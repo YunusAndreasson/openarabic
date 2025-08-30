@@ -128,7 +128,7 @@ function ArabicWordComponent({
         title: word.english || word.word_form || 'Word Audio',
       };
 
-      await simpleAudioService.play(track);
+      await simpleAudioService.play(track, { skipPolling: true, immediateStatus: true });
     } catch (error) {
       // Silently fail - audio playback is not critical
       console.warn('Word audio playback failed:', error);

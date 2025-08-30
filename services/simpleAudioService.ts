@@ -27,6 +27,10 @@ class SimpleAudioService {
   private loadingTimeout: ReturnType<typeof setTimeout> | null = null;
   private audioSessionConfigured = false;
 
+  // Player cache to avoid recreation for frequently played audio
+  private playerCache: Map<string, BasicAudioPlayer> = new Map();
+  private readonly MAX_CACHE_SIZE = 5; // Reduced for simplicity
+
   // STABILIZATION: Add state transition smoothing
   private lastStatusUpdate = 0;
   private statusUpdateThrottle = 400; // Slightly coarser to reduce UI churn without hurting UX
@@ -94,6 +98,12 @@ class SimpleAudioService {
       return this.currentPlayer;
     }
 
+    // Check cache for recently used players
+    const cachedPlayer = this.playerCache.get(audioUrl);
+    if (cachedPlayer) {
+      return cachedPlayer;
+    }
+
     // Stop and remove existing player asynchronously (don't block playback)
     if (this.currentPlayer) {
       // Non-blocking cleanup - don't await
@@ -106,13 +116,29 @@ class SimpleAudioService {
 
     // Create new player immediately
     const newPlayer = createAudioPlayer(audioUrl);
+
+    // Cache player for potential reuse
+    if (this.playerCache.size >= this.MAX_CACHE_SIZE) {
+      // Simple eviction: remove first key
+      const firstKey = this.playerCache.keys().next().value;
+      if (firstKey) {
+        this.playerCache.delete(firstKey);
+      }
+    }
+    this.playerCache.set(audioUrl, newPlayer);
+
     return newPlayer;
   }
 
   /**
    * Start playing a track
+   * @param track - The audio track to play
+   * @param options - Playback options for optimization
    */
-  async play(track: EnhancedAudioTrack): Promise<boolean> {
+  async play(
+    track: EnhancedAudioTrack,
+    options: { skipPolling?: boolean; immediateStatus?: boolean } = {}
+  ): Promise<boolean> {
     try {
       // Configure audio session first (should be pre-configured for faster playback)
       await this.configureAudioSession();
@@ -134,32 +160,49 @@ class SimpleAudioService {
       // Start playback immediately
       await this.currentPlayer.play?.();
 
-      // Start polling for status updates immediately after play() call
-      this.startStatusPolling();
+      // Conditionally start polling and wait for confirmation
+      if (!options.skipPolling) {
+        // Start polling for status updates immediately after play() call
+        this.startStatusPolling();
 
-      // Wait for audio to actually start playing (not just for play() to return)
-      const playbackStartTime = Date.now();
-      let actualPlaybackStarted = false;
+        // Wait for audio to actually start playing (not just for play() to return)
+        const playbackStartTime = Date.now();
+        let actualPlaybackStarted = false;
 
-      // Poll status until we detect actual playback or timeout
-      while (!actualPlaybackStarted && Date.now() - playbackStartTime < 1000) {
-        // Max wait 1 second
-        if (this.currentPlayer) {
-          const isPlaying = this.currentPlayer.playing || this.currentPlayer.isPlaying || false;
-          const currentTime = this.currentPlayer.currentTime ?? this.currentPlayer.position ?? 0;
+        // Poll status until we detect actual playback or timeout
+        while (!actualPlaybackStarted && Date.now() - playbackStartTime < 1000) {
+          // Max wait 1 second
+          if (this.currentPlayer) {
+            const isPlaying = this.currentPlayer.playing || this.currentPlayer.isPlaying || false;
+            const currentTime = this.currentPlayer.currentTime ?? this.currentPlayer.position ?? 0;
 
-          // Consider playback started if playing is true OR if currentTime > 0
-          if (isPlaying || currentTime > 0) {
-            actualPlaybackStarted = true;
-            break;
+            // Consider playback started if playing is true OR if currentTime > 0
+            if (isPlaying || currentTime > 0) {
+              actualPlaybackStarted = true;
+              break;
+            }
           }
+          // Small delay between checks
+          await new Promise(resolve => setTimeout(resolve, 10));
         }
-        // Small delay between checks
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
 
-      // Update status to playing (whether we detected it or not)
-      this.updateStatus({ isLoading: false, isPlaying: true });
+        // Update status to playing (whether we detected it or not)
+        this.updateStatus({ isLoading: false, isPlaying: true });
+      } else {
+        // For optimized playback (e.g., word audio), update status immediately
+        if (options.immediateStatus) {
+          this.updateStatus({
+            isLoading: false,
+            isPlaying: true,
+            currentTrack: this.currentTrack,
+            currentTime: 0,
+            duration: 0,
+          });
+        } else {
+          // Still provide minimal status update
+          this.updateStatus({ isLoading: false, isPlaying: true });
+        }
+      }
 
       // Set shorter loading timeout since audio should be cached
       this.loadingTimeout = setTimeout(() => {
@@ -524,6 +567,18 @@ class SimpleAudioService {
 
     // Clear all listeners to prevent memory leaks
     this.listeners.clear();
+
+    // Clear player cache and clean up cached players
+    for (const player of this.playerCache.values()) {
+      try {
+        if (typeof player.remove === 'function') {
+          await player.remove();
+        }
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+    this.playerCache.clear();
 
     // Best-effort to release audio session
     try {

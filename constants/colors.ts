@@ -113,16 +113,19 @@ const textHierarchy = {
   light: {
     subtitle: '#35463E', // 25% blend between darkest and medium - Use for: section headers, card subtitles
     metadata: '#5C6F65', // 50% blend between medium and light - Use for: timestamps, author names, secondary info
+    secondaryMetadata: '#7A8F82', // 75% blend between medium and light - Use for: chevrons, right-side secondary elements
     caption: '#5E7268', // 75% blend between medium and light - Use for: help text, placeholders, tertiary info
   },
   dark: {
     subtitle: '#E6EAE7', // Light mode equivalent - Use for: section headers, card subtitles
     metadata: '#CAD3CC', // Light mode equivalent - Use for: timestamps, author names, secondary info
+    secondaryMetadata: '#9BA8A0', // Light mode equivalent - Use for: chevrons, right-side secondary elements
     caption: '#BDC6BF', // Light mode equivalent - Use for: help text, placeholders, tertiary info
   },
   sepia: {
     subtitle: '#4A2F1F', // 25% blend for sepia hierarchy - Use for: section headers, card subtitles
     metadata: '#6B4530', // 50% blend for sepia hierarchy - Use for: timestamps, author names, secondary info
+    secondaryMetadata: '#8B6A4A', // 75% blend for sepia hierarchy - Use for: chevrons, right-side secondary elements
     caption: '#7A5138', // 75% blend for sepia hierarchy - Use for: help text, placeholders, tertiary info
   },
 } as const;
@@ -236,6 +239,7 @@ const lightColors: ThemeColors = {
   headingText: basePalette.forest.darkest,
   subtitleText: textHierarchy.light.subtitle,
   metadataText: textHierarchy.light.metadata,
+  secondaryMetadataText: textHierarchy.light.secondaryMetadata,
   captionText: textHierarchy.light.caption,
 
   // Interactive elements
@@ -317,6 +321,7 @@ const darkColors: ThemeColors = {
   headingText: basePalette.pure.white,
   subtitleText: textHierarchy.dark.subtitle,
   metadataText: textHierarchy.dark.metadata,
+  secondaryMetadataText: textHierarchy.dark.secondaryMetadata,
   captionText: textHierarchy.dark.caption,
 
   // Interactive elements
@@ -398,6 +403,7 @@ const sepiaColors: ThemeColors = {
   headingText: basePalette.autumn.darkest,
   subtitleText: textHierarchy.sepia.subtitle,
   metadataText: textHierarchy.sepia.metadata,
+  secondaryMetadataText: textHierarchy.sepia.secondaryMetadata,
   captionText: textHierarchy.sepia.caption,
 
   // Interactive elements - warm amber tones

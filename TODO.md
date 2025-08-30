@@ -16,7 +16,7 @@
 
 - [ ] Implement audio transition improvements
   - [x] Add title and summary
-  - [ ] Add word timestamps
+  - [x] Add word timestamps
   - [x] Add 500ms pause between sentences for arabic
 - [x] Improve the grammar rules system
   - [x] Highlight tashkeel (diacritical marks) properly

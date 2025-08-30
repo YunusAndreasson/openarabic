@@ -17,6 +17,7 @@ export interface ThemeColors {
   headingText: string;
   subtitleText: string;
   metadataText: string;
+  secondaryMetadataText: string;
   captionText: string;
 
   tint: string;

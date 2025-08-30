@@ -31,21 +31,19 @@ const AudioShuffleToggle: React.FC<AudioShuffleToggleProps> = ({ style }) => {
 
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.cardContent}>
-        <View style={styles.cardLeft}>
-          <View style={styles.cardIconContainer}>
-            <Ionicons
-              color={colors.interactiveSecondary}
-              name="shuffle"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            />
-          </View>
-          <ThemedText style={styles.cardText} type="body" weight="medium">
-            {STRINGS.AUDIO_SHUFFLE}
-          </ThemedText>
+      <View style={styles.cardLeft}>
+        <View style={styles.cardIconContainer}>
+          <Ionicons
+            color={colors.interactiveSecondary}
+            name="shuffle"
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+          />
         </View>
-        <Toggle value={audioShuffleEnabled} onValueChange={handleToggleChange} />
+        <ThemedText style={styles.cardText} type="body" weight="medium">
+          {STRINGS.AUDIO_SHUFFLE}
+        </ThemedText>
       </View>
+      <Toggle value={audioShuffleEnabled} onValueChange={handleToggleChange} />
     </View>
   );
 };
@@ -53,8 +51,6 @@ const AudioShuffleToggle: React.FC<AudioShuffleToggleProps> = ({ style }) => {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-  },
-  cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -65,14 +61,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardIconContainer: {
-    width: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
-    height: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.SMALL,
   },
   cardText: {
-    // Text styling for the toggle label
+    marginLeft: LAYOUT.SPACING.MEDIUM,
   },
 });
 

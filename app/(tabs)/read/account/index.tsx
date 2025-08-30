@@ -36,6 +36,53 @@ const Divider = memo(() => {
 });
 Divider.displayName = 'Divider';
 
+// DRY CardRight component for consistent right-side alignment
+const CardRight = memo(
+  ({
+    type,
+    text,
+    toggleValue,
+    onToggleChange,
+  }: {
+    type: 'chevron-only' | 'text-chevron' | 'toggle';
+    text?: string;
+    toggleValue?: boolean;
+    onToggleChange?: (value: boolean) => void;
+  }) => {
+    const colors = useColors();
+
+    if (type === 'toggle' && onToggleChange) {
+      return <Toggle value={toggleValue || false} onValueChange={onToggleChange} />;
+    }
+
+    if (type === 'text-chevron') {
+      return (
+        <View style={styles.cardRightValue}>
+          <ThemedText type="body" colorName="secondaryMetadataText">
+            {text}
+          </ThemedText>
+          <Ionicons
+            color={colors.secondaryMetadataText}
+            name="chevron-forward"
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+          />
+        </View>
+      );
+    }
+
+    // Default: chevron-only
+    return (
+      <Ionicons
+        color={colors.secondaryMetadataText}
+        name="chevron-forward"
+        size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+        style={styles.cardRightChevron}
+      />
+    );
+  }
+);
+CardRight.displayName = 'CardRight';
+
 const AccountScreen: FC = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -204,12 +251,7 @@ const AccountScreen: FC = () => {
                     {STRINGS.ARABIC_FONT}
                   </ThemedText>
                 </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
+                <CardRight type="chevron-only" />
               </View>
             </BaseCard>
 
@@ -233,16 +275,7 @@ const AccountScreen: FC = () => {
                     {STRINGS.DISPLAY_LANGUAGE}
                   </ThemedText>
                 </View>
-                <View style={styles.settingValueContainer}>
-                  <ThemedText type="body" colorName="metadataText">
-                    {currentLanguageText}
-                  </ThemedText>
-                  <Ionicons
-                    color={colors.metadataText}
-                    name="chevron-forward"
-                    size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  />
-                </View>
+                <CardRight type="text-chevron" text={currentLanguageText} />
               </View>
             </BaseCard>
 
@@ -261,7 +294,11 @@ const AccountScreen: FC = () => {
                   <ThemedText type="body">Word Audio</ThemedText>
                 </View>
               </View>
-              <Toggle value={wordAudioEnabled} onValueChange={handleWordAudioToggle} />
+              <CardRight
+                type="toggle"
+                toggleValue={wordAudioEnabled}
+                onToggleChange={handleWordAudioToggle}
+              />
             </View>
           </View>
         </BaseCard>
@@ -288,16 +325,7 @@ const AccountScreen: FC = () => {
                     {STRINGS.AUDIO_LANGUAGE}
                   </ThemedText>
                 </View>
-                <View style={styles.settingValueContainer}>
-                  <ThemedText type="body" colorName="metadataText">
-                    {currentAudioLanguageText}
-                  </ThemedText>
-                  <Ionicons
-                    color={colors.metadataText}
-                    name="chevron-forward"
-                    size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  />
-                </View>
+                <CardRight type="text-chevron" text={currentAudioLanguageText} />
               </View>
             </BaseCard>
 
@@ -326,18 +354,22 @@ const AccountScreen: FC = () => {
                   <ThemedText type="body">{STRINGS.STUDY_REMINDERS}</ThemedText>
                 </View>
               </View>
-              <Toggle value={reminderTime.enabled} onValueChange={handleReminderToggle} />
+              <CardRight
+                type="toggle"
+                toggleValue={reminderTime.enabled}
+                onToggleChange={handleReminderToggle}
+              />
             </View>
             {reminderTime.enabled && (
               <Fragment>
                 <Divider />
                 <BaseCard
                   shadowSize="none"
-                  style={styles.timePickerSettingRow}
+                  style={styles.interactiveCard}
                   onPress={handleTimePickerOpen}
                 >
-                  <View style={styles.settingRow}>
-                    <View style={styles.settingLabelContainer}>
+                  <View style={styles.cardContent}>
+                    <View style={styles.cardLeft}>
                       <View style={styles.cardIconContainer}>
                         <Ionicons
                           color={colors.interactiveSecondary}
@@ -345,13 +377,14 @@ const AccountScreen: FC = () => {
                           size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                         />
                       </View>
-                      <View style={styles.settingLabelTextContainer}>
-                        <ThemedText type="body">{STRINGS.TIME}</ThemedText>
-                      </View>
+                      <ThemedText style={styles.cardText} type="body" weight="medium">
+                        {STRINGS.TIME}
+                      </ThemedText>
                     </View>
-                    <ThemedText type="body" colorName="metadataText">
-                      {formatReminderTime(reminderTime.hour, reminderTime.minute)}
-                    </ThemedText>
+                    <CardRight
+                      type="text-chevron"
+                      text={formatReminderTime(reminderTime.hour, reminderTime.minute)}
+                    />
                   </View>
                 </BaseCard>
               </Fragment>
@@ -361,11 +394,11 @@ const AccountScreen: FC = () => {
 
             <BaseCard
               shadowSize="none"
-              style={styles.timePickerSettingRow}
+              style={styles.interactiveCard}
               onPress={handleDailyWordLimitPickerOpen}
             >
-              <View style={styles.settingRow}>
-                <View style={styles.settingLabelContainer}>
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
                       color={colors.interactiveSecondary}
@@ -373,20 +406,11 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <View style={styles.settingLabelTextContainer}>
-                    <ThemedText type="body">{STRINGS.DAILY_WORD_LIMIT}</ThemedText>
-                  </View>
-                </View>
-                <View style={styles.settingValueContainer}>
-                  <ThemedText type="body" colorName="metadataText">
-                    {currentDailyWordLimitText}
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.DAILY_WORD_LIMIT}
                   </ThemedText>
-                  <Ionicons
-                    color={colors.metadataText}
-                    name="chevron-forward"
-                    size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  />
                 </View>
+                <CardRight type="text-chevron" text={currentDailyWordLimitText} />
               </View>
             </BaseCard>
           </View>
@@ -398,11 +422,11 @@ const AccountScreen: FC = () => {
           <View style={styles.linksContainer}>
             <BaseCard
               shadowSize="none"
-              style={styles.timePickerSettingRow}
+              style={styles.interactiveCard}
               onPress={handleThemePickerOpen}
             >
-              <View style={styles.settingRow}>
-                <View style={styles.settingLabelContainer}>
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
                       color={colors.interactiveSecondary}
@@ -410,20 +434,11 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <View style={styles.settingLabelTextContainer}>
-                    <ThemedText type="body">{STRINGS.THEME}</ThemedText>
-                  </View>
-                </View>
-                <View style={styles.settingValueContainer}>
-                  <ThemedText type="body" colorName="metadataText">
-                    {currentThemeText}
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.THEME}
                   </ThemedText>
-                  <Ionicons
-                    color={colors.metadataText}
-                    name="chevron-forward"
-                    size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  />
                 </View>
+                <CardRight type="text-chevron" text={currentThemeText} />
               </View>
             </BaseCard>
           </View>
@@ -451,12 +466,7 @@ const AccountScreen: FC = () => {
                     {STRINGS.HELP}
                   </ThemedText>
                 </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
+                <CardRight type="chevron-only" />
               </View>
             </BaseCard>
 
@@ -480,12 +490,7 @@ const AccountScreen: FC = () => {
                     {STRINGS.CONTACT_SUPPORT}
                   </ThemedText>
                 </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="open"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
+                <CardRight type="chevron-only" />
               </View>
             </BaseCard>
 
@@ -509,12 +514,7 @@ const AccountScreen: FC = () => {
                     {STRINGS.RATE_APP}
                   </ThemedText>
                 </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
+                <CardRight type="chevron-only" />
               </View>
             </BaseCard>
           </View>
@@ -583,12 +583,7 @@ const AccountScreen: FC = () => {
                     </ThemedText>
                   </View>
                 </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
+                <CardRight type="chevron-only" />
               </View>
             </BaseCard>
           </View>
@@ -679,10 +674,14 @@ const styles = StyleSheet.create({
   cardText: {
     marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for better visual balance
   },
-  cardChevron: {
-    marginRight: LAYOUT.SPACING.SMALL,
+
+  cardRightValue: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.TINY,
+  },
+  cardRightChevron: {
     minWidth: LAYOUT.SPACING.XLARGE,
-    opacity: LAYOUT.OPACITY.MEDIUM,
     textAlign: 'center',
   },
 
@@ -715,11 +714,7 @@ const styles = StyleSheet.create({
   settingLabelTextContainer: {
     marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for consistency with cardText
   },
-  settingValueContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.TINY,
-  },
+
   commonDivider: {
     height: LAYOUT.BORDER.WIDTH.THIN,
     opacity: LAYOUT.OPACITY.MEDIUM,
@@ -751,12 +746,6 @@ const styles = StyleSheet.create({
   signOutTextContainer: {
     flexDirection: 'column',
     marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for consistency
-  },
-
-  // Time Picker Styles
-  timePickerSettingRow: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
   },
 
   userEmailText: {
