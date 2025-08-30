@@ -172,6 +172,8 @@ export const STRINGS = {
 
   ADDED_TO_LISTENING_LIST: 'Saved to playlist',
   REMOVED_FROM_LISTENING_LIST: 'Removed from playlist',
+  ADDED_TO_STUDY_LIST: 'Added to study list',
+  REMOVED_FROM_STUDY_LIST: 'Removed from study list',
 
   ACCOUNT_CREATED: 'Account created',
   CHECK_EMAIL_CONFIRMATION: 'Check your email for confirmation',

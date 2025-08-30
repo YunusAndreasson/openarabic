@@ -34,7 +34,7 @@ export function useReadingStreak(): UseReadingStreakResult {
       }
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes - streaks don't change frequently
+    staleTime: 30 * 1000, // 30 seconds - more responsive for streak updates
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
     refetchOnMount: false,

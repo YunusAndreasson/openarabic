@@ -128,6 +128,10 @@ export function useReadingProgress({
         queryClient.invalidateQueries({
           queryKey: ['reading-progress-bulk', user.id],
         });
+        // Invalidate streak query to update streak immediately after reading
+        queryClient.invalidateQueries({
+          queryKey: ['reading-streak', user.id],
+        });
       }
     },
     onError: error => {
@@ -206,6 +210,11 @@ export function useReadingProgress({
             totalSentences: sentencesToUse,
           });
         }
+
+        // Invalidate streak query since article open counts as reading activity
+        queryClient.invalidateQueries({
+          queryKey: ['reading-streak', user.id],
+        });
       } catch (error) {
         // Silent error - article open tracking failed but shouldn't break reading
         handleError(error as Error, {
@@ -238,6 +247,11 @@ export function useReadingProgress({
             articleId,
             lastSentenceRead: currentProgress.last_sentence_read,
             totalSentences, // Use actual total sentences now that article is loaded
+          });
+
+          // Invalidate streak query since this counts as additional reading activity
+          queryClient.invalidateQueries({
+            queryKey: ['reading-streak', user.id],
           });
         }
       } catch {

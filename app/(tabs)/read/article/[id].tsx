@@ -15,7 +15,7 @@ import {
 import { ArticleSentence, SentenceScrubber, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider, useToast } from '@/components/providers';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
@@ -287,12 +287,31 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     [activeTooltip]
   );
 
-  const handleStudyListToggle = useCallback(() => {
-    if (activeTooltip?.word.root_id) {
+  const handleStudyListToggle = useCallback(async () => {
+    if (activeTooltip?.word.root_id && user?.id) {
       selectionFeedback();
-      handleRootPress(activeTooltip.word.root_id);
+
+      // Determine operation type by checking if word exists
+      const existingWords = queryClient.getQueryData(
+        FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS)
+      );
+
+      const wordExists =
+        existingWords?.some(word => word.root_id === activeTooltip.word.root_id) ?? false;
+
+      // Show final success toast immediately (assuming operation will succeed)
+      const successMessage = wordExists
+        ? STRINGS.REMOVED_FROM_STUDY_LIST
+        : STRINGS.ADDED_TO_STUDY_LIST;
+      showToast(successMessage, 3000, 'success');
+
+      // Add/remove the word to/from study list in background
+      await handleRootPress(activeTooltip.word.root_id);
+
+      // If operation failed, the handleRootPress already showed error toast with haptic
+      // The success toast we showed will be replaced by the error toast
     }
-  }, [activeTooltip, handleRootPress]);
+  }, [activeTooltip, handleRootPress, showToast, user?.id, queryClient]);
 
   const handleCloseTooltip = useCallback(() => {
     setActiveTooltip(null);

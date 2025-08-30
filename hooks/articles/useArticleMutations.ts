@@ -17,6 +17,7 @@ import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
 import { handleError } from '@/utils/errorHandling';
+import { errorFeedback } from '@/utils/haptics';
 
 // Shared query keys used across mutation success handlers
 const RELATED_QUERY_KEYS = (userId: string, audioPreference?: 'arabic' | 'bilingual') =>
@@ -74,7 +75,7 @@ export const useArticleMutations = (
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
-  const { canAddWord, incrementDailyWordCount } = useDailyWordLimit();
+  const { dailyWordLimit, canAddWord, incrementDailyWordCount } = useDailyWordLimit();
 
   // Lightweight capacity guard: prevent adding when capacity is low (red phase)
   // Only applies when user has more than 100 words to avoid being annoying for new users
@@ -436,19 +437,14 @@ export const useArticleMutations = (
 
   // Handle root press
   const handleRootPress = useCallback(
-    async (rootId: number) => {
+    async (rootId: number): Promise<boolean | undefined> => {
       try {
-        // Check daily word limit first
-        const canAdd = await canAddWord();
-        if (!canAdd) {
-          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
-          return;
-        }
-
-        // Always get fresh session from Supabase
+        // Always get fresh session from Supabase first
         const {
           data: { session },
         } = await supabase.auth.getSession();
+
+        let currentUserId: string;
 
         if (!session?.user) {
           // Try to refresh the session first
@@ -457,47 +453,75 @@ export const useArticleMutations = (
           if (refreshError || !refreshData.session) {
             showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_ROOTS, undefined, 'info');
             router.replace(ROUTE_PATHS.AUTH);
-            return;
+            return undefined;
           }
 
-          // Capacity guard
-          if (isCapacityLow(refreshData.session.user.id)) {
-            showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, 'info');
-            return;
-          }
+          currentUserId = refreshData.session.user.id;
+        } else {
+          currentUserId = session.user.id;
+        }
 
-          // Increment daily word count and proceed
-          const incrementSuccess = await incrementDailyWordCount();
-          if (!incrementSuccess) {
-            showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
-            return;
-          }
+        // Check if word already exists (remove operation should be allowed even if limit reached)
+        const existingWords = queryClient.getQueryData(
+          FSRS_QUERY_KEYS.allWithCooldown(currentUserId, DEFAULT_SESSION_COOLDOWN_HOURS)
+        );
 
-          // Use the refreshed session
-          toggleRootMutation.mutate({ userId: refreshData.session.user.id, rootId });
-          return;
+        const wordExists = existingWords?.some(word => word.root_id === rootId) ?? false;
+
+        // Only check daily limit for add operations (when word doesn't exist)
+        if (!wordExists) {
+          const canAdd = await canAddWord();
+          if (!canAdd) {
+            const limitMessage =
+              dailyWordLimit === 0
+                ? STRINGS.DAILY_WORD_LIMIT_REACHED
+                : `Daily limit of ${dailyWordLimit} words reached`;
+            showToast(limitMessage, 4000, 'important');
+            errorFeedback(); // Use error haptic for daily limit reached
+            return undefined;
+          }
         }
 
         // Capacity guard
-        if (isCapacityLow(session.user.id)) {
+        if (isCapacityLow(currentUserId)) {
           showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, 'info');
-          return;
+          return undefined;
         }
 
-        // Increment daily word count and proceed
-        const incrementSuccess = await incrementDailyWordCount();
-        if (!incrementSuccess) {
-          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
-          return;
+        // Increment daily word count only for add operations
+        if (!wordExists) {
+          const incrementSuccess = await incrementDailyWordCount();
+          if (!incrementSuccess) {
+            const limitMessage =
+              dailyWordLimit === 0
+                ? STRINGS.DAILY_WORD_LIMIT_REACHED
+                : `Daily limit of ${dailyWordLimit} words reached`;
+            showToast(limitMessage, 4000, 'important');
+            errorFeedback(); // Use error haptic for daily limit reached
+            return undefined;
+          }
         }
 
         // Always use the user ID from the session directly
-        toggleRootMutation.mutate({ userId: session.user.id, rootId });
+        const result = await toggleRootMutation.mutateAsync({
+          userId: currentUserId,
+          rootId,
+        });
+        return result;
       } catch (error) {
         handleError(error as Error);
+        return undefined;
       }
     },
-    [toggleRootMutation, showToast, router, canAddWord, incrementDailyWordCount]
+    [
+      toggleRootMutation,
+      showToast,
+      router,
+      canAddWord,
+      incrementDailyWordCount,
+      dailyWordLimit,
+      queryClient,
+    ]
   );
 
   return {
