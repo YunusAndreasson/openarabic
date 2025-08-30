@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { FlashListProps } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { memo, useCallback, useMemo, type ReactElement } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, type ReactElement } from 'react';
 import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -13,14 +13,20 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   runOnJS,
   useAnimatedScrollHandler,
+  useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
-import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
+import {
+  SCROLL_EVENT_THROTTLE,
+  SENTENCE_DRAW_DISTANCE_MULTIPLIER,
+  TIMING_CONFIG,
+} from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -321,6 +327,18 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Reduce cross-thread calls by emitting JS updates only when change is meaningful
     const lastEmittedY = useSharedValue(0);
 
+    // Gentle fade-in animation for smooth content appearance
+    const opacity = useSharedValue(0);
+    const hasAnimatedRef = useRef(false);
+
+    // Trigger fade-in animation when content is available
+    useEffect(() => {
+      if (sortedSentences && sortedSentences.length > 0 && !hasAnimatedRef.current) {
+        hasAnimatedRef.current = true;
+        opacity.value = withTiming(1, TIMING_CONFIG.GENTLE);
+      }
+    }, [sortedSentences, opacity]);
+
     // Forward JS scroll needs from UI thread
     const handleScrollJS = useCallback(
       (y: number) => {
@@ -437,6 +455,11 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Memoized viewability config
     const viewabilityConfig = useMemo(() => createViewabilityConfig(), []);
 
+    // Animated style for gentle fade-in
+    const animatedStyle = useAnimatedStyle(() => ({
+      opacity: opacity.value,
+    }));
+
     // Memoize the key extractor to prevent inline function creation
     const keyExtractor = useCallback((item: Tables<'article_sentences'>) => item.id.toString(), []);
 
@@ -481,7 +504,7 @@ export const ArticleContent = memo<ArticleContentProps>(
     return (
       <View style={styles.flexOne}>
         {sortedSentences && sortedSentences.length > 0 ? (
-          <View style={listContainerStyle}>
+          <Animated.View style={[listContainerStyle, animatedStyle]}>
             {/* Sticky Parallax Header behind content */}
             <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
             <AnimatedFlashList
@@ -511,7 +534,7 @@ export const ArticleContent = memo<ArticleContentProps>(
               onToggleReadingList={onToggleReadingList}
               onClose={onClose}
             />
-          </View>
+          </Animated.View>
         ) : null}
       </View>
     );

@@ -463,7 +463,7 @@ export const useArticleMutations = (
         }
 
         // Check if word already exists (remove operation should be allowed even if limit reached)
-        const existingWords = queryClient.getQueryData(
+        const existingWords = queryClient.getQueryData<StudyWord[]>(
           FSRS_QUERY_KEYS.allWithCooldown(currentUserId, DEFAULT_SESSION_COOLDOWN_HOURS)
         );
 

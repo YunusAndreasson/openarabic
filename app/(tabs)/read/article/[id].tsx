@@ -292,7 +292,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       selectionFeedback();
 
       // Determine operation type by checking if word exists
-      const existingWords = queryClient.getQueryData(
+      const existingWords = queryClient.getQueryData<StudyWord[]>(
         FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS)
       );
 
