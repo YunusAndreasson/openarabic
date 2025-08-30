@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -44,6 +45,27 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
     const isDragging = useSharedValue(false);
     // Gate JS bridging by tracking last emitted index on UI thread
     const lastIndex = useSharedValue(currentSentence);
+
+    // Cleanup all animations on unmount
+    useEffect(() => {
+      return () => {
+        try {
+          cancelAnimation(trackWidth);
+          cancelAnimation(handlePosition);
+          cancelAnimation(showTooltip);
+          cancelAnimation(isDragging);
+          cancelAnimation(lastIndex);
+          // Reset to default values
+          trackWidth.value = DEFAULT_TRACK_WIDTH;
+          handlePosition.value = 0;
+          showTooltip.value = 0;
+          isDragging.value = false;
+          lastIndex.value = 0;
+        } catch {
+          // Animation cleanup failed - continue
+        }
+      };
+    }, [trackWidth, handlePosition, showTooltip, isDragging, lastIndex]);
 
     // Memoized calculations to prevent unnecessary recalculations
     const isValidScrubber = useMemo(() => totalSentences > 1, [totalSentences]);

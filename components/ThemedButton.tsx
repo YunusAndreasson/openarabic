@@ -135,7 +135,10 @@ function ThemedButtonComponent({
     [size]
   );
 
-  const textOpacityStyle = useMemo(() => (loading && !icon ? styles.hiddenText : null), [loading, icon]);
+  const textOpacityStyle = useMemo(
+    () => (loading && !icon ? styles.hiddenText : null),
+    [loading, icon]
+  );
 
   // Accessibility properties
   const accessibilityLabel = props.accessibilityLabel || title;

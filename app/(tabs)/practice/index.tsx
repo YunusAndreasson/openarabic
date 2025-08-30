@@ -3,8 +3,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, InteractionManager, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -21,6 +22,7 @@ import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -45,6 +47,20 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
+
+  // Smooth spring animations for loading and content transitions
+  // Always call hooks unconditionally at the top level
+  const { animatedStyle: loadingAnimatedStyle, startAnimation: startLoadingAnimation } =
+    useOpacityAnimation({
+      initialOpacity: 0,
+      duration: 200, // Quick for loading indicator
+    });
+
+  const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
+    useOpacityAnimation({
+      initialOpacity: 0,
+      duration: 400, // Gentler for content appearance
+    });
 
   // Combine focus effects for better performance
   useFocusEffect(
@@ -164,6 +180,33 @@ export default function VocabularyScreen(): JSX.Element {
   const contentPaddingBottom =
     insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL;
 
+  // Calculate loading and content states (needed for animations before any early returns)
+  const isLoadingState = isDataLoading || isFetching;
+  const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
+  const shouldShowMainContent = !isLoadingState || (isLoadingState && isDataCached);
+
+  // Track animation states to prevent restarts
+  const hasStartedLoadingAnimation = useRef(false);
+  const hasStartedContentAnimation = useRef(false);
+
+  // Trigger animations at the right times (with guards to prevent restarts)
+  useEffect(() => {
+    const shouldShowLoading = isLoadingState && !isDataCached;
+    if (shouldShowLoading && !hasStartedLoadingAnimation.current) {
+      hasStartedLoadingAnimation.current = true;
+      startLoadingAnimation();
+    } else if (!shouldShowLoading) {
+      hasStartedLoadingAnimation.current = false; // Reset for next loading state
+    }
+  }, [isLoadingState, isDataCached, startLoadingAnimation]);
+
+  useEffect(() => {
+    if (shouldShowMainContent && !hasStartedContentAnimation.current) {
+      hasStartedContentAnimation.current = true;
+      startContentAnimation();
+    }
+  }, [shouldShowMainContent, startContentAnimation]);
+
   // Show error message if there was an error loading data
   if (shouldShowError) {
     return (
@@ -178,13 +221,6 @@ export default function VocabularyScreen(): JSX.Element {
       </ThemedView>
     );
   }
-
-  const isLoadingState = isDataLoading || isFetching;
-  // Use the same key as allWords query for cache detection
-  const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
-
-  // Determine when to show the main content (vocabulary stat cards)
-  const shouldShowMainContent = !isLoadingState || (isLoadingState && isDataCached);
 
   // Main content
   return (
@@ -209,16 +245,16 @@ export default function VocabularyScreen(): JSX.Element {
           contentInsetAdjustmentBehavior: 'never' as const,
         }}
       >
-        {/* Subtle loading indicator */}
+        {/* Subtle loading indicator with smooth animation */}
         {isLoadingState && !isDataCached && (
-          <View style={styles.loadingContainer}>
+          <Animated.View style={[styles.loadingContainer, loadingAnimatedStyle]}>
             <ActivityIndicator color={colors.tint} size="small" />
-          </View>
+          </Animated.View>
         )}
 
-        {/* PRIMARY SECTION: Learning Overview */}
+        {/* PRIMARY SECTION: Learning Overview with smooth animation */}
         {shouldShowMainContent && (
-          <View style={styles.vocabularySection}>
+          <Animated.View style={[styles.vocabularySection, contentAnimatedStyle]}>
             {hasAnyStudyWords ? (
               <>
                 <VocabularyStatCards
@@ -255,7 +291,7 @@ export default function VocabularyScreen(): JSX.Element {
                 }}
               />
             )}
-          </View>
+          </Animated.View>
         )}
       </ThemedView>
 

@@ -1,7 +1,13 @@
 import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { runOnJS, useAnimatedReaction, useSharedValue, withSpring } from 'react-native-reanimated';
+import {
+  cancelAnimation,
+  runOnJS,
+  useAnimatedReaction,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 
 import { BaseChart } from '@charts/BaseChart';
 import { useChartColors } from '@charts/ChartColors';
@@ -59,6 +65,18 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
     // Animated retention value using Reanimated
     const retentionShared = useSharedValue(0);
     const [animatedRetention, setAnimatedRetention] = useState(0);
+
+    // Cleanup animation on unmount
+    useEffect(() => {
+      return () => {
+        try {
+          cancelAnimation(retentionShared);
+          retentionShared.value = 0;
+        } catch {
+          // Animation cleanup failed - continue
+        }
+      };
+    }, [retentionShared]);
 
     // Track previous retention to detect when entering green area
     const prevRetentionRef = useRef(0);

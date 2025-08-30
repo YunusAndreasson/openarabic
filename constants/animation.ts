@@ -126,6 +126,12 @@ export const ARTICLE_CARD_SPRING = {
   stiffness: 300,
 } as const;
 
+/** Spring config for component press animations */
+export const COMPONENT_PRESS_SPRING = {
+  damping: 15,
+  stiffness: 150,
+} as const;
+
 /** Delay before completion metrics appear */
 export const COMPLETION_METRIC_BASE_DELAY = 800;
 
@@ -157,6 +163,9 @@ export const DEFAULT_TOAST_DURATION = 4000;
 
 /** Duration for icon entrance animations */
 export const ICON_ENTRANCE_DURATION = 400;
+
+/** Duration for component entrance animations */
+export const COMPONENT_ENTRANCE_DURATION = 300;
 
 /** Delay before completion title appears */
 export const COMPLETION_TITLE_DELAY = 400;

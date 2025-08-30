@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { FlashListProps } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { memo, useCallback, useEffect, useMemo, useRef, type ReactElement } from 'react';
+import React, { memo, useCallback, useMemo, type ReactElement } from 'react';
 import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -13,9 +13,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   runOnJS,
   useAnimatedScrollHandler,
-  useAnimatedStyle,
   useSharedValue,
-  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,6 +26,7 @@ import {
   TIMING_CONFIG,
 } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
@@ -327,17 +326,18 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Reduce cross-thread calls by emitting JS updates only when change is meaningful
     const lastEmittedY = useSharedValue(0);
 
-    // Gentle fade-in animation for smooth content appearance
-    const opacity = useSharedValue(0);
-    const hasAnimatedRef = useRef(false);
+    // Sophisticated fade-in animation for smooth article appearance
+    const { animatedStyle, startAnimation } = useOpacityAnimation({
+      initialOpacity: 0,
+      duration: TIMING_CONFIG.GENTLE.duration,
+    });
 
-    // Trigger fade-in animation when content is available
-    useEffect(() => {
-      if (sortedSentences && sortedSentences.length > 0 && !hasAnimatedRef.current) {
-        hasAnimatedRef.current = true;
-        opacity.value = withTiming(1, TIMING_CONFIG.GENTLE);
+    // Trigger animation when content becomes available
+    React.useEffect(() => {
+      if (sortedSentences && sortedSentences.length > 0) {
+        startAnimation();
       }
-    }, [sortedSentences, opacity]);
+    }, [sortedSentences, startAnimation]);
 
     // Forward JS scroll needs from UI thread
     const handleScrollJS = useCallback(
@@ -455,11 +455,6 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Memoized viewability config
     const viewabilityConfig = useMemo(() => createViewabilityConfig(), []);
 
-    // Animated style for gentle fade-in
-    const animatedStyle = useAnimatedStyle(() => ({
-      opacity: opacity.value,
-    }));
-
     // Memoize the key extractor to prevent inline function creation
     const keyExtractor = useCallback((item: Tables<'article_sentences'>) => item.id.toString(), []);
 
@@ -502,9 +497,9 @@ export const ArticleContent = memo<ArticleContentProps>(
     );
 
     return (
-      <View style={styles.flexOne}>
+      <Animated.View style={[styles.flexOne, animatedStyle]}>
         {sortedSentences && sortedSentences.length > 0 ? (
-          <Animated.View style={[listContainerStyle, animatedStyle]}>
+          <View style={listContainerStyle}>
             {/* Sticky Parallax Header behind content */}
             <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
             <AnimatedFlashList
@@ -534,9 +529,9 @@ export const ArticleContent = memo<ArticleContentProps>(
               onToggleReadingList={onToggleReadingList}
               onClose={onClose}
             />
-          </Animated.View>
+          </View>
         ) : null}
-      </View>
+      </Animated.View>
     );
   },
   // Simplified memo comparison function - only check primitive values and stable references

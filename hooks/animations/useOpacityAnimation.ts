@@ -1,25 +1,20 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
+import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
 import {
-  useSharedValue,
-  withTiming,
-  useAnimatedStyle,
-  withDelay,
-  runOnJS,
+  cancelAnimation,
   FadeIn,
   FadeOut,
+  runOnJS,
   runOnUI,
-  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
 } from 'react-native-reanimated';
-import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
 
-import {
-  TIMING_CONFIG,
-  MIN_OPACITY_DURATION,
-  MIN_MOUNT_DELAY,
-} from '@/constants/animation';
+import { MIN_MOUNT_DELAY, MIN_OPACITY_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
-
 
 export type FadeAnimationStyle = 'entrance-only' | 'standard';
 
@@ -121,7 +116,6 @@ export interface FadeAnimationResult {
    */
   exiting: ReturnType<typeof FadeOut.duration>;
 }
-
 
 /**
  * Unified hook for opacity and fade animations
@@ -259,15 +253,12 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   );
 
   // Create animated style based on the opacity shared value
-  const animatedStyle = useAnimatedStyle<ViewStyle>(
-    () => {
-      'worklet';
-      return {
-        opacity: opacity.value,
-      };
-    },
-    [opacity]
-  ) as AnimatedStyleProp<ViewStyle>;
+  const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
+    'worklet';
+    return {
+      opacity: opacity.value,
+    };
+  }, [opacity]) as AnimatedStyleProp<ViewStyle>;
 
   // Auto-start animation if enabled - using UI thread
   useEffect(() => {

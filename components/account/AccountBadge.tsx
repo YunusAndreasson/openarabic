@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
+  cancelAnimation,
   useAnimatedStyle,
   useSharedValue,
   withSequence,
@@ -12,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { COMPONENT_ENTRANCE_DURATION, COMPONENT_PRESS_SPRING } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
@@ -21,11 +23,6 @@ import { getFirstNameFromEmail } from '@/utils/stringUtils';
 
 // Static constants for performance
 const PROFILE_PHOTO_SIZE = 64;
-const ANIMATION_DURATION = 300;
-const SPRING_CONFIG = {
-  damping: 15,
-  stiffness: 150,
-};
 
 interface AccountBadgeProps {
   userEmail: string;
@@ -69,6 +66,21 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
   const scaleValue = useSharedValue(1);
   const opacityValue = useSharedValue(0);
 
+  // Cleanup animations on unmount
+  React.useEffect(() => {
+    return () => {
+      try {
+        cancelAnimation(scaleValue);
+        cancelAnimation(opacityValue);
+        // Reset to default values
+        scaleValue.value = 1;
+        opacityValue.value = 0;
+      } catch {
+        // Animation cleanup failed - continue
+      }
+    };
+  }, [scaleValue, opacityValue]);
+
   // Derived values
   const firstName = getFirstNameFromEmail(userEmail);
   const memberSince = formatMemberSince(getMemberSinceDate(createdAt));
@@ -88,8 +100,9 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
         handleError(error as Error, { showToast: false });
       } finally {
         setIsLoadingInitial(false);
-        // Animate in after loading
-        opacityValue.value = withTiming(1, { duration: ANIMATION_DURATION });
+        // Animate in after loading (cancel any existing animation first)
+        cancelAnimation(opacityValue);
+        opacityValue.value = withTiming(1, { duration: COMPONENT_ENTRANCE_DURATION });
       }
     };
 
@@ -173,7 +186,11 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
 
   // Handle photo press animation
   const handlePhotoPress = useCallback(() => {
-    scaleValue.value = withSequence(withSpring(0.95, SPRING_CONFIG), withSpring(1, SPRING_CONFIG));
+    cancelAnimation(scaleValue);
+    scaleValue.value = withSequence(
+      withSpring(0.95, COMPONENT_PRESS_SPRING),
+      withSpring(1, COMPONENT_PRESS_SPRING)
+    );
     handlePhotoSelect();
   }, [scaleValue, handlePhotoSelect]);
 
