@@ -147,7 +147,8 @@ const BLUR_INTENSITY = 55;
 const styles = StyleSheet.create({
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
   },
   tabBarIcon: {
     marginTop: LAYOUT.SPACING.SMALL,

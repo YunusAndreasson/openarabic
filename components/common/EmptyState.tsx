@@ -143,10 +143,10 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     alignItems: 'center',
-    maxWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 7 - LAYOUT.SPACING.LARGE, // ~320px
+    maxWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 7 - LAYOUT.SPACING.LARGE,
   },
   customActionButton: {
-    minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 4 - LAYOUT.SPACING.MEDIUM, // ~180px
+    minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 4 - LAYOUT.SPACING.MEDIUM,
   },
   description: {
     marginTop: LAYOUT.SPACING.MEDIUM,

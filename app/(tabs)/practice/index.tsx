@@ -18,6 +18,7 @@ import { MemoryRetentionBottomSheet } from '@/components/practice/MemoryRetentio
 import RecommendationCard from '@/components/practice/RecommendationCard';
 import { VocabularyStatCards } from '@/components/practice/VocabularyStatCards';
 import { WordsMasteredBottomSheet } from '@/components/practice/WordsMasteredBottomSheet';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';
@@ -53,13 +54,13 @@ export default function VocabularyScreen(): JSX.Element {
   const { animatedStyle: loadingAnimatedStyle, startAnimation: startLoadingAnimation } =
     useOpacityAnimation({
       initialOpacity: 0,
-      duration: 200, // Quick for loading indicator
+      duration: TIMING_CONFIG.FAST.duration,
     });
 
   const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
     useOpacityAnimation({
       initialOpacity: 0,
-      duration: 400, // Gentler for content appearance
+      duration: TIMING_CONFIG.SLOW.duration,
     });
 
   // Combine focus effects for better performance

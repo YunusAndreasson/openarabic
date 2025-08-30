@@ -1,8 +1,8 @@
 import { memo, useCallback, useMemo } from 'react';
-import { Pressable, View, type TextStyle } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { PillProps } from '@/types/ui/pill.types';
@@ -10,116 +10,112 @@ import type { PillProps } from '@/types/ui/pill.types';
 /**
  * A simple pill component for filters and categories
  */
-const Pill = memo(
-  ({
-    id,
-    label,
-    isSelected = false,
-    onSelect,
-    variant = 'filter',
-  }: PillProps) => {
-    const colors = useColors();
-    const isDarkMode = useIsDarkMode();
+const Pill = memo(({ id, label, isSelected = false, onSelect, variant = 'filter' }: PillProps) => {
+  const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
-    const handlePress = useCallback(() => {
-      if (onSelect) {
-        onSelect(id);
-      }
-    }, [id, onSelect]);
+  const handlePress = useCallback(() => {
+    if (onSelect) {
+      onSelect(id);
+    }
+  }, [id, onSelect]);
 
-    const isCategory = variant === 'category';
-    const textType = isCategory ? 'overline' : 'label';
-    const textStyle: TextStyle = isDarkMode ? { color: colors.text } : {};
+  const isCategory = variant === 'category';
+  const textType = isCategory ? 'overline' : 'label';
 
-    const containerStyle = useMemo(() => {
-      if (isCategory) {
-        return {
-          backgroundColor: isSelected
-            ? `${colors.tint}CC` // 80% opacity
-            : isDarkMode
-            ? `${colors.elevation2}99` // 60% opacity
-            : `${colors.elevation1}B3`, // 70% opacity
-          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-          paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-          paddingVertical: LAYOUT.SPACING.TINY,
-          shadowColor: isDarkMode ? colors.black : colors.shadow,
-          ...LAYOUT.ELEVATION.SMALL,
-        };
-      }
+  const containerStyle = useMemo(() => {
+    const baseStyle = {
+      alignItems: 'center' as const,
+      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+      justifyContent: 'center' as const,
+      minHeight: MIN_TOUCH_TARGET.SMALL,
+      shadowColor: colors.shadow,
+    };
 
-      // Filter variant
+    if (isCategory) {
       return {
+        ...baseStyle,
         backgroundColor: isSelected
-          ? colors.tint
+          ? `${colors.tint}CC` // 80% opacity
           : isDarkMode
-          ? colors.elevation2
-          : colors.elevation1,
-        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-        borderColor: isSelected ? colors.tint : colors.borderOverlay,
-        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-        paddingHorizontal: LAYOUT.SPACING.LARGE,
-        paddingVertical: LAYOUT.SPACING.SMALL,
-        marginBottom: LAYOUT.SPACING.SMALL,
-        marginRight: LAYOUT.SPACING.SMALL,
-        shadowColor: colors.shadow,
-        ...LAYOUT.ELEVATION.SUBTLE,
+          ? `${colors.elevation2}99` // 60% opacity
+          : `${colors.elevation1}B3`, // 70% opacity
+        paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+        paddingVertical: LAYOUT.SPACING.TINY,
+        ...LAYOUT.ELEVATION.SMALL,
       };
-    }, [colors, isDarkMode, isSelected, isCategory]);
-
-    const pressedStyle = useMemo(
-      () => ({
-        backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
-      }),
-      [isDarkMode, colors]
-    );
-
-    const getPressableStyle = useCallback(
-      ({ pressed }: { pressed: boolean }) => [
-        containerStyle,
-        pressed && !isSelected && pressedStyle,
-      ],
-      [containerStyle, isSelected, pressedStyle]
-    );
-
-    // Non-interactive category pill
-    if (isCategory && !onSelect) {
-      return (
-        <View style={containerStyle}>
-          <ThemedText
-            colorName={isSelected ? 'background' : 'text'}
-            ellipsizeMode="tail"
-            numberOfLines={1}
-            style={textStyle}
-            type={textType}
-          >
-            {label}
-          </ThemedText>
-        </View>
-      );
     }
 
-    // Interactive pill
+    // Filter variant
+    return {
+      ...baseStyle,
+      backgroundColor: isSelected
+        ? colors.tint
+        : isDarkMode
+        ? colors.elevation2
+        : colors.elevation1,
+      borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+      borderColor: isSelected ? colors.tint : colors.borderOverlay,
+      paddingHorizontal: LAYOUT.SPACING.LARGE,
+      paddingVertical: LAYOUT.SPACING.SMALL,
+      marginBottom: LAYOUT.SPACING.SMALL,
+      marginRight: LAYOUT.SPACING.SMALL,
+      ...LAYOUT.ELEVATION.SUBTLE,
+    };
+  }, [colors, isDarkMode, isSelected, isCategory]);
+
+  const pressedStyle = useMemo(
+    () => ({
+      backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
+    }),
+    [isDarkMode, colors]
+  );
+
+  const getPressableStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [containerStyle, pressed && !isSelected && pressedStyle],
+    [containerStyle, isSelected, pressedStyle]
+  );
+
+  // Non-interactive category pill
+  if (isCategory && !onSelect) {
     return (
-      <Pressable
-        disabled={!onSelect}
-        accessibilityRole="button"
-        accessibilityState={{ selected: !!isSelected }}
-        style={getPressableStyle}
-        onPress={handlePress}
-      >
+      <View style={containerStyle}>
         <ThemedText
           colorName={isSelected ? 'background' : 'text'}
           ellipsizeMode="tail"
           numberOfLines={1}
-          style={textStyle}
           type={textType}
         >
           {label}
         </ThemedText>
-      </Pressable>
+      </View>
     );
   }
-);
+
+  // Interactive pill
+  return (
+    <Pressable
+      disabled={!onSelect}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!isSelected }}
+      accessibilityLabel={`${isSelected ? 'Selected' : 'Select'} ${label} ${variant}`}
+      accessibilityHint={
+        onSelect ? `Double tap to ${isSelected ? 'deselect' : 'select'} this ${variant}` : undefined
+      }
+      style={getPressableStyle}
+      onPress={handlePress}
+    >
+      <ThemedText
+        colorName={isSelected ? 'background' : 'text'}
+        ellipsizeMode="tail"
+        numberOfLines={1}
+        type={textType}
+      >
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+});
 
 Pill.displayName = 'Pill';
 

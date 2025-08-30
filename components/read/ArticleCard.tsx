@@ -19,11 +19,34 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 const GOLDEN_RATIO = 1.618; // True golden ratio for optimal image-to-content proportions
 const GRADIENT_START_POINT = { x: 0, y: 0.1 };
 const GRADIENT_END_POINT = { x: 0, y: 1.0 };
-// Use theme transparent explicitly for clarity in gradient construction
 const GRADIENT_HEIGHT_PERCENTAGE = '40%';
 const MAX_TITLE_LINES = 2;
 const MAX_AUTHOR_LINES = 1;
-const PILL_MAX_WIDTH = '70%';
+const PILL_MAX_WIDTH_PERCENTAGE = '70%';
+
+// Static style objects to prevent recreation
+const IMAGE_STYLE = {
+  borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  height: '100%',
+  width: '100%',
+} as const;
+
+const IMAGE_CONTAINER_STYLE = {
+  borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  overflow: 'hidden',
+  position: 'relative',
+  width: '100%',
+} as const;
+
+const GRADIENT_STYLE = {
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  height: GRADIENT_HEIGHT_PERCENTAGE,
+} as const;
 
 // Simplified interface specifically for ArticleCard (always article variant)
 type ArticleCardProps = Omit<BaseArticleCardProps, 'variant'> & {
@@ -64,45 +87,21 @@ const ArticleCardComparison = (
 
 // Static styles object to prevent recreation
 const styles = StyleSheet.create({
-  authorContainer: {
-    flexDirection: 'row' as const,
-    marginTop: LAYOUT.SPACING.TINY,
-  },
   contentContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
-  gradient: {
-    position: 'absolute' as const,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: GRADIENT_HEIGHT_PERCENTAGE,
+  textContainer: {
+    gap: LAYOUT.SPACING.SMALL,
   },
-  image: {
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: '100%' as const,
-    width: '100%' as const,
-  },
-  imageContainer: {
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    overflow: 'hidden' as const,
-    position: 'relative' as const,
-    width: '100%' as const,
-  },
+  gradient: GRADIENT_STYLE,
+  image: IMAGE_STYLE,
+  imageContainer: IMAGE_CONTAINER_STYLE,
   pillContainer: {
     left: LAYOUT.SPACING.MEDIUM,
-    maxWidth: PILL_MAX_WIDTH,
+    maxWidth: PILL_MAX_WIDTH_PERCENTAGE,
     position: 'absolute' as const,
     top: LAYOUT.SPACING.MEDIUM,
-  },
-  summaryContainer: {
-    marginTop: LAYOUT.SPACING.SMALL,
-  },
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.TINY,
   },
 });
 
@@ -208,7 +207,7 @@ function ArticleCardComponent({
       </View>
 
       <View style={styles.contentContainer}>
-        <View style={styles.titleContainer}>
+        <View style={styles.textContainer}>
           <ThemedText
             colorName="headingText"
             numberOfLines={MAX_TITLE_LINES}
@@ -217,9 +216,7 @@ function ArticleCardComponent({
           >
             {title}
           </ThemedText>
-        </View>
 
-        <View style={styles.authorContainer}>
           <ThemedText
             colorName="authorText"
             numberOfLines={MAX_AUTHOR_LINES}
@@ -228,9 +225,7 @@ function ArticleCardComponent({
           >
             {authorDisplayText}
           </ThemedText>
-        </View>
 
-        <View style={styles.summaryContainer}>
           <ThemedText colorName="captionText" type="caption" style={summaryStyle}>
             {summary}
           </ThemedText>
