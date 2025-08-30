@@ -79,6 +79,13 @@ class SimpleAudioService {
   }
 
   /**
+   * Pre-configure audio session for faster first playback
+   */
+  async preconfigureAudioSession(): Promise<void> {
+    await this.configureAudioSession();
+  }
+
+  /**
    * Create or reuse audio player for a track
    */
   private async createOrReusePlayer(audioUrl: string): Promise<BasicAudioPlayer> {
@@ -87,12 +94,17 @@ class SimpleAudioService {
       return this.currentPlayer;
     }
 
-    // Stop and remove existing player if it's different
+    // Stop and remove existing player asynchronously (don't block playback)
     if (this.currentPlayer) {
-      await this.stopInternal();
+      // Non-blocking cleanup - don't await
+      this.stopInternal().catch(() => {
+        // Ignore cleanup errors for faster playback
+      });
+      this.currentPlayer = null;
+      this.currentTrack = null;
     }
 
-    // Create new player
+    // Create new player immediately
     const newPlayer = createAudioPlayer(audioUrl);
     return newPlayer;
   }
@@ -102,7 +114,7 @@ class SimpleAudioService {
    */
   async play(track: EnhancedAudioTrack): Promise<boolean> {
     try {
-      // Configure audio session first
+      // Configure audio session first (should be pre-configured for faster playback)
       await this.configureAudioSession();
 
       // Create or reuse player
@@ -119,16 +131,37 @@ class SimpleAudioService {
         duration: 0,
       });
 
-      // Start playback
+      // Start playback immediately
       await this.currentPlayer.play?.();
 
-      // IMMEDIATE FEEDBACK: Update to playing state immediately after play() succeeds
-      this.updateStatus({ isLoading: false, isPlaying: true });
-
-      // Start polling for status updates with optimized interval
+      // Start polling for status updates immediately after play() call
       this.startStatusPolling();
 
-      // Set loading timeout as fallback
+      // Wait for audio to actually start playing (not just for play() to return)
+      const playbackStartTime = Date.now();
+      let actualPlaybackStarted = false;
+
+      // Poll status until we detect actual playback or timeout
+      while (!actualPlaybackStarted && Date.now() - playbackStartTime < 1000) {
+        // Max wait 1 second
+        if (this.currentPlayer) {
+          const isPlaying = this.currentPlayer.playing || this.currentPlayer.isPlaying || false;
+          const currentTime = this.currentPlayer.currentTime ?? this.currentPlayer.position ?? 0;
+
+          // Consider playback started if playing is true OR if currentTime > 0
+          if (isPlaying || currentTime > 0) {
+            actualPlaybackStarted = true;
+            break;
+          }
+        }
+        // Small delay between checks
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+
+      // Update status to playing (whether we detected it or not)
+      this.updateStatus({ isLoading: false, isPlaying: true });
+
+      // Set shorter loading timeout since audio should be cached
       this.loadingTimeout = setTimeout(() => {
         if (this.status.isLoading) {
           // RESET: Clear progress on loading timeout
@@ -140,7 +173,7 @@ class SimpleAudioService {
           });
           this.stopStatusPolling();
         }
-      }, 10000);
+      }, 3000); // Reduced from 10s to 3s for cached audio
 
       return true;
     } catch (error) {
@@ -350,7 +383,7 @@ class SimpleAudioService {
       clearInterval(this.statusPollingInterval);
     }
 
-    // Balanced polling interval for smoother progress updates
+    // Optimized polling interval for faster response (reduced from 600ms to 200ms)
     this.statusPollingInterval = setInterval(() => {
       if (this.currentPlayer) {
         try {
@@ -383,8 +416,8 @@ class SimpleAudioService {
 
           // Only update if values have changed meaningfully (reduce UI churn but stay smooth)
           const hasChanged =
-            Math.abs(this.status.currentTime - safeCurrentTime) > 0.3 ||
-            Math.abs(this.status.duration - safeDuration) > 0.3 ||
+            Math.abs(this.status.currentTime - safeCurrentTime) > 0.1 || // Reduced threshold for more responsive updates
+            Math.abs(this.status.duration - safeDuration) > 0.1 ||
             this.status.isPlaying !== isPlaying;
 
           if (hasChanged) {
@@ -409,7 +442,7 @@ class SimpleAudioService {
           throw new Error(`Audio status polling failed: ${pollingError}`);
         }
       }
-    }, 600);
+    }, 200); // Reduced from 600ms to 200ms for more responsive audio feedback
   }
 
   /**

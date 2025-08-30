@@ -65,6 +65,12 @@ export const useSimpleAudioPlayer = () => {
     await simpleAudioService.stop();
   }, []);
 
+  // Pre-configure audio session function
+  const preconfigureAudioSession = useCallback(async (): Promise<void> => {
+    if (!isMountedRef.current) return;
+    await simpleAudioService.preconfigureAudioSession();
+  }, []);
+
   return {
     // Status with safe defaults
     isPlaying: status?.isPlaying ?? false,
@@ -78,6 +84,7 @@ export const useSimpleAudioPlayer = () => {
     pause,
     resume,
     stop,
+    preconfigureAudioSession,
 
     // Full status object for advanced use cases
     status,

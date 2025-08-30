@@ -119,7 +119,7 @@ export class AudioCacheManager {
         return cachedPath;
       }
 
-      // If not cached, download and cache it
+      // Cache miss - download and cache it
       return await this.cacheAudio(url);
     } catch (error) {
       await handleError(error as Error, {

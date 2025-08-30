@@ -16,6 +16,7 @@ import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
 
@@ -466,7 +467,8 @@ export const useArticleMutations = (
           FSRS_QUERY_KEYS.allWithCooldown(currentUserId, DEFAULT_SESSION_COOLDOWN_HOURS)
         );
 
-        const wordExists = existingWords?.some(word => word.root_id === rootId) ?? false;
+        const wordExists =
+          existingWords?.some((word: StudyWord) => word.root_id === rootId) ?? false;
 
         // Only check daily limit for add operations (when word doesn't exist)
         if (!wordExists) {

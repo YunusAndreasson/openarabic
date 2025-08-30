@@ -358,14 +358,8 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     };
 
     try {
-      // Wait for audio to start playing (which means it's loaded)
+      // Play audio immediately since it's preloaded
       const success = await audioPlayerRef.current.play(track);
-
-      if (success) {
-        // Wait a bit more to ensure audio is fully loaded and ready
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
       return success;
     } catch (error) {
       handleError(error instanceof Error ? error : new Error(String(error)));
@@ -585,7 +579,9 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   // Audio preloading function - loads all audio files at session start
   const preloadSessionAudio = useCallback(
     async (words: StudyWord[]) => {
-      if (!words.length) return;
+      if (!words.length) {
+        return;
+      }
 
       setIsAudioPreloading(true);
       setIsAudioPreloadingComplete(false);
@@ -707,6 +703,16 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     }
   }, [wordQueue?.length, isComplete]);
 
+  // Effect: Pre-configure audio session for faster first playback
+  useEffect(() => {
+    if (wordQueue && wordQueue.length > 0 && !isComplete) {
+      // Pre-configure audio session in background to reduce first audio delay
+      audioPlayerRef.current.preconfigureAudioSession?.().catch(() => {
+        // Ignore pre-configuration errors - session will be configured on first play
+      });
+    }
+  }, [wordQueue?.length, isComplete]);
+
   // Effect: Handle current word changes and play audio (simplified - no more loading)
   useEffect(() => {
     if (stateRefs.current.completionTriggered || isComplete || isTransitioningToCompletion) {
@@ -735,11 +741,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     // Play audio for Arabic words (now preloaded, so should be instant)
     if (audioUrl) {
       // Play audio immediately since it's already cached
-      playAudio(audioUrl)
-        .then(() => {
-          // Development logging removed
-        })
-        .catch(handleError);
+      playAudio(audioUrl).catch(handleError);
     }
 
     // Update the lastProcessedWordId

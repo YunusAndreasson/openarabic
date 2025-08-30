@@ -297,7 +297,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       );
 
       const wordExists =
-        existingWords?.some(word => word.root_id === activeTooltip.word.root_id) ?? false;
+        existingWords?.some((word: StudyWord) => word.root_id === activeTooltip.word.root_id) ??
+        false;
 
       // Show final success toast immediately (assuming operation will succeed)
       const successMessage = wordExists
