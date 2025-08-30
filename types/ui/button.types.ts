@@ -39,6 +39,8 @@ export interface BaseButtonProps
   disablePressAnimation?: boolean;
   /** Whether to enable haptic feedback on press */
   hapticFeedback?: boolean;
+  /** Debounce delay in milliseconds to prevent rapid successive presses */
+  debounceMs?: number;
 }
 
 /**
@@ -93,4 +95,6 @@ export interface BaseIconButtonProps<TIcon = string> {
   style?: ViewStyle;
   /** Press handler */
   onPress: () => void;
+  /** Debounce delay in milliseconds to prevent rapid successive presses */
+  debounceMs?: number;
 }

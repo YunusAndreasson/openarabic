@@ -7,7 +7,7 @@ import Animated from 'react-native-reanimated';
 import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations';
+import { useDebounce, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
@@ -19,6 +19,8 @@ interface PlayButtonProps
   iconColor?: string;
   /** Whether to enable haptic feedback on press */
   hapticFeedback?: boolean;
+  /** Debounce delay in milliseconds to prevent rapid successive presses */
+  debounceMs?: number;
 }
 
 function getIconName(isPlaying: boolean) {
@@ -31,6 +33,7 @@ const PlayButton: FC<PlayButtonProps> = ({
   disabled = false,
   iconColor,
   hapticFeedback = true,
+  debounceMs = 300,
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -39,13 +42,17 @@ const PlayButton: FC<PlayButtonProps> = ({
     scaleAmount: ICON_BUTTON_PRESS_SCALE,
   });
 
-  const handlePress = useCallback(() => {
+  // Create the press handler with haptic feedback
+  const pressHandler = useCallback(() => {
     if (disabled) return;
     if (hapticFeedback) {
       selectionFeedback();
     }
     onPress();
   }, [disabled, onPress, hapticFeedback]);
+
+  // Apply debouncing to the press handler
+  const [debouncedHandlePress, isDebouncing] = useDebounce(pressHandler, debounceMs);
 
   const backgroundColor = colors.tint;
   // Use appropriate icon color for each theme for optimal contrast
@@ -60,10 +67,10 @@ const PlayButton: FC<PlayButtonProps> = ({
   return (
     <Pressable
       style={styles.button}
-      onPress={handlePress}
+      onPress={debouncedHandlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      disabled={disabled}
+      disabled={disabled || isDebouncing}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
     >
@@ -73,7 +80,7 @@ const PlayButton: FC<PlayButtonProps> = ({
           animatedStyle as ViewStyle,
           {
             backgroundColor,
-            opacity: disabled ? LAYOUT.OPACITY.MEDIUM : 1,
+            opacity: disabled || isDebouncing ? LAYOUT.OPACITY.MEDIUM : 1,
           },
         ]}
       >

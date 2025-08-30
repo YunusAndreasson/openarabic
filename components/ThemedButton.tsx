@@ -7,7 +7,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations';
+import { useDebounce, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui/button.types';
@@ -74,6 +74,7 @@ function ThemedButtonComponent({
   disablePressAnimation = false,
   uppercase = true,
   hapticFeedback = false,
+  debounceMs = 300,
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
@@ -85,7 +86,8 @@ function ThemedButtonComponent({
     opacityAmount: LAYOUT.OPACITY.PRESSED,
   });
 
-  const handlePress = useCallback(
+  // Create the press handler with haptic feedback
+  const pressHandler = useCallback(
     (event: GestureResponderEvent) => {
       if (hapticFeedback) {
         selectionFeedback();
@@ -96,6 +98,9 @@ function ThemedButtonComponent({
     },
     [onPress, disabled, loading, hapticFeedback]
   );
+
+  // Apply debouncing to the press handler
+  const [debouncedHandlePress, isDebouncing] = useDebounce(pressHandler, debounceMs);
 
   const textColor = disabled
     ? colors.secondaryText
@@ -147,8 +152,8 @@ function ThemedButtonComponent({
   // Accessibility properties
   const accessibilityLabel = props.accessibilityLabel || title;
   const accessibilityState = {
-    disabled: disabled || loading,
-    busy: loading,
+    disabled: disabled || loading || isDebouncing,
+    busy: loading || isDebouncing,
     ...props.accessibilityState,
   };
 
@@ -157,8 +162,8 @@ function ThemedButtonComponent({
       style={[buttonStyle, disablePressAnimation ? null : animatedStyle]}
       onPressIn={disablePressAnimation ? undefined : handlePressIn}
       onPressOut={disablePressAnimation ? undefined : handlePressOut}
-      disabled={disabled || loading}
-      onPress={handlePress}
+      disabled={disabled || loading || isDebouncing}
+      onPress={debouncedHandlePress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={accessibilityState}
