@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -36,12 +37,22 @@ const STATIC_STYLES = StyleSheet.create({
     maxWidth: SCREEN_WIDTH * TOOLTIP_CONSTANTS.MAX_WIDTH_RATIO,
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'row',
   },
   arrow: {
     position: 'absolute',
     width: 0,
     height: 0,
     borderStyle: 'solid',
+  },
+  contentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
+  },
+  chevronIcon: {
+    marginLeft: LAYOUT.SPACING.TINY,
   },
   text: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -81,7 +92,9 @@ const WordTooltipComparison = (
   if (
     prevProps.visible !== nextProps.visible ||
     prevProps.text !== nextProps.text ||
-    prevProps.arabicWord !== nextProps.arabicWord
+    prevProps.arabicWord !== nextProps.arabicWord ||
+    prevProps.onOpenWordDetails !== nextProps.onOpenWordDetails ||
+    prevProps.onClose !== nextProps.onClose
   ) {
     return false;
   }
@@ -101,15 +114,7 @@ const WordTooltipComparison = (
 };
 
 export const WordTooltip = memo(
-  ({
-    visible,
-    text = '',
-    arabicWord,
-    layout,
-    zIndex,
-    onStudyListToggle,
-    wordRootId,
-  }: WordTooltipProps) => {
+  ({ visible, text = '', arabicWord, layout, zIndex, onOpenWordDetails }: WordTooltipProps) => {
     const colors = useColors();
 
     // Press animation for better user feedback
@@ -148,11 +153,11 @@ export const WordTooltip = memo(
     );
 
     // Stable handlers
-    const handleTooltipPress = useCallback(() => {
-      if (onStudyListToggle && wordRootId) {
-        onStudyListToggle();
+    const handleOpenWordDetails = useCallback(() => {
+      if (onOpenWordDetails) {
+        onOpenWordDetails();
       }
-    }, [onStudyListToggle, wordRootId]);
+    }, [onOpenWordDetails]);
 
     // Memoize color mapping to prevent recreation
     const colorMapping = useMemo(
@@ -371,14 +376,23 @@ export const WordTooltip = memo(
         onLayout={measureContainerOffset}
       >
         <Pressable
-          onPress={handleTooltipPress}
+          onPress={handleOpenWordDetails}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          disabled={!onStudyListToggle || !wordRootId}
+          disabled={!onOpenWordDetails}
         >
           <Animated.View style={[tooltipStyle, animatedStyle]} testID="word-tooltip">
             <View style={arrowStyle} />
-            {renderColorCodedEnglish}
+            <View style={STATIC_STYLES.contentContainer}>
+              {renderColorCodedEnglish}
+              {/* Chevron indicator */}
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={colors.tint}
+                style={STATIC_STYLES.chevronIcon}
+              />
+            </View>
           </Animated.View>
         </Pressable>
       </View>

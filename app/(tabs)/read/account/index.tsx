@@ -25,8 +25,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
-import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
-import { setWordAudioEnabled } from '@/store/settingsSlice';
+import { useAppSelectorMemo } from '@/store/hooks';
 import { formatBytes } from '@/utils/cacheUtils';
 
 // Memoized components
@@ -86,11 +85,11 @@ CardRight.displayName = 'CardRight';
 const AccountScreen: FC = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const dispatch = useAppDispatch();
+
   const currentTheme = useAppSelectorMemo(state => state.theme.theme);
   const currentLanguage = useAppSelectorMemo(state => state.settings.displayLanguagePreference);
   const currentAudioLanguage = useAppSelectorMemo(state => state.settings.audioLanguagePreference);
-  const wordAudioEnabled = useAppSelectorMemo(state => state.settings.wordAudioEnabled);
+
   const [showThemePicker, setShowThemePicker] = React.useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = React.useState(false);
   const [showAudioLanguagePicker, setShowAudioLanguagePicker] = React.useState(false);
@@ -167,14 +166,6 @@ const AccountScreen: FC = () => {
   const handleDailyWordLimitPickerClose = useCallback(() => {
     setShowDailyWordLimitPicker(false);
   }, []);
-
-  // Word audio toggle handler
-  const handleWordAudioToggle = useCallback(
-    (value: boolean) => {
-      dispatch(setWordAudioEnabled(value));
-    },
-    [dispatch]
-  );
 
   // Get current theme display text
   const currentThemeText = useMemo(() => {
@@ -280,26 +271,6 @@ const AccountScreen: FC = () => {
             </BaseCard>
 
             <Divider />
-
-            <View style={styles.settingRow}>
-              <View style={styles.settingLabelContainer}>
-                <View style={styles.cardIconContainer}>
-                  <Ionicons
-                    color={colors.interactiveSecondary}
-                    name="volume-medium"
-                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                  />
-                </View>
-                <View style={styles.settingLabelTextContainer}>
-                  <ThemedText type="body">Word Audio</ThemedText>
-                </View>
-              </View>
-              <CardRight
-                type="toggle"
-                toggleValue={wordAudioEnabled}
-                onToggleChange={handleWordAudioToggle}
-              />
-            </View>
           </View>
         </BaseCard>
 

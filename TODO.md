@@ -2,29 +2,21 @@
 
 ## 🚀 Features
 
-- [x] Add max 10 days per day with setting to increase
+- [ ] Add folders
+- [ ] Play article with higlight
+- [x] Add bottomsheet for tooltip
+  - [x] Play
+  - [x] Add to study
+  - [x] Grammar note
+  - [ ] Transliteration
 
 ## 🐛 Bugs
 
-- [x] Play all, does not continue playing next audio
-- [x] Due and learning word counts not displayed correctly
-- [x] Practice session can finish early unexpectedly
-- [x] Long words in practice can be cut off
-- [x] Audio can start before loading in a session
+- [ ] Implement audio transition improvements
 
 ## 🔧 Improvements
 
-- [ ] Implement audio transition improvements
-  - [x] Add title and summary
-  - [x] Add word timestamps
-  - [x] Add 500ms pause between sentences for arabic
-- [x] Improve the grammar rules system
-  - [x] Highlight tashkeel (diacritical marks) properly
-  - [x] Improve instructions to the AI
-  - [x] Add more rules based on discovered patterns
-  - [x] Verify accuracy with GPT-5 analysis
-- [x] Remove study icon and highlight border
-- [x] The WordToolTip should have a slight feedback when pressing to add
+- [ ] Change playlist o bookmark
 
 ## Resources
 

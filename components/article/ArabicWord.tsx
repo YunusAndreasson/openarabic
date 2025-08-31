@@ -16,12 +16,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWord, useArabicWordAnalysis } from '@/hooks/vocabulary';
-import { simpleAudioService } from '@/services/simpleAudioService';
-import { useAppSelectorMemo } from '@/store/hooks';
 import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { selectionFeedback } from '@/utils/haptics';
-import { generateAudioUrl } from '@/utils/imageUtils';
 import { getSelectedStyle, type ArabicWordColors } from '@/utils/textStyleUtils';
 
 interface ArabicWordProps {
@@ -46,7 +42,6 @@ function ArabicWordComponent({
   testID,
 }: ArabicWordProps) {
   const colors = useColors();
-  const wordAudioEnabled = useAppSelectorMemo(state => state.settings.wordAudioEnabled);
   const [absoluteLayout, setAbsoluteLayout] = useState<LayoutRectangle | null>(null);
 
   // Use our existing hook for word selection state
@@ -114,40 +109,9 @@ function ArabicWordComponent({
     [isSelected, calculatedFontSize]
   );
 
-  // Handle word audio playback
-  const handleWordAudio = useCallback(async () => {
-    if (!word.audio_url || !wordAudioEnabled) return;
-
-    try {
-      const fullAudioUrl = generateAudioUrl(word.audio_url);
-      if (!fullAudioUrl) return;
-
-      const track = {
-        id: `word-${word.id}`,
-        audioUrl: fullAudioUrl,
-        title: word.english || word.word_form || 'Word Audio',
-      };
-
-      await simpleAudioService.play(track, { skipPolling: true, immediateStatus: true });
-    } catch (error) {
-      // Silently fail - audio playback is not critical
-      console.warn('Word audio playback failed:', error);
-    }
-  }, [word.audio_url, wordAudioEnabled, word.id, word.english, word.word_form]);
-
   // Show tooltip on quick press with fade animation (manual trigger)
   const handlePress = useCallback(() => {
-    // Play audio asynchronously (non-blocking) if available and enabled
-    if (word.audio_url && wordAudioEnabled) {
-      handleWordAudio().catch(error => {
-        // Silently handle audio errors to avoid blocking UI
-        console.warn('Word audio playback failed:', error);
-      });
-      // Provide immediate haptic feedback
-      selectionFeedback();
-    }
-
-    // Open the tooltip immediately (don't wait for audio)
+    // Open the tooltip immediately (no audio playback on word press)
     // Ensure we have fresh absolute coordinates
     if (wordRef?.current) {
       wordRef.current.measureInWindow((x, y, width, height) => {
@@ -163,7 +127,7 @@ function ArabicWordComponent({
     } else if (absoluteLayout) {
       onTooltipOpen(absoluteLayout);
     }
-  }, [absoluteLayout, onTooltipOpen, wordRef, word.audio_url, wordAudioEnabled, handleWordAudio]);
+  }, [absoluteLayout, onTooltipOpen, wordRef]);
 
   // ===== COLOR BATCHING (PREVENTS MULTIPLE COLOR CALCULATIONS) =====
   const batchedColors = useMemo(

@@ -19,10 +19,8 @@ export interface WordTooltipProps {
   onClose: () => void;
   /** Optional zIndex value to control tooltip stacking order */
   zIndex?: number;
-  /** Function to handle adding/removing word from study list */
-  onStudyListToggle?: () => void;
-  /** Optional word root ID for study list functionality */
-  wordRootId?: number;
+  /** Function to open word details bottom sheet */
+  onOpenWordDetails?: () => void;
 }
 
 /**

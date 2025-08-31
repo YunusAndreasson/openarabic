@@ -6,3 +6,4 @@ set -e
 
 # Run the complete pipeline
 uv run python main.py --full
+

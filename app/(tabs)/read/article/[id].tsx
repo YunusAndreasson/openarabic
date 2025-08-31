@@ -1,5 +1,6 @@
 import type { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
+import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -12,7 +13,12 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 
-import { ArticleSentence, SentenceScrubber, WordTooltip } from '@/components/article';
+import {
+  ArticleSentence,
+  SentenceScrubber,
+  WordDetailsBottomSheet,
+  WordTooltip,
+} from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider, useToast } from '@/components/providers';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
@@ -28,7 +34,6 @@ import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
 import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
-import { selectionFeedback } from '@/utils/haptics';
 
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
@@ -81,6 +86,17 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     layout: LayoutRectangle;
   } | null>(null);
 
+  const [wordDetailsBottomSheet, setWordDetailsBottomSheet] = useState<{
+    isVisible: boolean;
+    word: SentenceWord | null;
+  }>({
+    isVisible: false,
+    word: null,
+  });
+
+  // Track button state locally for immediate UI updates
+  const [localStudyStates, setLocalStudyStates] = useState<Map<number, boolean>>(new Map());
+
   // Ref to track current sentence index for reading progress
   const currentSentenceIndexRef = useRef(0);
 
@@ -128,7 +144,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const handleToggleReadingListWithFeedback = useCallback(async () => {
     if (!articleId) return;
 
-    selectionFeedback();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await handleToggleReadingList(articleId, isInReadingList);
     showToast(
       isInReadingList ? STRINGS.REMOVED_FROM_LISTENING_LIST : STRINGS.ADDED_TO_LISTENING_LIST,
@@ -226,7 +242,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       const progressPercent = Math.round((baselineLastSentence / sortedSentences.length) * 100);
 
       // Show resume toast
-      selectionFeedback();
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       showToast(`Resumed at ${progressPercent}%`, 3000, 'info');
 
       // Attempt jump once on resume
@@ -287,36 +303,66 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     [activeTooltip]
   );
 
-  const handleStudyListToggle = useCallback(async () => {
-    if (activeTooltip?.word.root_id && user?.id) {
-      selectionFeedback();
-
-      // Determine operation type by checking if word exists
-      const existingWords = queryClient.getQueryData<StudyWord[]>(
-        FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS)
-      );
-
-      const wordExists =
-        existingWords?.some((word: StudyWord) => word.root_id === activeTooltip.word.root_id) ??
-        false;
-
-      // Show final success toast immediately (assuming operation will succeed)
-      const successMessage = wordExists
-        ? STRINGS.REMOVED_FROM_STUDY_LIST
-        : STRINGS.ADDED_TO_STUDY_LIST;
-      showToast(successMessage, 3000, 'success');
-
-      // Add/remove the word to/from study list in background
-      await handleRootPress(activeTooltip.word.root_id);
-
-      // If operation failed, the handleRootPress already showed error toast with haptic
-      // The success toast we showed will be replaced by the error toast
-    }
-  }, [activeTooltip, handleRootPress, showToast, user?.id, queryClient]);
-
   const handleCloseTooltip = useCallback(() => {
     setActiveTooltip(null);
   }, []);
+
+  const handleOpenWordDetails = useCallback(() => {
+    if (activeTooltip?.word) {
+      // Close the tooltip first to avoid layering conflicts
+      setActiveTooltip(null);
+
+      // Then open the bottom sheet
+      setWordDetailsBottomSheet({
+        isVisible: true,
+        word: activeTooltip.word,
+      });
+    }
+  }, [activeTooltip]);
+
+  const handleCloseWordDetails = useCallback(() => {
+    setWordDetailsBottomSheet({
+      isVisible: false,
+      word: null,
+    });
+  }, []);
+
+  const handleAddWordToStudy = useCallback(
+    async (word: SentenceWord) => {
+      if (!user?.id || !word.root_id) return;
+
+      // Direct haptic feedback without debounce (same as Play Audio)
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      // Get current state before the operation
+      const wasInStudy =
+        localStudyStates.get(word.root_id) ??
+        (() => {
+          const allWords =
+            queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(user.id)) ?? [];
+          return allWords.some(studyWord => studyWord.root_id === word.root_id);
+        })();
+
+      // Immediately update local state for instant UI feedback
+      setLocalStudyStates(prev => new Map(prev.set(word.root_id, !wasInStudy)));
+
+      // Add/remove the word to/from study list in background
+      await handleRootPress(word.root_id);
+
+      // Invalidate queries to sync with backend
+      await queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
+      await queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
+      await queryClient.invalidateQueries({
+        queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+      });
+
+      // Refetch study words data
+      await refetchStudyWords?.();
+
+      // Keep bottom sheet open for additional interactions
+    },
+    [user?.id, handleRootPress, queryClient, refetchStudyWords, localStudyStates]
+  );
 
   // Lightweight sentence words accessor without extra routing logic
   const getWordsForSentence = useCallback(
@@ -368,10 +414,9 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       arabicWord: activeTooltip?.word.word_form,
       layout: activeTooltip?.layout ?? null,
       onClose: handleCloseTooltip,
-      onStudyListToggle: handleStudyListToggle,
-      wordRootId: activeTooltip?.word.root_id,
+      onOpenWordDetails: handleOpenWordDetails,
     }),
-    [activeTooltip, handleCloseTooltip, handleStudyListToggle]
+    [activeTooltip, handleCloseTooltip, handleOpenWordDetails]
   );
 
   const sentenceScrubberProps = useMemo(
@@ -429,6 +474,27 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       {/* Removed mini-player for article modal */}
 
       <WordTooltip {...tooltipProps} />
+
+      <WordDetailsBottomSheet
+        isVisible={wordDetailsBottomSheet.isVisible}
+        onClose={handleCloseWordDetails}
+        word={wordDetailsBottomSheet.word}
+        onAddToStudy={handleAddWordToStudy}
+        isInStudyList={
+          wordDetailsBottomSheet.word?.root_id
+            ? localStudyStates.get(wordDetailsBottomSheet.word.root_id) ??
+              (user?.id
+                ? (() => {
+                    const allWords =
+                      queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(user.id)) ?? [];
+                    return allWords.some(
+                      word => word.root_id === wordDetailsBottomSheet.word?.root_id
+                    );
+                  })()
+                : false)
+            : false
+        }
+      />
 
       {/* Scrubber moved out of ArticleContent to avoid ArticleContent rerenders */}
       <SentenceScrubber {...sentenceScrubberProps} />
