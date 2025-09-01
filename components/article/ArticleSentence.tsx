@@ -33,6 +33,7 @@ interface ArticleSentenceProps {
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
   dueWordRootIds?: Set<number>;
+  currentHighlightedWordIndex?: number;
 }
 
 // Custom comparison function for React.memo optimization
@@ -46,7 +47,8 @@ const ArticleSentenceComparison = (
     prevProps.sentence.english !== nextProps.sentence.english ||
     prevProps.settings.showEnglish !== nextProps.settings.showEnglish ||
     prevProps.settings.fontScale !== nextProps.settings.fontScale ||
-    prevProps.words.length !== nextProps.words.length
+    prevProps.words.length !== nextProps.words.length ||
+    prevProps.currentHighlightedWordIndex !== nextProps.currentHighlightedWordIndex
   ) {
     return false;
   }
@@ -87,10 +89,11 @@ function renderWordWithProps(
   index: number,
   wordRefs: RefObject<ComponentRef<typeof TouchableOpacity>>[],
   dueWordRootIds: Set<number>,
-  renderWord: ((word: SentenceWord) => ReactNode) | undefined,
+  renderWord: ((word: SentenceWord, isHighlighted: boolean) => ReactNode) | undefined,
   onWordPress: ((word: SentenceWord, layout?: LayoutRectangle) => void) | undefined,
   settings: { fontScale: number },
-  sentenceId: string | number
+  sentenceId: string | number,
+  currentHighlightedWordIndex?: number
 ) {
   const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
   if (!wordRefs[index]) {
@@ -99,17 +102,20 @@ function renderWordWithProps(
     >;
   }
   const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
+  const isHighlighted = currentHighlightedWordIndex === index;
+
   return renderWord ? (
-    renderWord(word)
+    renderWord(word, isHighlighted)
   ) : (
     <ArabicWord
-      key={`word-${wordId}-${word.position || sentenceId}`}
+      key={`word-${wordId}-${word.position}-${index}-${sentenceId}`}
       word={word}
       onTooltipOpen={layout => onWordPress?.(word, layout)}
       settings={{ fontScale: settings.fontScale }}
       wordRef={wordRefs[index]}
       position={index}
       isDueWord={isDueWord}
+      isHighlighted={isHighlighted}
       testID={(word as any).testID}
     />
   );
@@ -125,6 +131,7 @@ const ArticleSentenceComponent = memo(
     colors: propColors,
     containerStyle,
     dueWordRootIds = EMPTY_DUE_WORDS_SET,
+    currentHighlightedWordIndex,
   }: ArticleSentenceProps) => {
     const defaultColors = useColors();
     const colors = propColors || defaultColors;
@@ -180,8 +187,8 @@ const ArticleSentenceComponent = memo(
 
     // Memoize rendered words to prevent unnecessary recreations
     const renderedWords = useMemo(() => {
-      return words.map((word, index) =>
-        renderWordWithProps(
+      return words.map((word, index) => {
+        return renderWordWithProps(
           word,
           index,
           wordRefs.current,
@@ -189,10 +196,19 @@ const ArticleSentenceComponent = memo(
           renderWord,
           onWordPress,
           settings,
-          sentence.id
-        )
-      );
-    }, [renderWord, words, sentence.id, settings, onWordPress, dueWordRootIds]);
+          sentence.id,
+          currentHighlightedWordIndex
+        );
+      });
+    }, [
+      renderWord,
+      words,
+      sentence.id,
+      settings,
+      onWordPress,
+      dueWordRootIds,
+      currentHighlightedWordIndex,
+    ]);
 
     // Fallback for test environments where Animated.View might be undefined
     const AnimatedView: any = (Animated as any)?.View ?? View;

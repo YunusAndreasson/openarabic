@@ -29,6 +29,7 @@ interface ArabicWordProps {
   };
   wordRef?: RefObject<ComponentRef<typeof TouchableOpacity>>;
   isDueWord?: boolean;
+  isHighlighted?: boolean;
   testID?: string;
 }
 
@@ -39,6 +40,7 @@ function ArabicWordComponent({
   settings,
   wordRef,
   isDueWord = false,
+  isHighlighted = false,
   testID,
 }: ArabicWordProps) {
   const colors = useColors();
@@ -145,13 +147,39 @@ function ArabicWordComponent({
     [colors.transparent]
   );
 
+  // Highlight style when word is being played
+  const highlightStyle = useMemo(
+    () => ({
+      backgroundColor: isHighlighted
+        ? 'rgba(255, 193, 7, 0.7)' // Bright yellow/gold background - highly visible
+        : colors.transparent,
+      // Add a thick border for maximum visibility
+      borderWidth: isHighlighted ? 3 : 0,
+      borderColor: isHighlighted ? '#FF6B00' : colors.transparent, // Orange border
+      borderRadius: 8,
+      // Add padding for better visual separation
+      paddingHorizontal: isHighlighted ? 6 : 0,
+      paddingVertical: isHighlighted ? 3 : 0,
+      // Add shadow for extra visibility
+      shadowColor: isHighlighted ? '#FF6B00' : colors.transparent,
+      shadowOffset: isHighlighted ? { width: 0, height: 0 } : { width: 0, height: 0 },
+      shadowOpacity: isHighlighted ? 0.8 : 0,
+      shadowRadius: isHighlighted ? 6 : 0,
+      elevation: isHighlighted ? 8 : 0,
+      // Make text bold when highlighted
+      fontWeight: isHighlighted ? 'bold' : 'normal',
+    }),
+    [isHighlighted, colors.transparent]
+  );
+
   const containerStyle = useMemo(
     () => [
       styles.wordContainer,
       baseUnderlineStyle,
       getSelectedStyle(isSelected, isDueWord, batchedColors),
+      highlightStyle,
     ],
-    [isSelected, isDueWord, batchedColors, baseUnderlineStyle]
+    [isSelected, isDueWord, batchedColors, baseUnderlineStyle, highlightStyle]
   );
 
   // Render colored segments or single word
@@ -221,6 +249,7 @@ export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
     prevProps.settings.fontScale !== nextProps.settings.fontScale ||
     prevProps.position !== nextProps.position ||
     prevProps.isDueWord !== nextProps.isDueWord ||
+    prevProps.isHighlighted !== nextProps.isHighlighted ||
     prevProps.testID !== nextProps.testID
   ) {
     return false;

@@ -181,106 +181,135 @@ const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
 const FloatingActionButtons = memo<{
   isInReadingList: boolean;
   onToggleReadingList: () => void;
-  // Removed onPlayPress and isPlaying props
+  hasAudio?: boolean;
+  isPlaying?: boolean;
+  onPlayPress?: () => void;
   onClose: () => void;
-}>(({ isInReadingList, onToggleReadingList, onClose }) => {
-  const colors = useColors();
-  const insets = useSafeAreaInsets();
-  // No dark mode specific styling needed here
+}>(
+  ({
+    isInReadingList,
+    onToggleReadingList,
+    hasAudio = false,
+    isPlaying = false,
+    onPlayPress,
+    onClose,
+  }) => {
+    const colors = useColors();
+    const insets = useSafeAreaInsets();
+    // No dark mode specific styling needed here
 
-  const buttonStyle = useMemo(
-    () => ({
-      width: MIN_TOUCH_TARGET.MEDIUM,
-      height: MIN_TOUCH_TARGET.MEDIUM,
-      borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
-      backgroundColor: colors.elevation1,
-      alignItems: 'center' as const,
-      justifyContent: 'center' as const,
-      ...LAYOUT.ELEVATION.SUBTLE,
-    }),
-    [colors.elevation1]
-  );
+    const buttonStyle = useMemo(
+      () => ({
+        width: MIN_TOUCH_TARGET.MEDIUM,
+        height: MIN_TOUCH_TARGET.MEDIUM,
+        borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
+        backgroundColor: colors.elevation1,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        ...LAYOUT.ELEVATION.SUBTLE,
+      }),
+      [colors.elevation1]
+    );
 
-  const activeButtonStyle = useMemo(
-    () => ({
-      ...buttonStyle,
-      backgroundColor: colors.elevation2,
-    }),
-    [buttonStyle, colors.elevation2]
-  );
+    const activeButtonStyle = useMemo(
+      () => ({
+        ...buttonStyle,
+        backgroundColor: colors.elevation2,
+      }),
+      [buttonStyle, colors.elevation2]
+    );
 
-  // Memoize button positions with safe area insets
-  const closeButtonStyle = useMemo(
-    () => ({
-      position: 'absolute' as const,
-      top: insets.top + LAYOUT.SPACING.SMALL,
-      left: LAYOUT.SPACING.SMALL,
-      zIndex: LAYOUT.Z_INDEX.OVERLAY,
-    }),
-    [insets.top]
-  );
+    // Memoize button positions with safe area insets
+    const closeButtonStyle = useMemo(
+      () => ({
+        position: 'absolute' as const,
+        top: insets.top + LAYOUT.SPACING.SMALL,
+        left: LAYOUT.SPACING.SMALL,
+        zIndex: LAYOUT.Z_INDEX.OVERLAY,
+      }),
+      [insets.top]
+    );
 
-  const actionButtonsStyle = useMemo(
-    () => ({
-      position: 'absolute' as const,
-      top: insets.top + LAYOUT.SPACING.SMALL,
-      right: LAYOUT.SPACING.SMALL,
-      zIndex: LAYOUT.Z_INDEX.OVERLAY,
-      flexDirection: 'row' as const,
-      gap: LAYOUT.SPACING.SMALL,
-    }),
-    [insets.top]
-  );
+    const actionButtonsStyle = useMemo(
+      () => ({
+        position: 'absolute' as const,
+        top: insets.top + LAYOUT.SPACING.SMALL,
+        right: LAYOUT.SPACING.SMALL,
+        zIndex: LAYOUT.Z_INDEX.OVERLAY,
+        flexDirection: 'row' as const,
+        gap: LAYOUT.SPACING.SMALL,
+      }),
+      [insets.top]
+    );
 
-  return (
-    <>
-      {/* Close button - top left */}
-      <View style={closeButtonStyle}>
-        <Pressable
-          style={buttonStyle}
-          onPress={onClose}
-          android_ripple={{
-            color: colors.navigationRipple,
-            radius: MIN_TOUCH_TARGET.MEDIUM / 2,
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Close article"
-        >
-          <Ionicons
-            name="close"
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={colors.secondaryText}
-          />
-        </Pressable>
-      </View>
+    return (
+      <>
+        {/* Close button - top left */}
+        <View style={closeButtonStyle}>
+          <Pressable
+            style={buttonStyle}
+            onPress={onClose}
+            android_ripple={{
+              color: colors.navigationRipple,
+              radius: MIN_TOUCH_TARGET.MEDIUM / 2,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Close article"
+          >
+            <Ionicons
+              name="close"
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color={colors.secondaryText}
+            />
+          </Pressable>
+        </View>
 
-      {/* Action buttons - top right */}
-      <View style={actionButtonsStyle}>
-        {/* Playlist button */}
-        <Pressable
-          style={isInReadingList ? activeButtonStyle : buttonStyle}
-          onPress={onToggleReadingList}
-          android_ripple={{
-            color: colors.navigationRipple,
-            radius: MIN_TOUCH_TARGET.MEDIUM / 2,
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={
-            isInReadingList ? 'Remove from listening list' : 'Add to listening list'
-          }
-        >
-          <Ionicons
-            name="headset"
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={isInReadingList ? colors.tint : colors.secondaryText}
-          />
-        </Pressable>
+        {/* Action buttons - top right */}
+        <View style={actionButtonsStyle}>
+          {/* Play button - only show if article has audio */}
+          {hasAudio && onPlayPress && (
+            <Pressable
+              style={isPlaying ? activeButtonStyle : buttonStyle}
+              onPress={onPlayPress}
+              android_ripple={{
+                color: colors.navigationRipple,
+                radius: MIN_TOUCH_TARGET.MEDIUM / 2,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
+            >
+              <Ionicons
+                name={isPlaying ? 'pause' : 'play'}
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={isPlaying ? colors.tint : colors.secondaryText}
+              />
+            </Pressable>
+          )}
 
-        {/* Removed Play/Pause button */}
-      </View>
-    </>
-  );
-});
+          {/* Playlist button */}
+          <Pressable
+            style={isInReadingList ? activeButtonStyle : buttonStyle}
+            onPress={onToggleReadingList}
+            android_ripple={{
+              color: colors.navigationRipple,
+              radius: MIN_TOUCH_TARGET.MEDIUM / 2,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isInReadingList ? 'Remove from listening list' : 'Add to listening list'
+            }
+          >
+            <Ionicons
+              name="headset"
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color={isInReadingList ? colors.tint : colors.secondaryText}
+            />
+          </Pressable>
+        </View>
+      </>
+    );
+  }
+);
 
 FloatingActionButtons.displayName = 'FloatingActionButtons';
 
@@ -296,7 +325,11 @@ interface ArticleContentProps {
   // Reading list (playlist/listening) functionality
   isInReadingList: boolean;
   onToggleReadingList: () => void;
-  // Removed audio playback functionality props
+  // Audio playback functionality
+  hasAudio?: boolean;
+  isPlaying?: boolean;
+  onPlayPress?: () => void;
+  currentHighlightedWordIndex?: number;
   // Close functionality
   onClose: () => void;
 }
@@ -313,7 +346,10 @@ export const ArticleContent = memo<ArticleContentProps>(
     scrollViewRef,
     isInReadingList,
     onToggleReadingList,
-    // Removed onPlayPress and isPlaying props
+    hasAudio = false,
+    isPlaying = false,
+    onPlayPress,
+    currentHighlightedWordIndex = -1,
     onClose,
   }) => {
     const insets = useSafeAreaInsets();
@@ -482,6 +518,10 @@ export const ArticleContent = memo<ArticleContentProps>(
           bounces: true,
           overScrollMode: 'always',
           initialScrollIndex: 0,
+          // Force re-render when highlight state changes
+          extraData: {
+            currentHighlightedWordIndex,
+          },
         }),
       [
         sortedSentences,
@@ -493,6 +533,7 @@ export const ArticleContent = memo<ArticleContentProps>(
         onScrollAnimated,
         handleViewableItemsChanged,
         viewabilityConfig,
+        currentHighlightedWordIndex,
       ]
     );
 
@@ -527,6 +568,9 @@ export const ArticleContent = memo<ArticleContentProps>(
             <FloatingActionButtons
               isInReadingList={isInReadingList}
               onToggleReadingList={onToggleReadingList}
+              hasAudio={hasAudio}
+              isPlaying={isPlaying}
+              onPlayPress={onPlayPress}
               onClose={onClose}
             />
           </View>

@@ -22,7 +22,8 @@ export const useSimpleAudioPlayer = () => {
         const didChange =
           prev.isPlaying !== newStatus.isPlaying ||
           prev.isLoading !== newStatus.isLoading ||
-          Math.floor(prev.currentTime) !== Math.floor(newStatus.currentTime) ||
+          // Use higher precision for currentTime to enable smooth word highlighting
+          Math.abs(prev.currentTime - newStatus.currentTime) >= 0.1 ||
           Math.floor(prev.duration) !== Math.floor(newStatus.duration) ||
           (prev.currentTrack?.id ?? null) !== (newStatus.currentTrack?.id ?? null);
 
