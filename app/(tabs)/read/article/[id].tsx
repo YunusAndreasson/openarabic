@@ -38,7 +38,8 @@ import { simpleAudioService } from '@/services/simpleAudioService';
 import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
-import { successFeedback } from '@/utils/haptics';
+import { handleError } from '@/utils/errorHandling';
+import { lightFeedback } from '@/utils/haptics';
 
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
@@ -93,7 +94,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   );
 
   // Audio state for synchronization
-  const { position, isPlaying, currentArticle, onPlayPause } = useGlobalAudioState();
+  const { position, isPlaying, currentArticle } = useGlobalAudioState();
 
   const [activeTooltip, setActiveTooltip] = useState<{
     word: SentenceWord;
@@ -101,15 +102,13 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   } | null>(null);
 
   // Track current highlighted word for audio synchronization
-  const [currentHighlightedWordIndex, setCurrentHighlightedWordIndex] = useState<number>(-1);
+  const [currentHighlightedWord, setCurrentHighlightedWord] = useState<SentenceWord | null>(null);
 
-  // Create mapping from global word index to actual word and sentence
-  const { wordIndexToWordMap, wordIndexToSentenceMap } = useMemo(() => {
+  // Create mapping from global word index to actual word
+  const wordIndexToWordMap = useMemo(() => {
     const wordMap = new Map<number, SentenceWord>();
-    const sentenceMap = new Map<number, number>(); // wordIndex -> sentenceId
 
-    if (!sortedSentences.length)
-      return { wordIndexToWordMap: wordMap, wordIndexToSentenceMap: sentenceMap };
+    if (!sortedSentences.length) return wordMap;
 
     let globalWordIndex = 0;
 
@@ -118,13 +117,12 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       if (sentenceWords && sentenceWords.length > 0) {
         for (const word of sentenceWords) {
           wordMap.set(globalWordIndex, word);
-          sentenceMap.set(globalWordIndex, sentence.id);
           globalWordIndex++;
         }
       }
     }
 
-    return { wordIndexToWordMap: wordMap, wordIndexToSentenceMap: sentenceMap };
+    return wordMap;
   }, [sortedSentences, sentenceWordsMap]);
 
   // Auto-scroll state
@@ -212,7 +210,17 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     );
   }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback(async () => {
+    // Stop audio playback completely before navigating away
+    try {
+      const status = simpleAudioService.getStatus();
+      if (status.isPlaying || status.isLoading) {
+        await simpleAudioService.stop();
+      }
+    } catch (error) {
+      handleError(error as Error, { toastMessage: 'Failed to stop audio on close' });
+    }
+
     router.back();
   }, []);
 
@@ -236,15 +244,15 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         : undefined;
 
       if (isPlaying && currentArticleId === articleId) {
-        // Currently playing this article, so pause
-        successFeedback();
-        await onPlayPause();
+        // Currently playing this article, so stop completely
+        lightFeedback();
+        await simpleAudioService.stop();
         return;
       }
 
       // Generate fresh audio track for this article
       // Always use Arabic audio for word highlighting to match timestamps
-      successFeedback();
+      lightFeedback();
 
       const track = await enhancedAudioService.generateEnhancedAudioTrack(
         articleId,
@@ -254,16 +262,17 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       if (track) {
         const success = await simpleAudioService.play(track);
         if (!success) {
-          console.warn('Failed to start audio playback');
-          showToast('Failed to start audio playback', 3000, 'error');
+          handleError(new Error('Failed to start audio playback'), {
+            toastMessage: 'Audio playback failed',
+          });
         }
       } else {
-        console.warn('Failed to generate audio track');
-        showToast('Unable to load audio for this article', 3000, 'error');
+        handleError(new Error('Failed to generate audio track'), {
+          toastMessage: 'Audio generation failed',
+        });
       }
     } catch (error) {
-      console.warn('Failed to handle play press:', error);
-      showToast('Failed to start audio playback', 3000, 'error');
+      handleError(error as Error, { toastMessage: 'Failed to handle play press' });
     }
   }, [articleId, article, isPlaying, audioPreference, showToast]);
 
@@ -321,24 +330,39 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     return () => subscription.remove();
   }, [user?.id, refetchStudyWords]);
 
-  // Cleanup scroll timeout on unmount
+  // Cleanup scroll timeout and audio on unmount
   useEffect(() => {
     return () => {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
+
+      // Stop audio playback when component unmounts
+      const stopAudioOnUnmount = async () => {
+        try {
+          const status = simpleAudioService.getStatus();
+          if (status.isPlaying || status.isLoading) {
+            await simpleAudioService.stop();
+          }
+        } catch (error) {
+          handleError(error as Error, { toastMessage: 'Failed to stop audio on unmount' });
+        }
+      };
+
+      // Don't await this - let it run in background
+      stopAudioOnUnmount();
     };
   }, []);
 
   // Update highlighted word based on audio position
   useEffect(() => {
     if (!hasTimestamps || !isPlaying || !currentArticle || currentArticle.id !== articleId) {
-      setCurrentHighlightedWordIndex(-1);
+      setCurrentHighlightedWord(null);
       return;
     }
 
     if (typeof position !== 'number' || isNaN(position)) {
-      setCurrentHighlightedWordIndex(-1);
+      setCurrentHighlightedWord(null);
       return;
     }
 
@@ -354,12 +378,13 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       }
     }
 
-    // Only update if the word index has actually changed
-    setCurrentHighlightedWordIndex(prevIndex => {
-      if (prevIndex !== wordIndex) {
-        return wordIndex;
-      }
-      return prevIndex;
+    // Get the actual word object and only update if it has changed
+    const newHighlightedWord = wordIndex !== -1 ? wordIndexToWordMap.get(wordIndex) || null : null;
+
+    setCurrentHighlightedWord(prevWord => {
+      const prevId = prevWord?.id;
+      const newId = newHighlightedWord?.id;
+      return prevId !== newId ? newHighlightedWord : prevWord;
     });
   }, [
     position,
@@ -369,43 +394,34 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     articleId,
     getCurrentWordIndex,
     wordTimestamps,
+    wordIndexToWordMap,
   ]);
 
   // Auto-scroll to highlighted word
   const autoScrollToWord = useCallback(
-    (wordIndex: number) => {
-      if (
-        !autoScrollEnabled.current ||
-        wordIndex === -1 ||
-        !scrollViewRef.current ||
-        !sortedSentences
-      ) {
+    (word: SentenceWord | null) => {
+      if (!autoScrollEnabled.current || !word || !scrollViewRef.current || !sortedSentences) {
         return;
       }
 
       // Don't scroll if we've already scrolled to this word recently
-      if (lastScrolledWordIndex.current === wordIndex) {
+      if (lastScrolledWordIndex.current === word.id) {
         return;
       }
 
       // Find which sentence contains this word
       let targetSentenceIndex = -1;
 
-      // Use the word mapping to find which sentence contains the highlighted word
-      const highlightedWord = wordIndexToWordMap.get(wordIndex);
+      for (let sentenceIdx = 0; sentenceIdx < sortedSentences.length; sentenceIdx++) {
+        const sentence = sortedSentences[sentenceIdx];
+        if (!sentence) continue;
 
-      if (highlightedWord) {
-        for (let sentenceIdx = 0; sentenceIdx < sortedSentences.length; sentenceIdx++) {
-          const sentence = sortedSentences[sentenceIdx];
-          if (!sentence) continue;
+        const sentenceWords = sentenceWordsMap.get(sentence.id);
 
-          const sentenceWords = sentenceWordsMap.get(sentence.id);
-
-          if (sentenceWords && sentenceWords.length > 0) {
-            if (sentenceWords.includes(highlightedWord)) {
-              targetSentenceIndex = sentenceIdx;
-              break;
-            }
+        if (sentenceWords && sentenceWords.length > 0) {
+          if (sentenceWords.includes(word)) {
+            targetSentenceIndex = sentenceIdx;
+            break;
           }
         }
       }
@@ -421,7 +437,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           animated: true,
           viewPosition: 0.3, // Position word 30% from top for better visibility
         });
-        lastScrolledWordIndex.current = wordIndex;
+        lastScrolledWordIndex.current = word.id;
       } catch {
         // Fallback to offset-based scrolling
         const estimatedOffset = targetSentenceIndex * 80;
@@ -429,18 +445,18 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           offset: estimatedOffset,
           animated: true,
         });
-        lastScrolledWordIndex.current = wordIndex;
+        lastScrolledWordIndex.current = word.id;
       }
     },
-    [sortedSentences, sentenceWordsMap, scrollViewRef, wordIndexToWordMap]
+    [sortedSentences, sentenceWordsMap, scrollViewRef]
   );
 
   // Trigger auto-scroll when highlighted word changes
   useEffect(() => {
-    if (currentHighlightedWordIndex !== -1 && hasTimestamps && isPlaying) {
-      autoScrollToWord(currentHighlightedWordIndex);
+    if (currentHighlightedWord && hasTimestamps && isPlaying) {
+      autoScrollToWord(currentHighlightedWord);
     }
-  }, [currentHighlightedWordIndex, hasTimestamps, isPlaying, autoScrollToWord]);
+  }, [currentHighlightedWord, hasTimestamps, isPlaying, autoScrollToWord]);
 
   // Removed unused fade-in animation to avoid extra work on ready state
 
@@ -610,31 +626,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         return <React.Fragment />;
       }
 
-      // Convert global word index to local word index within this sentence
-      let highlightedWordIndex = -1;
-
-      if (currentHighlightedWordIndex !== -1) {
-        // Check if the current word belongs to this sentence
-        const wordSentenceId = wordIndexToSentenceMap.get(currentHighlightedWordIndex);
-        const mappedWord = wordIndexToWordMap.get(currentHighlightedWordIndex);
-
-        // Only try to highlight if this word belongs to the current sentence
-        if (wordSentenceId === item.id && mappedWord) {
-          // Find the local index of this word within the sentence
-          for (let i = 0; i < words.length; i++) {
-            const word = words[i];
-            if (
-              word &&
-              word.word_form === mappedWord.word_form &&
-              word.position === mappedWord.position
-            ) {
-              highlightedWordIndex = i;
-              break;
-            }
-          }
-        }
-      }
-
       return (
         <ArticleSentence
           key={item.id}
@@ -647,7 +638,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           colors={colors}
           dueWordRootIds={dueWordRootIds}
           onWordPress={handleWordPress}
-          currentHighlightedWordIndex={highlightedWordIndex}
+          currentHighlightedWord={currentHighlightedWord}
         />
       );
     },
@@ -658,8 +649,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       dueWordRootIds,
       handleWordPress,
       displayLanguagePreference,
-      currentHighlightedWordIndex,
-      wordIndexToWordMap,
+      currentHighlightedWord,
     ]
   );
 
@@ -713,7 +703,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       hasAudio,
       isPlaying: isPlaying && currentArticle?.id === articleId,
       onPlayPress: handlePlayPress,
-      currentHighlightedWordIndex,
+      currentHighlightedWord,
       onClose: handleClose,
     };
   }, [
@@ -732,7 +722,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     currentArticle?.id,
     articleId,
     handlePlayPress,
-    currentHighlightedWordIndex,
+    currentHighlightedWord,
     handleClose,
   ]);
 

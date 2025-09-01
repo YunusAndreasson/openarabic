@@ -33,7 +33,7 @@ interface ArticleSentenceProps {
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
   dueWordRootIds?: Set<number>;
-  currentHighlightedWordIndex?: number;
+  currentHighlightedWord?: SentenceWord | null;
 }
 
 // Custom comparison function for React.memo optimization
@@ -48,7 +48,7 @@ const ArticleSentenceComparison = (
     prevProps.settings.showEnglish !== nextProps.settings.showEnglish ||
     prevProps.settings.fontScale !== nextProps.settings.fontScale ||
     prevProps.words.length !== nextProps.words.length ||
-    prevProps.currentHighlightedWordIndex !== nextProps.currentHighlightedWordIndex
+    prevProps.currentHighlightedWord?.id !== nextProps.currentHighlightedWord?.id
   ) {
     return false;
   }
@@ -93,7 +93,7 @@ function renderWordWithProps(
   onWordPress: ((word: SentenceWord, layout?: LayoutRectangle) => void) | undefined,
   settings: { fontScale: number },
   sentenceId: string | number,
-  currentHighlightedWordIndex?: number
+  currentHighlightedWord?: SentenceWord | null
 ) {
   const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
   if (!wordRefs[index]) {
@@ -102,7 +102,9 @@ function renderWordWithProps(
     >;
   }
   const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
-  const isHighlighted = currentHighlightedWordIndex === index;
+  const isHighlighted = currentHighlightedWord
+    ? word.id === currentHighlightedWord.id && word.word_form === currentHighlightedWord.word_form
+    : false;
 
   return renderWord ? (
     renderWord(word, isHighlighted)
@@ -131,7 +133,7 @@ const ArticleSentenceComponent = memo(
     colors: propColors,
     containerStyle,
     dueWordRootIds = EMPTY_DUE_WORDS_SET,
-    currentHighlightedWordIndex,
+    currentHighlightedWord,
   }: ArticleSentenceProps) => {
     const defaultColors = useColors();
     const colors = propColors || defaultColors;
@@ -197,7 +199,7 @@ const ArticleSentenceComponent = memo(
           onWordPress,
           settings,
           sentence.id,
-          currentHighlightedWordIndex
+          currentHighlightedWord
         );
       });
     }, [
@@ -207,7 +209,7 @@ const ArticleSentenceComponent = memo(
       settings,
       onWordPress,
       dueWordRootIds,
-      currentHighlightedWordIndex,
+      currentHighlightedWord,
     ]);
 
     // Fallback for test environments where Animated.View might be undefined

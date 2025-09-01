@@ -147,29 +147,15 @@ function ArabicWordComponent({
     [colors.transparent]
   );
 
-  // Highlight style when word is being played
+  // Highlight style when word is being played - subtle but visible
   const highlightStyle = useMemo(
     () => ({
       backgroundColor: isHighlighted
-        ? 'rgba(255, 193, 7, 0.7)' // Bright yellow/gold background - highly visible
+        ? `${colors.tint}33` // Clear 20% opacity sage green background
         : colors.transparent,
-      // Add a thick border for maximum visibility
-      borderWidth: isHighlighted ? 3 : 0,
-      borderColor: isHighlighted ? '#FF6B00' : colors.transparent, // Orange border
-      borderRadius: 8,
-      // Add padding for better visual separation
-      paddingHorizontal: isHighlighted ? 6 : 0,
-      paddingVertical: isHighlighted ? 3 : 0,
-      // Add shadow for extra visibility
-      shadowColor: isHighlighted ? '#FF6B00' : colors.transparent,
-      shadowOffset: isHighlighted ? { width: 0, height: 0 } : { width: 0, height: 0 },
-      shadowOpacity: isHighlighted ? 0.8 : 0,
-      shadowRadius: isHighlighted ? 6 : 0,
-      elevation: isHighlighted ? 8 : 0,
-      // Make text bold when highlighted
-      fontWeight: isHighlighted ? 'bold' : 'normal',
+      // No border, padding, or font changes to prevent any visual shifts
     }),
-    [isHighlighted, colors.transparent]
+    [isHighlighted, colors.transparent, colors.tint]
   );
 
   const containerStyle = useMemo(

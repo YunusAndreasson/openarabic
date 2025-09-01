@@ -11,7 +11,7 @@ import { useDebounce, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
-import { selectionFeedback } from '@/utils/haptics';
+import { lightFeedback } from '@/utils/haptics';
 
 interface PlayButtonProps
   extends Omit<BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>, 'icon'> {
@@ -46,7 +46,7 @@ const PlayButton: FC<PlayButtonProps> = ({
   const pressHandler = useCallback(() => {
     if (disabled) return;
     if (hapticFeedback) {
-      selectionFeedback();
+      lightFeedback();
     }
     onPress();
   }, [disabled, onPress, hapticFeedback]);

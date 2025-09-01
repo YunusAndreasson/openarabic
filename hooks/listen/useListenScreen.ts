@@ -17,7 +17,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/listenSlice';
 import type { Article } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
+import { lightFeedback } from '@/utils/haptics';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { shuffleArray } from '@/utils/list';
 
@@ -196,7 +196,7 @@ export const useListenScreen = () => {
 
     if (isCurrentlyPlayingNow && currentPlaybackMode === 'all') {
       try {
-        selectionFeedback();
+        lightFeedback();
         await simpleAudioService.stop();
         // STABILIZATION: Debounce playback mode change
         playbackModeTimeoutRef.current = setTimeout(() => {
@@ -209,7 +209,7 @@ export const useListenScreen = () => {
       }
     } else if (currentTracks.length) {
       try {
-        selectionFeedback();
+        lightFeedback();
         // STABILIZATION: Set playback mode immediately for UI feedback
         setPlaybackMode('all');
 
@@ -277,7 +277,7 @@ export const useListenScreen = () => {
     async (articleId: number) => {
       if (!user?.id) return;
       try {
-        selectionFeedback();
+        lightFeedback();
         await readingListService.removeFromReadingList(user.id, articleId);
         dispatch(removeFromCustomOrder(articleId));
 
@@ -308,7 +308,7 @@ export const useListenScreen = () => {
         : undefined;
 
       if (isCurrentlyPlaying && currentArticleId === articleId) {
-        selectionFeedback();
+        lightFeedback();
         await simpleAudioService.stop();
         // STABILIZATION: Debounce playback mode change
         playbackModeTimeoutRef.current = setTimeout(() => {
@@ -320,7 +320,7 @@ export const useListenScreen = () => {
       // Always generate fresh track to ensure correct audio preference
       // Don't use pre-generated tracks as they might have stale preferences
       try {
-        selectionFeedback();
+        lightFeedback();
         setPlaybackMode('all');
 
         // PREFETCH: warm article data and image so audio components show artwork instantly

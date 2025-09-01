@@ -31,6 +31,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
@@ -44,9 +45,12 @@ const createViewabilityConfig = () => ({
   minimumViewTime: 100, // Minimum time item must be visible before triggering
 });
 
+// Comfortable reading space constant
+const COMFORTABLE_READING_SPACE = MIN_TOUCH_TARGET.MEDIUM;
+
 const createContentContainerStyle = (bottomInset: number, topPadding: number) => ({
   paddingTop: topPadding,
-  paddingBottom: bottomInset + 48, // Safe area + comfortable reading space
+  paddingBottom: bottomInset + COMFORTABLE_READING_SPACE, // Safe area + comfortable reading space
 });
 
 const createListContainerStyle = (backgroundColor: string) => ({
@@ -327,7 +331,7 @@ interface ArticleContentProps {
   hasAudio?: boolean;
   isPlaying?: boolean;
   onPlayPress?: () => void;
-  currentHighlightedWordIndex?: number;
+  currentHighlightedWord?: SentenceWord | null;
   // Close functionality
   onClose: () => void;
 }
@@ -347,7 +351,7 @@ export const ArticleContent = memo<ArticleContentProps>(
     hasAudio = false,
     isPlaying = false,
     onPlayPress,
-    currentHighlightedWordIndex = -1,
+    currentHighlightedWord = null,
     onClose,
   }) => {
     const insets = useSafeAreaInsets();
@@ -518,7 +522,7 @@ export const ArticleContent = memo<ArticleContentProps>(
           initialScrollIndex: 0,
           // Force re-render when highlight state changes
           extraData: {
-            currentHighlightedWordIndex,
+            currentHighlightedWord,
           },
         }),
       [
@@ -531,7 +535,7 @@ export const ArticleContent = memo<ArticleContentProps>(
         onScrollAnimated,
         handleViewableItemsChanged,
         viewabilityConfig,
-        currentHighlightedWordIndex,
+        currentHighlightedWord,
       ]
     );
 

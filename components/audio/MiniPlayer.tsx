@@ -9,7 +9,7 @@ import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
+import { lightFeedback } from '@/utils/haptics';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/time';
 
@@ -109,14 +109,14 @@ export const MiniPlayer = memo<MiniPlayerProps>(
 
     // Simplified mini-player press handler without animations
     const handleMiniPlayerPress = useCallback(() => {
-      selectionFeedback();
+      lightFeedback();
     }, []);
 
     // Handle play/pause with haptic feedback
     const handlePlayPause = useCallback(
       (event: GestureResponderEvent) => {
         event.stopPropagation(); // Prevent card tap
-        selectionFeedback();
+        lightFeedback();
         onPlayPause();
       },
       [onPlayPause]
@@ -215,7 +215,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
               <Pressable
                 onPress={event => {
                   event.stopPropagation();
-                  selectionFeedback();
+                  lightFeedback();
                   onTimerPress();
                 }}
                 android_ripple={{ color: colors.navigationRipple }}
