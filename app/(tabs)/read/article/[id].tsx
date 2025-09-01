@@ -206,7 +206,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await handleToggleReadingList(articleId, isInReadingList);
     showToast(
-      isInReadingList ? STRINGS.REMOVED_FROM_LISTENING_LIST : STRINGS.ADDED_TO_LISTENING_LIST,
+      isInReadingList ? STRINGS.REMOVED_FROM_BOOKMARKS : STRINGS.ADDED_TO_BOOKMARKS,
       3000,
       'success'
     );

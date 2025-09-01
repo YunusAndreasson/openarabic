@@ -26,7 +26,7 @@ const IconWithBadge = memo(
     focused,
     colors,
   }: {
-    name: 'book' | 'headset' | 'school';
+    name: 'book' | 'bookmark' | 'school';
     badgeCount: number;
     color: string;
     size: number;
@@ -132,7 +132,7 @@ const TAB_SCREENS = [
   {
     name: 'listen',
     title: STRINGS.LISTEN,
-    iconFilled: 'headset',
+    iconFilled: 'bookmark',
   },
   {
     name: 'practice',

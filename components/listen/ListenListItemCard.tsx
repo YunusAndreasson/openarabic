@@ -19,8 +19,8 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { difficultyLevelToLabel } from '@/utils/articles/difficulty';
 
-// Playlist thumbnail size for elegant music app aesthetic
-const PLAYLIST_IMAGE_SIZE = 48;
+// Bookmarks thumbnail size for elegant music app aesthetic
+const BOOKMARKS_IMAGE_SIZE = 48;
 
 interface ListenListItemCardProps {
   title: string;
@@ -33,7 +33,7 @@ interface ListenListItemCardProps {
   isBeingDragged?: boolean;
   // Play button props
   onPlayPress?: () => void;
-  // Image for playlist-style display
+  // Image for bookmarks-style display
   imageUrl?: string;
   // Reading progress
   progressPercentage?: number;
@@ -126,7 +126,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
         <View style={styles.cardWrapper}>
           <BaseCard shadowSize="small" onPress={editMode ? undefined : onPress}>
             <View style={styles.cardContent}>
-              {/* Article thumbnail - playlist style */}
+              {/* Article thumbnail - bookmarks style */}
               {imageUrl && (
                 <View style={styles.imageContainer}>
                   <EnhancedImage
@@ -274,8 +274,8 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   thumbnailImage: {
-    height: PLAYLIST_IMAGE_SIZE,
-    width: PLAYLIST_IMAGE_SIZE,
+    height: BOOKMARKS_IMAGE_SIZE,
+    width: BOOKMARKS_IMAGE_SIZE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   progressCircle: {

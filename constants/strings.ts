@@ -32,7 +32,7 @@ export const STRINGS = {
 
   // Account section titles
   READING_EXPERIENCE: 'Reading experience',
-  AUDIO_AND_PLAYLIST: 'Audio & playlist',
+  AUDIO_AND_BOOKMARKS: 'Audio & bookmarks',
   APP_AND_ACCOUNT: 'App & account',
   HELP_AND_SUPPORT: 'Help & support',
 
@@ -50,7 +50,7 @@ export const STRINGS = {
   THEME_AUTUMN: 'Autumn Leaves',
 
   // Content states
-  LOADING_PLAYLIST: 'Loading playlist',
+  LOADING_BOOKMARKS: 'Loading bookmarks',
 
   SOMETHING_WENT_WRONG: 'Something went wrong',
   PLEASE_TRY_AGAIN: tryAgain,
@@ -117,7 +117,7 @@ export const STRINGS = {
   ARTICLES_SELECTED_FOR_YOU: 'Articles selected for you',
   SUMMARY: 'Summary',
   READ: 'Library',
-  LISTEN: 'Playlist',
+  LISTEN: 'Bookmarks',
   PRACTICE: 'Study',
   CONTINUE_READING: 'Continue Reading',
 
@@ -149,11 +149,11 @@ export const STRINGS = {
   NO_MATCHES_FOUND: 'No matches found',
   TRY_DIFFERENT_SEARCH: 'Try a different search term or check spelling',
   NO_ARTICLES_SAVED: 'No saved articles',
-  LISTENING_PLAYLIST_EMPTY: 'Add articles to build your playlist',
+  LISTENING_BOOKMARKS_EMPTY: 'Add articles to build your bookmarks',
 
-  // Listen tab empty state - user-centric and playlist-focused
-  PLAYLIST_EMPTY_TITLE: 'Your playlist is empty',
-  PLAYLIST_EMPTY_DESCRIPTION: 'Save content from Library to start listening',
+  // Listen tab empty state - user-centric and bookmarks-focused
+  BOOKMARKS_EMPTY_TITLE: 'Your bookmarks are empty',
+  BOOKMARKS_EMPTY_DESCRIPTION: 'Save content from Library to start listening',
 
   // Practice tab empty state - user-centric and study-focused
   STUDY_LIST_EMPTY_TITLE: 'No words to study',
@@ -170,8 +170,8 @@ export const STRINGS = {
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete!',
 
-  ADDED_TO_LISTENING_LIST: 'Saved to playlist',
-  REMOVED_FROM_LISTENING_LIST: 'Removed from playlist',
+  ADDED_TO_BOOKMARKS: 'Saved to bookmarks',
+  REMOVED_FROM_BOOKMARKS: 'Removed from bookmarks',
   ADDED_TO_STUDY_LIST: 'Added to study list',
   REMOVED_FROM_STUDY_LIST: 'Removed from study list',
 
@@ -460,7 +460,7 @@ export const STRINGS = {
   FAILED_TO_SKIP_TO_NEXT_TRACK: "Couldn't skip track. " + tryAgain,
 
   // Reading list errors
-  FAILED_TO_LOAD_READING_LIST: "Couldn't load playlist. " + tryAgain,
+  FAILED_TO_LOAD_BOOKMARKS: "Couldn't load bookmarks. " + tryAgain,
   FAILED_TO_ADD_TO_READING_LIST: "Couldn't save article. " + tryAgain,
   FAILED_TO_REMOVE_FROM_READING_LIST: "Couldn't remove article. " + tryAgain,
   FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check save status",
@@ -638,9 +638,9 @@ export const STRINGS = {
   FAQ_HOW_SPACED_REPETITION_WORKS_A:
     "The app shows you words just before you're likely to forget them. Words you find easy appear less often, while challenging words appear more frequently until you master them.",
 
-  FAQ_READ_VS_LISTEN_Q: "What's the difference between Library and Playlist?",
+  FAQ_READ_VS_LISTEN_Q: "What's the difference between Library and Bookmarks?",
   FAQ_READ_VS_LISTEN_A:
-    'Library lets you browse articles and add vocabulary. Playlist plays saved articles so you can listen while multitasking.',
+    'Library lets you browse articles and add vocabulary. Bookmarks lets you listen to saved articles while multitasking.',
 
   FAQ_CHANGE_STUDY_REMINDERS_Q: 'How do I change my study reminders?',
   FAQ_CHANGE_STUDY_REMINDERS_A:

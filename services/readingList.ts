@@ -7,7 +7,7 @@ import { checkAuthentication, supabase } from './supabase';
 const errorConfig = {
   readingList: {
     load: {
-      toastMessage: STRINGS.FAILED_TO_LOAD_READING_LIST,
+      toastMessage: STRINGS.FAILED_TO_LOAD_BOOKMARKS,
       analyticsEventName: 'Reading_List_Load_Error',
       sentrySeverity: 'error' as const,
     },

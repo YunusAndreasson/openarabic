@@ -274,7 +274,7 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
-        {/* Audio - Audio preferences and playlist settings */}
+        {/* Audio - Audio preferences and bookmarks settings */}
         <SectionTitle title="Audio" textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>

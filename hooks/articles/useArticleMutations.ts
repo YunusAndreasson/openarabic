@@ -149,7 +149,7 @@ export const useArticleMutations = (
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
       },
       onError: (error: Error) => {
-        // Silently handle errors - no toast notifications for playlist actions
+        // Silently handle errors - no toast notifications for bookmarks actions
         const errorMessage = error.message;
         if (
           !errorMessage.includes('reading_list_position_unique') &&
@@ -180,7 +180,7 @@ export const useArticleMutations = (
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
       },
       onError: (error: Error) => {
-        // Silently handle errors - no toast notifications for playlist actions
+        // Silently handle errors - no toast notifications for bookmarks actions
         handleError(error, { showToast: false, captureSentry: false });
       },
     }),
@@ -340,7 +340,7 @@ export const useArticleMutations = (
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError || !refreshData.session) {
-            // Silently redirect to auth - no toast for playlist actions
+            // Silently redirect to auth - no toast for bookmarks actions
             router.replace(ROUTE_PATHS.AUTH);
             return;
           }

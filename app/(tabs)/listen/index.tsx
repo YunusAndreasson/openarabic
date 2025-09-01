@@ -99,7 +99,7 @@ const ListenListItem = memo(
         onPress={!editMode && audioState !== AUDIO_STATES.PLAYING ? handlePress : undefined}
         // Play button also triggers playback, hide when any audio is playing
         onPlayPress={!editMode && audioState !== AUDIO_STATES.PLAYING ? handlePlayPress : undefined}
-        // Add article image for playlist-style appearance
+        // Add article image for bookmarks-style appearance
         imageUrl={generateImageUrl(item.articles.image_url)}
         dragHandleProps={dragHandleProps}
       />
@@ -240,11 +240,11 @@ export default function ListenScreen(): JSX.Element {
     () =>
       shouldShowEmpty ? (
         <EmptyState
-          description={STRINGS.PLAYLIST_EMPTY_DESCRIPTION}
+          description={STRINGS.BOOKMARKS_EMPTY_DESCRIPTION}
           hideArticlesButton={true}
-          icon="headset"
+          icon="bookmark"
           iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-          title={STRINGS.PLAYLIST_EMPTY_TITLE}
+          title={STRINGS.BOOKMARKS_EMPTY_TITLE}
           containerStyle={{
             paddingTop: LAYOUT.SPACING.XLARGE,
             paddingBottom: LAYOUT.SPACING.LARGE,

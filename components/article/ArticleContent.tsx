@@ -295,12 +295,10 @@ const FloatingActionButtons = memo<{
               radius: MIN_TOUCH_TARGET.MEDIUM / 2,
             }}
             accessibilityRole="button"
-            accessibilityLabel={
-              isInReadingList ? 'Remove from listening list' : 'Add to listening list'
-            }
+            accessibilityLabel={isInReadingList ? 'Remove from bookmarks' : 'Add to bookmarks'}
           >
             <Ionicons
-              name="headset"
+              name="bookmark"
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               color={isInReadingList ? colors.tint : colors.secondaryText}
             />
@@ -322,7 +320,7 @@ interface ArticleContentProps {
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   colors: ThemeColors;
   scrollViewRef: React.RefObject<FlashList<Tables<'article_sentences'>>>;
-  // Reading list (playlist/listening) functionality
+  // Reading list (bookmarks/listening) functionality
   isInReadingList: boolean;
   onToggleReadingList: () => void;
   // Audio playback functionality
@@ -401,7 +399,7 @@ export const ArticleContent = memo<ArticleContentProps>(
     });
 
     // Reserve right-side space so text never sits under floating action buttons
-    // Updated to account for only one button now (playlist button)
+    // Updated to account for only one button now (bookmarks button)
     const rightOverlayPadding = useMemo(() => MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE, []);
 
     const titleContainerStyle = useMemo(
