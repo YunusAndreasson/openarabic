@@ -227,7 +227,7 @@ const FloatingActionButtons = memo<{
     const closeButtonStyle = useMemo(
       () => ({
         position: 'absolute' as const,
-        top: insets.top + LAYOUT.SPACING.SMALL,
+        top: LAYOUT.SPACING.SMALL,
         left: LAYOUT.SPACING.SMALL,
         zIndex: LAYOUT.Z_INDEX.OVERLAY,
       }),
@@ -237,11 +237,11 @@ const FloatingActionButtons = memo<{
     const actionButtonsStyle = useMemo(
       () => ({
         position: 'absolute' as const,
-        top: insets.top + LAYOUT.SPACING.SMALL,
+        top: LAYOUT.SPACING.SMALL,
         right: LAYOUT.SPACING.SMALL,
         zIndex: LAYOUT.Z_INDEX.OVERLAY,
         flexDirection: 'row' as const,
-        gap: LAYOUT.SPACING.SMALL,
+        gap: LAYOUT.SPACING.TINY,
       }),
       [insets.top]
     );

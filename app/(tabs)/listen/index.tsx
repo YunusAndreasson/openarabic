@@ -1,9 +1,10 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
+import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { InteractionManager, StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,9 +16,10 @@ import BottomControls from '@listen/BottomControls';
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/listen/ListenListItemCard';
 import { useToast } from '@/components/providers/ToastProvider';
-import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
@@ -49,18 +51,16 @@ const ListenListItem = memo(
     item,
     editMode,
     onDelete,
-    onPlayPress,
+    onArticlePress,
     drag,
     _isBeingDragged,
-    audioState,
   }: {
     item: ReadingListItem;
     editMode: boolean;
     onDelete: (id: number) => void;
-    onPlayPress: (id: number) => void;
+    onArticlePress: (articleId: number, title: string) => void;
     drag?: () => void;
     _isBeingDragged?: boolean;
-    audioState: AudioState;
   }) => {
     // Memoize event handlers to prevent inline function creation
     const handleDelete = useCallback(() => {
@@ -68,16 +68,10 @@ const ListenListItem = memo(
     }, [onDelete, item.article_id]);
 
     const handlePress = useCallback(() => {
-      if (!editMode && audioState !== AUDIO_STATES.PLAYING) {
-        onPlayPress(item.article_id);
+      if (!editMode) {
+        onArticlePress(item.article_id, item.articles.title);
       }
-    }, [editMode, audioState, onPlayPress, item.article_id]);
-
-    const handlePlayPress = useCallback(() => {
-      if (!editMode && audioState !== AUDIO_STATES.PLAYING) {
-        onPlayPress(item.article_id);
-      }
-    }, [editMode, audioState, onPlayPress, item.article_id]);
+    }, [editMode, onArticlePress, item.article_id, item.articles.title]);
 
     // Memoize drag handle props to prevent object recreation
     const dragHandleProps = useMemo(() => {
@@ -95,10 +89,9 @@ const ListenListItem = memo(
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
         onDelete={handleDelete}
-        // Entire card triggers playback when not in edit mode and not playing
-        onPress={!editMode && audioState !== AUDIO_STATES.PLAYING ? handlePress : undefined}
-        // Play button also triggers playback, hide when any audio is playing
-        onPlayPress={!editMode && audioState !== AUDIO_STATES.PLAYING ? handlePlayPress : undefined}
+        // Entire card triggers article navigation when not in edit mode
+        onPress={!editMode ? handlePress : undefined}
+        // Play button removed - single article playing functionality removed
         // Add article image for bookmarks-style appearance
         imageUrl={generateImageUrl(item.articles.image_url)}
         dragHandleProps={dragHandleProps}
@@ -109,7 +102,6 @@ const ListenListItem = memo(
     // Optimized comparison: only check props that actually change
     if (prevProps.editMode !== nextProps.editMode) return false;
     if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
-    if (prevProps.audioState !== nextProps.audioState) return false;
     return prevProps.item.article_id === nextProps.item.article_id;
   }
 );
@@ -119,6 +111,7 @@ ListenListItem.displayName = 'ListenListItem';
 export default function ListenScreen(): JSX.Element {
   const { editMode, reset } = useEditMode('listen');
   const { showToast } = useToast();
+  const { prefetchArticle } = useAppPreloader();
 
   // Reset edit mode when screen loses focus
   useFocusEffect(
@@ -135,10 +128,8 @@ export default function ListenScreen(): JSX.Element {
   // Simplified destructuring - only get what we actually use
   const {
     sortedReadingList,
-    audioState,
     isReadingListLoading,
     handlePlayAll,
-    handleArticlePlay,
     handleDelete,
     enhancedTracksError,
   } = useListenScreen();
@@ -254,6 +245,18 @@ export default function ListenScreen(): JSX.Element {
     [shouldShowEmpty]
   );
 
+  // Create the article press handler
+  const handleArticlePress = useCallback(
+    (articleId: number, title: string) => {
+      // Prefetch article data after navigation animation completes
+      InteractionManager.runAfterInteractions(() => {
+        prefetchArticle(articleId);
+      });
+      router.push(getArticleRoute(articleId, title));
+    },
+    [prefetchArticle]
+  );
+
   // Optimized render function - simplified logic
   const renderItem = useCallback(
     (params: { item: ReadingListItem; index?: number } | RenderItemParams<ReadingListItem>) => {
@@ -266,10 +269,9 @@ export default function ListenScreen(): JSX.Element {
             editMode={editMode}
             item={item}
             onDelete={handleDelete}
-            onPlayPress={handleArticlePlay}
+            onArticlePress={handleArticlePress}
             drag={drag}
             _isBeingDragged={isDragging}
-            audioState={audioState}
           />
         );
       } else {
@@ -278,13 +280,12 @@ export default function ListenScreen(): JSX.Element {
             editMode={editMode}
             item={item}
             onDelete={handleDelete}
-            onPlayPress={handleArticlePlay}
-            audioState={audioState}
+            onArticlePress={handleArticlePress}
           />
         );
       }
     },
-    [audioState, editMode, handleDelete, handleArticlePlay]
+    [editMode, handleDelete, handleArticlePress]
   );
 
   // Memoize the key extractor to prevent inline function creation

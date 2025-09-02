@@ -388,6 +388,12 @@ function AppContent() {
                 }}
               />
               <Stack.Screen
+                name="article/[id]"
+                options={createNavigationOptions(colors, {
+                  headerShown: false,
+                })}
+              />
+              <Stack.Screen
                 name="practice/review"
                 options={createNavigationOptions(colors, {
                   headerShown: false,

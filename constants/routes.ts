@@ -1,5 +1,5 @@
 export const getArticleRoute = (id: number, headerTitle?: string): string => {
-  const base = `/(tabs)/read/article/${id}`;
+  const base = `/article/${id}`;
   if (!headerTitle) return base;
   const search = new URLSearchParams({ headerTitle });
   const query = search.toString().replace(/\(/g, '%28').replace(/\)/g, '%29');

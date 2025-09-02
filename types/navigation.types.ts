@@ -37,7 +37,7 @@ export interface ArticleParams {
  * Type for route parameters
  */
 export type RouteParams = {
-  '/(tabs)/read/article/[id]': ArticleParams;
+  '/article/[id]': ArticleParams;
   '/(tabs)/read/filterModal': FiltersParams;
   '/practice/review': ReviewParams;
   '/': Record<string, never>;

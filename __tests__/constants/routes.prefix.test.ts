@@ -10,8 +10,8 @@ describe('ROUTE_PATHS - /(tabs) prefix', () => {
     expect(ROUTE_PATHS.PRACTICE_DICTIONARY.startsWith('/(tabs)/')).toBe(true);
   });
 
-  it('getArticleRoute returns /(tabs)/read/article/:id', () => {
-    expect(getArticleRoute(5)).toBe('/(tabs)/read/article/5');
+  it('getArticleRoute returns /article/:id', () => {
+    expect(getArticleRoute(5)).toBe('/article/5');
   });
 
   it('getPracticeReviewRoute keeps path without /(tabs) (modal route)', () => {
