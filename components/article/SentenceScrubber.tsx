@@ -183,7 +183,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
         opacity: showTooltip.value,
         transform: [
           { translateX: handlePosition.value - LAYOUT.SPACING.XXXLARGE }, // Center tooltip
-          { translateY: -25 }, // Position higher above the thumb for better visibility
+          { translateY: -30 }, // Position higher above the thumb for better visibility and prevent clipping
           { scale: withSpring(showTooltip.value > 0 ? 1 : 0.8, TOOLTIP_SPRING_CONFIG) },
         ],
       }),
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   tooltip: {
     position: 'absolute',
-    bottom: LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.XLARGE, // Positioned higher above the track
+    bottom: LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.XXLARGE, // Positioned higher above the track (24px + 32px = 56px)
     width: MIN_TOUCH_TARGET.LARGE + LAYOUT.SPACING.XXXLARGE,
     alignItems: 'center',
   },

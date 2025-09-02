@@ -6,6 +6,7 @@ import type { JSX } from 'react';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
+  Dimensions,
   InteractionManager,
   View,
   type LayoutRectangle,
@@ -127,6 +128,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
   // Auto-scroll state
   const lastScrolledWordIndex = useRef<number>(-1);
+  const lastScrollTime = useRef<number>(0);
   const autoScrollEnabled = useRef(true);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -177,7 +179,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       // Re-enable auto-scroll after user stops scrolling
       scrollTimeoutRef.current = setTimeout(() => {
         autoScrollEnabled.current = true;
-      }, 2000); // Re-enable after 2 seconds of no scrolling
+      }, 1000); // Re-enable after 1 second of no scrolling
     },
     [handleHeaderScroll]
   );
@@ -404,8 +406,10 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         return;
       }
 
-      // Don't scroll if we've already scrolled to this word recently
-      if (lastScrolledWordIndex.current === word.id) {
+      // Don't scroll if we've already scrolled to this word recently (within 3 seconds)
+      const currentTime = Date.now();
+      const timeSinceLastScroll = currentTime - lastScrollTime.current;
+      if (lastScrolledWordIndex.current === word.id && timeSinceLastScroll < 3000) {
         return;
       }
 
@@ -428,24 +432,35 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
       if (targetSentenceIndex === -1) return;
 
-      // Scroll to the sentence containing the word
-      const flashListIndex = targetSentenceIndex + 1; // +1 for header
+      // Calculate comfortable top margin accounting for header and safe area
+      const headerHeight = Math.round(Dimensions.get('window').width / 1.618) + 44; // Base header + safe area
+      const comfortableMargin = LAYOUT.SPACING.XLARGE * 2; // 48px comfortable margin
+
+      // Calculate offset for the target sentence
+      const estimatedSentenceHeight = 80; // Average sentence height
+      const targetOffset = targetSentenceIndex * estimatedSentenceHeight;
+
+      // Ensure we don't scroll too high (respect header)
+      // Allow scrolling to bottom content, just ensure minimum visibility
+      const minVisibleHeight = headerHeight + comfortableMargin;
+      const safeOffset = Math.max(minVisibleHeight, targetOffset);
 
       try {
-        scrollViewRef.current.scrollToIndex({
-          index: flashListIndex,
-          animated: true,
-          viewPosition: 0.3, // Position word 30% from top for better visibility
-        });
-        lastScrolledWordIndex.current = word.id;
-      } catch {
-        // Fallback to offset-based scrolling
-        const estimatedOffset = targetSentenceIndex * 80;
         scrollViewRef.current.scrollToOffset({
-          offset: estimatedOffset,
+          offset: safeOffset,
           animated: true,
         });
         lastScrolledWordIndex.current = word.id;
+        lastScrollTime.current = Date.now();
+      } catch {
+        // Fallback with simpler calculation
+        const fallbackOffset = targetSentenceIndex * 80;
+        scrollViewRef.current.scrollToOffset({
+          offset: Math.max(0, fallbackOffset),
+          animated: true,
+        });
+        lastScrolledWordIndex.current = word.id;
+        lastScrollTime.current = Date.now();
       }
     },
     [sortedSentences, sentenceWordsMap, scrollViewRef]
@@ -756,7 +771,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       />
 
       {/* Scrubber moved out of ArticleContent to avoid ArticleContent rerenders */}
-      <SentenceScrubber {...sentenceScrubberProps} />
+      {!wordDetailsBottomSheet.isVisible && <SentenceScrubber {...sentenceScrubberProps} />}
     </View>
   );
 }, ArticleScreenContentComparison);

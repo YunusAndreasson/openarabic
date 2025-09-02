@@ -6,12 +6,12 @@ import BottomSheet, {
 import * as Haptics from 'expo-haptics';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import type { AudioStatus } from '@/services/simpleAudioService';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
@@ -34,10 +34,31 @@ const WordDetailsBottomSheetComponent = ({
 }: WordDetailsBottomSheetProps) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const colors = useColors();
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioStatus, setAudioStatus] = useState<AudioStatus>(simpleAudioService.getStatus());
 
   // Configure snap points
-  const snapPoints = useMemo(() => [400], []);
+  const snapPoints = useMemo(() => [360], []);
+
+  // Listen for audio status changes
+  useEffect(() => {
+    const updateStatus = () => {
+      setAudioStatus(simpleAudioService.getStatus());
+    };
+
+    // Update immediately
+    updateStatus();
+
+    // Set up polling for status updates
+    const interval = setInterval(updateStatus, 200);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Check if this word's audio is currently playing
+  const isThisWordPlaying =
+    audioStatus.isPlaying && audioStatus.currentTrack?.id === `word-details-${word?.id}`;
+  const isThisWordLoading =
+    audioStatus.isLoading && audioStatus.currentTrack?.id === `word-details-${word?.id}`;
 
   // Handle visibility changes
   useEffect(() => {
@@ -54,7 +75,6 @@ const WordDetailsBottomSheetComponent = ({
 
     // Direct haptic feedback without debounce
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsPlaying(true);
 
     try {
       const fullAudioUrl = generateAudioUrl(word.audio_url);
@@ -69,8 +89,6 @@ const WordDetailsBottomSheetComponent = ({
       await simpleAudioService.play(track, { skipPolling: true, immediateStatus: true });
     } catch (error) {
       console.warn('Word audio playback failed:', error);
-    } finally {
-      setIsPlaying(false);
     }
   }, [word]);
 
@@ -127,13 +145,14 @@ const WordDetailsBottomSheetComponent = ({
         )}
 
         {/* Action Buttons */}
-        <SafeAreaView edges={['bottom']} style={styles.buttonSection}>
+        <View style={styles.buttonSection}>
           <View style={styles.buttonContainer}>
             <ThemedButton
-              title={isPlaying ? 'Playing...' : 'Play Audio'}
-              variant="filled"
+              title={isThisWordPlaying ? 'Playing...' : 'Play Audio'}
+              variant="outlined"
               onPress={handlePlayAudio}
-              disabled={!word.audio_url}
+              disabled={!word.audio_url || isThisWordLoading}
+              loading={isThisWordLoading}
               style={styles.actionButton}
             />
             <ThemedButton
@@ -143,7 +162,7 @@ const WordDetailsBottomSheetComponent = ({
               style={styles.actionButton}
             />
           </View>
-        </SafeAreaView>
+        </View>
       </BottomSheetView>
     </BottomSheet>
   );
@@ -170,7 +189,6 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.XXXLARGE, // Adequate spacing above scrubber
   },
   modalStyle: {
     zIndex: LAYOUT.Z_INDEX.POPUP,
@@ -201,7 +219,6 @@ const styles = StyleSheet.create({
   buttonSection: {
     marginTop: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   buttonContainer: {
     gap: LAYOUT.SPACING.MEDIUM,
