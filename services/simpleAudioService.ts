@@ -157,6 +157,17 @@ class SimpleAudioService {
         duration: 0,
       });
 
+      // For replay: If reusing a player that has finished, seek back to beginning
+      if (this.currentPlayer && typeof this.currentPlayer.currentTime === 'number') {
+        const currentTime = this.currentPlayer.currentTime;
+        const duration = this.currentPlayer.duration || this.currentPlayer.durationMillis;
+
+        // If player is at or near the end, seek to beginning
+        if (duration && currentTime >= duration - 0.5) {
+          await this.currentPlayer.seekTo?.(0);
+        }
+      }
+
       // Start playback immediately
       await this.currentPlayer.play?.();
 
@@ -453,6 +464,19 @@ class SimpleAudioService {
             // Track is within 0.5 seconds of completion, advance to next track
             this.advanceToNextTrack().catch(() => {
               // Track advancement failed - continue with current track
+            });
+            return;
+          }
+
+          // SINGLE TRACK SUPPORT: Check if current single track has completed
+          if (!this.isPlaylistMode && safeDuration > 0 && safeCurrentTime >= safeDuration - 0.1) {
+            // Single track has finished playing, reset status but keep player for potential replay
+            this.stopStatusPolling();
+            this.updateStatus({
+              isPlaying: false,
+              isLoading: false,
+              currentTime: safeDuration, // Set to full duration
+              duration: safeDuration,
             });
             return;
           }

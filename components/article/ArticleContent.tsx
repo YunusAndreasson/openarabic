@@ -208,6 +208,7 @@ const FloatingActionButtons = memo<{
         height: MIN_TOUCH_TARGET.MEDIUM,
         borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
         backgroundColor: colors.elevation1,
+        opacity: 0.88, // Subtle transparency for better visual hierarchy
         alignItems: 'center' as const,
         justifyContent: 'center' as const,
         ...LAYOUT.ELEVATION.SUBTLE,

@@ -37,7 +37,7 @@ const WordDetailsBottomSheetComponent = ({
   const [audioStatus, setAudioStatus] = useState<AudioStatus>(simpleAudioService.getStatus());
 
   // Configure snap points
-  const snapPoints = useMemo(() => [360], []);
+  const snapPoints = useMemo(() => [380], []);
 
   // Listen for audio status changes
   useEffect(() => {
@@ -86,7 +86,7 @@ const WordDetailsBottomSheetComponent = ({
         title: word.english || word.word_form || 'Word Audio',
       };
 
-      await simpleAudioService.play(track, { skipPolling: true, immediateStatus: true });
+      await simpleAudioService.play(track, { immediateStatus: true });
     } catch (error) {
       console.warn('Word audio playback failed:', error);
     }
