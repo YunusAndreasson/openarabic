@@ -115,7 +115,7 @@ def generate_article_audio(
             article_summary = None
 
         # Create article audio files in one pass
-        logger.info("Creating article audio files...")
+        # Create article audio files
         audio_urls = create_article_audio(
             sentences=sentences,
             article_title=article_title,
@@ -259,7 +259,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
             temp_dir = tempfile.mkdtemp()
 
             # Use the new streamlined audio generation function
-            logger.info("Generating streamlined article audio...")
+            # Generate streamlined article audio
 
             # Prepare sentence data for the new streamlined function
             sentences = []
@@ -297,7 +297,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
                         "Generated article audio but no word timestamps available"
                     )
 
-                logger.info(f"Generated article audio: {article_audio_url}")
+                # Article audio generated
             else:
                 raise RuntimeError("Failed to create article audio files")
 
@@ -392,13 +392,11 @@ def main() -> int:
     for json_path in translation_files:
         try:
             process_json_file(json_path)
-
         except Exception as e:
             error_count += 1
-            logger.error(f"Failed to process {json_path}: {e}")
 
     if error_count > 0:
-        logger.error(f"Failed to process {error_count} files")
+        logger.error(f"Failed to process {error_count} files during insertion phase")
         return 1
 
     return 0

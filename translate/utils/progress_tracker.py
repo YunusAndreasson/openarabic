@@ -35,14 +35,11 @@ class PipelineProgressTracker:
         """Update the current progress counter."""
         self.current_count += n
 
-        if description:
-            logger.debug(
-                f"   {description} ({self.current_count}/{self.current_total})"
-            )
+        # Progress updated
 
     def set_description(self, description: str) -> None:
         """Set the description for the current phase."""
-        logger.debug(f"   {description}")
+        # Description set
 
     def finish_phase(self, success: bool = True) -> None:
         """Finish the current phase."""

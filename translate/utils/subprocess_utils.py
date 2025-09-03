@@ -32,7 +32,7 @@ def run_pipeline_step(
     if env is None:
         env = os.environ.copy()
 
-    logger.info(f"🚀 Running {description}...")
+    # Run pipeline step silently
 
     result = subprocess.run(
         [sys.executable, script_path],
@@ -50,4 +50,4 @@ def run_pipeline_step(
             logger.error(f"stderr: {result.stderr}")
         raise RuntimeError(f"{description} failed.")
 
-    logger.info(f"✅ {description} completed successfully.")
+    # Pipeline step completed

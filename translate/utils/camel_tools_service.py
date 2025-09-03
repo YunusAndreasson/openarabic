@@ -50,22 +50,20 @@ class CamelToolsService:
                 for result in results:
                     if "diac" in result and result["diac"]:
                         suggested_tashkeel = result["diac"]
-                        logger.debug(
-                            f"Generated tashkeel for '{word}': '{suggested_tashkeel}'"
-                        )
+                        # Tashkeel generated successfully
                         return suggested_tashkeel
 
                 # If no diacritics found, try with different POS
                 if pos != "verb":
                     return self.generate_tashkeel_suggestion(word, "verb")
 
-            logger.debug(f"No tashkeel suggestion found for '{word}'")
+            # No tashkeel suggestion found
             return word
 
         except Exception as e:
             # Suppress noisy warnings from reinflector (e.g. invalid feature values)
             # and fall back to returning the original word without diacritics.
-            logger.debug(f"Tashkeel generation skipped for '{word}': {e}")
+            # Tashkeel generation skipped due to error
             return word
 
     def generate_tashkeel_suggestions_batch(self, words: list[str]) -> dict[str, str]:
@@ -162,9 +160,7 @@ def generate_tashkeel_suggestions_with_context(
 
     # If context is available, enhance suggestions with contextual information
     if context and context.strip():
-        logger.debug(
-            f"Enhancing tashkeel suggestions with context for sentence {sentence_index}"
-        )
+        # Enhancing tashkeel suggestions with context
         # Context can be used to improve suggestions, but camel-tools doesn't directly support it
         # The context will be provided to OpenAI for final refinement
 

@@ -152,10 +152,8 @@ def _get_eleven_labs_client() -> ElevenLabs:
         if not api_key:
             raise AudioGenerationError("ElevenLabs API key not configured")
 
-        logger.debug(f"Initializing ElevenLabs client with API key: {api_key[:8]}...")
         try:
             eleven_labs = ElevenLabs(api_key=api_key)
-            logger.debug("ElevenLabs client initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize ElevenLabs client: {e}")
             raise AudioGenerationError(
@@ -522,9 +520,6 @@ def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
     try:
         # Check if audio already exists in storage using the actual filename
         if check_file_exists("audio", filename):
-            logger.info(
-                f"Arabic audio file {filename} already exists, skipping generation"
-            )
             url = get_storage_url(filename)
             return {"url": url, "cached": True}
 
@@ -557,7 +552,7 @@ def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
                     f,
                     file_options={"content-type": "audio/mpeg"},
                 )
-            logger.info(f"Uploaded new Arabic audio file: {filename}")
+            # Audio file uploaded successfully
         else:
             logger.info(
                 f"Arabic audio file {filename} already exists in storage, skipping upload"
@@ -589,9 +584,6 @@ def generate_english_word_audio(word: str, filename: str) -> dict | None:
     try:
         # Check if audio already exists in storage using the actual filename
         if check_file_exists("audio", filename):
-            logger.info(
-                f"English audio file {filename} already exists, skipping generation"
-            )
             url = get_storage_url(filename)
             return {"url": url, "cached": True}
 
@@ -624,7 +616,7 @@ def generate_english_word_audio(word: str, filename: str) -> dict | None:
                     f,
                     file_options={"content-type": "audio/mpeg"},
                 )
-            logger.info(f"Uploaded new English audio file: {filename}")
+            # Audio file uploaded successfully
         else:
             logger.info(
                 f"English audio file {filename} already exists in storage, skipping upload"
@@ -654,7 +646,6 @@ def generate_sentence_audio(
     try:
         # Check if audio already exists in storage to avoid duplicate generation
         if check_file_exists("audio", filename):
-            logger.info(f"Audio file {filename} already exists, skipping generation")
             url = get_storage_url(filename)
             return AudioResult(
                 url=url,
@@ -694,7 +685,7 @@ def generate_sentence_audio(
                     f,
                     file_options={"content-type": "audio/mpeg"},
                 )
-            logger.info(f"Uploaded new sentence audio file: {filename}")
+            # Audio file uploaded successfully
         else:
             logger.info(
                 f"Sentence audio file {filename} already exists in storage, skipping upload"
@@ -795,7 +786,7 @@ def create_multi_audio_with_delays(
                 try:
                     segment = AudioSegment.from_mp3(io.BytesIO(audio_data))
                     segments.append(segment)
-                    logger.debug(f"Loaded segment {i + 1}: {len(audio_data)} bytes")
+                    # Segment loaded successfully
                 except Exception as e:
                     logger.error(f"Failed to load segment {i + 1}: {e}")
                     # Skip this segment
@@ -814,7 +805,6 @@ def create_multi_audio_with_delays(
         combined = segments[0]
         for i in range(1, len(segments)):
             combined = combined + delay_segment + segments[i]
-            logger.debug(f"Added segment {i + 1} with {delay_ms}ms delay")
 
         # Export as MP3
         output = io.BytesIO()
@@ -861,7 +851,7 @@ def create_article_audio(
             logger.error("No sentences provided for article audio creation")
             return None
 
-        logger.info(f"Creating article audio for {len(sentences)} sentences")
+        # Create article audio segments
 
         # Generate all audio segments in one pass
         arabic_segments = []
@@ -869,7 +859,6 @@ def create_article_audio(
 
         # Add title and summary to bilingual audio if provided
         if article_title and article_title.strip():
-            logger.info(f"Generating title audio: '{article_title}'")
             title_response = generate_speech(
                 text=article_title.strip(),
                 voice_id=ENGLISH_VOICE_ID,
@@ -877,12 +866,11 @@ def create_article_audio(
             )
             if title_response and title_response.get("audio"):
                 bilingual_segments.append(title_response["audio"])
-                logger.info("Title audio generated successfully")
+                # Title audio generated
             else:
                 logger.warning("Failed to generate title audio")
 
         if article_summary and article_summary.strip():
-            logger.info(f"Generating summary audio: '{article_summary[:50]}...'")
             summary_response = generate_speech(
                 text=article_summary.strip(),
                 voice_id=ENGLISH_VOICE_ID,
@@ -890,12 +878,16 @@ def create_article_audio(
             )
             if summary_response and summary_response.get("audio"):
                 bilingual_segments.append(summary_response["audio"])
-                logger.info("Summary audio generated successfully")
+                # Summary audio generated
             else:
                 logger.warning("Failed to generate summary audio")
 
         # Process each sentence
         all_word_timestamps = []
+        cumulative_time_offset = (
+            0.0  # Track cumulative time for timestamp offset calculation
+        )
+        global_word_index = 0  # Track global word index across all sentences
 
         for i, sentence in enumerate(sentences):
             arabic_text = sentence.get("arabic_text", "")
@@ -927,17 +919,50 @@ def create_article_audio(
             arabic_audio = arabic_response["audio"]
             arabic_segments.append(arabic_audio)
 
-            # Collect word timestamps from this sentence
+            # Collect word timestamps from this sentence with cumulative offset
             sentence_timestamps = arabic_response.get("word_timestamps", [])
             if sentence_timestamps:
                 logger.info(
                     f"Collected {len(sentence_timestamps)} word timestamps for sentence {i + 1}"
                 )
-                all_word_timestamps.extend(sentence_timestamps)
+
+                # Apply cumulative time offset to all timestamps in this sentence
+                # This accounts for the 500ms delays added between sentences
+                offset_timestamps = []
+                for local_word_idx, timestamp in enumerate(sentence_timestamps):
+                    offset_timestamp = timestamp.copy()
+                    offset_timestamp["start_time"] = (
+                        timestamp["start_time"] + cumulative_time_offset
+                    )
+                    offset_timestamp["end_time"] = (
+                        timestamp["end_time"] + cumulative_time_offset
+                    )
+                    # Use global word index instead of local sentence word index
+                    offset_timestamp["word_index"] = global_word_index + local_word_idx
+                    offset_timestamps.append(offset_timestamp)
+
+                all_word_timestamps.extend(offset_timestamps)
+
+                # Calculate the duration of this sentence's audio (without the delay)
+                if sentence_timestamps:
+                    sentence_duration = (
+                        sentence_timestamps[-1]["end_time"]
+                        - sentence_timestamps[0]["start_time"]
+                    )
+                    cumulative_time_offset += sentence_duration + (
+                        BILINGUAL_AUDIO_PAUSE_MS / 1000.0
+                    )  # Convert ms to seconds
+                    # Increment global word index for next sentence
+                    global_word_index += len(sentence_timestamps)
             else:
                 logger.warning(
                     f"No word timestamps collected for sentence {i + 1} (ID: {sentence_id})"
                 )
+                # Still need to increment global word index even if no timestamps
+                # to maintain consistency with wordIndexToWordMap in the frontend
+                sentence_words = arabic_response.get("words", [])
+                if sentence_words:
+                    global_word_index += len(sentence_words)
 
             # Generate English audio for bilingual version (without timestamps for now)
             english_response = generate_speech(
@@ -1016,7 +1041,7 @@ def create_article_audio(
                     file_options={"content-type": "audio/mpeg"},
                 )
             urls["arabic_url"] = get_storage_url(arabic_article_filename)
-            logger.info(f"Uploaded Arabic article audio: {arabic_article_filename}")
+            # Article audio uploaded successfully
         except Exception as e:
             logger.error(f"Failed to upload Arabic article audio: {e}")
             return None
@@ -1030,9 +1055,7 @@ def create_article_audio(
                     file_options={"content-type": "audio/mpeg"},
                 )
             urls["bilingual_url"] = get_storage_url(bilingual_article_filename)
-            logger.info(
-                f"Uploaded bilingual article audio: {bilingual_article_filename}"
-            )
+            # Bilingual article audio uploaded successfully
         except Exception as e:
             logger.error(f"Failed to upload bilingual article audio: {e}")
             return None
@@ -1084,9 +1107,7 @@ def generate_word_audio_with_google_tts(
     os.makedirs(output_dir, exist_ok=True)
     word_audio_results = []
 
-    logger.info(
-        f"Generating {len(word_data_list)} word audio clips using Google TTS for sentence {sentence_id}"
-    )
+    # Generate word audio clips using Google TTS
 
     for word_data in word_data_list:
         try:
@@ -1100,9 +1121,7 @@ def generate_word_audio_with_google_tts(
             # Create filename for this word
             filename = f"w{sentence_id}_{position:02d}.mp3"
 
-            logger.debug(
-                f"Generating audio for word '{word_form}' (position {position})"
-            )
+            # Generate audio for word
 
             # Generate audio using Google TTS (similar to study words)
             result = generate_arabic_word_audio(word_form, filename)
@@ -1119,10 +1138,7 @@ def generate_word_audio_with_google_tts(
                     }
                 )
 
-                if result.get("cached"):
-                    logger.debug(f"Used cached audio for word '{word_form}'")
-                else:
-                    logger.debug(f"Generated new audio for word '{word_form}'")
+                # Word audio generated successfully
 
             else:
                 logger.warning(
@@ -1135,38 +1151,8 @@ def generate_word_audio_with_google_tts(
             )
             continue
 
-    logger.info(
-        f"Successfully generated {len(word_audio_results)}/{len(word_data_list)} word audio clips for sentence {sentence_id}"
-    )
+    # Word audio generation completed
     return word_audio_results
-
-
-def cut_word_audio_clips(
-    _audio_file_path: str,
-    _word_timestamps: list[dict[str, Any]],
-    _output_dir: str,
-    _word_prefix: str = "word",
-    sentence_id: int | None = None,
-) -> list[dict[str, Any]]:
-    """
-    DEPRECATED: This function is no longer used.
-    Word audio is now generated using Google TTS instead of cutting from ElevenLabs audio.
-
-    Cut individual word audio clips from sentence audio using ffmpeg.
-
-    Args:
-        audio_file_path: Path to the source sentence audio file
-        word_timestamps: List of word timestamp dictionaries with start_time, end_time
-        output_dir: Directory to save word audio clips
-        word_prefix: Prefix for word audio filenames
-
-    Returns:
-        List of dictionaries with word data including audio file paths
-    """
-    logger.warning(
-        "cut_word_audio_clips is deprecated. Use generate_word_audio_with_google_tts instead."
-    )
-    return []
 
 
 def process_word_audio_for_latest_articles() -> bool:
@@ -1174,7 +1160,7 @@ def process_word_audio_for_latest_articles() -> bool:
     Process word audio for the most recently inserted articles.
     This is used in the full pipeline to automatically process word audio after insertion.
     """
-    logger.info("🔍 Finding latest articles for word audio processing")
+    # Find latest articles for word audio processing
 
     try:
         # Query for the latest articles (most recently inserted)
@@ -1201,16 +1187,14 @@ def process_word_audio_for_latest_articles() -> bool:
             logger.warning("No articles found for word audio processing")
             return False
 
-        logger.info(f"📝 Processing word audio for {len(result.data)} latest articles")
+        # Process word audio for latest articles
 
         success_count = 0
         for article in result.data:
             article_id = article["id"]
             article_title = article["title"]
 
-            logger.info(
-                f"🎵 Processing word audio for article {article_id}: {article_title}"
-            )
+            # Process word audio for article
 
             try:
                 import tempfile
@@ -1221,9 +1205,7 @@ def process_word_audio_for_latest_articles() -> bool:
                     )
 
                     if success:
-                        logger.info(
-                            f"✅ Successfully processed word audio for article {article_id}"
-                        )
+                        # Article word audio processing completed
                         success_count += 1
                     else:
                         logger.warning(
@@ -1235,9 +1217,7 @@ def process_word_audio_for_latest_articles() -> bool:
                     f"❌ Error processing word audio for article {article_id}: {e}"
                 )
 
-        logger.info(
-            f"📊 Word audio processing complete: {success_count}/{len(result.data)} articles successful"
-        )
+        # Word audio processing batch completed
         return success_count > 0
 
     except Exception as e:
@@ -1270,7 +1250,7 @@ def process_word_audio_for_sentences(
         word_data_list = sentence.get("word_timestamps", [])
 
         if not word_data_list:
-            logger.debug(f"No word data for sentence {sentence_id}")
+            # No word data for sentence
             continue
 
         logger.info(
@@ -1316,7 +1296,7 @@ def process_word_audio_for_article(article_id: int, output_dir: str) -> bool:
         client = get_supabase_client()
         os.makedirs(output_dir, exist_ok=True)
 
-        logger.info(f"Processing word audio for article {article_id}")
+        # Process word audio for article
 
         # Get article sentences with word timestamps
         sentences_result = (
@@ -1354,7 +1334,7 @@ def process_word_audio_for_article(article_id: int, output_dir: str) -> bool:
                 ]
 
             if not words_result.data:
-                logger.debug(f"No word timestamps found for sentence {sentence_id}")
+                # No word timestamps found for sentence
                 continue
 
             word_data_list = []
@@ -1370,7 +1350,7 @@ def process_word_audio_for_article(article_id: int, output_dir: str) -> bool:
                 )
 
             if not word_data_list:
-                logger.debug(f"No valid word data for sentence {sentence_id}")
+                # No valid word data for sentence
                 continue
 
             # Generate word audio using Google TTS (no need to download sentence audio)
@@ -1389,12 +1369,10 @@ def process_word_audio_for_article(article_id: int, output_dir: str) -> bool:
                 for uploaded_word in uploaded_word_data:
                     audio_url = uploaded_word.get("audio_url")
                     position = uploaded_word.get("position")
-                    logger.debug(
-                        f"Processing uploaded word: position={position}, audio_url={audio_url}"
-                    )
+                    # Process uploaded word
                     if audio_url and position is not None:
                         word_audio_urls.append((position, audio_url))
-                        logger.debug(f"Added word audio URL for update: {audio_url}")
+                        # Added word audio URL for update
                     else:
                         logger.warning(
                             f"Missing audio_url or position for word: position={position}, audio_url={audio_url}"
@@ -1403,9 +1381,7 @@ def process_word_audio_for_article(article_id: int, output_dir: str) -> bool:
                 # Update words in database
                 for position, audio_url in word_audio_urls:
                     try:
-                        logger.debug(
-                            f"Updating word audio URL for sentence {sentence_id}, position {position}: {audio_url}"
-                        )
+                        # Update word audio URL in database
                         result = (
                             client.table("sentence_words")
                             .update({"audio_url": audio_url})
@@ -1416,9 +1392,8 @@ def process_word_audio_for_article(article_id: int, output_dir: str) -> bool:
 
                         # Check if the update actually affected any rows
                         if result.data:
-                            logger.debug(
-                                f"Successfully updated {len(result.data)} word(s) with audio URL"
-                            )
+                            # Successfully updated word with audio URL
+                            pass
                         else:
                             logger.warning(
                                 f"No words were updated for sentence {sentence_id}, position {position}"
@@ -1429,16 +1404,12 @@ def process_word_audio_for_article(article_id: int, output_dir: str) -> bool:
                             f"Failed to update word audio URL for position {position}: {e}"
                         )
 
-                logger.info(
-                    f"Updated {len(word_audio_urls)} word audio URLs for sentence {sentence_id}"
-                )
+                # Updated word audio URLs for sentence
                 processed_sentences += 1
 
             # No cleanup needed for Google TTS approach (no temporary sentence audio files)
 
-        logger.info(
-            f"Successfully processed word audio for {processed_sentences}/{total_sentences} sentences in article {article_id}"
-        )
+            # Word audio processed for article
         return processed_sentences > 0
 
     except Exception as e:

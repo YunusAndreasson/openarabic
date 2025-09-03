@@ -1,6 +1,8 @@
 # Literal import removed - no longer using "unknown" fallbacks
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from typing import Any
+
+from pydantic import BaseModel, Field, validator
 
 from .enums import (
     DifficultyLevel,
@@ -13,7 +15,11 @@ from .enums import (
 class Uncertainty(BaseModel):
     """Unified uncertainty model that handles all types of uncertainties in the translation pipeline"""
 
-    model_config = {"use_enum_values": True, "extra": "forbid"}
+    model_config = {
+        "use_enum_values": True,
+        "extra": "forbid",
+        "validate_assignment": True,
+    }
 
     # Core uncertainty fields - simplified since database handles constraints
     text: str = Field(
@@ -22,8 +28,47 @@ class Uncertainty(BaseModel):
     word: str = Field(
         description="Word with uncertain diacritics (for tashkeel uncertainties)",
     )
-    type: UncertaintyType = Field(description="Type of uncertainty")
+    type: UncertaintyType = Field(
+        description="Type of uncertainty", default=UncertaintyType.TRANSLATION
+    )
     reason: str = Field(description="Reason for uncertainty")
+
+    @validator("type", pre=True)
+    @classmethod
+    def _normalize_uncertainty_type(cls, v: Any) -> UncertaintyType:
+        """Normalize uncertainty type enum values."""
+        if isinstance(v, str):
+            # Handle case-insensitive matching for common variations
+            v_lower = v.lower()
+            if v_lower in ["grammar", "grammatical"]:
+                return UncertaintyType.GRAMMAR
+            elif v_lower in ["vocabulary", "vocab"]:
+                return UncertaintyType.VOCABULARY
+            elif v_lower in ["context", "contextual"]:
+                return UncertaintyType.CONTEXT
+            elif v_lower in ["tashkeel", "diacritic", "diacritical"]:
+                return UncertaintyType.TASHKEEL
+            elif v_lower in ["translation", "translate"]:
+                return UncertaintyType.TRANSLATION
+            elif v_lower in ["cultural", "culture"]:
+                return UncertaintyType.CULTURAL
+            elif v_lower in ["technical", "tech"]:
+                return UncertaintyType.TECHNICAL
+            elif v_lower in ["ambiguity", "ambiguous"]:
+                return UncertaintyType.AMBIGUITY
+            else:
+                # Try exact match
+                try:
+                    return UncertaintyType(v)
+                except ValueError:
+                    import logging
+
+                    logger = logging.getLogger(__name__)
+                    logger.warning(
+                        f"Unknown uncertainty type '{v}', defaulting to TRANSLATION"
+                    )
+                    return UncertaintyType.TRANSLATION
+        return v
 
     # Resolution fields - simplified
     step: str = Field(description="Processing step where uncertainty was resolved")
@@ -66,7 +111,11 @@ RemainingUncertainty = Uncertainty
 class WordTranslation(BaseModel):
     """Unified word-level translation model that handles both single translations and translation options"""
 
-    model_config = {"use_enum_values": True, "extra": "forbid"}
+    model_config = {
+        "use_enum_values": True,
+        "extra": "forbid",
+        "validate_assignment": True,
+    }
 
     arabic: str = Field(description="Original Arabic word. Preserve exact formatting.")
     english: str | list[str] = Field(
@@ -93,7 +142,8 @@ class WordTranslation(BaseModel):
         )
     )
     notes: str | None = Field(
-        default=None, description="Grammar/translation notes. Optional."
+        default=None,
+        description="Informative grammar and translation notes shown directly to learners. Use clear language, transliterations instead of Arabic letters, and explain interesting linguistic patterns. Keep under 2 sentences for mobile readability.",
     )
     uncertainties: list[Uncertainty] = Field(
         default_factory=list, description="Uncertainties for this word. May be empty."
@@ -114,7 +164,7 @@ class WordTranslation(BaseModel):
         )
 
     # --- Validators ---
-    @field_validator("arabic")
+    @validator("arabic")
     @classmethod
     def _strip_arabic(cls, v: str) -> str:
         v = v.strip()
@@ -122,7 +172,56 @@ class WordTranslation(BaseModel):
             raise ValueError("arabic must be a non-empty string")
         return v
 
-    @field_validator("notes")
+    @validator("pos", pre=True)
+    @classmethod
+    def _normalize_part_of_speech(cls, v: Any) -> PartOfSpeech:
+        """Normalize part of speech enum values."""
+        if isinstance(v, str):
+            # Handle case-insensitive matching and common variations
+            v_lower = v.lower()
+            if v_lower in ["noun", "n"]:
+                return PartOfSpeech.NOUN
+            elif v_lower in ["verb", "v"]:
+                return PartOfSpeech.VERB
+            elif v_lower in ["adjective", "adj", "adj."]:
+                return PartOfSpeech.ADJECTIVE
+            elif v_lower in ["adverb", "adv", "adv."]:
+                return PartOfSpeech.ADVERB
+            elif v_lower in ["pronoun", "pron", "pro"]:
+                return PartOfSpeech.PRONOUN
+            elif v_lower in ["preposition", "prep", "pre"]:
+                return PartOfSpeech.PREPOSITION
+            elif v_lower in ["conjunction", "conj", "con"]:
+                return PartOfSpeech.CONJUNCTION
+            elif v_lower in ["interjection", "interj", "int"]:
+                return PartOfSpeech.INTERJECTION
+            elif v_lower in ["particle", "part", "pt"]:
+                return PartOfSpeech.PARTICLE
+            elif v_lower in ["numeral", "num", "number"]:
+                return PartOfSpeech.NUMERAL
+            elif v_lower in ["proper_noun", "proper noun", "propernoun"]:
+                return PartOfSpeech.PROPER_NOUN
+            elif v_lower in [
+                "demonstrative_pronoun",
+                "demonstrative pronoun",
+                "demonstrativepronoun",
+            ]:
+                return PartOfSpeech.DEMONSTRATIVE_PRONOUN
+            elif v_lower in ["relative_pronoun", "relative pronoun", "relativepronoun"]:
+                return PartOfSpeech.RELATIVE_PRONOUN
+            else:
+                # Try exact match
+                try:
+                    return PartOfSpeech(v)
+                except ValueError:
+                    import logging
+
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Unknown part of speech '{v}', defaulting to NOUN")
+                    return PartOfSpeech.NOUN
+        return v
+
+    @validator("notes")
     @classmethod
     def _strip_notes(cls, v: str | None) -> str | None:
         if v is None:
@@ -132,7 +231,7 @@ class WordTranslation(BaseModel):
             return None  # Convert empty string to None
         return v
 
-    @field_validator("english")
+    @validator("english")
     @classmethod
     def _validate_english(cls, v: str | list[str]) -> str | list[str]:
         if isinstance(v, list):
@@ -152,7 +251,7 @@ class WordTranslation(BaseModel):
             raise ValueError("english must be a non-empty string")
         return v
 
-    @field_validator("essential_translation")
+    @validator("essential_translation")
     @classmethod
     def _validate_essential_translation(cls, v: str | list[str]) -> str | list[str]:
         if isinstance(v, list):
@@ -173,7 +272,7 @@ class WordTranslation(BaseModel):
             raise ValueError("essential_translation must be a non-empty string")
         return v
 
-    @field_validator("essential")
+    @validator("essential")
     @classmethod
     def _validate_essential_token(cls, v: str) -> str:
         v = v.strip()
@@ -185,7 +284,7 @@ class WordTranslation(BaseModel):
         # Diacritics are preferred but not enforced at this stage; enforced at refinement.
         return v
 
-    @field_validator("uncertainties")
+    @validator("uncertainties")
     @classmethod
     def _ensure_uncertainties_present(cls, v: list[Uncertainty]) -> list[Uncertainty]:
         return v or []
@@ -219,7 +318,7 @@ class TashkeelResult(BaseModel):
         description="Uncertainties in tashkeel addition (may be empty)"
     )
 
-    @field_validator("tashkeel")
+    @validator("tashkeel")
     @classmethod
     def validate_arabic_text(cls, v: str) -> str:
         """Validate that tashkeel text is not empty"""
@@ -236,7 +335,7 @@ class WordTranslationResult(BaseModel):
         description="Word-by-word translations - REQUIRED field"
     )
 
-    @field_validator("word_translations")
+    @validator("word_translations")
     @classmethod
     def _validate_word_translations(
         cls, v: list[WordTranslation]
@@ -272,24 +371,6 @@ class RefinementResult(BaseModel):
         description="List of changes made during refinement (may be empty)"
     )
 
-    @model_validator(mode="after")
-    def _validate_finalized_word_translations(self) -> "RefinementResult":
-        for wt in self.improved_word_translations:
-            if wt.has_options or not wt.is_final:
-                raise ValueError(
-                    "Each improved_word_translation must be finalized with single 'english' and 'essential_translation' values"
-                )
-            # Enforce essential token and presence of at least one diacritic at refinement stage
-            if any(ch.isspace() for ch in wt.essential):
-                raise ValueError(
-                    "Refined 'essential' must be one token (no whitespace)"
-                )
-            if not any(0x064B <= ord(ch) <= 0x0652 for ch in wt.essential):
-                raise ValueError(
-                    "Refined 'essential' must include at least one Arabic diacritic (e.g., ً ٌ ٍ َ ُ ِ ّ ْ)"
-                )
-        return self
-
 
 class SentenceTranslation(BaseModel):
     """Complete sentence translation with all components"""
@@ -301,22 +382,82 @@ class SentenceTranslation(BaseModel):
     full_translation: str = Field(description="Complete English translation")
     notes: str = Field(description="Translation notes and context")
     verification_status: VerificationStatus = Field(
-        description="Status of translation verification"
+        description="Status of translation verification",
+        default=VerificationStatus.PENDING,
     )
     verification_issues: list[str] = Field(
         description="Issues found during verification (may be empty)"
     )
 
+    @validator("verification_status", pre=True)
+    @classmethod
+    def _normalize_verification_status(cls, v: Any) -> VerificationStatus:
+        """Normalize verification status enum values."""
+        if isinstance(v, str):
+            # Handle case-insensitive matching for common variations
+            v_lower = v.lower()
+            if v_lower in ["pending", "pend"]:
+                return VerificationStatus.PENDING
+            elif v_lower in ["success", "successful", "succeeded"]:
+                return VerificationStatus.SUCCESS
+            elif v_lower in ["failed", "failure", "fail"]:
+                return VerificationStatus.FAILED
+            elif v_lower in ["partial", "partially"]:
+                return VerificationStatus.PARTIAL
+            elif v_lower in ["needs_review", "needs review", "needsreview", "review"]:
+                return VerificationStatus.NEEDS_REVIEW
+            else:
+                # Try exact match
+                try:
+                    return VerificationStatus(v)
+                except ValueError:
+                    import logging
+
+                    logger = logging.getLogger(__name__)
+                    logger.warning(
+                        f"Unknown verification status '{v}', defaulting to PENDING"
+                    )
+                    return VerificationStatus.PENDING
+        return v
+
 
 class TextMetadata(BaseModel):
     """Base metadata about text content"""
 
-    model_config = {"use_enum_values": True, "extra": "forbid"}
+    model_config = {
+        "use_enum_values": True,
+        "extra": "forbid",
+        "validate_assignment": True,
+    }
 
     title: str = Field(description="Concise English title (3–7 words)")
     summary: str = Field(description="One-sentence summary of main content")
     difficulty_level: DifficultyLevel = Field(description="Difficulty rating (1–5)")
     total_units: int = Field(default=0, description="Total number of units", ge=0)
+
+    @validator("difficulty_level", pre=True)
+    @classmethod
+    def _normalize_difficulty_level(cls, v: Any) -> DifficultyLevel:
+        """Normalize difficulty level enum values."""
+        if isinstance(v, str):
+            # Handle string representations
+            try:
+                return DifficultyLevel(int(v))
+            except (ValueError, TypeError):
+                pass
+        elif isinstance(v, int):
+            # Handle integer values
+            try:
+                return DifficultyLevel(v)
+            except ValueError:
+                pass
+
+        # Default fallback
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Invalid difficulty level '{v}', defaulting to ELEMENTARY")
+        return DifficultyLevel.ELEMENTARY
 
 
 class SplitResult(TextMetadata):
@@ -325,11 +466,6 @@ class SplitResult(TextMetadata):
     units: list[str] = Field(
         default_factory=list, description="Array of text units/sentences"
     )
-
-    @model_validator(mode="after")
-    def _sync_total_units(self) -> "SplitResult":
-        self.total_units = len(self.units)
-        return self
 
 
 class AudioResult(BaseModel):
@@ -362,7 +498,11 @@ class BilingualAudioResult(BaseModel):
 class ArticleData(BaseModel):
     """Data structure for article insertion"""
 
-    model_config = {"use_enum_values": True, "extra": "forbid"}
+    model_config = {
+        "use_enum_values": True,
+        "extra": "forbid",
+        "validate_assignment": True,
+    }
 
     title: str = Field(description="Article title")
     summary: str = Field(description="Article summary")

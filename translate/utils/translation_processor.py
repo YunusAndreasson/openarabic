@@ -1,5 +1,6 @@
 from typing import Any
 
+from data.enums import VerificationStatus
 from data.models import (
     RefinementResult,
     SentenceTranslation,
@@ -367,7 +368,7 @@ def create_sentence_translation(
         word_by_word=final_word_translations,
         full_translation=refined_translation,
         notes="\n".join(notes) if notes else None,
-        verification_status="success"
+        verification_status=VerificationStatus.SUCCESS
         if (hasattr(refinement, "changes_made") and refinement.changes_made)
         or (hasattr(refinement, "get") and refinement.get("changes_made"))
         else "success",
@@ -381,7 +382,7 @@ def create_sentence_translation(
 
     validation_issues = validate_final_translation(sentence_translation)
     if validation_issues:
-        sentence_translation.verification_status = "needs_review"
+        sentence_translation.verification_status = VerificationStatus.NEEDS_REVIEW
         if sentence_translation.verification_issues:
             sentence_translation.verification_issues.extend(validation_issues)
         else:

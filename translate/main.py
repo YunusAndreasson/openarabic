@@ -3,6 +3,7 @@ import argparse
 import logging
 import os
 import sys
+import time
 from pathlib import Path
 
 # Add current directory to path for testing
@@ -61,7 +62,6 @@ def find_input_files_in_inbox() -> list[tuple[str, str, str]]:
             continue
 
         if author_folder not in AUTHOR_FOLDER_MAPPING:
-            logger.debug(f"Skipping unknown author folder: {author_folder}")
             continue
 
         author_name = AUTHOR_FOLDER_MAPPING[author_folder]
@@ -120,6 +120,30 @@ def run_insert_only() -> None:
         description="database insertion",
         cwd=os.path.dirname(os.path.abspath(__file__)),
     )
+
+
+def run_split_file_for_all(input_files):
+    """Process all split files without individual logging."""
+    for input_file, author_folder, author_name in input_files:
+        run_split_file(input_file, author_folder)
+
+
+def run_translation_for_all(split_files, batch_size):
+    """Process all translation files without individual logging."""
+    for split_file, author_number, author_name in split_files:
+        # Create translation output filename
+        split_path = Path(split_file)
+        # Remove the author prefix and _split suffix, then add author prefix and _translated suffix
+        base_name = split_path.stem.replace("_split", "")
+        if base_name.startswith(f"{author_number}_"):
+            base_name = base_name[len(f"{author_number}_") :]
+        translate_filename = f"{author_number}_{base_name}_translated.json"
+        output_file = os.path.join(TRANSLATE_DIR, translate_filename)
+
+        # Ensure translate directory exists
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+        run_translation(split_file, output_file, batch_size)
 
 
 def main() -> None:
@@ -218,12 +242,16 @@ Examples:
     if args.batch_size < 1 or args.batch_size > 15:
         raise ValueError(f"Batch size must be between 1 and 15, got: {args.batch_size}")
 
+    # Track total pipeline time
+    total_start_time = time.time()
+
     # Start pipeline
     # Pipeline start is now handled by progress bars
 
     # Only run split phase if specifically requested
     if args.split:
         logger.info("📄 PHASE 1: SPLIT - Splitting input files into sentences")
+        start_time = time.time()
 
         input_files = find_input_files_in_inbox()
         if not input_files:
@@ -232,17 +260,15 @@ Examples:
                 f"No input files found in inbox directory: {INBOX_DIR}"
             )
 
-        logger.info(f"📁 Found {len(input_files)} files to process")
+        run_split_file_for_all(input_files)
 
-        for i, (input_file, author_folder, author_name) in enumerate(input_files, 1):
-            logger.info(f"   {i}/{len(input_files)} - Processing {author_name}")
-            run_split_file(input_file, author_folder)
-
-        logger.info("✅ Split phase completed successfully")
+        elapsed = time.time() - start_time
+        logger.info(f"✅ Split phase completed in {elapsed:.1f}s")
 
     # Only run translate phase if specifically requested
     if args.translate:
         logger.info("🌍 PHASE 2: TRANSLATE - Translating sentences to English")
+        start_time = time.time()
 
         # Find all split files in the split directory
         split_files = []
@@ -259,32 +285,17 @@ Examples:
             logger.error(f"❌ No split files found in: {SPLIT_DIR}")
             raise FileNotFoundError(f"No split files found in: {SPLIT_DIR}")
 
-        logger.info(f"📄 Found {len(split_files)} split files to translate")
+        run_translation_for_all(split_files, args.batch_size)
 
-        for i, (split_file, author_number, author_name) in enumerate(split_files, 1):
-            logger.info(f"   {i}/{len(split_files)} - Translating {author_name}")
-
-            # Create translation output filename
-            split_path = Path(split_file)
-            # Remove the author prefix and _split suffix, then add author prefix and _translated suffix
-            base_name = split_path.stem.replace("_split", "")
-            if base_name.startswith(f"{author_number}_"):
-                base_name = base_name[len(f"{author_number}_") :]
-            translate_filename = f"{author_number}_{base_name}_translated.json"
-            output_file = os.path.join(TRANSLATE_DIR, translate_filename)
-
-            # Ensure translate directory exists
-            os.makedirs(os.path.dirname(output_file), exist_ok=True)
-
-            run_translation(split_file, output_file, args.batch_size)
-
-        logger.info("✅ Translate phase completed successfully")
+        elapsed = time.time() - start_time
+        logger.info(f"✅ Translate phase completed in {elapsed:.1f}s")
 
     # Only run insert phase if specifically requested
     if args.insert:
         logger.info(
             "💾 PHASE 3: INSERT - Processing through ElevenLabs and inserting into database"
         )
+        start_time = time.time()
 
         # Delegate insertion of all files to the insert script in a single run.
         # Note: The insert script discovers and processes all files in TRANSLATE_DIR
@@ -295,13 +306,15 @@ Examples:
             cwd=os.path.dirname(os.path.abspath(__file__)),
         )
 
-        logger.info("✅ Insert phase completed successfully")
+        elapsed = time.time() - start_time
+        logger.info(f"✅ Insert phase completed in {elapsed:.1f}s")
 
         # Handle word audio processing for full pipeline
         if args.full or args.auto:
             logger.info(
                 "🎵 PHASE 4: WORD AUDIO - Cutting and uploading individual word audio clips"
             )
+            start_time = time.time()
 
             # Import and run word audio processing for the latest inserted articles
             try:
@@ -309,10 +322,13 @@ Examples:
 
                 # Process word audio for articles inserted in this session
                 success = process_word_audio_for_latest_articles()
+                elapsed = time.time() - start_time
                 if success:
-                    logger.info("✅ Word audio processing completed successfully")
+                    logger.info(f"✅ Word audio processing completed in {elapsed:.1f}s")
                 else:
-                    logger.warning("⚠️ Word audio processing completed with some issues")
+                    logger.warning(
+                        f"⚠️ Word audio processing completed with issues in {elapsed:.1f}s"
+                    )
 
             except ImportError as e:
                 logger.warning(f"⚠️ Word audio processing not available: {e}")
@@ -324,6 +340,7 @@ Examples:
         logger.info(
             f"🎵 WORD AUDIO - Processing word-level audio for article {args.process_word_audio}"
         )
+        start_time = time.time()
 
         # Import word audio processing function
         try:
@@ -337,10 +354,10 @@ Examples:
                     article_id=args.process_word_audio, output_dir=temp_dir
                 )
 
+                elapsed = time.time() - start_time
                 if success:
-                    logger.info(
-                        f"✅ Successfully processed word audio for article {args.process_word_audio}"
-                    )
+                    # Word audio processing completed successfully
+                    pass
                 else:
                     logger.error(
                         f"❌ Failed to process word audio for article {args.process_word_audio}"
@@ -352,11 +369,14 @@ Examples:
             logger.error(f"❌ Error processing word audio: {e}")
 
     # Final pipeline completion message
+    total_elapsed = time.time() - total_start_time
     if args.full or args.auto:
         logger.info("🎉 FULL PIPELINE COMPLETED SUCCESSFULLY!")
         logger.info("   📄 Split → 🌍 Translate → 💾 Insert → 🎵 Word Audio")
+        logger.info(f"⏱️  Total pipeline time: {total_elapsed:.1f}s")
     elif any([args.split, args.translate, args.insert, args.process_word_audio]):
         logger.info("✅ Pipeline phases completed successfully")
+        logger.info(f"⏱️  Total time: {total_elapsed:.1f}s")
 
     # Report token usage statistics
     if token_tracker.api_calls > 0:

@@ -20,13 +20,13 @@ class GoogleTTSService:
         creds_path = credentials_path or os.getenv("GOOGLE_CLOUD_CREDENTIALS_PATH")
         if creds_path and os.path.exists(creds_path):
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
-            logger.debug(f"Set GOOGLE_APPLICATION_CREDENTIALS to: {creds_path}")
+            # Set Google Cloud credentials
         else:
-            logger.debug("Using default Google Cloud credentials")
+            # Using default Google Cloud credentials
 
         try:
             self.client = texttospeech.TextToSpeechClient()
-            logger.debug("Google Cloud TTS client initialized successfully")
+            # Google Cloud TTS client initialized
         except Exception as e:
             raise AudioGenerationError(
                 f"Failed to initialize Google Cloud TTS client: {e}"

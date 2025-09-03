@@ -273,9 +273,113 @@ def _validate_uncertainties(uncertainties: list[Any]) -> list[Uncertainty]:
             validated.append(item)
         else:
             # Skip invalid items but log for debugging
-            logger.debug(f"Skipping invalid uncertainty item: {type(item)} - {item}")
+            # Skip invalid uncertainty items silently
             continue
     return validated
+
+
+def _sanitize_refinement_data(item: dict[str, Any]) -> dict[str, Any]:
+    """Sanitize and validate refinement data before creating RefinementResult objects."""
+    sanitized = {}
+
+    # Sanitize basic fields
+    sanitized["improved_tashkeel"] = (
+        item.get("improved_tashkeel", "").strip()
+        if item.get("improved_tashkeel")
+        else ""
+    )
+    sanitized["improved_translation"] = (
+        item.get("improved_translation", "").strip()
+        if item.get("improved_translation")
+        else ""
+    )
+
+    # Sanitize word translations
+    word_translations = item.get("improved_word_translations", [])
+    sanitized_word_translations = []
+
+    if isinstance(word_translations, list):
+        for wt_data in word_translations:
+            try:
+                if isinstance(wt_data, dict):
+                    # Sanitize word translation data
+                    sanitized_wt = _sanitize_word_translation_data(wt_data)
+                    sanitized_word_translations.append(sanitized_wt)
+                elif isinstance(wt_data, WordTranslation):
+                    sanitized_word_translations.append(wt_data)
+            except Exception:
+                # Skip invalid word translations
+                continue
+
+    sanitized["improved_word_translations"] = sanitized_word_translations
+
+    # Sanitize uncertainties
+    sanitized["resolved_uncertainties"] = _validate_uncertainties(
+        item.get("resolved_uncertainties", [])
+    )
+    sanitized["remaining_uncertainties"] = _validate_uncertainties(
+        item.get("remaining_uncertainties", [])
+    )
+
+    # Sanitize changes made
+    changes_made = item.get("changes_made", [])
+    if isinstance(changes_made, list):
+        sanitized["changes_made"] = [
+            str(change).strip() for change in changes_made if change
+        ]
+    else:
+        sanitized["changes_made"] = []
+
+    return sanitized
+
+
+def _sanitize_word_translation_data(wt_data: dict[str, Any]) -> WordTranslation:
+    """Sanitize individual word translation data."""
+    from data.enums import PartOfSpeech
+
+    # Sanitize basic fields
+    arabic = wt_data.get("arabic", "").strip()
+    english = wt_data.get("english", "")
+    pos_value = wt_data.get("pos", "noun")
+    essential = wt_data.get("essential", "").strip()
+    essential_translation = wt_data.get("essential_translation", "")
+    notes = wt_data.get("notes", "").strip() if wt_data.get("notes") else None
+
+    # Ensure english and essential_translation are single strings (not lists)
+    if isinstance(english, list):
+        english = english[0] if english else ""
+    if isinstance(essential_translation, list):
+        essential_translation = (
+            essential_translation[0] if essential_translation else ""
+        )
+
+    # Validate and sanitize essential field
+    if not essential and arabic:
+        # If essential is missing but arabic exists, try to create a basic essential form
+        # This is a fallback for corrupted data
+        essential = arabic.strip()
+
+    # Ensure pos is valid
+    try:
+        pos = PartOfSpeech(pos_value)
+    except ValueError:
+        pos = PartOfSpeech.NOUN
+
+    # Sanitize uncertainties
+    uncertainties = _validate_uncertainties(wt_data.get("uncertainties", []))
+
+    # Create WordTranslation object
+    return WordTranslation(
+        arabic=arabic,
+        english=str(english).strip() if english else "",
+        pos=pos,
+        essential=essential,
+        essential_translation=str(essential_translation).strip()
+        if essential_translation
+        else "",
+        notes=notes,
+        uncertainties=uncertainties,
+    )
 
 
 def batch_translate_full_sentences(
@@ -685,15 +789,10 @@ def batch_translate_words(
                                     "proper_noun",
                                 ]:
                                     # For these word types, identical fields are correct
-                                    logger.debug(
-                                        f"Word '{word_option.arabic}' is {pos} - identical essential/arabic fields are correct"
-                                    )
+                                    pass
                                 elif pos in ["noun", "adjective"]:
                                     # For nouns/adjectives, check if they're already in root form
-                                    # Words like "مُتَضَمَّنٌ" (contained) are already root forms
-                                    logger.debug(
-                                        f"Word '{word_option.arabic}' is {pos} - identical essential/arabic fields may be correct for root forms"
-                                    )
+                                    pass
                                 elif pos == "verb":
                                     # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
                                     # No warning needed - this is acceptable
@@ -890,33 +989,54 @@ def batch_refine_translations(
         if "refinements" in response and isinstance(response["refinements"], list):
             results: RefinementResults = []
             for item in response["refinements"]:
-                if isinstance(item, dict):
-                    results.append(
-                        RefinementResult(
-                            improved_tashkeel=item.get("improved_tashkeel", ""),
-                            improved_translation=item.get("improved_translation", ""),
-                            improved_word_translations=item.get(
-                                "improved_word_translations", []
-                            ),
-                            resolved_uncertainties=item.get(
-                                "resolved_uncertainties", []
-                            ),
-                            remaining_uncertainties=item.get(
-                                "remaining_uncertainties", []
-                            ),
-                            changes_made=item.get("changes_made", []),
+                try:
+                    if isinstance(item, dict):
+                        # Sanitize and validate the data before creating RefinementResult
+                        sanitized_item = _sanitize_refinement_data(item)
+                        results.append(
+                            RefinementResult(
+                                improved_tashkeel=sanitized_item.get(
+                                    "improved_tashkeel", ""
+                                ),
+                                improved_translation=sanitized_item.get(
+                                    "improved_translation", ""
+                                ),
+                                improved_word_translations=sanitized_item.get(
+                                    "improved_word_translations", []
+                                ),
+                                resolved_uncertainties=sanitized_item.get(
+                                    "resolved_uncertainties", []
+                                ),
+                                remaining_uncertainties=sanitized_item.get(
+                                    "remaining_uncertainties", []
+                                ),
+                                changes_made=sanitized_item.get("changes_made", []),
+                            )
                         )
-                    )
-                else:
-                    # Create empty refinement result if response is malformed
+                    else:
+                        # Skip non-dict items in response
+                        # Create empty refinement result if response is malformed
+                        results.append(
+                            RefinementResult(
+                                improved_tashkeel="",
+                                improved_translation="",
+                                improved_word_translations=[],
+                                resolved_uncertainties=[],
+                                remaining_uncertainties=[],
+                                changes_made=["Response format error"],
+                            )
+                        )
+                except Exception as e:
+                    logger.error(f"Error creating RefinementResult from item: {e}")
+                    # Create fallback result with error information
                     results.append(
                         RefinementResult(
                             improved_tashkeel="",
-                            improved_translation="",
+                            improved_translation="Error processing refinement",
                             improved_word_translations=[],
                             resolved_uncertainties=[],
                             remaining_uncertainties=[],
-                            changes_made=[],
+                            changes_made=[f"Processing error: {str(e)}"],
                         )
                     )
             return results
@@ -1003,14 +1123,10 @@ def batch_translate_root_words_with_google_cloud(
                     "proper_noun",
                 ]:
                     # For these word types, identical fields are correct
-                    logger.debug(
-                        f"Google Cloud translation: '{original_text}' is {pos} - identical essential/arabic fields are correct"
-                    )
+                    pass
                 elif pos in ["noun", "adjective"]:
                     # For nouns/adjectives, check if they're already in root form
-                    logger.debug(
-                        f"Google Cloud translation: '{original_text}' is {pos} - identical essential/arabic fields may be correct for root forms"
-                    )
+                    pass
                 elif pos == "verb":
                     # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
                     # No warning needed - this is acceptable

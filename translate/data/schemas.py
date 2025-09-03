@@ -154,7 +154,7 @@ Input text:
 """
 
 WORD_BY_WORD_USER_PROMPT = (
-    """Translate Arabic words individually.
+    """Translate Arabic words individually with informative, user-friendly explanations.
 
 Guidelines:
 - Preserve exact Arabic formatting in arabic
@@ -194,6 +194,56 @@ Guidelines:
 
 **IMPORTANT**: The essential field must preserve diacritics (fatha, kasra, damma, shadda) while only removing grammatical affixes (prefixes, suffixes, case endings).
 
+**📝 GRAMMAR NOTES - USER-FRIENDLY EXPLANATIONS:**
+The `notes` field will be shown directly to users, so make them informative and interesting. Follow these guidelines:
+
+**✍️ WRITING STYLE:**
+- Use clear, helpful language that explains linguistic concepts
+- Avoid advanced grammatical terms - keep it accessible
+- Make explanations informative and educational
+- Use relevant examples when they clarify the concept
+
+**🔤 NEVER USE ARABIC LETTERS:**
+- Use transliterations like "-hum" (for them), "-ha" (for her), "-un" (for he/it)
+- Example: Instead of writing "هُمْ", write "-hum" (meaning them)
+
+**📋 WHEN TO ADD INFORMATIVE NOTES:**
+
+1. **Two-Word Translations:** When one Arabic word becomes two English words
+   - "This single Arabic word becomes two English words: 'for him'"
+   - "Arabic combines two concepts in one word: 'in it'"
+
+2. **Interesting Context:** When there's notable grammatical background
+   - "This word uses a special honorific form reserved for prophets"
+   - "This ending indicates respect for Allah"
+
+3. **Different Translation:** When the word is translated differently in this context
+   - "Normally means 'house', but here refers to 'family' - Arabic's poetic usage"
+   - "Usually 'to write', but in this religious context means 'to decree'"
+
+4. **Pronoun Attachments:** When pronouns attach to words
+   - "The '-hum' ending indicates 'their' - Arabic often attaches pronouns to words"
+   - "The '-ha' shows this belongs to 'her' - similar to adding 's in English"
+
+**💡 EXAMPLES OF GOOD NOTES:**
+❌ POOR: "Third person masculine plural pronoun suffix"
+✅ BETTER: "The '-hum' ending indicates 'their' - Arabic attaches pronouns to words"
+
+❌ POOR: "Preposition + pronoun combination"
+✅ BETTER: "Arabic combines two concepts in one word: 'in it'"
+
+❌ POOR: "Honorific form for prophets"
+✅ BETTER: "This special form is reserved for prophets - shows ultimate respect"
+
+❌ POOR: "Context-dependent translation"
+✅ BETTER: "Normally means 'to send', but here means 'to reveal' - religious context changes the meaning"
+
+**📏 FORMATTING GUIDELINES:**
+- Keep explanations clear and concise
+- Compare to English patterns when helpful
+- Limit to 1-2 sentences for mobile readability
+- Focus on educational value over entertainment
+
 Return valid JSON matching the WordTranslationResult model schema. Ensure the `english` string uses explicit multi‑word phrasing whenever morphology encodes multiple concepts (e.g., preposition + pronoun).
 
 Input for word‑by‑word translation:
@@ -223,6 +273,14 @@ Goals:
 - ✅ Ensure functional words are present; do not omit prepositions/pronouns encoded in Arabic tokens.
 - ✅ **CRITICAL**: Select only ONE final English translation from the alternatives provided in the previous phase
 - ✅ Remove all option arrays; each word must have a single, definitive English translation and no synonyms such as "book/scripture"
+
+**📝 GRAMMAR NOTES REFINEMENT:**
+- ✅ **PRESERVE INFORMATIVE STYLE**: Keep grammar notes clear and educational
+- ✅ **MAINTAIN USER-FOCUS**: Ensure notes are helpful and accessible for learners
+- ✅ **KEEP TRANSLITERATIONS**: Never use Arabic letters, only transliterations like "-hum", "-ha"
+- ✅ **PRESERVE CLARITY**: Keep explanations clear and professional
+- ✅ **MAINTAIN LENGTH**: Keep notes under 2 sentences for mobile reading
+- ✅ **ENHANCE IF NEEDED**: If a note is unclear, make it more informative during refinement
 
 Return valid JSON matching the RefinementResult model schema. Each improved_word_translation must be finalized (no option arrays).
 
