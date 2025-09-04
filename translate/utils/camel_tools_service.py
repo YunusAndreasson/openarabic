@@ -159,10 +159,8 @@ def generate_tashkeel_suggestions_with_context(
     suggestions = service.generate_tashkeel_suggestions_batch(words)
 
     # If context is available, enhance suggestions with contextual information
-    if context and context.strip():
-        # Enhancing tashkeel suggestions with context
-        # Context can be used to improve suggestions, but camel-tools doesn't directly support it
-        # The context will be provided to OpenAI for final refinement
+    # Context can be used to improve suggestions, but camel-tools doesn't directly support it
+    # The context will be provided to OpenAI for final refinement
 
     return suggestions
 

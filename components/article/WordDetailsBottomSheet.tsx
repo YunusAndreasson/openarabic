@@ -15,6 +15,7 @@ import type { AudioStatus } from '@/services/simpleAudioService';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
+import { handleError } from '@/utils/errorHandling';
 import { generateAudioUrl } from '@/utils/imageUtils';
 
 export interface WordDetailsBottomSheetProps {
@@ -88,7 +89,7 @@ const WordDetailsBottomSheetComponent = ({
 
       await simpleAudioService.play(track, { immediateStatus: true });
     } catch (error) {
-      console.warn('Word audio playback failed:', error);
+      handleError(error as Error, { toastMessage: 'Word audio playback failed' });
     }
   }, [word]);
 

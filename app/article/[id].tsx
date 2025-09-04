@@ -6,7 +6,6 @@ import type { JSX } from 'react';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
-  Dimensions,
   InteractionManager,
   View,
   type LayoutRectangle,
@@ -105,6 +104,9 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Track current highlighted word for audio synchronization
   const [currentHighlightedWord, setCurrentHighlightedWord] = useState<SentenceWord | null>(null);
 
+  // Position smoothing to handle timing variations
+  const lastStablePosition = useRef<number>(0);
+
   // Create mapping from global word index to actual word
   const wordIndexToWordMap = useMemo(() => {
     const wordMap = new Map<number, SentenceWord>();
@@ -113,8 +115,12 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
     let globalWordIndex = 0;
 
-    for (const sentence of sortedSentences) {
+    for (let sentenceIdx = 0; sentenceIdx < sortedSentences.length; sentenceIdx++) {
+      const sentence = sortedSentences[sentenceIdx];
+      if (!sentence) continue;
+
       const sentenceWords = sentenceWordsMap.get(sentence.id);
+
       if (sentenceWords && sentenceWords.length > 0) {
         for (const word of sentenceWords) {
           wordMap.set(globalWordIndex, word);
@@ -356,7 +362,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     };
   }, []);
 
-  // Update highlighted word based on audio position
+  // Update highlighted word based on audio position with enhanced sync logic
   useEffect(() => {
     if (!hasTimestamps || !isPlaying || !currentArticle || currentArticle.id !== articleId) {
       setCurrentHighlightedWord(null);
@@ -370,18 +376,67 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
     const wordIndex = getCurrentWordIndex(position);
 
-    // Handle the case where we're beyond word timestamps - this can happen if timestamps are incomplete
+    // Position smoothing: Filter out major jumps but allow normal progression
+    const positionDiff = Math.abs(position - lastStablePosition.current);
+    lastStablePosition.current = position;
+
+    // Skip updates if position jumped more than 3 seconds (likely a seek or buffering issue)
+    if (positionDiff > 3.0) {
+      return;
+    }
+
+    // Enhanced sync: Handle common desync scenarios including timestamp gaps
+    let finalWordIndex = wordIndex;
+
+    // Scenario 1: Audio position is ahead of timestamps (common after buffering or gaps)
     if (wordIndex === -1 && position > 0) {
       const lastWord = wordTimestamps[wordTimestamps.length - 1];
+
       if (lastWord && position > lastWord.end_time) {
-        // Let the useWordTimestamps hook handle incomplete timestamps
-        // It will return appropriate word indices or -1 based on time beyond
+        // If we're significantly beyond the last timestamp, timestamps might be incomplete
+        if (position - lastWord.end_time > 5) {
+          return; // Let useWordTimestamps handle incomplete timestamps
+        }
+        return; // Let useWordTimestamps handle incomplete timestamps
+      }
+
+      // Scenario 2: Audio jumped ahead due to buffering, find closest word
+      const closestWord = wordTimestamps.reduce((closest, current) => {
+        const currentDiff = Math.min(
+          Math.abs(position - current.start_time),
+          Math.abs(position - current.end_time)
+        );
+        const closestDiff = Math.min(
+          Math.abs(position - closest.start_time),
+          Math.abs(position - closest.end_time)
+        );
+        return currentDiff < closestDiff ? current : closest;
+      });
+
+      // Enhanced recovery: Handle timestamp gaps between sentences
+      const diff = Math.min(
+        Math.abs(position - closestWord.start_time),
+        Math.abs(position - closestWord.end_time)
+      );
+
+      // More aggressive recovery for timestamp gaps (up to 3 seconds)
+      if (diff <= 3.0) {
+        finalWordIndex = closestWord.word_index;
+      }
+    }
+
+    // Scenario 3: Audio position is before first word (early playback)
+    if (finalWordIndex === -1 && position >= 0) {
+      const firstWord = wordTimestamps[0];
+      if (firstWord && position < firstWord.start_time && position >= firstWord.start_time - 2) {
+        // If we're within 2 seconds of the first word, don't highlight anything yet
         return;
       }
     }
 
     // Get the actual word object and only update if it has changed
-    const newHighlightedWord = wordIndex !== -1 ? wordIndexToWordMap.get(wordIndex) || null : null;
+    const newHighlightedWord =
+      finalWordIndex !== -1 ? wordIndexToWordMap.get(finalWordIndex) || null : null;
 
     setCurrentHighlightedWord(prevWord => {
       const prevId = prevWord?.id;
@@ -399,7 +454,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     wordIndexToWordMap,
   ]);
 
-  // Auto-scroll to highlighted word
+  // Auto-scroll to highlighted word using proper FlashList positioning
   const autoScrollToWord = useCallback(
     (word: SentenceWord | null) => {
       if (!autoScrollEnabled.current || !word || !scrollViewRef.current || !sortedSentences) {
@@ -432,31 +487,23 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
       if (targetSentenceIndex === -1) return;
 
-      // Calculate comfortable top margin accounting for header and safe area
-      const headerHeight = Math.round(Dimensions.get('window').width / 1.618) + 44; // Base header + safe area
-      const comfortableMargin = LAYOUT.SPACING.XLARGE * 2; // 48px comfortable margin
+      // FlashList index = sentence index + 1 (to account for header component)
+      const flashListIndex = targetSentenceIndex + 1;
 
-      // Calculate offset for the target sentence
-      const estimatedSentenceHeight = 80; // Average sentence height
-      const targetOffset = targetSentenceIndex * estimatedSentenceHeight;
-
-      // Ensure we don't scroll too high (respect header)
-      // Allow scrolling to bottom content, just ensure minimum visibility
-      const minVisibleHeight = headerHeight + comfortableMargin;
-      const safeOffset = Math.max(minVisibleHeight, targetOffset);
-
+      // Primary method: scrollToIndex with optimal positioning
       try {
-        scrollViewRef.current.scrollToOffset({
-          offset: safeOffset,
+        scrollViewRef.current.scrollToIndex({
+          index: flashListIndex,
           animated: true,
+          viewPosition: 0.7, // Position highlighted sentence 70% from top for maximum comfort
         });
         lastScrolledWordIndex.current = word.id;
         lastScrollTime.current = Date.now();
       } catch {
-        // Fallback with simpler calculation
-        const fallbackOffset = targetSentenceIndex * 80;
+        // Essential fallback: offset-based scrolling using accurate constants
+        const targetOffset = targetSentenceIndex * LAYOUT.SENTENCE_ITEM.HEIGHT;
         scrollViewRef.current.scrollToOffset({
-          offset: Math.max(0, fallbackOffset),
+          offset: Math.max(0, targetOffset),
           animated: true,
         });
         lastScrolledWordIndex.current = word.id;

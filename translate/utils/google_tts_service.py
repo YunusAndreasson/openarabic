@@ -21,8 +21,6 @@ class GoogleTTSService:
         if creds_path and os.path.exists(creds_path):
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
             # Set Google Cloud credentials
-        else:
-            # Using default Google Cloud credentials
 
         try:
             self.client = texttospeech.TextToSpeechClient()

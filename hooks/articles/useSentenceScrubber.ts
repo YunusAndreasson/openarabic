@@ -3,6 +3,7 @@ import type { MutableRefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ViewToken } from 'react-native';
 
+import { LAYOUT } from '@/constants/layout';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
@@ -120,8 +121,8 @@ export function useSentenceScrubber({
             viewPosition: 0.1, // Show sentence near top (10% from top for better visibility)
           });
         } catch {
-          // Fallback to offset-based scrolling
-          const estimatedOffset = clampedIndex * 80; // Better estimate based on typical sentence height
+          // Fallback to offset-based scrolling using proper sentence height constant
+          const estimatedOffset = clampedIndex * LAYOUT.SENTENCE_ITEM.HEIGHT;
           scrollViewRef.current.scrollToOffset({
             offset: estimatedOffset,
             animated: true,
@@ -156,8 +157,8 @@ export function useSentenceScrubber({
       });
       setCurrentSentenceIndex(lastSentenceReadRef.current);
     } catch {
-      // Fallback to offset-based scrolling
-      const estimatedOffset = lastSentenceReadRef.current * 80;
+      // Fallback to offset-based scrolling using proper sentence height constant
+      const estimatedOffset = lastSentenceReadRef.current * LAYOUT.SENTENCE_ITEM.HEIGHT;
       scrollViewRef.current.scrollToOffset({
         offset: estimatedOffset,
         animated: true,

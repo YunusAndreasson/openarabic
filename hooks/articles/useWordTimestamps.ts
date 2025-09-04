@@ -48,8 +48,7 @@ export function useWordTimestamps(articleId: number | null) {
       const sortedTimestamps = timestamps.sort((a, b) => a.word_index - b.word_index);
 
       return sortedTimestamps;
-    } catch (error) {
-      console.warn('Failed to parse word timestamps:', error);
+    } catch {
       return [];
     }
   }, [article?.word_timestamps]);
