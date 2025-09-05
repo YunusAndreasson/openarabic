@@ -45,7 +45,7 @@ const BASE_CONJUNCTIONS = [
 const BASE_PREPOSITIONS = [
   {
     arabic: 'ب',
-    english: ['with', 'by', 'in', 'via', 'through', 'using', 'according to', 'of', 'for'],
+    english: ['with', 'by', 'in', 'via', 'through', 'using', 'according to', 'of', 'for', 'at'],
   },
   { arabic: 'ل', english: ['to', 'for', 'toward', 'because of', 'in order to', 'of'] },
   { arabic: 'ك', english: ['like', 'as', 'such as', 'similar to'] },
@@ -73,10 +73,14 @@ const OTHER_PREFIXES = [
   { arabic: 'ت', english: ['you', 'she', 'does', 'is'] },
   { arabic: 'أ', english: ['I', 'do', 'am'] },
   { arabic: 'ن', english: ['we', 'are', 'do'] },
+  // Subjunctive prefix (ya + verb + tu = "to verb")
+  { arabic: 'ي', english: ['to'] }, // subjunctive marker for "to [verb]"
   // Aspect particles & common compounds
   { arabic: 'قد', english: ['already', 'indeed'] },
   { arabic: 'إن', english: ['indeed', 'verily', 'if'] },
+  { arabic: 'فإن', english: ['for', 'so', 'then', 'therefore', 'because'] }, // Compound: fa (so/then) + inna (emphasis)
   { arabic: 'ما', english: ['what', 'that which'] },
+  { arabic: 'مَنْ', english: ['who', 'whoever', 'whomever'] },
   { arabic: 'أن', english: ['that', 'to'] },
   { arabic: 'إذا', english: ['if', 'when'] },
 ];
@@ -344,6 +348,12 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   },
   // Common transliteration-equivalent: final "هِ" often maps to "it/its"; we already catch via 'ه$'
   // Keep 'it/its' present for 'ه$' to handle cases like "...هِ"
+  // Subjunctive suffix (ya + verb + tu = "to verb")
+  {
+    arabic: 'تُ$',
+    english: ['to'],
+    type: ComponentType.SUFFIX,
+  },
   {
     arabic: 'نا$',
     english: ['our', 'ours', 'of us', 'us'],

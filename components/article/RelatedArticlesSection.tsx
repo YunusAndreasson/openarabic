@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
   },
   articleSpacing: {
     marginTop: LAYOUT.SPACING.MEDIUM,
