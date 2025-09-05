@@ -25,17 +25,21 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const colors = useColors();
     const audioPlayer = useSimpleAudioPlayer();
 
-    // Handle audio playback for Arabic pronunciation when card is pressed
+    // Handle audio playback for word pronunciation when card is pressed
     const handleCardPress = useCallback(async () => {
-      if (!word.root?.audio_url || editMode) return;
+      if (editMode) return;
 
       try {
         selectionFeedback();
 
+        // Prefer Arabic audio, fallback to English audio if available
+        const audioUrl = word.root?.audio_url || word.root?.audio_url_en;
+        if (!audioUrl) return;
+
         const track = {
-          id: `word-${word.root_id}-ar`,
-          audioUrl: word.root.audio_url,
-          title: word.root.letters || STRINGS.ARABIC_PRONUNCIATION_FALLBACK,
+          id: `word-${word.root_id}-${word.root?.audio_url ? 'ar' : 'en'}`,
+          audioUrl,
+          title: word.root?.letters || word.root?.meaning || STRINGS.ARABIC_PRONUNCIATION_FALLBACK,
         };
 
         await audioPlayer.play(track);
@@ -45,7 +49,15 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
           captureSentry: !__DEV__,
         });
       }
-    }, [word.root?.audio_url, word.root_id, word.root?.letters, audioPlayer, editMode]);
+    }, [
+      word.root?.audio_url,
+      word.root?.audio_url_en,
+      word.root_id,
+      word.root?.letters,
+      word.root?.meaning,
+      audioPlayer,
+      editMode,
+    ]);
 
     // Handle delete button press
     const handleDeletePress = useCallback(() => {
@@ -60,7 +72,6 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     // Get Arabic and English text from root
     const arabicText = word.root?.letters || STRINGS.UNKNOWN_ARABIC;
     const englishText = word.root?.meaning || STRINGS.UNKNOWN_ENGLISH;
-    const hasAudio = !!word.root?.audio_url;
 
     const deleteButtonStyle = useMemo(
       () => [styles.deleteButton, { backgroundColor: colors.error }],
@@ -72,7 +83,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
         <BaseCard
           style={styles.card}
           onPress={handleCardPress}
-          disabled={editMode || !hasAudio}
+          disabled={editMode}
           shadowSize="small"
           contentStyle={styles.cardContent}
         >

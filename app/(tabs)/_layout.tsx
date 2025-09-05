@@ -14,7 +14,6 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { selectionFeedback } from '@/utils/haptics';
 
 // Custom IconWithBadge component for better badge positioning and consistent shape
 const IconWithBadge = memo(
@@ -83,7 +82,6 @@ const DictionaryButton = memo((props: DictionaryButtonProps): JSX.Element | null
   const effectiveCount = itemCount ?? studyWordsCount;
 
   const handlePress = useCallback((): void => {
-    selectionFeedback();
     router.push(ROUTE_PATHS.PRACTICE_DICTIONARY);
   }, []);
 

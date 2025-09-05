@@ -15,6 +15,7 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { setDailyWordLimit } from '@/store/settingsSlice';
+import { lightFeedback } from '@/utils/haptics';
 
 export interface DailyWordLimitPickerProps {
   isVisible: boolean;
@@ -77,9 +78,9 @@ export const DailyWordLimitPicker: FC<DailyWordLimitPickerProps> = memo(
     const handleLimitSelect = useCallback(
       (limit: number) => {
         dispatch(setDailyWordLimit(limit));
-        onClose();
+        lightFeedback();
       },
-      [dispatch, onClose]
+      [dispatch]
     );
 
     const renderBackdrop = useCallback(

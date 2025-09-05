@@ -16,6 +16,7 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { setTheme } from '@/store/themeSlice';
+import { lightFeedback } from '@/utils/haptics';
 
 export interface ThemePickerProps {
   isVisible: boolean;
@@ -74,6 +75,7 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
   const handleThemeSelect = useCallback(
     (theme: Theme) => {
       dispatch(setTheme(theme));
+      lightFeedback();
     },
     [dispatch]
   );

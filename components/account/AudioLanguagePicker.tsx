@@ -16,6 +16,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { AudioLanguagePreference } from '@/store/settingsSlice';
 import { setAudioLanguagePreference } from '@/store/settingsSlice';
+import { lightFeedback } from '@/utils/haptics';
 
 export interface AudioLanguagePickerProps {
   isVisible: boolean;
@@ -68,9 +69,9 @@ export const AudioLanguagePicker: FC<AudioLanguagePickerProps> = memo(({ isVisib
   const handleAudioLanguageSelect = useCallback(
     (language: AudioLanguagePreference) => {
       dispatch(setAudioLanguagePreference(language));
-      onClose();
+      lightFeedback();
     },
-    [dispatch, onClose]
+    [dispatch]
   );
 
   // Use built-in backdrop component (same as ThemePicker)

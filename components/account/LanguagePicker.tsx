@@ -16,6 +16,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { DisplayLanguagePreference } from '@/store/settingsSlice';
 import { setDisplayLanguagePreference } from '@/store/settingsSlice';
+import { lightFeedback } from '@/utils/haptics';
 
 export interface LanguagePickerProps {
   isVisible: boolean;
@@ -68,9 +69,9 @@ export const LanguagePicker: FC<LanguagePickerProps> = memo(({ isVisible, onClos
   const handleLanguageSelect = useCallback(
     (language: DisplayLanguagePreference) => {
       dispatch(setDisplayLanguagePreference(language));
-      onClose();
+      lightFeedback();
     },
-    [dispatch, onClose]
+    [dispatch]
   );
 
   // Use built-in backdrop component (same as ThemePicker)

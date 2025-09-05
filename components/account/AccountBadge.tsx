@@ -171,7 +171,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
         // Success feedback after selection completed
         // Using selection-like subtle feedback is fine here, but we keep a single call
         // Consider mediumFeedback in future if we want stronger confirmation
-        // Keep as selectionFeedback to align with subtle action
+        // Use selection feedback for subtle action
         selectionFeedback();
       }
     } catch (error) {

@@ -229,8 +229,8 @@ function AppContent() {
   // Set default theme based on system preference if none is set yet
   useEffect(() => {
     if (!theme) {
-      // Use the enhanced theme detection which includes system preference fallback
-      dispatch(setTheme(Theme.Dark)); // Default to dark as per current behavior
+      // Use light theme as the gentlest default for new users
+      dispatch(setTheme(Theme.Light)); // Default to light for accessibility and gentleness
     }
   }, [dispatch, theme]);
 

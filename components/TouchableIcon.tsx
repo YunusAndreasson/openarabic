@@ -22,20 +22,12 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 // Auto-calculate optimal touch target size based on icon size
 const getOptimalTouchTarget = (iconSize: number): number => {
   if (iconSize <= 16) return MIN_TOUCH_TARGET.MEDIUM;
-  if (iconSize <= 24) return MIN_TOUCH_TARGET.MEDIUM; 
+  if (iconSize <= 24) return MIN_TOUCH_TARGET.MEDIUM;
   return MIN_TOUCH_TARGET.LARGE;
 };
 
 const TouchableIcon: FC<TouchableIconProps> = memo(
-  ({
-    icon,
-    size = 24,
-    color,
-    onPress,
-    disabled = false,
-    style,
-    hapticFeedback = true,
-  }) => {
+  ({ icon, size = 24, color, onPress, disabled = false, style, hapticFeedback = true }) => {
     const colors = useColors();
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
 

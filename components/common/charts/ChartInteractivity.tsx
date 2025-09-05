@@ -62,7 +62,7 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
   const colors = useColors();
 
   const handlePress = useCallback(() => {
-    selectionFeedback(); // Tiny haptic feedback
+    selectionFeedback(); // Selection haptic feedback
     onPress(x, y, value, label);
   }, [x, y, value, label, onPress]);
 
