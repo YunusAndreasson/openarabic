@@ -143,7 +143,6 @@ function generatePrefixCombinations(): WordComponent[] {
 
   // Conjunction + Particle (common discourse particles)
   const PARTICLES: { arabic: string; english: string[] }[] = [
-    { arabic: 'إن', english: ['if', 'indeed'] },
     { arabic: 'قد', english: ['already', 'indeed'] },
     { arabic: 'لا', english: ['not', 'no'] },
     { arabic: 'ما', english: ['what', 'that which'] },

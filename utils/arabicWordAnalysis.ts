@@ -177,7 +177,7 @@ function findComponent(
 
   for (const component of components) {
     // Remove regex anchors to get the actual pattern
-    const pattern = component.arabic.replace(/\^|\$/g, '');
+    const pattern = component.arabic.replace(/[\^$]/g, '');
 
     // Check if pattern matches based on type
     let matches = false;

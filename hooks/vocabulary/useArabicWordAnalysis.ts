@@ -37,15 +37,39 @@ export function useArabicWordAnalysis(
       return null;
     }
 
+    let processedEnglish = englishTranslation;
+
+    // Inject "[the]" for Arabic words containing "ال" (definite article) patterns
+    // This helps users learn that "ال" = "the" even when not explicitly translated
+    const normalizedArabic = arabicWord.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
+    const hasDefiniteArticle =
+      normalizedArabic.includes('ال') ||
+      normalizedArabic.startsWith('بال') ||
+      normalizedArabic.startsWith('لل') ||
+      normalizedArabic.startsWith('كال');
+
+    // Skip injection for divine names and words that already imply definiteness
+    const skipInjection =
+      normalizedArabic.includes('الله') || // Divine name "Allah"
+      englishTranslation.toLowerCase().includes('god') ||
+      englishTranslation.toLowerCase().includes('allah') ||
+      englishTranslation.toLowerCase().includes('lord') ||
+      englishTranslation.toLowerCase().includes('creator') ||
+      englishTranslation.toLowerCase().includes('most high');
+
+    if (hasDefiniteArticle && !englishTranslation.toLowerCase().includes('the') && !skipInjection) {
+      processedEnglish = `[the] ${englishTranslation}`;
+    }
+
     // CRITICAL RULE: Single English words should NEVER have grammar color-coding applied
-    // Check the English translation word count before doing any analysis
-    const wordCount = englishTranslation.trim().split(/\s+/).length;
+    // Check the processed English translation word count before doing any analysis
+    const wordCount = processedEnglish.trim().split(/\s+/).length;
     if (wordCount === 1) {
       // Return null analysis to prevent color-coding for single words
       return null;
     }
 
-    return analyzeArabicWord(arabicWord, englishTranslation);
+    return analyzeArabicWord(arabicWord, processedEnglish);
   }, [arabicWord, englishTranslation, enabled]);
 
   // Memoize the formatted analysis
