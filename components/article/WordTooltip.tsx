@@ -32,7 +32,7 @@ const STATIC_STYLES = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     paddingHorizontal: TOOLTIP_CONSTANTS.MIN_PADDING,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
     minWidth: LAYOUT.CARD.HEIGHT.LIST_ITEM,
     maxWidth: SCREEN_WIDTH * TOOLTIP_CONSTANTS.MAX_WIDTH_RATIO,
     justifyContent: 'center',
@@ -62,6 +62,15 @@ const STATIC_STYLES = StyleSheet.create({
       LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     includeFontPadding: false,
     textAlignVertical: 'center',
+  },
+  idText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '400',
+    textAlign: 'center',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    opacity: 0.7,
   },
 });
 
@@ -114,7 +123,15 @@ const WordTooltipComparison = (
 };
 
 export const WordTooltip = memo(
-  ({ visible, text = '', arabicWord, layout, zIndex, onOpenWordDetails }: WordTooltipProps) => {
+  ({
+    visible,
+    text = '',
+    arabicWord,
+    wordId,
+    layout,
+    zIndex,
+    onOpenWordDetails,
+  }: WordTooltipProps) => {
     const colors = useColors();
 
     // Press animation for better user feedback
@@ -177,17 +194,37 @@ export const WordTooltip = memo(
       const wordCount = text.trim().split(/\s+/).length;
       if (wordCount === 1) {
         return (
-          <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
-            {text}
-          </ThemedText>
+          <View>
+            <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
+              {text}
+            </ThemedText>
+            {wordId && (
+              <ThemedText
+                skipDefaultColor
+                style={[STATIC_STYLES.idText, { color: colors.secondaryText }]}
+              >
+                [{wordId}]
+              </ThemedText>
+            )}
+          </View>
         );
       }
 
       if (!formattedAnalysis?.sections?.length) {
         return (
-          <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
-            {text}
-          </ThemedText>
+          <View>
+            <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
+              {text}
+            </ThemedText>
+            {wordId && (
+              <ThemedText
+                skipDefaultColor
+                style={[STATIC_STYLES.idText, { color: colors.secondaryText }]}
+              >
+                [{wordId}]
+              </ThemedText>
+            )}
+          </View>
         );
       }
 
@@ -198,9 +235,19 @@ export const WordTooltip = memo(
 
       if (!componentSections.length) {
         return (
-          <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
-            {originalEnglish}
-          </ThemedText>
+          <View>
+            <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
+              {originalEnglish}
+            </ThemedText>
+            {wordId && (
+              <ThemedText
+                skipDefaultColor
+                style={[STATIC_STYLES.idText, { color: colors.secondaryText }]}
+              >
+                [{wordId}]
+              </ThemedText>
+            )}
+          </View>
         );
       }
 
@@ -289,19 +336,29 @@ export const WordTooltip = memo(
       }
 
       return (
-        <ThemedText skipDefaultColor style={STATIC_STYLES.text}>
-          {parts.map(part => (
+        <View>
+          <ThemedText skipDefaultColor style={STATIC_STYLES.text}>
+            {parts.map(part => (
+              <ThemedText
+                key={part.key}
+                skipDefaultColor
+                style={[STATIC_STYLES.text, { color: part.color }]}
+              >
+                {part.text}
+              </ThemedText>
+            ))}
+          </ThemedText>
+          {wordId && (
             <ThemedText
-              key={part.key}
               skipDefaultColor
-              style={[STATIC_STYLES.text, { color: part.color }]}
+              style={[STATIC_STYLES.idText, { color: colors.secondaryText }]}
             >
-              {part.text}
+              [{wordId}]
             </ThemedText>
-          ))}
-        </ThemedText>
+          )}
+        </View>
       );
-    }, [formattedAnalysis, text, colors.text, colorMapping]);
+    }, [formattedAnalysis, text, colors.text, colorMapping, wordId]);
 
     // Calculate tooltip dimensions with optimized processing
     const dimensions = useMemo(() => {

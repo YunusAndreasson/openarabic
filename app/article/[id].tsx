@@ -723,6 +723,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       visible: !!activeTooltip,
       text: activeTooltip?.word.english,
       arabicWord: activeTooltip?.word.word_form,
+      wordId: activeTooltip?.word.id,
       layout: activeTooltip?.layout ?? null,
       onClose: handleCloseTooltip,
       onOpenWordDetails: handleOpenWordDetails,

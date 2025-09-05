@@ -43,10 +43,13 @@ const BASE_CONJUNCTIONS = [
 ];
 
 const BASE_PREPOSITIONS = [
-  { arabic: 'ب', english: ['with', 'by', 'in', 'via', 'through', 'using', 'according to'] },
+  {
+    arabic: 'ب',
+    english: ['with', 'by', 'in', 'via', 'through', 'using', 'according to', 'of', 'for'],
+  },
   { arabic: 'ل', english: ['to', 'for', 'toward', 'because of', 'in order to', 'of'] },
   { arabic: 'ك', english: ['like', 'as', 'such as', 'similar to'] },
-  { arabic: 'في', english: ['in', 'at', 'inside', 'within'] },
+  { arabic: 'في', english: ['in', 'at', 'inside', 'within', 'upon'] },
   { arabic: 'من', english: ['from', 'of', 'than', 'out of'] },
   { arabic: 'على', english: ['on', 'upon', 'over', 'above', 'against'] },
   { arabic: 'عن', english: ['about', 'from', 'concerning', 'regarding'] },
@@ -326,7 +329,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   },
   {
     arabic: 'ه$',
-    english: ['his', 'its', 'it', 'of him', 'him', 'himself', 'he'],
+    english: ['his', 'its', 'it', 'of him', 'him', 'himself', 'he', 'their'],
     type: ComponentType.SUFFIX,
   },
   // Object pronoun - me
@@ -400,6 +403,12 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   {
     arabic: 'تن$',
     english: ['you', 'you all'],
+    type: ComponentType.SUFFIX,
+  },
+  // Conditional particle as suffix for compound words like فإن
+  {
+    arabic: 'إن$',
+    english: ['if'],
     type: ComponentType.SUFFIX,
   },
 

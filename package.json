@@ -28,6 +28,7 @@
     "ai:test:specific": "jest --testNamePattern",
     "ai:lint:component": "eslint components/",
     "ai:lint:hooks": "eslint hooks/",
+    "analyze:composite-words": "tsx scripts/analyze-composite-words.ts",
     "ai:typecheck:fast": "tsc --noEmit --incremental",
     "ai:validate:fast": "yarn ai:typecheck:fast && yarn lint:fix",
     "ai:performance": "yarn reassure --baseline && yarn reassure",
@@ -124,6 +125,7 @@
     "postinstall-postinstall": "^2.1.0",
     "react-test-renderer": "19.0.0",
     "reassure": "^1.4.0",
+    "tsx": "^4.20.5",
     "typescript": "~5.8.3"
   },
   "private": true,

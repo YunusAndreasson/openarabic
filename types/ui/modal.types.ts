@@ -8,6 +8,8 @@ export interface WordTooltipProps {
   text?: string;
   /** The Arabic word to analyze and display with color-coding */
   arabicWord?: string;
+  /** The word ID for analysis script reference */
+  wordId?: number;
   /** Layout information for positioning the tooltip */
   layout: {
     x: number;
