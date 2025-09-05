@@ -8,7 +8,7 @@
   - [x] Play
   - [x] Add to study
   - [x] Grammar note
-  - [ ] Transliteration
+  - [x] Transliteration
 
 ## 🐛 Bugs
 
