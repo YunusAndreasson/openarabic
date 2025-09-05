@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from pathlib import Path
 from typing import Any
 
 # Audio utilities - import real implementations (conditional to avoid import-time validation)
@@ -552,22 +553,77 @@ def insert_article_sentences(
 
 def archive_files(json_path: str, article_id: int) -> None:
     """Move input and output files to archive directory with article ID as name."""
+    from data.config import (
+        AUTHOR_FOLDER_MAPPING,
+        AUTHOR_NUMBER_MAPPING,
+        INBOX_DIR,
+        SPLIT_DIR,
+        TRANSLATE_DIR,
+    )
+
     archive_dir = ARCHIVE_DIR
     os.makedirs(archive_dir, exist_ok=True)
 
-    article_dir = os.path.dirname(json_path)
+    # Parse the translated filename to find original input file
+    # Format: [author_number]_[base_filename]_translated.json
+    filename = Path(json_path).name
+    if not filename.endswith("_translated.json"):
+        logger.warning(f"Unexpected filename format: {filename}")
+        return
 
-    input_file = os.path.join(article_dir, "input.txt")
+    # Extract author number and base filename
+    parts = filename.replace("_translated.json", "").split("_", 1)
+    if len(parts) != 2:
+        logger.warning(f"Could not parse filename: {filename}")
+        return
+
+    author_number, base_filename = parts
+
+    # Look up author folder name
+    if author_number not in AUTHOR_NUMBER_MAPPING:
+        logger.warning(f"Unknown author number: {author_number}")
+        return
+
+    author_folder = None
+    for folder, author_name in AUTHOR_FOLDER_MAPPING.items():
+        if author_name == AUTHOR_NUMBER_MAPPING[author_number]:
+            author_folder = folder
+            break
+
+    if not author_folder:
+        logger.warning(
+            f"Could not find author folder for: {AUTHOR_NUMBER_MAPPING[author_number]}"
+        )
+        return
+
+    # Construct file paths
+    input_file = os.path.join(INBOX_DIR, author_folder, f"{base_filename}.txt")
+    split_file = os.path.join(SPLIT_DIR, f"{author_number}_{base_filename}_split.json")
     output_file = json_path
 
     archived_input = os.path.join(archive_dir, f"{article_id}_input.txt")
     archived_output = os.path.join(archive_dir, f"{article_id}_output.json")
 
+    # Move input file from inbox to archive
     if os.path.exists(input_file):
         shutil.move(input_file, archived_input)
+        logger.info(f"Archived input file: {input_file} -> {archived_input}")
+    else:
+        logger.warning(f"Input file not found: {input_file}")
 
+    # Move output file to archive
     if os.path.exists(output_file):
         shutil.move(output_file, archived_output)
+        logger.info(f"Archived output file: {output_file} -> {archived_output}")
+    else:
+        logger.warning(f"Output file not found: {output_file}")
+
+    # Clean up intermediate split file
+    if os.path.exists(split_file):
+        os.remove(split_file)
+        logger.info(f"Cleaned up intermediate split file: {split_file}")
+    else:
+        logger.warning(f"Split file not found for cleanup: {split_file}")
 
 
 def validate_article_data(data: dict) -> None:

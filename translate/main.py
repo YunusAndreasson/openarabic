@@ -49,6 +49,7 @@ def find_input_files_in_inbox() -> list[tuple[str, str, str]]:
     """
     Find all input files in the inbox directory.
     Returns list of tuples: (input_file_path, author_folder, author_name)
+    Excludes files that have already been processed and archived.
     """
     input_files: list[tuple[str, str, str]] = []
 
@@ -70,9 +71,47 @@ def find_input_files_in_inbox() -> list[tuple[str, str, str]]:
         for file_name in os.listdir(author_folder_path):
             if file_name.endswith(".txt"):
                 input_file_path = os.path.join(author_folder_path, file_name)
+
+                # Check if this file has already been processed
+                if _is_file_already_processed(input_file_path):
+                    logger.info(f"Skipping already processed file: {input_file_path}")
+                    continue
+
                 input_files.append((input_file_path, author_folder, author_name))
 
     return input_files
+
+
+def _is_file_already_processed(input_file_path: str) -> bool:
+    """
+    Check if an input file has already been processed by comparing its content hash
+    with existing articles in the database.
+    """
+    try:
+        # Read the file content
+        with open(input_file_path, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+
+        if not content:
+            return False
+
+        # Generate content hash
+        from utils.storage_utils import generate_content_hash
+
+        content_hash = generate_content_hash({"content": content})
+
+        # Check if article exists with this hash
+        from utils.storage_utils import check_article_exists
+
+        existing_article_id, _ = check_article_exists(content_hash)
+
+        return existing_article_id is not None
+
+    except Exception as e:
+        logger.warning(
+            f"Error checking if file is already processed {input_file_path}: {e}"
+        )
+        return False
 
 
 def run_split_file(input_file: str, author_folder: str) -> str:
