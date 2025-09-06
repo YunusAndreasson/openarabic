@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
 
 import DoneButton from '@/components/ui/DoneButton';
@@ -15,14 +15,14 @@ export default function AccountLayout(): JSX.Element {
         name="index"
         options={createNavigationOptions(colors, {
           title: STRINGS.ACCOUNT,
-          headerLeft: () => <DoneButton />,
+          headerLeft: () => <DoneButton onPress={() => router.back()} />,
         })}
       />
       <Stack.Screen
         name="FontSelector"
         options={createNavigationOptions(colors, {
           title: STRINGS.ARABIC_FONT,
-          headerLeft: () => <DoneButton />,
+          headerLeft: () => <DoneButton onPress={() => router.back()} />,
         })}
       />
 
@@ -30,7 +30,7 @@ export default function AccountLayout(): JSX.Element {
         name="help"
         options={createNavigationOptions(colors, {
           title: STRINGS.HELP,
-          headerLeft: () => <DoneButton />,
+          headerLeft: () => <DoneButton onPress={() => router.back()} />,
         })}
       />
       <Stack.Screen

@@ -3,8 +3,8 @@ import type { JSX } from 'react';
 import { useCallback } from 'react';
 
 import FilterButton from '@read/FilterButton';
-import DoneButton from '@ui/DoneButton';
 
+import DoneButton from '@/components/ui/DoneButton';
 import { createNavigationOptions } from '@/constants/modal';
 import { getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -31,7 +31,7 @@ function getFilterTitle(params: FilterParams): string {
 
 const FilterHeaderLeft = () => {
   // Always show Done button on the left for all filter screens
-  return <DoneButton />;
+  return <DoneButton onPress={() => router.back()} />;
 };
 
 const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
@@ -58,7 +58,7 @@ export default function ReadLayout(): JSX.Element {
         name="filterModal"
         options={createNavigationOptions(colors, {
           title: STRINGS.FILTERS,
-          headerLeft: () => <DoneButton />,
+          headerLeft: () => <DoneButton onPress={() => router.back()} />,
         })}
       />
       <Stack.Screen

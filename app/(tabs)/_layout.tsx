@@ -3,7 +3,7 @@ import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import type { JSX } from 'react';
 import React, { Fragment, memo, useCallback, useEffect, useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { HeaderProfile } from '@/components/HeaderProfile';
 import { ThemedText } from '@/components/ThemedText';
@@ -42,11 +42,6 @@ const IconWithBadge = memo(
       [colors.error]
     );
 
-    const badgeTextStyle = useMemo(
-      () => [styles.badgeText, { color: colors.white }],
-      [colors.white]
-    );
-
     return (
       <View style={containerStyle}>
         <Ionicons
@@ -57,7 +52,9 @@ const IconWithBadge = memo(
         />
         {badgeCount > 0 && (
           <View style={badgeContainerStyle}>
-            <Text style={badgeTextStyle}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
+            <ThemedText colorName="white" weight="bold" type="caption">
+              {badgeCount > 99 ? '99+' : badgeCount}
+            </ThemedText>
           </View>
         )}
       </View>
@@ -175,11 +172,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
-  },
-  badgeText: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    textAlign: 'center',
   },
 });
 

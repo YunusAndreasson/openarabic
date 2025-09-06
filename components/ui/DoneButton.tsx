@@ -1,7 +1,5 @@
-import { router } from 'expo-router';
 import { memo, useCallback, type FC } from 'react';
-import type { ViewStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -9,69 +7,72 @@ import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layo
 import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+import { selectionFeedback } from '@/utils/haptics';
 
 interface DoneButtonProps {
   /**
    * Optional callback when done is pressed (defaults to router.back())
    */
   onPress?: () => void;
-
-  /**
-   * Optional custom styling
-   */
-  style?: ViewStyle;
 }
 
-const DoneButton: FC<DoneButtonProps> = ({ onPress, style }) => {
-  const colors = useColors();
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
+  const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     includeOpacity: true,
   });
 
   const handlePress = useCallback(() => {
+    selectionFeedback();
     if (onPress) {
       onPress();
-    } else {
-      router.back();
     }
   }, [onPress]);
 
   return (
-    <AnimatedTouchable
-      style={[
-        styles.button,
-        {
-          backgroundColor: colors.transparent,
-        },
-        animatedStyle as ViewStyle,
-        style,
-      ]}
-      onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      activeOpacity={LAYOUT.OPACITY.PRESSED}
-    >
-      <ThemedText
-        type="body"
-        weight="semibold"
+    <View style={styles.container}>
+      <AnimatedPressable
         style={[
-          styles.buttonText,
+          styles.button,
           {
-            color: colors.tint,
+            backgroundColor: colors.transparent,
           },
+          animatedStyle,
         ]}
-        numberOfLines={1}
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        android_ripple={{
+          color: colors.navigationRipple,
+          radius: MIN_TOUCH_TARGET.MEDIUM / 2,
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={STRINGS.DONE}
       >
-        {STRINGS.DONE}
-      </ThemedText>
-    </AnimatedTouchable>
+        <ThemedText
+          type="body"
+          weight="semibold"
+          style={[
+            styles.buttonText,
+            {
+              color: colors.tint,
+            },
+          ]}
+        >
+          {STRINGS.DONE}
+        </ThemedText>
+      </AnimatedPressable>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   button: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,

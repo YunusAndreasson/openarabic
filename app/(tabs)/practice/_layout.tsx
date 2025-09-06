@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
 
 import DoneButton from '@/components/ui/DoneButton';
@@ -20,7 +20,7 @@ export default function VocabularyLayout(): JSX.Element {
         options={createNavigationOptions(colors, {
           title: STRINGS.DICTIONARY,
           // Only show DoneButton when NOT in edit mode to avoid duplicate "Done" buttons
-          headerLeft: editMode ? undefined : () => <DoneButton />,
+          headerLeft: editMode ? undefined : () => <DoneButton onPress={() => router.back()} />,
           headerRight: () => <EditModeButton type="dictionary" />,
         })}
       />
