@@ -218,6 +218,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
         entering={FadeIn.delay(
           encouragingMetrics ? COMPLETION_BUTTON_DELAY.WITH_METRICS : COMPLETION_BUTTON_DELAY.BASE
         ).duration(TIMING_CONFIG.GENTLE.duration)}
+        style={styles.buttonContainer}
       >
         <ThemedButton title={buttonText} onPress={onClose} style={styles.button} />
       </Animated.View>
@@ -302,8 +303,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   button: {
-    alignSelf: 'center', // Center the button
-    width: LAYOUT.BUTTON.HEIGHT.LARGE * 6, // Fixed width to match content
+    alignSelf: 'stretch', // Stretch to full width for better alignment
+  },
+  buttonContainer: {
+    width: '100%', // Full width container
+    paddingHorizontal: LAYOUT.SPACING.XLARGE, // Generous horizontal padding
   },
   subtitleText: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

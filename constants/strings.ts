@@ -167,7 +167,7 @@ export const STRINGS = {
   ERROR_LOADING_DATA: "Couldn't load data",
 
   // Success messages - encouraging and celebration-focused
-  SESSION_COMPLETE: 'Session complete!',
+  SESSION_COMPLETE: 'Session complete',
 
   ADDED_TO_BOOKMARKS: 'Saved to bookmarks',
   REMOVED_FROM_BOOKMARKS: 'Removed from bookmarks',

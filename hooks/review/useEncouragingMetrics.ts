@@ -1,8 +1,7 @@
 import type { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
 import type { ComponentProps } from 'react';
+import { useMemo } from 'react';
 
-import { STRINGS } from '@/constants/strings';
 import type { SessionMetrics } from '@/types/review.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
@@ -36,21 +35,22 @@ export const useEncouragingMetrics = (
     // Accuracy achievement
     if (accuracyRate >= 80) {
       encouragingFacts.push({
-        text: STRINGS.ACCURACY_EXCELLENT_TEMPLATE.replace('{percent}', String(accuracyRate)),
+        text: `Amazing ${accuracyRate}% accuracy`,
         icon: 'checkmark-circle',
         color: colors.completionSuccess,
         type: 'accuracy',
       });
     } else if (accuracyRate >= 60) {
       encouragingFacts.push({
-        text: STRINGS.ACCURACY_SOLID_TEMPLATE.replace('{percent}', String(accuracyRate)),
+        text: `Solid ${accuracyRate}% accuracy`,
         icon: 'trending-up',
         color: colors.progressIndicator,
         type: 'accuracy',
       });
     } else if (metrics.wordsKnown > 0) {
+      const wordText = metrics.wordsKnown === 1 ? 'word' : 'words';
       encouragingFacts.push({
-        text: STRINGS.WORDS_STRONG_SESSION_TEMPLATE.replace('{count}', String(metrics.wordsKnown)),
+        text: `${metrics.wordsKnown} ${wordText} learned`,
         icon: 'checkmark-circle',
         color: colors.completionSuccess,
         type: 'mastery',
@@ -60,14 +60,14 @@ export const useEncouragingMetrics = (
     // Streak achievements
     if (metrics.longestStreak >= 5) {
       encouragingFacts.push({
-        text: STRINGS.STREAK_EXCELLENT_TEMPLATE.replace('{count}', String(metrics.longestStreak)),
+        text: `${metrics.longestStreak}-word streak`,
         icon: 'flame',
         color: colors.warning,
         type: 'streak',
       });
     } else if (metrics.longestStreak >= 3) {
       encouragingFacts.push({
-        text: STRINGS.STREAK_ACHIEVED_TEMPLATE.replace('{count}', String(metrics.longestStreak)),
+        text: `${metrics.longestStreak}-word streak`,
         icon: 'flash',
         color: colors.warning,
         type: 'streak',
@@ -76,8 +76,9 @@ export const useEncouragingMetrics = (
 
     // Mastery progress
     if (metrics.masteredWords > 0) {
+      const wordText = metrics.masteredWords === 1 ? 'word' : 'words';
       encouragingFacts.push({
-        text: STRINGS.MASTERED_WORDS_TEMPLATE.replace('{count}', String(metrics.masteredWords)),
+        text: `${metrics.masteredWords} ${wordText} mastered`,
         icon: 'star',
         color: colors.completionSuccess,
         type: 'mastery',
@@ -87,8 +88,9 @@ export const useEncouragingMetrics = (
     // Stability improvement
     if (metrics.averageStabilityIncrease > 0) {
       const avgIncrease = Math.round(metrics.averageStabilityIncrease);
+      const dayText = avgIncrease === 1 ? 'day' : 'days';
       encouragingFacts.push({
-        text: STRINGS.MEMORY_STRENGTH_BOOST_TEMPLATE.replace('{days}', String(avgIncrease)),
+        text: `Memory ${avgIncrease} ${dayText} stronger`,
         icon: 'bar-chart',
         color: colors.progressIndicator,
         type: 'efficiency',
@@ -99,7 +101,7 @@ export const useEncouragingMetrics = (
     if (sessionDuration > 0 && metrics.wordsReviewed >= 10) {
       const wordsPerMinute = Math.round(metrics.wordsReviewed / sessionDuration);
       encouragingFacts.push({
-        text: STRINGS.WORDS_PER_MIN_TEMPLATE.replace('{rate}', String(wordsPerMinute)),
+        text: `${wordsPerMinute} words per minute`,
         icon: 'speedometer',
         color: colors.info,
         type: 'efficiency',
@@ -108,15 +110,17 @@ export const useEncouragingMetrics = (
 
     // Effort recognition
     if (metrics.wordsReviewed >= 20) {
+      const wordText = metrics.wordsReviewed === 1 ? 'word' : 'words';
       encouragingFacts.push({
-        text: STRINGS.WORDS_REVIEWED_DEDICATION_TEMPLATE.replace('{count}', String(metrics.wordsReviewed)),
+        text: `${metrics.wordsReviewed} ${wordText} reviewed`,
         icon: 'trophy',
         color: colors.warning,
         type: 'effort',
       });
     } else if (metrics.wordsReviewed >= 10) {
+      const wordText = metrics.wordsReviewed === 1 ? 'word' : 'words';
       encouragingFacts.push({
-        text: STRINGS.WORDS_REVIEWED_GREAT_TEMPLATE.replace('{count}', String(metrics.wordsReviewed)),
+        text: `${metrics.wordsReviewed} ${wordText} reviewed`,
         icon: 'thumbs-up',
         color: colors.completionSuccess,
         type: 'effort',

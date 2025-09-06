@@ -643,8 +643,16 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       // Direct haptic feedback without debounce (same as Play Audio)
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-      // Get current state before the operation
-      const wasInStudy =
+      // Add/remove the word to/from study list first
+      const result = await handleRootPress(word.root_id);
+
+      // If operation failed (daily limit reached), don't update local state
+      if (result === undefined) {
+        return;
+      }
+
+      // Get current state after the operation
+      const isNowInStudy =
         localStudyStates.get(word.root_id) ??
         (() => {
           const allWords =
@@ -652,11 +660,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           return allWords.some(studyWord => studyWord.root_id === word.root_id);
         })();
 
-      // Immediately update local state for instant UI feedback
-      setLocalStudyStates(prev => new Map(prev.set(word.root_id, !wasInStudy)));
-
-      // Add/remove the word to/from study list in background
-      await handleRootPress(word.root_id);
+      // Update local state to reflect the new state
+      setLocalStudyStates(prev => new Map(prev.set(word.root_id, isNowInStudy)));
 
       // Invalidate queries to sync with backend
       await queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
