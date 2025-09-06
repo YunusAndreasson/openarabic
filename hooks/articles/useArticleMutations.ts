@@ -16,7 +16,7 @@ import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
-import { ToastType } from '@/types/enums';
+import { DailyWordLimitStatus, ToastType } from '@/types/enums';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
@@ -378,7 +378,7 @@ export const useArticleMutations = (
         // Check daily word limit first
         const canAdd = await canAddWord();
         if (!canAdd) {
-          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, ToastType.IMPORTANT);
+          showToast(DailyWordLimitStatus.REACHED, 3000, ToastType.IMPORTANT);
           return;
         }
 
@@ -406,7 +406,7 @@ export const useArticleMutations = (
           // Increment daily word count and proceed
           const incrementSuccess = await incrementDailyWordCount();
           if (!incrementSuccess) {
-            showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, ToastType.IMPORTANT);
+            showToast(DailyWordLimitStatus.REACHED, 3000, ToastType.IMPORTANT);
             return;
           }
 
@@ -424,7 +424,7 @@ export const useArticleMutations = (
         // Increment daily word count and proceed
         const incrementSuccess = await incrementDailyWordCount();
         if (!incrementSuccess) {
-          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, ToastType.IMPORTANT);
+          showToast(DailyWordLimitStatus.REACHED, 3000, ToastType.IMPORTANT);
           return;
         }
 
@@ -477,7 +477,7 @@ export const useArticleMutations = (
           if (!canAdd) {
             const limitMessage =
               dailyWordLimit === 0
-                ? STRINGS.DAILY_WORD_LIMIT_REACHED
+                ? DailyWordLimitStatus.REACHED
                 : `Daily limit of ${dailyWordLimit} words reached`;
             showToast(limitMessage, 4000, ToastType.IMPORTANT);
             errorFeedback(); // Use error haptic for daily limit reached
@@ -497,7 +497,7 @@ export const useArticleMutations = (
           if (!incrementSuccess) {
             const limitMessage =
               dailyWordLimit === 0
-                ? STRINGS.DAILY_WORD_LIMIT_REACHED
+                ? DailyWordLimitStatus.REACHED
                 : `Daily limit of ${dailyWordLimit} words reached`;
             showToast(limitMessage, 4000, ToastType.IMPORTANT);
             errorFeedback(); // Use error haptic for daily limit reached

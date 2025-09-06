@@ -7,7 +7,6 @@ import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layo
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { UiAction } from '@/types/enums';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface DoneButtonProps {
   /**
@@ -25,7 +24,6 @@ const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
   });
 
   const handlePress = useCallback(() => {
-    selectionFeedback();
     if (onPress) {
       onPress();
     }

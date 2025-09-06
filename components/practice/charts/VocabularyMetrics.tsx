@@ -4,8 +4,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { VocabularyStatCategory } from '@/types/enums';
 
 interface VocabularyMetricsProps {
   totalWords: number;
@@ -59,21 +59,21 @@ export const VocabularyMetrics = memo<VocabularyMetricsProps>(
           <MetricCard
             icon="library"
             value={totalWords.toString()}
-            label={STRINGS.VOCAB_STAT_TOTAL}
+            label={VocabularyStatCategory.TOTAL}
             color={colors.tint}
           />
 
           <MetricCard
             icon="checkmark-circle"
             value={masteredWords.toString()}
-            label={STRINGS.VOCAB_STAT_MASTERED}
+            label={VocabularyStatCategory.MASTERED}
             color={colors.success}
           />
 
           <MetricCard
             icon="school"
             value={learningWords.toString()}
-            label={STRINGS.VOCAB_STAT_LEARNING}
+            label={VocabularyStatCategory.LEARNING}
             color={colors.warning}
           />
         </View>

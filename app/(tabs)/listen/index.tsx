@@ -23,7 +23,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
-import { ToastType } from '@/types/enums';
+import { AudioAction, ToastType } from '@/types/enums';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { overrideFixedHeight } from '@/utils/list';
@@ -348,7 +348,7 @@ export default function ListenScreen(): JSX.Element {
         <BottomControls
           primaryDisabled={isPlayAllLoading}
           primaryLoading={isPlayAllLoading}
-          primaryLabel={STRINGS.PLAY_ALL}
+          primaryLabel={AudioAction.PLAY_ALL}
           onPrimaryPress={handlePlayAllStable}
         />
       </View>

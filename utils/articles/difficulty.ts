@@ -1,7 +1,7 @@
-import { STRINGS } from '@/constants/strings';
+import { ContentDifficulty } from '@/types/enums';
 
-export function difficultyLevelToLabel(level: number, strings = STRINGS): string {
-  if (level <= 2) return strings.BEGINNER;
-  if (level === 3) return strings.INTERMEDIATE;
-  return strings.ADVANCED;
+export function difficultyLevelToLabel(level: number): string {
+  if (level <= 2) return ContentDifficulty.BEGINNER;
+  if (level === 3) return ContentDifficulty.INTERMEDIATE;
+  return ContentDifficulty.ADVANCED;
 }

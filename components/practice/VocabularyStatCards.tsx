@@ -13,8 +13,8 @@ import BaseCard from '@common/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { MemoryRetentionGauge } from '@/components/practice/charts/MemoryRetentionGauge';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { VocabularyStatCategory } from '@/types/enums';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 interface VocabularyStatCardsProps {
@@ -86,21 +86,21 @@ export const VocabularyStatCards = memo(
     // Memoize stats array to prevent recreation
     const stats = [
       {
-        label: STRINGS.VOCAB_STAT_DUE,
+        label: VocabularyStatCategory.DUE,
         value: dueWords,
         color: colors.error,
         icon: 'alert-circle' as const,
         onPress: onDuePress, // Due words now open prognosis chart
       },
       {
-        label: STRINGS.VOCAB_STAT_LEARNING,
+        label: VocabularyStatCategory.LEARNING,
         value: learningWords,
         color: colors.warning,
         icon: 'school' as const,
         onPress: onLearningPress,
       },
       {
-        label: STRINGS.VOCAB_STAT_MASTERED,
+        label: VocabularyStatCategory.MASTERED,
         value: masteredWords,
         color: colors.success,
         icon: 'checkmark-circle' as const,

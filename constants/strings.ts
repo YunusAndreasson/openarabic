@@ -1,42 +1,9 @@
-import {
-  AppFeature,
-  AppTab,
-  ArabicFont,
-  AudioAction,
-  ContentDifficulty,
-  DailyWordLimitDescription,
-  DailyWordLimitStatus,
-  DailyWordLimitStatusDescription,
-  DailyWordLimitTier,
-  FontDescription,
-  LearningPhase,
-  MemoryRetentionPhase,
-  MemoryStrengthLevel,
-  PhaseRecommendation,
-  PracticeState,
-  ReviewAction,
-  SleepTimerAction,
-  VocabularyStatCategory,
-  WordDifficultyAction,
-  WordManagementAction,
-} from '@/types/enums';
-
 // Helper functions for consistent messaging
 const tryAgain = 'Try again';
 const checkConnection = 'Check connection and try again';
 const cleared = (item: string) => `${item} cleared`;
 
 export const STRINGS = {
-  // Core app features - using enums
-  WORKS_WITH_SCREEN_OFF: AppFeature.WORKS_WITH_SCREEN_OFF,
-  COMPLETE_LINGUISTIC_SYSTEM: AppFeature.COMPLETE_LINGUISTIC_SYSTEM,
-  RICH_VOCABULARY_INPUT: AppFeature.RICH_VOCABULARY_INPUT,
-  AUTHENTIC_LANGUAGE_PATTERNS: AppFeature.AUTHENTIC_LANGUAGE_PATTERNS,
-  CULTURAL_AND_CONCEPTUAL_FRAMEWORK: AppFeature.CULTURAL_FRAMEWORK,
-  ACQUISITION_NOT_LEARNING: AppFeature.ACQUISITION_NOT_LEARNING,
-  FOCUS_ON_MEANING: AppFeature.FOCUS_ON_MEANING,
-  NATURAL_PROCESS: AppFeature.NATURAL_PROCESS,
-
   // Settings & preferences
   STUDY_REMINDERS: 'Study reminders',
   TIME: 'Time',
@@ -99,53 +66,22 @@ export const STRINGS = {
 
   // Practice state labels
   WORD_OPTIONS: 'Word options',
-  UNKNOWN: PracticeState.UNKNOWN,
-  UNSURE: PracticeState.UNSURE,
-  KNOWN: PracticeState.KNOWN,
   NO_TRANSLATION_AVAILABLE: 'No translation available',
-
-  // Daily word limit options
-  DAILY_WORD_LIMIT_GETTING_STARTED: DailyWordLimitTier.GETTING_STARTED,
-  DAILY_WORD_LIMIT_GETTING_STARTED_DESC: DailyWordLimitDescription.GETTING_STARTED,
-  DAILY_WORD_LIMIT_STEADY: DailyWordLimitTier.STEADY_PROGRESS,
-  DAILY_WORD_LIMIT_STEADY_DESC: DailyWordLimitDescription.STEADY_PROGRESS,
-  DAILY_WORD_LIMIT_ACTIVE: DailyWordLimitTier.ACTIVE_LEARNING,
-  DAILY_WORD_LIMIT_ACTIVE_DESC: DailyWordLimitDescription.ACTIVE_LEARNING,
-  DAILY_WORD_LIMIT_UNLIMITED: DailyWordLimitTier.UNLIMITED,
-  DAILY_WORD_LIMIT_UNLIMITED_DESC: DailyWordLimitDescription.UNLIMITED,
-  DAILY_WORD_LIMIT_REACHED: DailyWordLimitStatus.REACHED,
-  DAILY_WORD_LIMIT_REACHED_DESC: DailyWordLimitStatusDescription.REACHED,
-  DAILY_WORD_LIMIT_APPROACHING: DailyWordLimitStatus.APPROACHING,
-  DAILY_WORD_LIMIT_APPROACHING_DESC: DailyWordLimitStatusDescription.APPROACHING,
 
   // Article & content actions - shortened and action-oriented
   BROWSE_ARTICLES: 'Browse articles',
   ARTICLES_SELECTED_FOR_YOU: 'Articles selected for you',
   SUMMARY: 'Summary',
-  READ: AppTab.READ,
-  LISTEN: AppTab.LISTEN,
-  PRACTICE: AppTab.PRACTICE,
   CONTINUE_READING: 'Continue Reading',
 
-  // Review actions
-  DONT_KNOW: ReviewAction.DONT_KNOW,
-  KNOW: ReviewAction.KNOW,
-  STUDY_DUE_WORDS: ReviewAction.STUDY_DUE_WORDS,
-
   // Audio controls - shortened button text
-  REPEAT: AudioAction.REPEAT,
-  PLAY_ALL: AudioAction.PLAY_ALL,
-  PLAY_NOW: AudioAction.PLAY_NOW,
   STOP: 'Stop',
   REMOVE: 'Remove',
-  LISTEN_LATER: AudioAction.LISTEN_LATER,
   SLEEP_TIMER_TITLE: 'Sleep timer',
   SLEEP_TIMER_AUTOMATIC: 'Playback stops automatically',
   SLEEP_TIMER_CHOOSE_WHEN: 'Choose when to stop',
   TIMER: 'Timer',
   SET_TIME: 'Set time',
-  START_TIMER: SleepTimerAction.START,
-  CANCEL_TIMER: SleepTimerAction.CANCEL,
   REMAINING: 'remaining',
   MINUTES: '{minutes} min',
 
@@ -205,20 +141,7 @@ export const STRINGS = {
   PASSWORD_ADD_CHARACTER_TYPES: 'Add uppercase, lowercase and a number',
   PASSWORD_USE_AT_LEAST_TEMPLATE: 'Use at least {minLength} characters',
 
-  // Word management actions - shortened
-  SKIP_TODAY: WordManagementAction.SKIP_TODAY,
-  HIDE_FROM_CURRENT_SESSION: WordManagementAction.HIDE_FROM_SESSION,
   RESET_PROGRESS: 'Reset progress',
-  START_OVER_WITH_THIS_WORD: WordManagementAction.START_OVER,
-  STOP_STUDYING: WordManagementAction.STOP_STUDYING,
-  REMOVE_FROM_VOCABULARY_LIST: WordManagementAction.REMOVE_FROM_LIST,
-  MAKE_EASIER: WordDifficultyAction.MAKE_EASIER,
-  REDUCE_DIFFICULTY_LEVEL: WordDifficultyAction.REDUCE_DIFFICULTY_LEVEL,
-  NEEDS_PRACTICE: WordDifficultyAction.NEEDS_PRACTICE,
-  SHOW_MORE_OFTEN: WordDifficultyAction.SHOW_MORE_OFTEN,
-  MARK_EASY: WordDifficultyAction.MARK_EASY,
-  SHOW_LESS_OFTEN: WordDifficultyAction.SHOW_LESS_OFTEN,
-  MARK_HARD: WordDifficultyAction.MARK_HARD,
 
   // Practice session labels - concise and scientifically grounded
   // 3-Phase FSRS Practice System - scientifically grounded labels
@@ -236,12 +159,6 @@ export const STRINGS = {
   STRENGTH_SCORE: 'Memory strength',
   DUE_WORDS: 'Due',
   STRUGGLING_WORDS: 'Struggling',
-  RED_PHASE: MemoryRetentionPhase.PRESERVE_MEMORY,
-  ORANGE_PHASE: MemoryRetentionPhase.CONSOLIDATE,
-  GREEN_PHASE: MemoryRetentionPhase.READY_TO_ADD,
-  PHASE_RECOMMENDATION_RED: PhaseRecommendation.RED,
-  PHASE_RECOMMENDATION_ORANGE: PhaseRecommendation.ORANGE,
-  PHASE_RECOMMENDATION_GREEN: PhaseRecommendation.GREEN,
 
   INSIGHTS_UNAVAILABLE: 'Insights unavailable',
   INFO: 'Info',
@@ -253,10 +170,6 @@ export const STRINGS = {
   REVIEW_TIMING_EXPLANATION:
     'Reviews are scheduled when recall drops. Clearing due words restores memory strength; consolidating weak words moves you toward green.',
   MEMORY_STRENGTH_OPTIMAL_TIMING: 'Optimal timing for reviews based on your memory strength',
-  // Memory strength labels - simple strength indicators (sentence case)
-  MEMORY_STRENGTH_LOW: MemoryStrengthLevel.LOW,
-  MEMORY_STRENGTH_MEDIUM: MemoryStrengthLevel.MEDIUM,
-  MEMORY_STRENGTH_HIGH: MemoryStrengthLevel.HIGH,
   MEMORY_STRENGTH_CHARTS_DESCRIPTION:
     'These charts show detailed stats about your memory strength and learning progress. Use them to understand how your vocabulary retention works and track improvement over time.',
   DUE_TODAY_LABEL: 'Due words today: {count}',
@@ -360,24 +273,9 @@ export const STRINGS = {
   PRACTICE_TO_TRACK_LEARNING_SPEED: 'Study to track speed',
   STUDY_WORDS_TO_TRACK_MEMORY_RETENTION: 'Study to track retention',
 
-  // Font options
-  FONT_MADINA: ArabicFont.MADINA,
-  FONT_AMIRI: ArabicFont.AMIRI,
-  FONT_SCHEHERAZADE: ArabicFont.SCHEHERAZADE,
-  FONT_NASTALIQ: ArabicFont.NASTALIQ,
-  FONT_NOTO_SANS: ArabicFont.NOTO_SANS,
-  FONT_MADINA_DESCRIPTION: FontDescription.MADINA,
-  FONT_AMIRI_DESCRIPTION: FontDescription.AMIRI,
-  FONT_SCHEHERAZADE_DESCRIPTION: FontDescription.SCHEHERAZADE,
-  FONT_NASTALIQ_DESCRIPTION: FontDescription.NASTALIQ,
-  FONT_NOTO_SANS_DESCRIPTION: FontDescription.NOTO_SANS,
-
   // Filter options
   ALL_DIFFICULTIES: 'All difficulties',
   ALL_AUTHORS: 'All authors',
-  BEGINNER: ContentDifficulty.BEGINNER,
-  INTERMEDIATE: ContentDifficulty.INTERMEDIATE,
-  ADVANCED: ContentDifficulty.ADVANCED,
 
   // Audio fallbacks
   ARABIC_TITLE_FALLBACK: 'Arabic',
@@ -516,23 +414,12 @@ export const STRINGS = {
   CONFIRM_DELETE_SELECTED: 'Delete selected words?',
   DELETE_FOREVER_WARNING: 'This action cannot be undone.',
 
-  // Vocabulary readiness - simplified 3-phase system aligned with copy guidelines
-  READY_TO_ADD: LearningPhase.READY_TO_ADD,
-  PRACTICE_MORE_FIRST: LearningPhase.PRACTICE_MORE_FIRST,
-  FOCUS_ON_CURRENT: LearningPhase.FOCUS_ON_CURRENT,
-
   // Practice button disabled messages - concise guidance
   COMPLETE_DUE_FIRST: 'Review due words first',
   FOCUS_ON_STRUGGLING_FIRST: 'Strengthen struggling words first',
   NO_PRACTICE_NEEDED: 'All caught up. Add new words to continue learning',
   GET_STARTED_MESSAGE: 'Browse articles in the Library tab to add words you want to learn',
   PRACTICE_OPTIONS: 'Study options',
-
-  // Vocabulary stat card labels and messages
-  VOCAB_STAT_DUE: VocabularyStatCategory.DUE,
-  VOCAB_STAT_LEARNING: VocabularyStatCategory.LEARNING,
-  VOCAB_STAT_MASTERED: VocabularyStatCategory.MASTERED,
-  VOCAB_STAT_TOTAL: VocabularyStatCategory.TOTAL,
 
   // Learning method content
   LEARNING_METHOD_INTRO:

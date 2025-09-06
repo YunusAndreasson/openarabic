@@ -13,7 +13,6 @@ import PlayButton from '@/components/listen/PlayButton';
 import { ARTICLE_CARD_SPRING, CARD_DRAG_SCALE, WORD_PRESS_SCALE } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -109,7 +108,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
     );
 
     // Helper function to get difficulty text
-    const getDifficultyText = (level: number): string => difficultyLevelToLabel(level, STRINGS);
+    const getDifficultyText = (level: number): string => difficultyLevelToLabel(level);
 
     return (
       <Animated.View style={[styles.cardContainer, animatedStyle]}>

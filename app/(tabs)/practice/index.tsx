@@ -29,6 +29,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+import { ReviewAction } from '@/types/enums';
 import { mediumFeedback } from '@/utils/haptics';
 
 export default function VocabularyScreen(): JSX.Element {
@@ -311,7 +312,7 @@ export default function VocabularyScreen(): JSX.Element {
           }}
         >
           <BottomControls
-            primaryLabel={STRINGS.STUDY_DUE_WORDS}
+            primaryLabel={ReviewAction.STUDY_DUE_WORDS}
             onPrimaryPress={handleStartReview}
             primaryDisabled={dueWordsCount === 0}
           />

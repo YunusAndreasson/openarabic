@@ -11,6 +11,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { SleepTimerAction } from '@/types/enums';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
 import { formatSecondsToClock } from '@/utils/time';
 
@@ -120,7 +121,7 @@ const SleepTimerComponent = ({
             <View style={styles.buttonContainer}>
               <ThemedButton
                 style={styles.fullWidthButton}
-                title={STRINGS.START_TIMER}
+                title={SleepTimerAction.START}
                 onPress={handleSetTimer}
               />
             </View>

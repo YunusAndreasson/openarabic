@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
 
 import { LAYOUT } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setArabicFont, setArabicFontSize, type ArabicFontName } from '@/store/settingsSlice';
+import { ArabicFont, FontDescription } from '@/types/enums';
 
 export interface ArabicFontOption {
   name: ArabicFontName;
@@ -15,32 +15,32 @@ export interface ArabicFontOption {
 export const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
   {
     name: 'NotoSans',
-    displayName: STRINGS.FONT_NOTO_SANS,
-    description: STRINGS.FONT_NOTO_SANS_DESCRIPTION,
+    displayName: ArabicFont.NOTO_SANS,
+    description: FontDescription.NOTO_SANS,
     previewText: 'اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ',
   },
   {
     name: 'Madina',
-    displayName: STRINGS.FONT_MADINA,
-    description: STRINGS.FONT_MADINA_DESCRIPTION,
+    displayName: ArabicFont.MADINA,
+    description: FontDescription.MADINA,
     previewText: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
   },
   {
     name: 'Amiri',
-    displayName: STRINGS.FONT_AMIRI,
-    description: STRINGS.FONT_AMIRI_DESCRIPTION,
+    displayName: ArabicFont.AMIRI,
+    description: FontDescription.AMIRI,
     previewText: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
   },
   {
     name: 'Scheherazade',
-    displayName: STRINGS.FONT_SCHEHERAZADE,
-    description: STRINGS.FONT_SCHEHERAZADE_DESCRIPTION,
+    displayName: ArabicFont.SCHEHERAZADE,
+    description: FontDescription.SCHEHERAZADE,
     previewText: 'وَمَا أَرْسَلْنَاكَ إِلَّا رَحْمَةً لِّلْعَالَمِينَ',
   },
   {
     name: 'Nastaliq',
-    displayName: STRINGS.FONT_NASTALIQ,
-    description: STRINGS.FONT_NASTALIQ_DESCRIPTION,
+    displayName: ArabicFont.NASTALIQ,
+    description: FontDescription.NASTALIQ,
     previewText: 'إِنَّ مَعَ الْعُسْرِ يُسْرًا',
   },
 ];

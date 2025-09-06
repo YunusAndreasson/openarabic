@@ -7,7 +7,6 @@ import BaseCard from '@common/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { DifficultyBar } from '@/components/practice/DifficultyBar';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -41,7 +40,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
         const track = {
           id: `word-${word.root_id}-${word.root?.audio_url ? 'ar' : 'en'}`,
           audioUrl,
-          title: word.root?.letters || word.root?.meaning || STRINGS.ARABIC_PRONUNCIATION_FALLBACK,
+          title: word.root?.letters || word.root?.meaning || 'Arabic Pronunciation',
         };
 
         await audioPlayer.play(track);
@@ -73,8 +72,8 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const difficultyValue = word.fsrs_difficulty ?? 1.0;
 
     // Get Arabic and English text from root
-    const arabicText = word.root?.letters || STRINGS.UNKNOWN_ARABIC;
-    const englishText = word.root?.meaning || STRINGS.UNKNOWN_ENGLISH;
+    const arabicText = word.root?.letters || 'Unknown Arabic';
+    const englishText = word.root?.meaning || 'Unknown English';
 
     const deleteButtonStyle = useMemo(
       () => [styles.deleteButton, { backgroundColor: colors.error }],

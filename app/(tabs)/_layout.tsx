@@ -10,11 +10,10 @@ import { ThemedText } from '@/components/ThemedText';
 import EditModeButton from '@/components/ui/EditModeButton';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { UiAction } from '@/types/enums';
+import { AppTab, UiAction } from '@/types/enums';
 
 // Custom IconWithBadge component for better badge positioning and consistent shape
 const IconWithBadge = memo(
@@ -122,17 +121,17 @@ DictionaryButton.displayName = 'DictionaryButton';
 const TAB_SCREENS = [
   {
     name: 'read',
-    title: STRINGS.READ,
+    title: AppTab.READ,
     iconFilled: 'book',
   },
   {
     name: 'listen',
-    title: STRINGS.LISTEN,
+    title: AppTab.LISTEN,
     iconFilled: 'bookmark',
   },
   {
     name: 'practice',
-    title: STRINGS.PRACTICE,
+    title: AppTab.PRACTICE,
     iconFilled: 'school',
   },
 ] as const;

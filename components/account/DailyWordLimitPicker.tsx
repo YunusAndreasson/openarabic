@@ -15,6 +15,7 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { setDailyWordLimit } from '@/store/settingsSlice';
+import { DailyWordLimitDescription, DailyWordLimitTier } from '@/types/enums';
 import { lightFeedback } from '@/utils/haptics';
 
 export interface DailyWordLimitPickerProps {
@@ -32,26 +33,26 @@ interface WordLimitOption {
 export const WORD_LIMIT_OPTIONS: WordLimitOption[] = [
   {
     id: 10,
-    title: STRINGS.DAILY_WORD_LIMIT_GETTING_STARTED,
-    subtitle: STRINGS.DAILY_WORD_LIMIT_GETTING_STARTED_DESC,
+    title: DailyWordLimitTier.GETTING_STARTED,
+    subtitle: DailyWordLimitDescription.GETTING_STARTED,
     icon: 'school',
   },
   {
     id: 20,
-    title: STRINGS.DAILY_WORD_LIMIT_STEADY,
-    subtitle: STRINGS.DAILY_WORD_LIMIT_STEADY_DESC,
+    title: DailyWordLimitTier.STEADY_PROGRESS,
+    subtitle: DailyWordLimitDescription.STEADY_PROGRESS,
     icon: 'trending-up',
   },
   {
     id: 30,
-    title: STRINGS.DAILY_WORD_LIMIT_ACTIVE,
-    subtitle: STRINGS.DAILY_WORD_LIMIT_ACTIVE_DESC,
+    title: DailyWordLimitTier.ACTIVE_LEARNING,
+    subtitle: DailyWordLimitDescription.ACTIVE_LEARNING,
     icon: 'flash',
   },
   {
     id: 0,
-    title: STRINGS.DAILY_WORD_LIMIT_UNLIMITED,
-    subtitle: STRINGS.DAILY_WORD_LIMIT_UNLIMITED_DESC,
+    title: DailyWordLimitTier.UNLIMITED,
+    subtitle: DailyWordLimitDescription.UNLIMITED,
     icon: 'infinite',
   },
 ];
