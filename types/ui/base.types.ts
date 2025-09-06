@@ -1,4 +1,4 @@
-import type { ViewStyle, StyleProp } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import type { AnimatedStyle } from 'react-native-reanimated';
 
 /**
@@ -25,6 +25,19 @@ export interface BaseOptionalPressableProps {
   onPress?: () => void;
   /** Optional test identifier used for testing */
   testID?: string;
+}
+
+/**
+ * Comprehensive base props combining style, pressable, and loading functionality
+ * This consolidates the most common UI component patterns to reduce interface extension
+ */
+export interface BaseComponentProps extends BaseStyleProps, BaseOptionalPressableProps {
+  /** Whether the component is in a loading state */
+  loading?: boolean;
+  /** Whether the component is disabled */
+  disabled?: boolean;
+  /** Children to render inside the component */
+  children?: React.ReactNode;
 }
 
 /**

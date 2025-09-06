@@ -173,7 +173,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       [contentContainerStyle, stableInsetsBottomRef.current]
     );
 
-    // Simplified FlashList configuration - removed empty data array
+    // FlashList configuration - empty data array since articles are displayed in header
     const flashListConfig = useMemo(
       () => ({
         data: [] as Article[], // Empty data since articles are in header

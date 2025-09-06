@@ -7,11 +7,10 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { useDebounce, usePressAnimation } from '@/hooks/animations';
+import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui/button.types';
-import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
 
@@ -61,20 +60,16 @@ const getIconSize = (size: ButtonSize, customSize?: number) => {
 };
 
 function ThemedButtonComponent({
-  variant = 'filled',
+  variant = 'filled', // Most common value - hardcoded
   title,
   icon,
-  loading = false,
+  loading = false, // Always false when not specified
   style,
-  disabled = false,
-  iconSize: customIconSize = LAYOUT.BUTTON.ICON_SIZE.LARGE,
+  disabled = false, // Always false when not specified
+  iconSize: customIconSize = LAYOUT.BUTTON.ICON_SIZE.LARGE, // Most common value - hardcoded
   onPress,
-  size = 'medium',
-  textWeight = 'bold',
-  disablePressAnimation = false,
-  uppercase = true,
-  hapticFeedback = false,
-  debounceMs = 300,
+  size = 'medium', // Most common value - hardcoded
+  textWeight = 'bold', // Most common value - hardcoded
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
@@ -86,21 +81,15 @@ function ThemedButtonComponent({
     opacityAmount: LAYOUT.OPACITY.PRESSED,
   });
 
-  // Create the press handler with haptic feedback
+  // Create the press handler
   const pressHandler = useCallback(
     (event: GestureResponderEvent) => {
-      if (hapticFeedback) {
-        selectionFeedback();
-      }
       if (onPress && !disabled && !loading) {
         onPress(event);
       }
     },
-    [onPress, disabled, loading, hapticFeedback]
+    [onPress, disabled, loading]
   );
-
-  // Apply debouncing to the press handler
-  const [debouncedHandlePress, isDebouncing] = useDebounce(pressHandler, debounceMs);
 
   const textColor = disabled
     ? colors.secondaryText
@@ -152,18 +141,18 @@ function ThemedButtonComponent({
   // Accessibility properties
   const accessibilityLabel = props.accessibilityLabel || title;
   const accessibilityState = {
-    disabled: disabled || loading || isDebouncing,
-    busy: loading || isDebouncing,
+    disabled: disabled || loading,
+    busy: loading,
     ...props.accessibilityState,
   };
 
   return (
     <AnimatedTouchable
-      style={[buttonStyle, disablePressAnimation ? null : animatedStyle]}
-      onPressIn={disablePressAnimation ? undefined : handlePressIn}
-      onPressOut={disablePressAnimation ? undefined : handlePressOut}
-      disabled={disabled || loading || isDebouncing}
-      onPress={debouncedHandlePress}
+      style={[buttonStyle, animatedStyle]}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      disabled={disabled || loading}
+      onPress={pressHandler}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={accessibilityState}
@@ -207,7 +196,7 @@ function ThemedButtonComponent({
               style={[buttonTextStyle, textOpacityStyle]}
               type={getTextType(size, textWeight)}
             >
-              {uppercase ? title?.toUpperCase() : title}
+              {title?.toUpperCase()}
             </ThemedText>
           )}
         </View>

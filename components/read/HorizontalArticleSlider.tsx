@@ -55,7 +55,6 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
   );
 
   // Memoize the article cards to prevent unnecessary re-renders
-  // Note: precomputed JSX list removed to avoid unused variable
 
   const keyExtractor = useCallback((item: Article) => `featured-${item.id}`, []);
 

@@ -91,7 +91,6 @@ const ListenListItem = memo(
         onDelete={handleDelete}
         // Entire card triggers article navigation when not in edit mode
         onPress={!editMode ? handlePress : undefined}
-        // Play button removed - single article playing functionality removed
         // Add article image for bookmarks-style appearance
         imageUrl={generateImageUrl(item.articles.image_url)}
         dragHandleProps={dragHandleProps}
@@ -348,7 +347,6 @@ export default function ListenScreen(): JSX.Element {
         <BottomControls
           primaryDisabled={isPlayAllLoading}
           primaryLoading={isPlayAllLoading}
-          primaryDisablePressAnimation={true}
           primaryLabel={STRINGS.PLAY_ALL}
           onPrimaryPress={handlePlayAllStable}
         />

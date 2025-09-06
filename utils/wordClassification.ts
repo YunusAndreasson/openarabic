@@ -41,9 +41,8 @@ export function calculateDueWords(studyWords: StudyWord[]): number {
   const nowMs = Date.now();
   const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
 
-  const normalizeTs = (ts: unknown) => {
+  const normalizeTs = (ts: string | null) => {
     if (typeof ts === 'string') return ts.replace(' ', 'T');
-    if (ts instanceof Date) return ts.toISOString();
     return undefined;
   };
 
@@ -53,12 +52,12 @@ export function calculateDueWords(studyWords: StudyWord[]): number {
       return true;
     }
 
-    const dueStr = normalizeTs(word.fsrs_due as unknown);
+    const dueStr = normalizeTs(word.fsrs_due);
     const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
     const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
 
     // Apply the same session cooldown so indicators match session content
-    const lastStr = normalizeTs(word.fsrs_last_review as unknown);
+    const lastStr = normalizeTs(word.fsrs_last_review);
     const lastMs = lastStr ? Date.parse(lastStr) : 0;
     const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
 
@@ -102,18 +101,17 @@ export function calculateMasteredWords(studyWords: StudyWord[]): number {
 export function calculateStrugglingWords(studyWords: StudyWord[]): number {
   const nowMs = Date.now();
   const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-  const normalizeTs = (ts: unknown) => {
+  const normalizeTs = (ts: string | null) => {
     if (typeof ts === 'string') return ts.replace(' ', 'T');
-    if (ts instanceof Date) return ts.toISOString();
     return undefined;
   };
 
   return studyWords.filter(word => {
-    const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
+    const hasBeenReviewed = (word.fsrs_reps ?? 0) > 0;
     if (!hasBeenReviewed) return false;
 
     // Apply the same cooldown as the session so indicators match session content
-    const lastStr = normalizeTs(word.fsrs_last_review as unknown);
+    const lastStr = normalizeTs(word.fsrs_last_review);
     const lastMs = lastStr ? Date.parse(lastStr) : 0;
     const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
     if (isRecentlyReviewed) return false;
@@ -170,17 +168,16 @@ export const getStrugglingWordsCount = (studyWords: StudyWord[]): number => {
 
   const nowMs = Date.now();
   const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-  const normalizeTs = (ts: unknown) => {
+  const normalizeTs = (ts: string | null) => {
     if (typeof ts === 'string') return ts.replace(' ', 'T');
-    if (ts instanceof Date) return ts.toISOString();
     return undefined;
   };
 
   return studyWords.filter(word => {
     if (!word || word.root_id == null) return false;
-    const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
+    const hasBeenReviewed = (word.fsrs_reps ?? 0) > 0;
     if (!hasBeenReviewed) return false;
-    const lastStr = normalizeTs(word.fsrs_last_review as unknown);
+    const lastStr = normalizeTs(word.fsrs_last_review);
     const lastMs = lastStr ? Date.parse(lastStr) : 0;
     const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
     if (isRecentlyReviewed) return false;

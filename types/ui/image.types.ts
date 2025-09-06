@@ -3,7 +3,7 @@ import type { ImageContentPosition } from 'expo-image';
 import type { BaseOptionalPressableProps, BaseStyleProps } from './base.types';
 
 /**
- * Image configuration options
+ * Image configuration options - simplified since most values are hardcoded defaults
  */
 export interface ImageConfig {
   /** How the image should fit within its container */

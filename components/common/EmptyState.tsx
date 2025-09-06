@@ -55,11 +55,8 @@ const EmptyState = memo(
 
     const defaultActionButton = !hideArticlesButton && (
       <ThemedButton
-        size="medium"
         style={styles.customActionButton}
-        textWeight="bold"
         title={STRINGS.BROWSE_ARTICLES}
-        variant="filled"
         onPress={handleBrowseArticles}
       />
     );

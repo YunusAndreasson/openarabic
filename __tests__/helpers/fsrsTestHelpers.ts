@@ -322,7 +322,6 @@ export const createWordSet = (
     id: number;
     hoursOverdue?: number;
     stability?: number;
-    // removed legacy difficulty
     state?: number;
     reps?: number;
     lapses?: number;

@@ -1,35 +1,25 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 
-import type { BaseAnimatedStyleProps, BaseOptionalPressableProps } from './base.types';
+import type { BaseComponentProps } from './base.types';
 
 /**
  * Props for card components with basic styling and functionality
  */
-export interface BaseCardProps extends BaseAnimatedStyleProps {
-  /** Whether the card is in a loading state */
-  isLoading?: boolean;
-  /** Children to render inside the card */
-  children?: React.ReactNode;
-  /** Optional callback when card is pressed */
-  onPress?: () => void;
+export interface BaseCardProps extends BaseComponentProps {
   /** Optional callback when card is long pressed */
   onLongPress?: () => void;
   /** Shadow size for the card */
   shadowSize?: 'large' | 'medium' | 'none' | 'small';
-  /** Custom loading component to use */
-  loadingComponent?: React.ReactNode;
   /** Additional styling for the content container */
   contentStyle?: StyleProp<ViewStyle>;
-  /** Whether the card is disabled (reduces opacity and prevents interactions) */
-  disabled?: boolean;
-  /** Optional test identifier used for testing */
-  testID?: string;
+  /** Alias for loading prop - more descriptive for cards */
+  isLoading?: boolean;
 }
 
 /**
  * Props for article variant of ThemedCard
  */
-export interface ArticleCardProps extends BaseCardProps, BaseOptionalPressableProps {
+export interface ArticleCardProps extends BaseCardProps {
   /** Variant of the card */
   variant: 'article';
   /** URL of the image to display in the card */

@@ -25,8 +25,6 @@ export interface BaseButtonProps
     BaseAnimatedStyleProps {
   /** Text displayed on the button */
   title: string;
-  /** Whether to render the title in uppercase. Defaults to false. */
-  uppercase?: boolean;
   /** Whether the button is in a loading state */
   loading?: boolean;
   /** Size of the icon in pixels */
@@ -35,12 +33,6 @@ export interface BaseButtonProps
   size?: ButtonSize;
   /** Text weight for the button text */
   textWeight?: ButtonTextWeight;
-  /** Whether to disable the press animation */
-  disablePressAnimation?: boolean;
-  /** Whether to enable haptic feedback on press */
-  hapticFeedback?: boolean;
-  /** Debounce delay in milliseconds to prevent rapid successive presses */
-  debounceMs?: number;
 }
 
 /**
@@ -52,35 +44,15 @@ export interface IconButtonProps {
 }
 
 /**
- * Props for filled variant of ThemedButton
+ * Simplified ThemedButton props - variant is now optional with 'filled' as default
  */
-export interface FilledButtonProps extends BaseButtonProps, IconButtonProps {
+export interface ThemedButtonProps extends BaseButtonProps, IconButtonProps {
   /** Visual style variant of the button */
-  variant: 'filled';
+  variant?: ButtonVariant;
 }
 
 /**
- * Props for outlined variant of ThemedButton
- */
-export interface OutlinedButtonProps extends BaseButtonProps, IconButtonProps {
-  /** Visual style variant of the button */
-  variant: 'outlined';
-}
-
-/**
- * A themed button component that supports different visual styles,
- * icons, loading states, and press animations.
- */
-export type ThemedButtonProps =
-  | FilledButtonProps
-  | OutlinedButtonProps
-  | (BaseButtonProps &
-      IconButtonProps & {
-        variant?: ButtonVariant;
-      });
-
-/**
- * Generic base props for icon-based buttons
+ * Simplified base props for icon-based buttons
  */
 export interface BaseIconButtonProps<TIcon = string> {
   /** Icon name (string or union of icon names) */
@@ -95,6 +67,4 @@ export interface BaseIconButtonProps<TIcon = string> {
   style?: ViewStyle;
   /** Press handler */
   onPress: () => void;
-  /** Debounce delay in milliseconds to prevent rapid successive presses */
-  debounceMs?: number;
 }

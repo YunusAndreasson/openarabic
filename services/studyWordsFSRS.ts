@@ -6,7 +6,7 @@ import { handleError } from '@/utils/errorHandling';
 
 import { checkAuthentication, supabase } from './supabase';
 
-// Interface for FSRS-specific update fields
+// Interface for FSRS-specific update fields - matches RPC function requirements
 interface FSRSWordUpdate {
   fsrs_due: string;
   fsrs_stability: number;
@@ -17,7 +17,7 @@ interface FSRSWordUpdate {
   fsrs_learning_steps: number;
   fsrs_lapses: number;
   fsrs_state: number;
-  fsrs_last_review: string; // Keep as non-null for RPC function compatibility
+  fsrs_last_review: string; // Always provided during updates
 }
 
 // Define options for fetching FSRS words
@@ -147,7 +147,25 @@ export const studyWordsFSRSService = {
       throw error;
     }
 
-    return data as StudyWord[];
+    // Type-safe mapping from database rows to StudyWord interface
+    return (data || []).map(
+      (row): StudyWord => ({
+        root_id: row.root_id,
+        user_id: 'user_id' in row ? row.user_id : userId, // Use passed userId for stats queries
+        fsrs_due: row.fsrs_due,
+        fsrs_stability: row.fsrs_stability,
+        fsrs_difficulty: row.fsrs_difficulty,
+        fsrs_elapsed_days: row.fsrs_elapsed_days,
+        fsrs_scheduled_days: row.fsrs_scheduled_days,
+        fsrs_reps: row.fsrs_reps,
+        fsrs_learning_steps: row.fsrs_learning_steps,
+        fsrs_lapses: row.fsrs_lapses,
+        fsrs_state: row.fsrs_state,
+        fsrs_last_review: row.fsrs_last_review, // Always exists per database schema
+        created_at: row.created_at,
+        root: 'root' in row ? { ...row.root, id: row.root_id } : undefined, // Add missing id field
+      })
+    );
   },
 
   // Update word with FSRS parameters

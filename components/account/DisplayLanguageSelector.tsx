@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -12,7 +13,7 @@ import { setDisplayLanguagePreference } from '@/store/settingsSlice';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface DisplayLanguageSelectorProps {
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 const DisplayLanguageSelector: React.FC<DisplayLanguageSelectorProps> = ({ style }) => {
@@ -47,7 +48,6 @@ const DisplayLanguageSelector: React.FC<DisplayLanguageSelectorProps> = ({ style
       >
         <ThemedText
           style={styles.optionLabel}
-          type="body"
           weight="medium"
           colorName={isSelected ? 'tint' : 'text'}
         >
@@ -68,7 +68,7 @@ const DisplayLanguageSelector: React.FC<DisplayLanguageSelectorProps> = ({ style
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
             />
           </View>
-          <ThemedText style={styles.cardText} type="body" weight="medium">
+          <ThemedText style={styles.cardText} weight="medium">
             {STRINGS.DISPLAY_LANGUAGE}
           </ThemedText>
         </View>

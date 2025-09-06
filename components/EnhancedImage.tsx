@@ -6,12 +6,7 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { EnhancedImageProps } from '@/types/ui/image.types';
 
-// Extract constants outside component for better performance
-const DEFAULT_CONTENT_FIT = 'cover';
-const DEFAULT_CONTENT_POSITION = 'center';
-// Use supported cache policy values per expo-image types
-const DEFAULT_CACHE_POLICY: EnhancedImageProps['cachePolicy'] = 'memory-disk';
-const DEFAULT_PRIORITY = 'normal';
+// Optimized constants - most common values are hardcoded as defaults
 const IMAGE_SIZE = '100%' as const;
 
 // Custom comparison function for memo optimization
@@ -60,12 +55,12 @@ const styles = StyleSheet.create({
 function EnhancedImageInternal({
   source,
   style,
-  contentFit = DEFAULT_CONTENT_FIT,
-  contentPosition = DEFAULT_CONTENT_POSITION,
+  contentFit = 'cover', // Most common value - hardcoded
+  contentPosition = 'center', // Most common value - hardcoded
   onLoad,
   onError,
-  cachePolicy = DEFAULT_CACHE_POLICY,
-  priority = DEFAULT_PRIORITY,
+  cachePolicy = 'memory-disk', // Most common value - hardcoded
+  priority = 'normal', // Most common value - hardcoded
   transition,
   recyclingKey,
   testID,

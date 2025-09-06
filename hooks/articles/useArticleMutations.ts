@@ -88,7 +88,7 @@ export const useArticleMutations = (
     if (Array.isArray(all)) {
       const words = all as {
         fsrs_due: string | null;
-        fsrs_last_review?: string | null;
+        fsrs_last_review: string;
         fsrs_stability?: number | null;
         fsrs_difficulty?: number | null;
         fsrs_reps?: number | null;

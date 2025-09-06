@@ -790,7 +790,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   ]);
 
   return (
-    <View style={FLEX_ONE_STYLE}>
+    <>
       {hasContent && articleContentProps ? <ArticleContent {...articleContentProps} /> : null}
 
       {/* Removed mini-player for article modal */}
@@ -820,7 +820,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
       {/* Scrubber moved out of ArticleContent to avoid ArticleContent rerenders */}
       {!wordDetailsBottomSheet.isVisible && <SentenceScrubber {...sentenceScrubberProps} />}
-    </View>
+    </>
   );
 }, ArticleScreenContentComparison);
 

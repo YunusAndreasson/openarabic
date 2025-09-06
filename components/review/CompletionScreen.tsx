@@ -218,7 +218,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
           encouragingMetrics ? COMPLETION_BUTTON_DELAY.WITH_METRICS : COMPLETION_BUTTON_DELAY.BASE
         ).duration(TIMING_CONFIG.GENTLE.duration)}
       >
-        <ThemedButton title={buttonText} variant="filled" onPress={onClose} style={styles.button} />
+        <ThemedButton title={buttonText} onPress={onClose} style={styles.button} />
       </Animated.View>
     </View>
   );

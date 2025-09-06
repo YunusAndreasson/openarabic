@@ -118,7 +118,6 @@ function renderWordWithProps(
       position={index}
       isDueWord={isDueWord}
       isHighlighted={isHighlighted}
-      testID={(word as any).testID}
     />
   );
 }
@@ -212,16 +211,14 @@ const ArticleSentenceComponent = memo(
       currentHighlightedWord,
     ]);
 
-    // Fallback for test environments where Animated.View might be undefined
-    const AnimatedView: any = (Animated as any)?.View ?? View;
+    // Use Animated.View directly - it's properly imported from react-native-reanimated
+    const AnimatedView = Animated.View;
 
     return (
       <View style={[styles.container, containerStyle]}>
         <AnimatedView style={backgroundStyle} />
         {settings.showEnglish && sentence.english && (
-          <ThemedText type="body" style={englishTextStyle as any}>
-            {sentence.english}
-          </ThemedText>
+          <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>
         )}
         <View style={styles.wordsContainer}>{renderedWords}</View>
       </View>

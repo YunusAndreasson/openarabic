@@ -13,11 +13,10 @@ const BaseCard: FC<BaseCardProps> = memo(
     style,
     onPress,
     onLongPress,
-    isLoading = false,
-    shadowSize = 'medium',
-    loadingComponent,
+    isLoading = false, // Always false when not specified
+    shadowSize = 'medium', // Most common value - hardcoded
     contentStyle,
-    disabled = false,
+    disabled = false, // Always false when not specified
     testID,
   }) => {
     const colors = useColors();
@@ -66,7 +65,7 @@ const BaseCard: FC<BaseCardProps> = memo(
     if (isLoading) {
       return (
         <Animated.View style={[baseCardStyle, animatedStyle]} testID={testID}>
-          {loadingComponent || <View style={combinedContentStyle} />}
+          <View style={combinedContentStyle} />
         </Animated.View>
       );
     }

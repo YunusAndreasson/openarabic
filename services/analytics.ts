@@ -11,12 +11,27 @@
  * - Type-safe interface
  */
 
-import type { MixpanelProperties } from 'mixpanel-react-native';
+// Minimal interface for analytics properties
+import { MIXPANEL_TOKEN } from '../constants/analytics';
 
-import { MIXPANEL_TOKEN } from '@/constants/analytics';
+interface AnalyticsProperties {
+  [key: string]: string | number | boolean | null | undefined;
+}
 
-// Mixpanel instance and initialization state
-let mixpanelInstance: any = null;
+// Minimal interface for Mixpanel instance
+interface MixpanelInstance {
+  init(): Promise<void>;
+  identify(userId: string): Promise<void>;
+  getPeople(): Promise<{ set: (properties: AnalyticsProperties) => void }>;
+  track(event: string, properties?: AnalyticsProperties): Promise<void>;
+  reset(): Promise<void>;
+}
+
+// Analytics instance and initialization state
+let mixpanelInstance: MixpanelInstance | null = null;
+
+// React Native global for development mode detection
+declare const __DEV__: boolean;
 let isInitialized = false;
 
 const initializeMixpanel = async (): Promise<void> => {
@@ -30,7 +45,9 @@ const initializeMixpanel = async (): Promise<void> => {
     // Official v3.1.2 initialization pattern
     const trackAutomaticEvents = false;
     mixpanelInstance = new Mixpanel(MIXPANEL_TOKEN.trim(), trackAutomaticEvents);
-    await mixpanelInstance.init();
+    if (mixpanelInstance) {
+      await mixpanelInstance.init();
+    }
 
     isInitialized = true;
     if (__DEV__) {
@@ -47,7 +64,7 @@ const initializeMixpanel = async (): Promise<void> => {
 // Simple analytics service with Mixpanel integration
 export const analytics = {
   // Identify user with properties
-  identify: async (userId: string, properties?: MixpanelProperties): Promise<void> => {
+  identify: async (userId: string, properties?: AnalyticsProperties): Promise<void> => {
     try {
       await initializeMixpanel();
 
@@ -70,7 +87,7 @@ export const analytics = {
   },
 
   // Track custom events
-  track: async (event: string, properties?: MixpanelProperties): Promise<void> => {
+  track: async (event: string, properties?: AnalyticsProperties): Promise<void> => {
     try {
       await initializeMixpanel();
 

@@ -209,11 +209,9 @@ export function useGlobalAudioState(): GlobalAudioState {
     setShowSleepTimerModal(false);
   }, []);
 
-  // STABILIZATION: Simplified mini-player visibility logic
   const shouldHideMiniPlayer = useMemo(() => {
-    // Hide mini-player if we've navigated to modal and audio is still playing/loading
-    return false; // No longer navigated to modal, so always show
-  }, [audioPlayer.isPlaying, audioPlayer.isLoading]);
+    return false; // Mini-player is always shown
+  }, []);
 
   return {
     isPlaying: audioPlayer.isPlaying,

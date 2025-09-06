@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -12,7 +13,7 @@ import { setAudioShuffleEnabled } from '@/store/settingsSlice';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface AudioShuffleToggleProps {
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 const AudioShuffleToggle: React.FC<AudioShuffleToggleProps> = ({ style }) => {
@@ -39,7 +40,7 @@ const AudioShuffleToggle: React.FC<AudioShuffleToggleProps> = ({ style }) => {
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
           />
         </View>
-        <ThemedText style={styles.cardText} type="body" weight="medium">
+        <ThemedText style={styles.cardText} weight="medium">
           {STRINGS.AUDIO_SHUFFLE}
         </ThemedText>
       </View>

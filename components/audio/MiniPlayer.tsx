@@ -160,11 +160,9 @@ export const MiniPlayer = memo<MiniPlayerProps>(
               <EnhancedImage
                 source={generateImageUrl(article.image_url)}
                 style={artworkStyle}
-                contentFit="cover"
                 priority="high"
                 transition={0}
                 recyclingKey={generateImageUrl(article.image_url)}
-                cachePolicy="memory-disk"
               />
             </View>
 

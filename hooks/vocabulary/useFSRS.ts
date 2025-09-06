@@ -177,8 +177,6 @@ export function useFSRS({
     stateTrackingRef.current.queueInitialized = true;
     lastQueueSignatureRef.current = signature;
 
-    // Development logging removed - session start
-
     // Clear any existing timeouts before setting new ones
     if (initTimeoutRef.current) {
       clearTimeout(initTimeoutRef.current);
@@ -215,15 +213,12 @@ export function useFSRS({
         const ordered = queueRef.current.toArray();
         setWordQueue(ordered);
 
-        // Development logging removed - queue initialized
-
         // FIXED: Check if any words are actually available (not in cooldown)
         const first = getNextWordWithSpacing();
 
         if (first) {
           // We have available words, start session
           setCurrentWord(first);
-          // Development logging removed - word next
         } else {
           // FIXED: All words are in cooldown or spacing, complete session immediately
           setIsComplete(true);
@@ -231,7 +226,6 @@ export function useFSRS({
             stateTrackingRef.current.completionTriggered = true;
             onComplete();
           }
-          // Development logging removed - session complete immediate
         }
       } else {
         // FIXED: Only complete if there are truly no words available
@@ -240,7 +234,6 @@ export function useFSRS({
           stateTrackingRef.current.completionTriggered = true;
           onComplete();
         }
-        // Development logging removed - no due words
       }
     }, 0);
 
@@ -294,8 +287,6 @@ export function useFSRS({
       }
 
       stateTrackingRef.current.isProcessingUpdate = true;
-
-      // Development logging removed - word update begin
 
       const card = convertToFSRSCard(currentWord);
       const now = new Date();
@@ -383,8 +374,6 @@ export function useFSRS({
           : 0;
       setProgress(newProgress);
 
-      // Development logging removed - progress updated
-
       // FIXED: Ensure forward progress when only spaced words remain (avoid deadlock)
       // If there's no next item, try to move any ready or nearly-ready spaced words back to the queue.
       if (!nextItem) {
@@ -404,7 +393,6 @@ export function useFSRS({
           );
 
           nextItem = getNextWordWithSpacing();
-          // Development logging removed - word next from spaced
         }
 
         // If still none, but the session isn't fully known yet, requeue the smallest spacing candidate
@@ -428,7 +416,6 @@ export function useFSRS({
                 id => id !== candidate.word.root_id
               );
               nextItem = candidate.word;
-              // Development logging removed - force repeat override
             }
           }
 
@@ -439,15 +426,12 @@ export function useFSRS({
               setIsComplete(true);
               if (onComplete) onComplete();
             }, COMPLETION_DELAY_MS);
-            // Development logging removed - session completion triggered
           }
         }
       }
 
       setCurrentWord(nextItem || null);
       setWordQueue(remaining);
-
-      // Development logging removed - word update end
 
       // Persist update; errors won't block UI progression
       try {
@@ -516,8 +500,6 @@ export function useFSRS({
 
       // Reset state
       resetQueue();
-
-      // Development logging removed
     };
   }, [resetQueue]);
 

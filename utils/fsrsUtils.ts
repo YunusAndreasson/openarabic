@@ -31,8 +31,7 @@ export function calculateRetrievability(
   lastReviewDate?: Date
 ): number {
   const stability = word.fsrs_stability ?? 0;
-  const lastReview =
-    lastReviewDate ?? (word.fsrs_last_review ? new Date(word.fsrs_last_review) : null);
+  const lastReview = lastReviewDate ?? new Date(word.fsrs_last_review);
 
   if (!lastReview || stability <= 0) {
     return 0;
@@ -159,18 +158,17 @@ export function calculateRetrievabilityTrend(
  * Check if a word is due on a specific date
  */
 function isWordDueOnDate(word: StudyWord, targetDate: Date): boolean {
-  const normalizeTs = (ts: unknown) => {
+  const normalizeTs = (ts: string | null) => {
     if (typeof ts === 'string') return ts.replace(' ', 'T');
-    if (ts instanceof Date) return ts.toISOString();
     return undefined;
   };
 
-  const dueStr = normalizeTs(word.fsrs_due as unknown);
+  const dueStr = normalizeTs(word.fsrs_due);
   const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
   const isDue = Number.isFinite(dueMs) && dueMs <= targetDate.getTime();
 
   // Apply the same session cooldown so indicators match session content
-  const lastStr = normalizeTs(word.fsrs_last_review as unknown);
+  const lastStr = normalizeTs(word.fsrs_last_review);
   const lastMs = lastStr ? Date.parse(lastStr) : 0;
   const cooldownMs = targetDate.getTime() - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
   const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cooldownMs;

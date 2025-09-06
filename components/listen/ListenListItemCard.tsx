@@ -132,7 +132,6 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
                   <EnhancedImage
                     source={imageUrl}
                     style={styles.thumbnailImage}
-                    cachePolicy="memory-disk"
                     transition={0}
                     recyclingKey={imageUrl}
                   />

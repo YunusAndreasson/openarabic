@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useCallback } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -12,7 +13,7 @@ import { setAudioLanguagePreference } from '@/store/settingsSlice';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface AudioLanguageSelectorProps {
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 const AudioLanguageSelector: React.FC<AudioLanguageSelectorProps> = ({ style }) => {
@@ -47,7 +48,6 @@ const AudioLanguageSelector: React.FC<AudioLanguageSelectorProps> = ({ style }) 
       >
         <ThemedText
           style={styles.optionLabel}
-          type="body"
           weight="medium"
           colorName={isSelected ? 'tint' : 'text'}
         >
@@ -68,7 +68,7 @@ const AudioLanguageSelector: React.FC<AudioLanguageSelectorProps> = ({ style }) 
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
             />
           </View>
-          <ThemedText style={styles.cardText} type="body" weight="medium">
+          <ThemedText style={styles.cardText} weight="medium">
             {STRINGS.AUDIO_LANGUAGE}
           </ThemedText>
         </View>

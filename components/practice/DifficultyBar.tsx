@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useColors } from '@/hooks/theme/useColors';
+import type { ThemeColors } from '@/types/ui/theme.types';
 
 interface DifficultyBarProps {
   difficulty: number;
@@ -20,7 +21,7 @@ const getDifficultyPercentage = (difficulty: number): number => {
 };
 
 // Smooth color interpolation between red, orange, and green
-const interpolateColor = (percentage: number, colors: any): string => {
+const interpolateColor = (percentage: number, colors: ThemeColors): string => {
   if (percentage <= 50) {
     // Interpolate from red to orange (0-50%)
     const ratio = percentage / 50;

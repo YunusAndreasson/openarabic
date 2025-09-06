@@ -363,7 +363,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       return success;
     } catch (error) {
       handleError(error instanceof Error ? error : new Error(String(error)));
-      // Development logging removed
       return false;
     }
   }, []);
@@ -470,7 +469,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
             const englishAudioUrl = generateAudioUrl(currentWord.root.audio_url_en);
             if (englishAudioUrl) {
               playAudio(englishAudioUrl);
-              // Development logging removed
             }
           }
 
@@ -494,7 +492,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
           } else {
             // For "known" responses, process immediately with minimum delay
             processFeedback(confidence, isStruggling, controller);
-            // Development logging removed
           }
         }, TRANSITION_DELAYS.fadeAnimation);
       }, TRANSITION_DELAYS.initial);
@@ -786,7 +783,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const handleSwipeLeft = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
       return;
-    // Development logging removed
     // Gesture swipe left
     handleKnowledgeResponse('unknown');
   }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady]);
@@ -794,7 +790,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const handleSwipeRight = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
       return;
-    // Development logging removed
     // Gesture swipe right
     handleKnowledgeResponse('known');
   }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady]);
@@ -920,8 +915,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       timeRefs.current.lastProcessedWordId = null;
       timeRefs.current.lastVagueTime = null;
       timeRefs.current.lastProgressUpdate = Date.now();
-
-      // Development logging removed
     };
   }, [fadeIn]);
 

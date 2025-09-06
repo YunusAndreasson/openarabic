@@ -121,7 +121,6 @@ const SleepTimerComponent = ({
               <ThemedButton
                 style={styles.fullWidthButton}
                 title={STRINGS.START_TIMER}
-                variant="filled"
                 onPress={handleSetTimer}
               />
             </View>
@@ -133,15 +132,11 @@ const SleepTimerComponent = ({
                 {formatSecondsToClock(remainingTime)}
               </ThemedText>
             </View>
-            <ThemedText style={styles.activeDescription} type="body" variant="secondary">
+            <ThemedText style={styles.activeDescription} variant="secondary">
               {STRINGS.TIME_REMAINING}
             </ThemedText>
             <View style={styles.buttonContainer}>
-              <ThemedButton
-                title={STRINGS.STOP_TIMER}
-                variant="filled"
-                onPress={handleCancelTimer}
-              />
+              <ThemedButton title={STRINGS.STOP_TIMER} onPress={handleCancelTimer} />
             </View>
           </View>
         )}

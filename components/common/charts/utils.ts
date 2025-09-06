@@ -39,28 +39,8 @@ export const isSameDay = (date1: Date, date2: Date): boolean => {
   return utc1.getTime() === utc2.getTime();
 };
 
-// Calculate retrievability using FSRS formula
-export const calculateRetrievability = (
-  word: StudyWord,
-  targetDate: Date,
-  lastReviewDate?: Date
-): number => {
-  const stability = word.fsrs_stability ?? 0;
-  const lastReview =
-    lastReviewDate ?? (word.fsrs_last_review ? new Date(word.fsrs_last_review) : null);
-
-  if (!lastReview || stability <= 0) {
-    return 0;
-  }
-
-  const daysSinceReview = (targetDate.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24);
-
-  // Correct FSRS retrievability formula: R = exp(-t/S)
-  // where t = days since review, S = stability
-  const retrievability = Math.exp(-daysSinceReview / stability);
-
-  return Math.max(0, Math.min(1, retrievability));
-};
+// Import shared retrievability calculation
+export { calculateRetrievability } from '@/utils/fsrsUtils';
 
 // Calculate learning efficiency score
 export const calculateEfficiencyScore = (word: StudyWord): number => {

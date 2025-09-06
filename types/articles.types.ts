@@ -24,11 +24,15 @@ export interface ArticleSentence extends Tables<'article_sentences'> {
  * Extended article type with additional UI and relational data
  * Core type used across article listings and detail views
  */
-export interface Article extends Tables<'articles'> {
+export interface Article extends Omit<Tables<'articles'>, 'category_id' | 'author_id'> {
   /** Sentences that make up this article, with word-level data */
   article_sentences: ArticleSentence[];
-  /** Category information for the article */
+  /** Category information for the article - always exists */
   category: Category;
-  /** Author information for the article */
+  /** Author information for the article - always exists */
   author: Author;
+  /** Category ID - always exists */
+  category_id: number;
+  /** Author ID - always exists */
+  author_id: number;
 }

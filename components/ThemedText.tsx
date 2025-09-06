@@ -34,12 +34,12 @@ import type { ThemedTextProps } from '@/types/ui/text.types';
  */
 function ThemedTextComponent({
   style,
-  type = 'body',
+  type = 'body', // Most common value - hardcoded
   variant,
   weight,
   align,
   colorName,
-  skipDefaultColor = false,
+  skipDefaultColor = false, // Always false when not specified
   numberOfLines,
   ellipsizeMode,
   arabicFontSize,
