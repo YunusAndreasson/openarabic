@@ -9,7 +9,7 @@ import * as Sentry from '@sentry/react-native';
 import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
-import { Stack, useNavigationContainerRef, useRouter, useSegments } from 'expo-router';
+import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
@@ -66,17 +66,7 @@ import { persistor, store } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 import { getEnvVar } from '@/utils/env';
 import { handleError } from '@/utils/errorHandling';
-import { onProfilerRender } from '@/utils/perf/enableRerenderLogging';
-import { registerNavigationContainer as registerPerfNavigationContainer } from '@/utils/perf/routeTracker';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
-
-// Enable dev-only rerender logging early in app startup without creating a route
-let __didInitPerf = false;
-if (__DEV__ && !__didInitPerf) {
-  __didInitPerf = true;
-  // Dynamically import to avoid bundling into production
-  import('./_bootstrap.dev').catch(() => {});
-}
 
 // Splash screen is now managed by expo-router v5's internal system
 // No manual preventAutoHideAsync needed - expo-router handles this automatically
@@ -148,11 +138,6 @@ function AppContent() {
 
   // Use streaks context
   const { isStreaksVisible, closeStreaks } = useStreaks();
-  const segments = useSegments();
-  const routeLabel = useMemo(
-    () => (Array.isArray(segments) && segments.length ? `/${segments.join('/')}` : '__root'),
-    [segments]
-  );
 
   // Enable LayoutAnimation on Android for FAQ expand/collapse
   useEffect(() => {
@@ -185,7 +170,6 @@ function AppContent() {
     if (navigationRef?.current) {
       navigationIntegration.registerNavigationContainer(navigationRef);
       // Also register for performance route tracking used by rerender logger
-      registerPerfNavigationContainer(navigationRef);
     }
   }, [navigationRef]);
 
@@ -370,50 +354,48 @@ function AppContent() {
   return (
     <NavigationThemeProvider value={navigationTheme}>
       <FSRSDataProvider userId={session?.user?.id}>
-        <React.Profiler id={`Screen:${routeLabel}`} onRender={onProfilerRender}>
-          <View style={styles.container}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen
-                name="(tabs)"
-                options={{
-                  headerShown: false,
-                  animation: 'fade',
-                }}
-              />
-              <Stack.Screen
-                name="auth"
-                options={{
-                  headerShown: false,
-                  animation: 'fade',
-                }}
-              />
-              <Stack.Screen
-                name="article/[id]"
-                options={createNavigationOptions(colors, {
-                  headerShown: false,
-                })}
-              />
-              <Stack.Screen
-                name="practice/review"
-                options={createNavigationOptions(colors, {
-                  headerShown: false,
-                  presentation: 'fullScreenModal',
-                  gestureEnabled: true,
-                })}
-              />
+        <View style={styles.container}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen
+              name="(tabs)"
+              options={{
+                headerShown: false,
+                animation: 'fade',
+              }}
+            />
+            <Stack.Screen
+              name="auth"
+              options={{
+                headerShown: false,
+                animation: 'fade',
+              }}
+            />
+            <Stack.Screen
+              name="article/[id]"
+              options={createNavigationOptions(colors, {
+                headerShown: false,
+              })}
+            />
+            <Stack.Screen
+              name="practice/review"
+              options={createNavigationOptions(colors, {
+                headerShown: false,
+                presentation: 'fullScreenModal',
+                gestureEnabled: true,
+              })}
+            />
 
-              {/* Audio overlays - mini-player and sleep timer */}
-            </Stack>
+            {/* Audio overlays - mini-player and sleep timer */}
+          </Stack>
 
-            {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
-            <AudioOverlays />
+          {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
+          <AudioOverlays />
 
-            {/* Streaks Bottom Sheet - rendered at root level for proper z-index */}
-            <StreaksBottomSheet isVisible={isStreaksVisible} onClose={closeStreaks} />
+          {/* Streaks Bottom Sheet - rendered at root level for proper z-index */}
+          <StreaksBottomSheet isVisible={isStreaksVisible} onClose={closeStreaks} />
 
-            <StatusBar style={isDark ? 'light' : 'dark'} />
-          </View>
-        </React.Profiler>
+          <StatusBar style={isDark ? 'light' : 'dark'} />
+        </View>
       </FSRSDataProvider>
     </NavigationThemeProvider>
   );
@@ -529,13 +511,7 @@ export default Sentry.wrap(function RootLayout() {
                       <Sentry.ErrorBoundary
                         fallback={({ error }) => <ErrorFallback error={error} />}
                       >
-                        {__DEV__ ? (
-                          <React.Profiler id="App" onRender={onProfilerRender}>
-                            <AppContent />
-                          </React.Profiler>
-                        ) : (
-                          <AppContent />
-                        )}
+                        <AppContent />
                       </Sentry.ErrorBoundary>
                     </StreaksProvider>
                   </ToastProvider>

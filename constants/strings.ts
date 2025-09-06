@@ -146,7 +146,6 @@ export const STRINGS = {
   // Empty states & hints - more actionable
   TRY_ADJUSTING_FILTERS: 'Try different filters',
   NO_ARTICLES_FOUND: 'No matches found',
-  NO_MATCHES_FOUND: 'No matches found',
   TRY_DIFFERENT_SEARCH: 'Try a different search term or check spelling',
   NO_ARTICLES_SAVED: 'No saved articles',
   LISTENING_BOOKMARKS_EMPTY: 'Add articles to build your bookmarks',
@@ -157,15 +156,14 @@ export const STRINGS = {
 
   // Practice tab empty state - user-centric and study-focused
   STUDY_LIST_EMPTY_TITLE: 'Ready to start learning?',
-  STUDY_LIST_EMPTY_DESCRIPTION:
-    'Add words from articles to begin building your Arabic vocabulary. Regular review sessions will help you retain what you learn!',
+  STUDY_LIST_EMPTY_DESCRIPTION: 'Add words from articles to start studying',
 
   // Dictionary
-  NO_STUDY_WORDS: 'No study words',
-  ADD_WORDS_TO_STUDY_LIST: 'Add words to your study list to see them here',
+  NO_STUDY_WORDS: 'No words to study',
+  ADD_WORDS_TO_STUDY_LIST: 'Add words from articles to study',
   SEARCH_WORDS_PLACEHOLDER: 'Search words...',
 
-  PROGRESS_NOT_AVAILABLE: "Progress isn't available right now",
+  PROGRESS_NOT_AVAILABLE: 'Progress unavailable',
   ERROR_LOADING_DATA: "Couldn't load data",
 
   // Success messages - encouraging and celebration-focused
@@ -594,16 +592,16 @@ export const STRINGS = {
   ERROR_FAILED_PROCESS_FIRST_TRACK: 'Failed to process first track',
 
   // Encouraging metrics templates
-  ACCURACY_EXCELLENT_TEMPLATE: '{percent}% accuracy - excellent recall',
-  ACCURACY_SOLID_TEMPLATE: '{percent}% accuracy - solid progress',
-  WORDS_STRONG_SESSION_TEMPLATE: '{count} words strong this session',
-  STREAK_EXCELLENT_TEMPLATE: '{count}-word streak - excellent focus',
-  STREAK_ACHIEVED_TEMPLATE: '{count}-word streak achieved',
-  MASTERED_WORDS_TEMPLATE: '{count} words reached strong level',
-  MEMORY_STRENGTH_BOOST_TEMPLATE: '+{days} days memory strength boost',
-  WORDS_PER_MIN_TEMPLATE: '{rate} words/min - efficient learning',
-  WORDS_REVIEWED_DEDICATION_TEMPLATE: '{count} words reviewed - dedication pays off',
-  WORDS_REVIEWED_GREAT_TEMPLATE: '{count} words reviewed - great effort',
+  ACCURACY_EXCELLENT_TEMPLATE: '{percent}% accuracy',
+  ACCURACY_SOLID_TEMPLATE: '{percent}% accuracy',
+  WORDS_STRONG_SESSION_TEMPLATE: '{count} words mastered',
+  STREAK_EXCELLENT_TEMPLATE: '{count}-word streak',
+  STREAK_ACHIEVED_TEMPLATE: '{count}-word streak',
+  MASTERED_WORDS_TEMPLATE: '{count} words mastered',
+  MEMORY_STRENGTH_BOOST_TEMPLATE: '+{days} days stronger',
+  WORDS_PER_MIN_TEMPLATE: '{rate} words/min',
+  WORDS_REVIEWED_DEDICATION_TEMPLATE: '{count} words reviewed',
+  WORDS_REVIEWED_GREAT_TEMPLATE: '{count} words reviewed',
 
   // Efficiency (units)
   WORDS_PER_DAY: 'words/day',

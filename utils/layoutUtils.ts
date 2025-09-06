@@ -1,0 +1,159 @@
+import type { ViewStyle } from 'react-native';
+
+import { LAYOUT } from '@/constants/layout';
+
+/**
+ * Spacing scale type for consistent usage across components
+ */
+export type SpacingScale = 'TINY' | 'SMALL' | 'MEDIUM' | 'LARGE' | 'XLARGE' | 'XXLARGE';
+
+/**
+ * Maps spacing scale to actual values
+ */
+const SPACING_MAP: Record<SpacingScale, number> = {
+  TINY: LAYOUT.SPACING.TINY,
+  SMALL: LAYOUT.SPACING.SMALL,
+  MEDIUM: LAYOUT.SPACING.MEDIUM,
+  LARGE: LAYOUT.SPACING.LARGE,
+  XLARGE: LAYOUT.SPACING.XLARGE,
+  XXLARGE: LAYOUT.SPACING.XXLARGE,
+};
+
+/**
+ * Creates padding styles with consistent spacing
+ * @param options - Padding configuration
+ * @returns ViewStyle with padding
+ */
+export const createPadding = (options: {
+  horizontal?: SpacingScale;
+  vertical?: SpacingScale;
+  top?: SpacingScale;
+  bottom?: SpacingScale;
+  left?: SpacingScale;
+  right?: SpacingScale;
+  all?: SpacingScale;
+}): ViewStyle => {
+  const style: ViewStyle = {};
+
+  if (options.all) {
+    const padding = SPACING_MAP[options.all];
+    style.padding = padding;
+    return style;
+  }
+
+  if (options.horizontal) {
+    style.paddingHorizontal = SPACING_MAP[options.horizontal];
+  }
+
+  if (options.vertical) {
+    style.paddingVertical = SPACING_MAP[options.vertical];
+  }
+
+  if (options.top) {
+    style.paddingTop = SPACING_MAP[options.top];
+  }
+
+  if (options.bottom) {
+    style.paddingBottom = SPACING_MAP[options.bottom];
+  }
+
+  if (options.left) {
+    style.paddingLeft = SPACING_MAP[options.left];
+  }
+
+  if (options.right) {
+    style.paddingRight = SPACING_MAP[options.right];
+  }
+
+  return style;
+};
+
+/**
+ * Creates margin styles with consistent spacing
+ * @param options - Margin configuration
+ * @returns ViewStyle with margin
+ */
+export const createMargin = (options: {
+  horizontal?: SpacingScale;
+  vertical?: SpacingScale;
+  top?: SpacingScale;
+  bottom?: SpacingScale;
+  left?: SpacingScale;
+  right?: SpacingScale;
+  all?: SpacingScale;
+}): ViewStyle => {
+  const style: ViewStyle = {};
+
+  if (options.all) {
+    const margin = SPACING_MAP[options.all];
+    style.margin = margin;
+    return style;
+  }
+
+  if (options.horizontal) {
+    style.marginHorizontal = SPACING_MAP[options.horizontal];
+  }
+
+  if (options.vertical) {
+    style.marginVertical = SPACING_MAP[options.vertical];
+  }
+
+  if (options.top) {
+    style.marginTop = SPACING_MAP[options.top];
+  }
+
+  if (options.bottom) {
+    style.marginBottom = SPACING_MAP[options.bottom];
+  }
+
+  if (options.left) {
+    style.marginLeft = SPACING_MAP[options.left];
+  }
+
+  if (options.right) {
+    style.marginRight = SPACING_MAP[options.right];
+  }
+
+  return style;
+};
+
+/**
+ * Creates common container styles for layouts
+ * @param options - Container configuration
+ * @returns ViewStyle for container
+ */
+export const createContainerStyle = (options: {
+  padding?: {
+    horizontal?: SpacingScale;
+    vertical?: SpacingScale;
+    all?: SpacingScale;
+  };
+  margin?: {
+    horizontal?: SpacingScale;
+    vertical?: SpacingScale;
+    all?: SpacingScale;
+  };
+  centered?: boolean;
+  fullWidth?: boolean;
+}): ViewStyle => {
+  const style: ViewStyle = {};
+
+  if (options.padding) {
+    Object.assign(style, createPadding(options.padding));
+  }
+
+  if (options.margin) {
+    Object.assign(style, createMargin(options.margin));
+  }
+
+  if (options.centered) {
+    style.alignItems = 'center';
+    style.justifyContent = 'center';
+  }
+
+  if (options.fullWidth) {
+    style.width = '100%';
+  }
+
+  return style;
+};

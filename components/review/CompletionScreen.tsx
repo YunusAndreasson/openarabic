@@ -28,6 +28,7 @@ import { analytics } from '@/services/analytics';
 import type { SessionMetrics } from '@/types/review.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { successFeedback } from '@/utils/haptics';
+import { createMargin, createPadding } from '@/utils/layoutUtils';
 
 interface CompletionScreenProps {
   onClose: () => void;
@@ -264,25 +265,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE + LAYOUT.SPACING.LARGE, // Reduced height for better proportion
     justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.XXXLARGE, // Increased for stronger visual separation
+    ...createMargin({ bottom: 'XXLARGE' }), // Increased for stronger visual separation
   },
   metricContent: {
     alignItems: 'center',
     flexDirection: 'row',
-    paddingVertical: LAYOUT.SPACING.TINY, // Reduced padding for tighter spacing
+    ...createPadding({ vertical: 'TINY' }),
   },
   metricIconContainer: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM, // Increased for better proportion
     justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    ...createMargin({ right: 'MEDIUM' }),
     width: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM, // Square container
   },
   metricItem: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.TINY, // Reduced vertical padding
+    ...createPadding({ horizontal: 'LARGE', vertical: 'TINY' }),
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
   },
   metricText: {

@@ -1,11 +1,12 @@
 import { memo, useMemo, type FC } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseCardProps } from '@/types/ui/card.types';
+import { createCardContentStyle } from '@/utils/textStyleUtils';
 
 const BaseCard: FC<BaseCardProps> = memo(
   ({
@@ -107,16 +108,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: LAYOUT.Z_INDEX.CARD,
   },
-  content: {
-    overflow: 'hidden',
-    position: 'relative',
-    zIndex: LAYOUT.Z_INDEX.BASE,
-    ...Platform.select({
-      android: {
-        minHeight: LAYOUT.BORDER.WIDTH.NORMAL,
-      },
-    }),
-  },
+  content: createCardContentStyle(),
 });
 
 BaseCard.displayName = 'BaseCard';

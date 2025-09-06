@@ -98,7 +98,7 @@ export default function ReviewScreen(): JSX.Element {
                 textAlign: 'center',
               }}
             >
-              Loading audio files...
+              Loading audio...
             </ThemedText>
             <ThemedText
               style={{
@@ -119,7 +119,7 @@ export default function ReviewScreen(): JSX.Element {
                   color: colors.success,
                 }}
               >
-                Audio ready! Starting practice...
+                Audio ready
               </ThemedText>
             )}
           </View>

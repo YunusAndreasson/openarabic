@@ -186,5 +186,29 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       // Should show all zeros
       expect(getAllByText('0').length).toBeGreaterThanOrEqual(3);
     });
+
+    it('handles large numbers correctly', () => {
+      const { getByText } = render(
+        <VocabularyStatCards
+          studyWords={[]}
+          dueWords={999}
+          learningWords={500}
+          masteredWords={250}
+        />
+      );
+
+      expect(getByText('999')).toBeTruthy();
+      expect(getByText('500')).toBeTruthy();
+      expect(getByText('250')).toBeTruthy();
+    });
+
+    it('renders without stats props (fallback behavior)', () => {
+      const words = [createStudyWord()];
+
+      const { UNSAFE_root } = render(<VocabularyStatCards studyWords={words} />);
+
+      // Should render without crashing even without explicit stats
+      expect(UNSAFE_root).toBeTruthy();
+    });
   });
 });

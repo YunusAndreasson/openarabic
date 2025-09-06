@@ -151,4 +151,45 @@ describe.each(sortFields)('sort by %s', field => {
 
     expect(result.current.map(a => a.id)).toEqual(expected[field]);
   });
+
+  describe('Error Handling', () => {
+    it('handles empty articles array', () => {
+      const state: FilterState = {
+        sort: { field: 'author', direction: 'asc' },
+        filters: { authorIds: [], difficultyRange: [1, 5], dateRange: 'all' },
+      };
+      (useAppSelector as jest.Mock).mockImplementation(sel => sel({ filters: state }));
+
+      const { result } = renderHook(() => useFilteredArticles([]));
+
+      expect(result.current).toEqual([]);
+    });
+
+    it('handles null/undefined articles', () => {
+      const state: FilterState = {
+        sort: { field: 'author', direction: 'asc' },
+        filters: { authorIds: [], difficultyRange: [1, 5], dateRange: 'all' },
+      };
+      (useAppSelector as jest.Mock).mockImplementation(sel => sel({ filters: state }));
+
+      const { result: nullResult } = renderHook(() => useFilteredArticles(null as any));
+      const { result: undefinedResult } = renderHook(() => useFilteredArticles(undefined as any));
+
+      expect(nullResult.current).toEqual([]);
+      expect(undefinedResult.current).toEqual([]);
+    });
+
+    it('handles articles without required properties', () => {
+      const state: FilterState = {
+        sort: { field: 'author', direction: 'asc' },
+        filters: { authorIds: [], difficultyRange: [1, 5], dateRange: 'all' },
+      };
+      (useAppSelector as jest.Mock).mockImplementation(sel => sel({ filters: state }));
+
+      const malformedArticles = [{ id: 1, title: 'Test' }]; // Missing required fields
+      const { result } = renderHook(() => useFilteredArticles(malformedArticles as any));
+
+      expect(result.current).toHaveLength(1);
+    });
+  });
 });

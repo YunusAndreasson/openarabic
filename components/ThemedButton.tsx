@@ -6,11 +6,13 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui/button.types';
+import { createPadding } from '@/utils/layoutUtils';
+import { createButtonTextStyle } from '@/utils/textStyleUtils';
 
 import { ThemedText } from './ThemedText';
 
@@ -210,33 +212,19 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
     minHeight: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    ...createPadding({ horizontal: 'LARGE', vertical: 'MEDIUM' }),
   },
   buttonLarge: {
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
-    paddingVertical: LAYOUT.SPACING.LARGE,
+    ...createPadding({ horizontal: 'XLARGE', vertical: 'LARGE' }),
   },
   buttonSmall: {
     minHeight: LAYOUT.BUTTON.HEIGHT.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    ...createPadding({ horizontal: 'MEDIUM', vertical: 'SMALL' }),
   },
-  buttonText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // bump medium button text from 15 -> 17 for uppercase legibility
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.HEAVY,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
-    textAlign: 'center',
-  },
-  buttonTextLarge: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // bump large button text from 17 -> 20
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
-  },
-  buttonTextSmall: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // bump small button text from 13 -> 15
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
-  },
+  buttonText: createButtonTextStyle('medium'),
+  buttonTextLarge: createButtonTextStyle('large'),
+  buttonTextSmall: createButtonTextStyle('small'),
   contentContainer: {
     alignItems: 'center',
     flexDirection: 'row',

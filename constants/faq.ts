@@ -54,7 +54,7 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'learning-speed',
         question: 'How quickly will I learn?',
         answer:
-          'Pace depends on input volume and regularity. FSRS spaces reviews to the edge of forgetting: stable words surface rarely; weak words reappear sooner for efficient consolidation.',
+          'Learning pace depends on how much you read and review regularly. FSRS optimizes review timing so you spend time efficiently - words you know well appear less often, while challenging words are reviewed more frequently. Most users see steady vocabulary growth with daily 15-30 minute sessions.',
         category: 'Getting Started',
       },
     ],
@@ -66,7 +66,7 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'spaced-repetition',
         question: 'How does spaced repetition work?',
         answer:
-          'We use FSRS to predict forgetting curves and schedule reviews just before recall drops. Your responses update stability and difficulty, dynamically adjusting intervals per word.',
+          "We use FSRS (Free Spaced Repetition Scheduler) to predict when you'll forget words and schedule reviews at the optimal time. Each time you review a word, the system adjusts its difficulty rating and schedules the next review accordingly.",
         category: 'Features',
       },
       {
@@ -80,7 +80,7 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'word-difficulty',
         question: 'How is word difficulty determined?',
         answer:
-          'Difficulty emerges from your review history: response quality, stability, and elapsed time. FSRS uses these signals to adapt intervals; there are no arbitrary “levels.”',
+          "Word difficulty is calculated from your review history using FSRS. It considers how quickly you recall words, how consistent your responses are, and how much time has passed since your last review. There are no fixed difficulty levels - each word's rating adapts based on your personal learning patterns.",
         category: 'Features',
       },
       {
@@ -88,6 +88,20 @@ export const FAQ_DATA: FAQCategory[] = [
         question: 'What audio features are available?',
         answer:
           'Audio playback with mini-player controls, sleep timer, and bookmarks management. Audio caches after you play an article the first time for offline listening. Controls emphasize Play and Stop for clarity.',
+        category: 'Features',
+      },
+      {
+        id: 'account-settings',
+        question: 'How do I change my settings?',
+        answer:
+          'Access settings through the Account section in the Read tab. You can customize Arabic font, font size, daily word limits, audio preferences, and display language. Changes are saved automatically and sync across your devices.',
+        category: 'Features',
+      },
+      {
+        id: 'islamic-calendar',
+        question: 'What is the Islamic calendar feature?',
+        answer:
+          'The Islamic calendar shows important Islamic dates and events in the Hijri calendar. It helps you stay connected with Islamic observances and can be toggled on/off in your account settings.',
         category: 'Features',
       },
     ],
@@ -99,7 +113,14 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'offline-mode',
         question: 'Does this work offline?',
         answer:
-          'Partially. Cached audio and previously loaded content play offline; vocabulary reviews work offline as well. Sync (e.g., new words, progress) needs a connection.',
+          'Yes, with limitations. You can review vocabulary offline, and previously cached audio plays without a connection. New content and progress sync require an internet connection.',
+        category: 'Offline & storage',
+      },
+      {
+        id: 'audio-caching',
+        question: 'How does audio caching work?',
+        answer:
+          'Audio files are cached after your first play. This means you can listen to articles offline after loading them once. Cached audio is stored locally and persists between sessions.',
         category: 'Offline & storage',
       },
     ],

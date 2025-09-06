@@ -13,11 +13,14 @@ import {
 /**
  * Custom hook to filter and sort articles based on Redux filter state
  */
-export const useFilteredArticles = (articles: Article[]) => {
+export const useFilteredArticles = (articles: Article[] | null | undefined) => {
   const filtersState = useAppSelector(state => state.filters);
 
+  // Handle null/undefined articles gracefully
+  const safeArticles = articles || [];
+
   // Fetch bulk reading progress for all articles (safely handles missing AuthProvider)
-  const articleIds = useMemo(() => articles.map(article => article.id), [articles]);
+  const articleIds = useMemo(() => safeArticles.map(article => article.id), [safeArticles]);
   const { data: progressMapRaw = new Map() } = useBulkReadingProgress(articleIds);
   // Ensure progressMap is always a Map to prevent runtime errors
   const progressMap = progressMapRaw instanceof Map ? progressMapRaw : new Map();

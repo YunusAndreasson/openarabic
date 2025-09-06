@@ -1,4 +1,5 @@
 import type { TextStyle, ViewStyle } from 'react-native';
+import { Platform } from 'react-native';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY, getArabicTextStyle } from '@/constants/layout';
 
@@ -183,4 +184,74 @@ export const getSelectedStyle = (
     borderBottomWidth: 1,
     borderBottomColor: isDueWord ? colors.wordDueUnderline : colors.wordSelectionUnderline,
   };
+};
+
+// ===== BUTTON TEXT STYLING UTILITIES =====
+
+/**
+ * Creates consistent button text styling
+ * @param size - Button size variant ('small' | 'medium' | 'large')
+ * @returns TextStyle object for button text
+ */
+export const createButtonTextStyle = (size: 'small' | 'medium' | 'large' = 'medium'): TextStyle => {
+  const baseStyle: TextStyle = {
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.HEAVY,
+    textAlign: 'center',
+  };
+
+  switch (size) {
+    case 'small':
+      return {
+        ...baseStyle,
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+        letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
+      };
+    case 'large':
+      return {
+        ...baseStyle,
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+        letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
+      };
+    case 'medium':
+    default:
+      return {
+        ...baseStyle,
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+        letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
+      };
+  }
+};
+
+// ===== CARD CONTENT CONTAINER UTILITIES =====
+
+/**
+ * Creates consistent card content container styling
+ * @param options - Optional configuration for the container
+ * @returns ViewStyle object for card content
+ */
+export const createCardContentStyle = (
+  options: {
+    includeAndroidMinHeight?: boolean;
+  } = {}
+): ViewStyle => {
+  const { includeAndroidMinHeight = true } = options;
+
+  const baseStyle: ViewStyle = {
+    overflow: 'hidden',
+    position: 'relative',
+    zIndex: LAYOUT.Z_INDEX.BASE,
+  };
+
+  if (includeAndroidMinHeight) {
+    return {
+      ...baseStyle,
+      ...Platform.select({
+        android: {
+          minHeight: LAYOUT.BORDER.WIDTH.NORMAL,
+        },
+      }),
+    };
+  }
+
+  return baseStyle;
 };

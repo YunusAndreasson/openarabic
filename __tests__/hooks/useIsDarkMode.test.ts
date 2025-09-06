@@ -42,4 +42,30 @@ describe('useIsDarkMode', () => {
     expect(result.current).toBe(true);
     expect(mockedUseColorScheme).toHaveBeenCalled();
   });
+
+  it('returns false for light system preference fallback', () => {
+    mockedSelector.mockReturnValue(null);
+    mockedUseColorScheme.mockReturnValue('light');
+
+    const { result } = renderHook(() => useIsDarkMode());
+
+    expect(result.current).toBe(false);
+  });
+
+  it('returns false for sepia theme', () => {
+    mockedSelector.mockReturnValue(Theme.Sepia);
+
+    const { result } = renderHook(() => useIsDarkMode());
+
+    expect(result.current).toBe(false);
+  });
+
+  it('handles undefined selector return', () => {
+    mockedSelector.mockReturnValue(undefined);
+    mockedUseColorScheme.mockReturnValue('light');
+
+    const { result } = renderHook(() => useIsDarkMode());
+
+    expect(result.current).toBe(false);
+  });
 });

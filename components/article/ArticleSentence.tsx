@@ -12,6 +12,7 @@ import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { createPadding } from '@/utils/layoutUtils';
 
 // Static constants to prevent recreation
 const EMPTY_DUE_WORDS_SET = new Set<number>();
@@ -160,14 +161,12 @@ const ArticleSentenceComponent = memo(
 
     // Memoize expensive style calculations
     const englishTextStyle = useMemo(
-      () => [
-        styles.englishText,
-        {
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-          color: colors.englishText,
-          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * settings.fontScale,
-        },
-      ],
+      () => ({
+        ...styles.englishText,
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+        color: colors.englishText,
+        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * settings.fontScale,
+      }),
       [colors.englishText, settings.fontScale]
     );
 
@@ -235,7 +234,7 @@ const styles = StyleSheet.create({
   },
   englishText: {
     fontFamily: FONTS.ENGLISH,
-    paddingTop: LAYOUT.SPACING.XXXLARGE,
+    paddingTop: LAYOUT.SPACING.XXLARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   wordsContainer: {
@@ -245,9 +244,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
     justifyContent: 'flex-start',
     minHeight: LAYOUT.SPACING.XLARGE * 1.5,
-    paddingLeft: LAYOUT.SPACING.MEDIUM,
-    paddingRight: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    ...createPadding({ horizontal: 'MEDIUM', vertical: 'MEDIUM' }),
     width: '100%',
   },
 });
