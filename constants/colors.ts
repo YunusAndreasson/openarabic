@@ -25,7 +25,7 @@ const basePalette = {
   // Interactive sage tints
   tint: {
     primary: '#5B7F68', // Sophisticated sage tint - light mode
-    primaryDark: '#7FA08A', // Balanced sage tint - dark mode
+    primaryDark: '#8FB397', // Brighter sage tint - dark mode for better contrast
   },
 
   // Educational Chart Colors - Unified system with sepia variants
@@ -243,10 +243,10 @@ const lightColors: ThemeColors = {
   captionText: textHierarchy.light.caption,
 
   // Interactive elements
-  tint: basePalette.tint.primaryDark, // Use same sage green as dark mode for consistency
-  tintBackground: applyOpacity(basePalette.tint.primaryDark, opacity.medium), // Common tint + 0.08 pattern
+  tint: basePalette.tint.primary, // Use light mode tint for proper contrast
+  tintBackground: applyOpacity(basePalette.tint.primary, opacity.medium), // Common tint + 0.08 pattern
   tabIconDefault: basePalette.forest.lighter,
-  tabIconSelected: basePalette.tint.primaryDark,
+  tabIconSelected: basePalette.tint.primary,
   icon: basePalette.forest.light,
   disabled: basePalette.forest.lighter,
 
@@ -254,8 +254,8 @@ const lightColors: ThemeColors = {
   transparent: basePalette.pure.transparent,
   overlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
   modalOverlay: applyOpacity(basePalette.sage.lighter, opacity.full),
-  borderOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.border),
-  buttonOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.medium),
+  borderOverlay: applyOpacity(basePalette.tint.primary, opacity.border),
+  buttonOverlay: applyOpacity(basePalette.tint.primary, opacity.medium),
   backdropOverlay: applyOpacity(basePalette.forest.dark, opacity.backdrop),
 
   // Elevation system - enhanced contrast
@@ -270,17 +270,17 @@ const lightColors: ThemeColors = {
   wordTooltipText: basePalette.forest.darkest,
   wordTooltipBorder: basePalette.sage.light,
   wordTooltipShadow: applyOpacity(basePalette.forest.dark, opacity.active),
-  wordSelectionUnderline: applyOpacity(basePalette.tint.primaryDark, opacity.selection),
+  wordSelectionUnderline: applyOpacity(basePalette.tint.primary, opacity.selection),
   wordDueUnderline: applyOpacity(basePalette.semantic.warning, opacity.due),
 
   // Navigation - adjusted for new background
-  navigationRipple: applyOpacity(basePalette.tint.primaryDark, opacity.strong),
+  navigationRipple: applyOpacity(basePalette.tint.primary, opacity.strong),
   headerOverlay: applyOpacity(basePalette.sage.lighter, opacity.header),
   tabBarOverlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
 
   // UI semantics
-  progressIndicator: basePalette.tint.primaryDark,
-  progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.progress),
+  progressIndicator: basePalette.tint.primary,
+  progressBackground: applyOpacity(basePalette.tint.primary, opacity.progress),
   interactiveSecondary: basePalette.forest.light,
   completionSuccess: basePalette.semantic.success,
 
@@ -289,7 +289,7 @@ const lightColors: ThemeColors = {
   chartThreshold: basePalette.charts.ui.threshold,
 
   // Utility colors - enhanced contrast
-  textOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.subtle),
+  textOverlay: applyOpacity(basePalette.tint.primary, opacity.subtle),
   textShadowDark: applyOpacity(basePalette.forest.dark, opacity.shadow),
   textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
   modalIndicator: basePalette.forest.lighter,
@@ -299,11 +299,11 @@ const lightColors: ThemeColors = {
 
 const darkColors: ThemeColors = {
   // Core brand colors
-  primary: basePalette.pure.white,
+  primary: basePalette.tint.primaryDark, // Use brand tint for consistency
   background: basePalette.sage.darkest,
   text: basePalette.pure.white,
   secondaryText: textHierarchy.dark.subtitle,
-  textTertiary: textHierarchy.dark.metadata,
+  textTertiary: textHierarchy.dark.caption, // Use caption for consistency with other modes
   border: basePalette.sage.medium,
   card: basePalette.sage.dark,
   cardBorder: basePalette.sage.medium,
@@ -337,7 +337,7 @@ const darkColors: ThemeColors = {
   overlay: applyOpacity(basePalette.sage.darkest, opacity.modal),
   modalOverlay: applyOpacity(basePalette.sage.darkest, opacity.full),
   borderOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.border),
-  buttonOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.strong),
+  buttonOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.medium), // Consistent with light mode
   backdropOverlay: applyOpacity(basePalette.sage.darkest, opacity.darkBackdrop),
 
   // Elevation system
@@ -362,7 +362,7 @@ const darkColors: ThemeColors = {
 
   // UI semantics
   progressIndicator: basePalette.tint.primaryDark,
-  progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.disabled),
+  progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.progress), // Consistent with other modes
   interactiveSecondary: textHierarchy.dark.metadata,
   completionSuccess: basePalette.semantic.successDark,
 
@@ -371,7 +371,7 @@ const darkColors: ThemeColors = {
   chartThreshold: basePalette.charts.ui.thresholdDark,
 
   // Utility colors
-  textOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.light),
+  textOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.subtle), // Consistent with other modes
   textShadowDark: applyOpacity(basePalette.pure.black, opacity.shadow),
   textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
   modalIndicator: basePalette.forest.light,
