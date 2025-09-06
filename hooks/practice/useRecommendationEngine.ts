@@ -236,47 +236,47 @@ const RECOMMENDATION_MESSAGES = {
 
   // Early learner messages (1-25 words) - more encouraging
   EARLY_LEARNER_CAN_ADD:
-    'Great progress! You have a solid start. Keep adding words from articles to reach an optimal vocabulary size for better learning.',
+    'Great progress! You have a solid start. Keep adding words from articles and maintain regular review sessions to accelerate your learning.',
   EARLY_LEARNER_REVIEW_FIRST:
-    'You have some words ready for review. Complete those first, then continue adding new vocabulary to build momentum.',
+    "Perfect timing! Complete your review session to strengthen what you've learned, then keep adding new vocabulary to build momentum.",
 
   // Building foundation messages (26-50 words) - balanced approach
   BUILDING_FOUNDATION_CAN_ADD:
-    "You're building a strong foundation! With your current vocabulary size, you can safely add more words while maintaining regular review sessions.",
+    "You're building a strong foundation! Keep up regular review sessions while adding new words to accelerate your progress.",
   BUILDING_FOUNDATION_CONSOLIDATE:
-    'You have many words still learning. Focus on consolidating them through regular reviews before adding too many new ones.',
+    'Focus on review sessions to consolidate your learning foundation. Regular practice will help these words move to long-term memory.',
   BUILDING_FOUNDATION_OPTIMAL:
-    "Perfect! You're in an optimal vocabulary range. Balance reviewing existing words with gradually adding new ones from articles.",
+    "Perfect! You're in an optimal vocabulary range. Regular review sessions combined with gradual word addition will maximize your learning efficiency.",
 
   // Learning phase messages - more nuanced
   LIGHT_LEARNING_LOAD:
-    'Your learning load is light. You can comfortably add new words while maintaining your review schedule.',
+    'Your learning load is light. Regular review sessions will help maintain your progress while you add new vocabulary.',
   MODERATE_LEARNING_LOAD:
-    'You have a moderate learning load. Consider adding new words gradually and ensure you complete regular review sessions.',
+    'Keep up with regular review sessions to manage your moderate learning load effectively and optimize your retention.',
   HEAVY_LEARNING_LOAD:
-    'You have a heavy learning load. Focus on consolidating your current words through regular reviews before adding many new ones.',
+    'Focus on review sessions to consolidate your learning. Regular practice is key to moving words into long-term memory.',
 
   // Established learner messages
   ESTABLISHED_HIGH_RETENTION_NO_LOAD:
-    'Your vocabulary is well-established with strong retention. You can confidently add new words while maintaining review consistency.',
+    'Excellent retention! Keep up regular review sessions to maintain your strong memory performance while expanding your vocabulary.',
   ESTABLISHED_HIGH_RETENTION_WITH_LOAD:
-    'Your retention is good, but you have a busy review schedule ahead. Consider adding fewer new words until your review load lightens.',
+    'Your retention is strong. Stay consistent with review sessions to manage your schedule effectively and maintain optimal learning intervals.',
 
   // Moderate retention messages
   MODERATE_GOOD_PROGRESS:
-    "You're progressing well through your vocabulary. Keep reviewing consistently and add new words gradually.",
+    'Great progress! Consistent review sessions will help maintain and improve your retention as you continue building your vocabulary.',
   MODERATE_NEEDS_ATTENTION:
-    'Focus on completing your review sessions consistently. This will help FSRS optimize your intervals and improve retention.',
+    'Review sessions are key to improving your retention. Consistent practice will help FSRS optimize your learning intervals for better results.',
 
   // Low retention messages
   LOW_RETENTION:
     'Your retention needs attention. Prioritize completing all review sessions to help FSRS recalculate optimal intervals.',
 
-  // Default messages
+  // Default messages - encourage review even when no words are due
   BALANCED_ESTABLISHED:
-    "You're doing well with spaced repetition! Continue regular practice and consider adding new words as your schedule allows.",
+    'Great progress! Even when no words are due, regular review sessions strengthen your memory and help FSRS optimize your learning schedule.',
   BALANCED_DEFAULT:
-    'Continue with regular practice sessions. Consistent reviews help FSRS optimize your learning intervals over time.',
+    'Keep up the momentum! Review sessions help maintain your learning progress, even when no words are currently due for study.',
 } as const;
 
 /**

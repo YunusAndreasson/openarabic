@@ -13,6 +13,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
+import { generateAudioUrl } from '@/utils/imageUtils';
 
 interface DictionaryWordCardProps {
   word: StudyWord;
@@ -33,7 +34,8 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
         selectionFeedback();
 
         // Prefer Arabic audio, fallback to English audio if available
-        const audioUrl = word.root?.audio_url || word.root?.audio_url_en;
+        const audioUrl =
+          generateAudioUrl(word.root?.audio_url) || generateAudioUrl(word.root?.audio_url_en);
         if (!audioUrl) return;
 
         const track = {
@@ -57,6 +59,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
       word.root?.meaning,
       audioPlayer,
       editMode,
+      generateAudioUrl,
     ]);
 
     // Handle delete button press

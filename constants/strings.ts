@@ -156,8 +156,9 @@ export const STRINGS = {
   BOOKMARKS_EMPTY_DESCRIPTION: 'Save content from Library to start listening',
 
   // Practice tab empty state - user-centric and study-focused
-  STUDY_LIST_EMPTY_TITLE: 'No words to study',
-  STUDY_LIST_EMPTY_DESCRIPTION: 'Add words from articles to start studying',
+  STUDY_LIST_EMPTY_TITLE: 'Ready to start learning?',
+  STUDY_LIST_EMPTY_DESCRIPTION:
+    'Add words from articles to begin building your Arabic vocabulary. Regular review sessions will help you retain what you learn!',
 
   // Dictionary
   NO_STUDY_WORDS: 'No study words',

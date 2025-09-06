@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   },
 
   buttonContainer: {
-    alignSelf: 'center',
+    width: '100%',
     paddingBottom: LAYOUT.SPACING.XLARGE,
   },
 });
