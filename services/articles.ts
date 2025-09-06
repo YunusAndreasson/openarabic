@@ -1,10 +1,9 @@
 import { STRINGS } from '@/constants/strings';
+import { supabase } from '@/services/supabase';
 import type { Article } from '@/types/articles.types';
 import type { ArticleRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
 import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
-
-import { supabase } from './supabase';
 
 // Define different column sets for different use cases
 const LIST_VIEW_COLUMNS = `

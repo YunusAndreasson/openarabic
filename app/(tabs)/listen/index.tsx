@@ -23,6 +23,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
+import { ToastType } from '@/types/enums';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { overrideFixedHeight } from '@/utils/list';
@@ -152,7 +153,7 @@ export default function ListenScreen(): JSX.Element {
 
   useEffect(() => {
     if (enhancedTracksError) {
-      showToast(STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS, 4000, 'error');
+      showToast(STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS, 4000, ToastType.ERROR);
     }
   }, [enhancedTracksError, showToast]);
 

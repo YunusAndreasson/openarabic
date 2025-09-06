@@ -1,6 +1,5 @@
+import { supabase } from '@/services/supabase';
 import type { Tables } from '@/types/database.types';
-
-import { supabase } from './supabase';
 
 export const categoriesService = {
   async getCategories(): Promise<Tables<'categories'>[]> {

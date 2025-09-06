@@ -10,6 +10,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { DisplayLanguagePreference } from '@/store/settingsSlice';
 import { setDisplayLanguagePreference } from '@/store/settingsSlice';
+import { DisplayLanguage } from '@/types/enums';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface DisplayLanguageSelectorProps {
@@ -75,8 +76,8 @@ const DisplayLanguageSelector: React.FC<DisplayLanguageSelectorProps> = ({ style
       </View>
 
       <View style={styles.optionsContainer}>
-        {renderOption('arabic', STRINGS.DISPLAY_LANGUAGE_ARABIC)}
-        {renderOption('bilingual', STRINGS.DISPLAY_LANGUAGE_BILINGUAL)}
+        {renderOption(DisplayLanguage.ARABIC_ONLY, STRINGS.DISPLAY_LANGUAGE_ARABIC)}
+        {renderOption(DisplayLanguage.ARABIC_ENGLISH, STRINGS.DISPLAY_LANGUAGE_BILINGUAL)}
       </View>
     </View>
   );

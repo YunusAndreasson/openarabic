@@ -1,10 +1,9 @@
 import type { Rating } from 'ts-fsrs';
 
+import { checkAuthentication, supabase } from '@/services/supabase';
 import type { TablesInsert, TablesUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-
-import { checkAuthentication, supabase } from './supabase';
 
 // Interface for FSRS-specific update fields - matches RPC function requirements
 interface FSRSWordUpdate {

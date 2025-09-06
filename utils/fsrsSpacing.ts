@@ -3,11 +3,9 @@ import {
   MIN_WORD_SPACING,
   SPACING_ITERATION_LIMIT,
 } from '@/constants/fsrs';
-
-import type { StudyWord } from '../types/vocabulary.types';
-
-import type { PriorityQueue } from './priorityQueue';
-import { isStrugglingWord } from './wordClassification';
+import type { StudyWord } from '@/types/vocabulary.types';
+import type { PriorityQueue } from '@/utils/priorityQueue';
+import { isStrugglingWord } from '@/utils/wordClassification';
 
 export interface SpacingState {
   recentWords: number[];

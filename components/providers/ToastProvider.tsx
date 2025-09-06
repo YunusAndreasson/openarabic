@@ -2,16 +2,16 @@ import {
   createContext,
   useCallback,
   useContext,
-  useState,
   useEffect,
   useMemo,
+  useState,
   type FC,
   type ReactNode,
 } from 'react';
 
 import { Toast } from '@/components/Toast';
 import { DEFAULT_TOAST_DURATION } from '@/constants/animation';
-import type { ToastType } from '@/types/ui/toast.types';
+import { ToastType } from '@/types/enums';
 import { setGlobalToastHandler } from '@/utils/errorHandling';
 
 interface ToastContextType {
@@ -34,17 +34,20 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
     visible: false,
     message: '',
     duration: undefined as number | undefined,
-    type: 'info' as ToastType,
+    type: ToastType.INFO,
   });
 
-  const showToast = useCallback((message: string, duration?: number, type: ToastType = 'info') => {
-    setToastState({
-      visible: true,
-      message,
-      duration,
-      type,
-    });
-  }, []);
+  const showToast = useCallback(
+    (message: string, duration?: number, type: ToastType = ToastType.INFO) => {
+      setToastState({
+        visible: true,
+        message,
+        duration,
+        type,
+      });
+    },
+    []
+  );
 
   const showImportantToast = useCallback(
     (message: string, duration: number = DEFAULT_TOAST_DURATION) => {
@@ -52,9 +55,11 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
         visible: true,
         message,
         duration,
-        type: 'important',
+        type: ToastType.IMPORTANT,
       });
-  }, []);
+    },
+    []
+  );
 
   const handleClose = useCallback(() => {
     setToastState(prev => ({ ...prev, visible: false }));

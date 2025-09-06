@@ -25,6 +25,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
 import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
+import { UiAction } from '@/types/enums';
 import type { SessionMetrics } from '@/types/review.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { successFeedback } from '@/utils/haptics';
@@ -47,7 +48,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   onClose,
   title = STRINGS.SESSION_COMPLETE,
   subtitle,
-  buttonText = STRINGS.CONTINUE,
+  buttonText = UiAction.CONTINUE,
   iconName = 'checkmark-circle',
   iconSize = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE,
   useThemedView = false,

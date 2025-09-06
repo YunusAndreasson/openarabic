@@ -5,12 +5,12 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useListenScreen } from '@/hooks/listen/useListenScreen';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { EditModeType } from '@/store/editModeSlice';
+import { UiAction } from '@/types/enums';
 import { selectionFeedback } from '@/utils/haptics';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -66,12 +66,12 @@ const EditModeButton: FC<EditModeButtonProps> = ({
   }
 
   const buttonText = editMode
-    ? STRINGS.DONE
+    ? UiAction.DONE
     : type === 'listen'
-    ? STRINGS.MANAGE
+    ? UiAction.MANAGE
     : type === 'dictionary'
-    ? STRINGS.MANAGE
-    : STRINGS.EDIT;
+    ? UiAction.MANAGE
+    : UiAction.EDIT;
 
   return (
     <AnimatedPressable

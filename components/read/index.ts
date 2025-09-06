@@ -1,6 +1,7 @@
-export { default as ArticleList } from './ArticleList';
-export { default as FeaturedSection } from './FeaturedSection';
-export { default as FilteredArticleView } from './FilteredArticleView';
+export { default as ArticleList } from '@/components/read/ArticleList';
+export { default as FeaturedSection } from '@/components/read/FeaturedSection';
+export { default as FilteredArticleView } from '@/components/read/FilteredArticleView';
+export { StreakMetrics } from '@/components/read/StreakMetrics';
 export { default as FilterSection } from './FilterSection';
 export { HijriDateFooter } from './HijriDateFooter';
 export { default as HorizontalArticleSlider } from './HorizontalArticleSlider';
@@ -8,5 +9,4 @@ export { default as HorizontalFeaturedSection } from './HorizontalFeaturedSectio
 export { default as IntelligentArticleSection } from './IntelligentArticleSection';
 export { default as ListArticleItem } from './ListArticleItem';
 export { StreakChart } from './StreakChart';
-export { StreakMetrics } from './StreakMetrics';
 export { StreaksBottomSheet } from './StreaksBottomSheet';

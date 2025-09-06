@@ -1,4 +1,4 @@
-import type { Tables } from './database.types';
+import type { Tables } from '@/types/database.types';
 
 /**
  * Enhanced sentence word type with root and word type information

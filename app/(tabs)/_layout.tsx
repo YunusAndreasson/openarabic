@@ -14,6 +14,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { UiAction } from '@/types/enums';
 
 // Custom IconWithBadge component for better badge positioning and consistent shape
 const IconWithBadge = memo(
@@ -110,7 +111,7 @@ const DictionaryButton = memo((props: DictionaryButtonProps): JSX.Element | null
         ]}
         numberOfLines={1}
       >
-        {STRINGS.DICTIONARY}
+        {UiAction.DICTIONARY}
       </ThemedText>
     </Pressable>
   );

@@ -9,6 +9,7 @@ import ListSeparator from '@common/ListSeparator';
 import SortingHeader from '@read/SortingHeader';
 
 import { ThemedView } from '@/components/ThemedView';
+import ListArticleItem from '@/components/read/ListArticleItem';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -16,8 +17,6 @@ import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import { overrideFixedHeight } from '@/utils/list';
-
-import ListArticleItem from './ListArticleItem';
 
 // Use responsive height for filtered article items
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;

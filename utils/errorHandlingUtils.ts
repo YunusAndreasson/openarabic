@@ -1,4 +1,4 @@
-import { handleError } from './errorHandling';
+import { handleError } from '@/utils/errorHandling';
 
 /**
  * Higher-order function that wraps an async function with consistent error handling

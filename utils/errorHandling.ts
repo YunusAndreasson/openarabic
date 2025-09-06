@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 
 import { analytics } from '@/services/analytics';
-import type { ToastType } from '@/types/ui/toast.types';
+import { ToastType } from '@/types/enums';
 
 // Store toast handler globally - updated to support types
 let globalToastHandler: ((message: string, duration?: number, type?: ToastType) => void) | null =
@@ -41,7 +41,7 @@ interface ErrorOptions {
 
 const DEFAULT_OPTIONS: ErrorOptions = {
   showToast: true,
-  toastType: 'error', // Default to error type for error handler
+  toastType: ToastType.ERROR, // Default to error type for error handler
   trackAnalytics: true,
   captureSentry: true,
   sentrySeverity: 'error',

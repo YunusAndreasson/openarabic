@@ -1,8 +1,7 @@
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { checkAuthentication } from '@/services/supabase';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { isStrugglingWord } from '@/utils/wordClassification';
-
-import { studyWordsFSRSService } from './studyWordsFSRS';
 
 export const strugglingWordsService = {
   /**

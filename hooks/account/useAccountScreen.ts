@@ -14,6 +14,7 @@ import { useReminders } from '@/hooks/notifications/useReminders';
 import pkg from '@/package.json';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
+import { UiAction } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
@@ -89,7 +90,7 @@ export const useAccountScreen = () => {
       } ${STRINGS.DATA_RELOAD_REQUIRED}`,
       [
         {
-          text: STRINGS.CANCEL,
+          text: UiAction.CANCEL,
           style: 'cancel',
         },
         {
@@ -125,7 +126,7 @@ export const useAccountScreen = () => {
       STRINGS.ARE_YOU_SURE_SIGN_OUT,
       [
         {
-          text: STRINGS.CANCEL,
+          text: UiAction.CANCEL,
           style: 'cancel',
         },
         {
@@ -165,7 +166,7 @@ export const useAccountScreen = () => {
 
           if (!granted) {
             Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
-              { text: STRINGS.CANCEL, style: 'cancel' },
+              { text: UiAction.CANCEL, style: 'cancel' },
               { text: STRINGS.OPEN_SETTINGS, onPress: () => Linking.openSettings() },
             ]);
             return;
@@ -173,7 +174,7 @@ export const useAccountScreen = () => {
         } catch (error) {
           handleError(error as Error, { showToast: false });
           Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
-            { text: STRINGS.CANCEL, style: 'cancel' },
+            { text: UiAction.CANCEL, style: 'cancel' },
             { text: STRINGS.OPEN_SETTINGS, onPress: () => Linking.openSettings() },
           ]);
           return;

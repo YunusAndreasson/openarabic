@@ -1,5 +1,5 @@
-import type { Article, Author } from './articles.types';
-import type { Tables } from './database.types';
+import type { Article, Author } from '@/types/articles.types';
+import type { Tables } from '@/types/database.types';
 
 /**
  * Reading list item combining user/article relation with article details

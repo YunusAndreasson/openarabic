@@ -2,12 +2,13 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
 import { LAYOUT } from '@/constants/layout';
+import { AudioLanguage, DisplayLanguage } from '@/types/enums';
 import type { ReminderTime } from '@/types/notifications.types';
 
 export type ArabicFontName = 'Madina' | 'Amiri' | 'Scheherazade' | 'Nastaliq' | 'NotoSans';
 
-export type AudioLanguagePreference = 'arabic' | 'bilingual';
-export type DisplayLanguagePreference = 'arabic' | 'bilingual';
+export type AudioLanguagePreference = AudioLanguage;
+export type DisplayLanguagePreference = DisplayLanguage;
 
 export interface SettingsState {
   fontScale: number;
@@ -30,9 +31,9 @@ const initialState: SettingsState = {
   },
   arabicFont: 'NotoSans', // Default font
   arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // Default to 20px
-  audioLanguagePreference: 'bilingual', // Default to English + Arabic
+  audioLanguagePreference: AudioLanguage.ENGLISH_ARABIC, // Default to English + Arabic
   audioShuffleEnabled: false, // Default to sequential playback
-  displayLanguagePreference: 'bilingual', // Default to Arabic + English
+  displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH, // Default to Arabic + English
   dailyWordLimit: 10, // Default to 10 words per day for getting started
   wordAudioEnabled: true, // Default to enabled for word audio playback
 };

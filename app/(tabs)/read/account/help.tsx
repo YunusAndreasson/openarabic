@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import SectionTitle from '@/components/common/SectionTitle';
-import { FAQ_DATA, type FAQItem } from '@/constants/faq';
+import { FAQ_DATA, type FAQCategoryData, type FAQItem } from '@/constants/faq';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -138,7 +138,7 @@ const HelpScreen: FC = () => {
           removeClippedSubviews: false,
         }}
       >
-        {FAQ_DATA.map((category, categoryIndex) => (
+        {FAQ_DATA.map((category: FAQCategoryData, categoryIndex) => (
           <View
             key={category.name}
             style={categoryIndex > 0 ? styles.categorySpacingConditional : undefined}

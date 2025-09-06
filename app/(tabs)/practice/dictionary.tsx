@@ -14,14 +14,13 @@ import DictionarySortingHeader from '@/components/practice/DictionarySortingHead
 import { DictionaryWordCard } from '@/components/practice/DictionaryWordCard';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useDictionaryModal, useFSRSQueries } from '@/hooks/vocabulary';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-
-import { STRINGS } from '../../../constants/strings';
 
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();

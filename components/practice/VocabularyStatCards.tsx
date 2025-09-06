@@ -11,12 +11,11 @@ import { StyleSheet, View } from 'react-native';
 import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
+import { MemoryRetentionGauge } from '@/components/practice/charts/MemoryRetentionGauge';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-
-import { MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
 
 interface VocabularyStatCardsProps {
   masteredWords?: number;

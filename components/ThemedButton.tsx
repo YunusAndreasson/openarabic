@@ -4,6 +4,7 @@ import type { GestureResponderEvent } from 'react-native';
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { ThemedText } from '@/components/ThemedText';
 import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
@@ -13,8 +14,6 @@ import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection'
 import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui/button.types';
 import { createPadding } from '@/utils/layoutUtils';
 import { createButtonTextStyle } from '@/utils/textStyleUtils';
-
-import { ThemedText } from './ThemedText';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 

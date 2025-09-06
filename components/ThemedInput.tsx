@@ -9,11 +9,10 @@ import type {
 } from 'react-native';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { errorFeedback } from '@/utils/haptics';
-
-import { ThemedText } from './ThemedText';
 
 interface ThemedInputProps extends TextInputProps {
   icon?: ComponentProps<typeof Ionicons>['name'];

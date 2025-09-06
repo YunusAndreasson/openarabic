@@ -1,11 +1,10 @@
 import { STRINGS } from '@/constants/strings';
+import { articlesService } from '@/services/articles';
+import { audioCache } from '@/services/audioCache';
+import { readingListService } from '@/services/readingList';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
 import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
-
-import { articlesService } from './articles';
-import { audioCache } from './audioCache';
-import { readingListService } from './readingList';
 
 // Helper function to generate composite ID
 const generateTrackId = (articleId: number): string => {

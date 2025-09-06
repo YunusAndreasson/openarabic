@@ -10,6 +10,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { AudioLanguagePreference } from '@/store/settingsSlice';
 import { setAudioLanguagePreference } from '@/store/settingsSlice';
+import { AudioLanguage } from '@/types/enums';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface AudioLanguageSelectorProps {
@@ -75,8 +76,8 @@ const AudioLanguageSelector: React.FC<AudioLanguageSelectorProps> = ({ style }) 
       </View>
 
       <View style={styles.optionsContainer}>
-        {renderOption('arabic', STRINGS.AUDIO_LANGUAGE_ARABIC)}
-        {renderOption('bilingual', STRINGS.AUDIO_LANGUAGE_BILINGUAL)}
+        {renderOption(AudioLanguage.ARABIC_ONLY, STRINGS.AUDIO_LANGUAGE_ARABIC)}
+        {renderOption(AudioLanguage.ENGLISH_ARABIC, STRINGS.AUDIO_LANGUAGE_BILINGUAL)}
       </View>
     </View>
   );

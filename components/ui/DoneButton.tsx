@@ -4,9 +4,9 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { UiAction } from '@/types/enums';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface DoneButtonProps {
@@ -49,7 +49,7 @@ const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
           radius: MIN_TOUCH_TARGET.MEDIUM / 2,
         }}
         accessibilityRole="button"
-        accessibilityLabel={STRINGS.DONE}
+        accessibilityLabel={UiAction.DONE}
       >
         <ThemedText
           type="body"
@@ -61,7 +61,7 @@ const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
             },
           ]}
         >
-          {STRINGS.DONE}
+          {UiAction.DONE}
         </ThemedText>
       </AnimatedPressable>
     </View>

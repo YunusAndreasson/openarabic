@@ -9,6 +9,7 @@ import { createNavigationOptions } from '@/constants/modal';
 import { getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { UiAction } from '@/types/enums';
 import type { FilterParams } from '@/types/navigation.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -26,7 +27,7 @@ function getFilterTitle(params: FilterParams): string {
     return STRINGS.CATEGORY;
   }
 
-  return STRINGS.FILTER;
+  return UiAction.FILTER;
 }
 
 const FilterHeaderLeft = () => {
@@ -57,7 +58,7 @@ export default function ReadLayout(): JSX.Element {
       <Stack.Screen
         name="filterModal"
         options={createNavigationOptions(colors, {
-          title: STRINGS.FILTERS,
+          title: UiAction.FILTERS,
           headerLeft: () => <DoneButton onPress={() => router.back()} />,
         })}
       />

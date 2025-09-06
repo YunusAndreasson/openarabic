@@ -1,6 +1,5 @@
+import { supabase } from '@/services/supabase';
 import type { Database } from '@/types/database.types';
-
-import { supabase } from './supabase';
 
 type ReadingProgressRow = Database['public']['Tables']['reading_progress']['Row'];
 

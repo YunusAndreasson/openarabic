@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface VocabularyMetricsProps {
@@ -58,21 +59,21 @@ export const VocabularyMetrics = memo<VocabularyMetricsProps>(
           <MetricCard
             icon="library"
             value={totalWords.toString()}
-            label="Total words"
+            label={STRINGS.VOCAB_STAT_TOTAL}
             color={colors.tint}
           />
 
           <MetricCard
             icon="checkmark-circle"
             value={masteredWords.toString()}
-            label="Mastered"
+            label={STRINGS.VOCAB_STAT_MASTERED}
             color={colors.success}
           />
 
           <MetricCard
             icon="school"
             value={learningWords.toString()}
-            label="Learning"
+            label={STRINGS.VOCAB_STAT_LEARNING}
             color={colors.warning}
           />
         </View>

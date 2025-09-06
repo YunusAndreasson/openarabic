@@ -1,4 +1,4 @@
-import type { Tables } from './database.types';
+import type { Tables } from '@/types/database.types';
 
 export type AuthorRow = Tables<'authors'>;
 

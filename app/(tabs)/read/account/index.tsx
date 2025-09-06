@@ -26,6 +26,7 @@ import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
 import { useAppSelectorMemo } from '@/store/hooks';
+import { AccountSection } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 
 // Memoized components
@@ -221,7 +222,7 @@ const AccountScreen: FC = () => {
         )}
 
         {/* Reading - Font and language settings */}
-        <SectionTitle title="Reading" textStyle={styles.sectionTitle} />
+        <SectionTitle title={AccountSection.READING_EXPERIENCE} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard
@@ -275,7 +276,7 @@ const AccountScreen: FC = () => {
         </BaseCard>
 
         {/* Audio - Audio preferences and bookmarks settings */}
-        <SectionTitle title="Audio" textStyle={styles.sectionTitle} />
+        <SectionTitle title={AccountSection.AUDIO_BOOKMARKS} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard
@@ -309,7 +310,7 @@ const AccountScreen: FC = () => {
         </BaseCard>
 
         {/* Study - Study reminders and timing */}
-        <SectionTitle title="Study" textStyle={styles.sectionTitle} />
+        <SectionTitle title={AccountSection.APP_ACCOUNT} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <View style={styles.settingRow}>
@@ -416,7 +417,7 @@ const AccountScreen: FC = () => {
         </BaseCard>
 
         {/* Support - Help and assistance */}
-        <SectionTitle title="Support" textStyle={styles.sectionTitle} />
+        <SectionTitle title={AccountSection.HELP_SUPPORT} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard
@@ -492,7 +493,7 @@ const AccountScreen: FC = () => {
         </BaseCard>
 
         {/* Account - Data and account actions */}
-        <SectionTitle title="Account" textStyle={styles.sectionTitle} />
+        <SectionTitle title={STRINGS.ACCOUNT} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleClearCache}>

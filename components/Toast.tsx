@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedText } from '@/components/ThemedText';
 import {
   DEFAULT_ANIMATION_DURATION,
   DEFAULT_TOAST_DURATION,
@@ -15,9 +16,7 @@ import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import type { ToastType } from '@/types/ui/toast.types';
-
-import { ThemedText } from './ThemedText';
+import { ToastType } from '@/types/enums';
 
 interface ToastProps {
   visible: boolean;
@@ -56,7 +55,13 @@ const styles = StyleSheet.create({
 });
 
 export const Toast = memo(
-  ({ visible, message, duration = DEFAULT_DURATION, onClose, type = 'info' }: ToastProps) => {
+  ({
+    visible,
+    message,
+    duration = DEFAULT_DURATION,
+    onClose,
+    type = ToastType.INFO,
+  }: ToastProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
     const insets = useSafeAreaInsets();

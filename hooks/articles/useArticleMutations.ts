@@ -16,6 +16,7 @@ import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
+import { ToastType } from '@/types/enums';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
@@ -227,7 +228,7 @@ export const useArticleMutations = (
           );
         }
         handleError(error);
-        showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, 'error');
+        showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, ToastType.ERROR);
         queryClient.invalidateQueries({
           queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
         });
@@ -284,7 +285,7 @@ export const useArticleMutations = (
           );
         }
         handleError(error);
-        showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, 'error');
+        showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, ToastType.ERROR);
         queryClient.invalidateQueries({
           queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
         });
@@ -377,7 +378,7 @@ export const useArticleMutations = (
         // Check daily word limit first
         const canAdd = await canAddWord();
         if (!canAdd) {
-          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
+          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, ToastType.IMPORTANT);
           return;
         }
 
@@ -391,21 +392,21 @@ export const useArticleMutations = (
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError || !refreshData.session) {
-            showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_WORDS, undefined, 'info');
+            showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_WORDS, undefined, ToastType.INFO);
             router.replace(ROUTE_PATHS.AUTH);
             return;
           }
 
           // Capacity guard
           if (isCapacityLow(refreshData.session.user.id)) {
-            showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, 'info');
+            showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, ToastType.INFO);
             return;
           }
 
           // Increment daily word count and proceed
           const incrementSuccess = await incrementDailyWordCount();
           if (!incrementSuccess) {
-            showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
+            showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, ToastType.IMPORTANT);
             return;
           }
 
@@ -416,14 +417,14 @@ export const useArticleMutations = (
 
         // Capacity guard
         if (isCapacityLow(session.user.id)) {
-          showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, 'info');
+          showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, ToastType.INFO);
           return;
         }
 
         // Increment daily word count and proceed
         const incrementSuccess = await incrementDailyWordCount();
         if (!incrementSuccess) {
-          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
+          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, ToastType.IMPORTANT);
           return;
         }
 
@@ -452,7 +453,7 @@ export const useArticleMutations = (
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError || !refreshData.session) {
-            showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_ROOTS, undefined, 'info');
+            showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_ROOTS, undefined, ToastType.INFO);
             router.replace(ROUTE_PATHS.AUTH);
             return undefined;
           }
@@ -478,7 +479,7 @@ export const useArticleMutations = (
               dailyWordLimit === 0
                 ? STRINGS.DAILY_WORD_LIMIT_REACHED
                 : `Daily limit of ${dailyWordLimit} words reached`;
-            showToast(limitMessage, 4000, 'important');
+            showToast(limitMessage, 4000, ToastType.IMPORTANT);
             errorFeedback(); // Use error haptic for daily limit reached
             return undefined;
           }
@@ -486,7 +487,7 @@ export const useArticleMutations = (
 
         // Capacity guard
         if (isCapacityLow(currentUserId)) {
-          showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, 'info');
+          showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, ToastType.INFO);
           return undefined;
         }
 
@@ -498,7 +499,7 @@ export const useArticleMutations = (
               dailyWordLimit === 0
                 ? STRINGS.DAILY_WORD_LIMIT_REACHED
                 : `Daily limit of ${dailyWordLimit} words reached`;
-            showToast(limitMessage, 4000, 'important');
+            showToast(limitMessage, 4000, ToastType.IMPORTANT);
             errorFeedback(); // Use error haptic for daily limit reached
             return undefined;
           }

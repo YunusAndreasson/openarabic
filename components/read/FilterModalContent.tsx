@@ -16,6 +16,7 @@ import {
 } from '@/hooks/articles/useFilterModal';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Author } from '@/types/articles.types';
+import { UiAction } from '@/types/enums';
 
 interface FilterModalProps {
   availableAuthors: Author[];
@@ -94,7 +95,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                 },
               ]}
               accessible={true}
-              accessibilityLabel={`${STRINGS.FILTERS}: ${activeFiltersCount}`}
+              accessibilityLabel={`${UiAction.FILTERS}: ${activeFiltersCount}`}
             >
               <ThemedText
                 type="body"
@@ -118,14 +119,14 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
               ]}
               accessibilityRole="button"
               accessibilityState={{ disabled: activeFiltersCount === 0 }}
-              accessibilityLabel={STRINGS.RESET_FILTERS}
+              accessibilityLabel={UiAction.RESET_FILTERS}
             >
               <ThemedText
                 type="label"
                 colorName={activeFiltersCount === 0 ? 'secondaryText' : 'warning'}
                 weight="semibold"
               >
-                {STRINGS.RESET_FILTERS}
+                {UiAction.RESET_FILTERS}
               </ThemedText>
             </Pressable>
           </View>

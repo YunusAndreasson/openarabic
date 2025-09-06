@@ -16,6 +16,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { AudioLanguagePreference } from '@/store/settingsSlice';
 import { setAudioLanguagePreference } from '@/store/settingsSlice';
+import { AudioLanguage } from '@/types/enums';
 import { lightFeedback } from '@/utils/haptics';
 
 export interface AudioLanguagePickerProps {
@@ -32,13 +33,13 @@ interface AudioLanguageOption {
 
 export const AUDIO_LANGUAGE_OPTIONS: AudioLanguageOption[] = [
   {
-    id: 'arabic',
+    id: AudioLanguage.ARABIC_ONLY,
     title: STRINGS.AUDIO_LANGUAGE_ARABIC,
     subtitle: 'Audio plays in Arabic with English subtitles',
     icon: 'volume-high',
   },
   {
-    id: 'bilingual',
+    id: AudioLanguage.ENGLISH_ARABIC,
     title: STRINGS.AUDIO_LANGUAGE_BILINGUAL,
     subtitle: 'Audio plays in both Arabic and English',
     icon: 'language',

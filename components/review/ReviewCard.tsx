@@ -12,13 +12,12 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import WordDisplayComponent from '@/components/review/WordDisplay';
 import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { AnimatedStyleProp as AppAnimatedStyleProp } from '@/types/ui/base.types';
 import { withOpacity } from '@/utils/colorUtils';
-
-import WordDisplayComponent from './WordDisplay';
 
 // ===== STATIC ANIMATION CONFIGURATION =====
 const ANIMATION_CONFIG = {

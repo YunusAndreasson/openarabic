@@ -12,7 +12,7 @@
  */
 
 // Minimal interface for analytics properties
-import { MIXPANEL_TOKEN } from '../constants/analytics';
+import { MIXPANEL_TOKEN } from '@/constants/analytics';
 
 interface AnalyticsProperties {
   [key: string]: string | number | boolean | null | undefined;

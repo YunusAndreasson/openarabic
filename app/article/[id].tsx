@@ -37,6 +37,7 @@ import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
+import { ToastType } from '@/types/enums';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
@@ -214,7 +215,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     showToast(
       isInReadingList ? STRINGS.REMOVED_FROM_BOOKMARKS : STRINGS.ADDED_TO_BOOKMARKS,
       3000,
-      'success'
+      ToastType.SUCCESS
     );
   }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
 
@@ -552,7 +553,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
       // Show resume toast
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      showToast(`Resumed at ${progressPercent}%`, 3000, 'info');
+      showToast(`Resumed at ${progressPercent}%`, 3000, ToastType.INFO);
 
       // Attempt jump once on resume
       setTimeout(() => {

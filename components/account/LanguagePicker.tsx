@@ -16,6 +16,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { DisplayLanguagePreference } from '@/store/settingsSlice';
 import { setDisplayLanguagePreference } from '@/store/settingsSlice';
+import { DisplayLanguage } from '@/types/enums';
 import { lightFeedback } from '@/utils/haptics';
 
 export interface LanguagePickerProps {
@@ -32,13 +33,13 @@ interface LanguageOption {
 
 export const LANGUAGE_OPTIONS: LanguageOption[] = [
   {
-    id: 'arabic',
+    id: DisplayLanguage.ARABIC_ONLY,
     title: STRINGS.DISPLAY_LANGUAGE_ARABIC,
     subtitle: 'Text displays in Arabic script with English translations',
     icon: 'text',
   },
   {
-    id: 'bilingual',
+    id: DisplayLanguage.ARABIC_ENGLISH,
     title: STRINGS.DISPLAY_LANGUAGE_BILINGUAL,
     subtitle: 'Text shows both Arabic and English side by side',
     icon: 'language',

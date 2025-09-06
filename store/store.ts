@@ -2,13 +2,12 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import type { PersistConfig } from 'redux-persist/es/types';
 
+import editModeReducer from '@/store/editModeSlice';
+import filtersReducer from '@/store/filtersSlice';
+import listenReducer from '@/store/listenSlice';
+import settingsReducer from '@/store/settingsSlice';
+import themeReducer from '@/store/themeSlice';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
-
-import editModeReducer from './editModeSlice';
-import filtersReducer from './filtersSlice';
-import listenReducer from './listenSlice';
-import settingsReducer from './settingsSlice';
-import themeReducer from './themeSlice';
 
 // Combine reducers (even if there's only one) so we can use a whitelist.
 const rootReducer = combineReducers({

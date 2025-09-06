@@ -1,6 +1,6 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
-import { LAYOUT } from './layout';
+import { LAYOUT } from '@/constants/layout';
 
 /**
  * Centralized navigation configuration for consistent styling across the app

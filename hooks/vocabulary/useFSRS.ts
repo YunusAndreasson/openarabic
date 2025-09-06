@@ -11,6 +11,7 @@ import {
 } from '@/constants/fsrs';
 import { strugglingWordsService } from '@/services/strugglingWords';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { ToastType } from '@/types/enums';
 import type { FSRSStateTracking, UseFSRSOptions, UseFSRSResult } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -447,7 +448,7 @@ export function useFSRS({
           error instanceof Error
             ? error
             : new Error((error as { message?: string })?.message ?? JSON.stringify(error));
-        handleError(errObj, { toastType: 'important' });
+        handleError(errObj, { toastType: ToastType.IMPORTANT });
       }
 
       stateTrackingRef.current.isProcessingUpdate = false;

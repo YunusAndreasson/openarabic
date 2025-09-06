@@ -2,8 +2,7 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import type { Query } from '@tanstack/react-query';
 
 import { FSRS_BASE_KEY, STRUGGLING_WORDS_KEY } from '@/constants/fsrs';
-
-import { getSafeStorage } from './safeAsyncStorage';
+import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 // Constants for better performance and maintainability
 const CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE';

@@ -8,6 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { UiAction } from '@/types/enums';
 import type { RoutePath } from '@/types/navigation.types';
 import type { ErrorMessageProps } from '@/types/ui/review.types';
 
@@ -37,7 +38,7 @@ const ErrorMessage = memo(
         </ThemedText>
         <ThemedButton
           style={styles.retryButton}
-          title={STRINGS.REFRESH}
+          title={UiAction.REFRESH}
           testID="error-retry-button"
           onPress={handleRetry}
         />

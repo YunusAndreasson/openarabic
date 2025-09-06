@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import type { TypedUseSelectorHook } from 'react-redux';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
-import type { AppDispatch, RootState } from './store';
-import { store } from './store'; // used to generate fallback state when Redux context is missing
+import type { AppDispatch, RootState } from '@/store/store';
+import { store } from '@/store/store'; // used to generate fallback state when Redux context is missing
 
 // Use throughout your app instead of plain `useDispatch` and `useSelector`
 export const useAppDispatch = () => {

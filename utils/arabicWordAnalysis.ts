@@ -6,7 +6,7 @@ import {
   COMPONENT_TYPE_CONFIG,
   ComponentType,
   type WordComponent,
-} from '../constants/arabicWordComponents';
+} from '@/constants/arabicWordComponents';
 
 export interface AnalyzedComponent {
   component: WordComponent;

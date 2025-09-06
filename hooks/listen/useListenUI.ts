@@ -3,12 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
 import { getArticleRoute } from '@/constants/routes';
+import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAppDispatch } from '@/store/hooks';
 import { setCustomOrder } from '@/store/listenSlice';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { selectionFeedback } from '@/utils/haptics';
-
-import { useAppPreloader } from '../app/useAppPreloader';
 
 interface ListenUIParams {
   sortedReadingList: ReadingListItem[];

@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
+import { UiAction } from '@/types/enums';
 import { errorFeedback } from '@/utils/haptics';
 
 // Define ErrorStateProps inline
@@ -31,7 +31,7 @@ const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
       </View>
       {onRetry ? (
         <View style={styles.buttonContainer}>
-          <ThemedButton title={STRINGS.REFRESH} onPress={onRetry} />
+          <ThemedButton title={UiAction.REFRESH} onPress={onRetry} />
         </View>
       ) : null}
     </View>

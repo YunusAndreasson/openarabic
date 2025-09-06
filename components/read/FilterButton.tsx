@@ -4,11 +4,11 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectActiveFiltersCount } from '@/store/filtersSlice';
 import { useAppSelectorMemo } from '@/store/hooks';
+import { UiAction } from '@/types/enums';
 
 interface FilterButtonProps {
   onPress: () => void;
@@ -48,7 +48,7 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       >
         <ThemedText type="label" weight="semibold" colorName="tint" style={styles.filterText}>
-          {STRINGS.FILTER}
+          {UiAction.FILTER}
         </ThemedText>
 
         {activeFiltersCount > 0 && (

@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from '@/services/supabase';
 
 export interface ReadingStreak {
   currentStreak: number;

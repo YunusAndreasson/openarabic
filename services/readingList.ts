@@ -1,8 +1,7 @@
 import { STRINGS } from '@/constants/strings';
+import { checkAuthentication, supabase } from '@/services/supabase';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { handleError } from '@/utils/errorHandling';
-
-import { checkAuthentication, supabase } from './supabase';
 
 const errorConfig = {
   readingList: {
