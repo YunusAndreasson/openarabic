@@ -1,4 +1,5 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { Platform } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 
@@ -6,20 +7,10 @@ import { LAYOUT } from '@/constants/layout';
  * Centralized navigation configuration for consistent styling across the app
  *
  * @example Modal screen (default)
- * ```typescript
- * <Stack.Screen
- *   name="example"
- *   options={createNavigationOptions(colors, { title: 'Example' })}
- * />
- * ```
+ * <Stack.Screen name="example" options={createNavigationOptions(colors, { title: 'Example' })} />
  *
  * @example Regular screen
- * ```typescript
- * <Stack.Screen
- *   name="settings"
- *   options={createNavigationOptions(colors, { title: 'Settings', isRegularScreen: true })}
- * />
- * ```
+ * <Stack.Screen name="settings" options={createNavigationOptions(colors, { title: 'Settings', isRegularScreen: true })} />
  */
 
 /**
@@ -47,7 +38,7 @@ export function createNavigationOptions(
       fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
     },
     headerTintColor: colors.headingText,
-
+    headerTransparent: false,
     ...overrides,
   };
 
@@ -55,15 +46,16 @@ export function createNavigationOptions(
     return baseOptions;
   }
 
-  // Default is modal presentation with enhanced backdrop opacity
+  // Native modal behavior (minimal customization)
   return {
-    presentation: 'modal',
+    presentation: Platform.select({
+      ios: 'modal',
+      android: 'fullScreenModal',
+      default: 'modal',
+    }),
     gestureEnabled: true,
     contentStyle: {
       backgroundColor: colors.background,
-      // Subtle elevation for modal separation
-      shadowColor: colors.shadow,
-      ...LAYOUT.ELEVATION.MEDIUM,
     },
     ...baseOptions,
   };

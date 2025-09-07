@@ -1,4 +1,3 @@
-import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -38,7 +37,6 @@ export default function VocabularyScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { prefetchVocabularyData } = useAppPreloader();
-  const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
   // Add state for bottom sheet visibility
@@ -238,7 +236,7 @@ export default function VocabularyScreen(): JSX.Element {
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM,
+            paddingTop: LAYOUT.SPACING.MEDIUM,
             paddingBottom: contentPaddingBottom,
           },
         ]}

@@ -1,4 +1,3 @@
-import { useHeaderHeight } from '@react-navigation/elements';
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -43,7 +42,6 @@ const styles = StyleSheet.create({
 
 export default function ReadScreen(): JSX.Element {
   const colors = useColors();
-  const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
   const queryClient = useQueryClient();
@@ -195,16 +193,14 @@ export default function ReadScreen(): JSX.Element {
     () => ({
       ...styles.listContentContainer,
       backgroundColor: colors.background,
-      paddingTop: headerHeight,
+      paddingTop: 0,
       paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
     }),
-    [colors, headerHeight, insets.bottom] // Use entire colors object to reduce individual property dependencies
+    [colors, insets.bottom]
   );
 
-  // Simplified loading and error handling - articles are guaranteed to exist
   const isLoading = isArticlesLoading || isCategoriesLoading;
 
-  // Only show loading state, not error states for missing data
   if (isLoading && !articlesData.length && !categoriesData.length) {
     // Show loading state - handled by ArticleList
   }
@@ -220,7 +216,7 @@ export default function ReadScreen(): JSX.Element {
         isRefreshing={isRefreshing}
         ListHeaderComponent={ListHeaderComponent}
         ListFooterComponent={ListFooterComponent}
-        progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
+        progressViewOffset={LAYOUT.SPACING.XLARGE}
         onArticlePress={handleArticlePress}
         onRefresh={handleRefresh}
       />

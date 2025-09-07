@@ -1,8 +1,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
-import type { Theme } from '@/constants/colors';
-import { Colors } from '@/constants/colors';
+import { Theme, Colors } from '@/constants/colors';
 
 type ThemeColors = (typeof Colors)[Theme];
 
@@ -12,8 +11,8 @@ export interface ThemeState {
 }
 
 const initialState: ThemeState = {
-  theme: null,
-  colors: Colors.light,
+  theme: Theme.Dark, // Default to Midnight Summer (dark theme) for new users
+  colors: Colors.dark,
 };
 
 const themeSlice = createSlice({

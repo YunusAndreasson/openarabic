@@ -1,15 +1,17 @@
 import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback } from 'react';
+import { Platform, Text } from 'react-native';
 
 import FilterButton from '@read/FilterButton';
 
 import DoneButton from '@/components/ui/DoneButton';
+import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
 import { getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { UiAction } from '@/types/enums';
+import { AppTab, UiAction } from '@/types/enums';
 import type { FilterParams } from '@/types/navigation.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -52,7 +54,32 @@ export default function ReadLayout(): JSX.Element {
       <Stack.Screen
         name="index"
         options={{
-          headerShown: false, // Use tab header for main screen with HeaderProfile
+          headerShown: true,
+          // Normalize header background and title color on both platforms
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.headingText,
+          headerShadowVisible: false,
+          ...(Platform.OS === 'ios'
+            ? {
+                // Use a custom left title on iOS to guarantee left alignment with system font
+                headerTitle: '',
+                headerLeft: () => (
+                  <Text
+                    style={{
+                      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+                      fontWeight: '600',
+                      color: colors.headingText,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {AppTab.READ}
+                  </Text>
+                ),
+              }
+            : {
+                title: AppTab.READ,
+                headerTitleStyle: { color: colors.headingText },
+              }),
         }}
       />
       <Stack.Screen

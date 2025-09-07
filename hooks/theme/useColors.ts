@@ -26,7 +26,7 @@ export function useColors(): ThemeColors {
 
   try {
     const theme = useAppSelector(
-      state => state?.theme?.theme || Theme.Light,
+      state => state?.theme?.theme || Theme.Dark,
       (prev, next) => prev === next
     );
 
@@ -43,8 +43,8 @@ export function useColors(): ThemeColors {
 
     return prevColorsRef.current;
   } catch {
-    // Fallback to light theme if Redux context is not available yet
-    // This prevents errors during initial app bootstrap
-    return getCachedColors(Theme.Light);
+    // Fallback to dark theme (Midnight Summer) if Redux context is not available yet
+    // This prevents errors during initial app bootstrap and matches default theme
+    return getCachedColors(Theme.Dark);
   }
 }

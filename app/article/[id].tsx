@@ -7,11 +7,13 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import {
   AppState,
   InteractionManager,
+  Platform,
   View,
   type LayoutRectangle,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   ArticleSentence,
@@ -834,11 +836,20 @@ export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
 
+  const Container = Platform.OS === 'android' ? SafeAreaView : View;
+  const containerProps =
+    Platform.OS === 'android'
+      ? ({
+          style: [FLEX_ONE_STYLE, { backgroundColor: colors.background }],
+          edges: ['top'] as const,
+        } as const)
+      : ({ style: [FLEX_ONE_STYLE, { backgroundColor: colors.background }] } as const);
+
   return (
     <ToastProvider>
-      <View style={[FLEX_ONE_STYLE, { backgroundColor: colors.background }]}>
+      <Container {...(containerProps as any)}>
         <ArticleScreenContent id={id ?? ''} />
-      </View>
+      </Container>
     </ToastProvider>
   );
 }

@@ -1,4 +1,3 @@
-import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
@@ -140,7 +139,7 @@ export default function ListenScreen(): JSX.Element {
     editMode,
   });
 
-  const headerHeight = useHeaderHeight();
+  // const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
   // STABILIZATION: Add local loading state for PLAY ALL button
@@ -189,13 +188,11 @@ export default function ListenScreen(): JSX.Element {
     };
   }, []);
 
-  // Simplified state calculations
   const shouldShowEmpty = !stableHasArticles && canShowEmpty && !isReadingListLoading;
 
-  // Proper spacing accounting for bottom controls and tab bar
   const listContainerStyle = useMemo(
     () => ({
-      paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM,
+      paddingTop: LAYOUT.SPACING.MEDIUM,
       // Account for BottomControls height + tab bar + safe area when controls are visible
       paddingBottom: stableHasArticles
         ? LAYOUT.BOTTOM_BAR.HEIGHT +
@@ -204,7 +201,7 @@ export default function ListenScreen(): JSX.Element {
         : LAYOUT.SPACING.MEDIUM,
       paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     }),
-    [headerHeight, stableHasArticles, insets.bottom]
+    [stableHasArticles, insets.bottom]
   );
 
   // STABILIZATION: Memoize bottom controls style with stable conditions

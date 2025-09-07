@@ -24,7 +24,7 @@ import {
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
@@ -213,8 +213,8 @@ function AppContent() {
   // Set default theme based on system preference if none is set yet
   useEffect(() => {
     if (!theme) {
-      // Use light theme as the gentlest default for new users
-      dispatch(setTheme(Theme.Light)); // Default to light for accessibility and gentleness
+      // Use dark theme (Midnight Summer) as the default for new users
+      dispatch(setTheme(Theme.Dark)); // Default to dark theme for comfortable evening study
     }
   }, [dispatch, theme]);
 
@@ -354,7 +354,7 @@ function AppContent() {
   return (
     <NavigationThemeProvider value={navigationTheme}>
       <FSRSDataProvider userId={session?.user?.id}>
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['left', 'right']}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen
               name="(tabs)"
@@ -395,7 +395,7 @@ function AppContent() {
           <StreaksBottomSheet isVisible={isStreaksVisible} onClose={closeStreaks} />
 
           <StatusBar style={isDark ? 'light' : 'dark'} />
-        </View>
+        </SafeAreaView>
       </FSRSDataProvider>
     </NavigationThemeProvider>
   );

@@ -3,11 +3,9 @@ import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import type { JSX } from 'react';
 import React, { Fragment, memo, useCallback, useEffect, useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { HeaderProfile } from '@/components/HeaderProfile';
 import { ThemedText } from '@/components/ThemedText';
-import EditModeButton from '@/components/ui/EditModeButton';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth';
@@ -140,18 +138,8 @@ const BLUR_INTENSITY = 55;
 
 // Static styles for better performance
 const styles = StyleSheet.create({
-  headerTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
-  },
   tabBarIcon: {
-    marginTop: LAYOUT.SPACING.SMALL,
-  },
-  tabBarStyleIOS: {
-    position: 'absolute',
-    borderTopWidth: 0,
-    height: LAYOUT.BOTTOM_BAR.HEIGHT,
+    marginTop: 0,
   },
   focusedIcon: {
     opacity: 1,
@@ -232,16 +220,17 @@ export default function TabLayout(): JSX.Element {
     }
   }, [session, isLoading]);
 
-  // Memoize dynamic styles for better performance
-  const tabBarStyleAndroid = useMemo(
+  // Unified tab bar style for both platforms with proper background surface for BlurView
+  const tabBarStyle = useMemo(
     () => ({
       position: 'absolute' as const,
-      borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
-      borderTopColor: colors.border,
+      borderTopWidth: 0, // Remove border to prevent transparency gaps
       height: LAYOUT.BOTTOM_BAR.HEIGHT,
-      ...LAYOUT.ELEVATION.SMALL,
+      backgroundColor: colors.elevation0, // Provide background surface for BlurView to work against
+      paddingTop: 0,
+      paddingBottom: 0,
     }),
-    [colors.border]
+    [colors.elevation0]
   );
 
   // Safety check: don't render until we have colors (Redux store is ready)
@@ -257,11 +246,8 @@ export default function TabLayout(): JSX.Element {
     <>
       <Tabs
         screenOptions={{
-          headerShown: true,
-          headerTitleAlign: 'left',
-          headerTitleStyle: styles.headerTitle,
-          headerTransparent: true,
-          headerBackground: () => <HeaderBackground />,
+          // Hide the Tabs header so each stack controls its own header (fixes modal overlap)
+          headerShown: false,
 
           // Tab bar styling with blur
           tabBarBackground: () => <TabBarBackground />,
@@ -269,10 +255,9 @@ export default function TabLayout(): JSX.Element {
           tabBarInactiveTintColor: colors.tabIconDefault,
           tabBarShowLabel: false, // Clean icon-only design with 3 tabs and clear nav titles
           tabBarIconStyle: styles.tabBarIcon,
-          tabBarStyle: Platform.select({
-            ios: styles.tabBarStyleIOS,
-            android: tabBarStyleAndroid,
-          }),
+          tabBarItemStyle: { paddingTop: 0, paddingBottom: 0 },
+          tabBarStyle: tabBarStyle,
+          tabBarHideOnKeyboard: false,
 
           // Performance optimizations
           freezeOnBlur: true,
@@ -296,18 +281,6 @@ export default function TabLayout(): JSX.Element {
                   colors={colors}
                 />
               ),
-              // Badge is now handled by the custom IconWithBadge component
-              // Header customizations for specific screens
-              ...(screen.name === 'read' && {
-                headerRight: () => <HeaderProfile />,
-              }),
-              ...(screen.name === 'listen' && {
-                headerRight: () => <EditModeButton type="listen" hideWhenEmpty />,
-              }),
-              ...(screen.name === 'practice' && {
-                headerRight: () => <DictionaryButton hideWhenEmpty />,
-              }),
-              // Dictionary button for practice tab
             }}
           />
         ))}
