@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import type { JSX } from 'react';
 import React, { Fragment, memo, useCallback, useEffect, useMemo } from 'react';
@@ -9,7 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth';
-import { useColors, useIsDarkMode } from '@/hooks/theme';
+import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { AppTab, UiAction } from '@/types/enums';
 
@@ -134,8 +133,6 @@ const TAB_SCREENS = [
   },
 ] as const;
 
-const BLUR_INTENSITY = 55;
-
 // Static styles for better performance
 const styles = StyleSheet.create({
   tabBarIcon: {
@@ -162,34 +159,6 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
 });
-
-// Simplified header background - works for both platforms
-const HeaderBackground = memo(() => {
-  const isDarkMode = useIsDarkMode();
-
-  return (
-    <BlurView
-      intensity={BLUR_INTENSITY}
-      style={StyleSheet.absoluteFill}
-      tint={isDarkMode ? 'dark' : 'light'}
-    />
-  );
-});
-HeaderBackground.displayName = 'HeaderBackground';
-
-// Simplified tab bar background - works for both platforms
-const TabBarBackground = memo(() => {
-  const isDarkMode = useIsDarkMode();
-
-  return (
-    <BlurView
-      intensity={BLUR_INTENSITY}
-      style={StyleSheet.absoluteFill}
-      tint={isDarkMode ? 'dark' : 'light'}
-    />
-  );
-});
-TabBarBackground.displayName = 'TabBarBackground';
 
 const dictionaryButtonStyles = StyleSheet.create({
   button: {
@@ -220,20 +189,19 @@ export default function TabLayout(): JSX.Element {
     }
   }, [session, isLoading]);
 
-  // Unified tab bar style for both platforms with proper background surface for BlurView
+  // Unified tab bar style for both platforms with native background
   const tabBarStyle = useMemo(
     () => ({
       position: 'absolute' as const,
-      borderTopWidth: 0, // Remove border to prevent transparency gaps
+      borderTopWidth: 0,
       height: LAYOUT.BOTTOM_BAR.HEIGHT,
-      backgroundColor: colors.elevation0, // Provide background surface for BlurView to work against
+      backgroundColor: colors.elevation0,
       paddingTop: 0,
       paddingBottom: 0,
     }),
     [colors.elevation0]
   );
 
-  // Safety check: don't render until we have colors (Redux store is ready)
   if (!colors) {
     return <Fragment />;
   }
@@ -246,20 +214,13 @@ export default function TabLayout(): JSX.Element {
     <>
       <Tabs
         screenOptions={{
-          // Hide the Tabs header so each stack controls its own header (fixes modal overlap)
           headerShown: false,
-
-          // Tab bar styling with blur
-          tabBarBackground: () => <TabBarBackground />,
           tabBarActiveTintColor: colors.tint,
           tabBarInactiveTintColor: colors.tabIconDefault,
-          tabBarShowLabel: false, // Clean icon-only design with 3 tabs and clear nav titles
+          tabBarShowLabel: false,
           tabBarIconStyle: styles.tabBarIcon,
           tabBarItemStyle: { paddingTop: 0, paddingBottom: 0 },
           tabBarStyle: tabBarStyle,
-          tabBarHideOnKeyboard: false,
-
-          // Performance optimizations
           freezeOnBlur: true,
           animation: 'fade',
           lazy: true,
