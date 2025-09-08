@@ -10,6 +10,8 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { AppTab, UiAction } from '@/types/enums';
 
+import { DictionaryButton } from '../_layout';
+
 export default function VocabularyLayout(): JSX.Element {
   const colors = useColors();
   const { editMode } = useEditMode('dictionary');
@@ -37,8 +39,13 @@ export default function VocabularyLayout(): JSX.Element {
                     {AppTab.PRACTICE}
                   </Text>
                 ),
+                headerRight: () => <DictionaryButton hideWhenEmpty={true} />,
               }
-            : { title: AppTab.PRACTICE, headerTitleStyle: { color: colors.headingText } }),
+            : {
+                title: AppTab.PRACTICE,
+                headerTitleStyle: { color: colors.headingText },
+                headerRight: () => <DictionaryButton hideWhenEmpty={true} />,
+              }),
         }}
       />
       <Stack.Screen

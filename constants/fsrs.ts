@@ -44,7 +44,7 @@ export const UNSTABLE_DIFFICULTY_THRESHOLD = 7.5;
 
 // (Removed unused mastery/learning thresholds to avoid conflicting definitions)
 
-export const DEFAULT_SESSION_COOLDOWN_HOURS = 12;
+export const DEFAULT_SESSION_COOLDOWN_HOURS = 2;
 
 // Spacing and scheduling constants
 export const SPACING_ITERATION_LIMIT = 20;

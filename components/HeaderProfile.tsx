@@ -142,7 +142,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: LAYOUT.SPACING.MEDIUM,
-    paddingRight: LAYOUT.SCREEN_EDGE_PADDING, // Align with featured content padding
   },
   streakContainer: {
     flexDirection: 'row',

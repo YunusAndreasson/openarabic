@@ -87,7 +87,7 @@
     "react-native-url-polyfill": "^2.0.0",
     "react-redux": "^9.2.0",
     "redux-persist": "^6.0.0",
-    "strip-ansi": "^7.1.0",
+    "strip-ansi": "^7.1.2",
     "ts-fsrs": "^5.2.3"
   },
   "devDependencies": {
@@ -101,8 +101,8 @@
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.0.10",
-    "@typescript-eslint/eslint-plugin": "^8.42.0",
-    "@typescript-eslint/parser": "^8.42.0",
+    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/parser": "^8.43.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "^13.2.3",
     "concurrently": "^9.2.1",

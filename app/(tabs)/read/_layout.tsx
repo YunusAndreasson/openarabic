@@ -5,6 +5,7 @@ import { Platform, Text } from 'react-native';
 
 import FilterButton from '@read/FilterButton';
 
+import { HeaderProfile } from '@/components/HeaderProfile';
 import DoneButton from '@/components/ui/DoneButton';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
@@ -75,10 +76,12 @@ export default function ReadLayout(): JSX.Element {
                     {AppTab.READ}
                   </Text>
                 ),
+                headerRight: () => <HeaderProfile size={32} />,
               }
             : {
                 title: AppTab.READ,
                 headerTitleStyle: { color: colors.headingText },
+                headerRight: () => <HeaderProfile size={32} />,
               }),
         }}
       />

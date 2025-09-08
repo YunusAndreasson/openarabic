@@ -115,6 +115,8 @@ const DictionaryButton = memo((props: DictionaryButtonProps): JSX.Element | null
 
 DictionaryButton.displayName = 'DictionaryButton';
 
+export { DictionaryButton };
+
 const TAB_SCREENS = [
   {
     name: 'read',

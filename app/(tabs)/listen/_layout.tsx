@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 import { Platform, Text } from 'react-native';
 
+import EditModeButton from '@/components/ui/EditModeButton';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { AppTab } from '@/types/enums';
@@ -32,8 +33,13 @@ export default function ListenLayout(): JSX.Element {
                     {AppTab.LISTEN}
                   </Text>
                 ),
+                headerRight: () => <EditModeButton type="listen" hideWhenEmpty={true} />,
               }
-            : { title: AppTab.LISTEN, headerTitleStyle: { color: colors.headingText } }),
+            : {
+                title: AppTab.LISTEN,
+                headerTitleStyle: { color: colors.headingText },
+                headerRight: () => <EditModeButton type="listen" hideWhenEmpty={true} />,
+              }),
         }}
       />
     </Stack>
