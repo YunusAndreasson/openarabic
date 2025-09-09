@@ -1,7 +1,7 @@
 {
   "name": "OpenArabic",
   "main": "expo-router/entry",
-  "version": "1447.3.12+66",
+  "version": "1447.3.13+67",
   "scripts": {
     "postinstall": "patch-package",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
@@ -75,6 +75,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",
+    "@babel/plugin-transform-runtime": "^7.28.3",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.35.0",
     "@expo/metro-config": "^0.20.17",
@@ -86,7 +87,7 @@
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.43.0",
     "babel-plugin-module-resolver": "^5.0.2",
-    "babel-preset-expo": "~13.0.0",
+    "babel-preset-expo": "^13.2.3",
     "eslint": "9.35.0",
     "eslint-config-expo": "~9.2.0",
     "eslint-plugin-import": "^2.32.0",
