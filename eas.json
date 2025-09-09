@@ -23,7 +23,7 @@
     "preview": {
       "distribution": "internal",
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "medium"
       },
       "env": {
         "EXPO_PUBLIC_SENTRY_DSN": "${EXPO_PUBLIC_SENTRY_DSN}",
@@ -37,11 +37,11 @@
     },
     "production": {
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "medium"
       },
       "android": {
-        "resourceClass": "m-medium",
-        "buildType": "aab"
+        "resourceClass": "medium",
+        "buildType": "app-bundle"
       },
       "env": {
         "EXPO_PUBLIC_SENTRY_DSN": "${EXPO_PUBLIC_SENTRY_DSN}",
