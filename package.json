@@ -75,7 +75,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",
-    "@babel/plugin-transform-runtime": "^7.28.3",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.35.0",
     "@expo/metro-config": "^0.20.17",
