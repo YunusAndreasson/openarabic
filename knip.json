@@ -42,11 +42,10 @@
     "@sentry/cli",
     "strip-ansi",
     "expo-asset",
-    "@babel/plugin-transform-runtime",
     "metro-react-native-babel-preset"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
-  "ignoreBinaries": ["expo-doctor", "supabase", "gh"],
+  "ignoreBinaries": ["supabase", "gh"],
   "exclude": ["duplicates"]
 }

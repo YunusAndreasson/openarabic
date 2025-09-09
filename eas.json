@@ -39,6 +39,10 @@
       "ios": {
         "resourceClass": "m-medium"
       },
+      "android": {
+        "resourceClass": "m-medium",
+        "buildType": "aab"
+      },
       "env": {
         "EXPO_PUBLIC_SENTRY_DSN": "${EXPO_PUBLIC_SENTRY_DSN}",
         "EXPO_PUBLIC_MIXPANEL_TOKEN": "${EXPO_PUBLIC_MIXPANEL_TOKEN}",
@@ -56,6 +60,10 @@
         "appleId": "",
         "ascAppId": "1594031029",
         "appleTeamId": "G9UUQ9MDS4"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
       }
     }
   }

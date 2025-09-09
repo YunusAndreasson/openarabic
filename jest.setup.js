@@ -1,20 +1,10 @@
 import { TextDecoder, TextEncoder } from 'util';
 
 import { jest } from '@jest/globals';
-import { configure } from 'reassure';
-
-// Configure Reassure for performance testing (AI agents benefit from performance insights)
+// Performance testing configuration removed - reassure no longer used
 if (typeof global.jest === 'undefined') {
   global.jest = jest;
 }
-
-configure({
-  testingLibrary: 'react-native',
-  // AI-optimized performance testing configuration
-  runs: 5, // Reduced runs for faster CI/CD cycles
-  warmupRuns: 1, // Minimal warmup for efficiency
-  outputFile: './coverage/performance-results.json',
-});
 
 // Enhanced animation frame mocking for consistent timing
 global.requestAnimationFrame = function (callback) {

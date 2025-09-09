@@ -53,39 +53,46 @@ jobs:
       - name: Bump version
         if: github.event_name == 'workflow_dispatch'
         run: |
-          echo "🚀 Bumping version before build..."
           yarn bump
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           NEW_VERSION=$(node -p "require('./package.json').version")
           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-          echo "📝 Committing version $NEW_VERSION"
           git add package.json app.json
           git commit -m "chore: bump version to $NEW_VERSION"
           git tag "v$NEW_VERSION"
-
-          echo "📤 Pushing changes and tags"
           git push origin $CURRENT_BRANCH
           git push origin "v$NEW_VERSION"
 
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
         id: version
 
-      - name: Build for TestFlight
-        id: build
+      - name: Build for iOS
+        id: ios_build
         run: |
-          echo "Starting iOS build for TestFlight..."
           BUILD_OUTPUT=$(eas build --platform ios --profile production --auto-submit --non-interactive --json)
           echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
 
-          # Extract build ID for tracking
           BUILD_ID=$(echo "$BUILD_OUTPUT" | jq -r '.[0].id // empty')
           if [ -n "$BUILD_ID" ]; then
-            echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
-            echo "✅ Build submitted successfully with ID: $BUILD_ID"
+            echo "ios_build_id=$BUILD_ID" >> $GITHUB_OUTPUT
           else
-            echo "❌ Failed to extract build ID"
+            echo "❌ iOS Build ID extraction failed"
+            exit 1
+          fi
+
+      - name: Build for Google Play
+        id: android_build
+        run: |
+          BUILD_OUTPUT=$(eas build --platform android --profile production --auto-submit --non-interactive --json)
+          echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
+
+          BUILD_ID=$(echo "$BUILD_OUTPUT" | jq -r '.[0].id // empty')
+          if [ -n "$BUILD_ID" ]; then
+            echo "android_build_id=$BUILD_ID" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Android Build ID extraction failed"
             exit 1
           fi
         env:
@@ -93,39 +100,62 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ALLOW_FAILURE: true
           SENTRY_DISABLE_AUTO_UPLOAD: false
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
 
-      - name: Wait for build completion
-        if: steps.build.outputs.build_id
+      - name: Wait for iOS build completion
+        if: steps.ios_build.outputs.ios_build_id
         run: |
-          BUILD_ID="${{ steps.build.outputs.build_id }}"
-          echo "Monitoring build $BUILD_ID..."
+          BUILD_ID="${{ steps.ios_build.outputs.ios_build_id }}"
 
-          # Wait for build to complete (max 30 minutes)
           for i in {1..60}; do
             STATUS=$(eas build:view $BUILD_ID --json | jq -r '.status')
-            echo "Build status: $STATUS (check $i/60)"
 
             case $STATUS in
               "finished")
-                echo "✅ Build completed successfully!"
                 exit 0
                 ;;
               "errored"|"canceled")
-                echo "❌ Build failed with status: $STATUS"
+                echo "❌ iOS build failed: $STATUS"
                 exit 1
                 ;;
               "in-progress"|"in-queue"|"pending")
-                echo "⏳ Build still in progress, waiting 30s..."
                 sleep 30
                 ;;
               *)
-                echo "⚠️ Unknown status: $STATUS, continuing to wait..."
                 sleep 30
                 ;;
             esac
           done
 
-          echo "❌ Build timeout after 30 minutes"
+          echo "❌ iOS build timeout"
+          exit 1
+
+      - name: Wait for Android build completion
+        if: steps.android_build.outputs.android_build_id
+        run: |
+          BUILD_ID="${{ steps.android_build.outputs.android_build_id }}"
+
+          for i in {1..60}; do
+            STATUS=$(eas build:view $BUILD_ID --json | jq -r '.status')
+
+            case $STATUS in
+              "finished")
+                exit 0
+                ;;
+              "errored"|"canceled")
+                echo "❌ Android build failed: $STATUS"
+                exit 1
+                ;;
+              "in-progress"|"in-queue"|"pending")
+                sleep 30
+                ;;
+              *)
+                sleep 30
+                ;;
+            esac
+          done
+
+          echo "❌ Android build timeout"
           exit 1
 
       # === GitHub Release Creation (after successful build) ===
@@ -133,30 +163,16 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && success() && steps.version.outputs.version
         run: |
           NEW_VERSION="${{ steps.version.outputs.version }}"
-          BUILD_ID="${{ steps.build.outputs.build_id }}"
+          IOS_BUILD_ID="${{ steps.ios_build.outputs.ios_build_id }}"
+          ANDROID_BUILD_ID="${{ steps.android_build.outputs.android_build_id }}"
 
-          # Create release notes with build info
-          RELEASE_NOTES="## Release v$NEW_VERSION
-
-          🚀 **TestFlight Build**: Successfully submitted to App Store Connect
-          📱 **Build ID**: $BUILD_ID
-          🔗 **EAS Build**: [View build details](https://expo.dev/accounts/[your-account]/projects/[your-project]/builds/$BUILD_ID)
-
-          ### What's Changed
-          "
-
-          echo "🎉 Creating GitHub release v$NEW_VERSION"
           gh release create "v$NEW_VERSION" \
             --title "Release v$NEW_VERSION" \
-            --notes "$RELEASE_NOTES" \
-            --generate-notes \
+            --notes "iOS Build: $IOS_BUILD_ID\nAndroid Build: $ANDROID_BUILD_ID" \
             --latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify on failure
         if: failure()
-        run: |
-          echo "❌ Release workflow failed!"
-          echo "Check the logs above for details."
-          # You could add Slack/Discord notifications here
+        run: echo "❌ Release failed"
