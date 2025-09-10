@@ -39,6 +39,7 @@
       }
     },
     "production": {
+      "node": "20.20.0",
       "ios": {
         "resourceClass": "medium"
       },

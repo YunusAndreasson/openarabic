@@ -111,6 +111,9 @@
     "node": ">=20.0.0",
     "yarn": ">=1.22.22"
   },
+  "resolutions": {
+    "@react-native/babel-preset": "0.79.6"
+  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
