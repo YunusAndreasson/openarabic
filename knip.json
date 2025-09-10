@@ -42,7 +42,8 @@
     "@sentry/cli",
     "strip-ansi",
     "expo-asset",
-    "metro-react-native-babel-preset"
+    "metro-react-native-babel-preset",
+    "@babel/plugin-transform-runtime"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
