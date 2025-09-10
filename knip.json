@@ -43,7 +43,8 @@
     "strip-ansi",
     "expo-asset",
     "metro-react-native-babel-preset",
-    "@babel/plugin-transform-runtime"
+    "@babel/plugin-transform-runtime",
+    "@expo/config"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
