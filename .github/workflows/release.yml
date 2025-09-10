@@ -71,7 +71,7 @@ jobs:
       - name: Build for iOS
         id: ios_build
         run: |
-          BUILD_OUTPUT=$(eas build --platform ios --profile production --auto-submit --non-interactive --json)
+          BUILD_OUTPUT=$(eas build --platform ios --profile production --non-interactive --json)
           echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
 
           BUILD_ID=$(echo "$BUILD_OUTPUT" | jq -r '.[0].id // empty')
