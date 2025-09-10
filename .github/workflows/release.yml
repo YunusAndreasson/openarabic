@@ -81,6 +81,8 @@ jobs:
             echo "❌ iOS Build ID extraction failed"
             exit 1
           fi
+        env:
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
 
       - name: Build for Google Play
         id: android_build
