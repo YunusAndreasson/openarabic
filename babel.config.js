@@ -21,8 +21,8 @@ module.exports = function (api) {
           },
         },
       ],
-      // This plugin must be last for correct React Native Reanimated setup
-      'react-native-reanimated/plugin',
+      // Reanimated plugin has been moved to worklets in Expo 54
+      'react-native-worklets/plugin',
     ],
   };
 };
