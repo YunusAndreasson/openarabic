@@ -1,29 +1,54 @@
 // Compatibility shim for expo-updates to find expo/config/paths
-// Maps to the actual @expo/config/build/paths/paths module
+// Provides minimal implementation without Node.js dependencies
 
-let pathsModule;
+// Minimal implementation of the functions expo-updates needs
+const pathsModule = {
+  convertEntryPointToRelative: (entryPoint) => {
+    if (typeof entryPoint === 'string' && entryPoint.startsWith('./')) {
+      return entryPoint;
+    }
+    return entryPoint;
+  },
 
-try {
-  // Try the new path first
-  pathsModule = require('@expo/config/build/paths/paths');
-} catch (error) {
-  try {
-    // Fallback to alternative paths if available
-    pathsModule = require('@expo/config/build/paths');
-  } catch {
-    console.warn('expo/config/paths compatibility shim: Could not load @expo/config paths module', error.message);
-    // Provide minimal fallback exports
-    pathsModule = {
-      convertEntryPointToRelative: (entry) => entry,
-      resolveEntryPoint: (entry) => entry,
-      resolveRelativeEntryPoint: (entry) => entry,
-      ensureSlash: (path) => path,
-      getFileWithExtensions: (path) => path,
-      getMetroServerRoot: () => process.cwd(),
-      getMetroWorkspaceGlobs: () => [],
-      getPossibleProjectRoot: () => process.cwd(),
-    };
+  resolveEntryPoint: (entryPoint) => {
+    if (typeof entryPoint === 'string') {
+      return entryPoint;
+    }
+    return './index';
+  },
+
+  resolveRelativeEntryPoint: (entryPoint) => {
+    if (typeof entryPoint === 'string') {
+      return entryPoint;
+    }
+    return './index';
+  },
+
+  ensureSlash: (inputPath) => {
+    if (typeof inputPath === 'string') {
+      return inputPath.replace(/\\/g, '/');
+    }
+    return inputPath;
+  },
+
+  getFileWithExtensions: (filePath) => {
+    if (typeof filePath === 'string') {
+      return filePath;
+    }
+    return '';
+  },
+
+  getMetroServerRoot: () => {
+    return process.cwd();
+  },
+
+  getMetroWorkspaceGlobs: () => {
+    return [];
+  },
+
+  getPossibleProjectRoot: () => {
+    return process.cwd();
   }
-}
+};
 
 module.exports = pathsModule;
