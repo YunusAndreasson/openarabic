@@ -1,13 +1,17 @@
-// Polyfills must be imported first
+// Polyfills must be imported first and synchronously
 import 'react-native-url-polyfill/auto';
 
-// Additional polyfills for compatibility
-if (typeof globalThis !== 'undefined' && !globalThis.URL) {
-  globalThis.URL = require('react-native-url-polyfill').URL;
-}
-
-if (typeof globalThis !== 'undefined' && !globalThis.URLSearchParams) {
-  globalThis.URLSearchParams = require('react-native-url-polyfill').URLSearchParams;
+// Ensure URL and URLSearchParams are available globally before any other code runs
+if (typeof global !== 'undefined') {
+  if (!global.URL) {
+    global.URL = require('react-native-url-polyfill').URL;
+  }
+  if (!global.URLSearchParams) {
+    global.URLSearchParams = require('react-native-url-polyfill').URLSearchParams;
+  }
+  if (!global.location) {
+    global.location = { href: '' };
+  }
 }
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
