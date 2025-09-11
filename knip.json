@@ -37,15 +37,6 @@
     "jest.setup.js",
     "expo-router/entry"
   ],
-  "ignoreDependencies": [
-    "postinstall-postinstall",
-    "@sentry/cli",
-    "strip-ansi",
-    "expo-asset",
-    "metro-react-native-babel-preset",
-    "@babel/plugin-transform-runtime",
-    "@expo/config"
-  ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
   "ignoreBinaries": ["supabase", "gh"],

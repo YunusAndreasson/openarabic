@@ -1073,15 +1073,15 @@
   resolved "https://registry.yarnpkg.com/@expo/config-types/-/config-types-54.0.7.tgz#5b0aa962c4cf8f5519a0c474e84664be47671c17"
   integrity sha512-f0UehgPd2gUqUtQ6euHAL6MqTT/A07r847Ztw2yZYWTUr0hRZr4nCP4U+lr8/pPtsHQYMKoPB1mOeAaTO25ruw==
 
-"@expo/config@^12.0.7", "@expo/config@~12.0.7":
-  version "12.0.7"
-  resolved "https://registry.yarnpkg.com/@expo/config/-/config-12.0.7.tgz#f5f24f455ae182201ace9763b0de201d570d5bc2"
-  integrity sha512-sL0qagPAi5/tnnHfNZAD9Pbf6xq91bUB0dVwKcCzOQX+rjUgOtj9akQyU+w5LMKu+5R79CkeHxljirplVWSEpg==
+"@expo/config@~11.0.12", "@expo/config@~11.0.13":
+  version "11.0.13"
+  resolved "https://registry.yarnpkg.com/@expo/config/-/config-11.0.13.tgz#1cc490a5f667e0129db5f98755f6bc4d8921edb2"
+  integrity sha512-TnGb4u/zUZetpav9sx/3fWK71oCPaOjZHoVED9NaEncktAd0Eonhq5NUghiJmkUGt3gGSjRAEBXiBbbY9/B1LA==
   dependencies:
     "@babel/code-frame" "~7.10.4"
-    "@expo/config-plugins" "~11.0.7"
-    "@expo/config-types" "^54.0.7"
-    "@expo/json-file" "^10.0.6"
+    "@expo/config-plugins" "~10.1.2"
+    "@expo/config-types" "^53.0.5"
+    "@expo/json-file" "^9.1.5"
     deepmerge "^4.3.1"
     getenv "^2.0.0"
     glob "^10.4.2"
@@ -1092,15 +1092,15 @@
     slugify "^1.3.4"
     sucrase "3.35.0"
 
-"@expo/config@~11.0.12", "@expo/config@~11.0.13":
-  version "11.0.13"
-  resolved "https://registry.yarnpkg.com/@expo/config/-/config-11.0.13.tgz#1cc490a5f667e0129db5f98755f6bc4d8921edb2"
-  integrity sha512-TnGb4u/zUZetpav9sx/3fWK71oCPaOjZHoVED9NaEncktAd0Eonhq5NUghiJmkUGt3gGSjRAEBXiBbbY9/B1LA==
+"@expo/config@~12.0.7":
+  version "12.0.7"
+  resolved "https://registry.yarnpkg.com/@expo/config/-/config-12.0.7.tgz#f5f24f455ae182201ace9763b0de201d570d5bc2"
+  integrity sha512-sL0qagPAi5/tnnHfNZAD9Pbf6xq91bUB0dVwKcCzOQX+rjUgOtj9akQyU+w5LMKu+5R79CkeHxljirplVWSEpg==
   dependencies:
     "@babel/code-frame" "~7.10.4"
-    "@expo/config-plugins" "~10.1.2"
-    "@expo/config-types" "^53.0.5"
-    "@expo/json-file" "^9.1.5"
+    "@expo/config-plugins" "~11.0.7"
+    "@expo/config-types" "^54.0.7"
+    "@expo/json-file" "^10.0.6"
     deepmerge "^4.3.1"
     getenv "^2.0.0"
     glob "^10.4.2"
