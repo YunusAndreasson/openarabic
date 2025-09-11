@@ -35,7 +35,8 @@
     "metro.config.cjs",
     "jest.config.js",
     "jest.setup.js",
-    "expo-router/entry"
+    "expo-router/entry",
+    "expo/**"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,

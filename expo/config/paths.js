@@ -10,7 +10,7 @@ try {
   try {
     // Fallback to alternative paths if available
     pathsModule = require('@expo/config/build/paths');
-  } catch (fallbackError) {
+  } catch {
     console.warn('expo/config/paths compatibility shim: Could not load @expo/config paths module', error.message);
     // Provide minimal fallback exports
     pathsModule = {
