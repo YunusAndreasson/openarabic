@@ -16,6 +16,10 @@
       "env": {
         "EXPO_PUBLIC_SENTRY_DSN": "${EXPO_PUBLIC_SENTRY_DSN}",
         "EXPO_PUBLIC_MIXPANEL_TOKEN": "${EXPO_PUBLIC_MIXPANEL_TOKEN}",
+        "EXPO_PUBLIC_UPDATES_ENABLED": "true",
+        "EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY": "ON_LOAD",
+        "EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT": "0",
+        "NODE_PATH": "/Users/expo/workingdir/build",
         "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}",
         "SENTRY_ORG": "openarabic",
         "SENTRY_PROJECT": "react-native",
@@ -31,6 +35,10 @@
       "env": {
         "EXPO_PUBLIC_SENTRY_DSN": "${EXPO_PUBLIC_SENTRY_DSN}",
         "EXPO_PUBLIC_MIXPANEL_TOKEN": "${EXPO_PUBLIC_MIXPANEL_TOKEN}",
+        "EXPO_PUBLIC_UPDATES_ENABLED": "true",
+        "EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY": "ON_LOAD",
+        "EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT": "0",
+        "NODE_PATH": "/Users/expo/workingdir/build",
         "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}",
         "SENTRY_ORG": "openarabic",
         "SENTRY_PROJECT": "react-native",
@@ -50,6 +58,10 @@
       "env": {
         "EXPO_PUBLIC_SENTRY_DSN": "${EXPO_PUBLIC_SENTRY_DSN}",
         "EXPO_PUBLIC_MIXPANEL_TOKEN": "${EXPO_PUBLIC_MIXPANEL_TOKEN}",
+        "EXPO_PUBLIC_UPDATES_ENABLED": "true",
+        "EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY": "ON_LOAD",
+        "EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT": "0",
+        "NODE_PATH": "/Users/expo/workingdir/build",
         "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}",
         "SENTRY_ORG": "openarabic",
         "SENTRY_PROJECT": "react-native",
