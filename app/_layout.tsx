@@ -1,19 +1,3 @@
-// Polyfills must be imported first and synchronously
-import 'react-native-url-polyfill/auto';
-
-// Ensure URL and URLSearchParams are available globally before any other code runs
-if (typeof global !== 'undefined') {
-  if (!global.URL) {
-    global.URL = require('react-native-url-polyfill').URL;
-  }
-  if (!global.URLSearchParams) {
-    global.URLSearchParams = require('react-native-url-polyfill').URLSearchParams;
-  }
-  if (!global.location) {
-    global.location = { href: '' };
-  }
-}
-
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import NetInfo from '@react-native-community/netinfo';
 import {
@@ -28,7 +12,7 @@ import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   AppState,

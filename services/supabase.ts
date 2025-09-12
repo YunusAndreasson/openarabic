@@ -2,7 +2,6 @@ import * as Sentry from '@sentry/react-native';
 import type { Session, User } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
-import 'react-native-url-polyfill/auto';
 
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/constants/supabase';
 import type { Database } from '@/types/database.types';

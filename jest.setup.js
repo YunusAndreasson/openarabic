@@ -506,9 +506,6 @@ jest.mock('@supabase/supabase-js', () => ({
   })),
 }));
 
-// Mock react-native-url-polyfill to prevent BlobModule issues
-jest.mock('react-native-url-polyfill/auto', () => {});
-
 // Mock redux-persist to prevent AsyncStorage issues
 jest.mock('redux-persist', () => {
   const actual = jest.requireActual('redux-persist');
