@@ -68,116 +68,36 @@ jobs:
         id: version
 
       - name: Build for iOS
-        id: ios_build
-        run: |
-          BUILD_OUTPUT=$(eas build --platform ios --profile production --non-interactive --json)
-          echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
-
-          BUILD_ID=$(echo "$BUILD_OUTPUT" | jq -r '.[0].id // empty')
-          if [ -n "$BUILD_ID" ]; then
-            echo "ios_build_id=$BUILD_ID" >> $GITHUB_OUTPUT
-          else
-            echo "❌ iOS Build ID extraction failed"
-            exit 1
-          fi
+        run: eas build --platform ios --profile production --non-interactive
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
-          EXPO_PUBLIC_UPDATES_ENABLED: "true"
-          EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: "ON_LOAD"
-          EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: "0"
-          NODE_PATH: "/github/workspace"
+          EXPO_PUBLIC_UPDATES_ENABLED: 'true'
+          EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: 'ON_LOAD'
+          EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
+          NODE_PATH: '/github/workspace'
 
       - name: Build for Google Play
-        id: android_build
-        run: |
-          BUILD_OUTPUT=$(eas build --platform android --profile production --auto-submit --non-interactive --json)
-          echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
-
-          BUILD_ID=$(echo "$BUILD_OUTPUT" | jq -r '.[0].id // empty')
-          if [ -n "$BUILD_ID" ]; then
-            echo "android_build_id=$BUILD_ID" >> $GITHUB_OUTPUT
-          else
-            echo "❌ Android Build ID extraction failed"
-            exit 1
-          fi
+        run: eas build --platform android --profile production --auto-submit --non-interactive
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
-          EXPO_PUBLIC_UPDATES_ENABLED: "true"
-          EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: "ON_LOAD"
-          EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: "0"
-          NODE_PATH: "/github/workspace"
+          EXPO_PUBLIC_UPDATES_ENABLED: 'true'
+          EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: 'ON_LOAD'
+          EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
+          NODE_PATH: '/github/workspace'
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ALLOW_FAILURE: true
           SENTRY_DISABLE_AUTO_UPLOAD: false
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-
-      - name: Wait for iOS build completion
-        if: steps.ios_build.outputs.ios_build_id
-        run: |
-          BUILD_ID="${{ steps.ios_build.outputs.ios_build_id }}"
-
-          for i in {1..60}; do
-            STATUS=$(eas build:view $BUILD_ID --json | jq -r '.status')
-
-            case $STATUS in
-              "finished")
-                exit 0
-                ;;
-              "errored"|"canceled")
-                echo "❌ iOS build failed: $STATUS"
-                exit 1
-                ;;
-              "in-progress"|"in-queue"|"pending")
-                sleep 30
-                ;;
-              *)
-                sleep 30
-                ;;
-            esac
-          done
-
-          echo "❌ iOS build timeout"
-          exit 1
-
-      - name: Wait for Android build completion
-        if: steps.android_build.outputs.android_build_id
-        run: |
-          BUILD_ID="${{ steps.android_build.outputs.android_build_id }}"
-
-          for i in {1..60}; do
-            STATUS=$(eas build:view $BUILD_ID --json | jq -r '.status')
-
-            case $STATUS in
-              "finished")
-                exit 0
-                ;;
-              "errored"|"canceled")
-                echo "❌ Android build failed: $STATUS"
-                exit 1
-                ;;
-              "in-progress"|"in-queue"|"pending")
-                sleep 30
-                ;;
-              *)
-                sleep 30
-                ;;
-            esac
-          done
-
-          echo "❌ Android build timeout"
-          exit 1
 
       # === GitHub Release Creation (after successful build) ===
       - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch' && success() && steps.version.outputs.version
         run: |
           NEW_VERSION="${{ steps.version.outputs.version }}"
-          IOS_BUILD_ID="${{ steps.ios_build.outputs.ios_build_id }}"
-          ANDROID_BUILD_ID="${{ steps.android_build.outputs.android_build_id }}"
 
           gh release create "v$NEW_VERSION" \
             --title "Release v$NEW_VERSION" \
-            --notes "iOS Build: $IOS_BUILD_ID\nAndroid Build: $ANDROID_BUILD_ID" \
+            --notes "Automated release for version $NEW_VERSION" \
             --latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

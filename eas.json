@@ -10,6 +10,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "ios": {
         "simulator": true
       },
@@ -29,6 +30,7 @@
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "ios": {
         "resourceClass": "medium"
       },
@@ -48,6 +50,7 @@
     },
     "production": {
       "node": "20.19.5",
+      "channel": "production",
       "ios": {
         "resourceClass": "medium"
       },
