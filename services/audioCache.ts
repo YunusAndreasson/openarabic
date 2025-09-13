@@ -1,6 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system';
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
@@ -28,8 +28,8 @@ export class AudioCacheManager {
    */
   private async ensureCacheDirectoryExists(): Promise<void> {
     try {
-      const dirInfo = await FileSystem.getInfoAsync(this.cacheDir);
-      if (!dirInfo.exists) {
+      const cacheDir = new Directory(this.cacheDir);
+      if (!cacheDir.exists) {
         await FileSystem.makeDirectoryAsync(this.cacheDir, { intermediates: true });
       }
     } catch (error) {
@@ -63,8 +63,8 @@ export class AudioCacheManager {
         return memoryEntry.path;
       }
 
-      const fileInfo = await FileSystem.getInfoAsync(cachedFilePath);
-      if (fileInfo.exists) {
+      const cachedFile = new File(cachedFilePath);
+      if (cachedFile.exists) {
         // Update memory cache
         this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
         return cachedFilePath;
@@ -138,8 +138,8 @@ export class AudioCacheManager {
    */
   async clearCache(): Promise<void> {
     try {
-      const dirInfo = await FileSystem.getInfoAsync(this.cacheDir);
-      if (dirInfo.exists) {
+      const cacheDir = new Directory(this.cacheDir);
+      if (cacheDir.exists) {
         await FileSystem.deleteAsync(this.cacheDir);
         await this.ensureCacheDirectoryExists();
       }
@@ -156,19 +156,17 @@ export class AudioCacheManager {
    */
   async getCacheSize(): Promise<number> {
     try {
-      const dirInfo = await FileSystem.getInfoAsync(this.cacheDir);
-      if (!dirInfo.exists) {
+      const cacheDir = new Directory(this.cacheDir);
+      if (!cacheDir.exists) {
         return 0;
       }
 
       const files = await FileSystem.readDirectoryAsync(this.cacheDir);
 
-      const infoPromises = files.map(file => FileSystem.getInfoAsync(this.cacheDir + file));
-      const fileInfos = await Promise.all(infoPromises);
-
-      const totalSize = fileInfos.reduce((size, info) => {
-        if (info.exists && 'size' in info) {
-          return size + info.size;
+      const filePromises = files.map(file => new File(this.cacheDir + file));
+      const totalSize = filePromises.reduce((size, file) => {
+        if (file.exists && file.size !== null) {
+          return size + file.size;
         }
         return size;
       }, 0);
