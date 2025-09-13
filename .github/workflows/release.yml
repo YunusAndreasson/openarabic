@@ -55,8 +55,14 @@ jobs:
           BUILD_OUTPUT=$(eas build --platform android --profile production --non-interactive --json)
           echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
 
+          # Extract JSON from output (skip any non-JSON lines like "***")
+          JSON_OUTPUT=$(echo "$BUILD_OUTPUT" | grep -E '^\s*[\[{]' | head -1)
+          if [ -z "$JSON_OUTPUT" ]; then
+            JSON_OUTPUT="$BUILD_OUTPUT"
+          fi
+
           # Extract build ID for submission
-          BUILD_ID=$(echo "$BUILD_OUTPUT" | jq -r '.[0].id // empty')
+          BUILD_ID=$(echo "$JSON_OUTPUT" | jq -r '.[0].id // empty' 2>/dev/null || echo "")
           if [ -n "$BUILD_ID" ]; then
             echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
           fi
@@ -110,8 +116,14 @@ jobs:
           BUILD_OUTPUT=$(eas build --platform ios --profile production --non-interactive --json)
           echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
 
+          # Extract JSON from output (skip any non-JSON lines like "***")
+          JSON_OUTPUT=$(echo "$BUILD_OUTPUT" | grep -E '^\s*[\[{]' | head -1)
+          if [ -z "$JSON_OUTPUT" ]; then
+            JSON_OUTPUT="$BUILD_OUTPUT"
+          fi
+
           # Extract build ID for submission
-          BUILD_ID=$(echo "$BUILD_OUTPUT" | jq -r '.[0].id // empty')
+          BUILD_ID=$(echo "$JSON_OUTPUT" | jq -r '.[0].id // empty' 2>/dev/null || echo "")
           if [ -n "$BUILD_ID" ]; then
             echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
           fi
