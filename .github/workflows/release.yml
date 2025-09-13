@@ -64,15 +64,8 @@ jobs:
       # === Submit Android to Google Play Store ===
       - name: Submit Android to Google Play
         run: |
-          # Get the latest Android build ID
-          LATEST_BUILD=$(eas build:list --platform android --limit 1 --json | jq -r '.[0].id' 2>/dev/null || echo "")
-          if [ -n "$LATEST_BUILD" ]; then
-            echo "Submitting build: $LATEST_BUILD"
-            eas submit --platform android --profile production --non-interactive --id $LATEST_BUILD
-          else
-            echo "Could not find latest Android build"
-            exit 1
-          fi
+          # Submit the most recent Android build produced by this workflow
+          eas submit --platform android --profile production --non-interactive --latest
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
@@ -115,15 +108,8 @@ jobs:
       # === Submit iOS to App Store ===
       - name: Submit iOS to App Store
         run: |
-          # Get the latest iOS build ID
-          LATEST_BUILD=$(eas build:list --platform ios --limit 1 --json | jq -r '.[0].id' 2>/dev/null || echo "")
-          if [ -n "$LATEST_BUILD" ]; then
-            echo "Submitting build: $LATEST_BUILD"
-            eas submit --platform ios --profile production --non-interactive --id $LATEST_BUILD
-          else
-            echo "Could not find latest iOS build"
-            exit 1
-          fi
+          # Submit the most recent iOS build produced by this workflow
+          eas submit --platform ios --profile production --non-interactive --latest
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           EXPO_PUBLIC_UPDATES_ENABLED: 'true'
