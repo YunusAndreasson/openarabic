@@ -50,24 +50,7 @@ jobs:
 
       # === Build Android First (for early testing) ===
       - name: Build for Android
-        id: android_build
-        run: |
-          BUILD_OUTPUT=$(eas build --platform android --profile production --non-interactive --json 2>&1 | tail -10)
-          echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
-
-          # Extract build ID - try multiple approaches for robustness
-          BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//' | sed 's/"//')
-          if [ -z "$BUILD_ID" ]; then
-            # Fallback: try to extract from URL in logs
-            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o 'builds/[a-f0-9-]*' | head -1 | sed 's|builds/||')
-          fi
-          if [ -z "$BUILD_ID" ]; then
-            # Last resort: look for any UUID-like pattern
-            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o '[a-f0-9]\{8\}-[a-f0-9]\{4\}-[a-f0-9]\{4\}-[a-f0-9]\{4\}-[a-f0-9]\{12\}' | head -1)
-          fi
-          if [ -n "$BUILD_ID" ]; then
-            echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
-          fi
+        run: eas build --platform android --profile production --non-interactive
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           EXPO_PUBLIC_UPDATES_ENABLED: 'true'
@@ -80,8 +63,16 @@ jobs:
 
       # === Submit Android to Google Play Store ===
       - name: Submit Android to Google Play
-        if: steps.android_build.outputs.build_id
-        run: eas submit --platform android --profile production --non-interactive --id ${{ steps.android_build.outputs.build_id }}
+        run: |
+          # Get the latest Android build ID
+          LATEST_BUILD=$(eas build:list --platform android --limit 1 --json | jq -r '.[0].id' 2>/dev/null || echo "")
+          if [ -n "$LATEST_BUILD" ]; then
+            echo "Submitting build: $LATEST_BUILD"
+            eas submit --platform android --profile production --non-interactive --id $LATEST_BUILD
+          else
+            echo "Could not find latest Android build"
+            exit 1
+          fi
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
@@ -113,24 +104,7 @@ jobs:
         id: version
 
       - name: Build for iOS
-        id: ios_build
-        run: |
-          BUILD_OUTPUT=$(eas build --platform ios --profile production --non-interactive --json 2>&1 | tail -10)
-          echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
-
-          # Extract build ID - try multiple approaches for robustness
-          BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//' | sed 's/"//')
-          if [ -z "$BUILD_ID" ]; then
-            # Fallback: try to extract from URL in logs
-            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o 'builds/[a-f0-9-]*' | head -1 | sed 's|builds/||')
-          fi
-          if [ -z "$BUILD_ID" ]; then
-            # Last resort: look for any UUID-like pattern
-            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o '[a-f0-9]\{8\}-[a-f0-9]\{4\}-[a-f0-9]\{4\}-[a-f0-9]\{4\}-[a-f0-9]\{12\}' | head -1)
-          fi
-          if [ -n "$BUILD_ID" ]; then
-            echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
-          fi
+        run: eas build --platform ios --profile production --non-interactive
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           EXPO_PUBLIC_UPDATES_ENABLED: 'true'
@@ -140,8 +114,16 @@ jobs:
 
       # === Submit iOS to App Store ===
       - name: Submit iOS to App Store
-        if: steps.ios_build.outputs.build_id
-        run: eas submit --platform ios --profile production --non-interactive --id ${{ steps.ios_build.outputs.build_id }}
+        run: |
+          # Get the latest iOS build ID
+          LATEST_BUILD=$(eas build:list --platform ios --limit 1 --json | jq -r '.[0].id' 2>/dev/null || echo "")
+          if [ -n "$LATEST_BUILD" ]; then
+            echo "Submitting build: $LATEST_BUILD"
+            eas submit --platform ios --profile production --non-interactive --id $LATEST_BUILD
+          else
+            echo "Could not find latest iOS build"
+            exit 1
+          fi
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           EXPO_PUBLIC_UPDATES_ENABLED: 'true'
