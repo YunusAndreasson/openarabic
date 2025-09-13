@@ -49,8 +49,9 @@ jobs:
           eas update --branch $CURRENT_BRANCH --auto
 
       # === Build Android First (for early testing) ===
-      - name: Build for Google Play
-        run: eas build --platform android --profile production --auto-submit --non-interactive
+      - name: Build for Android
+        id: android_build
+        run: eas build --platform android --profile production --non-interactive
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           EXPO_PUBLIC_UPDATES_ENABLED: 'true'
@@ -60,7 +61,21 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ALLOW_FAILURE: true
           SENTRY_DISABLE_AUTO_UPLOAD: false
+
+      # === Submit Android to Google Play Store ===
+      - name: Submit Android to Google Play
+        if: steps.android_build.outcome == 'success'
+        run: eas submit --platform android --profile production --non-interactive
+        env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+          EXPO_PUBLIC_UPDATES_ENABLED: 'true'
+          EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: 'ON_LOAD'
+          EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
+          NODE_PATH: '/github/workspace'
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ALLOW_FAILURE: true
+          SENTRY_DISABLE_AUTO_UPLOAD: false
 
       # === Version Bumping (before iOS build so it has new version) ===
       - name: Bump version
