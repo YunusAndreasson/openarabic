@@ -55,11 +55,7 @@
         "resourceClass": "medium",
         "cache": {
           "key": "yarn-deps-{{ checksum \"yarn.lock\" }}-{{ checksum \"package.json\" }}",
-          "paths": [
-            ".yarn/cache",
-            ".yarn/install-state.gz",
-            "node_modules"
-          ]
+          "paths": [".yarn/cache", ".yarn/install-state.gz", "node_modules"]
         }
       },
       "android": {
@@ -67,11 +63,7 @@
         "buildType": "app-bundle",
         "cache": {
           "key": "yarn-deps-{{ checksum \"yarn.lock\" }}-{{ checksum \"package.json\" }}",
-          "paths": [
-            ".yarn/cache",
-            ".yarn/install-state.gz",
-            "node_modules"
-          ]
+          "paths": [".yarn/cache", ".yarn/install-state.gz", "node_modules"]
         }
       },
       "env": {
