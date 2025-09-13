@@ -14,13 +14,13 @@ jobs:
       (github.event_name == 'push' && contains(github.event.head_commit.message, 'chore: bump version'))
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: 'yarn'
@@ -68,7 +68,7 @@ jobs:
         id: version
 
       - name: Build for iOS
-        run: eas build --platform ios --profile production --non-interactive
+        run: eas build --platform ios --profile production --auto-submit --non-interactive
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           EXPO_PUBLIC_UPDATES_ENABLED: 'true'
