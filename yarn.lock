@@ -1220,29 +1220,6 @@
     base64-js "^1.2.3"
     xmlbuilder "^15.1.1"
 
-<<<<<<< HEAD
-"@expo/prebuild-config@^54.0.2", "@expo/prebuild-config@^54.0.3":
-  version "54.0.3"
-  resolved "https://registry.yarnpkg.com/@expo/prebuild-config/-/prebuild-config-54.0.3.tgz#e3ac24bb1ec2ec348dfa98dc2ec5605b1fa49bf3"
-  integrity sha512-okf6Umaz1VniKmm+pA37QHBzB9XlRHvO1Qh3VbUezy07LTkz87kXUW7uLMmrA319WLavWSVORTXeR0jBRihObA==
-"@expo/prebuild-config@^54.0.2":
-  version "54.0.2"
-  resolved "https://registry.yarnpkg.com/@expo/prebuild-config/-/prebuild-config-54.0.2.tgz#0b49af4b94a78caaf40a70b3ce168d6371368d1f"
-  integrity sha512-JFWwwUTgU0+/79tG+vZnQRruM9agOJl3yiWOfyQVNdCdL13DF4a1nXvvCuNmuK6R7oEmyx8BhhAToY4Bmn0d+w==
-  dependencies:
-    "@expo/config" "~12.0.9"
-    "@expo/config-plugins" "~54.0.1"
-    "@expo/config-types" "^54.0.8"
-    "@expo/image-utils" "^0.8.7"
-    "@expo/json-file" "^10.0.7"
-    "@react-native/normalize-colors" "0.81.4"
-    debug "^4.3.1"
-    resolve-from "^5.0.0"
-    semver "^7.6.0"
-    xml2js "0.6.0"
-
-=======
->>>>>>> 23f20b23 (chore: update dependencies and improve audio cache implementation)
 "@expo/prebuild-config@^54.0.3":
   version "54.0.3"
   resolved "https://registry.yarnpkg.com/@expo/prebuild-config/-/prebuild-config-54.0.3.tgz#e3ac24bb1ec2ec348dfa98dc2ec5605b1fa49bf3"
@@ -4892,11 +4869,7 @@ expo-eas-client@~1.0.7:
   resolved "https://registry.yarnpkg.com/expo-eas-client/-/expo-eas-client-1.0.7.tgz#9c9c7909d7bb9b6ceb4bef6875f1b9119ef22a8c"
   integrity sha512-Q/b1X0fM+3beqqvffok14pjxMF600NxopdSr9WJY61fF4xllcVnALS0kEudffp9ihMOfcb5xWYqzKj6jMqYDIw==
 
-<<<<<<< HEAD
-expo-file-system@^19.0.11, expo-file-system@~19.0.13:
-=======
 expo-file-system@^19.0.14, expo-file-system@~19.0.14:
->>>>>>> 23f20b23 (chore: update dependencies and improve audio cache implementation)
   version "19.0.14"
   resolved "https://registry.yarnpkg.com/expo-file-system/-/expo-file-system-19.0.14.tgz#1169fd9fcba8a5f1ef8e3c232ef8c62274ac4803"
   integrity sha512-0CA7O5IYhab11TlxQlJAx0Xm9pdkk/zEHNiW+Hh/T4atWi9U/J38CIp7iNYSrBvy9dC3rJbze5D1ANcKKr4mSQ==
@@ -4998,10 +4971,6 @@ expo-notifications@~0.32.10:
     expo-application "~7.0.7"
     expo-constants "~18.0.8"
 
-expo-router@~6.0.0:
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-6.0.3.tgz#0b49ff73539915a3c68cfa1f5c45b493139b23f3"
-  integrity sha512-TNBHE7qMutUB6GlXciNRZYH1H6bxXR6knzsEHQoBypSvCHdFYpq/EvUtc5BG+umHjTJaJq3WVzDFJ8Xl/WP0+w==
 expo-router@~6.0.3:
   version "6.0.3"
   resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-6.0.3.tgz#0b49ff73539915a3c68cfa1f5c45b493139b23f3"
@@ -5030,16 +4999,11 @@ expo-router@~6.0.3:
     use-latest-callback "^0.2.1"
     vaul "^1.1.2"
 
-expo-splash-screen@^31.0.8:
-  version "31.0.10"
-  resolved "https://registry.yarnpkg.com/expo-splash-screen/-/expo-splash-screen-31.0.10.tgz#e0edd9782715b82a8eed34d5ebde778b79f850b4"
-  integrity sha512-i6g9IK798mae4yvflstQ1HkgahIJ6exzTCTw4vEdxV0J2SwiW3Tj+CwRjf0te7Zsb+7dDQhBTmGZwdv00VER2A==
 expo-splash-screen@~31.0.10:
   version "31.0.10"
   resolved "https://registry.yarnpkg.com/expo-splash-screen/-/expo-splash-screen-31.0.10.tgz#e0edd9782715b82a8eed34d5ebde778b79f850b4"
   integrity sha512-i6g9IK798mae4yvflstQ1HkgahIJ6exzTCTw4vEdxV0J2SwiW3Tj+CwRjf0te7Zsb+7dDQhBTmGZwdv00VER2A==
   dependencies:
-    "@expo/prebuild-config" "^54.0.3"
     "@expo/prebuild-config" "^54.0.3"
 
 expo-status-bar@^3.0.7:
