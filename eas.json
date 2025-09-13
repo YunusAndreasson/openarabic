@@ -5,7 +5,7 @@
   },
   "build": {
     "base": {
-      "node": "20.19.5"
+      "node": ">=20.0.0"
     },
     "development": {
       "developmentClient": true,
@@ -47,7 +47,7 @@
       }
     },
     "production": {
-      "node": "20.18.0",
+      "node": ">=20.0.0",
       "ios": {
         "resourceClass": "medium"
       },

@@ -1,15 +1,31 @@
+const mockDownloadFileAsync = jest.fn();
+const mockFileConstructor = jest.fn();
+const mockDigestStringAsync = jest.fn();
+
 jest.mock('expo-file-system', () => ({
-  cacheDirectory: '/cache/',
   getInfoAsync: jest.fn(),
   makeDirectoryAsync: jest.fn(),
-  downloadAsync: jest.fn(),
   readDirectoryAsync: jest.fn(),
   deleteAsync: jest.fn(),
+  File: Object.assign(
+    mockFileConstructor.mockImplementation(path => ({
+      uri: path,
+      exists: true,
+    })),
+    {
+      downloadFileAsync: mockDownloadFileAsync,
+    }
+  ),
+  Paths: {
+    cache: {
+      uri: '/cache/',
+    },
+  },
 }));
 
 jest.mock('expo-crypto', () => ({
   CryptoDigestAlgorithm: { MD5: 'MD5' },
-  digestStringAsync: jest.fn(),
+  digestStringAsync: mockDigestStringAsync,
 }));
 
 jest.mock('../../utils/errorHandling', () => ({
@@ -30,8 +46,10 @@ describe('audioCache', () => {
 
   test('getAudio returns cached file path when it exists', async () => {
     const FileSystem = require('expo-file-system');
-    const Crypto = require('expo-crypto');
-    (Crypto.digestStringAsync as jest.Mock).mockResolvedValue(hash);
+
+    // Mock crypto to return the expected hash
+    mockDigestStringAsync.mockResolvedValue(hash);
+
     (FileSystem.getInfoAsync as jest.Mock)
       .mockResolvedValueOnce({ exists: true }) // constructor check
       .mockResolvedValueOnce({ exists: true }); // file exists
@@ -40,36 +58,51 @@ describe('audioCache', () => {
     const result = await audioCache.getAudio(url);
 
     expect(result).toBe(cachedPath);
-    expect(FileSystem.downloadAsync).not.toHaveBeenCalled();
+    expect(mockFileConstructor).not.toHaveBeenCalled();
   });
 
   test('getAudio downloads file when not cached', async () => {
     const FileSystem = require('expo-file-system');
-    const Crypto = require('expo-crypto');
-    (Crypto.digestStringAsync as jest.Mock).mockResolvedValue(hash);
+
+    // Mock crypto to return the expected hash
+    mockDigestStringAsync.mockResolvedValue(hash);
+
     (FileSystem.getInfoAsync as jest.Mock)
       .mockResolvedValueOnce({ exists: true }) // constructor check
       .mockResolvedValueOnce({ exists: false }) // file missing
       .mockResolvedValueOnce({ exists: true }); // cache dir exists during download
-    (FileSystem.downloadAsync as jest.Mock).mockResolvedValue({ status: 200 });
+
+    // Clear mocks before test
+    mockFileConstructor.mockClear();
+    mockDownloadFileAsync.mockClear();
+
+    // Mock the download to return a successful result
+    mockDownloadFileAsync.mockResolvedValue({ uri: cachedPath, exists: true });
+
     audioCache = require('../../services/audioCache').audioCache;
 
     const result = await audioCache.getAudio(url);
 
-    expect(FileSystem.downloadAsync).toHaveBeenCalledWith(url, cachedPath);
+    expect(mockFileConstructor).toHaveBeenCalledWith(cachedPath);
+    expect(mockDownloadFileAsync).toHaveBeenCalled();
     expect(result).toBe(cachedPath);
   });
 
   test('getAudio returns original URL on failed download', async () => {
     const FileSystem = require('expo-file-system');
-    const Crypto = require('expo-crypto');
     const { handleError } = require('../../utils/errorHandling');
-    (Crypto.digestStringAsync as jest.Mock).mockResolvedValue(hash);
+
+    // Mock crypto to return the expected hash
+    mockDigestStringAsync.mockResolvedValue(hash);
+
     (FileSystem.getInfoAsync as jest.Mock)
       .mockResolvedValueOnce({ exists: true }) // constructor check
       .mockResolvedValueOnce({ exists: false }) // file missing
       .mockResolvedValueOnce({ exists: true }); // cache dir exists
-    (FileSystem.downloadAsync as jest.Mock).mockResolvedValue({ status: 500 });
+
+    // Override the default mock to return a failed download result
+    mockDownloadFileAsync.mockResolvedValueOnce({ uri: cachedPath, exists: false });
+
     audioCache = require('../../services/audioCache').audioCache;
 
     const result = await audioCache.getAudio(url);
@@ -89,7 +122,9 @@ describe('audioCache', () => {
     await audioCache.clearCache();
 
     expect(FileSystem.deleteAsync).toHaveBeenCalledWith('/cache/audio/');
-    expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith('/cache/audio/', { intermediates: true });
+    expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith('/cache/audio/', {
+      intermediates: true,
+    });
   });
 
   test('clearCache rethrows errors from deleteAsync', async () => {

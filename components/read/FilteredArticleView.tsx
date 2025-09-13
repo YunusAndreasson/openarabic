@@ -11,7 +11,7 @@ import SortingHeader from '@read/SortingHeader';
 import { ThemedView } from '@/components/ThemedView';
 import ListArticleItem from '@/components/read/ListArticleItem';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
@@ -279,8 +279,6 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
         <FlashList<Article>
           data={visibleArticles}
           drawDistance={ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER}
-          estimatedItemSize={ITEM_HEIGHT}
-          estimatedListSize={{ height: ITEM_HEIGHT * 10, width: SCREEN_WIDTH }}
           keyExtractor={keyExtractor}
           removeClippedSubviews={true}
           showsVerticalScrollIndicator={true}

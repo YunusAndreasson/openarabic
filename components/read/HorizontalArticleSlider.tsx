@@ -108,11 +108,6 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
         keyExtractor={keyExtractor}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
-        estimatedItemSize={CARD_WIDTH}
-        estimatedListSize={{
-          height: getContentAwareHeight(''),
-          width: (CARD_WIDTH + CARD_SPACING) * 5,
-        }}
         removeClippedSubviews={true}
         // Rely on FlashList defaults for render/window sizes
         decelerationRate="fast"

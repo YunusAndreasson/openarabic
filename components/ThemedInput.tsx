@@ -1,12 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
-import type {
-  GestureResponderEvent,
-  NativeSyntheticEvent,
-  TextInputFocusEventData,
-  TextInputProps,
-} from 'react-native';
+import type { GestureResponderEvent, TextInputProps } from 'react-native';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -19,8 +14,8 @@ interface ThemedInputProps extends TextInputProps {
   rightIcon?: ComponentProps<typeof Ionicons>['name'];
   error?: string;
   hint?: string;
-  onFocus?: (e: NativeSyntheticEvent<TextInputFocusEventData>) => void;
-  onBlur?: (e: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  onFocus?: (e: any) => void;
+  onBlur?: (e: any) => void;
   onRightIconPress?: (e: GestureResponderEvent) => void;
   style?: TextInputProps['style'];
 }
@@ -97,7 +92,7 @@ export const ThemedInput = forwardRef<TextInput, ThemedInputProps>(
     );
 
     const handleFocus = useCallback(
-      (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+      (e: any) => {
         setIsFocused(true);
         onFocus?.(e);
       },
@@ -105,7 +100,7 @@ export const ThemedInput = forwardRef<TextInput, ThemedInputProps>(
     );
 
     const handleBlur = useCallback(
-      (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+      (e: any) => {
         setIsFocused(false);
         onBlur?.(e);
       },

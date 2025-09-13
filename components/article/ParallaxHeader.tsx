@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { memo, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
@@ -54,7 +54,7 @@ interface ParallaxHeaderProps {
   article: Article;
   colors: ThemeColors;
   // Shared scroll value from the list to drive parallax/stretch
-  scrollY: Animated.SharedValue<number>;
+  scrollY: SharedValue<number>;
 }
 
 /**

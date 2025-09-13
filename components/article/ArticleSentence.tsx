@@ -3,7 +3,7 @@ import type { ComponentRef, ReactNode, RefObject } from 'react';
 import { createRef, memo, useEffect, useMemo, useRef } from 'react';
 import type { LayoutRectangle, StyleProp, TouchableOpacity, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, { type AnimatedStyleProp } from 'react-native-reanimated';
+import Animated, { type AnimatedStyle } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ArabicWord } from '@/components/article/ArabicWord';
@@ -182,7 +182,7 @@ const ArticleSentenceComponent = memo(
       };
 
       // Combine with animated style properties
-      return Object.assign(baseStyle, animatedHighlightStyle) as AnimatedStyleProp<ViewStyle>;
+      return Object.assign(baseStyle, animatedHighlightStyle) as AnimatedStyle<ViewStyle>;
     }, [colors.tint, colors.transparent, animatedHighlightStyle]);
 
     // Memoize rendered words to prevent unnecessary recreations

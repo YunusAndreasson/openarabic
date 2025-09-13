@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import type { AnimatedStyleProp as ReanimatedAnimatedStyleProp } from 'react-native-reanimated';
+import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-reanimated';
 import Animated, {
   cancelAnimation,
   interpolateColor,
@@ -61,7 +61,7 @@ interface ReviewCardProps {
   onSwipeRight: () => void;
   isUpdating: boolean;
   isTransitioning: boolean;
-  opacityStyle: ReanimatedAnimatedStyleProp<ViewStyle> | AppAnimatedStyleProp<ViewStyle>;
+  opacityStyle: ReanimatedAnimatedStyle<ViewStyle> | AppAnimatedStyleProp<ViewStyle>;
   testID?: string;
   // Translation props
   translation?: string;

@@ -324,7 +324,7 @@ interface ArticleContentProps {
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   colors: ThemeColors;
-  scrollViewRef: React.RefObject<FlashList<Tables<'article_sentences'>>>;
+  scrollViewRef: React.RefObject<any>;
   // Reading list (bookmarks/listening) functionality
   isInReadingList: boolean;
   onToggleReadingList: () => void;

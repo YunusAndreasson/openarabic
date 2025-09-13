@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
-import type { AnimatedStyleProp, SharedValue } from 'react-native-reanimated';
+import type { AnimatedStyle, SharedValue } from 'react-native-reanimated';
 import { useAnimatedStyle } from 'react-native-reanimated';
 
 import { DEFAULT_ANIMATION_DURATION, TIMING_CONFIG } from '@/constants/animation';
@@ -63,7 +63,7 @@ interface UseReviewReturn {
   handleSwipeRight: () => void;
   handleLongPress: () => void;
   handleClose: () => void;
-  transparentStyle: AnimatedStyleProp<ViewStyle>;
+  transparentStyle: AnimatedStyle<ViewStyle>;
   sessionMetrics: SessionMetrics;
   // Add audio preloading state
   isAudioPreloading: boolean;

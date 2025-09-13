@@ -1,12 +1,13 @@
 import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 
 export class AudioCacheManager {
   private static instance: AudioCacheManager;
-  private cacheDir = FileSystem.cacheDirectory + 'audio/';
+  private cacheDir = Paths.cache.uri + 'audio/';
   // In-memory cache to reduce file system checks
   private memoryCache = new Map<string, { path: string; timestamp: number }>();
   private readonly MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -87,14 +88,15 @@ export class AudioCacheManager {
       const cachedFilePath = this.cacheDir + cacheKey;
 
       // Download to cache
-      const downloadResult = await FileSystem.downloadAsync(url, cachedFilePath);
+      const file = new File(cachedFilePath);
+      const downloadResult = await File.downloadFileAsync(url, file);
 
-      if (downloadResult.status === 200) {
+      if (downloadResult.exists) {
         // Update memory cache
         this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
         return cachedFilePath;
       } else {
-        throw new Error(`Download failed with status: ${downloadResult.status}`);
+        throw new Error('Download failed - file does not exist after download');
       }
     } catch (error) {
       await handleError(error as Error, { showToast: false });

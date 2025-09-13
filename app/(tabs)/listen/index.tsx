@@ -15,7 +15,7 @@ import BottomControls from '@listen/BottomControls';
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/listen/ListenListItemCard';
 import { useToast } from '@/components/providers/ToastProvider';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -320,8 +320,6 @@ export default function ListenScreen(): JSX.Element {
           <FlashList<ReadingListItem>
             data={sortedReadingList}
             drawDistance={ITEM_HEIGHT * 3}
-            estimatedItemSize={ITEM_HEIGHT}
-            estimatedListSize={{ height: ITEM_HEIGHT * 10, width: SCREEN_WIDTH }}
             keyExtractor={memoizedKeyExtractor}
             removeClippedSubviews={true}
             // iOS best practice: Allow natural bounce behavior for tactile feedback

@@ -1,4 +1,3 @@
-import type { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -768,7 +767,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       handleScroll,
       handleViewableItemsChanged,
       colors,
-      scrollViewRef: scrollViewRef as React.RefObject<FlashList<Tables<'article_sentences'>>>,
+      scrollViewRef: scrollViewRef as React.RefObject<any>,
       isInReadingList,
       onToggleReadingList: handleToggleReadingListWithFeedback,
       hasAudio,

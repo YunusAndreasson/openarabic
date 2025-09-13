@@ -1,5 +1,5 @@
 import { useHeaderHeight } from '@react-navigation/elements';
-import type { ContentStyle, ListRenderItem } from '@shopify/flash-list';
+import type { ListRenderItem } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import {
   forwardRef,
@@ -88,7 +88,7 @@ interface ArticleListProps {
   isRefreshing?: boolean;
 }
 
-const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
+const ArticleList = forwardRef<any, ArticleListProps>(
   (
     {
       onRefresh,
@@ -102,7 +102,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     ref
   ) => {
     const colors = useColors();
-    const listRef = useRef<FlashList<Article>>(null);
+    const listRef = useRef<any>(null);
     const insets = useSafeAreaInsets();
     const headerHeight = useHeaderHeight();
     const [, startTransition] = useTransition();
@@ -119,7 +119,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       stableInsetsBottomRef.current = insets.bottom;
     }
 
-    useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
+    useImperativeHandle(ref, () => listRef.current, []);
 
     // Optimized render item with stable reference
     const renderItem: ListRenderItem<Article> = useCallback(
@@ -166,7 +166,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     // Optimized content container style - cache the base style and only update when necessary
     const safeContentContainerStyle = useMemo(
       () => ({
-        ...(contentContainerStyle as ContentStyle),
+        ...(contentContainerStyle as any),
         paddingBottom:
           stableInsetsBottomRef.current + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
       }),

@@ -148,7 +148,6 @@ export default function DictionaryScreen(): JSX.Element {
           <FlashList
             data={sortedWords}
             renderItem={renderItem}
-            estimatedItemSize={80}
             contentContainerStyle={{ paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE }}
             showsVerticalScrollIndicator={false}
             extraData={editMode}
