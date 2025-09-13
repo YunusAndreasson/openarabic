@@ -52,11 +52,27 @@
       "node": "20.19.5",
       "channel": "production",
       "ios": {
-        "resourceClass": "medium"
+        "resourceClass": "medium",
+        "cache": {
+          "key": "yarn-deps-{{ checksum \"yarn.lock\" }}-{{ checksum \"package.json\" }}",
+          "paths": [
+            ".yarn/cache",
+            ".yarn/install-state.gz",
+            "node_modules"
+          ]
+        }
       },
       "android": {
-        "resourceClass": "medium",
-        "buildType": "app-bundle"
+        "resourceClass": "large",
+        "buildType": "app-bundle",
+        "cache": {
+          "key": "yarn-deps-{{ checksum \"yarn.lock\" }}-{{ checksum \"package.json\" }}",
+          "paths": [
+            ".yarn/cache",
+            ".yarn/install-state.gz",
+            "node_modules"
+          ]
+        }
       },
       "env": {
         "EXPO_PUBLIC_SENTRY_DSN": "${EXPO_PUBLIC_SENTRY_DSN}",
