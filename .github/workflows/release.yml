@@ -39,6 +39,12 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
           packager: yarn
 
+      - name: Prepare Google Service Account file
+        run: |
+          echo "$GOOGLE_SERVICE_ACCOUNT_KEY" > google-service-account.json
+        env:
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
       - name: Install additional Expo and Babel packages
         run: |
           yarn add --dev babel-preset-expo @babel/plugin-transform-runtime metro-react-native-babel-preset

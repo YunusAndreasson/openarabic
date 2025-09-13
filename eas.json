@@ -81,6 +81,7 @@
         "appleTeamId": "G9UUQ9MDS4"
       },
       "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
         "track": "internal"
       }
     }
