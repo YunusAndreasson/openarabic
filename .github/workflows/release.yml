@@ -69,7 +69,7 @@ jobs:
 
       # === Submit Android to Google Play Store (Internal Testing) ===
       - name: Submit Android to Google Play (Internal)
-        run: eas submit --platform android --profile production --non-interactive --latest --track internal
+        run: eas submit --platform android --profile production --non-interactive --latest
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
