@@ -67,9 +67,9 @@ jobs:
           SENTRY_ALLOW_FAILURE: true
           SENTRY_DISABLE_AUTO_UPLOAD: false
 
-      # === Submit Android to Google Play Store ===
-      - name: Submit Android to Google Play
-        run: eas submit --platform android --profile production --non-interactive --latest
+      # === Submit Android to Google Play Store (Internal Testing) ===
+      - name: Submit Android to Google Play (Internal)
+        run: eas submit --platform android --profile production --non-interactive --latest --track internal
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
@@ -109,10 +109,10 @@ jobs:
           EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
           NODE_PATH: '/github/workspace'
 
-      # === Submit iOS to App Store ===
-      - name: Submit iOS to App Store
+      # === Submit iOS to TestFlight ===
+      - name: Submit iOS to TestFlight
         run: |
-          # Submit the most recent iOS build produced by this workflow
+          # Submit the most recent iOS build produced by this workflow to TestFlight
           eas submit --platform ios --profile production --non-interactive --latest
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
