@@ -54,6 +54,25 @@ jobs:
           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
           eas update --branch $CURRENT_BRANCH --auto
 
+      # === Version Bumping (before builds so they use new version) ===
+      - name: Bump version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          yarn bump
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+          git add package.json app.json
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git tag "v$NEW_VERSION"
+          git push origin $CURRENT_BRANCH
+          git push origin "v$NEW_VERSION"
+
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        id: version
+
       # === Build Android First (for early testing) ===
       - name: Build for Android
         run: eas build --platform android --profile production --non-interactive
@@ -80,25 +99,6 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ALLOW_FAILURE: true
           SENTRY_DISABLE_AUTO_UPLOAD: false
-
-      # === Version Bumping (before iOS build so it has new version) ===
-      - name: Bump version
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          yarn bump
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          NEW_VERSION=$(node -p "require('./package.json').version")
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
-          git add package.json app.json
-          git commit -m "chore: bump version to $NEW_VERSION"
-          git tag "v$NEW_VERSION"
-          git push origin $CURRENT_BRANCH
-          git push origin "v$NEW_VERSION"
-
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-        id: version
 
       - name: Build for iOS
         run: eas build --platform ios --profile production --non-interactive
