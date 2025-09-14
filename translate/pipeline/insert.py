@@ -350,6 +350,14 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 
     archive_files(file_path, article_id)
 
+    # Validate cleanup after successful processing
+    import subprocess
+    result = subprocess.run([sys.executable, "cleanup_check.py"],
+                          cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                          capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"Cleanup validation failed: {result.stdout}")
+
     return article_id
 
 

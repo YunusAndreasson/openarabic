@@ -348,6 +348,14 @@ Examples:
         elapsed = time.time() - start_time
         logger.info(f"✅ Insert phase completed in {elapsed:.1f}s")
 
+        # Validate cleanup after insert phase
+        import subprocess
+        result = subprocess.run([sys.executable, "cleanup_check.py"],
+                              cwd=os.path.dirname(os.path.abspath(__file__)),
+                              capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"Cleanup validation failed: {result.stdout}")
+
         # Handle word audio processing for full pipeline
         if args.full or args.auto:
             logger.info(
