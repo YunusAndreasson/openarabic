@@ -5,7 +5,6 @@ import type { JSX } from 'react';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
-  InteractionManager,
   Platform,
   View,
   type LayoutRectangle,
@@ -41,13 +40,11 @@ import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
+import { calculateHeaderHeight } from '@/utils/gradientUtils';
 import { lightFeedback } from '@/utils/haptics';
 
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
-const RESUME_WINDOW_TIMEOUT = 1500;
-const RESUME_JUMP_DELAY = 500;
-const PROGRESS_THRESHOLD = 15;
 
 // Custom comparison function for React.memo optimization
 const ArticleScreenContentComparison = (
@@ -72,6 +69,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const queryClient = useQueryClient();
 
   const { handleScroll: handleHeaderScroll } = useHeaderVisibility();
+
+  // Note: header height not needed for current auto-scroll logic
 
   // Memoize article ID parsing to prevent unnecessary recalculations
   const articleId = useMemo(() => {
@@ -153,14 +152,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
   // Ref to track current sentence index for reading progress
   const currentSentenceIndexRef = useRef(0);
-
-  // Ref to track if we've already handled the initial resume for this article
-  const hasHandledInitialResumeRef = useRef(false);
-
-  // Reset resume flag when article changes
-  useEffect(() => {
-    hasHandledInitialResumeRef.current = false;
-  }, [articleId]);
 
   // Keep a ref to avoid handleScroll identity changes when tooltip toggles
   const activeTooltipRef = useRef<typeof activeTooltip>(null);
@@ -314,6 +305,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     dueWordRootIds,
     sentenceWordsMap,
     lastSentenceRead: effectiveLastSentenceRead,
+    headerOffset: calculateHeaderHeight(0),
   });
 
   // Update the ref when currentSentenceIndex changes
@@ -502,7 +494,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         lastScrolledWordIndex.current = word.id;
         lastScrollTime.current = Date.now();
       } catch {
-        // Essential fallback: offset-based scrolling using accurate constants
+        // Essential fallback: offset-based scrolling using sentence height
         const targetOffset = targetSentenceIndex * LAYOUT.SENTENCE_ITEM.HEIGHT;
         scrollViewRef.current.scrollToOffset({
           offset: Math.max(0, targetOffset),
@@ -522,9 +514,11 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     }
   }, [currentHighlightedWord, hasTimestamps, isPlaying, autoScrollToWord]);
 
-  // Removed unused fade-in animation to avoid extra work on ready state
+  // Resume-on-open behavior (original working behavior)
+  const hasHandledInitialResumeRef = useRef(false);
+  const RESUME_WINDOW_TIMEOUT = 1500;
+  const RESUME_JUMP_DELAY = 500;
 
-  // Limit resume behavior to a short window right after content becomes ready
   const resumeWindowActiveRef = useRef(false);
   useEffect(() => {
     if (article && sortedSentences && sortedSentences.length > 0 && !isLoadingArticle) {
@@ -537,9 +531,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     return () => {};
   }, [article, sortedSentences, isLoadingArticle]);
 
-  // Handle initial resume when article is fully loaded
   useEffect(() => {
-    // Only run once when everything is ready and we haven't handled resume yet
     if (
       !hasHandledInitialResumeRef.current &&
       !isLoadingArticle &&
@@ -558,32 +550,12 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
       // Attempt jump once on resume
       setTimeout(() => {
-        InteractionManager.runAfterInteractions(() => {
-          // Primary: delegate to hook (handles measurement and safety flags)
+        // Primary: delegate to hook (handles measurement and safety flags)
+        try {
           jumpToLastReadPosition();
-          // Fallback: if progress was below threshold, force a direct scroll to ensure UX expectation
-          if (progressPercent < PROGRESS_THRESHOLD && scrollViewRef.current) {
-            const targetIndex = (initialLastSentenceRead ?? 0) + 1; // +1 for header
-            try {
-              scrollViewRef.current.scrollToIndex({
-                index: targetIndex,
-                animated: true,
-                viewPosition: 0.1,
-              });
-            } catch {
-              // Offset fallback if index-based scroll fails due to measurement/virtualization
-              const estimatedOffset = Math.max(0, (targetIndex - 1) * LAYOUT.SENTENCE_ITEM.HEIGHT);
-              try {
-                scrollViewRef.current.scrollToOffset({
-                  offset: estimatedOffset,
-                  animated: true,
-                });
-              } catch {
-                // noop
-              }
-            }
-          }
-        });
+        } catch {
+          // noop
+        }
       }, RESUME_JUMP_DELAY);
 
       // Mark as handled - this prevents any further resume logic
@@ -597,6 +569,70 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     jumpToLastReadPosition,
     showToast,
   ]);
+
+  // Removed unused fade-in animation to avoid extra work on ready state
+
+  // Disabled automatic resume - articles now always start from the top
+  // This ensures users see the article image when opening articles
+  // useEffect(() => {
+  //   // Only run once when everything is ready and we haven't handled resume yet
+  //   if (
+  //     !hasHandledInitialResumeRef.current &&
+  //     !isLoadingArticle &&
+  //     article &&
+  //     sortedSentences &&
+  //     sortedSentences.length > 0 &&
+  //     hadExistingProgressOnMount &&
+  //     resumeWindowActiveRef.current
+  //   ) {
+  //     const baselineLastSentence = initialLastSentenceRead ?? 0;
+  //     const progressPercent = Math.round((baselineLastSentence / sortedSentences.length) * 100);
+
+  //     // Show resume toast
+  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  //     showToast(`Resumed at ${progressPercent}%`, 3000, ToastType.INFO);
+
+  //     // Attempt jump once on resume
+  //     setTimeout(() => {
+  //       InteractionManager.runAfterInteractions(() => {
+  //         // Primary: delegate to hook (handles measurement and safety flags)
+  //         jumpToLastReadPosition();
+  //         // Fallback: if progress was below threshold, force a direct scroll to ensure UX expectation
+  //         if (progressPercent < PROGRESS_THRESHOLD && scrollViewRef.current) {
+  //           const targetIndex = (initialLastSentenceRead ?? 0) + 1; // +1 for header
+  //           try {
+  //             scrollViewRef.current.scrollToIndex({
+  //               index: targetIndex,
+  //               animated: true,
+  //               viewPosition: 0.1,
+  //             });
+  //           } catch {
+  //             // Offset fallback if index-based scroll fails due to measurement/virtualization
+  //             const estimatedOffset = Math.max(0, (targetIndex - 1) * LAYOUT.SENTENCE_ITEM.HEIGHT);
+  //             try {
+  //               scrollViewRef.current.scrollToOffset({
+  //                 offset: estimatedOffset,
+  //                 animated: true,
+  //               });
+  //             } catch {
+  //               // noop
+  //             }
+  //           }
+  //         }
+  //       });
+  //     }, RESUME_JUMP_DELAY);
+
+  //     // Mark as handled - this prevents any further resume logic
+  //     hasHandledInitialResumeRef.current = true;
+  //   }
+  // }, [
+  //   isLoadingArticle,
+  //   article,
+  //   sortedSentences,
+  //   hadExistingProgressOnMount,
+  //   jumpToLastReadPosition,
+  //   showToast,
+  // ]);
 
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {

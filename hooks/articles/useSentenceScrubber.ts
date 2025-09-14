@@ -11,6 +11,7 @@ interface UseSentenceScrubberProps {
   dueWordRootIds: Set<number>;
   sentenceWordsMap: Map<number, SentenceWord[]>;
   lastSentenceRead?: number; // Optional: last sentence read for progress calculation
+  headerOffset?: number; // Optional: top padding (e.g., parallax header height)
 }
 
 interface UseSentenceScrubberReturn {
@@ -29,6 +30,7 @@ export function useSentenceScrubber({
   dueWordRootIds,
   sentenceWordsMap,
   lastSentenceRead = 0,
+  headerOffset = 0,
 }: UseSentenceScrubberProps): UseSentenceScrubberReturn {
   const scrollViewRef = useRef<any>(null);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
@@ -120,8 +122,8 @@ export function useSentenceScrubber({
             viewPosition: 0.1, // Show sentence near top (10% from top for better visibility)
           });
         } catch {
-          // Fallback to offset-based scrolling using proper sentence height constant
-          const estimatedOffset = clampedIndex * LAYOUT.SENTENCE_ITEM.HEIGHT;
+          // Fallback to offset-based scrolling using proper sentence height constant + header offset
+          const estimatedOffset = headerOffset + clampedIndex * LAYOUT.SENTENCE_ITEM.HEIGHT;
           scrollViewRef.current.scrollToOffset({
             offset: estimatedOffset,
             animated: true,
@@ -129,7 +131,7 @@ export function useSentenceScrubber({
         }
       }
     },
-    [sortedSentences.length]
+    [sortedSentences.length, headerOffset]
   );
 
   // Function to safely jump to last read position (respects 15% threshold)
@@ -156,8 +158,9 @@ export function useSentenceScrubber({
       });
       setCurrentSentenceIndex(lastSentenceReadRef.current);
     } catch {
-      // Fallback to offset-based scrolling using proper sentence height constant
-      const estimatedOffset = lastSentenceReadRef.current * LAYOUT.SENTENCE_ITEM.HEIGHT;
+      // Fallback to offset-based scrolling using proper sentence height constant + header offset
+      const estimatedOffset =
+        headerOffset + lastSentenceReadRef.current * LAYOUT.SENTENCE_ITEM.HEIGHT;
       scrollViewRef.current.scrollToOffset({
         offset: estimatedOffset,
         animated: true,
@@ -170,7 +173,7 @@ export function useSentenceScrubber({
       isJumpingToLastPosition.current = false;
       isJumpingRef.current = false;
     }, 2000); // 2 second delay to ensure scroll animation completes and viewable items settle
-  }, [shouldAllowJumpToLastPosition]);
+  }, [shouldAllowJumpToLastPosition, headerOffset]);
 
   // Handle scrub start - mark as user scrubbing to prevent automatic updates
   const handleScrubStart = useCallback(() => {

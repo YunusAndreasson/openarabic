@@ -81,7 +81,7 @@ const createFlashListConfig = <T,>({
   bounces = true,
   overScrollMode = 'always',
   extraData,
-  initialScrollIndex = 0,
+  initialScrollIndex,
 }: {
   data: T[];
   renderItem: (info: { item: T; index: number }) => React.ReactElement;
@@ -162,6 +162,8 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     textAlign: 'left',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    letterSpacing: 0.2,
     lineHeight: LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL * LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },
   playIconOffset: {
@@ -378,6 +380,8 @@ export const ArticleContent = memo<ArticleContentProps>(
       }
     }, [sortedSentences, startAnimation]);
 
+    // Removed forced scroll-to-top effect to avoid redundant logic
+
     // Forward JS scroll needs from UI thread
     const handleScrollJS = useCallback(
       (y: number) => {
@@ -408,7 +412,13 @@ export const ArticleContent = memo<ArticleContentProps>(
     const rightOverlayPadding = useMemo(() => MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE, []);
 
     const titleContainerStyle = useMemo(
-      () => [styles.titleContainer, { paddingRight: rightOverlayPadding }],
+      () => [
+        styles.titleContainer,
+        {
+          paddingRight: rightOverlayPadding,
+          marginTop: -(LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.SMALL),
+        },
+      ],
       [rightOverlayPadding]
     );
 
@@ -421,6 +431,14 @@ export const ArticleContent = memo<ArticleContentProps>(
       () => [styles.summaryContainer, { paddingRight: rightOverlayPadding }],
       [rightOverlayPadding]
     );
+
+    const dividerStyle = {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
+      opacity: 0.4,
+      marginHorizontal: LAYOUT.SPACING.MEDIUM,
+      marginBottom: LAYOUT.SPACING.MEDIUM,
+    } as const;
 
     // Render title/author below the hero image but above content
     const headerComponent = useMemo(
@@ -464,6 +482,7 @@ export const ArticleContent = memo<ArticleContentProps>(
               </ThemedText>
             </View>
           )}
+          <View style={dividerStyle} />
         </View>
       ),
       [article, titleContainerStyle, authorContainerStyle, summaryContainerStyle]
@@ -520,7 +539,7 @@ export const ArticleContent = memo<ArticleContentProps>(
           alwaysBounceVertical: true,
           bounces: true,
           overScrollMode: 'always',
-          initialScrollIndex: 0,
+          // Do not set an initialScrollIndex so FlashList starts at absolute top
           // Force re-render when highlight state changes
           extraData: {
             currentHighlightedWord,
