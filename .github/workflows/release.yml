@@ -69,10 +69,7 @@ jobs:
 
       # === Submit Android to Google Play Store ===
       - name: Submit Android to Google Play
-        run: |
-          # Write service account key to a temp file and submit the latest build
-          echo "$GOOGLE_SERVICE_ACCOUNT_KEY" > /tmp/google-service-account.json
-          eas submit --platform android --profile production --non-interactive --latest --key /tmp/google-service-account.json
+        run: eas submit --platform android --profile production --non-interactive --latest
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
