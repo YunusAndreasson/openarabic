@@ -4,10 +4,6 @@ const mockDirectoryConstructor = jest.fn();
 const mockDigestStringAsync = jest.fn();
 
 jest.mock('expo-file-system', () => ({
-  getInfoAsync: jest.fn(),
-  makeDirectoryAsync: jest.fn(),
-  readDirectoryAsync: jest.fn(),
-  deleteAsync: jest.fn(),
   File: Object.assign(
     mockFileConstructor.mockImplementation(path => ({
       uri: path,
@@ -27,6 +23,13 @@ jest.mock('expo-file-system', () => ({
       uri: '/cache/',
     },
   },
+}));
+
+jest.mock('expo-file-system/legacy', () => ({
+  readDirectoryAsync: jest.fn(),
+  deleteAsync: jest.fn(),
+  makeDirectoryAsync: jest.fn(),
+  getInfoAsync: jest.fn(),
 }));
 
 jest.mock('expo-crypto', () => ({
@@ -51,12 +54,12 @@ describe('audioCache', () => {
   const cachedPath = `/cache/audio/${hash}.mp3`;
 
   test('getAudio returns cached file path when it exists', async () => {
-    const FileSystem = require('expo-file-system');
+    const FileSystemLegacy = require('expo-file-system/legacy');
 
     // Mock crypto to return the expected hash
     mockDigestStringAsync.mockResolvedValue(hash);
 
-    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
+    (FileSystemLegacy.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
 
     // Reset mocks
     mockDirectoryConstructor.mockClear();
@@ -83,12 +86,12 @@ describe('audioCache', () => {
   });
 
   test('getAudio downloads file when not cached', async () => {
-    const FileSystem = require('expo-file-system');
+    const FileSystemLegacy = require('expo-file-system/legacy');
 
     // Mock crypto to return the expected hash
     mockDigestStringAsync.mockResolvedValue(hash);
 
-    (FileSystem.getInfoAsync as jest.Mock)
+    (FileSystemLegacy.getInfoAsync as jest.Mock)
       .mockResolvedValueOnce({ exists: true }) // constructor check
       .mockResolvedValueOnce({ exists: true }); // cache dir exists during download
 
@@ -97,18 +100,26 @@ describe('audioCache', () => {
     mockFileConstructor.mockClear();
     mockDownloadFileAsync.mockClear();
 
-    // Mock Directory to exist
+    // Mock Directory to exist for ensureCacheDirectoryExists
     mockDirectoryConstructor.mockImplementation(path => ({
       uri: path,
       exists: true,
     }));
 
     // Mock File to not exist initially (triggers download)
-    mockFileConstructor.mockImplementation(path => ({
-      uri: path,
-      exists: false,
-      size: null,
-    }));
+    // First call: getCachedFilePath - file doesn't exist
+    // Second call: cacheAudio - file doesn't exist initially
+    mockFileConstructor
+      .mockImplementationOnce(path => ({
+        uri: path,
+        exists: false, // getCachedFilePath - file not found
+        size: null,
+      }))
+      .mockImplementationOnce(path => ({
+        uri: path,
+        exists: false, // cacheAudio - file doesn't exist initially
+        size: null,
+      }));
 
     // Mock the download to return a successful result
     mockDownloadFileAsync.mockResolvedValue({ uri: cachedPath, exists: true });
@@ -122,13 +133,13 @@ describe('audioCache', () => {
   });
 
   test('getAudio returns original URL on failed download', async () => {
-    const FileSystem = require('expo-file-system');
+    const FileSystemLegacy = require('expo-file-system/legacy');
     const { handleError } = require('../../utils/errorHandling');
 
     // Mock crypto to return the expected hash
     mockDigestStringAsync.mockResolvedValue(hash);
 
-    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
+    (FileSystemLegacy.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
 
     // Clear mocks before test
     mockDirectoryConstructor.mockClear();
@@ -141,15 +152,23 @@ describe('audioCache', () => {
       exists: true,
     }));
 
-    // Mock File to not exist (triggers download)
-    mockFileConstructor.mockImplementation(path => ({
-      uri: path,
-      exists: false,
-      size: null,
-    }));
+    // Mock File to not exist initially (triggers download)
+    // First call: getCachedFilePath - file doesn't exist
+    // Second call: cacheAudio - file doesn't exist initially
+    mockFileConstructor
+      .mockImplementationOnce(path => ({
+        uri: path,
+        exists: false, // getCachedFilePath - file not found
+        size: null,
+      }))
+      .mockImplementationOnce(path => ({
+        uri: path,
+        exists: false, // cacheAudio - file doesn't exist initially
+        size: null,
+      }));
 
     // Mock the download to fail
-    mockDownloadFileAsync.mockResolvedValue({ uri: cachedPath, exists: false });
+    mockDownloadFileAsync.mockRejectedValue(new Error('Download failed'));
 
     audioCache = require('../../services/audioCache').audioCache;
 
@@ -160,27 +179,47 @@ describe('audioCache', () => {
   });
 
   test('clearCache removes files and recreates directory', async () => {
-    const FileSystem = require('expo-file-system');
-    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
+    const FileSystemLegacy = require('expo-file-system/legacy');
+    (FileSystemLegacy.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
 
     // Clear mocks
     mockDirectoryConstructor.mockClear();
+    (FileSystemLegacy.deleteAsync as jest.Mock).mockClear();
+    (FileSystemLegacy.makeDirectoryAsync as jest.Mock).mockClear();
+
+    // Mock Directory to handle multiple calls
+    // First call: constructor (ensureCacheDirectoryExists) - exists: false
+    // Second call: clearCache - exists: true
+    // Third call: ensureCacheDirectoryExists after delete - exists: false
+    mockDirectoryConstructor
+      .mockImplementationOnce(path => ({
+        uri: path,
+        exists: false, // Constructor call
+      }))
+      .mockImplementationOnce(path => ({
+        uri: path,
+        exists: true, // clearCache call
+      }))
+      .mockImplementationOnce(path => ({
+        uri: path,
+        exists: false, // ensureCacheDirectoryExists after delete
+      }));
 
     audioCache = require('../../services/audioCache').audioCache;
 
     await audioCache.clearCache();
 
-    expect(FileSystem.deleteAsync).toHaveBeenCalledWith('/cache/audio/');
-    expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith('/cache/audio/', {
+    expect(FileSystemLegacy.deleteAsync).toHaveBeenCalledWith('/cache/audio/');
+    expect(FileSystemLegacy.makeDirectoryAsync).toHaveBeenCalledWith('/cache/audio/', {
       intermediates: true,
     });
   });
 
   test('clearCache rethrows errors from deleteAsync', async () => {
-    const FileSystem = require('expo-file-system');
+    const FileSystemLegacy = require('expo-file-system/legacy');
     const { handleError } = require('../../utils/errorHandling');
     const err = new Error('fail');
-    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
+    (FileSystemLegacy.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
 
     // Clear mocks
     mockDirectoryConstructor.mockClear();
@@ -191,7 +230,7 @@ describe('audioCache', () => {
       exists: true,
     }));
 
-    (FileSystem.deleteAsync as jest.Mock).mockRejectedValueOnce(err);
+    (FileSystemLegacy.deleteAsync as jest.Mock).mockRejectedValueOnce(err);
     audioCache = require('../../services/audioCache').audioCache;
 
     await expect(audioCache.clearCache()).rejects.toThrow(err);
@@ -199,8 +238,8 @@ describe('audioCache', () => {
   });
 
   test('getCacheSize sums file sizes correctly', async () => {
-    const FileSystem = require('expo-file-system');
-    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
+    const FileSystemLegacy = require('expo-file-system/legacy');
+    (FileSystemLegacy.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
 
     // Clear mocks
     mockDirectoryConstructor.mockClear();
@@ -212,19 +251,22 @@ describe('audioCache', () => {
       exists: true,
     }));
 
-    // Mock File instances with sizes
-    mockFileConstructor.mockImplementationOnce(path => ({
-      uri: path,
-      exists: true,
-      size: 100,
-    }));
-    mockFileConstructor.mockImplementationOnce(path => ({
-      uri: path,
-      exists: true,
-      size: 200,
-    }));
+    // Mock legacy readDirectoryAsync to return file names
+    (FileSystemLegacy.readDirectoryAsync as jest.Mock).mockResolvedValue(['one.mp3', 'two.mp3']);
 
-    (FileSystem.readDirectoryAsync as jest.Mock).mockResolvedValue(['one.mp3', 'two.mp3']);
+    // Mock File instances with sizes
+    mockFileConstructor
+      .mockImplementationOnce(path => ({
+        uri: path,
+        exists: true,
+        size: 100,
+      }))
+      .mockImplementationOnce(path => ({
+        uri: path,
+        exists: true,
+        size: 200,
+      }));
+
     audioCache = require('../../services/audioCache').audioCache;
 
     const size = await audioCache.getCacheSize();

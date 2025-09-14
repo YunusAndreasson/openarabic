@@ -16,14 +16,19 @@ export default function VocabularyLayout(): JSX.Element {
   const colors = useColors();
   const { editMode } = useEditMode('dictionary');
 
+  const backgroundColor = colors?.background || '#FFFFFF';
+  const textColor = colors?.headingText || '#000000';
+
   return (
     <Stack>
       <Stack.Screen
         name="index"
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.headingText,
+          headerStyle: {
+            backgroundColor,
+          },
+          headerTintColor: textColor,
           headerShadowVisible: false,
           ...(Platform.OS === 'ios'
             ? {
@@ -33,7 +38,8 @@ export default function VocabularyLayout(): JSX.Element {
                     style={{
                       fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
                       fontWeight: '600',
-                      color: colors.headingText,
+                      color: textColor,
+                      minWidth: 100,
                     }}
                   >
                     {AppTab.PRACTICE}
@@ -43,7 +49,7 @@ export default function VocabularyLayout(): JSX.Element {
               }
             : {
                 title: AppTab.PRACTICE,
-                headerTitleStyle: { color: colors.headingText },
+                headerTitleStyle: { color: textColor },
                 headerRight: () => <DictionaryButton hideWhenEmpty={true} />,
               }),
         }}

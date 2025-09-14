@@ -897,6 +897,11 @@ def create_article_audio(
 
             if not arabic_text or not english_text:
                 logger.warning(f"Skipping sentence {i + 1} - missing text")
+                # Still update offset to maintain alignment
+                estimated_duration = len(arabic_text) * 0.08  # ~80ms per character
+                cumulative_time_offset += estimated_duration + (BILINGUAL_AUDIO_PAUSE_MS / 1000.0)
+                word_count = len(arabic_text.split()) if arabic_text else 0
+                global_word_index += word_count
                 continue
 
             logger.info(
@@ -904,16 +909,79 @@ def create_article_audio(
             )
 
             # Generate Arabic audio for this sentence WITH TIMESTAMPS
-            arabic_response = generate_speech_with_timestamps(
-                text=tashkeel_text,
-                voice_id=ARABIC_VOICE_ID,
-                voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
-                sentence_id=sentence_id,
-            )
+            # RECOVERY STRATEGY 0: Retry mechanism for transient failures
+            max_retries = 2
+            arabic_response = None
+
+            for retry_attempt in range(max_retries + 1):
+                try:
+                    arabic_response = generate_speech_with_timestamps(
+                        text=tashkeel_text,
+                        voice_id=ARABIC_VOICE_ID,
+                        voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
+                        sentence_id=sentence_id,
+                    )
+
+                    if arabic_response and arabic_response.get("audio"):
+                        break  # Success, exit retry loop
+                    elif retry_attempt < max_retries:
+                        logger.warning(
+                            f"Audio generation failed for sentence {i + 1}, retry {retry_attempt + 1}/{max_retries}"
+                        )
+                        import time
+                        time.sleep(1)  # Brief delay before retry
+                    else:
+                        logger.error(
+                            f"Audio generation failed for sentence {i + 1} after {max_retries + 1} attempts"
+                        )
+
+                except Exception as e:
+                    if retry_attempt < max_retries:
+                        logger.warning(
+                            f"Audio generation exception for sentence {i + 1}, retry {retry_attempt + 1}/{max_retries}: {e}"
+                        )
+                        import time
+                        time.sleep(1)
+                    else:
+                        logger.error(
+                            f"Audio generation exception for sentence {i + 1} after {max_retries + 1} attempts: {e}"
+                        )
+
+            # ROBUST RECOVERY: Handle audio generation failures gracefully
             if not arabic_response or not arabic_response.get("audio"):
                 logger.error(
-                    f"Failed to generate Arabic audio for sentence {i + 1} (ID: {sentence_id})"
+                    f"Failed to generate Arabic audio for sentence {i + 1} (ID: {sentence_id}) after all retries"
                 )
+
+                # RECOVERY STRATEGY 1: Estimate duration and maintain offset alignment
+                estimated_duration = len(arabic_text) * 0.08  # ~80ms per character
+                cumulative_time_offset += estimated_duration + (BILINGUAL_AUDIO_PAUSE_MS / 1000.0)
+
+                # Update global word index to maintain consistency
+                word_count = len(arabic_text.split())
+                global_word_index += word_count
+
+                # RECOVERY STRATEGY 2: Create silent audio segment to maintain audio continuity
+                try:
+                    from pydub import AudioSegment
+                    # Create silent audio with estimated duration
+                    silent_duration_ms = int(estimated_duration * 1000)
+                    silent_audio = AudioSegment.silent(duration=silent_duration_ms)
+
+                    # Convert to bytes for consistency
+                    import io
+                    output = io.BytesIO()
+                    silent_audio.export(output, format="mp3")
+                    silent_audio_bytes = output.getvalue()
+
+                    arabic_segments.append(silent_audio_bytes)
+                    logger.info(f"Created silent audio segment ({silent_duration_ms}ms) for failed sentence {i + 1}")
+
+                except Exception as e:
+                    logger.warning(f"Failed to create silent audio for sentence {i + 1}: {e}")
+                    # Fallback: skip audio segment but maintain timing
+                    pass
+
                 continue
 
             arabic_audio = arabic_response["audio"]
@@ -958,11 +1026,36 @@ def create_article_audio(
                 logger.warning(
                     f"No word timestamps collected for sentence {i + 1} (ID: {sentence_id})"
                 )
-                # Still need to increment global word index even if no timestamps
-                # to maintain consistency with wordIndexToWordMap in the frontend
-                sentence_words = arabic_response.get("words", [])
-                if sentence_words:
-                    global_word_index += len(sentence_words)
+
+                # RECOVERY STRATEGY 3: Create placeholder timestamps for failed sentences
+                # This ensures word highlighting doesn't break completely
+                words = arabic_text.split()
+                if words:
+                    estimated_word_duration = len(arabic_text) * 0.08 / len(words)  # Distribute duration across words
+
+                    placeholder_timestamps = []
+                    for word_idx, word in enumerate(words):
+                        start_time = cumulative_time_offset + (word_idx * estimated_word_duration)
+                        end_time = start_time + estimated_word_duration
+
+                        placeholder_timestamps.append({
+                            "word": word,
+                            "start_time": round(start_time, 3),
+                            "end_time": round(end_time, 3),
+                            "duration": round(estimated_word_duration, 3),
+                            "word_index": global_word_index + word_idx,
+                            "char_start_index": 0,  # Placeholder values
+                            "char_end_index": len(word) - 1,
+                            "is_placeholder": True  # Mark as placeholder for debugging
+                        })
+
+                    all_word_timestamps.extend(placeholder_timestamps)
+                    logger.info(f"Created {len(placeholder_timestamps)} placeholder timestamps for sentence {i + 1}")
+
+                # Update cumulative offset and global word index
+                estimated_duration = len(arabic_text) * 0.08
+                cumulative_time_offset += estimated_duration + (BILINGUAL_AUDIO_PAUSE_MS / 1000.0)
+                global_word_index += len(words) if words else 0
 
             # Generate English audio for bilingual version (without timestamps for now)
             english_response = generate_speech(

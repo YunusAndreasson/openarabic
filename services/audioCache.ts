@@ -1,6 +1,6 @@
 import * as Crypto from 'expo-crypto';
-import * as FileSystem from 'expo-file-system';
 import { Directory, File, Paths } from 'expo-file-system';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
 
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
@@ -30,7 +30,8 @@ export class AudioCacheManager {
     try {
       const cacheDir = new Directory(this.cacheDir);
       if (!cacheDir.exists) {
-        await FileSystem.makeDirectoryAsync(this.cacheDir, { intermediates: true });
+        // Use legacy API to avoid deprecation warning
+        await FileSystemLegacy.makeDirectoryAsync(this.cacheDir, { intermediates: true });
       }
     } catch (error) {
       await handleError(error as Error, { showToast: false });
@@ -140,7 +141,8 @@ export class AudioCacheManager {
     try {
       const cacheDir = new Directory(this.cacheDir);
       if (cacheDir.exists) {
-        await FileSystem.deleteAsync(this.cacheDir);
+        // Use legacy API to avoid deprecation warning
+        await FileSystemLegacy.deleteAsync(this.cacheDir);
         await this.ensureCacheDirectoryExists();
       }
       // Clear memory cache as well
@@ -161,10 +163,11 @@ export class AudioCacheManager {
         return 0;
       }
 
-      const files = await FileSystem.readDirectoryAsync(this.cacheDir);
+      // Use legacy API since getFilesAsync is not available in current Expo version
+      const fileNames = await FileSystemLegacy.readDirectoryAsync(this.cacheDir);
+      const files = fileNames.map(fileName => new File(this.cacheDir + fileName));
 
-      const filePromises = files.map(file => new File(this.cacheDir + file));
-      const totalSize = filePromises.reduce((size, file) => {
+      const totalSize = files.reduce((size, file) => {
         if (file.exists && file.size !== null) {
           return size + file.size;
         }

@@ -138,7 +138,7 @@ const TAB_SCREENS = [
 // Static styles for better performance
 const styles = StyleSheet.create({
   tabBarIcon: {
-    marginTop: 0,
+    marginTop: 8, // Move icons down to center them better
   },
   focusedIcon: {
     opacity: 1,
@@ -221,7 +221,7 @@ export default function TabLayout(): JSX.Element {
           tabBarInactiveTintColor: colors.tabIconDefault,
           tabBarShowLabel: false,
           tabBarIconStyle: styles.tabBarIcon,
-          tabBarItemStyle: { paddingTop: 0, paddingBottom: 0 },
+          tabBarItemStyle: { paddingTop: 4, paddingBottom: 4 },
           tabBarStyle: tabBarStyle,
           freezeOnBlur: true,
           animation: 'fade',

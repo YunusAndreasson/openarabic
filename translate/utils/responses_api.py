@@ -63,6 +63,15 @@ class TokenUsageTracker:
         self.successful_calls: int = 0
         self.failed_calls: int = 0
         self.retry_attempts: int = 0
+        # Phase-specific tracking
+        self.phase_calls: dict[str, int] = {}
+        self.current_phase: str | None = None
+
+    def set_phase(self, phase: str) -> None:
+        """Set the current phase for API call tracking"""
+        self.current_phase = phase
+        if phase not in self.phase_calls:
+            self.phase_calls[phase] = 0
 
     def update(self, usage_data: dict[str, int]) -> None:
         """Update token counts from API response"""
@@ -70,6 +79,10 @@ class TokenUsageTracker:
         self.completion_tokens += usage_data.get("completion_tokens", 0)
         self.total_tokens += usage_data.get("total_tokens", 0)
         self.api_calls += 1
+
+        # Track phase-specific calls
+        if self.current_phase:
+            self.phase_calls[self.current_phase] += 1
 
         # Response API pricing (adjust as needed)
         prompt_cost = usage_data.get("prompt_tokens", 0) * 0.01 / 1000
@@ -80,6 +93,16 @@ class TokenUsageTracker:
         """Calculate success rate"""
         total = self.successful_calls + self.failed_calls
         return (self.successful_calls / total * 100) if total > 0 else 0.0
+
+    def get_phase_summary(self) -> str:
+        """Get a summary of API calls per phase"""
+        if not self.phase_calls:
+            return "No phase-specific API calls tracked"
+
+        summary = "API Calls by Phase:\n"
+        for phase, calls in self.phase_calls.items():
+            summary += f"  {phase}: {calls:,} calls\n"
+        return summary.rstrip()
 
     def __str__(self) -> str:
         success_rate = self.get_success_rate()
@@ -93,7 +116,8 @@ class TokenUsageTracker:
             f"Prompt Tokens: {self.prompt_tokens:,}\n"
             f"Completion Tokens: {self.completion_tokens:,}\n"
             f"Total Tokens: {self.total_tokens:,}\n"
-            f"Estimated Cost: ${self.total_cost:.2f}"
+            f"Estimated Cost: ${self.total_cost:.2f}\n"
+            f"{self.get_phase_summary()}"
         )
 
 

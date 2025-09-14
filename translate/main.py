@@ -425,9 +425,10 @@ Examples:
         logger.info("✅ Pipeline phases completed successfully")
         logger.info(f"⏱️  Total time: {total_elapsed:.1f}s")
 
-    # Report token usage statistics
+    # Report API call statistics
     if token_tracker.api_calls > 0:
-        pass  # Token usage reporting removed to reduce noise
+        logger.info("📊 API Usage Summary:")
+        logger.info(token_tracker.get_phase_summary())
 
 
 __all__ = [

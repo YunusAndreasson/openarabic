@@ -91,6 +91,10 @@ def split_file(input_file: str, output_file: str) -> SplitResult:
     """Split an input file into learner-friendly units and save the result."""
 
     try:
+        # Set phase for API call tracking
+        from utils.responses_api import token_tracker
+        token_tracker.set_phase("Split")
+
         full_text = read_text_file(input_file)
 
         split_result = split_text_into_sentences(full_text)

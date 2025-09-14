@@ -4,10 +4,10 @@ import os
 
 # OpenAI model configuration - Valid model names per project standards
 
-MODEL_ANALYSIS = "gpt-5"
-MODEL_TRANSLATION = "gpt-5"
+MODEL_ANALYSIS = "gpt-5-mini"
+MODEL_TRANSLATION = "gpt-5-mini"
 MODEL_OTHER = "gpt-4o"
-MODEL_VERIFICATION = "gpt-5"
+MODEL_VERIFICATION = "gpt-5-mini"
 
 # Batch processing defaults
 DEFAULT_BATCH_SIZE = 12

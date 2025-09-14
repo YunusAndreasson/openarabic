@@ -50,26 +50,30 @@ const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
 export default function ReadLayout(): JSX.Element {
   const colors = useColors();
 
+  const backgroundColor = colors?.background || '#FFFFFF';
+  const textColor = colors?.headingText || '#000000';
+
   return (
     <Stack>
       <Stack.Screen
         name="index"
         options={{
           headerShown: true,
-          // Normalize header background and title color on both platforms
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.headingText,
+          headerStyle: {
+            backgroundColor,
+          },
+          headerTintColor: textColor,
           headerShadowVisible: false,
           ...(Platform.OS === 'ios'
             ? {
-                // Use a custom left title on iOS to guarantee left alignment with system font
                 headerTitle: '',
                 headerLeft: () => (
                   <Text
                     style={{
                       fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
                       fontWeight: '600',
-                      color: colors.headingText,
+                      color: textColor,
+                      minWidth: 100,
                     }}
                     numberOfLines={1}
                   >
@@ -80,7 +84,7 @@ export default function ReadLayout(): JSX.Element {
               }
             : {
                 title: AppTab.READ,
-                headerTitleStyle: { color: colors.headingText },
+                headerTitleStyle: { color: textColor },
                 headerRight: () => <HeaderProfile size={32} />,
               }),
         }}

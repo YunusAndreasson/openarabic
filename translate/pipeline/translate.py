@@ -306,6 +306,10 @@ def translate_file(
 ) -> bool | None:
     """Translate a file containing split sentences."""
     try:
+        # Set phase for API call tracking
+        from utils.responses_api import token_tracker
+        token_tracker.set_phase("Translation")
+
         split_data = load_split_data(input_file)
         if not split_data:
             logger.error(f"Could not load split data from {input_file}")

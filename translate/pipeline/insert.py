@@ -195,6 +195,10 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
 
+    # Set phase for API call tracking
+    from utils.responses_api import token_tracker
+    token_tracker.set_phase("Insert")
+
     # Detect author from file path
     author_name, author_id = detect_author_from_file_path(file_path)
 

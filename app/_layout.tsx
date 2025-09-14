@@ -48,7 +48,6 @@ import { STRINGS } from '@/constants/strings';
 import { StreaksProvider, useStreaks } from '@/contexts/StreaksContext';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useReadTabDataLoaded } from '@/hooks/app/useArticlesAndDueWordsLoaded';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -164,7 +163,6 @@ function AppContent() {
   });
 
   const { preloadAppData, isLoaded } = useAppPreloader();
-  const readTabDataLoaded = useReadTabDataLoaded();
 
   useEffect(() => {
     if (navigationRef?.current) {
@@ -233,8 +231,9 @@ function AppContent() {
     // Either auth is ready or we've waited long enough
     const authIsReady = !isAuthLoading || session !== null;
 
-    // Content is ready or we've waited long enough
-    const contentIsReady = isLoaded && readTabDataLoaded;
+    // Simplified content readiness - don't wait for all data to load
+    // This prevents the header glitch by showing the UI sooner
+    const contentIsReady = isLoaded;
 
     // Only proceed when fonts are ready AND (auth is ready OR we have content)
     if (fontsAreReady && (authIsReady || contentIsReady)) {
@@ -247,7 +246,7 @@ function AppContent() {
         });
       }, 100); // Small delay to ensure smooth transition
     }
-  }, [fontsLoaded, isAuthLoading, session, isLoaded, readTabDataLoaded]);
+  }, [fontsLoaded, isAuthLoading, session, isLoaded]);
 
   // Initialize notifications when app is ready (Expo best practice)
   useEffect(() => {
@@ -354,7 +353,7 @@ function AppContent() {
   return (
     <NavigationThemeProvider value={navigationTheme}>
       <FSRSDataProvider userId={session?.user?.id}>
-        <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen
               name="(tabs)"
