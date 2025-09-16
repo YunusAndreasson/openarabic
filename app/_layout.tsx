@@ -352,14 +352,14 @@ function AppContent() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
-      <FSRSDataProvider userId={session?.user?.id}>
-        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <FSRSDataProvider userId={session?.user?.id}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen
               name="(tabs)"
               options={{
                 headerShown: false,
-                animation: 'fade',
+                animation: 'none', // FIXED: Disable animation to prevent black screen
               }}
             />
             <Stack.Screen
@@ -394,8 +394,8 @@ function AppContent() {
           <StreaksBottomSheet isVisible={isStreaksVisible} onClose={closeStreaks} />
 
           <StatusBar style={isDark ? 'light' : 'dark'} />
-        </SafeAreaView>
-      </FSRSDataProvider>
+        </FSRSDataProvider>
+      </SafeAreaView>
     </NavigationThemeProvider>
   );
 }
