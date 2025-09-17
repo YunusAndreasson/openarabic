@@ -270,8 +270,6 @@ const AccountScreen: FC = () => {
                 <CardRight type="text-chevron" text={currentLanguageText} />
               </View>
             </BaseCard>
-
-            <Divider />
           </View>
         </BaseCard>
 
