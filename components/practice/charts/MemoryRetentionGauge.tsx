@@ -1,6 +1,6 @@
 import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import {
   cancelAnimation,
   runOnJS,
@@ -190,12 +190,15 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
               </Group>
             </Canvas>
 
-            {/* Center percentage */}
-            <View style={styles.centerSection}>
+            {/* Center percentage - positioned to not block touch events */}
+            <View style={styles.centerSection} pointerEvents="none">
               <ThemedText style={[styles.retentionText, dynamicStyles.retentionText]}>
                 {Math.round(animatedRetention)}%
               </ThemedText>
             </View>
+
+            {/* Transparent touch overlay to ensure entire gauge area is tappable */}
+            <Pressable style={styles.touchOverlay} onPress={onInfoPress} pointerEvents="box-only" />
           </View>
 
           {/* Memory Strength label below gauge */}
@@ -244,6 +247,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     marginTop: LAYOUT.SPACING.SMALL,
+  },
+  touchOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
   },
 });
 
