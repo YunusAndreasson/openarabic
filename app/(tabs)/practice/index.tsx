@@ -236,7 +236,6 @@ export default function VocabularyScreen(): JSX.Element {
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingTop: LAYOUT.SPACING.MEDIUM,
             paddingBottom: contentPaddingBottom,
           },
         ]}
@@ -342,12 +341,8 @@ export default function VocabularyScreen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
+  container: LAYOUT.COMMON_STYLES.CONTAINER,
+  contentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
   loadingContainer: {
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,

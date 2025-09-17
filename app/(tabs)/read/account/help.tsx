@@ -168,9 +168,7 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
-  scrollContentDynamic: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
+  scrollContentDynamic: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
   scrollView: {
     flex: 1,
   },

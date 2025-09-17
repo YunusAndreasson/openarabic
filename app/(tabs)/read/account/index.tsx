@@ -659,10 +659,10 @@ const styles = StyleSheet.create({
 
   // App Footer Styles
   appFooterWrapper: {
+    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
     marginTop: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.LARGE,
   },
   appFooterContent: {
@@ -708,8 +708,8 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
+    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   scrollView: {
     flex: 1,

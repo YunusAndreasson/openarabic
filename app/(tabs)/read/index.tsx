@@ -29,15 +29,11 @@ import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: LAYOUT.COMMON_STYLES.CONTAINER,
   headerContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    // No margin needed - content should be directly under header
   },
-  listContentContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
+  listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
 });
 
 export default function ReadScreen(): JSX.Element {

@@ -28,9 +28,7 @@ import { generateImageUrl } from '@/utils/imageUtils';
 import { overrideFixedHeight } from '@/utils/list';
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: LAYOUT.COMMON_STYLES.CONTAINER,
   flexOne: {
     flex: 1,
   },
@@ -192,14 +190,14 @@ export default function ListenScreen(): JSX.Element {
 
   const listContainerStyle = useMemo(
     () => ({
-      paddingTop: LAYOUT.SPACING.MEDIUM,
+      ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
+      // No paddingTop needed - content should be directly under header
       // Account for BottomControls height + tab bar + safe area when controls are visible
       paddingBottom: stableHasArticles
         ? LAYOUT.BOTTOM_BAR.HEIGHT +
           LAYOUT.SPACING.XLARGE +
           Math.max(insets.bottom, LAYOUT.SPACING.SMALL)
         : LAYOUT.SPACING.MEDIUM,
-      paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     }),
     [stableHasArticles, insets.bottom]
   );

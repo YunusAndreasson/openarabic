@@ -399,6 +399,19 @@ export const LAYOUT = {
       DOTTED: 'dotted',
     },
   },
+
+  /**
+   * Common styles used across tab screens to reduce duplication
+   * Centralizes frequently repeated style patterns
+   */
+  COMMON_STYLES: {
+    CONTAINER: {
+      flex: 1,
+    },
+    CONTENT_CONTAINER: {
+      paddingHorizontal: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
+    },
+  },
 };
 
 export const getArabicTextStyle = (

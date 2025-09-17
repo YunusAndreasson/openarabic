@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
     paddingTop: LAYOUT.SPACING.MEDIUM, // Add spacing after the full-width header
   },
   dateRow: {

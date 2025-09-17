@@ -167,15 +167,13 @@ export default function DictionaryScreen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: LAYOUT.COMMON_STYLES.CONTAINER,
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
   },
   contentContainer: {
+    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
     flex: 1,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
 });
