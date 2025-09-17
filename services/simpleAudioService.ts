@@ -90,6 +90,47 @@ class SimpleAudioService {
   }
 
   /**
+   * Reset audio session for recovery from corruption
+   */
+  async resetAudioSession(): Promise<void> {
+    try {
+      // Stop current playback
+      await this.stopInternal();
+
+      // Clear all cached players
+      for (const player of this.playerCache.values()) {
+        try {
+          if (typeof player.remove === 'function') {
+            await player.remove();
+          }
+        } catch {
+          // Ignore cleanup errors during reset
+        }
+      }
+      this.playerCache.clear();
+
+      // Reset audio session configuration
+      this.audioSessionConfigured = false;
+
+      // Reconfigure audio session
+      await this.configureAudioSession();
+
+      // Reset status
+      this.updateStatus({
+        isPlaying: false,
+        isLoading: false,
+        currentTrack: null,
+        currentTime: 0,
+        duration: 0,
+      });
+    } catch (error) {
+      // Even if reset fails, clear the configuration flag to force reconfiguration
+      this.audioSessionConfigured = false;
+      throw new Error(`Audio session reset failed: ${error}`);
+    }
+  }
+
+  /**
    * Create or reuse audio player for a track
    */
   private async createOrReusePlayer(audioUrl: string): Promise<BasicAudioPlayer> {
@@ -106,22 +147,35 @@ class SimpleAudioService {
 
     // Stop and remove existing player asynchronously (don't block playback)
     if (this.currentPlayer) {
+      // CRITICAL FIX: Null references before cleanup to avoid race condition
+      this.currentPlayer = null;
+      this.currentTrack = null;
+
       // Non-blocking cleanup - don't await
       this.stopInternal().catch(() => {
         // Ignore cleanup errors for faster playback
       });
-      this.currentPlayer = null;
-      this.currentTrack = null;
     }
 
     // Create new player immediately
     const newPlayer = createAudioPlayer(audioUrl);
 
-    // Cache player for potential reuse
+    // Cache player for potential reuse with proper cleanup
     if (this.playerCache.size >= this.MAX_CACHE_SIZE) {
-      // Simple eviction: remove first key
+      // CRITICAL FIX: Properly clean up evicted players
       const firstKey = this.playerCache.keys().next().value;
       if (firstKey) {
+        const evictedPlayer = this.playerCache.get(firstKey);
+        if (evictedPlayer) {
+          // Properly remove the player before evicting from cache
+          try {
+            if (typeof evictedPlayer.remove === 'function') {
+              await evictedPlayer.remove();
+            }
+          } catch (cleanupError) {
+            // Ignore cleanup errors - we still want to evict the player
+          }
+        }
         this.playerCache.delete(firstKey);
       }
     }
@@ -245,6 +299,19 @@ class SimpleAudioService {
         } catch {
           // Ignore cleanup errors
         }
+      }
+
+      // CRITICAL FIX: Try to recover from audio session corruption
+      try {
+        await this.resetAudioSession();
+
+        // Retry playback once after reset
+        const retrySuccess = await this.play(track, options);
+        if (retrySuccess) {
+          return true;
+        }
+      } catch (resetError) {
+        // Reset failed, continue with error handling
       }
 
       handleError(error as Error, { toastMessage: 'Failed to start audio playback' });

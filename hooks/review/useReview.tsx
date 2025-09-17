@@ -610,8 +610,11 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         }
 
         // Preload all audio files in parallel for better performance
+        // CRITICAL FIX: Load audio files in batches to prevent resource exhaustion
         const totalUrls = audioUrls.length;
         let completedUrls = 0;
+        const BATCH_SIZE = 5; // Process 5 audio files at a time
+        const BATCH_DELAY = 100; // 100ms delay between batches
 
         // Create progress tracking function
         const trackProgress = () => {
@@ -619,20 +622,30 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
           setAudioPreloadProgress((completedUrls / totalUrls) * 100);
         };
 
-        // Load all audio files in parallel
-        const preloadPromises = audioUrls.map(async url => {
-          try {
-            await audioCache.getAudio(url);
-            trackProgress();
-            return true;
-          } catch {
-            trackProgress(); // Still count as completed to avoid hanging
-            return false;
-          }
-        });
+        // Process audio files in batches to prevent overwhelming the system
+        for (let i = 0; i < audioUrls.length; i += BATCH_SIZE) {
+          const batch = audioUrls.slice(i, i + BATCH_SIZE);
 
-        // Wait for all audio files to complete loading
-        await Promise.all(preloadPromises);
+          // Process current batch in parallel
+          const batchPromises = batch.map(async url => {
+            try {
+              await audioCache.getAudio(url);
+              trackProgress();
+              return true;
+            } catch {
+              trackProgress(); // Still count as completed to avoid hanging
+              return false;
+            }
+          });
+
+          // Wait for current batch to complete
+          await Promise.all(batchPromises);
+
+          // Small delay between batches to prevent resource exhaustion
+          if (i + BATCH_SIZE < audioUrls.length) {
+            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+          }
+        }
 
         // Mark preloading as complete immediately
         setIsAudioPreloadingComplete(true);
