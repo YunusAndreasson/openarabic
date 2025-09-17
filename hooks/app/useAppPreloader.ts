@@ -89,6 +89,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // Preload user's FSRS data if available
       if (user?.id) {
         try {
+          // CRITICAL: Force refresh due words on app open to get latest calculations
           await queryClient.fetchQuery({
             queryKey: FSRS_QUERY_KEYS.due(user.id),
             queryFn: () =>
@@ -98,7 +99,21 @@ export const useAppPreloader = (): AppPreloaderResult => {
                 sessionCooldownHours: 1,
                 limit: 100,
               }),
-            ...CACHE_TIMES.CRITICAL,
+            staleTime: 0, // Always fetch fresh data on app open
+            gcTime: CACHE_TIMES.CRITICAL.gcTime,
+            retry: 2,
+          });
+
+          // Also refresh all words for accurate memory strength calculation
+          await queryClient.fetchQuery({
+            queryKey: FSRS_QUERY_KEYS.all(user.id),
+            queryFn: () =>
+              studyWordsFSRSService.getFSRSWords(user.id, {
+                forStats: false,
+                limit: 1000,
+              }),
+            staleTime: 0, // Always fetch fresh data on app open
+            gcTime: CACHE_TIMES.CRITICAL.gcTime,
             retry: 2,
           });
         } catch {

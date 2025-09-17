@@ -172,7 +172,7 @@ class SimpleAudioService {
             if (typeof evictedPlayer.remove === 'function') {
               await evictedPlayer.remove();
             }
-          } catch (cleanupError) {
+          } catch {
             // Ignore cleanup errors - we still want to evict the player
           }
         }
@@ -310,7 +310,7 @@ class SimpleAudioService {
         if (retrySuccess) {
           return true;
         }
-      } catch (resetError) {
+      } catch {
         // Reset failed, continue with error handling
       }
 

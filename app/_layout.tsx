@@ -53,7 +53,9 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { FSRSDataProvider } from '@/hooks/vocabulary/FSRSDataProvider';
+import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
 import { analytics } from '@/services/analytics';
+import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import {
   cleanupNotifications,
   clearAppBadge,
@@ -150,6 +152,11 @@ function AppContent() {
 
   // App badge management - monitors due words and updates app icon badge
   useAppBadge();
+
+  // Smart due words calculator - refreshes data when app becomes active
+  useSmartDueWordsCalculator({
+    refreshDelay: 1000, // 1 second delay to avoid excessive API calls
+  });
 
   // Global audio state moved into AudioOverlays to avoid re-rendering the root
 
@@ -251,17 +258,26 @@ function AppContent() {
   // Initialize notifications when app is ready (Expo best practice)
   useEffect(() => {
     if (appReady) {
-      initializeNotifications().catch(() => {
-        // Silently handle notification initialization errors
-        // Error is already handled in the notification service
-      });
+      const initializeAppServices = async () => {
+        try {
+          await initializeNotifications();
+          await registerBackgroundTasks();
+        } catch (error) {
+          console.warn('Failed to initialize app services:', error);
+        }
+      };
+
+      initializeAppServices();
     }
   }, [appReady]);
 
-  // Cleanup notifications and app badge on unmount
+  // Cleanup notifications, background tasks, and app badge on unmount
   useEffect(() => {
     return () => {
       cleanupNotifications();
+      unregisterBackgroundTasks().catch(() => {
+        // Silently handle background task cleanup errors
+      });
       // Clear app badge when app is unmounted (async cleanup)
       clearAppBadge().catch(error => {
         // Silently handle badge cleanup errors during unmount
