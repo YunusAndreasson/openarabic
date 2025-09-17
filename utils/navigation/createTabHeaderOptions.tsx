@@ -1,13 +1,12 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import type { JSX } from 'react';
-import { Platform, Text } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import type { AppTab } from '@/types/enums';
 
 interface TabHeaderOptions {
   readonly title: AppTab;
-  readonly rightComponent?: () => JSX.Element;
+  readonly rightComponent?: () => React.ReactElement;
   readonly colors: {
     background: string;
     headingText: string;
@@ -35,30 +34,42 @@ export function createTabHeaderOptions({
     headerShadowVisible: false,
   };
 
-  const textStyle = {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontWeight: '600' as const,
-    color: textColor,
-    minWidth: 100,
-  };
-
-  if (Platform.OS === 'ios') {
-    return {
-      ...baseOptions,
-      headerTitle: '',
-      headerLeft: () => (
-        <Text style={textStyle} numberOfLines={1}>
-          {title}
-        </Text>
-      ),
-      headerRight: rightComponent,
-    };
-  }
-
   return {
     ...baseOptions,
-    title,
-    headerTitleStyle: { color: textColor },
-    headerRight: rightComponent,
+    headerTitle: () => (
+      <View
+        style={{
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 0,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+            fontWeight: '600',
+            color: textColor,
+            textAlign: 'left',
+            flex: 1,
+          }}
+          numberOfLines={1}
+        >
+          {title}
+        </Text>
+        {rightComponent && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+            }}
+          >
+            {rightComponent()}
+          </View>
+        )}
+      </View>
+    ),
   };
 }
