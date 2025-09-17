@@ -32,11 +32,14 @@
     "__mocks__/**",
     "__perf__/**",
     "babel.config.js",
+    "metro.config.js",
     "metro.config.cjs",
     "jest.config.js",
     "jest.setup.js",
     "expo-router/entry",
-    "expo/**"
+    "expo/**",
+    "@expo/metro-config",
+    "metro-minify-terser"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
