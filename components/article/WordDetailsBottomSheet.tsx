@@ -1,8 +1,4 @@
-import BottomSheet, {
-  BottomSheetBackdrop,
-  type BottomSheetBackdropProps,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import * as Haptics from 'expo-haptics';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -15,7 +11,7 @@ import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { AudioStatus } from '@/services/simpleAudioService';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
+import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { generateAudioUrl } from '@/utils/imageUtils';
 
@@ -282,13 +278,8 @@ const WordDetailsBottomSheetComponent = ({
     await onAddToStudy(word);
   }, [word, onAddToStudy]);
 
-  // Use built-in backdrop component
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} onPress={onClose} />
-    ),
-    [onClose]
-  );
+  // Use common backdrop component
+  const renderBackdrop = useBottomSheetBackdrop(onClose);
 
   // Don't render anything if not visible or no word
   if (!isVisible || !word) {

@@ -1,4 +1,4 @@
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -9,19 +9,17 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 interface DueWordsBottomSheetProps {
   isVisible: boolean;
   onClose: () => void;
 }
 
-const SNAP_POINTS = [450]; // Compact height with minimal spacing
-
 export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, onClose }) => {
   const colors = useColors();
   const { user } = useAuth();
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   // Use FSRS queries to get study words data
   const { allWords } = useFSRSQueries({
@@ -34,15 +32,12 @@ export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, 
     return allWords?.filter(word => word != null && word.root_id != null) ?? [];
   }, [allWords]);
 
-  // Snap point is static so define outside component
-  const snapPoints = SNAP_POINTS;
-
-  // Show/hide modal based on isVisible prop (same pattern as other bottom sheets)
+  // Show/hide modal based on isVisible prop
   useEffect(() => {
     if (isVisible) {
-      bottomSheetRef.current?.expand();
+      bottomSheetRef.current?.present();
     } else {
-      bottomSheetRef.current?.close();
+      bottomSheetRef.current?.dismiss();
     }
   }, [isVisible]);
 
@@ -57,20 +52,14 @@ export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, 
     [colors.elevation1, colors.modalIndicator]
   );
 
-  // Only render when visible (same pattern as other bottom sheets)
-  if (!isVisible) {
-    return null;
-  }
-
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={bottomSheetRef}
-      snapPoints={snapPoints}
-      onClose={onClose}
+      onDismiss={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={renderBackdrop}
-      {...COMMON_BOTTOM_SHEET_PROPS}
+      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
     >
       <BottomSheetView style={styles.container}>
         <BottomSheetHeader
@@ -83,7 +72,7 @@ export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, 
           <DueWordsPrognosisChart studyWords={filteredStudyWords} hideTitle={true} />
         </View>
       </BottomSheetView>
-    </BottomSheet>
+    </BottomSheetModal>
   );
 });
 

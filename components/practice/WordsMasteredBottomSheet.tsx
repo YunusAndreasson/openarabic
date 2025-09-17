@@ -1,9 +1,5 @@
-import BottomSheet, {
-  BottomSheetBackdrop,
-  type BottomSheetBackdropProps,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
@@ -13,48 +9,34 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 export interface WordsMasteredBottomSheetProps {
   isVisible: boolean;
   onClose: () => void;
 }
 
-const SNAP_POINTS = [450]; // Compact height with minimal spacing
-
 export const WordsMasteredBottomSheet = memo<WordsMasteredBottomSheetProps>(
   ({ isVisible, onClose }) => {
     const colors = useColors();
     const { user } = useAuth();
-    const bottomSheetRef = useRef<BottomSheet>(null);
+    const bottomSheetRef = useRef<BottomSheetModal>(null);
 
     const { allWords: studyWords } = useFSRSQueries({
       userId: user?.id,
     });
 
-    // Snap point is static so define outside component
-    const snapPoints = SNAP_POINTS;
-
-    // Show/hide modal based on isVisible prop (same pattern as other bottom sheets)
+    // Show/hide modal based on isVisible prop
     useEffect(() => {
       if (isVisible) {
-        bottomSheetRef.current?.expand();
+        bottomSheetRef.current?.present();
       } else {
-        bottomSheetRef.current?.close();
+        bottomSheetRef.current?.dismiss();
       }
     }, [isVisible]);
 
-    // Use built-in backdrop component (same as other bottom sheets)
-    const renderBackdrop = useCallback(
-      (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          onPress={onClose}
-        />
-      ),
-      [onClose]
-    );
+    // Use common backdrop component
+    const renderBackdrop = useBottomSheetBackdrop(onClose);
 
     const dynamicStyles = useMemo(
       () => ({
@@ -64,25 +46,14 @@ export const WordsMasteredBottomSheet = memo<WordsMasteredBottomSheetProps>(
       [colors.elevation1, colors.modalIndicator]
     );
 
-    // Only render when visible (same pattern as other bottom sheets)
-    if (!isVisible) {
-      return null;
-    }
-
     return (
-      <BottomSheet
+      <BottomSheetModal
         ref={bottomSheetRef}
-        index={0}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        enableOverDrag={false}
-        enableDynamicSizing={false}
-        animateOnMount={true}
-        activeOffsetY={[-10, 10]}
-        onClose={onClose}
+        onDismiss={onClose}
         backgroundStyle={dynamicStyles.bottomSheet}
         handleIndicatorStyle={dynamicStyles.indicator}
         backdropComponent={renderBackdrop}
+        {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
       >
         <BottomSheetView style={styles.container}>
           <BottomSheetHeader
@@ -95,7 +66,7 @@ export const WordsMasteredBottomSheet = memo<WordsMasteredBottomSheetProps>(
             <MasteryChart studyWords={studyWords ?? []} hideTitle={true} />
           </View>
         </BottomSheetView>
-      </BottomSheet>
+      </BottomSheetModal>
     );
   }
 );

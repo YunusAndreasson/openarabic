@@ -3,8 +3,8 @@ import { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { useCallback } from 'react';
 
 /**
- * Common backdrop component for bottom sheets
- * Reduces code duplication across all bottom sheet components
+ * Common backdrop component for bottom sheet modals
+ * Reduces code duplication across all bottom sheet modal components
  */
 export const useBottomSheetBackdrop = (onClose: () => void) => {
   return useCallback(
@@ -25,5 +25,16 @@ export const COMMON_BOTTOM_SHEET_PROPS = {
   enableOverDrag: false,
   enableDynamicSizing: false,
   animateOnMount: true,
+  activeOffsetY: [-10, 10] as [number, number],
+} as const;
+
+/**
+ * Common bottom sheet modal props for consistent behavior
+ * Reduces prop duplication across all bottom sheet modal components
+ */
+export const COMMON_BOTTOM_SHEET_MODAL_PROPS = {
+  enablePanDownToClose: true,
+  enableOverDrag: false,
+  enableDynamicSizing: true,
   activeOffsetY: [-10, 10] as [number, number],
 } as const;

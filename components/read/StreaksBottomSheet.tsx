@@ -1,9 +1,5 @@
-import BottomSheet, {
-  BottomSheetBackdrop,
-  type BottomSheetBackdropProps,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -12,6 +8,7 @@ import { StreakMetrics } from '@/components/read/StreakMetrics';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useStreakHistory } from '@/hooks/articles/useStreakHistory';
 import { useColors } from '@/hooks/theme/useColors';
+import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 interface StreaksBottomSheetProps {
   isVisible: boolean;
@@ -19,7 +16,7 @@ interface StreaksBottomSheetProps {
 }
 
 export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, onClose }) => {
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const colors = useColors();
 
   const {
@@ -30,25 +27,17 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     enabled: isVisible, // Only fetch when visible
   });
 
-  // Use a much smaller height to eliminate bottom padding
-  const snapPoints = [400];
-
-  // Show/hide modal based on isVisible prop (same pattern as other bottom sheets)
+  // Show/hide modal based on isVisible prop
   useEffect(() => {
     if (isVisible) {
-      bottomSheetRef.current?.expand();
+      bottomSheetRef.current?.present();
     } else {
-      bottomSheetRef.current?.close();
+      bottomSheetRef.current?.dismiss();
     }
   }, [isVisible]);
 
-  // Memoize backdrop component to prevent recreation
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} onPress={onClose} />
-    ),
-    [onClose]
-  );
+  // Use common backdrop component
+  const renderBackdrop = useBottomSheetBackdrop(onClose);
 
   // Memoize dynamic styles
   const dynamicStyles = useMemo(
@@ -125,28 +114,17 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     );
   }, [isStreakLoading, isStreakError, streakHistory]);
 
-  // Only render when visible (same pattern as other bottom sheets)
-  if (!isVisible) {
-    return null;
-  }
-
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={bottomSheetRef}
-      index={0}
-      snapPoints={snapPoints}
-      enablePanDownToClose
-      enableOverDrag={false}
-      enableDynamicSizing={false}
-      animateOnMount={true}
-      activeOffsetY={[-10, 10]}
-      onClose={onClose}
+      onDismiss={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={renderBackdrop}
+      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
     >
       <BottomSheetView style={styles.container}>{content}</BottomSheetView>
-    </BottomSheet>
+    </BottomSheetModal>
   );
 });
 
