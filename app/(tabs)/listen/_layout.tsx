@@ -1,52 +1,23 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
-import { Platform, Text } from 'react-native';
 
 import EditModeButton from '@/components/ui/EditModeButton';
-import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { AppTab } from '@/types/enums';
+import { createTabHeaderOptions } from '@/utils/navigation/createTabHeaderOptions';
 
 export default function ListenLayout(): JSX.Element {
   const colors = useColors();
-
-  const backgroundColor = colors?.background || '#FFFFFF';
-  const textColor = colors?.headingText || '#000000';
 
   return (
     <Stack>
       <Stack.Screen
         name="index"
-        options={{
-          headerShown: true,
-          headerStyle: {
-            backgroundColor,
-          },
-          headerTintColor: textColor,
-          headerShadowVisible: false,
-          ...(Platform.OS === 'ios'
-            ? {
-                headerTitle: '',
-                headerLeft: () => (
-                  <Text
-                    style={{
-                      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-                      fontWeight: '600',
-                      color: textColor,
-                      minWidth: 100,
-                    }}
-                  >
-                    {AppTab.LISTEN}
-                  </Text>
-                ),
-                headerRight: () => <EditModeButton type="listen" hideWhenEmpty={true} />,
-              }
-            : {
-                title: AppTab.LISTEN,
-                headerTitleStyle: { color: textColor },
-                headerRight: () => <EditModeButton type="listen" hideWhenEmpty={true} />,
-              }),
-        }}
+        options={createTabHeaderOptions({
+          title: AppTab.LISTEN,
+          rightComponent: () => <EditModeButton type="listen" hideWhenEmpty={true} />,
+          colors,
+        })}
       />
     </Stack>
   );

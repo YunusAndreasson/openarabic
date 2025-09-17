@@ -1,14 +1,13 @@
 import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
-import { Platform, Text } from 'react-native';
 
 import DoneButton from '@/components/ui/DoneButton';
 import EditModeButton from '@/components/ui/EditModeButton';
-import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { AppTab, UiAction } from '@/types/enums';
+import { createTabHeaderOptions } from '@/utils/navigation/createTabHeaderOptions';
 
 import { DictionaryButton } from '../_layout';
 
@@ -16,43 +15,15 @@ export default function VocabularyLayout(): JSX.Element {
   const colors = useColors();
   const { editMode } = useEditMode('dictionary');
 
-  const backgroundColor = colors?.background || '#FFFFFF';
-  const textColor = colors?.headingText || '#000000';
-
   return (
     <Stack>
       <Stack.Screen
         name="index"
-        options={{
-          headerShown: true,
-          headerStyle: {
-            backgroundColor,
-          },
-          headerTintColor: textColor,
-          headerShadowVisible: false,
-          ...(Platform.OS === 'ios'
-            ? {
-                headerTitle: '',
-                headerLeft: () => (
-                  <Text
-                    style={{
-                      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-                      fontWeight: '600',
-                      color: textColor,
-                      minWidth: 100,
-                    }}
-                  >
-                    {AppTab.PRACTICE}
-                  </Text>
-                ),
-                headerRight: () => <DictionaryButton hideWhenEmpty={true} />,
-              }
-            : {
-                title: AppTab.PRACTICE,
-                headerTitleStyle: { color: textColor },
-                headerRight: () => <DictionaryButton hideWhenEmpty={true} />,
-              }),
-        }}
+        options={createTabHeaderOptions({
+          title: AppTab.PRACTICE,
+          rightComponent: () => <DictionaryButton hideWhenEmpty={true} />,
+          colors,
+        })}
       />
       <Stack.Screen
         name="dictionary"

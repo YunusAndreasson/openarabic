@@ -1,19 +1,18 @@
 import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback } from 'react';
-import { Platform, Text } from 'react-native';
 
 import FilterButton from '@read/FilterButton';
 
 import { HeaderProfile } from '@/components/HeaderProfile';
 import DoneButton from '@/components/ui/DoneButton';
-import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
 import { getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { AppTab, UiAction } from '@/types/enums';
 import type { FilterParams } from '@/types/navigation.types';
+import { createTabHeaderOptions } from '@/utils/navigation/createTabHeaderOptions';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 /**
@@ -50,44 +49,15 @@ const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
 export default function ReadLayout(): JSX.Element {
   const colors = useColors();
 
-  const backgroundColor = colors?.background || '#FFFFFF';
-  const textColor = colors?.headingText || '#000000';
-
   return (
     <Stack>
       <Stack.Screen
         name="index"
-        options={{
-          headerShown: true,
-          headerStyle: {
-            backgroundColor,
-          },
-          headerTintColor: textColor,
-          headerShadowVisible: false,
-          ...(Platform.OS === 'ios'
-            ? {
-                headerTitle: '',
-                headerLeft: () => (
-                  <Text
-                    style={{
-                      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-                      fontWeight: '600',
-                      color: textColor,
-                      minWidth: 100,
-                    }}
-                    numberOfLines={1}
-                  >
-                    {AppTab.READ}
-                  </Text>
-                ),
-                headerRight: () => <HeaderProfile size={32} />,
-              }
-            : {
-                title: AppTab.READ,
-                headerTitleStyle: { color: textColor },
-                headerRight: () => <HeaderProfile size={32} />,
-              }),
-        }}
+        options={createTabHeaderOptions({
+          title: AppTab.READ,
+          rightComponent: () => <HeaderProfile size={32} />,
+          colors,
+        })}
       />
       <Stack.Screen
         name="filterModal"

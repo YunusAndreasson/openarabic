@@ -16,13 +16,6 @@ config.transformer.minifierConfig = {
 // Enable React Compiler optimizations
 config.transformer.reactCompiler = true;
 
-// Optimize for native builds
-config.serializer.customSerializer = require('@expo/metro-runtime').createSerializer({
-  // Native-specific optimizations
-  createModuleIdFactory: () => path => {
-    // Optimize module ID generation for native
-    return path.replace(__dirname, '').replace(/\\/g, '/');
-  },
-});
+// Native-specific optimizations are handled by Expo's default configuration
 
 module.exports = config;
