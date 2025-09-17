@@ -35,7 +35,7 @@ const WordDetailsBottomSheetComponent = ({
   const [audioStatus, setAudioStatus] = useState<AudioStatus>(simpleAudioService.getStatus());
 
   // Use Arabic word analysis for color-coding
-  const { hasComponents, coloredSegments, formattedAnalysis } = useArabicWordAnalysis(
+  const { hasComponents, coloredSegments, formattedAnalysis, analysis } = useArabicWordAnalysis(
     word?.word_form || '',
     word?.english || '',
     true
@@ -119,6 +119,18 @@ const WordDetailsBottomSheetComponent = ({
     }
 
     const matchPositions: { start: number; end: number; color: string }[] = [];
+
+    // Add bracket color coding for [the] injection
+    if (analysis?.hasBracketInjection) {
+      const bracketMatch = originalEnglish.match(/^\[the\]/);
+      if (bracketMatch) {
+        matchPositions.push({
+          start: 0,
+          end: 6, // "[the]" length
+          color: colors.tint, // Use tint color for brackets
+        });
+      }
+    }
 
     for (const section of componentSections) {
       if (!section.englishPart) continue;

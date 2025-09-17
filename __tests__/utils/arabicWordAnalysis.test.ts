@@ -557,4 +557,24 @@ describe('arabicWordAnalysis', () => {
       });
     });
   });
+
+  describe('Bracket Injection', () => {
+    it('should detect bracket injection for definite articles', () => {
+      const analysis = analyzeArabicWord('الكتاب', 'book');
+      expect(analysis).not.toBeNull();
+      expect(analysis?.hasBracketInjection).toBe(true);
+    });
+
+    it('should not detect bracket injection when the is already present', () => {
+      const analysis = analyzeArabicWord('الكتاب', 'the book');
+      expect(analysis).not.toBeNull();
+      expect(analysis?.hasBracketInjection).toBe(false);
+    });
+
+    it('should not detect bracket injection for divine names', () => {
+      const analysis = analyzeArabicWord('الله', 'Allah');
+      expect(analysis).not.toBeNull();
+      expect(analysis?.hasBracketInjection).toBe(false);
+    });
+  });
 });

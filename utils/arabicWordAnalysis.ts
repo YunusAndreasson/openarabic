@@ -27,6 +27,7 @@ export interface WordAnalysis {
   hasComponents: boolean;
   remainingArabic: string;
   remainingEnglish: string;
+  hasBracketInjection?: boolean;
 }
 
 // Pre-compiled regex patterns for better performance
@@ -278,6 +279,27 @@ function findDiacritic(arabic: string, english: string): AnalyzedComponent | und
 export function analyzeArabicWord(arabic: string, english: string): WordAnalysis {
   const normalized = normalizeArabic(arabic);
 
+  // Check for bracket injection (same logic as in useArabicWordAnalysis hook)
+  let hasBracketInjection = false;
+  const hasDefiniteArticle =
+    normalized.includes('ال') ||
+    normalized.startsWith('بال') ||
+    normalized.startsWith('لل') ||
+    normalized.startsWith('كال');
+
+  // Skip injection for divine names and words that already imply definiteness
+  const skipInjection =
+    normalized.includes('الله') || // Divine name "Allah"
+    english.toLowerCase().includes('god') ||
+    english.toLowerCase().includes('allah') ||
+    english.toLowerCase().includes('lord') ||
+    english.toLowerCase().includes('creator') ||
+    english.toLowerCase().includes('most high');
+
+  if (hasDefiniteArticle && !english.toLowerCase().includes('the') && !skipInjection) {
+    hasBracketInjection = true;
+  }
+
   // Check for diacritical prefixes in original text first (before normalization)
   const diacriticalPrefix = findComponent(arabic, english, ARABIC_PREFIXES, ComponentType.PREFIX);
 
@@ -323,6 +345,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     hasComponents: !!(resolvedPrefix || infix || resolvedSuffix || diacritic),
     remainingArabic: remaining.trim(),
     remainingEnglish: normalizeEnglish(english),
+    hasBracketInjection,
   };
 }
 

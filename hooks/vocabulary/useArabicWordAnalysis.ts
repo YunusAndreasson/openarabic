@@ -38,6 +38,7 @@ export function useArabicWordAnalysis(
     }
 
     let processedEnglish = englishTranslation;
+    let hasBracketInjection = false;
 
     // Inject "[the]" for Arabic words containing "ال" (definite article) patterns
     // This helps users learn that "ال" = "the" even when not explicitly translated
@@ -59,6 +60,7 @@ export function useArabicWordAnalysis(
 
     if (hasDefiniteArticle && !englishTranslation.toLowerCase().includes('the') && !skipInjection) {
       processedEnglish = `[the] ${englishTranslation}`;
+      hasBracketInjection = true;
     }
 
     // CRITICAL RULE: Single English words should NEVER have grammar color-coding applied
@@ -69,7 +71,17 @@ export function useArabicWordAnalysis(
       return null;
     }
 
-    return analyzeArabicWord(arabicWord, processedEnglish);
+    const wordAnalysis = analyzeArabicWord(arabicWord, processedEnglish);
+
+    // Add bracket injection flag to the analysis
+    if (wordAnalysis) {
+      return {
+        ...wordAnalysis,
+        hasBracketInjection,
+      };
+    }
+
+    return wordAnalysis;
   }, [arabicWord, englishTranslation, enabled]);
 
   // Memoize the formatted analysis

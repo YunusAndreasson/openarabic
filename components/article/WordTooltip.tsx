@@ -163,7 +163,7 @@ export const WordTooltip = memo(
     }, [visible, measureContainerOffset]);
 
     // Arabic word analysis for English color-coding
-    const { formattedAnalysis } = useArabicWordAnalysis(
+    const { formattedAnalysis, analysis } = useArabicWordAnalysis(
       arabicWord || '',
       text,
       !!(arabicWord && text)
@@ -252,6 +252,18 @@ export const WordTooltip = memo(
       }
 
       const matchPositions: { start: number; end: number; color: string }[] = [];
+
+      // Add bracket color coding for [the] injection
+      if (analysis?.hasBracketInjection) {
+        const bracketMatch = originalEnglish.match(/^\[the\]/);
+        if (bracketMatch) {
+          matchPositions.push({
+            start: 0,
+            end: 6, // "[the]" length
+            color: colors.tint, // Use tint color for brackets
+          });
+        }
+      }
 
       for (const section of componentSections) {
         if (!section.englishPart) continue;
