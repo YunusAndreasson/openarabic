@@ -8,7 +8,6 @@ import {
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -28,12 +27,6 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
-import amiriFont from '@/assets/fonts/Amiri.ttf';
-import interFont from '@/assets/fonts/Inter.ttf';
-import madinaFont from '@/assets/fonts/Madina.otf';
-import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
-import notoSansFont from '@/assets/fonts/NotoSans.ttf';
-import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import { ThemedText } from '@/components/ThemedText';
 import { MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/listen';
@@ -69,8 +62,14 @@ import { getEnvVar } from '@/utils/env';
 import { handleError } from '@/utils/errorHandling';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
 
-// Splash screen is now managed by expo-router v5's internal system
-// No manual preventAutoHideAsync needed - expo-router handles this automatically
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
+// Set the animation options for smooth fade out
+SplashScreen.setOptions({
+  duration: 1000,
+  fade: true,
+});
 
 // Sync React Query online status with device connectivity
 onlineManager.setEventListener(setOnline => {
@@ -160,15 +159,6 @@ function AppContent() {
 
   // Global audio state moved into AudioOverlays to avoid re-rendering the root
 
-  const [fontsLoaded] = useFonts({
-    NotoSans: notoSansFont,
-    Inter: interFont,
-    Amiri: amiriFont,
-    Madina: madinaFont,
-    Scheherazade: scheherazadeFont,
-    Nastaliq: nastaliqFont,
-  });
-
   const { preloadAppData, isLoaded } = useAppPreloader();
 
   useEffect(() => {
@@ -232,9 +222,6 @@ function AppContent() {
 
   // Wait for all resources before setting appReady
   useEffect(() => {
-    // Primary condition - fonts must be loaded
-    const fontsAreReady = fontsLoaded;
-
     // Either auth is ready or we've waited long enough
     const authIsReady = !isAuthLoading || session !== null;
 
@@ -242,18 +229,15 @@ function AppContent() {
     // This prevents the header glitch by showing the UI sooner
     const contentIsReady = isLoaded;
 
-    // Only proceed when fonts are ready AND (auth is ready OR we have content)
-    if (fontsAreReady && (authIsReady || contentIsReady)) {
+    // Only proceed when auth is ready OR we have content
+    // Fonts are now embedded at build time, so no need to wait for them
+    if (authIsReady || contentIsReady) {
       setAppReady(true);
 
       // Hide splash screen with animation when app is ready
-      setTimeout(() => {
-        SplashScreen.hideAsync().catch(() => {
-          // Silently handle splash screen hide errors
-        });
-      }, 100); // Small delay to ensure smooth transition
+      SplashScreen.hide();
     }
-  }, [fontsLoaded, isAuthLoading, session, isLoaded]);
+  }, [isAuthLoading, session, isLoaded]);
 
   // Initialize notifications when app is ready (Expo best practice)
   useEffect(() => {
@@ -293,12 +277,12 @@ function AppContent() {
 
   // Fallback timeout so the app doesn't remain stuck on the splash screen
   useEffect(() => {
-    if (!fontsLoaded || appReady) return;
+    if (appReady) return;
     const timer = setTimeout(() => {
       setAppReady(true);
     }, 10000);
     return () => clearTimeout(timer);
-  }, [fontsLoaded, appReady]);
+  }, [appReady]);
 
   // Cleanup effect for AppState subscription
   useEffect(() => {

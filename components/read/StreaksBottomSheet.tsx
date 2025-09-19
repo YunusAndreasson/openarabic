@@ -135,8 +135,9 @@ const styles = StyleSheet.create({
   indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   // Perfect visual hierarchy container structure
   container: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE, // 16px - consistent horizontal padding
-    paddingTop: LAYOUT.SPACING.MEDIUM, // 12px - breathing room from indicator
+    paddingHorizontal: LAYOUT.SPACING.XLARGE, // 24px - increased horizontal padding for better breathing room
+    paddingTop: LAYOUT.SPACING.LARGE, // 16px - increased top padding for better spacing from indicator
+    paddingBottom: LAYOUT.SPACING.LARGE, // 16px - added bottom padding for better content spacing
   },
   // Section 1: Header (highest hierarchy)
   header: {

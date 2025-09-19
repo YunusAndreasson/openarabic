@@ -12,20 +12,15 @@
     "primaryColor": "#5B7F68",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
       "buildNumber": "131",
       "appStoreUrl": "https://apps.apple.com/app/openarabic/id1594031029",
+      "newArchEnabled": true,
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio",
-          "processing"
-        ],
+        "UIBackgroundModes": ["audio", "processing"],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",
@@ -52,10 +47,7 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE"
       ],
-      "blockedPermissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ]
+      "blockedPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },
     "notification": {
       "icon": "./assets/images/oaLogo.png",
@@ -73,7 +65,19 @@
           "image": "./assets/images/oaLogo.png"
         }
       ],
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/NotoSans.ttf",
+            "./assets/fonts/Inter.ttf",
+            "./assets/fonts/Amiri.ttf",
+            "./assets/fonts/Madina.otf",
+            "./assets/fonts/Scheherazade.ttf",
+            "./assets/fonts/Nastaliq.ttf"
+          ]
+        }
+      ],
       [
         "@sentry/react-native/expo",
         {

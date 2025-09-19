@@ -223,9 +223,9 @@ export default function TabLayout(): JSX.Element {
           tabBarIconStyle: styles.tabBarIcon,
           tabBarItemStyle: { paddingTop: 4, paddingBottom: 4 },
           tabBarStyle: tabBarStyle,
-          freezeOnBlur: false,
-          animation: 'none', // FIXED: Disable tab animation to prevent black screen
-          lazy: false,
+          freezeOnBlur: true, // Keep screens in memory to prevent black screens
+          animation: 'none', // Disable animations to prevent black screens completely
+          lazy: false, // Pre-load all screens
         }}
       >
         {TAB_SCREENS.map(screen => (
