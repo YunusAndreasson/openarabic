@@ -4859,13 +4859,6 @@ expo-audio@~1.0.13:
   resolved "https://registry.yarnpkg.com/expo-audio/-/expo-audio-1.0.13.tgz#e9e79fece878296560f5d2f5080562232d0629e0"
   integrity sha512-Z91jMYv/BMpn5Dkyu204RyNl2EpXRx8HgScTYlwRRYewtfTH8NN+bwZQAApn33NwGhW1cIlcuG/XCAeJBr9l4Q==
 
-expo-background-fetch@^14.0.7:
-  version "14.0.7"
-  resolved "https://registry.yarnpkg.com/expo-background-fetch/-/expo-background-fetch-14.0.7.tgz#20888ae997ce9d62896370b8a01a4f28d1dd625c"
-  integrity sha512-vq/2w/I9OYkYbKn2YmMTzWEZm+Ddl8ObRtKR8s5kpfyGEIHz4rsIuHF1kpqHXuxI/DNZEhAN8fIO2nh+jNW5uQ==
-  dependencies:
-    expo-task-manager "~14.0.7"
-
 expo-background-task@^1.0.8:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/expo-background-task/-/expo-background-task-1.0.8.tgz#d1d1a3788d0055b780343cdbd0fb3563c4bebb2f"
@@ -4982,7 +4975,7 @@ expo-modules-core@3.0.17:
   dependencies:
     invariant "^2.2.4"
 
-expo-notifications@~0.32.10:
+expo-notifications@0.32.11:
   version "0.32.11"
   resolved "https://registry.yarnpkg.com/expo-notifications/-/expo-notifications-0.32.11.tgz#0d90d08efdf4693ceaa32ab8bb7455d56424c441"
   integrity sha512-4rLWC9Q4B7aQywXn9cKAlNY4p00CYKLJ23qZ0Pp/whkX0NxmI4MwJ20YhreV08gjHTTTWHpYU7jqYWpsjtPIxA==
@@ -8292,7 +8285,7 @@ react-is@^18.0.0, react-is@^18.3.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.3.1.tgz#e83557dc12eae63a99e003a46388b1dcbb44db7e"
   integrity sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==
 
-react-is@^19.0.0, react-is@^19.1.0:
+react-is@^19.1.0, react-is@^19.1.1:
   version "19.1.1"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.1.1.tgz#038ebe313cf18e1fd1235d51c87360eb87f7c36a"
   integrity sha512-tr41fA15Vn8p4X9ntI+yCyeGSf1TlYaY5vlTZfQmeLBrFo3psOPX6HhTDnFNL9uj3EhP0KAQ80cugCl4b4BERA==
@@ -8474,20 +8467,20 @@ react-style-singleton@^2.2.2, react-style-singleton@^2.2.3:
     get-nonce "^1.0.0"
     tslib "^2.0.0"
 
-react-test-renderer@19.0.0:
-  version "19.0.0"
-  resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-19.0.0.tgz#ca6fa322c58d4bfa34635788fe242a8c3daa4c7d"
-  integrity sha512-oX5u9rOQlHzqrE/64CNr0HB0uWxkCQmZNSfozlYvwE71TLVgeZxVf0IjouGEr1v7r1kcDifdAJBeOhdhxsG/DA==
-  dependencies:
-    react-is "^19.0.0"
-    scheduler "^0.25.0"
-
 react-test-renderer@19.1.0:
   version "19.1.0"
   resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-19.1.0.tgz#89e1baa9e45a6da064b9760f92251d5b8e1f34ab"
   integrity sha512-jXkSl3CpvPYEF+p/eGDLB4sPoDX8pKkYvRl9+rR8HxLY0X04vW7hCm1/0zHoUSjPZ3bDa+wXWNTDVIw/R8aDVw==
   dependencies:
     react-is "^19.1.0"
+    scheduler "^0.26.0"
+
+react-test-renderer@19.1.1:
+  version "19.1.1"
+  resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-19.1.1.tgz#c1e57b7a9c7291e3f52c489022071ac39f55155a"
+  integrity sha512-aGRXI+zcBTtg0diHofc7+Vy97nomBs9WHHFY1Csl3iV0x6xucjNYZZAkiVKGiNYUv23ecOex5jE67t8ZzqYObA==
+  dependencies:
+    react-is "^19.1.1"
     scheduler "^0.26.0"
 
 react@19.1.0:

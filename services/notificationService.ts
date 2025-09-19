@@ -348,3 +348,17 @@ export async function canUseBadge(): Promise<boolean> {
     return false;
   }
 }
+
+// New feature: Clear last notification response (SDK 54+)
+export async function clearLastNotificationResponse(): Promise<boolean> {
+  try {
+    await Notifications.clearLastNotificationResponseAsync();
+    return true;
+  } catch (error) {
+    handleError(error as Error, {
+      showToast: false,
+      analyticsEventName: 'Clear_Last_Notification_Response_Error',
+    });
+    return false;
+  }
+}

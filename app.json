@@ -91,7 +91,9 @@
         {
           "icon": "./assets/images/oaLogo.png",
           "color": "#5B7F68",
-          "defaultChannel": "default"
+          "defaultChannel": "reminders",
+          "sounds": [],
+          "enableBackgroundRemoteNotifications": false
         }
       ],
       "expo-audio",

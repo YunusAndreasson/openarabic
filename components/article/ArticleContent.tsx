@@ -65,14 +65,12 @@ const createFlashListConfig = <T,>({
   data,
   renderItem,
   keyExtractor,
-  estimatedItemSize,
   contentContainerStyle,
   ListHeaderComponent,
   ListFooterComponent,
   onScroll,
   onViewableItemsChanged,
   viewabilityConfig,
-  overrideItemLayout,
   drawDistance,
   scrollEventThrottle = 16,
   showsVerticalScrollIndicator = false,
@@ -86,14 +84,12 @@ const createFlashListConfig = <T,>({
   data: T[];
   renderItem: (info: { item: T; index: number }) => React.ReactElement;
   keyExtractor: (item: T, index: number) => string;
-  estimatedItemSize: number;
   contentContainerStyle?: FlashListProps<T>['contentContainerStyle'];
   ListHeaderComponent?: React.ComponentType<unknown> | React.ReactElement | null;
   ListFooterComponent?: React.ComponentType<unknown> | React.ReactElement | null;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onViewableItemsChanged?: (info: { viewableItems: ViewToken[] }) => void;
   viewabilityConfig?: ViewabilityConfig;
-  overrideItemLayout?: (layout: { span?: number; size?: number }) => void;
   drawDistance?: number;
   scrollEventThrottle?: number;
   showsVerticalScrollIndicator?: boolean;
@@ -107,14 +103,12 @@ const createFlashListConfig = <T,>({
   data,
   renderItem,
   keyExtractor,
-  estimatedItemSize,
   contentContainerStyle,
   ListHeaderComponent,
   ListFooterComponent,
   onScroll,
   onViewableItemsChanged,
   viewabilityConfig,
-  overrideItemLayout,
   drawDistance,
   scrollEventThrottle,
   showsVerticalScrollIndicator,
@@ -516,14 +510,13 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Memoize the key extractor to prevent inline function creation
     const keyExtractor = useCallback((item: Tables<'article_sentences'>) => item.id.toString(), []);
 
-    // Create FlashList configuration
+    // Create FlashList v2 configuration - no estimates needed
     const flashListConfig = useMemo(
       () =>
         createFlashListConfig({
           data: sortedSentences,
           renderItem: renderSentenceItem,
           keyExtractor,
-          estimatedItemSize: SENTENCE_ITEM_HEIGHT,
           contentContainerStyle,
           ListHeaderComponent: headerComponent,
           ListFooterComponent: footerComponent,
@@ -539,6 +532,7 @@ export const ArticleContent = memo<ArticleContentProps>(
           alwaysBounceVertical: true,
           bounces: true,
           overScrollMode: 'always',
+          // v2 performance optimizations - maxItemsInRecyclePool is set directly on FlashList
           // Do not set an initialScrollIndex so FlashList starts at absolute top
           // Force re-render when highlight state changes
           extraData: {
@@ -569,6 +563,7 @@ export const ArticleContent = memo<ArticleContentProps>(
               ref={scrollViewRef as unknown as React.RefObject<any>}
               key={`article-${id}`}
               {...flashListConfig}
+              maxItemsInRecyclePool={30} // Control memory usage for sentence items
               onScrollToIndexFailed={({ index }: { index: number }) => {
                 // Fallback: estimate offset using fixed item height and account for header
                 const estimatedOffset = Math.max(

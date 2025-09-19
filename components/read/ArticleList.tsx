@@ -18,16 +18,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ArticleCard from '@read/ArticleCard';
 
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import { generateImageUrl } from '@/utils/imageUtils';
 
-// Optimized constants for better performance
-const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + LAYOUT.SPACING.XXXLARGE * 8;
-const DRAW_DISTANCE = ITEM_HEIGHT * LIST_DRAW_DISTANCE_MULTIPLIER;
-const ESTIMATED_LIST_SIZE = { height: ITEM_HEIGHT * 10, width: SCREEN_WIDTH };
+// v2 optimized constants - no need for item height estimates
+const DRAW_DISTANCE = LAYOUT.CARD.HEIGHT.LIST_ITEM * LIST_DRAW_DISTANCE_MULTIPLIER;
 
 // Static key extractor for better performance
 const articleKeyExtractor = (item: Article) => `article-${item.id}`;
@@ -168,13 +166,12 @@ const ArticleList = forwardRef<any, ArticleListProps>(
       [contentContainerStyle, stableInsetsBottomRef.current]
     );
 
-    // FlashList configuration - empty data array since articles are displayed in header
+    // FlashList v2 configuration - no estimates needed, automatic layout
     const flashListConfig = useMemo(
       () => ({
         data: [] as Article[], // Empty data since articles are in header
         renderItem,
         keyExtractor: articleKeyExtractor,
-        estimatedItemSize: ITEM_HEIGHT,
         showsVerticalScrollIndicator: false,
         contentContainerStyle: safeContentContainerStyle,
         ListHeaderComponent,
@@ -182,23 +179,10 @@ const ArticleList = forwardRef<any, ArticleListProps>(
         refreshControl,
         scrollEventThrottle: 16,
         ItemSeparatorComponent: SeparatorComponent,
-        overrideItemLayout: (
-          layout: { span?: number; size?: number },
-          _item: Article,
-          _index: number,
-          _maxColumns: number
-        ) => {
-          layout.size = ITEM_HEIGHT;
-        },
         drawDistance: DRAW_DISTANCE,
-        estimatedListSize: ESTIMATED_LIST_SIZE,
         removeClippedSubviews: true,
-        maxToRenderPerBatch: 10,
-        windowSize: 10,
-        initialNumToRender: 5,
-        updateCellsBatchingPeriod: 50,
-        disableIntervalMomentum: true,
-        disableScrollViewPanResponder: false,
+        // v2 performance optimizations
+        maxItemsInRecyclePool: 20, // Control memory usage for better performance
         keyboardShouldPersistTaps: 'handled' as const,
       }),
       [

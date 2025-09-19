@@ -151,6 +151,9 @@ export default function DictionaryScreen(): JSX.Element {
             contentContainerStyle={{ paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE }}
             showsVerticalScrollIndicator={false}
             extraData={editMode}
+            // v2 performance optimizations
+            maxItemsInRecyclePool={40} // Control memory usage for vocabulary lists
+            // v2 automatically handles layout - no estimates needed
           />
         </View>
       ) : (

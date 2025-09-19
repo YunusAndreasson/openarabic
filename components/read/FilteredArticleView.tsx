@@ -16,7 +16,7 @@ import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
-import { overrideFixedHeight } from '@/utils/list';
+// v2 handles layout automatically - no overrideFixedHeight needed
 
 // Use responsive height for filtered article items
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
@@ -227,7 +227,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
 
   const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
 
-  const overrideItemLayout = useCallback(overrideFixedHeight(ITEM_HEIGHT), []);
+  // v2 handles layout automatically - no overrideItemLayout needed
 
   // Memoize empty state props - only shows when filters eliminate all results
   const emptyStateProps = useMemo(
@@ -275,7 +275,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
           ListFooterComponent={ListFooterComponent}
         />
       ) : (
-        // Use FlashList in normal mode
+        // Use FlashList v2 in normal mode - automatic layout
         <FlashList<Article>
           data={visibleArticles}
           drawDistance={ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER}
@@ -287,7 +287,8 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
           ListHeaderComponent={ListHeaderComponent}
           ListFooterComponent={ListFooterComponent}
           renderItem={renderItem}
-          overrideItemLayout={overrideItemLayout}
+          // v2 performance optimizations
+          maxItemsInRecyclePool={25} // Control memory usage for article lists
         />
       )}
     </ThemedView>

@@ -48,7 +48,7 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({ articles })
 
   const keyExtractor = useCallback((item: Article) => `featured-${item.id}`, []);
 
-  // getItemLayout is not supported by FlashList types; rely on estimatedItemSize and snap props
+  // v2 handles layout automatically - no size estimates needed
 
   const renderItem = useCallback(
     (info: { item: Article; index: number }) => {
@@ -99,7 +99,8 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({ articles })
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
         removeClippedSubviews={true}
-        // Rely on FlashList defaults for render/window sizes
+        // v2 performance optimizations
+        maxItemsInRecyclePool={8} // Control memory usage for horizontal slider
         decelerationRate="fast"
         snapToAlignment="start"
         snapToInterval={CARD_WIDTH + CARD_SPACING}

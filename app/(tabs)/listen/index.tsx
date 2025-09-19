@@ -25,7 +25,7 @@ import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
 import { AudioAction, ToastType } from '@/types/enums';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { generateImageUrl } from '@/utils/imageUtils';
-import { overrideFixedHeight } from '@/utils/list';
+// v2 handles layout automatically - no overrideFixedHeight needed
 
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
@@ -330,8 +330,9 @@ export default function ListenScreen(): JSX.Element {
             ItemSeparatorComponent={ItemSeparator}
             ListEmptyComponent={EmptyStateComponent}
             ListHeaderComponent={null}
-            overrideItemLayout={overrideFixedHeight(ITEM_HEIGHT)}
             renderItem={renderItem}
+            // v2 performance optimizations
+            maxItemsInRecyclePool={15} // Control memory usage for reading list
           />
         )}
       </ThemedView>
