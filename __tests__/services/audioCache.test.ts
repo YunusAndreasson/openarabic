@@ -54,12 +54,8 @@ describe('audioCache', () => {
   const cachedPath = `/cache/audio/${hash}.mp3`;
 
   test('getAudio returns cached file path when it exists', async () => {
-    const FileSystemLegacy = require('expo-file-system/legacy');
-
     // Mock crypto to return the expected hash
     mockDigestStringAsync.mockResolvedValue(hash);
-
-    (FileSystemLegacy.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
 
     // Reset mocks
     mockDirectoryConstructor.mockClear();
@@ -86,11 +82,10 @@ describe('audioCache', () => {
   });
 
   test('getAudio downloads file when not cached', async () => {
-    const FileSystemLegacy = require('expo-file-system/legacy');
-
     // Mock crypto to return the expected hash
     mockDigestStringAsync.mockResolvedValue(hash);
 
+    const FileSystemLegacy = require('expo-file-system/legacy');
     (FileSystemLegacy.getInfoAsync as jest.Mock)
       .mockResolvedValueOnce({ exists: true }) // constructor check
       .mockResolvedValueOnce({ exists: true }); // cache dir exists during download
@@ -133,13 +128,10 @@ describe('audioCache', () => {
   });
 
   test('getAudio returns original URL on failed download', async () => {
-    const FileSystemLegacy = require('expo-file-system/legacy');
     const { handleError } = require('../../utils/errorHandling');
 
     // Mock crypto to return the expected hash
     mockDigestStringAsync.mockResolvedValue(hash);
-
-    (FileSystemLegacy.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
 
     // Clear mocks before test
     mockDirectoryConstructor.mockClear();
@@ -179,13 +171,8 @@ describe('audioCache', () => {
   });
 
   test('clearCache removes files and recreates directory', async () => {
-    const FileSystemLegacy = require('expo-file-system/legacy');
-    (FileSystemLegacy.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
-
     // Clear mocks
     mockDirectoryConstructor.mockClear();
-    (FileSystemLegacy.deleteAsync as jest.Mock).mockClear();
-    (FileSystemLegacy.makeDirectoryAsync as jest.Mock).mockClear();
 
     // Mock Directory to handle multiple calls
     // First call: constructor (ensureCacheDirectoryExists) - exists: false
@@ -209,6 +196,7 @@ describe('audioCache', () => {
 
     await audioCache.clearCache();
 
+    const FileSystemLegacy = require('expo-file-system/legacy');
     expect(FileSystemLegacy.deleteAsync).toHaveBeenCalledWith('/cache/audio/');
     expect(FileSystemLegacy.makeDirectoryAsync).toHaveBeenCalledWith('/cache/audio/', {
       intermediates: true,
@@ -216,10 +204,8 @@ describe('audioCache', () => {
   });
 
   test('clearCache rethrows errors from deleteAsync', async () => {
-    const FileSystemLegacy = require('expo-file-system/legacy');
     const { handleError } = require('../../utils/errorHandling');
     const err = new Error('fail');
-    (FileSystemLegacy.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
 
     // Clear mocks
     mockDirectoryConstructor.mockClear();
@@ -230,6 +216,7 @@ describe('audioCache', () => {
       exists: true,
     }));
 
+    const FileSystemLegacy = require('expo-file-system/legacy');
     (FileSystemLegacy.deleteAsync as jest.Mock).mockRejectedValueOnce(err);
     audioCache = require('../../services/audioCache').audioCache;
 
@@ -238,9 +225,6 @@ describe('audioCache', () => {
   });
 
   test('getCacheSize sums file sizes correctly', async () => {
-    const FileSystemLegacy = require('expo-file-system/legacy');
-    (FileSystemLegacy.getInfoAsync as jest.Mock).mockResolvedValueOnce({ exists: true }); // constructor check
-
     // Clear mocks
     mockDirectoryConstructor.mockClear();
     mockFileConstructor.mockClear();
@@ -252,6 +236,7 @@ describe('audioCache', () => {
     }));
 
     // Mock legacy readDirectoryAsync to return file names
+    const FileSystemLegacy = require('expo-file-system/legacy');
     (FileSystemLegacy.readDirectoryAsync as jest.Mock).mockResolvedValue(['one.mp3', 'two.mp3']);
 
     // Mock File instances with sizes

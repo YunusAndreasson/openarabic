@@ -30,7 +30,7 @@ export class AudioCacheManager {
     try {
       const cacheDir = new Directory(this.cacheDir);
       if (!cacheDir.exists) {
-        // Use legacy API to avoid deprecation warning
+        // Note: Using legacy API until modern Directory.makeDirectoryAsync() is available
         await FileSystemLegacy.makeDirectoryAsync(this.cacheDir, { intermediates: true });
       }
     } catch (error) {
@@ -141,7 +141,7 @@ export class AudioCacheManager {
     try {
       const cacheDir = new Directory(this.cacheDir);
       if (cacheDir.exists) {
-        // Use legacy API to avoid deprecation warning
+        // Note: Using legacy API until modern Directory.deleteAsync() is available
         await FileSystemLegacy.deleteAsync(this.cacheDir);
         await this.ensureCacheDirectoryExists();
       }
@@ -163,11 +163,11 @@ export class AudioCacheManager {
         return 0;
       }
 
-      // Use legacy API since getFilesAsync is not available in current Expo version
+      // Note: Using legacy API until modern Directory.list() returns File instances with size
       const fileNames = await FileSystemLegacy.readDirectoryAsync(this.cacheDir);
       const files = fileNames.map(fileName => new File(this.cacheDir + fileName));
 
-      const totalSize = files.reduce((size, file) => {
+      const totalSize = files.reduce((size: number, file: File) => {
         if (file.exists && file.size !== null) {
           return size + file.size;
         }
