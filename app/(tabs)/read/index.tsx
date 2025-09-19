@@ -24,7 +24,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
-import type { Article, Category } from '@/types/articles.types';
+import type { Category } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
 
@@ -132,16 +132,7 @@ export default function ReadScreen(): JSX.Element {
     }
   }, [isRefreshing, queryClient, user?.id]);
 
-  const handleArticlePress = useCallback(
-    (article: Article) => {
-      // Prefetch article data after navigation animation completes
-      InteractionManager.runAfterInteractions(() => {
-        prefetchArticle(article.id);
-      });
-      router.push(getArticleRoute(article.id, article.title));
-    },
-    [prefetchArticle]
-  );
+  // Note: Article navigation is now handled by Link components in ArticleCard
 
   const handleSelectCategory = useCallback(
     (categoryId: number) => {
@@ -166,18 +157,13 @@ export default function ReadScreen(): JSX.Element {
   const ListHeaderComponent = useMemo(() => {
     return (
       <View style={styles.headerContainer}>
-        <IntelligentArticleSection
-          articlesData={articlesData}
-          refreshKey={refreshKey}
-          onArticlePress={handleArticlePress}
-        />
+        <IntelligentArticleSection articlesData={articlesData} refreshKey={refreshKey} />
         <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
       </View>
     );
   }, [
     articlesData, // Articles data changes less frequently than other values
     refreshKey, // Only changes on manual refresh
-    handleArticlePress, // Stable callback
     categoriesWithArticles, // Computed value, changes when articles/categories change
     handleSelectCategory, // Stable callback
   ]);
@@ -213,7 +199,6 @@ export default function ReadScreen(): JSX.Element {
         ListHeaderComponent={ListHeaderComponent}
         ListFooterComponent={ListFooterComponent}
         progressViewOffset={LAYOUT.SPACING.XLARGE}
-        onArticlePress={handleArticlePress}
         onRefresh={handleRefresh}
       />
 

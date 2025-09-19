@@ -12,7 +12,6 @@ import { generateImageUrl } from '@/utils/imageUtils';
 
 interface HorizontalArticleSliderProps {
   articles: Article[];
-  onArticlePress: (article: Article) => void;
 }
 
 // Calculate card width based on screen width and spacing
@@ -36,23 +35,14 @@ const getContentAwareHeight = (summary: string): number => {
 /**
  * Horizontal slider displaying multiple articles in a swipeable ScrollView
  */
-const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
-  articles,
-  onArticlePress,
-}) => {
+const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({ articles }) => {
   const colors = useColors();
   const lastVisibleCardIndex = useRef<number>(-1);
 
   // Limit to 5 articles for the slider
   const displayArticles = articles.slice(0, 5);
 
-  // Memoize the article press handler to prevent inline function creation
-  const handleArticlePress = useCallback(
-    (article: Article) => {
-      onArticlePress(article);
-    },
-    [onArticlePress]
-  );
+  // Note: Navigation is now handled by Link component in ArticleCard
 
   // Memoize the article cards to prevent unnecessary re-renders
 
@@ -76,11 +66,10 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
         { shadowColor: colors.shadow, ...LAYOUT.ELEVATION.SUBTLE },
       ];
 
-      const onPress = () => handleArticlePress(info.item);
-
       return (
         <View style={containerStyle}>
           <ArticleCard
+            article={info.item}
             author={info.item.author.name}
             category={info.item.category.name}
             categoryForDisplay={info.item.category.name}
@@ -88,12 +77,13 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
             style={cardStyle}
             summary={String(info.item.summary)}
             title={info.item.title}
-            onPress={onPress}
+            prefetch={false}
+            isRelatedArticle={false}
           />
         </View>
       );
     },
-    [colors.card, colors.shadow, handleArticlePress]
+    [colors.card, colors.shadow]
   );
 
   // Skip rendering if no articles

@@ -70,8 +70,8 @@ export default function ReviewScreen(): JSX.Element {
     return (
       <CompletionScreen
         sessionMetrics={sessionMetrics}
-        onClose={handleClose}
         testID="completion-screen"
+        fromRemember={fromRemember}
       />
     );
   }

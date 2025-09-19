@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 import type { JSX } from 'react';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -9,8 +10,10 @@ import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import Pill from '@/components/ui/Pill';
 import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { getArticleRoute } from '@/constants/routes';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -48,14 +51,17 @@ const GRADIENT_STYLE = {
   height: GRADIENT_HEIGHT_PERCENTAGE,
 } as const;
 
-// Simplified interface specifically for ArticleCard (always article variant)
-type ArticleCardProps = Omit<BaseArticleCardProps, 'variant'> & {
+// Enhanced interface for ArticleCard
+type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
   author: string;
   category: string;
   categoryForDisplay: string;
   imageUrl: string;
   summary: string;
   title: string;
+  article: Article; // Full article object for navigation
+  prefetch?: boolean; // Enable prefetching for better performance
+  isRelatedArticle?: boolean; // For related articles navigation
 };
 
 // Custom comparison function for memo optimization
@@ -71,7 +77,9 @@ const ArticleCardComparison = (
     prevProps.category !== nextProps.category ||
     prevProps.categoryForDisplay !== nextProps.categoryForDisplay ||
     prevProps.summary !== nextProps.summary ||
-    prevProps.onPress !== nextProps.onPress ||
+    prevProps.article.id !== nextProps.article.id ||
+    prevProps.prefetch !== nextProps.prefetch ||
+    prevProps.isRelatedArticle !== nextProps.isRelatedArticle ||
     prevProps.testID !== nextProps.testID
   ) {
     return false;
@@ -121,6 +129,7 @@ const createSummaryStyle = () => ({
 
 /**
  * High-performance article card component optimized for list rendering
+ * Now with Expo Router v6 Link integration for better performance and native feel
  */
 function ArticleCardComponent({
   title,
@@ -130,8 +139,10 @@ function ArticleCardComponent({
   categoryForDisplay,
   summary,
   style,
-  onPress,
   testID,
+  article,
+  prefetch = true,
+  isRelatedArticle = false,
 }: ArticleCardProps): JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -195,43 +206,78 @@ function ArticleCardComponent({
     [gradientColors]
   );
 
-  return (
-    <BaseCard style={style} onPress={onPress} testID={testID}>
-      <View style={imageContainerStyle}>
-        <EnhancedImage style={styles.image} source={imageUrl} />
-        <LinearGradient {...gradientProps} />
-      </View>
+  // Generate article route with proper parameters
+  const articleHref = useMemo(
+    () => getArticleRoute(article.id, article.title),
+    [article.id, article.title]
+  );
 
-      <View style={styles.pillContainer}>
-        <Pill id={category} label={capitalizedCategory} variant="category" />
-      </View>
-
-      <View style={styles.contentContainer}>
-        <View style={styles.textContainer}>
-          <ThemedText
-            colorName="headingText"
-            numberOfLines={MAX_TITLE_LINES}
-            style={titleStyle}
-            type="heading3"
-          >
-            {title}
-          </ThemedText>
-
-          <ThemedText
-            colorName="authorText"
-            numberOfLines={MAX_AUTHOR_LINES}
-            style={authorStyle}
-            type="label"
-          >
-            {authorDisplayText}
-          </ThemedText>
-
-          <ThemedText colorName="captionText" type="caption" style={summaryStyle}>
-            {summary}
-          </ThemedText>
+  // Create the card content component
+  const cardContent = useMemo(
+    () => (
+      <>
+        <View style={imageContainerStyle}>
+          <EnhancedImage style={styles.image} source={imageUrl} />
+          <LinearGradient {...gradientProps} />
         </View>
-      </View>
-    </BaseCard>
+
+        <View style={styles.pillContainer}>
+          <Pill id={category} label={capitalizedCategory} variant="category" />
+        </View>
+
+        <View style={styles.contentContainer}>
+          <View style={styles.textContainer}>
+            <ThemedText
+              colorName="headingText"
+              numberOfLines={MAX_TITLE_LINES}
+              style={titleStyle}
+              type="heading3"
+            >
+              {title}
+            </ThemedText>
+
+            <ThemedText
+              colorName="authorText"
+              numberOfLines={MAX_AUTHOR_LINES}
+              style={authorStyle}
+              type="label"
+            >
+              {authorDisplayText}
+            </ThemedText>
+
+            <ThemedText colorName="captionText" type="caption" style={summaryStyle}>
+              {summary}
+            </ThemedText>
+          </View>
+        </View>
+      </>
+    ),
+    [
+      imageContainerStyle,
+      imageUrl,
+      gradientProps,
+      category,
+      capitalizedCategory,
+      titleStyle,
+      title,
+      authorStyle,
+      authorDisplayText,
+      summaryStyle,
+      summary,
+    ]
+  );
+
+  return (
+    <Link
+      href={articleHref}
+      prefetch={prefetch}
+      push={!isRelatedArticle}
+      dangerouslySingular={true}
+    >
+      <BaseCard style={style} testID={testID}>
+        {cardContent}
+      </BaseCard>
+    </Link>
   );
 }
 

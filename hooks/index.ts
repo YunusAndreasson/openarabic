@@ -8,9 +8,8 @@ export * from './auth';
 export * from './theme';
 
 // Data hooks
-export * from './vocabulary';
-export * from './articles';
 export * from './review';
+export * from './vocabulary';
 
 // Practice hooks
 export * from './practice';

@@ -49,20 +49,16 @@ const SeparatorComponent = () => <View style={styles.separator} />;
 
 interface ArticleItemProps {
   item: Article;
-  onPress: (article: Article) => void;
 }
 
-const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
-  const [isPending, startTransition] = useTransition();
+const ArticleItem = memo(({ item }: ArticleItemProps) => {
+  const [isPending] = useTransition();
 
-  const handlePress = useCallback(() => {
-    startTransition(() => {
-      onPress(item);
-    });
-  }, [item, onPress]);
+  // Note: Navigation is now handled by Link component in ArticleCard
 
   return (
     <ArticleCard
+      article={item}
       author={item.author.name}
       category={item.category.name}
       categoryForDisplay={item.category.name}
@@ -70,7 +66,8 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
       style={[styles.articleCard, isPending && styles.pendingCard]}
       summary={String(item.summary)}
       title={item.title}
-      onPress={handlePress}
+      prefetch={true}
+      isRelatedArticle={false}
       testID={`article-${item.id}`}
     />
   );
@@ -80,7 +77,6 @@ ArticleItem.displayName = 'ArticleItem';
 
 interface ArticleListProps {
   onRefresh?: () => void;
-  onArticlePress: (article: Article) => void;
   ListHeaderComponent?: ComponentType<object> | ReactElement | null;
   ListFooterComponent?: ComponentType<object> | ReactElement | null;
   contentContainerStyle?: StyleProp<ViewStyle>;
@@ -92,7 +88,6 @@ const ArticleList = forwardRef<any, ArticleListProps>(
   (
     {
       onRefresh,
-      onArticlePress,
       ListHeaderComponent,
       ListFooterComponent,
       contentContainerStyle,
@@ -123,8 +118,8 @@ const ArticleList = forwardRef<any, ArticleListProps>(
 
     // Optimized render item with stable reference
     const renderItem: ListRenderItem<Article> = useCallback(
-      ({ item }) => <ArticleItem item={item} onPress={onArticlePress} />,
-      [onArticlePress]
+      ({ item }) => <ArticleItem item={item} />,
+      []
     );
 
     // Optimized refresh handler

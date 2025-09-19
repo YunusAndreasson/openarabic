@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import React, { memo, useCallback, useMemo } from 'react';
+import { Link } from 'expo-router';
+import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ListenListItemCard } from '@/components/listen/ListenListItemCard';
@@ -24,11 +24,6 @@ interface RelatedArticlesSectionProps {
    * Maximum number of related articles to show (default: 5)
    */
   maxArticles?: number;
-
-  /**
-   * Optional custom navigation handler
-   */
-  onArticlePress?: (article: Article) => void;
 }
 
 /**
@@ -38,7 +33,7 @@ interface RelatedArticlesSectionProps {
  * Uses existing article selection logic for consistency and efficiency.
  */
 export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
-  ({ currentArticleId, articlesData, maxArticles = 5, onArticlePress }) => {
+  ({ currentArticleId, articlesData, maxArticles = 5 }) => {
     // Filter out current article efficiently with memoization
     const filteredArticles = useMemo(() => {
       return articlesData.filter(article => article.id !== currentArticleId);
@@ -56,36 +51,28 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
       return selectedArticles.slice(0, maxArticles);
     }, [selectedArticles, maxArticles]);
 
-    // Default navigation handler using router.replace for smooth transitions
-    // Haptics intentionally disabled for related articles below sentences
-    const defaultNavigationHandler = useCallback((article: Article) => {
-      router.replace(getArticleRoute(article.id, article.title));
-    }, []);
-
-    const handleArticlePress = onArticlePress || defaultNavigationHandler;
-
-    // Memoize the article press handler to prevent inline function creation
-    const createArticlePressHandler = useCallback(
-      (article: Article) => {
-        return () => handleArticlePress(article);
-      },
-      [handleArticlePress]
-    );
+    // Note: Navigation is now handled by Link component with dangerouslySingular
 
     // Memoize the article cards to prevent unnecessary re-renders
     const articleCards = useMemo(() => {
       return relatedArticles.map((article, index) => (
         <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
-          <ListenListItemCard
-            title={article.title}
-            author={article.author.name}
-            difficultyLevel={article.difficulty_level}
-            imageUrl={generateImageUrl(article.image_url)}
-            onPress={createArticlePressHandler(article)}
-          />
+          <Link
+            href={getArticleRoute(article.id, article.title)}
+            replace
+            dangerouslySingular={true}
+            asChild
+          >
+            <ListenListItemCard
+              title={article.title}
+              author={article.author.name}
+              difficultyLevel={article.difficulty_level}
+              imageUrl={generateImageUrl(article.image_url)}
+            />
+          </Link>
         </View>
       ));
-    }, [relatedArticles, createArticlePressHandler]);
+    }, [relatedArticles]);
 
     // Early return if no articles to show
     if (relatedArticles.length === 0) {

@@ -9,20 +9,18 @@ interface GenericFeaturedSectionProps {
   articlesData: Article[];
   refreshKey: number;
   scope?: string;
-  onArticlePress: (article: Article) => void;
 }
 
 function GenericFeaturedSectionInternal({
   articlesData,
   refreshKey,
   scope = 'global',
-  onArticlePress,
 }: GenericFeaturedSectionProps): JSX.Element | null {
   const { article } = useFeaturedArticleSelection(articlesData, refreshKey, scope);
 
   if (!article) return null;
 
-  return <FeaturedSection article={article} onPress={onArticlePress} />;
+  return <FeaturedSection article={article} />;
 }
 
 export default memo(GenericFeaturedSectionInternal);

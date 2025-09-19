@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import HorizontalArticleSlider from '@read/HorizontalArticleSlider';
 
@@ -21,11 +21,6 @@ interface HorizontalFeaturedSectionProps {
    * Scope identifier for caching ('global', 'category-{id}', etc.)
    */
   scope?: string;
-
-  /**
-   * Callback when an article is pressed
-   */
-  onArticlePress: (article: Article) => void;
 }
 
 /**
@@ -38,7 +33,6 @@ const HorizontalFeaturedSectionComparison = (
   // Quick path comparisons first (most likely to change)
   if (prevProps.refreshKey !== nextProps.refreshKey) return false;
   if (prevProps.scope !== nextProps.scope) return false;
-  if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
 
   // Array reference and length checks
   if (prevProps.articlesData !== nextProps.articlesData) return false;
@@ -54,27 +48,18 @@ const HorizontalFeaturedSectionInternal = memo(function HorizontalFeaturedSectio
   articlesData,
   refreshKey,
   scope = 'global',
-  onArticlePress,
 }: HorizontalFeaturedSectionProps): JSX.Element | null {
   // Use the multiple featured articles selection hook
   const featuredArticles = useMultipleFeaturedArticles(articlesData, refreshKey, scope);
 
   const selectedArticles = useMemo(() => featuredArticles.articles, [featuredArticles.articles]);
 
-  const memoizedOnPress = useCallback(
-    (article: Article) => {
-      onArticlePress(article);
-    },
-    [onArticlePress]
-  );
-
   const sliderProps = useMemo(() => {
     if (!selectedArticles.length) return null;
     return {
       articles: selectedArticles,
-      onArticlePress: memoizedOnPress,
     };
-  }, [selectedArticles, memoizedOnPress]);
+  }, [selectedArticles]);
 
   // Early return if no articles selected
   if (!sliderProps) {

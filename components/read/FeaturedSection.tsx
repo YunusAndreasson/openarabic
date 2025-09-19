@@ -1,4 +1,4 @@
-import { memo, useCallback, type FC } from 'react';
+import { memo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import ArticleCard from '@read/ArticleCard';
@@ -10,23 +10,20 @@ import { generateImageUrl } from '@/utils/imageUtils';
 
 interface FeaturedSectionProps {
   article: Article;
-  onPress: (article: Article) => void;
 }
 
 /**
  * A section displaying the featured article
  */
-const FeaturedSection: FC<FeaturedSectionProps> = ({ article, onPress }) => {
+const FeaturedSection: FC<FeaturedSectionProps> = ({ article }) => {
   // No need for prefetching here - it's done during app preload
-
-  const handlePress = useCallback(() => {
-    onPress(article);
-  }, [article, onPress]);
+  // Note: Navigation is now handled by Link component in ArticleCard
 
   // Articles are guaranteed to be available when this component is used
   return (
     <View style={styles.container}>
       <ArticleCard
+        article={article}
         author={article.author.name}
         category={STRINGS.RECOMMENDED}
         categoryForDisplay={article.category.name}
@@ -34,7 +31,8 @@ const FeaturedSection: FC<FeaturedSectionProps> = ({ article, onPress }) => {
         style={styles.cardStyle}
         summary={String(article.summary)}
         title={article.title}
-        onPress={handlePress}
+        prefetch={true}
+        isRelatedArticle={false}
       />
     </View>
   );

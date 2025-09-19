@@ -8,7 +8,6 @@ import type { Article } from '@/types/articles.types';
 interface IntelligentArticleSectionProps {
   articlesData: Article[];
   refreshKey: number;
-  onArticlePress: (article: Article) => void;
 }
 
 /**
@@ -20,7 +19,6 @@ const IntelligentArticleSectionComparison = (
 ): boolean => {
   // Quick path comparisons first (most likely to change)
   if (prevProps.refreshKey !== nextProps.refreshKey) return false;
-  if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
 
   // Array reference and length checks
   if (prevProps.articlesData !== nextProps.articlesData) return false;
@@ -35,15 +33,9 @@ const IntelligentArticleSectionComparison = (
 const IntelligentArticleSectionInternal = memo(function IntelligentArticleSectionInternal({
   articlesData,
   refreshKey,
-  onArticlePress,
 }: IntelligentArticleSectionProps): JSX.Element | null {
   return (
-    <HorizontalFeaturedSection
-      articlesData={articlesData}
-      refreshKey={refreshKey}
-      scope="global"
-      onArticlePress={onArticlePress}
-    />
+    <HorizontalFeaturedSection articlesData={articlesData} refreshKey={refreshKey} scope="global" />
   );
 },
 IntelligentArticleSectionComparison);

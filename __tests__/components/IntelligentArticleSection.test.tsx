@@ -67,9 +67,7 @@ describe('IntelligentArticleSection', () => {
   });
 
   it('passes through empty articles array', () => {
-    const { getByTestId } = render(
-      <IntelligentArticleSection articlesData={[]} refreshKey={0} onArticlePress={onArticlePress} />
-    );
+    const { getByTestId } = render(<IntelligentArticleSection articlesData={[]} refreshKey={0} />);
 
     const mockComponent = getByTestId('horizontal-featured-section');
     expect(mockComponent.props.children).toBe('scope:global,articles:0,refresh:0');
@@ -78,11 +76,7 @@ describe('IntelligentArticleSection', () => {
   it('updates when props change', () => {
     const initialArticles = [createArticle(1, 'Article 1')];
     const { getByTestId, rerender } = render(
-      <IntelligentArticleSection
-        articlesData={initialArticles}
-        refreshKey={0}
-        onArticlePress={onArticlePress}
-      />
+      <IntelligentArticleSection articlesData={initialArticles} refreshKey={0} />
     );
 
     expect(getByTestId('horizontal-featured-section').props.children).toBe(
@@ -90,13 +84,7 @@ describe('IntelligentArticleSection', () => {
     );
 
     const updatedArticles = [createArticle(1, 'Article 1'), createArticle(2, 'Article 2')];
-    rerender(
-      <IntelligentArticleSection
-        articlesData={updatedArticles}
-        refreshKey={1}
-        onArticlePress={onArticlePress}
-      />
-    );
+    rerender(<IntelligentArticleSection articlesData={updatedArticles} refreshKey={1} />);
 
     expect(getByTestId('horizontal-featured-section').props.children).toBe(
       'scope:global,articles:2,refresh:1'

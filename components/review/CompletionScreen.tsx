@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
+import { Link } from 'expo-router';
 import { Fragment, useEffect, useMemo, type ComponentProps, type FC } from 'react';
 import { InteractionManager, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
@@ -20,6 +21,7 @@ import {
 } from '@/constants/animation';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
@@ -32,7 +34,6 @@ import { successFeedback } from '@/utils/haptics';
 import { createMargin, createPadding } from '@/utils/layoutUtils';
 
 interface CompletionScreenProps {
-  onClose: () => void;
   title?: string;
   subtitle?: string;
   buttonText?: string;
@@ -42,10 +43,10 @@ interface CompletionScreenProps {
   contentStyle?: object;
   sessionMetrics?: SessionMetrics;
   testID?: string;
+  fromRemember?: boolean; // For dismissTo navigation
 }
 
 const CompletionScreen: FC<CompletionScreenProps> = ({
-  onClose,
   title = STRINGS.SESSION_COMPLETE,
   subtitle,
   buttonText = UiAction.CONTINUE,
@@ -55,6 +56,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   contentStyle,
   sessionMetrics,
   testID,
+  fromRemember = false,
 }) => {
   const colors = useColors();
   const queryClient = useQueryClient();
@@ -214,14 +216,22 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
         )}
       </View>
 
-      {/* Action Button - Final hierarchy level */}
+      {/* Action Button - Final hierarchy level with Link navigation */}
       <Animated.View
         entering={FadeIn.delay(
           encouragingMetrics ? COMPLETION_BUTTON_DELAY.WITH_METRICS : COMPLETION_BUTTON_DELAY.BASE
         ).duration(TIMING_CONFIG.GENTLE.duration)}
         style={styles.buttonContainer}
       >
-        <ThemedButton title={buttonText} onPress={onClose} style={styles.button} />
+        {fromRemember ? (
+          <Link href={ROUTE_PATHS.PRACTICE_TAB} dismissTo={true} asChild>
+            <ThemedButton title={buttonText} style={styles.button} />
+          </Link>
+        ) : (
+          <Link href=".." replace asChild>
+            <ThemedButton title={buttonText} style={styles.button} />
+          </Link>
+        )}
       </Animated.View>
     </View>
   );
