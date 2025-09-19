@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
   runOnJS,
@@ -12,9 +12,9 @@ import Animated, {
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { usePanGesture } from '@/hooks/gestures/usePanGesture';
 import { useColors } from '@/hooks/theme/useColors';
 import { SCRUBBER_CONSTANTS } from '@/utils/gestureUtils';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface SentenceScrubberProps {
   currentSentence: number;
@@ -41,10 +41,42 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
     // Shared values for performance
     const trackWidth = useSharedValue(DEFAULT_TRACK_WIDTH as number);
     const handlePosition = useSharedValue(0);
-    const showTooltip = useSharedValue(0);
-    const isDragging = useSharedValue(false);
-    // Gate JS bridging by tracking last emitted index on UI thread
     const lastIndex = useSharedValue(currentSentence);
+
+    // Memoized calculations to prevent unnecessary recalculations
+    const isValidScrubber = useMemo(() => totalSentences > 1, [totalSentences]);
+    const maxSentenceIndex = useMemo(() => totalSentences - 1, [totalSentences]);
+
+    // ===== PAN GESTURE HOOK (v2 OPTIMIZED) =====
+    const {
+      gesture: panGesture,
+      isDragging,
+      showTooltip,
+    } = usePanGesture({
+      onBegin: onScrubStart,
+      onUpdate: useCallback(
+        (progress: number) => {
+          'worklet';
+          if (trackWidth.value > 0) {
+            // Update handle position immediately for responsive feel
+            handlePosition.value = progress * (trackWidth.value - HANDLE_SIZE);
+
+            // Calculate sentence index efficiently
+            const sentenceIndex = Math.round(progress * maxSentenceIndex);
+            // Only bridge to JS when the index actually changes
+            if (sentenceIndex !== lastIndex.value) {
+              lastIndex.value = sentenceIndex;
+              runOnJS(onSentenceChange)(sentenceIndex);
+            }
+          }
+        },
+        [trackWidth, handlePosition, maxSentenceIndex, lastIndex, onSentenceChange]
+      ),
+      onEnd: onScrubEnd,
+      testId: 'sentence-scrubber-gesture',
+      springConfig: TOOLTIP_SPRING_CONFIG,
+      trackWidth,
+    });
 
     // Cleanup all animations on unmount
     useEffect(() => {
@@ -52,46 +84,18 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
         try {
           cancelAnimation(trackWidth);
           cancelAnimation(handlePosition);
-          cancelAnimation(showTooltip);
-          cancelAnimation(isDragging);
           cancelAnimation(lastIndex);
           // Reset to default values
           trackWidth.value = DEFAULT_TRACK_WIDTH;
           handlePosition.value = 0;
-          showTooltip.value = 0;
-          isDragging.value = false;
           lastIndex.value = 0;
         } catch {
           // Animation cleanup failed - continue
         }
       };
-    }, [trackWidth, handlePosition, showTooltip, isDragging, lastIndex]);
+    }, [trackWidth, handlePosition, lastIndex]);
 
-    // Memoized calculations to prevent unnecessary recalculations
-    const isValidScrubber = useMemo(() => totalSentences > 1, [totalSentences]);
-
-    const maxSentenceIndex = useMemo(() => totalSentences - 1, [totalSentences]);
-
-    // Haptic feedback on sentence change
-    const triggerHapticFeedback = useCallback(() => {
-      selectionFeedback();
-    }, []);
-
-    // Memoized callback wrapper with haptic feedback
-    const safeSentenceChange = useCallback(
-      (index: number) => {
-        const safeIndex = Math.max(0, Math.min(Math.floor(index), maxSentenceIndex));
-
-        // Trigger haptic feedback when sentence actually changes
-        if (safeIndex !== lastSentenceRef.current) {
-          triggerHapticFeedback();
-          lastSentenceRef.current = safeIndex;
-        }
-
-        onSentenceChange(safeIndex);
-      },
-      [maxSentenceIndex, onSentenceChange, triggerHapticFeedback]
-    );
+    // Haptic feedback is now handled in the gesture hook
 
     // Update position when sentence changes (only when not dragging)
     React.useEffect(() => {
@@ -125,43 +129,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
       [currentSentence, maxSentenceIndex, isValidScrubber]
     );
 
-    // Optimized pan gesture with better performance
-    const panGesture = useMemo(
-      () =>
-        Gesture.Pan()
-          .onBegin(() => {
-            'worklet';
-            isDragging.value = true;
-            showTooltip.value = withSpring(1, TOOLTIP_SPRING_CONFIG);
-            runOnJS(onScrubStart)();
-          })
-          .onUpdate(event => {
-            'worklet';
-            if (trackWidth.value > 0 && event.x >= 0) {
-              // Clamp progress to valid range
-              const progress = Math.max(0, Math.min(1, event.x / trackWidth.value));
-
-              // Update handle position immediately for responsive feel
-              handlePosition.value = progress * (trackWidth.value - HANDLE_SIZE);
-
-              // Calculate sentence index efficiently
-              const sentenceIndex = Math.round(progress * maxSentenceIndex);
-              // Only bridge to JS when the index actually changes
-              if (sentenceIndex !== lastIndex.value) {
-                lastIndex.value = sentenceIndex;
-                runOnJS(safeSentenceChange)(sentenceIndex);
-              }
-            }
-          })
-          .onEnd(() => {
-            'worklet';
-            isDragging.value = false;
-            showTooltip.value = withSpring(0, TOOLTIP_SPRING_CONFIG);
-            runOnJS(onScrubEnd)();
-          })
-          .withTestId('sentence-scrubber-gesture'),
-      [trackWidth, handlePosition, maxSentenceIndex, safeSentenceChange, onScrubStart, onScrubEnd]
-    );
+    // Gesture is now handled by the usePanGesture hook
 
     // Memoized animated styles for better performance - Updated for dynamic sizing
     const handleStyle = useAnimatedStyle(() => {
