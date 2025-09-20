@@ -425,13 +425,13 @@ const styles = StyleSheet.create({
   loadingIndicator: {
     marginTop: LAYOUT.SPACING.SMALL,
   },
+  gestureRoot: {
+    flex: 1,
+  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     padding: LAYOUT.SPACING.LARGE,
-  },
-  gestureRoot: {
-    flex: 1,
   },
   errorTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,

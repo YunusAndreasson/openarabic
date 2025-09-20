@@ -31,8 +31,6 @@ export const ROUTE_PATHS = {
   PRACTICE_DICTIONARY: '/(tabs)/practice/dictionary',
 } as const;
 
-export type StaticRoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];
-
 export const getPracticeReviewRoute = (
   params?: Partial<{
     rootId: number;

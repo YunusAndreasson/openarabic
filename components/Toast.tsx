@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -225,6 +225,7 @@ export const Toast = memo(
     return (
       <Animated.View
         pointerEvents="none"
+        layout={LinearTransition}
         style={[containerStyle, opacityStyle, scaleStyle, translateYStyle]}
       >
         <View

@@ -173,19 +173,3 @@ export const FAQ_DATA: FAQCategoryData[] = [
     ],
   },
 ];
-
-// Helper function to get all FAQ items flattened
-export const getAllFAQItems = (): FAQItem[] => {
-  return FAQ_DATA.flatMap(category => category.items);
-};
-
-// Helper function to get FAQ items by category
-export const getFAQItemsByCategory = (categoryName: string): FAQItem[] => {
-  const category = FAQ_DATA.find(cat => cat.name === categoryName);
-  return category?.items || [];
-};
-
-// Helper function to get FAQ item by ID
-export const getFAQItemById = (id: string): FAQItem | undefined => {
-  return getAllFAQItems().find(item => item.id === id);
-};
