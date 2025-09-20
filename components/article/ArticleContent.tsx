@@ -204,7 +204,7 @@ const FloatingActionButtons = memo<{
         height: MIN_TOUCH_TARGET.MEDIUM,
         borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
         backgroundColor: colors.elevation1,
-        opacity: 0.88, // Subtle transparency for better visual hierarchy
+        opacity: 0.65, // 2025 best practice: More subtle circular background
         alignItems: 'center' as const,
         justifyContent: 'center' as const,
         ...LAYOUT.ELEVATION.SUBTLE,
@@ -216,6 +216,7 @@ const FloatingActionButtons = memo<{
       () => ({
         ...buttonStyle,
         backgroundColor: colors.elevation2,
+        opacity: 0.75, // 2025 best practice: Slightly more visible when active
       }),
       [buttonStyle, colors.elevation2]
     );
@@ -224,7 +225,7 @@ const FloatingActionButtons = memo<{
     const closeButtonStyle = useMemo(
       () => ({
         position: 'absolute' as const,
-        top: LAYOUT.SPACING.SMALL,
+        top: LAYOUT.SPACING.LARGE, // Increased from SMALL to LARGE for better spacing
         left: LAYOUT.SPACING.SMALL,
         zIndex: LAYOUT.Z_INDEX.OVERLAY,
       }),
@@ -234,7 +235,7 @@ const FloatingActionButtons = memo<{
     const actionButtonsStyle = useMemo(
       () => ({
         position: 'absolute' as const,
-        top: LAYOUT.SPACING.SMALL,
+        top: LAYOUT.SPACING.LARGE, // Increased from SMALL to LARGE for better spacing
         right: LAYOUT.SPACING.SMALL,
         zIndex: LAYOUT.Z_INDEX.OVERLAY,
         flexDirection: 'row' as const,

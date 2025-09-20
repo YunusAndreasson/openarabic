@@ -46,10 +46,10 @@ export default function ReadScreen(): JSX.Element {
 
   // Get last read article for continue reading button
   const {
-    lastReadArticle,
-    hasLastReadArticle,
     showButton,
     isLoading: isLastReadLoading,
+    continueReadingData,
+    articleType,
   } = useLastReadArticle();
 
   const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery({
@@ -105,25 +105,29 @@ export default function ReadScreen(): JSX.Element {
 
     try {
       // Force complete cache invalidation for immediate data update
-      const refreshPromises = [
+      const baseQueries = [
         queryClient.invalidateQueries({ queryKey: ['articles'] }),
         queryClient.invalidateQueries({ queryKey: ['categories'] }),
       ];
 
       // Add user-specific queries if authenticated
-      if (user?.id) {
-        refreshPromises.push(
-          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) }),
-          queryClient.invalidateQueries({
-            queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-          }),
-          queryClient.invalidateQueries({ queryKey: ['reading-streak', user.id] })
-        );
-      }
+      const userQueries = user?.id
+        ? [
+            queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) }),
+            queryClient.invalidateQueries({
+              queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+            }),
+            queryClient.invalidateQueries({ queryKey: ['reading-streak', user.id] }),
+            queryClient.invalidateQueries({ queryKey: ['reading-list', user.id] }),
+            queryClient.invalidateQueries({ queryKey: ['last-read-article', user.id] }),
+          ]
+        : [];
 
-      await Promise.all(refreshPromises);
+      // Execute all invalidations with error handling for individual failures
+      const allQueries = [...baseQueries, ...userQueries];
+      await Promise.allSettled(allQueries);
 
-      // Force new article selection
+      // Force new article selection only if refresh was successful
       setRefreshKey(prev => prev + 1);
     } catch (error) {
       handleError(error instanceof Error ? error : new Error(STRINGS.REFRESH_FAILED));
@@ -143,15 +147,15 @@ export default function ReadScreen(): JSX.Element {
   );
 
   const handleContinueReading = useCallback(() => {
-    if (!lastReadArticle) return;
+    if (!continueReadingData?.article) return;
 
     selectionFeedback();
     // Prefetch article data after navigation animation completes
     InteractionManager.runAfterInteractions(() => {
-      prefetchArticle(lastReadArticle.id);
+      prefetchArticle(continueReadingData.article.id);
     });
-    router.push(getArticleRoute(lastReadArticle.id, lastReadArticle.title));
-  }, [lastReadArticle, prefetchArticle]);
+    router.push(getArticleRoute(continueReadingData.article.id, continueReadingData.article.title));
+  }, [continueReadingData, prefetchArticle]);
 
   // Optimized header component - minimize re-creation by memoizing stable parts
   const ListHeaderComponent = useMemo(() => {
@@ -170,6 +174,11 @@ export default function ReadScreen(): JSX.Element {
 
   // Static footer component - no props needed
   const ListFooterComponent = useMemo(() => <HijriDateFooter />, []);
+
+  // Dynamic button text based on article type - simplified logic
+  const continueButtonText = useMemo(() => {
+    return articleType === 'featured' ? 'Start Reading' : STRINGS.CONTINUE_READING;
+  }, [articleType]);
 
   const contentContainerStyle = useMemo(
     () => ({
@@ -217,10 +226,10 @@ export default function ReadScreen(): JSX.Element {
           }}
         >
           <BottomControls
-            primaryLabel={STRINGS.CONTINUE_READING}
+            primaryLabel={continueButtonText}
             onPrimaryPress={handleContinueReading}
-            primaryDisabled={!hasLastReadArticle} // Disable until article data is fully loaded
-            primaryLoading={isLastReadLoading && !hasLastReadArticle} // Show loading while article data loads
+            primaryDisabled={!continueReadingData} // Disable until we have any type of article data
+            primaryLoading={isLastReadLoading && !continueReadingData} // Show loading while article data loads
           />
         </View>
       )}

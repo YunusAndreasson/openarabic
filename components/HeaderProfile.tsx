@@ -5,7 +5,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useStreaks } from '@/contexts/StreaksContext';
 import { useReadingStreak } from '@/hooks/articles/useReadingStreak';
@@ -53,9 +53,20 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
     [size]
   );
 
-  const streakTextStyle = useMemo(
-    () => [styles.streakText, { color: hasStreak ? colors.warning : colors.textTertiary }],
-    [hasStreak, colors.warning, colors.textTertiary]
+  // Dynamic styles for streak badge circle - smaller and proportional to account badge
+  const STREAK_BADGE_SIZE = 32; // Smaller than account badge (64px) for visual hierarchy
+  const streakBadgeStyle = useMemo(
+    () => ({
+      width: STREAK_BADGE_SIZE,
+      height: STREAK_BADGE_SIZE,
+      borderRadius: STREAK_BADGE_SIZE / 2,
+      borderWidth: LAYOUT.BORDER.WIDTH.THIN, // Thinner border for smaller size
+      borderColor: hasStreak ? colors.warning : colors.textTertiary,
+      backgroundColor: hasStreak ? colors.warning + '20' : colors.elevation1, // Slightly more opaque
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+    }),
+    [hasStreak, colors.warning, colors.textTertiary, colors.elevation1]
   );
 
   // Load saved profile photo
@@ -84,16 +95,44 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
 
   return (
     <View style={styles.container}>
-      {/* Streak Counter */}
+      {/* Streak Counter - Circular Badge Design */}
       <Pressable
-        style={styles.streakContainer}
         onPress={handleStreakPress}
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+        style={{ padding: LAYOUT.SPACING.TINY }} // Add padding for better touch target
       >
-        <Ionicons name="flame" size={16} color={hasStreak ? colors.warning : colors.textTertiary} />
-        <ThemedText type="caption" style={streakTextStyle} numberOfLines={1}>
-          {currentStreak}
-        </ThemedText>
+        <View style={streakBadgeStyle}>
+          <Ionicons
+            name="flame"
+            size={16}
+            color={hasStreak ? colors.warning : colors.textTertiary}
+          />
+          <ThemedText
+            type="caption"
+            weight="bold"
+            style={[
+              styles.streakText,
+              {
+                color: hasStreak ? colors.warning : colors.textTertiary,
+                position: 'absolute',
+                bottom: -2,
+                right: -2,
+                backgroundColor: colors.background,
+                borderRadius: 8,
+                paddingHorizontal: 3,
+                paddingVertical: 1,
+                fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+                minWidth: 16,
+                height: 16,
+                textAlign: 'center',
+                lineHeight: 14,
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {currentStreak}
+          </ThemedText>
+        </View>
       </Pressable>
 
       {/* Profile Button */}
@@ -142,16 +181,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: LAYOUT.SPACING.MEDIUM,
-  },
-  streakContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.TINY,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    minHeight: MIN_TOUCH_TARGET.SMALL,
-    justifyContent: 'center',
   },
   streakText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
