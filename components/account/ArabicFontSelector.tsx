@@ -71,20 +71,26 @@ const ArabicFontSelector: FC = () => {
 
   // Local UI state to avoid dispatching on every slider tick
   const [localFontSize, setLocalFontSize] = useState<number>(selectedFontSize);
+  const [isSliding, setIsSliding] = useState<boolean>(false);
 
   // Keep local state in sync when global value changes externally
   useEffect(() => {
-    if (localFontSize !== selectedFontSize) {
+    if (!isSliding && localFontSize !== selectedFontSize) {
       setLocalFontSize(selectedFontSize);
     }
-  }, [selectedFontSize, localFontSize]);
+  }, [selectedFontSize, localFontSize, isSliding]);
 
   const handleFontSizeChange = useCallback((value: number) => {
     setLocalFontSize(value);
   }, []);
 
+  const handleSlidingStart = useCallback(() => {
+    setIsSliding(true);
+  }, []);
+
   const handleSlidingComplete = useCallback(
     (value: number) => {
+      setIsSliding(false);
       selectionFeedback();
       setFontSize(value);
     },
@@ -101,6 +107,7 @@ const ArabicFontSelector: FC = () => {
           step={fontSizeRange.STEP}
           value={localFontSize}
           onValueChange={handleFontSizeChange}
+          onSlidingStart={handleSlidingStart}
           onSlidingComplete={handleSlidingComplete}
           minimumTrackTintColor={colors.tint}
           maximumTrackTintColor={colors.borderOverlay}
@@ -117,7 +124,7 @@ const ArabicFontSelector: FC = () => {
           <FontPreviewCard
             key={option.name}
             isSelected={selectedFont === option.name}
-            fontSize={localFontSize}
+            fontSize={isSliding ? localFontSize : selectedFontSize}
             option={option}
             onSelect={selectFont}
           />

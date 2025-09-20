@@ -11,22 +11,35 @@ import SectionTitle from '@common/SectionTitle';
 import { TimePicker } from '@ui/TimePicker';
 import { Toggle } from '@ui/Toggle';
 
-import { THEME_OPTIONS, ThemePicker } from '@/components/ThemePicker';
+import { THEME_OPTIONS } from '@/components/ThemePicker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SocialMediaIcons } from '@/components/account';
-import { AudioLanguagePicker } from '@/components/account/AudioLanguagePicker';
 import AudioShuffleToggle from '@/components/account/AudioShuffleToggle';
-import { DailyWordLimitPicker } from '@/components/account/DailyWordLimitPicker';
-import { LanguagePicker } from '@/components/account/LanguagePicker';
+import { ThemedPicker } from '@/components/ui/ThemedPicker';
+import type { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
-import { useAppSelectorMemo } from '@/store/hooks';
-import { AccountSection } from '@/types/enums';
+import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
+import {
+  setAudioLanguagePreference,
+  setDailyWordLimit,
+  setDisplayLanguagePreference,
+  type AudioLanguagePreference,
+  type DisplayLanguagePreference,
+} from '@/store/settingsSlice';
+import { setTheme } from '@/store/themeSlice';
+import {
+  AccountSection,
+  AudioLanguage,
+  DailyWordLimitDescription,
+  DailyWordLimitTier,
+  DisplayLanguage,
+} from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 
 // Memoized components
@@ -90,11 +103,9 @@ const AccountScreen: FC = () => {
   const currentTheme = useAppSelectorMemo(state => state.theme.theme);
   const currentLanguage = useAppSelectorMemo(state => state.settings.displayLanguagePreference);
   const currentAudioLanguage = useAppSelectorMemo(state => state.settings.audioLanguagePreference);
+  const dispatch = useAppDispatch();
 
-  const [showThemePicker, setShowThemePicker] = React.useState(false);
-  const [showLanguagePicker, setShowLanguagePicker] = React.useState(false);
-  const [showAudioLanguagePicker, setShowAudioLanguagePicker] = React.useState(false);
-  const [showDailyWordLimitPicker, setShowDailyWordLimitPicker] = React.useState(false);
+  const [activePicker, setActivePicker] = React.useState<string | null>(null);
   const currentDailyWordLimit = useAppSelectorMemo(state => state.settings.dailyWordLimit);
 
   const {
@@ -132,41 +143,117 @@ const AccountScreen: FC = () => {
     [colors.error]
   );
 
-  // Theme picker handlers
-  const handleThemePickerOpen = useCallback(() => {
-    setShowThemePicker(true);
+  // Unified picker handlers
+  const handlePickerOpen = useCallback((pickerType: string) => {
+    setActivePicker(pickerType);
   }, []);
 
-  const handleThemePickerClose = useCallback(() => {
-    setShowThemePicker(false);
+  const handlePickerClose = useCallback(() => {
+    setActivePicker(null);
   }, []);
 
-  // Language picker handlers
-  const handleLanguagePickerOpen = useCallback(() => {
-    setShowLanguagePicker(true);
-  }, []);
+  const handlePickerSelect = useCallback(
+    (value: string | number) => {
+      switch (activePicker) {
+        case 'theme':
+          dispatch(setTheme(value as Theme));
+          break;
+        case 'language':
+          dispatch(setDisplayLanguagePreference(value as DisplayLanguagePreference));
+          break;
+        case 'audioLanguage':
+          dispatch(setAudioLanguagePreference(value as AudioLanguagePreference));
+          break;
+        case 'dailyWordLimit':
+          dispatch(setDailyWordLimit(value as number));
+          break;
+      }
+      setActivePicker(null);
+    },
+    [activePicker, dispatch]
+  );
 
-  const handleLanguagePickerClose = useCallback(() => {
-    setShowLanguagePicker(false);
-  }, []);
-
-  // Audio language picker handlers
-  const handleAudioLanguagePickerOpen = useCallback(() => {
-    setShowAudioLanguagePicker(true);
-  }, []);
-
-  const handleAudioLanguagePickerClose = useCallback(() => {
-    setShowAudioLanguagePicker(false);
-  }, []);
-
-  // Daily word limit picker handlers
-  const handleDailyWordLimitPickerOpen = useCallback(() => {
-    setShowDailyWordLimitPicker(true);
-  }, []);
-
-  const handleDailyWordLimitPickerClose = useCallback(() => {
-    setShowDailyWordLimitPicker(false);
-  }, []);
+  // Picker configurations
+  const pickerConfigs = useMemo(
+    () => ({
+      theme: {
+        title: STRINGS.THEME,
+        options: THEME_OPTIONS,
+        selectedValue: currentTheme,
+        snapPoints: [440],
+      },
+      language: {
+        title: STRINGS.DISPLAY_LANGUAGE,
+        options: [
+          {
+            id: DisplayLanguage.ARABIC_ONLY,
+            title: STRINGS.DISPLAY_LANGUAGE_ARABIC,
+            subtitle: 'Text displays in Arabic script with English translations',
+            icon: 'text' as const,
+          },
+          {
+            id: DisplayLanguage.ARABIC_ENGLISH,
+            title: STRINGS.DISPLAY_LANGUAGE_BILINGUAL,
+            subtitle: 'Text shows both Arabic and English side by side',
+            icon: 'language' as const,
+          },
+        ],
+        selectedValue: currentLanguage,
+        snapPoints: [320],
+      },
+      audioLanguage: {
+        title: STRINGS.AUDIO_LANGUAGE,
+        options: [
+          {
+            id: AudioLanguage.ARABIC_ONLY,
+            title: STRINGS.AUDIO_LANGUAGE_ARABIC,
+            subtitle: 'Audio plays in Arabic with English subtitles',
+            icon: 'volume-high' as const,
+          },
+          {
+            id: AudioLanguage.ENGLISH_ARABIC,
+            title: STRINGS.AUDIO_LANGUAGE_BILINGUAL,
+            subtitle: 'Audio plays in both Arabic and English',
+            icon: 'language' as const,
+          },
+        ],
+        selectedValue: currentAudioLanguage,
+        snapPoints: [320],
+      },
+      dailyWordLimit: {
+        title: STRINGS.DAILY_WORD_LIMIT,
+        options: [
+          {
+            id: 10,
+            title: DailyWordLimitTier.GETTING_STARTED,
+            subtitle: DailyWordLimitDescription.GETTING_STARTED,
+            icon: 'school' as const,
+          },
+          {
+            id: 20,
+            title: DailyWordLimitTier.STEADY_PROGRESS,
+            subtitle: DailyWordLimitDescription.STEADY_PROGRESS,
+            icon: 'trending-up' as const,
+          },
+          {
+            id: 30,
+            title: DailyWordLimitTier.ACTIVE_LEARNING,
+            subtitle: DailyWordLimitDescription.ACTIVE_LEARNING,
+            icon: 'flash' as const,
+          },
+          {
+            id: 0,
+            title: DailyWordLimitTier.UNLIMITED,
+            subtitle: DailyWordLimitDescription.UNLIMITED,
+            icon: 'infinite' as const,
+          },
+        ],
+        selectedValue: currentDailyWordLimit,
+        snapPoints: [440],
+      },
+    }),
+    [currentTheme, currentLanguage, currentAudioLanguage, currentDailyWordLimit]
+  );
 
   // Get current theme display text
   const currentThemeText = useMemo(() => {
@@ -252,7 +339,7 @@ const AccountScreen: FC = () => {
             <BaseCard
               shadowSize="none"
               style={styles.interactiveCard}
-              onPress={handleLanguagePickerOpen}
+              onPress={() => handlePickerOpen('language')}
             >
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
@@ -280,7 +367,7 @@ const AccountScreen: FC = () => {
             <BaseCard
               shadowSize="none"
               style={styles.interactiveCard}
-              onPress={handleAudioLanguagePickerOpen}
+              onPress={() => handlePickerOpen('audioLanguage')}
             >
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
@@ -365,7 +452,7 @@ const AccountScreen: FC = () => {
             <BaseCard
               shadowSize="none"
               style={styles.interactiveCard}
-              onPress={handleDailyWordLimitPickerOpen}
+              onPress={() => handlePickerOpen('dailyWordLimit')}
             >
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
@@ -393,7 +480,7 @@ const AccountScreen: FC = () => {
             <BaseCard
               shadowSize="none"
               style={styles.interactiveCard}
-              onPress={handleThemePickerOpen}
+              onPress={() => handlePickerOpen('theme')}
             >
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
@@ -582,23 +669,25 @@ const AccountScreen: FC = () => {
         onTimeSet={handleTimeSet}
       />
 
-      {/* Theme Picker Modal */}
-      <ThemePicker isVisible={showThemePicker} onClose={handleThemePickerClose} />
-
-      {/* Language Picker Modal */}
-      <LanguagePicker isVisible={showLanguagePicker} onClose={handleLanguagePickerClose} />
-
-      {/* Audio Language Picker Modal */}
-      <AudioLanguagePicker
-        isVisible={showAudioLanguagePicker}
-        onClose={handleAudioLanguagePickerClose}
-      />
-
-      {/* Daily Word Limit Picker Modal */}
-      <DailyWordLimitPicker
-        key={showDailyWordLimitPicker ? 'open' : 'closed'}
-        isVisible={showDailyWordLimitPicker}
-        onClose={handleDailyWordLimitPickerClose}
+      {/* Unified ThemedPicker Modal */}
+      <ThemedPicker
+        isVisible={activePicker !== null}
+        onClose={handlePickerClose}
+        onSelect={handlePickerSelect}
+        title={activePicker ? pickerConfigs[activePicker as keyof typeof pickerConfigs].title : ''}
+        options={
+          activePicker ? pickerConfigs[activePicker as keyof typeof pickerConfigs].options : []
+        }
+        selectedValue={
+          activePicker
+            ? pickerConfigs[activePicker as keyof typeof pickerConfigs].selectedValue || undefined
+            : undefined
+        }
+        snapPoints={
+          activePicker
+            ? pickerConfigs[activePicker as keyof typeof pickerConfigs].snapPoints
+            : [320]
+        }
       />
     </ThemedView>
   );

@@ -10,6 +10,7 @@ import {
   getEnhancedOpacity,
 } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useAppSelector } from '@/store/hooks';
 import type { ThemedTextProps } from '@/types/ui/text.types';
@@ -48,7 +49,8 @@ function ThemedTextComponent({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const selectedArabicFont = useAppSelector(state => state.settings.arabicFont);
-  const selectedArabicFontSize = useAppSelector(state => state.settings.arabicFontSize);
+  // Only use debounced font size for Arabic text to prevent flickering during slider changes
+  const debouncedArabicFontSize = useDebouncedArabicFontSize(type === 'arabic' ? 100 : 0);
 
   // Enhanced text color function with semantic color support
   const getTextColor = (
@@ -96,8 +98,8 @@ function ThemedTextComponent({
     const textColor = getTextColor(colors, variant, colorName, skipDefaultColor);
 
     if (type === 'arabic') {
-      // Use Redux font size, fallback to prop, then default
-      const fontSize = selectedArabicFontSize || arabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
+      // Use debounced font size for smooth updates, fallback to prop, then default
+      const fontSize = debouncedArabicFontSize || arabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
 
       return {
         finalStyle: [
@@ -134,7 +136,7 @@ function ThemedTextComponent({
     colorName,
     skipDefaultColor,
     colors,
-    selectedArabicFontSize,
+    debouncedArabicFontSize,
     arabicFontSize,
     selectedArabicFont,
     weight,

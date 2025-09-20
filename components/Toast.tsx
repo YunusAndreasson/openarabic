@@ -4,16 +4,9 @@ import Animated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
-import {
-  DEFAULT_ANIMATION_DURATION,
-  DEFAULT_TOAST_DURATION,
-  TOAST_INITIAL_TRANSLATE_Y,
-  TOAST_SCALE_CONFIG,
-  TOAST_SCALE_SPRING,
-  TOAST_SPRING,
-} from '@/constants/animation';
+import { DEFAULT_ANIMATION_DURATION, DEFAULT_TOAST_DURATION } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
+import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { ToastType } from '@/types/enums';
@@ -66,18 +59,7 @@ export const Toast = memo(
     const colors = useColors();
     const insets = useSafeAreaInsets();
 
-    const animationConfig = useMemo(
-      () => ({
-        initialScale:
-          TOAST_SCALE_CONFIG[type === 'important' ? 'IMPORTANT' : 'DEFAULT'].initialScale,
-        targetOvershoot:
-          TOAST_SCALE_CONFIG[type === 'important' ? 'IMPORTANT' : 'DEFAULT'].overshoot,
-        springConfig: TOAST_SCALE_SPRING[type === 'important' ? 'IMPORTANT' : 'DEFAULT'],
-      }),
-      [type]
-    );
-
-    // Reusable animation hooks
+    // Simple opacity animation
     const {
       animatedStyle: opacityStyle,
       startAnimation: fadeIn,
@@ -86,34 +68,6 @@ export const Toast = memo(
     } = useOpacityAnimation({
       initialOpacity: 0,
       duration: DEFAULT_ANIMATION_DURATION,
-    });
-
-    const {
-      animatedStyle: scaleStyle,
-      startAnimation: startScale,
-      reverseAnimation: reverseScale,
-      reset: resetScale,
-    } = useTransformAnimation({
-      type: 'scale',
-      initialValue: animationConfig.initialScale,
-      targetValue: 1,
-      useSpring: true,
-      damping: animationConfig.springConfig.damping,
-      stiffness: animationConfig.springConfig.stiffness,
-    });
-
-    const {
-      animatedStyle: translateYStyle,
-      startAnimation: startTranslate,
-      reverseAnimation: reverseTranslate,
-      reset: resetTranslate,
-    } = useTransformAnimation({
-      type: 'translateY',
-      initialValue: TOAST_INITIAL_TRANSLATE_Y,
-      targetValue: 0,
-      useSpring: true,
-      damping: TOAST_SPRING.damping,
-      stiffness: TOAST_SPRING.stiffness,
     });
 
     // Keep individual animated styles separate for clarity
@@ -128,25 +82,17 @@ export const Toast = memo(
 
       if (visible) {
         fadeIn();
-        startScale();
-        startTranslate();
 
         timerRef.current = setTimeout(() => {
           fadeOut();
-          reverseScale();
-          reverseTranslate();
 
           setTimeout(() => {
             onClose();
             resetOpacity();
-            resetScale();
-            resetTranslate();
           }, DEFAULT_ANIMATION_DURATION);
         }, duration);
       } else {
         resetOpacity();
-        resetScale();
-        resetTranslate();
       }
 
       return () => {
@@ -155,20 +101,7 @@ export const Toast = memo(
           timerRef.current = null;
         }
       };
-    }, [
-      visible,
-      duration,
-      onClose,
-      fadeIn,
-      fadeOut,
-      startScale,
-      reverseScale,
-      startTranslate,
-      reverseTranslate,
-      resetOpacity,
-      resetScale,
-      resetTranslate,
-    ]);
+    }, [visible, duration, onClose, fadeIn, fadeOut, resetOpacity]);
 
     // Enhanced color scheme based on toast type - use elevation3 for floating elements
     const backgroundColor = useMemo(() => {
@@ -226,7 +159,7 @@ export const Toast = memo(
       <Animated.View
         pointerEvents="none"
         layout={LinearTransition}
-        style={[containerStyle, opacityStyle, scaleStyle, translateYStyle]}
+        style={[containerStyle, opacityStyle]}
       >
         <View
           style={[

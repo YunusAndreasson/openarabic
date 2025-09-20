@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
@@ -38,7 +38,7 @@ const getRandomArticles = (articles: Article[], count: number): Article[] => {
     const j = Math.floor(Math.random() * (i + 1));
     const temp = shuffled[i];
     const other = shuffled[j];
-    if (temp && other) {
+    if (temp !== undefined && other !== undefined) {
       shuffled[i] = other;
       shuffled[j] = temp;
     }
@@ -99,6 +99,17 @@ export function useMultipleFeaturedArticles(
     type: 'random',
     dueWordRootIds: new Set<number>(),
   });
+
+  // Fallback selection function - moved outside useMemo to eliminate duplication
+  const performFallbackSelection = useCallback((): MultipleFeaturedArticlesResult => {
+    const randomArticles = getRandomArticles(articlesData, MAX_FEATURED_ARTICLES);
+    return {
+      articles: randomArticles,
+      reason: STRINGS.RECOMMENDED,
+      type: 'random',
+      dueWordRootIds,
+    };
+  }, [articlesData, dueWordRootIds]);
 
   // Memoized article selection logic - optimized to prevent expensive recomputations
   useMemo(() => {
@@ -211,16 +222,6 @@ export function useMultipleFeaturedArticles(
         // For refreshes, always perform new selection for variety
         const fallbackSelection = performFallbackSelection();
         setSelectedArticles(fallbackSelection);
-      }
-
-      function performFallbackSelection(): MultipleFeaturedArticlesResult {
-        const randomArticles = getRandomArticles(articlesData, MAX_FEATURED_ARTICLES);
-        return {
-          articles: randomArticles,
-          reason: STRINGS.RECOMMENDED,
-          type: 'random',
-          dueWordRootIds,
-        };
       }
     };
 
