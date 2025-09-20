@@ -104,7 +104,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
         <View style={streakBadgeStyle}>
           <Ionicons
             name="flame"
-            size={16}
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
             color={hasStreak ? colors.warning : colors.textTertiary}
           />
           <ThemedText
@@ -119,8 +119,8 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
                 right: -2,
                 backgroundColor: colors.background,
                 borderRadius: 8,
-                paddingHorizontal: 3,
-                paddingVertical: 1,
+                paddingHorizontal: LAYOUT.SPACING.MICRO,
+                paddingVertical: LAYOUT.SPACING.MICRO / 4,
                 fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
                 minWidth: 16,
                 height: 16,

@@ -4,7 +4,7 @@ import BottomSheet, {
   BottomSheetView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
-import { memo, useCallback, useEffect, useMemo, useRef, type FC } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import BaseCard from '@common/BaseCard';
@@ -59,6 +59,7 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
   const dispatch = useAppDispatch();
   const currentTheme = useAppSelectorMemo(state => state.theme.theme);
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const [optimisticTheme, setOptimisticTheme] = React.useState(currentTheme);
 
   // Snap point is static so define outside component
   const snapPoints = SNAP_POINTS;
@@ -72,8 +73,14 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
     }
   }, [isVisible]);
 
+  // Sync optimistic theme with actual theme when it changes
+  React.useEffect(() => {
+    setOptimisticTheme(currentTheme);
+  }, [currentTheme]);
+
   const handleThemeSelect = useCallback(
     (theme: Theme) => {
+      setOptimisticTheme(theme); // Immediate visual feedback
       dispatch(setTheme(theme));
       lightFeedback();
     },
@@ -127,7 +134,7 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
         {/* Theme Options */}
         <View style={styles.optionsContainer}>
           {THEME_OPTIONS.map(option => {
-            const isSelected = currentTheme === option.id;
+            const isSelected = optimisticTheme === option.id;
 
             return (
               <BaseCard
@@ -177,6 +184,8 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
     </BottomSheet>
   );
 });
+
+export default memo(ThemePicker);
 
 ThemePicker.displayName = 'ThemePicker';
 

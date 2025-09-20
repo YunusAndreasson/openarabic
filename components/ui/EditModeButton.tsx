@@ -1,4 +1,4 @@
-import { memo, useCallback, type FC } from 'react';
+import React, { memo, useCallback, type FC } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -45,6 +45,12 @@ const EditModeButton: FC<EditModeButtonProps> = ({
 }) => {
   const colors = useColors();
   const { editMode, toggle } = useEditMode(type);
+  const [optimisticEditMode, setOptimisticEditMode] = React.useState(editMode);
+
+  // Sync optimistic state with actual state when it changes
+  React.useEffect(() => {
+    setOptimisticEditMode(editMode);
+  }, [editMode]);
   // Derive count internally for listen type when not provided
   const { sortedReadingList } = useBookmarksScreen();
   const derivedCount = type === 'listen' ? sortedReadingList.length : undefined;
@@ -56,17 +62,21 @@ const EditModeButton: FC<EditModeButtonProps> = ({
   });
 
   const handlePress = useCallback((): void => {
+    // Optimistic update - immediately show the new state
+    const newEditMode = !optimisticEditMode;
+    setOptimisticEditMode(newEditMode);
+
     selectionFeedback();
     toggle();
-    onEditModeChange?.(!editMode);
-  }, [toggle, editMode, onEditModeChange]);
+    onEditModeChange?.(newEditMode);
+  }, [toggle, optimisticEditMode, onEditModeChange]);
 
   // Guard early return only after all hooks and callbacks above have been created
   if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {
     return null;
   }
 
-  const buttonText = editMode
+  const buttonText = optimisticEditMode
     ? UiAction.DONE
     : type === 'listen'
     ? UiAction.MANAGE

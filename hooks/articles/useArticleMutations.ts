@@ -34,7 +34,10 @@ const RELATED_QUERY_KEYS = (userId: string, audioPreference?: 'arabic' | 'biling
   ] as const;
 
 interface ArticleMutationsResult {
-  handleToggleReadingList: (articleId: number | undefined, isInReadingList: boolean) => void;
+  handleToggleReadingList: (
+    articleId: number | undefined,
+    isInReadingList: boolean
+  ) => Promise<void>;
   handleWordPress: (wordId: number) => void;
   handleRootPress: (rootId: number) => void;
   addToReadingListMutation: UseMutationResult<void, Error, { userId: string; articleId: number }>;

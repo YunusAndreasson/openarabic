@@ -28,7 +28,7 @@ const Pill = memo(({ id, label, isSelected = false, onSelect, variant = 'filter'
       alignItems: 'center' as const,
       borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
       justifyContent: 'center' as const,
-      minHeight: MIN_TOUCH_TARGET.SMALL,
+      minHeight: MIN_TOUCH_TARGET.MEDIUM,
       shadowColor: colors.shadow,
     };
 

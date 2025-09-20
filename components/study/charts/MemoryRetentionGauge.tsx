@@ -13,7 +13,7 @@ import { BaseChart } from '@charts/BaseChart';
 import { useChartColors } from '@charts/ChartColors';
 
 import { ThemedText } from '@/components/ThemedText';
-import { SPRING_CONFIG } from '@/constants/animation';
+import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -95,7 +95,7 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
         // Trigger celebratory haptic feedback when entering green area
         // Sequence: success + medium impact for a strong dopamine hit
         successFeedback();
-        setTimeout(() => mediumFeedback(), 100); // Small delay for distinct feel
+        setTimeout(() => mediumFeedback(), TIMING_CONFIG.FAST.duration); // Small delay for distinct feel
         hasTriggeredGreenHapticRef.current = true;
       }
 

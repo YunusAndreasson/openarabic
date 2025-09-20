@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback, type FC } from 'react';
+import React, { memo, useCallback, type FC } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import BaseCard from '@common/BaseCard';
@@ -39,17 +39,31 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
     selectedAuthorsText,
   } = useFilterModal(availableAuthors);
 
+  const [optimisticExpandedSections, setOptimisticExpandedSections] =
+    React.useState(expandedSections);
+
+  // Sync optimistic state with actual state when it changes
+  React.useEffect(() => {
+    setOptimisticExpandedSections(expandedSections);
+  }, [expandedSections]);
+
   // Minimal summary handled by section subtitles; show only count and reset at top
 
   const handleToggleAuthors = useCallback(() => {
+    // Optimistic update - immediately show the new state
+    setOptimisticExpandedSections(prev => ({ ...prev, authors: !prev.authors }));
     toggleSection('authors');
   }, [toggleSection]);
 
   const handleToggleDifficulty = useCallback(() => {
+    // Optimistic update - immediately show the new state
+    setOptimisticExpandedSections(prev => ({ ...prev, difficulty: !prev.difficulty }));
     toggleSection('difficulty');
   }, [toggleSection]);
 
   const handleToggleDateRange = useCallback(() => {
+    // Optimistic update - immediately show the new state
+    setOptimisticExpandedSections(prev => ({ ...prev, dateRange: !prev.dateRange }));
     toggleSection('dateRange');
   }, [toggleSection]);
 
@@ -138,7 +152,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             <Pressable
               style={[
                 styles.filterRow,
-                expandedSections.authors && [
+                optimisticExpandedSections.authors && [
                   styles.filterRowExpanded,
                   { backgroundColor: colors.elevation2 },
                 ],
@@ -175,15 +189,15 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                 </View>
                 <View style={styles.expandIndicator}>
                   <Ionicons
-                    name={expandedSections.authors ? 'chevron-up' : 'chevron-down'}
+                    name={optimisticExpandedSections.authors ? 'chevron-up' : 'chevron-down'}
                     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    color={expandedSections.authors ? colors.tint : colors.secondaryText}
+                    color={optimisticExpandedSections.authors ? colors.tint : colors.secondaryText}
                   />
                 </View>
               </View>
             </Pressable>
 
-            {expandedSections.authors && (
+            {optimisticExpandedSections.authors && (
               <View
                 style={[
                   styles.expandedContent,
@@ -218,7 +232,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             <Pressable
               style={[
                 styles.filterRow,
-                expandedSections.difficulty && [
+                optimisticExpandedSections.difficulty && [
                   styles.filterRowExpanded,
                   { backgroundColor: colors.elevation2 },
                 ],
@@ -255,15 +269,17 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                 </View>
                 <View style={styles.expandIndicator}>
                   <Ionicons
-                    name={expandedSections.difficulty ? 'chevron-up' : 'chevron-down'}
+                    name={optimisticExpandedSections.difficulty ? 'chevron-up' : 'chevron-down'}
                     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    color={expandedSections.difficulty ? colors.tint : colors.secondaryText}
+                    color={
+                      optimisticExpandedSections.difficulty ? colors.tint : colors.secondaryText
+                    }
                   />
                 </View>
               </View>
             </Pressable>
 
-            {expandedSections.difficulty && (
+            {optimisticExpandedSections.difficulty && (
               <View
                 style={[
                   styles.expandedContent,
@@ -295,7 +311,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
               style={[
                 styles.filterRow,
                 styles.lastFilterRow,
-                expandedSections.dateRange && [
+                optimisticExpandedSections.dateRange && [
                   styles.filterRowExpanded,
                   { backgroundColor: colors.elevation2 },
                 ],
@@ -331,15 +347,17 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                 </View>
                 <View style={styles.expandIndicator}>
                   <Ionicons
-                    name={expandedSections.dateRange ? 'chevron-up' : 'chevron-down'}
+                    name={optimisticExpandedSections.dateRange ? 'chevron-up' : 'chevron-down'}
                     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    color={expandedSections.dateRange ? colors.tint : colors.secondaryText}
+                    color={
+                      optimisticExpandedSections.dateRange ? colors.tint : colors.secondaryText
+                    }
                   />
                 </View>
               </View>
             </Pressable>
 
-            {expandedSections.dateRange && (
+            {optimisticExpandedSections.dateRange && (
               <View
                 style={[
                   styles.expandedContent,

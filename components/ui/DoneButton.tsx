@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { memo, useCallback, type FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -26,6 +27,11 @@ const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
   const handlePress = useCallback(() => {
     if (onPress) {
       onPress();
+    } else {
+      // Default behavior: navigate back with slight delay for better UX
+      setTimeout(() => {
+        router.back();
+      }, 50); // Small delay to let the press animation complete
     }
   }, [onPress]);
 

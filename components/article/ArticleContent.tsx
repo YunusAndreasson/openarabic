@@ -180,7 +180,7 @@ const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
 // Floating action buttons component positioned over parallax header
 const FloatingActionButtons = memo<{
   isInReadingList: boolean;
-  onToggleReadingList: () => void;
+  onToggleReadingList: () => Promise<void>;
   hasAudio?: boolean;
   isPlaying?: boolean;
   onPlayPress?: () => void;
@@ -196,7 +196,30 @@ const FloatingActionButtons = memo<{
   }) => {
     const colors = useColors();
     const insets = useSafeAreaInsets();
+    const [optimisticIsInReadingList, setOptimisticIsInReadingList] =
+      React.useState(isInReadingList);
     // No dark mode specific styling needed here
+
+    // Sync optimistic state with prop when it changes (from external updates)
+    React.useEffect(() => {
+      setOptimisticIsInReadingList(isInReadingList);
+    }, [isInReadingList]);
+
+    // Optimistic toggle handler
+    const handleOptimisticToggle = React.useCallback(async () => {
+      // Optimistic update - immediately show the new state
+      const newState = !optimisticIsInReadingList;
+      setOptimisticIsInReadingList(newState);
+
+      try {
+        await onToggleReadingList();
+        // Success - the optimistic state should match the actual state now
+      } catch (error) {
+        // Revert optimistic update on error
+        setOptimisticIsInReadingList(optimisticIsInReadingList);
+        console.error('Failed to toggle reading list:', error);
+      }
+    }, [onToggleReadingList, optimisticIsInReadingList]);
 
     const buttonStyle = useMemo(
       () => ({
@@ -290,19 +313,21 @@ const FloatingActionButtons = memo<{
 
           {/* Playlist button */}
           <Pressable
-            style={isInReadingList ? activeButtonStyle : buttonStyle}
-            onPress={onToggleReadingList}
+            style={optimisticIsInReadingList ? activeButtonStyle : buttonStyle}
+            onPress={handleOptimisticToggle}
             android_ripple={{
               color: colors.navigationRipple,
               radius: MIN_TOUCH_TARGET.MEDIUM / 2,
             }}
             accessibilityRole="button"
-            accessibilityLabel={isInReadingList ? 'Remove from bookmarks' : 'Add to bookmarks'}
+            accessibilityLabel={
+              optimisticIsInReadingList ? 'Remove from bookmarks' : 'Add to bookmarks'
+            }
           >
             <Ionicons
               name="bookmark"
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={isInReadingList ? colors.tint : colors.secondaryText}
+              color={optimisticIsInReadingList ? colors.tint : colors.secondaryText}
             />
           </Pressable>
         </View>
@@ -324,7 +349,7 @@ interface ArticleContentProps {
   scrollViewRef: React.RefObject<any>;
   // Reading list (bookmarks/listening) functionality
   isInReadingList: boolean;
-  onToggleReadingList: () => void;
+  onToggleReadingList: () => Promise<void>;
   // Audio playback functionality
   hasAudio?: boolean;
   isPlaying?: boolean;

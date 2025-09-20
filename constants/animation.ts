@@ -28,6 +28,9 @@ export const TIMING_CONFIG = {
     duration: 400, // Progress bar animations
     easing: Easing.out(Easing.cubic), // Smooth progress easing
   },
+  POLLING: {
+    interval: 200, // Polling intervals for status updates
+  },
 } as const;
 
 /**

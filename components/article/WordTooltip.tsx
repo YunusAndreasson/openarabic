@@ -458,7 +458,7 @@ export const WordTooltip = memo(
               {/* Chevron indicator */}
               <Ionicons
                 name="chevron-forward"
-                size={16}
+                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                 color={colors.tint}
                 style={STATIC_STYLES.chevronIcon}
               />

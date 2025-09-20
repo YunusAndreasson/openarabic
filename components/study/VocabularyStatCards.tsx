@@ -41,7 +41,7 @@ const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress }) =>
     return (
       <BaseCard shadowSize="small" style={styles.statCard}>
         <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
-          <Ionicons name={icon} size={16} color={color} />
+          <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
         </View>
         <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
           {value}

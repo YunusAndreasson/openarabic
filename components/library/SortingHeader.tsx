@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    minHeight: MIN_TOUCH_TARGET.SMALL,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
     gap: LAYOUT.SPACING.TINY,
   },
   directionIcon: {

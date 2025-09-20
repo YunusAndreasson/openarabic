@@ -7,6 +7,7 @@ import { ProgressBar } from '@common/ProgressBar';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback } from '@/utils/haptics';
@@ -142,7 +143,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
 
     return (
       <Animated.View
-        entering={FadeInUp.duration(350)}
+        entering={FadeInUp.duration(TIMING_CONFIG.GENTLE.duration)}
         exiting={FadeOutDown.duration(200)}
         style={containerStyle}
       >
@@ -234,7 +235,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
               >
                 <Ionicons
                   name={isPlaying ? 'pause' : 'play'}
-                  size={18}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   color={colors.black}
                   style={!isPlaying && styles.playIconOffset}
                 />

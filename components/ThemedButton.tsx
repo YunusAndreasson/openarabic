@@ -80,14 +80,23 @@ function ThemedButtonComponent({
     type: 'card',
   });
 
-  // Create the press handler
+  // Optimistic loading state - immediately show loading when pressed
+  const [optimisticLoading, setOptimisticLoading] = React.useState(false);
+  const isActuallyLoading = loading || optimisticLoading;
+
+  // Create the press handler with optimistic loading
   const pressHandler = useCallback(
     (event: GestureResponderEvent) => {
-      if (onPress && !disabled && !loading) {
+      if (onPress && !disabled && !isActuallyLoading) {
+        setOptimisticLoading(true); // Immediately show loading
         onPress(event);
+        // Auto-clear optimistic loading after 5 seconds as fallback
+        setTimeout(() => {
+          setOptimisticLoading(false);
+        }, 5000);
       }
     },
-    [onPress, disabled, loading]
+    [onPress, disabled, isActuallyLoading]
   );
 
   const textColor = disabled
@@ -108,14 +117,14 @@ function ThemedButtonComponent({
       size === 'large' && styles.buttonLarge,
       size === 'small' && styles.buttonSmall,
       variant === 'filled' && {
-        backgroundColor: disabled ? colors.cardBorder : colors.tint,
+        backgroundColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint,
       },
       variant === 'outlined' && {
         borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-        borderColor: disabled ? colors.border : colors.tint,
+        borderColor: isActuallyLoading || disabled ? colors.border : colors.tint,
       },
     ],
-    [size, variant, colors.tint, colors.cardBorder, disabled]
+    [size, variant, colors.tint, colors.cardBorder, disabled, isActuallyLoading]
   );
 
   const buttonTextStyle = useMemo(
@@ -133,15 +142,15 @@ function ThemedButtonComponent({
   );
 
   const textOpacityStyle = useMemo(
-    () => (loading && !icon ? styles.hiddenText : null),
-    [loading, icon]
+    () => (isActuallyLoading && !icon ? styles.hiddenText : null),
+    [isActuallyLoading, icon]
   );
 
   // Accessibility properties
   const accessibilityLabel = props.accessibilityLabel || title;
   const accessibilityState = {
-    disabled: disabled || loading,
-    busy: loading,
+    disabled: disabled || isActuallyLoading,
+    busy: isActuallyLoading,
     ...props.accessibilityState,
   };
 
@@ -150,18 +159,18 @@ function ThemedButtonComponent({
       style={[buttonStyle, animatedStyle]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      disabled={disabled || loading}
+      disabled={disabled || isActuallyLoading}
       onPress={pressHandler}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={accessibilityState}
-      accessibilityHint={loading ? 'Button is loading' : undefined}
+      accessibilityHint={isActuallyLoading ? 'Button is loading' : undefined}
       {...props}
     >
       <View style={styles.innerContainer}>
         {icon && (
           <View style={iconContainerStyle}>
-            {loading ? (
+            {isActuallyLoading ? (
               <ActivityIndicator color={textColor} size="small" />
             ) : (
               <Ionicons
@@ -174,7 +183,7 @@ function ThemedButtonComponent({
         )}
 
         <View style={styles.contentContainer}>
-          {loading && !icon ? (
+          {isActuallyLoading && !icon ? (
             <ActivityIndicator color={textColor} size="small" />
           ) : (
             <ThemedText

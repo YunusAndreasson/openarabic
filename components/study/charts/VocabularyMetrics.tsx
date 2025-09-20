@@ -35,7 +35,7 @@ const MetricCard = memo<MetricCardProps>(({ icon, value, label, color }) => {
       ]}
     >
       <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
-        <Ionicons name={icon} size={16} color={color} />
+        <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
       </View>
       <ThemedText type="heading2" weight="bold" style={[styles.metricValue, { color }]}>
         {value}

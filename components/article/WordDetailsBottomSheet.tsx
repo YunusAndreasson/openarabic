@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
@@ -34,6 +35,7 @@ const WordDetailsBottomSheetComponent = ({
   const colors = useColors();
   const [audioStatus, setAudioStatus] = useState<AudioStatus>(simpleAudioService.getStatus());
   const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useState(isInStudyList);
+  const [optimisticIsVisible, setOptimisticIsVisible] = useState(isVisible);
 
   // Use Arabic word analysis for color-coding
   const { hasComponents, coloredSegments, formattedAnalysis, analysis } = useArabicWordAnalysis(
@@ -42,10 +44,15 @@ const WordDetailsBottomSheetComponent = ({
     true
   );
 
-  // Sync optimistic state with prop when it changes (from external updates)
+  // Sync optimistic states with props when they change (from external updates)
   useEffect(() => {
     setOptimisticIsInStudyList(isInStudyList);
   }, [isInStudyList]);
+
+  // Optimistic visibility - show modal immediately when isVisible becomes true
+  useEffect(() => {
+    setOptimisticIsVisible(isVisible);
+  }, [isVisible]);
 
   // Configure snap points
   const snapPoints = useMemo(() => [380], []);
@@ -245,7 +252,7 @@ const WordDetailsBottomSheetComponent = ({
     updateStatus();
 
     // Set up polling for status updates
-    const interval = setInterval(updateStatus, 200);
+    const interval = setInterval(updateStatus, TIMING_CONFIG.POLLING.interval);
 
     return () => clearInterval(interval);
   }, []);
@@ -312,8 +319,8 @@ const WordDetailsBottomSheetComponent = ({
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
 
-  // Don't render anything if not visible or no word
-  if (!isVisible || !word) {
+  // Don't render anything if not visible or no word (use optimistic visibility for immediate feedback)
+  if (!optimisticIsVisible || !word) {
     return null;
   }
 
