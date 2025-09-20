@@ -38,11 +38,12 @@
     "jest.setup.js",
     "expo-router/entry",
     "expo/**",
+    ".github/workflows/**",
     "@expo/metro-config",
     "metro-minify-terser"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
-  "ignoreBinaries": ["supabase", "gh"],
+  "ignoreBinaries": ["supabase", "gh", "eas"],
   "exclude": ["duplicates"]
 }
