@@ -44,12 +44,7 @@ export default function ReadScreen(): JSX.Element {
   const { prefetchArticle } = useAppPreloader();
 
   // Get last read article for continue reading button
-  const {
-    showButton,
-    isLoading: isLastReadLoading,
-    continueReadingData,
-    articleType,
-  } = useLastReadArticle();
+  const { showButton, isLoading: isLastReadLoading, continueReadingData } = useLastReadArticle();
 
   const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery({
     queryKey: ['categories'],
@@ -75,9 +70,19 @@ export default function ReadScreen(): JSX.Element {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Optimized articlesData - memoize to prevent unnecessary re-renders
+  const memoizedArticlesData = useMemo(
+    () => articlesData,
+    [
+      // Only depend on articlesData itself, not individual properties
+      // This creates a stable reference unless the actual array changes
+      articlesData,
+    ]
+  );
+
   // Optimized derivedData - use stable references when possible
   const categoriesWithArticles = useMemo(() => {
-    const counts = articlesData.reduce<Record<number, number>>((acc, article) => {
+    const counts = memoizedArticlesData.reduce<Record<number, number>>((acc, article) => {
       const id = article?.category?.id;
       if (id) {
         acc[id] = (acc[id] || 0) + 1;
@@ -94,7 +99,7 @@ export default function ReadScreen(): JSX.Element {
       }
       return acc;
     }, []);
-  }, [articlesData, categoriesData]); // Keep full dependencies but optimize the arrays themselves
+  }, [memoizedArticlesData, categoriesData]); // Use memoized articles data
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
@@ -160,12 +165,12 @@ export default function ReadScreen(): JSX.Element {
   const ListHeaderComponent = useMemo(() => {
     return (
       <View style={styles.headerContainer}>
-        <IntelligentArticleSection articlesData={articlesData} refreshKey={refreshKey} />
+        <IntelligentArticleSection articlesData={memoizedArticlesData} refreshKey={refreshKey} />
         <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
       </View>
     );
   }, [
-    articlesData, // Articles data changes less frequently than other values
+    memoizedArticlesData, // Use memoized articles data to prevent unnecessary re-renders
     refreshKey, // Only changes on manual refresh
     categoriesWithArticles, // Computed value, changes when articles/categories change
     handleSelectCategory, // Stable callback
@@ -174,10 +179,10 @@ export default function ReadScreen(): JSX.Element {
   // Static footer component - no props needed
   const ListFooterComponent = useMemo(() => <HijriDateFooter />, []);
 
-  // Dynamic button text based on article type - simplified logic
+  // Button text - always "Continue Reading" since we only show articles user has actually read or bookmarked
   const continueButtonText = useMemo(() => {
-    return articleType === 'featured' ? 'Start Reading' : STRINGS.CONTINUE_READING;
-  }, [articleType]);
+    return STRINGS.CONTINUE_READING;
+  }, []);
 
   const contentContainerStyle = useMemo(
     () => ({

@@ -3,6 +3,7 @@ This file contains prompts and constants for the translation system.
 Pydantic models are defined in data/models.py.
 """
 
+from .config import VALID_CATEGORIES
 from .enums import DifficultyLevel, PartOfSpeech
 
 # Define valid parts of speech
@@ -60,7 +61,22 @@ CONTENT_ANALYSIS_PROMPT = (
    - Short and easy to understand single sentence
    - Should be exciting like its "promoting" the content
 
-3. Difficulty Level (1–5):
+3. Category:
+   - Choose the most appropriate category from the valid categories below
+   - Only use one of these exact categories: """
+    + ", ".join(f"'{category}'" for category in VALID_CATEGORIES.keys())
+    + """
+   - Base your choice on the actual content, not assumptions
+   - Examples:
+     * Text about Islamic beliefs and creed → 'aqeedah'
+     * Text about Islamic law and jurisprudence → 'fiqh'
+     * Text about Prophet's sayings and actions → 'hadith'
+     * Text about Quranic verses or recitation → 'quran'
+     * Text about Prophet Muhammad's biography → 'seerah'
+     * Text about spiritual excellence and worship → 'ihsan'
+     * Text about Quranic explanation and commentary → 'tafsir'
+
+4. Difficulty Level (1–5):
 """
     + format_difficulty_levels()
     + """

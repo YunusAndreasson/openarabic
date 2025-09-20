@@ -130,22 +130,26 @@ export default function ReviewScreen(): JSX.Element {
 
   return (
     <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
-      <View
-        style={[
-          baseStyles.contentContainer,
-          {
-            paddingTop: insets.top + LAYOUT.SPACING.MEDIUM,
-            paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
-          },
-        ]}
-      >
+      {/* Progress header at top of screen */}
+      <View style={{ paddingTop: LAYOUT.SPACING.LARGE }}>
         <ReviewHeader
           animationKey={progressAnimationKey}
           maxProgress={maxProgress}
           progress={progress}
           onClose={handleClose}
         />
+      </View>
 
+      {/* Main content area */}
+      <View
+        style={[
+          baseStyles.contentContainer,
+          {
+            paddingTop: LAYOUT.SPACING.MEDIUM, // Less padding since header is above
+            paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
+          },
+        ]}
+      >
         <View style={baseStyles.wordArea}>
           <ReviewCard
             key={currentWordKey}

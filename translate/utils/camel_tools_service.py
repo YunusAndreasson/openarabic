@@ -60,7 +60,7 @@ class CamelToolsService:
             # No tashkeel suggestion found
             return word
 
-        except Exception as e:
+        except Exception:
             # Suppress noisy warnings from reinflector (e.g. invalid feature values)
             # and fall back to returning the original word without diacritics.
             # Tashkeel generation skipped due to error

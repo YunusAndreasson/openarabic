@@ -3,6 +3,7 @@ import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 import { InteractionManager } from 'react-native';
 
+import { simpleAudioService } from '@/services/simpleAudioService';
 import { handleError } from '@/utils/errorHandling';
 
 /**
@@ -109,7 +110,13 @@ export const useScreenFocusRefresh = (
       // Ensure subsequent focus events aren't treated as initial
       state.isInitialMount = false;
 
-      // No cleanup needed for this effect
+      // Cleanup function when screen loses focus
+      return () => {
+        // Stop any playing audio when navigating away from this screen
+        simpleAudioService.stop().catch(() => {
+          // Ignore errors during cleanup
+        });
+      };
     }, [refreshData]) // Dependency is stable
   );
 

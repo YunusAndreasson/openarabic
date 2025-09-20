@@ -39,6 +39,7 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
             title="unknown",
             summary=response["error"],
             difficulty_level="unknown",
+            category="aqeedah",
             total_units=0,
         )
 
@@ -58,6 +59,7 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
             title="unknown",
             summary="unknown",
             difficulty_level="unknown",
+            category="aqeedah",
             total_units=0,
         )
 
@@ -67,6 +69,7 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
         title=data.get("title", "unknown"),
         summary=data.get("summary", "unknown"),
         difficulty_level=data.get("difficulty_level", "unknown"),
+        category=data.get("category", "aqeedah"),
         total_units=len(data.get("units", [])),
     )
 

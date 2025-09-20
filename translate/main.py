@@ -89,7 +89,7 @@ def _is_file_already_processed(input_file_path: str) -> bool:
     """
     try:
         # Read the file content
-        with open(input_file_path, "r", encoding="utf-8") as f:
+        with open(input_file_path, encoding="utf-8") as f:
             content = f.read().strip()
 
         if not content:

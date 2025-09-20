@@ -107,3 +107,17 @@ AUTHOR_NUMBER_MAPPING = {
     folder.split("_")[0]: author_name
     for folder, author_name in AUTHOR_FOLDER_MAPPING.items()
 }
+
+# Valid article categories - must match database categories
+VALID_CATEGORIES = {
+    "aqeedah": "Islamic creed and belief",
+    "fiqh": "Islamic jurisprudence",
+    "hadith": "Prophetic traditions",
+    "quran": "Quranic studies",
+    "seerah": "Biography of Prophet Muhammad",
+    "ihsan": "Spiritual excellence and worship",
+    "tafsir": "Quranic exegesis"
+}
+
+# Default category for fallback
+DEFAULT_CATEGORY = "aqeedah"

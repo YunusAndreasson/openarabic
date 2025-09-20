@@ -33,6 +33,7 @@ const WordDetailsBottomSheetComponent = ({
   const bottomSheetRef = useRef<BottomSheet>(null);
   const colors = useColors();
   const [audioStatus, setAudioStatus] = useState<AudioStatus>(simpleAudioService.getStatus());
+  const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useState(isInStudyList);
 
   // Use Arabic word analysis for color-coding
   const { hasComponents, coloredSegments, formattedAnalysis, analysis } = useArabicWordAnalysis(
@@ -40,6 +41,11 @@ const WordDetailsBottomSheetComponent = ({
     word?.english || '',
     true
   );
+
+  // Sync optimistic state with prop when it changes (from external updates)
+  useEffect(() => {
+    setOptimisticIsInStudyList(isInStudyList);
+  }, [isInStudyList]);
 
   // Configure snap points
   const snapPoints = useMemo(() => [380], []);
@@ -276,19 +282,32 @@ const WordDetailsBottomSheetComponent = ({
         title: word.english || word.word_form || 'Word Audio',
       };
 
+      // Stop any currently playing article audio before starting word audio
+      await simpleAudioService.stop();
+
       await simpleAudioService.play(track, { immediateStatus: true });
     } catch (error) {
       handleError(error as Error, { toastMessage: 'Word audio playback failed' });
     }
   }, [word]);
 
-  // Handle add to study
+  // Handle add to study with optimistic update
   const handleAddToStudy = useCallback(async () => {
     if (!word) return;
 
+    // Optimistic update - immediately show the new state
+    setOptimisticIsInStudyList(!optimisticIsInStudyList);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await onAddToStudy(word);
-  }, [word, onAddToStudy]);
+
+    try {
+      await onAddToStudy(word);
+      // Success - the optimistic state should match the actual state now
+    } catch (error) {
+      // Revert optimistic update on error
+      setOptimisticIsInStudyList(optimisticIsInStudyList);
+      handleError(error as Error, { toastMessage: 'Failed to update study list' });
+    }
+  }, [word, onAddToStudy, optimisticIsInStudyList]);
 
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
@@ -337,8 +356,8 @@ const WordDetailsBottomSheetComponent = ({
               style={styles.actionButton}
             />
             <ThemedButton
-              title={isInStudyList ? 'Remove from Study' : 'Add to Study'}
-              variant={isInStudyList ? 'outlined' : 'filled'}
+              title={optimisticIsInStudyList ? 'Remove from Study' : 'Add to Study'}
+              variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
               onPress={handleAddToStudy}
               style={styles.actionButton}
             />
@@ -356,7 +375,8 @@ const arePropsEqual = (
 ): boolean =>
   prevProps.isVisible === nextProps.isVisible &&
   prevProps.word?.id === nextProps.word?.id &&
-  prevProps.isInStudyList === nextProps.isInStudyList;
+  prevProps.isInStudyList === nextProps.isInStudyList &&
+  prevProps.onAddToStudy === nextProps.onAddToStudy;
 
 const styles = StyleSheet.create({
   background: {

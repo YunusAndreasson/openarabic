@@ -39,8 +39,8 @@ export function useLastReadArticle(): UseLastReadArticleReturn {
       return readingProgressService.getLastReadArticle(user.id);
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnMount: false,
+    staleTime: 1 * 60 * 1000, // 1 minute - shorter stale time for Continue Reading
+    refetchOnMount: true, // Always refetch when library screen mounts
   });
 
   // Fetch reading list/bookmarks (second priority) - fetch for authenticated users
@@ -52,14 +52,6 @@ export function useLastReadArticle(): UseLastReadArticleReturn {
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
-    refetchOnMount: false,
-  });
-
-  // Fetch featured articles (third priority) - using existing articles query from cache
-  const { data: articlesData } = useQuery({
-    queryKey: ['articles'],
-    queryFn: () => articlesService.getArticles(),
-    staleTime: 10 * 60 * 1000, // 10 minutes for articles
     refetchOnMount: false,
   });
 
@@ -75,10 +67,10 @@ export function useLastReadArticle(): UseLastReadArticleReturn {
     refetchOnMount: false,
   });
 
-  // Determine what to show for "Continue Reading" - prioritize user's saved articles
+  // Determine what to show for "Continue Reading" - prioritize actual reading progress
   const continueReadingData = useMemo((): ContinueReadingData | null => {
     try {
-      // Priority 1: Article with reading progress (highest priority)
+      // Priority 1: Article with reading progress (ONLY priority - this is what user was actually reading)
       if (lastReadProgress && lastReadArticle) {
         return {
           type: 'reading_progress',
@@ -87,7 +79,7 @@ export function useLastReadArticle(): UseLastReadArticleReturn {
         };
       }
 
-      // Priority 2: Most recently bookmarked article (user's explicit choice)
+      // Priority 2: Most recently bookmarked article (fallback only if no reading progress)
       if (readingList && readingList.length > 0) {
         // Get the most recent article from reading list
         const recentArticle = readingList[0];
@@ -99,24 +91,13 @@ export function useLastReadArticle(): UseLastReadArticleReturn {
         }
       }
 
-      // Priority 3: Featured/recommended article (fallback only)
-      if (articlesData && articlesData.length > 0) {
-        // Get the first available article as a featured recommendation
-        const featuredArticle = articlesData[0];
-        if (featuredArticle) {
-          return {
-            type: 'featured',
-            article: featuredArticle,
-          };
-        }
-      }
-
+      // No continue reading available
       return null;
     } catch {
       // Gracefully handle errors in continue reading computation
       return null;
     }
-  }, [lastReadProgress, lastReadArticle, readingList, articlesData]);
+  }, [lastReadProgress, lastReadArticle, readingList]);
 
   // Show button if we have any type of article to continue with
   const showButton = !!continueReadingData;

@@ -558,7 +558,6 @@ def archive_files(json_path: str, article_id: int) -> None:
         AUTHOR_NUMBER_MAPPING,
         INBOX_DIR,
         SPLIT_DIR,
-        TRANSLATE_DIR,
     )
 
     archive_dir = ARCHIVE_DIR

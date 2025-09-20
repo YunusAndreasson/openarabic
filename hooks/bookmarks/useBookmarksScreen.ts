@@ -1,3 +1,4 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -372,6 +373,19 @@ export const useBookmarksScreen = () => {
       }
     };
   }, []);
+
+  // Stop audio when screen loses focus
+  useFocusEffect(
+    useCallback(() => {
+      // Cleanup function when screen loses focus
+      return () => {
+        // Stop any playing audio when navigating away from bookmarks screen
+        simpleAudioService.stop().catch(() => {
+          // Ignore errors during cleanup
+        });
+      };
+    }, [])
+  );
 
   return {
     sortedReadingList,

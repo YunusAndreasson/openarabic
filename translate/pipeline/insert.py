@@ -202,16 +202,27 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
     # Detect author from file path
     author_name, author_id = detect_author_from_file_path(file_path)
 
-    # Use default category if not specified
-    if category_id is None:
-        category_id = get_category_id("aqeedah")
-
     try:
         with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
     except Exception as e:
         logger.error(f"Failed to read JSON file: {e}")
         raise
+
+    # Get category from the split data
+    category = "aqeedah"  # default fallback
+    if "metadata" in data and "category" in data["metadata"]:
+        category = data["metadata"]["category"]
+
+    # Validate category before getting ID
+    from data.config import VALID_CATEGORIES
+    if category not in VALID_CATEGORIES:
+        logger.warning(f"Invalid category '{category}' detected, using default 'aqeedah'")
+        category = "aqeedah"
+
+    # Use specified category or default
+    if category_id is None:
+        category_id = get_category_id(category)
 
     # Validate required fields
     if "metadata" not in data or "translations" not in data:
@@ -404,7 +415,7 @@ def main() -> int:
     for json_path in translation_files:
         try:
             process_json_file(json_path)
-        except Exception as e:
+        except Exception:
             error_count += 1
 
     if error_count > 0:

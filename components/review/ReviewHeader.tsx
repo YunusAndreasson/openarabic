@@ -16,15 +16,14 @@ const STATIC_STYLES = StyleSheet.create({
   header: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: LAYOUT.HEADER.NAV_HEIGHT,
+    height: LAYOUT.SPACING.XXLARGE, // Compact height for progress bar only (32px)
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
     width: '100%',
     zIndex: 1,
   },
   progressContainer: {
     flex: 1,
-    marginVertical: LAYOUT.SPACING.MEDIUM,
+    marginVertical: LAYOUT.SPACING.TINY, // Minimal margin for highest positioning
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   closeButton: {
@@ -72,6 +71,7 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
       animationDuration: TIMING_CONFIG.PROGRESS.duration,
       animationTriggered,
       progress: displayProgress,
+      height: LAYOUT.SPACING.MEDIUM, // Standard height (12px)
     }),
     [animationTriggered, displayProgress]
   );
