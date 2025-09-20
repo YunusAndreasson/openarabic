@@ -15,8 +15,6 @@ import {
   COMPLETION_METRIC_STAGGER,
   COMPLETION_SUBTITLE_DELAY,
   COMPLETION_TITLE_DELAY,
-  ICON_ENTRANCE_DURATION,
-  QUICK_ANIMATION_DURATION,
   TIMING_CONFIG,
 } from '@/constants/animation';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
@@ -84,7 +82,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   useEffect(() => {
     const timer = setTimeout(() => {
       successFeedback();
-    }, QUICK_ANIMATION_DURATION + ICON_ENTRANCE_DURATION / 2);
+    }, TIMING_CONFIG.FAST.duration + TIMING_CONFIG.ENTRANCE.duration / 2);
 
     return () => clearTimeout(timer);
   }, []);
@@ -148,8 +146,8 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
     <View style={[styles.contentContainer, contentStyle || {}]}>
       {/* Success Icon - Primary visual element */}
       <Animated.View
-        entering={ZoomIn.delay(QUICK_ANIMATION_DURATION)
-          .duration(ICON_ENTRANCE_DURATION)
+        entering={ZoomIn.delay(TIMING_CONFIG.FAST.duration)
+          .duration(TIMING_CONFIG.ENTRANCE.duration)
           .springify()}
         style={styles.iconContainer}
       >

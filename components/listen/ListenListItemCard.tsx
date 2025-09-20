@@ -10,7 +10,7 @@ import { ThemedText } from '@/components/ThemedText';
 import DeleteButton from '@/components/listen/DeleteButton';
 import DragHandle, { type DragHandleProps } from '@/components/listen/DragHandle';
 import PlayButton from '@/components/listen/PlayButton';
-import { ARTICLE_CARD_SPRING, CARD_DRAG_SCALE, WORD_PRESS_SCALE } from '@/constants/animation';
+import { CARD_DRAG_SCALE, SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
@@ -69,8 +69,8 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
       initialValue: 1,
       targetValue: 1,
       useSpring: true,
-      damping: ARTICLE_CARD_SPRING.damping,
-      stiffness: ARTICLE_CARD_SPRING.stiffness,
+      damping: SPRING_CONFIG.RESPONSIVE.damping,
+      stiffness: SPRING_CONFIG.RESPONSIVE.stiffness,
     });
 
     useEffect(() => {

@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { COMPONENT_ENTRANCE_DURATION, PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
+import { PRESS_SCALE, SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
@@ -102,7 +102,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
         setIsLoadingInitial(false);
         // Animate in after loading (cancel any existing animation first)
         cancelAnimation(opacityValue);
-        opacityValue.value = withTiming(1, { duration: COMPONENT_ENTRANCE_DURATION });
+        opacityValue.value = withTiming(1, TIMING_CONFIG.ENTRANCE);
       }
     };
 

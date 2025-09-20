@@ -20,6 +20,14 @@ export const TIMING_CONFIG = {
     duration: 250, // Faster for more responsive gentle animations
     easing: Easing.bezier(0.4, 0.0, 0.2, 1), // Natural gentle easing
   },
+  ENTRANCE: {
+    duration: 250, // Component entrance animations
+    easing: Easing.out(Easing.cubic), // Natural entrance easing
+  },
+  PROGRESS: {
+    duration: 400, // Progress bar animations
+    easing: Easing.out(Easing.cubic), // Smooth progress easing
+  },
 } as const;
 
 /**
@@ -51,6 +59,13 @@ export const SPRING_CONFIG = {
     damping: 22, // Higher damping for very smooth sliding
     stiffness: 120, // Balanced stiffness for natural slide feel
     mass: 0.7, // Lighter mass for snappier sliding
+    overshootClamping: false,
+    energyThreshold: 0.01,
+  },
+  RESPONSIVE: {
+    damping: 18, // Higher damping for smoother, more refined feel
+    stiffness: 350, // Higher stiffness for more responsive, snappy feel
+    mass: 0.6, // Lighter mass for quicker response
     overshootClamping: false,
     energyThreshold: 0.01,
   },
@@ -86,15 +101,6 @@ export const CARD_DRAG_SCALE = 1.05;
 /** Minimum progress value before triggering animations */
 export const REVIEW_MIN_PROGRESS_VALUE = 1;
 
-/** Default animation duration for UI feedback */
-export const DEFAULT_ANIMATION_DURATION = 180; // Slightly faster for more responsive feel
-
-/** Extra quick animation duration */
-export const QUICK_ANIMATION_DURATION = 80; // Faster for snappy micro-interactions
-
-/** Duration for rotation based animations */
-export const ROTATION_ANIMATION_DURATION = 350; // Slightly faster for smoother feel
-
 /** Starting offset for toast translate animations */
 export const TOAST_INITIAL_TRANSLATE_Y = 50;
 
@@ -119,15 +125,6 @@ export const SENTENCE_DRAW_DISTANCE_MULTIPLIER = 12;
 /** Default scroll event throttle for smooth animations */
 export const SCROLL_EVENT_THROTTLE = 16;
 
-/** Spring config for ArticleCard scale animation */
-export const ARTICLE_CARD_SPRING = {
-  damping: 22, // Higher damping for smoother, more refined feel
-  stiffness: 350, // Higher stiffness for more responsive, snappy feel
-  mass: 0.6, // Lighter mass for quicker response
-  overshootClamping: false,
-  energyThreshold: 0.01,
-} as const;
-
 /** Delay before completion metrics appear */
 export const COMPLETION_METRIC_BASE_DELAY = 800;
 
@@ -139,9 +136,6 @@ export const COMPLETION_BUTTON_DELAY = {
   BASE: 1000,
   WITH_METRICS: 1400,
 } as const;
-
-/** Animation duration for progress bars */
-export const PROGRESS_BAR_ANIMATION_DURATION = 400; // Faster for more responsive progress feedback
 
 /** Spring config for toast scale animations */
 export const TOAST_SCALE_SPRING = {
@@ -156,12 +150,6 @@ export const TOAST_SCALE_CONFIG = {
 
 /** Default toast visibility duration */
 export const DEFAULT_TOAST_DURATION = 4000;
-
-/** Duration for icon entrance animations */
-export const ICON_ENTRANCE_DURATION = 300; // Faster for snappier icon entrances
-
-/** Duration for component entrance animations */
-export const COMPONENT_ENTRANCE_DURATION = 250; // Faster for more responsive component entrances
 
 /** Delay before completion title appears */
 export const COMPLETION_TITLE_DELAY = 400;

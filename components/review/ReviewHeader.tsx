@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@common/ProgressBar';
 
-import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
@@ -69,7 +69,7 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
 
   const progressBarProps = useMemo(
     () => ({
-      animationDuration: PROGRESS_BAR_ANIMATION_DURATION,
+      animationDuration: TIMING_CONFIG.PROGRESS.duration,
       animationTriggered,
       progress: displayProgress,
     }),

@@ -10,7 +10,7 @@ import BaseCard from '@common/BaseCard';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import Pill from '@/components/ui/Pill';
-import { ARTICLE_CARD_SPRING, PRESS_SCALE } from '@/constants/animation';
+import { PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useTransformAnimation } from '@/hooks/animations';
@@ -158,8 +158,8 @@ function ArticleCardComponent({
     initialValue: 1,
     targetValue: 1,
     useSpring: true,
-    damping: ARTICLE_CARD_SPRING.damping,
-    stiffness: ARTICLE_CARD_SPRING.stiffness,
+    damping: SPRING_CONFIG.RESPONSIVE.damping,
+    stiffness: SPRING_CONFIG.RESPONSIVE.stiffness,
   });
 
   // Handle press animation - scale down on press, back up on release

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
-import { QUICK_ANIMATION_DURATION } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -14,7 +14,7 @@ export interface DragHandleProps {
 
 const DragHandle: FC<DragHandleProps> = ({
   onLongPress,
-  delayLongPress = QUICK_ANIMATION_DURATION,
+  delayLongPress = TIMING_CONFIG.FAST.duration,
   style,
 }) => {
   const colors = useColors();

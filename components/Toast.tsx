@@ -4,7 +4,7 @@ import Animated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
-import { DEFAULT_ANIMATION_DURATION, DEFAULT_TOAST_DURATION } from '@/constants/animation';
+import { DEFAULT_TOAST_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -67,7 +67,7 @@ export const Toast = memo(
       reset: resetOpacity,
     } = useOpacityAnimation({
       initialOpacity: 0,
-      duration: DEFAULT_ANIMATION_DURATION,
+      duration: TIMING_CONFIG.MEDIUM.duration,
     });
 
     // Keep individual animated styles separate for clarity
@@ -89,7 +89,7 @@ export const Toast = memo(
           setTimeout(() => {
             onClose();
             resetOpacity();
-          }, DEFAULT_ANIMATION_DURATION);
+          }, TIMING_CONFIG.MEDIUM.duration);
         }, duration);
       } else {
         resetOpacity();

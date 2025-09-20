@@ -11,7 +11,7 @@ import type { LayoutChangeEvent, LayoutRectangle, TextStyle } from 'react-native
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -62,7 +62,7 @@ function ArabicWordComponent({
   // Use opacity animation for border
   const { setOpacity: setBorderOpacity } = useOpacityAnimation({
     initialOpacity: isSelected ? 1 : 0,
-    duration: DEFAULT_ANIMATION_DURATION,
+    duration: TIMING_CONFIG.MEDIUM.duration,
   });
 
   // Update border opacity when selection changes

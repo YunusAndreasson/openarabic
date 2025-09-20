@@ -4,7 +4,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ROTATION_ANIMATION_DURATION } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -27,7 +27,7 @@ const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => 
       type: 'rotate',
       initialValue: 0,
       targetValue: 360,
-      duration: ROTATION_ANIMATION_DURATION,
+      duration: TIMING_CONFIG.SLOW.duration,
     }
   );
 

@@ -6,7 +6,7 @@ import { InteractionManager } from 'react-native';
 import type { AnimatedStyle, SharedValue } from 'react-native-reanimated';
 import { useAnimatedStyle } from 'react-native-reanimated';
 
-import { DEFAULT_ANIMATION_DURATION, TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -91,7 +91,7 @@ const fontConfig: WordSizingConfig = {
 // Timing constants for transitions (milliseconds)
 const TRANSITION_DELAYS = {
   initial: TIMING_CONFIG.FAST.duration, // Initial delay before animation
-  fadeAnimation: DEFAULT_ANIMATION_DURATION, // Delay for fade animation
+  fadeAnimation: TIMING_CONFIG.MEDIUM.duration, // Delay for fade animation
   meaningDisplay: {
     normal: 3000, // Display time for meaning overlay (increased from 1500)
     struggling: 4000, // Display time for struggling words (increased from 2500)
@@ -197,7 +197,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       if (stateRefs.current.completionTriggered) {
         setIsTransitioningToCompletion(false);
       }
-    }, DEFAULT_ANIMATION_DURATION);
+    }, TIMING_CONFIG.MEDIUM.duration);
   }, []); // Remove fadeOut from dependencies
 
   const { currentWord, isComplete, progress, updateWord, invalidateQueries, wordQueue } = useFSRS({
