@@ -141,9 +141,9 @@ jest.mock('expo-router', () => {
   const routerReplaceMock = jest.fn();
   const routerPushMock = jest.fn();
   const screens = {
-    read: require('../../app/(tabs)/read/index.tsx'),
-    listen: require('../../app/(tabs)/listen/index.tsx'),
-    practice: require('../../app/(tabs)/practice/index.tsx'),
+    library: require('../../app/(tabs)/library/index.tsx'),
+    bookmarks: require('../../app/(tabs)/bookmarks/index.tsx'),
+    study: require('../../app/(tabs)/study/index.tsx'),
   };
 
   const Tabs = ({ children, tabBar }: any) => {
@@ -193,22 +193,22 @@ jest.mock('expo-blur', () => {
   };
 });
 
-jest.mock('@/app/(tabs)/read/index.tsx', () => {
+jest.mock('@/app/(tabs)/library/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
-  return () => <Text>READ_MOCK</Text>;
+  return () => <Text>LIBRARY_MOCK</Text>;
 });
 
-jest.mock('@/app/(tabs)/listen/index.tsx', () => {
+jest.mock('@/app/(tabs)/bookmarks/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
-  return () => <Text>LISTEN_MOCK</Text>;
+  return () => <Text>BOOKMARKS_MOCK</Text>;
 });
 
-jest.mock('@/app/(tabs)/practice/index.tsx', () => {
+jest.mock('@/app/(tabs)/study/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
-  return () => <Text>PRACTICE_MOCK</Text>;
+  return () => <Text>STUDY_MOCK</Text>;
 });
 
 jest.mock('@/components/HeaderProfile', () => {
@@ -216,7 +216,7 @@ jest.mock('@/components/HeaderProfile', () => {
   const { TouchableOpacity, Text } = require('react-native');
   const { router } = require('expo-router');
   const HeaderProfile = () => (
-    <TouchableOpacity testID="profile-btn" onPress={() => router.push('/(tabs)/read/account')}>
+    <TouchableOpacity testID="profile-btn" onPress={() => router.push('/(tabs)/library/account')}>
       <Text>PROFILE</Text>
     </TouchableOpacity>
   );
@@ -231,7 +231,7 @@ jest.mock('@/services/notificationService', () => ({
 }));
 
 // Mock reading streak service
-jest.mock('@/services/readingStreak', () => ({
+jest.mock('@/services/studyStreak', () => ({
   ReadingStreakService: {
     getStreakHistory: jest.fn().mockResolvedValue({
       currentStreak: 0,
@@ -406,7 +406,7 @@ describe('Auth flow', () => {
     });
 
     expect(signInMock).toHaveBeenCalled();
-    expect(routerReplaceMock).toHaveBeenCalledWith('/(tabs)/read');
+    expect(routerReplaceMock).toHaveBeenCalledWith('/(tabs)/library');
   });
 });
 
@@ -417,11 +417,11 @@ describe('App navigation', () => {
     expect(getByText('READ_MOCK')).toBeTruthy();
 
     fireEvent.press(getByTestId('profile-btn'));
-    expect(routerPushMock).toHaveBeenCalledWith('/(tabs)/read/account');
+    expect(routerPushMock).toHaveBeenCalledWith('/(tabs)/library/account');
   });
 
   it('logs out from account screen', async () => {
-    const AccountScreen = require('../../app/(tabs)/read/account/index.tsx');
+    const AccountScreen = require('../../app/(tabs)/library/account/index.tsx');
     const { getByTestId } = render(<AccountScreen />);
 
     await act(async () => {

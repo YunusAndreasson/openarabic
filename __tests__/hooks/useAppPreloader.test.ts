@@ -40,7 +40,7 @@ jest.mock('@/services/categories', () => ({
 }));
 
 jest.mock('@/services/readingList', () => ({
-  readingListService: {
+  bookmarkService: {
     getReadingList: jest.fn().mockResolvedValue([]),
   },
 }));

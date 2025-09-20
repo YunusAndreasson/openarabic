@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { CACHE_TIMES } from '@/constants/queryConfig';
 import { articlesService } from '@/services/articles';
-import { readingListService } from '@/services/readingList';
+import { bookmarkService } from '@/services/bookmark';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
@@ -48,7 +48,7 @@ export const useArticleData = (
     queryKey: ['readingList', userId, articleId],
     queryFn: () => {
       if (!userId || !articleId) throw new Error('User ID and Article ID are required');
-      return readingListService.isInReadingList(userId, articleId);
+      return bookmarkService.isInReadingList(userId, articleId);
     },
     enabled: !!userId && !!articleId,
     ...CACHE_TIMES.MEDIUM, // 3 minutes - reading list changes moderately

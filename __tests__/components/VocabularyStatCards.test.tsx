@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
-import VocabularyStatCards from '../../components/practice/VocabularyStatCards';
+import VocabularyStatCards from '../../components/study/VocabularyStatCards';
 import type { StudyWord } from '../../types/vocabulary.types';
 
 // Mock expo-router
@@ -69,7 +69,7 @@ jest.mock('@charts/ChartColors', () => ({
   }),
 }));
 
-jest.mock('@/components/practice/charts/MemoryRetentionGauge', () => ({
+jest.mock('@/components/study/charts/MemoryRetentionGauge', () => ({
   MemoryRetentionGauge: () => null,
 }));
 

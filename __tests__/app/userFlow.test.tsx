@@ -4,10 +4,10 @@ import React from 'react';
 
 import { TouchableOpacity } from 'react-native';
 import { ArabicWord } from '../../components/article/ArabicWord';
-import ErrorMessage from '../../components/practice/ErrorMessage';
-import { VocabularyStatCards } from '../../components/practice/VocabularyStatCards';
-import ArticleCard from '../../components/read/ArticleCard';
+import ArticleCard from '../../components/library/ArticleCard';
 import CompletionScreen from '../../components/review/CompletionScreen';
+import ErrorMessage from '../../components/study/ErrorMessage';
+import { VocabularyStatCards } from '../../components/study/VocabularyStatCards';
 import { useReview } from '../../hooks/review';
 
 jest.mock('expo-router', () => {
@@ -40,7 +40,7 @@ jest.mock('../../components/ThemedButton', () => {
   return { __esModule: true, ThemedButton };
 });
 
-jest.mock('../../components/read/ArticleCard', () => {
+jest.mock('../../components/library/ArticleCard', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
   return {
@@ -69,7 +69,7 @@ jest.mock('../../components/review/CompletionScreen', () => {
   };
 });
 
-jest.mock('../../components/practice/VocabularyStatCards', () => {
+jest.mock('../../components/study/VocabularyStatCards', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
   return {
@@ -204,7 +204,7 @@ describe('UI flow', () => {
       const handleStart = async () => {
         try {
           await startReview();
-          router.push('/practice/review');
+          router.push('/study/review');
         } catch {
           setError(true);
         }

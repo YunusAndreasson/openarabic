@@ -5,7 +5,7 @@ import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
 
 import { articlesService } from '../../services/articles';
 import { audioCache } from '../../services/audioCache';
-import { readingListService } from '../../services/readingList';
+import { bookmarkService } from '../../services/bookmark';
 
 jest.mock('../../services/articles');
 jest.mock('../../services/audioCache');
@@ -15,7 +15,7 @@ jest.mock('@/utils/imageUtils');
 
 const mockArticlesService = articlesService as jest.Mocked<typeof articlesService>;
 const mockAudioCache = audioCache as jest.Mocked<typeof audioCache>;
-const mockReadingListService = readingListService as jest.Mocked<typeof readingListService>;
+const mockBookmarkService = bookmarkService as jest.Mocked<typeof bookmarkService>;
 const mockHandleError = handleError as jest.MockedFunction<typeof handleError>;
 const mockGenerateAudioUrl = generateAudioUrl as jest.MockedFunction<typeof generateAudioUrl>;
 const mockGenerateImageUrl = generateImageUrl as jest.MockedFunction<typeof generateImageUrl>;

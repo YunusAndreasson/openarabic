@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from '@/hooks/auth/useAuth';
-import { ReadingStreakService, type StreakHistoryData } from '@/services/readingStreak';
+import { ReadingStreakService, type StreakHistoryData } from '@/services/studyStreak';
 
 interface UseStreakHistoryOptions {
   days?: number;

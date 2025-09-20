@@ -4,7 +4,7 @@ import type { PersistConfig } from 'redux-persist/es/types';
 
 import editModeReducer from '@/store/editModeSlice';
 import filtersReducer from '@/store/filtersSlice';
-import listenReducer from '@/store/listenSlice';
+import playlistReducer from '@/store/playlistSlice';
 import settingsReducer from '@/store/settingsSlice';
 import themeReducer from '@/store/themeSlice';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
@@ -14,7 +14,7 @@ const rootReducer = combineReducers({
   theme: themeReducer,
   settings: settingsReducer,
   filters: filtersReducer,
-  listen: listenReducer,
+  playlist: playlistReducer,
   editMode: editModeReducer,
 });
 

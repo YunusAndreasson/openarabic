@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from '@/hooks/auth/useAuth';
-import { readingStreakService, type ReadingStreak } from '@/services/readingStreak';
+import { studyStreakService, type ReadingStreak } from '@/services/studyStreak';
 import { handleError } from '@/utils/errorHandling';
 
 interface UseReadingStreakResult {
@@ -27,7 +27,7 @@ export function useReadingStreak(): UseReadingStreakResult {
     queryFn: async () => {
       if (!user?.id) return null;
       try {
-        return await readingStreakService.getReadingStreak(user.id);
+        return await studyStreakService.getReadingStreak(user.id);
       } catch (error) {
         handleError(error as Error, { showToast: false });
         throw error;

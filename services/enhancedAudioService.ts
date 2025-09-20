@@ -1,7 +1,7 @@
 import { STRINGS } from '@/constants/strings';
 import { articlesService } from '@/services/articles';
 import { audioCache } from '@/services/audioCache';
-import { readingListService } from '@/services/readingList';
+import { bookmarkService } from '@/services/bookmark';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
 import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
@@ -59,7 +59,7 @@ export const enhancedAudioService = {
   ): Promise<EnhancedAudioTrack[]> {
     try {
       // Fetch user's reading list with the correct audio URL selected at database level
-      const readingList = await readingListService.getReadingList(userId);
+      const readingList = await bookmarkService.getReadingList(userId);
 
       // Build tracks directly from the reading list items
       const allTracks: EnhancedAudioTrack[] = [];

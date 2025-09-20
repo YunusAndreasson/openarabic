@@ -29,9 +29,9 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { ThemedText } from '@/components/ThemedText';
 import { MiniPlayer } from '@/components/audio';
-import { SleepTimer } from '@/components/listen';
+import { SleepTimer } from '@/components/bookmarks';
+import { StreaksBottomSheet } from '@/components/library/StreaksBottomSheet';
 import { AuthProvider, ToastProvider } from '@/components/providers';
-import { StreaksBottomSheet } from '@/components/read/StreaksBottomSheet';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
@@ -308,7 +308,7 @@ function AppContent() {
 
       try {
         if (session) {
-          router.replace(ROUTE_PATHS.READ_TAB);
+          router.replace(ROUTE_PATHS.LIBRARY_TAB);
         } else {
           router.replace(ROUTE_PATHS.AUTH);
         }
@@ -373,14 +373,6 @@ function AppContent() {
               name="article/[id]"
               options={createNavigationOptions(colors, {
                 headerShown: false,
-              })}
-            />
-            <Stack.Screen
-              name="practice/review"
-              options={createNavigationOptions(colors, {
-                headerShown: false,
-                presentation: 'fullScreenModal',
-                gestureEnabled: true,
               })}
             />
 

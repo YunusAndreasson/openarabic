@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
-import { DictionaryWordCard } from '../../components/practice/DictionaryWordCard';
+import { DictionaryWordCard } from '../../components/study/DictionaryWordCard';
 import type { StudyWord } from '../../types/vocabulary.types';
 
 // Mock dependencies
@@ -62,7 +62,7 @@ jest.mock('@/components/ThemedText', () => ({
 }));
 
 // Mock DifficultyBar
-jest.mock('@/components/practice/DifficultyBar', () => ({
+jest.mock('@/components/study/DifficultyBar', () => ({
   DifficultyBar: () => {
     const React = require('react');
     const { View } = require('react-native');

@@ -2,9 +2,9 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import React, { useMemo, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
+import playlistReducer from '../../store/playlistSlice';
 import editModeReducer from '../../store/editModeSlice';
 import filtersReducer from '../../store/filtersSlice';
-import listenReducer from '../../store/listenSlice';
 import settingsReducer from '../../store/settingsSlice';
 
 import themeReducer from '../../store/themeSlice';
@@ -13,7 +13,7 @@ const rootReducer = combineReducers({
   theme: themeReducer,
   settings: settingsReducer,
   filters: filtersReducer,
-  listen: listenReducer,
+  playlist: playlistReducer,
   editMode: editModeReducer,
 });
 

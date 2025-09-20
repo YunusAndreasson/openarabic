@@ -2,7 +2,7 @@ import {
   getArticleRoute,
   getCategoryFilterRoute,
   getFilterModalRoute,
-  getPracticeReviewRoute,
+  getStudyReviewRoute,
   ROUTE_PATHS,
 } from '../../constants/routes';
 
@@ -52,35 +52,35 @@ describe('routes', () => {
     });
   });
 
-  describe('getPracticeReviewRoute', () => {
+  describe('getStudyReviewRoute', () => {
     it('should return base route when no params', () => {
-      const result = getPracticeReviewRoute();
-      expect(result).toBe('/practice/review');
+      const result = getStudyReviewRoute();
+      expect(result).toBe('/study/review');
     });
 
     it('should include rootId parameter', () => {
-      const result = getPracticeReviewRoute({ rootId: 123 });
-      expect(result).toContain('/practice/review');
+      const result = getStudyReviewRoute({ rootId: 123 });
+      expect(result).toContain('/study/review');
       expect(result).toContain('rootId=123');
     });
 
     it('should include mode parameter', () => {
-      const result = getPracticeReviewRoute({ mode: 'random' });
+      const result = getStudyReviewRoute({ mode: 'random' });
       expect(result).toContain('mode=random');
     });
 
     it('should include count parameter', () => {
-      const result = getPracticeReviewRoute({ count: 10 });
+      const result = getStudyReviewRoute({ count: 10 });
       expect(result).toContain('count=10');
     });
 
     it('should include fromRemember parameter', () => {
-      const result = getPracticeReviewRoute({ fromRemember: 'test' });
+      const result = getStudyReviewRoute({ fromRemember: 'test' });
       expect(result).toContain('fromRemember=test');
     });
 
     it('should combine multiple parameters', () => {
-      const result = getPracticeReviewRoute({
+      const result = getStudyReviewRoute({
         rootId: 123,
         mode: 'random',
         count: 10,
@@ -93,7 +93,7 @@ describe('routes', () => {
     });
 
     it('should handle special characters in parameters', () => {
-      const result = getPracticeReviewRoute({ fromRemember: 'test (value)' });
+      const result = getStudyReviewRoute({ fromRemember: 'test (value)' });
       expect(result).toContain('fromRemember=test+%28value%29');
     });
   });
@@ -102,10 +102,10 @@ describe('routes', () => {
     it('should contain expected static routes', () => {
       expect(ROUTE_PATHS.AUTH).toBe('/auth');
       expect(ROUTE_PATHS.TABS).toBe('/(tabs)');
-      expect(ROUTE_PATHS.READ_TAB).toBe('/(tabs)/read');
-      expect(ROUTE_PATHS.PRACTICE_TAB).toBe('/(tabs)/practice');
-      expect(ROUTE_PATHS.LISTEN_TAB).toBe('/(tabs)/listen');
-      expect(ROUTE_PATHS.ACCOUNT).toBe('/(tabs)/read/account');
+      expect(ROUTE_PATHS.LIBRARY_TAB).toBe('/(tabs)/library');
+      expect(ROUTE_PATHS.STUDY_TAB).toBe('/(tabs)/study');
+      expect(ROUTE_PATHS.BOOKMARKS_TAB).toBe('/(tabs)/bookmarks');
+      expect(ROUTE_PATHS.ACCOUNT).toBe('/(tabs)/library/account');
     });
   });
 });

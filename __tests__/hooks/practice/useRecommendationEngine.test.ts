@@ -1,4 +1,4 @@
-import { useRecommendationEngine } from '@/hooks/practice/useRecommendationEngine';
+import { useRecommendationEngine } from '@/hooks/study/useRecommendationEngine';
 import { renderHook } from '@testing-library/react-native';
 
 describe('useRecommendationEngine', () => {

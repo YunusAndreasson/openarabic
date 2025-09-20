@@ -26,7 +26,7 @@ export interface StudyWordRow extends Tables<'study_words'> {
 }
 
 /** Raw reading list item with optional relations */
-export interface ReadingListItemRow extends Tables<'reading_list'> {
+export interface BookmarkItemRow extends Tables<'reading_list'> {
   articles?: ArticleRow | null;
 }
 

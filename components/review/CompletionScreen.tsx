@@ -222,7 +222,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
         style={styles.buttonContainer}
       >
         {fromRemember ? (
-          <Link href={ROUTE_PATHS.PRACTICE_TAB} dismissTo={true} asChild>
+          <Link href={ROUTE_PATHS.STUDY_TAB} dismissTo={true} asChild>
             <ThemedButton title={buttonText} style={styles.button} />
           </Link>
         ) : (

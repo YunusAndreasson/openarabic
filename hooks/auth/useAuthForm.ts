@@ -124,7 +124,7 @@ export function useAuthForm(): UseAuthFormReturn {
         });
         await analytics.trackSignIn('email');
         successFeedback();
-        router.replace(ROUTE_PATHS.READ_TAB);
+        router.replace(ROUTE_PATHS.LIBRARY_TAB);
       }
     } catch (err) {
       if (!isMountedRef.current) return;

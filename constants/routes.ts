@@ -6,10 +6,10 @@ export const getArticleRoute = (id: number, headerTitle?: string): string => {
 };
 
 export const getFilterModalRoute = (categoryId: number): string =>
-  `/(tabs)/read/filterModal?categoryId=${categoryId}`;
+  `/(tabs)/library/filterModal?categoryId=${categoryId}`;
 
 export const getCategoryFilterRoute = (categoryId: number, name?: string): string => {
-  const base = `/(tabs)/read/filter`;
+  const base = `/(tabs)/library/filter`;
   const params = [`type=category`, `id=${categoryId}`];
   if (name) params.push(`name=${encodeURIComponent(name)}`);
   const query = params.join('&');
@@ -19,19 +19,19 @@ export const getCategoryFilterRoute = (categoryId: number, name?: string): strin
 export const ROUTE_PATHS = {
   AUTH: '/auth',
   TABS: '/(tabs)',
-  READ_TAB: '/(tabs)/read',
-  PRACTICE_TAB: '/(tabs)/practice',
-  LISTEN_TAB: '/(tabs)/listen',
-  ACCOUNT: '/(tabs)/read/account',
-  ACCOUNT_HELP: '/(tabs)/read/account/help',
-  ACCOUNT_FONT_SELECTOR: '/(tabs)/read/account/FontSelector',
-  ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/read/account/islamicCalendar',
+  LIBRARY_TAB: '/(tabs)/library',
+  STUDY_TAB: '/(tabs)/study',
+  BOOKMARKS_TAB: '/(tabs)/bookmarks',
+  ACCOUNT: '/(tabs)/library/account',
+  ACCOUNT_HELP: '/(tabs)/library/account/help',
+  ACCOUNT_FONT_SELECTOR: '/(tabs)/library/account/FontSelector',
+  ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/library/account/islamicCalendar',
 
-  PRACTICE_REVIEW: '/practice/review',
-  PRACTICE_DICTIONARY: '/(tabs)/practice/dictionary',
+  STUDY_REVIEW: '/study/review',
+  STUDY_DICTIONARY: '/(tabs)/study/dictionary',
 } as const;
 
-export const getPracticeReviewRoute = (
+export const getStudyReviewRoute = (
   params?: Partial<{
     rootId: number;
     mode: 'new' | 'random' | 'spaced';
@@ -46,5 +46,5 @@ export const getPracticeReviewRoute = (
   if (params?.fromRemember)
     queryParts.push(`fromRemember=${encodeURIComponent(params.fromRemember)}`);
   const query = queryParts.join('&');
-  return query ? `${ROUTE_PATHS.PRACTICE_REVIEW}?${query}` : ROUTE_PATHS.PRACTICE_REVIEW;
+  return query ? `${ROUTE_PATHS.STUDY_REVIEW}?${query}` : ROUTE_PATHS.STUDY_REVIEW;
 };

@@ -39,9 +39,9 @@ jest.mock('expo-router', () => {
   const React = require('react');
   const { Text, TouchableOpacity } = require('react-native');
   const screens = {
-    read: require('../../app/(tabs)/read/index.tsx'),
-    listen: require('../../app/(tabs)/listen/index.tsx'),
-    practice: require('../../app/(tabs)/practice/index.tsx'),
+    read: require('../../app/(tabs)/library/index.tsx'),
+    listen: require('../../app/(tabs)/bookmarks/index.tsx'),
+    practice: require('../../app/(tabs)/study/index.tsx'),
   };
 
   const Tabs = ({ children, tabBar }: any) => {
@@ -102,19 +102,19 @@ jest.mock('expo-blur', () => {
   };
 });
 
-jest.mock('../../app/(tabs)/read/index.tsx', () => {
+jest.mock('../../app/(tabs)/library/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return () => <Text>READ_MOCK</Text>;
 });
 
-jest.mock('../../app/(tabs)/listen/index.tsx', () => {
+jest.mock('../../app/(tabs)/bookmarks/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return () => <Text>LISTEN_MOCK</Text>;
 });
 
-jest.mock('../../app/(tabs)/practice/index.tsx', () => {
+jest.mock('../../app/(tabs)/study/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return () => <Text>PRACTICE_MOCK</Text>;

@@ -186,7 +186,7 @@ module.exports = [
         'error',
         {
           selector: "MemberExpression[object.name='ROUTE_PATHS'][property.name='TABS']",
-          message: 'Use READ_TAB/LISTEN_TAB/PRACTICE_TAB instead of ROUTE_PATHS.TABS',
+          message: 'Use LIBRARY_TAB/BOOKMARKS_TAB/STUDY_TAB instead of ROUTE_PATHS.TABS',
         },
       ],
     },

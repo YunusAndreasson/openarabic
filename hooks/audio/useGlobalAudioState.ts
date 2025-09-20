@@ -5,10 +5,10 @@ import { AUDIO_STATES } from '@/constants/audio';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useListenScreen } from '@/hooks/listen/useListenScreen';
+import { useBookmarksScreen } from '@/hooks/bookmarks/useBookmarksScreen';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import type { Article } from '@/types/articles.types';
-import type { ReadingListItem } from '@/types/readingList.types';
+import type { BookmarkItem } from '@/types/bookmark.types';
 import { successFeedback } from '@/utils/haptics';
 
 // MiniPlayer-compatible article interface
@@ -63,7 +63,7 @@ export function useGlobalAudioState(): GlobalAudioState {
   const [showSleepTimerModal, setShowSleepTimerModal] = useState(false);
 
   // Get reading list for queue tracking
-  const { sortedEnhancedTracks } = useListenScreen();
+  const { sortedEnhancedTracks } = useBookmarksScreen();
 
   // Sleep timer integration
   const sleepTimer = useSleepTimer(() => {
@@ -133,7 +133,7 @@ export function useGlobalAudioState(): GlobalAudioState {
 
     const cachedArticle = queryClient.getQueryData<Article>(['article', currentArticleId]) ?? null;
     const readingList = user?.id
-      ? queryClient.getQueryData<ReadingListItem[]>(['readingList', user.id]) ?? null
+      ? queryClient.getQueryData<BookmarkItem[]>(['readingList', user.id]) ?? null
       : null;
     const readingListArticle =
       readingList?.find(i => i.article_id === currentArticleId)?.articles ?? null;

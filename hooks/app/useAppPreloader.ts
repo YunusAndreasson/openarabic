@@ -9,8 +9,8 @@ import { CACHE_TIMES } from '@/constants/queryConfig';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
 import { authorsService } from '@/services/authors';
+import { bookmarkService } from '@/services/bookmark';
 import { categoriesService } from '@/services/categories';
-import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
@@ -136,7 +136,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             }),
             queryClient.prefetchQuery({
               queryKey: ['readingList', user.id],
-              queryFn: () => readingListService.getReadingList(user.id),
+              queryFn: () => bookmarkService.getReadingList(user.id),
               ...CACHE_TIMES.MEDIUM,
               retry: 2,
             }),

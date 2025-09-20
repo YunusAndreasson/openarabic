@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
-import { readingListService } from '@/services/readingList';
+import { bookmarkService } from '@/services/bookmark';
 import { readingProgressService } from '@/services/readingProgress';
 
 interface ContinueReadingData {
@@ -32,7 +32,7 @@ export function useLastReadArticle() {
     queryKey: ['reading-list', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      return readingListService.getReadingList(user.id);
+      return bookmarkService.getReadingList(user.id);
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,

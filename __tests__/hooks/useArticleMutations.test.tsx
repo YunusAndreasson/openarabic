@@ -6,7 +6,7 @@ import useArticleMutations from '@/hooks/articles/useArticleMutations';
 
 // Mock services used by the hook
 jest.mock('@/services/readingList', () => ({
-  readingListService: {
+  bookmarkService: {
     addToReadingList: jest.fn().mockResolvedValue(undefined),
     removeFromReadingList: jest.fn().mockResolvedValue(undefined),
   },
@@ -48,7 +48,7 @@ jest.mock('@/services/supabase', () => ({
   },
 }));
 
-const { readingListService } = require('@/services/readingList');
+const { bookmarkService } = require('@/services/bookmark');
 const { supabase } = require('@/services/supabase');
 
 const createWrapper = () => {

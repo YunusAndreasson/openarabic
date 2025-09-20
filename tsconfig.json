@@ -5,9 +5,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@read/*": ["components/read/*"],
-      "@listen/*": ["components/listen/*"],
-      "@practice/*": ["components/practice/*"],
+      "@library/*": ["components/library/*"],
+      "@bookmarks/*": ["components/bookmarks/*"],
+      "@study/*": ["components/study/*"],
       "@account/*": ["components/account/*"],
       "@article/*": ["components/article/*"],
       "@common/*": ["components/common/*"],

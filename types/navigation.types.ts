@@ -38,13 +38,12 @@ export interface ArticleParams {
  */
 export type RouteParams = {
   '/article/[id]': ArticleParams;
-  '/(tabs)/read/filterModal': FiltersParams;
-  '/practice/review': ReviewParams;
+  '/(tabs)/library/filterModal': FiltersParams;
+  '/study/review': ReviewParams;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
-  '/(tabs)/practice': Record<string, never>;
-  '/(tabs)/listen': Record<string, never>;
-  '/(tabs)/read/account/studyStats': Record<string, never>;
+  '/(tabs)/study': Record<string, never>;
+  '/(tabs)/bookmarks': Record<string, never>;
 };
 
 /**
@@ -59,10 +58,3 @@ export type Route<T extends RoutePath> = {
   pathname: T;
   params?: RouteParams[T];
 };
-
-/**
- * Type for listen parameters
- */
-export interface ListenParams {
-  fromRemember?: string;
-}

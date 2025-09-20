@@ -41,7 +41,7 @@ jest.mock('@/hooks/account', () => {
   };
 });
 
-jest.mock('@/app/(tabs)/read/account/index.tsx', () => {
+jest.mock('@/app/(tabs)/library/account/index.tsx', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');
   const { useAccountScreen } = require('@/hooks/account');
@@ -93,7 +93,7 @@ const {
   __mocks: { openMock, toggleMock, setMock, setReminderEnabled },
 } = require('@/hooks/account');
 
-const AccountScreen = require('@/app/(tabs)/read/account/index.tsx').default;
+const AccountScreen = require('@/app/(tabs)/library/account/index.tsx').default;
 
 describe('account reminder flow', () => {
   beforeEach(() => {

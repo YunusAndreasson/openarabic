@@ -65,9 +65,9 @@ module.exports = {
 
     // Path aliases for cleaner imports
     '^@/(.*)$': '<rootDir>/$1',
-    '^@read/(.*)$': '<rootDir>/components/read/$1',
-    '^@listen/(.*)$': '<rootDir>/components/listen/$1',
-    '^@practice/(.*)$': '<rootDir>/components/practice/$1',
+    '^@library/(.*)$': '<rootDir>/components/library/$1',
+    '^@bookmarks/(.*)$': '<rootDir>/components/bookmarks/$1',
+    '^@study/(.*)$': '<rootDir>/components/study/$1',
     '^@account/(.*)$': '<rootDir>/components/account/$1',
     '^@article/(.*)$': '<rootDir>/components/article/$1',
     '^@common/(.*)$': '<rootDir>/components/common/$1',

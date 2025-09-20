@@ -76,7 +76,7 @@ const DictionaryButton = memo((props: DictionaryButtonProps): JSX.Element | null
   const effectiveCount = itemCount ?? studyWordsCount;
 
   const handlePress = useCallback((): void => {
-    router.push(ROUTE_PATHS.PRACTICE_DICTIONARY);
+    router.push(ROUTE_PATHS.STUDY_DICTIONARY);
   }, []);
 
   // Hide button when hideWhenEmpty is true and there are no study words
@@ -119,17 +119,17 @@ export { DictionaryButton };
 
 const TAB_SCREENS = [
   {
-    name: 'read',
+    name: 'library',
     title: AppTab.READ,
     iconFilled: 'book',
   },
   {
-    name: 'listen',
+    name: 'bookmarks',
     title: AppTab.LISTEN,
     iconFilled: 'bookmark',
   },
   {
-    name: 'practice',
+    name: 'study',
     title: AppTab.PRACTICE,
     iconFilled: 'school',
   },
@@ -237,7 +237,7 @@ export default function TabLayout(): JSX.Element {
               tabBarIcon: ({ focused, color }) => (
                 <IconWithBadge
                   name={screen.iconFilled}
-                  badgeCount={screen.name === 'practice' ? dueWordsCount : 0}
+                  badgeCount={screen.name === 'study' ? dueWordsCount : 0}
                   color={color}
                   size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
                   focused={focused}

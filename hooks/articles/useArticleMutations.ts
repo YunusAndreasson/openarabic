@@ -12,7 +12,7 @@ import {
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
-import { readingListService } from '@/services/readingList';
+import { bookmarkService } from '@/services/bookmark';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
@@ -140,7 +140,7 @@ export const useArticleMutations = (
   const addToReadingListOptions = useMemo(
     () => ({
       mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
-        readingListService.addToReadingList(userId, articleId),
+        bookmarkService.addToReadingList(userId, articleId),
       onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: number }) => {
         // Immediately update cache to reflect the bookmark was added
         queryClient.setQueryData(['readingList', userId, articleId], true);
@@ -171,7 +171,7 @@ export const useArticleMutations = (
   const removeFromReadingListOptions = useMemo(
     () => ({
       mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
-        readingListService.removeFromReadingList(userId, articleId),
+        bookmarkService.removeFromReadingList(userId, articleId),
       onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: number }) => {
         // Immediately update cache to reflect the bookmark was removed
         queryClient.setQueryData(['readingList', userId, articleId], false);

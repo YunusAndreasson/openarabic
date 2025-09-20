@@ -7,11 +7,11 @@ This repository contains a sophisticated React Native (Expo) app for Arabic lang
 ## Core Features & Architecture
 
 ### Main Application Features
-- **[Read Tab](app/(tabs)/read/index.tsx)**: Article browsing with intelligent filtering, difficulty levels, featured sections
-- **[Practice Tab](app/(tabs)/practice/index.tsx)**: FSRS-based spaced repetition vocabulary learning with dictionary
-- **[Listen Tab](app/(tabs)/listen/index.tsx)**: Audio playback with playlist management, sleep timer, repeat controls
-- **[Account Settings](app/(tabs)/read/account/)**: Font selection, theme management, Islamic calendar integration
-- **[Review Flow](app/practice/review.tsx)**: Visual vocabulary practice with word display and translation
+- **[Library Tab](app/(tabs)/library/index.tsx)**: Article browsing with intelligent filtering, difficulty levels, featured sections
+- **[Study Tab](app/(tabs)/study/index.tsx)**: FSRS-based spaced repetition vocabulary learning with dictionary
+- **[Bookmarks Tab](app/(tabs)/bookmarks/index.tsx)**: Audio playback with playlist management, sleep timer, repeat controls
+- **[Account Settings](app/(tabs)/library/account/)**: Font selection, theme management, Islamic calendar integration
+- **[Review Flow](app/study/review.tsx)**: Visual vocabulary practice with word display and translation
 
 ### Technical Stack (Current)
 - **React Native**: 0.79.5 with React 19.0.0
@@ -52,7 +52,7 @@ app/
 │       ├── filter.tsx          # Article filtering
 │       └── filterModal.tsx     # Filter modal overlay
 ├── auth/                       # Authentication flow
-└── practice/review.tsx         # Standalone vocabulary review
+└── study/review.tsx            # Standalone vocabulary review
 ```
 
 ### Core Application Structure

@@ -6,7 +6,7 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
-import { useListenScreen } from '@/hooks/listen/useListenScreen';
+import { useBookmarksScreen } from '@/hooks/bookmarks/useBookmarksScreen';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { EditModeType } from '@/store/editModeSlice';
@@ -46,7 +46,7 @@ const EditModeButton: FC<EditModeButtonProps> = ({
   const colors = useColors();
   const { editMode, toggle } = useEditMode(type);
   // Derive count internally for listen type when not provided
-  const { sortedReadingList } = useListenScreen();
+  const { sortedReadingList } = useBookmarksScreen();
   const derivedCount = type === 'listen' ? sortedReadingList.length : undefined;
   const effectiveCount = itemCount ?? derivedCount ?? undefined;
 

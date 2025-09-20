@@ -23,10 +23,10 @@ const ErrorMessage = memo(
     const handleRetry = useCallback(() => {
       const route: RoutePath =
         screenName === 'practice'
-          ? (ROUTE_PATHS.PRACTICE_TAB as RoutePath)
+          ? (ROUTE_PATHS.STUDY_TAB as RoutePath)
           : screenName === 'account'
           ? (ROUTE_PATHS.ACCOUNT as RoutePath)
-          : (ROUTE_PATHS.READ_TAB as RoutePath);
+          : (ROUTE_PATHS.LIBRARY_TAB as RoutePath);
 
       router.replace(route);
     }, [router, screenName]);

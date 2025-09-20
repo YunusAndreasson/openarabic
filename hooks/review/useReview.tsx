@@ -855,7 +855,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         if (onClose) {
           onClose();
         } else if (fromRemember) {
-          router.replace(ROUTE_PATHS.PRACTICE_TAB);
+          router.replace(ROUTE_PATHS.STUDY_TAB);
         } else {
           router.back();
         }

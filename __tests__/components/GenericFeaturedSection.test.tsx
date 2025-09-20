@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
-import GenericFeaturedSection from '../../components/read/GenericFeaturedSection';
+import GenericFeaturedSection from '../../components/library/GenericFeaturedSection';
 import type { Article } from '../../types/articles.types';
 
 // Mock the useFeaturedArticleSelection hook
