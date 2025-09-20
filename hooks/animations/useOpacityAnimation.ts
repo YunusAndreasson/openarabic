@@ -6,7 +6,6 @@ import {
   FadeIn,
   FadeOut,
   runOnJS,
-  runOnUI,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -188,14 +187,14 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
 
   const fadeIn = useCallback(
     (onComplete?: () => void) => {
-      runOnUI(animateOpacityTo)(1, onComplete);
+      animateOpacityTo(1, onComplete);
     },
     [animateOpacityTo]
   );
 
   const fadeOut = useCallback(
     (onComplete?: () => void) => {
-      runOnUI(animateOpacityTo)(0, onComplete);
+      animateOpacityTo(0, onComplete);
     },
     [animateOpacityTo]
   );
@@ -203,51 +202,45 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   const setOpacity = useCallback(
     (value: number, onComplete?: () => void) => {
       const safeValue = Math.max(0, Math.min(1, value));
-      runOnUI(animateOpacityTo)(safeValue, onComplete);
+      animateOpacityTo(safeValue, onComplete);
     },
     [animateOpacityTo]
   );
 
   const reset = useCallback(() => {
-    runOnUI(() => {
-      'worklet';
-      cancelAnimation(opacity);
-      opacity.value = validInitialOpacity;
-    })();
+    'worklet';
+    cancelAnimation(opacity);
+    opacity.value = validInitialOpacity;
   }, [opacity, validInitialOpacity]);
 
   const startAnimation = useCallback(
     (startDelay = delay, onComplete?: () => void) => {
-      runOnUI(() => {
-        'worklet';
-        const safeDelay = Math.max(0, startDelay);
-        opacity.value = withDelay(
-          safeDelay,
-          withTiming(1, timingConfig, finished => {
-            if (finished) {
-              safeRunCallback(onComplete);
-            }
-          })
-        );
-      })();
+      'worklet';
+      const safeDelay = Math.max(0, startDelay);
+      opacity.value = withDelay(
+        safeDelay,
+        withTiming(1, timingConfig, finished => {
+          if (finished) {
+            safeRunCallback(onComplete);
+          }
+        })
+      );
     },
     [opacity, delay, timingConfig, safeRunCallback]
   );
 
   const reverseAnimation = useCallback(
     (startDelay = delay, onComplete?: () => void) => {
-      runOnUI(() => {
-        'worklet';
-        const safeDelay = Math.max(0, startDelay);
-        opacity.value = withDelay(
-          safeDelay,
-          withTiming(validInitialOpacity, timingConfig, finished => {
-            if (finished) {
-              safeRunCallback(onComplete);
-            }
-          })
-        );
-      })();
+      'worklet';
+      const safeDelay = Math.max(0, startDelay);
+      opacity.value = withDelay(
+        safeDelay,
+        withTiming(validInitialOpacity, timingConfig, finished => {
+          if (finished) {
+            safeRunCallback(onComplete);
+          }
+        })
+      );
     },
     [opacity, validInitialOpacity, delay, timingConfig, safeRunCallback]
   );
@@ -263,11 +256,8 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   // Auto-start animation if enabled - using UI thread
   useEffect(() => {
     if (autoStart && isMounted.value) {
-      runOnUI(() => {
-        'worklet';
-        // Set directly to target without initial flash to prevent visual glitch
-        opacity.value = withDelay(MIN_MOUNT_DELAY, withTiming(1, timingConfig));
-      })();
+      // Set directly to target without initial flash to prevent visual glitch
+      opacity.value = withDelay(MIN_MOUNT_DELAY, withTiming(1, timingConfig));
     }
   }, [autoStart, opacity, timingConfig, isMounted]);
 

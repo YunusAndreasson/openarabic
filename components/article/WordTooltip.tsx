@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { ARTICLE_CARD_SPRING } from '@/constants/animation';
 import type { ColorName } from '@/constants/colors';
 import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
@@ -137,7 +138,7 @@ export const WordTooltip = memo(
     // Press animation for better user feedback
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
       type: 'card',
-      scaleAmount: 0.95, // More apparent scale for better feedback
+      springConfig: ARTICLE_CARD_SPRING,
     });
 
     // Convert window coordinates (from measureInWindow) to local overlay coordinates

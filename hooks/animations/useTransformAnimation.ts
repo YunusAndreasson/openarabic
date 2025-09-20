@@ -22,7 +22,7 @@ import {
   ZoomOut,
 } from 'react-native-reanimated';
 
-import { TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG, useAnimationConfig } from '@/constants/animation';
 import { SCREEN_WIDTH } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
@@ -162,6 +162,12 @@ export const useTransformAnimation = (
     stiffness,
   } = options;
 
+  const {
+    shouldAnimate,
+    duration: reducedMotionDuration,
+    springConfig: reducedMotionSpring,
+  } = useAnimationConfig();
+
   const screenWidth = SCREEN_WIDTH;
 
   // For slide animations, calculate the start position based on direction
@@ -175,19 +181,19 @@ export const useTransformAnimation = (
 
   // Memoize animation configurations
   const springConfig = useMemo(
-    () => ({
-      damping: damping ?? 15,
-      stiffness: stiffness ?? 120,
-    }),
-    [damping, stiffness]
+    () =>
+      shouldAnimate
+        ? { damping: damping ?? 15, stiffness: stiffness ?? 120 }
+        : reducedMotionSpring ?? { damping: 100, stiffness: 1000, mass: 1 },
+    [damping, stiffness, shouldAnimate, reducedMotionSpring]
   );
 
   const timingConfig = useMemo(
     () => ({
-      duration,
+      duration: shouldAnimate ? duration : reducedMotionDuration ?? 1,
       easing: TIMING_CONFIG.MEDIUM.easing,
     }),
-    [duration]
+    [duration, shouldAnimate, reducedMotionDuration]
   );
 
   // Create optimized entering and exiting animations based on transform type

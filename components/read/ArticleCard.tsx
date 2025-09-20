@@ -3,14 +3,17 @@ import { Link } from 'expo-router';
 import type { JSX } from 'react';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import BaseCard from '@common/BaseCard';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import Pill from '@/components/ui/Pill';
+import { ARTICLE_CARD_SPRING, PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
+import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
@@ -149,6 +152,29 @@ function ArticleCardComponent({
   // For mobile-only apps, use constant screen width
   const screenWidth = SCREEN_WIDTH;
 
+  // Add press animation using the same system as ListenListItemCard
+  const { animatedStyle, setValue } = useTransformAnimation({
+    type: 'scale',
+    initialValue: 1,
+    targetValue: 1,
+    useSpring: true,
+    damping: ARTICLE_CARD_SPRING.damping,
+    stiffness: ARTICLE_CARD_SPRING.stiffness,
+  });
+
+  // Handle press animation - scale down on press, back up on release
+  const handlePressIn = useMemo(() => {
+    return () => {
+      setValue(PRESS_SCALE.CARD);
+    };
+  }, [setValue]);
+
+  const handlePressOut = useMemo(() => {
+    return () => {
+      setValue(1);
+    };
+  }, [setValue]);
+
   // Memoize image height calculation with optimized dependencies
   const imageHeight = useMemo(
     () => Math.round((screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO),
@@ -268,16 +294,20 @@ function ArticleCardComponent({
   );
 
   return (
-    <Link
-      href={articleHref}
-      prefetch={prefetch}
-      push={!isRelatedArticle}
-      dangerouslySingular={true}
-    >
-      <BaseCard style={style} testID={testID}>
-        {cardContent}
-      </BaseCard>
-    </Link>
+    <Animated.View style={animatedStyle}>
+      <Link
+        href={articleHref}
+        prefetch={prefetch}
+        push={!isRelatedArticle}
+        dangerouslySingular={true}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
+        <BaseCard style={style} testID={testID}>
+          {cardContent}
+        </BaseCard>
+      </Link>
+    </Animated.View>
   );
 }
 

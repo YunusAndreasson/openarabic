@@ -79,6 +79,7 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({ articles })
             title={info.item.title}
             prefetch={false}
             isRelatedArticle={false}
+            testID={`slider-article-${info.item.id}`}
           />
         </View>
       );

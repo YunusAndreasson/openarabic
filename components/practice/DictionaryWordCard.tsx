@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
 import { DifficultyBar } from '@/components/practice/DifficultyBar';
+import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { usePressAnimation } from '@/hooks/animations';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -23,6 +25,15 @@ interface DictionaryWordCardProps {
 export const DictionaryWordCard = memo<DictionaryWordCardProps>(
   ({ word, editMode, onDelete }) => {
     const colors = useColors();
+
+    // Press animation for delete button
+    const {
+      animatedStyle: deleteButtonAnimatedStyle,
+      handlePressIn,
+      handlePressOut,
+    } = usePressAnimation({
+      scaleAmount: ICON_BUTTON_PRESS_SCALE,
+    });
     const audioPlayer = useSimpleAudioPlayer();
 
     // Handle audio playback for word pronunciation when card is pressed
@@ -75,11 +86,6 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const arabicText = word.root?.letters || 'Unknown Arabic';
     const englishText = word.root?.meaning || 'Unknown English';
 
-    const deleteButtonStyle = useMemo(
-      () => [styles.deleteButton, { backgroundColor: colors.error }],
-      [colors.error]
-    );
-
     return (
       <View style={styles.container}>
         <BaseCard
@@ -124,9 +130,10 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
         {/* Delete Button (separate from card, only in edit mode) */}
         {editMode && (
           <TouchableOpacity
-            style={deleteButtonStyle}
+            style={deleteButtonAnimatedStyle as any}
             onPress={handleDeletePress}
-            activeOpacity={LAYOUT.OPACITY.PRESSED}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
           >
             <Ionicons name="trash" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.white} />
           </TouchableOpacity>

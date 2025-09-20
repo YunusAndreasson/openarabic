@@ -2,10 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useCallback, useMemo, type JSX } from 'react';
 import type { GestureResponderEvent } from 'react-native';
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
@@ -79,7 +78,6 @@ function ThemedButtonComponent({
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',
-    opacityAmount: LAYOUT.OPACITY.PRESSED,
   });
 
   // Create the press handler
@@ -177,9 +175,7 @@ function ThemedButtonComponent({
 
         <View style={styles.contentContainer}>
           {loading && !icon ? (
-            <Animated.View entering={FadeIn.duration(DEFAULT_ANIMATION_DURATION)}>
-              <ActivityIndicator color={textColor} size="small" />
-            </Animated.View>
+            <ActivityIndicator color={textColor} size="small" />
           ) : (
             <ThemedText
               skipDefaultColor

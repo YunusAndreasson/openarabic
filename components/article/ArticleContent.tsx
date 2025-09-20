@@ -361,10 +361,10 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Reduce cross-thread calls by emitting JS updates only when change is meaningful
     const lastEmittedY = useSharedValue(0);
 
-    // Sophisticated fade-in animation for smooth article appearance
+    // Optimized fade-in animation for snappy article appearance
     const { animatedStyle, startAnimation } = useOpacityAnimation({
       initialOpacity: 0,
-      duration: TIMING_CONFIG.GENTLE.duration,
+      duration: TIMING_CONFIG.FAST.duration, // 150ms for snappier feel
     });
 
     // Trigger animation when content becomes available

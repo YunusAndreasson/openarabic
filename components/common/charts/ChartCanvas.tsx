@@ -27,6 +27,20 @@ export const ChartCanvas = memo(
     const { tooltip, showTooltip, hideTooltip } = useChartTooltip();
     const colors = useColors();
 
+    // Validate dataPoints to prevent frozen object errors
+    const validDataPoints = useMemo(() => {
+      return dataPoints.filter(
+        point =>
+          point &&
+          typeof point.x === 'number' &&
+          typeof point.y === 'number' &&
+          typeof point.label === 'string' &&
+          typeof point.value === 'string' &&
+          !Number.isNaN(point.x) &&
+          !Number.isNaN(point.y)
+      );
+    }, [dataPoints]);
+
     const canvasStyle = useMemo(() => ({ width: resolvedWidth, height }), [resolvedWidth, height]);
 
     // Inline last-value badge removed; bottom summary shows Latest/Average/Max
@@ -57,9 +71,9 @@ export const ChartCanvas = memo(
           <Canvas style={canvasStyle}>{children}</Canvas>
 
           {/* Interactive Data Point Overlays */}
-          {dataPoints.map(point => (
+          {validDataPoints.map(point => (
             <DataPointOverlay
-              key={`data-point-${point.label}-${point.value}`}
+              key={`data-point-${Math.round(point.x)}-${Math.round(point.y)}`}
               label={point.label}
               value={point.value}
               x={point.x}

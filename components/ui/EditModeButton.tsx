@@ -51,6 +51,7 @@ const EditModeButton: FC<EditModeButtonProps> = ({
   const effectiveCount = itemCount ?? derivedCount ?? undefined;
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    type: 'card',
     includeOpacity: true,
   });
 

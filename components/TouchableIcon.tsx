@@ -29,7 +29,9 @@ const getOptimalTouchTarget = (iconSize: number): number => {
 const TouchableIcon: FC<TouchableIconProps> = memo(
   ({ icon, size = 24, color, onPress, disabled = false, style, hapticFeedback = true }) => {
     const colors = useColors();
-    const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
+    const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+      type: 'card',
+    });
 
     const handlePress = useCallback(() => {
       if (hapticFeedback) {
@@ -52,7 +54,6 @@ const TouchableIcon: FC<TouchableIconProps> = memo(
 
     return (
       <AnimatedTouchable
-        activeOpacity={LAYOUT.OPACITY.PRESSED}
         disabled={disabled}
         hitSlop={hitSlop}
         style={[

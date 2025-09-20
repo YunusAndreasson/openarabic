@@ -33,6 +33,7 @@ const FeaturedSection: FC<FeaturedSectionProps> = ({ article }) => {
         title={article.title}
         prefetch={true}
         isRelatedArticle={false}
+        testID="featured-article-card"
       />
     </View>
   );

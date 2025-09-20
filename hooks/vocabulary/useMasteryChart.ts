@@ -239,7 +239,8 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     return chartData.points
       .map((point, index) => {
         const data = masteryData[index];
-        if (!data) return null;
+        if (!data || !point || typeof point.x !== 'number' || typeof point.y !== 'number')
+          return null;
 
         return {
           x: point.x,
@@ -249,7 +250,10 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
           data,
         } as DataPoint<MasteryRecord>;
       })
-      .filter((point): point is DataPoint<MasteryRecord> => point !== null);
+      .filter(
+        (point): point is DataPoint<MasteryRecord> =>
+          point !== null && !!point.label && !!point.value
+      );
   }, [chartData.points, masteryData]);
 
   const xLabels = useMemo(

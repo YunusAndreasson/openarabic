@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { COMPONENT_ENTRANCE_DURATION, COMPONENT_PRESS_SPRING } from '@/constants/animation';
+import { COMPONENT_ENTRANCE_DURATION, PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
@@ -188,8 +188,8 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
   const handlePhotoPress = useCallback(() => {
     cancelAnimation(scaleValue);
     scaleValue.value = withSequence(
-      withSpring(0.95, COMPONENT_PRESS_SPRING),
-      withSpring(1, COMPONENT_PRESS_SPRING)
+      withSpring(PRESS_SCALE.BUTTON, SPRING_CONFIG.BUTTON),
+      withSpring(1, SPRING_CONFIG.BUTTON)
     );
     handlePhotoSelect();
   }, [scaleValue, handlePhotoSelect]);

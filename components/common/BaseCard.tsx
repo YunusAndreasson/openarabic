@@ -25,8 +25,6 @@ const BaseCard: FC<BaseCardProps> = memo(
     // Use sophisticated press animation for better feel and scroll compatibility
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
       type: 'card',
-      includeOpacity: true,
-      opacityAmount: LAYOUT.OPACITY.PRESSED, // Keep existing opacity value
     });
 
     const shadowStyles = useMemo(() => {

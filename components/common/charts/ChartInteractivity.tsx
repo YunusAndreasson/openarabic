@@ -1,8 +1,10 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -57,11 +59,26 @@ interface DataPointOverlayProps {
   onPress: (x: number, y: number, value: string, label: string) => void;
 }
 
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
 export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, label, onPress }) => {
   const [isPressed, setIsPressed] = useState(false);
   const colors = useColors();
 
+  // Press animation for consistent touch feedback
+  const { animatedStyle } = usePressAnimation({
+    type: 'card',
+  });
+
   const handlePress = useCallback(() => {
+    // Defensive guards to avoid updating frozen state with invalid values
+    const isValidNumber = (n: unknown) => typeof n === 'number' && Number.isFinite(n);
+    const isValidString = (s: unknown) => typeof s === 'string' && s.length > 0;
+
+    if (!isValidNumber(x) || !isValidNumber(y) || !isValidString(value) || !isValidString(label)) {
+      return;
+    }
+
     selectionFeedback(); // Selection haptic feedback
     onPress(x, y, value, label);
   }, [x, y, value, label, onPress]);
@@ -95,12 +112,11 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
   );
 
   return (
-    <TouchableOpacity
-      style={touchableStyle}
+    <AnimatedTouchable
+      style={[touchableStyle, animatedStyle]}
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      activeOpacity={LAYOUT.OPACITY.PRESSED}
     />
   );
 });
