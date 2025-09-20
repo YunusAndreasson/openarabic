@@ -294,8 +294,6 @@ export function useRecommendationEngine({
   return useMemo(() => {
     const totalWords = studyWords.length;
 
-    // Note: Removed early return for 0 words to let new vocabulary progression logic handle it
-
     // Optimized calculations using helper functions
     const upcomingDueWords = calculateUpcomingDueWords(studyWords);
     const userState: UserState = getUserState(totalWords, currentRetention);
@@ -480,7 +478,16 @@ export function useRecommendationEngine({
       };
     }
 
-    // Fallback for all other scenarios
+    // Fallback: Check if user can safely add more words
+    if (canSafelyAddWords && !hasDueWords) {
+      return {
+        message: RECOMMENDATION_MESSAGES.LIGHT_LEARNING_LOAD,
+        indicator: 'green' as const,
+        type: 'add_words' as const,
+      };
+    }
+
+    // Default: Maintain momentum when no reviews are due
     return {
       message: RECOMMENDATION_MESSAGES.BALANCED_DEFAULT,
       indicator: 'green' as const,
