@@ -42,6 +42,7 @@ jest.mock('@tanstack/react-query', () => {
   return {
     __esModule: true,
     useQuery: (...args: any[]) => mockUseQuery(...args),
+    useAppSelector: (selector: any) => selector(mockState),
     useQueryClient: () => ({
       getQueryData: () => readingListItems,
       invalidateQueries,

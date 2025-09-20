@@ -5,9 +5,10 @@ import { ThemedText } from '@/components/ThemedText';
 import BaseCard from '@/components/common/BaseCard';
 import { LAYOUT } from '@/constants/layout';
 import { useRecommendationEngine } from '@/hooks/study/useRecommendationEngine';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 interface RecommendationCardProps {
-  studyWords: any[];
+  studyWords: StudyWord[];
   dueWordsCount: number;
   currentRetention: number;
   learningWords: number;

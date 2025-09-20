@@ -60,8 +60,13 @@ export class AudioCacheManager {
 
       // Check memory cache first for better performance
       const memoryEntry = this.memoryCache.get(cacheKey);
-      if (memoryEntry && Date.now() - memoryEntry.timestamp < this.MEMORY_CACHE_TTL) {
-        return memoryEntry.path;
+      if (memoryEntry) {
+        const isFresh = Date.now() - memoryEntry.timestamp < this.MEMORY_CACHE_TTL;
+        if (isFresh) {
+          return memoryEntry.path;
+        }
+        // Prune expired entry to cap memory growth
+        this.memoryCache.delete(cacheKey);
       }
 
       const cachedFile = new File(cachedFilePath);
@@ -70,7 +75,8 @@ export class AudioCacheManager {
         this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
         return cachedFilePath;
       }
-
+      // Ensure any stale memory entry is removed
+      this.memoryCache.delete(cacheKey);
       return null;
     } catch (error) {
       await handleError(error as Error, { showToast: false });

@@ -16,25 +16,13 @@ import { lightFeedback } from '@/utils/haptics';
 interface PlayButtonProps
   extends Omit<BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>, 'icon'> {
   isPlaying?: boolean;
-  iconColor?: string;
-  /** Whether to enable haptic feedback on press */
-  hapticFeedback?: boolean;
-  /** Debounce delay in milliseconds to prevent rapid successive presses */
-  debounceMs?: number;
 }
 
-function getIconName(isPlaying: boolean) {
+function getIconName(isPlaying: boolean): 'pause' | 'play' {
   return isPlaying ? 'pause' : 'play';
 }
 
-const PlayButton: FC<PlayButtonProps> = ({
-  onPress,
-  isPlaying = false,
-  disabled = false,
-  iconColor,
-  hapticFeedback = true,
-  debounceMs = 300,
-}) => {
+const PlayButton: FC<PlayButtonProps> = ({ onPress, isPlaying = false, disabled = false }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const currentTheme = useCurrentTheme();
@@ -45,24 +33,21 @@ const PlayButton: FC<PlayButtonProps> = ({
   // Create the press handler with haptic feedback
   const pressHandler = useCallback(() => {
     if (disabled) return;
-    if (hapticFeedback) {
-      lightFeedback();
-    }
+    lightFeedback();
     onPress();
-  }, [disabled, onPress, hapticFeedback]);
+  }, [disabled, onPress]);
 
   // Apply debouncing to the press handler
-  const [debouncedHandlePress, isDebouncing] = useDebounce(pressHandler, debounceMs);
+  const [debouncedHandlePress, isDebouncing] = useDebounce(pressHandler, 300);
 
   const backgroundColor = colors.tint;
   // Use appropriate icon color for each theme for optimal contrast
   const resolvedIconColor =
-    iconColor ||
-    (currentTheme === Theme.Sepia
+    currentTheme === Theme.Sepia
       ? colors.white // Use white icon for sepia theme for better contrast on amber background
       : isDarkMode
       ? colors.black
-      : colors.text);
+      : colors.text;
 
   return (
     <Pressable

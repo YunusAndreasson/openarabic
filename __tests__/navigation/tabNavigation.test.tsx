@@ -31,7 +31,13 @@ jest.mock('@react-navigation/elements', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
-    PlatformPressable: ({ onPress, children }: any) => <Text onPress={onPress}>{children}</Text>,
+    PlatformPressable: ({
+      onPress,
+      children,
+    }: {
+      onPress: () => void;
+      children: React.ReactNode;
+    }) => <Text onPress={onPress}>{children}</Text>,
   };
 });
 
@@ -44,14 +50,27 @@ jest.mock('expo-router', () => {
     practice: require('../../app/(tabs)/study/index.tsx'),
   };
 
-  const Tabs = ({ children, tabBar }: any) => {
-    const routes = React.Children.map(children, (child: any) => ({
-      key: child.props.name,
-      name: child.props.name,
-      title:
-        child.props.options?.title ||
-        child.props.name.charAt(0).toUpperCase() + child.props.name.slice(1),
-    }));
+  const Tabs = ({
+    children,
+    tabBar,
+  }: {
+    children: React.ReactNode;
+    tabBar: (props: {
+      descriptors: Record<string, { options: { title: string } }>;
+      state: { index: number; routes: Array<{ key: string; name: string; title: string }> };
+      navigation: { navigate: (name: string) => void; emit: () => { defaultPrevented: boolean } };
+    }) => React.ReactNode;
+  }) => {
+    const routes = React.Children.map(
+      children,
+      (child: React.ReactElement<{ name: string; options?: { title?: string } }>) => ({
+        key: child.props.name,
+        name: child.props.name,
+        title:
+          child.props.options?.title ||
+          child.props.name.charAt(0).toUpperCase() + child.props.name.slice(1),
+      })
+    );
     const [index, setIndex] = React.useState(0);
     const navigation = {
       navigate: (name: string) => {
@@ -60,17 +79,23 @@ jest.mock('expo-router', () => {
       },
       emit: () => ({ defaultPrevented: false }),
     };
-    const descriptors = routes.reduce((acc: any, route: any) => {
-      acc[route.key] = { options: { title: route.title } };
-      return acc;
-    }, {} as any);
+    const descriptors = routes.reduce(
+      (
+        acc: Record<string, { options: { title: string } }>,
+        route: { key: string; title: string }
+      ) => {
+        acc[route.key] = { options: { title: route.title } };
+        return acc;
+      },
+      {} as Record<string, { options: { title: string } }>
+    );
     const state = { index, routes };
     const Active = screens[routes[index].name as keyof typeof screens];
 
     // Simple tab bar implementation for testing
     const TabBar = () => (
       <>
-        {routes.map((route: any, idx: number) => (
+        {routes.map((route: { key: string; name: string; title: string }, idx: number) => (
           <TouchableOpacity
             key={route.key}
             onPress={() => setIndex(idx)}
@@ -90,7 +115,7 @@ jest.mock('expo-router', () => {
     );
   };
 
-  Tabs.Screen = ({ name, options }: any) => null;
+  Tabs.Screen = ({ name, options }: { name: string; options: { title?: string } }) => null;
 
   return { Tabs, router: { replace: jest.fn() } };
 });

@@ -137,7 +137,7 @@ jest.mock('../../hooks/review', () => {
 const { state } = require('../../hooks/review');
 const { router } = require('expo-router');
 
-function DummyReview() {
+function DummyReview(): JSX.Element {
   const { handleSwipeLeft: swipeLeft, isComplete } = useReview();
   return isComplete ? (
     <CompletionScreen testID="completion-screen" onClose={() => {}} />
@@ -198,7 +198,7 @@ describe('UI flow', () => {
   it('shows error when review session fails to start', async () => {
     const startReview = jest.fn().mockRejectedValue(new Error('fail'));
 
-    function ReviewStarter() {
+    function ReviewStarter(): JSX.Element {
       const [error, setError] = React.useState(false);
 
       const handleStart = async () => {

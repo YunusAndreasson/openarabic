@@ -11,11 +11,9 @@ import DeleteButton from '@/components/bookmarks/DeleteButton';
 import DragHandle, { type DragHandleProps } from '@/components/bookmarks/DragHandle';
 import PlayButton from '@/components/bookmarks/PlayButton';
 import { CARD_DRAG_SCALE, SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
-import { Theme } from '@/constants/colors';
 import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
-import { useColors } from '@/hooks/theme/useColors';
-import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { difficultyLevelToLabel } from '@/utils/articles/difficulty';
 
 // Bookmarks thumbnail size for elegant music app aesthetic
@@ -58,11 +56,6 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
     shouldAnimateOnMount = true,
   }) => {
     const isDarkMode = useIsDarkMode();
-    const currentTheme = useCurrentTheme();
-    const colors = useColors();
-    // Play button icon should be dark in both modes, but white in sepia for better contrast
-    const playIconColor =
-      currentTheme === Theme.Sepia ? colors.white : isDarkMode ? colors.black : colors.text;
 
     const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
       type: 'scale',
@@ -166,7 +159,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
               <View style={styles.rightSideContainer}>
                 {!editMode && onPlayPress && (
                   <View style={styles.playButtonContainer}>
-                    <PlayButton onPress={onPlayPress} isPlaying={false} iconColor={playIconColor} />
+                    <PlayButton onPress={onPlayPress} />
                   </View>
                 )}
                 {hasStartedReading && progressPercentage !== undefined && (

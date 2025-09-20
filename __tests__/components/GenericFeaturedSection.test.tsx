@@ -14,7 +14,7 @@ jest.mock('@/hooks/articles/useFeaturedArticleSelection', () => ({
 // Mock the FeaturedSection component
 jest.mock('@read/FeaturedSection', () => {
   const { Text } = require('react-native');
-  return function MockFeaturedSection({ article }: { article: Article }) {
+  return function MockFeaturedSection({ article }: { article: Article }): JSX.Element {
     return <Text testID="featured-section">{article.title}</Text>;
   };
 });

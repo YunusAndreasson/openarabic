@@ -5,14 +5,30 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
 import { bookmarkService } from '@/services/bookmark';
 import { readingProgressService } from '@/services/readingProgress';
+import type { Article } from '@/types/articles.types';
+import type { ReadingProgressRow } from '@/types/dbRow.types';
 
 interface ContinueReadingData {
   type: 'reading_progress' | 'reading_list' | 'featured';
-  article: any;
-  progress?: any;
+  article: Article;
+  progress?: ReadingProgressRow;
 }
 
-export function useLastReadArticle() {
+interface UseLastReadArticleReturn {
+  // Original properties for backward compatibility
+  lastReadArticle: Article | null;
+  lastReadProgress: ReadingProgressRow | null;
+
+  // Enhanced properties
+  continueReadingData: ContinueReadingData | null;
+  articleType: ContinueReadingData['type'] | null;
+
+  isLoading: boolean;
+  hasLastReadArticle: boolean;
+  showButton: boolean;
+}
+
+export function useLastReadArticle(): UseLastReadArticleReturn {
   const { user } = useAuth();
 
   // Fetch reading progress data (highest priority)
@@ -87,10 +103,12 @@ export function useLastReadArticle() {
       if (articlesData && articlesData.length > 0) {
         // Get the first available article as a featured recommendation
         const featuredArticle = articlesData[0];
-        return {
-          type: 'featured',
-          article: featuredArticle,
-        };
+        if (featuredArticle) {
+          return {
+            type: 'featured',
+            article: featuredArticle,
+          };
+        }
       }
 
       return null;

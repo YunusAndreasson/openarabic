@@ -49,15 +49,15 @@ export const useFilteredArticles = (articles: Article[] | null | undefined) => {
 
   const filteredAndSortedArticles = useMemo(() => {
     // Return empty array if articles are not provided or filters state is not ready
-    if (!articles?.length || !filtersState) return [];
+    if (!safeArticles.length || !filtersState) return [];
 
     // Apply filters using utility function
-    const filteredArticles = filterArticles(articles, filters, filterDate);
+    const filteredArticles = filterArticles(safeArticles, filters, filterDate);
 
     // Apply sorting using utility function
     const comparator = comparators[sort.field];
     return sortArticles(filteredArticles, comparator, sort.direction);
-  }, [articles, sort, filters, filterDate, filtersState, comparators]);
+  }, [safeArticles, sort, filters, filterDate, filtersState, comparators]);
 
   return filteredAndSortedArticles;
 };

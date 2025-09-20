@@ -53,19 +53,7 @@ const HorizontalFeaturedSectionInternal = memo(function HorizontalFeaturedSectio
 
   const selectedArticles = useMemo(() => featuredArticles.articles, [featuredArticles.articles]);
 
-  const sliderProps = useMemo(() => {
-    if (!selectedArticles.length) return null;
-    return {
-      articles: selectedArticles,
-    };
-  }, [selectedArticles]);
-
-  // Early return if no articles selected
-  if (!sliderProps) {
-    return null;
-  }
-
-  return <HorizontalArticleSlider {...sliderProps} />;
+  return <HorizontalArticleSlider articles={selectedArticles} />;
 },
 HorizontalFeaturedSectionComparison);
 

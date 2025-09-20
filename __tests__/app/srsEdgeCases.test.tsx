@@ -223,7 +223,7 @@ jest.mock('../../components/review/ReviewHeader', () => () => null);
 
 const { useReview, createSRSMock, getCurrentSRSMock } = require('../../hooks/review');
 
-function SRSReview({ onClose }: { onClose: () => void }) {
+function SRSReview({ onClose }: { onClose: () => void }): JSX.Element {
   const review = useReview({ onClose });
 
   if (review.isComplete) {
@@ -240,7 +240,7 @@ function SRSReview({ onClose }: { onClose: () => void }) {
   );
 }
 
-function SRSFlow() {
+function SRSFlow(): JSX.Element {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
   const review = useReview({ onClose: () => setSessionStarted(false) });

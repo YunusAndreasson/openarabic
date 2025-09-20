@@ -38,7 +38,6 @@ const ListArticleItem = memo(
         title={article.title}
         difficultyLevel={article.difficulty_level}
         onPress={!editMode ? handlePress : undefined}
-        editMode={editMode}
         onDelete={onDelete}
         dragHandleProps={dragHandleProps}
         isBeingDragged={isBeingDragged}

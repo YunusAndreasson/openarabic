@@ -145,12 +145,27 @@ class SimpleAudioService {
       return cachedPlayer;
     }
 
-    // Stop and remove existing player asynchronously (don't block playback)
+    // Stop previous playback safely without blocking new playback
     if (this.currentPlayer) {
-      // CRITICAL FIX: Null references before cleanup to avoid race condition
+      const previousPlayer = this.currentPlayer;
+
+      // Null references immediately to avoid races with new player state
       this.currentPlayer = null;
       this.currentTrack = null;
 
+      // Pause the previous player asynchronously to prevent overlapping audio
+      // Do NOT remove here to preserve cache reuse; eviction handles removal
+      (async () => {
+        try {
+          if (typeof previousPlayer.pause === 'function') {
+            await previousPlayer.pause();
+          }
+        } catch {
+          // Ignore pause errors
+        }
+      })();
+
+      // Clear any existing polling/timeout from the previous session
       // Non-blocking cleanup - don't await
       this.stopInternal().catch(() => {
         // Ignore cleanup errors for faster playback

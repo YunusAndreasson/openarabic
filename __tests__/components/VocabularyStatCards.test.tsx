@@ -35,12 +35,23 @@ jest.mock('@/hooks/theme/useColors', () => ({
 
 // Mock FlashList
 jest.mock('@shopify/flash-list', () => ({
-  FlashList: ({ data, renderItem }: any) => {
+  FlashList: ({
+    data,
+    renderItem,
+  }: {
+    data: { label: string; value: number; color: string }[] | undefined;
+    renderItem: (props: {
+      item: { label: string; value: number; color: string };
+      index: number;
+    }) => JSX.Element;
+  }) => {
     const React = require('react');
     return React.createElement(
       'View',
       {},
-      data?.map((item: any, index: number) => renderItem({ item, index }))
+      data?.map((item: { label: string; value: number; color: string }, index: number) =>
+        renderItem({ item, index })
+      )
     );
   },
 }));
@@ -50,7 +61,8 @@ jest.mock('react-native', () => {
   const RN = jest.requireActual('react-native');
   return {
     ...RN,
-    Modal: ({ children, visible }: any) => (visible ? children : null),
+    Modal: ({ children, visible }: { children: React.ReactNode; visible: boolean }) =>
+      visible ? children : null,
   };
 });
 
