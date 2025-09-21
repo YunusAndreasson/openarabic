@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { AUDIO_STATES } from '@/constants/audio';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 // Use direct service access to avoid frequent parent re-renders from time updates
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
@@ -36,39 +35,25 @@ export const useBookmarksScreen = () => {
   const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
   const playbackModeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Minimal audio state subscription: only update when state transitions, ignore time ticks
-  const [audioState, setAudioState] = useState(() => {
-    const status = simpleAudioService.getStatus();
-    return status.isPlaying
-      ? AUDIO_STATES.PLAYING
-      : status.isLoading
-      ? AUDIO_STATES.LOADING
-      : AUDIO_STATES.IDLE;
-  });
-
   const sleepTimer = useSleepTimer(() => {
     simpleAudioService.stop().catch(() => {});
     setPlaybackMode('none');
   });
 
   // Monitor audio state and auto-cancel sleep timer when audio stops
+  // Use simpleAudioService directly instead of maintaining separate state
   useEffect(() => {
     const unsubscribe = simpleAudioService.subscribe(status => {
-      const nextState = status.isPlaying
-        ? AUDIO_STATES.PLAYING
-        : status.isLoading
-        ? AUDIO_STATES.LOADING
-        : AUDIO_STATES.IDLE;
+      const isPlaying = status.isPlaying;
+      const isLoading = status.isLoading;
 
-      // Auto-cancel sleep timer when audio stops
-      if (nextState === AUDIO_STATES.IDLE && audioState !== AUDIO_STATES.IDLE) {
+      // Auto-cancel sleep timer when audio stops (playing -> stopped)
+      if (!isPlaying && !isLoading && sleepTimer.state.isActive) {
         sleepTimer.actions.autoCancel();
       }
-
-      setAudioState(prev => (prev !== nextState ? nextState : prev));
     });
     return unsubscribe;
-  }, [audioState, sleepTimer.actions]);
+  }, [sleepTimer.actions, sleepTimer.state.isActive]);
 
   const readingListQuery = useQuery({
     queryKey: ['readingList', user?.id],
@@ -176,7 +161,7 @@ export const useBookmarksScreen = () => {
     true
   );
 
-  const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
+  const isCurrentlyPlaying = simpleAudioService.getStatus().isPlaying;
 
   // STABILIZATION: Enhanced handlePlayAll with better state management
   const handlePlayAll = useCallback(async () => {
@@ -185,13 +170,13 @@ export const useBookmarksScreen = () => {
       clearTimeout(playbackModeTimeoutRef.current);
     }
 
-    // Get current values directly instead of relying on captured values
-    const currentAudioState = audioState;
+    // Get current values directly from audio service instead of relying on local state
+    const currentStatus = simpleAudioService.getStatus();
     const currentPlaybackMode = playbackMode;
     const currentTracks = sortedEnhancedTracks;
 
-    const isCurrentlyStarting = currentAudioState === AUDIO_STATES.LOADING;
-    const isCurrentlyPlayingNow = currentAudioState === AUDIO_STATES.PLAYING;
+    const isCurrentlyStarting = currentStatus.isLoading;
+    const isCurrentlyPlayingNow = currentStatus.isPlaying;
 
     if (isCurrentlyStarting) return;
 
@@ -261,7 +246,7 @@ export const useBookmarksScreen = () => {
         handleError(error as Error);
       }
     }
-  }, [playbackMode, sortedEnhancedTracks, audioState, audioPreference, audioShuffleEnabled]);
+  }, [playbackMode, sortedEnhancedTracks, audioPreference, audioShuffleEnabled]);
 
   const handleSleepTimerSet = useCallback(
     (minutes: number) => {
@@ -393,7 +378,6 @@ export const useBookmarksScreen = () => {
     shouldShowInitialLoading,
     isReadingListLoading,
     playbackMode,
-    audioState,
     sleepTimer,
     handleSleepTimerSet,
     handleSleepTimerCancel,

@@ -79,6 +79,7 @@ const BottomControls = memo<BottomControlsProps>(
               style={styles.button}
               title={primaryLabel}
               onPress={onPrimaryPress}
+              enableOptimisticLoading={primaryLabel === 'PLAY ALL'}
               testID="primary-action-button"
             />
           </View>

@@ -33,6 +33,8 @@ export interface BaseButtonProps
   size?: ButtonSize;
   /** Text weight for the button text */
   textWeight?: ButtonTextWeight;
+  /** Enable optimistic loading - immediately show loading when pressed */
+  enableOptimisticLoading?: boolean;
 }
 
 /**

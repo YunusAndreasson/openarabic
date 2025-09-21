@@ -70,6 +70,7 @@ function ThemedButtonComponent({
   onPress,
   size = 'medium', // Most common value - hardcoded
   textWeight = 'bold', // Most common value - hardcoded
+  enableOptimisticLoading = false, // Only enable when explicitly requested
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
@@ -80,23 +81,27 @@ function ThemedButtonComponent({
     type: 'card',
   });
 
-  // Optimistic loading state - immediately show loading when pressed
+  // Optimistic loading state - only when explicitly enabled
   const [optimisticLoading, setOptimisticLoading] = React.useState(false);
-  const isActuallyLoading = loading || optimisticLoading;
+  const isActuallyLoading = loading || (enableOptimisticLoading && optimisticLoading);
 
-  // Create the press handler with optimistic loading
+  // Create the press handler with optional optimistic loading
   const pressHandler = useCallback(
     (event: GestureResponderEvent) => {
       if (onPress && !disabled && !isActuallyLoading) {
-        setOptimisticLoading(true); // Immediately show loading
-        onPress(event);
-        // Auto-clear optimistic loading after 5 seconds as fallback
-        setTimeout(() => {
-          setOptimisticLoading(false);
-        }, 5000);
+        if (enableOptimisticLoading) {
+          setOptimisticLoading(true); // Immediately show loading
+          onPress(event);
+          // Auto-clear optimistic loading after 500ms as fallback (much shorter)
+          setTimeout(() => {
+            setOptimisticLoading(false);
+          }, 500);
+        } else {
+          onPress(event);
+        }
       }
     },
-    [onPress, disabled, isActuallyLoading]
+    [onPress, disabled, isActuallyLoading, enableOptimisticLoading]
   );
 
   const textColor = disabled
