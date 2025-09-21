@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.XXXLARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   pressable: {

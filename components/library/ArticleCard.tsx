@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     left: LAYOUT.SPACING.MEDIUM,
     maxWidth: PILL_MAX_WIDTH_PERCENTAGE,
     position: 'absolute' as const,
-    top: LAYOUT.SPACING.MEDIUM,
+    top: LAYOUT.SPACING.SMALL,
   },
 });
 

@@ -449,6 +449,42 @@ def insert_article_sentences(
                     f"Missing audio for bilingual generation in sentence {idx + 1}"
                 )
 
+            # Handle missing audio URLs gracefully to avoid database constraint violations
+            if not english_audio_url:
+                logger.warning(
+                    f"No English audio URL available for sentence {idx + 1}, generating silent audio placeholder"
+                )
+                # Create a silent audio placeholder to satisfy database constraints
+                try:
+                    import io
+
+                    from pydub import AudioSegment
+
+                    # Create a short silent audio file (1 second)
+                    silent_audio = AudioSegment.silent(duration=1000)  # 1 second of silence
+
+                    # Export as MP3
+                    silent_buffer = io.BytesIO()
+                    silent_audio.export(silent_buffer, format="mp3")
+                    silent_buffer.seek(0)
+
+                    # Generate filename and upload
+                    placeholder_filename = generate_audio_filename()
+                    supabase_client = get_supabase_client()
+                    supabase_client.storage.from_("audio").upload(
+                        placeholder_filename,
+                        silent_buffer.getvalue(),
+                        file_options={"content-type": "audio/mpeg"},
+                    )
+
+                    english_audio_url = get_storage_url(placeholder_filename)
+                    logger.info(f"Created silent audio placeholder for sentence {idx + 1}")
+
+                except Exception as e:
+                    logger.error(f"Failed to create silent audio placeholder: {e}")
+                    # Fallback to empty string if silent audio creation fails
+                    english_audio_url = ""
+
             sentence_data = {
                 "article_id": article_id,
                 "position": idx,

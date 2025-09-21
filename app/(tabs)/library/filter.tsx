@@ -22,7 +22,7 @@ export default function CategoryFilterScreen(): JSX.Element {
     refetch,
   } = useQuery<Article[]>({
     queryKey: ['filtered-articles', 'category', categoryId],
-    queryFn: () => articlesService.getArticles({ categoryId, limit: 200, sortBy: 'created_at' }),
+    queryFn: () => articlesService.getArticles({ categoryId, sortBy: 'created_at' }),
     enabled: categoryId > 0,
     staleTime: 3600000,
     gcTime: 7200000,

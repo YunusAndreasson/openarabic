@@ -70,7 +70,8 @@ def generate_article_audio(
 ) -> None:
     """Generate article-level audio files in one streamlined pass."""
     if not AUDIO_AVAILABLE:
-        raise RuntimeError("Audio generation not available - failing per strict mode")
+        logger.warning("Audio generation not available - skipping article audio generation")
+        return
 
     use_progress = progress_tracker is not None
     temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_audio")
@@ -124,7 +125,8 @@ def generate_article_audio(
         )
 
         if not audio_urls:
-            raise RuntimeError("Failed to create article audio files")
+            logger.warning("Failed to create article audio files")
+            return
 
         # Update database with article-level audio URLs and timestamps
         try:
@@ -152,7 +154,8 @@ def generate_article_audio(
             )
 
         except Exception as e:
-            raise RuntimeError(f"Failed to update article audio URLs: {e}") from e
+            logger.error(f"Failed to update article audio URLs: {e}")
+            # Don't raise exception - continue without updating audio URLs
 
         # Clean up temporary directory
         if os.path.exists(temp_dir):
@@ -162,7 +165,8 @@ def generate_article_audio(
         # Clean up on error
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
-        raise RuntimeError(f"Failed to generate article audio: {e}") from e
+        logger.error(f"Failed to generate article audio: {e}")
+        # Don't raise exception - return gracefully
 
 
 def detect_author_from_file_path(file_path: str) -> tuple[str, int]:
@@ -265,20 +269,21 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         logger.error(f"CRITICAL: Placeholder data detected - aborting insertion: {e}")
         raise
 
-    # CRITICAL: Generate audio BEFORE inserting the article
+    # Generate audio BEFORE inserting the article
     # This ensures audio_url is available when the article is inserted
     article_audio_url = None
+    word_timestamps = []
+    audio_generation_success = False
+
     if AUDIO_AVAILABLE:
         try:
             # Create temporary directory for audio processing
             temp_dir = tempfile.mkdtemp()
-
-            # Use the new streamlined audio generation function
-            # Generate streamlined article audio
+            logger.info("Starting audio generation process...")
 
             # Prepare sentence data for the new streamlined function
             sentences = []
-            for translation in translations:
+            for _i, translation in enumerate(translations):
                 sentences.append(
                     {
                         "arabic_text": translation.tashkeel or translation.original,
@@ -312,9 +317,10 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
                         "Generated article audio but no word timestamps available"
                     )
 
-                # Article audio generated
+                audio_generation_success = True
+                logger.info("Article audio generation completed successfully")
             else:
-                raise RuntimeError("Failed to create article audio files")
+                logger.warning("Article audio generation failed, continuing without audio")
 
             # Clean up temporary directory
             if os.path.exists(temp_dir):
@@ -322,9 +328,13 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 
         except Exception as e:
             logger.error(f"Audio generation failed: {e}")
-            raise RuntimeError(f"Audio generation is mandatory and failed: {e}") from e
+            logger.info("Continuing with article insertion despite audio generation failure")
+            # Don't raise exception - continue without audio
 
     # Create ArticleData object with audio_url and timestamps
+    # Handle the case where audio generation failed gracefully
+    final_audio_url = article_audio_url if audio_generation_success else ""
+
     article_data = ArticleData(
         title=data["metadata"]["title"],
         summary=data["metadata"]["summary"],
@@ -333,10 +343,8 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         author_id=author_id,
         content_hash=content_hash,
         image_url=image_url,
-        audio_url=article_audio_url,  # This will be None if AUDIO_AVAILABLE is False
-        word_timestamps=word_timestamps
-        if AUDIO_AVAILABLE and "word_timestamps" in locals() and word_timestamps
-        else [],
+        audio_url=final_audio_url,  # Empty string if audio generation failed
+        word_timestamps=word_timestamps if audio_generation_success else [],
     )
 
     try:

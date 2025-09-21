@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { PillProps } from '@/types/ui/pill.types';
@@ -28,7 +28,7 @@ const Pill = memo(({ id, label, isSelected = false, onSelect, variant = 'filter'
       alignItems: 'center' as const,
       borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
       justifyContent: 'center' as const,
-      minHeight: MIN_TOUCH_TARGET.MEDIUM,
+      minHeight: LAYOUT.SPACING.XLARGE,
       shadowColor: colors.shadow,
     };
 
@@ -41,7 +41,7 @@ const Pill = memo(({ id, label, isSelected = false, onSelect, variant = 'filter'
           ? `${colors.elevation2}99` // 60% opacity
           : `${colors.elevation1}B3`, // 70% opacity
         paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-        paddingVertical: LAYOUT.SPACING.TINY,
+        paddingVertical: 0,
         ...LAYOUT.ELEVATION.SMALL,
       };
     }

@@ -45,7 +45,7 @@ const BottomControls = memo<BottomControlsProps>(
           styles.container,
           {
             paddingBottom: insets.bottom || LAYOUT.SPACING.SMALL,
-            backgroundColor: colors.background,
+            backgroundColor: colors.transparent,
           },
         ]}
       >
@@ -64,6 +64,11 @@ const BottomControls = memo<BottomControlsProps>(
                   {
                     borderColor: colors.tint,
                     backgroundColor: colors.elevation1,
+                    shadowColor: colors.shadow,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 4,
+                    elevation: 5,
                   },
                 ]}
                 onPress={onSecondaryPress}
@@ -76,7 +81,16 @@ const BottomControls = memo<BottomControlsProps>(
             <ThemedButton
               disabled={primaryDisabled}
               loading={primaryLoading}
-              style={styles.button}
+              style={[
+                styles.button,
+                {
+                  shadowColor: colors.shadow,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 4,
+                  elevation: 5,
+                },
+              ]}
               title={primaryLabel}
               onPress={onPrimaryPress}
               enableOptimisticLoading={primaryLabel === 'PLAY ALL'}
