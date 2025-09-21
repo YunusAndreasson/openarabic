@@ -21,6 +21,7 @@ import {
 } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider, useToast } from '@/components/providers';
+import PulsatingLoader from '@/components/ui/PulsatingLoader';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -45,6 +46,13 @@ import { lightFeedback } from '@/utils/haptics';
 
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
+
+// Static styles for loading container
+const LOADING_CONTAINER_STYLE = {
+  flex: 1,
+  justifyContent: 'center' as const,
+  alignItems: 'center' as const,
+} as const;
 
 // Custom comparison function for React.memo optimization
 const ArticleScreenContentComparison = (
@@ -831,6 +839,15 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     currentHighlightedWord,
     handleClose,
   ]);
+
+  // Show loader while article is loading
+  if (isLoadingArticle) {
+    return (
+      <View style={LOADING_CONTAINER_STYLE}>
+        <PulsatingLoader size={64} />
+      </View>
+    );
+  }
 
   return (
     <>

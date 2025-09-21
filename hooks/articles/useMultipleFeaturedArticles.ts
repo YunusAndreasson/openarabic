@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
@@ -59,6 +59,14 @@ export function useMultipleFeaturedArticles(
   scope: string = 'global'
 ): MultipleFeaturedArticlesResult {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Try to get cached featured articles first for immediate display
+  const cachedFeatured = queryClient.getQueryData<MultipleFeaturedArticlesResult>([
+    'featured-articles',
+    scope,
+    refreshKey,
+  ]);
 
   // Use the existing hooks for due and difficult words
   const { hasEnoughArticles: hasDueWordArticles, dueWordRootIds } = useArticlesByDueWords(
@@ -93,12 +101,38 @@ export function useMultipleFeaturedArticles(
   const hasArticles = useMemo(() => articlesLength > 0, [articlesLength]);
 
   // State to store the computed selection
-  const [selectedArticles, setSelectedArticles] = useState<MultipleFeaturedArticlesResult>({
-    articles: [],
-    reason: STRINGS.LOADING_ARTICLES,
-    type: 'random',
-    dueWordRootIds: new Set<number>(),
+  const [selectedArticles, setSelectedArticles] = useState<MultipleFeaturedArticlesResult>(() => {
+    // Return cached data immediately if available
+    if (cachedFeatured) {
+      return cachedFeatured;
+    }
+
+    // If no cached data but we have articles, use first 5 as immediate fallback
+    if (articlesData.length > 0) {
+      const fallbackArticles = articlesData.slice(0, 5);
+      return {
+        articles: fallbackArticles,
+        reason: STRINGS.RECOMMENDED,
+        type: 'random' as const,
+        dueWordRootIds: new Set<number>(),
+      };
+    }
+
+    // Otherwise show loading
+    return {
+      articles: [],
+      reason: STRINGS.LOADING_ARTICLES,
+      type: 'random',
+      dueWordRootIds: new Set<number>(),
+    };
   });
+
+  // Use cached featured articles immediately if available
+  useEffect(() => {
+    if (cachedFeatured) {
+      setSelectedArticles(cachedFeatured);
+    }
+  }, [cachedFeatured]);
 
   // Helper function to create fallback selection - moved inside to avoid dependency issues
   const createFallbackSelection = useCallback((): MultipleFeaturedArticlesResult => {

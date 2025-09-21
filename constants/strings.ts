@@ -182,7 +182,7 @@ export const STRINGS = {
     'Daily vocabulary advancement, tracking new words mastered over time.',
 
   // Practice bottom sheet subtitles (condensed for subtitle format)
-  MEMORY_STRENGTH_SUBTITLE: 'Shows your mastery rate over the last 7 days',
+  MEMORY_STRENGTH_SUBTITLE: 'Shows when words need review based on memory decay (next 7 days)',
   WORD_MASTERY_SUBTITLE: 'Displays your vocabulary retention percentage',
   LEARNING_RATE_SUBTITLE: 'Tracks words learned per day over the last week',
   DUE_WORDS_FORECAST_SUBTITLE: 'Predicts how many words will be due each day',

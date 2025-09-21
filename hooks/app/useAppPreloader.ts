@@ -61,11 +61,22 @@ export const useAppPreloader = (): AppPreloaderResult => {
       const [_categories, _articles] = await Promise.all(criticalPromises);
       setPreloadProgress(25);
 
-      // Prefetch featured slider assets (images + article details) without blocking UI
+      // Pre-compute and cache featured articles for immediate availability
       if (Array.isArray(_articles) && _articles.length > 0) {
         InteractionManager.runAfterInteractions(() => {
           try {
-            const featured: Article[] = (_articles as Article[]).slice(0, 3); // Reduced from 5 to 3 for faster startup
+            const articles = _articles as Article[];
+            const featured: Article[] = articles.slice(0, 5); // Get first 5 articles as featured
+
+            // Cache featured articles immediately with consistent query key
+            queryClient.setQueryData(['featured-articles', 'global', 0], {
+              articles: featured,
+              reason: 'Pre-computed during startup',
+              type: 'random' as const,
+              dueWordRootIds: new Set<number>(),
+            });
+
+            // Prefetch images and details for featured articles
             const imagePrefetches = featured
               .map(a => String(a.image_url))
               .filter(Boolean)
