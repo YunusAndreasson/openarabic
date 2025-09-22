@@ -68,8 +68,21 @@ export function useGlobalAudioState(): GlobalAudioState {
   // Sleep timer integration
   const sleepTimer = useSleepTimer(() => {
     successFeedback(); // Haptic feedback when timer completes
-    audioPlayer.stop();
     setShowSleepTimerModal(false); // Close modal when timer completes
+
+    // CRITICAL FIX: Mark sleep timer as expired instead of stopping immediately
+    // This allows the current track to finish naturally while preventing playlist progression
+    simpleAudioService.markSleepTimerExpired();
+
+    // Set a timeout to force stop after a reasonable delay (30 seconds)
+    // This ensures we don't get stuck if audio never stops naturally
+    setTimeout(() => {
+      // Only stop if we're still in playlist mode (track didn't finish yet)
+      const playlistInfo = simpleAudioService.getPlaylistInfo();
+      if (playlistInfo.isPlaylistMode) {
+        audioPlayer.stop();
+      }
+    }, 30000);
   });
 
   // Auto-cancel sleep timer when audio stops

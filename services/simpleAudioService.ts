@@ -41,6 +41,9 @@ class SimpleAudioService {
   private isPlaylistMode = false;
   private onPlaylistTrackComplete: ((nextTrack: EnhancedAudioTrack | null) => void) | null = null;
 
+  // SLEEP TIMER SUPPORT: Track when sleep timer has expired
+  private sleepTimerExpired = false;
+
   // Current audio status
   private status: AudioStatus = {
     isPlaying: false,
@@ -349,6 +352,9 @@ class SimpleAudioService {
       this.isPlaylistMode = true;
       this.onPlaylistTrackComplete = onTrackComplete || null;
 
+      // Reset sleep timer expired flag when starting new playlist
+      this.resetSleepTimerExpired();
+
       // Start with the first track
       const firstTrack = tracks[0];
       if (!firstTrack) return false;
@@ -359,6 +365,7 @@ class SimpleAudioService {
       this.playlist = [];
       this.currentPlaylistIndex = 0;
       this.onPlaylistTrackComplete = null;
+      this.resetSleepTimerExpired();
       throw error;
     }
   }
@@ -371,6 +378,18 @@ class SimpleAudioService {
       return false;
     }
 
+    // Don't advance if sleep timer has expired
+    if (this.sleepTimerExpired) {
+      // Sleep timer expired - stop instead of advancing
+      this.isPlaylistMode = false;
+      this.playlist = [];
+      this.currentPlaylistIndex = 0;
+      this.onPlaylistTrackComplete = null;
+      this.resetSleepTimerExpired();
+      await this.stop();
+      return false;
+    }
+
     this.currentPlaylistIndex++;
 
     if (this.currentPlaylistIndex >= this.playlist.length) {
@@ -379,6 +398,7 @@ class SimpleAudioService {
       this.playlist = [];
       this.currentPlaylistIndex = 0;
       this.onPlaylistTrackComplete = null;
+      this.resetSleepTimerExpired();
 
       // Stop playback and notify completion
       await this.stop();
@@ -411,6 +431,9 @@ class SimpleAudioService {
       this.playlist = [];
       this.currentPlaylistIndex = 0;
       this.onPlaylistTrackComplete = null;
+
+      // SLEEP TIMER SUPPORT: Reset sleep timer expired flag when stopping
+      this.resetSleepTimerExpired();
 
       await this.stopInternal();
       // RESET: Clear all progress and track data when stopping
@@ -501,6 +524,27 @@ class SimpleAudioService {
   }
 
   /**
+   * SLEEP TIMER SUPPORT: Mark that sleep timer has expired
+   */
+  markSleepTimerExpired(): void {
+    this.sleepTimerExpired = true;
+  }
+
+  /**
+   * SLEEP TIMER SUPPORT: Check if sleep timer has expired
+   */
+  isSleepTimerExpired(): boolean {
+    return this.sleepTimerExpired;
+  }
+
+  /**
+   * SLEEP TIMER SUPPORT: Reset sleep timer expired flag
+   */
+  resetSleepTimerExpired(): void {
+    this.sleepTimerExpired = false;
+  }
+
+  /**
    * Subscribe to status updates
    */
   subscribe(listener: (status: AudioStatus) => void): () => void {
@@ -543,6 +587,15 @@ class SimpleAudioService {
 
           // PLAYLIST SUPPORT: Check if current track has completed
           if (this.isPlaylistMode && safeDuration > 0 && safeCurrentTime >= safeDuration - 0.5) {
+            // Don't advance if sleep timer has expired
+            if (this.sleepTimerExpired) {
+              // Sleep timer expired - stop instead of advancing
+              this.advanceToNextTrack().catch(() => {
+                // Track advancement failed - continue with current track
+              });
+              return;
+            }
+
             // Track is within 0.5 seconds of completion, advance to next track
             this.advanceToNextTrack().catch(() => {
               // Track advancement failed - continue with current track
