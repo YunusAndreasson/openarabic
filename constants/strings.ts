@@ -72,7 +72,6 @@ export const STRINGS = {
   BROWSE_ARTICLES: 'Browse articles',
   ARTICLES_SELECTED_FOR_YOU: 'Articles selected for you',
   SUMMARY: 'Summary',
-  CONTINUE_READING: 'Continue Reading',
 
   // Audio controls - shortened button text
   STOP: 'Stop',

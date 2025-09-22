@@ -132,10 +132,6 @@ export function useReadingProgress({
         queryClient.invalidateQueries({
           queryKey: ['reading-streak', user.id],
         });
-        // Invalidate last read article query to update Continue Reading button
-        queryClient.invalidateQueries({
-          queryKey: ['last-read-article', user.id],
-        });
       }
     },
     onError: error => {
