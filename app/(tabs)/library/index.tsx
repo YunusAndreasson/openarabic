@@ -13,12 +13,13 @@ import { HijriDateFooter } from '@/components/library/HijriDateFooter';
 import IntelligentArticleSection from '@/components/library/IntelligentArticleSection';
 import { LAYOUT } from '@/constants/layout';
 import { CACHE_TIMES } from '@/constants/queryConfig';
-import { getCategoryFilterRoute } from '@/constants/routes';
+import { getCategoryFilterRoute, getLatestReadRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
+import { readingProgressService } from '@/services/readingProgress';
 import type { Category } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
@@ -59,6 +60,19 @@ export default function ReadScreen(): JSX.Element {
     placeholderData: old => old,
   });
 
+  // Get latest read articles for special category
+  const { data: latestReadArticles = [], isLoading: isLatestReadLoading } = useQuery({
+    queryKey: ['latest-read-articles', user?.id],
+    queryFn: () =>
+      user?.id ? readingProgressService.getLatestReadArticles(user.id, 10) : Promise.resolve([]),
+    enabled: !!user?.id,
+    staleTime: 10000, // 10 seconds - short cache for real-time updates when reading
+    gcTime: 900000, // 15 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -72,6 +86,17 @@ export default function ReadScreen(): JSX.Element {
     ]
   );
 
+  // Create special "Latest Read" category
+  const latestReadCategory = useMemo(() => {
+    if (!user?.id) return null;
+
+    return {
+      id: -1, // Special ID to indicate it's not a real category
+      name: STRINGS.LATEST_READ,
+      count: latestReadArticles.length,
+    };
+  }, [user?.id, latestReadArticles.length]);
+
   // Optimized derivedData - use stable references when possible
   const categoriesWithArticles = useMemo(() => {
     const counts = memoizedArticlesData.reduce<Record<number, number>>((acc, article) => {
@@ -82,7 +107,7 @@ export default function ReadScreen(): JSX.Element {
       return acc;
     }, {});
 
-    return categoriesData.reduce<(Category & { count: number })[]>((acc, category) => {
+    const result = categoriesData.reduce<(Category & { count: number })[]>((acc, category) => {
       if (category?.id && category.id > 0 && category.name) {
         const count = counts[category.id] || 0;
         if (count > 0) {
@@ -91,7 +116,11 @@ export default function ReadScreen(): JSX.Element {
       }
       return acc;
     }, []);
+
+    return result;
   }, [memoizedArticlesData, categoriesData]); // Use memoized articles data
+
+  // Note: We're now rendering regular categories and Latest Read category separately
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
@@ -111,6 +140,14 @@ export default function ReadScreen(): JSX.Element {
         ? [
             queryClient.invalidateQueries({ queryKey: ['reading-streak', user.id] }),
             queryClient.invalidateQueries({ queryKey: ['reading-list', user.id] }),
+            queryClient.invalidateQueries({
+              queryKey: ['latest-read-articles', user.id],
+              refetchType: 'active',
+            }),
+            queryClient.invalidateQueries({
+              queryKey: ['latest-read-articles-detailed', user.id],
+              refetchType: 'active',
+            }),
           ]
         : [];
 
@@ -131,6 +168,12 @@ export default function ReadScreen(): JSX.Element {
 
   const handleSelectCategory = useCallback(
     (categoryId: number) => {
+      // Special handling for Latest Read category
+      if (categoryId === -1) {
+        router.push(getLatestReadRoute());
+        return;
+      }
+
       const categoryName = categoriesData.find(c => c.id === categoryId)?.name;
       router.push(getCategoryFilterRoute(categoryId, categoryName));
     },
@@ -143,12 +186,16 @@ export default function ReadScreen(): JSX.Element {
       <View style={styles.headerContainer}>
         <IntelligentArticleSection articlesData={memoizedArticlesData} refreshKey={refreshKey} />
         <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
+        {latestReadCategory && (
+          <FilterSection items={[latestReadCategory]} onSelect={handleSelectCategory} />
+        )}
       </View>
     );
   }, [
     memoizedArticlesData, // Use memoized articles data to prevent unnecessary re-renders
     refreshKey, // Only changes on manual refresh
-    categoriesWithArticles, // Computed value, changes when articles/categories change
+    categoriesWithArticles, // Regular categories
+    latestReadCategory, // Latest Read category
     handleSelectCategory, // Stable callback
   ]);
 
@@ -165,7 +212,7 @@ export default function ReadScreen(): JSX.Element {
     [colors, insets.bottom]
   );
 
-  const isLoading = isArticlesLoading || isCategoriesLoading;
+  const isLoading = isArticlesLoading || isCategoriesLoading || isLatestReadLoading;
 
   if (isLoading && !articlesData.length && !categoriesData.length) {
     // Show loading state - handled by ArticleList

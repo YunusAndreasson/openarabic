@@ -143,9 +143,21 @@ export function createComparators(
   progressMap: Map<number, { progress_percentage: number }>
 ): Record<FilterState['sort']['field'], (a: Article, b: Article) => number> {
   return {
-    author: (a, b) => a.author.name.localeCompare(b.author.name),
-    date: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-    difficulty: (a, b) => a.difficulty_level - b.difficulty_level,
+    author: (a, b) => {
+      const authorA = a.author?.name || '';
+      const authorB = b.author?.name || '';
+      return authorA.localeCompare(authorB);
+    },
+    date: (a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateA - dateB;
+    },
+    difficulty: (a, b) => {
+      const diffA = a.difficulty_level ?? 0;
+      const diffB = b.difficulty_level ?? 0;
+      return diffA - diffB;
+    },
     progress: (a, b) => {
       const progressA = progressMap.get(a.id)?.progress_percentage || 0;
       const progressB = progressMap.get(b.id)?.progress_percentage || 0;

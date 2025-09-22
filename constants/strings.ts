@@ -72,6 +72,7 @@ export const STRINGS = {
   BROWSE_ARTICLES: 'Browse articles',
   ARTICLES_SELECTED_FOR_YOU: 'Articles selected for you',
   SUMMARY: 'Summary',
+  LATEST_READ: 'Latest Read',
 
   // Audio controls - shortened button text
   STOP: 'Stop',

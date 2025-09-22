@@ -85,6 +85,13 @@ export default function LibraryLayout(): JSX.Element {
           });
         }}
       />
+      <Stack.Screen
+        name="latest-read"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.LATEST_READ,
+          headerLeft: () => <FilterHeaderLeft />,
+        })}
+      />
     </Stack>
   );
 }

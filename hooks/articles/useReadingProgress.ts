@@ -132,6 +132,16 @@ export function useReadingProgress({
         queryClient.invalidateQueries({
           queryKey: ['reading-streak', user.id],
         });
+        // Invalidate latest read articles to update the Latest Read category
+        queryClient.invalidateQueries({
+          queryKey: ['latest-read-articles', user.id],
+          refetchType: 'active', // Refetch active queries immediately
+        });
+        // Invalidate detailed latest read articles
+        queryClient.invalidateQueries({
+          queryKey: ['latest-read-articles-detailed', user.id],
+          refetchType: 'active', // Refetch active queries immediately
+        });
       }
     },
     onError: error => {

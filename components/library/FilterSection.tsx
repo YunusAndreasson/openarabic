@@ -30,18 +30,18 @@ interface FilterSectionProps {
 const CompactNavCard = memo(
   ({ label, count, onPress }: { label: string; count?: number; onPress: () => void }) => {
     const colors = useColors();
-    
+
     // Memoize dynamic styles for better performance
-    const countBadgeStyle = useMemo(() => [
-      compactCardStyles.countBadge,
-      { backgroundColor: colors.elevation3 }
-    ], [colors.elevation3]);
-    
-    const countTextStyle = useMemo(() => [
-      compactCardStyles.countText,
-      { color: colors.text }
-    ], [colors.text]);
-    
+    const countBadgeStyle = useMemo(
+      () => [compactCardStyles.countBadge, { backgroundColor: colors.elevation3 }],
+      [colors.elevation3]
+    );
+
+    const countTextStyle = useMemo(
+      () => [compactCardStyles.countText, { color: colors.text }],
+      [colors.text]
+    );
+
     return (
       <BaseCard shadowSize="small" style={compactCardStyles.card} onPress={onPress}>
         <View style={compactCardStyles.row}>
@@ -50,11 +50,7 @@ const CompactNavCard = memo(
           </ThemedText>
           {count !== undefined && (
             <View style={countBadgeStyle}>
-              <ThemedText
-                skipDefaultColor
-                style={countTextStyle}
-                type="caption"
-              >
+              <ThemedText skipDefaultColor style={countTextStyle} type="caption">
                 {count}
               </ThemedText>
             </View>

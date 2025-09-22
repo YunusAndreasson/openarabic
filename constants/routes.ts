@@ -16,6 +16,10 @@ export const getCategoryFilterRoute = (categoryId: number, name?: string): strin
   return `${base}?${query}`;
 };
 
+export const getLatestReadRoute = (): string => {
+  return `/(tabs)/library/latest-read`;
+};
+
 export const ROUTE_PATHS = {
   AUTH: '/auth',
   TABS: '/(tabs)',
