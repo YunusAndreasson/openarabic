@@ -190,7 +190,7 @@ export const LAYOUT = {
   },
 
   BOTTOM_BAR: {
-    HEIGHT: IS_IOS ? 83 : 65, // Standard iOS tab bar height: 83px, Android: 65px
+    HEIGHT: IS_IOS ? 73 : 58, // Compact tab bar height - reduced from standard heights
   },
 
   BORDER_RADIUS: {

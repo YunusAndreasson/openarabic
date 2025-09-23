@@ -139,7 +139,7 @@ const TAB_SCREENS = [
 // Static styles for better performance
 const styles = StyleSheet.create({
   tabBarIcon: {
-    marginTop: 8, // Move icons down to center them better
+    marginTop: 2, // Minimal margin for compact tab bar
   },
   focusedIcon: {
     opacity: 1,
@@ -148,12 +148,12 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.HIGH,
   },
   iconContainer: {
-    margin: LAYOUT.SPACING.TINY,
+    margin: LAYOUT.SPACING.MICRO, // Minimal margin for compact layout
   },
   badgeContainer: {
     position: 'absolute',
-    right: -LAYOUT.SPACING.TINY - 2, // -6px for proper positioning
-    top: -LAYOUT.SPACING.TINY + 1, // -3px for proper positioning
+    right: -LAYOUT.SPACING.MICRO - 2, // -3px for compact positioning
+    top: -LAYOUT.SPACING.MICRO + 1, // -2px for compact positioning
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     width: LAYOUT.COMPONENT.BADGE.SIZE,
     height: LAYOUT.COMPONENT.BADGE.SIZE,
@@ -222,7 +222,7 @@ export default function TabLayout(): JSX.Element {
           tabBarInactiveTintColor: colors.tabIconDefault,
           tabBarShowLabel: false,
           tabBarIconStyle: styles.tabBarIcon,
-          tabBarItemStyle: { paddingTop: 4, paddingBottom: 4 },
+          tabBarItemStyle: { paddingTop: 2, paddingBottom: 2 },
           tabBarStyle: tabBarStyle,
           freezeOnBlur: false, // Keep screens in memory to prevent black screens
           animation: 'none', // Disable animations to prevent black screens completely
