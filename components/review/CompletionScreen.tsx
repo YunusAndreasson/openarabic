@@ -17,7 +17,7 @@ import {
   COMPLETION_TITLE_DELAY,
   TIMING_CONFIG,
 } from '@/constants/animation';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -65,14 +65,22 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
     if (!useThemedView && user?.id) {
       // Defer query invalidation until after completion screen animation completes
       InteractionManager.runAfterInteractions(() => {
+        // Invalidate all FSRS word queries to ensure coach messages and study tab update
         queryClient.invalidateQueries({
           predicate: query => {
             const key = query.queryKey[0];
-            return key === 'fsrs-words';
+            return key === 'fsrs-words' || key === 'struggling-words';
           },
         });
+
+        // Specifically invalidate the queries used by the study tab for immediate updates
         if (user?.id) {
+          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
+          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
           queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
+          queryClient.invalidateQueries({
+            queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+          });
         }
       });
     }
