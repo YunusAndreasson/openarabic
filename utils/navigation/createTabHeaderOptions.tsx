@@ -25,50 +25,44 @@ export function createTabHeaderOptions({
   const backgroundColor = colors?.background || '#FFFFFF';
   const textColor = colors?.headingText || '#000000';
 
-  const baseOptions: NativeStackNavigationOptions = {
-    headerShown: true,
-    headerStyle: {
+  // Pre-computed styles for better performance
+  const headerStyles = {
+    headerContainer: {
       backgroundColor,
+      height: 40, // Ultra-compact - minimal space around 32px icons
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'space-between' as const,
+      paddingHorizontal: 16,
+      paddingVertical: 0, // No vertical padding
     },
-    headerTintColor: textColor,
-    headerShadowVisible: false,
+    titleText: {
+      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+      fontWeight: '600' as const,
+      color: textColor,
+      textAlign: 'left' as const,
+      flex: 1,
+    },
+    rightContainer: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'flex-end' as const,
+    },
   };
 
   return {
-    ...baseOptions,
-    headerTitle: () => (
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 0,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-            fontWeight: '600',
-            color: textColor,
-            textAlign: 'left',
-            flex: 1,
-          }}
-          numberOfLines={1}
-        >
+    headerShown: true,
+    headerShadowVisible: false,
+    // Remove redundant properties since we're using custom header
+    headerStyle: undefined,
+    headerTintColor: undefined,
+    headerTitle: undefined,
+    header: () => (
+      <View style={headerStyles.headerContainer}>
+        <Text style={headerStyles.titleText} numberOfLines={1}>
           {title}
         </Text>
-        {rightComponent && (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-            }}
-          >
-            {rightComponent()}
-          </View>
-        )}
+        {rightComponent && <View style={headerStyles.rightContainer}>{rightComponent()}</View>}
       </View>
     ),
   };

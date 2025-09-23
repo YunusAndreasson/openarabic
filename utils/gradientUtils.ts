@@ -4,7 +4,7 @@ import { withOpacity } from '@/utils/colorUtils';
 
 // Extract constants outside component to prevent recreation
 const GOLDEN_RATIO = 1.618; // True golden ratio for optimal header proportions
-const BASE_HEADER_HEIGHT = Math.round(SCREEN_WIDTH / GOLDEN_RATIO); // Base height based on golden ratio
+const BASE_HEADER_HEIGHT = Math.round(SCREEN_WIDTH / (GOLDEN_RATIO * 4)); // Compact header height - reduced from golden ratio
 
 /**
  * Calculate header height including safe area for proper image display

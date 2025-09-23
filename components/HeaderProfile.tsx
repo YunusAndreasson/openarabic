@@ -49,23 +49,19 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   }, [openStreaks]);
 
   const profilePhotoStyle = useMemo(
-    () => [styles.profilePhoto, { width: size, height: size, borderRadius: size / 2 }],
+    () => [styles.baseProfilePhoto, { width: size, height: size, borderRadius: size / 2 }],
     [size]
   );
 
-  // Dynamic styles for streak badge circle - smaller and proportional to account badge
-  const STREAK_BADGE_SIZE = 32; // Smaller than account badge (64px) for visual hierarchy
+  // Dynamic styles for streak badge circle - prominent for better visibility
   const streakBadgeStyle = useMemo(
-    () => ({
-      width: STREAK_BADGE_SIZE,
-      height: STREAK_BADGE_SIZE,
-      borderRadius: STREAK_BADGE_SIZE / 2,
-      borderWidth: LAYOUT.BORDER.WIDTH.THIN, // Thinner border for smaller size
-      borderColor: hasStreak ? colors.warning : colors.textTertiary,
-      backgroundColor: hasStreak ? colors.warning + '20' : colors.elevation1, // Slightly more opaque
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
-    }),
+    () => [
+      styles.baseStreakBadge,
+      {
+        borderColor: hasStreak ? colors.warning : colors.textTertiary,
+        backgroundColor: hasStreak ? colors.warning + '20' : colors.elevation1,
+      },
+    ],
     [hasStreak, colors.warning, colors.textTertiary, colors.elevation1]
   );
 
@@ -99,7 +95,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
       <Pressable
         onPress={handleStreakPress}
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-        style={{ padding: LAYOUT.SPACING.TINY }} // Add padding for better touch target
+        style={{ padding: LAYOUT.SPACING.TINY }} // Standard padding for touch targets
       >
         <View style={streakBadgeStyle}>
           <Ionicons
@@ -115,17 +111,17 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
               {
                 color: hasStreak ? colors.warning : colors.textTertiary,
                 position: 'absolute',
-                bottom: -2,
-                right: -2,
+                bottom: 0,
+                right: 0,
                 backgroundColor: colors.background,
-                borderRadius: 8,
-                paddingHorizontal: LAYOUT.SPACING.MICRO,
-                paddingVertical: LAYOUT.SPACING.MICRO / 4,
+                borderRadius: 6,
+                paddingHorizontal: LAYOUT.SPACING.MICRO / 2,
+                paddingVertical: 0,
                 fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                minWidth: 16,
-                height: 16,
+                minWidth: 10,
+                height: 10,
                 textAlign: 'center',
-                lineHeight: 14,
+                lineHeight: 10,
               },
             ]}
             numberOfLines={1}
@@ -160,7 +156,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
               type="label"
               weight="bold"
               style={[
-                styles.initialsText,
+                styles.baseInitialsText,
                 { fontSize: size * 0.45, color: isDarkMode ? colors.black : colors.white },
               ]}
             >
@@ -183,7 +179,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   streakText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
   },
   profileButton: {
     alignItems: 'center',
@@ -191,16 +187,27 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.TINY,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
+  baseStreakBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   profilePhoto: {
-    // Dynamic styles applied inline
+    // Base style - dynamic properties applied inline
   },
   initialsContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    // No additional styling needed - tint background will be the only circle
   },
-  initialsText: {
-    // Dynamic styles applied inline
+  // Pre-computed base styles for better performance
+  baseProfilePhoto: {
+    // Width, height, and borderRadius applied dynamically
+  },
+  baseInitialsText: {
+    // Font size and color applied dynamically
   },
 });
 

@@ -323,11 +323,11 @@ export const LAYOUT = {
 
   HEADER: {
     HEIGHT: {
-      EXPANDED: TOUCH_TARGETS.LARGE * 8, // ~380 - responsive to touch targets
+      EXPANDED: TOUCH_TARGETS.LARGE * 3, // ~144 - optimized for compact header space
       COLLAPSED: 0,
     },
     NAV_HEIGHT: IS_IOS ? TOUCH_TARGETS.MEDIUM : TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // Platform-specific responsive heights
-    NAV_HEADER_HEIGHT: IS_IOS ? TOUCH_TARGETS.LARGE * 2 + BASE_UNIT : SPACING_SCALE.XLARGE * 4, // Platform-specific responsive heights
+    NAV_HEADER_HEIGHT: IS_IOS ? TOUCH_TARGETS.MEDIUM : TOUCH_TARGETS.MEDIUM + SPACING_SCALE.TINY, // Optimized compact header heights
 
     TITLE: {
       MAIN: {
