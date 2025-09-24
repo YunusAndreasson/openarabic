@@ -128,7 +128,7 @@ const ArticleList = forwardRef<any, ArticleListProps>(
       }
     }, [onRefresh]);
 
-    // Memoized refresh control - extract colors to avoid re-creation
+    // Memoized refresh control with optimized dependencies
     const refreshControl = useMemo(
       () => (
         <RefreshControl
@@ -149,13 +149,15 @@ const ArticleList = forwardRef<any, ArticleListProps>(
       [
         isRefreshing,
         handleRefreshWithTransition,
-        colors, // Use entire colors object as dependency
+        colors.tint, // Only depend on specific color properties
+        colors.background,
+        colors.secondaryText,
         stableHeaderHeightRef.current,
         progressViewOffset,
       ]
     );
 
-    // Optimized content container style - cache the base style and only update when necessary
+    // Optimized content container style - more specific dependencies
     const safeContentContainerStyle = useMemo(
       () => ({
         ...(contentContainerStyle as any),

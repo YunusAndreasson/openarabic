@@ -4,8 +4,9 @@ import { Image } from 'expo-image';
 import { useCallback, useRef, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { CACHE_TIMES } from '@/constants/queryConfig';
+import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
 import { authorsService } from '@/services/authors';
@@ -13,6 +14,7 @@ import { bookmarkService } from '@/services/bookmark';
 import { categoriesService } from '@/services/categories';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
+import { getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 
 interface AppPreloaderResult {
@@ -21,6 +23,7 @@ interface AppPreloaderResult {
   preloadAppData: () => Promise<void>;
   prefetchArticle: (articleId: number) => Promise<boolean>;
   prefetchVocabularyData: () => Promise<boolean>;
+  prefetchFeaturedArticles: () => Promise<boolean>;
   preloadProgress: number; // 0-100 percentage
 }
 
@@ -127,6 +130,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
             gcTime: CACHE_TIMES.CRITICAL.gcTime,
             retry: 2,
           });
+
+          // Preload featured articles to prevent glitching when library loads
+          try {
+            await prefetchFeaturedArticles();
+          } catch {
+            // Ignore featured articles prefetch errors - will fall back to on-demand selection
+          }
         } catch {
           // Ignore errors - will fall back to random selection
         }
@@ -246,12 +256,112 @@ export const useAppPreloader = (): AppPreloaderResult => {
     }
   }, [queryClient, user?.id]);
 
+  // Pre-select featured articles to prevent glitching when library loads
+  const prefetchFeaturedArticles = useCallback(async () => {
+    if (!user?.id) return false;
+
+    try {
+      // Fetch all articles first
+      const allArticles = await queryClient.fetchQuery({
+        queryKey: ['articles'],
+        queryFn: () => articlesService.getArticles(),
+        staleTime: 300000, // 5 minutes
+        gcTime: 600000, // 10 minutes
+      });
+
+      if (!allArticles || allArticles.length === 0) return false;
+
+      // Get user's study words to determine selection strategy
+      const allStudyWords = await queryClient.fetchQuery({
+        queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+        queryFn: () =>
+          studyWordsFSRSService.getFSRSWords(user.id, {
+            forStats: true,
+            limit: 1,
+          }),
+        staleTime: 180000,
+        gcTime: 600000,
+      });
+
+      const hasAnyStudyWords = allStudyWords.length > 0;
+
+      // Get due words for intelligent selection
+      const dueWords = await queryClient.fetchQuery({
+        queryKey: FSRS_QUERY_KEYS.due(user.id),
+        queryFn: () =>
+          studyWordsFSRSService.getFSRSWords(user.id, {
+            onlyDue: true,
+            sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
+          }),
+        staleTime: 60000, // 1 minute for due words
+        gcTime: 300000,
+      });
+
+      const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
+
+      // Perform intelligent featured article selection
+      const performIntelligentSelection = () => {
+        if (dueWordRootIds.size > 0) {
+          const dueWordArticles = allArticles.filter(article =>
+            article.article_sentences?.some(sentence =>
+              sentence.sentence_words?.some((word: any) => dueWordRootIds.has(word.root_id))
+            )
+          );
+
+          if (dueWordArticles.length > 0) {
+            const selected = dueWordArticles.slice(0, 5);
+            return {
+              articles: selected,
+              reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
+              type: 'due-words' as const,
+              dueWordRootIds,
+            };
+          }
+        }
+
+        // Fallback to beginner articles for new users
+        if (!user?.id || !hasAnyStudyWords) {
+          const beginnerArticles = getBeginnerArticles(allArticles);
+          if (beginnerArticles.length > 0) {
+            const selected = beginnerArticles.slice(0, 5);
+            return {
+              articles: selected,
+              reason: STRINGS.RECOMMENDED,
+              type: 'beginner' as const,
+              dueWordRootIds: new Set(),
+            };
+          }
+        }
+
+        // Final fallback: random selection
+        const shuffled = [...allArticles].sort(() => 0.5 - Math.random());
+        return {
+          articles: shuffled.slice(0, 5),
+          reason: STRINGS.RECOMMENDED,
+          type: 'random' as const,
+          dueWordRootIds: new Set(),
+        };
+      };
+
+      const featuredSelection = performIntelligentSelection();
+
+      // Cache the featured articles for immediate use
+      queryClient.setQueryData(['featured-articles', 'global', 0], featuredSelection);
+
+      return true;
+    } catch (error) {
+      console.warn('Featured articles prefetch failed:', error);
+      return false;
+    }
+  }, [user?.id, queryClient]);
+
   return {
     isPreloading,
     isLoaded,
     preloadAppData,
     prefetchArticle,
     prefetchVocabularyData,
+    prefetchFeaturedArticles,
     preloadProgress,
   };
 };

@@ -67,7 +67,7 @@ function EnhancedImageInternal({
 }: EnhancedImageProps) {
   const colors = useColors();
 
-  // Memoize container style to prevent recreation
+  // Memoize container style with minimal dependencies
   const containerStyle = useMemo(
     () => [styles.container, { backgroundColor: colors.elevation2 }, style],
     [colors.elevation2, style]

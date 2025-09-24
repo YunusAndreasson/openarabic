@@ -176,9 +176,11 @@ export default function VocabularyScreen(): JSX.Element {
     return { learningWords, masteredWords };
   }, [filteredStudyWords]);
 
-  // Calculate bottom padding for content container
-  const contentPaddingBottom =
-    insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL;
+  // Memoize bottom padding calculation with minimal dependencies
+  const contentPaddingBottom = useMemo(
+    () => insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL,
+    [insets.bottom]
+  );
 
   // Calculate loading and content states (needed for animations before any early returns)
   const isLoadingState = isDataLoading || isFetching;

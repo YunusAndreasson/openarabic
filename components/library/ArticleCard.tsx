@@ -152,7 +152,7 @@ function ArticleCardComponent({
   // For mobile-only apps, use constant screen width
   const screenWidth = SCREEN_WIDTH;
 
-  // Add press animation using the same system as ListenListItemCard
+  // Optimized press animation - memoize animation hook parameters
   const { animatedStyle, setValue } = useTransformAnimation({
     type: 'scale',
     initialValue: 1,
@@ -175,13 +175,13 @@ function ArticleCardComponent({
     };
   }, [setValue]);
 
-  // Memoize image height calculation with optimized dependencies
+  // Memoize image height calculation - screenWidth is stable for mobile
   const imageHeight = useMemo(
     () => Math.round((screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO),
     [screenWidth]
   );
 
-  // Memoize gradient colors with better optimization
+  // Memoize gradient colors with stable references
   const gradientColors = useMemo(() => {
     if (isDarkMode) {
       return [
@@ -199,9 +199,10 @@ function ArticleCardComponent({
     ] as const;
   }, [colors.background, colors.card, colors.transparent, isDarkMode]);
 
-  const titleStyle = useMemo(() => createTitleStyle(), []);
-  const authorStyle = useMemo(() => createAuthorStyle(), []);
-  const summaryStyle = useMemo(() => createSummaryStyle(), []);
+  // Static styles - create once and reuse
+  const titleStyle = createTitleStyle();
+  const authorStyle = createAuthorStyle();
+  const summaryStyle = createSummaryStyle();
 
   // Memoize computed values for child components
   const imageContainerStyle = useMemo(

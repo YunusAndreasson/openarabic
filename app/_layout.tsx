@@ -190,19 +190,18 @@ function AppContent() {
 
   const colors = useColors();
 
+  // Optimized navigation theme - memoize with stable colors reference
   const navigationTheme = useMemo(() => {
     const baseTheme = isDark ? DarkTheme : DefaultTheme;
-    // On iOS, ensure the native back button uses our tint color by deriving a theme object
-    if (Platform.OS === 'ios') {
-      return {
-        ...baseTheme,
-        colors: {
-          ...baseTheme.colors,
-          primary: colors.tint,
-        },
-      };
-    }
-    return baseTheme;
+    return Platform.OS === 'ios'
+      ? {
+          ...baseTheme,
+          colors: {
+            ...baseTheme.colors,
+            primary: colors.tint,
+          },
+        }
+      : baseTheme;
   }, [isDark, colors.tint]);
 
   // Set default theme based on system preference if none is set yet
@@ -434,14 +433,25 @@ const styles = StyleSheet.create({
   },
 });
 
+// Optimized AudioOverlays with better memoization
 const AudioOverlays = memo(function AudioOverlays() {
   const globalAudioState = useGlobalAudioState();
 
-  const shouldShowMiniPlayer =
-    Boolean(globalAudioState.currentArticle) &&
-    (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
-    !globalAudioState.showSleepTimerModal &&
-    !globalAudioState.shouldHideMiniPlayer;
+  // Memoize the mini player visibility to prevent unnecessary re-renders
+  const shouldShowMiniPlayer = useMemo(
+    () =>
+      Boolean(globalAudioState.currentArticle) &&
+      (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
+      !globalAudioState.showSleepTimerModal &&
+      !globalAudioState.shouldHideMiniPlayer,
+    [
+      globalAudioState.currentArticle,
+      globalAudioState.isPlaying,
+      globalAudioState.audioState,
+      globalAudioState.showSleepTimerModal,
+      globalAudioState.shouldHideMiniPlayer,
+    ]
+  );
 
   return (
     <>

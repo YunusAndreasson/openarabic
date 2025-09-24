@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
@@ -68,7 +68,7 @@ export function useMultipleFeaturedArticles(
     refreshKey,
   ]);
 
-  // Use the existing hooks for due and difficult words
+  // Use the existing hooks for due and difficult words with cached data
   const { hasEnoughArticles: hasDueWordArticles, dueWordRootIds } = useArticlesByDueWords(
     user?.id,
     10
@@ -100,25 +100,32 @@ export function useMultipleFeaturedArticles(
   const articlesLength = useMemo(() => articlesData.length, [articlesData.length]);
   const hasArticles = useMemo(() => articlesLength > 0, [articlesLength]);
 
+  // Convert Sets to stable array representations for dependencies
+  const stableDueWordRootIds = useMemo(() => Array.from(dueWordRootIds).sort(), [dueWordRootIds]);
+  const stableDifficultWordRootIds = useMemo(
+    () => Array.from(difficultWordRootIds).sort(),
+    [difficultWordRootIds]
+  );
+
   // State to store the computed selection
   const [selectedArticles, setSelectedArticles] = useState<MultipleFeaturedArticlesResult>(() => {
-    // Return cached data immediately if available
+    // Return cached data immediately if available (from preloader)
     if (cachedFeatured) {
       return cachedFeatured;
     }
 
-    // If no cached data but we have articles, use first 5 as immediate fallback
+    // If we have articles, return them immediately to prevent loading state
     if (articlesData.length > 0) {
-      const fallbackArticles = articlesData.slice(0, 5);
+      const immediateArticles = articlesData.slice(0, 5);
       return {
-        articles: fallbackArticles,
+        articles: immediateArticles,
         reason: STRINGS.RECOMMENDED,
         type: 'random' as const,
         dueWordRootIds: new Set<number>(),
       };
     }
 
-    // Otherwise show loading
+    // Show loading only if no data at all
     return {
       articles: [],
       reason: STRINGS.LOADING_ARTICLES,
@@ -127,118 +134,60 @@ export function useMultipleFeaturedArticles(
     };
   });
 
+  // Track if we've already initialized to prevent infinite loops
+  const hasInitializedRef = useRef(false);
+
   // Use cached featured articles immediately if available
   useEffect(() => {
-    if (cachedFeatured) {
+    if (cachedFeatured && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
       setSelectedArticles(cachedFeatured);
     }
   }, [cachedFeatured]);
 
-  // Article selection logic - moved to useEffect to prevent infinite re-renders
-  React.useEffect(() => {
+  // Memoize the selection logic to prevent infinite re-renders
+  const selectionLogic = useCallback(() => {
+    // Determine the selection strategy and compute the result once
+    let result: MultipleFeaturedArticlesResult;
+
     if (!hasArticles) {
-      setSelectedArticles({
+      result = {
         articles: [],
         reason: STRINGS.LOADING_ARTICLES,
         type: 'random',
         dueWordRootIds: new Set<number>(),
-      });
-      return;
-    }
+      };
+    } else if (cachedFeatured) {
+      // Use cached featured articles from preloader
+      result = cachedFeatured;
+    } else if (refreshKey === 0) {
+      // For initial load (refreshKey === 0), use intelligent selection
+      if (
+        !initialSelectionRef.current ||
+        initialSelectionRef.current.refreshKey !== 0 ||
+        initialSelectionRef.current.scope !== scope
+      ) {
+        // First time or scope change - perform intelligent selection
+        let intelligentSelection: MultipleFeaturedArticlesResult;
 
-    // Use requestIdleCallback to defer expensive computation if available
-    const performSelection = () => {
-      // For initial load (refreshKey === 0), cache and reuse the first intelligent selection
-      if (refreshKey === 0) {
-        if (
-          !initialSelectionRef.current ||
-          initialSelectionRef.current.refreshKey !== 0 ||
-          initialSelectionRef.current.scope !== scope
-        ) {
-          // First time or scope change - perform intelligent selection
-          let intelligentSelection: MultipleFeaturedArticlesResult;
-
-          // Strategy 1: If user has due words and enough articles with those words
-          if (user?.id && hasDueWordArticles && dueWordRootIds.size > 0) {
-            const dueWordArticles = articlesData.filter(article =>
-              article.article_sentences?.some(sentence =>
-                sentence.sentence_words?.some((word: SentenceWord) =>
-                  dueWordRootIds.has(word.root_id)
-                )
+        // Strategy 1: If user has due words and enough articles with those words
+        if (user?.id && hasDueWordArticles && dueWordRootIds.size > 0) {
+          const dueWordArticles = articlesData.filter(article =>
+            article.article_sentences?.some(sentence =>
+              sentence.sentence_words?.some((word: SentenceWord) =>
+                dueWordRootIds.has(word.root_id)
               )
-            );
+            )
+          );
 
-            if (dueWordArticles.length > 0) {
-              intelligentSelection = {
-                articles: getRandomArticles(dueWordArticles, MAX_FEATURED_ARTICLES),
-                reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
-                type: 'due-words',
-                dueWordRootIds,
-              };
-            } else {
-              // Fallback to random selection
-              intelligentSelection = {
-                articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
-                reason: STRINGS.RECOMMENDED,
-                type: 'random' as const,
-                dueWordRootIds,
-              };
-            }
-          }
-          // Strategy 2: If user has difficult words and study progress
-          else if (
-            user?.id &&
-            hasDifficultWordArticles &&
-            difficultWordRootIds.size > 0 &&
-            hasAnyStudyWords
-          ) {
-            const difficultWordArticles = articlesData.filter(article =>
-              article.article_sentences?.some(sentence =>
-                sentence.sentence_words?.some((word: SentenceWord) =>
-                  difficultWordRootIds.has(word.root_id)
-                )
-              )
-            );
-
-            if (difficultWordArticles.length > 0) {
-              intelligentSelection = {
-                articles: getRandomArticles(difficultWordArticles, MAX_FEATURED_ARTICLES),
-                reason: STRINGS.CHOSEN_TO_REINFORCE_CHALLENGING,
-                type: 'difficult-words',
-                dueWordRootIds,
-              };
-            } else {
-              // Fallback to random selection
-              intelligentSelection = {
-                articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
-                reason: STRINGS.RECOMMENDED,
-                type: 'random' as const,
-                dueWordRootIds,
-              };
-            }
-          }
-          // Strategy 3: If new user, show beginner-friendly articles
-          else if (!user?.id || !hasAnyStudyWords) {
-            const beginnerArticles = getBeginnerArticles(articlesData);
-            if (beginnerArticles.length > 0) {
-              intelligentSelection = {
-                articles: getRandomArticles(beginnerArticles, MAX_FEATURED_ARTICLES),
-                reason: STRINGS.RECOMMENDED,
-                type: 'beginner',
-                dueWordRootIds,
-              };
-            } else {
-              // Fallback to random selection
-              intelligentSelection = {
-                articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
-                reason: STRINGS.RECOMMENDED,
-                type: 'random' as const,
-                dueWordRootIds,
-              };
-            }
-          }
-          // Strategy 4: Fallback to random selection
-          else {
+          if (dueWordArticles.length > 0) {
+            intelligentSelection = {
+              articles: getRandomArticles(dueWordArticles, MAX_FEATURED_ARTICLES),
+              reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
+              type: 'due-words',
+              dueWordRootIds,
+            };
+          } else {
             intelligentSelection = {
               articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
@@ -246,49 +195,127 @@ export function useMultipleFeaturedArticles(
               dueWordRootIds,
             };
           }
-
-          // Cache the intelligent selection
-          initialSelectionRef.current = {
-            articles: intelligentSelection.articles,
-            refreshKey: 0,
-            scope,
-          };
-
-          setSelectedArticles(intelligentSelection);
-        } else {
-          // Return cached selection for consistent display
-          setSelectedArticles({
-            articles: initialSelectionRef.current.articles,
-            reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE, // Default reason for cached
-            type: 'due-words', // Default type for cached
-            dueWordRootIds,
-          });
         }
-      } else {
-        // For refreshes, always perform new selection for variety
-        setSelectedArticles({
-          articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
-          reason: STRINGS.RECOMMENDED,
-          type: 'random' as const,
-          dueWordRootIds,
-        });
-      }
-    };
+        // Strategy 2: If user has difficult words and study progress
+        else if (
+          user?.id &&
+          hasDifficultWordArticles &&
+          difficultWordRootIds.size > 0 &&
+          hasAnyStudyWords
+        ) {
+          const difficultWordArticles = articlesData.filter(article =>
+            article.article_sentences?.some(sentence =>
+              sentence.sentence_words?.some((word: SentenceWord) =>
+                difficultWordRootIds.has(word.root_id)
+              )
+            )
+          );
 
-    // Defer computation using setTimeout to prevent blocking the UI thread
-    // Use a small delay to allow the UI to render first
-    setTimeout(performSelection, 0);
+          if (difficultWordArticles.length > 0) {
+            intelligentSelection = {
+              articles: getRandomArticles(difficultWordArticles, MAX_FEATURED_ARTICLES),
+              reason: STRINGS.CHOSEN_TO_REINFORCE_CHALLENGING,
+              type: 'difficult-words',
+              dueWordRootIds,
+            };
+          } else {
+            intelligentSelection = {
+              articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+              reason: STRINGS.RECOMMENDED,
+              type: 'random' as const,
+              dueWordRootIds,
+            };
+          }
+        }
+        // Strategy 3: If new user, show beginner-friendly articles
+        else if (!user?.id || !hasAnyStudyWords) {
+          const beginnerArticles = getBeginnerArticles(articlesData);
+          if (beginnerArticles.length > 0) {
+            intelligentSelection = {
+              articles: getRandomArticles(beginnerArticles, MAX_FEATURED_ARTICLES),
+              reason: STRINGS.RECOMMENDED,
+              type: 'beginner',
+              dueWordRootIds,
+            };
+          } else {
+            intelligentSelection = {
+              articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+              reason: STRINGS.RECOMMENDED,
+              type: 'random' as const,
+              dueWordRootIds,
+            };
+          }
+        }
+        // Strategy 4: Fallback to random selection
+        else {
+          intelligentSelection = {
+            articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+            reason: STRINGS.RECOMMENDED,
+            type: 'random' as const,
+            dueWordRootIds,
+          };
+        }
+
+        // Cache the intelligent selection
+        initialSelectionRef.current = {
+          articles: intelligentSelection.articles,
+          refreshKey: 0,
+          scope,
+        };
+
+        result = intelligentSelection;
+      } else {
+        // Return cached selection for consistent display
+        result = {
+          articles: initialSelectionRef.current.articles,
+          reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE, // Default reason for cached
+          type: 'due-words', // Default type for cached
+          dueWordRootIds,
+        };
+      }
+    } else {
+      // For refreshes, always perform new selection for variety
+      result = {
+        articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+        reason: STRINGS.RECOMMENDED,
+        type: 'random' as const,
+        dueWordRootIds,
+      };
+    }
+
+    // Set the result only once per execution
+    setSelectedArticles(result);
+    return result;
   }, [
     hasArticles,
+    cachedFeatured,
     refreshKey,
     scope,
     user?.id,
     hasDueWordArticles,
-    dueWordRootIds,
+    stableDueWordRootIds, // Use stable array instead of Set
     hasDifficultWordArticles,
-    difficultWordRootIds,
+    stableDifficultWordRootIds, // Use stable array instead of Set
     hasAnyStudyWords,
-    articlesData, // Add articlesData as dependency
+    articlesData,
+  ]);
+
+  // Run selection logic only when dependencies change and we haven't initialized yet
+  useEffect(() => {
+    // Prevent infinite loops by checking if we've already initialized
+    if (hasInitializedRef.current) return;
+
+    // Mark as initialized to prevent future runs
+    hasInitializedRef.current = true;
+
+    // Only run if we have articles and no cached data
+    if (hasArticles && !cachedFeatured) {
+      selectionLogic();
+    }
+  }, [
+    hasArticles,
+    cachedFeatured,
+    selectionLogic
   ]);
 
   return selectedArticles;

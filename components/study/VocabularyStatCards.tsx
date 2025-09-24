@@ -5,7 +5,7 @@
  * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
  */
 import { Ionicons } from '@expo/vector-icons';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import BaseCard from '@common/BaseCard';
@@ -83,30 +83,43 @@ export const VocabularyStatCards = memo(
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
 
-    // Memoize stats array to prevent recreation
-    const stats = [
-      {
-        label: VocabularyStatCategory.DUE,
-        value: dueWords,
-        color: colors.error,
-        icon: 'alert-circle' as const,
-        onPress: onDuePress, // Due words now open prognosis chart
-      },
-      {
-        label: VocabularyStatCategory.LEARNING,
-        value: learningWords,
-        color: colors.warning,
-        icon: 'school' as const,
-        onPress: onLearningPress,
-      },
-      {
-        label: VocabularyStatCategory.MASTERED,
-        value: masteredWords,
-        color: colors.success,
-        icon: 'checkmark-circle' as const,
-        onPress: onMasteredPress,
-      },
-    ];
+    // Memoize stats array with proper dependencies to prevent unnecessary recreation
+    const stats = useMemo(
+      () => [
+        {
+          label: VocabularyStatCategory.DUE,
+          value: dueWords,
+          color: colors.error,
+          icon: 'alert-circle' as const,
+          onPress: onDuePress, // Due words now open prognosis chart
+        },
+        {
+          label: VocabularyStatCategory.LEARNING,
+          value: learningWords,
+          color: colors.warning,
+          icon: 'school' as const,
+          onPress: onLearningPress,
+        },
+        {
+          label: VocabularyStatCategory.MASTERED,
+          value: masteredWords,
+          color: colors.success,
+          icon: 'checkmark-circle' as const,
+          onPress: onMasteredPress,
+        },
+      ],
+      [
+        dueWords,
+        learningWords,
+        masteredWords,
+        colors.error,
+        colors.warning,
+        colors.success,
+        onDuePress,
+        onLearningPress,
+        onMasteredPress,
+      ]
+    );
 
     return (
       <View style={styles.container}>

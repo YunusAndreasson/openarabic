@@ -243,56 +243,72 @@ export default function ReadScreen(): JSX.Element {
     [categoriesData, authorsData, difficultyData]
   );
 
-  // Optimized header component - minimize re-creation by memoizing stable parts
-  const ListHeaderComponent = useMemo(() => {
-    return (
-      <View style={styles.headerContainer}>
-        <IntelligentArticleSection articlesData={memoizedArticlesData} refreshKey={refreshKey} />
+  // Optimized header component - memoize individual sections
+  const headerSections = useMemo(() => {
+    const sections = [];
 
-        {/* Categories Section */}
-        {categoriesWithArticles.length > 0 && (
-          <>
-            <FilterSection
-              items={categoriesWithArticles}
-              onSelect={handleSelectFilter}
-              filterType="category"
-            />
-            <SubtleDivider />
-          </>
-        )}
+    if (memoizedArticlesData.length > 0) {
+      sections.push(
+        <IntelligentArticleSection
+          key="featured"
+          articlesData={memoizedArticlesData}
+          refreshKey={refreshKey}
+        />
+      );
+    }
 
-        {/* Authors Section */}
-        {authorsWithArticles.length > 0 && (
-          <>
-            <FilterSection
-              items={authorsWithArticles}
-              onSelect={handleSelectFilter}
-              filterType="author"
-            />
-            <SubtleDivider />
-          </>
-        )}
+    if (categoriesWithArticles.length > 0) {
+      sections.push(
+        <React.Fragment key="categories">
+          <FilterSection
+            items={categoriesWithArticles}
+            onSelect={handleSelectFilter}
+            filterType="category"
+          />
+          <SubtleDivider />
+        </React.Fragment>
+      );
+    }
 
-        {/* Difficulty Levels Section */}
-        {difficultyData.length > 0 && (
-          <>
-            <FilterSection
-              items={difficultyData}
-              onSelect={handleSelectFilter}
-              filterType="difficulty"
-            />
-            <SubtleDivider />
-          </>
-        )}
-      </View>
-    );
+    if (authorsWithArticles.length > 0) {
+      sections.push(
+        <React.Fragment key="authors">
+          <FilterSection
+            items={authorsWithArticles}
+            onSelect={handleSelectFilter}
+            filterType="author"
+          />
+          <SubtleDivider />
+        </React.Fragment>
+      );
+    }
+
+    if (difficultyData.length > 0) {
+      sections.push(
+        <React.Fragment key="difficulty">
+          <FilterSection
+            items={difficultyData}
+            onSelect={handleSelectFilter}
+            filterType="difficulty"
+          />
+          <SubtleDivider />
+        </React.Fragment>
+      );
+    }
+
+    return sections;
   }, [
-    memoizedArticlesData, // Use memoized articles data to prevent unnecessary re-renders
-    refreshKey, // Only changes on manual refresh
-    categoriesWithArticles, // Regular categories
-    authorsWithArticles, // Authors with article counts
-    difficultyData, // Difficulty levels with article counts
+    memoizedArticlesData,
+    refreshKey,
+    categoriesWithArticles,
+    authorsWithArticles,
+    difficultyData,
   ]);
+
+  const ListHeaderComponent = useMemo(
+    () => <View style={styles.headerContainer}>{headerSections}</View>,
+    [headerSections]
+  );
 
   // Static footer component - no props needed
   const ListFooterComponent = useMemo(() => <HijriDateFooter />, []);
