@@ -21,7 +21,7 @@ export const getEnvVar = (
   const value = process.env[key] || fallback;
 
   if (warnIfMissing && !value && __DEV__) {
-    console.warn(`⚠️  Environment variable ${key} not found. Using fallback or undefined.`);
+    // Environment variable not found - using fallback or undefined
   }
 
   return value;

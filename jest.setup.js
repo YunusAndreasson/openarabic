@@ -749,9 +749,10 @@ jest.mock('react-native/Libraries/Image/resolveAssetSource', () =>
   })
 );
 
-// Global error handler for unhandled promise rejections (AI debugging)
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+// Global error handler for unhandled promise rejections
+process.on('unhandledRejection', reason => {
+  // Handle unhandled promise rejections silently in tests
+  throw new Error(`Unhandled promise rejection: ${reason}`);
 });
 
 // Optimized test timeout for AI efficiency

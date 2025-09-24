@@ -28,27 +28,37 @@ export const authorsService = {
   },
 
   async getUniqueAuthors(): Promise<AuthorRow[]> {
-    const { data, error } = await supabase
-      .from('articles')
-      .select('author:authors!inner(id, name)', {
-        count: 'exact',
-      })
-      .order('author(name)', { ascending: true })
-      .returns<ArticleAuthorResult[]>();
+    // Use a simpler approach - get all authors and filter by those with articles
+    const { data: allAuthors, error: authorsError } = await supabase
+      .from('authors')
+      .select('id, name')
+      .order('name', { ascending: true });
 
-    if (error) {
-      await handleError(new Error(error.message), {
+    if (authorsError) {
+      await handleError(new Error(authorsError.message), {
         toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
       });
-      throw error;
+      throw authorsError;
     }
 
-    // Build a map of unique authors to avoid duplicates
-    const uniqueMap = new Map<number, AuthorRow>();
-    for (const row of data ?? []) {
-      uniqueMap.set(row.author.id, row.author);
+    // Get unique author IDs from articles
+    const { data: articleAuthors, error: articlesError } = await supabase
+      .from('articles')
+      .select('author_id');
+
+    if (articlesError) {
+      await handleError(new Error(articlesError.message), {
+        toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
+      });
+      throw articlesError;
     }
-    return Array.from(uniqueMap.values());
+
+    // Filter to only authors that have articles
+    const authorIdsWithArticles = new Set(articleAuthors?.map(a => a.author_id) ?? []);
+    const authorsWithArticles =
+      allAuthors?.filter(author => authorIdsWithArticles.has(author.id)) ?? [];
+
+    return authorsWithArticles;
   },
 
   async getAuthorsByCategory(categoryId: number): Promise<AuthorRow[]> {

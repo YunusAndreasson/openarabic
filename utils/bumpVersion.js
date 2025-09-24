@@ -3,11 +3,10 @@ const fs = require('fs');
 
 const moment = require('moment-hijri');
 
-function runCheck(cmd, name) {
+function runCheck(cmd) {
   try {
     execSync(cmd, { stdio: 'inherit' });
   } catch {
-    console.error(`\n❌ ${name} failed. Aborting version bump.\n`);
     process.exit(1);
   }
 }
@@ -29,9 +28,6 @@ function getIslamicDateVersion() {
 function getHighestBuildNumber(appJson) {
   const iosBuildNumber = parseInt(appJson.expo?.ios?.buildNumber ?? '', 10);
   const androidVersionCode = parseInt(appJson.expo?.android?.versionCode ?? '', 10);
-
-  console.log(`📱 Current iOS build number: ${iosBuildNumber}`);
-  console.log(`🤖 Current Android version code: ${androidVersionCode}`);
 
   return Math.max(iosBuildNumber, androidVersionCode);
 }
@@ -55,8 +51,6 @@ function calculateNewVersion(currentVersion) {
   // If we're on a new Islamic month/year, reset patch to day number
   if (currentDateString !== newDateString) {
     const newVersion = `${year}.${month}.${day}`;
-    console.log(`📅 New Islamic month detected: ${currentDateString} → ${newDateString}`);
-    console.log(`🎯 Base version will be: ${newVersion} (Islamic date: ${year}/${month}/${day})`);
     return newVersion;
   }
 
@@ -64,9 +58,6 @@ function calculateNewVersion(currentVersion) {
   // The patch number represents the release count for this month
   const newPatch = currentPatch + 1;
   const newVersion = `${year}.${month}.${newPatch}`;
-
-  console.log(`🔄 Same Islamic month - incrementing release number`);
-  console.log(`📊 Release #${newPatch} for Islamic month ${year}/${month}`);
 
   return newVersion;
 }
@@ -93,9 +84,7 @@ function validateVersion(version) {
   }
 
   if (patch > 100) {
-    console.warn(
-      `⚠️  Warning: High patch number (${patch}) detected. Consider if this is correct.`
-    );
+    // High patch number detected - validation will continue but user should verify
   }
 
   return true;
@@ -106,9 +95,6 @@ runCheck('yarn tsc --noEmit', 'TypeScript type check');
 // Run lint
 runCheck('yarn lint', 'Lint');
 
-console.log('\n🕌 Islamic Calendar Version Bumping with Unified Build Numbers');
-console.log('===============================================================');
-
 // Get current versions
 const appJsonPath = './app.json';
 const pkgPath = './package.json';
@@ -117,12 +103,10 @@ const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 
 const currentVersion = pkg.version;
-console.log(`📦 Current version: ${currentVersion}`);
 
 // Get highest build number and increment it
 const currentHighestBuild = getHighestBuildNumber(appJson);
 const newBuildNumber = currentHighestBuild + 1;
-console.log(`🔢 New unified build number: ${newBuildNumber} (was ${currentHighestBuild})`);
 
 // Calculate new base version (without build number)
 const newBaseVersion = calculateNewVersion(currentVersion);
@@ -145,31 +129,4 @@ fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2));
 pkg.version = newFullVersion;
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
 
-// Show Islamic date info
-const { year, month, day } = getIslamicDateVersion();
-const islamicMonths = [
-  'Muharram',
-  'Safar',
-  "Rabi' al-awwal",
-  "Rabi' al-thani",
-  'Jumada al-awwal',
-  'Jumada al-thani',
-  'Rajab',
-  "Sha'ban",
-  'Ramadan',
-  'Shawwal',
-  "Dhu al-Qi'dah",
-  'Dhu al-Hijjah',
-];
-
-console.log('\n✅ Version Bump Complete!');
-console.log('=========================');
-console.log(`📱 Package version (with build): ${newFullVersion}`);
-console.log(`📦 Expo version (base): ${newBaseVersion}`);
-console.log(`🔢 Unified build number: ${newBuildNumber}`);
-console.log(`🍎 iOS build: ${expo.ios.buildNumber}`);
-console.log(`🤖 Android version code: ${expo.android.versionCode}`);
-console.log(`📅 Islamic date: ${day} ${islamicMonths[month - 1]} ${year} AH`);
-console.log(`📊 This is release #${newBaseVersion.split('.')[2]} for this Islamic month`);
-console.log(`🏗️  Build #${newBuildNumber} overall`);
-console.log('');
+// Version bump completed successfully

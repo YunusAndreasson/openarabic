@@ -200,56 +200,6 @@ export class ReadingProgressService {
 
     return data as ReadingProgress | null;
   }
-
-  /**
-   * Get the 10 most recently read articles with article data for a user
-   * Efficient implementation with two separate queries for reliability
-   */
-  static async getLatestReadArticles(
-    userId: string,
-    limit: number = 10
-  ): Promise<(ReadingProgress & { articles: any })[]> {
-    // First get the reading progress entries
-    const { data: progressData, error: progressError } = await supabase
-      .from('reading_progress')
-      .select('*')
-      .eq('user_id', userId)
-      .gt('last_sentence_read', 0) // Only articles with actual progress
-      .order('updated_at', { ascending: false })
-      .limit(limit);
-
-    if (progressError) {
-      throw new Error(`Failed to get latest read articles: ${progressError.message}`);
-    }
-
-    if (!progressData || progressData.length === 0) {
-      return [];
-    }
-
-    // Get the article IDs
-    const articleIds = progressData.map(p => p.article_id);
-
-    // Fetch the article details
-    const { data: articlesData, error: articlesError } = await supabase
-      .from('articles')
-      .select('id, title, summary, image_url, author_id, category_id, difficulty_level')
-      .in('id', articleIds);
-
-    if (articlesError) {
-      throw new Error(`Failed to get article details: ${articlesError.message}`);
-    }
-
-    // Combine the data
-    const result = progressData.map(progress => {
-      const article = articlesData?.find(a => a.id === progress.article_id);
-      return {
-        ...progress,
-        articles: article || null,
-      };
-    });
-
-    return result;
-  }
 }
 
 export const readingProgressService = ReadingProgressService;

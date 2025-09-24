@@ -17,8 +17,8 @@ const LIST_VIEW_COLUMNS = `
   summary,
   audio_url,
   audio_url_bilingual,
-  category:categories(id, name),
-  author:authors(id, name)
+  category:categories!inner(id, name),
+  author:authors!inner(id, name)
 `;
 
 const CARD_VIEW_COLUMNS = `
@@ -28,8 +28,8 @@ const CARD_VIEW_COLUMNS = `
 
 const DETAIL_VIEW_COLUMNS = `
   *,
-  category:categories(id, name),
-  author:authors(id, name),
+  category:categories!inner(id, name),
+  author:authors!inner(id, name),
   article_sentences(
     id,
     position,
@@ -68,8 +68,8 @@ const ARTICLES_WITH_WORD_STATS = `
   summary,
   audio_url,
   audio_url_bilingual,
-  category:categories(id, name),
-  author:authors(id, name),
+  category:categories!inner(id, name),
+  author:authors!inner(id, name),
   article_sentences(
     id,
     sentence_words(
@@ -136,6 +136,7 @@ export const articlesService = {
         });
         throw error;
       }
+
       return mapToArticles((data ?? []) as unknown as ArticleRow[]);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {

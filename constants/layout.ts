@@ -327,7 +327,9 @@ export const LAYOUT = {
       COLLAPSED: 0,
     },
     NAV_HEIGHT: IS_IOS ? TOUCH_TARGETS.MEDIUM : TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // Platform-specific responsive heights
-    NAV_HEADER_HEIGHT: IS_IOS ? TOUCH_TARGETS.MEDIUM : TOUCH_TARGETS.MEDIUM + SPACING_SCALE.TINY, // Optimized compact header heights
+    NAV_HEADER_HEIGHT: IS_IOS
+      ? TOUCH_TARGETS.MEDIUM + SPACING_SCALE.TINY
+      : TOUCH_TARGETS.MEDIUM + SPACING_SCALE.SMALL, // Accommodate multi-line titles
 
     TITLE: {
       MAIN: {

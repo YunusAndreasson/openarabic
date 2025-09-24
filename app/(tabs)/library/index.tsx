@@ -8,19 +8,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import ArticleList from '@/components/library/ArticleList';
-import FilterSection from '@/components/library/FilterSection';
+import FilterSection, { SubtleDivider } from '@/components/library/FilterSection';
 import { HijriDateFooter } from '@/components/library/HijriDateFooter';
 import IntelligentArticleSection from '@/components/library/IntelligentArticleSection';
 import { LAYOUT } from '@/constants/layout';
 import { CACHE_TIMES } from '@/constants/queryConfig';
-import { getCategoryFilterRoute, getLatestReadRoute } from '@/constants/routes';
+import {
+  getAuthorFilterRoute,
+  getCategoryFilterRoute,
+  getDifficultyFilterRoute,
+} from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
+import { authorsService } from '@/services/authors';
 import { categoriesService } from '@/services/categories';
-import { readingProgressService } from '@/services/readingProgress';
-import type { Category } from '@/types/articles.types';
+import { difficultyService } from '@/services/difficulty';
+import type { Author, Category } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
@@ -49,6 +54,26 @@ export default function ReadScreen(): JSX.Element {
     refetchOnMount: false,
   });
 
+  const { data: authorsData = [], isLoading: isAuthorsLoading } = useQuery({
+    queryKey: ['authors'],
+    queryFn: () => authorsService.getUniqueAuthors(),
+    staleTime: 86400000,
+    gcTime: 172800000,
+    retry: 3,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  const { data: difficultyData = [], isLoading: isDifficultyLoading } = useQuery({
+    queryKey: ['difficulty-levels'],
+    queryFn: () => difficultyService.getDifficultyLevels(),
+    staleTime: 86400000,
+    gcTime: 172800000,
+    retry: 3,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
   // Get articles for display and filtering
   const { data: articlesData = [], isLoading: isArticlesLoading } = useQuery({
     queryKey: ['articles'],
@@ -58,19 +83,6 @@ export default function ReadScreen(): JSX.Element {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     placeholderData: old => old,
-  });
-
-  // Get latest read articles for special category
-  const { data: latestReadArticles = [], isLoading: isLatestReadLoading } = useQuery({
-    queryKey: ['latest-read-articles', user?.id],
-    queryFn: () =>
-      user?.id ? readingProgressService.getLatestReadArticles(user.id, 10) : Promise.resolve([]),
-    enabled: !!user?.id,
-    staleTime: 10000, // 10 seconds - short cache for real-time updates when reading
-    gcTime: 900000, // 15 minutes
-    retry: 2,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -86,16 +98,7 @@ export default function ReadScreen(): JSX.Element {
     ]
   );
 
-  // Create special "Latest Read" category
-  const latestReadCategory = useMemo(() => {
-    if (!user?.id) return null;
-
-    return {
-      id: -1, // Special ID to indicate it's not a real category
-      name: STRINGS.LATEST_READ,
-      count: latestReadArticles.length,
-    };
-  }, [user?.id, latestReadArticles.length]);
+  // Note: Categories are prioritized over authors since IDs overlap and categories are primary navigation
 
   // Optimized derivedData - use stable references when possible
   const categoriesWithArticles = useMemo(() => {
@@ -120,7 +123,30 @@ export default function ReadScreen(): JSX.Element {
     return result;
   }, [memoizedArticlesData, categoriesData]); // Use memoized articles data
 
-  // Note: We're now rendering regular categories and Latest Read category separately
+  // Create authors with article counts
+  const authorsWithArticles = useMemo(() => {
+    const counts = memoizedArticlesData.reduce<Record<number, number>>((acc, article) => {
+      const id = article?.author?.id;
+      if (id) {
+        acc[id] = (acc[id] || 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    const result = authorsData.reduce<(Author & { count: number })[]>((acc, author) => {
+      if (author?.id && author.id > 0 && author.name) {
+        const count = counts[author.id] || 0;
+        if (count > 0) {
+          acc.push({ ...author, count });
+        }
+      }
+      return acc;
+    }, []);
+
+    return result;
+  }, [memoizedArticlesData, authorsData]); // Use memoized articles and authors data
+
+  // Note: We're now rendering regular categories and Continue Reading category separately
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
@@ -133,6 +159,8 @@ export default function ReadScreen(): JSX.Element {
       const baseQueries = [
         queryClient.invalidateQueries({ queryKey: ['articles'] }),
         queryClient.invalidateQueries({ queryKey: ['categories'] }),
+        queryClient.invalidateQueries({ queryKey: ['authors'] }),
+        queryClient.invalidateQueries({ queryKey: ['difficulty-levels'] }),
       ];
 
       // Add user-specific queries if authenticated
@@ -140,14 +168,6 @@ export default function ReadScreen(): JSX.Element {
         ? [
             queryClient.invalidateQueries({ queryKey: ['reading-streak', user.id] }),
             queryClient.invalidateQueries({ queryKey: ['reading-list', user.id] }),
-            queryClient.invalidateQueries({
-              queryKey: ['latest-read-articles', user.id],
-              refetchType: 'active',
-            }),
-            queryClient.invalidateQueries({
-              queryKey: ['latest-read-articles-detailed', user.id],
-              refetchType: 'active',
-            }),
           ]
         : [];
 
@@ -166,18 +186,61 @@ export default function ReadScreen(): JSX.Element {
 
   // Note: Article navigation is now handled by Link components in ArticleCard
 
-  const handleSelectCategory = useCallback(
-    (categoryId: number) => {
-      // Special handling for Latest Read category
-      if (categoryId === -1) {
-        router.push(getLatestReadRoute());
+  const handleSelectFilter = useCallback(
+    (id: number, _name?: string, filterType?: string) => {
+      // Use explicit filterType if provided, otherwise determine by checking each data source
+      if (filterType) {
+        switch (filterType) {
+          case 'category': {
+            const category = categoriesData.find(c => c.id === id);
+            if (category) {
+              router.push(getCategoryFilterRoute(id, category.name));
+              return;
+            }
+            break;
+          }
+          case 'author': {
+            const author = authorsData.find(a => a.id === id);
+            if (author) {
+              router.push(getAuthorFilterRoute(id, author.name));
+              return;
+            }
+            break;
+          }
+          case 'difficulty': {
+            const difficulty = difficultyData.find(d => d.id === id);
+            if (difficulty) {
+              router.push(getDifficultyFilterRoute(id, difficulty.name));
+              return;
+            }
+            break;
+          }
+        }
+      }
+
+      // Fallback: Check in priority order (difficulty first to avoid ID conflicts)
+      // Check if it's a difficulty level first (to avoid category ID conflicts)
+      const difficulty = difficultyData.find(d => d.id === id);
+      if (difficulty) {
+        router.push(getDifficultyFilterRoute(id, difficulty.name));
         return;
       }
 
-      const categoryName = categoriesData.find(c => c.id === categoryId)?.name;
-      router.push(getCategoryFilterRoute(categoryId, categoryName));
+      // Then check if it's a category
+      const category = categoriesData.find(c => c.id === id);
+      if (category) {
+        router.push(getCategoryFilterRoute(id, category.name));
+        return;
+      }
+
+      // Finally check if it's an author
+      const author = authorsData.find(a => a.id === id);
+      if (author) {
+        router.push(getAuthorFilterRoute(id, author.name));
+        return;
+      }
     },
-    [categoriesData]
+    [categoriesData, authorsData, difficultyData]
   );
 
   // Optimized header component - minimize re-creation by memoizing stable parts
@@ -185,9 +248,41 @@ export default function ReadScreen(): JSX.Element {
     return (
       <View style={styles.headerContainer}>
         <IntelligentArticleSection articlesData={memoizedArticlesData} refreshKey={refreshKey} />
-        <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
-        {latestReadCategory && (
-          <FilterSection items={[latestReadCategory]} onSelect={handleSelectCategory} />
+
+        {/* Categories Section */}
+        {categoriesWithArticles.length > 0 && (
+          <>
+            <FilterSection
+              items={categoriesWithArticles}
+              onSelect={handleSelectFilter}
+              filterType="category"
+            />
+            <SubtleDivider />
+          </>
+        )}
+
+        {/* Authors Section */}
+        {authorsWithArticles.length > 0 && (
+          <>
+            <FilterSection
+              items={authorsWithArticles}
+              onSelect={handleSelectFilter}
+              filterType="author"
+            />
+            <SubtleDivider />
+          </>
+        )}
+
+        {/* Difficulty Levels Section */}
+        {difficultyData.length > 0 && (
+          <>
+            <FilterSection
+              items={difficultyData}
+              onSelect={handleSelectFilter}
+              filterType="difficulty"
+            />
+            <SubtleDivider />
+          </>
         )}
       </View>
     );
@@ -195,8 +290,8 @@ export default function ReadScreen(): JSX.Element {
     memoizedArticlesData, // Use memoized articles data to prevent unnecessary re-renders
     refreshKey, // Only changes on manual refresh
     categoriesWithArticles, // Regular categories
-    latestReadCategory, // Latest Read category
-    handleSelectCategory, // Stable callback
+    authorsWithArticles, // Authors with article counts
+    difficultyData, // Difficulty levels with article counts
   ]);
 
   // Static footer component - no props needed
@@ -212,9 +307,10 @@ export default function ReadScreen(): JSX.Element {
     [colors, insets.bottom]
   );
 
-  const isLoading = isArticlesLoading || isCategoriesLoading || isLatestReadLoading;
+  const isLoading =
+    isArticlesLoading || isCategoriesLoading || isAuthorsLoading || isDifficultyLoading;
 
-  if (isLoading && !articlesData.length && !categoriesData.length) {
+  if (isLoading && !articlesData.length && !categoriesData.length && !authorsData.length) {
     // Show loading state - handled by ArticleList
   }
 

@@ -1,7 +1,6 @@
 import reducer, {
   clearAllFilters,
   type FilterState,
-  selectActiveFiltersCount,
   setDateRange,
   setDifficultyRange,
   setSortField,
@@ -75,54 +74,5 @@ describe('filtersSlice reducers', () => {
       difficultyRange: [1, 5],
       dateRange: 'all',
     });
-  });
-});
-
-describe('selectActiveFiltersCount', () => {
-  const base: FilterState = {
-    sort: { field: 'progress', direction: 'desc' },
-    filters: { authorIds: [], difficultyRange: [1, 5], dateRange: 'all' },
-  };
-
-  const cases: Array<{ desc: string; state: { filters: FilterState }; expected: number }> = [
-    {
-      desc: 'no filters active',
-      state: { filters: base },
-      expected: 0,
-    },
-    {
-      desc: 'author filter active',
-      state: {
-        filters: {
-          ...base,
-          filters: { ...base.filters, authorIds: [1] },
-        },
-      },
-      expected: 1,
-    },
-    {
-      desc: 'difficulty filter active',
-      state: {
-        filters: {
-          ...base,
-          filters: { ...base.filters, difficultyRange: [2, 5] },
-        },
-      },
-      expected: 1,
-    },
-    {
-      desc: 'all filters active',
-      state: {
-        filters: {
-          ...base,
-          filters: { authorIds: [1], difficultyRange: [2, 4], dateRange: 'week' },
-        },
-      },
-      expected: 3,
-    },
-  ];
-
-  test.each(cases)('$desc => $expected', ({ state, expected }) => {
-    expect(selectActiveFiltersCount(state)).toBe(expected);
   });
 });

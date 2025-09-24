@@ -246,8 +246,8 @@ function AppContent() {
         try {
           await initializeNotifications();
           await registerBackgroundTasks();
-        } catch (error) {
-          console.warn('Failed to initialize app services:', error);
+        } catch {
+          // Silently handle app service initialization failures
         }
       };
 

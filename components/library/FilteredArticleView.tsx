@@ -9,7 +9,7 @@ import ListSeparator from '@common/ListSeparator';
 
 import { ThemedView } from '@/components/ThemedView';
 import ListArticleItem from '@/components/library/ListArticleItem';
-import SortingHeader from '@/components/library/SortingHeader';
+import PulsatingLoader from '@/components/ui/PulsatingLoader';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -175,7 +175,6 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
             <View style={STATIC_STYLES.headerSpacing} />
           </>
         )}
-        <SortingHeader />
       </>
     );
   }, [HeaderComponent, articlesLength]);
@@ -250,6 +249,20 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
     }),
     []
   );
+
+  // Show loading state when loading and no articles yet, or when we have articles but loading continues
+  const shouldShowLoading =
+    loading && (visibleArticles.length === 0 || (articles?.length && !shouldShowEmpty));
+
+  if (shouldShowLoading) {
+    return (
+      <ThemedView {...themedViewProps}>
+        <View style={[STATIC_STYLES.emptyContainer, { paddingTop: LAYOUT.SPACING.XXLARGE }]}>
+          <PulsatingLoader size={64} />
+        </View>
+      </ThemedView>
+    );
+  }
 
   if (shouldShowEmpty) {
     return (

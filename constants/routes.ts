@@ -5,9 +5,6 @@ export const getArticleRoute = (id: number, headerTitle?: string): string => {
   return `${base}?headerTitle=${encodedTitle}`;
 };
 
-export const getFilterModalRoute = (categoryId: number): string =>
-  `/(tabs)/library/filterModal?categoryId=${categoryId}`;
-
 export const getCategoryFilterRoute = (categoryId: number, name?: string): string => {
   const base = `/(tabs)/library/filter`;
   const params = [`type=category`, `id=${categoryId}`];
@@ -16,8 +13,20 @@ export const getCategoryFilterRoute = (categoryId: number, name?: string): strin
   return `${base}?${query}`;
 };
 
-export const getLatestReadRoute = (): string => {
-  return `/(tabs)/library/latest-read`;
+export const getAuthorFilterRoute = (authorId: number, name?: string): string => {
+  const base = `/(tabs)/library/filter`;
+  const params = [`type=author`, `id=${authorId}`];
+  if (name) params.push(`name=${encodeURIComponent(name)}`);
+  const query = params.join('&');
+  return `${base}?${query}`;
+};
+
+export const getDifficultyFilterRoute = (difficultyId: number, name?: string): string => {
+  const base = `/(tabs)/library/filter`;
+  const params = [`type=difficulty`, `id=${difficultyId}`];
+  if (name) params.push(`name=${encodeURIComponent(name)}`);
+  const query = params.join('&');
+  return `${base}?${query}`;
 };
 
 export const ROUTE_PATHS = {

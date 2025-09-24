@@ -8,7 +8,6 @@ export const isAsyncStorageAvailable = (): boolean => {
   try {
     return typeof AsyncStorage?.getItem === 'function';
   } catch (storageCheckError) {
-    console.error('CRITICAL: Failed to check AsyncStorage availability:', storageCheckError);
     throw new Error(`AsyncStorage availability check failed: ${storageCheckError}`);
   }
 };
@@ -23,7 +22,6 @@ export const getSafeStorage = (): StorageLike => {
   }
 
   // Provide a fallback that doesn't crash the app during initialization
-  console.warn('AsyncStorage not available, using null storage fallback');
 
   // Create a simple storage fallback that returns null/undefined but doesn't crash
   const nullStorage: StorageLike = {

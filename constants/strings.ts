@@ -59,9 +59,6 @@ export const STRINGS = {
   DIFFICULTY: 'Difficulty',
   CATEGORY: 'Category',
 
-  // Sorting options
-  DATE_ADDED: 'Date',
-  AUTHOR_FILTER: 'Author',
   RESUMED_READING_TEMPLATE: 'Resumed at {percent}%',
 
   // Practice state labels
@@ -344,6 +341,7 @@ export const STRINGS = {
   FAILED_TO_LOAD_ARTICLE: "Couldn't load article. " + tryAgain,
   FAILED_TO_LOAD_FILTER_OPTIONS: "Couldn't load filters. " + tryAgain,
   FAILED_TO_LOAD_AUTHORS: "Couldn't load authors. " + tryAgain,
+  FAILED_TO_LOAD_DIFFICULTY_LEVELS: "Couldn't load difficulty levels. " + tryAgain,
   UNABLE_TO_LOAD_CHART_DATA: "Couldn't load chart. " + tryAgain,
 
   // Audio errors - with guidance

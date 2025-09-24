@@ -9,6 +9,31 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
+// Subtle divider component for elegant section separation
+const SubtleDivider = memo(() => {
+  const colors = useColors();
+
+  return (
+    <View style={dividerStyles.divider}>
+      <View style={[dividerStyles.dividerLine, { backgroundColor: colors.elevation1 }]} />
+    </View>
+  );
+});
+
+SubtleDivider.displayName = 'SubtleDivider';
+
+const dividerStyles = StyleSheet.create({
+  divider: {
+    alignItems: 'center',
+    marginVertical: LAYOUT.SPACING.SMALL,
+  },
+  dividerLine: {
+    height: 1,
+    opacity: 0.25, // Even more subtle opacity for elegance
+    width: '90%', // Slightly narrower for elegant spacing
+  },
+});
+
 const styles = StyleSheet.create({
   filterSectionContainer: {
     marginTop: LAYOUT.SPACING.MEDIUM,
@@ -24,7 +49,8 @@ interface FilterItem {
 
 interface FilterSectionProps {
   items: FilterItem[];
-  onSelect: (id: number, name?: string) => void;
+  onSelect: (id: number, name?: string, filterType?: string) => void;
+  filterType?: string; // Optional filter type to pass to onSelect
 }
 
 const CompactNavCard = memo(
@@ -93,10 +119,10 @@ const compactCardStyles = StyleSheet.create({
   },
 });
 
-const FilterSection = memo(({ items, onSelect }: FilterSectionProps): JSX.Element => {
+const FilterSection = memo(({ items, onSelect, filterType }: FilterSectionProps): JSX.Element => {
   const handleSelect = useCallback(
-    (id: number, name?: string) => () => onSelect(id, name),
-    [onSelect]
+    (id: number, name?: string) => () => onSelect(id, name, filterType),
+    [onSelect, filterType]
   );
 
   // Guard against undefined or empty items
@@ -120,4 +146,5 @@ const FilterSection = memo(({ items, onSelect }: FilterSectionProps): JSX.Elemen
 
 FilterSection.displayName = 'FilterSection';
 
+export { SubtleDivider };
 export default FilterSection;

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
@@ -134,17 +134,6 @@ export function useMultipleFeaturedArticles(
     }
   }, [cachedFeatured]);
 
-  // Helper function to create fallback selection - moved inside to avoid dependency issues
-  const createFallbackSelection = useCallback((): MultipleFeaturedArticlesResult => {
-    const randomArticles = getRandomArticles(articlesData, MAX_FEATURED_ARTICLES);
-    return {
-      articles: randomArticles,
-      reason: STRINGS.RECOMMENDED,
-      type: 'random' as const,
-      dueWordRootIds,
-    };
-  }, [articlesData, dueWordRootIds]);
-
   // Article selection logic - moved to useEffect to prevent infinite re-renders
   React.useEffect(() => {
     if (!hasArticles) {
@@ -187,7 +176,13 @@ export function useMultipleFeaturedArticles(
                 dueWordRootIds,
               };
             } else {
-              intelligentSelection = createFallbackSelection();
+              // Fallback to random selection
+              intelligentSelection = {
+                articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+                reason: STRINGS.RECOMMENDED,
+                type: 'random' as const,
+                dueWordRootIds,
+              };
             }
           }
           // Strategy 2: If user has difficult words and study progress
@@ -213,7 +208,13 @@ export function useMultipleFeaturedArticles(
                 dueWordRootIds,
               };
             } else {
-              intelligentSelection = createFallbackSelection();
+              // Fallback to random selection
+              intelligentSelection = {
+                articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+                reason: STRINGS.RECOMMENDED,
+                type: 'random' as const,
+                dueWordRootIds,
+              };
             }
           }
           // Strategy 3: If new user, show beginner-friendly articles
@@ -227,12 +228,23 @@ export function useMultipleFeaturedArticles(
                 dueWordRootIds,
               };
             } else {
-              intelligentSelection = createFallbackSelection();
+              // Fallback to random selection
+              intelligentSelection = {
+                articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+                reason: STRINGS.RECOMMENDED,
+                type: 'random' as const,
+                dueWordRootIds,
+              };
             }
           }
           // Strategy 4: Fallback to random selection
           else {
-            intelligentSelection = createFallbackSelection();
+            intelligentSelection = {
+              articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+              reason: STRINGS.RECOMMENDED,
+              type: 'random' as const,
+              dueWordRootIds,
+            };
           }
 
           // Cache the intelligent selection
@@ -254,7 +266,12 @@ export function useMultipleFeaturedArticles(
         }
       } else {
         // For refreshes, always perform new selection for variety
-        setSelectedArticles(createFallbackSelection());
+        setSelectedArticles({
+          articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+          reason: STRINGS.RECOMMENDED,
+          type: 'random' as const,
+          dueWordRootIds,
+        });
       }
     };
 
@@ -271,7 +288,7 @@ export function useMultipleFeaturedArticles(
     hasDifficultWordArticles,
     difficultWordRootIds,
     hasAnyStudyWords,
-    createFallbackSelection, // Helper function to create fallback selection
+    articlesData, // Add articlesData as dependency
   ]);
 
   return selectedArticles;

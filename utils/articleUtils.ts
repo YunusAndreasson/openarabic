@@ -1,4 +1,3 @@
-import type { FilterState } from '@/store/filtersSlice';
 import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -137,39 +136,9 @@ export function getArticlesByDifficultWords(
 }
 
 /**
- * Create comparators for article sorting
- */
-export function createComparators(
-  progressMap: Map<number, { progress_percentage: number }>
-): Record<FilterState['sort']['field'], (a: Article, b: Article) => number> {
-  return {
-    author: (a, b) => {
-      const authorA = a.author?.name || '';
-      const authorB = b.author?.name || '';
-      return authorA.localeCompare(authorB);
-    },
-    date: (a, b) => {
-      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return dateA - dateB;
-    },
-    difficulty: (a, b) => {
-      const diffA = a.difficulty_level ?? 0;
-      const diffB = b.difficulty_level ?? 0;
-      return diffA - diffB;
-    },
-    progress: (a, b) => {
-      const progressA = progressMap.get(a.id)?.progress_percentage || 0;
-      const progressB = progressMap.get(b.id)?.progress_percentage || 0;
-      return progressA - progressB;
-    },
-  };
-}
-
-/**
  * Calculate filter date based on date range
  */
-export function calculateFilterDate(dateRange: FilterState['filters']['dateRange']): Date | null {
+export function calculateFilterDate(dateRange: 'week' | 'month' | 'all'): Date | null {
   if (dateRange === 'all') return null;
   const date = new Date();
   if (dateRange === 'week') {
@@ -185,7 +154,11 @@ export function calculateFilterDate(dateRange: FilterState['filters']['dateRange
  */
 export function filterArticles(
   articles: Article[],
-  filters: FilterState['filters'],
+  filters: {
+    authorIds: number[];
+    difficultyRange: [number, number];
+    dateRange: 'week' | 'month' | 'all';
+  },
   filterDate: Date | null
 ): Article[] {
   if (!articles?.length) return [];
@@ -218,15 +191,39 @@ export function filterArticles(
 }
 
 /**
- * Sort articles using the specified comparator and direction
+ * Sort articles by progress: articles with progress (partially read) first,
+ * then articles with no progress, then articles with full progress (completed)
  */
-export function sortArticles<T>(
-  articles: T[],
-  comparator: (a: T, b: T) => number,
-  direction: 'asc' | 'desc'
-): T[] {
+export function sortArticlesByProgress(
+  articles: Article[],
+  progressMap: Map<number, { progress_percentage: number }>
+): Article[] {
   return [...articles].sort((a, b) => {
-    const result = comparator(a, b);
-    return direction === 'desc' ? -result : result;
+    const progressA = progressMap.get(a.id)?.progress_percentage || 0;
+    const progressB = progressMap.get(b.id)?.progress_percentage || 0;
+
+    // Articles with partial progress (1-99%) come first
+    const aHasPartialProgress = progressA > 0 && progressA < 100;
+    const bHasPartialProgress = progressB > 0 && progressB < 100;
+
+    if (aHasPartialProgress && !bHasPartialProgress) return -1;
+    if (!aHasPartialProgress && bHasPartialProgress) return 1;
+
+    // Articles with no progress come second
+    const aHasNoProgress = progressA === 0;
+    const bHasNoProgress = progressB === 0;
+
+    if (aHasNoProgress && !bHasNoProgress) return -1;
+    if (!aHasNoProgress && bHasNoProgress) return 1;
+
+    // Articles with full progress (100%) come last
+    const aIsCompleted = progressA === 100;
+    const bIsCompleted = progressB === 100;
+
+    if (aIsCompleted && !bIsCompleted) return 1;
+    if (!aIsCompleted && bIsCompleted) return -1;
+
+    // If both articles are in the same category, sort by progress percentage (descending)
+    return progressB - progressA;
   });
 }

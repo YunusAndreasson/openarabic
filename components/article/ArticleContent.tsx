@@ -214,10 +214,10 @@ const FloatingActionButtons = memo<{
       try {
         await onToggleReadingList();
         // Success - the optimistic state should match the actual state now
-      } catch (error) {
+      } catch {
         // Revert optimistic update on error
         setOptimisticIsInReadingList(optimisticIsInReadingList);
-        console.error('Failed to toggle reading list:', error);
+        // Error handling completed silently
       }
     }, [onToggleReadingList, optimisticIsInReadingList]);
 

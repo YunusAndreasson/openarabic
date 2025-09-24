@@ -71,16 +71,24 @@ export function createNavigationOptions(
             flex: 2,
             alignItems: 'center',
             justifyContent: 'center',
+            paddingHorizontal: LAYOUT.SPACING.SMALL,
+            paddingVertical: 0,
+            minHeight: LAYOUT.HEADER.NAV_HEADER_HEIGHT,
           }}
         >
           <Text
             style={{
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+              fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
               fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
               color: colors.headingText,
               textAlign: 'center',
+              lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
+              paddingVertical: 0,
             }}
-            numberOfLines={1}
+            numberOfLines={2}
+            adjustsFontSizeToFit={true}
+            minimumFontScale={0.9}
+            ellipsizeMode="tail"
           >
             {overrides.title}
           </Text>
@@ -122,6 +130,9 @@ export function createNavigationOptions(
     }),
     gestureEnabled: true,
     contentStyle: {
+      backgroundColor: colors.background,
+    },
+    headerStyle: {
       backgroundColor: colors.background,
     },
     ...baseOptions,

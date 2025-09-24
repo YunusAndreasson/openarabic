@@ -1,12 +1,10 @@
 import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback } from 'react';
+import { View } from 'react-native';
 
 import { HeaderProfile } from '@/components/HeaderProfile';
-import FilterButton from '@/components/library/FilterButton';
 import DoneButton from '@/components/ui/DoneButton';
 import { createNavigationOptions } from '@/constants/modal';
-import { getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { AppTab, UiAction } from '@/types/enums';
@@ -20,12 +18,24 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 function getFilterTitle(params: FilterParams): string {
   const { type, name } = params;
 
-  if (type === 'category' && name) {
-    return capitalizeFirstLetter(decodeURIComponent(name));
+  if (name) {
+    const decodedName = decodeURIComponent(name);
+    const capitalizedName = capitalizeFirstLetter(decodedName);
+
+    // For author names that might be long, truncate if necessary
+    if (type === 'author' && capitalizedName.length > 20) {
+      return capitalizedName.substring(0, 17) + '...';
+    }
+
+    return capitalizedName;
   }
 
   if (type === 'category') {
     return STRINGS.CATEGORY;
+  }
+
+  if (type === 'author') {
+    return 'Author Articles';
   }
 
   return UiAction.FILTER;
@@ -36,13 +46,14 @@ const FilterHeaderLeft = () => {
   return <DoneButton onPress={() => router.back()} />;
 };
 
-const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
-  const handleFilterPress = useCallback(() => {
-    router.push(getFilterModalRoute(categoryId));
-  }, [categoryId]);
+const FilterHeaderRight = ({ filterType }: { filterType: string }) => {
+  // For authors, show minimal spacer to maintain layout but give title more space
+  if (filterType === 'author') {
+    return <View style={{ width: 20, height: 44 }} />;
+  }
 
-  // For categories, show filter button on the right
-  return <FilterButton onPress={handleFilterPress} />;
+  // For categories and difficulties, show minimal spacer (filter modal removed)
+  return <View style={{ width: 20, height: 44 }} />;
 };
 
 export default function LibraryLayout(): JSX.Element {
@@ -59,13 +70,6 @@ export default function LibraryLayout(): JSX.Element {
         })}
       />
       <Stack.Screen
-        name="filterModal"
-        options={createNavigationOptions(colors, {
-          title: UiAction.FILTERS,
-          headerLeft: () => <DoneButton onPress={() => router.back()} />,
-        })}
-      />
-      <Stack.Screen
         name="account"
         options={createNavigationOptions(colors, {
           headerShown: false,
@@ -76,21 +80,14 @@ export default function LibraryLayout(): JSX.Element {
         name="filter"
         options={({ route }) => {
           const params = route.params as FilterParams;
-          const categoryId = parseInt(params.id ?? '', 10);
+          const filterType = params.type ?? 'category';
 
           return createNavigationOptions(colors, {
             title: getFilterTitle(params),
             headerLeft: () => <FilterHeaderLeft />,
-            headerRight: () => <FilterHeaderRight categoryId={categoryId} />,
+            headerRight: () => <FilterHeaderRight filterType={filterType} />,
           });
         }}
-      />
-      <Stack.Screen
-        name="latest-read"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.LATEST_READ,
-          headerLeft: () => <FilterHeaderLeft />,
-        })}
       />
     </Stack>
   );
