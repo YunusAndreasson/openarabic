@@ -1,7 +1,7 @@
 {
   "name": "OpenArabic",
   "main": "expo-router/entry",
-  "version": "1447.3.33+134",
+  "version": "1447.4.3+135",
   "scripts": {
     "postinstall": "patch-package",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
