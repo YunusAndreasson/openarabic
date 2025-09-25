@@ -74,18 +74,34 @@ const ReviewBottomActionsInternal: FC = memo(() => {
     () => ({
       error: colors.error,
       success: colors.success,
+      warning: colors.warning,
     }),
-    [colors.error, colors.success]
+    [colors.error, colors.success, colors.warning]
   );
 
-  const tintColors = useMemo(() => createTintColors(batchedColors), [batchedColors]);
+  const tintColors = useMemo(
+    () => ({
+      ...createTintColors(batchedColors),
+      warning: batchedColors.warning + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
+    }),
+    [batchedColors]
+  );
+
+  // Use standard colors
+  const hesitationColors = useMemo(
+    () => ({
+      left: batchedColors.error,
+      right: batchedColors.success,
+    }),
+    [batchedColors]
+  );
 
   const iconComponents = useMemo(
     () => ({
-      left: <Ionicons {...createIconProps('chevron-back', batchedColors.error)} />,
-      right: <Ionicons {...createIconProps('chevron-forward', batchedColors.success)} />,
+      left: <Ionicons {...createIconProps('chevron-back', hesitationColors.left)} />,
+      right: <Ionicons {...createIconProps('chevron-forward', hesitationColors.right)} />,
     }),
-    [batchedColors]
+    [hesitationColors]
   );
 
   const indicatorStyles = useMemo(
@@ -98,21 +114,21 @@ const ReviewBottomActionsInternal: FC = memo(() => {
 
   const textStyles = useMemo(
     () => ({
-      leftText: [STATIC_STYLES.indicatorText, { color: batchedColors.error }],
-      rightText: [STATIC_STYLES.indicatorText, { color: batchedColors.success }],
+      leftText: [STATIC_STYLES.indicatorText, { color: hesitationColors.left }],
+      rightText: [STATIC_STYLES.indicatorText, { color: hesitationColors.right }],
     }),
-    [batchedColors]
+    [hesitationColors]
   );
 
   return (
     <View style={STATIC_STYLES.container}>
-      {/* Left indicator - Don't know */}
+      {/* Left indicator */}
       <View style={STATIC_STYLES.indicatorContainer}>
         <View style={indicatorStyles.leftIndicator}>{iconComponents.left}</View>
         <ThemedText style={textStyles.leftText}>{ReviewAction.DONT_KNOW}</ThemedText>
       </View>
 
-      {/* Right indicator - Know */}
+      {/* Right indicator */}
       <View style={STATIC_STYLES.indicatorContainer}>
         <View style={indicatorStyles.rightIndicator}>{iconComponents.right}</View>
         <ThemedText style={textStyles.rightText}>{ReviewAction.KNOW}</ThemedText>

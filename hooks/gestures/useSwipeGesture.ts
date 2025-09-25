@@ -11,6 +11,8 @@ export interface SwipeGestureOptions {
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   onSwipeComplete?: (isRight: boolean) => void;
+  onGestureStart?: () => void;
+  onGestureEnd?: () => void;
   minDistance?: number;
   activeOffsetX?: [number, number];
   swipeThresholdRatio?: number;
@@ -35,6 +37,8 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
     onSwipeLeft,
     onSwipeRight,
     onSwipeComplete,
+    onGestureStart,
+    onGestureEnd,
     minDistance = GESTURE_CONFIG.MIN_DISTANCE,
     activeOffsetX = GESTURE_CONFIG.ACTIVE_OFFSET_X,
     swipeThresholdRatio = GESTURE_CONSTANTS.SWIPE_THRESHOLD_RATIO,
@@ -88,6 +92,12 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
         .enabled(enabled)
         .minDistance(minDistance)
         .activeOffsetX(activeOffsetX)
+        .onStart(() => {
+          'worklet';
+          if (onGestureStart) {
+            runOnJS(onGestureStart)();
+          }
+        })
         .onUpdate(event => {
           'worklet';
           if (!isAnimatingRef.value && event.translationX !== undefined) {
@@ -104,6 +114,11 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
           'worklet';
           if (!isAnimatingRef.value && event.translationX !== undefined) {
             const translationX = event.translationX;
+
+            // Call end callback before processing swipe
+            if (onGestureEnd) {
+              runOnJS(onGestureEnd)();
+            }
 
             // Inline swipe action logic
             const swipeThreshold = SCREEN_WIDTH * swipeThresholdRatio;
@@ -129,6 +144,8 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
       maxTranslationRatio,
       swipeThresholdRatio,
       springConfig,
+      onGestureStart,
+      onGestureEnd,
     ]
   );
 

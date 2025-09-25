@@ -9,10 +9,10 @@ import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
+import { selectionFeedback } from '@/utils/haptics';
 import { createTextStyle, type BatchedTextColors } from '@/utils/textStyleUtils';
 
 const WORD_DISPLAY_CONSTANTS = {
-  DEFAULT_FONT_SIZE: LAYOUT.SPACING.XXLARGE,
   ARABIC_FONT_SIZE: LAYOUT.SPACING.XXLARGE * 2, // Very large for Arabic (64px)
 
   ARABIC_TOP_POSITION: LAYOUT.SPACING.MEDIUM, // Arabic higher up but not at very top (12px)
@@ -58,7 +58,13 @@ const STATIC_STYLES = StyleSheet.create({
  * Component to display a word with optimal styling and sizing
  * Uses React.memo with a custom comparison function to prevent unnecessary re-renders
  */
-const WordDisplayInternal = ({ word, style, translation }: WordDisplayProps) => {
+const WordDisplayInternal = ({
+  word,
+  style,
+  translation,
+  showFirstLetterOnly = false,
+  englishTranslation,
+}: WordDisplayProps) => {
   const colors = useColors();
 
   // ===== COLOR BATCHING (PREVENTS MULTIPLE COLOR CALCULATIONS) =====
@@ -91,15 +97,32 @@ const WordDisplayInternal = ({ word, style, translation }: WordDisplayProps) => 
 
   // Using regular ThemedText for translation; style handled by typography system
 
+  // Always show the full Arabic word - hint appears separately below
+  const displayWord = word;
+
+  // Get the hesitation hint (first letter of English translation with dots)
+  const hesitationHint = useMemo(() => {
+    if (showFirstLetterOnly && englishTranslation && englishTranslation.length > 0) {
+      const firstLetter = englishTranslation.charAt(0).toUpperCase();
+      const hintWithDots = firstLetter + '...';
+
+      // Trigger subtle haptic feedback when hint appears (only once)
+      selectionFeedback();
+
+      return hintWithDots;
+    }
+    return null;
+  }, [showFirstLetterOnly, englishTranslation, word]);
+
   const arabicTextProps = useMemo(
     () => ({
       skipDefaultColor: true,
       arabicFontSize: WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE,
       style: arabicTextStyle,
       type: 'arabic' as const,
-      children: word,
+      children: displayWord,
     }),
-    [arabicTextStyle, word]
+    [arabicTextStyle, displayWord]
   );
 
   const translationTextProps = useMemo(
@@ -111,6 +134,16 @@ const WordDisplayInternal = ({ word, style, translation }: WordDisplayProps) => 
     [translation]
   );
 
+  // Create props for hesitation hint (similar to translation but auto-shown)
+  const hesitationHintProps = useMemo(
+    () => ({
+      variant: 'warning' as const, // Use warning variant for yellow/orange hesitation hint
+      type: 'heading2' as const,
+      children: hesitationHint,
+    }),
+    [hesitationHint]
+  );
+
   return (
     <View style={containerStyle}>
       <View style={STATIC_STYLES.arabicContainer}>
@@ -120,6 +153,11 @@ const WordDisplayInternal = ({ word, style, translation }: WordDisplayProps) => 
         <Animated.View style={[STATIC_STYLES.translationContainer, translationAnimatedStyle]}>
           <ThemedText {...translationTextProps} />
         </Animated.View>
+      )}
+      {hesitationHint && (
+        <View style={[STATIC_STYLES.translationContainer, { marginTop: LAYOUT.SPACING.SMALL }]}>
+          <ThemedText {...hesitationHintProps} />
+        </View>
       )}
     </View>
   );
@@ -133,7 +171,9 @@ const WordDisplayComparison = (
   return (
     prevProps.word === nextProps.word &&
     prevProps.translation === nextProps.translation &&
-    prevProps.style === nextProps.style
+    prevProps.style === nextProps.style &&
+    prevProps.showFirstLetterOnly === nextProps.showFirstLetterOnly &&
+    prevProps.englishTranslation === nextProps.englishTranslation
   );
 };
 

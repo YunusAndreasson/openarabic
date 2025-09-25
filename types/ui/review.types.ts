@@ -12,6 +12,10 @@ export interface WordDisplayProps {
   translation?: string;
   /** Additional style for the container */
   style?: StyleProp<ViewStyle>;
+  /** Show only first letter as hesitation hint */
+  showFirstLetterOnly?: boolean;
+  /** English translation for hint (when showFirstLetterOnly is true) */
+  englishTranslation?: string;
 }
 
 /**

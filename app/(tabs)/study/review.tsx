@@ -48,6 +48,7 @@ export default function ReviewScreen(): JSX.Element {
   const {
     currentSentence,
     currentMeaning,
+    currentWord,
     showTranslation,
     isTransitioningToCompletion,
     isComplete,
@@ -61,6 +62,9 @@ export default function ReviewScreen(): JSX.Element {
     isUpdating,
     transparentStyle,
     sessionMetrics,
+    isHesitating,
+    handleHesitationStart,
+    handleHesitationEnd,
     isAudioPreloading,
     audioPreloadProgress,
     isAudioPreloadingComplete,
@@ -154,6 +158,7 @@ export default function ReviewScreen(): JSX.Element {
           <ReviewCard
             key={currentWordKey}
             word={currentSentence.wordForm}
+            currentWord={currentWord}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
             opacityStyle={transparentStyle}
@@ -162,6 +167,9 @@ export default function ReviewScreen(): JSX.Element {
             testID="review-card"
             translation={currentMeaning}
             showTranslation={showTranslation}
+            onHesitationStart={handleHesitationStart}
+            onHesitationEnd={handleHesitationEnd}
+            isHesitating={isHesitating}
           />
         </View>
 

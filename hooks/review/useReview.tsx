@@ -47,6 +47,7 @@ interface UseReviewProps {
 interface UseReviewReturn {
   currentSentence: { wordForm: string };
   currentMeaning: string;
+  currentWord?: StudyWord | null;
   showTranslation: boolean;
   isVagueMeaning: boolean;
   isStruggling: boolean;
@@ -65,6 +66,10 @@ interface UseReviewReturn {
   handleClose: () => void;
   transparentStyle: AnimatedStyle<ViewStyle>;
   sessionMetrics: SessionMetrics;
+  // Hesitation state and callbacks
+  isHesitating: boolean;
+  handleHesitationStart: () => void;
+  handleHesitationEnd: () => void;
   // Add audio preloading state
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
@@ -124,6 +129,8 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const [isStruggling, setIsStruggling] = useState(false);
   // Ensure UI re-renders when updating state changes so gestures re-enable
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
+  // Hesitation state
+  const [isHesitating, setIsHesitating] = useState(false);
   // Audio preloading state
   const [isAudioPreloading, setIsAudioPreloading] = useState(false);
   const [audioPreloadProgress, setAudioPreloadProgress] = useState(0);
@@ -796,21 +803,31 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const handleSwipeLeft = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
       return;
-    // Gesture swipe left
+    // Gesture swipe left - after hesitation: unknown, otherwise: unknown
     handleKnowledgeResponse('unknown');
   }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady]);
 
   const handleSwipeRight = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
       return;
-    // Gesture swipe right
-    handleKnowledgeResponse('known');
-  }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady]);
+    // Gesture swipe right - after hesitation: vague, otherwise: known
+    const confidence = isHesitating ? 'vague' : 'known';
+    handleKnowledgeResponse(confidence);
+  }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady, isHesitating]);
 
   const handleLongPress = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
       return;
   }, [currentWord, isComplete, isCurrentWordAudioReady]);
+
+  // Hesitation callbacks
+  const handleHesitationStart = useCallback(() => {
+    setIsHesitating(true);
+  }, []);
+
+  const handleHesitationEnd = useCallback(() => {
+    setIsHesitating(false);
+  }, []);
 
   const handleClose = useCallback(() => {
     const mounted = { current: true };
@@ -942,6 +959,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   return {
     currentSentence,
     currentMeaning,
+    currentWord,
     showTranslation,
     isVagueMeaning,
     isStruggling,
@@ -960,6 +978,10 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     handleClose,
     transparentStyle,
     sessionMetrics: sessionMetricsRef.current,
+    // Hesitation state and callbacks
+    isHesitating,
+    handleHesitationStart,
+    handleHesitationEnd,
     // Add audio preloading state
     isAudioPreloading,
     audioPreloadProgress,

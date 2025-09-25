@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -38,6 +38,7 @@ const STATIC_STYLES = StyleSheet.create({
 
 interface ReviewCardProps {
   word: string;
+  currentWord?: any; // Current word object for accessing English translation
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   isUpdating: boolean;
@@ -47,10 +48,15 @@ interface ReviewCardProps {
   // Translation props
   translation?: string;
   showTranslation?: boolean;
+  // Hesitation props
+  onHesitationStart?: () => void;
+  onHesitationEnd?: () => void;
+  isHesitating?: boolean;
 }
 
 const ReviewCardInternal = ({
   word,
+  currentWord,
   onSwipeLeft,
   onSwipeRight,
   isUpdating,
@@ -59,8 +65,28 @@ const ReviewCardInternal = ({
   testID,
   translation,
   showTranslation = false,
+  onHesitationStart,
+  onHesitationEnd,
+  isHesitating = false,
 }: ReviewCardProps) => {
   const colors = useColors();
+
+  // ===== HESITATION TIMER =====
+  const hesitationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isGestureActiveRef = useRef(false);
+
+  // Hesitation timer constant (3 seconds)
+  const HESITATION_DELAY_MS = 3000;
+
+  // Clean up hesitation timer
+  const clearHesitationTimer = useCallback(() => {
+    if (hesitationTimeoutRef.current) {
+      clearTimeout(hesitationTimeoutRef.current);
+      hesitationTimeoutRef.current = null;
+    }
+    // Also reset gesture active state
+    isGestureActiveRef.current = false;
+  }, []);
 
   // ===== SWIPE GESTURE HOOK (v2 OPTIMIZED) =====
   const { gesture: panGesture, translateX } = useSwipeGesture({
@@ -68,6 +94,19 @@ const ReviewCardInternal = ({
     onSwipeLeft,
     onSwipeRight,
     springConfig: SPRING_CONFIG.CARD,
+    onSwipeComplete: () => {
+      clearHesitationTimer();
+      if (onHesitationEnd) {
+        onHesitationEnd();
+      }
+    }, // Clear timer when swipe completes
+    // Clear hesitation timer when user starts interacting (swiping)
+    onGestureStart: () => {
+      clearHesitationTimer();
+      if (onHesitationEnd) {
+        onHesitationEnd(); // Reset hesitation state when user interacts
+      }
+    },
   });
 
   // ===== SWIPE BACKGROUND COLOR ANIMATION =====
@@ -76,23 +115,33 @@ const ReviewCardInternal = ({
   const successStart = useMemo(() => withOpacity(colors.success, 0), [colors.success]);
   const successEnd = useMemo(() => withOpacity(colors.success, 0.18), [colors.success]);
 
+  // Add vague colors (orange/yellow for hesitation)
+  const vagueStart = useMemo(() => withOpacity(colors.warning || '#FFA500', 0), [colors.warning]);
+  const vagueEnd = useMemo(() => withOpacity(colors.warning || '#FFA500', 0.25), [colors.warning]);
+
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
     const maxTranslation = SCREEN_WIDTH * GESTURE_CONSTANTS.MAX_TRANSLATION_RATIO;
     const t = Math.min(Math.abs(translateX.value) / maxTranslation, 1);
 
     if (translateX.value < 0) {
+      // Left swipe - unknown (red) or vague (orange) depending on hesitation state
+      const startColor = isHesitating ? vagueStart : errorStart;
+      const endColor = isHesitating ? vagueEnd : errorEnd;
       return {
-        backgroundColor: interpolateColor(t, [0, 1], [errorStart, errorEnd]),
+        backgroundColor: interpolateColor(t, [0, 1], [startColor, endColor]),
       };
     }
     if (translateX.value > 0) {
+      // Right swipe - success (green) or vague (orange) depending on hesitation state
+      const startColor = isHesitating ? vagueStart : successStart;
+      const endColor = isHesitating ? vagueEnd : successEnd;
       return {
-        backgroundColor: interpolateColor(t, [0, 1], [successStart, successEnd]),
+        backgroundColor: interpolateColor(t, [0, 1], [startColor, endColor]),
       };
     }
     return { backgroundColor: colors.transparent };
-  }, [errorStart, errorEnd, successStart, successEnd]);
+  }, [errorStart, errorEnd, successStart, successEnd, vagueStart, vagueEnd, isHesitating]);
 
   // ===== COMBINED ANIMATED STYLE (SINGLE ANIMATED VIEW) =====
   const combinedAnimatedStyle = useAnimatedStyle(() => {
@@ -102,14 +151,40 @@ const ReviewCardInternal = ({
     };
   }, []);
 
+  // Get English translation for hint - try multiple sources
+  const englishTranslation = currentWord?.root?.meaning || currentWord?.meaning || '';
+
+  // Auto-start hesitation timer when word appears (if not already hesitating)
+  useEffect(() => {
+    if (word && englishTranslation && !isHesitating && !hesitationTimeoutRef.current) {
+      hesitationTimeoutRef.current = setTimeout(() => {
+        if (!isGestureActiveRef.current) {
+          // Only show hint if user hasn't interacted
+          onHesitationStart?.();
+        }
+      }, HESITATION_DELAY_MS);
+    }
+
+    // Cleanup on unmount or word change
+    return () => {
+      if (hesitationTimeoutRef.current) {
+        clearTimeout(hesitationTimeoutRef.current);
+        hesitationTimeoutRef.current = null;
+      }
+    };
+  }, [word, englishTranslation, isHesitating, onHesitationStart]);
+
   // ===== MEMOIZED PROPS (PREVENT CHILD RE-RENDERS) =====
-  const wordDisplayProps = useMemo(
-    () => ({
+  const wordDisplayProps = useMemo(() => {
+    const props = {
       word,
       translation: showTranslation ? translation : undefined,
-    }),
-    [word, showTranslation, translation]
-  );
+      showFirstLetterOnly: isHesitating,
+      englishTranslation: englishTranslation || undefined, // Always pass English translation when available
+    };
+
+    return props;
+  }, [word, showTranslation, translation, isHesitating, englishTranslation]);
 
   // ===== CLEANUP (HANDLED BY HOOK) =====
   // Cleanup is now handled by the useSwipeGesture hook
@@ -134,6 +209,7 @@ const ReviewCardInternal = ({
 const ReviewCardComparison = (prevProps: ReviewCardProps, nextProps: ReviewCardProps): boolean => {
   return (
     prevProps.word === nextProps.word &&
+    prevProps.currentWord === nextProps.currentWord &&
     prevProps.onSwipeLeft === nextProps.onSwipeLeft &&
     prevProps.onSwipeRight === nextProps.onSwipeRight &&
     prevProps.isUpdating === nextProps.isUpdating &&
@@ -141,7 +217,10 @@ const ReviewCardComparison = (prevProps: ReviewCardProps, nextProps: ReviewCardP
     prevProps.opacityStyle === nextProps.opacityStyle &&
     prevProps.testID === nextProps.testID &&
     prevProps.translation === nextProps.translation &&
-    prevProps.showTranslation === nextProps.showTranslation
+    prevProps.showTranslation === nextProps.showTranslation &&
+    prevProps.onHesitationStart === nextProps.onHesitationStart &&
+    prevProps.onHesitationEnd === nextProps.onHesitationEnd &&
+    prevProps.isHesitating === nextProps.isHesitating
   );
 };
 
