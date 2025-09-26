@@ -222,11 +222,8 @@ export default function TabLayout(): JSX.Element {
           tabBarInactiveTintColor: colors.tabIconDefault,
           tabBarShowLabel: false,
           tabBarIconStyle: styles.tabBarIcon,
-          tabBarItemStyle: { paddingTop: 2, paddingBottom: 2 },
+          tabBarItemStyle: { paddingTop: 4, paddingBottom: 2 },
           tabBarStyle: tabBarStyle,
-          freezeOnBlur: false, // Keep screens in memory to prevent black screens
-          animation: 'none', // Disable animations to prevent black screens completely
-          lazy: true, // Pre-load all screens
         }}
       >
         {TAB_SCREENS.map(screen => (

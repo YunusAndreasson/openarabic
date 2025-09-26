@@ -3,12 +3,11 @@ import { SCREEN_WIDTH } from '@/constants/layout';
 // ===== TOOLTIP CONSTANTS =====
 export const TOOLTIP_CONSTANTS = {
   ARROW_SIZE: 6,
-  MIN_PADDING: 12,
+  MIN_PADDING: 8, // Reduced for tighter appearance
   SCREEN_MARGIN: 16,
   Z_INDEX: 999999,
-  MIN_WIDTH: 80,
-  MAX_WIDTH_RATIO: 0.85,
-  HEIGHT: 40,
+  MIN_WIDTH: 70, // Reduced for tighter appearance
+  HEIGHT: 32, // Reduced for tighter appearance
   CHAR_WIDTH: 9, // Approximate average char width at fontSize 15 for tighter estimate (tests expect 9)
   BOOKMARK_WIDTH: 32,
   GAP_WIDTH: 8,
@@ -50,32 +49,37 @@ export const calculateTooltipDimensions = (
     MIN_PADDING,
     SCREEN_MARGIN,
     MIN_WIDTH,
-    MAX_WIDTH_RATIO,
     HEIGHT,
     CHAR_WIDTH,
     BOOKMARK_WIDTH,
     GAP_WIDTH,
   } = TOOLTIP_CONSTANTS;
 
-  // Estimate text width (rough calculation)
+  // Estimate text width with accurate calculation
   const textWidth = text.length * CHAR_WIDTH;
 
   // Add space for bookmark if present
   const bookmarkWidth = hasBookmark ? BOOKMARK_WIDTH : 0;
   const gapWidth = hasBookmark ? GAP_WIDTH : 0;
 
+  // Reserve space for chevron (always present)
+  const chevronWidth = 24; // Approximate width of chevron icon
+
   // Calculate total content width
-  const contentWidth = textWidth + bookmarkWidth + gapWidth;
+  const contentWidth = textWidth + bookmarkWidth + gapWidth + chevronWidth;
 
   // Calculate tooltip width with padding
   const estimatedTooltipWidth = Math.max(contentWidth + MIN_PADDING * 2, MIN_WIDTH);
 
-  // Apply maximum width constraint
-  const maxWidth = SCREEN_WIDTH * MAX_WIDTH_RATIO;
+  // Use measured width if available, but cap it at a reasonable maximum
+  const maxReasonableWidth = Math.min(SCREEN_WIDTH * 0.8, 320); // Cap at 80% of screen or 320px
+  const baseWidth =
+    measuredWidth && measuredWidth > 0 && measuredWidth <= maxReasonableWidth
+      ? measuredWidth
+      : Math.min(estimatedTooltipWidth, maxReasonableWidth);
 
-  // Prefer the actual measured width when available to avoid clipping or overestimation
-  const baseWidth = measuredWidth && measuredWidth > 0 ? measuredWidth : estimatedTooltipWidth;
-  const finalTooltipWidth = Math.min(baseWidth, maxWidth);
+  // Ensure minimum width and reasonable maximum
+  const finalTooltipWidth = Math.max(MIN_WIDTH, Math.min(baseWidth, maxReasonableWidth));
 
   // Calculate tooltip height
   const tooltipHeight = HEIGHT;
@@ -84,21 +88,33 @@ export const calculateTooltipDimensions = (
   const wordCenterX = layout.x + layout.width / 2;
   const tooltipTop = layout.y - tooltipHeight;
 
-  // Calculate horizontal position
+  // Calculate horizontal position with better centering
   let tooltipLeft = wordCenterX - finalTooltipWidth / 2;
   let arrowLeft = finalTooltipWidth / 2;
 
-  // Handle screen boundaries
+  // Handle screen boundaries with improved logic
+  const tooltipRight = tooltipLeft + finalTooltipWidth;
+
   if (tooltipLeft < SCREEN_MARGIN) {
+    // Tooltip would go off left edge - align to left margin
     tooltipLeft = SCREEN_MARGIN;
     arrowLeft = wordCenterX - SCREEN_MARGIN;
-  } else if (tooltipLeft + finalTooltipWidth > SCREEN_WIDTH - SCREEN_MARGIN) {
+  } else if (tooltipRight > SCREEN_WIDTH - SCREEN_MARGIN) {
+    // Tooltip would go off right edge - align to right margin
     tooltipLeft = SCREEN_WIDTH - SCREEN_MARGIN - finalTooltipWidth;
     arrowLeft = wordCenterX - tooltipLeft;
   }
 
-  // Clamp arrow position within tooltip bounds
-  arrowLeft = Math.max(ARROW_SIZE, Math.min(arrowLeft, finalTooltipWidth - ARROW_SIZE));
+  // Ensure arrow stays within tooltip bounds and points to word center when possible
+  const minArrowLeft = ARROW_SIZE + 8; // Extra margin from left edge
+  const maxArrowLeft = finalTooltipWidth - ARROW_SIZE - 8; // Extra margin from right edge
+  arrowLeft = Math.max(minArrowLeft, Math.min(arrowLeft, maxArrowLeft));
+
+  // If arrow is too far from word center, try to center it better
+  const idealArrowLeft = finalTooltipWidth / 2;
+  if (Math.abs(arrowLeft - idealArrowLeft) > finalTooltipWidth * 0.3) {
+    arrowLeft = Math.max(minArrowLeft, Math.min(idealArrowLeft, maxArrowLeft));
+  }
 
   return {
     tooltipLeft,

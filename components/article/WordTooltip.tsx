@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -6,7 +5,7 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';
 import type { ColorName } from '@/constants/colors';
-import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
@@ -33,9 +32,9 @@ const STATIC_STYLES = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     paddingHorizontal: TOOLTIP_CONSTANTS.MIN_PADDING,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    minWidth: LAYOUT.CARD.HEIGHT.LIST_ITEM,
-    maxWidth: SCREEN_WIDTH * TOOLTIP_CONSTANTS.MAX_WIDTH_RATIO,
+    paddingVertical: LAYOUT.SPACING.SMALL, // Tighter vertical padding
+    minWidth: Math.max(LAYOUT.CARD.HEIGHT.LIST_ITEM, 120), // Tighter minimum width
+    // Width is now calculated dynamically based on text length
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
@@ -49,11 +48,11 @@ const STATIC_STYLES = StyleSheet.create({
   contentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     flex: 1,
-  },
-  chevronIcon: {
-    marginLeft: LAYOUT.SPACING.TINY,
+    minHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL +
+      LAYOUT.SPACING.SMALL, // Tighter minimum height for compact appearance
   },
   text: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -64,14 +63,16 @@ const STATIC_STYLES = StyleSheet.create({
     includeFontPadding: false,
     textAlignVertical: 'center',
   },
-  idText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '400',
+  singleLineText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '500',
     textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     includeFontPadding: false,
     textAlignVertical: 'center',
-    opacity: 0.7,
+    // Ensure text doesn't overflow horizontally
+    maxWidth: '100%',
   },
 });
 
@@ -104,7 +105,8 @@ const WordTooltipComparison = (
     prevProps.text !== nextProps.text ||
     prevProps.arabicWord !== nextProps.arabicWord ||
     prevProps.onOpenWordDetails !== nextProps.onOpenWordDetails ||
-    prevProps.onClose !== nextProps.onClose
+    prevProps.onClose !== nextProps.onClose ||
+    prevProps.zIndex !== nextProps.zIndex
   ) {
     return false;
   }
@@ -124,15 +126,7 @@ const WordTooltipComparison = (
 };
 
 export const WordTooltip = memo(
-  ({
-    visible,
-    text = '',
-    arabicWord,
-    wordId,
-    layout,
-    zIndex,
-    onOpenWordDetails,
-  }: WordTooltipProps) => {
+  ({ visible, text = '', arabicWord, layout, zIndex, onOpenWordDetails }: WordTooltipProps) => {
     const colors = useColors();
 
     // Press animation for better user feedback
@@ -170,6 +164,14 @@ export const WordTooltip = memo(
       !!(arabicWord && text)
     );
 
+    // Calculate the actual displayed text (may include bracket injection)
+    const displayedText = useMemo(() => {
+      if (!formattedAnalysis?.sections?.length) {
+        return text;
+      }
+      return formattedAnalysis.sections.find(s => s.type === 'original')?.content || text;
+    }, [formattedAnalysis, text]);
+
     // Stable handlers
     const handleOpenWordDetails = useCallback(() => {
       if (onOpenWordDetails) {
@@ -195,59 +197,44 @@ export const WordTooltip = memo(
       const wordCount = text.trim().split(/\s+/).length;
       if (wordCount === 1) {
         return (
-          <View>
-            <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ThemedText
+              skipDefaultColor
+              style={[STATIC_STYLES.singleLineText, { color: colors.text }]}
+              numberOfLines={1}
+            >
               {text}
             </ThemedText>
-            {wordId && (
-              <ThemedText
-                skipDefaultColor
-                style={[STATIC_STYLES.idText, { color: colors.secondaryText }]}
-              >
-                [{wordId}]
-              </ThemedText>
-            )}
           </View>
         );
       }
 
       if (!formattedAnalysis?.sections?.length) {
         return (
-          <View>
-            <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ThemedText
+              skipDefaultColor
+              style={[STATIC_STYLES.singleLineText, { color: colors.text }]}
+              numberOfLines={1}
+            >
               {text}
             </ThemedText>
-            {wordId && (
-              <ThemedText
-                skipDefaultColor
-                style={[STATIC_STYLES.idText, { color: colors.secondaryText }]}
-              >
-                [{wordId}]
-              </ThemedText>
-            )}
           </View>
         );
       }
-
-      const originalEnglish =
-        formattedAnalysis.sections.find(s => s.type === 'original')?.content || text;
 
       const componentSections = formattedAnalysis.sections.filter(s => s.type === 'components');
 
       if (!componentSections.length) {
         return (
-          <View>
-            <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
-              {originalEnglish}
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ThemedText
+              skipDefaultColor
+              style={[STATIC_STYLES.singleLineText, { color: colors.text }]}
+              numberOfLines={1}
+            >
+              {displayedText}
             </ThemedText>
-            {wordId && (
-              <ThemedText
-                skipDefaultColor
-                style={[STATIC_STYLES.idText, { color: colors.secondaryText }]}
-              >
-                [{wordId}]
-              </ThemedText>
-            )}
           </View>
         );
       }
@@ -256,7 +243,7 @@ export const WordTooltip = memo(
 
       // Add bracket color coding for [the] injection
       if (analysis?.hasBracketInjection) {
-        const bracketMatch = originalEnglish.match(/^\[the\]/);
+        const bracketMatch = displayedText.match(/^\[the\]/);
         if (bracketMatch) {
           matchPositions.push({
             start: 0,
@@ -269,7 +256,7 @@ export const WordTooltip = memo(
       for (const section of componentSections) {
         if (!section.englishPart) continue;
 
-        const searchText = originalEnglish.toLowerCase();
+        const searchText = displayedText.toLowerCase();
         const colorKey = section.colorName as keyof typeof COLOR_MAP;
         const colorValue = COLOR_MAP[colorKey] || 'tint';
         const themeColorName: ColorName = colorValue;
@@ -327,51 +314,50 @@ export const WordTooltip = memo(
       for (const match of sortedMatches) {
         if (match.start > currentIndex) {
           parts.push({
-            text: originalEnglish.substring(currentIndex, match.start),
+            text: displayedText.substring(currentIndex, match.start),
             color: colors.text,
             key: `text-${currentIndex}`,
           });
         }
         parts.push({
-          text: originalEnglish.substring(match.start, match.end),
+          text: displayedText.substring(match.start, match.end),
           color: match.color,
           key: `match-${match.start}`,
         });
         currentIndex = match.end;
       }
 
-      if (currentIndex < originalEnglish.length) {
+      if (currentIndex < displayedText.length) {
         parts.push({
-          text: originalEnglish.substring(currentIndex),
+          text: displayedText.substring(currentIndex),
           color: colors.text,
           key: 'remaining',
         });
       }
 
       return (
-        <View>
-          <ThemedText skipDefaultColor style={STATIC_STYLES.text}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText} numberOfLines={1}>
             {parts.map(part => (
               <ThemedText
                 key={part.key}
                 skipDefaultColor
-                style={[STATIC_STYLES.text, { color: part.color }]}
+                style={[STATIC_STYLES.singleLineText, { color: part.color }]}
+                numberOfLines={1}
               >
                 {part.text}
               </ThemedText>
             ))}
           </ThemedText>
-          {wordId && (
-            <ThemedText
-              skipDefaultColor
-              style={[STATIC_STYLES.idText, { color: colors.secondaryText }]}
-            >
-              [{wordId}]
-            </ThemedText>
-          )}
         </View>
       );
-    }, [formattedAnalysis, text, colors.text, colorMapping, wordId]);
+    }, [formattedAnalysis, text, displayedText, colors.text, colorMapping]);
 
     // Calculate tooltip dimensions with optimized processing
     const dimensions = useMemo(() => {
@@ -385,8 +371,8 @@ export const WordTooltip = memo(
         width: (layout as TooltipLayout).width,
         height: (layout as TooltipLayout).height,
       } as TooltipLayout;
-      return calculateTooltipDimensions(adjustedLayout, text || '', false);
-    }, [layout, text, containerOffsetX]);
+      return calculateTooltipDimensions(adjustedLayout, displayedText, false);
+    }, [layout, text, displayedText, containerOffsetX]);
 
     // Memoized styles with optimized dependencies
     const containerStyle = useMemo(
@@ -453,16 +439,7 @@ export const WordTooltip = memo(
         >
           <Animated.View style={[tooltipStyle, animatedStyle]} testID="word-tooltip">
             <View style={arrowStyle} />
-            <View style={STATIC_STYLES.contentContainer}>
-              {renderColorCodedEnglish}
-              {/* Chevron indicator */}
-              <Ionicons
-                name="chevron-forward"
-                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                color={colors.tint}
-                style={STATIC_STYLES.chevronIcon}
-              />
-            </View>
+            <View style={STATIC_STYLES.contentContainer}>{renderColorCodedEnglish}</View>
           </Animated.View>
         </Pressable>
       </View>

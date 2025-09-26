@@ -10,12 +10,11 @@ describe('Positioning Utilities', () => {
   describe('TOOLTIP_CONSTANTS', () => {
     it('should have correct constant values', () => {
       expect(TOOLTIP_CONSTANTS.ARROW_SIZE).toBe(6);
-      expect(TOOLTIP_CONSTANTS.MIN_PADDING).toBe(12);
+      expect(TOOLTIP_CONSTANTS.MIN_PADDING).toBe(8);
       expect(TOOLTIP_CONSTANTS.SCREEN_MARGIN).toBe(16);
       expect(TOOLTIP_CONSTANTS.Z_INDEX).toBe(999999);
-      expect(TOOLTIP_CONSTANTS.MIN_WIDTH).toBe(80);
-      expect(TOOLTIP_CONSTANTS.MAX_WIDTH_RATIO).toBe(0.85);
-      expect(TOOLTIP_CONSTANTS.HEIGHT).toBe(40);
+      expect(TOOLTIP_CONSTANTS.MIN_WIDTH).toBe(70);
+      expect(TOOLTIP_CONSTANTS.HEIGHT).toBe(32);
       expect(TOOLTIP_CONSTANTS.CHAR_WIDTH).toBe(9);
       expect(TOOLTIP_CONSTANTS.BOOKMARK_WIDTH).toBe(32);
       expect(TOOLTIP_CONSTANTS.GAP_WIDTH).toBe(8);
@@ -33,7 +32,7 @@ describe('Positioning Utilities', () => {
     it('should calculate dimensions for simple text without bookmark', () => {
       const result = calculateTooltipDimensions(mockLayout, 'Hello', false);
 
-      expect(result.tooltipTop).toBe(160); // 200 - 40
+      expect(result.tooltipTop).toBe(168); // 200 - 32
       expect(result.tooltipWidth).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.MIN_WIDTH);
       expect(result.tooltipHeight).toBe(TOOLTIP_CONSTANTS.HEIGHT);
       expect(result.arrowLeft).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.ARROW_SIZE);
@@ -42,7 +41,7 @@ describe('Positioning Utilities', () => {
     it('should calculate dimensions for text with bookmark', () => {
       const result = calculateTooltipDimensions(mockLayout, 'Hello', true);
 
-      expect(result.tooltipTop).toBe(160);
+      expect(result.tooltipTop).toBe(168);
       expect(result.tooltipWidth).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.MIN_WIDTH);
       expect(result.tooltipHeight).toBe(TOOLTIP_CONSTANTS.HEIGHT);
     });

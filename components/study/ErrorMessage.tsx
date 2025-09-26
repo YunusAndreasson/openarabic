@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { memo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -19,6 +20,7 @@ const ErrorMessage = memo(
   }: ErrorMessageProps) => {
     const colors = useColors();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
 
     const handleRetry = useCallback(() => {
       const route: RoutePath =
@@ -32,7 +34,10 @@ const ErrorMessage = memo(
     }, [router, screenName]);
 
     return (
-      <View style={styles.messageContainer} testID="error-message">
+      <View
+        style={[styles.messageContainer, { paddingBottom: insets.bottom }]}
+        testID="error-message"
+      >
         <ThemedText style={[styles.message, { color: colors.error }]} testID="error-message-text">
           {customMessage}
         </ThemedText>
@@ -56,7 +61,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   retryButton: {
     marginTop: LAYOUT.SPACING.MEDIUM,
