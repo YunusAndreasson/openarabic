@@ -59,8 +59,6 @@ const createListContainerStyle = (backgroundColor: string) => ({
   position: 'relative' as const,
 });
 
-// Removed fixed overrideItemLayout to allow accurate measurement
-
 const createFlashListConfig = <T,>({
   data,
   renderItem,
@@ -172,10 +170,6 @@ const styles = StyleSheet.create({
 const SENTENCE_ITEM_HEIGHT = LAYOUT.SENTENCE_ITEM.HEIGHT;
 const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
 const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
-
-// Removed unused ArticleTitleProps
-
-// Removed unused ArticleTitle component to simplify file
 
 // Floating action buttons component positioned over parallax header
 const FloatingActionButtons = memo<{
@@ -399,8 +393,6 @@ export const ArticleContent = memo<ArticleContentProps>(
         startAnimation();
       }
     }, [sortedSentences, startAnimation]);
-
-    // Removed forced scroll-to-top effect to avoid redundant logic
 
     // Forward JS scroll needs from UI thread
     const handleScrollJS = useCallback(

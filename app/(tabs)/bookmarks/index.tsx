@@ -131,13 +131,11 @@ export default function ListenScreen(): JSX.Element {
     enhancedTracksError,
   } = useBookmarksScreen();
 
-  // Simplified UI hook call - removed unused parameters
   const { canShowEmpty, handleDragEnd } = useListenUI({
     sortedReadingList,
     editMode,
   });
 
-  // const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
   // STABILIZATION: Add local loading state for PLAY ALL button
@@ -285,8 +283,6 @@ export default function ListenScreen(): JSX.Element {
 
   // Memoize the key extractor to prevent inline function creation
   const memoizedKeyExtractor = useCallback(keyExtractor, []);
-
-  // Removed FlashList extraData: row components already receive stable props via renderItem
 
   return (
     <ThemedView

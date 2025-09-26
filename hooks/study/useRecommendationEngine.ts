@@ -18,7 +18,6 @@ interface RecommendationEngineParams {
   trend: 'improving' | 'declining' | 'stable';
 }
 
-// Constants for optimization - more nuanced progression thresholds
 const VOCABULARY_PROGRESSION_THRESHOLDS = {
   ABSOLUTE_BEGINNER: 0, // 0 words: complete beginner
   EARLY_LEARNER: 25, // 1-25 words: just getting started
@@ -107,7 +106,6 @@ interface LearningState {
 }
 
 function getUserState(totalWords: number, currentRetention: number): UserState {
-  // Determine vocabulary stage based on progression thresholds
   let vocabularyStage: UserState['vocabularyStage'];
   let optimalRange: number;
 
@@ -170,7 +168,6 @@ function getLearningState(
   const learningRatio = totalWords > 0 ? learningWords / totalWords : 0;
   const learningProgressRatio = masteredWords / Math.max(1, totalWords);
 
-  // Determine learning load level based on flexible thresholds
   let learningLoadLevel: LearningState['learningLoadLevel'];
   if (learningRatio <= LEARNING_LOAD_THRESHOLDS.LIGHT) {
     learningLoadLevel = 'light';
@@ -180,7 +177,6 @@ function getLearningState(
     learningLoadLevel = 'heavy';
   }
 
-  // Legacy heavy learning check for backward compatibility
   const isInHeavyLearningPhase = learningRatio > LEARNING_LOAD_THRESHOLDS.HEAVY;
 
   // New logic: can safely add words based on learning load and vocabulary size

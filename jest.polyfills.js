@@ -1,5 +1,4 @@
 // Mobile-only Jest polyfills for React Native
-// Removed web-specific polyfills since this is mobile-only
 
 // Text encoding polyfills for Node.js compatibility
 import { TextDecoder, TextEncoder } from 'util';

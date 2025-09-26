@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
+import { useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -11,6 +12,7 @@ import {
   ReviewCard,
   ReviewHeader,
 } from '@/components/review';
+import PulsatingLoader from '@/components/ui/PulsatingLoader';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
@@ -68,7 +70,14 @@ export default function ReviewScreen(): JSX.Element {
     isAudioPreloading,
     audioPreloadProgress,
     isAudioPreloadingComplete,
+    isLoading,
+    wordQueue,
   } = useReview({ fromRemember, mode });
+
+  // Track if review session is still initializing (first word not yet loaded)
+  const isInitializing = useMemo(() => {
+    return isLoading || (wordQueue.length === 0 && !isComplete && currentWord === null);
+  }, [isLoading, wordQueue.length, isComplete, currentWord]);
 
   if (isComplete || isTransitioningToCompletion) {
     return (
@@ -80,7 +89,28 @@ export default function ReviewScreen(): JSX.Element {
     );
   }
 
-  // Show audio preloading indicator
+  // Show beautiful loader while practice session is loading words or initializing
+  // This takes precedence over audio preloading during initial load
+  if (isLoading || isInitializing) {
+    return (
+      <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
+        <View style={[baseStyles.contentContainer, { justifyContent: 'center' }]}>
+          <PulsatingLoader size={64} />
+          <ThemedText
+            style={{
+              marginTop: LAYOUT.SPACING.MEDIUM,
+              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+              textAlign: 'center',
+            }}
+          >
+            Preparing practice session...
+          </ThemedText>
+        </View>
+      </View>
+    );
+  }
+
+  // Show audio preloading indicator (only when not in initial loading phase)
   if (isAudioPreloading) {
     return (
       <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
@@ -93,8 +123,8 @@ export default function ReviewScreen(): JSX.Element {
             },
           ]}
         >
-          <View style={baseStyles.wordArea}>
-            <ActivityIndicator size="large" color={colors.tint} />
+          <View style={[baseStyles.wordArea, { alignItems: 'center' }]}>
+            <PulsatingLoader size={64} />
             <ThemedText
               style={{
                 marginTop: LAYOUT.SPACING.MEDIUM,

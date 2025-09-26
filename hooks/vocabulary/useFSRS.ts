@@ -109,19 +109,16 @@ export function useFSRS({
     queryFn: async () => {
       if (!userId) return [];
 
-      // Spaced mode uses struggling words with cooldown
       if (mode === 'spaced') {
         return strugglingWordsService.getStrugglingWords(userId, 50, _sessionCooldownHours);
       }
 
-      // Study all or due words; apply cooldown consistently
       const words = await studyWordsFSRSService.getFSRSWords(userId, {
         onlyDue: !useAllWords,
         forStats: false,
         sessionCooldownHours: _sessionCooldownHours,
       });
 
-      // Defensive client-side cooldown filter to prevent recently reviewed words leaking in
       if (useAllWords && _sessionCooldownHours > 0) {
         const nowMs = Date.now();
         const cutoffMs = nowMs - _sessionCooldownHours * 60 * 60 * 1000;
@@ -214,14 +211,12 @@ export function useFSRS({
         const ordered = queueRef.current.toArray();
         setWordQueue(ordered);
 
-        // FIXED: Check if any words are actually available (not in cooldown)
         const first = getNextWordWithSpacing();
 
         if (first) {
           // We have available words, start session
           setCurrentWord(first);
         } else {
-          // FIXED: All words are in cooldown or spacing, complete session immediately
           setIsComplete(true);
           if (onComplete && !stateTrackingRef.current.completionTriggered) {
             stateTrackingRef.current.completionTriggered = true;
@@ -298,7 +293,6 @@ export function useFSRS({
       const { card: newCard } = fsrsInstance.next(card, now, rating);
 
       // Prepare FSRS update payload
-      // For unknown/vague, schedule a short cooldown so the word doesn't remain immediately due after session
       const shortCooldownMs = 10 * 60 * 1000; // 10 minutes
       const nextDueDate =
         confidence === 'known' ? newCard.due : new Date(now.getTime() + shortCooldownMs);

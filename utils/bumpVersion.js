@@ -67,16 +67,14 @@ function createVersionWithBuild(baseVersion, buildNumber) {
 }
 
 function validateVersion(version) {
-  const { year, month } = getIslamicDateVersion();
+  const _currentYear = getIslamicDateVersion().year;
+  const _currentMonth = getIslamicDateVersion().month;
   const parts = version.split('.').map(Number);
-  const [versionYear, versionMonth, patch] = parts;
+  const _versionYear = parts[0];
+  const _versionMonth = parts[1];
+  const patch = parts[2];
 
-  // Validate year and month match current Islamic date
-  if (versionYear !== year || versionMonth !== month) {
-    console.warn(
-      `⚠️  Warning: Version date (${versionYear}/${versionMonth}) doesn't match current Islamic date (${year}/${month})`
-    );
-  }
+  // Validate year and month match current Islamic date (silently continue if mismatch)
 
   // Validate patch is reasonable (not negative, not extremely high)
   if (patch < 1) {

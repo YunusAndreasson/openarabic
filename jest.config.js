@@ -104,7 +104,6 @@ module.exports = {
     ],
   },
 
-  // AI-optimized coverage thresholds - realistic but enforced
   coverageThreshold: {
     global: {
       branches: 20,

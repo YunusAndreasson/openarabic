@@ -1,7 +1,6 @@
 import { TextDecoder, TextEncoder } from 'util';
 
 import { jest } from '@jest/globals';
-// Performance testing configuration removed - reassure no longer used
 if (typeof global.jest === 'undefined') {
   global.jest = jest;
 }
@@ -293,7 +292,6 @@ jest.mock('react-native', () => {
       hairlineWidth: 1,
     },
 
-    // Animation (legacy)
     Animated: {
       Value: jest.fn(_value => ({
         setValue: jest.fn(),

@@ -58,7 +58,7 @@ const BASE_PREPOSITIONS = [
 
 const DEFINITE_ARTICLE = { arabic: 'ال', english: ['the'] };
 
-// 2. Other standalone prefixes not used in combinations
+// 2. Other standalone prefixes
 const OTHER_PREFIXES = [
   // Future tense markers
   { arabic: 'س', english: ['will', 'shall'] },

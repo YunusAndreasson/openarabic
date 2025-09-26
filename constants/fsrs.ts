@@ -3,8 +3,6 @@ import type { StepUnit } from 'ts-fsrs';
 export const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
 export const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
 
-// (Removed unused SESSION_CONFIG to reduce dead constants)
-
 // Base keys for consistent cache management
 export const FSRS_BASE_KEY = 'fsrs-words';
 export const STRUGGLING_WORDS_KEY = 'struggling-words';
@@ -42,17 +40,10 @@ export const STRUGGLING_LAPSES_THRESHOLD = 1;
 export const UNSTABLE_STABILITY_THRESHOLD = 7;
 export const UNSTABLE_DIFFICULTY_THRESHOLD = 7.5;
 
-// (Removed unused mastery/learning thresholds to avoid conflicting definitions)
-
 export const DEFAULT_SESSION_COOLDOWN_HOURS = 2;
 
 // Spacing and scheduling constants
 export const SPACING_ITERATION_LIMIT = 20;
-// (Removed unused SKIP_FOR_TODAY_DUE_HOUR)
-
-// FSRS algorithm adjustments
-// (Removed unused EASY/HARD adjustment constants)
-
 // Chart thresholds
 export const URGENT_RETRIEVABILITY_THRESHOLD = 0.5;
 export const TREND_CHANGE_THRESHOLD = 0.1;

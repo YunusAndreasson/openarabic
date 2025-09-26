@@ -52,7 +52,6 @@ export const useAccountScreen = () => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [, setNotificationPermissions] = useState(false);
   const [cacheSize, setCacheSize] = useState<number>(0);
-  const [isClearingCache, setIsClearingCache] = useState(false);
   const user = useUserWithCreationDate();
   const isMounted = useRef(true);
 
@@ -97,7 +96,6 @@ export const useAccountScreen = () => {
           text: STRINGS.CLEAR_CACHE,
           style: 'destructive',
           onPress: async () => {
-            setIsClearingCache(true);
             try {
               // Clear audio cache
               await clearCache();
@@ -111,8 +109,6 @@ export const useAccountScreen = () => {
             } catch (error) {
               Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
               handleError(error as Error, { showToast: false });
-            } finally {
-              setIsClearingCache(false);
             }
           },
         },
@@ -297,7 +293,6 @@ export const useAccountScreen = () => {
       currentYear,
       user,
       handleClearCache,
-      isClearingCache,
       cacheSize,
     }),
     [
@@ -315,7 +310,6 @@ export const useAccountScreen = () => {
       currentYear,
       user,
       handleClearCache,
-      isClearingCache,
       cacheSize,
     ]
   );

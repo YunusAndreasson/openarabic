@@ -52,7 +52,6 @@ const FilterHeaderRight = ({ filterType }: { filterType: string }) => {
     return <View style={{ width: 20, height: 44 }} />;
   }
 
-  // For categories and difficulties, show minimal spacer (filter modal removed)
   return <View style={{ width: 20, height: 44 }} />;
 };
 

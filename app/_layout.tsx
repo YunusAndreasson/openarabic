@@ -12,15 +12,7 @@ import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  AppState,
-  Image,
-  Platform,
-  StyleSheet,
-  UIManager,
-  View,
-} from 'react-native';
+import { AppState, Image, Platform, StyleSheet, UIManager, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -32,6 +24,7 @@ import { MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/bookmarks';
 import { StreaksBottomSheet } from '@/components/library/StreaksBottomSheet';
 import { AuthProvider, ToastProvider } from '@/components/providers';
+import PulsatingLoader from '@/components/ui/PulsatingLoader';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
@@ -344,7 +337,7 @@ function AppContent() {
         </ThemedText>
 
         {/* Loading Indicator */}
-        <ActivityIndicator size="large" color={colors.tint} style={styles.loadingIndicator} />
+        <PulsatingLoader size={64} />
       </View>
     );
   }
@@ -412,9 +405,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  loadingIndicator: {
-    marginTop: LAYOUT.SPACING.SMALL,
   },
   gestureRoot: {
     flex: 1,

@@ -43,8 +43,6 @@ export const ChartCanvas = memo(
 
     const canvasStyle = useMemo(() => ({ width: resolvedWidth, height }), [resolvedWidth, height]);
 
-    // Inline last-value badge removed; bottom summary shows Latest/Average/Max
-
     const activeCursor = useMemo(() => {
       if (!tooltip.visible) return null;
       const x = Math.max(0, Math.min(tooltip.x, resolvedWidth));

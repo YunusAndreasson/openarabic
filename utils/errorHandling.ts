@@ -105,9 +105,8 @@ const trackErrorAnalytics = async (
     };
 
     await analytics.track(eventName || 'Error Occurred', analyticsProperties);
-  } catch (analyticsError) {
-    // Silently fail if analytics tracking fails
-    console.warn('Error analytics tracking failed:', analyticsError);
+  } catch {
+    // Silently fail if analytics tracking fails - analytics should not block error handling
   }
 };
 

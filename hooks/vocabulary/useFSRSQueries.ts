@@ -25,7 +25,6 @@ interface FSRSQueriesResult {
 export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQueriesResult {
   const queryClient = useQueryClient();
 
-  // Base query for all words for charts (no cooldown so charts always have data)
   const allWordsQuery = useQuery({
     queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : ['no-user'],
     queryFn: async () => {
@@ -45,12 +44,10 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : ['no-user', 'due'],
     queryFn: () => {
       if (!userId) throw new Error('User ID is required');
-      // Apply the same session cooldown as the practice session so freshly reviewed
       // words do not appear as still due on the Practice screen
       return studyWordsFSRSService.getFSRSWords(userId, {
         onlyDue: true,
         limit,
-        // Use the session cooldown so Practice indicator and session match
         sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
       });
     },
@@ -67,10 +64,8 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
         const normalizeTs = (ts: string | null | undefined) =>
           ts ? ts.replace(' ', 'T') : undefined;
 
-        // Filter to only include words due now AND not reviewed within the cooldown window
         const filtered = allWords.filter(word => {
           // New words (state 0) are always due for their first review
-          // AND are never excluded by cooldown since they haven't been reviewed
           if (word.fsrs_state === 0) {
             return true;
           }

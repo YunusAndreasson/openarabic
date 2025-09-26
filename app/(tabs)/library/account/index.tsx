@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { Fragment, memo, useCallback, useMemo, type FC } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@common/BaseCard';
@@ -123,7 +123,6 @@ const AccountScreen: FC = () => {
     currentYear,
     user,
     handleClearCache,
-    isClearingCache,
     cacheSize,
   } = useAccountScreen();
 
@@ -600,22 +599,16 @@ const AccountScreen: FC = () => {
                     </ThemedText>
                   </View>
                 </View>
-                {isClearingCache ? (
-                  <View style={styles.clearButton}>
-                    <ActivityIndicator size="small" color={colors.tint} />
-                  </View>
-                ) : (
-                  <ThemedText
-                    type="label"
-                    weight="medium"
-                    colorName="tint"
-                    style={styles.clearButton}
-                    onPress={cacheSize > 0 ? handleClearCache : undefined}
-                    disabled={cacheSize === 0}
-                  >
-                    CLEAR
-                  </ThemedText>
-                )}
+                <ThemedText
+                  type="label"
+                  weight="medium"
+                  colorName="tint"
+                  style={styles.clearButton}
+                  onPress={cacheSize > 0 ? handleClearCache : undefined}
+                  disabled={cacheSize === 0}
+                >
+                  CLEAR
+                </ThemedText>
               </View>
             </BaseCard>
 

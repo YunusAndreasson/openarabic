@@ -56,7 +56,6 @@ export function calculateDueWords(studyWords: StudyWord[]): number {
     const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
     const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
 
-    // Apply the same session cooldown so indicators match session content
     const lastStr = normalizeTs(word.fsrs_last_review);
     const lastMs = lastStr ? Date.parse(lastStr) : 0;
     const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
@@ -110,7 +109,6 @@ export function calculateStrugglingWords(studyWords: StudyWord[]): number {
     const hasBeenReviewed = (word.fsrs_reps ?? 0) > 0;
     if (!hasBeenReviewed) return false;
 
-    // Apply the same cooldown as the session so indicators match session content
     const lastStr = normalizeTs(word.fsrs_last_review);
     const lastMs = lastStr ? Date.parse(lastStr) : 0;
     const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
@@ -139,7 +137,6 @@ export function calculateWordCategories(
   const strugglingWords = calculateStrugglingWords(studyWords);
 
   return {
-    // Prioritize the provided dueWords count (includes cooldown filtering) even when it's 0
     dueWords: typeof dueWordsProp === 'number' ? dueWordsProp : calculatedDueWords,
     learningWords,
     masteredWords,

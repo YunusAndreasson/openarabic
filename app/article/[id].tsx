@@ -73,7 +73,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const audioPreference = useAppSelectorMemo(state => state.settings.audioLanguagePreference);
   const { showToast } = useToast();
 
-  // Removed audio-related hooks and state
   const queryClient = useQueryClient();
 
   const { handleScroll: handleHeaderScroll } = useHeaderVisibility();
@@ -578,70 +577,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     showToast,
   ]);
 
-  // Removed unused fade-in animation to avoid extra work on ready state
-
-  // Disabled automatic resume - articles now always start from the top
-  // This ensures users see the article image when opening articles
-  // useEffect(() => {
-  //   // Only run once when everything is ready and we haven't handled resume yet
-  //   if (
-  //     !hasHandledInitialResumeRef.current &&
-  //     !isLoadingArticle &&
-  //     article &&
-  //     sortedSentences &&
-  //     sortedSentences.length > 0 &&
-  //     hadExistingProgressOnMount &&
-  //     resumeWindowActiveRef.current
-  //   ) {
-  //     const baselineLastSentence = initialLastSentenceRead ?? 0;
-  //     const progressPercent = Math.round((baselineLastSentence / sortedSentences.length) * 100);
-
-  //     // Show resume toast
-  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  //     showToast(`Resumed at ${progressPercent}%`, 3000, ToastType.INFO);
-
-  //     // Attempt jump once on resume
-  //     setTimeout(() => {
-  //       InteractionManager.runAfterInteractions(() => {
-  //         // Primary: delegate to hook (handles measurement and safety flags)
-  //         jumpToLastReadPosition();
-  //         // Fallback: if progress was below threshold, force a direct scroll to ensure UX expectation
-  //         if (progressPercent < PROGRESS_THRESHOLD && scrollViewRef.current) {
-  //           const targetIndex = (initialLastSentenceRead ?? 0) + 1; // +1 for header
-  //           try {
-  //             scrollViewRef.current.scrollToIndex({
-  //               index: targetIndex,
-  //               animated: true,
-  //               viewPosition: 0.1,
-  //             });
-  //           } catch {
-  //             // Offset fallback if index-based scroll fails due to measurement/virtualization
-  //             const estimatedOffset = Math.max(0, (targetIndex - 1) * LAYOUT.SENTENCE_ITEM.HEIGHT);
-  //             try {
-  //               scrollViewRef.current.scrollToOffset({
-  //                 offset: estimatedOffset,
-  //                 animated: true,
-  //               });
-  //             } catch {
-  //               // noop
-  //             }
-  //           }
-  //         }
-  //       });
-  //     }, RESUME_JUMP_DELAY);
-
-  //     // Mark as handled - this prevents any further resume logic
-  //     hasHandledInitialResumeRef.current = true;
-  //   }
-  // }, [
-  //   isLoadingArticle,
-  //   article,
-  //   sortedSentences,
-  //   hadExistingProgressOnMount,
-  //   jumpToLastReadPosition,
-  //   showToast,
-  // ]);
-
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {
       if (layout && layout.width > 0) {
@@ -650,7 +585,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           setActiveTooltip(null);
         } else {
           // Always open new tooltip immediately for different words
-          // This will automatically close the previous tooltip due to state replacement
           setActiveTooltip({ word, layout });
         }
       }

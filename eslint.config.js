@@ -164,7 +164,6 @@ module.exports = [
       'react/no-namespace': 'warn',
       'react/jsx-no-duplicate-props': ['error', { ignoreCase: true }],
       'react/display-name': 'off',
-      // Migration guards: prevent regressions to legacy paths and generic tabs
       'no-restricted-imports': [
         'error',
         {

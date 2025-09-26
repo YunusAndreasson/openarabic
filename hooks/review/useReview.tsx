@@ -55,6 +55,8 @@ interface UseReviewReturn {
   opacity: SharedValue<number>;
   isComplete: boolean;
   isUpdating: boolean;
+  isLoading: boolean;
+  wordQueue: StudyWord[];
   progress: number;
   maxProgress: number;
   progressAnimationKey: number;
@@ -207,14 +209,14 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     }, TIMING_CONFIG.MEDIUM.duration);
   }, []); // Remove fadeOut from dependencies
 
-  const { currentWord, isComplete, progress, updateWord, invalidateQueries, wordQueue } = useFSRS({
-    userId: user?.id,
-    onComplete: triggerCompletionTransition,
-    useAllWords: fromRemember, // When fromRemember is true, use all words instead of just due words
-    mode, // Pass the mode for struggling words filtering
-    // Apply cooldown even for "Study all words" so recently reviewed words don't reappear immediately
-    sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
-  });
+  const { currentWord, isComplete, progress, updateWord, invalidateQueries, wordQueue, isLoading } =
+    useFSRS({
+      userId: user?.id,
+      onComplete: triggerCompletionTransition,
+      useAllWords: fromRemember, // When fromRemember is true, use all words instead of just due words
+      mode, // Pass the mode for struggling words filtering
+      sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
+    });
 
   const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
 
@@ -390,7 +392,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       stateRefs.current.isUpdatingWord = true;
       setIsUpdatingUI(true);
 
-      // Abort any previous operation
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -967,6 +968,8 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     opacity,
     isComplete,
     isUpdating: isUpdatingUI,
+    isLoading,
+    wordQueue,
     progress,
     maxProgress: stateRefs.current.maxProgress,
     progressAnimationKey,

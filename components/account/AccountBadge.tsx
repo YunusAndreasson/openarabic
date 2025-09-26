@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -59,8 +59,6 @@ const getMemberSinceDate = (createdAt?: string) => {
 const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, createdAt }) => {
   const colors = useColors();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
 
   // Animation values
   const scaleValue = useSharedValue(1);
@@ -99,7 +97,6 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
       } catch (error) {
         handleError(error as Error, { showToast: false });
       } finally {
-        setIsLoadingInitial(false);
         // Animate in after loading (cancel any existing animation first)
         cancelAnimation(opacityValue);
         opacityValue.value = withTiming(1, TIMING_CONFIG.ENTRANCE);
@@ -158,7 +155,6 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
       });
 
       if (!result.canceled && result.assets[0]) {
-        setIsLoading(true);
         const selectedUri = result.assets[0].uri;
 
         // Save to local storage
@@ -179,8 +175,6 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
         toastMessage: 'Failed to select profile photo',
         showToast: true,
       });
-    } finally {
-      setIsLoading(false);
     }
   }, [storageKey]);
 
@@ -247,19 +241,6 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
     [colors]
   );
 
-  if (isLoadingInitial) {
-    return (
-      <View
-        style={[
-          styles.profileCard,
-          { backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center' },
-        ]}
-      >
-        <ActivityIndicator size="large" color={colors.tint} />
-      </View>
-    );
-  }
-
   return (
     <Animated.View style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}>
       <View style={styles.profileContent}>
@@ -289,11 +270,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
 
               {/* Edit Icon Overlay */}
               <View style={dynamicStyles.editIconContainer}>
-                {isLoading ? (
-                  <ActivityIndicator size="small" color={colors.background} />
-                ) : (
-                  <Ionicons name="camera" size={12} color={colors.background} />
-                )}
+                <Ionicons name="camera" size={12} color={colors.background} />
               </View>
             </View>
           </Animated.View>

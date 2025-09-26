@@ -24,11 +24,11 @@ const MetricCard = memo<MetricCardProps>(({ icon, value, label, color }) => {
   const colors = useColors();
 
   // Memoize dynamic styles
-  const dynamicStyles = useMemo(
-    () => ({
+  const dynamicStyles = useMemo(() => {
+    return {
       metricCard: {
-        backgroundColor: colors.card,
-        ...LAYOUT.ELEVATION.MEDIUM,
+        backgroundColor: colors.elevation2,
+        ...LAYOUT.ELEVATION.LARGE,
         shadowColor: colors.shadow,
       },
       iconContainer: {
@@ -37,9 +37,8 @@ const MetricCard = memo<MetricCardProps>(({ icon, value, label, color }) => {
       metricValue: {
         color,
       },
-    }),
-    [colors.card, colors.shadow, color]
-  );
+    };
+  }, [colors.card, colors.shadow, colors.elevation2, color]);
 
   return (
     <BaseCard shadowSize="none" style={[styles.metricCard, dynamicStyles.metricCard]}>
@@ -65,7 +64,7 @@ MetricCard.displayName = 'MetricCard';
 export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
   const colors = useColors();
 
-  // Memoize color calculation function
+  // Memoize color calculation function with enhanced contrast
   const getStreakColor = useCallback(
     (streak: number) => {
       if (streak === 0) return colors.textTertiary;
@@ -99,7 +98,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
         icon: 'calendar' as const,
         value: metrics.totalReadingDays.toString(),
         label: `${metrics.totalReadingDays === 1 ? 'Day' : 'Days'} read`,
-        color: colors.tint,
+        color: colors.primary,
       },
     ],
     [
@@ -109,6 +108,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
       getStreakColor,
       colors.warning,
       colors.tint,
+      colors.primary,
     ]
   );
 

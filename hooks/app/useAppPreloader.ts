@@ -79,11 +79,11 @@ export const useAppPreloader = (): AppPreloaderResult => {
               dueWordRootIds: new Set<number>(),
             });
 
-            // Prefetch images and details for featured articles
+            // Prefetch images and details for featured articles with error handling
             const imagePrefetches = featured
               .map(a => String(a.image_url))
               .filter(Boolean)
-              .map(url => Image.prefetch(url));
+              .map(url => Image.prefetch(url).catch(() => null)); // Silently handle prefetch failures
             const detailPrefetches = featured.map(a =>
               queryClient.prefetchQuery({
                 queryKey: ['article', a.id],
@@ -349,8 +349,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
       queryClient.setQueryData(['featured-articles', 'global', 0], featuredSelection);
 
       return true;
-    } catch (error) {
-      console.warn('Featured articles prefetch failed:', error);
+    } catch {
+      // Featured articles prefetch failed - silently continue with cached or default content
       return false;
     }
   }, [user?.id, queryClient]);

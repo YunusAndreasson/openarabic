@@ -21,12 +21,6 @@ export function calculateWordPriority(word: StudyWord): number {
   const difficultyFactor = (difficulty - 5) * 0.01;
   const lapseFactor = (word.fsrs_lapses ?? 0) * 0.5;
 
-  // Priority calculation:
-  // - More overdue = lower priority number (more urgent)
-  // - Higher stability = higher priority number (less urgent)
-  // - Lower stability = lower priority number (more urgent)
-  // - More lapses = lower priority number (more urgent)
-  // - Struggling words = lower priority number (more urgent)
   const basePriority = 10; // Start with a high base value
   const stabilityFactor = Math.max(0, 10 - stability) * 0.1; // Lower stability = more urgent (lower number)
   const strugglingFactor = isStrugglingWord(word) ? -10.0 : 0; // Struggling words get much higher priority (lower number)

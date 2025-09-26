@@ -48,7 +48,6 @@ export function getArticlesByDueWords(
 
     // Check each sentence in the article
     article.article_sentences?.forEach(sentence => {
-      // Some fixtures provide words directly in article_sentences (legacy shape)
       // Support both shapes: sentence_words[] or a direct word-like object
       if (Array.isArray((sentence as any).sentence_words)) {
         (sentence as any).sentence_words.forEach((word: any) => {

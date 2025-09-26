@@ -221,7 +221,8 @@ export const useBookmarksScreen = () => {
               ]);
               const imageUrl = String(nextTrack.imageUrl || articleInCache?.image_url);
               if (imageUrl) {
-                Image.prefetch(imageUrl).catch(() => {});
+                // Prefetch image with proper error handling - don't block audio playback
+                Image.prefetch(imageUrl).catch(() => null);
               } else {
                 prefetchArticle(articleIdToPrefetch).catch(() => {});
               }
@@ -319,7 +320,8 @@ export const useBookmarksScreen = () => {
         const cachedArticle = queryClient.getQueryData<Article>(['article', articleId]);
         const cachedImg = generateImageUrl(cachedArticle?.image_url);
         if (cachedImg) {
-          Image.prefetch(cachedImg).catch(() => {});
+          // Prefetch cached image - silent failure won't block functionality
+          Image.prefetch(cachedImg).catch(() => null);
         } else {
           prefetchArticle(articleId).catch(() => {});
         }

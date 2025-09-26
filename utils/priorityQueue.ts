@@ -156,7 +156,6 @@ export class PriorityQueue<T> {
   // New method: optimize memory usage
   trim() {
     // In JavaScript, arrays automatically resize, but we can force garbage collection
-    // of unused capacity by creating new arrays
     if (this.heap.length < this.prevTrimLength / 2) {
       this.heap = this.heap.slice();
       this.priorities = this.priorities.slice();
@@ -184,7 +183,6 @@ export class PriorityQueue<T> {
     return indices.map(i => this.heap[i]).filter((item): item is T => item !== undefined);
   }
 
-  // Backward compatibility: maintain the old interface
   pushItem(priorityItem: PriorityItem<T>) {
     this.push(priorityItem.item, priorityItem.priority);
   }

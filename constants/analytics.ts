@@ -8,10 +8,7 @@ import { getEnvVar } from '@/utils/env';
 // Your Mixpanel project token - required for analytics to work
 export const MIXPANEL_TOKEN = getEnvVar('EXPO_PUBLIC_MIXPANEL_TOKEN');
 
-// Analytics token validation - silently handle missing token
-if (!MIXPANEL_TOKEN) {
-  console.warn('MIXPANEL_TOKEN is falsy - analytics will be disabled');
-}
+// Analytics token - gracefully handled by analytics service
 
 // Analytics event names - keep consistent across the app
 export const ANALYTICS_EVENTS = {

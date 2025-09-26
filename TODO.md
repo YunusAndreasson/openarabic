@@ -3,7 +3,7 @@
 ## 🚀 Features
 
 - [ ] Add folders
-- [ ] Play article with higlight
+- [x] Play article with higlight
 - [x] Add bottomsheet for tooltip
   - [x] Play
   - [x] Add to study
@@ -12,11 +12,11 @@
 
 ## 🐛 Bugs
 
-- [ ] Implement audio transition improvements
+- [x] Implement audio transition improvements
 
 ## 🔧 Improvements
 
-- [ ] Change playlist o bookmark
+- [x] Change playlist to bookmark
 
 ## Resources
 

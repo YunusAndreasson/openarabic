@@ -50,14 +50,9 @@ const initializeMixpanel = async (): Promise<void> => {
     }
 
     isInitialized = true;
-    if (__DEV__) {
-      console.log('Mixpanel initialized successfully');
-    }
-  } catch (error) {
-    console.error(
-      'Mixpanel initialization failed:',
-      error instanceof Error ? error.message : String(error)
-    );
+  } catch {
+    // Analytics initialization failed - silently continue without analytics
+    // This is expected behavior when MIXPANEL_TOKEN is not configured
   }
 };
 
@@ -78,11 +73,8 @@ export const analytics = {
         }
       }
       // Silent success - no logging needed for normal operation
-    } catch (error) {
-      // Only log errors in development
-      if (__DEV__) {
-        console.warn(`Analytics: Identify failed for user ${userId}:`, error);
-      }
+    } catch {
+      // Analytics failed silently - this is expected behavior when MIXPANEL_TOKEN is not configured
     }
   },
 
@@ -95,11 +87,8 @@ export const analytics = {
         await mixpanelInstance.track(event, properties);
       }
       // Silent success - no logging needed for normal operation
-    } catch (error) {
-      // Only log errors in development
-      if (__DEV__) {
-        console.warn(`Analytics: Track failed for "${event}":`, error);
-      }
+    } catch {
+      // Analytics failed silently - this is expected behavior when MIXPANEL_TOKEN is not configured
     }
   },
 
@@ -112,11 +101,8 @@ export const analytics = {
         await mixpanelInstance.reset();
       }
       // Silent success - no logging needed for normal operation
-    } catch (error) {
-      // Only log errors in development
-      if (__DEV__) {
-        console.warn('Analytics: Reset failed:', error);
-      }
+    } catch {
+      // Analytics failed silently - this is expected behavior when MIXPANEL_TOKEN is not configured
     }
   },
 

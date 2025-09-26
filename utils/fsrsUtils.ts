@@ -167,7 +167,6 @@ function isWordDueOnDate(word: StudyWord, targetDate: Date): boolean {
   const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
   const isDue = Number.isFinite(dueMs) && dueMs <= targetDate.getTime();
 
-  // Apply the same session cooldown so indicators match session content
   const lastStr = normalizeTs(word.fsrs_last_review);
   const lastMs = lastStr ? Date.parse(lastStr) : 0;
   const cooldownMs = targetDate.getTime() - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
@@ -192,7 +191,6 @@ export function calculateDueWordsForecast(
   return dates.map((date, index) => {
     const dueWords = validWords.filter(word => isWordDueOnDate(word, date)).length;
 
-    // Calculate newly due words (due on this day but not the previous day)
     let newlyDue = dueWords;
     if (index > 0) {
       const previousDate = dates[index - 1];

@@ -1,9 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// No longer need these imports since we provide a graceful fallback
-
-// Removed hasLoggedWarning - no longer needed with explicit failure
-
 export const isAsyncStorageAvailable = (): boolean => {
   try {
     return typeof AsyncStorage?.getItem === 'function';
@@ -13,8 +9,6 @@ export const isAsyncStorageAvailable = (): boolean => {
 };
 
 type StorageLike = Pick<typeof AsyncStorage, 'getItem' | 'setItem' | 'removeItem'>;
-
-// Removed fallbackStorage - we now fail explicitly when AsyncStorage is unavailable
 
 export const getSafeStorage = (): StorageLike => {
   if (isAsyncStorageAvailable()) {

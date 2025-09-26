@@ -14,6 +14,7 @@ export interface ImageConfig {
 
 /**
  * Props for the EnhancedImage component
+ * Optimized for Expo Image v3 with modern features and smart defaults
  */
 export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressableProps {
   /** Source URL of the image - required and must be non-null */
@@ -42,4 +43,10 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
 
   /** Hint for texture reuse when the same URL is shown in different places */
   recyclingKey?: string;
+
+  /** Placeholder blurhash for instant loading feedback */
+  placeholder?: string;
+
+  /** Content fit for placeholder */
+  placeholderContentFit?: ImageConfig['contentFit'];
 }

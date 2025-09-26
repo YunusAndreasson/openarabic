@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, InteractionManager, StyleSheet, View } from 'react-native';
+import { InteractionManager, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -17,6 +17,7 @@ import { MemoryRetentionBottomSheet } from '@/components/study/MemoryRetentionBo
 import RecommendationCard from '@/components/study/RecommendationCard';
 import { VocabularyStatCards } from '@/components/study/VocabularyStatCards';
 import { WordsMasteredBottomSheet } from '@/components/study/WordsMasteredBottomSheet';
+import PulsatingLoader from '@/components/ui/PulsatingLoader';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
@@ -25,7 +26,6 @@ import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { ReviewAction } from '@/types/enums';
@@ -33,7 +33,6 @@ import { mediumFeedback } from '@/utils/haptics';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
-  const colors = useColors();
   const queryClient = useQueryClient();
   const router = useRouter();
   const { prefetchVocabularyData } = useAppPreloader();
@@ -249,7 +248,7 @@ export default function VocabularyScreen(): JSX.Element {
         {/* Subtle loading indicator with smooth animation */}
         {isLoadingState && !isDataCached && (
           <Animated.View style={[styles.loadingContainer, loadingAnimatedStyle]}>
-            <ActivityIndicator color={colors.tint} size="small" />
+            <PulsatingLoader size={32} />
           </Animated.View>
         )}
 

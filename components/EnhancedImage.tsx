@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
 
 /**
  * High-performance image component optimized for loading and caching
+ * Uses Expo Image v3 with modern features and smart defaults
  */
 function EnhancedImageInternal({
   source,
@@ -61,9 +62,11 @@ function EnhancedImageInternal({
   onError,
   cachePolicy = 'memory-disk', // Most common value - hardcoded
   priority = 'normal', // Most common value - hardcoded
-  transition,
+  transition = 300, // Smooth cross-fade by default
   recyclingKey,
   testID,
+  placeholder,
+  placeholderContentFit = 'cover',
 }: EnhancedImageProps) {
   const colors = useColors();
 
@@ -84,9 +87,22 @@ function EnhancedImageInternal({
       recyclingKey,
       source,
       style: styles.image,
+      ...(placeholder ? { placeholder } : {}),
+      ...(placeholder ? { placeholderContentFit } : {}),
       ...(testID ? { testID } : {}),
     }),
-    [cachePolicy, contentFit, contentPosition, priority, transition, recyclingKey, source, testID]
+    [
+      cachePolicy,
+      contentFit,
+      contentPosition,
+      priority,
+      transition,
+      recyclingKey,
+      source,
+      placeholder,
+      placeholderContentFit,
+      testID,
+    ]
   );
 
   // Memoize callback props separately to avoid recreating imageProps

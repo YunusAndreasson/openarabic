@@ -31,7 +31,7 @@ export default function FilterScreen(): JSX.Element {
 
   const {
     data: articles = [],
-    isLoading,
+    isFetching, // Tracks if actively fetching from network
     error,
     refetch,
   } = useQuery<Article[]>({
@@ -56,27 +56,35 @@ export default function FilterScreen(): JSX.Element {
       });
     },
     enabled: filterId > 0,
-    staleTime: 300000, // 5 minutes - shorter cache for better responsiveness
-    gcTime: 1800000, // 30 minutes
-    refetchOnMount: true, // Always refetch on mount for fresh data
+    staleTime: 300000, // 5 minutes - data is fresh for 5 minutes
+    gcTime: 1800000, // 30 minutes cache
+    refetchOnMount: false, // Don't refetch if data is fresh (2025 best practice)
     refetchOnWindowFocus: false,
+    refetchOnReconnect: true, // Only refetch on network reconnection
   });
 
-  // Minimum loading time to prevent jarring transitions (2025 UX best practice)
+  // Smart loader logic: 2025 UX best practice
+  // - Don't show loader if data is cached and fresh
+  // - Only show loader when actually fetching from network
+  // - Minimum time prevents jarring transitions for network requests
   useEffect(() => {
-    if (filterId > 0) {
+    if (filterId > 0 && isFetching) {
+      // Only show loader when actually fetching from network
       setShowLoader(true);
       const minLoadingTimer = setTimeout(() => {
         setShowLoader(false);
-      }, 500); // 500ms minimum loading time
+      }, 300); // Reduced to 300ms for better UX with network requests
 
       return () => clearTimeout(minLoadingTimer);
+    } else {
+      // Data is cached or not loading - hide loader immediately
+      setShowLoader(false);
     }
-    return undefined; // Explicit return for the case when filterId <= 0
-  }, [filterId]);
+    return undefined;
+  }, [filterId, isFetching]);
 
-  // Hide loader only when both conditions are met: data loaded AND minimum time passed
-  const shouldShowLoader = showLoader && (isLoading || articles.length === 0);
+  // Show loader only when: actively fetching from network AND minimum time hasn't passed
+  const shouldShowLoader = showLoader && isFetching;
 
   if (error) {
     return (
@@ -87,7 +95,9 @@ export default function FilterScreen(): JSX.Element {
     );
   }
 
-  // Show loading state with minimum 500ms duration (2025 UX best practice)
+  // Show loading state only when actually fetching from network (2025 UX best practice)
+  // - No loader for cached data (instant UX)
+  // - 300ms minimum for network requests (prevents jarring transitions)
   if (shouldShowLoader) {
     return (
       <ThemedView
@@ -107,7 +117,7 @@ export default function FilterScreen(): JSX.Element {
   return (
     <FilteredArticleView
       articles={articles}
-      loading={false} // Parent handles loading with minimum duration
+      loading={isFetching} // Only show loading when actively fetching from network
       onArticlePress={article => router.push(getArticleRoute(article.id, article.title))}
     />
   );
