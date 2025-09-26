@@ -40,18 +40,18 @@ export function useArabicWordAnalysis(
     let processedEnglish = englishTranslation;
     let hasBracketInjection = false;
 
-    // Inject "[the]" for Arabic words containing "ال" (definite article) patterns
+    // Inject "[the]" for Arabic words starting with "ال" (definite article)
     // This helps users learn that "ال" = "the" even when not explicitly translated
     const normalizedArabic = arabicWord.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
     const hasDefiniteArticle =
-      normalizedArabic.includes('ال') ||
+      normalizedArabic.startsWith('ال') ||
       normalizedArabic.startsWith('بال') ||
       normalizedArabic.startsWith('لل') ||
       normalizedArabic.startsWith('كال');
 
     // Skip injection for divine names and words that already imply definiteness
     const skipInjection =
-      normalizedArabic.includes('الله') || // Divine name "Allah"
+      normalizedArabic.startsWith('الله') || // Divine name "Allah"
       englishTranslation.toLowerCase().includes('god') ||
       englishTranslation.toLowerCase().includes('allah') ||
       englishTranslation.toLowerCase().includes('lord') ||

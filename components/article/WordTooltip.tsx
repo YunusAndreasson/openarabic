@@ -194,7 +194,7 @@ export const WordTooltip = memo(
     // Render color-coded English text with optimized processing
     const renderColorCodedEnglish = useMemo(() => {
       // Single words should never have grammar color-coding
-      const wordCount = text.trim().split(/\s+/).length;
+      const wordCount = displayedText.trim().split(/\s+/).length;
       if (wordCount === 1) {
         return (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -203,7 +203,7 @@ export const WordTooltip = memo(
               style={[STATIC_STYLES.singleLineText, { color: colors.text }]}
               numberOfLines={1}
             >
-              {text}
+              {displayedText}
             </ThemedText>
           </View>
         );
@@ -217,7 +217,7 @@ export const WordTooltip = memo(
               style={[STATIC_STYLES.singleLineText, { color: colors.text }]}
               numberOfLines={1}
             >
-              {text}
+              {displayedText}
             </ThemedText>
           </View>
         );
@@ -357,7 +357,7 @@ export const WordTooltip = memo(
           </ThemedText>
         </View>
       );
-    }, [formattedAnalysis, text, displayedText, colors.text, colorMapping]);
+    }, [formattedAnalysis, text, displayedText, colors.text, colorMapping, analysis]);
 
     // Calculate tooltip dimensions with optimized processing
     const dimensions = useMemo(() => {
