@@ -1029,6 +1029,22 @@ def create_article_audio(
             arabic_audio = arabic_response["audio"]
             arabic_segments.append(arabic_audio)
 
+            # Decode actual segment duration to avoid cumulative drift
+            # Prefer real MP3 duration since final article audio is built from decoded segments
+            try:
+                from pydub import AudioSegment
+
+                segment_duration_s = AudioSegment.from_mp3(io.BytesIO(arabic_audio)).duration_seconds
+            except Exception:
+                # Fallbacks: use alignment span if available, else simple heuristic
+                _fallback_alignment = arabic_response.get("word_timestamps", [])
+                if _fallback_alignment:
+                    segment_duration_s = (
+                        float(_fallback_alignment[-1]["end_time"]) - float(_fallback_alignment[0]["start_time"])
+                    )
+                else:
+                    segment_duration_s = len(arabic_text) * 0.08  # ~80ms per character
+
             # Collect word timestamps from this sentence with cumulative offset
             sentence_timestamps = arabic_response.get("word_timestamps", [])
             if sentence_timestamps:
@@ -1036,67 +1052,67 @@ def create_article_audio(
                     f"Collected {len(sentence_timestamps)} word timestamps for sentence {i + 1}"
                 )
 
-                # Apply cumulative time offset to all timestamps in this sentence
-                # This accounts for the 500ms delays added between sentences
+                # Realign and rescale timestamps to match actual audio duration for this sentence
                 offset_timestamps = []
+                first_start = float(sentence_timestamps[0]["start_time"]) if sentence_timestamps else 0.0
+                last_end = float(sentence_timestamps[-1]["end_time"]) if sentence_timestamps else 0.0
+                alignment_span = max(last_end - first_start, 0.000001)
+                scale = segment_duration_s / alignment_span if alignment_span > 0 else 1.0
+
                 for local_word_idx, timestamp in enumerate(sentence_timestamps):
-                    offset_timestamp = timestamp.copy()
-                    offset_timestamp["start_time"] = (
-                        timestamp["start_time"] + cumulative_time_offset
-                    )
-                    offset_timestamp["end_time"] = (
-                        timestamp["end_time"] + cumulative_time_offset
-                    )
-                    # Use global word index instead of local sentence word index
-                    offset_timestamp["word_index"] = global_word_index + local_word_idx
+                    rel_start = float(timestamp["start_time"]) - first_start
+                    rel_end = float(timestamp["end_time"]) - first_start
+                    adjusted_start = cumulative_time_offset + (rel_start * scale)
+                    adjusted_end = cumulative_time_offset + (rel_end * scale)
+
+                    offset_timestamp = {
+                        "word": timestamp.get("word"),
+                        "start_time": round(adjusted_start, 3),
+                        "end_time": round(adjusted_end, 3),
+                        "duration": round(max(adjusted_end - adjusted_start, 0.0), 3),
+                        "word_index": global_word_index + local_word_idx,
+                        "char_start_index": timestamp.get("char_start_index", 0),
+                        "char_end_index": timestamp.get("char_end_index", 0),
+                    }
                     offset_timestamps.append(offset_timestamp)
 
                 all_word_timestamps.extend(offset_timestamps)
 
-                # Calculate the duration of this sentence's audio (without the delay)
-                if sentence_timestamps:
-                    sentence_duration = (
-                        sentence_timestamps[-1]["end_time"]
-                        - sentence_timestamps[0]["start_time"]
-                    )
-                    cumulative_time_offset += sentence_duration + (
-                        BILINGUAL_AUDIO_PAUSE_MS / 1000.0
-                    )  # Convert ms to seconds
-                    # Increment global word index for next sentence
-                    global_word_index += len(sentence_timestamps)
+                # Advance offset by actual decoded segment duration + configured pause
+                cumulative_time_offset += segment_duration_s + (BILINGUAL_AUDIO_PAUSE_MS / 1000.0)
+                # Increment global word index for next sentence
+                global_word_index += len(sentence_timestamps)
             else:
                 logger.warning(
                     f"No word timestamps collected for sentence {i + 1} (ID: {sentence_id})"
                 )
 
-                # RECOVERY STRATEGY 3: Create placeholder timestamps for failed sentences
-                # This ensures word highlighting doesn't break completely
+                # Create placeholder timestamps that exactly span the actual segment duration
                 words = arabic_text.split()
                 if words:
-                    estimated_word_duration = len(arabic_text) * 0.08 / len(words)  # Distribute duration across words
+                    per_word = segment_duration_s / len(words)
 
                     placeholder_timestamps = []
                     for word_idx, word in enumerate(words):
-                        start_time = cumulative_time_offset + (word_idx * estimated_word_duration)
-                        end_time = start_time + estimated_word_duration
+                        start_time = cumulative_time_offset + (word_idx * per_word)
+                        end_time = start_time + per_word
 
                         placeholder_timestamps.append({
                             "word": word,
                             "start_time": round(start_time, 3),
                             "end_time": round(end_time, 3),
-                            "duration": round(estimated_word_duration, 3),
+                            "duration": round(per_word, 3),
                             "word_index": global_word_index + word_idx,
-                            "char_start_index": 0,  # Placeholder values
+                            "char_start_index": 0,
                             "char_end_index": len(word) - 1,
-                            "is_placeholder": True  # Mark as placeholder for debugging
+                            "is_placeholder": True,
                         })
 
                     all_word_timestamps.extend(placeholder_timestamps)
                     logger.info(f"Created {len(placeholder_timestamps)} placeholder timestamps for sentence {i + 1}")
 
-                # Update cumulative offset and global word index
-                estimated_duration = len(arabic_text) * 0.08
-                cumulative_time_offset += estimated_duration + (BILINGUAL_AUDIO_PAUSE_MS / 1000.0)
+                # Advance offset by actual segment duration + pause
+                cumulative_time_offset += segment_duration_s + (BILINGUAL_AUDIO_PAUSE_MS / 1000.0)
                 global_word_index += len(words) if words else 0
 
             # Generate English audio for bilingual version (without timestamps for now)
