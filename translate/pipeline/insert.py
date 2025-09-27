@@ -311,7 +311,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 
     # Create ArticleData object with audio_url and timestamps
     # Handle the case where audio generation failed gracefully
-    final_audio_url = article_audio_url if audio_generation_success else ""
+    final_audio_url = article_audio_url if audio_generation_success else None
 
     article_data = ArticleData(
         title=data["metadata"]["title"],
@@ -321,7 +321,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         author_id=author_id,
         content_hash=content_hash,
         image_url=image_url,
-        audio_url=final_audio_url,  # Empty string if audio generation failed
+        audio_url=final_audio_url,  # None if audio generation failed
     )
 
     try:

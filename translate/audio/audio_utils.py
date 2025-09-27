@@ -699,46 +699,64 @@ def create_article_audio(
             )
 
             # Generate Arabic audio for this sentence
-            arabic_response = generate_speech(
-                text=tashkeel_text,
-                voice_id=ARABIC_VOICE_ID,
-                voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
-            )
+            try:
+                arabic_response = generate_speech(
+                    text=tashkeel_text,
+                    voice_id=ARABIC_VOICE_ID,
+                    voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
+                )
 
-            if not arabic_response or not arabic_response.get("audio"):
-                logger.error(f"Failed to generate Arabic audio for sentence {i + 1}")
+                if not arabic_response or not arabic_response.get("audio"):
+                    logger.warning(f"Failed to generate Arabic audio for sentence {i + 1}")
+                    continue
+
+                arabic_audio = arabic_response["audio"]
+                arabic_segments.append(arabic_audio)
+
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'content_against_policy' in error_msg or 'terms of service' in error_msg:
+                    logger.warning(f"Skipping sentence {i + 1} due to content policy violation")
+                else:
+                    logger.warning(f"Error generating Arabic audio for sentence {i + 1}: {e}")
                 continue
-
-            arabic_audio = arabic_response["audio"]
-            arabic_segments.append(arabic_audio)
-
 
             # Generate English audio for bilingual version (without timestamps for now)
-            english_response = generate_speech(
-                text=english_text,
-                voice_id=ENGLISH_VOICE_ID,
-                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
-            )
-            if not english_response or not english_response.get("audio"):
-                logger.error(f"Failed to generate English audio for sentence {i + 1}")
-                continue
+            try:
+                english_response = generate_speech(
+                    text=english_text,
+                    voice_id=ENGLISH_VOICE_ID,
+                    voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
+                )
+                if not english_response or not english_response.get("audio"):
+                    logger.warning(f"Failed to generate English audio for sentence {i + 1}")
+                    continue
 
-            english_audio = english_response["audio"]
+                english_audio = english_response["audio"]
 
-            # Add English then Arabic to bilingual segments
-            bilingual_segments.append(english_audio)
-            bilingual_segments.append(arabic_audio)
+                # Add English then Arabic to bilingual segments
+                bilingual_segments.append(english_audio)
+                bilingual_segments.append(arabic_audio)
+
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'content_against_policy' in error_msg or 'terms of service' in error_msg:
+                    logger.warning(f"Skipping English audio for sentence {i + 1} due to content policy violation")
+                else:
+                    logger.warning(f"Error generating English audio for sentence {i + 1}: {e}")
+                # Still add Arabic audio to bilingual if we have it
+                bilingual_segments.append(arabic_audio)
 
             logger.info(
                 f"Sentence {i + 1} audio generated successfully"
             )
 
         if not arabic_segments:
-            logger.error("No Arabic audio segments generated")
+            logger.warning("No Arabic audio segments generated - skipping article audio creation")
             return None
 
         if not bilingual_segments:
-            logger.error("No bilingual audio segments generated")
+            logger.warning("No bilingual audio segments generated - skipping article audio creation")
             return None
 
         # Create final audio files with 500ms delays
@@ -852,19 +870,18 @@ def generate_word_audio_with_google_tts(
     # Generate word audio clips using Google TTS
 
     for word_data in word_data_list:
+        word_form = word_data.get("word_form", "").strip()
+        position = word_data.get("position", 0)
+
+        if not word_form:
+            logger.warning(f"Empty word form for position {position}, skipping")
+            continue
+
+        # Create filename for this word
+        filename = f"w{sentence_id}_{position:02d}.mp3"
+
+        # Generate audio for word
         try:
-            word_form = word_data.get("word_form", "").strip()
-            position = word_data.get("position", 0)
-
-            if not word_form:
-                logger.warning(f"Empty word form for position {position}, skipping")
-                continue
-
-            # Create filename for this word
-            filename = f"w{sentence_id}_{position:02d}.mp3"
-
-            # Generate audio for word
-
             # Generate audio using Google TTS (similar to study words)
             result = generate_arabic_word_audio(word_form, filename)
 
@@ -888,9 +905,12 @@ def generate_word_audio_with_google_tts(
                 )
 
         except Exception as e:
-            logger.error(
-                f"Error generating audio for word at position {word_data.get('position', 'unknown')}: {e}"
-            )
+            # Check if it's a content policy violation
+            error_msg = str(e).lower()
+            if 'content_against_policy' in error_msg or 'terms of service' in error_msg:
+                logger.warning(f"Skipping word '{word_form}' due to content policy violation")
+            else:
+                logger.warning(f"Error generating audio for word '{word_form}' at position {position}: {e}")
             continue
 
     # Word audio generation completed

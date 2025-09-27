@@ -13,18 +13,13 @@ import { HijriDateFooter } from '@/components/library/HijriDateFooter';
 import IntelligentArticleSection from '@/components/library/IntelligentArticleSection';
 import { LAYOUT } from '@/constants/layout';
 import { CACHE_TIMES } from '@/constants/queryConfig';
-import {
-  getAuthorFilterRoute,
-  getCategoryFilterRoute,
-  getDifficultyFilterRoute,
-} from '@/constants/routes';
+import { getAuthorFilterRoute, getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
 import { authorsService } from '@/services/authors';
 import { categoriesService } from '@/services/categories';
-import { difficultyService } from '@/services/difficulty';
 import type { Author, Category } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
@@ -57,16 +52,6 @@ export default function ReadScreen(): JSX.Element {
   const { data: authorsData = [], isLoading: isAuthorsLoading } = useQuery({
     queryKey: ['authors'],
     queryFn: () => authorsService.getUniqueAuthors(),
-    staleTime: 86400000,
-    gcTime: 172800000,
-    retry: 3,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
-
-  const { data: difficultyData = [], isLoading: isDifficultyLoading } = useQuery({
-    queryKey: ['difficulty-levels'],
-    queryFn: () => difficultyService.getDifficultyLevels(),
     staleTime: 86400000,
     gcTime: 172800000,
     retry: 3,
@@ -160,7 +145,6 @@ export default function ReadScreen(): JSX.Element {
         queryClient.invalidateQueries({ queryKey: ['articles'] }),
         queryClient.invalidateQueries({ queryKey: ['categories'] }),
         queryClient.invalidateQueries({ queryKey: ['authors'] }),
-        queryClient.invalidateQueries({ queryKey: ['difficulty-levels'] }),
       ];
 
       // Add user-specific queries if authenticated
@@ -207,26 +191,11 @@ export default function ReadScreen(): JSX.Element {
             }
             break;
           }
-          case 'difficulty': {
-            const difficulty = difficultyData.find(d => d.id === id);
-            if (difficulty) {
-              router.push(getDifficultyFilterRoute(id, difficulty.name));
-              return;
-            }
-            break;
-          }
         }
       }
 
-      // Fallback: Check in priority order (difficulty first to avoid ID conflicts)
-      // Check if it's a difficulty level first (to avoid category ID conflicts)
-      const difficulty = difficultyData.find(d => d.id === id);
-      if (difficulty) {
-        router.push(getDifficultyFilterRoute(id, difficulty.name));
-        return;
-      }
-
-      // Then check if it's a category
+      // Fallback: Check in priority order
+      // Check if it's a category
       const category = categoriesData.find(c => c.id === id);
       if (category) {
         router.push(getCategoryFilterRoute(id, category.name));
@@ -240,7 +209,7 @@ export default function ReadScreen(): JSX.Element {
         return;
       }
     },
-    [categoriesData, authorsData, difficultyData]
+    [categoriesData, authorsData]
   );
 
   // Optimized header component - memoize individual sections
@@ -283,27 +252,8 @@ export default function ReadScreen(): JSX.Element {
       );
     }
 
-    if (difficultyData.length > 0) {
-      sections.push(
-        <React.Fragment key="difficulty">
-          <FilterSection
-            items={difficultyData}
-            onSelect={handleSelectFilter}
-            filterType="difficulty"
-          />
-          <SubtleDivider />
-        </React.Fragment>
-      );
-    }
-
     return sections;
-  }, [
-    memoizedArticlesData,
-    refreshKey,
-    categoriesWithArticles,
-    authorsWithArticles,
-    difficultyData,
-  ]);
+  }, [memoizedArticlesData, refreshKey, categoriesWithArticles, authorsWithArticles]);
 
   const ListHeaderComponent = useMemo(
     () => <View style={styles.headerContainer}>{headerSections}</View>,
@@ -323,8 +273,7 @@ export default function ReadScreen(): JSX.Element {
     [colors, insets.bottom]
   );
 
-  const isLoading =
-    isArticlesLoading || isCategoriesLoading || isAuthorsLoading || isDifficultyLoading;
+  const isLoading = isArticlesLoading || isCategoriesLoading || isAuthorsLoading;
 
   if (isLoading && !articlesData.length && !categoriesData.length && !authorsData.length) {
     // Show loading state - handled by ArticleList

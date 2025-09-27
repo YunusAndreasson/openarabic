@@ -219,7 +219,7 @@ def insert_sentence_words(
                 .execute()
             )
             if result.data:
-                inserted_words = result.data
+                pass  # Words inserted successfully
         except Exception as e:
             logger.error(f"Failed to insert words for sentence {sentence_id}: {e}")
             return {"total_words": 0}
@@ -299,55 +299,137 @@ def insert_article_sentences(
             arabic_filename = generate_audio_filename()
 
             # Generate Arabic audio for this sentence
-            arabic_response = generate_speech(
-                text=arabic_text,
-                voice_id=ARABIC_VOICE_ID,
-                voice_settings=VoiceSettings(**ARABIC_VOICE_SETTINGS)
-                if VoiceSettings
-                else None,
-            )
-
+            arabic_response = None
             arabic_audio_url = None
-            if arabic_response and arabic_response.get("audio"):
-                # Upload Arabic audio to Supabase storage
+
+            try:
+                arabic_response = generate_speech(
+                    text=arabic_text,
+                    voice_id=ARABIC_VOICE_ID,
+                    voice_settings=VoiceSettings(**ARABIC_VOICE_SETTINGS)
+                    if VoiceSettings
+                    else None,
+                )
+
+                if arabic_response and arabic_response.get("audio"):
+                    # Upload Arabic audio to Supabase storage
+                    try:
+                        get_supabase_client().storage.from_("audio").upload(
+                            arabic_filename,
+                            arabic_response["audio"],
+                            file_options={"content-type": "audio/mpeg"},
+                        )
+                        arabic_audio_url = get_storage_url(arabic_filename)
+                    except Exception as e:
+                        logger.warning(f"Failed to upload Arabic sentence audio: {e}")
+                else:
+                    logger.warning(
+                        f"Failed to generate Arabic audio for sentence {idx + 1}"
+                    )
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'content_against_policy' in error_msg or 'terms of service' in error_msg:
+                    logger.warning(f"Skipping Arabic audio for sentence {idx + 1} due to content policy violation")
+                else:
+                    logger.warning(f"Error generating Arabic audio for sentence {idx + 1}: {e}")
+
+            # Create silent audio placeholder if Arabic audio generation failed
+            if not arabic_audio_url:
+                logger.info(f"Creating silent audio placeholder for sentence {idx + 1}")
                 try:
-                    get_supabase_client().storage.from_("audio").upload(
+                    import io
+
+                    from pydub import AudioSegment
+
+                    # Create a short silent audio file (1 second)
+                    silent_audio = AudioSegment.silent(duration=1000)  # 1 second of silence
+
+                    # Export as MP3
+                    silent_buffer = io.BytesIO()
+                    silent_audio.export(silent_buffer, format="mp3")
+                    silent_buffer.seek(0)
+
+                    # Upload silent placeholder
+                    supabase_client = get_supabase_client()
+                    supabase_client.storage.from_("audio").upload(
                         arabic_filename,
-                        arabic_response["audio"],
+                        silent_buffer.getvalue(),
                         file_options={"content-type": "audio/mpeg"},
                     )
+
                     arabic_audio_url = get_storage_url(arabic_filename)
+                    logger.info(f"Created silent audio placeholder for sentence {idx + 1}")
+
                 except Exception as e:
-                    logger.warning(f"Failed to upload Arabic sentence audio: {e}")
-            else:
-                logger.warning(
-                    f"Failed to generate Arabic audio for sentence {idx + 1}"
+                    logger.error(f"Failed to create silent audio placeholder: {e}")
+                    # Fallback to empty string if silent audio creation fails
+                    arabic_audio_url = ""
+
+            # Generate English audio for this sentence
+            english_filename = generate_audio_filename()
+            english_response = None
+            english_audio_url = None
+
+            try:
+                english_response = generate_speech(
+                    text=english_text,
+                    voice_id=ENGLISH_VOICE_ID,
+                    voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
                 )
 
-                # Generate English audio for this sentence
-            english_filename = generate_audio_filename()
-            english_response = generate_speech(
-                text=english_text,
-                voice_id=ENGLISH_VOICE_ID,
-                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
-            )
+                if english_response and english_response.get("audio"):
+                    # Upload English audio to Supabase storage
+                    try:
+                        get_supabase_client().storage.from_("audio").upload(
+                            english_filename,
+                            english_response["audio"],
+                            file_options={"content-type": "audio/mpeg"},
+                        )
+                        english_audio_url = get_storage_url(english_filename)
+                    except Exception as e:
+                        logger.warning(f"Failed to upload English sentence audio: {e}")
+                else:
+                    logger.warning(
+                        f"Failed to generate English audio for sentence {idx + 1}"
+                    )
+            except Exception as e:
+                error_msg = str(e).lower()
+                if 'content_against_policy' in error_msg or 'terms of service' in error_msg:
+                    logger.warning(f"Skipping English audio for sentence {idx + 1} due to content policy violation")
+                else:
+                    logger.warning(f"Error generating English audio for sentence {idx + 1}: {e}")
 
-            english_audio_url = None
-            if english_response and english_response.get("audio"):
-                # Upload English audio to Supabase storage
+            # Create silent audio placeholder if English audio generation failed
+            if not english_audio_url:
+                logger.info(f"Creating silent audio placeholder for English sentence {idx + 1}")
                 try:
-                    get_supabase_client().storage.from_("audio").upload(
+                    import io
+
+                    from pydub import AudioSegment
+
+                    # Create a short silent audio file (1 second)
+                    silent_audio = AudioSegment.silent(duration=1000)  # 1 second of silence
+
+                    # Export as MP3
+                    silent_buffer = io.BytesIO()
+                    silent_audio.export(silent_buffer, format="mp3")
+                    silent_buffer.seek(0)
+
+                    # Upload silent placeholder
+                    supabase_client = get_supabase_client()
+                    supabase_client.storage.from_("audio").upload(
                         english_filename,
-                        english_response["audio"],
+                        silent_buffer.getvalue(),
                         file_options={"content-type": "audio/mpeg"},
                     )
+
                     english_audio_url = get_storage_url(english_filename)
+                    logger.info(f"Created silent audio placeholder for English sentence {idx + 1}")
+
                 except Exception as e:
-                    logger.warning(f"Failed to upload English sentence audio: {e}")
-            else:
-                logger.warning(
-                    f"Failed to generate English audio for sentence {idx + 1}"
-                )
+                    logger.error(f"Failed to create silent audio placeholder: {e}")
+                    # Fallback to empty string if silent audio creation fails
+                    english_audio_url = ""
 
             # Generate bilingual audio for this sentence (English + Arabic)
             bilingual_filename = generate_audio_filename()
@@ -389,17 +471,13 @@ def insert_article_sentences(
                     )
                     bilingual_audio_url = None
             else:
-                bilingual_audio_url = None
                 logger.warning(
                     f"Missing audio for bilingual generation in sentence {idx + 1}"
                 )
 
-            # Handle missing audio URLs gracefully to avoid database constraint violations
-            if not english_audio_url:
-                logger.warning(
-                    f"No English audio URL available for sentence {idx + 1}, generating silent audio placeholder"
-                )
-                # Create a silent audio placeholder to satisfy database constraints
+            # Create silent audio placeholder if bilingual audio generation failed
+            if not bilingual_audio_url:
+                logger.info(f"Creating silent audio placeholder for bilingual sentence {idx + 1}")
                 try:
                     import io
 
@@ -413,22 +491,22 @@ def insert_article_sentences(
                     silent_audio.export(silent_buffer, format="mp3")
                     silent_buffer.seek(0)
 
-                    # Generate filename and upload
-                    placeholder_filename = generate_audio_filename()
+                    # Upload silent placeholder
                     supabase_client = get_supabase_client()
                     supabase_client.storage.from_("audio").upload(
-                        placeholder_filename,
+                        bilingual_filename,
                         silent_buffer.getvalue(),
                         file_options={"content-type": "audio/mpeg"},
                     )
 
-                    english_audio_url = get_storage_url(placeholder_filename)
-                    logger.info(f"Created silent audio placeholder for sentence {idx + 1}")
+                    bilingual_audio_url = get_storage_url(bilingual_filename)
+                    logger.info(f"Created silent audio placeholder for bilingual sentence {idx + 1}")
 
                 except Exception as e:
                     logger.error(f"Failed to create silent audio placeholder: {e}")
                     # Fallback to empty string if silent audio creation fails
-                    english_audio_url = ""
+                    bilingual_audio_url = ""
+
 
             sentence_data = {
                 "article_id": article_id,
