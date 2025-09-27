@@ -23,13 +23,11 @@ import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider, useToast } from '@/components/providers';
 import PulsatingLoader from '@/components/ui/PulsatingLoader';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
-import { useWordTimestamps } from '@/hooks/articles/useWordTimestamps';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -96,55 +94,13 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
 
-  // Word timestamps for audio synchronization
-  const { wordTimestamps, hasTimestamps, getCurrentWordIndex } = useWordTimestamps(
-    articleId ?? null
-  );
-
   // Audio state for synchronization
-  const { position, isPlaying, currentArticle } = useGlobalAudioState();
+  const { isPlaying, currentArticle } = useGlobalAudioState();
 
   const [activeTooltip, setActiveTooltip] = useState<{
     word: SentenceWord;
     layout: LayoutRectangle;
   } | null>(null);
-
-  // Track current highlighted word for audio synchronization
-  const [currentHighlightedWord, setCurrentHighlightedWord] = useState<SentenceWord | null>(null);
-
-  // Position smoothing to handle timing variations
-  const lastStablePosition = useRef<number>(0);
-
-  // Create mapping from global word index to actual word
-  const wordIndexToWordMap = useMemo(() => {
-    const wordMap = new Map<number, SentenceWord>();
-
-    if (!sortedSentences.length) return wordMap;
-
-    let globalWordIndex = 0;
-
-    for (let sentenceIdx = 0; sentenceIdx < sortedSentences.length; sentenceIdx++) {
-      const sentence = sortedSentences[sentenceIdx];
-      if (!sentence) continue;
-
-      const sentenceWords = sentenceWordsMap.get(sentence.id);
-
-      if (sentenceWords && sentenceWords.length > 0) {
-        for (const word of sentenceWords) {
-          wordMap.set(globalWordIndex, word);
-          globalWordIndex++;
-        }
-      }
-    }
-
-    return wordMap;
-  }, [sortedSentences, sentenceWordsMap]);
-
-  // Auto-scroll state
-  const lastScrolledWordIndex = useRef<number>(-1);
-  const lastScrollTime = useRef<number>(0);
-  const autoScrollEnabled = useRef(true);
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [wordDetailsBottomSheet, setWordDetailsBottomSheet] = useState<{
     isVisible: boolean;
@@ -173,19 +129,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       if (activeTooltipRef.current) {
         setActiveTooltip(null);
       }
-
-      // Disable auto-scroll temporarily when user scrolls manually
-      autoScrollEnabled.current = false;
-
-      // Clear any existing timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-
-      // Re-enable auto-scroll after user stops scrolling
-      scrollTimeoutRef.current = setTimeout(() => {
-        autoScrollEnabled.current = true;
-      }, 1000); // Re-enable after 1 second of no scrolling
     },
     [handleHeaderScroll]
   );
@@ -342,10 +285,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Cleanup scroll timeout and audio on unmount
   useEffect(() => {
     return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-
       // Stop audio playback when component unmounts
       const stopAudioOnUnmount = async () => {
         try {
@@ -362,164 +301,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       stopAudioOnUnmount();
     };
   }, []);
-
-  // Update highlighted word based on audio position with enhanced sync logic
-  useEffect(() => {
-    if (!hasTimestamps || !isPlaying || !currentArticle || currentArticle.id !== articleId) {
-      setCurrentHighlightedWord(null);
-      return;
-    }
-
-    if (typeof position !== 'number' || isNaN(position)) {
-      setCurrentHighlightedWord(null);
-      return;
-    }
-
-    const wordIndex = getCurrentWordIndex(position);
-
-    // Position smoothing: Filter out major jumps but allow normal progression
-    const positionDiff = Math.abs(position - lastStablePosition.current);
-    lastStablePosition.current = position;
-
-    // Skip updates if position jumped more than 3 seconds (likely a seek or buffering issue)
-    if (positionDiff > 3.0) {
-      return;
-    }
-
-    // Enhanced sync: Handle common desync scenarios including timestamp gaps
-    let finalWordIndex = wordIndex;
-
-    // Scenario 1: Audio position is ahead of timestamps (common after buffering or gaps)
-    if (wordIndex === -1 && position > 0) {
-      const lastWord = wordTimestamps[wordTimestamps.length - 1];
-
-      if (lastWord && position > lastWord.end_time) {
-        // If we're significantly beyond the last timestamp, timestamps might be incomplete
-        if (position - lastWord.end_time > 5) {
-          return; // Let useWordTimestamps handle incomplete timestamps
-        }
-        return; // Let useWordTimestamps handle incomplete timestamps
-      }
-
-      // Scenario 2: Audio jumped ahead due to buffering, find closest word
-      const closestWord = wordTimestamps.reduce((closest, current) => {
-        const currentDiff = Math.min(
-          Math.abs(position - current.start_time),
-          Math.abs(position - current.end_time)
-        );
-        const closestDiff = Math.min(
-          Math.abs(position - closest.start_time),
-          Math.abs(position - closest.end_time)
-        );
-        return currentDiff < closestDiff ? current : closest;
-      });
-
-      // Enhanced recovery: Handle timestamp gaps between sentences
-      const diff = Math.min(
-        Math.abs(position - closestWord.start_time),
-        Math.abs(position - closestWord.end_time)
-      );
-
-      // More aggressive recovery for timestamp gaps (up to 3 seconds)
-      if (diff <= 3.0) {
-        finalWordIndex = closestWord.word_index;
-      }
-    }
-
-    // Scenario 3: Audio position is before first word (early playback)
-    if (finalWordIndex === -1 && position >= 0) {
-      const firstWord = wordTimestamps[0];
-      if (firstWord && position < firstWord.start_time && position >= firstWord.start_time - 2) {
-        // If we're within 2 seconds of the first word, don't highlight anything yet
-        return;
-      }
-    }
-
-    // Get the actual word object and only update if it has changed
-    const newHighlightedWord =
-      finalWordIndex !== -1 ? wordIndexToWordMap.get(finalWordIndex) || null : null;
-
-    setCurrentHighlightedWord(prevWord => {
-      const prevId = prevWord?.id;
-      const newId = newHighlightedWord?.id;
-      return prevId !== newId ? newHighlightedWord : prevWord;
-    });
-  }, [
-    position,
-    isPlaying,
-    hasTimestamps,
-    currentArticle,
-    articleId,
-    getCurrentWordIndex,
-    wordTimestamps,
-    wordIndexToWordMap,
-  ]);
-
-  // Auto-scroll to highlighted word using proper FlashList positioning
-  const autoScrollToWord = useCallback(
-    (word: SentenceWord | null) => {
-      if (!autoScrollEnabled.current || !word || !scrollViewRef.current || !sortedSentences) {
-        return;
-      }
-
-      // Don't scroll if we've already scrolled to this word recently (within 3 seconds)
-      const currentTime = Date.now();
-      const timeSinceLastScroll = currentTime - lastScrollTime.current;
-      if (lastScrolledWordIndex.current === word.id && timeSinceLastScroll < 3000) {
-        return;
-      }
-
-      // Find which sentence contains this word
-      let targetSentenceIndex = -1;
-
-      for (let sentenceIdx = 0; sentenceIdx < sortedSentences.length; sentenceIdx++) {
-        const sentence = sortedSentences[sentenceIdx];
-        if (!sentence) continue;
-
-        const sentenceWords = sentenceWordsMap.get(sentence.id);
-
-        if (sentenceWords && sentenceWords.length > 0) {
-          if (sentenceWords.includes(word)) {
-            targetSentenceIndex = sentenceIdx;
-            break;
-          }
-        }
-      }
-
-      if (targetSentenceIndex === -1) return;
-
-      // FlashList index = sentence index + 1 (to account for header component)
-      const flashListIndex = targetSentenceIndex + 1;
-
-      // Primary method: scrollToIndex with optimal positioning
-      try {
-        scrollViewRef.current.scrollToIndex({
-          index: flashListIndex,
-          animated: true,
-          viewPosition: 0.7, // Position highlighted sentence 70% from top for maximum comfort
-        });
-        lastScrolledWordIndex.current = word.id;
-        lastScrollTime.current = Date.now();
-      } catch {
-        // Essential fallback: offset-based scrolling using sentence height
-        const targetOffset = targetSentenceIndex * LAYOUT.SENTENCE_ITEM.HEIGHT;
-        scrollViewRef.current.scrollToOffset({
-          offset: Math.max(0, targetOffset),
-          animated: true,
-        });
-        lastScrolledWordIndex.current = word.id;
-        lastScrollTime.current = Date.now();
-      }
-    },
-    [sortedSentences, sentenceWordsMap, scrollViewRef]
-  );
-
-  // Trigger auto-scroll when highlighted word changes
-  useEffect(() => {
-    if (currentHighlightedWord && hasTimestamps && isPlaying) {
-      autoScrollToWord(currentHighlightedWord);
-    }
-  }, [currentHighlightedWord, hasTimestamps, isPlaying, autoScrollToWord]);
 
   // Resume-on-open behavior (original working behavior)
   const hasHandledInitialResumeRef = useRef(false);
@@ -685,7 +466,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           colors={colors}
           dueWordRootIds={dueWordRootIds}
           onWordPress={handleWordPress}
-          currentHighlightedWord={currentHighlightedWord}
         />
       );
     },
@@ -696,7 +476,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       dueWordRootIds,
       handleWordPress,
       displayLanguagePreference,
-      currentHighlightedWord,
     ]
   );
 
@@ -750,7 +529,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       hasAudio,
       isPlaying: isPlaying && currentArticle?.id === articleId,
       onPlayPress: handlePlayPress,
-      currentHighlightedWord,
       onClose: handleClose,
     };
   }, [
@@ -769,7 +547,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     currentArticle?.id,
     articleId,
     handlePlayPress,
-    currentHighlightedWord,
     handleClose,
   ]);
 

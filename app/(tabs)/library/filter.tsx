@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useMemo } from 'react';
@@ -18,8 +18,6 @@ export default function FilterScreen(): JSX.Element {
   const { id, type } = searchParams;
   const filterId = parseInt(id ?? '', 10);
   const filterType = type ?? 'category';
-  const queryClient = useQueryClient();
-
   // No need to clear cache - we're using preloaded articles and filtering locally
 
   // Use preloaded articles and filter locally - no network requests needed

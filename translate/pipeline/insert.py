@@ -135,15 +135,6 @@ def generate_article_audio(
                 "audio_url_bilingual": audio_urls["bilingual_url"],
             }
 
-            # Add word timestamps if available
-            word_timestamps = audio_urls.get("word_timestamps")
-            if word_timestamps:
-                update_data["word_timestamps"] = word_timestamps
-                logger.info(
-                    f"Updating database with {len(word_timestamps)} word timestamps"
-                )
-            else:
-                logger.warning("No word timestamps available for database update")
 
             get_supabase_client().table("articles").update(update_data).eq(
                 "id", article_id
@@ -272,7 +263,6 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
     # Generate audio BEFORE inserting the article
     # This ensures audio_url is available when the article is inserted
     article_audio_url = None
-    word_timestamps = []
     audio_generation_success = False
 
     if AUDIO_AVAILABLE:
@@ -304,18 +294,6 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
                 # Get the Arabic audio URL for the article
                 article_audio_url = audio_urls["arabic_url"]
 
-                # Get word timestamps if available
-                word_timestamps: list[dict[str, Any]] = audio_urls.get(
-                    "word_timestamps", []
-                )
-                if word_timestamps:
-                    logger.info(
-                        f"Generated article audio with {len(word_timestamps)} word timestamps"
-                    )
-                else:
-                    logger.warning(
-                        "Generated article audio but no word timestamps available"
-                    )
 
                 audio_generation_success = True
                 logger.info("Article audio generation completed successfully")
@@ -344,7 +322,6 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         content_hash=content_hash,
         image_url=image_url,
         audio_url=final_audio_url,  # Empty string if audio generation failed
-        word_timestamps=word_timestamps if audio_generation_success else [],
     )
 
     try:

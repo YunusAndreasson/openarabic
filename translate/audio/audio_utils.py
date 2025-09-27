@@ -302,250 +302,8 @@ def generate_speech(
         return None
 
 
-def extract_word_timestamps(
-    text: str, alignment: Any, sentence_id: int | None = None
-) -> list[dict[str, Any]]:
-    """
-    Extract word-level timestamps from ElevenLabs character-level alignment data.
-
-    Args:
-        text: The Arabic text used for TTS (should include diacritics)
-        alignment: The alignment object from ElevenLabs response
-        sentence_id: Optional sentence ID for logging context
-
-    Returns:
-        List of word timestamp dictionaries, empty list if extraction fails
-    """
-    try:
-        # Validate inputs
-        if not text or not text.strip():
-            logger.warning(
-                f"Empty text provided for timestamp extraction (sentence_id: {sentence_id})"
-            )
-            return []
-
-        if not alignment:
-            logger.warning(
-                f"No alignment data provided for timestamp extraction (sentence_id: {sentence_id})"
-            )
-            return []
-
-        # Extract character timing arrays
-        char_starts = getattr(alignment, "character_start_times_seconds", None)
-        char_ends = getattr(alignment, "character_end_times_seconds", None)
-
-        if not char_starts or not char_ends:
-            logger.warning(
-                f"Missing character timing arrays in alignment (sentence_id: {sentence_id})"
-            )
-            return []
-
-        if len(char_starts) != len(char_ends):
-            logger.warning(
-                f"Mismatched character timing arrays lengths: {len(char_starts)} vs {len(char_ends)} (sentence_id: {sentence_id})"
-            )
-            return []
-
-        # Split text into words (preserving Arabic word boundaries)
-        arabic_words = text.strip().split()
-        word_count = len(arabic_words)
-
-        if word_count == 0:
-            logger.warning(
-                f"No words found in text for timestamp extraction (sentence_id: {sentence_id})"
-            )
-            return []
-
-        # Extract timestamps for words
-
-        word_timestamps = []
-        char_index = 0
-
-        for word_idx, word in enumerate(arabic_words):
-            word_length = len(word)
-
-            # Validate we have enough characters remaining
-            if char_index + word_length > len(char_starts):
-                logger.warning(
-                    f"Word '{word}' (index {word_idx}) exceeds available characters. "
-                    f"Word length: {word_length}, Remaining chars: {len(char_starts) - char_index} "
-                    f"(sentence_id: {sentence_id})"
-                )
-                break
-
-            try:
-                # Get timing for this word
-                start_time = float(char_starts[char_index])
-                end_time = float(char_ends[char_index + word_length - 1])
-                duration = round(end_time - start_time, 3)
-
-                # Validate timing values
-                if start_time < 0 or end_time < 0 or duration < 0:
-                    logger.warning(
-                        f"Invalid timing values for word '{word}': "
-                        f"start={start_time}, end={end_time}, duration={duration} "
-                        f"(sentence_id: {sentence_id})"
-                    )
-                    continue
-
-                word_data = {
-                    "word": word,
-                    "start_time": round(start_time, 3),
-                    "end_time": round(end_time, 3),
-                    "duration": duration,
-                    "word_index": word_idx,
-                    "char_start_index": char_index,
-                    "char_end_index": char_index + word_length - 1,
-                }
-
-                word_timestamps.append(word_data)
-
-            except (ValueError, IndexError) as e:
-                logger.warning(
-                    f"Failed to extract timing for word '{word}' (index {word_idx}): {e} "
-                    f"(sentence_id: {sentence_id})"
-                )
-                continue
-
-            # Move to next word (skip the space character)
-            char_index += word_length + 1
-
-        extracted_count = len(word_timestamps)
-        if extracted_count != word_count:
-            logger.warning(
-                f"Extracted {extracted_count}/{word_count} word timestamps "
-                f"(sentence_id: {sentence_id})"
-            )
-        else:
-            logger.info(
-                f"Successfully extracted {extracted_count} word timestamps "
-                f"(sentence_id: {sentence_id})"
-            )
-
-        return word_timestamps
-
-    except Exception as e:
-        logger.error(
-            f"Critical error during word timestamp extraction: {e} "
-            f"(sentence_id: {sentence_id})"
-        )
-        return []
 
 
-@retry_operation(max_attempts=5, delay=2, backoff=2)
-def generate_speech_with_timestamps(
-    text: str,
-    voice_id: str,
-    voice_settings: VoiceSettings | None = None,
-    sentence_id: int | None = None,
-) -> dict[str, Any] | None:
-    """
-    Generate speech using ElevenLabs API with timestamp extraction.
-
-    Args:
-        text: The text to convert to speech
-        voice_id: The voice ID to use
-        voice_settings: Optional voice settings
-        sentence_id: Optional sentence ID for logging context
-
-    Returns:
-        Dictionary with audio data, metadata, and word timestamps, or None if failed
-    """
-    try:
-        client = _get_eleven_labs_client()
-
-        # Use default voice settings if none provided
-        if voice_settings is None:
-            voice_settings = VoiceSettings(**DEFAULT_VOICE_SETTINGS)
-        elif isinstance(voice_settings, dict):
-            voice_settings = VoiceSettings(**voice_settings)
-
-        logger.info(
-            f"Generating speech with timestamps for sentence {sentence_id}: '{text[:50]}...'"
-        )
-
-        # Generate speech with timestamps
-        response = client.text_to_speech.convert_with_timestamps(
-            text=text,
-            voice_id=voice_id,
-            model_id=ELEVENLABS_TTS_MODEL_ID,
-            voice_settings=voice_settings,
-        )
-
-        # Extract audio data
-        audio_data = None
-
-        # Handle different response formats
-        if hasattr(response, "audio_base_64") and response.audio_base_64:
-            # Direct response with base64 encoded audio
-            import base64
-
-            audio_data = base64.b64decode(response.audio_base_64)
-        elif hasattr(response, "audio") and response.audio:
-            # Direct response with raw audio
-            audio_data = response.audio
-        elif hasattr(response, "__iter__") and not hasattr(response, "audio"):
-            # Generator response (fallback)
-            audio_chunks = []
-
-            for audio_chunk in response:
-                if hasattr(audio_chunk, "audio") and audio_chunk.audio:
-                    chunk_data = audio_chunk.audio
-                elif hasattr(audio_chunk, "data") and audio_chunk.data:
-                    chunk_data = audio_chunk.data
-                elif hasattr(audio_chunk, "content") and audio_chunk.content:
-                    chunk_data = audio_chunk.content
-                elif isinstance(audio_chunk, bytes):
-                    chunk_data = audio_chunk
-                else:
-                    continue
-
-                audio_chunks.append(chunk_data)
-
-            if audio_chunks:
-                audio_data = b"".join(audio_chunks)
-            else:
-                logger.error("No audio chunks collected")
-                return None
-        else:
-            logger.error("No audio data in response")
-            return None
-
-        # Validate audio data
-        if not validate_mp3(audio_data):
-            logger.error("Invalid MP3 data received")
-            return None
-
-        # Extract word timestamps
-        word_timestamps = []
-        if hasattr(response, "alignment") and response.alignment:
-            word_timestamps = extract_word_timestamps(
-                text, response.alignment, sentence_id
-            )
-        else:
-            logger.warning(f"No alignment data in response for sentence {sentence_id}")
-
-        result = {
-            "audio": audio_data,
-            "duration": getattr(response, "duration", 0.0),
-            "voice_id": voice_id,
-            "text": text,
-            "word_timestamps": word_timestamps,
-            "timestamp_count": len(word_timestamps),
-        }
-
-        logger.info(
-            f"Successfully generated speech with {len(word_timestamps)} word timestamps "
-            f"for sentence {sentence_id}"
-        )
-
-        return result
-
-    except Exception as e:
-        logger.error(
-            f"Speech generation with timestamps failed for sentence {sentence_id}: {e}"
-        )
-        return None
 
 
 def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
@@ -925,11 +683,6 @@ def create_article_audio(
                 logger.warning("Failed to generate summary audio")
 
         # Process each sentence
-        all_word_timestamps = []
-        cumulative_time_offset = (
-            0.0  # Track cumulative time for timestamp offset calculation
-        )
-        global_word_index = 0  # Track global word index across all sentences
 
         for i, sentence in enumerate(sentences):
             arabic_text = sentence.get("arabic_text", "")
@@ -939,181 +692,26 @@ def create_article_audio(
 
             if not arabic_text or not english_text:
                 logger.warning(f"Skipping sentence {i + 1} - missing text")
-                # Still update offset to maintain alignment
-                estimated_duration = len(arabic_text) * 0.08  # ~80ms per character
-                cumulative_time_offset += estimated_duration + (BILINGUAL_AUDIO_PAUSE_MS / 1000.0)
-                word_count = len(arabic_text.split()) if arabic_text else 0
-                global_word_index += word_count
                 continue
 
             logger.info(
                 f"Processing sentence {i + 1}/{len(sentences)} (ID: {sentence_id})"
             )
 
-            # Generate Arabic audio for this sentence WITH TIMESTAMPS
-            # RECOVERY STRATEGY 0: Retry mechanism for transient failures
-            max_retries = 2
-            arabic_response = None
+            # Generate Arabic audio for this sentence
+            arabic_response = generate_speech(
+                text=tashkeel_text,
+                voice_id=ARABIC_VOICE_ID,
+                voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
+            )
 
-            for retry_attempt in range(max_retries + 1):
-                try:
-                    arabic_response = generate_speech_with_timestamps(
-                        text=tashkeel_text,
-                        voice_id=ARABIC_VOICE_ID,
-                        voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
-                        sentence_id=sentence_id,
-                    )
-
-                    if arabic_response and arabic_response.get("audio"):
-                        break  # Success, exit retry loop
-                    elif retry_attempt < max_retries:
-                        logger.warning(
-                            f"Audio generation failed for sentence {i + 1}, retry {retry_attempt + 1}/{max_retries}"
-                        )
-                        import time
-                        time.sleep(1)  # Brief delay before retry
-                    else:
-                        logger.error(
-                            f"Audio generation failed for sentence {i + 1} after {max_retries + 1} attempts"
-                        )
-
-                except Exception as e:
-                    if retry_attempt < max_retries:
-                        logger.warning(
-                            f"Audio generation exception for sentence {i + 1}, retry {retry_attempt + 1}/{max_retries}: {e}"
-                        )
-                        import time
-                        time.sleep(1)
-                    else:
-                        logger.error(
-                            f"Audio generation exception for sentence {i + 1} after {max_retries + 1} attempts: {e}"
-                        )
-
-            # ROBUST RECOVERY: Handle audio generation failures gracefully
             if not arabic_response or not arabic_response.get("audio"):
-                logger.error(
-                    f"Failed to generate Arabic audio for sentence {i + 1} (ID: {sentence_id}) after all retries"
-                )
-
-                # RECOVERY STRATEGY 1: Estimate duration and maintain offset alignment
-                estimated_duration = len(arabic_text) * 0.08  # ~80ms per character
-                cumulative_time_offset += estimated_duration + (BILINGUAL_AUDIO_PAUSE_MS / 1000.0)
-
-                # Update global word index to maintain consistency
-                word_count = len(arabic_text.split())
-                global_word_index += word_count
-
-                # RECOVERY STRATEGY 2: Create silent audio segment to maintain audio continuity
-                try:
-                    from pydub import AudioSegment
-                    # Create silent audio with estimated duration
-                    silent_duration_ms = int(estimated_duration * 1000)
-                    silent_audio = AudioSegment.silent(duration=silent_duration_ms)
-
-                    # Convert to bytes for consistency
-                    import io
-                    output = io.BytesIO()
-                    silent_audio.export(output, format="mp3")
-                    silent_audio_bytes = output.getvalue()
-
-                    arabic_segments.append(silent_audio_bytes)
-                    logger.info(f"Created silent audio segment ({silent_duration_ms}ms) for failed sentence {i + 1}")
-
-                except Exception as e:
-                    logger.warning(f"Failed to create silent audio for sentence {i + 1}: {e}")
-                    # Fallback: skip audio segment but maintain timing
-                    pass
-
+                logger.error(f"Failed to generate Arabic audio for sentence {i + 1}")
                 continue
 
             arabic_audio = arabic_response["audio"]
             arabic_segments.append(arabic_audio)
 
-            # Decode actual segment duration to avoid cumulative drift
-            # Prefer real MP3 duration since final article audio is built from decoded segments
-            try:
-                from pydub import AudioSegment
-
-                segment_duration_s = AudioSegment.from_mp3(io.BytesIO(arabic_audio)).duration_seconds
-            except Exception:
-                # Fallbacks: use alignment span if available, else simple heuristic
-                _fallback_alignment = arabic_response.get("word_timestamps", [])
-                if _fallback_alignment:
-                    segment_duration_s = (
-                        float(_fallback_alignment[-1]["end_time"]) - float(_fallback_alignment[0]["start_time"])
-                    )
-                else:
-                    segment_duration_s = len(arabic_text) * 0.08  # ~80ms per character
-
-            # Collect word timestamps from this sentence with cumulative offset
-            sentence_timestamps = arabic_response.get("word_timestamps", [])
-            if sentence_timestamps:
-                logger.info(
-                    f"Collected {len(sentence_timestamps)} word timestamps for sentence {i + 1}"
-                )
-
-                # Realign and rescale timestamps to match actual audio duration for this sentence
-                offset_timestamps = []
-                first_start = float(sentence_timestamps[0]["start_time"]) if sentence_timestamps else 0.0
-                last_end = float(sentence_timestamps[-1]["end_time"]) if sentence_timestamps else 0.0
-                alignment_span = max(last_end - first_start, 0.000001)
-                scale = segment_duration_s / alignment_span if alignment_span > 0 else 1.0
-
-                for local_word_idx, timestamp in enumerate(sentence_timestamps):
-                    rel_start = float(timestamp["start_time"]) - first_start
-                    rel_end = float(timestamp["end_time"]) - first_start
-                    adjusted_start = cumulative_time_offset + (rel_start * scale)
-                    adjusted_end = cumulative_time_offset + (rel_end * scale)
-
-                    offset_timestamp = {
-                        "word": timestamp.get("word"),
-                        "start_time": round(adjusted_start, 3),
-                        "end_time": round(adjusted_end, 3),
-                        "duration": round(max(adjusted_end - adjusted_start, 0.0), 3),
-                        "word_index": global_word_index + local_word_idx,
-                        "char_start_index": timestamp.get("char_start_index", 0),
-                        "char_end_index": timestamp.get("char_end_index", 0),
-                    }
-                    offset_timestamps.append(offset_timestamp)
-
-                all_word_timestamps.extend(offset_timestamps)
-
-                # Advance offset by actual decoded segment duration + configured pause
-                cumulative_time_offset += segment_duration_s + (BILINGUAL_AUDIO_PAUSE_MS / 1000.0)
-                # Increment global word index for next sentence
-                global_word_index += len(sentence_timestamps)
-            else:
-                logger.warning(
-                    f"No word timestamps collected for sentence {i + 1} (ID: {sentence_id})"
-                )
-
-                # Create placeholder timestamps that exactly span the actual segment duration
-                words = arabic_text.split()
-                if words:
-                    per_word = segment_duration_s / len(words)
-
-                    placeholder_timestamps = []
-                    for word_idx, word in enumerate(words):
-                        start_time = cumulative_time_offset + (word_idx * per_word)
-                        end_time = start_time + per_word
-
-                        placeholder_timestamps.append({
-                            "word": word,
-                            "start_time": round(start_time, 3),
-                            "end_time": round(end_time, 3),
-                            "duration": round(per_word, 3),
-                            "word_index": global_word_index + word_idx,
-                            "char_start_index": 0,
-                            "char_end_index": len(word) - 1,
-                            "is_placeholder": True,
-                        })
-
-                    all_word_timestamps.extend(placeholder_timestamps)
-                    logger.info(f"Created {len(placeholder_timestamps)} placeholder timestamps for sentence {i + 1}")
-
-                # Advance offset by actual segment duration + pause
-                cumulative_time_offset += segment_duration_s + (BILINGUAL_AUDIO_PAUSE_MS / 1000.0)
-                global_word_index += len(words) if words else 0
 
             # Generate English audio for bilingual version (without timestamps for now)
             english_response = generate_speech(
@@ -1132,7 +730,7 @@ def create_article_audio(
             bilingual_segments.append(arabic_audio)
 
             logger.info(
-                f"Sentence {i + 1} audio generated successfully with {len(sentence_timestamps)} timestamps"
+                f"Sentence {i + 1} audio generated successfully"
             )
 
         if not arabic_segments:
@@ -1217,15 +815,8 @@ def create_article_audio(
                 os.remove(temp_file)
 
         # Validate collected timestamps
-        if all_word_timestamps:
-            logger.info(f"Total word timestamps collected: {len(all_word_timestamps)}")
-        else:
-            logger.warning("No word timestamps were collected for this article")
-
-        # Add timestamps to return data
+        # Return audio URLs without timestamps
         result = urls.copy()
-        result["word_timestamps"] = all_word_timestamps
-        result["timestamp_count"] = len(all_word_timestamps)
 
         logger.info("Article audio creation completed successfully")
         return result
@@ -1398,7 +989,7 @@ def process_word_audio_for_sentences(
 
     for sentence_idx, sentence in enumerate(sentences):
         sentence_id = sentence.get("id") or (sentence_idx + sentence_id_offset + 1)
-        word_data_list = sentence.get("word_timestamps", [])
+        word_data_list = sentence.get("words", [])
 
         if not word_data_list:
             # No word data for sentence
@@ -1467,25 +1058,17 @@ def process_word_audio_for_article(article_id: int, output_dir: str) -> bool:
         for sentence in sentences_result.data:
             sentence_id = sentence["id"]
 
-            # Get word timestamps for this sentence
+            # Get words for this sentence
             words_result = (
                 client.table("sentence_words")
-                .select("id, position, word_form, start_time, end_time")
+                .select("id, position, word_form")
                 .eq("sentence_id", sentence_id)
                 .order("position")
                 .execute()
             )
 
-            # Filter out NULL timestamps in Python
-            if words_result.data:
-                words_result.data = [
-                    word
-                    for word in words_result.data
-                    if word.get("start_time") is not None
-                ]
-
             if not words_result.data:
-                # No word timestamps found for sentence
+                # No words found for sentence
                 continue
 
             word_data_list = []
@@ -1493,8 +1076,6 @@ def process_word_audio_for_article(article_id: int, output_dir: str) -> bool:
                 word_data_list.append(
                     {
                         "word_form": word["word_form"],
-                        "start_time": word["start_time"],
-                        "end_time": word["end_time"],
                         "word_id": word["id"],
                         "position": word["position"],
                     }

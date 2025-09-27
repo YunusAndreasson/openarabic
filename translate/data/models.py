@@ -533,10 +533,6 @@ class ArticleData(BaseModel):
     audio_url: str = Field(
         description="URL to article audio. Required for database insertion."
     )
-    word_timestamps: list[dict] = Field(
-        default_factory=list,
-        description="Word-level timestamps for Arabic audio playback",
-    )
 
 
 class TranslationValidationError(Exception):
