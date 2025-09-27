@@ -12,6 +12,7 @@ import { articlesService } from '@/services/articles';
 import { authorsService } from '@/services/authors';
 import { bookmarkService } from '@/services/bookmark';
 import { categoriesService } from '@/services/categories';
+import { readingProgressService } from '@/services/readingProgress';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
 import { getBeginnerArticles } from '@/utils/articleUtils';
@@ -55,7 +56,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         }),
         queryClient.fetchQuery({
           queryKey: ['articles'],
-          queryFn: () => articlesService.getArticles({ limit: 20 }), // Load fewer articles initially for faster startup
+          queryFn: () => articlesService.getArticles(), // Load all articles for filtering
           ...CACHE_TIMES.ARTICLES,
           retry: 3,
         }),
@@ -63,6 +64,18 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
       const [_categories, _articles] = await Promise.all(criticalPromises);
       setPreloadProgress(25);
+
+      // Preload reading progress immediately after articles to prevent card reordering
+      if (user?.id && Array.isArray(_articles) && _articles.length > 0) {
+        const articleIds = (_articles as Article[]).map(article => article.id);
+        await queryClient.prefetchQuery({
+          queryKey: ['reading-progress-bulk', user.id, [...articleIds].sort((a, b) => a - b)],
+          queryFn: () => readingProgressService.getBulkProgress(user.id, articleIds),
+          staleTime: 300000, // 5 minutes - data is fresh for 5 minutes
+          gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
+          retry: 2,
+        });
+      }
 
       // Pre-compute and cache featured articles for immediate availability
       if (Array.isArray(_articles) && _articles.length > 0) {
@@ -142,7 +155,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         }
       }
 
-      setPreloadProgress(40);
+      setPreloadProgress(50);
 
       // Load user-specific background data asynchronously
       if (user?.id) {
@@ -168,7 +181,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         }, 500); // Delay background loading by 500ms to prioritize initial UI responsiveness
       }
 
-      setPreloadProgress(80);
+      setPreloadProgress(70);
       setIsLoaded(true);
       setPreloadProgress(100);
 

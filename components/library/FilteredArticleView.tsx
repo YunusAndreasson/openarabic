@@ -250,7 +250,8 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
     []
   );
 
-  // Show loading state when loading and no articles yet, or when we have articles but loading continues
+  // Show loading state only when loading and no articles yet
+  // Progress data is now preloaded, so no need to wait for it
   const shouldShowLoading =
     loading && (visibleArticles.length === 0 || (articles?.length && !shouldShowEmpty));
 

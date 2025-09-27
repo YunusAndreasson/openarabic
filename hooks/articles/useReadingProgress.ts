@@ -331,8 +331,8 @@ export function useBulkReadingProgress(articleIds: number[]) {
       return readingProgressService.getBulkProgress(user.id, articleIds);
     },
     enabled: !!user?.id && articleIds.length > 0,
-    staleTime: 0, // Always consider data stale to force refetch
-    refetchOnMount: true, // Force refetch on mount to ensure we get fresh data
+    staleTime: 30000, // 30 seconds - data is fresh for 30 seconds to prevent flickering
+    refetchOnMount: false, // Don't force refetch on mount to prevent card position changes
     retry: 3, // Retry up to 3 times if the query fails
     gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
   });

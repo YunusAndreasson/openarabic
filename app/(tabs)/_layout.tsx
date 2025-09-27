@@ -152,8 +152,8 @@ const styles = StyleSheet.create({
   },
   badgeContainer: {
     position: 'absolute',
-    right: -LAYOUT.SPACING.MICRO - 2, // -3px for compact positioning
-    top: -LAYOUT.SPACING.MICRO + 1, // -2px for compact positioning
+    right: -LAYOUT.SPACING.MEDIUM, // -6px to move badge further right
+    top: -LAYOUT.SPACING.MICRO, // -2px for compact positioning
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     width: LAYOUT.COMPONENT.BADGE.SIZE,
     height: LAYOUT.COMPONENT.BADGE.SIZE,

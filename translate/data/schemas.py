@@ -116,7 +116,19 @@ Focus on preserving Islamic terminology and classical Arabic meanings. Handle Ar
 For each sentence, provide:
 1. translation:
    - Simple vocabulary; English‑only output (used for audiobook and reading)
-   - Don't use Arabic words in translation (God instead of Allah, etc.)
+   - **CRITICAL: Use English words only - never include Arabic terms in parentheses or brackets**
+   - **Examples of required substitutions:**
+     * Allah → God
+     * Hadith → Narration
+     * Sujood → Prostration
+     * Ruko → Bowing
+     * Dhikr → Remembrance
+     * Tawhid → Monotheism
+     * Shirk → Polytheism
+     * Salah → Prayer
+     * Zakat → Charity
+     * Hajj → Pilgrimage
+     * Quran → Scripture
    - Match register: solemn (supplications), precise (hadith)
    - Grammatically sound (conjugation, agreement, syntax)
 2. notes:
@@ -178,6 +190,19 @@ Guidelines:
 - pos must be from the allowed set: """
     + format_valid_pos()
     + """
+- **CRITICAL: Use English words only - never include Arabic terms in parentheses or brackets**
+- **Required English substitutions for Islamic terms:**
+  * Allah → God
+  * Hadith → Narration
+  * Sujood → Prostration
+  * Ruko → Bowing
+  * Dhikr → Remembrance
+  * Tawhid → Monotheism
+  * Shirk → Polytheism
+  * Salah → Prayer
+  * Zakat → Charity
+  * Hajj → Pilgrimage
+  * Quran → Scripture
 - Prefer explicit multi-word English phrases that reflect Arabic morphology; avoid condensed/archaic forms like 'therein', 'thereof', 'whereby'. Use 'in it', 'of it', 'by which', 'for him', etc.
 - Never omit functional words; if the Arabic token encodes a preposition+pronoun (e.g., فيه، له، منهم), the english must include both parts (e.g., "in it", "for him", "from them").
 
@@ -279,6 +304,7 @@ Goals:
 - ❌ Don't change "مِنْ" to "من" (this removes necessary diacritics)
 - ❌ Don't change "كَتَبَ" to "كتب" (this removes necessary diacritics)
 - ❌ Don't use condensed/archaic English compounds like "therein/thereof/whereby" when the Arabic encodes separate concepts (e.g., preposition + pronoun).
+- ❌ **NEVER include Arabic terms in English translations** (e.g., "God (Allah)", "prayer (salah)", "scripture (Quran)")
 
 **What TO do:**
 - ✅ Keep correct essential forms exactly as provided
@@ -289,6 +315,18 @@ Goals:
 - ✅ Ensure functional words are present; do not omit prepositions/pronouns encoded in Arabic tokens.
 - ✅ **CRITICAL**: Select only ONE final English translation from the alternatives provided in the previous phase
 - ✅ Remove all option arrays; each word must have a single, definitive English translation and no synonyms such as "book/scripture"
+- ✅ **ENSURE PURE ENGLISH**: Replace any Arabic terms with English equivalents:
+  * Allah → God
+  * Hadith → Narration
+  * Sujood → Prostration
+  * Ruko → Bowing
+  * Dhikr → Remembrance
+  * Tawhid → Monotheism
+  * Shirk → Polytheism
+  * Salah → Prayer
+  * Zakat → Charity
+  * Hajj → Pilgrimage
+  * Quran → Scripture
 
 **📝 GRAMMAR NOTES REFINEMENT:**
 - ✅ **PRESERVE INFORMATIVE STYLE**: Keep grammar notes clear and educational

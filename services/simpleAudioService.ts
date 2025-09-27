@@ -572,10 +572,9 @@ class SimpleAudioService {
           const rawPosition = this.currentPlayer.currentTime ?? this.currentPlayer.position ?? 0;
           const rawDuration = this.currentPlayer.duration ?? this.currentPlayer.durationMillis ?? 0;
 
-          const currentTimeSeconds =
-            rawPosition > 1000 && rawPosition > 600 ? rawPosition / 1000 : rawPosition;
-          const durationSeconds =
-            rawDuration > 1000 && rawDuration > 600 ? rawDuration / 1000 : rawDuration;
+          // Robust ms/seconds detection: if values look like millis (> 600), convert once
+          const currentTimeSeconds = rawPosition > 600 ? rawPosition / 1000 : rawPosition;
+          const durationSeconds = rawDuration > 600 ? rawDuration / 1000 : rawDuration;
 
           // Add safety checks for invalid values
           const safeCurrentTime =

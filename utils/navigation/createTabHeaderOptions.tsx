@@ -29,12 +29,11 @@ export function createTabHeaderOptions({
   const headerStyles = {
     headerContainer: {
       backgroundColor,
-      height: 56, // Increased for more breathing room around streak and profile elements
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
       justifyContent: 'space-between' as const,
       paddingHorizontal: 16,
-      paddingVertical: 4, // Small vertical padding for better spacing
+      paddingBottom: 2, // Reduced bottom padding for tighter spacing
     },
     titleText: {
       fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
