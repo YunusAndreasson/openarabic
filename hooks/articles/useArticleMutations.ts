@@ -151,6 +151,7 @@ export const useArticleMutations = (
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
+        queryClient.invalidateQueries({ queryKey: ['enhancedAudioTracks', userId, audioPreference] });
       },
       onError: (error: Error) => {
         // Silently handle errors - no toast notifications for bookmarks actions
@@ -167,7 +168,7 @@ export const useArticleMutations = (
         }
       },
     }),
-    [queryClient, refetchReadingListStatus]
+    [queryClient, refetchReadingListStatus, audioPreference]
   );
 
   // Memoize mutation options for removing from reading list
@@ -182,13 +183,14 @@ export const useArticleMutations = (
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
+        queryClient.invalidateQueries({ queryKey: ['enhancedAudioTracks', userId, audioPreference] });
       },
       onError: (error: Error) => {
         // Silently handle errors - no toast notifications for bookmarks actions
         handleError(error, { showToast: false, captureSentry: false });
       },
     }),
-    [queryClient, refetchReadingListStatus]
+    [queryClient, refetchReadingListStatus, audioPreference]
   );
 
   // Memoize mutation options for toggling word study status
