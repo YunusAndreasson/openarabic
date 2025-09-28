@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { CACHE_TIMES } from '@/constants/queryConfig';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -44,11 +44,20 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : ['no-user', 'due'],
     queryFn: () => {
       if (!userId) throw new Error('User ID is required');
-      // words do not appear as still due on the Practice screen
+      // Apply cooldown only if the last session was just completed
+      const lastCompletedAt = queryClient.getQueryData<number>([
+        FSRS_BASE_KEY,
+        userId,
+        'lastCompletedAt',
+      ]);
+      const recentlyCompleted =
+        typeof lastCompletedAt === 'number' &&
+        Date.now() - lastCompletedAt < DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+
       return studyWordsFSRSService.getFSRSWords(userId, {
         onlyDue: true,
         limit,
-        sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
+        ...(recentlyCompleted ? { sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS } : {}),
       });
     },
     enabled: !!userId, // Only enable when we have userId
@@ -59,7 +68,18 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
       const allWords = queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(userId));
       if (allWords) {
         const nowMs = Date.now();
-        const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+        // Apply cooldown only if session was recently completed
+        const lastCompletedAt = queryClient.getQueryData<number>([
+          FSRS_BASE_KEY,
+          userId,
+          'lastCompletedAt',
+        ]);
+        const applyCooldown =
+          typeof lastCompletedAt === 'number' &&
+          Date.now() - lastCompletedAt < DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+        const cutoffMs = applyCooldown
+          ? nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000
+          : -Infinity;
 
         const normalizeTs = (ts: string | null | undefined) =>
           ts ? ts.replace(' ', 'T') : undefined;
@@ -77,7 +97,6 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
           const lastStr = normalizeTs(word.fsrs_last_review);
           const lastMs = lastStr ? Date.parse(lastStr) : 0;
           const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-
           return isDue && !isRecentlyReviewed;
         });
 

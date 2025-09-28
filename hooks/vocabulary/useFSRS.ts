@@ -5,11 +5,11 @@ import { createEmptyCard, fsrs, generatorParameters, Rating, State } from 'ts-fs
 
 import {
   DEFAULT_SESSION_COOLDOWN_HOURS,
+  FSRS_BASE_KEY,
   FSRS_QUERY_KEYS,
   MIN_WORD_SPACING,
   OPTIMIZED_FSRS_CONFIG,
 } from '@/constants/fsrs';
-import { strugglingWordsService } from '@/services/strugglingWords';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { ToastType } from '@/types/enums';
 import type { FSRSStateTracking, UseFSRSOptions, UseFSRSResult } from '@/types/fsrs.types';
@@ -49,8 +49,6 @@ type SpacingQueue = SpacingState;
 export function useFSRS({
   userId,
   onComplete,
-  useAllWords = false,
-  mode,
   sessionCooldownHours: _sessionCooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS,
 }: UseFSRSOptions): UseFSRSResult {
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
@@ -95,45 +93,25 @@ export function useFSRS({
   const fsrsInstance = useMemo(() => fsrs(fsrsParams), [fsrsParams]);
 
   const { data: dueWords, isLoading } = useQuery({
-    queryKey: userId
-      ? mode === 'spaced'
-        ? FSRS_QUERY_KEYS.struggling(userId, 50)
-        : useAllWords
-        ? FSRS_QUERY_KEYS.allWithCooldown(userId, _sessionCooldownHours)
-        : FSRS_QUERY_KEYS.due(userId)
-      : mode === 'spaced'
-      ? FSRS_QUERY_KEYS.FALLBACK.due
-      : useAllWords
-      ? FSRS_QUERY_KEYS.FALLBACK.allWithCooldown(_sessionCooldownHours)
-      : FSRS_QUERY_KEYS.FALLBACK.due,
+    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : FSRS_QUERY_KEYS.FALLBACK.due,
     queryFn: async () => {
       if (!userId) return [];
 
-      if (mode === 'spaced') {
-        return strugglingWordsService.getStrugglingWords(userId, 50, _sessionCooldownHours);
-      }
+      // If the last session was recently completed, temporarily apply cooldown
+      const lastCompletedAt = queryClient.getQueryData<number>([
+        FSRS_BASE_KEY,
+        userId,
+        'lastCompletedAt',
+      ]);
+      const recentlyCompleted =
+        typeof lastCompletedAt === 'number' &&
+        Date.now() - lastCompletedAt < _sessionCooldownHours * 60 * 60 * 1000;
 
       const words = await studyWordsFSRSService.getFSRSWords(userId, {
-        onlyDue: !useAllWords,
+        onlyDue: true,
         forStats: false,
-        sessionCooldownHours: _sessionCooldownHours,
+        ...(recentlyCompleted ? { sessionCooldownHours: _sessionCooldownHours } : {}),
       });
-
-      if (useAllWords && _sessionCooldownHours > 0) {
-        const nowMs = Date.now();
-        const cutoffMs = nowMs - _sessionCooldownHours * 60 * 60 * 1000;
-        const normalizeTs = (ts: unknown) => {
-          if (typeof ts === 'string') return ts.replace(' ', 'T');
-          if (ts instanceof Date) return ts.toISOString();
-          return undefined;
-        };
-        return words.filter(w => {
-          const lastStr = normalizeTs(w.fsrs_last_review as unknown);
-          const lastMs = lastStr ? Date.parse(lastStr) : 0;
-          const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-          return !isRecentlyReviewed;
-        });
-      }
 
       return words;
     },
@@ -456,8 +434,6 @@ export function useFSRS({
       onComplete,
       getNextWordWithSpacing,
       updateSpacingCounters,
-      mode,
-      useAllWords,
       _sessionCooldownHours,
     ]
   );
@@ -501,16 +477,8 @@ export function useFSRS({
   const invalidateQueries = useCallback(() => {
     if (!userId) return;
 
-    // Invalidate the specific query type we're using
-    if (mode === 'spaced') {
-      // Struggling words session
-      queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.struggling(userId, 50) });
-    } else {
-      const currentQueryKey = useAllWords
-        ? FSRS_QUERY_KEYS.allWithCooldown(userId, _sessionCooldownHours)
-        : FSRS_QUERY_KEYS.due(userId);
-      queryClient.invalidateQueries({ queryKey: currentQueryKey });
-    }
+    // Only due-words flow is supported
+    queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(userId) });
 
     // Also invalidate related queries
     queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(userId) });
@@ -518,7 +486,7 @@ export function useFSRS({
     stateTrackingRef.current.queueInitialized = false;
     queueRef.current = new PriorityQueue<StudyWord>();
     spacingQueueRef.current = createSpacingState();
-  }, [queryClient, userId, useAllWords, mode]);
+  }, [queryClient, userId]);
 
   return {
     currentWord,

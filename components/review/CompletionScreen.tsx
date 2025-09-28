@@ -17,7 +17,7 @@ import {
   COMPLETION_TITLE_DELAY,
   TIMING_CONFIG,
 } from '@/constants/animation';
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -65,6 +65,11 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
     if (!useThemedView && user?.id) {
       // Defer query invalidation until after completion screen animation completes
       InteractionManager.runAfterInteractions(() => {
+        // Mark session completion time to enable temporary cooldown on due query
+        if (user?.id) {
+          queryClient.setQueryData([FSRS_BASE_KEY, user.id, 'lastCompletedAt'], Date.now());
+        }
+
         // Invalidate all FSRS word queries to ensure coach messages and study tab update
         queryClient.invalidateQueries({
           predicate: query => {

@@ -6,6 +6,7 @@ import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
 import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
+import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import { generateImageUrl } from '@/utils/imageUtils';
 
@@ -46,33 +47,60 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
       `article-${currentArticleId}` // Unique scope per article for cache consistency
     );
 
-    // Limit to requested number of articles
+    // Fetch bulk reading progress for selected articles
+    const selectedArticleIds = useMemo(() => selectedArticles.map(a => a.id), [selectedArticles]);
+    const { data: progressMap } = useSafeBulkReadingProgress(selectedArticleIds);
+
+    // Sort so that unread articles (no progress record) appear first, preserving relative order
+    const sortedByUnreadFirst = useMemo(() => {
+      if (!selectedArticles.length) return selectedArticles;
+      const unread: Article[] = [];
+      const read: Article[] = [];
+      for (const a of selectedArticles) {
+        if (progressMap?.has?.(a.id)) {
+          read.push(a);
+        } else {
+          unread.push(a);
+        }
+      }
+      return [...unread, ...read];
+    }, [selectedArticles, progressMap]);
+
+    // Limit to requested number of articles after sorting
     const relatedArticles = useMemo(() => {
-      return selectedArticles.slice(0, maxArticles);
-    }, [selectedArticles, maxArticles]);
+      return sortedByUnreadFirst.slice(0, maxArticles);
+    }, [sortedByUnreadFirst, maxArticles]);
 
     // Note: Navigation is now handled by Link component with dangerouslySingular
 
     // Memoize the article cards to prevent unnecessary re-renders
     const articleCards = useMemo(() => {
-      return relatedArticles.map((article, index) => (
-        <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
-          <Link
-            href={getArticleRoute(article.id, article.title)}
-            replace
-            dangerouslySingular={true}
-            asChild
-          >
-            <ListenListItemCard
-              title={article.title}
-              author={article.author.name}
-              difficultyLevel={article.difficulty_level}
-              imageUrl={generateImageUrl(article.image_url)}
-            />
-          </Link>
-        </View>
-      ));
-    }, [relatedArticles]);
+      return relatedArticles.map((article, index) => {
+        const progress = progressMap?.get?.(article.id);
+        const hasStartedReading = !!progress;
+        const progressPercentage = progress?.progress_percentage ?? 0;
+
+        return (
+          <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
+            <Link
+              href={getArticleRoute(article.id, article.title)}
+              replace
+              dangerouslySingular={true}
+              asChild
+            >
+              <ListenListItemCard
+                title={article.title}
+                author={article.author.name}
+                difficultyLevel={article.difficulty_level}
+                imageUrl={generateImageUrl(article.image_url)}
+                hasStartedReading={hasStartedReading}
+                progressPercentage={progressPercentage}
+              />
+            </Link>
+          </View>
+        );
+      });
+    }, [relatedArticles, progressMap]);
 
     // Early return if no articles to show
     if (relatedArticles.length === 0) {

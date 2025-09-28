@@ -4,8 +4,6 @@ import type { StudyWord } from '@/types/vocabulary.types';
 export interface UseFSRSOptions {
   userId: string | undefined;
   onComplete?: () => void;
-  useAllWords?: boolean; // If true, fetch all words instead of just due words
-  mode?: string; // 'spaced' for struggling words, undefined for normal practice
   /**
    * Session cooldown: Exclude words reviewed within this many hours.
    * Prevents words from appearing immediately after a study session.

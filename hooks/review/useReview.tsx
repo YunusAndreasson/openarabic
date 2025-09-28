@@ -105,7 +105,7 @@ const TRANSITION_DELAYS = {
   },
 };
 
-export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}): UseReviewReturn {
+export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -213,8 +213,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     useFSRS({
       userId: user?.id,
       onComplete: triggerCompletionTransition,
-      useAllWords: fromRemember, // When fromRemember is true, use all words instead of just due words
-      mode, // Pass the mode for struggling words filtering
       sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
     });
 

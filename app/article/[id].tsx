@@ -412,17 +412,15 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         return;
       }
 
-      // Get current state after the operation
-      const isNowInStudy =
-        localStudyStates.get(word.root_id) ??
-        (() => {
-          const allWords =
-            queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(user.id)) ?? [];
-          return allWords.some(studyWord => studyWord.root_id === word.root_id);
-        })();
+      // Use the mutation result directly to determine new state
+      const isNowInStudy = result;
 
-      // Update local state to reflect the new state
-      setLocalStudyStates(prev => new Map(prev.set(word.root_id, isNowInStudy)));
+      // Update local state immutably to reflect the new state
+      setLocalStudyStates(prev => {
+        const next = new Map(prev);
+        next.set(word.root_id, isNowInStudy);
+        return next;
+      });
 
       // Invalidate queries to sync with backend
       await queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });

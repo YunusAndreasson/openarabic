@@ -5,7 +5,7 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';
 import type { ColorName } from '@/constants/colors';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
@@ -383,13 +383,18 @@ export const WordTooltip = memo(
       [zIndex]
     );
 
+    const effectiveTooltipHeight = useMemo(
+      () => Math.max(dimensions.tooltipHeight, MIN_TOUCH_TARGET.MEDIUM),
+      [dimensions.tooltipHeight]
+    );
+
     const tooltipStyle = useMemo(
       () => ({
         ...STATIC_STYLES.tooltip,
         top: dimensions.tooltipTop,
         left: dimensions.tooltipLeft,
         width: dimensions.tooltipWidth,
-        height: dimensions.tooltipHeight,
+        height: effectiveTooltipHeight,
         backgroundColor: colors.elevation1,
         borderColor: colors.border,
         shadowColor: colors.shadow,
@@ -400,7 +405,7 @@ export const WordTooltip = memo(
         dimensions.tooltipTop,
         dimensions.tooltipLeft,
         dimensions.tooltipWidth,
-        dimensions.tooltipHeight,
+        effectiveTooltipHeight,
         colors.elevation1,
         colors.border,
         colors.shadow,
@@ -411,7 +416,7 @@ export const WordTooltip = memo(
       () => ({
         ...STATIC_STYLES.arrow,
         left: dimensions.arrowLeft,
-        top: dimensions.tooltipHeight,
+        top: effectiveTooltipHeight,
         borderTopWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
         borderLeftWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
         borderRightWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
@@ -419,7 +424,7 @@ export const WordTooltip = memo(
         borderLeftColor: colors.transparent,
         borderRightColor: colors.transparent,
       }),
-      [dimensions.arrowLeft, dimensions.tooltipHeight, colors.elevation1, colors.transparent]
+      [dimensions.arrowLeft, effectiveTooltipHeight, colors.elevation1, colors.transparent]
     );
 
     if (!visible || !layout) return null;
