@@ -18,7 +18,7 @@ The Arabic translation pipeline processes Islamic texts through a sophisticated 
 translate/
 ├── 0_inbox/                    # Raw input files by author
 │   ├── 1_al_imam_an_nawawi/
-│   ├── 2_ibn_al_qayyim_al_jawziyyah/
+│   ├── 2_ibn_al_qayyim/
 │   └── [author_folders]/
 ├── 1_split/                    # Sentence-split files (flat)
 ├── 2_translate/                # Translated files (flat)

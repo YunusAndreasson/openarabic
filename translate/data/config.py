@@ -86,7 +86,7 @@ TRANSLATION_TIMEOUT = 30
 # Author mapping for inbox folders and file prefixes
 AUTHOR_FOLDER_MAPPING = {
     "1_al_imam_an_nawawi": "al-Imam an-Nawawi",
-    "2_ibn_al_qayyim_al_jawziyyah": "Ibn al-Qayyim al-Jawziyyah",
+    "2_ibn_al_qayyim": "Ibn al-Qayyim al-Jawziyyah",
     "3_ibn_taymiyyah": "Ibn Taymiyyah",
     "4_ibn_al_jawzi": "Ibn al-Jawzi",
     "5_ibn_kathir": "Ibn Kathir",

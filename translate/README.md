@@ -10,7 +10,7 @@ The pipeline uses a numbered directory system to organize files by processing ph
 translate/
 ├── 0_inbox/                    # Raw input files organized by author
 │   ├── 1_al_imam_an_nawawi/
-│   ├── 2_ibn_al_qayyim_al_jawziyyah/
+│   ├── 2_ibn_al_qayyim/
 │   ├── 3_ibn_taymiyyah/
 │   ├── 4_ibn_al_jawzi/
 │   ├── 5_ibn_kathir/
@@ -160,7 +160,7 @@ The pipeline automatically maps folder names to database authors:
 | Folder                         | Author Name                |
 | ------------------------------ | -------------------------- |
 | `1_al_imam_an_nawawi`          | al-Imam an-Nawawi          |
-| `2_ibn_al_qayyim_al_jawziyyah` | Ibn al-Qayyim al-Jawziyyah |
+| `2_ibn_al_qayyim` | Ibn al-Qayyim al-Jawziyyah |
 | `3_ibn_taymiyyah`              | Ibn Taymiyyah              |
 | `4_ibn_al_jawzi`               | Ibn al-Jawzi               |
 | `5_ibn_kathir`                 | Ibn Kathir                 |

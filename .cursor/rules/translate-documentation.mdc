@@ -65,7 +65,7 @@ The main.py file provides these CLI arguments:
 
 The system uses a numbered folder structure with automatic author mapping:
 
-- Folders: `1_al_imam_an_nawawi`, `2_ibn_al_qayyim_al_jawziyyah`, etc.
+- Folders: `1_al_imam_an_nawawi`, `2_ibn_al_qayyim`, etc.
 - Files: `{author_number}_{article_name}_split.json`, `{author_number}_{article_name}_translated.json`
 
 ## Translation Pipeline Architecture
