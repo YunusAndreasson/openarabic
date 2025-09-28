@@ -31,7 +31,7 @@ class PipelineProgressTracker:
         if description:
             logger.info(f"   {description}")
 
-    def update(self, n: int = 1, description: str = None) -> None:
+    def update(self, n: int = 1, _description: str = None) -> None:
         """Update the current progress counter."""
         self.current_count += n
 

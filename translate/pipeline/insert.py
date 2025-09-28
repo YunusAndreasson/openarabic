@@ -70,7 +70,9 @@ def generate_article_audio(
 ) -> None:
     """Generate article-level audio files in one streamlined pass."""
     if not AUDIO_AVAILABLE:
-        logger.warning("Audio generation not available - skipping article audio generation")
+        logger.warning(
+            "Audio generation not available - skipping article audio generation"
+        )
         return
 
     use_progress = progress_tracker is not None
@@ -135,7 +137,6 @@ def generate_article_audio(
                 "audio_url_bilingual": audio_urls["bilingual_url"],
             }
 
-
             get_supabase_client().table("articles").update(update_data).eq(
                 "id", article_id
             ).execute()
@@ -192,6 +193,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 
     # Set phase for API call tracking
     from utils.responses_api import token_tracker
+
     token_tracker.set_phase("Insert")
 
     # Detect author from file path
@@ -211,8 +213,11 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 
     # Validate category before getting ID
     from data.config import VALID_CATEGORIES
+
     if category not in VALID_CATEGORIES:
-        logger.warning(f"Invalid category '{category}' detected, using default 'aqeedah'")
+        logger.warning(
+            f"Invalid category '{category}' detected, using default 'aqeedah'"
+        )
         category = "aqeedah"
 
     # Use specified category or default
@@ -294,11 +299,12 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
                 # Get the Arabic audio URL for the article
                 article_audio_url = audio_urls["arabic_url"]
 
-
                 audio_generation_success = True
                 logger.info("Article audio generation completed successfully")
             else:
-                logger.warning("Article audio generation failed, continuing without audio")
+                logger.warning(
+                    "Article audio generation failed, continuing without audio"
+                )
 
             # Clean up temporary directory
             if os.path.exists(temp_dir):
@@ -306,7 +312,9 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 
         except Exception as e:
             logger.error(f"Audio generation failed: {e}")
-            logger.info("Continuing with article insertion despite audio generation failure")
+            logger.info(
+                "Continuing with article insertion despite audio generation failure"
+            )
             # Don't raise exception - continue without audio
 
     # Create ArticleData object with audio_url and timestamps
@@ -352,9 +360,13 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 
     # Validate cleanup after successful processing
     import subprocess
-    result = subprocess.run([sys.executable, "cleanup_check.py"],
-                          cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                          capture_output=True, text=True)
+
+    result = subprocess.run(
+        [sys.executable, "cleanup_check.py"],
+        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        capture_output=True,
+        text=True,
+    )
     if result.returncode != 0:
         raise RuntimeError(f"Cleanup validation failed: {result.stdout}")
 

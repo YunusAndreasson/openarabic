@@ -209,7 +209,7 @@ def insert_sentence_words(
         words_data.append(word_data)
 
     # Insert words first (without timestamps to avoid client issues)
-    inserted_words = []
+    # inserted_words = []
     if words_data:
         try:
             result = (
@@ -328,10 +328,17 @@ def insert_article_sentences(
                     )
             except Exception as e:
                 error_msg = str(e).lower()
-                if 'content_against_policy' in error_msg or 'terms of service' in error_msg:
-                    logger.warning(f"Skipping Arabic audio for sentence {idx + 1} due to content policy violation")
+                if (
+                    "content_against_policy" in error_msg
+                    or "terms of service" in error_msg
+                ):
+                    logger.warning(
+                        f"Skipping Arabic audio for sentence {idx + 1} due to content policy violation"
+                    )
                 else:
-                    logger.warning(f"Error generating Arabic audio for sentence {idx + 1}: {e}")
+                    logger.warning(
+                        f"Error generating Arabic audio for sentence {idx + 1}: {e}"
+                    )
 
             # Create silent audio placeholder if Arabic audio generation failed
             if not arabic_audio_url:
@@ -342,7 +349,9 @@ def insert_article_sentences(
                     from pydub import AudioSegment
 
                     # Create a short silent audio file (1 second)
-                    silent_audio = AudioSegment.silent(duration=1000)  # 1 second of silence
+                    silent_audio = AudioSegment.silent(
+                        duration=1000
+                    )  # 1 second of silence
 
                     # Export as MP3
                     silent_buffer = io.BytesIO()
@@ -358,7 +367,9 @@ def insert_article_sentences(
                     )
 
                     arabic_audio_url = get_storage_url(arabic_filename)
-                    logger.info(f"Created silent audio placeholder for sentence {idx + 1}")
+                    logger.info(
+                        f"Created silent audio placeholder for sentence {idx + 1}"
+                    )
 
                 except Exception as e:
                     logger.error(f"Failed to create silent audio placeholder: {e}")
@@ -394,21 +405,32 @@ def insert_article_sentences(
                     )
             except Exception as e:
                 error_msg = str(e).lower()
-                if 'content_against_policy' in error_msg or 'terms of service' in error_msg:
-                    logger.warning(f"Skipping English audio for sentence {idx + 1} due to content policy violation")
+                if (
+                    "content_against_policy" in error_msg
+                    or "terms of service" in error_msg
+                ):
+                    logger.warning(
+                        f"Skipping English audio for sentence {idx + 1} due to content policy violation"
+                    )
                 else:
-                    logger.warning(f"Error generating English audio for sentence {idx + 1}: {e}")
+                    logger.warning(
+                        f"Error generating English audio for sentence {idx + 1}: {e}"
+                    )
 
             # Create silent audio placeholder if English audio generation failed
             if not english_audio_url:
-                logger.info(f"Creating silent audio placeholder for English sentence {idx + 1}")
+                logger.info(
+                    f"Creating silent audio placeholder for English sentence {idx + 1}"
+                )
                 try:
                     import io
 
                     from pydub import AudioSegment
 
                     # Create a short silent audio file (1 second)
-                    silent_audio = AudioSegment.silent(duration=1000)  # 1 second of silence
+                    silent_audio = AudioSegment.silent(
+                        duration=1000
+                    )  # 1 second of silence
 
                     # Export as MP3
                     silent_buffer = io.BytesIO()
@@ -424,7 +446,9 @@ def insert_article_sentences(
                     )
 
                     english_audio_url = get_storage_url(english_filename)
-                    logger.info(f"Created silent audio placeholder for English sentence {idx + 1}")
+                    logger.info(
+                        f"Created silent audio placeholder for English sentence {idx + 1}"
+                    )
 
                 except Exception as e:
                     logger.error(f"Failed to create silent audio placeholder: {e}")
@@ -477,14 +501,18 @@ def insert_article_sentences(
 
             # Create silent audio placeholder if bilingual audio generation failed
             if not bilingual_audio_url:
-                logger.info(f"Creating silent audio placeholder for bilingual sentence {idx + 1}")
+                logger.info(
+                    f"Creating silent audio placeholder for bilingual sentence {idx + 1}"
+                )
                 try:
                     import io
 
                     from pydub import AudioSegment
 
                     # Create a short silent audio file (1 second)
-                    silent_audio = AudioSegment.silent(duration=1000)  # 1 second of silence
+                    silent_audio = AudioSegment.silent(
+                        duration=1000
+                    )  # 1 second of silence
 
                     # Export as MP3
                     silent_buffer = io.BytesIO()
@@ -500,13 +528,14 @@ def insert_article_sentences(
                     )
 
                     bilingual_audio_url = get_storage_url(bilingual_filename)
-                    logger.info(f"Created silent audio placeholder for bilingual sentence {idx + 1}")
+                    logger.info(
+                        f"Created silent audio placeholder for bilingual sentence {idx + 1}"
+                    )
 
                 except Exception as e:
                     logger.error(f"Failed to create silent audio placeholder: {e}")
                     # Fallback to empty string if silent audio creation fails
                     bilingual_audio_url = ""
-
 
             sentence_data = {
                 "article_id": article_id,

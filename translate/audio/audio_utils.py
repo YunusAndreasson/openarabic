@@ -76,15 +76,23 @@ def retry_operation(
                     # Check if this is a rate limiting error (429)
                     is_rate_limit = False
                     error_msg = str(e).lower()
-                    if '429' in error_msg or 'rate limit' in error_msg or 'system_busy' in error_msg:
+                    if (
+                        "429" in error_msg
+                        or "rate limit" in error_msg
+                        or "system_busy" in error_msg
+                    ):
                         is_rate_limit = True
-                        logger.warning(f"Rate limit detected on attempt {attempts}/{max_attempts}: {e}")
+                        logger.warning(
+                            f"Rate limit detected on attempt {attempts}/{max_attempts}: {e}"
+                        )
                     else:
                         logger.warning(f"Attempt {attempts}/{max_attempts} failed: {e}")
 
                     if attempts == max_attempts:
                         if is_rate_limit:
-                            logger.error(f"Rate limit exceeded after {max_attempts} attempts: {e}")
+                            logger.error(
+                                f"Rate limit exceeded after {max_attempts} attempts: {e}"
+                            )
                         else:
                             logger.error(f"Failed after {max_attempts} attempts: {e}")
                         raise
@@ -104,7 +112,9 @@ def retry_operation(
                     if is_rate_limit:
                         current_delay *= backoff  # Exponential backoff for rate limits
                     else:
-                        current_delay = delay * attempts  # Linear backoff for other errors
+                        current_delay = (
+                            delay * attempts
+                        )  # Linear backoff for other errors
 
                     # Cap the delay at 60 seconds maximum
                     current_delay = min(current_delay, 60)
@@ -300,10 +310,6 @@ def generate_speech(
     except Exception as e:
         logger.error(f"Speech generation failed: {e}")
         return None
-
-
-
-
 
 
 def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
@@ -707,7 +713,9 @@ def create_article_audio(
                 )
 
                 if not arabic_response or not arabic_response.get("audio"):
-                    logger.warning(f"Failed to generate Arabic audio for sentence {i + 1}")
+                    logger.warning(
+                        f"Failed to generate Arabic audio for sentence {i + 1}"
+                    )
                     continue
 
                 arabic_audio = arabic_response["audio"]
@@ -715,10 +723,17 @@ def create_article_audio(
 
             except Exception as e:
                 error_msg = str(e).lower()
-                if 'content_against_policy' in error_msg or 'terms of service' in error_msg:
-                    logger.warning(f"Skipping sentence {i + 1} due to content policy violation")
+                if (
+                    "content_against_policy" in error_msg
+                    or "terms of service" in error_msg
+                ):
+                    logger.warning(
+                        f"Skipping sentence {i + 1} due to content policy violation"
+                    )
                 else:
-                    logger.warning(f"Error generating Arabic audio for sentence {i + 1}: {e}")
+                    logger.warning(
+                        f"Error generating Arabic audio for sentence {i + 1}: {e}"
+                    )
                 continue
 
             # Generate English audio for bilingual version (without timestamps for now)
@@ -729,7 +744,9 @@ def create_article_audio(
                     voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
                 )
                 if not english_response or not english_response.get("audio"):
-                    logger.warning(f"Failed to generate English audio for sentence {i + 1}")
+                    logger.warning(
+                        f"Failed to generate English audio for sentence {i + 1}"
+                    )
                     continue
 
                 english_audio = english_response["audio"]
@@ -740,23 +757,32 @@ def create_article_audio(
 
             except Exception as e:
                 error_msg = str(e).lower()
-                if 'content_against_policy' in error_msg or 'terms of service' in error_msg:
-                    logger.warning(f"Skipping English audio for sentence {i + 1} due to content policy violation")
+                if (
+                    "content_against_policy" in error_msg
+                    or "terms of service" in error_msg
+                ):
+                    logger.warning(
+                        f"Skipping English audio for sentence {i + 1} due to content policy violation"
+                    )
                 else:
-                    logger.warning(f"Error generating English audio for sentence {i + 1}: {e}")
+                    logger.warning(
+                        f"Error generating English audio for sentence {i + 1}: {e}"
+                    )
                 # Still add Arabic audio to bilingual if we have it
                 bilingual_segments.append(arabic_audio)
 
-            logger.info(
-                f"Sentence {i + 1} audio generated successfully"
-            )
+            logger.info(f"Sentence {i + 1} audio generated successfully")
 
         if not arabic_segments:
-            logger.warning("No Arabic audio segments generated - skipping article audio creation")
+            logger.warning(
+                "No Arabic audio segments generated - skipping article audio creation"
+            )
             return None
 
         if not bilingual_segments:
-            logger.warning("No bilingual audio segments generated - skipping article audio creation")
+            logger.warning(
+                "No bilingual audio segments generated - skipping article audio creation"
+            )
             return None
 
         # Create final audio files with 500ms delays
@@ -907,10 +933,14 @@ def generate_word_audio_with_google_tts(
         except Exception as e:
             # Check if it's a content policy violation
             error_msg = str(e).lower()
-            if 'content_against_policy' in error_msg or 'terms of service' in error_msg:
-                logger.warning(f"Skipping word '{word_form}' due to content policy violation")
+            if "content_against_policy" in error_msg or "terms of service" in error_msg:
+                logger.warning(
+                    f"Skipping word '{word_form}' due to content policy violation"
+                )
             else:
-                logger.warning(f"Error generating audio for word '{word_form}' at position {position}: {e}")
+                logger.warning(
+                    f"Error generating audio for word '{word_form}' at position {position}: {e}"
+                )
             continue
 
     # Word audio generation completed
@@ -954,7 +984,9 @@ def process_word_audio_for_latest_articles() -> bool:
         success_count = 0
         for article in result.data:
             article_id = article["id"]
-            _article_title = article["title"]  # Unused but kept for potential future use
+            _article_title = article[
+                "title"
+            ]  # Unused but kept for potential future use
 
             # Process word audio for article
 

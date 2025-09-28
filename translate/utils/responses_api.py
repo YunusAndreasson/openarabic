@@ -58,6 +58,7 @@ class TokenUsageTracker:
         self.prompt_tokens: int = 0
         self.completion_tokens: int = 0
         self.total_tokens: int = 0
+        self.cached_prompt_tokens: int = 0
         self.total_cost: float = 0.0
         self.api_calls: int = 0
         self.successful_calls: int = 0
@@ -65,29 +66,132 @@ class TokenUsageTracker:
         self.retry_attempts: int = 0
         # Phase-specific tracking
         self.phase_calls: dict[str, int] = {}
+        self.phase_totals: dict[str, dict[str, float | int]] = {}
         self.current_phase: str | None = None
+        # Model-specific breakdowns
+        self.model_totals: dict[str, dict[str, float | int]] = {}
+        # Keep a tiny leaderboard of most expensive calls
+        self.top_calls: list[
+            dict[str, Any]
+        ] = []  # each: {model, phase, cost, usage, response_id}
 
     def set_phase(self, phase: str) -> None:
         """Set the current phase for API call tracking"""
         self.current_phase = phase
         if phase not in self.phase_calls:
             self.phase_calls[phase] = 0
+        if phase not in self.phase_totals:
+            self.phase_totals[phase] = {
+                "prompt": 0,
+                "completion": 0,
+                "cached_prompt": 0,
+                "total": 0,
+                "cost": 0.0,
+            }
 
-    def update(self, usage_data: dict[str, int]) -> None:
-        """Update token counts from API response"""
-        self.prompt_tokens += usage_data.get("prompt_tokens", 0)
-        self.completion_tokens += usage_data.get("completion_tokens", 0)
-        self.total_tokens += usage_data.get("total_tokens", 0)
+    def _ensure_model_bucket(self, model: str) -> None:
+        if model not in self.model_totals:
+            self.model_totals[model] = {
+                "prompt": 0,
+                "completion": 0,
+                "cached_prompt": 0,
+                "total": 0,
+                "cost": 0.0,
+                "calls": 0,
+            }
+
+    def update(
+        self,
+        usage_data: dict[str, Any],
+        model: str | None = None,
+        phase: str | None = None,
+        response_id: str | None = None,
+    ) -> float:
+        """Update token counts from API response and return computed cost.
+
+        usage_data is expected to contain keys like: prompt_tokens, completion_tokens,
+        total_tokens, and nested prompt_tokens_details.cached_tokens where available.
+        """
+        prompt_tokens = int(usage_data.get("prompt_tokens", 0) or 0)
+        completion_tokens = int(usage_data.get("completion_tokens", 0) or 0)
+        total_tokens = int(
+            usage_data.get("total_tokens", prompt_tokens + completion_tokens) or 0
+        )
+        details = usage_data.get("prompt_tokens_details", {}) or {}
+        cached_tokens = int(details.get("cached_tokens", 0) or 0)
+
+        self.prompt_tokens += prompt_tokens
+        self.completion_tokens += completion_tokens
+        self.total_tokens += total_tokens
+        self.cached_prompt_tokens += cached_tokens
         self.api_calls += 1
 
-        # Track phase-specific calls
-        if self.current_phase:
-            self.phase_calls[self.current_phase] += 1
+        # Track phase-specific calls and token totals
+        phase_key = phase or self.current_phase
+        if phase_key:
+            self.phase_calls[phase_key] = self.phase_calls.get(phase_key, 0) + 1
+            bucket = self.phase_totals.setdefault(
+                phase_key,
+                {
+                    "prompt": 0,
+                    "completion": 0,
+                    "cached_prompt": 0,
+                    "total": 0,
+                    "cost": 0.0,
+                },
+            )
+            bucket["prompt"] = int(bucket["prompt"]) + prompt_tokens
+            bucket["completion"] = int(bucket["completion"]) + completion_tokens
+            bucket["cached_prompt"] = int(bucket["cached_prompt"]) + cached_tokens
+            bucket["total"] = int(bucket["total"]) + total_tokens
 
         # Response API pricing (adjust as needed)
-        prompt_cost = usage_data.get("prompt_tokens", 0) * 0.01 / 1000
-        completion_cost = usage_data.get("completion_tokens", 0) * 0.03 / 1000
-        self.total_cost += prompt_cost + completion_cost
+        prompt_cost = prompt_tokens * 0.01 / 1000
+        completion_cost = completion_tokens * 0.03 / 1000
+        call_cost = prompt_cost + completion_cost
+        self.total_cost += call_cost
+
+        # Model breakdown
+        if model:
+            self._ensure_model_bucket(model)
+            mb = self.model_totals[model]
+            mb["prompt"] = int(mb["prompt"]) + prompt_tokens
+            mb["completion"] = int(mb["completion"]) + completion_tokens
+            mb["cached_prompt"] = int(mb["cached_prompt"]) + cached_tokens
+            mb["total"] = int(mb["total"]) + total_tokens
+            mb["cost"] = float(mb["cost"]) + call_cost
+            mb["calls"] = int(mb["calls"]) + 1
+
+        # Phase cost accumulation
+        if phase_key:
+            self.phase_totals[phase_key]["cost"] = (
+                float(self.phase_totals[phase_key]["cost"]) + call_cost
+            )
+
+        # Maintain small list of top costliest calls
+        self._record_top_call(
+            {
+                "model": model,
+                "phase": phase_key,
+                "cost": call_cost,
+                "usage": {
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                    "total_tokens": total_tokens,
+                    "cached_prompt_tokens": cached_tokens,
+                },
+                "response_id": response_id,
+            }
+        )
+
+        return call_cost
+
+    def _record_top_call(self, call_info: dict[str, Any]) -> None:
+        self.top_calls.append(call_info)
+        # Keep only top 10 by cost
+        self.top_calls.sort(key=lambda x: x.get("cost", 0.0), reverse=True)
+        if len(self.top_calls) > 10:
+            self.top_calls = self.top_calls[:10]
 
     def get_success_rate(self) -> float:
         """Calculate success rate"""
@@ -104,6 +208,36 @@ class TokenUsageTracker:
             summary += f"  {phase}: {calls:,} calls\n"
         return summary.rstrip()
 
+    def get_cost_breakdown(self) -> str:
+        """Detailed cost/token breakdown by phase and model, incl. cached tokens."""
+        lines: list[str] = []
+        lines.append(f"Cached Prompt Tokens: {self.cached_prompt_tokens:,}")
+        if self.phase_totals:
+            lines.append("Per-Phase Tokens/Cost:")
+            for phase, b in self.phase_totals.items():
+                lines.append(
+                    f"  {phase}: prompt={int(b['prompt']):,}, completion={int(b['completion']):,}, "
+                    f"cached={int(b['cached_prompt']):,}, total={int(b['total']):,}, cost=${float(b['cost']):.2f}"
+                )
+        if self.model_totals:
+            lines.append("Per-Model Tokens/Cost:")
+            for model, b in self.model_totals.items():
+                lines.append(
+                    f"  {model}: calls={int(b['calls']):,}, prompt={int(b['prompt']):,}, completion={int(b['completion']):,}, "
+                    f"cached={int(b['cached_prompt']):,}, total={int(b['total']):,}, cost=${float(b['cost']):.2f}"
+                )
+        if self.top_calls:
+            lines.append("Top Calls by Cost:")
+            for i, c in enumerate(self.top_calls, start=1):
+                usage = c.get("usage", {})
+                lines.append(
+                    f"  {i}. ${c.get('cost', 0.0):.2f} | model={c.get('model')} | phase={c.get('phase')} | "
+                    f"pt={usage.get('prompt_tokens', 0):,} ct={usage.get('completion_tokens', 0):,} "
+                    f"cached={usage.get('cached_prompt_tokens', 0):,} total={usage.get('total_tokens', 0):,} "
+                    f"id={c.get('response_id')}"
+                )
+        return "\n".join(lines) if lines else "No cost breakdown available"
+
     def __str__(self) -> str:
         success_rate = self.get_success_rate()
         return (
@@ -115,6 +249,7 @@ class TokenUsageTracker:
             f"Success Rate: {success_rate:.1f}%\n"
             f"Prompt Tokens: {self.prompt_tokens:,}\n"
             f"Completion Tokens: {self.completion_tokens:,}\n"
+            f"Cached Prompt Tokens: {self.cached_prompt_tokens:,}\n"
             f"Total Tokens: {self.total_tokens:,}\n"
             f"Estimated Cost: ${self.total_cost:.2f}\n"
             f"{self.get_phase_summary()}"
@@ -137,6 +272,33 @@ class ResponsesAPIManager:
         self.model = model
         self.current_response_id: str | None = None
         self.logger = logging.getLogger(__name__)
+
+    def _extract_usage(self, response: Any) -> dict[str, Any]:
+        """Best-effort extraction of usage dict from Response API objects."""
+        if not hasattr(response, "usage"):
+            return {}
+        usage_obj = response.usage
+        try:
+            if hasattr(usage_obj, "to_dict"):
+                return usage_obj.to_dict()
+            if hasattr(usage_obj, "model_dump"):
+                return usage_obj.model_dump()  # pydantic-style
+            if isinstance(usage_obj, dict):
+                return usage_obj
+        except Exception:
+            return {}
+        # Fallback: try to read common attributes
+        result: dict[str, Any] = {}
+        for key in (
+            "prompt_tokens",
+            "completion_tokens",
+            "total_tokens",
+            "prompt_tokens_details",
+            "completion_tokens_details",
+        ):
+            if hasattr(usage_obj, key):
+                result[key] = getattr(usage_obj, key)
+        return result
 
     def start_conversation(
         self,
@@ -167,6 +329,17 @@ class ResponsesAPIManager:
                 # Store response ID and parse structured result
                 self.current_response_id = response.id
 
+                # Track usage if present
+                usage_dict = self._extract_usage(response)
+                if usage_dict:
+                    token_tracker.update(
+                        usage_data=usage_dict,
+                        model=self.model,
+                        phase=token_tracker.current_phase,
+                        response_id=response.id,
+                    )
+                    token_tracker.successful_calls += 1
+
                 return {
                     "response_id": response.id,
                     "data": response.output_parsed.model_dump(),
@@ -181,6 +354,17 @@ class ResponsesAPIManager:
 
                 self.current_response_id = response.id
 
+                # Track usage if present
+                usage_dict = self._extract_usage(response)
+                if usage_dict:
+                    token_tracker.update(
+                        usage_data=usage_dict,
+                        model=self.model,
+                        phase=token_tracker.current_phase,
+                        response_id=response.id,
+                    )
+                    token_tracker.successful_calls += 1
+
                 return {
                     "response_id": response.id,
                     "text": response.output_text,
@@ -190,6 +374,7 @@ class ResponsesAPIManager:
         except Exception as e:
             self.logger.error(f"Error in start_conversation: {str(e)}")
             self.current_response_id = None
+            token_tracker.failed_calls += 1
             return {"response_id": None, "error": str(e), "success": False}
 
     def continue_conversation(
@@ -224,6 +409,17 @@ class ResponsesAPIManager:
                 # Update response ID and parse structured result
                 self.current_response_id = response.id
 
+                # Track usage if present
+                usage_dict = self._extract_usage(response)
+                if usage_dict:
+                    token_tracker.update(
+                        usage_data=usage_dict,
+                        model=self.model,
+                        phase=token_tracker.current_phase,
+                        response_id=response.id,
+                    )
+                    token_tracker.successful_calls += 1
+
                 return {
                     "response_id": response.id,
                     "data": response.output_parsed.model_dump(),
@@ -239,6 +435,17 @@ class ResponsesAPIManager:
 
                 self.current_response_id = response.id
 
+                # Track usage if present
+                usage_dict = self._extract_usage(response)
+                if usage_dict:
+                    token_tracker.update(
+                        usage_data=usage_dict,
+                        model=self.model,
+                        phase=token_tracker.current_phase,
+                        response_id=response.id,
+                    )
+                    token_tracker.successful_calls += 1
+
                 return {
                     "response_id": response.id,
                     "text": response.output_text,
@@ -247,6 +454,7 @@ class ResponsesAPIManager:
 
         except Exception as e:
             self.logger.error(f"Error in continue_conversation: {str(e)}")
+            token_tracker.failed_calls += 1
             return {"response_id": response_id, "error": str(e), "success": False}
 
     def start_document_conversation(

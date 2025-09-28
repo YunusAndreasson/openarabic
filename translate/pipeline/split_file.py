@@ -96,6 +96,7 @@ def split_file(input_file: str, output_file: str) -> SplitResult:
     try:
         # Set phase for API call tracking
         from utils.responses_api import token_tracker
+
         token_tracker.set_phase("Split")
 
         full_text = read_text_file(input_file)

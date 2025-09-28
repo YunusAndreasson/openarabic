@@ -161,15 +161,17 @@ def run_insert_only() -> None:
     )
 
 
-def run_split_file_for_all(input_files):
+def run_split_file_for_all(input_files: list[tuple[str, str, str]]) -> None:
     """Process all split files without individual logging."""
-    for input_file, author_folder, author_name in input_files:
+    for input_file, author_folder, _author_name in input_files:
         run_split_file(input_file, author_folder)
 
 
-def run_translation_for_all(split_files, batch_size):
+def run_translation_for_all(
+    split_files: list[tuple[str, str, str]], batch_size: int
+) -> None:
     """Process all translation files without individual logging."""
-    for split_file, author_number, author_name in split_files:
+    for split_file, author_number, _author_name in split_files:
         # Create translation output filename
         split_path = Path(split_file)
         # Remove the author prefix and _split suffix, then add author prefix and _translated suffix
@@ -350,9 +352,13 @@ Examples:
 
         # Validate cleanup after insert phase
         import subprocess
-        result = subprocess.run([sys.executable, "cleanup_check.py"],
-                              cwd=os.path.dirname(os.path.abspath(__file__)),
-                              capture_output=True, text=True)
+
+        result = subprocess.run(
+            [sys.executable, "cleanup_check.py"],
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+            capture_output=True,
+            text=True,
+        )
         if result.returncode != 0:
             raise RuntimeError(f"Cleanup validation failed: {result.stdout}")
 

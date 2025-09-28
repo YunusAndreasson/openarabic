@@ -63,8 +63,6 @@ def _handle_arabic_processing_error(
         logger.error(
             f"{error_msg} - JSON parsing failed (possible Arabic formatting issue): {error}"
         )
-    else:
-        logger.error(f"{error_msg} - {error}")
 
 
 def _extract_response_data(response: dict[str, Any]) -> dict[str, Any] | None:
@@ -272,7 +270,7 @@ def _validate_uncertainties(uncertainties: list[Any]) -> list[Uncertainty]:
         elif isinstance(item, Uncertainty):
             validated.append(item)
         else:
-            # Skip invalid items but log for debugging
+            # Skip invalid uncertainty items silently
             # Skip invalid uncertainty items silently
             continue
     return validated
@@ -307,8 +305,9 @@ def _sanitize_refinement_data(item: dict[str, Any]) -> dict[str, Any]:
                     sanitized_word_translations.append(sanitized_wt)
                 elif isinstance(wt_data, WordTranslation):
                     sanitized_word_translations.append(wt_data)
-            except Exception:
+            except Exception as e:
                 # Skip invalid word translations
+                logger.warning(f"Skipping invalid word translation: {e}")
                 continue
 
     sanitized["improved_word_translations"] = sanitized_word_translations
@@ -388,6 +387,10 @@ def batch_translate_full_sentences(
     conversation_manager: ResponsesAPIManager | None = None,
 ) -> TranslationResults:
     """Translate full sentences with context."""
+    # Set phase for sentence translation tracking
+    from utils.responses_api import token_tracker
+
+    token_tracker.set_phase("Sentence Translation")
     results: TranslationResults = []
 
     def try_translation(
@@ -498,11 +501,14 @@ def batch_add_tashkeel(
     conversation_manager: ResponsesAPIManager | None = None,
 ) -> TashkeelResults:
     """Add diacritical marks to Arabic text."""
+    # Set phase for tashkeel generation tracking
+    from utils.responses_api import token_tracker
+
+    token_tracker.set_phase("Tashkeel Generation")
     results: TashkeelResults = []
 
     # Use conversation continuity if available
     if conversation_manager and conversation_manager.current_response_id:
-        # Process each sentence individually with conversation manager
         for i, sentence in enumerate(sentences):
             # Get context for this sentence
             context = None
@@ -623,8 +629,11 @@ def batch_translate_words(
     conversation_manager: ResponsesAPIManager | None = None,
 ) -> WordTranslationResults:
     """Translate individual words with context from full sentence translation."""
-    processed_results: WordTranslationResults = []
+    # Set phase for word-by-word translation tracking
+    from utils.responses_api import token_tracker
 
+    token_tracker.set_phase("Word-by-Word Translation")
+    processed_results: WordTranslationResults = []
     max_retries = 3
 
     for i, (_sentence, tashkeel_result, translation_result) in enumerate(
@@ -845,6 +854,10 @@ def batch_refine_translations(
 ) -> RefinementResults:
     """Refine all translation components, selecting best options"""
     try:
+        # Set phase for verification tracking
+        from utils.responses_api import token_tracker
+
+        token_tracker.set_phase("Verification")
         formatted_inputs = []
         for i, data in enumerate(refinement_input):
             refinement_data: RefinementInput = data
@@ -1048,7 +1061,7 @@ def batch_refine_translations(
             return []
     except Exception as e:
         logger.error(f"Error in batch_refine_translations: {e}")
-        # Return empty results but log the error for debugging
+        # Return empty results on error
         return []
 
 
@@ -1056,6 +1069,10 @@ def batch_translate_root_words_with_google_cloud(
     sentences: list[str],
 ) -> WordTranslationResults:
     """Translate individual Arabic root words using Google Cloud Translate with context awareness."""
+    # Set phase for Google Cloud translation tracking
+    from utils.responses_api import token_tracker
+
+    token_tracker.set_phase("Google Cloud Translation")
     # Use credentials path from config
     credentials_path = GOOGLE_CLOUD_CREDENTIALS_PATH
     service = GoogleTranslateService(credentials_path=credentials_path)
@@ -1065,7 +1082,6 @@ def batch_translate_root_words_with_google_cloud(
     arabic_words = filter_arabic_words(
         " ".join(sentences)
     )  # CRITICAL: Use existing function
-
     # TODO: Add root word extraction logic here
     # For now, use individual words as root words
     root_words = (

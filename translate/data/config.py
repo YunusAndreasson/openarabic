@@ -116,7 +116,7 @@ VALID_CATEGORIES = {
     "quran": "Quranic studies",
     "seerah": "Biography of Prophet Muhammad",
     "ihsan": "Spiritual excellence and worship",
-    "tafsir": "Quranic exegesis"
+    "tafsir": "Quranic exegesis",
 }
 
 # Default category for fallback

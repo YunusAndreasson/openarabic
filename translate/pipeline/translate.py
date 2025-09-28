@@ -308,6 +308,7 @@ def translate_file(
     try:
         # Set phase for API call tracking
         from utils.responses_api import token_tracker
+
         token_tracker.set_phase("Translation")
 
         split_data = load_split_data(input_file)
@@ -333,7 +334,7 @@ def translate_file(
 
             conversation_manager.start_document_conversation(sentences)
 
-            # Debug: Check if conversation manager was properly initialized
+            # Check if conversation manager was properly initialized
             if not conversation_manager.current_response_id:
                 logger.error(
                     "Conversation manager failed to initialize - no response_id set"

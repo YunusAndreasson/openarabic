@@ -467,8 +467,7 @@ class SplitResult(TextMetadata):
         default_factory=list, description="Array of text units/sentences"
     )
     category: str = Field(
-        default="aqeedah",
-        description="Detected Islamic text category"
+        default="aqeedah", description="Detected Islamic text category"
     )
 
     @validator("category")
@@ -476,8 +475,10 @@ class SplitResult(TextMetadata):
     def _validate_category(cls, v: str) -> str:
         """Validate that category is one of the valid Islamic text categories"""
         from .config import VALID_CATEGORIES
+
         if v not in VALID_CATEGORIES:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(f"Invalid category '{v}', defaulting to 'aqeedah'")
             return "aqeedah"
