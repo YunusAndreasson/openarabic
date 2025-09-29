@@ -126,8 +126,9 @@ export function useGlobalAudioState(): GlobalAudioState {
 
   // PLAYLIST SUPPORT: Get playlist information from the audio service
   const playlistInfo = useMemo(() => {
+    // Recompute when playback state or current track changes so indices stay accurate
     return simpleAudioService.getPlaylistInfo();
-  }, []);
+  }, [audioPlayer.currentTrack?.id, audioPlayer.isPlaying, audioPlayer.isLoading]);
 
   // Enhanced queue position that considers actual playlist state
   const enhancedQueuePosition = useMemo(() => {

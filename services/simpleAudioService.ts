@@ -1,4 +1,5 @@
 import { createAudioPlayer, setAudioModeAsync, setIsAudioActiveAsync } from 'expo-audio';
+import { AppState } from 'react-native';
 
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
@@ -44,6 +45,9 @@ class SimpleAudioService {
   // SLEEP TIMER SUPPORT: Track when sleep timer has expired
   private sleepTimerExpired = false;
 
+  // APP STATE SUPPORT: Track app state for background audio handling
+  private appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
+
   // Current audio status
   private status: AudioStatus = {
     isPlaying: false,
@@ -78,6 +82,10 @@ class SimpleAudioService {
         interruptionModeAndroid: 'duckOthers',
         shouldRouteThroughEarpiece: false,
       });
+
+      // Set up AppState listener for background audio handling
+      this.setupAppStateListener();
+
       this.audioSessionConfigured = true;
     } catch (sessionError) {
       // This is critical - audio may not work properly
@@ -93,6 +101,44 @@ class SimpleAudioService {
   }
 
   /**
+   * Set up AppState listener for background audio handling
+   */
+  private setupAppStateListener(): void {
+    // Remove existing listener if any
+    if (this.appStateSubscription) {
+      this.appStateSubscription.remove();
+    }
+
+    this.appStateSubscription = AppState.addEventListener('change', async nextAppState => {
+      try {
+        if (nextAppState === 'background' || nextAppState === 'inactive') {
+          // App is going to background - ensure audio session stays active
+          if (this.status.isPlaying || this.isPlaylistMode) {
+            await setIsAudioActiveAsync(true);
+            // Re-configure audio session to maintain background playback
+            await setAudioModeAsync({
+              shouldPlayInBackground: true,
+              playsInSilentMode: true,
+              allowsRecording: false,
+              interruptionMode: 'duckOthers',
+              interruptionModeAndroid: 'duckOthers',
+              shouldRouteThroughEarpiece: false,
+            });
+          }
+        } else if (nextAppState === 'active') {
+          // App is coming to foreground - ensure audio session is still active
+          if (this.status.isPlaying || this.isPlaylistMode) {
+            await setIsAudioActiveAsync(true);
+          }
+        }
+      } catch (error) {
+        // Don't throw errors from AppState listener as it can cause crashes
+        console.warn('AppState audio handling error:', error);
+      }
+    });
+  }
+
+  /**
    * Reset audio session for recovery from corruption
    */
   async resetAudioSession(): Promise<void> {
@@ -100,17 +146,8 @@ class SimpleAudioService {
       // Stop current playback
       await this.stopInternal();
 
-      // Clear all cached players
-      for (const player of this.playerCache.values()) {
-        try {
-          if (typeof player.remove === 'function') {
-            await player.remove();
-          }
-        } catch {
-          // Ignore cleanup errors during reset
-        }
-      }
-      this.playerCache.clear();
+      // Preserve player cache to keep startup fast across sessions.
+      // Cache eviction is handled separately by MAX_CACHE_SIZE and manual clear in Account.
 
       // Reset audio session configuration
       this.audioSessionConfigured = false;
@@ -378,18 +415,6 @@ class SimpleAudioService {
       return false;
     }
 
-    // Don't advance if sleep timer has expired
-    if (this.sleepTimerExpired) {
-      // Sleep timer expired - stop instead of advancing
-      this.isPlaylistMode = false;
-      this.playlist = [];
-      this.currentPlaylistIndex = 0;
-      this.onPlaylistTrackComplete = null;
-      this.resetSleepTimerExpired();
-      await this.stop();
-      return false;
-    }
-
     this.currentPlaylistIndex++;
 
     if (this.currentPlaylistIndex >= this.playlist.length) {
@@ -588,9 +613,14 @@ class SimpleAudioService {
           if (this.isPlaylistMode && safeDuration > 0 && safeCurrentTime >= safeDuration - 0.5) {
             // Don't advance if sleep timer has expired
             if (this.sleepTimerExpired) {
-              // Sleep timer expired - stop instead of advancing
-              this.advanceToNextTrack().catch(() => {
-                // Track advancement failed - continue with current track
+              // Sleep timer expired - stop playlist instead of advancing
+              this.isPlaylistMode = false;
+              this.playlist = [];
+              this.currentPlaylistIndex = 0;
+              this.onPlaylistTrackComplete = null;
+              this.resetSleepTimerExpired();
+              this.stop().catch(() => {
+                // Stop failed - continue with current track
               });
               return;
             }
@@ -725,6 +755,12 @@ class SimpleAudioService {
 
     // Clear all listeners to prevent memory leaks
     this.listeners.clear();
+
+    // Clean up AppState listener
+    if (this.appStateSubscription) {
+      this.appStateSubscription.remove();
+      this.appStateSubscription = null;
+    }
 
     // Clear player cache and clean up cached players
     for (const player of this.playerCache.values()) {

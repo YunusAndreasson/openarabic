@@ -151,6 +151,7 @@ function AppContent() {
   });
 
   // Global audio state moved into AudioOverlays to avoid re-rendering the root
+  const globalAudioState = useGlobalAudioState();
 
   const { preloadAppData, isLoaded } = useAppPreloader();
 
@@ -163,6 +164,9 @@ function AppContent() {
 
   useEffect(() => {
     if (!appReady || isAuthLoading) return;
+
+    // Pre-configure audio session for background playback
+    globalAudioState.preconfigureAudioSession?.();
 
     const identifyUser = async () => {
       if (session?.user) {
@@ -179,7 +183,7 @@ function AppContent() {
     };
 
     identifyUser();
-  }, [session, appReady, isAuthLoading]);
+  }, [session, appReady, isAuthLoading, globalAudioState]);
 
   const colors = useColors();
 
