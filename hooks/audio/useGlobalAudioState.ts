@@ -48,6 +48,7 @@ export interface GlobalAudioState {
   onSleepTimerSet: (minutes: number) => void;
   onSleepTimerCancel: () => void;
   onSleepTimerClose: () => void;
+  preconfigureAudioSession: () => Promise<void>;
 }
 
 /**
@@ -85,16 +86,12 @@ export function useGlobalAudioState(): GlobalAudioState {
     }, 30000);
   });
 
-  // Auto-cancel sleep timer when audio stops
+  // Auto-cancel sleep timer when audio stops - use existing audio subscription
   useEffect(() => {
-    const unsubscribe = simpleAudioService.subscribe(status => {
-      // Auto-cancel sleep timer when audio stops
-      if (!status.isPlaying && !status.isLoading && sleepTimer.state.isActive) {
-        sleepTimer.actions.autoCancel();
-      }
-    });
-    return unsubscribe;
-  }, [sleepTimer.state.isActive, sleepTimer.actions]);
+    if (!audioPlayer.isPlaying && !audioPlayer.isLoading && sleepTimer.state.isActive) {
+      sleepTimer.actions.autoCancel();
+    }
+  }, [audioPlayer.isPlaying, audioPlayer.isLoading, sleepTimer.state.isActive, sleepTimer.actions]);
 
   // Get current article ID from audio player
   const currentArticleId = useMemo(() => {
@@ -223,6 +220,10 @@ export function useGlobalAudioState(): GlobalAudioState {
     setShowSleepTimerModal(false);
   }, []);
 
+  const handlePreconfigureAudioSession = useCallback(async () => {
+    await audioPlayer.preconfigureAudioSession();
+  }, [audioPlayer]);
+
   const shouldHideMiniPlayer = useMemo(() => {
     return false; // Mini-player is always shown
   }, []);
@@ -248,5 +249,6 @@ export function useGlobalAudioState(): GlobalAudioState {
     onSleepTimerSet: handleSleepTimerSet,
     onSleepTimerCancel: handleSleepTimerCancel,
     onSleepTimerClose: handleSleepTimerClose,
+    preconfigureAudioSession: handlePreconfigureAudioSession,
   };
 }

@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 // Use direct service access to avoid frequent parent re-renders from time updates
-import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useScreenFocusRefresh } from '@/hooks/utils/useScreenFocusRefresh';
 import { articlesService } from '@/services/articles';
@@ -35,25 +34,7 @@ export const useBookmarksScreen = () => {
   const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
   const playbackModeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const sleepTimer = useSleepTimer(() => {
-    simpleAudioService.stop().catch(() => {});
-    setPlaybackMode('none');
-  });
-
-  // Monitor audio state and auto-cancel sleep timer when audio stops
-  // Use simpleAudioService directly instead of maintaining separate state
-  useEffect(() => {
-    const unsubscribe = simpleAudioService.subscribe(status => {
-      const isPlaying = status.isPlaying;
-      const isLoading = status.isLoading;
-
-      // Auto-cancel sleep timer when audio stops (playing -> stopped)
-      if (!isPlaying && !isLoading && sleepTimer.state.isActive) {
-        sleepTimer.actions.autoCancel();
-      }
-    });
-    return unsubscribe;
-  }, [sleepTimer.actions, sleepTimer.state.isActive]);
+  // Sleep timer functionality is handled by useGlobalAudioState
 
   const readingListQuery = useQuery({
     queryKey: ['readingList', user?.id],
@@ -249,16 +230,7 @@ export const useBookmarksScreen = () => {
     }
   }, [playbackMode, sortedEnhancedTracks, audioPreference, audioShuffleEnabled]);
 
-  const handleSleepTimerSet = useCallback(
-    (minutes: number) => {
-      sleepTimer.actions.startTimer(minutes);
-    },
-    [sleepTimer.actions]
-  );
-
-  const handleSleepTimerCancel = useCallback(() => {
-    sleepTimer.actions.cancelTimer();
-  }, [sleepTimer.actions]);
+  // Sleep timer handlers are handled by useGlobalAudioState
 
   const handleDelete = useCallback(
     async (articleId: number) => {
@@ -380,9 +352,6 @@ export const useBookmarksScreen = () => {
     shouldShowInitialLoading,
     isReadingListLoading,
     playbackMode,
-    sleepTimer,
-    handleSleepTimerSet,
-    handleSleepTimerCancel,
     handlePlayAll,
     handleArticlePlay,
     handleDelete,

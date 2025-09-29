@@ -1,38 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
-import type { AudioStatus } from '@/services/simpleAudioService';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
+
+import { useAudioSubscription } from './useAudioSubscription';
 
 /**
  * Hook for simple audio player functionality
  */
 export const useSimpleAudioPlayer = () => {
-  const [status, setStatus] = useState<AudioStatus>(() => simpleAudioService.getStatus());
+  const { status } = useAudioSubscription();
   const isMountedRef = useRef(true);
-
-  // Subscribe to status updates with shallow change detection to avoid redundant renders
-  useEffect(() => {
-    const unsubscribe = simpleAudioService.subscribe(newStatus => {
-      if (!isMountedRef.current) return;
-
-      setStatus(prev => {
-        if (!prev) return newStatus;
-
-        const didChange =
-          prev.isPlaying !== newStatus.isPlaying ||
-          prev.isLoading !== newStatus.isLoading ||
-          // Use higher precision for currentTime to enable smooth word highlighting
-          Math.abs(prev.currentTime - newStatus.currentTime) >= 0.1 ||
-          Math.floor(prev.duration) !== Math.floor(newStatus.duration) ||
-          (prev.currentTrack?.id ?? null) !== (newStatus.currentTrack?.id ?? null);
-
-        return didChange ? newStatus : prev;
-      });
-    });
-
-    return unsubscribe;
-  }, []);
 
   // Track component mount status
   useEffect(() => {

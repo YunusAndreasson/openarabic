@@ -5,11 +5,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
-import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
+import { useAudioSubscription } from '@/hooks/audio/useAudioSubscription';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
-import type { AudioStatus } from '@/services/simpleAudioService';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
@@ -33,9 +32,15 @@ const WordDetailsBottomSheetComponent = ({
 }: WordDetailsBottomSheetProps) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const colors = useColors();
-  const [audioStatus, setAudioStatus] = useState<AudioStatus>(simpleAudioService.getStatus());
+  const { status: audioStatus } = useAudioSubscription();
+
+  // Optimistic state for instant UI feedback
   const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useState(isInStudyList);
-  const [optimisticIsVisible, setOptimisticIsVisible] = useState(isVisible);
+
+  // Sync optimistic state with prop changes
+  useEffect(() => {
+    setOptimisticIsInStudyList(isInStudyList);
+  }, [isInStudyList]);
 
   // Use Arabic word analysis for color-coding
   const { hasComponents, coloredSegments, formattedAnalysis, analysis } = useArabicWordAnalysis(
@@ -43,16 +48,6 @@ const WordDetailsBottomSheetComponent = ({
     word?.english || '',
     true
   );
-
-  // Sync optimistic states with props when they change (from external updates)
-  useEffect(() => {
-    setOptimisticIsInStudyList(isInStudyList);
-  }, [isInStudyList]);
-
-  // Optimistic visibility - show modal immediately when isVisible becomes true
-  useEffect(() => {
-    setOptimisticIsVisible(isVisible);
-  }, [isVisible]);
 
   // Configure snap points
   const snapPoints = useMemo(() => [380], []);
@@ -242,20 +237,7 @@ const WordDetailsBottomSheetComponent = ({
     );
   }, [word?.english, formattedAnalysis, colorMapping, colors.secondaryText, colors.text]);
 
-  // Listen for audio status changes
-  useEffect(() => {
-    const updateStatus = () => {
-      setAudioStatus(simpleAudioService.getStatus());
-    };
-
-    // Update immediately
-    updateStatus();
-
-    // Set up polling for status updates
-    const interval = setInterval(updateStatus, TIMING_CONFIG.POLLING.interval);
-
-    return () => clearInterval(interval);
-  }, []);
+  // Audio status is now provided by centralized subscription
 
   // Check if this word's audio is currently playing
   const isThisWordPlaying =
@@ -298,17 +280,17 @@ const WordDetailsBottomSheetComponent = ({
     }
   }, [word]);
 
-  // Handle add to study with optimistic update
+  // Handle add to study with optimistic update for instant feedback
   const handleAddToStudy = useCallback(async () => {
     if (!word) return;
 
-    // Optimistic update - immediately show the new state
+    // Instant UI feedback
     setOptimisticIsInStudyList(!optimisticIsInStudyList);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     try {
       await onAddToStudy(word);
-      // Success - the optimistic state should match the actual state now
+      // Success - optimistic state should now match actual state
     } catch (error) {
       // Revert optimistic update on error
       setOptimisticIsInStudyList(optimisticIsInStudyList);
@@ -320,7 +302,7 @@ const WordDetailsBottomSheetComponent = ({
   const renderBackdrop = useBottomSheetBackdrop(onClose);
 
   // Don't render anything if not visible or no word (use optimistic visibility for immediate feedback)
-  if (!optimisticIsVisible || !word) {
+  if (!isVisible || !word) {
     return null;
   }
 

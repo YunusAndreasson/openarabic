@@ -39,6 +39,7 @@ const WHITESPACE_REGEX = /\s+/;
 // Separate caches for Arabic and English normalization to avoid contention
 const ARABIC_NORMALIZATION_CACHE = new Map<string, string>();
 const ENGLISH_NORMALIZATION_CACHE = new Map<string, string>();
+const ANALYSIS_CACHE = new Map<string, WordAnalysis>();
 const CACHE_SIZE_LIMIT = 100;
 
 // Contraction map hoisted and lowercased once for reuse
@@ -277,7 +278,16 @@ function findDiacritic(arabic: string, english: string): AnalyzedComponent | und
  * Main function to analyze an Arabic word and its English translation for components
  */
 export function analyzeArabicWord(arabic: string, english: string): WordAnalysis {
+  // Create cache key from normalized inputs
   const normalized = normalizeArabic(arabic);
+  const normalizedEnglish = normalizeEnglish(english);
+  const cacheKey = `${normalized}|${normalizedEnglish}`;
+
+  // Check cache first
+  const cachedResult = ANALYSIS_CACHE.get(cacheKey);
+  if (cachedResult) {
+    return cachedResult;
+  }
 
   // Check for bracket injection (same logic as in useArabicWordAnalysis hook)
   let hasBracketInjection = false;
@@ -336,7 +346,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // Look for infixes in the remaining text
   const infix = remaining.length > 2 ? findInfix(remaining, english) : undefined;
 
-  return {
+  const result: WordAnalysis = {
     original: { arabic, english },
     prefix: resolvedPrefix,
     infix,
@@ -347,6 +357,17 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     remainingEnglish: normalizeEnglish(english),
     hasBracketInjection,
   };
+
+  // Cache the result and manage cache size
+  if (ANALYSIS_CACHE.size >= CACHE_SIZE_LIMIT) {
+    const firstKey = ANALYSIS_CACHE.keys().next().value;
+    if (firstKey) {
+      ANALYSIS_CACHE.delete(firstKey);
+    }
+  }
+  ANALYSIS_CACHE.set(cacheKey, result);
+
+  return result;
 }
 
 /**

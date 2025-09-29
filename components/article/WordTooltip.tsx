@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -137,13 +137,15 @@ export const WordTooltip = memo(
 
     // Convert window coordinates (from measureInWindow) to local overlay coordinates
     const containerRef = useRef<View | null>(null);
-    const [containerOffsetX, setContainerOffsetX] = useState<number>(0);
+    const containerOffsetXRef = useRef<number>(0);
 
     const measureContainerOffset = useCallback(() => {
       if (containerRef.current?.measureInWindow) {
         try {
           containerRef.current.measureInWindow((x: number /* y, w, h */) => {
-            if (typeof x === 'number') setContainerOffsetX(x);
+            if (typeof x === 'number') {
+              containerOffsetXRef.current = x;
+            }
           });
         } catch {
           // ignore
@@ -151,11 +153,12 @@ export const WordTooltip = memo(
       }
     }, []);
 
+    // Only measure once when tooltip becomes visible
     useEffect(() => {
-      if (visible) {
-        setTimeout(measureContainerOffset, 0);
+      if (visible && layout) {
+        measureContainerOffset();
       }
-    }, [visible, measureContainerOffset]);
+    }, [visible, layout, measureContainerOffset]);
 
     // Arabic word analysis for English color-coding
     const { formattedAnalysis, analysis } = useArabicWordAnalysis(
@@ -366,13 +369,13 @@ export const WordTooltip = memo(
       }
 
       const adjustedLayout: TooltipLayout = {
-        x: (layout as TooltipLayout).x - (containerOffsetX || 0),
+        x: (layout as TooltipLayout).x - containerOffsetXRef.current,
         y: (layout as TooltipLayout).y,
         width: (layout as TooltipLayout).width,
         height: (layout as TooltipLayout).height,
       } as TooltipLayout;
       return calculateTooltipDimensions(adjustedLayout, displayedText, false);
-    }, [layout, text, displayedText, containerOffsetX]);
+    }, [layout, displayedText]);
 
     // Memoized styles with optimized dependencies
     const containerStyle = useMemo(
