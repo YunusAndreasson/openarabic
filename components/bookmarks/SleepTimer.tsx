@@ -109,10 +109,11 @@ const SleepTimerComponent = ({
               {timerOptions.map(minutes => (
                 <View key={minutes} style={styles.optionContainer}>
                   <ThemedButton
-                    title={`${minutes}m`}
+                    title={`${minutes} min`}
                     variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
                     onPress={handleOptionSelect(minutes)}
                     style={styles.optionButton}
+                    uppercase={false}
                   />
                 </View>
               ))}

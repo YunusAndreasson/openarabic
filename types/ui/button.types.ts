@@ -35,6 +35,8 @@ export interface BaseButtonProps
   textWeight?: ButtonTextWeight;
   /** Enable optimistic loading - immediately show loading when pressed */
   enableOptimisticLoading?: boolean;
+  /** Whether to transform text to uppercase (default: true) */
+  uppercase?: boolean;
 }
 
 /**

@@ -71,6 +71,7 @@ function ThemedButtonComponent({
   size = 'medium', // Most common value - hardcoded
   textWeight = 'bold', // Most common value - hardcoded
   enableOptimisticLoading = false, // Only enable when explicitly requested
+  uppercase = true, // Default to uppercase for most buttons
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
@@ -207,7 +208,7 @@ function ThemedButtonComponent({
               style={[buttonTextStyle, textOpacityStyle]}
               type={getTextType(size, textWeight)}
             >
-              {title?.toUpperCase()}
+              {uppercase ? title?.toUpperCase() : title}
             </ThemedText>
           )}
         </View>

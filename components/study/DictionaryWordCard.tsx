@@ -1,16 +1,16 @@
-import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
+import DeleteButton from '@/components/bookmarks/DeleteButton';
 import { DifficultyBar } from '@/components/study/DifficultyBar';
-import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations';
+import { SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
+import { LAYOUT } from '@/constants/layout';
+import { useTransformAnimation } from '@/hooks/animations';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
-import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
@@ -24,17 +24,24 @@ interface DictionaryWordCardProps {
 
 export const DictionaryWordCard = memo<DictionaryWordCardProps>(
   ({ word, editMode, onDelete }) => {
-    const colors = useColors();
-
-    // Press animation for delete button
-    const {
-      animatedStyle: deleteButtonAnimatedStyle,
-      handlePressIn,
-      handlePressOut,
-    } = usePressAnimation({
-      scaleAmount: ICON_BUTTON_PRESS_SCALE,
-    });
     const audioPlayer = useSimpleAudioPlayer();
+
+    // Transform animation for edit mode (similar to bookmarks)
+    const { animatedStyle, setValue } = useTransformAnimation({
+      type: 'scale',
+      initialValue: 1,
+      targetValue: 1,
+      useSpring: true,
+      damping: SPRING_CONFIG.RESPONSIVE.damping,
+      stiffness: SPRING_CONFIG.RESPONSIVE.stiffness,
+    });
+
+    // Apply edit mode scaling
+    if (editMode) {
+      setValue(WORD_PRESS_SCALE);
+    } else {
+      setValue(1);
+    }
 
     // Handle audio playback for word pronunciation when card is pressed
     const handleCardPress = useCallback(async () => {
@@ -75,8 +82,6 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     // Handle delete button press
     const handleDeletePress = useCallback(() => {
       if (!editMode) return;
-
-      selectionFeedback();
       onDelete();
     }, [editMode, onDelete]);
 
@@ -87,58 +92,54 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const englishText = word.root?.meaning || 'Unknown English';
 
     return (
-      <View style={styles.container}>
-        <BaseCard
-          style={styles.card}
-          onPress={handleCardPress}
-          disabled={editMode}
-          shadowSize="small"
-          contentStyle={styles.cardContent}
-        >
-          <View style={styles.content}>
-            {/* Left: English text with difficulty bar below */}
-            <View style={styles.leftSection}>
-              <View style={styles.textContainer}>
+      <Animated.View style={[styles.cardContainer, animatedStyle]}>
+        <View style={styles.cardWrapper}>
+          <BaseCard
+            style={styles.card}
+            onPress={editMode ? undefined : handleCardPress}
+            shadowSize="small"
+            contentStyle={styles.cardContent}
+          >
+            <View style={styles.content}>
+              {/* Left: English text with difficulty bar below */}
+              <View style={styles.leftSection}>
+                <View style={styles.textContainer}>
+                  <ThemedText
+                    type="body"
+                    variant="secondary"
+                    style={styles.englishText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {englishText}
+                  </ThemedText>
+                  <DifficultyBar difficulty={difficultyValue} width={48} height={3} />
+                </View>
+              </View>
+
+              {/* Right: Arabic (prominent, right-aligned) */}
+              <View style={styles.rightSection}>
                 <ThemedText
-                  type="body"
-                  variant="secondary"
-                  style={styles.englishText}
+                  type="arabic"
+                  arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE}
+                  weight="semibold"
                   numberOfLines={1}
-                  ellipsizeMode="tail"
+                  style={styles.arabicText}
                 >
-                  {englishText}
+                  {arabicText}
                 </ThemedText>
-                <DifficultyBar difficulty={difficultyValue} width={48} height={3} />
               </View>
             </View>
+          </BaseCard>
+        </View>
 
-            {/* Right: Arabic (prominent, right-aligned) */}
-            <View style={styles.rightSection}>
-              <ThemedText
-                type="arabic"
-                arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE}
-                weight="semibold"
-                numberOfLines={1}
-                style={styles.arabicText}
-              >
-                {arabicText}
-              </ThemedText>
-            </View>
-          </View>
-        </BaseCard>
-
-        {/* Delete Button (separate from card, only in edit mode) */}
+        {/* Delete Button - shows on right in edit mode (similar to bookmarks) */}
         {editMode && (
-          <TouchableOpacity
-            style={deleteButtonAnimatedStyle as any}
-            onPress={handleDeletePress}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-          >
-            <Ionicons name="trash" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.white} />
-          </TouchableOpacity>
+          <View style={styles.deleteButtonContainer}>
+            <DeleteButton onPress={handleDeletePress} />
+          </View>
         )}
-      </View>
+      </Animated.View>
     );
   },
   (prevProps, nextProps) => {
@@ -156,15 +157,17 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
 DictionaryWordCard.displayName = 'DictionaryWordCard';
 
 const styles = StyleSheet.create({
-  container: {
-    height: LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM,
-    marginBottom: LAYOUT.SPACING.SMALL,
+  cardContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  cardWrapper: {
+    flex: 1,
   },
   card: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.SMALL,
   },
   cardContent: {
     minHeight: LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM,
@@ -207,12 +210,9 @@ const styles = StyleSheet.create({
   arabicText: {
     includeFontPadding: true,
   },
-
-  deleteButton: {
-    width: MIN_TOUCH_TARGET.SMALL,
-    height: MIN_TOUCH_TARGET.SMALL,
-    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
+  deleteButtonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingLeft: LAYOUT.SPACING.SMALL,
   },
 });

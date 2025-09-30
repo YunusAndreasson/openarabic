@@ -300,23 +300,24 @@ export function useMultipleFeaturedArticles(
     articlesData,
   ]);
 
-  // Run selection logic only when dependencies change and we haven't initialized yet
+  // Run selection logic when dependencies change
   useEffect(() => {
-    // Prevent infinite loops by checking if we've already initialized
-    if (hasInitializedRef.current) return;
+    // For initial load (refreshKey === 0), only run if not initialized
+    if (refreshKey === 0 && hasInitializedRef.current) return;
 
-    // Mark as initialized to prevent future runs
-    hasInitializedRef.current = true;
+    // For refresh (refreshKey > 0), always run to get new selection
+    if (refreshKey > 0 || !hasInitializedRef.current) {
+      // Mark as initialized for initial load
+      if (refreshKey === 0) {
+        hasInitializedRef.current = true;
+      }
 
-    // Only run if we have articles and no cached data
-    if (hasArticles && !cachedFeatured) {
-      selectionLogic();
+      // Only run if we have articles and no cached data
+      if (hasArticles && !cachedFeatured) {
+        selectionLogic();
+      }
     }
-  }, [
-    hasArticles,
-    cachedFeatured,
-    selectionLogic
-  ]);
+  }, [hasArticles, cachedFeatured, selectionLogic, refreshKey]);
 
   return selectedArticles;
 }

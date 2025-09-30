@@ -161,8 +161,8 @@ export const STRINGS = {
   INFO: 'Info',
   MEMORY_STRENGTH_INFO: 'About memory strength',
 
-  WORD_MASTERY: 'Word mastery',
-  LEARNING_PROGRESS: 'Learning progress',
+  WORD_MASTERY: 'Mastered Words',
+  LEARNING_PROGRESS: 'Words in Progress',
   REVIEW_TIMING: 'Memory strength',
   REVIEW_TIMING_EXPLANATION:
     'Reviews are scheduled when recall drops. Clearing due words restores memory strength; consolidating weak words moves you toward green.',
@@ -179,13 +179,13 @@ export const STRINGS = {
     'Daily vocabulary advancement, tracking new words mastered over time.',
 
   // Practice bottom sheet subtitles (condensed for subtitle format)
-  MEMORY_STRENGTH_SUBTITLE: 'Shows when words need review based on memory decay',
-  WORD_MASTERY_SUBTITLE: 'The amount of words that you have mastered',
-  LEARNING_RATE_SUBTITLE: 'Tracks words learned per day over the last week',
-  DUE_WORDS_FORECAST_SUBTITLE: 'Predicts how many words will be due each day',
+  MEMORY_STRENGTH_SUBTITLE: 'Memory strength determines optimal review timing',
+  WORD_MASTERY_SUBTITLE: 'Words you can recall without difficulty',
+  LEARNING_RATE_SUBTITLE: 'Words being actively learned and relearned',
+  DUE_WORDS_FORECAST_SUBTITLE: 'Upcoming reviews for the next 7 days',
   MEMORY_RETENTION_OPTIMAL_TIMING:
     'Optimal review scheduling, indicating daily recall to guide retention.',
-  DUE_WORDS_FORECAST: 'Due words forecast',
+  DUE_WORDS_FORECAST: 'Due Words',
   DUE_WORDS_FORECAST_EXPLANATION:
     'Projected due words over the next 7 days, helping you plan study sessions and manage review workload.',
 
