@@ -332,7 +332,7 @@ export function useBulkReadingProgress(articleIds: number[]) {
     },
     enabled: !!user?.id && articleIds.length > 0,
     staleTime: 30000, // 30 seconds - data is fresh for 30 seconds to prevent flickering
-    refetchOnMount: false, // Don't force refetch on mount to prevent card position changes
+    refetchOnMount: 'always', // Always refetch on mount to ensure fresh data
     retry: 3, // Retry up to 3 times if the query fails
     gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
   });
