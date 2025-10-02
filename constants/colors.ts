@@ -7,7 +7,7 @@ const basePalette = {
     darkest: '#1A2B23', // Deep forest text
     dark: '#2B3C35', // Rich forest charcoal (primary)
     medium: '#4A5B52', // Balanced mid-tone sage
-    light: '#748A7C', // Refined sage-blue
+    light: '#6A7F72', // Refined sage-blue (WCAG AA compliant: 4.5:1)
     lighter: '#9AB5A4', // Clear inactive state
   },
 
@@ -137,8 +137,7 @@ const opacity = {
   medium: 0.08, // Standard hover states - Use for: button hovers, card highlights
   strong: 0.1, // Active backgrounds - Use for: pressed states, active tabs
   active: 0.12, // Strong active states - Use for: selected items, focus rings
-  border: 0.15, // Border overlays - Use for: subtle borders, dividers
-  progress: 0.15, // Progress backgrounds - Use for: progress bar tracks
+  border: 0.15, // Border overlays - Use for: subtle borders, dividers, progress bars
   disabled: 0.2, // Disabled backgrounds - Use for: disabled button states
   selection: 0.28, // Text selection - Use for: text selection highlights
   tooltip: 0.32, // Tooltips and shadows - Use for: tooltip backgrounds, light shadows
@@ -280,7 +279,7 @@ const lightColors: ThemeColors = {
 
   // UI semantics
   progressIndicator: basePalette.tint.primary,
-  progressBackground: applyOpacity(basePalette.tint.primary, opacity.progress),
+  progressBackground: applyOpacity(basePalette.tint.primary, opacity.border),
   interactiveSecondary: basePalette.forest.light,
   completionSuccess: basePalette.semantic.success,
 
@@ -327,7 +326,7 @@ const darkColors: ThemeColors = {
   // Interactive elements
   tint: basePalette.tint.primaryDark,
   tintBackground: applyOpacity(basePalette.tint.primaryDark, opacity.medium), // Common tint + 0.08 pattern
-  tabIconDefault: basePalette.forest.light,
+  tabIconDefault: basePalette.forest.lighter, // Fixed: use lighter for better contrast on dark bg
   tabIconSelected: basePalette.tint.primaryDark,
   icon: textHierarchy.dark.metadata,
   disabled: basePalette.sage.medium,
@@ -347,13 +346,13 @@ const darkColors: ThemeColors = {
   elevation2: elevation.dark.level2,
   elevation3: elevation.dark.level3,
 
-  // Reading experience - dark mode with standardized values
+  // Reading experience - dark mode needs higher opacity for visibility on dark backgrounds
   wordTooltipBg: basePalette.sage.medium,
   wordTooltipText: basePalette.pure.white,
   wordTooltipBorder: elevation.dark.level3,
-  wordTooltipShadow: applyOpacity(basePalette.pure.black, opacity.due),
-  wordSelectionUnderline: applyOpacity(basePalette.tint.primaryDark, opacity.tooltip),
-  wordDueUnderline: applyOpacity(basePalette.semantic.warningDark, opacity.overlay),
+  wordTooltipShadow: applyOpacity(basePalette.pure.black, opacity.active), // Consistent with light mode
+  wordSelectionUnderline: applyOpacity(basePalette.tint.primaryDark, opacity.selection), // Consistent with light mode
+  wordDueUnderline: applyOpacity(basePalette.semantic.warningDark, opacity.due), // Consistent with light mode
 
   // Navigation
   navigationRipple: applyOpacity(basePalette.tint.primaryDark, opacity.active),
@@ -362,7 +361,7 @@ const darkColors: ThemeColors = {
 
   // UI semantics
   progressIndicator: basePalette.tint.primaryDark,
-  progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.progress), // Consistent with other modes
+  progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.border),
   interactiveSecondary: textHierarchy.dark.metadata,
   completionSuccess: basePalette.semantic.successDark,
 
@@ -444,7 +443,7 @@ const sepiaColors: ThemeColors = {
 
   // UI semantics - sepia UI elements
   progressIndicator: basePalette.autumn.accent.primary,
-  progressBackground: applyOpacity(basePalette.autumn.accent.primary, opacity.progress),
+  progressBackground: applyOpacity(basePalette.autumn.accent.primary, opacity.border),
   interactiveSecondary: basePalette.autumn.light,
   completionSuccess: basePalette.autumn.semantic.success,
 
