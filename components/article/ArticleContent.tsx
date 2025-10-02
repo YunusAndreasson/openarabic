@@ -33,6 +33,7 @@ import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
+import { createAndroidRipple } from '@/utils/layoutUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -171,6 +172,9 @@ const SENTENCE_ITEM_HEIGHT = LAYOUT.SENTENCE_ITEM.HEIGHT;
 const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
 const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
 
+// Static key extractor for better performance
+const sentenceKeyExtractor = (item: Tables<'article_sentences'>) => item.id.toString();
+
 // Floating action buttons component positioned over parallax header
 const FloatingActionButtons = memo<{
   isInReadingList: boolean;
@@ -268,10 +272,7 @@ const FloatingActionButtons = memo<{
           <Pressable
             style={buttonStyle}
             onPress={onClose}
-            android_ripple={{
-              color: colors.navigationRipple,
-              radius: MIN_TOUCH_TARGET.MEDIUM / 2,
-            }}
+            android_ripple={createAndroidRipple(colors)}
             accessibilityRole="button"
             accessibilityLabel="Close article"
           >
@@ -290,10 +291,7 @@ const FloatingActionButtons = memo<{
             <Pressable
               style={isPlaying ? activeButtonStyle : buttonStyle}
               onPress={onPlayPress}
-              android_ripple={{
-                color: colors.navigationRipple,
-                radius: MIN_TOUCH_TARGET.MEDIUM / 2,
-              }}
+              android_ripple={createAndroidRipple(colors)}
               accessibilityRole="button"
               accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
             >
@@ -309,10 +307,7 @@ const FloatingActionButtons = memo<{
           <Pressable
             style={optimisticIsInReadingList ? activeButtonStyle : buttonStyle}
             onPress={handleOptimisticToggle}
-            android_ripple={{
-              color: colors.navigationRipple,
-              radius: MIN_TOUCH_TARGET.MEDIUM / 2,
-            }}
+            android_ripple={createAndroidRipple(colors)}
             accessibilityRole="button"
             accessibilityLabel={
               optimisticIsInReadingList ? 'Remove from bookmarks' : 'Add to bookmarks'
@@ -525,16 +520,13 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Memoized viewability config
     const viewabilityConfig = useMemo(() => createViewabilityConfig(), []);
 
-    // Memoize the key extractor to prevent inline function creation
-    const keyExtractor = useCallback((item: Tables<'article_sentences'>) => item.id.toString(), []);
-
     // Create FlashList v2 configuration - no estimates needed
     const flashListConfig = useMemo(
       () =>
         createFlashListConfig({
           data: sortedSentences,
           renderItem: renderSentenceItem,
-          keyExtractor,
+          keyExtractor: sentenceKeyExtractor,
           contentContainerStyle,
           ListHeaderComponent: headerComponent,
           ListFooterComponent: footerComponent,
@@ -560,7 +552,6 @@ export const ArticleContent = memo<ArticleContentProps>(
       [
         sortedSentences,
         renderSentenceItem,
-        keyExtractor,
         contentContainerStyle,
         headerComponent,
         footerComponent,

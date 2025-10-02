@@ -19,14 +19,6 @@ export interface WordDisplayProps {
 }
 
 /**
- * Props for the InstructionFooter component
- */
-export interface InstructionFooterProps {
-  /** Additional container style */
-  style?: StyleProp<ViewStyle>;
-}
-
-/**
  * Props for the ErrorMessage component in vocabulary
  */
 export interface ErrorMessageProps {

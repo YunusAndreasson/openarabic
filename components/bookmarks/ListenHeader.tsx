@@ -7,6 +7,7 @@ import { ProgressBar } from '@common/ProgressBar';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
+import { createAndroidRipple } from '@/utils/layoutUtils';
 
 interface ListenHeaderProps {
   progress: number;
@@ -61,7 +62,7 @@ const ListenHeader = memo<ListenHeaderProps>(
             hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
             accessibilityRole="button"
             accessibilityLabel="Close practice session"
-            android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
+            android_ripple={createAndroidRipple(colors)}
           >
             <Ionicons
               name="close"
@@ -78,7 +79,7 @@ const ListenHeader = memo<ListenHeaderProps>(
             onPress={handleManagePress}
             hitSlop={LAYOUT.HIT_SLOP.SMALL}
             testID="manage-word-button"
-            android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.SMALL / 2 }}
+            android_ripple={createAndroidRipple(colors, 'small')}
           >
             <Ionicons
               name="ellipsis-horizontal"

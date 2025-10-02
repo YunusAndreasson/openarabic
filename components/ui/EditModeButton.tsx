@@ -4,14 +4,15 @@ import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useBookmarksScreen } from '@/hooks/bookmarks/useBookmarksScreen';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { EditModeType } from '@/store/editModeSlice';
 import { UiAction } from '@/types/enums';
+import { createHeaderButtonStyle, createHeaderButtonTextStyle } from '@/utils/buttonStyleUtils';
 import { selectionFeedback } from '@/utils/haptics';
+import { createAndroidRipple } from '@/utils/layoutUtils';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -94,11 +95,11 @@ const EditModeButton: FC<EditModeButtonProps> = ({
         animatedStyle as ViewStyle,
         style,
       ]}
-      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
+      android_ripple={createAndroidRipple(colors)}
     >
       <ThemedText
         type="body"
@@ -118,19 +119,8 @@ const EditModeButton: FC<EditModeButtonProps> = ({
 };
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET.MEDIUM,
-    minWidth: 70,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-  buttonText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
-  },
+  button: createHeaderButtonStyle(),
+  buttonText: createHeaderButtonTextStyle(),
 });
 
 export default memo(EditModeButton);

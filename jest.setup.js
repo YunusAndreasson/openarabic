@@ -87,6 +87,7 @@ jest.mock('react-native-reanimated', () => {
       value: initialValue,
       modify: jest.fn(),
     }),
+    useReducedMotion: () => false,
     useAnimatedStyle: styleCallback => {
       try {
         return styleCallback() || {};
@@ -96,6 +97,15 @@ jest.mock('react-native-reanimated', () => {
     },
     useDerivedValue: callback => ({ value: callback() }),
     useAnimatedProps: callback => callback(),
+    useAnimatedReaction: (prepare, react) => {
+      // Execute the reaction immediately in tests
+      try {
+        const prepared = prepare();
+        react(prepared, prepared);
+      } catch {
+        // Ignore errors in test environment
+      }
+    },
 
     // Animation functions
     withTiming: (value, _config, callback) => {
@@ -715,12 +725,12 @@ global.Intl = {
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: 'SafeAreaView',
   SafeAreaProvider: ({ children }) => children,
-  useSafeAreaInsets: jest.fn(() => ({
+  useSafeAreaInsets: () => ({
     top: 44,
     right: 0,
     bottom: 34,
     left: 0,
-  })),
+  }),
   SafeAreaConsumer: ({ children }) =>
     children({
       top: 44,

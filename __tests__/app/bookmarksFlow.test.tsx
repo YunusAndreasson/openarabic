@@ -121,7 +121,7 @@ describe('bookmarks flow', () => {
     const { getByTestId, queryByTestId } = render(<TestApp />);
 
     fireEvent.press(getByTestId('article-1'));
-    fireEvent.press(getByTestId('listen-later-button'));
+    fireEvent.press(getByTestId('add-to-bookmarks-button'));
     expect((global as any).handleToggleBookmark).toHaveBeenCalledWith(1, false);
 
     fireEvent.press(getByTestId('go-bookmarks'));

@@ -15,6 +15,7 @@ import { simpleAudioService } from '@/services/simpleAudioService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
 import type { Article } from '@/types/articles.types';
+import type { ArticleId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 import { generateImageUrl } from '@/utils/imageUtils';
@@ -192,7 +193,7 @@ export const useBookmarksScreen = () => {
               queryClient
                 .prefetchQuery({
                   queryKey: ['article', articleIdToPrefetch],
-                  queryFn: () => articlesService.getArticleById(articleIdToPrefetch),
+                  queryFn: () => articlesService.getArticleById(articleIdToPrefetch as ArticleId),
                 })
                 .catch(() => {});
 
@@ -237,7 +238,7 @@ export const useBookmarksScreen = () => {
       if (!user?.id) return;
       try {
         lightFeedback();
-        await bookmarkService.removeFromReadingList(user.id, articleId);
+        await bookmarkService.removeFromReadingList(user.id, articleId as ArticleId);
         dispatch(removeFromCustomOrder(articleId));
 
         // Immediately update the specific article's reading list status
@@ -286,7 +287,7 @@ export const useBookmarksScreen = () => {
         queryClient
           .prefetchQuery({
             queryKey: ['article', articleId],
-            queryFn: () => articlesService.getArticleById(articleId),
+            queryFn: () => articlesService.getArticleById(articleId as ArticleId),
           })
           .catch(() => {});
         const cachedArticle = queryClient.getQueryData<Article>(['article', articleId]);
@@ -299,7 +300,7 @@ export const useBookmarksScreen = () => {
         }
 
         const track = await enhancedAudioService.generateEnhancedAudioTrack(
-          articleId,
+          articleId as ArticleId,
           audioPreference
         );
         if (track) {

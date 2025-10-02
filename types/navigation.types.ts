@@ -9,14 +9,21 @@ export interface ReviewParams {
 }
 
 /**
- * Type for filter parameters
+ * Type for filter parameters with discriminated union
  */
-export interface FilterParams {
-  type: 'author' | 'category';
-  id: string;
-  name?: string;
-  headerTitle?: string;
-}
+export type FilterParams =
+  | {
+      type: 'author';
+      id: string;
+      name?: string;
+      headerTitle?: string;
+    }
+  | {
+      type: 'category';
+      id: string;
+      name?: string;
+      headerTitle?: string;
+    };
 
 /**
  * Type for filters modal parameters
@@ -34,7 +41,7 @@ export interface ArticleParams {
 }
 
 /**
- * Type for route parameters
+ * Type for route parameters - strongly typed for each route
  */
 export type RouteParams = {
   '/article/[id]': ArticleParams;
@@ -47,14 +54,31 @@ export type RouteParams = {
 };
 
 /**
- * Type for route paths
+ * Type for route paths - extract all valid route paths
  */
 export type RoutePath = keyof RouteParams;
 
 /**
- * Type for route objects
+ * Discriminated union for type-safe route navigation
+ * Ensures params match the route pathname
  */
-export type Route<T extends RoutePath> = {
-  pathname: T;
-  params?: RouteParams[T];
-};
+export type Route =
+  | { pathname: '/article/[id]'; params: ArticleParams }
+  | { pathname: '/(tabs)/library/filterModal'; params: FiltersParams }
+  | { pathname: '/study/review'; params?: ReviewParams }
+  | { pathname: '/'; params?: Record<string, never> }
+  | { pathname: '/(tabs)'; params?: Record<string, never> }
+  | { pathname: '/(tabs)/study'; params?: Record<string, never> }
+  | { pathname: '/(tabs)/bookmarks'; params?: Record<string, never> };
+
+/**
+ * Helper type to extract params for a specific route
+ */
+export type ParamsForRoute<T extends RoutePath> = RouteParams[T];
+
+/**
+ * Type guard to check if a route requires params
+ */
+export type RouteRequiresParams<T extends RoutePath> = RouteParams[T] extends Record<string, never>
+  ? false
+  : true;

@@ -12,7 +12,7 @@ import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, Image, Platform, StyleSheet, UIManager, View } from 'react-native';
+import { AppState, Platform, StyleSheet, UIManager, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -24,7 +24,6 @@ import { MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/bookmarks';
 import { StreaksBottomSheet } from '@/components/library/StreaksBottomSheet';
 import { AuthProvider, ToastProvider } from '@/components/providers';
-import PulsatingLoader from '@/components/ui/PulsatingLoader';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
@@ -57,12 +56,6 @@ import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
-
-// Set the animation options for smooth fade out
-SplashScreen.setOptions({
-  duration: 1000,
-  fade: true,
-});
 
 // Sync React Query online status with device connectivity
 onlineManager.setEventListener(setOnline => {
@@ -154,6 +147,7 @@ function AppContent() {
   const globalAudioState = useGlobalAudioState();
 
   const { preloadAppData, isLoaded } = useAppPreloader();
+  const hasTriggeredPreload = useRef(false);
 
   useEffect(() => {
     if (navigationRef?.current) {
@@ -209,31 +203,34 @@ function AppContent() {
     }
   }, [dispatch, theme]);
 
-  // Handle preloading app data
+  // Handle preloading app data - start when auth is ready
   useEffect(() => {
-    if (!isAuthLoading && !isLoaded) {
-      preloadAppData();
+    if (!isAuthLoading && !isLoaded && !hasTriggeredPreload.current) {
+      hasTriggeredPreload.current = true;
+      preloadAppData().catch(() => {
+        // Preload errors are already logged in the preloader
+      });
     }
   }, [isAuthLoading, isLoaded, preloadAppData]);
 
   // Wait for all resources before setting appReady
   useEffect(() => {
-    // Either auth is ready or we've waited long enough
-    const authIsReady = !isAuthLoading || session !== null;
+    // Auth must be fully resolved (not loading anymore)
+    const authIsReady = !isAuthLoading;
 
-    // Simplified content readiness - don't wait for all data to load
-    // This prevents the header glitch by showing the UI sooner
+    // Critical content must be loaded (articles, categories, etc.)
     const contentIsReady = isLoaded;
 
-    // Only proceed when auth is ready OR we have content
-    // Fonts are now embedded at build time, so no need to wait for them
-    if (authIsReady || contentIsReady) {
+    // CRITICAL: Require BOTH auth AND content to be ready
+    // This prevents janky behavior from showing UI before data is available
+    // Once ready, never set back to false (prevents unmounting during refresh)
+    if (authIsReady && contentIsReady && !appReady) {
       setAppReady(true);
 
-      // Hide splash screen with animation when app is ready
+      // Hide splash screen when app is ready
       SplashScreen.hide();
     }
-  }, [isAuthLoading, session, isLoaded]);
+  }, [isAuthLoading, isLoaded, appReady]);
 
   // Initialize notifications when app is ready (Expo best practice)
   useEffect(() => {
@@ -276,6 +273,7 @@ function AppContent() {
     if (appReady) return;
     const timer = setTimeout(() => {
       setAppReady(true);
+      SplashScreen.hide();
     }, 10000);
     return () => clearTimeout(timer);
   }, [appReady]);
@@ -297,9 +295,9 @@ function AppContent() {
     return () => subscription.remove();
   }, [appReady, preloadAppData]);
 
-  // Perform session-based navigation after app is ready
+  // Perform session-based navigation after app is ready and navigation is mounted
   useEffect(() => {
-    if (appReady && !isAuthLoading && !hasAttemptedRedirect) {
+    if (appReady && !isAuthLoading && !hasAttemptedRedirect && navigationRef?.current) {
       setHasAttemptedRedirect(true);
 
       try {
@@ -318,32 +316,11 @@ function AppContent() {
         router.replace(ROUTE_PATHS.AUTH);
       }
     }
-  }, [appReady, isAuthLoading, hasAttemptedRedirect, session, router]);
+  }, [appReady, isAuthLoading, hasAttemptedRedirect, session, router, navigationRef]);
 
-  // Show branded loading screen until the app is ready
+  // Don't render Stack until app is ready to prevent slide animation on initial load
   if (!appReady) {
-    return (
-      <View
-        style={[styles.container, styles.loadingContainer, { backgroundColor: colors.background }]}
-      >
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-
-        {/* App Logo */}
-        <Image
-          source={require('@/assets/images/oaLogo.png')}
-          style={styles.loadingLogo}
-          resizeMode="contain"
-        />
-
-        {/* Loading Text */}
-        <ThemedText type="body" style={[styles.loadingText, { color: colors.tint }]}>
-          {STRINGS.LOADING}
-        </ThemedText>
-
-        {/* Loading Indicator */}
-        <PulsatingLoader size={64} />
-      </View>
-    );
+    return null;
   }
 
   return (
@@ -395,20 +372,6 @@ interface FallbackProps {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: LAYOUT.SPACING.LARGE,
-  },
-  loadingLogo: {
-    width: 120,
-    height: 120,
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  loadingText: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   gestureRoot: {
     flex: 1,

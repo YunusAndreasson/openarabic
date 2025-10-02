@@ -1,12 +1,19 @@
-import type { Article, ArticleSentence } from '@/types/articles.types';
+import type {
+  Article,
+  ArticleRow,
+  ArticleSentence,
+  ArticleSentenceRow,
+  SentenceWordRow,
+} from '@/types/articles.types';
+import type { ArticleId, AuthorId, CategoryId, RootId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
-import type { ArticleRow, ArticleSentenceRow, SentenceWordRow } from '@/types/dbRow.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
 function mapToSentenceWord(item: SentenceWordRow): SentenceWord {
   const base = item as Tables<'sentence_words'>;
   return {
     ...base,
+    root_id: base.root_id as RootId,
     root: item.root ?? null,
     word_type: item.word_type ?? null,
   };
@@ -33,6 +40,9 @@ export function mapToArticle(item: ArticleRow): Article {
 
   return {
     ...base,
+    id: base.id as ArticleId,
+    category_id: base.category_id as CategoryId,
+    author_id: base.author_id as AuthorId,
     article_sentences: Array.isArray(item.article_sentences)
       ? item.article_sentences.map(mapToArticleSentence)
       : [],

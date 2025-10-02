@@ -1,6 +1,7 @@
 import type { ViewStyle } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import type { ThemeColors } from '@/types/ui/theme.types';
 
 /**
  * Spacing scale type for consistent usage across components
@@ -157,3 +158,55 @@ export const createContainerStyle = (options: {
 
   return style;
 };
+
+/**
+ * Creates consistent Android ripple configuration
+ * @param colors - Theme colors object
+ * @param size - Size of the ripple radius
+ * @returns Android ripple configuration
+ */
+export const createAndroidRipple = (
+  colors: ThemeColors,
+  size: 'small' | 'medium' | 'large' = 'medium'
+) => {
+  const sizeMap = {
+    small: MIN_TOUCH_TARGET.SMALL,
+    medium: MIN_TOUCH_TARGET.MEDIUM,
+    large: MIN_TOUCH_TARGET.LARGE,
+  };
+
+  return {
+    color: colors.navigationRipple,
+    radius: sizeMap[size] / 2,
+  };
+};
+
+/**
+ * Common style patterns used throughout the app
+ * Use these to avoid recreating common style combinations
+ */
+export const COMMON_STYLES = {
+  /** Horizontal row with centered items */
+  row: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+  },
+  /** Horizontal row with centered items and centered content */
+  centeredRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  /** Medium border radius */
+  roundedMedium: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+  /** Full width container */
+  fullWidth: {
+    width: '100%' as const,
+  },
+  /** Flex 1 */
+  flex1: {
+    flex: 1,
+  },
+} as const;

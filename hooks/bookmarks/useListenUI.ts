@@ -7,6 +7,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAppDispatch } from '@/store/hooks';
 import { setCustomOrder } from '@/store/playlistSlice';
 import type { BookmarkItem } from '@/types/bookmark.types';
+import type { ArticleId } from '@/types/branded.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface ListenUIParams {
@@ -34,7 +35,7 @@ export const useListenUI = ({ sortedReadingList, editMode }: ListenUIParams) => 
       const article = sortedReadingList.find(item => item.article_id === articleId)?.articles;
       if (article) {
         InteractionManager.runAfterInteractions(() => prefetchArticle(articleId));
-        router.push(getArticleRoute(articleId, article.title));
+        router.push(getArticleRoute(articleId as ArticleId, article.title));
       }
     },
     [prefetchArticle, sortedReadingList, editMode]

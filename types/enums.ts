@@ -194,40 +194,48 @@ export enum AppTab {
 
 /**
  * Common UI action buttons
+ * Using const object for zero runtime overhead
  */
-export enum UiAction {
-  SORT_BY = 'Sort',
-  DICTIONARY = 'Dictionary',
-  FILTERS = 'Filters',
-  RESET_FILTERS = 'Reset',
-  AUTHORS = 'Authors',
-  DIFFICULTY = 'Difficulty',
-  CATEGORY = 'Category',
-  FILTER = 'Filter',
-  REFRESH = 'Refresh',
-  DONE = 'Done',
-  EDIT = 'Edit',
-  MANAGE = 'Manage',
-  CLOSE = 'Close',
-  BACK = 'Back',
-  CANCEL = 'Cancel',
-  CLEAR = 'Clear',
-  CONTINUE = 'Continue',
-}
+export const UiAction = {
+  SORT_BY: 'Sort',
+  DICTIONARY: 'Dictionary',
+  FILTERS: 'Filters',
+  RESET_FILTERS: 'Reset',
+  AUTHORS: 'Authors',
+  DIFFICULTY: 'Difficulty',
+  CATEGORY: 'Category',
+  FILTER: 'Filter',
+  REFRESH: 'Refresh',
+  DONE: 'Done',
+  EDIT: 'Edit',
+  MANAGE: 'Manage',
+  CLOSE: 'Close',
+  BACK: 'Back',
+  CANCEL: 'Cancel',
+  CLEAR: 'Clear',
+  CONTINUE: 'Continue',
+} as const;
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export type UiAction = (typeof UiAction)[keyof typeof UiAction];
 
 // ===== AUDIO CONTROLS =====
 
 /**
  * Audio playback actions
+ * Using const object for zero runtime overhead
  */
-export enum AudioAction {
-  REPEAT = 'Repeat',
-  PLAY_ALL = 'Play all',
-  PLAY_NOW = 'Play',
-  STOP = 'Stop',
-  REMOVE = 'Remove',
-  LISTEN_LATER = 'Listen later',
-}
+export const AudioAction = {
+  REPEAT: 'Repeat',
+  PLAY_ALL: 'Play all',
+  PLAY_NOW: 'Play',
+  STOP: 'Stop',
+  REMOVE: 'Remove',
+  LISTEN_LATER: 'Listen later',
+} as const;
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export type AudioAction = (typeof AudioAction)[keyof typeof AudioAction];
 
 /**
  * Sleep timer actions
@@ -268,12 +276,16 @@ export enum WordManagementAction {
 
 /**
  * Review confidence actions
+ * Using const object for zero runtime overhead
  */
-export enum ReviewAction {
-  DONT_KNOW = "Don't know",
-  KNOW = 'Know',
-  STUDY_DUE_WORDS = 'Review Now',
-}
+export const ReviewAction = {
+  DONT_KNOW: "Don't know",
+  KNOW: 'Know',
+  STUDY_DUE_WORDS: 'Review Now',
+} as const;
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export type ReviewAction = (typeof ReviewAction)[keyof typeof ReviewAction];
 
 // ===== LEARNING PHASES =====
 
@@ -293,22 +305,21 @@ export enum LearningPhase {
  */
 export type EnumValues<T> = T[keyof T];
 
-/**
- * Helper type for enum keys
- */
-export type EnumKeys<T> = keyof T;
-
 // ===== NOTIFICATION & TOAST TYPES =====
 
 /**
  * Toast notification types for user feedback
+ * Using const object for zero runtime overhead
  */
-export enum ToastType {
-  ERROR = 'error',
-  IMPORTANT = 'important',
-  INFO = 'info',
-  SUCCESS = 'success',
-}
+export const ToastType = {
+  ERROR: 'error',
+  IMPORTANT: 'important',
+  INFO: 'info',
+  SUCCESS: 'success',
+} as const;
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export type ToastType = (typeof ToastType)[keyof typeof ToastType];
 
 // ===== FAQ SYSTEM =====
 
@@ -419,13 +430,4 @@ export const getEnumValues = <T extends Record<string, string | number>>(
   enumObj: T
 ): EnumValues<T>[] => {
   return Object.values(enumObj) as EnumValues<T>[];
-};
-
-/**
- * Type-safe way to get enum keys as array
- */
-export const getEnumKeys = <T extends Record<string, string | number>>(
-  enumObj: T
-): EnumKeys<T>[] => {
-  return Object.keys(enumObj) as EnumKeys<T>[];
 };

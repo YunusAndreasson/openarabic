@@ -14,6 +14,7 @@ export function formatSecondsToClock(seconds: number): string {
 
 /**
  * Format a Date to 12-hour clock string H:MM AM/PM
+ * Note: Using manual formatting instead of Intl.DateTimeFormat due to Jest compatibility issues
  */
 export function formatDateTo12hClock(date: Date): string {
   const hour = date.getHours();

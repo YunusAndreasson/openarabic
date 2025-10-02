@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-nat
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { createAndroidRipple } from '@/utils/layoutUtils';
 
 export interface DragHandleProps {
   onLongPress: () => void;
@@ -24,7 +25,7 @@ const DragHandle: FC<DragHandleProps> = ({
       style={[styles.container, style]}
       onLongPress={onLongPress}
       delayLongPress={delayLongPress}
-      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
+      android_ripple={createAndroidRipple(colors)}
     >
       <Ionicons
         name="reorder-three"

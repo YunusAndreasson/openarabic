@@ -1,12 +1,11 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { DEFAULT_TOAST_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
-import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { ToastType } from '@/types/enums';
@@ -59,19 +58,6 @@ export const Toast = memo(
     const colors = useColors();
     const insets = useSafeAreaInsets();
 
-    // Simple opacity animation
-    const {
-      animatedStyle: opacityStyle,
-      startAnimation: fadeIn,
-      reverseAnimation: fadeOut,
-      reset: resetOpacity,
-    } = useOpacityAnimation({
-      initialOpacity: 0,
-      duration: TIMING_CONFIG.MEDIUM.duration,
-    });
-
-    // Keep individual animated styles separate for clarity
-
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -81,18 +67,9 @@ export const Toast = memo(
       }
 
       if (visible) {
-        fadeIn();
-
         timerRef.current = setTimeout(() => {
-          fadeOut();
-
-          setTimeout(() => {
-            onClose();
-            resetOpacity();
-          }, TIMING_CONFIG.MEDIUM.duration);
+          onClose();
         }, duration);
-      } else {
-        resetOpacity();
       }
 
       return () => {
@@ -101,7 +78,7 @@ export const Toast = memo(
           timerRef.current = null;
         }
       };
-    }, [visible, duration, onClose, fadeIn, fadeOut, resetOpacity]);
+    }, [visible, duration, onClose]);
 
     // Enhanced color scheme based on toast type - use elevation3 for floating elements
     const backgroundColor = useMemo(() => {
@@ -158,8 +135,9 @@ export const Toast = memo(
     return (
       <Animated.View
         pointerEvents="none"
-        layout={LinearTransition}
-        style={[containerStyle, opacityStyle]}
+        entering={FadeInUp.duration(TIMING_CONFIG.FAST.duration)}
+        exiting={FadeOutUp.duration(TIMING_CONFIG.FAST.duration)}
+        style={containerStyle}
       >
         <View
           style={[

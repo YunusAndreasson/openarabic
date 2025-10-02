@@ -2,11 +2,10 @@ import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   calculateFilterDate,
-  createComparators,
   filterArticles,
   getArticlesByDifficultWords,
   getArticlesByDueWords,
-  sortArticles,
+  sortArticlesByProgress,
 } from '@/utils/articleUtils';
 
 // Mock data for testing
@@ -128,34 +127,29 @@ describe('articleUtils', () => {
     });
   });
 
-  describe('createComparators', () => {
-    const progressMap = new Map([
-      [1, { progress_percentage: 50 }],
-      [2, { progress_percentage: 25 }],
-    ]);
-
-    it('should create author comparator', () => {
-      const comparators = createComparators(progressMap);
-      const result = comparators.author(mockArticles[0], mockArticles[1]);
-      expect(result).toBeLessThan(0); // 'Author A' comes before 'Author B'
+  describe('sortArticlesByProgress', () => {
+    it('should prioritize articles with partial progress (1-99%)', () => {
+      const progressMap = new Map([
+        [1, { progress_percentage: 50 }], // Partial progress
+        [2, { progress_percentage: 0 }], // No progress
+      ]);
+      const result = sortArticlesByProgress(mockArticles, progressMap);
+      expect(result[0].id).toBe(1); // Article with partial progress comes first
     });
 
-    it('should create date comparator', () => {
-      const comparators = createComparators(progressMap);
-      const result = comparators.date(mockArticles[0], mockArticles[1]);
-      expect(result).toBeLessThan(0); // First article is older
+    it('should place no-progress articles before completed articles', () => {
+      const progressMap = new Map([
+        [1, { progress_percentage: 100 }], // Completed
+        [2, { progress_percentage: 0 }], // No progress
+      ]);
+      const result = sortArticlesByProgress(mockArticles, progressMap);
+      expect(result[0].id).toBe(2); // No progress comes before completed
     });
 
-    it('should create difficulty comparator', () => {
-      const comparators = createComparators(progressMap);
-      const result = comparators.difficulty(mockArticles[0], mockArticles[1]);
-      expect(result).toBeLessThan(0); // First article has lower difficulty
-    });
-
-    it('should create progress comparator', () => {
-      const comparators = createComparators(progressMap);
-      const result = comparators.progress(mockArticles[0], mockArticles[1]);
-      expect(result).toBeGreaterThan(0); // First article has higher progress
+    it('should handle articles without progress data', () => {
+      const progressMap = new Map();
+      const result = sortArticlesByProgress(mockArticles, progressMap);
+      expect(result).toHaveLength(2);
     });
   });
 
@@ -202,30 +196,6 @@ describe('articleUtils', () => {
       };
       const result = filterArticles([], filters, null);
       expect(result).toHaveLength(0);
-    });
-  });
-
-  describe('sortArticles', () => {
-    it('should sort in ascending order', () => {
-      const numbers = [3, 1, 2];
-      const comparator = (a: number, b: number) => a - b;
-      const result = sortArticles(numbers, comparator, 'asc');
-      expect(result).toEqual([1, 2, 3]);
-    });
-
-    it('should sort in descending order', () => {
-      const numbers = [1, 3, 2];
-      const comparator = (a: number, b: number) => a - b;
-      const result = sortArticles(numbers, comparator, 'desc');
-      expect(result).toEqual([3, 2, 1]);
-    });
-
-    it('should not mutate original array', () => {
-      const numbers = [3, 1, 2];
-      const original = [...numbers];
-      const comparator = (a: number, b: number) => a - b;
-      sortArticles(numbers, comparator, 'asc');
-      expect(numbers).toEqual(original);
     });
   });
 

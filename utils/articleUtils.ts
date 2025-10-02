@@ -1,4 +1,5 @@
 import type { Article } from '@/types/articles.types';
+import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
@@ -44,24 +45,17 @@ export function getArticlesByDueWords(
   // Count unique due words in each article
   const articlesWithDueWordCount = articles.map(article => {
     // Use a set to track unique root IDs in this article
-    const uniqueDueRootIds = new Set<number>();
+    const uniqueDueRootIds = new Set<RootId>();
 
     // Check each sentence in the article
     article.article_sentences?.forEach(sentence => {
-      // Support both shapes: sentence_words[] or a direct word-like object
-      if (Array.isArray((sentence as any).sentence_words)) {
-        (sentence as any).sentence_words.forEach((word: any) => {
-          const rootId: number | undefined = word?.root_id;
-          if (rootId && dueWordRootIds.has(rootId)) {
-            uniqueDueRootIds.add(rootId);
-          }
-        });
-      } else {
-        const rootId: number | undefined = (sentence as any)?.root_id;
+      // Iterate through all sentence words
+      sentence.sentence_words?.forEach(word => {
+        const rootId: RootId | undefined = word?.root_id;
         if (rootId && dueWordRootIds.has(rootId)) {
           uniqueDueRootIds.add(rootId);
         }
-      }
+      });
     });
 
     // Return the count of unique root IDs
@@ -98,24 +92,17 @@ export function getArticlesByDifficultWords(
   // Count unique difficult words in each article
   const articlesWithDifficultWordCount = articles.map(article => {
     // Use a set to track unique root IDs in this article
-    const uniqueDifficultRootIds = new Set<number>();
+    const uniqueDifficultRootIds = new Set<RootId>();
 
     // Check each sentence in the article
     article.article_sentences?.forEach(sentence => {
-      // Support both shapes: sentence_words[] or a direct word-like object
-      if (Array.isArray((sentence as any).sentence_words)) {
-        (sentence as any).sentence_words.forEach((word: any) => {
-          const rootId: number | undefined = word?.root_id;
-          if (rootId && difficultWordRootIds.has(rootId)) {
-            uniqueDifficultRootIds.add(rootId);
-          }
-        });
-      } else {
-        const rootId: number | undefined = (sentence as any)?.root_id;
+      // Iterate through all sentence words
+      sentence.sentence_words?.forEach(word => {
+        const rootId: RootId | undefined = word?.root_id;
         if (rootId && difficultWordRootIds.has(rootId)) {
           uniqueDifficultRootIds.add(rootId);
         }
-      }
+      });
     });
 
     // Return the count of unique root IDs

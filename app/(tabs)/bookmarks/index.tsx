@@ -23,6 +23,7 @@ import { useBookmarksScreen, useListenUI } from '@/hooks/bookmarks';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
 import type { BookmarkItem } from '@/types/bookmark.types';
+import type { ArticleId } from '@/types/branded.types';
 import { AudioAction, ToastType } from '@/types/enums';
 import { generateImageUrl } from '@/utils/imageUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
@@ -245,7 +246,7 @@ export default function ListenScreen(): JSX.Element {
       InteractionManager.runAfterInteractions(() => {
         prefetchArticle(articleId);
       });
-      router.push(getArticleRoute(articleId, title));
+      router.push(getArticleRoute(articleId as ArticleId, title));
     },
     [prefetchArticle]
   );

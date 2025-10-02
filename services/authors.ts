@@ -1,6 +1,6 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
-import type { AuthorRow } from '@/types/dbRow.types';
+import type { AuthorRow } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 
 /**

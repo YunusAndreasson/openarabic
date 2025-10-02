@@ -1,6 +1,7 @@
 import type { Rating } from 'ts-fsrs';
 
 import { checkAuthentication, supabase } from '@/services/supabase';
+import type { RootId, UserId } from '@/types/branded.types';
 import type { TablesInsert, TablesUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -149,8 +150,8 @@ export const studyWordsFSRSService = {
     // Type-safe mapping from database rows to StudyWord interface
     return (data || []).map(
       (row): StudyWord => ({
-        root_id: row.root_id,
-        user_id: 'user_id' in row ? row.user_id : userId, // Use passed userId for stats queries
+        root_id: row.root_id as RootId,
+        user_id: ('user_id' in row ? row.user_id : userId) as UserId, // Use passed userId for stats queries
         fsrs_due: row.fsrs_due,
         fsrs_stability: row.fsrs_stability,
         fsrs_difficulty: row.fsrs_difficulty,

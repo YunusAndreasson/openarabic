@@ -11,6 +11,7 @@ import {
   OPTIMIZED_FSRS_CONFIG,
 } from '@/constants/fsrs';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import type { FSRSStateTracking, UseFSRSOptions, UseFSRSResult } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
@@ -140,7 +141,7 @@ export function useFSRS({
     // Build a stable signature of the current due words
     const signature = effectiveDueWords
       .map(w => w.root_id)
-      .filter((id): id is number => id != null)
+      .filter((id): id is RootId => id != null)
       .sort((a, b) => a - b)
       .join(',');
 

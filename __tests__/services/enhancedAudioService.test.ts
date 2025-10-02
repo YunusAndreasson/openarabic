@@ -1,3 +1,39 @@
+// Mock expo-file-system before any imports that use it
+jest.mock('expo-file-system', () => ({
+  Paths: {
+    cache: { uri: '/mock-cache/' },
+    document: { uri: '/mock-document/' },
+  },
+  Directory: jest.fn(),
+  File: jest.fn(),
+}));
+jest.mock('expo-file-system/legacy', () => ({
+  makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
+  deleteAsync: jest.fn().mockResolvedValue(undefined),
+  getInfoAsync: jest.fn().mockResolvedValue({ exists: false }),
+  readDirectoryAsync: jest.fn().mockResolvedValue([]),
+}));
+jest.mock('expo-crypto', () => ({
+  digestStringAsync: jest.fn().mockResolvedValue('mock-hash'),
+}));
+
+jest.mock('../../services/articles');
+jest.mock('../../services/audioCache');
+jest.mock('../../services/bookmark', () => ({
+  bookmarkService: {
+    getReadingList: jest.fn().mockResolvedValue([]),
+    addToReadingList: jest.fn().mockResolvedValue(undefined),
+    removeFromReadingList: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+// readingList service no longer exists, mocking readingProgress instead
+jest.mock('../../services/readingProgress', () => ({
+  getReadingProgress: jest.fn().mockResolvedValue([]),
+  updateReadingProgress: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock('@/utils/errorHandling');
+jest.mock('@/utils/imageUtils');
+
 import { STRINGS } from '@/constants/strings';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { handleError } from '@/utils/errorHandling';
@@ -6,12 +42,6 @@ import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
 import { articlesService } from '../../services/articles';
 import { audioCache } from '../../services/audioCache';
 import { bookmarkService } from '../../services/bookmark';
-
-jest.mock('../../services/articles');
-jest.mock('../../services/audioCache');
-jest.mock('../../services/readingList');
-jest.mock('@/utils/errorHandling');
-jest.mock('@/utils/imageUtils');
 
 const mockArticlesService = articlesService as jest.Mocked<typeof articlesService>;
 const mockAudioCache = audioCache as jest.Mocked<typeof audioCache>;
@@ -127,7 +157,7 @@ describe('enhancedAudioService', () => {
     ];
 
     it('processes all reading list items with bilingual preference', async () => {
-      mockReadingListService.getReadingList.mockResolvedValue(mockReadingList as any);
+      mockBookmarkService.getReadingList.mockResolvedValue(mockReadingList as any);
       mockGenerateAudioUrl
         .mockReturnValueOnce('https://example.com/bilingual1.mp3')
         .mockReturnValueOnce('https://example.com/audio2.mp3');
@@ -162,7 +192,7 @@ describe('enhancedAudioService', () => {
     });
 
     it('processes all reading list items with arabic preference', async () => {
-      mockReadingListService.getReadingList.mockResolvedValue(mockReadingList as any);
+      mockBookmarkService.getReadingList.mockResolvedValue(mockReadingList as any);
       mockGenerateAudioUrl
         .mockReturnValueOnce('https://example.com/audio1.mp3')
         .mockReturnValueOnce('https://example.com/audio2.mp3');
@@ -195,7 +225,7 @@ describe('enhancedAudioService', () => {
 
     it('handles errors gracefully and returns empty array', async () => {
       const error = new Error('Reading list fetch failed');
-      mockReadingListService.getReadingList.mockRejectedValue(error);
+      mockBookmarkService.getReadingList.mockRejectedValue(error);
 
       const result = await enhancedAudioService.getReadingListEnhancedTracks('user123');
 
@@ -208,7 +238,7 @@ describe('enhancedAudioService', () => {
     });
 
     it('handles empty reading list', async () => {
-      mockReadingListService.getReadingList.mockResolvedValue([]);
+      mockBookmarkService.getReadingList.mockResolvedValue([]);
 
       const result = await enhancedAudioService.getReadingListEnhancedTracks('user123');
 

@@ -21,6 +21,7 @@ import { articlesService } from '@/services/articles';
 import { authorsService } from '@/services/authors';
 import { categoriesService } from '@/services/categories';
 import type { Author, Category } from '@/types/articles.types';
+import type { AuthorId, CategoryId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
@@ -152,6 +153,7 @@ export default function ReadScreen(): JSX.Element {
         ? [
             queryClient.invalidateQueries({ queryKey: ['reading-streak', user.id] }),
             queryClient.invalidateQueries({ queryKey: ['reading-list', user.id] }),
+            queryClient.invalidateQueries({ queryKey: ['reading-progress-bulk', user.id] }),
           ]
         : [];
 
@@ -178,7 +180,7 @@ export default function ReadScreen(): JSX.Element {
           case 'category': {
             const category = categoriesData.find(c => c.id === id);
             if (category) {
-              router.push(getCategoryFilterRoute(id, category.name));
+              router.push(getCategoryFilterRoute(id as CategoryId, category.name));
               return;
             }
             break;
@@ -186,7 +188,7 @@ export default function ReadScreen(): JSX.Element {
           case 'author': {
             const author = authorsData.find(a => a.id === id);
             if (author) {
-              router.push(getAuthorFilterRoute(id, author.name));
+              router.push(getAuthorFilterRoute(id as AuthorId, author.name));
               return;
             }
             break;
@@ -198,14 +200,14 @@ export default function ReadScreen(): JSX.Element {
       // Check if it's a category
       const category = categoriesData.find(c => c.id === id);
       if (category) {
-        router.push(getCategoryFilterRoute(id, category.name));
+        router.push(getCategoryFilterRoute(id as CategoryId, category.name));
         return;
       }
 
       // Finally check if it's an author
       const author = authorsData.find(a => a.id === id);
       if (author) {
-        router.push(getAuthorFilterRoute(id, author.name));
+        router.push(getAuthorFilterRoute(id as AuthorId, author.name));
         return;
       }
     },

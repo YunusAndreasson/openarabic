@@ -16,6 +16,7 @@ import { bookmarkService } from '@/services/bookmark';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
+import type { ArticleId, RootId } from '@/types/branded.types';
 import { DailyWordLimitStatus, ToastType } from '@/types/enums';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -35,21 +36,25 @@ const RELATED_QUERY_KEYS = (userId: string, audioPreference?: 'arabic' | 'biling
 
 interface ArticleMutationsResult {
   handleToggleReadingList: (
-    articleId: number | undefined,
+    articleId: ArticleId | undefined,
     isInReadingList: boolean
   ) => Promise<void>;
-  handleWordPress: (wordId: number) => void;
-  handleRootPress: (rootId: number) => void;
-  addToReadingListMutation: UseMutationResult<void, Error, { userId: string; articleId: number }>;
+  handleWordPress: (wordId: RootId) => void;
+  handleRootPress: (rootId: RootId) => void;
+  addToReadingListMutation: UseMutationResult<
+    void,
+    Error,
+    { userId: string; articleId: ArticleId }
+  >;
   removeFromReadingListMutation: UseMutationResult<
     void,
     Error,
-    { userId: string; articleId: number }
+    { userId: string; articleId: ArticleId }
   >;
   toggleWordMutation: UseMutationResult<
     boolean,
     Error,
-    { userId: string; wordId: number },
+    { userId: string; wordId: RootId },
     StudyWordContext
   >;
   toggleRootMutation: UseMutationResult<
@@ -142,9 +147,9 @@ export const useArticleMutations = (
   // Memoize mutation options for reading list
   const addToReadingListOptions = useMemo(
     () => ({
-      mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
+      mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
         bookmarkService.addToReadingList(userId, articleId),
-      onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: number }) => {
+      onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
         // Immediately update cache to reflect the bookmark was added
         queryClient.setQueryData(['readingList', userId, articleId], true);
 
@@ -174,9 +179,9 @@ export const useArticleMutations = (
   // Memoize mutation options for removing from reading list
   const removeFromReadingListOptions = useMemo(
     () => ({
-      mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
+      mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
         bookmarkService.removeFromReadingList(userId, articleId),
-      onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: number }) => {
+      onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
         // Immediately update cache to reflect the bookmark was removed
         queryClient.setQueryData(['readingList', userId, articleId], false);
 
@@ -196,7 +201,7 @@ export const useArticleMutations = (
   // Memoize mutation options for toggling word study status
   const toggleWordOptions = useMemo(
     () => ({
-      mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) => {
+      mutationFn: async ({ userId, wordId }: { userId: string; wordId: RootId }) => {
         return studyWordsFSRSService.toggleFSRSStudyRoot(userId, wordId);
       },
       onMutate: async ({
@@ -204,7 +209,7 @@ export const useArticleMutations = (
         wordId,
       }: {
         userId: string;
-        wordId: number;
+        wordId: RootId;
       }): Promise<StudyWordContext> => {
         await queryClient.cancelQueries({
           queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
@@ -308,18 +313,20 @@ export const useArticleMutations = (
   );
 
   // Initialize mutations with memoized options
-  const addToReadingListMutation = useMutation<void, Error, { userId: string; articleId: number }>(
-    addToReadingListOptions
-  );
+  const addToReadingListMutation = useMutation<
+    void,
+    Error,
+    { userId: string; articleId: ArticleId }
+  >(addToReadingListOptions);
   const removeFromReadingListMutation = useMutation<
     void,
     Error,
-    { userId: string; articleId: number }
+    { userId: string; articleId: ArticleId }
   >(removeFromReadingListOptions);
   const toggleWordMutation = useMutation<
     boolean,
     Error,
-    { userId: string; wordId: number },
+    { userId: string; wordId: RootId },
     StudyWordContext
   >(toggleWordOptions);
   const toggleRootMutation = useMutation<
@@ -331,7 +338,7 @@ export const useArticleMutations = (
 
   // Handle toggling reading list
   const handleToggleReadingList = useCallback(
-    async (articleId: number | undefined, isInReadingList: boolean) => {
+    async (articleId: ArticleId | undefined, isInReadingList: boolean) => {
       if (!articleId) return;
 
       try {
@@ -378,7 +385,7 @@ export const useArticleMutations = (
 
   // Handle word press
   const handleWordPress = useCallback(
-    async (wordId: number) => {
+    async (wordId: RootId) => {
       try {
         // Check daily word limit first
         const canAdd = await canAddWord();
@@ -444,7 +451,7 @@ export const useArticleMutations = (
 
   // Handle root press
   const handleRootPress = useCallback(
-    async (rootId: number): Promise<boolean | undefined> => {
+    async (rootId: RootId): Promise<boolean | undefined> => {
       try {
         // Always get fresh session from Supabase first
         const {
@@ -513,7 +520,7 @@ export const useArticleMutations = (
         // Always use the user ID from the session directly
         const result = await toggleRootMutation.mutateAsync({
           userId: currentUserId,
-          rootId,
+          rootId: rootId as number,
         });
         return result;
       } catch (error) {

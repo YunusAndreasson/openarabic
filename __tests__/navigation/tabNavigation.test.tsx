@@ -45,9 +45,9 @@ jest.mock('expo-router', () => {
   const React = require('react');
   const { Text, TouchableOpacity } = require('react-native');
   const screens = {
-    read: require('../../app/(tabs)/library/index.tsx'),
-    listen: require('../../app/(tabs)/bookmarks/index.tsx'),
-    practice: require('../../app/(tabs)/study/index.tsx'),
+    library: require('../../app/(tabs)/library/index.tsx').default,
+    bookmarks: require('../../app/(tabs)/bookmarks/index.tsx').default,
+    study: require('../../app/(tabs)/study/index.tsx').default,
   };
 
   const Tabs = ({
@@ -120,29 +120,33 @@ jest.mock('expo-router', () => {
   return { Tabs, router: { replace: jest.fn() } };
 });
 
-jest.mock('expo-blur', () => {
-  const React = require('react');
-  return {
-    BlurView: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  };
-});
+// expo-blur is not installed, so we skip the mock - tests using it should mock inline if needed
 
 jest.mock('../../app/(tabs)/library/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
-  return () => <Text>READ_MOCK</Text>;
+  return {
+    __esModule: true,
+    default: () => React.createElement(Text, {}, 'READ_MOCK'),
+  };
 });
 
 jest.mock('../../app/(tabs)/bookmarks/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
-  return () => <Text>LISTEN_MOCK</Text>;
+  return {
+    __esModule: true,
+    default: () => React.createElement(Text, {}, 'LISTEN_MOCK'),
+  };
 });
 
 jest.mock('../../app/(tabs)/study/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
-  return () => <Text>PRACTICE_MOCK</Text>;
+  return {
+    __esModule: true,
+    default: () => React.createElement(Text, {}, 'PRACTICE_MOCK'),
+  };
 });
 
 jest.mock('../../hooks/auth/useAuth', () => ({
@@ -181,16 +185,10 @@ jest.mock('../../services/notificationService', () => ({
   updateAppIconBadge: jest.fn(),
 }));
 
-// Mock reading streak service
-jest.mock('../../services/readingStreak', () => ({
-  ReadingStreakService: {
-    getStreakHistory: jest.fn().mockResolvedValue({
-      currentStreak: 0,
-      bestStreak: 0,
-      totalReadingDays: 0,
-      dailyActivity: [],
-    }),
-  },
+// Mock reading progress service (no readingStreak service exists)
+jest.mock('../../services/readingProgress', () => ({
+  getReadingProgress: jest.fn().mockResolvedValue([]),
+  updateReadingProgress: jest.fn().mockResolvedValue(undefined),
 }));
 
 // Mock streak history hook
@@ -224,27 +222,27 @@ const createWrapper = () => {
 
 describe('Tab navigation', () => {
   it('renders default Library tab and navigates between tabs', () => {
-    const { getByText } = render(<TabLayout />, { wrapper: createWrapper() });
+    const { getByText, getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
     expect(getByText('READ_MOCK')).toBeTruthy();
 
-    fireEvent.press(getByText('Playlist'));
+    fireEvent.press(getByTestId('tab-bookmarks'));
     expect(getByText('LISTEN_MOCK')).toBeTruthy();
 
-    fireEvent.press(getByText('Study'));
+    fireEvent.press(getByTestId('tab-study'));
     expect(getByText('PRACTICE_MOCK')).toBeTruthy();
   });
 
-  it('shows memory capacity badge on practice tab when due words exist (red phase)', async () => {
+  it('shows memory capacity badge on study tab when due words exist (red phase)', async () => {
     const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
     // Wait for the component to render
     await waitFor(() => {
-      expect(getByTestId('tab-practice')).toBeTruthy();
+      expect(getByTestId('tab-study')).toBeTruthy();
     });
 
-    // Verify the practice tab renders correctly
-    expect(getByTestId('tab-practice')).toBeTruthy();
+    // Verify the study tab renders correctly
+    expect(getByTestId('tab-study')).toBeTruthy();
   });
 
   it('does not show memory capacity badge when only struggling words exist (orange phase)', async () => {
@@ -252,10 +250,10 @@ describe('Tab navigation', () => {
 
     // Wait for the component to render
     await waitFor(() => {
-      expect(getByTestId('tab-practice')).toBeTruthy();
+      expect(getByTestId('tab-study')).toBeTruthy();
     });
 
-    // Verify the practice tab renders correctly
-    expect(getByTestId('tab-practice')).toBeTruthy();
+    // Verify the study tab renders correctly
+    expect(getByTestId('tab-study')).toBeTruthy();
   });
 });

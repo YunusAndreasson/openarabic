@@ -66,8 +66,8 @@ export const SPRING_CONFIG = {
     energyThreshold: 0.01,
   },
   RESPONSIVE: {
-    damping: 18, // Higher damping for smoother, more refined feel
-    stiffness: 350, // Higher stiffness for more responsive, snappy feel
+    damping: 20, // Slightly higher damping for smoother feel
+    stiffness: 250, // Reduced stiffness for less jitter
     mass: 0.6, // Lighter mass for quicker response
     overshootClamping: false,
     energyThreshold: 0.01,

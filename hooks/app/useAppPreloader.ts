@@ -15,6 +15,7 @@ import { categoriesService } from '@/services/categories';
 import { readingProgressService } from '@/services/readingProgress';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
+import type { ArticleId } from '@/types/branded.types';
 import { getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 
@@ -33,7 +34,7 @@ interface AppPreloaderResult {
  */
 export const useAppPreloader = (): AppPreloaderResult => {
   const queryClient = useQueryClient();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user } = useAuth();
   const [isPreloading, setIsPreloading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [preloadProgress, setPreloadProgress] = useState(0);
@@ -41,7 +42,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
   // Progressive loading: Load critical data first, then user-specific data
   const preloadCriticalData = useCallback(async () => {
-    if (preloadLockRef.current) return;
+    // Lock is handled by preloadAppData, no need to check here
 
     try {
       setPreloadProgress(10);
@@ -202,8 +203,10 @@ export const useAppPreloader = (): AppPreloaderResult => {
   }, [queryClient, user]);
 
   const preloadAppData = useCallback(async () => {
-    if (isPreloading || preloadLockRef.current) return;
-    if (isAuthLoading) return;
+    if (preloadLockRef.current) {
+      return;
+    }
+    // Don't wait for auth - critical data (categories, articles) can load without user
 
     setIsPreloading(true);
     preloadLockRef.current = true;
@@ -214,14 +217,14 @@ export const useAppPreloader = (): AppPreloaderResult => {
       setIsPreloading(false);
       preloadLockRef.current = false;
     }
-  }, [isPreloading, isAuthLoading, preloadCriticalData]);
+  }, [preloadCriticalData]);
 
   const prefetchArticle = useCallback(
     async (articleId: number) => {
       try {
         await queryClient.prefetchQuery({
           queryKey: ['article', articleId],
-          queryFn: () => articlesService.getArticleById(articleId),
+          queryFn: () => articlesService.getArticleById(articleId as ArticleId),
           ...CACHE_TIMES.ARTICLES,
           retry: 2,
         });
@@ -317,7 +320,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         if (dueWordRootIds.size > 0) {
           const dueWordArticles = allArticles.filter(article =>
             article.article_sentences?.some(sentence =>
-              sentence.sentence_words?.some((word: any) => dueWordRootIds.has(word.root_id))
+              sentence.sentence_words?.some(word => dueWordRootIds.has(word.root_id))
             )
           );
 

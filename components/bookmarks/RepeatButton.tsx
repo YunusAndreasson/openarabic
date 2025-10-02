@@ -11,6 +11,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { AudioAction } from '@/types/enums';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
+import { createAndroidRipple, COMMON_STYLES } from '@/utils/layoutUtils';
 
 interface RepeatButtonProps
   extends Omit<BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>, 'icon' | 'onPress'> {
@@ -58,7 +59,7 @@ const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => 
       style={[styles.container, containerStyle]}
       onPress={handlePress}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
+      android_ripple={createAndroidRipple(colors)}
       {...rest}
     >
       <Animated.View style={[styles.iconContainer, iconRotationStyle]}>
@@ -83,20 +84,17 @@ const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => 
 const styles = StyleSheet.create({
   container: {
     ...LAYOUT.ELEVATION.SUBTLE,
-    alignItems: 'center',
+    ...COMMON_STYLES.centeredRow,
+    ...COMMON_STYLES.roundedMedium,
     alignSelf: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    flexDirection: 'row',
-    justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     minWidth: MIN_TOUCH_TARGET.LARGE * 2 + LAYOUT.SPACING.TINY,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
   iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...COMMON_STYLES.centeredRow,
     marginRight: LAYOUT.SPACING.SMALL,
   },
   label: {

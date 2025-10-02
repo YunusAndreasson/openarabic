@@ -12,6 +12,7 @@ import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback } from '@/utils/haptics';
 import { generateImageUrl } from '@/utils/imageUtils';
+import { createAndroidRipple } from '@/utils/layoutUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/time';
 
 export interface MiniPlayerProps {
@@ -149,7 +150,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
       >
         <Pressable
           onPress={handleMiniPlayerPress}
-          android_ripple={{ color: colors.navigationRipple }}
+          android_ripple={createAndroidRipple(colors)}
           style={cardStyle}
         >
           {/* Subtle inner hairline at top for grab affordance */}
@@ -217,7 +218,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
                   lightFeedback();
                   onTimerPress();
                 }}
-                android_ripple={{ color: colors.navigationRipple }}
+                android_ripple={createAndroidRipple(colors)}
                 style={timerButtonStyle}
               >
                 <Ionicons
@@ -230,7 +231,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
               {/* Play/Pause button */}
               <Pressable
                 onPress={handlePlayPause}
-                android_ripple={{ color: colors.navigationRipple }}
+                android_ripple={createAndroidRipple(colors)}
                 style={playButtonStyle}
               >
                 <Ionicons

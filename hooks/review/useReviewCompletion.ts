@@ -1,0 +1,100 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect } from 'react';
+import { InteractionManager } from 'react-native';
+
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { TIMING_CONFIG } from '@/constants/animation';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { analytics } from '@/services/analytics';
+import type { SessionMetrics } from '@/types/review.types';
+import { successFeedback } from '@/utils/haptics';
+
+/**
+ * Hook to handle review session completion side effects
+ * Manages query invalidation, analytics tracking, and haptic feedback
+ *
+ * @param sessionMetrics - Optional metrics from the completed session
+ * @param shouldExecute - Whether to execute completion logic (default: true)
+ */
+export const useReviewCompletion = (
+  sessionMetrics?: SessionMetrics,
+  shouldExecute: boolean = true
+) => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  /**
+   * Invalidate all FSRS queries after review completion
+   * This ensures the study tab and coach messages update immediately
+   */
+  const invalidateReviewQueries = useCallback(() => {
+    if (!user?.id) return;
+
+    // Mark session completion time to enable temporary cooldown
+    queryClient.setQueryData([FSRS_BASE_KEY, user.id, 'lastCompletedAt'], Date.now());
+
+    // Invalidate all FSRS word queries
+    queryClient.invalidateQueries({
+      predicate: query => {
+        const key = query.queryKey[0];
+        return key === 'fsrs-words' || key === 'struggling-words';
+      },
+    });
+
+    // Specifically invalidate the queries used by the study tab
+    const queriesToInvalidate = [
+      FSRS_QUERY_KEYS.all(user.id),
+      FSRS_QUERY_KEYS.due(user.id),
+      FSRS_QUERY_KEYS.stats(user.id),
+      FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+    ];
+
+    queriesToInvalidate.forEach(queryKey => {
+      queryClient.invalidateQueries({ queryKey });
+    });
+  }, [user?.id, queryClient]);
+
+  /**
+   * Track review completion analytics
+   */
+  const trackCompletion = useCallback(() => {
+    if (!sessionMetrics) return;
+
+    const sessionDuration = Date.now() - sessionMetrics.startTime;
+
+    analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, {
+      wordsReviewed: sessionMetrics.wordsReviewed,
+      wordsKnown: sessionMetrics.wordsKnown,
+      wordsVague: sessionMetrics.wordsVague,
+      wordsUnknown: sessionMetrics.wordsUnknown,
+      sessionDuration,
+      averageStabilityIncrease: sessionMetrics.averageStabilityIncrease,
+      longestStreak: sessionMetrics.longestStreak,
+      masteredWords: sessionMetrics.masteredWords,
+    });
+  }, [sessionMetrics]);
+
+  /**
+   * Execute completion logic when component mounts
+   * Deferred to after animations complete for better UX
+   */
+  useEffect(() => {
+    if (!shouldExecute) return;
+
+    InteractionManager.runAfterInteractions(() => {
+      invalidateReviewQueries();
+      trackCompletion();
+
+      // Trigger haptic feedback
+      setTimeout(() => {
+        successFeedback();
+      }, TIMING_CONFIG.FAST.duration + TIMING_CONFIG.ENTRANCE.duration / 2);
+    });
+  }, [shouldExecute]); // Only run once on mount with correct shouldExecute
+
+  return {
+    invalidateReviewQueries,
+    trackCompletion,
+  };
+};

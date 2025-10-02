@@ -35,6 +35,7 @@ import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import { useAppSelectorMemo } from '@/store/hooks';
+import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
@@ -81,7 +82,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const articleId = useMemo(() => {
     if (!id) return undefined;
     const parsed = parseInt(id ?? '', 10);
-    return isNaN(parsed) ? undefined : parsed;
+    return isNaN(parsed) ? undefined : (parsed as ArticleId);
   }, [id]);
 
   const {

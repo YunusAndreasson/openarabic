@@ -30,10 +30,15 @@ export const useToast = (): ToastContextType => {
 };
 
 export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const [toastState, setToastState] = useState({
+  const [toastState, setToastState] = useState<{
+    visible: boolean;
+    message: string;
+    duration: number | undefined;
+    type: ToastType;
+  }>({
     visible: false,
     message: '',
-    duration: undefined as number | undefined,
+    duration: undefined,
     type: ToastType.INFO,
   });
 

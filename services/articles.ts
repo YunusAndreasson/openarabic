@@ -1,7 +1,7 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
-import type { Article } from '@/types/articles.types';
-import type { ArticleRow } from '@/types/dbRow.types';
+import type { Article, ArticleRow } from '@/types/articles.types';
+import type { ArticleId, AuthorId, CategoryId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
 
@@ -80,8 +80,8 @@ const ARTICLES_WITH_WORD_STATS = `
 `;
 
 interface GetArticlesOptions {
-  categoryId?: number;
-  authorId?: number;
+  categoryId?: CategoryId;
+  authorId?: AuthorId;
   limit?: number;
   offset?: number;
   minDifficulty?: number;
@@ -178,7 +178,7 @@ export const articlesService = {
     }
   },
 
-  async getArticleById(id: number): Promise<Article> {
+  async getArticleById(id: ArticleId): Promise<Article> {
     try {
       const { data, error } = await supabase
         .from('articles')

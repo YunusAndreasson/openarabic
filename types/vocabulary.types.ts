@@ -1,10 +1,13 @@
+import type { RootId, UserId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 
 /**
  * Enhanced sentence word type with root and word type information
  * Used in article views, word details, and vocabulary components
  */
-export interface SentenceWord extends Tables<'sentence_words'> {
+export interface SentenceWord extends Omit<Tables<'sentence_words'>, 'root_id'> {
+  /** Root ID (branded for type safety) */
+  root_id: RootId;
   root: Tables<'roots'> | null;
   word_type: Tables<'word_types'> | null;
   sentence?: Tables<'article_sentences'> | null;
@@ -15,9 +18,11 @@ export interface SentenceWord extends Tables<'sentence_words'> {
  * Used across vocabulary-related components, screens, and the spaced repetition system
  */
 export interface StudyWord {
-  root_id: number;
+  /** Root ID (branded for type safety) */
+  root_id: RootId;
   root?: Tables<'roots'> | null;
-  user_id: string;
+  /** User ID (branded for type safety) */
+  user_id: UserId;
 
   fsrs_due: string | null;
   fsrs_stability: number | null;

@@ -1,14 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'expo-router';
-import { Fragment, useEffect, useMemo, type ComponentProps, type FC } from 'react';
-import { InteractionManager, StyleSheet, View } from 'react-native';
+import { Fragment, type ComponentProps, type FC } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import {
   COMPLETION_BUTTON_DELAY,
   COMPLETION_METRIC_BASE_DELAY,
@@ -17,19 +15,15 @@ import {
   COMPLETION_TITLE_DELAY,
   TIMING_CONFIG,
 } from '@/constants/animation';
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
+import { useEncouragingMetrics, useReviewCompletion } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
-import { analytics } from '@/services/analytics';
 import { UiAction } from '@/types/enums';
 import type { SessionMetrics } from '@/types/review.types';
 import { withOpacity } from '@/utils/colorUtils';
-import { successFeedback } from '@/utils/haptics';
-import { createMargin, createPadding } from '@/utils/layoutUtils';
+import { createMargin, createPadding, COMMON_STYLES } from '@/utils/layoutUtils';
 
 interface CompletionScreenProps {
   title?: string;
@@ -57,103 +51,12 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   fromRemember = false,
 }) => {
   const colors = useColors();
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
 
-  // Only invalidate queries for review flow
-  useEffect(() => {
-    if (!useThemedView && user?.id) {
-      // Defer query invalidation until after completion screen animation completes
-      InteractionManager.runAfterInteractions(() => {
-        // Mark session completion time to enable temporary cooldown on due query
-        if (user?.id) {
-          queryClient.setQueryData([FSRS_BASE_KEY, user.id, 'lastCompletedAt'], Date.now());
-        }
-
-        // Invalidate all FSRS word queries to ensure coach messages and study tab update
-        queryClient.invalidateQueries({
-          predicate: query => {
-            const key = query.queryKey[0];
-            return key === 'fsrs-words' || key === 'struggling-words';
-          },
-        });
-
-        // Specifically invalidate the queries used by the study tab for immediate updates
-        if (user?.id) {
-          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
-          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
-          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
-          queryClient.invalidateQueries({
-            queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-          });
-        }
-      });
-    }
-  }, [user?.id, queryClient, useThemedView]);
-
-  // Trigger haptic feedback when component mounts
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      successFeedback();
-    }, TIMING_CONFIG.FAST.duration + TIMING_CONFIG.ENTRANCE.duration / 2);
-
-    return () => clearTimeout(timer);
-  }, []);
+  // Handle review completion logic (query invalidation, analytics, haptics)
+  // Only execute for review flow (not for generic completion screens)
+  useReviewCompletion(sessionMetrics, !useThemedView);
 
   const encouragingMetrics = useEncouragingMetrics(sessionMetrics, colors);
-
-  // Memoize analytics data to prevent unnecessary recalculations
-  const analyticsData = useMemo(() => {
-    if (!sessionMetrics) return null;
-
-    const sessionDuration = Date.now() - sessionMetrics.startTime;
-    const wordsReviewed = sessionMetrics.wordsReviewed;
-
-    // Only calculate performance metrics if there are words to review
-    const performanceMetrics =
-      wordsReviewed > 0
-        ? {
-            accuracyRate: Math.round((sessionMetrics.wordsKnown / wordsReviewed) * 100),
-            struggleRate: Math.round((sessionMetrics.wordsVague / wordsReviewed) * 100),
-            unknownRate: Math.round((sessionMetrics.wordsUnknown / wordsReviewed) * 100),
-          }
-        : { accuracyRate: 0, struggleRate: 0, unknownRate: 0 };
-
-    return {
-      // Core session data
-      wordsReviewed,
-      wordsKnown: sessionMetrics.wordsKnown,
-      wordsVague: sessionMetrics.wordsVague,
-      wordsUnknown: sessionMetrics.wordsUnknown,
-      masteredWords: sessionMetrics.masteredWords,
-
-      // Performance metrics
-      ...performanceMetrics,
-
-      // Learning progress
-      averageStabilityIncrease: Math.round(sessionMetrics.averageStabilityIncrease * 100) / 100,
-      longestStreak: sessionMetrics.longestStreak,
-      currentStreak: sessionMetrics.currentStreak,
-
-      // Session metadata
-      sessionDurationMs: sessionDuration,
-      sessionDurationMinutes: Math.round(sessionDuration / 60000), // Convert ms to minutes
-      wordsPerMinute: wordsReviewed, // Simplified - just total words for now
-
-      // Session quality indicators
-      hadPerfectSession: sessionMetrics.wordsUnknown === 0 && sessionMetrics.wordsVague === 0,
-      hadStruggleWords: sessionMetrics.wordsVague > 0,
-      hadUnknownWords: sessionMetrics.wordsUnknown > 0,
-      hadMasteredWords: sessionMetrics.masteredWords > 0,
-    };
-  }, [sessionMetrics, useThemedView]);
-
-  // Track practice session completion analytics - runs only once when data is ready
-  useEffect(() => {
-    if (analyticsData) {
-      analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, analyticsData);
-    }
-  }, [analyticsData]);
 
   const Content = (
     <View style={[styles.contentContainer, contentStyle || {}]}>
@@ -291,20 +194,18 @@ const styles = StyleSheet.create({
     ...createMargin({ bottom: 'XXLARGE' }), // Increased for stronger visual separation
   },
   metricContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
+    ...COMMON_STYLES.row,
     ...createPadding({ vertical: 'TINY' }),
   },
   metricIconContainer: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    ...COMMON_STYLES.centeredRow,
+    ...COMMON_STYLES.roundedMedium,
     height: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM, // Increased for better proportion
-    justifyContent: 'center',
     ...createMargin({ right: 'MEDIUM' }),
     width: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM, // Square container
   },
   metricItem: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    ...COMMON_STYLES.roundedMedium,
     ...createPadding({ horizontal: 'LARGE', vertical: 'TINY' }),
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
   },

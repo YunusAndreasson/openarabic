@@ -3,11 +3,12 @@ import { articlesService } from '@/services/articles';
 import { audioCache } from '@/services/audioCache';
 import { bookmarkService } from '@/services/bookmark';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
+import type { ArticleId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
 
 // Helper function to generate composite ID
-const generateTrackId = (articleId: number): string => {
+const generateTrackId = (articleId: ArticleId): string => {
   return `article-${articleId}`;
 };
 
@@ -16,7 +17,7 @@ export const enhancedAudioService = {
    * Generates enhanced audio track for an article
    */
   async generateEnhancedAudioTrack(
-    articleId: number,
+    articleId: ArticleId,
     audioPreference: 'arabic' | 'bilingual' = 'bilingual'
   ): Promise<EnhancedAudioTrack | null> {
     try {
@@ -78,7 +79,7 @@ export const enhancedAudioService = {
         const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl || selectedAudioUrl);
 
         allTracks.push({
-          id: generateTrackId(item.article_id),
+          id: generateTrackId(item.article_id as ArticleId),
           articleId: item.article_id,
           audioUrl: cachedAudioUrl,
           title: article.title,

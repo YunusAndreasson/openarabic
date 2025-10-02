@@ -4,10 +4,11 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { UiAction } from '@/types/enums';
+import { createHeaderButtonStyle, createHeaderButtonTextStyle } from '@/utils/buttonStyleUtils';
+import { createAndroidRipple } from '@/utils/layoutUtils';
 
 interface DoneButtonProps {
   /**
@@ -48,10 +49,7 @@ const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        android_ripple={{
-          color: colors.navigationRipple,
-          radius: MIN_TOUCH_TARGET.MEDIUM / 2,
-        }}
+        android_ripple={createAndroidRipple(colors)}
         accessibilityRole="button"
         accessibilityLabel={UiAction.DONE}
       >
@@ -77,19 +75,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  button: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET.MEDIUM,
-    minWidth: 70,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-  buttonText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
-  },
+  button: createHeaderButtonStyle(),
+  buttonText: createHeaderButtonTextStyle(),
 });
 
 export default memo(DoneButton);

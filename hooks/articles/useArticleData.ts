@@ -7,6 +7,7 @@ import { articlesService } from '@/services/articles';
 import { bookmarkService } from '@/services/bookmark';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
+import type { ArticleId } from '@/types/branded.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 
 interface ArticleDataResult {
@@ -35,7 +36,7 @@ export const useArticleData = (
     queryKey: ['article', articleId],
     queryFn: () => {
       if (!articleId) throw new Error('Article ID is required');
-      return articlesService.getArticleById(articleId);
+      return articlesService.getArticleById(articleId as ArticleId);
     },
     enabled: !!articleId,
     ...CACHE_TIMES.ARTICLES,
@@ -48,7 +49,7 @@ export const useArticleData = (
     queryKey: ['readingList', userId, articleId],
     queryFn: () => {
       if (!userId || !articleId) throw new Error('User ID and Article ID are required');
-      return bookmarkService.isInReadingList(userId, articleId);
+      return bookmarkService.isInReadingList(userId, articleId as ArticleId);
     },
     enabled: !!userId && !!articleId,
     ...CACHE_TIMES.MEDIUM, // 3 minutes - reading list changes moderately

@@ -12,6 +12,7 @@ import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { AppTab, UiAction } from '@/types/enums';
 import type { ThemeColors } from '@/types/ui/theme.types';
+import { createAndroidRipple } from '@/utils/layoutUtils';
 
 // Custom IconWithBadge component for better badge positioning and consistent shape
 const IconWithBadge = memo(
@@ -95,7 +96,7 @@ const DictionaryButton = memo((props: DictionaryButtonProps): JSX.Element | null
       ]}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       onPress={handlePress}
-      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
+      android_ripple={createAndroidRipple(colors)}
     >
       <ThemedText
         type="body"

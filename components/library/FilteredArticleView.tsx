@@ -14,7 +14,7 @@ import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
-import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 // v2 handles layout automatically - no overrideFixedHeight needed
 
@@ -128,9 +128,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
 
   // Fetch bulk reading progress for all articles
   const articleIds = useMemo(() => visibleArticles.map(article => article.id), [visibleArticles]);
-  const { data: progressMapRaw = new Map() } = useBulkReadingProgress(articleIds);
-  // Ensure progressMap is always a Map to prevent runtime errors
-  const progressMap = progressMapRaw instanceof Map ? progressMapRaw : new Map();
+  const { data: progressMap } = useSafeBulkReadingProgress(articleIds);
 
   // Memoize expensive computations
   const articlesLength = useMemo(() => visibleArticles.length, [visibleArticles.length]);
@@ -185,9 +183,9 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   ) => React.JSX.Element = useCallback(
     params => {
       const { item } = params;
-      const progress = progressMap.get(item.id);
+      const progress = progressMap?.get?.(item.id);
       const progressPercentage = progress?.progress_percentage ?? 0;
-      const hasStartedReading = progress !== undefined; // Article has been started if there's a progress record
+      const hasStartedReading = !!progress;
 
       if (editMode && 'drag' in params) {
         // DraggableFlatList render

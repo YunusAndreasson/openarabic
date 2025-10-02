@@ -1,11 +1,13 @@
-export const getArticleRoute = (id: number, headerTitle?: string): string => {
+import type { ArticleId, AuthorId, CategoryId, RootId } from '@/types/branded.types';
+
+export const getArticleRoute = (id: ArticleId, headerTitle?: string): string => {
   const base = `/article/${id}`;
   if (!headerTitle) return base;
   const encodedTitle = encodeURIComponent(headerTitle);
   return `${base}?headerTitle=${encodedTitle}`;
 };
 
-export const getCategoryFilterRoute = (categoryId: number, name?: string): string => {
+export const getCategoryFilterRoute = (categoryId: CategoryId, name?: string): string => {
   const base = `/(tabs)/library/filter`;
   const params = [`type=category`, `id=${categoryId}`];
   if (name) params.push(`name=${encodeURIComponent(name)}`);
@@ -13,7 +15,7 @@ export const getCategoryFilterRoute = (categoryId: number, name?: string): strin
   return `${base}?${query}`;
 };
 
-export const getAuthorFilterRoute = (authorId: number, name?: string): string => {
+export const getAuthorFilterRoute = (authorId: AuthorId, name?: string): string => {
   const base = `/(tabs)/library/filter`;
   const params = [`type=author`, `id=${authorId}`];
   if (name) params.push(`name=${encodeURIComponent(name)}`);
@@ -46,7 +48,7 @@ export const ROUTE_PATHS = {
 
 export const getStudyReviewRoute = (
   params?: Partial<{
-    rootId: number;
+    rootId: RootId;
     mode: 'new' | 'random' | 'spaced';
     count: number;
     fromRemember: string;

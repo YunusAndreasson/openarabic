@@ -107,15 +107,10 @@ export function useMultipleFeaturedArticles(
     [difficultWordRootIds]
   );
 
-  // State to store the computed selection
+  // State to store the computed selection (only for refreshes)
   const [selectedArticles, setSelectedArticles] = useState<MultipleFeaturedArticlesResult>(() => {
-    // Return cached data immediately if available (from preloader)
-    if (cachedFeatured) {
-      return cachedFeatured;
-    }
-
-    // If we have articles, return them immediately to prevent loading state
-    if (articlesData.length > 0) {
+    // For initial load without cache, show first 5 articles immediately
+    if (articlesData.length > 0 && refreshKey === 0) {
       const immediateArticles = articlesData.slice(0, 5);
       return {
         articles: immediateArticles,
@@ -137,14 +132,6 @@ export function useMultipleFeaturedArticles(
   // Track if we've already initialized to prevent infinite loops
   const hasInitializedRef = useRef(false);
 
-  // Use cached featured articles immediately if available
-  useEffect(() => {
-    if (cachedFeatured && !hasInitializedRef.current) {
-      hasInitializedRef.current = true;
-      setSelectedArticles(cachedFeatured);
-    }
-  }, [cachedFeatured]);
-
   // Memoize the selection logic to prevent infinite re-renders
   const selectionLogic = useCallback(() => {
     // Determine the selection strategy and compute the result once
@@ -157,9 +144,6 @@ export function useMultipleFeaturedArticles(
         type: 'random',
         dueWordRootIds: new Set<number>(),
       };
-    } else if (cachedFeatured) {
-      // Use cached featured articles from preloader
-      result = cachedFeatured;
     } else if (refreshKey === 0) {
       // For initial load (refreshKey === 0), use intelligent selection
       if (
@@ -288,7 +272,6 @@ export function useMultipleFeaturedArticles(
     return result;
   }, [
     hasArticles,
-    cachedFeatured,
     refreshKey,
     scope,
     user?.id,
@@ -298,6 +281,7 @@ export function useMultipleFeaturedArticles(
     stableDifficultWordRootIds, // Use stable array instead of Set
     hasAnyStudyWords,
     articlesData,
+    dueWordRootIds,
   ]);
 
   // Run selection logic when dependencies change
@@ -312,12 +296,18 @@ export function useMultipleFeaturedArticles(
         hasInitializedRef.current = true;
       }
 
-      // Only run if we have articles and no cached data
-      if (hasArticles && !cachedFeatured) {
+      // Only run if we have articles
+      if (hasArticles) {
         selectionLogic();
       }
     }
-  }, [hasArticles, cachedFeatured, selectionLogic, refreshKey]);
+  }, [hasArticles, selectionLogic, refreshKey]);
+
+  // CRITICAL: Trust preloader cache for initial load (refreshKey === 0)
+  // This prevents expensive recomputation and eliminates jank
+  if (cachedFeatured && refreshKey === 0) {
+    return cachedFeatured;
+  }
 
   return selectedArticles;
 }

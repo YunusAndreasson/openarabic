@@ -77,8 +77,8 @@ describe('articlesService', () => {
         summary,
         audio_url,
         audio_url_bilingual,
-        category:categories(id,name),
-        author:authors(id,name)
+        category:categories!inner(id,name),
+        author:authors!inner(id,name)
       `.replace(/\s/g, '');
       expect(calledColumns).toBe(expected);
       expect(builder.eq).toHaveBeenCalledWith('category_id', 2);
@@ -109,8 +109,8 @@ describe('articlesService', () => {
         summary,
         audio_url,
         audio_url_bilingual,
-        category:categories(id,name),
-        author:authors(id,name),
+        category:categories!inner(id,name),
+        author:authors!inner(id,name),
         article_sentences(
           id,
           sentence_words(
@@ -160,8 +160,8 @@ describe('articlesService', () => {
         summary,
         audio_url,
         audio_url_bilingual,
-        category:categories(id,name),
-        author:authors(id,name),
+        category:categories!inner(id,name),
+        author:authors!inner(id,name),
         article_sentences(
           id,
           sentence_words(

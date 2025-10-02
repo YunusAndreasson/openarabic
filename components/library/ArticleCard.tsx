@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -10,7 +10,7 @@ import BaseCard from '@common/BaseCard';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import Pill from '@/components/ui/Pill';
-import { PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
+import { SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useTransformAnimation } from '@/hooks/animations';
@@ -116,19 +116,18 @@ const styles = StyleSheet.create({
   },
 });
 
-// Memoized static typography styles
-const createTitleStyle = () => ({
-  // Defer to ThemedText heading3 for card titles; keep micro letter-spacing only
+// Static typography styles
+const TITLE_STYLE = {
   letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-});
+};
 
-const createAuthorStyle = () => ({
+const AUTHOR_STYLE = {
   letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
-});
+};
 
-const createSummaryStyle = () => ({
+const SUMMARY_STYLE = {
   letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
-});
+};
 
 /**
  * High-performance article card component optimized for list rendering
@@ -144,8 +143,8 @@ function ArticleCardComponent({
   style,
   testID,
   article,
-  prefetch = true,
-  isRelatedArticle = false,
+  prefetch: _prefetch = true,
+  isRelatedArticle: _isRelatedArticle = false,
 }: ArticleCardProps): JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -153,7 +152,7 @@ function ArticleCardComponent({
   const screenWidth = SCREEN_WIDTH;
 
   // Optimized press animation - memoize animation hook parameters
-  const { animatedStyle, setValue } = useTransformAnimation({
+  const { animatedStyle, setValue: _setValue } = useTransformAnimation({
     type: 'scale',
     initialValue: 1,
     targetValue: 1,
@@ -163,18 +162,6 @@ function ArticleCardComponent({
   });
 
   // Handle press animation - scale down on press, back up on release
-  const handlePressIn = useMemo(() => {
-    return () => {
-      setValue(PRESS_SCALE.CARD);
-    };
-  }, [setValue]);
-
-  const handlePressOut = useMemo(() => {
-    return () => {
-      setValue(1);
-    };
-  }, [setValue]);
-
   // Memoize image height calculation - screenWidth is stable for mobile
   const imageHeight = useMemo(
     () => Math.round((screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO),
@@ -199,10 +186,6 @@ function ArticleCardComponent({
     ] as const;
   }, [colors.background, colors.card, colors.transparent, isDarkMode]);
 
-  // Static styles - create once and reuse
-  const titleStyle = createTitleStyle();
-  const authorStyle = createAuthorStyle();
-  const summaryStyle = createSummaryStyle();
 
   // Memoize computed values for child components
   const imageContainerStyle = useMemo(
@@ -210,17 +193,11 @@ function ArticleCardComponent({
     [imageHeight]
   );
 
-  const capitalizedCategory = useMemo(() => capitalizeFirstLetter(category), [category]);
-
-  const capitalizedCategoryForDisplay = useMemo(
-    () => (categoryForDisplay ? capitalizeFirstLetter(categoryForDisplay) : ''),
-    [categoryForDisplay]
-  );
-
-  const authorDisplayText = useMemo(
-    () => `${author} • ${capitalizedCategoryForDisplay}`,
-    [author, capitalizedCategoryForDisplay]
-  );
+  const capitalizedCategory = capitalizeFirstLetter(category);
+  const capitalizedCategoryForDisplay = categoryForDisplay
+    ? capitalizeFirstLetter(categoryForDisplay)
+    : '';
+  const authorDisplayText = `${author} • ${capitalizedCategoryForDisplay}`;
 
   // Memoize gradient props to prevent unnecessary re-renders
   const gradientProps = useMemo(
@@ -238,6 +215,17 @@ function ArticleCardComponent({
     () => getArticleRoute(article.id, article.title),
     [article.id, article.title]
   );
+
+  const router = useRouter();
+
+  // Handle navigation with router.push to avoid Link navigation errors
+  const handlePress = useCallback(() => {
+    try {
+      router.push(articleHref);
+    } catch (error) {
+      console.error('[ArticleCard] Navigation error:', error);
+    }
+  }, [router, articleHref]);
 
   // Create the card content component
   const cardContent = useMemo(
@@ -257,7 +245,7 @@ function ArticleCardComponent({
             <ThemedText
               colorName="headingText"
               numberOfLines={MAX_TITLE_LINES}
-              style={titleStyle}
+              style={TITLE_STYLE}
               type="heading3"
             >
               {title}
@@ -266,13 +254,13 @@ function ArticleCardComponent({
             <ThemedText
               colorName="authorText"
               numberOfLines={MAX_AUTHOR_LINES}
-              style={authorStyle}
+              style={AUTHOR_STYLE}
               type="label"
             >
               {authorDisplayText}
             </ThemedText>
 
-            <ThemedText colorName="captionText" type="caption" style={summaryStyle}>
+            <ThemedText colorName="captionText" type="caption" style={SUMMARY_STYLE}>
               {summary}
             </ThemedText>
           </View>
@@ -285,29 +273,21 @@ function ArticleCardComponent({
       gradientProps,
       category,
       capitalizedCategory,
-      titleStyle,
       title,
-      authorStyle,
       authorDisplayText,
-      summaryStyle,
       summary,
     ]
   );
 
   return (
     <Animated.View style={animatedStyle}>
-      <Link
-        href={articleHref}
-        prefetch={prefetch}
-        push={!isRelatedArticle}
-        dangerouslySingular={true}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
+      <BaseCard
+        style={style}
+        testID={testID}
+        onPress={handlePress}
       >
-        <BaseCard style={style} testID={testID}>
-          {cardContent}
-        </BaseCard>
-      </Link>
+        {cardContent}
+      </BaseCard>
     </Animated.View>
   );
 }
