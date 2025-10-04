@@ -13,6 +13,8 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useSimpleAudioPlayer } from '@/hooks/audio';
 import { useAuth } from '@/hooks/auth';
+import { useSessionMetrics } from '@/hooks/review';
+import { useTimerCleanup } from '@/hooks/utils';
 import { useFSRS, useWordSizing } from '@/hooks/vocabulary';
 import { audioCache } from '@/services/audioCache';
 import type { SessionMetrics } from '@/types/review.types';
@@ -28,10 +30,6 @@ interface ReviewTimeRefs {
 }
 
 interface ReviewStateRefs {
-  meaningTimeout: ReturnType<typeof setTimeout> | null;
-  completionTransition: ReturnType<typeof setTimeout> | null;
-  initialTransitionTimeout: ReturnType<typeof setTimeout> | null;
-  fadeAnimationTimeout: ReturnType<typeof setTimeout> | null;
   maxProgress: number;
   completionTriggered: boolean;
   isUpdatingWord: boolean;
@@ -117,6 +115,12 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     duration: TRANSITION_DELAYS.fadeAnimation,
   });
 
+  // Timer cleanup hook for managing all setTimeout calls
+  const { setTimer, clearTimer, clearAllTimers } = useTimerCleanup();
+
+  // Session metrics tracking hook
+  const { metrics: sessionMetrics, updateMetrics } = useSessionMetrics();
+
   // UI state
   const [showTranslation, setShowTranslation] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
@@ -148,60 +152,38 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Consolidated state refs
   const stateRefs = useRef<ReviewStateRefs>({
-    meaningTimeout: null,
-    completionTransition: null,
-    initialTransitionTimeout: null,
-    fadeAnimationTimeout: null,
     maxProgress: 0,
     completionTriggered: false,
     isUpdatingWord: false,
     progressUpdatedForCompletion: false,
   });
 
-  // Add navigation timer ref for cleanup
-  const navigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Session metrics tracking
-  const sessionMetricsRef = useRef<SessionMetrics>({
-    wordsReviewed: 0,
-    wordsKnown: 0,
-    wordsVague: 0,
-    wordsUnknown: 0,
-    averageStabilityIncrease: 0,
-    longestStreak: 0,
-    currentStreak: 0,
-    masteredWords: 0,
-    startTime: Date.now(),
-  });
-
   // Add controller ref for proper cleanup
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Utility to stop audio safely
+  const stopAudioSafely = useCallback(() => {
+    audioPlayerRef.current.stop().catch(() => {});
+  }, []);
 
   const triggerCompletionTransition = useCallback(() => {
     if (stateRefs.current.completionTriggered) return;
     stateRefs.current.completionTriggered = true;
 
-    // UI completion transition
-
     // Stop any playing audio to free resources
-    audioPlayerRef.current.stop().catch(() => {});
+    stopAudioSafely();
     setIsTransitioningToCompletion(true);
-    // Call fadeOut directly instead of depending on it
     fadeOut();
 
     stateRefs.current.maxProgress = 100;
     setProgressAnimationKey(prev => prev + 1);
 
-    if (stateRefs.current.completionTransition) {
-      clearTimeout(stateRefs.current.completionTransition);
-    }
-
-    stateRefs.current.completionTransition = setTimeout(() => {
+    setTimer('completionTransition', () => {
       if (stateRefs.current.completionTriggered) {
         setIsTransitioningToCompletion(false);
       }
     }, TIMING_CONFIG.MEDIUM.duration);
-  }, []); // Remove fadeOut from dependencies
+  }, [fadeOut, setTimer, stopAudioSafely]);
 
   const { currentWord, isComplete, progress, updateWord, invalidateQueries, wordQueue, isLoading } =
     useFSRS({
@@ -235,10 +217,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // Ensure translation is hidden when advancing to a new word
   useEffect(() => {
     // Clear any pending translation timers
-    if (stateRefs.current.meaningTimeout) {
-      clearTimeout(stateRefs.current.meaningTimeout);
-      stateRefs.current.meaningTimeout = null;
-    }
+    clearTimer('meaningTimeout');
+
     // Immediately hide translation and reset related flags
     setShowTranslation(false);
     setCurrentMeaning('');
@@ -246,9 +226,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     if (currentWordKey !== 'none' && stateRefs.current.completionTriggered) {
       stateRefs.current.completionTriggered = false;
       setIsTransitioningToCompletion(false);
-      // UI completion reset for new word
     }
-  }, [currentWordKey]);
+  }, [currentWordKey, clearTimer]);
 
   // Batch state updates for translation display
   const showTranslationWithTimeout = useCallback(
@@ -257,21 +236,20 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       setIsVagueMeaning(isVague);
       setShowTranslation(true);
 
-      return setTimeout(() => {
+      setTimer('meaningDisplay', () => {
         setShowTranslation(false);
       }, TRANSITION_DELAYS.meaningDisplay);
     },
-    []
+    [setTimer]
   );
 
   // Shows translation if needed
   const displayMeaning = useCallback(
     (confidence: 'known' | 'vague' | 'unknown') => {
-      if (confidence === 'known') return null;
+      if (confidence === 'known') return;
 
       const meaning = currentWord?.root?.meaning || 'No translation available';
-      const shouldShowAsError = confidence === 'unknown';
-      return showTranslationWithTimeout(meaning, confidence === 'vague');
+      showTranslationWithTimeout(meaning, confidence === 'vague');
     },
     [currentWord?.root?.meaning, showTranslationWithTimeout]
   );
@@ -302,24 +280,27 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           // Word process complete immediately
         } else {
           // Continue with normal flow
-          setTimeout(() => fadeIn(), TIMING_CONFIG.FAST.duration);
-          // Word process done
+          setTimer('fadeInDelay', () => fadeIn(), TIMING_CONFIG.FAST.duration);
         }
       } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
         if (!stateRefs.current.isUpdatingWord) return;
         fadeIn();
-        // Word process error logged
       } finally {
         stateRefs.current.isUpdatingWord = false;
         setIsUpdatingUI(false);
-        if (stateRefs.current.meaningTimeout) {
-          clearTimeout(stateRefs.current.meaningTimeout);
-          stateRefs.current.meaningTimeout = null;
-        }
+        clearTimer('meaningTimeout');
       }
     },
-    [currentWord?.root_id, updateWord, fadeIn, isComplete, triggerCompletionTransition]
+    [
+      currentWord?.root_id,
+      updateWord,
+      fadeIn,
+      isComplete,
+      triggerCompletionTransition,
+      setTimer,
+      clearTimer,
+    ]
   );
 
   // Enhanced audio playback function for single audio files
@@ -366,66 +347,19 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      // Update session metrics
-      const metrics = sessionMetricsRef.current;
-      metrics.wordsReviewed++;
-
-      // Track response types
-      if (confidence === 'known') {
-        metrics.wordsKnown++;
-        metrics.currentStreak++;
-        metrics.longestStreak = Math.max(metrics.longestStreak, metrics.currentStreak);
-
-        // Check if word is now mastered (stability >= 5 days after this review)
-        const currentStability = currentWord?.fsrs_stability ?? 0;
-        if (currentStability >= 4) {
-          // Likely to reach 5+ after this review
-          metrics.masteredWords++;
-        }
-      } else if (confidence === 'vague') {
-        metrics.wordsVague++;
-        metrics.currentStreak = 0; // Reset streak on vague
-      } else {
-        metrics.wordsUnknown++;
-        metrics.currentStreak = 0; // Reset streak on unknown
-      }
-
-      // Calculate average stability increase (simplified estimation)
-      if (currentWord?.fsrs_stability) {
-        const estimatedIncrease =
-          confidence === 'known'
-            ? currentWord.fsrs_stability * 0.3
-            : confidence === 'vague'
-            ? currentWord.fsrs_stability * 0.1
-            : 0;
-        const totalIncrease =
-          metrics.averageStabilityIncrease * (metrics.wordsReviewed - 1) + estimatedIncrease;
-        metrics.averageStabilityIncrease = totalIncrease / metrics.wordsReviewed;
-      }
+      // Update session metrics using hook
+      updateMetrics(confidence, currentWord?.fsrs_stability ?? undefined);
 
       // Start transition animation
-      // Clear any pending transition timers before scheduling new ones
-      if (stateRefs.current.initialTransitionTimeout) {
-        clearTimeout(stateRefs.current.initialTransitionTimeout);
-        stateRefs.current.initialTransitionTimeout = null;
-      }
-      if (stateRefs.current.fadeAnimationTimeout) {
-        clearTimeout(stateRefs.current.fadeAnimationTimeout);
-        stateRefs.current.fadeAnimationTimeout = null;
-      }
-
-      stateRefs.current.initialTransitionTimeout = setTimeout(() => {
+      setTimer('initialTransition', () => {
         if (controller.signal.aborted) return;
 
         // Clean up any playing audio before proceeding
-        audioPlayerRef.current.stop().catch(() => {});
+        stopAudioSafely();
 
         // VAGUE WORDS: Immediate transition with no delays, translation, or audio
-        // Only orange background flash (handled by ReviewCard.tsx)
         if (confidence === 'vague') {
-          // Track vague responses for future reference
           timeRefs.current.lastVagueTime = Date.now();
-          // Process immediately - no translation, no audio, no delay
           processFeedback(confidence, controller);
           return;
         }
@@ -433,7 +367,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         // KNOWN WORDS: Fade out and proceed quickly
         if (confidence === 'known') {
           fadeOut();
-          stateRefs.current.fadeAnimationTimeout = setTimeout(() => {
+          setTimer('fadeAnimation', () => {
             if (controller.signal.aborted) return;
             processFeedback(confidence, controller);
           }, TRANSITION_DELAYS.fadeAnimation);
@@ -442,11 +376,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
         // UNKNOWN WORDS: Show translation + play audio + delay before next word
         if (confidence === 'unknown') {
-          stateRefs.current.fadeAnimationTimeout = setTimeout(() => {
+          setTimer('fadeAnimationUnknown', () => {
             if (controller.signal.aborted) return;
 
             // Show translation overlay with red text
-            stateRefs.current.meaningTimeout = displayMeaning(confidence);
+            displayMeaning(confidence);
 
             // Play English feedback audio
             if (currentWord?.root?.audio_url_en) {
@@ -457,7 +391,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
             }
 
             // Wait for meaning display before processing
-            stateRefs.current.meaningTimeout = setTimeout(() => {
+            setTimer('meaningTimeout', () => {
               processFeedback(confidence, controller);
             }, TRANSITION_DELAYS.meaningDisplay);
           }, TRANSITION_DELAYS.fadeAnimation);
@@ -471,8 +405,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       displayMeaning,
       processFeedback,
       playAudio,
-      currentWord?.root?.audio_url_en,
-      generateAudioUrl,
+      currentWord,
+      setTimer,
+      stopAudioSafely,
+      updateMetrics,
     ]
   );
 
@@ -484,10 +420,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
     if (isComplete) {
       // Ensure any remaining audio is stopped
-      audioPlayerRef.current.stop().catch(() => {});
-      // UI completion isComplete effect
+      stopAudioSafely();
     }
-  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
+  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition, stopAudioSafely]);
 
   // Effect: Update progress bar
   useEffect(() => {
@@ -667,17 +602,17 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   useEffect(() => {
     // Stop any existing audio from other sessions (like listen tab) when practice starts
     if (currentWord && !isComplete && !isTransitioningToCompletion) {
-      audioPlayerRef.current.stop().catch(() => {});
+      stopAudioSafely();
     }
-  }, [currentWord, isComplete, isTransitioningToCompletion]);
+  }, [currentWord, isComplete, isTransitioningToCompletion, stopAudioSafely]);
 
   // Effect: Stop any existing audio when practice session initializes
   useEffect(() => {
     // Stop any existing audio when the practice session first starts
     if (wordQueue && wordQueue.length > 0 && !isComplete) {
-      audioPlayerRef.current.stop().catch(() => {});
+      stopAudioSafely();
     }
-  }, [wordQueue?.length, isComplete]);
+  }, [wordQueue?.length, isComplete, stopAudioSafely]);
 
   // Effect: Pre-configure audio session for faster first playback
   useEffect(() => {
@@ -795,7 +730,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     const mounted = { current: true };
 
     // Stop any playing audio when closing
-    audioPlayerRef.current.stop().catch(() => {});
+    stopAudioSafely();
 
     if (!mounted.current) return;
 
@@ -824,12 +759,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       }
     });
 
-    // Clear any existing navigation timer
-    if (navigationTimerRef.current) {
-      clearTimeout(navigationTimerRef.current);
-    }
-
-    navigationTimerRef.current = setTimeout(() => {
+    // Schedule navigation with timer cleanup
+    setTimer('navigation', () => {
       if (mounted.current) {
         if (onClose) {
           onClose();
@@ -840,9 +771,16 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         }
       }
       mounted.current = false;
-      // Session ended (closed)
     }, 100);
-  }, [invalidateQueries, user?.id, queryClient, onClose, fromRemember, router]);
+  }, [
+    invalidateQueries,
+    user?.id,
+    queryClient,
+    onClose,
+    fromRemember,
+    setTimer,
+    stopAudioSafely,
+  ]);
 
   // Cleanup effect
   useEffect(() => {
@@ -868,37 +806,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       }
 
       // Ensure audio is stopped and cleaned up
-      try {
-        audioPlayerRef.current.stop().catch(() => {});
-      } catch {
-        // Audio cleanup failed - continue
-      }
+      stopAudioSafely();
 
-      // Clean up all timers with null checks
-      if (stateRefs.current.meaningTimeout) {
-        clearTimeout(stateRefs.current.meaningTimeout);
-        stateRefs.current.meaningTimeout = null;
-      }
-
-      if (stateRefs.current.completionTransition) {
-        clearTimeout(stateRefs.current.completionTransition);
-        stateRefs.current.completionTransition = null;
-      }
-
-      if (stateRefs.current.initialTransitionTimeout) {
-        clearTimeout(stateRefs.current.initialTransitionTimeout);
-        stateRefs.current.initialTransitionTimeout = null;
-      }
-
-      if (stateRefs.current.fadeAnimationTimeout) {
-        clearTimeout(stateRefs.current.fadeAnimationTimeout);
-        stateRefs.current.fadeAnimationTimeout = null;
-      }
-
-      if (navigationTimerRef.current) {
-        clearTimeout(navigationTimerRef.current);
-        navigationTimerRef.current = null;
-      }
+      // Clean up all timers
+      clearAllTimers();
 
       // Reset all state refs to prevent stale references
       stateRefs.current.isUpdatingWord = false;
@@ -908,7 +819,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       timeRefs.current.lastVagueTime = null;
       timeRefs.current.lastProgressUpdate = Date.now();
     };
-  }, [fadeIn]);
+  }, [fadeIn, stopAudioSafely, clearAllTimers]);
 
   // Create a transparent style for non-transitioning states
   const transparentStyle = useAnimatedStyle(
@@ -940,7 +851,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     handleLongPress,
     handleClose,
     transparentStyle,
-    sessionMetrics: sessionMetricsRef.current,
+    sessionMetrics,
     // Hesitation state and callbacks
     isHesitating,
     handleHesitationStart,
