@@ -63,21 +63,24 @@ export const useAppPreloader = (): AppPreloaderResult => {
         }),
       ];
 
-      const [_categories, _articles] = await Promise.all(criticalPromises);
-      setPreloadProgress(25);
+      // CRITICAL FIX: Load reading progress synchronously with articles
+      // This prevents race condition where filtered view renders before progress data is available
+      const readingProgressPromise = user?.id
+        ? queryClient.prefetchQuery({
+            queryKey: ['reading-progress-bulk', user.id],
+            queryFn: () => readingProgressService.getBulkProgress(user.id, []), // Empty array = fetch all
+            staleTime: 30000, // 30 seconds - match hook staleTime for consistency
+            gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
+            retry: 2,
+          })
+        : Promise.resolve();
 
-      // Preload reading progress immediately after articles to prevent card reordering
-      // Fetch ALL reading progress for the user (not filtered by articles)
-      // This creates a shared cache entry that all article lists can use
-      if (user?.id) {
-        await queryClient.prefetchQuery({
-          queryKey: ['reading-progress-bulk', user.id],
-          queryFn: () => readingProgressService.getBulkProgress(user.id, []), // Empty array = fetch all
-          staleTime: 30000, // 30 seconds - match hook staleTime for consistency
-          gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
-          retry: 2,
-        });
-      }
+      // Wait for BOTH articles AND reading progress to complete
+      const [_categories, _articles] = await Promise.all([
+        ...criticalPromises,
+        readingProgressPromise,
+      ]);
+      setPreloadProgress(25);
 
       // Pre-compute and cache featured articles for immediate availability
       if (Array.isArray(_articles) && _articles.length > 0) {

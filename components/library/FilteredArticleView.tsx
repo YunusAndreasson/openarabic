@@ -128,7 +128,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
 
   // Fetch bulk reading progress for all articles
   const articleIds = useMemo(() => visibleArticles.map(article => article.id), [visibleArticles]);
-  const { data: progressMap } = useSafeBulkReadingProgress(articleIds);
+  const { data: progressMap, isLoading: isProgressLoading } = useSafeBulkReadingProgress(articleIds);
 
   // Memoize expensive computations
   const articlesLength = useMemo(() => visibleArticles.length, [visibleArticles.length]);
@@ -248,10 +248,13 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
     []
   );
 
-  // Show loading state only when loading and no articles yet
-  // Progress data is now preloaded, so no need to wait for it
+  // Show loading state when:
+  // 1. Loading articles and no articles cached yet
+  // 2. Loading progress data on first render (prevents showing items without indicators)
+  const isInitialProgressLoad = isProgressLoading && visibleArticles.length > 0 && !progressMap?.size;
   const shouldShowLoading =
-    loading && (visibleArticles.length === 0 || (articles?.length && !shouldShowEmpty));
+    loading && (visibleArticles.length === 0 || (articles?.length && !shouldShowEmpty)) ||
+    isInitialProgressLoad;
 
   if (shouldShowLoading) {
     return (
