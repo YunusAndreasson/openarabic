@@ -101,11 +101,12 @@ const ReviewCardInternal = ({
       }
     }, // Clear timer when swipe completes
     // Clear hesitation timer when user starts interacting (swiping)
+    // CRITICAL FIX: Do NOT call onHesitationEnd() here - it must be called AFTER
+    // the swipe handler reads isHesitating state. Calling it here causes a race
+    // condition where vague words are incorrectly marked as known.
     onGestureStart: () => {
       clearHesitationTimer();
-      if (onHesitationEnd) {
-        onHesitationEnd(); // Reset hesitation state when user interacts
-      }
+      isGestureActiveRef.current = true;
     },
   });
 
@@ -125,11 +126,10 @@ const ReviewCardInternal = ({
     const t = Math.min(Math.abs(translateX.value) / maxTranslation, 1);
 
     if (translateX.value < 0) {
-      // Left swipe - unknown (red) or vague (orange) depending on hesitation state
-      const startColor = isHesitating ? vagueStart : errorStart;
-      const endColor = isHesitating ? vagueEnd : errorEnd;
+      // Left swipe - ALWAYS unknown (red), regardless of hesitation state
+      // Hesitation state only affects right swipes (known vs vague)
       return {
-        backgroundColor: interpolateColor(t, [0, 1], [startColor, endColor]),
+        backgroundColor: interpolateColor(t, [0, 1], [errorStart, errorEnd]),
       };
     }
     if (translateX.value > 0) {

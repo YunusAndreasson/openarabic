@@ -281,11 +281,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       if (confidence === 'known') return null;
 
       const meaning = currentWord?.root?.meaning || 'No translation available';
+      // FIXED: Vague words should NEVER show as error (red text), only unknown words
+      // isStruggling only affects display duration, not error styling for vague
       const shouldShowAsError = confidence === 'unknown';
       return showTranslationWithTimeout(
         meaning,
         confidence === 'vague',
-        shouldShowAsError || isStruggling
+        shouldShowAsError // Only unknown shows red, vague never shows red
       );
     },
     [currentWord?.root?.meaning, showTranslationWithTimeout]
@@ -451,55 +453,55 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         // Clean up any playing audio before proceeding
         audioPlayerRef.current.stop().catch(() => {});
 
-        // Only fade out if we're moving to a new word (known response)
-        // For vague/unknown responses, we want to keep the Arabic word visible
-        if (confidence === 'known') {
-          fadeOut();
+        // VAGUE WORDS: Immediate transition with no delays, translation, or audio
+        // Only orange background flash (handled by ReviewCard.tsx)
+        if (confidence === 'vague') {
+          // Track vague responses for future struggle detection
+          timeRefs.current.lastVagueTime = Date.now();
+          // Process immediately - no translation, no audio, no delay
+          processFeedback(confidence, false, controller);
+          return;
         }
 
-        stateRefs.current.fadeAnimationTimeout = setTimeout(() => {
-          if (controller.signal.aborted) return;
+        // KNOWN WORDS: Fade out and proceed quickly
+        if (confidence === 'known') {
+          fadeOut();
+          stateRefs.current.fadeAnimationTimeout = setTimeout(() => {
+            if (controller.signal.aborted) return;
+            processFeedback(confidence, false, controller);
+          }, TRANSITION_DELAYS.fadeAnimation);
+          return;
+        }
 
-          // Determine if user is struggling with this word
-          const isStruggling = checkIsStruggling(confidence);
+        // UNKNOWN WORDS: Show translation + play audio + delay before next word
+        if (confidence === 'unknown') {
+          stateRefs.current.fadeAnimationTimeout = setTimeout(() => {
+            if (controller.signal.aborted) return;
 
-          // Update UI with meaning if needed
-          stateRefs.current.meaningTimeout = displayMeaning(confidence, isStruggling);
-          // Meaning display logged
+            const isStruggling = checkIsStruggling(confidence);
 
-          // Play English feedback audio for vague/unknown responses
-          if (
-            (confidence === 'vague' || confidence === 'unknown') &&
-            currentWord?.root?.audio_url_en
-          ) {
-            const englishAudioUrl = generateAudioUrl(currentWord.root.audio_url_en);
-            if (englishAudioUrl) {
-              playAudio(englishAudioUrl);
+            // Show translation overlay with red text
+            stateRefs.current.meaningTimeout = displayMeaning(confidence, isStruggling);
+
+            // Play English feedback audio
+            if (currentWord?.root?.audio_url_en) {
+              const englishAudioUrl = generateAudioUrl(currentWord.root.audio_url_en);
+              if (englishAudioUrl) {
+                playAudio(englishAudioUrl);
+              }
             }
-          }
 
-          // Track vague responses for future struggle detection
-          if (confidence === 'vague') {
-            timeRefs.current.lastVagueTime = Date.now();
-          }
-
-          // Schedule the actual word processing
-          if (confidence === 'unknown' || confidence === 'vague') {
+            // Wait for meaning display before processing
             stateRefs.current.meaningTimeout = setTimeout(
               () => {
-                // Process feedback after meaning display timeout
                 processFeedback(confidence, isStruggling, controller);
-                // Meaning timeout elapsed
               },
               isStruggling
                 ? TRANSITION_DELAYS.meaningDisplay.struggling
                 : TRANSITION_DELAYS.meaningDisplay.normal
             );
-          } else {
-            // For "known" responses, process immediately with minimum delay
-            processFeedback(confidence, isStruggling, controller);
-          }
-        }, TRANSITION_DELAYS.fadeAnimation);
+          }, TRANSITION_DELAYS.fadeAnimation);
+        }
       }, TRANSITION_DELAYS.initial);
     },
     [

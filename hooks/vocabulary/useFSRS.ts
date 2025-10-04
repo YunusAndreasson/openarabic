@@ -295,19 +295,21 @@ export function useFSRS({
       if (confidence === 'known') {
         countersRef.current.knownWords += 1;
       } else {
-        // For vague/unknown responses, add the word back to the spacing queue now
+        // For vague/unknown responses, add the word back to the spacing queue
+        // Keep in-memory FSRS state updated but DON'T persist to DB yet
         const updatedWord: StudyWord = {
           ...currentWord,
-          fsrs_due: wordUpdateData.fsrs_due,
-          fsrs_stability: wordUpdateData.fsrs_stability,
-          fsrs_difficulty: wordUpdateData.fsrs_difficulty,
-          fsrs_elapsed_days: wordUpdateData.fsrs_elapsed_days,
-          fsrs_scheduled_days: wordUpdateData.fsrs_scheduled_days,
-          fsrs_reps: wordUpdateData.fsrs_reps,
-          fsrs_learning_steps: wordUpdateData.fsrs_learning_steps,
-          fsrs_lapses: wordUpdateData.fsrs_lapses,
-          fsrs_state: wordUpdateData.fsrs_state,
-          fsrs_last_review: wordUpdateData.fsrs_last_review,
+          // Update in-memory FSRS state for next review in this session
+          fsrs_stability: newCard.stability,
+          fsrs_difficulty: newCard.difficulty,
+          fsrs_elapsed_days: newCard.elapsed_days,
+          fsrs_scheduled_days: newCard.scheduled_days,
+          fsrs_reps: newCard.reps,
+          fsrs_learning_steps: newCard.learning_steps,
+          fsrs_lapses: newCard.lapses,
+          fsrs_state: newCard.state,
+          fsrs_last_review: now.toISOString(),
+          // DON'T update fsrs_due - keep original due date for DB persistence later
         };
         spacingQueueRef.current.spacedWords.push({
           word: updatedWord,
@@ -407,22 +409,28 @@ export function useFSRS({
       setCurrentWord(nextItem || null);
       setWordQueue(remaining);
 
-      // Persist update; errors won't block UI progression
-      try {
-        await studyWordsFSRSService.updateWordAndReview(
-          userId,
-          rootId,
-          wordUpdateData,
-          rating,
-          newCard.learning_steps
-        );
-      } catch (error) {
-        const errObj =
-          error instanceof Error
-            ? error
-            : new Error((error as { message?: string })?.message ?? JSON.stringify(error));
-        handleError(errObj, { toastType: ToastType.IMPORTANT });
+      // CRITICAL FIX: Only persist to database when word is marked as KNOWN
+      // Vague/unknown words stay in session-only spacing queue until mastered
+      // This prevents vague words from getting 10-min cooldown and disappearing
+      if (confidence === 'known') {
+        // Persist update; errors won't block UI progression
+        try {
+          await studyWordsFSRSService.updateWordAndReview(
+            userId,
+            rootId,
+            wordUpdateData,
+            rating,
+            newCard.learning_steps
+          );
+        } catch (error) {
+          const errObj =
+            error instanceof Error
+              ? error
+              : new Error((error as { message?: string })?.message ?? JSON.stringify(error));
+          handleError(errObj, { toastType: ToastType.IMPORTANT });
+        }
       }
+      // For vague/unknown: word stays in spacing queue, no DB update until known
 
       stateTrackingRef.current.isProcessingUpdate = false;
     },
