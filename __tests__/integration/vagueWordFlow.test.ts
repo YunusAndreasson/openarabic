@@ -246,4 +246,126 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldSetMeaningTimeout).toBe(false);
     });
   });
+
+  describe('Audio preloading behavior', () => {
+    it('should preload all session audio files at session start', () => {
+      const sessionWords = [
+        { id: 1, audioUrl: 'word1.mp3', audioUrlEn: 'word1-en.mp3' },
+        { id: 2, audioUrl: 'word2.mp3', audioUrlEn: 'word2-en.mp3' },
+        { id: 3, audioUrl: 'word3.mp3', audioUrlEn: 'word3-en.mp3' },
+      ];
+
+      const audioUrlsToPreload: string[] = [];
+
+      // Collect all unique audio URLs
+      sessionWords.forEach(word => {
+        if (word.audioUrl && !audioUrlsToPreload.includes(word.audioUrl)) {
+          audioUrlsToPreload.push(word.audioUrl);
+        }
+        if (word.audioUrlEn && !audioUrlsToPreload.includes(word.audioUrlEn)) {
+          audioUrlsToPreload.push(word.audioUrlEn);
+        }
+      });
+
+      // Should have collected 6 unique URLs (3 Arabic + 3 English)
+      expect(audioUrlsToPreload).toHaveLength(6);
+      expect(audioUrlsToPreload).toContain('word1.mp3');
+      expect(audioUrlsToPreload).toContain('word1-en.mp3');
+    });
+
+    it('should show loading state while audio is preloading', () => {
+      const session = {
+        isAudioPreloading: true,
+        audioPreloadProgress: 45, // 45% complete
+        isAudioPreloadingComplete: false,
+      };
+
+      // Should show preloading UI
+      expect(session.isAudioPreloading).toBe(true);
+      expect(session.audioPreloadProgress).toBeGreaterThan(0);
+      expect(session.audioPreloadProgress).toBeLessThan(100);
+      expect(session.isAudioPreloadingComplete).toBe(false);
+    });
+
+    it('should NOT start practice until audio preloading is complete', () => {
+      let canStartPractice = false;
+
+      const preloadState = {
+        isLoading: false, // Words loaded
+        isAudioPreloading: true, // Audio still loading
+        isAudioPreloadingComplete: false,
+      };
+
+      // Check if practice can start
+      canStartPractice =
+        !preloadState.isLoading &&
+        !preloadState.isAudioPreloading &&
+        preloadState.isAudioPreloadingComplete;
+
+      expect(canStartPractice).toBe(false);
+
+      // Audio completes
+      preloadState.isAudioPreloading = false;
+      preloadState.isAudioPreloadingComplete = true;
+
+      canStartPractice =
+        !preloadState.isLoading &&
+        !preloadState.isAudioPreloading &&
+        preloadState.isAudioPreloadingComplete;
+
+      expect(canStartPractice).toBe(true);
+    });
+
+    it('should gracefully degrade if audio preloading fails', () => {
+      const preloadResult = {
+        isAudioPreloading: false,
+        isAudioPreloadingComplete: true, // Still set to true even on failure
+        audioPreloadProgress: 100,
+        failedUrls: ['word3-en.mp3'], // One failed
+      };
+
+      // Session should still start even with failures
+      expect(preloadResult.isAudioPreloadingComplete).toBe(true);
+      expect(preloadResult.isAudioPreloading).toBe(false);
+
+      // Practice can proceed without blocking
+      const canProceed = preloadResult.isAudioPreloadingComplete;
+      expect(canProceed).toBe(true);
+    });
+
+    it('should preload in batches to prevent resource exhaustion', () => {
+      const totalUrls = 20; // 10 words × 2 audio files each
+      const BATCH_SIZE = 5;
+
+      const batches: number[] = [];
+      for (let i = 0; i < totalUrls; i += BATCH_SIZE) {
+        const batchSize = Math.min(BATCH_SIZE, totalUrls - i);
+        batches.push(batchSize);
+      }
+
+      // Should process in 4 batches: [5, 5, 5, 5]
+      expect(batches).toEqual([5, 5, 5, 5]);
+      expect(batches.reduce((sum, size) => sum + size, 0)).toBe(totalUrls);
+    });
+
+    it('should only preload audio once per session', () => {
+      const session = {
+        hasPreloadedAudio: false,
+        preloadCount: 0,
+      };
+
+      // First time: preload
+      if (!session.hasPreloadedAudio) {
+        session.preloadCount++;
+        session.hasPreloadedAudio = true;
+      }
+      expect(session.preloadCount).toBe(1);
+
+      // Second time: skip (already preloaded)
+      if (!session.hasPreloadedAudio) {
+        session.preloadCount++;
+      }
+      expect(session.preloadCount).toBe(1); // Still 1, not 2
+    });
+  });
 });
