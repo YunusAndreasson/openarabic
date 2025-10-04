@@ -43,7 +43,6 @@ const baseStyles = StyleSheet.create({
 export default function ReviewScreen(): JSX.Element {
   const params = useLocalSearchParams();
   const fromRemember = params['fromRemember'] === 'true';
-  const mode = params['mode'] as string | undefined;
   const insets = useSafeAreaInsets();
   const colors = useColors();
 
@@ -72,7 +71,7 @@ export default function ReviewScreen(): JSX.Element {
     isAudioPreloadingComplete,
     isLoading,
     wordQueue,
-  } = useReview({ fromRemember, mode });
+  } = useReview({ fromRemember });
 
   // Track if review session is still initializing (first word not yet loaded)
   const isInitializing = useMemo(() => {

@@ -40,7 +40,6 @@ interface ReviewStateRefs {
 
 interface UseReviewProps {
   fromRemember?: boolean;
-  mode?: string;
   onClose?: () => void;
 }
 
@@ -50,7 +49,6 @@ interface UseReviewReturn {
   currentWord?: StudyWord | null;
   showTranslation: boolean;
   isVagueMeaning: boolean;
-  isStruggling: boolean;
   isTransitioningToCompletion: boolean;
   opacity: SharedValue<number>;
   isComplete: boolean;
@@ -99,10 +97,7 @@ const fontConfig: WordSizingConfig = {
 const TRANSITION_DELAYS = {
   initial: TIMING_CONFIG.FAST.duration, // Initial delay before animation
   fadeAnimation: TIMING_CONFIG.MEDIUM.duration, // Delay for fade animation
-  meaningDisplay: {
-    normal: 3000, // Display time for meaning overlay (increased from 1500)
-    struggling: 4000, // Display time for struggling words (increased from 2500)
-  },
+  meaningDisplay: 3000, // Display time for meaning overlay
 };
 
 export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
@@ -128,7 +123,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const [isTransitioningToCompletion, setIsTransitioningToCompletion] = useState(false);
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
   const [isVagueMeaning, setIsVagueMeaning] = useState(false);
-  const [isStruggling, setIsStruggling] = useState(false);
   // Ensure UI re-renders when updating state changes so gestures re-enable
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
   // Hesitation state
@@ -224,6 +218,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     return { wordForm };
   }, [currentWord]);
 
+  // Track which word hesitation applies to
+  const hesitationWordKeyRef = useRef<string>('');
+
   // Unique key for the current word to trigger renders even if the text is identical
   const currentWordKey = useMemo(
     () =>
@@ -244,7 +241,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
     // Immediately hide translation and reset related flags
     setShowTranslation(false);
-    setIsStruggling(false);
     setCurrentMeaning('');
     // Reset stale completion flag if a new word/session appears
     if (currentWordKey !== 'none' && stateRefs.current.completionTriggered) {
@@ -256,74 +252,45 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Batch state updates for translation display
   const showTranslationWithTimeout = useCallback(
-    (meaning: string, isVague: boolean, isStruggling: boolean = false) => {
+    (meaning: string, isVague: boolean) => {
       setCurrentMeaning(meaning);
       setIsVagueMeaning(isVague);
       setShowTranslation(true);
-      setIsStruggling(isStruggling);
 
-      return setTimeout(
-        () => {
-          setShowTranslation(false);
-          setIsStruggling(false);
-        },
-        isStruggling
-          ? TRANSITION_DELAYS.meaningDisplay.struggling
-          : TRANSITION_DELAYS.meaningDisplay.normal
-      );
+      return setTimeout(() => {
+        setShowTranslation(false);
+      }, TRANSITION_DELAYS.meaningDisplay);
     },
     []
   );
 
   // Shows translation if needed
   const displayMeaning = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown', isStruggling: boolean) => {
+    (confidence: 'known' | 'vague' | 'unknown') => {
       if (confidence === 'known') return null;
 
       const meaning = currentWord?.root?.meaning || 'No translation available';
-      // FIXED: Vague words should NEVER show as error (red text), only unknown words
-      // isStruggling only affects display duration, not error styling for vague
       const shouldShowAsError = confidence === 'unknown';
-      return showTranslationWithTimeout(
-        meaning,
-        confidence === 'vague',
-        shouldShowAsError // Only unknown shows red, vague never shows red
-      );
+      return showTranslationWithTimeout(meaning, confidence === 'vague');
     },
     [currentWord?.root?.meaning, showTranslationWithTimeout]
   );
 
-  // Determines if the user is struggling with this word
-  const checkIsStruggling = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown'): boolean => {
-      if (confidence !== 'vague') return false;
-
-      const now = Date.now();
-      return (
-        timeRefs.current.lastVagueTime !== null &&
-        now - timeRefs.current.lastVagueTime < 24 * 60 * 60 * 1000 && // Within 24 hours
-        (currentWord?.fsrs_stability ?? 0) < 15
-      );
-    },
-    [currentWord?.fsrs_stability]
-  );
-
   // Process the word update in FSRS
   const processFeedback = useCallback(
-    async (
-      confidence: 'known' | 'vague' | 'unknown',
-      isStruggling: boolean,
-      controller: AbortController
-    ) => {
+    async (confidence: 'known' | 'vague' | 'unknown', controller: AbortController) => {
       if (!currentWord?.root_id || controller.signal.aborted) {
         return;
       }
 
+      // CRITICAL FIX: Reset hesitation immediately before processing feedback
+      // This prevents hint from showing on the next word during transition
+      // Must happen BEFORE updateWord changes currentWord to prevent timing issues
+      setIsHesitating(false);
+      hesitationWordKeyRef.current = '';
+
       try {
-        // If struggling, treat it more like 'unknown' than 'vague'
-        const effectiveConfidence = isStruggling ? 'unknown' : confidence;
-        // Word processing begin
-        await updateWord(currentWord.root_id, effectiveConfidence);
+        await updateWord(currentWord.root_id, confidence);
 
         if (!stateRefs.current.isUpdatingWord) return;
 
@@ -456,10 +423,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         // VAGUE WORDS: Immediate transition with no delays, translation, or audio
         // Only orange background flash (handled by ReviewCard.tsx)
         if (confidence === 'vague') {
-          // Track vague responses for future struggle detection
+          // Track vague responses for future reference
           timeRefs.current.lastVagueTime = Date.now();
           // Process immediately - no translation, no audio, no delay
-          processFeedback(confidence, false, controller);
+          processFeedback(confidence, controller);
           return;
         }
 
@@ -468,7 +435,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           fadeOut();
           stateRefs.current.fadeAnimationTimeout = setTimeout(() => {
             if (controller.signal.aborted) return;
-            processFeedback(confidence, false, controller);
+            processFeedback(confidence, controller);
           }, TRANSITION_DELAYS.fadeAnimation);
           return;
         }
@@ -478,10 +445,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           stateRefs.current.fadeAnimationTimeout = setTimeout(() => {
             if (controller.signal.aborted) return;
 
-            const isStruggling = checkIsStruggling(confidence);
-
             // Show translation overlay with red text
-            stateRefs.current.meaningTimeout = displayMeaning(confidence, isStruggling);
+            stateRefs.current.meaningTimeout = displayMeaning(confidence);
 
             // Play English feedback audio
             if (currentWord?.root?.audio_url_en) {
@@ -492,14 +457,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
             }
 
             // Wait for meaning display before processing
-            stateRefs.current.meaningTimeout = setTimeout(
-              () => {
-                processFeedback(confidence, isStruggling, controller);
-              },
-              isStruggling
-                ? TRANSITION_DELAYS.meaningDisplay.struggling
-                : TRANSITION_DELAYS.meaningDisplay.normal
-            );
+            stateRefs.current.meaningTimeout = setTimeout(() => {
+              processFeedback(confidence, controller);
+            }, TRANSITION_DELAYS.meaningDisplay);
           }, TRANSITION_DELAYS.fadeAnimation);
         }
       }, TRANSITION_DELAYS.initial);
@@ -508,12 +468,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       isTransitioningToCompletion,
       isComplete,
       fadeOut,
-      checkIsStruggling,
       displayMeaning,
       processFeedback,
       playAudio,
       currentWord?.root?.audio_url_en,
-      currentWord?.fsrs_stability,
       generateAudioUrl,
     ]
   );
@@ -824,10 +782,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // Hesitation callbacks
   const handleHesitationStart = useCallback(() => {
     setIsHesitating(true);
-  }, []);
+    // Track which word this hesitation is for
+    hesitationWordKeyRef.current = currentWordKey;
+  }, [currentWordKey]);
 
   const handleHesitationEnd = useCallback(() => {
     setIsHesitating(false);
+    hesitationWordKeyRef.current = '';
   }, []);
 
   const handleClose = useCallback(() => {
@@ -963,7 +924,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentWord,
     showTranslation,
     isVagueMeaning,
-    isStruggling,
     isTransitioningToCompletion,
     opacity,
     isComplete,

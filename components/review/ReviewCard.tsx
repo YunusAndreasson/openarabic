@@ -156,7 +156,15 @@ const ReviewCardInternal = ({
 
   // Auto-start hesitation timer when word appears (if not already hesitating)
   useEffect(() => {
-    if (word && englishTranslation && !isHesitating && !hesitationTimeoutRef.current) {
+    // CRITICAL FIX: Don't start timer if translation is showing (prevents timer restart during feedback)
+    // This prevents the bug where onHesitationEnd → isHesitating=false triggers new timer while showing translation
+    if (
+      word &&
+      englishTranslation &&
+      !isHesitating &&
+      !hesitationTimeoutRef.current &&
+      !showTranslation
+    ) {
       hesitationTimeoutRef.current = setTimeout(() => {
         if (!isGestureActiveRef.current) {
           // Only show hint if user hasn't interacted
@@ -171,8 +179,10 @@ const ReviewCardInternal = ({
         clearTimeout(hesitationTimeoutRef.current);
         hesitationTimeoutRef.current = null;
       }
+      // CRITICAL FIX: Reset gesture active flag on word change to prevent stale state
+      isGestureActiveRef.current = false;
     };
-  }, [word, englishTranslation, isHesitating, onHesitationStart]);
+  }, [word, englishTranslation, isHesitating, onHesitationStart, showTranslation]);
 
   // ===== MEMOIZED PROPS (PREVENT CHILD RE-RENDERS) =====
   const wordDisplayProps = useMemo(() => {

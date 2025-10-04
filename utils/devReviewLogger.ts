@@ -12,14 +12,12 @@ interface LogContext {
   sessionId: string;
   userId?: string | null;
   mode?: string | null;
-  useAllWords?: boolean;
   sessionCooldownHours?: number;
 }
 
 interface StartSessionParams {
   userId?: string | null;
   mode?: string;
-  useAllWords?: boolean;
   sessionCooldownHours?: number;
   dueCount?: number;
   signature?: string | null;
@@ -77,7 +75,6 @@ export const devReviewLogger = {
       sessionId: generateSessionId(),
       userId: params.userId ?? null,
       mode: params.mode ?? null,
-      useAllWords: params.useAllWords,
       sessionCooldownHours: params.sessionCooldownHours,
     };
     startTimestamp = Date.now();
