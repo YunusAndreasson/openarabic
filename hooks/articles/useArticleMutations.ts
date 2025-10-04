@@ -54,13 +54,13 @@ interface ArticleMutationsResult {
   toggleWordMutation: UseMutationResult<
     boolean,
     Error,
-    { userId: string; wordId: RootId },
+    { userId: string; wordId?: RootId; rootId?: number },
     StudyWordContext
   >;
   toggleRootMutation: UseMutationResult<
     boolean,
     Error,
-    { userId: string; rootId: number },
+    { userId: string; wordId?: RootId; rootId?: number },
     StudyWordContext
   >;
 }
@@ -198,75 +198,22 @@ export const useArticleMutations = (
     [queryClient, refetchReadingListStatus, audioPreference]
   );
 
-  // Memoize mutation options for toggling word study status
-  const toggleWordOptions = useMemo(
+  // Shared mutation options factory for toggling study words/roots
+  // DRY: Consolidates duplicate logic between toggleWord and toggleRoot
+  const createToggleStudyOptions = useCallback(
     () => ({
-      mutationFn: async ({ userId, wordId }: { userId: string; wordId: RootId }) => {
-        return studyWordsFSRSService.toggleFSRSStudyRoot(userId, wordId);
+      mutationFn: async ({ userId, wordId, rootId }: { userId: string; wordId?: RootId; rootId?: number }) => {
+        const id = (wordId ?? rootId) as number;
+        return studyWordsFSRSService.toggleFSRSStudyRoot(userId, id);
       },
       onMutate: async ({
         userId,
         wordId,
-      }: {
-        userId: string;
-        wordId: RootId;
-      }): Promise<StudyWordContext> => {
-        await queryClient.cancelQueries({
-          queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
-        });
-        const previousStudyWords = queryClient.getQueryData(
-          FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
-        ) as {
-          root_id: number;
-        }[];
-
-        queryClient.setQueryData(
-          FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
-          (old: { root_id: number }[] = []) => {
-            const exists = old.some(sw => sw.root_id === wordId);
-            return exists ? old.filter(sw => sw.root_id !== wordId) : [...old, { root_id: wordId }];
-          }
-        );
-
-        return { previousStudyWords };
-      },
-      onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
-        if (context?.previousStudyWords) {
-          queryClient.setQueryData(
-            FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
-            context.previousStudyWords
-          );
-        }
-        handleError(error);
-        showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, ToastType.ERROR);
-        queryClient.invalidateQueries({
-          queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
-        });
-      },
-      onSuccess: async (_: boolean, { userId }: { userId: string }) => {
-        // Batch invalidate related queries
-        RELATED_QUERY_KEYS(userId, audioPreference).forEach(queryKey => {
-          queryClient.invalidateQueries({ queryKey });
-        });
-
-        await refetchStudyWords?.();
-      },
-    }),
-    [queryClient, refetchStudyWords, showToast]
-  );
-
-  // Memoize mutation options for toggling root study status
-  const toggleRootOptions = useMemo(
-    () => ({
-      mutationFn: async ({ userId, rootId }: { userId: string; rootId: number }) => {
-        return studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
-      },
-      onMutate: async ({
-        userId,
         rootId,
       }: {
         userId: string;
-        rootId: number;
+        wordId?: RootId;
+        rootId?: number;
       }): Promise<StudyWordContext> => {
         await queryClient.cancelQueries({
           queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
@@ -277,11 +224,12 @@ export const useArticleMutations = (
           root_id: number;
         }[];
 
+        const id = (wordId ?? rootId) as number;
         queryClient.setQueryData(
           FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
           (old: { root_id: number }[] = []) => {
-            const exists = old.some(sw => sw.root_id === rootId);
-            return exists ? old.filter(sw => sw.root_id !== rootId) : [...old, { root_id: rootId }];
+            const exists = old.some(sw => sw.root_id === id);
+            return exists ? old.filter(sw => sw.root_id !== id) : [...old, { root_id: id }];
           }
         );
 
@@ -309,8 +257,11 @@ export const useArticleMutations = (
         await refetchStudyWords?.();
       },
     }),
-    [queryClient, refetchStudyWords, showToast]
+    [queryClient, refetchStudyWords, showToast, audioPreference]
   );
+
+  // Memoize shared toggle options (used by both word and root mutations)
+  const toggleStudyOptions = useMemo(() => createToggleStudyOptions(), [createToggleStudyOptions]);
 
   // Initialize mutations with memoized options
   const addToReadingListMutation = useMutation<
@@ -326,15 +277,15 @@ export const useArticleMutations = (
   const toggleWordMutation = useMutation<
     boolean,
     Error,
-    { userId: string; wordId: RootId },
+    { userId: string; wordId?: RootId; rootId?: number },
     StudyWordContext
-  >(toggleWordOptions);
+  >(toggleStudyOptions);
   const toggleRootMutation = useMutation<
     boolean,
     Error,
-    { userId: string; rootId: number },
+    { userId: string; wordId?: RootId; rootId?: number },
     StudyWordContext
-  >(toggleRootOptions);
+  >(toggleStudyOptions);
 
   // Handle toggling reading list
   const handleToggleReadingList = useCallback(

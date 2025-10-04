@@ -54,7 +54,6 @@ describe('useDailyWordLimit - Unit Tests', () => {
       expect(typeof result.current.incrementDailyWordCount).toBe('function');
       expect(typeof result.current.getDailyWordCount).toBe('function');
       expect(typeof result.current.getRemainingWords).toBe('function');
-      expect(typeof result.current.getCurrentDailyCount).toBe('function');
       expect(typeof result.current.isApproachingLimit).toBe('function');
       expect(typeof result.current.resetDailyWordCount).toBe('function');
     });

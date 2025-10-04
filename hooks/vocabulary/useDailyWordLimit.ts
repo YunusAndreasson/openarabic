@@ -79,11 +79,6 @@ export const useDailyWordLimit = () => {
     return Math.max(0, dailyWordLimit - currentCount);
   }, [dailyWordLimit, getDailyWordCount]);
 
-  // Get current daily count for display purposes
-  const getCurrentDailyCount = useCallback(async (): Promise<number> => {
-    return await getDailyWordCount();
-  }, [getDailyWordCount]);
-
   // Check if user is approaching their daily limit (80% threshold)
   const isApproachingLimit = useCallback(async (): Promise<boolean> => {
     if (dailyWordLimit === 0) return false;
@@ -108,7 +103,6 @@ export const useDailyWordLimit = () => {
     incrementDailyWordCount,
     canAddWord,
     getRemainingWords,
-    getCurrentDailyCount,
     isApproachingLimit,
     resetDailyWordCount,
   };
