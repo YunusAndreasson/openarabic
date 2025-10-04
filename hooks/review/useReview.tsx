@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
 import type { AnimatedStyle, SharedValue } from 'react-native-reanimated';
@@ -13,10 +13,10 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useSimpleAudioPlayer } from '@/hooks/audio';
 import { useAuth } from '@/hooks/auth';
+import { useAudioPreloader } from '@/hooks/review/useAudioPreloader';
 import { useSessionMetrics } from '@/hooks/review';
 import { useTimerCleanup } from '@/hooks/utils';
 import { useFSRS, useWordSizing } from '@/hooks/vocabulary';
-import { audioCache } from '@/services/audioCache';
 import type { SessionMetrics } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -71,8 +71,6 @@ interface UseReviewReturn {
   // Add audio preloading state
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
-  // Add audio ready state
-  isCurrentWordAudioReady: boolean;
   // Add audio preloading completion state
   isAudioPreloadingComplete: boolean;
 }
@@ -131,17 +129,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
   // Hesitation state
   const [isHesitating, setIsHesitating] = useState(false);
-  // Audio preloading state
-  const [isAudioPreloading, setIsAudioPreloading] = useState(false);
-  const [audioPreloadProgress, setAudioPreloadProgress] = useState(0);
-  // Track if audio has been preloaded to prevent infinite loops
-  const hasPreloadedAudioRef = useRef(false);
-  // Track the actual word content to prevent unnecessary preloading
-  const lastPreloadedWordsRef = useRef<string>('');
-  // Track if current word audio is ready
-  const [isCurrentWordAudioReady, setIsCurrentWordAudioReady] = useState(false);
-  // Track if audio preloading is fully complete
-  const [isAudioPreloadingComplete, setIsAudioPreloadingComplete] = useState(false);
 
   // Consolidated time tracking refs
   const timeRefs = useRef<ReviewTimeRefs>({
@@ -192,27 +179,27 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
     });
 
+  // Audio preloading hook (must come after wordQueue/isComplete from useFSRS)
+  const {
+    isPreloading: isAudioPreloading,
+    progress: audioPreloadProgress,
+    isComplete: isAudioPreloadingComplete,
+  } = useAudioPreloader(wordQueue, isComplete);
+
   const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
 
-  // Derive currentSentence directly from currentWord to avoid timing issues
-  const currentSentence = useMemo(() => {
-    const wordForm = currentWord?.root?.letters ?? '';
-    return { wordForm };
-  }, [currentWord]);
+  // Derive currentSentence directly from currentWord (React 19 auto-memoizes)
+  const currentSentence = { wordForm: currentWord?.root?.letters ?? '' };
 
   // Track which word hesitation applies to
   const hesitationWordKeyRef = useRef<string>('');
 
-  // Unique key for the current word to trigger renders even if the text is identical
-  const currentWordKey = useMemo(
-    () =>
-      currentWord
-        ? `${currentWord.root_id}-${currentWord.fsrs_last_review ?? ''}-${
-            currentWord.fsrs_reps ?? 0
-          }`
-        : 'none',
-    [currentWord]
-  );
+  // Unique key for the current word to trigger renders (React 19 auto-memoizes)
+  const currentWordKey = currentWord
+    ? `${currentWord.root_id}-${currentWord.fsrs_last_review ?? ''}-${
+        currentWord.fsrs_reps ?? 0
+      }`
+    : 'none';
 
   // Ensure translation is hidden when advancing to a new word
   useEffect(() => {
@@ -474,155 +461,18 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
   }, [isComplete, isTransitioningToCompletion]);
 
-  // Audio preloading function - loads all audio files at session start
-  const preloadSessionAudio = useCallback(
-    async (words: StudyWord[]) => {
-      if (!words.length) {
-        return;
-      }
-
-      setIsAudioPreloading(true);
-      setIsAudioPreloadingComplete(false);
-      setAudioPreloadProgress(0);
-
-      try {
-        const audioUrls: string[] = [];
-
-        // Collect all unique audio URLs from the session words
-        words.forEach(word => {
-          if (word.root?.audio_url) {
-            const audioUrl = generateAudioUrl(word.root.audio_url);
-            if (audioUrl && !audioUrls.includes(audioUrl)) {
-              audioUrls.push(audioUrl);
-            }
-          }
-          if (word.root?.audio_url_en) {
-            const englishAudioUrl = generateAudioUrl(word.root.audio_url_en);
-            if (englishAudioUrl && !audioUrls.includes(englishAudioUrl)) {
-              audioUrls.push(englishAudioUrl);
-            }
-          }
-        });
-
-        if (audioUrls.length === 0) {
-          setIsAudioPreloading(false);
-          setIsAudioPreloadingComplete(true);
-          return;
-        }
-
-        // Preload all audio files in parallel for better performance
-        // CRITICAL FIX: Load audio files in batches to prevent resource exhaustion
-        const totalUrls = audioUrls.length;
-        let completedUrls = 0;
-        const BATCH_SIZE = 5; // Process 5 audio files at a time
-        const BATCH_DELAY = 100; // 100ms delay between batches
-
-        // Create progress tracking function
-        const trackProgress = () => {
-          completedUrls++;
-          setAudioPreloadProgress((completedUrls / totalUrls) * 100);
-        };
-
-        // Process audio files in batches to prevent overwhelming the system
-        for (let i = 0; i < audioUrls.length; i += BATCH_SIZE) {
-          const batch = audioUrls.slice(i, i + BATCH_SIZE);
-
-          // Process current batch in parallel
-          const batchPromises = batch.map(async url => {
-            try {
-              await audioCache.getAudio(url);
-              trackProgress();
-              return true;
-            } catch {
-              trackProgress(); // Still count as completed to avoid hanging
-              return false;
-            }
-          });
-
-          // Wait for current batch to complete
-          await Promise.all(batchPromises);
-
-          // Small delay between batches to prevent resource exhaustion
-          if (i + BATCH_SIZE < audioUrls.length) {
-            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
-          }
-        }
-
-        // Mark preloading as complete immediately
-        setIsAudioPreloadingComplete(true);
-      } catch {
-        // Don't block the session if audio preloading fails
-        setIsAudioPreloadingComplete(true);
-      } finally {
-        setIsAudioPreloading(false);
-        setAudioPreloadProgress(0);
-      }
-    },
-    [generateAudioUrl]
-  );
-
-  // Effect: Preload audio when session starts (ONCE)
-  useEffect(() => {
-    // Create a stable signature of the words to prevent unnecessary preloading
-    const wordsSignature = wordQueue?.map(w => w.root_id).join(',') || '';
-
-    // Only preload if we have words, haven't started preloading, haven't already preloaded, and session isn't complete
-    // AND the words have actually changed
-    if (
-      wordQueue &&
-      wordQueue.length > 0 &&
-      !isAudioPreloading &&
-      !hasPreloadedAudioRef.current &&
-      !isComplete &&
-      !isTransitioningToCompletion &&
-      wordsSignature !== lastPreloadedWordsRef.current
-    ) {
-      hasPreloadedAudioRef.current = true;
-      lastPreloadedWordsRef.current = wordsSignature;
-      preloadSessionAudio(wordQueue);
-    }
-  }, [
-    wordQueue?.length,
-    isAudioPreloading,
-    isComplete,
-    isTransitioningToCompletion,
-    preloadSessionAudio,
-  ]);
-
-  // Reset preload flag when session completes
-  useEffect(() => {
-    if (isComplete) {
-      hasPreloadedAudioRef.current = false;
-      lastPreloadedWordsRef.current = '';
-      setIsAudioPreloadingComplete(false);
-    }
-  }, [isComplete]);
-
-  // Effect: Stop any existing audio when practice session starts
-  useEffect(() => {
-    // Stop any existing audio from other sessions (like listen tab) when practice starts
-    if (currentWord && !isComplete && !isTransitioningToCompletion) {
-      stopAudioSafely();
-    }
-  }, [currentWord, isComplete, isTransitioningToCompletion, stopAudioSafely]);
-
-  // Effect: Stop any existing audio when practice session initializes
-  useEffect(() => {
-    // Stop any existing audio when the practice session first starts
-    if (wordQueue && wordQueue.length > 0 && !isComplete) {
-      stopAudioSafely();
-    }
-  }, [wordQueue?.length, isComplete, stopAudioSafely]);
-
-  // Effect: Pre-configure audio session for faster first playback
+  // Effect: Initialize audio session when practice starts
   useEffect(() => {
     if (wordQueue && wordQueue.length > 0 && !isComplete) {
+      // Stop any existing audio from other sessions (like listen tab)
+      stopAudioSafely();
+
       // Pre-configure audio session in background to reduce first audio delay
       audioPlayerRef.current.preconfigureAudioSession?.().catch(() => {
         // Ignore pre-configuration errors - session will be configured on first play
       });
     }
-  }, [wordQueue?.length, isComplete]);
+  }, [wordQueue?.length, isComplete, stopAudioSafely]);
 
   // Effect: Handle current word changes and play audio (simplified - no more loading)
   useEffect(() => {
@@ -646,12 +496,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     const wordId = String(currentWord.root_id);
     const audioUrl = generateAudioUrl(currentWord.root.audio_url);
 
-    // Since audio is preloaded, mark as ready immediately
-    setIsCurrentWordAudioReady(true);
-
-    // Play audio for Arabic words (now preloaded, so should be instant)
+    // Play audio for Arabic words (preloaded, so should be instant)
     if (audioUrl) {
-      // Play audio immediately since it's already cached
       playAudio(audioUrl).catch(handleError);
     }
 
@@ -695,24 +541,22 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   }, [currentWord, isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
 
   const handleSwipeLeft = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
-      return;
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
     // Gesture swipe left - after hesitation: unknown, otherwise: unknown
     handleKnowledgeResponse('unknown');
-  }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady]);
+  }, [handleKnowledgeResponse, isComplete, currentWord]);
 
   const handleSwipeRight = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
-      return;
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
     // Gesture swipe right - after hesitation: vague, otherwise: known
     const confidence = isHesitating ? 'vague' : 'known';
     handleKnowledgeResponse(confidence);
-  }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady, isHesitating]);
+  }, [handleKnowledgeResponse, isComplete, currentWord, isHesitating]);
 
   const handleLongPress = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
-      return;
-  }, [currentWord, isComplete, isCurrentWordAudioReady]);
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
+    handleKnowledgeResponse('vague');
+  }, [currentWord, isComplete, handleKnowledgeResponse]);
 
   // Hesitation callbacks
   const handleHesitationStart = useCallback(() => {
@@ -859,8 +703,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     // Add audio preloading state
     isAudioPreloading,
     audioPreloadProgress,
-    // Add audio ready state
-    isCurrentWordAudioReady,
     // Add audio preloading completion state
     isAudioPreloadingComplete,
   };
