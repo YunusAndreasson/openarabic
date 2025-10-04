@@ -284,19 +284,19 @@ const WordDetailsBottomSheetComponent = ({
   const handleAddToStudy = useCallback(async () => {
     if (!word) return;
 
-    // Instant UI feedback
-    setOptimisticIsInStudyList(!optimisticIsInStudyList);
+    // Instant UI feedback - use functional update to avoid stale closure
+    setOptimisticIsInStudyList(prev => !prev);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     try {
       await onAddToStudy(word);
       // Success - optimistic state should now match actual state
     } catch (error) {
-      // Revert optimistic update on error
-      setOptimisticIsInStudyList(optimisticIsInStudyList);
+      // Revert optimistic update on error - use functional update
+      setOptimisticIsInStudyList(prev => !prev);
       handleError(error as Error, { toastMessage: 'Failed to update study list' });
     }
-  }, [word, onAddToStudy, optimisticIsInStudyList]);
+  }, [word, onAddToStudy]);
 
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);

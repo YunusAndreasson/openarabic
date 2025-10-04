@@ -435,7 +435,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
       // Keep bottom sheet open for additional interactions
     },
-    [user?.id, handleRootPress, queryClient, refetchStudyWords, localStudyStates]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- localStudyStates not needed in deps because we use functional update pattern (setLocalStudyStates(prev => ...))
+    [user?.id, handleRootPress, queryClient, refetchStudyWords]
   );
 
   // Lightweight sentence words accessor without extra routing logic
