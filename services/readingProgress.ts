@@ -100,20 +100,25 @@ export class ReadingProgressService {
 
   /**
    * Get reading progress for multiple articles
+   * @param userId - The user ID to fetch progress for
+   * @param articleIds - Array of article IDs to fetch. If empty, fetches ALL progress for user.
    */
   static async getBulkProgress(
     userId: string,
     articleIds: number[]
   ): Promise<Map<number, ReadingProgress>> {
-    if (articleIds.length === 0) {
-      return new Map();
-    }
-
-    const { data, error } = await supabase
+    // Build query
+    let query = supabase
       .from('reading_progress')
       .select('*')
-      .eq('user_id', userId)
-      .in('article_id', articleIds);
+      .eq('user_id', userId);
+
+    // Only filter by articleIds if provided
+    if (articleIds.length > 0) {
+      query = query.in('article_id', articleIds);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw new Error(`Failed to get bulk reading progress: ${error.message}`);

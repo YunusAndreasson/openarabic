@@ -67,12 +67,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
       setPreloadProgress(25);
 
       // Preload reading progress immediately after articles to prevent card reordering
-      if (user?.id && Array.isArray(_articles) && _articles.length > 0) {
-        const articleIds = (_articles as Article[]).map(article => article.id);
+      // Fetch ALL reading progress for the user (not filtered by articles)
+      // This creates a shared cache entry that all article lists can use
+      if (user?.id) {
         await queryClient.prefetchQuery({
-          queryKey: ['reading-progress-bulk', user.id, [...articleIds].sort((a, b) => a - b)],
-          queryFn: () => readingProgressService.getBulkProgress(user.id, articleIds),
-          staleTime: 300000, // 5 minutes - data is fresh for 5 minutes
+          queryKey: ['reading-progress-bulk', user.id],
+          queryFn: () => readingProgressService.getBulkProgress(user.id, []), // Empty array = fetch all
+          staleTime: 30000, // 30 seconds - match hook staleTime for consistency
           gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
           retry: 2,
         });

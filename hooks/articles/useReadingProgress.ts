@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useAuth } from '@/hooks/auth/useAuth';
 import { readingProgressService } from '@/services/readingProgress';
@@ -320,22 +320,47 @@ export function useReadingProgress({
 export function useBulkReadingProgress(articleIds: number[]) {
   const { user } = useAuth();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: [
       'reading-progress-bulk',
       user?.id ?? '__guest__',
-      [...articleIds].sort((a, b) => a - b),
     ],
     queryFn: async () => {
-      if (!user?.id || articleIds.length === 0) return new Map();
-      return readingProgressService.getBulkProgress(user.id, articleIds);
+      if (!user?.id) return new Map();
+      // Fetch ALL reading progress for this user (not just requested articleIds)
+      // This creates a single shared cache entry that all components can use
+      // The service's getBulkProgress without articleIds filter will fetch all progress
+      return readingProgressService.getBulkProgress(user.id, []);
     },
-    enabled: !!user?.id && articleIds.length > 0,
+    enabled: !!user?.id,
     staleTime: 30000, // 30 seconds - data is fresh for 30 seconds to prevent flickering
-    refetchOnMount: 'always', // Always refetch on mount to ensure fresh data
+    refetchOnMount: false, // Don't force refetch on mount to prevent card position changes
     retry: 3, // Retry up to 3 times if the query fails
     gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
   });
+
+  // Filter the full Map to only include requested articleIds for this component
+  // This happens in the component, not in the query cache
+  const filteredData = useMemo(() => {
+    const data = query.data;
+    // Early return for missing data, empty articleIds, or non-Map data
+    if (!data || articleIds.length === 0 || !(data instanceof Map)) {
+      return new Map();
+    }
+    const filtered = new Map();
+    articleIds.forEach(id => {
+      const progress = data.get(id);
+      if (progress) {
+        filtered.set(id, progress);
+      }
+    });
+    return filtered;
+  }, [query.data, articleIds]);
+
+  return {
+    ...query,
+    data: filteredData,
+  };
 }
 
 // Safe wrapper hook for bulk reading progress that handles missing AuthProvider
