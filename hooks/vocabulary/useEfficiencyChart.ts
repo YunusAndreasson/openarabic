@@ -1,4 +1,3 @@
-import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
 import { useChartColors } from '@charts/ChartColors';
@@ -8,6 +7,7 @@ import {
   GRAPH_HEIGHT_LARGE,
   useGraphWidth,
 } from '@charts/constants';
+import { buildSmoothChartPath } from '@charts/pathBuilder';
 import {
   calculateEfficiencyScore,
   createStandardizedPerformanceZones,
@@ -17,6 +17,7 @@ import {
 
 import { TREND_CHANGE_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { parseSupabaseTimestamp } from '@/utils/dateUtils';
 
 // Efficiency data interface
 export interface EfficiencyRecord {
@@ -53,27 +54,13 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
   const efficiencyData = useMemo<EfficiencyRecord[]>(() => {
     const dates = generateDateRange(DAYS_7);
 
-    const parseSupabaseTimestamp = (ts: string): Date | null => {
-      if (!ts) return null;
-      let s = ts.replace(' ', 'T');
-      // Normalize timezone: convert trailing "+00" to "Z"; if missing tz, assume Z
-      s = s.replace(/\+00$/, 'Z');
-      if (!/[Zz]|[-+]\d{2}:?\d{2}$/.test(s)) {
-        s = s + 'Z';
-      }
-      const d = new Date(s);
-      return isNaN(d.getTime()) ? null : d;
-    };
-
     return dates.map(date => {
       let totalEfficiency = 0;
       let wordCount = 0;
 
       studyWords.forEach(word => {
         // Robust normalization for Supabase timestamp (Hermes-friendly)
-        const lastReview = word.fsrs_last_review
-          ? parseSupabaseTimestamp(word.fsrs_last_review)
-          : null;
+        const lastReview = parseSupabaseTimestamp(word.fsrs_last_review);
 
         // Count words reviewed on this specific day
         if (lastReview && isSameDay(lastReview, date) && (word.fsrs_reps ?? 0) > 0) {
@@ -103,32 +90,13 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
 
     const maxEfficiency = Math.max(100, Math.max(...efficiencyData.map(d => d.averageEfficiency)));
 
-    // Create smooth curve using Skia Path
-    const path = Skia.Path.Make();
-    const points: { x: number; y: number; efficiency: number; date: Date }[] = [];
-
-    // Render all 7 days so the chart doesn't look empty when some days have no activity
+    // Create smooth curve using shared path builder utility
     const dataPointPositions = calculateDataPointPositions(efficiencyData.length);
-
-    efficiencyData.forEach((data, index) => {
-      const x = dataPointPositions[index] || 0;
-      const y = GRAPH_HEIGHT_LARGE - (data.averageEfficiency / maxEfficiency) * GRAPH_HEIGHT_LARGE;
-      points.push({ x, y, efficiency: data.averageEfficiency, date: data.date });
-
-      if (index === 0) {
-        path.moveTo(x, y);
-      } else {
-        // Create smooth curves using cubic bezier (like MasteryChart)
-        // This creates much more natural-looking curves instead of sharp angles
-        const prevPoint = points[index - 1];
-        if (prevPoint) {
-          const controlX1 = prevPoint.x + (x - prevPoint.x) * 0.3;
-          const controlY1 = prevPoint.y;
-          const controlX2 = prevPoint.x + (x - prevPoint.x) * 0.7;
-          const controlY2 = y;
-          path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
-        }
-      }
+    const { path: efficiencyPath, points } = buildSmoothChartPath({
+      data: efficiencyData,
+      dataPointPositions,
+      calculateY: data => GRAPH_HEIGHT_LARGE - (data.averageEfficiency / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+      buildPoint: (x, y, data) => ({ x, y, efficiency: data.averageEfficiency, date: data.date }),
     });
 
     // Define performance zones using standardized utility
@@ -171,7 +139,7 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
     const hasData = (studyWords?.length ?? 0) > 0;
 
     return {
-      efficiencyPath: path.toSVGString(),
+      efficiencyPath,
       hasData,
       performanceZones,
       dataPoints: points,

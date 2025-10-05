@@ -1,3 +1,10 @@
+// Mock the strings constants before importing cacheUtils
+jest.mock('@/constants/strings', () => ({
+  STRINGS: {
+    BYTE_UNITS: ['Bytes', 'KB', 'MB', 'GB', 'TB'],
+  },
+}));
+
 import { formatBytes, isRemoteAudioUrl } from '../../utils/cacheUtils';
 
 describe('formatBytes', () => {

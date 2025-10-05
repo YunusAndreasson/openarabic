@@ -1,3 +1,4 @@
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   calculateCriticalWords,
@@ -7,26 +8,9 @@ import {
   generateForecastDates,
 } from '@/utils/fsrsUtils';
 
-// Mock data for testing
-const createStudyWord = (overrides: Partial<StudyWord> = {}): StudyWord => ({
-  id: 1,
-  root_id: 1,
-  sentence_id: 1,
-  position: 1,
-  word_form: 'test',
-  english: 'test',
-  difficulty_level: 5,
-  grammar_note: null,
-  created_at: '2024-01-01T00:00:00Z',
-  fsrs_state: 0,
-  fsrs_difficulty: 6.5,
-  fsrs_stability: 0,
-  fsrs_lapses: 0,
-  fsrs_reps: 0,
-  fsrs_last_review: null,
-  fsrs_due: null,
-  ...overrides,
-});
+// Helper to create study words for this test
+const createStudyWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
+  createTestWord(overrides);
 
 describe('fsrsUtils', () => {
   describe('calculateRetrievability', () => {

@@ -39,6 +39,7 @@ import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
+import { getCurrentArticleId, isAudioBusy, stopAudioSafely } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
 import { lightFeedback } from '@/utils/haptics';
@@ -165,10 +166,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const handleClose = useCallback(async () => {
     // Stop audio playback completely before navigating away
     try {
-      const status = simpleAudioService.getStatus();
-      if (status.isPlaying || status.isLoading) {
-        await simpleAudioService.stop();
-      }
+      await stopAudioSafely(true);
     } catch (error) {
       handleError(error as Error, { toastMessage: 'Failed to stop audio on close' });
     }
@@ -188,12 +186,9 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     if (!articleId || !article) return;
 
     try {
-      const status = simpleAudioService.getStatus();
-      if (status.isLoading) return;
+      if (isAudioBusy()) return;
 
-      const currentArticleId = status.currentTrack?.articleId
-        ? parseInt(status.currentTrack.articleId.toString(), 10)
-        : undefined;
+      const currentArticleId = getCurrentArticleId();
 
       if (isPlaying && currentArticleId === articleId) {
         // Currently playing this article, so stop completely
@@ -286,20 +281,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Cleanup scroll timeout and audio on unmount
   useEffect(() => {
     return () => {
-      // Stop audio playback when component unmounts
-      const stopAudioOnUnmount = async () => {
-        try {
-          const status = simpleAudioService.getStatus();
-          if (status.isPlaying || status.isLoading) {
-            await simpleAudioService.stop();
-          }
-        } catch (error) {
-          handleError(error as Error, { toastMessage: 'Failed to stop audio on unmount' });
-        }
-      };
-
-      // Don't await this - let it run in background
-      stopAudioOnUnmount();
+      // Stop audio playback when component unmounts (fire-and-forget)
+      stopAudioSafely();
     };
   }, []);
 

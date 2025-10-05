@@ -1,6 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TIMING_CONSTANTS } from '@/constants/animation';
@@ -8,17 +7,20 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 // Use direct service access to avoid frequent parent re-renders from time updates
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useScreenFocusRefresh } from '@/hooks/utils/useScreenFocusRefresh';
-import { articlesService } from '@/services/articles';
 import { bookmarkService } from '@/services/bookmark';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
-import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
+import {
+  getCurrentArticleId,
+  isAudioBusy,
+  prefetchArticleWithImage,
+  stopAudioSafely,
+} from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
-import { generateImageUrl } from '@/utils/imageUtils';
 import { shuffleArray } from '@/utils/list';
 
 export const useBookmarksScreen = () => {
@@ -157,10 +159,9 @@ export const useBookmarksScreen = () => {
     const currentPlaybackMode = playbackMode;
     const currentTracks = sortedEnhancedTracks;
 
-    const isCurrentlyStarting = currentStatus.isLoading;
     const isCurrentlyPlayingNow = currentStatus.isPlaying;
 
-    if (isCurrentlyStarting) return;
+    if (isAudioBusy()) return;
 
     if (isCurrentlyPlayingNow && currentPlaybackMode === 'all') {
       try {
@@ -186,29 +187,9 @@ export const useBookmarksScreen = () => {
 
         const success = await simpleAudioService.playPlaylist(tracksToPlay, nextTrack => {
           // Callback when a track completes and the next one starts
-          if (nextTrack) {
+          if (nextTrack?.articleId) {
             // Prefetch the next article's data and image for smooth transitions
-            const articleIdToPrefetch = nextTrack.articleId;
-            if (articleIdToPrefetch) {
-              queryClient
-                .prefetchQuery({
-                  queryKey: ['article', articleIdToPrefetch],
-                  queryFn: () => articlesService.getArticleById(articleIdToPrefetch as ArticleId),
-                })
-                .catch(() => {});
-
-              const articleInCache = queryClient.getQueryData<Article>([
-                'article',
-                articleIdToPrefetch,
-              ]);
-              const imageUrl = String(nextTrack.imageUrl || articleInCache?.image_url);
-              if (imageUrl) {
-                // Prefetch image with proper error handling - don't block audio playback
-                Image.prefetch(imageUrl).catch(() => null);
-              } else {
-                prefetchArticle(articleIdToPrefetch).catch(() => {});
-              }
-            }
+            prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
           } else {
             // Playlist is complete, reset playback mode
             playbackModeTimeoutRef.current = setTimeout(() => {
@@ -260,12 +241,9 @@ export const useBookmarksScreen = () => {
 
   const handleArticlePlay = useCallback(
     async (articleId: number) => {
-      const status = simpleAudioService.getStatus();
-      if (status.isLoading) return;
+      if (isAudioBusy()) return;
 
-      const currentArticleId = status.currentTrack?.articleId
-        ? parseInt(status.currentTrack.articleId.toString(), 10)
-        : undefined;
+      const currentArticleId = getCurrentArticleId();
 
       if (isCurrentlyPlaying && currentArticleId === articleId) {
         lightFeedback();
@@ -284,20 +262,7 @@ export const useBookmarksScreen = () => {
         setPlaybackMode('all');
 
         // PREFETCH: warm article data and image so audio components show artwork instantly
-        queryClient
-          .prefetchQuery({
-            queryKey: ['article', articleId],
-            queryFn: () => articlesService.getArticleById(articleId as ArticleId),
-          })
-          .catch(() => {});
-        const cachedArticle = queryClient.getQueryData<Article>(['article', articleId]);
-        const cachedImg = generateImageUrl(cachedArticle?.image_url);
-        if (cachedImg) {
-          // Prefetch cached image - silent failure won't block functionality
-          Image.prefetch(cachedImg).catch(() => null);
-        } else {
-          prefetchArticle(articleId).catch(() => {});
-        }
+        await prefetchArticleWithImage(articleId, queryClient, prefetchArticle);
 
         const track = await enhancedAudioService.generateEnhancedAudioTrack(
           articleId as ArticleId,
@@ -340,9 +305,7 @@ export const useBookmarksScreen = () => {
       // Cleanup function when screen loses focus
       return () => {
         // Stop any playing audio when navigating away from bookmarks screen
-        simpleAudioService.stop().catch(() => {
-          // Ignore errors during cleanup
-        });
+        stopAudioSafely();
       };
     }, [])
   );

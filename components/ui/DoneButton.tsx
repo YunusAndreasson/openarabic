@@ -7,7 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { UiAction } from '@/types/enums';
-import { createHeaderButtonStyle, createHeaderButtonTextStyle } from '@/utils/buttonStyleUtils';
+import { HEADER_BUTTON_STYLE, HEADER_BUTTON_TEXT_STYLE } from '@/utils/buttonStyleUtils';
 import { createAndroidRipple } from '@/utils/layoutUtils';
 
 interface DoneButtonProps {
@@ -75,8 +75,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  button: createHeaderButtonStyle(),
-  buttonText: createHeaderButtonTextStyle(),
+  button: HEADER_BUTTON_STYLE,
+  buttonText: HEADER_BUTTON_TEXT_STYLE,
 });
 
 export default memo(DoneButton);

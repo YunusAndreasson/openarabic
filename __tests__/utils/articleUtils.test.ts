@@ -1,3 +1,4 @@
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
@@ -81,8 +82,7 @@ const mockArticles: Article[] = [
 ];
 
 const mockStudyWords: StudyWord[] = [
-  {
-    id: 1,
+  createTestWord({
     root_id: 1,
     fsrs_state: 0,
     fsrs_difficulty: 1.0,
@@ -90,11 +90,9 @@ const mockStudyWords: StudyWord[] = [
     fsrs_reps: 0,
     fsrs_lapses: 0,
     fsrs_last_review: null,
-    created_at: '2024-01-01T00:00:00Z',
-    root: { id: 1, letters: 'مرحبا', meaning: 'hello' },
-  },
-  {
-    id: 2,
+    root: { id: 1, letters: 'مرحبا', meaning: 'hello', audio_url: null, audio_url_en: null },
+  }),
+  createTestWord({
     root_id: 2,
     fsrs_state: 1,
     fsrs_difficulty: 2.0,
@@ -102,9 +100,8 @@ const mockStudyWords: StudyWord[] = [
     fsrs_reps: 3,
     fsrs_lapses: 1,
     fsrs_last_review: '2024-01-10T00:00:00Z',
-    created_at: '2024-01-01T00:00:00Z',
-    root: { id: 2, letters: 'كيف', meaning: 'how' },
-  },
+    root: { id: 2, letters: 'كيف', meaning: 'how', audio_url: null, audio_url_en: null },
+  }),
 ];
 
 describe('articleUtils', () => {

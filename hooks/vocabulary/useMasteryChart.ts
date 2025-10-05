@@ -1,4 +1,3 @@
-import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
 import type { DataPoint } from '@/components/common/charts';
@@ -11,12 +10,14 @@ import {
   GRAPH_HEIGHT_LARGE,
   useGraphWidth,
 } from '@/components/common/charts/constants';
+import { buildSmoothChartPath } from '@/components/common/charts/pathBuilder';
 import {
   createStandardizedPerformanceZones,
   generateDateRange,
 } from '@/components/common/charts/utils';
 import { MASTERY_MILESTONES, MASTERY_TREND_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { parseSupabaseTimestamp } from '@/utils/dateUtils';
 
 interface Milestone {
   x: number;
@@ -78,31 +79,9 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     () =>
       studyWords.map(word => ({
         // Robust normalization for Supabase timestamp (Hermes-friendly)
-        createdAt: (() => {
-          const parseSupabaseTimestamp = (ts: string | null | undefined): Date | null => {
-            if (!ts) return null;
-            let s = ts.replace(' ', 'T');
-            // Normalize timezone: convert trailing "+00" to "Z"; if missing tz, assume Z
-            s = s.replace(/\+00$/, 'Z');
-            if (!/[Zz]|[-+]\d{2}:?\d{2}$/.test(s)) {
-              s = s + 'Z';
-            }
-            const d = new Date(s);
-            return isNaN(d.getTime()) ? null : d;
-          };
-
-          // Fallback to epoch if parsing fails so words are counted historically
-          return parseSupabaseTimestamp(word.created_at) ?? new Date(0);
-        })(),
-        lastReview: word.fsrs_last_review
-          ? (() => {
-              let s = word.fsrs_last_review.replace(' ', 'T');
-              s = s.replace(/\+00$/, 'Z');
-              if (!/[Zz]|[-+]\d{2}:?\d{2}$/.test(s)) s = s + 'Z';
-              const d = new Date(s);
-              return isNaN(d.getTime()) ? null : d;
-            })()
-          : null,
+        // Fallback to epoch if parsing fails so words are counted historically
+        createdAt: parseSupabaseTimestamp(word.created_at) ?? new Date(0),
+        lastReview: parseSupabaseTimestamp(word.fsrs_last_review),
         state: word.fsrs_state,
         stability: word.fsrs_stability ?? 0,
       })),
@@ -149,29 +128,13 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     const maxRate = Math.max(100, Math.max(...masteryData.map(d => d.masteryRate)));
     const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
 
-    // Calculate positions with proper boundary padding to ensure data points are fully visible
+    // Create smooth curve using shared path builder utility
     const dataPointPositions = calculateDataPointPositions(masteryData.length);
-
-    const path = Skia.Path.Make();
-    const points: ChartPoint[] = [];
-
-    masteryData.forEach((data, index) => {
-      const x = dataPointPositions[index] || 0;
-      const y = TOP_PADDING + (chartHeight - (data.masteryRate / maxRate) * chartHeight);
-      points.push({ x, y, rate: data.masteryRate, date: data.date });
-
-      if (index === 0) {
-        path.moveTo(x, y);
-      } else if (masteryData.length > 1) {
-        const prevPoint = points[index - 1];
-        if (prevPoint) {
-          const controlX1 = prevPoint.x + (x - prevPoint.x) * 0.3;
-          const controlY1 = prevPoint.y;
-          const controlX2 = prevPoint.x + (x - prevPoint.x) * 0.7;
-          const controlY2 = y;
-          path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
-        }
-      }
+    const { path: masteryPath, points } = buildSmoothChartPath({
+      data: masteryData,
+      dataPointPositions,
+      calculateY: data => TOP_PADDING + (chartHeight - (data.masteryRate / maxRate) * chartHeight),
+      buildPoint: (x, y, data) => ({ x, y, rate: data.masteryRate, date: data.date }),
     });
 
     const milestones = MASTERY_MILESTONES.map(target => {
@@ -210,7 +173,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     );
 
     return {
-      masteryPath: path.toSVGString(),
+      masteryPath,
       // Show the chart whenever the user has any study words, regardless of due words
       hasData: (studyWords?.length ?? 0) > 0,
       performanceZones,

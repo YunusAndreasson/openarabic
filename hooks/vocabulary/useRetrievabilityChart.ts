@@ -1,4 +1,3 @@
-import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
 import { useChartColors } from '@charts/ChartColors';
@@ -9,6 +8,7 @@ import {
   GRAPH_HEIGHT_LARGE,
   useGraphWidth,
 } from '@charts/constants';
+import { buildSmoothChartPath } from '@charts/pathBuilder';
 import { createStandardizedPerformanceZones } from '@charts/utils';
 
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -63,36 +63,23 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
       Math.max(...retrievabilityData.map(d => d.averageRetrievability))
     );
 
-    const path = Skia.Path.Make();
-    const points: { x: number; y: number; retrievability: number; date: Date }[] = [];
-
-    // Render all 7 days for continuity (even if some days have 0 words)
+    // Create smooth curve using shared path builder utility
+    const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
+    const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
     const dataPointPositions = calculateDataPointPositions(retrievabilityData.length);
 
-    retrievabilityData.forEach((data, index) => {
-      const x = dataPointPositions[index] || 0;
-      // Use consistent padding approach like MasteryChart
-      const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
-      const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
-      const y =
+    const { path: retrievabilityPath, points } = buildSmoothChartPath({
+      data: retrievabilityData,
+      dataPointPositions,
+      calculateY: data =>
         TOP_PADDING +
-        (chartHeight - (data.averageRetrievability / maxRetrievability) * chartHeight);
-      points.push({ x, y, retrievability: data.averageRetrievability, date: data.date });
-
-      if (index === 0) {
-        path.moveTo(x, y);
-      } else {
-        const prevPoint = points[index - 1];
-        if (prevPoint) {
-          // Create smooth curves using cubic bezier (like MasteryChart)
-          // This creates much more natural-looking curves instead of sharp angles
-          const controlX1 = prevPoint.x + (x - prevPoint.x) * 0.3;
-          const controlY1 = prevPoint.y;
-          const controlX2 = prevPoint.x + (x - prevPoint.x) * 0.7;
-          const controlY2 = y;
-          path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
-        }
-      }
+        (chartHeight - (data.averageRetrievability / maxRetrievability) * chartHeight),
+      buildPoint: (x, y, data) => ({
+        x,
+        y,
+        retrievability: data.averageRetrievability,
+        date: data.date,
+      }),
     });
 
     const performanceZones = createStandardizedPerformanceZones(GRAPH_HEIGHT_LARGE, 0, chartColors);
@@ -106,7 +93,7 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
     const criticalWords = todayData?.criticalWords || 0;
 
     return {
-      retrievabilityPath: path.toSVGString(),
+      retrievabilityPath,
       // Show the chart whenever the user has any study words, regardless of due words
       hasData: (studyWords?.length ?? 0) > 0,
       dangerZones: performanceZones,

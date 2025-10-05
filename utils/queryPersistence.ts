@@ -10,11 +10,16 @@ const THROTTLE_TIME = 1000; // 1 second
 const MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 // Pre-defined sets for faster lookups
-const STATIC_DATA_KEYS = new Set(['categories', 'authors', 'articles']);
-const FILTERED_ARTICLE_KEYS = new Set(['filtered-articles']);
-const USER_DATA_KEYS = new Set(['readingList']);
+const PERSIST_KEYS = new Set([
+  'categories',
+  'authors',
+  'articles',
+  'filtered-articles',
+  'readingList',
+  'reading-progress',
+  'reading-progress-bulk',
+]);
 const VOCABULARY_KEYS = new Set([FSRS_BASE_KEY]);
-const READING_PROGRESS_KEYS = new Set(['reading-progress', 'reading-progress-bulk']);
 const EXCLUDED_KEYS = new Set(['isInReadingList', 'enhancedAudioTracks', STRUGGLING_WORDS_KEY]);
 const EXCLUDED_PATTERNS = new Set(['due', 'live']);
 
@@ -27,25 +32,21 @@ export const queryPersister = createAsyncStoragePersister({
   deserialize: JSON.parse,
 });
 
+/**
+ * Helper to check if query key contains any excluded patterns
+ */
+const hasExcludedPattern = (queryKey: unknown[]): boolean => {
+  return queryKey.some(key => typeof key === 'string' && EXCLUDED_PATTERNS.has(key));
+};
+
 // Optimized shouldDehydrateQuery function
 const shouldDehydrateQuery = (query: Query): boolean => {
   const queryKey = query.queryKey;
   const firstKey = typeof queryKey[0] === 'string' ? queryKey[0] : '';
 
-  // Fast lookups using Sets
-  if (
-    STATIC_DATA_KEYS.has(firstKey) ||
-    FILTERED_ARTICLE_KEYS.has(firstKey) ||
-    USER_DATA_KEYS.has(firstKey) ||
-    READING_PROGRESS_KEYS.has(firstKey)
-  ) {
-    return true;
-  }
-
-  // Handle vocabulary data with exclusions
-  if (VOCABULARY_KEYS.has(firstKey)) {
-    // Don't persist real-time due words
-    return !queryKey.some(key => typeof key === 'string' && EXCLUDED_PATTERNS.has(key));
+  // Early exit for excluded patterns
+  if (hasExcludedPattern(queryKey)) {
+    return false;
   }
 
   // Fast exclusion checks
@@ -53,9 +54,14 @@ const shouldDehydrateQuery = (query: Query): boolean => {
     return false;
   }
 
-  // Check for excluded patterns in any part of the query key
-  if (queryKey.some(key => typeof key === 'string' && EXCLUDED_PATTERNS.has(key))) {
-    return false;
+  // Fast lookups for persistent keys
+  if (PERSIST_KEYS.has(firstKey)) {
+    return true;
+  }
+
+  // Handle vocabulary data (already checked for excluded patterns above)
+  if (VOCABULARY_KEYS.has(firstKey)) {
+    return true;
   }
 
   // Default to not persisting

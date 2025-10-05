@@ -34,7 +34,7 @@ class SimpleAudioService {
 
   // STABILIZATION: Add state transition smoothing
   private lastStatusUpdate = 0;
-  private statusUpdateThrottle = 400; // Slightly coarser to reduce UI churn without hurting UX
+  private statusUpdateThrottle = 500; // Match polling interval to avoid wasted updates
 
   // PLAYLIST SUPPORT: Add playlist state management
   private playlist: EnhancedAudioTrack[] = [];
@@ -185,7 +185,7 @@ class SimpleAudioService {
       return cachedPlayer;
     }
 
-    // Stop previous playback safely without blocking new playback
+    // Stop previous playback to prevent overlapping audio
     if (this.currentPlayer) {
       const previousPlayer = this.currentPlayer;
 
@@ -193,23 +193,18 @@ class SimpleAudioService {
       this.currentPlayer = null;
       this.currentTrack = null;
 
-      // Pause the previous player asynchronously to prevent overlapping audio
+      // Pause previous player synchronously to prevent audio overlap
       // Do NOT remove here to preserve cache reuse; eviction handles removal
-      (async () => {
-        try {
-          if (typeof previousPlayer.pause === 'function') {
-            await previousPlayer.pause();
-          }
-        } catch {
-          // Ignore pause errors
+      try {
+        if (typeof previousPlayer.pause === 'function') {
+          await previousPlayer.pause();
         }
-      })();
+      } catch {
+        // Ignore pause errors
+      }
 
       // Clear any existing polling/timeout from the previous session
-      // Non-blocking cleanup - don't await
-      this.stopInternal().catch(() => {
-        // Ignore cleanup errors for faster playback
-      });
+      this.stopStatusPolling();
     }
 
     // Create new player immediately
@@ -217,21 +212,24 @@ class SimpleAudioService {
 
     // Cache player for potential reuse with proper cleanup
     if (this.playerCache.size >= this.MAX_CACHE_SIZE) {
-      // CRITICAL FIX: Properly clean up evicted players
+      // Evict oldest player - fire-and-forget cleanup to not block new player creation
       const firstKey = this.playerCache.keys().next().value;
       if (firstKey) {
         const evictedPlayer = this.playerCache.get(firstKey);
-        if (evictedPlayer) {
-          // Properly remove the player before evicting from cache
-          try {
-            if (typeof evictedPlayer.remove === 'function') {
-              await evictedPlayer.remove();
-            }
-          } catch {
-            // Ignore cleanup errors - we still want to evict the player
-          }
-        }
         this.playerCache.delete(firstKey);
+
+        // Clean up evicted player asynchronously (don't block new player creation)
+        if (evictedPlayer) {
+          (async () => {
+            try {
+              if (typeof evictedPlayer.remove === 'function') {
+                await evictedPlayer.remove();
+              }
+            } catch {
+              // Ignore cleanup errors
+            }
+          })();
+        }
       }
     }
     this.playerCache.set(audioUrl, newPlayer);
@@ -280,33 +278,12 @@ class SimpleAudioService {
       // Start playback immediately
       await this.currentPlayer.play?.();
 
-      // Conditionally start polling and wait for confirmation
+      // Conditionally start polling and update status
       if (!options.skipPolling) {
         // Start polling for status updates immediately after play() call
         this.startStatusPolling();
 
-        // Wait for audio to actually start playing (not just for play() to return)
-        const playbackStartTime = Date.now();
-        let actualPlaybackStarted = false;
-
-        // Poll status until we detect actual playback or timeout
-        while (!actualPlaybackStarted && Date.now() - playbackStartTime < 1000) {
-          // Max wait 1 second
-          if (this.currentPlayer) {
-            const isPlaying = this.currentPlayer.playing || this.currentPlayer.isPlaying || false;
-            const currentTime = this.currentPlayer.currentTime ?? this.currentPlayer.position ?? 0;
-
-            // Consider playback started if playing is true OR if currentTime > 0
-            if (isPlaying || currentTime > 0) {
-              actualPlaybackStarted = true;
-              break;
-            }
-          }
-          // Small delay between checks
-          await new Promise(resolve => setTimeout(resolve, 10));
-        }
-
-        // Update status to playing (whether we detected it or not)
+        // Update status to playing immediately - trust the polling to correct if needed
         this.updateStatus({ isLoading: false, isPlaying: true });
       } else {
         // For optimized playback (e.g., word audio), update status immediately
@@ -588,7 +565,7 @@ class SimpleAudioService {
       clearInterval(this.statusPollingInterval);
     }
 
-    // Optimized polling interval for faster response (reduced from 600ms to 200ms)
+    // Optimized polling interval (500ms = 2x/sec for efficiency)
     this.statusPollingInterval = setInterval(() => {
       if (this.currentPlayer) {
         try {
@@ -669,11 +646,11 @@ class SimpleAudioService {
             currentTime: 0,
             duration: 0,
           });
-          // Re-throw to make the error visible
-          throw new Error(`Audio status polling failed: ${pollingError}`);
+          // Log error instead of throwing (can't throw from setInterval callback)
+          console.error('Audio status polling failed:', pollingError);
         }
       }
-    }, 200); // Reduced from 600ms to 200ms for more responsive audio feedback
+    }, 500); // 500ms (2x/sec) balances responsiveness with battery efficiency
   }
 
   /**
@@ -705,8 +682,8 @@ class SimpleAudioService {
           await this.currentPlayer.remove();
         }
       } catch (cleanupError) {
-        // Re-throw to make the error visible
-        throw new Error(`Audio cleanup failed: ${cleanupError}`);
+        // Log error instead of throwing (callers don't always catch)
+        console.error('Audio cleanup failed:', cleanupError);
       }
       this.currentPlayer = null;
     }
@@ -741,8 +718,8 @@ class SimpleAudioService {
       } catch (listenerError) {
         // Remove problematic listeners
         this.listeners.delete(listener);
-        // Re-throw to make the error visible
-        throw new Error(`Audio status listener failed: ${listenerError}`);
+        // Log error instead of throwing (can't throw from forEach)
+        console.error('Audio status listener failed:', listenerError);
       }
     });
   }

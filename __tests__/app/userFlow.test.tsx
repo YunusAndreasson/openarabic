@@ -10,6 +10,7 @@ import ErrorMessage from '../../components/study/ErrorMessage';
 import { VocabularyStatCards } from '../../components/study/VocabularyStatCards';
 import { useReview } from '../../hooks/review';
 
+// Keep inline for hoisting - expo-router is imported by dependencies
 jest.mock('expo-router', () => {
   const router = { push: jest.fn(), replace: jest.fn() };
   return { router, useRouter: () => router };

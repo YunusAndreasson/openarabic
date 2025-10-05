@@ -9,9 +9,10 @@ jest.mock('@react-navigation/native', () => {
 });
 
 import { NavigationContainer } from '@react-navigation/native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import TestStoreProvider from '../helpers/testStore';
 
+import { createTestQueryClient } from '../helpers/testUtils';
 import TabLayout from '../../app/(tabs)/_layout';
 
 // Mock the FSRSDataProvider context to simplify tests
@@ -208,9 +209,7 @@ jest.mock('../../hooks/articles/useStreakHistory', () => ({
 }));
 
 const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+  const queryClient = createTestQueryClient();
   return ({ children }: { children: React.ReactNode }) => (
     <TestStoreProvider>
       <QueryClientProvider client={queryClient}>

@@ -1,4 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
+import { createTestWord } from '../helpers/fsrsTestHelpers';
 import type { StudyWord } from '../../types/vocabulary.types';
 import {
   calculateDueWords,
@@ -19,101 +20,77 @@ describe('Word Count Consistency Validation', () => {
   // Mock study words data that reproduces the observed bugs
   const mockStudyWords: StudyWord[] = [
     // Word 1: Due word, should count in due words
-    {
+    createTestWord({
       root_id: 1,
       user_id: 'test-user',
-      fsrs_due: '2024-01-01T00:00:00Z', // Past due
+      fsrs_due: '2024-01-01T00:00:00Z',
       fsrs_last_review: '2024-01-01T00:00:00Z',
       fsrs_reps: 3,
       fsrs_state: 2,
-      fsrs_stability: 4, // Lower stability - learning (state=2, stability<5)
+      fsrs_stability: 4,
       fsrs_difficulty: 6.5,
       fsrs_lapses: 1,
-      fsrs_elapsed_days: 0,
-      fsrs_scheduled_days: 1,
-      fsrs_learning_steps: 0,
-      created_at: '2024-01-01T00:00:00Z',
-    },
+    }),
     // Word 2: Struggling word, has been reviewed, should count
-    {
+    createTestWord({
       root_id: 2,
       user_id: 'test-user',
-      fsrs_due: '2024-12-31T00:00:00Z', // Future due
+      fsrs_due: '2024-12-31T00:00:00Z',
       fsrs_last_review: '2024-01-02T00:00:00Z',
       fsrs_reps: 5,
       fsrs_state: 2,
-      fsrs_stability: 4, // Lower stability - learning (state=2, stability<5)
-      fsrs_difficulty: 8.5, // High difficulty
-      fsrs_lapses: 2, // High lapses
-      fsrs_elapsed_days: 0,
-      fsrs_scheduled_days: 1,
-      fsrs_learning_steps: 0,
-      created_at: '2024-01-01T00:00:00Z',
-    },
+      fsrs_stability: 4,
+      fsrs_difficulty: 8.5,
+      fsrs_lapses: 2,
+    }),
     // Word 3: Struggling word, NOT reviewed, should NOT count
-    {
+    createTestWord({
       root_id: 3,
       user_id: 'test-user',
-      fsrs_due: '2024-12-31T00:00:00Z', // Future due
-      fsrs_last_review: null, // Never reviewed
+      fsrs_due: '2024-12-31T00:00:00Z',
+      fsrs_last_review: null,
       fsrs_reps: 0,
       fsrs_state: 2,
-      fsrs_stability: 4, // Lower stability - not mastered
-      fsrs_difficulty: 9.0, // High difficulty
-      fsrs_lapses: 3, // High lapses
-      fsrs_elapsed_days: 0,
-      fsrs_scheduled_days: 1,
-      fsrs_learning_steps: 0,
-      created_at: '2024-01-01T00:00:00Z',
-    },
+      fsrs_stability: 4,
+      fsrs_difficulty: 9.0,
+      fsrs_lapses: 3,
+    }),
     // Word 4: Learning word, should count in learning
-    {
+    createTestWord({
       root_id: 4,
       user_id: 'test-user',
-      fsrs_due: '2024-12-31T00:00:00Z', // Future due
+      fsrs_due: '2024-12-31T00:00:00Z',
       fsrs_last_review: '2024-01-03T00:00:00Z',
       fsrs_reps: 2,
-      fsrs_state: 1, // Learning state
-      fsrs_stability: 3, // Low stability
+      fsrs_state: 1,
+      fsrs_stability: 3,
       fsrs_difficulty: 6.0,
       fsrs_lapses: 0,
-      fsrs_elapsed_days: 0,
-      fsrs_scheduled_days: 1,
-      fsrs_learning_steps: 0,
-      created_at: '2024-01-01T00:00:00Z',
-    },
+    }),
     // Word 5: Mastered word, should count in mastered
-    {
+    createTestWord({
       root_id: 5,
       user_id: 'test-user',
-      fsrs_due: '2024-12-31T00:00:00Z', // Future due
+      fsrs_due: '2024-12-31T00:00:00Z',
       fsrs_last_review: '2024-01-04T00:00:00Z',
       fsrs_reps: 10,
-      fsrs_state: 2, // Mature state
-      fsrs_stability: 8, // High stability
+      fsrs_state: 2,
+      fsrs_stability: 8,
       fsrs_difficulty: 5.0,
       fsrs_lapses: 0,
-      fsrs_elapsed_days: 0,
-      fsrs_scheduled_days: 1,
-      fsrs_learning_steps: 0,
-      created_at: '2024-01-01T00:00:00Z',
-    },
+    }),
     // Word 6: Recently reviewed (within cooldown), should NOT count in due
-    {
+    createTestWord({
       root_id: 6,
       user_id: 'test-user',
-      fsrs_due: '2024-01-01T00:00:00Z', // Past due
-      fsrs_last_review: new Date(Date.now() - 13 * 60 * 60 * 1000).toISOString(), // 13 hours ago (outside 12h cooldown)
+      fsrs_due: '2024-01-01T00:00:00Z',
+      fsrs_last_review: new Date(Date.now() - 13 * 60 * 60 * 1000).toISOString(),
       fsrs_reps: 4,
       fsrs_state: 2,
-      fsrs_stability: 4, // Lower stability - learning (state=2, stability<5)
+      fsrs_stability: 4,
       fsrs_difficulty: 6.0,
       fsrs_lapses: 1,
-      fsrs_elapsed_days: 0,
-      fsrs_scheduled_days: 1,
-      fsrs_learning_steps: 0,
-      created_at: '2024-01-01T00:00:00Z',
-    },
+    }),
   ];
 
   describe('Bug 1: Progress Bar Broken - Total Words Consistency', () => {

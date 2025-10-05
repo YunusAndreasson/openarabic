@@ -21,11 +21,9 @@ const SPACING_MAP: Record<SpacingScale, number> = {
 };
 
 /**
- * Creates padding styles with consistent spacing
- * @param options - Padding configuration
- * @returns ViewStyle with padding
+ * Spacing options type for padding and margin
  */
-export const createPadding = (options: {
+type SpacingOptions = {
   horizontal?: SpacingScale;
   vertical?: SpacingScale;
   top?: SpacingScale;
@@ -33,40 +31,56 @@ export const createPadding = (options: {
   left?: SpacingScale;
   right?: SpacingScale;
   all?: SpacingScale;
-}): ViewStyle => {
+};
+
+/**
+ * Generic helper to create spacing styles (padding or margin)
+ * @param options - Spacing configuration
+ * @param type - Type of spacing ('padding' or 'margin')
+ * @returns ViewStyle with spacing
+ */
+const createSpacing = (options: SpacingOptions, type: 'padding' | 'margin'): ViewStyle => {
   const style: ViewStyle = {};
 
   if (options.all) {
-    const padding = SPACING_MAP[options.all];
-    style.padding = padding;
+    style[type] = SPACING_MAP[options.all];
     return style;
   }
 
   if (options.horizontal) {
-    style.paddingHorizontal = SPACING_MAP[options.horizontal];
+    style[`${type}Horizontal` as keyof ViewStyle] = SPACING_MAP[options.horizontal];
   }
 
   if (options.vertical) {
-    style.paddingVertical = SPACING_MAP[options.vertical];
+    style[`${type}Vertical` as keyof ViewStyle] = SPACING_MAP[options.vertical];
   }
 
   if (options.top) {
-    style.paddingTop = SPACING_MAP[options.top];
+    style[`${type}Top` as keyof ViewStyle] = SPACING_MAP[options.top];
   }
 
   if (options.bottom) {
-    style.paddingBottom = SPACING_MAP[options.bottom];
+    style[`${type}Bottom` as keyof ViewStyle] = SPACING_MAP[options.bottom];
   }
 
   if (options.left) {
-    style.paddingLeft = SPACING_MAP[options.left];
+    style[`${type}Left` as keyof ViewStyle] = SPACING_MAP[options.left];
   }
 
   if (options.right) {
-    style.paddingRight = SPACING_MAP[options.right];
+    style[`${type}Right` as keyof ViewStyle] = SPACING_MAP[options.right];
   }
 
   return style;
+};
+
+/**
+ * Creates padding styles with consistent spacing
+ * @param options - Padding configuration
+ * @returns ViewStyle with padding
+ */
+export const createPadding = (options: SpacingOptions): ViewStyle => {
+  return createSpacing(options, 'padding');
 };
 
 /**
@@ -74,48 +88,8 @@ export const createPadding = (options: {
  * @param options - Margin configuration
  * @returns ViewStyle with margin
  */
-export const createMargin = (options: {
-  horizontal?: SpacingScale;
-  vertical?: SpacingScale;
-  top?: SpacingScale;
-  bottom?: SpacingScale;
-  left?: SpacingScale;
-  right?: SpacingScale;
-  all?: SpacingScale;
-}): ViewStyle => {
-  const style: ViewStyle = {};
-
-  if (options.all) {
-    const margin = SPACING_MAP[options.all];
-    style.margin = margin;
-    return style;
-  }
-
-  if (options.horizontal) {
-    style.marginHorizontal = SPACING_MAP[options.horizontal];
-  }
-
-  if (options.vertical) {
-    style.marginVertical = SPACING_MAP[options.vertical];
-  }
-
-  if (options.top) {
-    style.marginTop = SPACING_MAP[options.top];
-  }
-
-  if (options.bottom) {
-    style.marginBottom = SPACING_MAP[options.bottom];
-  }
-
-  if (options.left) {
-    style.marginLeft = SPACING_MAP[options.left];
-  }
-
-  if (options.right) {
-    style.marginRight = SPACING_MAP[options.right];
-  }
-
-  return style;
+export const createMargin = (options: SpacingOptions): ViewStyle => {
+  return createSpacing(options, 'margin');
 };
 
 /**
@@ -160,6 +134,15 @@ export const createContainerStyle = (options: {
 };
 
 /**
+ * Ripple size map for consistent Android ripple sizing
+ */
+const RIPPLE_SIZE_MAP = {
+  small: MIN_TOUCH_TARGET.SMALL,
+  medium: MIN_TOUCH_TARGET.MEDIUM,
+  large: MIN_TOUCH_TARGET.LARGE,
+} as const;
+
+/**
  * Creates consistent Android ripple configuration
  * @param colors - Theme colors object
  * @param size - Size of the ripple radius
@@ -168,18 +151,10 @@ export const createContainerStyle = (options: {
 export const createAndroidRipple = (
   colors: ThemeColors,
   size: 'small' | 'medium' | 'large' = 'medium'
-) => {
-  const sizeMap = {
-    small: MIN_TOUCH_TARGET.SMALL,
-    medium: MIN_TOUCH_TARGET.MEDIUM,
-    large: MIN_TOUCH_TARGET.LARGE,
-  };
-
-  return {
-    color: colors.navigationRipple,
-    radius: sizeMap[size] / 2,
-  };
-};
+) => ({
+  color: colors.navigationRipple,
+  radius: RIPPLE_SIZE_MAP[size] / 2,
+});
 
 /**
  * Common style patterns used throughout the app

@@ -1,3 +1,4 @@
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   calculateDueWords,
@@ -8,26 +9,9 @@ import {
   isStrugglingWord,
 } from '@/utils/wordClassification';
 
-// Mock data for testing
-const createStudyWord = (overrides: Partial<StudyWord> = {}): StudyWord => ({
-  id: 1,
-  root_id: 1,
-  sentence_id: 1,
-  position: 1,
-  word_form: 'test',
-  english: 'test',
-  difficulty_level: 5,
-  grammar_note: null,
-  created_at: '2024-01-01T00:00:00Z',
-  fsrs_state: 0,
-  fsrs_difficulty: 6.5,
-  fsrs_stability: 0,
-  fsrs_lapses: 0,
-  fsrs_reps: 0,
-  fsrs_last_review: null,
-  fsrs_due: null,
-  ...overrides,
-});
+// Helper to create study words for this test
+const createStudyWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
+  createTestWord(overrides);
 
 describe('wordClassification', () => {
   describe('isStrugglingWord', () => {
@@ -60,9 +44,9 @@ describe('wordClassification', () => {
       const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(); // Tomorrow
 
       const words = [
-        createStudyWord({ fsrs_due: pastDate, fsrs_state: 2 }), // Past due, review state
-        createStudyWord({ fsrs_due: futureDate, fsrs_state: 2 }), // Future due, review state
-        createStudyWord({ fsrs_due: pastDate, fsrs_state: 0 }), // Past due, new state (always due)
+        createStudyWord({ fsrs_due: pastDate, fsrs_state: 2, fsrs_last_review: null }), // Past due, review state
+        createStudyWord({ fsrs_due: futureDate, fsrs_state: 2, fsrs_last_review: null }), // Future due, review state
+        createStudyWord({ fsrs_due: pastDate, fsrs_state: 0, fsrs_last_review: null }), // Past due, new state (always due)
       ];
 
       expect(calculateDueWords(words)).toBe(2); // Past due words only
@@ -142,14 +126,15 @@ describe('wordClassification', () => {
       const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(); // 13 hours ago (beyond 12-hour cooldown)
       const words = [
         createStudyWord({ fsrs_due: pastDate }), // Due
-        createStudyWord({ fsrs_state: 0 }), // New - should be counted as due for first review
-        createStudyWord({ fsrs_state: 2, fsrs_stability: 10 }), // Mastered
+        createStudyWord({ fsrs_state: 0, fsrs_due: null }), // New - should be counted as due for first review
+        createStudyWord({ fsrs_state: 2, fsrs_stability: 10, fsrs_due: null }), // Mastered
         createStudyWord({
           fsrs_state: 1, // Learning state
           fsrs_difficulty: 8.5,
           fsrs_lapses: 2,
           fsrs_last_review: pastBeyondCooldown,
           fsrs_reps: 3,
+          fsrs_due: null,
         }), // Struggling
       ];
 

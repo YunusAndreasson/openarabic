@@ -1,5 +1,6 @@
 import { selectionFeedback } from '@/utils/haptics';
 
+// Keep inline mock for this test since it needs direct access to jest.fn() instances for assertions
 jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(),
   impactAsync: jest.fn(),

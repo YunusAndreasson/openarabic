@@ -1,4 +1,3 @@
-import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
 import { useChartColors } from '@charts/ChartColors';
@@ -9,6 +8,7 @@ import {
   GRAPH_HEIGHT_LARGE,
   useGraphWidth,
 } from '@charts/constants';
+import { buildSmoothChartPath } from '@charts/pathBuilder';
 
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
@@ -60,37 +60,16 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
       Math.max(...dueWordsData.map(d => d.dueWords))
     );
 
-    const path = Skia.Path.Make();
-    const points: { x: number; y: number; dueWords: number; date: Date }[] = [];
-
-    // Render all 7 days for continuity
+    // Create smooth curve using shared path builder utility
+    const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
+    const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
     const dataPointPositions = calculateDataPointPositions(dueWordsData.length);
 
-    dueWordsData.forEach((data, index) => {
-      const x = dataPointPositions[index] || 0;
-      // Use consistent padding approach like MasteryChart
-      const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
-      const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
-      // Fix Y-coordinate calculation: higher due words should be at top (more concerning)
-      // When dueWords = 0, y = TOP_PADDING + chartHeight (bottom)
-      // When dueWords = maxDueWords, y = TOP_PADDING (top)
-      const y = TOP_PADDING + (chartHeight - (data.dueWords / maxDueWords) * chartHeight);
-      points.push({ x, y, dueWords: data.dueWords, date: data.date });
-
-      if (index === 0) {
-        path.moveTo(x, y);
-      } else {
-        const prevPoint = points[index - 1];
-        if (prevPoint) {
-          // Create smooth curves using cubic bezier (like MasteryChart)
-          // This creates much more natural-looking curves
-          const controlX1 = prevPoint.x + (x - prevPoint.x) * 0.3;
-          const controlY1 = prevPoint.y;
-          const controlX2 = prevPoint.x + (x - prevPoint.x) * 0.7;
-          const controlY2 = y;
-          path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
-        }
-      }
+    const { path: dueWordsPath, points } = buildSmoothChartPath({
+      data: dueWordsData,
+      dataPointPositions,
+      calculateY: data => TOP_PADDING + (chartHeight - (data.dueWords / maxDueWords) * chartHeight),
+      buildPoint: (x, y, data) => ({ x, y, dueWords: data.dueWords, date: data.date }),
     });
 
     // Calculate trend using utility function
@@ -102,7 +81,7 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
     const peakDue = Math.max(...dueWordsData.map(d => d.dueWords));
 
     return {
-      dueWordsPath: path.toSVGString(),
+      dueWordsPath,
       // Show the chart whenever the user has any study words
       hasData: (studyWords?.length ?? 0) > 0,
       dataPoints: points,

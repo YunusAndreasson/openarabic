@@ -5,11 +5,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@common/ProgressBar';
 
-import { TIMING_CONFIG } from '@/constants/animation';
+import { REVIEW_MIN_PROGRESS_VALUE, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
-import { calculateDisplayProgress, shouldTriggerAnimation } from '@/utils/progressUtils';
 
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====
 const STATIC_STYLES = StyleSheet.create({
@@ -52,11 +51,14 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
   const colors = useColors();
 
   const displayProgress = useMemo(
-    () => calculateDisplayProgress(progress, maxProgress),
+    () => Math.max(progress, maxProgress),
     [progress, maxProgress]
   );
 
-  const animationTriggered = useMemo(() => shouldTriggerAnimation(animationKey), [animationKey]);
+  const animationTriggered = useMemo(
+    () => animationKey > REVIEW_MIN_PROGRESS_VALUE,
+    [animationKey]
+  );
 
   // Handle close with haptic feedback
   const handleClose = useCallback(() => {

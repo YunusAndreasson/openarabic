@@ -10,7 +10,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { EditModeType } from '@/store/editModeSlice';
 import { UiAction } from '@/types/enums';
-import { createHeaderButtonStyle, createHeaderButtonTextStyle } from '@/utils/buttonStyleUtils';
+import { HEADER_BUTTON_STYLE, HEADER_BUTTON_TEXT_STYLE } from '@/utils/buttonStyleUtils';
 import { selectionFeedback } from '@/utils/haptics';
 import { createAndroidRipple } from '@/utils/layoutUtils';
 
@@ -119,8 +119,8 @@ const EditModeButton: FC<EditModeButtonProps> = ({
 };
 
 const styles = StyleSheet.create({
-  button: createHeaderButtonStyle(),
-  buttonText: createHeaderButtonTextStyle(),
+  button: HEADER_BUTTON_STYLE,
+  buttonText: HEADER_BUTTON_TEXT_STYLE,
 });
 
 export default memo(EditModeButton);
