@@ -1,3 +1,5 @@
+import { BaseChart } from '@charts/BaseChart';
+import { useChartColors } from '@charts/ChartColors';
 import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -9,8 +11,6 @@ import {
   withSpring,
 } from 'react-native-reanimated';
 
-import { BaseChart } from '@charts/BaseChart';
-import { useChartColors } from '@charts/ChartColors';
 
 import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';

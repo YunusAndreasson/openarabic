@@ -1,8 +1,8 @@
+import { ProgressBar } from '@common/ProgressBar';
 import { memo, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { ProgressBar } from '@common/ProgressBar';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';

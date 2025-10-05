@@ -1,3 +1,4 @@
+import BaseCard from '@common/BaseCard';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
@@ -5,7 +6,6 @@ import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';

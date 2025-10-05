@@ -1,7 +1,7 @@
+import { CHART_VISUAL } from '@charts/constants';
 import { Path } from '@shopify/react-native-skia';
 import { memo } from 'react';
 
-import { CHART_VISUAL } from '@charts/constants';
 
 import { useColors } from '@/hooks/theme/useColors';
 

@@ -1,3 +1,5 @@
+import EmptyState from '@common/EmptyState';
+import ListSeparator from '@common/ListSeparator';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
@@ -8,8 +10,6 @@ import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import EmptyState from '@common/EmptyState';
-import ListSeparator from '@common/ListSeparator';
 
 import { ThemedView } from '@/components/ThemedView';
 import BottomControls from '@/components/bookmarks/BottomControls';

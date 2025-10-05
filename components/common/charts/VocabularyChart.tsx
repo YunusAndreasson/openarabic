@@ -1,6 +1,3 @@
-import { Group } from '@shopify/react-native-skia';
-import React, { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
 
 import { BaseChart } from '@charts/BaseChart';
 import { ChartAreaFill } from '@charts/ChartAreaFill';
@@ -11,6 +8,9 @@ import { ChartGrid } from '@charts/ChartGrid';
 import { ChartMainLine } from '@charts/ChartMainLine';
 import { ChartPerformanceZones } from '@charts/ChartPerformanceZones';
 import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
+import { Group } from '@shopify/react-native-skia';
+import React, { memo, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import type { PerformanceZone } from '@/types/ui/chart.types';
 import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';

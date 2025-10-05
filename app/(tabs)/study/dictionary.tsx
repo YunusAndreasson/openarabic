@@ -1,3 +1,4 @@
+import EmptyState from '@common/EmptyState';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
@@ -7,7 +8,6 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import EmptyState from '@common/EmptyState';
 
 import { ThemedView } from '@/components/ThemedView';
 import DictionarySortingHeader from '@/components/study/DictionarySortingHeader';

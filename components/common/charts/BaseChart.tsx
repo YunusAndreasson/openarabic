@@ -1,8 +1,8 @@
+import { Y_AXIS_WIDTH } from '@charts/ChartAxes';
+import BaseCard from '@common/BaseCard';
 import { memo, type ReactNode, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Y_AXIS_WIDTH } from '@charts/ChartAxes';
-import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';

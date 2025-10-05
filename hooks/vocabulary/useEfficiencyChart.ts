@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 
 import { useChartColors } from '@charts/ChartColors';
 import {
@@ -14,6 +13,7 @@ import {
   generateDateRange,
   isSameDay,
 } from '@charts/utils';
+import { useMemo } from 'react';
 
 import { TREND_CHANGE_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';

@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 
 import { useChartColors } from '@charts/ChartColors';
 import {
@@ -9,6 +8,7 @@ import {
   useGraphWidth,
 } from '@charts/constants';
 import { buildSmoothChartPath } from '@charts/pathBuilder';
+import { useMemo } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';
 import {

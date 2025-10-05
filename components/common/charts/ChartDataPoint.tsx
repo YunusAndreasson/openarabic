@@ -1,8 +1,8 @@
+import { useChartColors } from '@charts/ChartColors';
+import { CHART_VISUAL } from '@charts/constants';
 import { Circle, Group } from '@shopify/react-native-skia';
 import { memo } from 'react';
 
-import { useChartColors } from '@charts/ChartColors';
-import { CHART_VISUAL } from '@charts/constants';
 
 interface ChartDataPointProps {
   x: number;

@@ -26,11 +26,11 @@ import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useEfficiencyChart } from '@/hooks/vocabulary/useEfficiencyChart';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
-import { useEfficiencyChart } from '@/hooks/vocabulary/useEfficiencyChart';
 import { ReviewAction } from '@/types/enums';
-import { mediumFeedback } from '@/utils/haptics';
+import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -39,14 +39,17 @@ export default function VocabularyScreen(): JSX.Element {
   const { prefetchVocabularyData } = useAppPreloader();
   const insets = useSafeAreaInsets();
 
-  // Add state for bottom sheet visibility
-  const [isMemoryRetentionVisible, setIsMemoryRetentionVisible] = useState(false);
-  const [isDueWordsVisible, setIsDueWordsVisible] = useState(false);
-  const [isLearningRateVisible, setIsLearningRateVisible] = useState(false);
-  const [isWordsMasteredVisible, setIsWordsMasteredVisible] = useState(false);
+  // Single coordinated state for bottom sheet visibility
+  const [activeBottomSheet, setActiveBottomSheet] = useState<
+    'memory' | 'due' | 'learning' | 'mastered' | null
+  >(null);
 
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
+
+  // Add ref to prevent rapid bottom sheet switching
+  const lastSheetChangeRef = useRef(0);
+  const isTransitioning = useRef(false);
 
   // Smooth spring animations for loading and content transitions
   // Always call hooks unconditionally at the top level
@@ -123,25 +126,65 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Handle memory strength gauge info press - now opens bottom sheet
   const handleMemoryStrengthInfo = useCallback(() => {
-    setIsMemoryRetentionVisible(true);
-  }, []);
+    setActiveBottomSheetDebounced('memory');
+  }, [setActiveBottomSheetDebounced]);
 
-  // Handle closing the bottom sheets
-  const handleCloseMemoryRetention = useCallback(() => {
-    setIsMemoryRetentionVisible(false);
-  }, []);
+  // Handle closing any bottom sheet
+  const handleCloseBottomSheet = useCallback(() => {
+    setActiveBottomSheetDebounced(null);
+  }, [setActiveBottomSheetDebounced]);
 
-  const handleCloseDueWords = useCallback(() => {
-    setIsDueWordsVisible(false);
-  }, []);
+  // Debounced bottom sheet setter to prevent rapid switching
+  const setActiveBottomSheetDebounced = useCallback(
+    (sheet: 'memory' | 'due' | 'learning' | 'mastered' | null) => {
+      // Prevent multiple rapid state changes during transitions
+      if (isTransitioning.current) {
+        return;
+      }
 
-  const handleCloseLearningRate = useCallback(() => {
-    setIsLearningRateVisible(false);
-  }, []);
+      const now = Date.now();
+      const timeSinceLastChange = now - lastSheetChangeRef.current;
 
-  const handleCloseWordsMastered = useCallback(() => {
-    setIsWordsMasteredVisible(false);
-  }, []);
+      // Prevent rapid switching (less than 400ms between changes)
+      // Allow immediate closing (null) or opening when none is active
+      if (
+        timeSinceLastChange < 400 &&
+        activeBottomSheet !== null &&
+        sheet !== null &&
+        sheet !== activeBottomSheet
+      ) {
+        return;
+      }
+
+      // Only trigger haptic feedback when bottom sheet actually opens
+      if (sheet !== null) {
+        selectionFeedback();
+      }
+
+      isTransitioning.current = true;
+      lastSheetChangeRef.current = now;
+      setActiveBottomSheet(sheet);
+
+      // Reset transition flag after animation time
+      setTimeout(() => {
+        isTransitioning.current = false;
+      }, 300);
+    },
+    [activeBottomSheet]
+  );
+
+  // Handle card presses
+  const handleDuePress = useCallback(() => {
+    setActiveBottomSheetDebounced('due');
+  }, [setActiveBottomSheetDebounced]);
+
+  const handleLearningPress = useCallback(() => {
+    setActiveBottomSheetDebounced('learning');
+  }, [setActiveBottomSheetDebounced]);
+
+  const handleMasteredPress = useCallback(() => {
+    setActiveBottomSheetDebounced('mastered');
+  }, [setActiveBottomSheetDebounced]);
 
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
@@ -265,9 +308,9 @@ export default function VocabularyScreen(): JSX.Element {
                   masteredWords={calculatedStats.masteredWords}
                   studyWords={filteredStudyWords}
                   onInfoPress={handleMemoryStrengthInfo}
-                  onDuePress={() => setIsDueWordsVisible(true)}
-                  onLearningPress={() => setIsLearningRateVisible(true)}
-                  onMasteredPress={() => setIsWordsMasteredVisible(true)}
+                  onDuePress={handleDuePress}
+                  onLearningPress={handleLearningPress}
+                  onMasteredPress={handleMasteredPress}
                 />
 
                 {/* Recommendation Card - placed below stat cards */}
@@ -319,25 +362,25 @@ export default function VocabularyScreen(): JSX.Element {
         </View>
       )}
 
-      {/* Memory Retention Bottom Sheet */}
+      {/* Coordinated Bottom Sheets - only one can be visible at a time */}
       <MemoryRetentionBottomSheet
-        isVisible={isMemoryRetentionVisible}
-        onClose={handleCloseMemoryRetention}
+        isVisible={activeBottomSheet === 'memory'}
+        onClose={handleCloseBottomSheet}
       />
 
-      {/* Due Words Bottom Sheet */}
-      <DueWordsBottomSheet isVisible={isDueWordsVisible} onClose={handleCloseDueWords} />
+      <DueWordsBottomSheet
+        isVisible={activeBottomSheet === 'due'}
+        onClose={handleCloseBottomSheet}
+      />
 
-      {/* Learning Rate Bottom Sheet */}
       <LearningRateBottomSheet
-        isVisible={isLearningRateVisible}
-        onClose={handleCloseLearningRate}
+        isVisible={activeBottomSheet === 'learning'}
+        onClose={handleCloseBottomSheet}
       />
 
-      {/* Words Mastered Bottom Sheet */}
       <WordsMasteredBottomSheet
-        isVisible={isWordsMasteredVisible}
-        onClose={handleCloseWordsMastered}
+        isVisible={activeBottomSheet === 'mastered'}
+        onClose={handleCloseBottomSheet}
       />
     </ThemedView>
   );

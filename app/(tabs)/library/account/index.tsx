@@ -1,15 +1,15 @@
 // External Libraries
+import BaseCard from '@common/BaseCard';
+import SectionTitle from '@common/SectionTitle';
 import { Ionicons } from '@expo/vector-icons';
+import { TimePicker } from '@ui/TimePicker';
+import { Toggle } from '@ui/Toggle';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { Fragment, memo, useCallback, useMemo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import BaseCard from '@common/BaseCard';
-import SectionTitle from '@common/SectionTitle';
-import { TimePicker } from '@ui/TimePicker';
-import { Toggle } from '@ui/Toggle';
 
 import { THEME_OPTIONS } from '@/components/ThemePicker';
 import { ThemedText } from '@/components/ThemedText';

@@ -1,9 +1,9 @@
+import BaseCard from '@common/BaseCard';
+import { ProgressCircle } from '@common/ProgressCircle';
 import { memo, useEffect, useMemo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import BaseCard from '@common/BaseCard';
-import { ProgressCircle } from '@common/ProgressCircle';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';

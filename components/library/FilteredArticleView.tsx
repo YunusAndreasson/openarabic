@@ -1,11 +1,11 @@
+import EmptyState from '@common/EmptyState';
+import ListSeparator from '@common/ListSeparator';
 import { FlashList } from '@shopify/flash-list';
 import React, { memo, useCallback, useMemo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 
-import EmptyState from '@common/EmptyState';
-import ListSeparator from '@common/ListSeparator';
 
 import { ThemedView } from '@/components/ThemedView';
 import ListArticleItem from '@/components/library/ListArticleItem';

@@ -1,3 +1,4 @@
+import BaseCard from '@common/BaseCard';
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -7,7 +8,6 @@ import BottomSheet, {
 import { memo, useCallback, useEffect, useMemo, useRef, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';

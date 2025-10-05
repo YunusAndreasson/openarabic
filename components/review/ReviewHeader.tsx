@@ -1,9 +1,9 @@
+import { ProgressBar } from '@common/ProgressBar';
 import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { ProgressBar } from '@common/ProgressBar';
 
 import { REVIEW_MIN_PROGRESS_VALUE, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';

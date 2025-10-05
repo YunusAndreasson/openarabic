@@ -1,9 +1,9 @@
-import { Mask, Path, Rect } from '@shopify/react-native-skia';
-import { memo, useMemo } from 'react';
 
 import { useChartColors } from '@charts/ChartColors';
 import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
 import { createAreaFillPath } from '@charts/utils';
+import { Mask, Path, Rect } from '@shopify/react-native-skia';
+import { memo, useMemo } from 'react';
 
 import { useColors } from '@/hooks/theme/useColors';
 import type { PerformanceZone } from '@/types/ui/chart.types';

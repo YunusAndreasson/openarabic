@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
+ 
 /**
  * Analytics Service
  * Production-ready Mixpanel integration with silent operation

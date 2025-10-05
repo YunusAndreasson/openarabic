@@ -1,7 +1,7 @@
+import { useChartColors } from '@charts/ChartColors';
 import { Group, Line } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 
-import { useChartColors } from '@charts/ChartColors';
 
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { useColors } from '@/hooks/theme/useColors';

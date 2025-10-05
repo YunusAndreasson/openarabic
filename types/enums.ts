@@ -216,7 +216,7 @@ export const UiAction = {
   CONTINUE: 'Continue',
 } as const;
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
+ 
 export type UiAction = (typeof UiAction)[keyof typeof UiAction];
 
 // ===== AUDIO CONTROLS =====
@@ -234,7 +234,7 @@ export const AudioAction = {
   LISTEN_LATER: 'Listen later',
 } as const;
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
+ 
 export type AudioAction = (typeof AudioAction)[keyof typeof AudioAction];
 
 /**
@@ -284,7 +284,7 @@ export const ReviewAction = {
   STUDY_DUE_WORDS: 'Review Due Words',
 } as const;
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
+ 
 export type ReviewAction = (typeof ReviewAction)[keyof typeof ReviewAction];
 
 // ===== LEARNING PHASES =====
@@ -318,7 +318,7 @@ export const ToastType = {
   SUCCESS: 'success',
 } as const;
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
+ 
 export type ToastType = (typeof ToastType)[keyof typeof ToastType];
 
 // ===== FAQ SYSTEM =====

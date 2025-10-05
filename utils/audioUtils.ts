@@ -1,10 +1,10 @@
-import { Image } from 'expo-image';
 import type { QueryClient } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 
 import { articlesService } from '@/services/articles';
 import { simpleAudioService } from '@/services/simpleAudioService';
-import type { ArticleId } from '@/types/branded.types';
 import type { Article } from '@/types/articles.types';
+import type { ArticleId } from '@/types/branded.types';
 import { generateImageUrl } from '@/utils/imageUtils';
 
 /**

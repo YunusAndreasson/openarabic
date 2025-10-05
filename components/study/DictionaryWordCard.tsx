@@ -1,8 +1,8 @@
+import BaseCard from '@common/BaseCard';
 import { memo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
 import DeleteButton from '@/components/bookmarks/DeleteButton';
