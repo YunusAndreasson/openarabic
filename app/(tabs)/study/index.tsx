@@ -28,6 +28,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+import { useEfficiencyChart } from '@/hooks/vocabulary/useEfficiencyChart';
 import { ReviewAction } from '@/types/enums';
 import { mediumFeedback } from '@/utils/haptics';
 
@@ -101,8 +102,14 @@ export default function VocabularyScreen(): JSX.Element {
     limit: 100,
   });
 
+  // Filter study words for memory capacity gauge (needs all words, not just due)
+  const filteredStudyWords = useMemo(() => {
+    return allWords?.filter(word => word != null && word.root_id != null) ?? [];
+  }, [allWords]);
+
   // Get chart data for recommendations
   const { chartData } = useRetrievabilityChart(allWords || []);
+  const { chartData: efficiencyChartData } = useEfficiencyChart(filteredStudyWords);
 
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
@@ -139,11 +146,6 @@ export default function VocabularyScreen(): JSX.Element {
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
   const dueWordsCount = dueWords?.length ?? 0;
-
-  // Filter study words for memory capacity gauge (needs all words, not just due)
-  const filteredStudyWords = useMemo(() => {
-    return allWords?.filter(word => word != null && word.root_id != null) ?? [];
-  }, [allWords]);
 
   // Show main UI if there are any words available in either query source
   // - allWords may lag if mutations only invalidate 'due' keys

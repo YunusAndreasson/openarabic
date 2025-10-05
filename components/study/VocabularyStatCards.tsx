@@ -32,11 +32,13 @@ interface StatCardProps {
   label: string;
   value: number;
   color: string;
-  icon: 'alert-circle' | 'school' | 'checkmark-circle';
+  icon: 'time' | 'school' | 'trophy';
   onPress?: () => void;
+  formatAsDecimal?: boolean;
 }
 
-const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress }) => {
+const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress, formatAsDecimal = false }) => {
+  const displayValue = formatAsDecimal ? value.toFixed(1) : Math.round(value).toString();
   if (!onPress) {
     return (
       <BaseCard shadowSize="small" style={styles.statCard}>
@@ -44,7 +46,7 @@ const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress }) =>
           <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
         </View>
         <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
-          {value}
+          {displayValue}
         </ThemedText>
         <ThemedText type="caption" colorName="textTertiary" style={styles.statLabel}>
           {label}
@@ -59,7 +61,7 @@ const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress }) =>
         <Ionicons name={icon} size={16} color={color} />
       </View>
       <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
-        {value}
+        {displayValue}
       </ThemedText>
       <ThemedText type="caption" colorName="textTertiary" style={styles.statLabel}>
         {label}
@@ -90,8 +92,9 @@ export const VocabularyStatCards = memo(
           label: VocabularyStatCategory.DUE,
           value: dueWords,
           color: colors.error,
-          icon: 'alert-circle' as const,
+          icon: 'time' as const,
           onPress: onDuePress, // Due words now open prognosis chart
+          formatAsDecimal: false,
         },
         {
           label: VocabularyStatCategory.LEARNING,
@@ -99,13 +102,15 @@ export const VocabularyStatCards = memo(
           color: colors.warning,
           icon: 'school' as const,
           onPress: onLearningPress,
+          formatAsDecimal: false,
         },
         {
           label: VocabularyStatCategory.MASTERED,
           value: masteredWords,
           color: colors.success,
-          icon: 'checkmark-circle' as const,
+          icon: 'trophy' as const,
           onPress: onMasteredPress,
+          formatAsDecimal: false,
         },
       ],
       [
@@ -135,6 +140,7 @@ export const VocabularyStatCards = memo(
               color={stat.color}
               icon={stat.icon}
               onPress={stat.onPress}
+              formatAsDecimal={stat.formatAsDecimal}
             />
           ))}
         </View>

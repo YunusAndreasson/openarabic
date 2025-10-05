@@ -281,7 +281,7 @@ export enum WordManagementAction {
 export const ReviewAction = {
   DONT_KNOW: "Don't know",
   KNOW: 'Know',
-  STUDY_DUE_WORDS: 'Review Now',
+  STUDY_DUE_WORDS: 'Review Due Words',
 } as const;
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare

@@ -12,10 +12,10 @@ import { PERFORMANCE_THRESHOLDS } from './constants';
 // Standardized terminology
 export const CHART_LABELS = {
   // Performance metrics - with clear time indicators for zero confusion
-  STRENGTH: '📈 Memory strength', // How strong your memory is (last 7 days)
+  STRENGTH: '📈 Mastery Journey', // Cumulative mastered words over time
   RETENTION: '⏰ Review schedule', // When words will need review (next 7 days)
-  SPEED: '⚡ Learning speed', // How fast you are learning (last 7 days)
-  DUE_WORDS_PROGNOSIS: '📋 Due words forecast', // Projected due words (next 7 days)
+  SPEED: '📚 Learning Progress', // Progress in learning words over time
+  DUE_WORDS_PROGNOSIS: '📋 Due Words Forecast', // Projected due words (next 7 days)
 
   // Word categories
   MASTERED: 'mastered',
