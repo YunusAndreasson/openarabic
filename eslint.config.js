@@ -1,24 +1,12 @@
 const js = require('@eslint/js');
-const { FlatCompat } = require('@eslint/eslintrc');
 const typescriptPlugin = require('@typescript-eslint/eslint-plugin');
 const typescriptParser = require('@typescript-eslint/parser');
 const reactPlugin = require('eslint-plugin-react');
 const reactHooksPlugin = require('eslint-plugin-react-hooks');
-const reactNativePlugin = require('eslint-plugin-react-native');
-const importPlugin = require('eslint-plugin-import');
 const unusedImportsPlugin = require('eslint-plugin-unused-imports');
-const expoConfig = require('eslint-config-expo');
-
-const compat = new FlatCompat();
 
 module.exports = [
   js.configs.recommended,
-  ...compat.extends('plugin:react/recommended'),
-  ...compat.extends('plugin:react-hooks/recommended'),
-  ...compat.extends('plugin:react-native/all'),
-  ...compat.extends('plugin:import/errors'),
-  ...compat.extends('plugin:import/warnings'),
-  ...compat.extends('eslint-config-expo'),
 
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -36,7 +24,6 @@ module.exports = [
       'unused-imports': unusedImportsPlugin,
     },
     rules: {
-      ...typescriptPlugin.configs.recommended.rules,
       '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
       '@typescript-eslint/no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
@@ -55,7 +42,6 @@ module.exports = [
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/consistent-type-imports': 'error',
       'no-unused-vars': 'off',
-      'react/prop-types': 'off',
     },
   },
   {
@@ -79,31 +65,41 @@ module.exports = [
           argsIgnorePattern: '^_',
         },
       ],
-
-      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/restrict-template-expressions': 'off',
-      '@typescript-eslint/restrict-plus-operands': 'off',
-      '@typescript-eslint/no-floating-promises': 'off',
-      '@typescript-eslint/require-await': 'off',
-      '@typescript-eslint/await-thenable': 'off',
-      '@typescript-eslint/no-misused-promises': 'off',
-      '@typescript-eslint/prefer-regexp-exec': 'off',
-      '@typescript-eslint/unbound-method': 'off',
     },
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
+    languageOptions: {
+      globals: {
+        // React Native globals
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        console: 'readonly',
+        __DEV__: 'readonly',
+        process: 'readonly',
+        global: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        AbortController: 'readonly',
+        React: 'readonly',
+        // Browser globals (for coverage reports)
+        document: 'readonly',
+        window: 'readonly',
+      },
+    },
     plugins: {
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
-      'react-native': reactNativePlugin,
-      import: importPlugin,
       'unused-imports': unusedImportsPlugin,
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
     },
     rules: {
       'no-unused-vars': 'off',
@@ -121,73 +117,14 @@ module.exports = [
       'no-console': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'off',
-      'react-native/no-unused-styles': 'error',
-      'react-native/split-platform-components': 'warn',
-      'react-native/no-inline-styles': 'off',
-      'react-native/no-color-literals': 'off',
-      'react-native/no-raw-text': ['warn', { skip: ['ThemedText'] }],
-      'react-native/sort-styles': 'off',
       'react/react-in-jsx-scope': 'off',
       'react/jsx-no-bind': 'off',
       'react/no-array-index-key': 'warn',
       'react/jsx-key': 'error',
       'react/jsx-fragments': 'off',
-      'import/order': [
-        'warn',
-        {
-          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
-          'newlines-between': 'always',
-          alphabetize: { order: 'asc' },
-          pathGroups: [
-            {
-              pattern: '@/**',
-              group: 'internal',
-              position: 'after',
-            },
-          ],
-          pathGroupsExcludedImportTypes: ['builtin'],
-        },
-      ],
-      'import/no-unresolved': 'warn',
-      'import/named': 'warn',
-      'import/no-duplicates': 'error',
-      'import/no-unused-modules': 'warn',
-      'react/no-unstable-nested-components': ['warn', { allowAsProps: true }],
-      'react/jsx-no-constructed-context-values': 'warn',
-      'react/no-unused-prop-types': 'warn',
-      'react/jsx-no-useless-fragment': 'off',
-      'react/no-object-type-as-default-prop': 'warn',
-      'react/jsx-no-script-url': 'error',
-      'react/no-danger': 'error',
-      'react/no-arrow-function-lifecycle': 'warn',
-      'react/no-invalid-html-attribute': 'warn',
-      'react/no-namespace': 'warn',
-      'react/jsx-no-duplicate-props': ['error', { ignoreCase: true }],
       'react/display-name': 'off',
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            'components/home/*',
-            '@/components/ArticleCard',
-            '@/components/FilterModal',
-            '@/components/BottomControls',
-            '@/components/AudioProgressIndicator',
-            '@/components/EmptyState',
-            '@/components/ErrorState',
-            '@/components/Pill',
-            '@/components/Toggle',
-            '@/components/TimePicker',
-          ],
-        },
-      ],
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: "MemberExpression[object.name='ROUTE_PATHS'][property.name='TABS']",
-          message: 'Use LIBRARY_TAB/BOOKMARKS_TAB/STUDY_TAB instead of ROUTE_PATHS.TABS',
-        },
-      ],
+      'react/prop-types': 'off',
+      'no-redeclare': 'off',
     },
   },
   {

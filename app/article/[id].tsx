@@ -418,7 +418,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
       // Keep bottom sheet open for additional interactions
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- localStudyStates not needed in deps because we use functional update pattern (setLocalStudyStates(prev => ...))
+     
     [user?.id, handleRootPress, queryClient, refetchStudyWords]
   );
 

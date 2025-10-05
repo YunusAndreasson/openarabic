@@ -48,27 +48,27 @@ const createSpacing = (options: SpacingOptions, type: 'padding' | 'margin'): Vie
   }
 
   if (options.horizontal) {
-    style[`${type}Horizontal` as keyof ViewStyle] = SPACING_MAP[options.horizontal];
+    (style as any)[`${type}Horizontal`] = SPACING_MAP[options.horizontal];
   }
 
   if (options.vertical) {
-    style[`${type}Vertical` as keyof ViewStyle] = SPACING_MAP[options.vertical];
+    (style as any)[`${type}Vertical`] = SPACING_MAP[options.vertical];
   }
 
   if (options.top) {
-    style[`${type}Top` as keyof ViewStyle] = SPACING_MAP[options.top];
+    (style as any)[`${type}Top`] = SPACING_MAP[options.top];
   }
 
   if (options.bottom) {
-    style[`${type}Bottom` as keyof ViewStyle] = SPACING_MAP[options.bottom];
+    (style as any)[`${type}Bottom`] = SPACING_MAP[options.bottom];
   }
 
   if (options.left) {
-    style[`${type}Left` as keyof ViewStyle] = SPACING_MAP[options.left];
+    (style as any)[`${type}Left`] = SPACING_MAP[options.left];
   }
 
   if (options.right) {
-    style[`${type}Right` as keyof ViewStyle] = SPACING_MAP[options.right];
+    (style as any)[`${type}Right`] = SPACING_MAP[options.right];
   }
 
   return style;

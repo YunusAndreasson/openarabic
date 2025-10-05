@@ -35,7 +35,7 @@ export const queryPersister = createAsyncStoragePersister({
 /**
  * Helper to check if query key contains any excluded patterns
  */
-const hasExcludedPattern = (queryKey: unknown[]): boolean => {
+const hasExcludedPattern = (queryKey: readonly unknown[]): boolean => {
   return queryKey.some(key => typeof key === 'string' && EXCLUDED_PATTERNS.has(key));
 };
 

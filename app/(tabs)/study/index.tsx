@@ -112,7 +112,8 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Get chart data for recommendations
   const { chartData } = useRetrievabilityChart(allWords || []);
-  const { chartData: efficiencyChartData } = useEfficiencyChart(filteredStudyWords);
+  // Note: efficiencyChartData is available but not currently used in UI
+  useEfficiencyChart(filteredStudyWords);
 
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
@@ -123,16 +124,6 @@ export default function VocabularyScreen(): JSX.Element {
     mediumFeedback();
     router.push(getStudyReviewRoute());
   }, [user, router]);
-
-  // Handle memory strength gauge info press - now opens bottom sheet
-  const handleMemoryStrengthInfo = useCallback(() => {
-    setActiveBottomSheetDebounced('memory');
-  }, [setActiveBottomSheetDebounced]);
-
-  // Handle closing any bottom sheet
-  const handleCloseBottomSheet = useCallback(() => {
-    setActiveBottomSheetDebounced(null);
-  }, [setActiveBottomSheetDebounced]);
 
   // Debounced bottom sheet setter to prevent rapid switching
   const setActiveBottomSheetDebounced = useCallback(
@@ -172,6 +163,16 @@ export default function VocabularyScreen(): JSX.Element {
     },
     [activeBottomSheet]
   );
+
+  // Handle memory strength gauge info press - now opens bottom sheet
+  const handleMemoryStrengthInfo = useCallback(() => {
+    setActiveBottomSheetDebounced('memory');
+  }, [setActiveBottomSheetDebounced]);
+
+  // Handle closing any bottom sheet
+  const handleCloseBottomSheet = useCallback(() => {
+    setActiveBottomSheetDebounced(null);
+  }, [setActiveBottomSheetDebounced]);
 
   // Handle card presses
   const handleDuePress = useCallback(() => {
