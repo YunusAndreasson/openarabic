@@ -53,12 +53,11 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
       return efficiencyData.map((_, index) => allDayPositions[index] || 0);
     }, [efficiencyData.length]);
 
-    // 🚀 Unified chart with perfect grid system and performance zones:
+    // 🚀 Unified chart with clean single-color design (no performance zones):
     return (
       <VocabularyChart
         path={chartData.efficiencyPath}
         dataPoints={chartData.dataPoints}
-        performanceZones={chartData.performanceZones}
         tooltipDataPoints={dataPoints}
         xLabels={xLabels}
         xLabelPositions={xLabelPositions}

@@ -1,6 +1,32 @@
-import { withOpacity } from '../../utils/colorUtils';
+import {
+  darken,
+  desaturate,
+  lighten,
+  oklchToHex,
+  saturate,
+  withOpacity,
+} from '../../utils/colorUtils';
 
 describe('colorUtils', () => {
+  describe('oklchToHex', () => {
+    it('should convert OKLCH to hex with gamut clamping', () => {
+      // Sage green example from docs
+      const result = oklchToHex(0.55, 0.08, 155);
+      expect(result).toMatch(/^#[0-9A-F]{6}$/i);
+    });
+
+    it('should clamp out-of-gamut colors to displayable RGB', () => {
+      // Very high chroma that might be out of gamut
+      const result = oklchToHex(0.5, 0.5, 180);
+      expect(result).toMatch(/^#[0-9A-F]{6}$/i);
+    });
+
+    it('should handle edge cases', () => {
+      expect(oklchToHex(0, 0, 0)).toMatch(/^#[0-9A-F]{6}$/i); // Black
+      expect(oklchToHex(1, 0, 0)).toMatch(/^#[0-9A-F]{6}$/i); // White
+    });
+  });
+
   describe('withOpacity', () => {
     it('should create rgba string with valid hex and opacity', () => {
       const result = withOpacity('#FF5500', 0.5);
@@ -35,6 +61,54 @@ describe('colorUtils', () => {
     it('should handle null/undefined hex colors', () => {
       expect(withOpacity(null as any, 0.5)).toBe('rgba(0,0,0,0.5)');
       expect(withOpacity(undefined as any, 0.5)).toBe('rgba(0,0,0,0.5)');
+    });
+  });
+
+  describe('lighten', () => {
+    it('should lighten a color', () => {
+      const result = lighten(0.5, 0.1, 180, 0.2);
+      expect(result).toMatch(/^#[0-9A-F]{6}$/i);
+    });
+
+    it('should clamp lightness to max 1', () => {
+      const result = lighten(0.9, 0.1, 180, 0.5);
+      expect(result).toMatch(/^#[0-9A-F]{6}$/i);
+    });
+  });
+
+  describe('darken', () => {
+    it('should darken a color', () => {
+      const result = darken(0.5, 0.1, 180, 0.2);
+      expect(result).toMatch(/^#[0-9A-F]{6}$/i);
+    });
+
+    it('should clamp lightness to min 0', () => {
+      const result = darken(0.1, 0.1, 180, 0.5);
+      expect(result).toMatch(/^#[0-9A-F]{6}$/i);
+    });
+  });
+
+  describe('saturate', () => {
+    it('should increase saturation', () => {
+      const result = saturate(0.5, 0.1, 180, 0.05);
+      expect(result).toMatch(/^#[0-9A-F]{6}$/i);
+    });
+
+    it('should clamp chroma to max 0.4', () => {
+      const result = saturate(0.5, 0.35, 180, 0.1);
+      expect(result).toMatch(/^#[0-9A-F]{6}$/i);
+    });
+  });
+
+  describe('desaturate', () => {
+    it('should decrease saturation', () => {
+      const result = desaturate(0.5, 0.1, 180, 0.05);
+      expect(result).toMatch(/^#[0-9A-F]{6}$/i);
+    });
+
+    it('should clamp chroma to min 0', () => {
+      const result = desaturate(0.5, 0.05, 180, 0.1);
+      expect(result).toMatch(/^#[0-9A-F]{6}$/i);
     });
   });
 });

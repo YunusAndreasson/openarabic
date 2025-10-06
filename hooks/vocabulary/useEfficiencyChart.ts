@@ -1,15 +1,12 @@
 
-import { useChartColors } from '@charts/ChartColors';
 import {
   calculateDataPointPositions,
   DAYS_7,
   GRAPH_HEIGHT_LARGE,
-  useGraphWidth,
 } from '@charts/constants';
 import { buildSmoothChartPath } from '@charts/pathBuilder';
 import {
   calculateEfficiencyScore,
-  createStandardizedPerformanceZones,
   generateDateRange,
   isSameDay,
 } from '@charts/utils';
@@ -29,7 +26,6 @@ export interface EfficiencyRecord {
 interface EfficiencyChartData {
   efficiencyPath: string;
   hasData: boolean;
-  performanceZones: ReturnType<typeof createStandardizedPerformanceZones>;
   dataPoints: { x: number; y: number; efficiency: number; date: Date }[];
   insights: {
     currentEfficiency: number;
@@ -47,9 +43,6 @@ export interface UseEfficiencyChartResult {
  * Calculate efficiency data and chart metrics for vocabulary words.
  */
 export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartResult {
-  const chartColors = useChartColors();
-  const graphWidth = useGraphWidth();
-
   // Calculate efficiency data over the last 7 days
   const efficiencyData = useMemo<EfficiencyRecord[]>(() => {
     const dates = generateDateRange(DAYS_7);
@@ -83,7 +76,6 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
         efficiencyPath: '',
         hasData: false,
         insights: { currentEfficiency: 0, trend: 'stable' as const, weeklyAverage: 0 },
-        performanceZones: [],
         dataPoints: [],
       };
     }
@@ -98,20 +90,6 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
       calculateY: data => GRAPH_HEIGHT_LARGE - (data.averageEfficiency / maxEfficiency) * GRAPH_HEIGHT_LARGE,
       buildPoint: (x, y, data) => ({ x, y, efficiency: data.averageEfficiency, date: data.date }),
     });
-
-    // Define performance zones using standardized utility
-    const performanceZones = createStandardizedPerformanceZones(
-      GRAPH_HEIGHT_LARGE,
-      0,
-      chartColors
-    ).map(zone => ({
-      ...zone,
-      // Adjust for efficiency chart scaling
-      y:
-        GRAPH_HEIGHT_LARGE -
-        ((zone.min + (zone.max - zone.min)) / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-      height: ((zone.max - zone.min) / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-    }));
 
     // Calculate insights
     const recent = efficiencyData.slice(-4); // Last 4 days for 7-day period
@@ -141,7 +119,6 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
     return {
       efficiencyPath,
       hasData,
-      performanceZones,
       dataPoints: points,
       insights: {
         currentEfficiency: Math.round(currentEfficiency),
@@ -149,7 +126,7 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
         weeklyAverage: Math.round(recentAvg),
       },
     };
-  }, [efficiencyData, chartColors, graphWidth, studyWords?.length]);
+  }, [efficiencyData, studyWords?.length]);
 
   return { efficiencyData, chartData };
 }

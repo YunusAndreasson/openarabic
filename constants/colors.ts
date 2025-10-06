@@ -13,7 +13,7 @@
  */
 
 import type { ThemeColors } from '@/types/ui/theme.types';
-import { oklchToHex } from '@/utils/colorUtils';
+import { oklchToHex, withAlpha } from '@/utils/colorUtils';
 
 // =============================================================================
 // OKLCH PALETTE DEFINITIONS (Reverse-engineered from existing hex colors)
@@ -280,12 +280,6 @@ const basePalette = {
 // OPACITY & ELEVATION (Unchanged from original)
 // =============================================================================
 
-// Helper to apply opacity to a hex color
-const applyOpacity = (color: string, opacity: number): string =>
-  `${color}${Math.round(opacity * 255)
-    .toString(16)
-    .padStart(2, '0')}`;
-
 const opacity = {
   subtle: 0.04,
   light: 0.06,
@@ -360,7 +354,7 @@ const lightColors: ThemeColors = {
 
   // Interactive elements
   tint: basePalette.tint.primary,
-  tintBackground: applyOpacity(basePalette.tint.primary, opacity.medium),
+  tintBackground: withAlpha(basePalette.tint.primary, opacity.medium),
   tabIconDefault: basePalette.forest.lighter,
   tabIconSelected: basePalette.tint.primary,
   icon: basePalette.forest.light,
@@ -368,11 +362,11 @@ const lightColors: ThemeColors = {
 
   // Overlays
   transparent: basePalette.pure.transparent,
-  overlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
-  modalOverlay: applyOpacity(basePalette.sage.lighter, opacity.full),
-  borderOverlay: applyOpacity(basePalette.tint.primary, opacity.border),
-  buttonOverlay: applyOpacity(basePalette.tint.primary, opacity.medium),
-  backdropOverlay: applyOpacity(basePalette.forest.dark, opacity.backdrop),
+  overlay: withAlpha(basePalette.sage.lighter, opacity.modal),
+  modalOverlay: withAlpha(basePalette.sage.lighter, opacity.full),
+  borderOverlay: withAlpha(basePalette.tint.primary, opacity.border),
+  buttonOverlay: withAlpha(basePalette.tint.primary, opacity.medium),
+  backdropOverlay: withAlpha(basePalette.forest.dark, opacity.backdrop),
 
   // Elevation system
   shadow: basePalette.forest.dark,
@@ -385,18 +379,18 @@ const lightColors: ThemeColors = {
   wordTooltipBg: basePalette.pure.white,
   wordTooltipText: basePalette.forest.darkest,
   wordTooltipBorder: basePalette.sage.light,
-  wordTooltipShadow: applyOpacity(basePalette.forest.dark, opacity.active),
-  wordSelectionUnderline: applyOpacity(basePalette.tint.primary, opacity.selection),
-  wordDueUnderline: applyOpacity(basePalette.semantic.warning, opacity.due),
+  wordTooltipShadow: withAlpha(basePalette.forest.dark, opacity.active),
+  wordSelectionUnderline: withAlpha(basePalette.tint.primary, opacity.selection),
+  wordDueUnderline: withAlpha(basePalette.semantic.warning, opacity.due),
 
   // Navigation
-  navigationRipple: applyOpacity(basePalette.tint.primary, opacity.strong),
-  headerOverlay: applyOpacity(basePalette.sage.lighter, opacity.header),
-  tabBarOverlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
+  navigationRipple: withAlpha(basePalette.tint.primary, opacity.strong),
+  headerOverlay: withAlpha(basePalette.sage.lighter, opacity.header),
+  tabBarOverlay: withAlpha(basePalette.sage.lighter, opacity.modal),
 
   // UI semantics
   progressIndicator: basePalette.tint.primary,
-  progressBackground: applyOpacity(basePalette.tint.primary, opacity.border),
+  progressBackground: withAlpha(basePalette.tint.primary, opacity.border),
   interactiveSecondary: basePalette.forest.light,
   completionSuccess: basePalette.semantic.success,
 
@@ -405,9 +399,9 @@ const lightColors: ThemeColors = {
   chartThreshold: basePalette.charts.ui.threshold,
 
   // Utility colors
-  textOverlay: applyOpacity(basePalette.tint.primary, opacity.subtle),
-  textShadowDark: applyOpacity(basePalette.forest.dark, opacity.shadow),
-  textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
+  textOverlay: withAlpha(basePalette.tint.primary, opacity.subtle),
+  textShadowDark: withAlpha(basePalette.forest.dark, opacity.shadow),
+  textShadowLight: withAlpha(basePalette.pure.white, opacity.shadow),
   modalIndicator: basePalette.forest.lighter,
   white: basePalette.pure.white,
   black: basePalette.pure.black,
@@ -442,7 +436,7 @@ const darkColors: ThemeColors = {
 
   // Interactive elements
   tint: basePalette.tint.primaryDark,
-  tintBackground: applyOpacity(basePalette.tint.primaryDark, opacity.medium),
+  tintBackground: withAlpha(basePalette.tint.primaryDark, opacity.medium),
   tabIconDefault: basePalette.forest.lighter,
   tabIconSelected: basePalette.tint.primaryDark,
   icon: textHierarchy.dark.metadata,
@@ -450,11 +444,11 @@ const darkColors: ThemeColors = {
 
   // Overlays
   transparent: basePalette.pure.transparent,
-  overlay: applyOpacity(basePalette.sage.darkest, opacity.modal),
-  modalOverlay: applyOpacity(basePalette.sage.darkest, opacity.full),
-  borderOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.border),
-  buttonOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.medium),
-  backdropOverlay: applyOpacity(basePalette.sage.darkest, opacity.darkBackdrop),
+  overlay: withAlpha(basePalette.sage.darkest, opacity.modal),
+  modalOverlay: withAlpha(basePalette.sage.darkest, opacity.full),
+  borderOverlay: withAlpha(basePalette.tint.primaryDark, opacity.border),
+  buttonOverlay: withAlpha(basePalette.tint.primaryDark, opacity.medium),
+  backdropOverlay: withAlpha(basePalette.sage.darkest, opacity.darkBackdrop),
 
   // Elevation system
   shadow: basePalette.pure.black,
@@ -467,18 +461,18 @@ const darkColors: ThemeColors = {
   wordTooltipBg: basePalette.sage.medium,
   wordTooltipText: basePalette.pure.white,
   wordTooltipBorder: elevation.dark.level3,
-  wordTooltipShadow: applyOpacity(basePalette.pure.black, opacity.active),
-  wordSelectionUnderline: applyOpacity(basePalette.tint.primaryDark, opacity.selection),
-  wordDueUnderline: applyOpacity(basePalette.semantic.warningDark, opacity.due),
+  wordTooltipShadow: withAlpha(basePalette.pure.black, opacity.active),
+  wordSelectionUnderline: withAlpha(basePalette.tint.primaryDark, opacity.selection),
+  wordDueUnderline: withAlpha(basePalette.semantic.warningDark, opacity.due),
 
   // Navigation
-  navigationRipple: applyOpacity(basePalette.tint.primaryDark, opacity.active),
-  headerOverlay: applyOpacity(basePalette.sage.darkest, opacity.header),
-  tabBarOverlay: applyOpacity(basePalette.sage.darkest, opacity.modal),
+  navigationRipple: withAlpha(basePalette.tint.primaryDark, opacity.active),
+  headerOverlay: withAlpha(basePalette.sage.darkest, opacity.header),
+  tabBarOverlay: withAlpha(basePalette.sage.darkest, opacity.modal),
 
   // UI semantics
   progressIndicator: basePalette.tint.primaryDark,
-  progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.border),
+  progressBackground: withAlpha(basePalette.tint.primaryDark, opacity.border),
   interactiveSecondary: textHierarchy.dark.metadata,
   completionSuccess: basePalette.semantic.successDark,
 
@@ -487,9 +481,9 @@ const darkColors: ThemeColors = {
   chartThreshold: basePalette.charts.ui.thresholdDark,
 
   // Utility colors
-  textOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.subtle),
-  textShadowDark: applyOpacity(basePalette.pure.black, opacity.shadow),
-  textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
+  textOverlay: withAlpha(basePalette.tint.primaryDark, opacity.subtle),
+  textShadowDark: withAlpha(basePalette.pure.black, opacity.shadow),
+  textShadowLight: withAlpha(basePalette.pure.white, opacity.shadow),
   modalIndicator: basePalette.forest.light,
   white: basePalette.pure.white,
   black: basePalette.pure.black,
@@ -524,7 +518,7 @@ const sepiaColors: ThemeColors = {
 
   // Interactive elements
   tint: basePalette.autumn.accent.primary,
-  tintBackground: applyOpacity(basePalette.autumn.accent.primary, opacity.medium),
+  tintBackground: withAlpha(basePalette.autumn.accent.primary, opacity.medium),
   tabIconDefault: basePalette.autumn.lighter,
   tabIconSelected: basePalette.autumn.accent.primary,
   icon: basePalette.autumn.light,
@@ -532,11 +526,11 @@ const sepiaColors: ThemeColors = {
 
   // Overlays
   transparent: basePalette.pure.transparent,
-  overlay: applyOpacity(basePalette.autumn.paper.lighter, opacity.modal),
-  modalOverlay: applyOpacity(basePalette.autumn.paper.lighter, opacity.full),
-  borderOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.border),
-  buttonOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.medium),
-  backdropOverlay: applyOpacity(basePalette.autumn.dark, opacity.backdrop),
+  overlay: withAlpha(basePalette.autumn.paper.lighter, opacity.modal),
+  modalOverlay: withAlpha(basePalette.autumn.paper.lighter, opacity.full),
+  borderOverlay: withAlpha(basePalette.autumn.accent.primary, opacity.border),
+  buttonOverlay: withAlpha(basePalette.autumn.accent.primary, opacity.medium),
+  backdropOverlay: withAlpha(basePalette.autumn.dark, opacity.backdrop),
 
   // Elevation system
   shadow: basePalette.autumn.dark,
@@ -549,18 +543,18 @@ const sepiaColors: ThemeColors = {
   wordTooltipBg: basePalette.sepiaPure.white,
   wordTooltipText: basePalette.autumn.darkest,
   wordTooltipBorder: basePalette.autumn.paper.light,
-  wordTooltipShadow: applyOpacity(basePalette.autumn.dark, opacity.active),
-  wordSelectionUnderline: applyOpacity(basePalette.autumn.accent.primary, opacity.selection),
-  wordDueUnderline: applyOpacity(basePalette.autumn.semantic.warning, opacity.due),
+  wordTooltipShadow: withAlpha(basePalette.autumn.dark, opacity.active),
+  wordSelectionUnderline: withAlpha(basePalette.autumn.accent.primary, opacity.selection),
+  wordDueUnderline: withAlpha(basePalette.autumn.semantic.warning, opacity.due),
 
   // Navigation
-  navigationRipple: applyOpacity(basePalette.autumn.accent.primary, opacity.strong),
-  headerOverlay: applyOpacity(basePalette.autumn.paper.lighter, opacity.header),
-  tabBarOverlay: applyOpacity(basePalette.autumn.paper.lighter, opacity.modal),
+  navigationRipple: withAlpha(basePalette.autumn.accent.primary, opacity.strong),
+  headerOverlay: withAlpha(basePalette.autumn.paper.lighter, opacity.header),
+  tabBarOverlay: withAlpha(basePalette.autumn.paper.lighter, opacity.modal),
 
   // UI semantics
   progressIndicator: basePalette.autumn.accent.primary,
-  progressBackground: applyOpacity(basePalette.autumn.accent.primary, opacity.border),
+  progressBackground: withAlpha(basePalette.autumn.accent.primary, opacity.border),
   interactiveSecondary: basePalette.autumn.light,
   completionSuccess: basePalette.autumn.semantic.success,
 
@@ -569,9 +563,9 @@ const sepiaColors: ThemeColors = {
   chartThreshold: basePalette.charts.ui.thresholdSepia,
 
   // Utility colors
-  textOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.subtle),
-  textShadowDark: applyOpacity(basePalette.autumn.dark, opacity.shadow),
-  textShadowLight: applyOpacity(basePalette.sepiaPure.white, opacity.shadow),
+  textOverlay: withAlpha(basePalette.autumn.accent.primary, opacity.subtle),
+  textShadowDark: withAlpha(basePalette.autumn.dark, opacity.shadow),
+  textShadowLight: withAlpha(basePalette.sepiaPure.white, opacity.shadow),
   modalIndicator: basePalette.autumn.lighter,
   white: basePalette.sepiaPure.white,
   black: basePalette.sepiaPure.black,

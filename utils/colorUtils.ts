@@ -10,7 +10,7 @@
  * - H (Hue): 0-360 (degrees on color wheel)
  */
 
-import { formatHex, wcagContrast, type Oklch } from 'culori';
+import { clampRgb, converter, formatHex, wcagContrast, type Oklch } from 'culori';
 
 /**
  * Convert OKLCH color to hex string for React Native
@@ -18,7 +18,7 @@ import { formatHex, wcagContrast, type Oklch } from 'culori';
  * @param l - Lightness (0-1)
  * @param c - Chroma (0-0.4)
  * @param h - Hue (0-360 degrees)
- * @returns Hex color string (e.g., "#5B7F68")
+ * @returns Hex color string (e.g., "#5B7F68"), clamped to displayable RGB gamut
  *
  * @example
  * oklchToHex(0.55, 0.08, 155) // → "#5B7F68" (sage green)
@@ -30,7 +30,8 @@ export const oklchToHex = (l: number, c: number, h: number): string => {
     c,
     h,
   };
-  return formatHex(oklchColor);
+  // Clamp to RGB gamut to prevent out-of-gamut colors
+  return formatHex(clampRgb(oklchColor));
 };
 
 /**
@@ -181,7 +182,7 @@ export const ensureContrast = (
  * @param c - Chroma
  * @param h - Hue
  * @param amount - Amount to lighten (0-1, e.g., 0.1 = 10% lighter)
- * @returns Lightened hex color
+ * @returns Lightened hex color, clamped to RGB gamut
  */
 export const lighten = (l: number, c: number, h: number, amount: number): string => {
   return oklchToHex(Math.min(1, l + amount), c, h);
@@ -194,7 +195,7 @@ export const lighten = (l: number, c: number, h: number, amount: number): string
  * @param c - Chroma
  * @param h - Hue
  * @param amount - Amount to darken (0-1, e.g., 0.1 = 10% darker)
- * @returns Darkened hex color
+ * @returns Darkened hex color, clamped to RGB gamut
  */
 export const darken = (l: number, c: number, h: number, amount: number): string => {
   return oklchToHex(Math.max(0, l - amount), c, h);
@@ -207,7 +208,7 @@ export const darken = (l: number, c: number, h: number, amount: number): string 
  * @param c - Current chroma
  * @param h - Hue
  * @param amount - Amount to increase (0-0.4, e.g., 0.02 = +2% saturation)
- * @returns More saturated hex color
+ * @returns More saturated hex color, clamped to RGB gamut
  */
 export const saturate = (l: number, c: number, h: number, amount: number): string => {
   return oklchToHex(l, Math.min(0.4, c + amount), h);
@@ -220,7 +221,7 @@ export const saturate = (l: number, c: number, h: number, amount: number): strin
  * @param c - Current chroma
  * @param h - Hue
  * @param amount - Amount to decrease (0-0.4, e.g., 0.02 = -2% saturation)
- * @returns Less saturated hex color
+ * @returns Less saturated hex color, clamped to RGB gamut
  */
 export const desaturate = (l: number, c: number, h: number, amount: number): string => {
   return oklchToHex(l, Math.max(0, c - amount), h);
@@ -241,49 +242,12 @@ export const withAlpha = (hexColor: string, alpha: number): string => {
   return `${hexColor}${alphaHex}`;
 };
 
-// Legacy utility functions (kept for backward compatibility)
-
-/**
- * Convert a hex color to RGB components.
- *
- * @param hex - Hex color string (e.g., "#FF5500" or "#F50")
- * @returns RGB color components as a string "r,g,b"
- */
-function hexToRgb(hex: string): string {
-  if (!hex || typeof hex !== 'string') {
-    return '0,0,0';
-  }
-
-  hex = hex.replace(/^#/, '').trim();
-
-  // Expand shorthand #RGB/#RGBA to full form
-  if (hex.length === 3 || hex.length === 4) {
-    const [r = '0', g = '0', b = '0', a] = hex;
-    hex = r + r + g + g + b + b + (a ? a + a : '');
-  }
-
-  // Ignore alpha component if present (#RRGGBBAA)
-  if (hex.length === 8) {
-    hex = hex.slice(0, 6);
-  }
-
-  if (!/^[\dA-Fa-f]{6}$/.test(hex)) {
-    return '0,0,0';
-  }
-
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-
-  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) {
-    return '0,0,0';
-  }
-
-  return `${r},${g},${b}`;
-}
+// Create RGB converter once for performance
+const toRgb = converter('rgb');
 
 /**
  * Create an rgba color string from a hex color and opacity
+ * Uses culori for robust color parsing and conversion
  *
  * @param hex - Hex color string (e.g., "#FF5500")
  * @param opacity - Opacity value between 0 and 1
@@ -292,5 +256,23 @@ function hexToRgb(hex: string): string {
 export function withOpacity(hex: string, opacity: number): string {
   const validOpacity =
     typeof opacity === 'number' && !Number.isNaN(opacity) ? Math.max(0, Math.min(1, opacity)) : 1;
-  return `rgba(${hexToRgb(hex)},${validOpacity})`;
+
+  // Validate input before parsing
+  if (!hex || typeof hex !== 'string') {
+    return `rgba(0,0,0,${validOpacity})`;
+  }
+
+  // Parse and convert to RGB using culori
+  const rgb = toRgb(hex);
+
+  if (!rgb) {
+    return `rgba(0,0,0,${validOpacity})`;
+  }
+
+  // Extract RGB values (culori returns 0-1 range, convert to 0-255)
+  const r = Math.round((rgb.r ?? 0) * 255);
+  const g = Math.round((rgb.g ?? 0) * 255);
+  const b = Math.round((rgb.b ?? 0) * 255);
+
+  return `rgba(${r},${g},${b},${validOpacity})`;
 }

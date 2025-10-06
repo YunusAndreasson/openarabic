@@ -22,13 +22,13 @@ export const MasteryChart = memo<MasteryChartProps>(
     const {
       masteryPath,
       hasData,
-      performanceZones,
       milestones,
       points,
       tooltipPoints: dataPoints,
       subtitle,
       xLabelPositions,
       xLabels,
+      maxCount,
     } = useMasteryChart(studyWords);
 
     // Prepare tooltip data points for interactivity
@@ -36,17 +36,17 @@ export const MasteryChart = memo<MasteryChartProps>(
       return dataPoints || [];
     }, [dataPoints]);
 
-    // 🚀 Unified chart with perfect grid system and milestone support:
+    // 🚀 Unified chart with clean single-color design (no performance zones):
     return (
       <VocabularyChart
         path={masteryPath}
         dataPoints={points}
-        performanceZones={performanceZones}
         milestones={milestones} // Special milestones for mastery chart
         tooltipDataPoints={tooltipDataPoints}
         xLabels={xLabels}
         xLabelPositions={xLabelPositions}
-        yMax={100}
+        yMax={maxCount}
+        yLabelFormatter={(value: number) => value.toString()}
         topPadding={TOP_PADDING}
         graphWidth={graphWidth}
         title={CHART_LABELS.STRENGTH}
