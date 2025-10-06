@@ -47,10 +47,6 @@ export default function VocabularyScreen(): JSX.Element {
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
 
-  // Add ref to prevent rapid bottom sheet switching
-  const lastSheetChangeRef = useRef(0);
-  const isTransitioning = useRef(false);
-
   // Smooth spring animations for loading and content transitions
   // Always call hooks unconditionally at the top level
   const { animatedStyle: loadingAnimatedStyle, startAnimation: startLoadingAnimation } =
@@ -125,67 +121,40 @@ export default function VocabularyScreen(): JSX.Element {
     router.push(getStudyReviewRoute());
   }, [user, router]);
 
-  // Debounced bottom sheet setter to prevent rapid switching
-  const setActiveBottomSheetDebounced = useCallback(
+  // Bottom sheet handler with haptic feedback
+  const handleBottomSheetChange = useCallback(
     (sheet: 'memory' | 'due' | 'learning' | 'mastered' | null) => {
-      // Prevent multiple rapid state changes during transitions
-      if (isTransitioning.current) {
-        return;
-      }
-
-      const now = Date.now();
-      const timeSinceLastChange = now - lastSheetChangeRef.current;
-
-      // Prevent rapid switching (less than 400ms between changes)
-      // Allow immediate closing (null) or opening when none is active
-      if (
-        timeSinceLastChange < 400 &&
-        activeBottomSheet !== null &&
-        sheet !== null &&
-        sheet !== activeBottomSheet
-      ) {
-        return;
-      }
-
-      // Only trigger haptic feedback when bottom sheet actually opens
+      // Trigger haptic feedback when opening a sheet
       if (sheet !== null) {
         selectionFeedback();
       }
-
-      isTransitioning.current = true;
-      lastSheetChangeRef.current = now;
       setActiveBottomSheet(sheet);
-
-      // Reset transition flag after animation time
-      setTimeout(() => {
-        isTransitioning.current = false;
-      }, 300);
     },
-    [activeBottomSheet]
+    []
   );
 
   // Handle memory strength gauge info press - now opens bottom sheet
   const handleMemoryStrengthInfo = useCallback(() => {
-    setActiveBottomSheetDebounced('memory');
-  }, [setActiveBottomSheetDebounced]);
+    handleBottomSheetChange('memory');
+  }, [handleBottomSheetChange]);
 
   // Handle closing any bottom sheet
   const handleCloseBottomSheet = useCallback(() => {
-    setActiveBottomSheetDebounced(null);
-  }, [setActiveBottomSheetDebounced]);
+    handleBottomSheetChange(null);
+  }, [handleBottomSheetChange]);
 
   // Handle card presses
   const handleDuePress = useCallback(() => {
-    setActiveBottomSheetDebounced('due');
-  }, [setActiveBottomSheetDebounced]);
+    handleBottomSheetChange('due');
+  }, [handleBottomSheetChange]);
 
   const handleLearningPress = useCallback(() => {
-    setActiveBottomSheetDebounced('learning');
-  }, [setActiveBottomSheetDebounced]);
+    handleBottomSheetChange('learning');
+  }, [handleBottomSheetChange]);
 
   const handleMasteredPress = useCallback(() => {
-    setActiveBottomSheetDebounced('mastered');
-  }, [setActiveBottomSheetDebounced]);
+    handleBottomSheetChange('mastered');
+  }, [handleBottomSheetChange]);
 
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session

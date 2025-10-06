@@ -39,26 +39,11 @@ interface StatCardProps {
 
 const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress, formatAsDecimal = false }) => {
   const displayValue = formatAsDecimal ? value.toFixed(1) : Math.round(value).toString();
-  if (!onPress) {
-    return (
-      <BaseCard shadowSize="small" style={styles.statCard}>
-        <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
-          <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
-        </View>
-        <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
-          {displayValue}
-        </ThemedText>
-        <ThemedText type="caption" colorName="textTertiary" style={styles.statLabel}>
-          {label}
-        </ThemedText>
-      </BaseCard>
-    );
-  }
 
   return (
     <BaseCard shadowSize="small" style={styles.statCard} onPress={onPress}>
       <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
-        <Ionicons name={icon} size={16} color={color} />
+        <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
       </View>
       <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
         {displayValue}
