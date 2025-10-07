@@ -1,9 +1,6 @@
-import { useChartColors } from '@charts/ChartColors';
 import { Group, Line } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 
-
-import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -14,7 +11,6 @@ interface ChartGridProps {
   topPadding?: number;
   xLabelPositions?: number[]; // X positions for vertical grid lines (daily positions)
   yMax?: number; // Maximum value for y-axis (default 100 for percentages)
-  showWarningLine?: boolean; // Whether to show the warning threshold line
 }
 
 /**
@@ -28,11 +24,9 @@ export const ChartGrid = memo(
     topPadding = 0,
     xLabelPositions = [],
     yMax = 100,
-    showWarningLine = false,
   }: ChartGridProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
-    const chartColors = useChartColors();
 
     // Beautiful, subtle grid lines - perfect opacity for readability without distraction
     const gridColor = useMemo(
@@ -46,8 +40,6 @@ export const ChartGrid = memo(
       [isDarkMode, colors.white, colors.black]
     );
 
-    // Threshold line colors are now handled per line in thresholdLines
-
     // Horizontal lines at exact percentages (25%, 50%, 75%, 100%) for perfect value reading
     const horizontalLines = useMemo(() => {
       const chartHeight = height - topPadding;
@@ -57,41 +49,6 @@ export const ChartGrid = memo(
         return { y: yPosition, percentage };
       });
     }, [height, topPadding, yMax]);
-
-    // Threshold lines at critical thresholds for vocabulary retention
-    const thresholdLines = useMemo(() => {
-      if (!showWarningLine) return [];
-
-      const chartHeight = height - topPadding;
-      const lines = [];
-
-      // Red line at 40% (where red stops and yellow starts)
-      const redLineY =
-        topPadding + chartHeight - (MEMORY_CAPACITY_THRESHOLDS.POOR / yMax) * chartHeight;
-      lines.push({
-        y: redLineY,
-        percentage: MEMORY_CAPACITY_THRESHOLDS.POOR,
-        color: chartColors.performance.poor,
-      });
-
-      // Yellow line at 70% (where yellow stops and green starts)
-      const yellowLineY =
-        topPadding + chartHeight - (MEMORY_CAPACITY_THRESHOLDS.MODERATE / yMax) * chartHeight;
-      lines.push({
-        y: yellowLineY,
-        percentage: MEMORY_CAPACITY_THRESHOLDS.MODERATE,
-        color: chartColors.performance.moderate,
-      });
-
-      return lines;
-    }, [
-      showWarningLine,
-      height,
-      topPadding,
-      yMax,
-      chartColors.performance.poor,
-      chartColors.performance.moderate,
-    ]);
 
     // Vertical lines at daily positions for temporal reference
     const verticalLines = useMemo(() => {
@@ -108,18 +65,6 @@ export const ChartGrid = memo(
             p1={{ x: 0, y: line.y }}
             p2={{ x: width, y: line.y }}
             strokeWidth={1}
-            style="stroke"
-          />
-        ))}
-
-        {/* Threshold lines at critical retention levels */}
-        {thresholdLines.map(line => (
-          <Line
-            key={`threshold-line-${line.percentage}%`}
-            color={line.color}
-            p1={{ x: 0, y: line.y }}
-            p2={{ x: width, y: line.y }}
-            strokeWidth={2}
             style="stroke"
           />
         ))}

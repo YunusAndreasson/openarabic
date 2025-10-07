@@ -12,7 +12,6 @@ interface RetrievabilityChartProps {
   studyWords: StudyWord[];
   onInfoPress?: () => void;
   hideTitle?: boolean;
-  showWarningLine?: boolean; // Whether to show the 75% warning line
 }
 
 interface RetrievabilityRecord {
@@ -28,7 +27,6 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
     studyWords = [],
     onInfoPress,
     hideTitle = false,
-    showWarningLine = true,
   }: RetrievabilityChartProps) => {
     const graphWidth = useGraphWidth();
     const { retrievabilityData, chartData } = useRetrievabilityChart(studyWords);
@@ -90,7 +88,6 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         onCardPress={onInfoPress}
         hideTitle={hideTitle}
         hasData={chartData.hasData}
-        showWarningLine={showWarningLine}
         isFuturePrediction={true} // Today is leftmost for future predictions
         emptyStateText=""
       />

@@ -15,13 +15,13 @@ export const GRAPH_WIDTH =
 // Data point radius for boundary calculations
 // Account for today's halo effect which is 5x the normal size
 const DATA_POINT_RADIUS = 3.5; // Must match CHART_VISUAL.DATA_POINT_SIZE
-const TODAY_HALO_RADIUS = DATA_POINT_RADIUS * 5; // Today's maximum halo size (17.5px)
+export const TODAY_HALO_RADIUS = DATA_POINT_RADIUS * 5; // Today's maximum halo size (17.5px) - exported for edge padding
 export const DATA_POINT_PADDING = DATA_POINT_RADIUS * 2; // Used for boundary calculations in positioning
 
 /**
- * Calculate data point positions with proper boundary padding
- * Ensures all data points are fully visible within the chart canvas
- * Accounts for today's halo effect (5x normal radius) to prevent clipping
+ * Calculate data point positions across full chart width
+ * Returns positions from 0 to GRAPH_WIDTH for proper line/fill rendering
+ * Edge dots are rendered with visual padding offset to prevent clipping
  */
 export const calculateDataPointPositions = (dataCount: number): number[] => {
   if (dataCount <= 1) {
@@ -29,22 +29,11 @@ export const calculateDataPointPositions = (dataCount: number): number[] => {
   }
 
   const positions: number[] = [];
-  // Use full width for better data visualization
+  // Use full width for line and fill that extends to edges
   const stepX = GRAPH_WIDTH / Math.max(1, dataCount - 1);
 
   for (let i = 0; i < dataCount; i++) {
-    // Use full width but ensure dots don't exceed boundaries
-    let x = i * stepX;
-
-    // Adjust first and last points to keep dots (including today's halo) fully visible
-    // Today is typically at index 0, so give it extra clearance
-    // Also give rightmost adequate clearance to prevent any clipping
-    if (i === 0) {
-      x = TODAY_HALO_RADIUS; // Start with halo clearance for today's dot
-    } else if (i === dataCount - 1) {
-      x = GRAPH_WIDTH - TODAY_HALO_RADIUS; // End with generous clearance for safety
-    }
-
+    const x = i * stepX;
     positions.push(x);
   }
 

@@ -12,22 +12,21 @@ interface ChartPerformanceZonesProps {
   zones: PerformanceZone[];
   maskPath: string;
   graphWidth: number;
-  firstX?: number; // X coordinate of first data point
-  lastX?: number;  // X coordinate of last data point
 }
 
 /**
  * Shared performance zones component for all vocabulary charts
  * Renders the color-coded zones masked under the main line
+ * Extends to full chart width (0 to graphWidth) for complete coverage
  */
 export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
-  ({ zones, maskPath, graphWidth, firstX, lastX }) => {
+  ({ zones, maskPath, graphWidth }) => {
     const colors = useColors();
     const chartColors = useChartColors();
 
     const areaPath = useMemo(
-      () => (maskPath ? createAreaFillPath(maskPath, graphWidth, GRAPH_HEIGHT_LARGE, firstX, lastX) : ''),
-      [maskPath, graphWidth, firstX, lastX]
+      () => (maskPath ? createAreaFillPath(maskPath, graphWidth, GRAPH_HEIGHT_LARGE) : ''),
+      [maskPath, graphWidth]
     );
 
     if (!maskPath || zones.length === 0 || !areaPath) return null;
@@ -37,7 +36,7 @@ export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
         {zones.map(zone => (
           <Rect
             key={`performance-zone-${zone.color}-${zone.y}-${zone.height}`}
-            color={chartColors.withOpacity(zone.color, 0.25)}
+            color={chartColors.withOpacity(zone.color, 0.35)}
             height={zone.height}
             width={graphWidth}
             x={0}

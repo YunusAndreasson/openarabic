@@ -30,7 +30,6 @@ export const MemoryRetentionBottomSheet = memo<MemoryRetentionBottomSheetProps>(
           <RetrievabilityChart
             studyWords={studyWords ?? []}
             hideTitle={true}
-            showWarningLine={true}
           />
         }
       />

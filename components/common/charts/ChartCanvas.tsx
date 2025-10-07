@@ -7,7 +7,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { DataPoint } from '@/types/ui/chart.types';
 
 import { ChartTooltipData, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
-import { CHART_VISUAL, GRAPH_HEIGHT_LARGE, useGraphWidth } from './constants';
+import { CHART_VISUAL, GRAPH_HEIGHT_LARGE, TODAY_HALO_RADIUS, useGraphWidth } from './constants';
 
 interface ChartCanvasProps {
   children: ReactNode;
@@ -70,16 +70,29 @@ export const ChartCanvas = memo(
           <Canvas style={canvasStyle}>{children}</Canvas>
 
           {/* Interactive Data Point Overlays */}
-          {validDataPoints.map(point => (
-            <DataPointOverlay
-              key={`data-point-${Math.round(point.x)}-${Math.round(point.y)}`}
-              label={point.label}
-              value={point.value}
-              x={point.x}
-              y={point.y}
-              onPress={showTooltip}
-            />
-          ))}
+          {validDataPoints.map((point, index) => {
+            // Apply edge padding offset to match visual dot positions
+            const isFirstPoint = index === 0;
+            const isLastPoint = index === validDataPoints.length - 1;
+
+            let adjustedX = point.x;
+            if (isFirstPoint) {
+              adjustedX = point.x + TODAY_HALO_RADIUS;
+            } else if (isLastPoint) {
+              adjustedX = point.x - TODAY_HALO_RADIUS;
+            }
+
+            return (
+              <DataPointOverlay
+                key={`data-point-${Math.round(point.x)}-${Math.round(point.y)}`}
+                label={point.label}
+                value={point.value}
+                x={adjustedX}
+                y={point.y}
+                onPress={showTooltip}
+              />
+            );
+          })}
 
           {/* Active cursor when tooltip is shown */}
           {activeCursor}

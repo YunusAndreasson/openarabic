@@ -375,7 +375,7 @@ export function useBulkReadingProgress(articleIds: number[]) {
       user?.id, // Match preloader key exactly (no fallback)
     ],
     queryFn: async () => {
-      // Always return empty Map if no user, but don't block the query
+      // TypeScript guard - should never happen due to enabled check
       if (!user?.id) {
         return new Map();
       }
@@ -384,14 +384,12 @@ export function useBulkReadingProgress(articleIds: number[]) {
       // The service's getBulkProgress without articleIds filter will fetch all progress
       return readingProgressService.getBulkProgress(user.id, []);
     },
-    // CRITICAL: Always enabled to prevent query from being disabled during auth rehydration
-    // queryFn handles the no-user case by returning empty Map
-    enabled: true,
-    // Use placeholderData to prevent undefined while query fetches
-    placeholderData: () => new Map(),
-    staleTime: 30000, // 30 seconds - data is fresh for 30 seconds to prevent flickering during normal usage
+    // Enable query only when we have a user ID
+    enabled: Boolean(user?.id),
+    // Use placeholderData to prevent undefined while query is disabled or fetching
+    placeholderData: new Map(),
+    // Don't set staleTime/retry here - let QueryClient defaults control for testability
     refetchOnMount: true, // Refetch if data is stale or invalidated
-    retry: 3, // Retry up to 3 times if the query fails
     gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
     refetchOnReconnect: true, // Refetch when network reconnects
   });

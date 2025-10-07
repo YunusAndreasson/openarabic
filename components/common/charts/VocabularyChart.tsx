@@ -12,6 +12,7 @@ import { CHART_VISUAL } from '@charts/constants';
 import { Group } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import type { PerformanceZone } from '@/types/ui/chart.types';
 import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';
@@ -48,7 +49,6 @@ interface VocabularyChartProps<T> {
   hasData: boolean;
   emptyStateText: string;
   bottomSummary?: { label: string; value: string }[];
-  showWarningLine?: boolean; // Whether to show the 75% warning line
 }
 
 // Optimized comparison function with shallow array checks and stable references
@@ -128,7 +128,6 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     hasData,
     emptyStateText,
     bottomSummary,
-    showWarningLine = false,
   }: VocabularyChartProps<any>) => {
     // Automatically set todayIndex based on chart type
     // Future prediction charts (like RetrievabilityChart) have today at index 0
@@ -158,10 +157,6 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     const chartComponents = useMemo(() => {
       const components = [];
 
-      // Extract first and last x coordinates for vertical fill edges (used by area fill and zones)
-      const firstX = dataPoints[0]?.x;
-      const lastX = dataPoints[dataPoints.length - 1]?.x;
-
       // Grid lines
       components.push(
         <ChartGrid
@@ -171,11 +166,10 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
           width={graphWidth}
           xLabelPositions={xLabelPositions}
           yMax={yMax}
-          showWarningLine={showWarningLine}
         />
       );
 
-      // Area fill under the line
+      // Area fill under the line - extends to full chart width
       if (chartData.hasChartData) {
         components.push(
           <Group key="area-fill">
@@ -183,14 +177,12 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
               path={path}
               graphWidth={graphWidth}
               topPadding={topPadding}
-              firstX={firstX}
-              lastX={lastX}
             />
           </Group>
         );
       }
 
-      // Performance zones
+      // Performance zones - extend to full chart width
       if (chartData.hasPerformanceZones) {
         components.push(
           <Group key="performance-zones">
@@ -198,8 +190,6 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
               zones={performanceZones}
               maskPath={path}
               graphWidth={graphWidth}
-              firstX={firstX}
-              lastX={lastX}
             />
           </Group>
         );
@@ -217,6 +207,8 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
                 y={point.y}
                 uniqueKey={dataPointKeys[index]}
                 isToday={todayIndex !== undefined && index === todayIndex}
+                isFirstPoint={index === 0}
+                isLastPoint={index === dataPoints.length - 1}
               />
             ))}
           </Group>
@@ -253,7 +245,6 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       dataPointKeys,
       milestones,
       milestoneKeys,
-      showWarningLine,
       todayIndex,
     ]);
 
@@ -286,14 +277,14 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
         onCardPress={onCardPress}
         bottomSummary={bottomSummary}
       >
-        <View style={styles.container}>
+        <Animated.View entering={FadeInUp.duration(700).delay(100)} style={styles.container}>
           <View style={styles.chartContainer}>
             <ChartCanvas dataPoints={tooltipDataPoints}>{chartComponents}</ChartCanvas>
           </View>
 
           {/* Axes */}
           {axesComponent}
-        </View>
+        </Animated.View>
       </BaseChart>
     );
   },
