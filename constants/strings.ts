@@ -179,7 +179,7 @@ export const STRINGS = {
     'Daily vocabulary advancement, tracking new words mastered over time.',
 
   // Practice bottom sheet subtitles (condensed for subtitle format)
-  MEMORY_STRENGTH_SUBTITLE: 'Memory strength determines optimal review timing',
+  MEMORY_STRENGTH_SUBTITLE: 'Amount of words you are expected to recall at a given time',
   WORD_MASTERY_SUBTITLE: 'Cumulative progress of mastered words over time',
   LEARNING_RATE_SUBTITLE: 'Learning efficiency and speed trends over recent days',
   DUE_WORDS_FORECAST_SUBTITLE: 'Upcoming reviews for the next 7 days',
