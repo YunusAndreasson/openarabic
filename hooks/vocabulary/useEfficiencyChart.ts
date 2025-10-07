@@ -1,6 +1,7 @@
 
 import {
   calculateDataPointPositions,
+  CHART_VISUAL,
   DAYS_7,
   GRAPH_HEIGHT_LARGE,
 } from '@charts/constants';
@@ -83,11 +84,15 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
     const maxEfficiency = Math.max(100, Math.max(...efficiencyData.map(d => d.averageEfficiency)));
 
     // Create smooth curve using shared path builder utility
+    const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
+    const BOTTOM_PADDING = CHART_VISUAL.CHART_BOTTOM_PADDING;
+    // Effective chart height accounts for both top and bottom padding
+    const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING - BOTTOM_PADDING;
     const dataPointPositions = calculateDataPointPositions(efficiencyData.length);
     const { path: efficiencyPath, points } = buildSmoothChartPath({
       data: efficiencyData,
       dataPointPositions,
-      calculateY: data => GRAPH_HEIGHT_LARGE - (data.averageEfficiency / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+      calculateY: data => TOP_PADDING + (chartHeight - (data.averageEfficiency / maxEfficiency) * chartHeight),
       buildPoint: (x, y, data) => ({ x, y, efficiency: data.averageEfficiency, date: data.date }),
     });
 

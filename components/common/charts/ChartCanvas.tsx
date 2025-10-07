@@ -7,7 +7,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { DataPoint } from '@/types/ui/chart.types';
 
 import { ChartTooltipData, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
-import { GRAPH_HEIGHT_LARGE, useGraphWidth } from './constants';
+import { CHART_VISUAL, GRAPH_HEIGHT_LARGE, useGraphWidth } from './constants';
 
 interface ChartCanvasProps {
   children: ReactNode;
@@ -19,9 +19,10 @@ interface ChartCanvasProps {
 /**
  * Standardized chart canvas that provides consistent interactive features
  * across all vocabulary charts including tooltips and data point overlays.
+ * Height includes bottom padding to prevent data point clipping.
  */
 export const ChartCanvas = memo(
-  ({ children, width, height = GRAPH_HEIGHT_LARGE, dataPoints = [] }: ChartCanvasProps) => {
+  ({ children, width, height = GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING, dataPoints = [] }: ChartCanvasProps) => {
     const graphWidth = useGraphWidth();
     const resolvedWidth = width ?? graphWidth;
     const { tooltip, showTooltip, hideTooltip } = useChartTooltip();

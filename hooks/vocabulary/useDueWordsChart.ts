@@ -62,7 +62,9 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
 
     // Create smooth curve using shared path builder utility
     const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
-    const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
+    const BOTTOM_PADDING = CHART_VISUAL.CHART_BOTTOM_PADDING;
+    // Effective chart height accounts for both top and bottom padding
+    const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING - BOTTOM_PADDING;
     const dataPointPositions = calculateDataPointPositions(dueWordsData.length);
 
     const { path: dueWordsPath, points } = buildSmoothChartPath({

@@ -8,6 +8,7 @@ import { ChartGrid } from '@charts/ChartGrid';
 import { ChartMainLine } from '@charts/ChartMainLine';
 import { ChartPerformanceZones } from '@charts/ChartPerformanceZones';
 import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
+import { CHART_VISUAL } from '@charts/constants';
 import { Group } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -136,7 +137,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       xLabels.length > 0 ? (isFuturePrediction ? 0 : xLabels.length - 1) : undefined;
 
     // Memoized chart data calculations for better performance
-    const contentHeight = useMemo(() => GRAPH_HEIGHT_LARGE + CONTENT_HEIGHT_OFFSET, []);
+    const contentHeight = useMemo(() => GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING + CONTENT_HEIGHT_OFFSET, []);
 
     const chartData = useMemo(
       () => ({
@@ -157,11 +158,15 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     const chartComponents = useMemo(() => {
       const components = [];
 
+      // Extract first and last x coordinates for vertical fill edges (used by area fill and zones)
+      const firstX = dataPoints[0]?.x;
+      const lastX = dataPoints[dataPoints.length - 1]?.x;
+
       // Grid lines
       components.push(
         <ChartGrid
           key="chart-grid"
-          height={GRAPH_HEIGHT_LARGE}
+          height={GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING}
           topPadding={topPadding}
           width={graphWidth}
           xLabelPositions={xLabelPositions}
@@ -174,7 +179,13 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       if (chartData.hasChartData) {
         components.push(
           <Group key="area-fill">
-            <ChartAreaFill path={path} graphWidth={graphWidth} topPadding={topPadding} />
+            <ChartAreaFill
+              path={path}
+              graphWidth={graphWidth}
+              topPadding={topPadding}
+              firstX={firstX}
+              lastX={lastX}
+            />
           </Group>
         );
       }
@@ -187,6 +198,8 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
               zones={performanceZones}
               maskPath={path}
               graphWidth={graphWidth}
+              firstX={firstX}
+              lastX={lastX}
             />
           </Group>
         );
@@ -248,7 +261,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     const axesComponent = useMemo(
       () => (
         <ChartAxes
-          height={GRAPH_HEIGHT_LARGE}
+          height={GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING}
           showYAxis={true}
           topPadding={topPadding}
           width={graphWidth}

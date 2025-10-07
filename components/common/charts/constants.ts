@@ -13,13 +13,15 @@ export const GRAPH_WIDTH =
   X_AXIS_LABEL_PADDING;
 
 // Data point radius for boundary calculations
+// Account for today's halo effect which is 5x the normal size
 const DATA_POINT_RADIUS = 3.5; // Must match CHART_VISUAL.DATA_POINT_SIZE
+const TODAY_HALO_RADIUS = DATA_POINT_RADIUS * 5; // Today's maximum halo size (17.5px)
 export const DATA_POINT_PADDING = DATA_POINT_RADIUS * 2; // Used for boundary calculations in positioning
 
 /**
  * Calculate data point positions with proper boundary padding
  * Ensures all data points are fully visible within the chart canvas
- * FIXED: Eliminated inward tilt by using full width and smart boundary positioning
+ * Accounts for today's halo effect (5x normal radius) to prevent clipping
  */
 export const calculateDataPointPositions = (dataCount: number): number[] => {
   if (dataCount <= 1) {
@@ -34,11 +36,13 @@ export const calculateDataPointPositions = (dataCount: number): number[] => {
     // Use full width but ensure dots don't exceed boundaries
     let x = i * stepX;
 
-    // Adjust first and last points to keep dots fully visible
+    // Adjust first and last points to keep dots (including today's halo) fully visible
+    // Today is typically at index 0, so give it extra clearance
+    // Also give rightmost adequate clearance to prevent any clipping
     if (i === 0) {
-      x = DATA_POINT_RADIUS; // Start at radius, not center
+      x = TODAY_HALO_RADIUS; // Start with halo clearance for today's dot
     } else if (i === dataCount - 1) {
-      x = GRAPH_WIDTH - DATA_POINT_RADIUS; // End at width - radius
+      x = GRAPH_WIDTH - TODAY_HALO_RADIUS; // End with generous clearance for safety
     }
 
     positions.push(x);
@@ -56,7 +60,8 @@ export const CHART_VISUAL = {
   DATA_POINT_SIZE: 3.5, // Primary data point radius
   DATA_POINT_INNER_SIZE: 2, // Inner highlight radius
   LINE_WIDTH: 2.5, // Chart line stroke width
-  CHART_TOP_PADDING: 8, // Top padding for data points (aligned to 8px grid)
+  CHART_TOP_PADDING: 20, // Top padding to accommodate today's halo (5x radius = 17.5px + buffer)
+  CHART_BOTTOM_PADDING: 8, // Bottom padding to prevent dots from clipping at bottom edge
   // Data point colors now use golden streak colors for better visibility
 } as const;
 

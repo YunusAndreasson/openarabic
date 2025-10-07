@@ -12,6 +12,8 @@ interface ChartPerformanceZonesProps {
   zones: PerformanceZone[];
   maskPath: string;
   graphWidth: number;
+  firstX?: number; // X coordinate of first data point
+  lastX?: number;  // X coordinate of last data point
 }
 
 /**
@@ -19,13 +21,13 @@ interface ChartPerformanceZonesProps {
  * Renders the color-coded zones masked under the main line
  */
 export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
-  ({ zones, maskPath, graphWidth }) => {
+  ({ zones, maskPath, graphWidth, firstX, lastX }) => {
     const colors = useColors();
     const chartColors = useChartColors();
 
     const areaPath = useMemo(
-      () => (maskPath ? createAreaFillPath(maskPath, graphWidth, GRAPH_HEIGHT_LARGE) : ''),
-      [maskPath, graphWidth]
+      () => (maskPath ? createAreaFillPath(maskPath, graphWidth, GRAPH_HEIGHT_LARGE, firstX, lastX) : ''),
+      [maskPath, graphWidth, firstX, lastX]
     );
 
     if (!maskPath || zones.length === 0 || !areaPath) return null;
