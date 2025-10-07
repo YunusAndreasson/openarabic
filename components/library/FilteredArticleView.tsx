@@ -14,7 +14,6 @@ import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
-import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 // v2 handles layout automatically - no overrideFixedHeight needed
 
@@ -124,11 +123,8 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   HeaderComponent = null,
 }) => {
   // Apply global filters/sorting state to incoming articles
-  const visibleArticles = useFilteredArticles(articles);
-
-  // Fetch bulk reading progress for all articles
-  const articleIds = useMemo(() => visibleArticles.map(article => article.id), [visibleArticles]);
-  const { data: progressMap, isLoading: isProgressLoading } = useSafeBulkReadingProgress(articleIds);
+  // useFilteredArticles now returns BOTH articles AND their progress (single source of truth)
+  const { articles: visibleArticles, progressMap, isProgressLoading } = useFilteredArticles(articles);
 
   // Memoize expensive computations
   const articlesLength = useMemo(() => visibleArticles.length, [visibleArticles.length]);
@@ -183,9 +179,11 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   ) => React.JSX.Element = useCallback(
     params => {
       const { item } = params;
-      const progress = progressMap?.get?.(item.id);
+      const progress = progressMap.get(item.id);
+      // Only show progress circle if progress exists AND progress_percentage is not null
+      // Null indicates database issue/corruption, not "0% progress"
+      const hasStartedReading = !!progress && progress.progress_percentage !== null;
       const progressPercentage = progress?.progress_percentage ?? 0;
-      const hasStartedReading = !!progress;
 
       if (editMode && 'drag' in params) {
         // DraggableFlatList render
@@ -251,7 +249,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   // Show loading state when:
   // 1. Loading articles and no articles cached yet
   // 2. Loading progress data on first render (prevents showing items without indicators)
-  const isInitialProgressLoad = isProgressLoading && visibleArticles.length > 0 && !progressMap?.size;
+  const isInitialProgressLoad = isProgressLoading && visibleArticles.length > 0 && progressMap.size === 0;
   const shouldShowLoading =
     loading && (visibleArticles.length === 0 || (articles?.length && !shouldShowEmpty)) ||
     isInitialProgressLoad;

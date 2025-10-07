@@ -115,8 +115,9 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Track button state locally for immediate UI updates
   const [localStudyStates, setLocalStudyStates] = useState<Map<number, boolean>>(new Map());
 
-  // Ref to track current sentence index for reading progress
-  const currentSentenceIndexRef = useRef(0);
+  // State to track current sentence index for reading progress
+  // This allows useReadingProgress to receive the current value, not a stale ref
+  const [currentSentenceIndexForProgress, setCurrentSentenceIndexForProgress] = useState(0);
 
   // Keep a ref to avoid handleScroll identity changes when tooltip toggles
   const activeTooltipRef = useRef<typeof activeTooltip>(null);
@@ -230,7 +231,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     useReadingProgress({
       articleId: articleId ?? 0, // Use 0 if articleId is undefined/null
       totalSentences: sortedSentences?.length ?? 0,
-      currentSentenceIndex: currentSentenceIndexRef.current,
+      currentSentenceIndex: currentSentenceIndexForProgress,
       isActive,
     });
 
@@ -254,9 +255,10 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     headerOffset: calculateHeaderHeight(0),
   });
 
-  // Update the ref when currentSentenceIndex changes
+  // Update state when currentSentenceIndex from scrubber changes
+  // This syncs the scrubber's value with what useReadingProgress sees
   useEffect(() => {
-    currentSentenceIndexRef.current = currentSentenceIndex;
+    setCurrentSentenceIndexForProgress(currentSentenceIndex);
   }, [currentSentenceIndex]);
 
   // Update reading progress when current sentence changes (but only after initial load)

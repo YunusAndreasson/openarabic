@@ -107,6 +107,18 @@ export function useMultipleFeaturedArticles(
     [difficultWordRootIds]
   );
 
+  // Create stable Set from stable array to prevent infinite loops
+  // This ensures the Set reference only changes when the actual word IDs change
+  const stableDueWordSet = useMemo(
+    () => new Set(stableDueWordRootIds),
+    [stableDueWordRootIds.join(',')]
+  );
+
+  const stableDifficultWordSet = useMemo(
+    () => new Set(stableDifficultWordRootIds),
+    [stableDifficultWordRootIds.join(',')]
+  );
+
   // State to store the computed selection (only for refreshes)
   const [selectedArticles, setSelectedArticles] = useState<MultipleFeaturedArticlesResult>(() => {
     // For initial load without cache, show first 5 articles immediately
@@ -132,6 +144,9 @@ export function useMultipleFeaturedArticles(
   // Track if we've already initialized to prevent infinite loops
   const hasInitializedRef = useRef(false);
 
+  // Prevent rapid re-execution during cascading data updates
+  const isUpdatingRef = useRef(false);
+
   // Memoize the selection logic to prevent infinite re-renders
   const selectionLogic = useCallback(() => {
     // Determine the selection strategy and compute the result once
@@ -155,11 +170,11 @@ export function useMultipleFeaturedArticles(
         let intelligentSelection: MultipleFeaturedArticlesResult;
 
         // Strategy 1: If user has due words and enough articles with those words
-        if (user?.id && hasDueWordArticles && dueWordRootIds.size > 0) {
+        if (user?.id && hasDueWordArticles && stableDueWordSet.size > 0) {
           const dueWordArticles = articlesData.filter(article =>
             article.article_sentences?.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
-                dueWordRootIds.has(word.root_id)
+                stableDueWordSet.has(word.root_id)
               )
             )
           );
@@ -169,14 +184,14 @@ export function useMultipleFeaturedArticles(
               articles: getRandomArticles(dueWordArticles, MAX_FEATURED_ARTICLES),
               reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
               type: 'due-words',
-              dueWordRootIds,
+              dueWordRootIds: stableDueWordSet,
             };
           } else {
             intelligentSelection = {
               articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'random' as const,
-              dueWordRootIds,
+              dueWordRootIds: stableDueWordSet,
             };
           }
         }
@@ -184,13 +199,13 @@ export function useMultipleFeaturedArticles(
         else if (
           user?.id &&
           hasDifficultWordArticles &&
-          difficultWordRootIds.size > 0 &&
+          stableDifficultWordSet.size > 0 &&
           hasAnyStudyWords
         ) {
           const difficultWordArticles = articlesData.filter(article =>
             article.article_sentences?.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
-                difficultWordRootIds.has(word.root_id)
+                stableDifficultWordSet.has(word.root_id)
               )
             )
           );
@@ -200,14 +215,14 @@ export function useMultipleFeaturedArticles(
               articles: getRandomArticles(difficultWordArticles, MAX_FEATURED_ARTICLES),
               reason: STRINGS.CHOSEN_TO_REINFORCE_CHALLENGING,
               type: 'difficult-words',
-              dueWordRootIds,
+              dueWordRootIds: stableDueWordSet,
             };
           } else {
             intelligentSelection = {
               articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'random' as const,
-              dueWordRootIds,
+              dueWordRootIds: stableDueWordSet,
             };
           }
         }
@@ -219,14 +234,14 @@ export function useMultipleFeaturedArticles(
               articles: getRandomArticles(beginnerArticles, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'beginner',
-              dueWordRootIds,
+              dueWordRootIds: stableDueWordSet,
             };
           } else {
             intelligentSelection = {
               articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'random' as const,
-              dueWordRootIds,
+              dueWordRootIds: stableDueWordSet,
             };
           }
         }
@@ -236,7 +251,7 @@ export function useMultipleFeaturedArticles(
             articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
             reason: STRINGS.RECOMMENDED,
             type: 'random' as const,
-            dueWordRootIds,
+            dueWordRootIds: stableDueWordSet,
           };
         }
 
@@ -254,7 +269,7 @@ export function useMultipleFeaturedArticles(
           articles: initialSelectionRef.current.articles,
           reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE, // Default reason for cached
           type: 'due-words', // Default type for cached
-          dueWordRootIds,
+          dueWordRootIds: stableDueWordSet,
         };
       }
     } else {
@@ -263,7 +278,7 @@ export function useMultipleFeaturedArticles(
         articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
         reason: STRINGS.RECOMMENDED,
         type: 'random' as const,
-        dueWordRootIds,
+        dueWordRootIds: stableDueWordSet,
       };
     }
 
@@ -281,11 +296,15 @@ export function useMultipleFeaturedArticles(
     stableDifficultWordRootIds, // Use stable array instead of Set
     hasAnyStudyWords,
     articlesData,
-    dueWordRootIds,
+    // REMOVED: dueWordRootIds - Already tracked via stableDueWordRootIds
+    // Including the Set directly caused infinite loops because Sets get new references
   ]);
 
   // Run selection logic when dependencies change
   useEffect(() => {
+    // Prevent rapid re-execution during cascading updates
+    if (isUpdatingRef.current) return;
+
     // For initial load (refreshKey === 0), only run if not initialized
     if (refreshKey === 0 && hasInitializedRef.current) return;
 
@@ -298,7 +317,12 @@ export function useMultipleFeaturedArticles(
 
       // Only run if we have articles
       if (hasArticles) {
+        isUpdatingRef.current = true;
         selectionLogic();
+        // Reset after a short delay to allow legitimate updates
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 100);
       }
     }
   }, [hasArticles, selectionLogic, refreshKey]);

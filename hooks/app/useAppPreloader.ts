@@ -68,8 +68,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
       const readingProgressPromise = user?.id
         ? queryClient.prefetchQuery({
             queryKey: ['reading-progress-bulk', user.id],
-            queryFn: () => readingProgressService.getBulkProgress(user.id, []), // Empty array = fetch all
-            staleTime: 30000, // 30 seconds - match hook staleTime for consistency
+            queryFn: () => readingProgressService.getBulkProgress(user.id, []),
+            staleTime: 0, // CRITICAL: Always fetch fresh data on app startup to prevent stale cache from blocking updates
             gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
             retry: 2,
           })

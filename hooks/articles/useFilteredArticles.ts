@@ -7,6 +7,7 @@ import { calculateFilterDate, filterArticles, sortArticlesByProgress } from '@/u
 
 /**
  * Custom hook to filter and sort articles based on Redux filter state
+ * Returns both filtered articles AND their reading progress data (single source of truth)
  */
 export const useFilteredArticles = (articles: Article[] | null | undefined) => {
   const filtersState = useAppSelector(state => state.filters);
@@ -14,9 +15,9 @@ export const useFilteredArticles = (articles: Article[] | null | undefined) => {
   // Handle null/undefined articles gracefully
   const safeArticles = articles || [];
 
-  // Fetch bulk reading progress for all articles (safely handles missing AuthProvider)
+  // Fetch bulk reading progress for all articles (single source of truth)
   const articleIds = useMemo(() => safeArticles.map(article => article.id), [safeArticles]);
-  const { data: progressMapRaw = new Map() } = useBulkReadingProgress(articleIds);
+  const { data: progressMapRaw = new Map(), isLoading: isProgressLoading } = useBulkReadingProgress(articleIds);
   // Ensure progressMap is always a Map to prevent runtime errors
   const progressMap = progressMapRaw instanceof Map ? progressMapRaw : new Map();
 
@@ -43,5 +44,10 @@ export const useFilteredArticles = (articles: Article[] | null | undefined) => {
     return sortArticlesByProgress(filteredArticles, progressMap);
   }, [safeArticles, filters, filterDate, progressMap]);
 
-  return filteredAndSortedArticles;
+  // Return both articles and their progress data (single source of truth)
+  return {
+    articles: filteredAndSortedArticles,
+    progressMap,
+    isProgressLoading,
+  };
 };

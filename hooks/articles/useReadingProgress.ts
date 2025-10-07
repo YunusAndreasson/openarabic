@@ -20,12 +20,6 @@ export interface ReadingProgressData {
   updatedAt: string;
 }
 
-const READING_PROGRESS_QUERY_KEY = (userId: string, articleId: number) => [
-  'reading-progress',
-  userId,
-  articleId,
-];
-
 const DEBOUNCE_DELAY = 500; // Reduced from 2000ms to 500ms for more responsive tracking
 
 export function useReadingProgress({
@@ -42,58 +36,73 @@ export function useReadingProgress({
   // that was created/updated during the current session.
   const initialLastSentenceReadRef = useRef<number | null>(null);
 
-  // Query to get current reading progress
-  const { data: progress, isLoading } = useQuery({
-    queryKey: READING_PROGRESS_QUERY_KEY(user?.id ?? '__guest__', articleId),
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const result = await readingProgressService.getProgress(user.id, articleId);
+  // Use bulk query as single source of truth - extract specific article progress
+  const { data: progressMap, isLoading } = useBulkReadingProgress([articleId]);
 
-      // Sanitize loaded progress to ensure it's valid for current article
-      if (result && totalSentences > 0) {
-        // Ensure last_sentence_read is within valid bounds (0-based indexing)
-        const maxValidSentence = totalSentences - 1;
-        const sanitizedLastSentence = Math.max(
-          0,
-          Math.min(result.last_sentence_read, maxValidSentence)
-        );
+  // Extract progress for this specific article from the bulk cache
+  const rawProgress = useMemo(() => {
+    if (!progressMap || !user?.id || articleId <= 0) return null;
+    return progressMap.get(articleId) || null;
+  }, [progressMap, user?.id, articleId]);
 
-        // If we had to sanitize, update the database with corrected value
-        if (sanitizedLastSentence !== result.last_sentence_read) {
-          // Update the database with the corrected value
-          readingProgressService
-            .updateProgress({
-              userId: user.id,
-              articleId,
-              lastSentenceRead: sanitizedLastSentence,
-              totalSentences,
-            })
-            .catch(() => {
-              // Silent error - sanitization failed but we still use corrected value
-            });
-        }
+  // Sanitize progress data to ensure it's valid for current article
+  const progress = useMemo(() => {
+    if (!rawProgress || totalSentences <= 0) return rawProgress;
 
-        // Update the ref with sanitized value
-        lastSavedSentenceRef.current = sanitizedLastSentence;
+    let needsSanitization = false;
+    let sanitized = { ...rawProgress };
 
-        // Return sanitized result
-        return {
-          ...result,
-          last_sentence_read: sanitizedLastSentence,
-        };
-      }
+    // Ensure last_sentence_read is within valid bounds (0-based indexing)
+    const maxValidSentence = totalSentences - 1;
+    const sanitizedLastSentence = Math.max(
+      0,
+      Math.min(rawProgress.last_sentence_read, maxValidSentence)
+    );
 
-      // Update the ref when we load existing progress (for unsanitized case)
-      if (result) {
-        lastSavedSentenceRef.current = result.last_sentence_read;
-      }
-      return result;
-    },
-    enabled: !!user?.id && articleId > 0, // Only enable when we have a valid articleId (not 0)
-    staleTime: 30000, // Cache for 30 seconds
-    refetchOnMount: false, // Don't refetch on mount - use persisted data first
-    retry: 3, // Retry up to 3 times if the query fails
-  });
+    if (sanitizedLastSentence !== rawProgress.last_sentence_read) {
+      sanitized.last_sentence_read = sanitizedLastSentence;
+      needsSanitization = true;
+    }
+
+    // Check if progress_percentage is null (database corruption/error)
+    // This will be recalculated by the database on update
+    if (rawProgress.progress_percentage === null) {
+      needsSanitization = true;
+    }
+
+    return needsSanitization ? sanitized : rawProgress;
+  }, [rawProgress, totalSentences]);
+
+  // Update database if sanitization was required
+  useEffect(() => {
+    if (!rawProgress || !user?.id || !progress || totalSentences <= 0) return;
+
+    // Check if we sanitized the data (last_sentence_read changed OR progress_percentage is null)
+    const lastSentenceNeedsFix = rawProgress.last_sentence_read !== progress.last_sentence_read;
+    const progressPercentageNeedsFix = rawProgress.progress_percentage === null;
+
+    if (lastSentenceNeedsFix || progressPercentageNeedsFix) {
+      // Update the database with the corrected value (silent failure)
+      // Database function will recalculate progress_percentage
+      readingProgressService
+        .updateProgress({
+          userId: user.id,
+          articleId,
+          lastSentenceRead: progress.last_sentence_read,
+          totalSentences,
+        })
+        .catch(() => {
+          // Silent error - sanitization update failed but we still use corrected value
+        });
+    }
+  }, [rawProgress, progress, user?.id, articleId, totalSentences]);
+
+  // Update the ref when we load progress
+  useEffect(() => {
+    if (progress) {
+      lastSavedSentenceRef.current = progress.last_sentence_read;
+    }
+  }, [progress?.last_sentence_read]);
 
   // Capture the initial progress exactly once when the first query result resolves
   // (post-sanitization). If there was no existing progress, this stores 0.
@@ -121,10 +130,7 @@ export function useReadingProgress({
 
       // Invalidate queries to refresh UI
       if (user?.id) {
-        queryClient.invalidateQueries({
-          queryKey: READING_PROGRESS_QUERY_KEY(user.id, articleId),
-        });
-        // Also invalidate bulk progress queries to update lists
+        // Invalidate bulk progress query (single source of truth)
         queryClient.invalidateQueries({
           queryKey: ['reading-progress-bulk', user.id],
         });
@@ -180,14 +186,18 @@ export function useReadingProgress({
     return () => clearTimeout(timeoutId);
   }, [currentSentenceIndex, isActive, updateProgress, user?.id]);
 
-  // IMMEDIATE ARTICLE OPEN TRACKING: Run as soon as component mounts
+  // Track if we've already recorded the initial article open (once per mount)
+  const hasRecordedOpenRef = useRef(false);
+
+  // IMMEDIATE ARTICLE OPEN TRACKING: Run once when component mounts
   useEffect(() => {
-    if (!user?.id || articleId <= 0) return;
+    if (!user?.id || articleId <= 0 || hasRecordedOpenRef.current) return;
 
     // Record article open immediately when component mounts
     const recordArticleOpen = async () => {
       try {
-        // Get current progress to see if we need to create/update a record
+        // Fetch current progress directly to avoid circular dependency
+        // (don't use cached progress since we'll invalidate it anyway)
         const currentProgress = await readingProgressService.getProgress(user.id, articleId);
 
         if (currentProgress) {
@@ -211,7 +221,13 @@ export function useReadingProgress({
           });
         }
 
-        // Invalidate streak query since article open counts as reading activity
+        // Mark as recorded to prevent re-running
+        hasRecordedOpenRef.current = true;
+
+        // Invalidate bulk query and streak query since article open counts as reading activity
+        queryClient.invalidateQueries({
+          queryKey: ['reading-progress-bulk', user.id],
+        });
         queryClient.invalidateQueries({
           queryKey: ['reading-streak', user.id],
         });
@@ -229,15 +245,19 @@ export function useReadingProgress({
 
     // Execute immediately (no timeout) to ensure daily activity is tracked
     recordArticleOpen();
-  }, [user?.id, articleId]); // Only depend on user and articleId to run immediately
+  }, [user?.id, articleId, totalSentences, queryClient]); // Removed progress to avoid circular dependency
 
   // ADDITIONAL: Track when article becomes active (fully loaded) - for additional updates
+  // Use a separate ref to track if we've run the active tracking
+  const hasRecordedActiveRef = useRef(false);
+
   useEffect(() => {
-    if (!isActive || !user?.id || articleId <= 0) return;
+    if (!isActive || !user?.id || articleId <= 0 || hasRecordedActiveRef.current) return;
 
     // Additional update when article becomes fully active
     const recordActiveArticleOpen = async () => {
       try {
+        // Fetch current progress directly to avoid circular dependency
         const currentProgress = await readingProgressService.getProgress(user.id, articleId);
 
         if (currentProgress && totalSentences > 0) {
@@ -249,7 +269,13 @@ export function useReadingProgress({
             totalSentences, // Use actual total sentences now that article is loaded
           });
 
-          // Invalidate streak query since this counts as additional reading activity
+          // Mark as recorded
+          hasRecordedActiveRef.current = true;
+
+          // Invalidate queries to refresh
+          queryClient.invalidateQueries({
+            queryKey: ['reading-progress-bulk', user.id],
+          });
           queryClient.invalidateQueries({
             queryKey: ['reading-streak', user.id],
           });
@@ -261,32 +287,55 @@ export function useReadingProgress({
 
     const activeTimeoutId = setTimeout(recordActiveArticleOpen, 500);
     return () => clearTimeout(activeTimeoutId);
-  }, [isActive, user?.id, articleId, totalSentences]);
+  }, [isActive, user?.id, articleId, totalSentences, queryClient]); // Removed progress to avoid circular dependency
+
+  // Refs to capture latest values for unmount cleanup (avoid stale closure)
+  const unmountDataRef = useRef({
+    isActive,
+    currentSentenceIndex,
+    userId: user?.id,
+    articleId,
+    totalSentences,
+    progressLastSentence: progress?.last_sentence_read ?? 0,
+  });
+
+  // Update refs whenever values change
+  useEffect(() => {
+    unmountDataRef.current = {
+      isActive,
+      currentSentenceIndex,
+      userId: user?.id,
+      articleId,
+      totalSentences,
+      progressLastSentence: progress?.last_sentence_read ?? 0,
+    };
+  }, [isActive, currentSentenceIndex, user?.id, articleId, totalSentences, progress?.last_sentence_read]);
 
   // Also save progress immediately when component unmounts (article closed)
   useEffect(() => {
     return () => {
-      // Save final progress when hook unmounts
-      if (isActive && currentSentenceIndex >= 0 && user?.id && articleId > 0) {
+      // Save final progress when hook unmounts using latest values from ref
+      const data = unmountDataRef.current;
+      if (data.isActive && data.currentSentenceIndex >= 0 && data.userId && data.articleId > 0) {
         const lastRecorded = Math.max(
           lastSavedSentenceRef.current,
-          progress?.last_sentence_read ?? 0
+          data.progressLastSentence
         );
         // Ensure valid bounds before saving
         const validFinalSentenceIndex = Math.max(
           0,
-          Math.min(currentSentenceIndex, totalSentences - 1)
+          Math.min(data.currentSentenceIndex, data.totalSentences - 1)
         );
 
         // Save progress if we're at a different position than last recorded
-        if (validFinalSentenceIndex !== lastRecorded && user?.id) {
+        if (validFinalSentenceIndex !== lastRecorded && data.userId) {
           // Save final progress without logging
           readingProgressService
             .updateProgress({
-              userId: user.id,
-              articleId,
+              userId: data.userId,
+              articleId: data.articleId,
               lastSentenceRead: validFinalSentenceIndex,
-              totalSentences,
+              totalSentences: data.totalSentences,
             })
             .catch(() => {
               // Silent error - final progress save failed
@@ -294,7 +343,7 @@ export function useReadingProgress({
         }
       }
     };
-  }, []); // Empty dependency array - this effect only runs on unmount
+  }, []); // Empty dependency array is safe now - cleanup uses ref values
 
   return {
     progress: progress
@@ -323,20 +372,28 @@ export function useBulkReadingProgress(articleIds: number[]) {
   const query = useQuery({
     queryKey: [
       'reading-progress-bulk',
-      user?.id ?? '__guest__',
+      user?.id, // Match preloader key exactly (no fallback)
     ],
     queryFn: async () => {
-      if (!user?.id) return new Map();
+      // Always return empty Map if no user, but don't block the query
+      if (!user?.id) {
+        return new Map();
+      }
       // Fetch ALL reading progress for this user (not just requested articleIds)
       // This creates a single shared cache entry that all components can use
       // The service's getBulkProgress without articleIds filter will fetch all progress
       return readingProgressService.getBulkProgress(user.id, []);
     },
-    enabled: !!user?.id,
-    staleTime: 30000, // 30 seconds - data is fresh for 30 seconds to prevent flickering
-    refetchOnMount: false, // Don't force refetch on mount to prevent card position changes
+    // CRITICAL: Always enabled to prevent query from being disabled during auth rehydration
+    // queryFn handles the no-user case by returning empty Map
+    enabled: true,
+    // Use placeholderData to prevent undefined while query fetches
+    placeholderData: () => new Map(),
+    staleTime: 30000, // 30 seconds - data is fresh for 30 seconds to prevent flickering during normal usage
+    refetchOnMount: true, // Refetch if data is stale or invalidated
     retry: 3, // Retry up to 3 times if the query fails
     gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
+    refetchOnReconnect: true, // Refetch when network reconnects
   });
 
   // Filter the full Map to only include requested articleIds for this component

@@ -182,11 +182,13 @@ export function filterArticles(
  */
 export function sortArticlesByProgress(
   articles: Article[],
-  progressMap: Map<number, { progress_percentage: number }>
+  progressMap: Map<number, { progress_percentage: number | null }>
 ): Article[] {
   return [...articles].sort((a, b) => {
-    const progressA = progressMap.get(a.id)?.progress_percentage || 0;
-    const progressB = progressMap.get(b.id)?.progress_percentage || 0;
+    // Handle null explicitly - treat as 0 (no progress)
+    // null indicates database corruption or calculation error, treat same as "not started"
+    const progressA = progressMap.get(a.id)?.progress_percentage ?? 0;
+    const progressB = progressMap.get(b.id)?.progress_percentage ?? 0;
 
     // Articles with partial progress (1-99%) come first
     const aHasPartialProgress = progressA > 0 && progressA < 100;
@@ -195,7 +197,7 @@ export function sortArticlesByProgress(
     if (aHasPartialProgress && !bHasPartialProgress) return -1;
     if (!aHasPartialProgress && bHasPartialProgress) return 1;
 
-    // Articles with no progress come second
+    // Articles with no progress come second (includes null, 0, or no entry)
     const aHasNoProgress = progressA === 0;
     const bHasNoProgress = progressB === 0;
 
