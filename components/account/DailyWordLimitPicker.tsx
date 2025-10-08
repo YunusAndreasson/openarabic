@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     height: LAYOUT.PROGRESS_BAR.HEIGHT,
   },
   container: {
-    paddingBottom: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.XXLARGE,
   },
   header: {
     ...LAYOUT.BOTTOM_SHEET.HEADER,

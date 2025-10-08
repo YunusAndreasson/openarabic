@@ -65,7 +65,7 @@ describe('useReminders', () => {
   it('formats reminder time correctly', () => {
     const { result } = renderHook(() => useReminders());
 
-    expect(result.current.formatReminderTime(0, 5)).toBe('12:05 AM');
-    expect(result.current.formatReminderTime(15, 0)).toBe('3:00 PM');
+    expect(result.current.formatReminderTime(0, 5)).toBe('00:05');
+    expect(result.current.formatReminderTime(15, 0)).toBe('15:00');
   });
 });

@@ -152,14 +152,6 @@ function ThemedButtonComponent({
     [isActuallyLoading, icon]
   );
 
-  // Accessibility properties
-  const accessibilityLabel = props.accessibilityLabel || title;
-  const accessibilityState = {
-    disabled: disabled || isActuallyLoading,
-    busy: isActuallyLoading,
-    ...props.accessibilityState,
-  };
-
   return (
     <AnimatedTouchable
       style={[buttonStyle, animatedStyle]}
@@ -167,10 +159,6 @@ function ThemedButtonComponent({
       onPressOut={handlePressOut}
       disabled={disabled || isActuallyLoading}
       onPress={pressHandler}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={accessibilityState}
-      accessibilityHint={isActuallyLoading ? 'Button is loading' : undefined}
       {...props}
     >
       <View style={styles.innerContainer}>

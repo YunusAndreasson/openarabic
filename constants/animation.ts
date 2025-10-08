@@ -1,4 +1,4 @@
-import { Easing, useReducedMotion } from 'react-native-reanimated';
+import { Easing } from 'react-native-reanimated';
 
 /**
  * Timing configuration presets for animations
@@ -199,20 +199,3 @@ export const TIMING_CONSTANTS = {
   NETWORK_TIMEOUT: 10000,
   RETRY_DELAY_BASE: 1000,
 } as const;
-
-/**
- * Hook for detecting user's reduced motion preference
- * Use this in animation hooks to conditionally disable animations for accessibility
- */
-export const useAnimationConfig = () => {
-  const reducedMotion = useReducedMotion();
-
-  return {
-    shouldAnimate: !reducedMotion,
-    // For users with reduced motion, use minimal duration to maintain functionality
-    duration: reducedMotion ? 1 : undefined,
-    springConfig: reducedMotion
-      ? { damping: 100, stiffness: 1000, mass: 1 } // Very stiff spring for minimal movement
-      : undefined,
-  };
-};

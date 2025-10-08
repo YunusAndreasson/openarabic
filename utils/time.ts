@@ -13,16 +13,15 @@ export function formatSecondsToClock(seconds: number): string {
 }
 
 /**
- * Format a Date to 12-hour clock string H:MM AM/PM
- * Note: Using manual formatting instead of Intl.DateTimeFormat due to Jest compatibility issues
+ * Format a Date to 12-hour clock string using native toLocaleTimeString
+ * Returns format like "2:30 PM" in US locale
  */
 export function formatDateTo12hClock(date: Date): string {
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-  const period = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  const displayMinute = minute.toString().padStart(2, '0');
-  return `${displayHour}:${displayMinute} ${period}`;
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
 }
 
 /**

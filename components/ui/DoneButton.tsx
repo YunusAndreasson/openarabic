@@ -50,8 +50,6 @@ const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         android_ripple={createAndroidRipple(colors)}
-        accessibilityRole="button"
-        accessibilityLabel={UiAction.DONE}
       >
         <ThemedText
           type="body"

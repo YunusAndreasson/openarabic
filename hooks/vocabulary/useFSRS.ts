@@ -337,6 +337,7 @@ export function useFSRS({
       // But we need to ensure counters are properly initialized first
       if (!stateTrackingRef.current.queueInitialized) {
         setProgress(0); // Default to 0 when queue isn't initialized yet
+        stateTrackingRef.current.isProcessingUpdate = false;
         return;
       }
 
@@ -398,7 +399,7 @@ export function useFSRS({
           // If we still have no next item, complete
           if (!nextItem && !stateTrackingRef.current.completionTriggered) {
             stateTrackingRef.current.completionTriggered = true;
-            setTimeout(() => {
+            completionTimeoutRef.current = setTimeout(() => {
               setIsComplete(true);
               if (onComplete) onComplete();
             }, COMPLETION_DELAY_MS);

@@ -12,16 +12,9 @@ export const GRAPH_WIDTH =
   16 - // Reduced from 24 for more graph space
   X_AXIS_LABEL_PADDING;
 
-// Data point radius for boundary calculations
-// Account for today's halo effect which is 5x the normal size
-const DATA_POINT_RADIUS = 3.5; // Must match CHART_VISUAL.DATA_POINT_SIZE
-export const TODAY_HALO_RADIUS = DATA_POINT_RADIUS * 5; // Today's maximum halo size (17.5px) - exported for edge padding
-export const DATA_POINT_PADDING = DATA_POINT_RADIUS * 2; // Used for boundary calculations in positioning
-
 /**
  * Calculate data point positions across full chart width
  * Returns positions from 0 to GRAPH_WIDTH for proper line/fill rendering
- * Edge dots are rendered with visual padding offset to prevent clipping
  */
 export const calculateDataPointPositions = (dataCount: number): number[] => {
   if (dataCount <= 1) {
@@ -49,9 +42,8 @@ export const CHART_VISUAL = {
   DATA_POINT_SIZE: 3.5, // Primary data point radius
   DATA_POINT_INNER_SIZE: 2, // Inner highlight radius
   LINE_WIDTH: 2.5, // Chart line stroke width
-  CHART_TOP_PADDING: 20, // Top padding to accommodate today's halo (5x radius = 17.5px + buffer)
+  CHART_TOP_PADDING: 20, // Top padding for visual balance
   CHART_BOTTOM_PADDING: 8, // Bottom padding to prevent dots from clipping at bottom edge
-  // Data point colors now use golden streak colors for better visibility
 } as const;
 
 // Time periods - optimized for mobile clarity and user comprehension

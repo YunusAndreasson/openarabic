@@ -13,7 +13,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { formatDateTo12hClock } from '@/utils/time';
 
 export interface TimePickerProps {
   isVisible: boolean;
@@ -86,7 +85,15 @@ export const TimePicker = memo(
       onClose();
     }, [selectedDate, extractTimeAndSet, onClose]);
 
-    const formatTime = useCallback((date: Date) => formatDateTo12hClock(date), []);
+    const formatTime = useCallback(
+      (date: Date) =>
+        date.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }),
+      []
+    );
 
     // Use built-in backdrop component
     const renderBackdrop = useCallback(
@@ -115,7 +122,7 @@ export const TimePicker = memo(
         <DateTimePicker
           value={selectedDate}
           mode="time"
-          is24Hour={false}
+          is24Hour={true}
           display="default"
           onChange={handleDateChange}
           textColor={colors.text}
@@ -163,7 +170,7 @@ export const TimePicker = memo(
             <DateTimePicker
               value={selectedDate}
               mode="time"
-              is24Hour={false}
+              is24Hour={true}
               display="spinner"
               onChange={handleDateChange}
               style={styles.picker}

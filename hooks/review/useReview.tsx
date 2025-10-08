@@ -47,7 +47,6 @@ interface UseReviewReturn {
   currentWord?: StudyWord | null;
   showTranslation: boolean;
   isVagueMeaning: boolean;
-  isTransitioningToCompletion: boolean;
   opacity: SharedValue<number>;
   isComplete: boolean;
   isUpdating: boolean;
@@ -122,7 +121,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // UI state
   const [showTranslation, setShowTranslation] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
-  const [isTransitioningToCompletion, setIsTransitioningToCompletion] = useState(false);
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
   const [isVagueMeaning, setIsVagueMeaning] = useState(false);
   // Ensure UI re-renders when updating state changes so gestures re-enable
@@ -159,18 +157,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
     // Stop any playing audio to free resources
     stopAudioSafely();
-    setIsTransitioningToCompletion(true);
-    fadeOut();
 
     stateRefs.current.maxProgress = 100;
     setProgressAnimationKey(prev => prev + 1);
-
-    setTimer('completionTransition', () => {
-      if (stateRefs.current.completionTriggered) {
-        setIsTransitioningToCompletion(false);
-      }
-    }, TIMING_CONFIG.MEDIUM.duration);
-  }, [fadeOut, setTimer, stopAudioSafely]);
+  }, [stopAudioSafely]);
 
   const { currentWord, isComplete, progress, updateWord, invalidateQueries, wordQueue, isLoading } =
     useFSRS({
@@ -212,7 +202,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     // Reset stale completion flag if a new word/session appears
     if (currentWordKey !== 'none' && stateRefs.current.completionTriggered) {
       stateRefs.current.completionTriggered = false;
-      setIsTransitioningToCompletion(false);
     }
   }, [currentWordKey, clearTimer]);
 
@@ -316,7 +305,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // Guard conditions: exit early if we're already in a processing state
       if (
         stateRefs.current.isUpdatingWord ||
-        isTransitioningToCompletion ||
         isComplete ||
         stateRefs.current.completionTriggered
       ) {
@@ -386,7 +374,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       }, TRANSITION_DELAYS.initial);
     },
     [
-      isTransitioningToCompletion,
       isComplete,
       fadeOut,
       displayMeaning,
@@ -401,7 +388,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Effect: Handle completion transition
   useEffect(() => {
-    if (isComplete && !isTransitioningToCompletion && !stateRefs.current.completionTriggered) {
+    if (isComplete && !stateRefs.current.completionTriggered) {
       triggerCompletionTransition();
     }
 
@@ -409,13 +396,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // Ensure any remaining audio is stopped
       stopAudioSafely();
     }
-  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition, stopAudioSafely]);
+  }, [isComplete, triggerCompletionTransition, stopAudioSafely]);
 
   // Effect: Update progress bar
   useEffect(() => {
-    // Don't update during transition to completion to avoid cycles
-    if (isTransitioningToCompletion) return;
-
     if (!isComplete && progress !== undefined) {
       const now = Date.now();
       if (now - timeRefs.current.lastProgressUpdate < 100) {
@@ -440,16 +424,12 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         }
       }
     }
-  }, [isComplete, progress, isTransitioningToCompletion]);
+  }, [isComplete, progress]);
 
   // Effect: Ensure 100% progress on completion
   useEffect(() => {
-    // Skip if we've already updated or if we're transitioning
-    if (
-      isComplete &&
-      !isTransitioningToCompletion &&
-      !stateRefs.current.progressUpdatedForCompletion
-    ) {
+    // Skip if we've already updated
+    if (isComplete && !stateRefs.current.progressUpdatedForCompletion) {
       stateRefs.current.maxProgress = 100;
       stateRefs.current.progressUpdatedForCompletion = true;
       setProgressAnimationKey(prev => prev + 1);
@@ -459,7 +439,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     if (!isComplete) {
       stateRefs.current.progressUpdatedForCompletion = false;
     }
-  }, [isComplete, isTransitioningToCompletion]);
+  }, [isComplete]);
 
   // Effect: Initialize audio session when practice starts
   useEffect(() => {
@@ -476,7 +456,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Effect: Handle current word changes and play audio (simplified - no more loading)
   useEffect(() => {
-    if (stateRefs.current.completionTriggered || isComplete || isTransitioningToCompletion) {
+    if (stateRefs.current.completionTriggered || isComplete) {
       return;
     }
 
@@ -506,7 +486,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   }, [
     currentWord,
     isComplete,
-    isTransitioningToCompletion,
     showTranslation,
     playAudio,
     generateAudioUrl,
@@ -518,7 +497,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   useEffect(() => {
     if (
       !isComplete &&
-      !isTransitioningToCompletion &&
       !stateRefs.current.completionTriggered &&
       !stateRefs.current.isUpdatingWord &&
       !currentWord
@@ -526,7 +504,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       const timer = setTimeout(() => {
         if (
           !isComplete &&
-          !isTransitioningToCompletion &&
           !stateRefs.current.completionTriggered &&
           !stateRefs.current.isUpdatingWord &&
           !currentWord
@@ -538,7 +515,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [currentWord, isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
+  }, [currentWord, isComplete, triggerCompletionTransition]);
 
   const handleSwipeLeft = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
@@ -639,7 +616,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       stateRefs.current.progressUpdatedForCompletion = false;
 
       // Explicitly reset UI state on unmount
-      setIsTransitioningToCompletion(false);
       setShowTranslation(false);
 
       // Safely call fadeIn with error handling to prevent crashes
@@ -679,7 +655,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentWord,
     showTranslation,
     isVagueMeaning,
-    isTransitioningToCompletion,
     opacity,
     isComplete,
     isUpdating: isUpdatingUI,

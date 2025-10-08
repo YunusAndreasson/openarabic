@@ -56,9 +56,6 @@ const DictionarySortingHeader: FC<DictionarySortingHeaderProps> = ({
                 color: colors.tint,
                 radius: MIN_TOUCH_TARGET.MEDIUM / 2,
               }}
-              accessibilityRole="button"
-              accessibilityLabel={`Sort by ${option.label}`}
-              accessibilityState={{ selected: isActive }}
             >
               <ThemedText
                 type="label"

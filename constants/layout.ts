@@ -29,7 +29,7 @@ const SPACING_SCALE = {
   XXXLARGE: BASE_UNIT * 12, // 48
 } as const;
 
-// Touch target system based on accessibility guidelines
+// Touch target system
 const TOUCH_TARGETS = {
   SMALL: BASE_UNIT * 8, // 32 - responsive to base unit
   MEDIUM: BASE_UNIT * 11, // 44 - responsive to base unit
@@ -139,16 +139,9 @@ export const TYPOGRAPHY_HIERARCHY = {
     },
   },
 
-  ACCESSIBILITY: {
-    MIN_CONTRAST_RATIOS: {
-      LARGE_TEXT: 3.0,
-      NORMAL_TEXT: 4.5,
-      ENHANCED: 7.0,
-    },
-    DYNAMIC_OPACITY: {
-      LIGHT_THEME_BOOST: 0.05,
-      DARK_THEME_BOOST: 0.08,
-    },
+  OPACITY_BOOST: {
+    LIGHT_THEME: 0.05,
+    DARK_THEME: 0.08,
   },
 } as const;
 
@@ -206,7 +199,7 @@ export const LAYOUT = {
       LARGE: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
     },
     HEIGHT: {
-      // Dynamic heights based on content and accessibility
+      // Dynamic heights based on content
       LIST_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // 48 + 32 = 80
       AUDIO_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.XLARGE * 2, // 48 + 40 = 88
       MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.XLARGE * 2, // 48 + 48 = 96 (increased from 72 for better proportions)
@@ -443,13 +436,13 @@ export const getEnhancedOpacity = (
   let adjustedOpacity = baseOpacity;
 
   if (isDarkMode) {
-    adjustedOpacity += TYPOGRAPHY_HIERARCHY.ACCESSIBILITY.DYNAMIC_OPACITY.DARK_THEME_BOOST;
+    adjustedOpacity += TYPOGRAPHY_HIERARCHY.OPACITY_BOOST.DARK_THEME;
   } else {
-    adjustedOpacity += TYPOGRAPHY_HIERARCHY.ACCESSIBILITY.DYNAMIC_OPACITY.LIGHT_THEME_BOOST;
+    adjustedOpacity += TYPOGRAPHY_HIERARCHY.OPACITY_BOOST.LIGHT_THEME;
   }
 
   if (isInteractive) {
-    adjustedOpacity += TYPOGRAPHY_HIERARCHY.ACCESSIBILITY.DYNAMIC_OPACITY.LIGHT_THEME_BOOST; // 0.05 - use existing constant
+    adjustedOpacity += TYPOGRAPHY_HIERARCHY.OPACITY_BOOST.LIGHT_THEME; // 0.05
   }
 
   return Math.min(1.0, Math.max(0.0, adjustedOpacity));

@@ -273,8 +273,6 @@ const FloatingActionButtons = memo<{
             style={buttonStyle}
             onPress={onClose}
             android_ripple={createAndroidRipple(colors)}
-            accessibilityRole="button"
-            accessibilityLabel="Close article"
           >
             <Ionicons
               name="close"
@@ -292,8 +290,6 @@ const FloatingActionButtons = memo<{
               style={isPlaying ? activeButtonStyle : buttonStyle}
               onPress={onPlayPress}
               android_ripple={createAndroidRipple(colors)}
-              accessibilityRole="button"
-              accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
             >
               <Ionicons
                 name={isPlaying ? 'pause' : 'play'}
@@ -308,10 +304,6 @@ const FloatingActionButtons = memo<{
             style={optimisticIsInReadingList ? activeButtonStyle : buttonStyle}
             onPress={handleOptimisticToggle}
             android_ripple={createAndroidRipple(colors)}
-            accessibilityRole="button"
-            accessibilityLabel={
-              optimisticIsInReadingList ? 'Remove from bookmarks' : 'Add to bookmarks'
-            }
           >
             <Ionicons
               name="bookmark"

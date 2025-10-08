@@ -51,7 +51,6 @@ export default function ReviewScreen(): JSX.Element {
     currentMeaning,
     currentWord,
     showTranslation,
-    isTransitioningToCompletion,
     isComplete,
     progress,
     maxProgress,
@@ -78,7 +77,7 @@ export default function ReviewScreen(): JSX.Element {
     return isLoading || (wordQueue.length === 0 && !isComplete && currentWord === null);
   }, [isLoading, wordQueue.length, isComplete, currentWord]);
 
-  if (isComplete || isTransitioningToCompletion) {
+  if (isComplete) {
     return (
       <CompletionScreen
         sessionMetrics={sessionMetrics}
@@ -192,7 +191,6 @@ export default function ReviewScreen(): JSX.Element {
             onSwipeRight={handleSwipeRight}
             opacityStyle={transparentStyle}
             isUpdating={isUpdating}
-            isTransitioning={isTransitioningToCompletion}
             testID="review-card"
             translation={currentMeaning}
             showTranslation={showTranslation}

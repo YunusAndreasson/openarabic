@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     height: LAYOUT.BOTTOM_SHEET.INDICATOR.HEIGHT,
   },
   container: {
-    paddingBottom: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.XXXLARGE,
   },
   header: {
     ...LAYOUT.BOTTOM_SHEET.HEADER,
@@ -176,6 +176,7 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.XXXLARGE,
     gap: LAYOUT.SPACING.MEDIUM,
   },
   optionCard: {

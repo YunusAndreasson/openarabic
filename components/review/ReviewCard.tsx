@@ -42,7 +42,6 @@ interface ReviewCardProps {
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   isUpdating: boolean;
-  isTransitioning: boolean;
   opacityStyle: ReanimatedAnimatedStyle<ViewStyle> | AppAnimatedStyleProp<ViewStyle>;
   testID?: string;
   // Translation props
@@ -60,7 +59,6 @@ const ReviewCardInternal = ({
   onSwipeLeft,
   onSwipeRight,
   isUpdating,
-  isTransitioning,
   opacityStyle,
   testID,
   translation,
@@ -90,7 +88,7 @@ const ReviewCardInternal = ({
 
   // ===== SWIPE GESTURE HOOK (v2 OPTIMIZED) =====
   const { gesture: panGesture, translateX } = useSwipeGesture({
-    enabled: !isUpdating && !isTransitioning,
+    enabled: !isUpdating,
     onSwipeLeft,
     onSwipeRight,
     springConfig: SPRING_CONFIG.CARD,
@@ -223,7 +221,6 @@ const ReviewCardComparison = (prevProps: ReviewCardProps, nextProps: ReviewCardP
     prevProps.onSwipeLeft === nextProps.onSwipeLeft &&
     prevProps.onSwipeRight === nextProps.onSwipeRight &&
     prevProps.isUpdating === nextProps.isUpdating &&
-    prevProps.isTransitioning === nextProps.isTransitioning &&
     prevProps.opacityStyle === nextProps.opacityStyle &&
     prevProps.testID === nextProps.testID &&
     prevProps.translation === nextProps.translation &&

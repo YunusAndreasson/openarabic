@@ -87,7 +87,6 @@ jest.mock('react-native-reanimated', () => {
       value: initialValue,
       modify: jest.fn(),
     }),
-    useReducedMotion: () => false,
     useAnimatedStyle: styleCallback => {
       try {
         return styleCallback() || {};

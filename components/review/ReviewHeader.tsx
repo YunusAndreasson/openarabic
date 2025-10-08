@@ -93,8 +93,6 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
           style={closeButtonStyle}
           onPress={handleClose}
           hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-          accessibilityRole="button"
-          accessibilityLabel="Close practice session"
         >
           <Ionicons
             name="close"

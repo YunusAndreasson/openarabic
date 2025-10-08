@@ -12,7 +12,6 @@ import { CHART_VISUAL } from '@charts/constants';
 import { Group } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import type { PerformanceZone } from '@/types/ui/chart.types';
 import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';
@@ -206,9 +205,6 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
                 x={point.x}
                 y={point.y}
                 uniqueKey={dataPointKeys[index]}
-                isToday={todayIndex !== undefined && index === todayIndex}
-                isFirstPoint={index === 0}
-                isLastPoint={index === dataPoints.length - 1}
               />
             ))}
           </Group>
@@ -225,7 +221,6 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
                 x={milestone.x}
                 y={milestone.y}
                 uniqueKey={milestoneKeys[index]}
-                isToday={false} // Milestones are never "today"
               />
             ))}
           </Group>
@@ -277,14 +272,14 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
         onCardPress={onCardPress}
         bottomSummary={bottomSummary}
       >
-        <Animated.View entering={FadeInUp.duration(700).delay(100)} style={styles.container}>
+        <View style={styles.container}>
           <View style={styles.chartContainer}>
             <ChartCanvas dataPoints={tooltipDataPoints}>{chartComponents}</ChartCanvas>
           </View>
 
           {/* Axes */}
           {axesComponent}
-        </Animated.View>
+        </View>
       </BaseChart>
     );
   },

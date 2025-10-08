@@ -13,7 +13,6 @@ import {
   CARD_PRESS_OPACITY,
   PRESS_SCALE,
   SPRING_CONFIG,
-  useAnimationConfig,
 } from '@/constants/animation';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
@@ -78,7 +77,6 @@ export interface PressAnimationResult {
  */
 export const usePressAnimation = (options: PressAnimationOptions = {}): PressAnimationResult => {
   const { type = 'button', scaleAmount, opacityAmount, includeOpacity, springConfig } = options;
-  const { shouldAnimate, springConfig: reducedMotionSpring } = useAnimationConfig();
 
   // Set defaults based on type
   const defaultScaleAmount = type === 'card' ? PRESS_SCALE.CARD : PRESS_SCALE.BUTTON;
@@ -86,9 +84,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   const finalOpacityAmount = opacityAmount ?? CARD_PRESS_OPACITY;
   const finalIncludeOpacity = includeOpacity ?? type === 'card';
   const finalSpringConfig = useRef(
-    shouldAnimate
-      ? springConfig ?? (type === 'card' ? SPRING_CONFIG.CARD : SPRING_CONFIG.BUTTON)
-      : reducedMotionSpring ?? { damping: 100, stiffness: 1000, mass: 1 }
+    springConfig ?? (type === 'card' ? SPRING_CONFIG.CARD : SPRING_CONFIG.BUTTON)
   ).current;
 
   // Animation value

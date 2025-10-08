@@ -60,8 +60,6 @@ const ListenHeader = memo<ListenHeaderProps>(
             style={closeButtonStyle}
             onPress={handleClose}
             hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-            accessibilityRole="button"
-            accessibilityLabel="Close practice session"
             android_ripple={createAndroidRipple(colors)}
           >
             <Ionicons

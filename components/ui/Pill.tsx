@@ -96,12 +96,6 @@ const Pill = memo(({ id, label, isSelected = false, onSelect, variant = 'filter'
   return (
     <Pressable
       disabled={!onSelect}
-      accessibilityRole="button"
-      accessibilityState={{ selected: !!isSelected }}
-      accessibilityLabel={`${isSelected ? 'Selected' : 'Select'} ${label} ${variant}`}
-      accessibilityHint={
-        onSelect ? `Double tap to ${isSelected ? 'deselect' : 'select'} this ${variant}` : undefined
-      }
       style={getPressableStyle}
       onPress={handlePress}
     >

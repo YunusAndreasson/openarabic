@@ -92,20 +92,6 @@ export const FAQ_DATA: FAQCategoryData[] = [
           'Audio playback with mini-player controls, sleep timer, and bookmarks management. Audio caches after you play an article the first time for offline listening. Controls emphasize Play and Stop for clarity.',
         category: FAQCategoryEnum.FEATURES,
       },
-      {
-        id: 'account-settings',
-        question: 'How do I change my settings?',
-        answer:
-          'Access settings through the Account section in the Read tab. You can customize Arabic font, font size, daily word limits, audio preferences, and display language. Changes are saved automatically and sync across your devices.',
-        category: FAQCategoryEnum.FEATURES,
-      },
-      {
-        id: 'islamic-calendar',
-        question: 'What is the Islamic calendar feature?',
-        answer:
-          'The Islamic calendar shows important Islamic dates and events in the Hijri calendar. It helps you stay connected with Islamic observances and can be toggled on/off in your account settings.',
-        category: FAQCategoryEnum.FEATURES,
-      },
     ],
   },
   {

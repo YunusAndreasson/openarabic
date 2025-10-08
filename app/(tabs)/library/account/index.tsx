@@ -167,7 +167,7 @@ const AccountScreen: FC = () => {
           dispatch(setDailyWordLimit(value as number));
           break;
       }
-      setActivePicker(null);
+      // Don't close picker on selection - let user close manually
     },
     [activePicker, dispatch]
   );
@@ -248,7 +248,7 @@ const AccountScreen: FC = () => {
           },
         ],
         selectedValue: currentDailyWordLimit,
-        snapPoints: [440],
+        snapPoints: [520],
       },
     }),
     [currentTheme, currentLanguage, currentAudioLanguage, currentDailyWordLimit]
@@ -673,7 +673,7 @@ const AccountScreen: FC = () => {
         }
         selectedValue={
           activePicker
-            ? pickerConfigs[activePicker as keyof typeof pickerConfigs].selectedValue || undefined
+            ? pickerConfigs[activePicker as keyof typeof pickerConfigs].selectedValue ?? undefined
             : undefined
         }
         snapPoints={

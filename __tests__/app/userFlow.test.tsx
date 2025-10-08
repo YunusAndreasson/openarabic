@@ -116,7 +116,6 @@ jest.mock('../../hooks/review', () => {
       showMeaningOverlay: false,
       currentMeaning: '',
       currentSentence: { wordForm: 'word' },
-      isTransitioningToCompletion: state.isComplete,
       isComplete: state.isComplete,
       progress: 0,
       maxProgress: 1,

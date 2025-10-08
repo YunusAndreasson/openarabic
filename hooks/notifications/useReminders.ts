@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 
-import { STRINGS } from '@/constants/strings';
 import { scheduleReminder } from '@/services/notificationService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setReminderTime } from '@/store/settingsSlice';
@@ -33,10 +32,13 @@ export function useReminders(): UseRemindersResult {
   );
 
   const formatReminderTime = useCallback((hour: number, minute: number): string => {
-    const period = hour >= 12 ? STRINGS.PM : STRINGS.AM;
-    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-    const displayMinute = minute.toString().padStart(2, '0');
-    return `${displayHour}:${displayMinute} ${period}`;
+    const date = new Date();
+    date.setHours(hour, minute, 0, 0);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
   }, []);
 
   return useMemo(

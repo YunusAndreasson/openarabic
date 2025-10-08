@@ -9,7 +9,6 @@ const createMockIcon = name => {
       {
         ...props,
         testID: `mock-icon-${name}`,
-        accessibilityLabel: `icon ${props.name || name}`,
       },
       props.name || name
     );

@@ -1,11 +1,12 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useCallback, useMemo, useState, type FC } from 'react';
-import { LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
+import { LayoutAnimation, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import BaseCard from '@/components/common/BaseCard';
 import SectionTitle from '@/components/common/SectionTitle';
 import { FAQ_DATA, type FAQCategoryData, type FAQItem } from '@/constants/faq';
 import { LAYOUT } from '@/constants/layout';
@@ -23,9 +24,25 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
   const colors = useColors();
 
   const handlePress = useCallback(() => {
-    // Use LayoutAnimation only on native platforms for smooth expand/collapse
+    // Use spring-based LayoutAnimation for natural expand/collapse feel
     if (LayoutAnimation && typeof LayoutAnimation.configureNext === 'function') {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      LayoutAnimation.configureNext({
+        duration: 300,
+        create: {
+          type: LayoutAnimation.Types.spring,
+          property: LayoutAnimation.Properties.opacity,
+          springDamping: 0.8,
+        },
+        update: {
+          type: LayoutAnimation.Types.spring,
+          springDamping: 0.8,
+        },
+        delete: {
+          type: LayoutAnimation.Types.spring,
+          property: LayoutAnimation.Properties.opacity,
+          springDamping: 0.8,
+        },
+      });
     }
     onToggle(item.id);
   }, [item.id, onToggle]);
@@ -34,12 +51,10 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
     () => [
       styles.faqButton,
       {
-        backgroundColor: colors.card,
         borderColor: isExpanded ? colors.tint : colors.cardBorder,
-        ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation
       },
     ],
-    [colors.card, colors.tint, colors.cardBorder, isExpanded]
+    [colors.tint, colors.cardBorder, isExpanded]
   );
 
   const answerContainerStyle = useMemo(
@@ -56,19 +71,7 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
 
   return (
     <View style={styles.faqItemContainer}>
-      <Pressable
-        style={buttonStyle}
-        onPress={handlePress}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: isExpanded }}
-        accessibilityLabel={item.question}
-        accessibilityHint={isExpanded ? 'Collapses the answer' : 'Expands to show the answer'}
-        android_ripple={{
-          color: colors.navigationRipple,
-          borderless: false,
-          radius: LAYOUT.BUTTON.HEIGHT.LARGE / 2,
-        }}
-      >
+      <BaseCard shadowSize="small" style={buttonStyle} onPress={handlePress}>
         <View style={styles.faqButtonContent}>
           <ThemedText
             type="body"
@@ -84,7 +87,7 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
             color={isExpanded ? colors.tint : colors.textTertiary}
           />
         </View>
-      </Pressable>
+      </BaseCard>
       {isExpanded && (
         <View style={answerContainerStyle}>
           <ThemedText type="body" colorName="metadataText">
