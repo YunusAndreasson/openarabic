@@ -65,19 +65,16 @@ export function calculateDueWords(studyWords: StudyWord[]): number {
 }
 
 /**
- * Calculate learning words using server-side logic (matching session logic)
- * Server: 'fsrs_state.in.(0,1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
+ * Calculate learned words - all words that have graduated to State 2 (Review phase)
+ * This includes both consolidating words (stability < 5) and mastered words (stability >= 5)
  *
- * Note: State 0 (New) words are actually due for their first review, not learning.
- * Only words in states 1 (Learning), 3 (Relearning), or state 2 with low stability are learning.
+ * In FSRS progression: New (0) → Learning (1) → Learned (2) → subset: Mastered (2 + high stability)
  */
-export function calculateLearningWords(studyWords: StudyWord[]): number {
+export function calculateLearnedWords(studyWords: StudyWord[]): number {
   return studyWords.filter(word => {
     const state = word.fsrs_state;
-    const stability = word.fsrs_stability ?? 0;
-    // State 0 (New) words are due for first review, not learning
-    // Only states 1, 3, or state 2 with low stability are learning
-    return state === 1 || state === 3 || (state === 2 && stability < 5);
+    // All State 2 words are considered "learned" (graduated to review phase)
+    return state === 2;
   }).length;
 }
 
@@ -127,18 +124,18 @@ export function calculateWordCategories(
   dueWordsProp?: number
 ): {
   dueWords: number;
-  learningWords: number;
+  learnedWords: number;
   masteredWords: number;
   strugglingWords: number;
 } {
   const calculatedDueWords = calculateDueWords(studyWords);
-  const learningWords = calculateLearningWords(studyWords);
+  const learnedWords = calculateLearnedWords(studyWords);
   const masteredWords = calculateMasteredWords(studyWords);
   const strugglingWords = calculateStrugglingWords(studyWords);
 
   return {
     dueWords: typeof dueWordsProp === 'number' ? dueWordsProp : calculatedDueWords,
-    learningWords,
+    learnedWords,
     masteredWords,
     strugglingWords,
   };

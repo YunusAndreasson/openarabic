@@ -2,7 +2,7 @@ import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   calculateDueWords,
-  calculateLearningWords,
+  calculateLearnedWords,
   calculateMasteredWords,
   calculateStrugglingWords,
   calculateWordCategories,
@@ -62,19 +62,19 @@ describe('wordClassification', () => {
     });
   });
 
-  describe('calculateLearningWords', () => {
-    it('should count learning words correctly', () => {
+  describe('calculateLearnedWords', () => {
+    it('should count learned words correctly', () => {
       const words = [
-        createStudyWord({ fsrs_state: 0 }), // New - should NOT be counted as learning
-        createStudyWord({ fsrs_state: 1 }), // Learning
-        createStudyWord({ fsrs_state: 2, fsrs_stability: 3 }), // Review but unstable
-        createStudyWord({ fsrs_state: 3 }), // Relearning
-        createStudyWord({ fsrs_state: 2, fsrs_stability: 10 }), // Mastered
+        createStudyWord({ fsrs_state: 0 }), // New - not learned yet
+        createStudyWord({ fsrs_state: 1 }), // Learning - not learned yet
+        createStudyWord({ fsrs_state: 2, fsrs_stability: 3 }), // Learned (State 2)
+        createStudyWord({ fsrs_state: 3 }), // Relearning - not learned yet
+        createStudyWord({ fsrs_state: 2, fsrs_stability: 10 }), // Learned (State 2, also mastered)
       ];
 
-      // State 0 (New) words are due for first review, not learning
-      // Only states 1, 3, or state 2 with low stability are learning
-      expect(calculateLearningWords(words)).toBe(3);
+      // Learned words = all State 2 words (graduated to review phase)
+      // Includes both consolidating and mastered words
+      expect(calculateLearnedWords(words)).toBe(2);
     });
   });
 
@@ -127,7 +127,7 @@ describe('wordClassification', () => {
       const words = [
         createStudyWord({ fsrs_due: pastDate }), // Due
         createStudyWord({ fsrs_state: 0, fsrs_due: null }), // New - should be counted as due for first review
-        createStudyWord({ fsrs_state: 2, fsrs_stability: 10, fsrs_due: null }), // Mastered
+        createStudyWord({ fsrs_state: 2, fsrs_stability: 10, fsrs_due: null }), // Mastered (and learned)
         createStudyWord({
           fsrs_state: 1, // Learning state
           fsrs_difficulty: 8.5,
@@ -135,13 +135,13 @@ describe('wordClassification', () => {
           fsrs_last_review: pastBeyondCooldown,
           fsrs_reps: 3,
           fsrs_due: null,
-        }), // Struggling
+        }), // Struggling (but not learned yet)
       ];
 
       const result = calculateWordCategories(words);
 
       expect(result.dueWords).toBe(2); // Past due + new word (state 0)
-      expect(result.learningWords).toBe(1); // Only struggling word (state 1)
+      expect(result.learnedWords).toBe(1); // Only the State 2 mastered word
       expect(result.masteredWords).toBe(1);
       expect(result.strugglingWords).toBe(1);
     });

@@ -13,6 +13,7 @@ import { PERFORMANCE_THRESHOLDS } from './constants';
 export const CHART_LABELS = {
   // Performance metrics - with clear time indicators for zero confusion
   STRENGTH: '📈 Mastery Journey', // Cumulative mastered words over time
+  LEARNED: '🎓 Learned Words', // Cumulative learned words over time
   RETENTION: '⏰ Review schedule', // When words will need review (next 7 days)
   SPEED: '📚 Learning Progress', // Progress in learning words over time
   DUE_WORDS_PROGNOSIS: '📋 Due Words Forecast', // Projected due words (next 7 days)
@@ -145,6 +146,7 @@ export const generateChartSubtitle = {
 // Updated from generic messages to specific action + benefit format
 export const EMPTY_STATE_MESSAGES = {
   mastery: 'Complete your first 5 reviews to see your memory strength trend',
+  learned: 'Complete your first reviews to see learned words progress',
   efficiency: 'Practice 10 words to track your learning speed progress',
   retrievability: 'Study 5 words to monitor which ones need review timing',
   dueWords: 'Add words to see due forecast',

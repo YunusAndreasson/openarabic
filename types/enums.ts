@@ -112,7 +112,7 @@ export enum PracticeState {
  */
 export enum VocabularyStatCategory {
   DUE = 'Due',
-  LEARNING = 'Learning',
+  LEARNED = 'Learned',
   MASTERED = 'Mastered',
   TOTAL = 'Total words',
 }

@@ -19,11 +19,11 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 interface VocabularyStatCardsProps {
   masteredWords?: number;
-  learningWords?: number;
+  learnedWords?: number;
   dueWords?: number;
   onInfoPress?: () => void;
   onDuePress?: () => void;
-  onLearningPress?: () => void;
+  onLearnedPress?: () => void;
   onMasteredPress?: () => void;
   studyWords?: StudyWord[];
 }
@@ -60,11 +60,11 @@ StatCard.displayName = 'StatCard';
 export const VocabularyStatCards = memo(
   ({
     masteredWords = 0,
-    learningWords = 0,
+    learnedWords = 0,
     dueWords = 0,
     onInfoPress,
     onDuePress,
-    onLearningPress,
+    onLearnedPress,
     onMasteredPress,
     studyWords = [],
   }: VocabularyStatCardsProps) => {
@@ -82,11 +82,11 @@ export const VocabularyStatCards = memo(
           formatAsDecimal: false,
         },
         {
-          label: VocabularyStatCategory.LEARNING,
-          value: learningWords,
+          label: VocabularyStatCategory.LEARNED,
+          value: learnedWords,
           color: colors.warning,
           icon: 'school' as const,
-          onPress: onLearningPress,
+          onPress: onLearnedPress,
           formatAsDecimal: false,
         },
         {
@@ -100,13 +100,13 @@ export const VocabularyStatCards = memo(
       ],
       [
         dueWords,
-        learningWords,
+        learnedWords,
         masteredWords,
         colors.error,
         colors.warning,
         colors.success,
         onDuePress,
-        onLearningPress,
+        onLearnedPress,
         onMasteredPress,
       ]
     );
