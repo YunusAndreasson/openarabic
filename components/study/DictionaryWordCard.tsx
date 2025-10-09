@@ -1,12 +1,12 @@
 import BaseCard from '@common/BaseCard';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 
 import { ThemedText } from '@/components/ThemedText';
 import DeleteButton from '@/components/bookmarks/DeleteButton';
-import { DifficultyBar } from '@/components/study/DifficultyBar';
+import { StatusBadge } from '@/components/study/StatusBadge';
 import { SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
@@ -15,6 +15,12 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { generateAudioUrl } from '@/utils/imageUtils';
+import {
+  isDueWord,
+  isExtraHardWord,
+  isLearnedWord,
+  isMasteredWord,
+} from '@/utils/wordClassification';
 
 interface DictionaryWordCardProps {
   word: StudyWord;
@@ -85,11 +91,29 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
       onDelete();
     }, [editMode, onDelete]);
 
-    const difficultyValue = word.fsrs_difficulty ?? 1.0;
-
     // Get Arabic and English text from root
     const arabicText = word.root?.letters || 'Unknown Arabic';
     const englishText = word.root?.meaning || 'Unknown English';
+
+    // Determine word status for badges (memoized to prevent recalculations)
+    const wordStatus = useMemo(
+      () => ({
+        isDue: isDueWord(word),
+        isLearned: isLearnedWord(word),
+        isMastered: isMasteredWord(word),
+        isExtraHard: isExtraHardWord(word),
+      }),
+      [word]
+    );
+
+    // Determine primary badge type (mutually exclusive: Due > Mastered > Learned)
+    const primaryBadgeType = wordStatus.isDue
+      ? 'due'
+      : wordStatus.isMastered
+        ? 'mastered'
+        : wordStatus.isLearned
+          ? 'learned'
+          : null;
 
     return (
       <Animated.View style={[styles.cardContainer, animatedStyle]}>
@@ -101,9 +125,18 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
             contentStyle={styles.cardContent}
           >
             <View style={styles.content}>
-              {/* Left: English text with difficulty bar below */}
+              {/* Left: Status badges and English text */}
               <View style={styles.leftSection}>
                 <View style={styles.textContainer}>
+                  {/* Status badges row (primary + optional extra hard) */}
+                  {(primaryBadgeType || wordStatus.isExtraHard) && (
+                    <View style={styles.badgesRow}>
+                      {primaryBadgeType && <StatusBadge type={primaryBadgeType} />}
+                      {wordStatus.isExtraHard && <StatusBadge type="extraHard" />}
+                    </View>
+                  )}
+
+                  {/* English meaning text */}
                   <ThemedText
                     type="body"
                     variant="secondary"
@@ -113,7 +146,6 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
                   >
                     {englishText}
                   </ThemedText>
-                  <DifficultyBar difficulty={difficultyValue} width={48} height={3} />
                 </View>
               </View>
 
@@ -146,7 +178,11 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     return (
       prevProps.editMode === nextProps.editMode &&
       prevProps.word.root_id === nextProps.word.root_id &&
-      prevProps.word.fsrs_difficulty === nextProps.word.fsrs_difficulty &&
+      prevProps.word.fsrs_state === nextProps.word.fsrs_state &&
+      prevProps.word.fsrs_stability === nextProps.word.fsrs_stability &&
+      prevProps.word.fsrs_due === nextProps.word.fsrs_due &&
+      prevProps.word.fsrs_last_review === nextProps.word.fsrs_last_review &&
+      prevProps.word.fsrs_difficulty === nextProps.word.fsrs_difficulty && // Still needed for Extra Hard badge
       prevProps.word.root?.letters === nextProps.word.root?.letters &&
       prevProps.word.root?.meaning === nextProps.word.root?.meaning &&
       prevProps.word.root?.audio_url === nextProps.word.root?.audio_url
@@ -192,6 +228,11 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-start',
     gap: LAYOUT.SPACING.SMALL,
+  },
+  badgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.TINY, // Small gap between badges
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

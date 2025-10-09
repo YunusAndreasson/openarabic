@@ -86,6 +86,13 @@ export const FAQ_DATA: FAQCategoryData[] = [
         category: FAQCategoryEnum.FEATURES,
       },
       {
+        id: 'learned-vs-mastered',
+        question: 'What is the difference between Learned and Mastered?',
+        answer:
+          "These show your vocabulary progression. Learned words have successfully moved to long-term memory and are building toward mastery - they still need regular review. Mastered words have strong, stable memories requiring minimal review. The system uses FSRS to track each word's retention strength and automatically schedules reviews at optimal times.",
+        category: FAQCategoryEnum.FEATURES,
+      },
+      {
         id: 'audio-features',
         question: 'What audio features are available?',
         answer:

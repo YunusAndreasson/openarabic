@@ -181,8 +181,8 @@ export const STRINGS = {
 
   // Practice bottom sheet subtitles (condensed for subtitle format)
   MEMORY_STRENGTH_SUBTITLE: 'Amount of words you are expected to recall at a given time',
-  WORD_MASTERY_SUBTITLE: 'Cumulative progress of mastered words over time',
-  LEARNED_WORDS_SUBTITLE: 'Words that have graduated to the review phase',
+  WORD_MASTERY_SUBTITLE: 'Words with strong, stable memories requiring minimal review',
+  LEARNED_WORDS_SUBTITLE: 'Words you have successfully learned that are building toward mastery',
   LEARNING_RATE_SUBTITLE: 'Learning efficiency and speed trends over recent days',
   DUE_WORDS_FORECAST_SUBTITLE: 'Upcoming reviews for the next 7 days',
   MEMORY_RETENTION_OPTIMAL_TIMING:

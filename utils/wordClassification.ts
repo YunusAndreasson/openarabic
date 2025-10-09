@@ -178,3 +178,61 @@ export const getStrugglingWordsCount = (studyWords: StudyWord[]): number => {
     return isStrugglingWord(word);
   }).length;
 };
+
+// ===== WORD STATUS UTILITY FUNCTIONS FOR DICTIONARY UI =====
+
+/**
+ * Determines if a word is due for review (for Dictionary UI status badges)
+ * Uses the same logic as calculateDueWords but for a single word
+ */
+export function isDueWord(word: StudyWord): boolean {
+  const nowMs = Date.now();
+  const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+
+  const normalizeTs = (ts: string | null) => {
+    if (typeof ts === 'string') return ts.replace(' ', 'T');
+    return undefined;
+  };
+
+  // New words (state 0) are always due for their first review
+  if (word.fsrs_state === 0) {
+    return true;
+  }
+
+  const dueStr = normalizeTs(word.fsrs_due);
+  const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
+  const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
+
+  const lastStr = normalizeTs(word.fsrs_last_review);
+  const lastMs = lastStr ? Date.parse(lastStr) : 0;
+  const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
+
+  return isDue && !isRecentlyReviewed;
+}
+
+/**
+ * Determines if a word is learned (for Dictionary UI status badges)
+ * Learned = State 2 (graduated to review phase)
+ */
+export function isLearnedWord(word: StudyWord): boolean {
+  return word.fsrs_state === 2;
+}
+
+/**
+ * Determines if a word is mastered (for Dictionary UI status badges)
+ * Mastered = State 2 + stability >= 5
+ */
+export function isMasteredWord(word: StudyWord): boolean {
+  const state = word.fsrs_state;
+  const stability = word.fsrs_stability ?? 0;
+  return state === 2 && stability >= 5;
+}
+
+/**
+ * Determines if a word is extra hard (for Dictionary UI secondary badge)
+ * Extra Hard = difficulty > 8.0 (high end of 1.0-10.0 scale)
+ */
+export function isExtraHardWord(word: StudyWord): boolean {
+  const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY;
+  return difficulty > 8.0;
+}

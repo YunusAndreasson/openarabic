@@ -21,6 +21,7 @@ import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useDictionaryModal, useFSRSQueries } from '@/hooks/vocabulary';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
+import { isLearnedWord, isMasteredWord } from '@/utils/wordClassification';
 
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
@@ -28,15 +29,15 @@ export default function DictionaryScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const navigation = useNavigation();
-  const { filter } = useLocalSearchParams<{ filter?: 'due' | 'learning' | 'mastered' }>();
+  const { filter } = useLocalSearchParams<{ filter?: 'due' | 'learned' | 'mastered' }>();
 
   // Update screen title based on filter
   useEffect(() => {
     const title =
       filter === 'due'
         ? 'Due Words'
-        : filter === 'learning'
-        ? 'Learning Words'
+        : filter === 'learned'
+        ? 'Learned Words'
         : filter === 'mastered'
         ? 'Mastered Words'
         : 'Dictionary';
@@ -56,7 +57,7 @@ export default function DictionaryScreen(): JSX.Element {
   // Get all study words and due words
   const { allWords: studyWords, dueWords, isLoading } = useFSRSQueries({ userId: user?.id });
 
-  // Filter by category when requested (due/learning/mastered)
+  // Filter by category when requested (due/learned/mastered)
   const filteredByCategory = useMemo<StudyWord[] | undefined>(() => {
     if (!studyWords) return studyWords;
     if (!filter) return studyWords;
@@ -66,21 +67,13 @@ export default function DictionaryScreen(): JSX.Element {
       return dueWords;
     }
 
-    if (filter === 'learning') {
-      return studyWords.filter(word => {
-        const state = word.fsrs_state;
-        const stability = word.fsrs_stability ?? 0;
-        // State 0 (New) words are due for first review, not learning
-        // Only states 1, 3, or state 2 with low stability are learning
-        return state === 1 || state === 3 || (state === 2 && stability < 5);
-      });
+    if (filter === 'learned') {
+      // Learned = all State 2 words (graduated to review phase)
+      return studyWords.filter(word => isLearnedWord(word));
     }
 
-    return studyWords.filter(word => {
-      const state = word.fsrs_state;
-      const stability = word.fsrs_stability ?? 0;
-      return state === 2 && stability >= 5;
-    });
+    // Mastered = State 2 + stability >= 5
+    return studyWords.filter(word => isMasteredWord(word));
   }, [studyWords, dueWords, filter]);
 
   const { toggleRootMutation } = useArticleMutations(

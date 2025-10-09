@@ -177,6 +177,12 @@ export function filterArticles(
 }
 
 /**
+ * Completion threshold for articles (95% or higher is considered completed)
+ * This provides leeway for users who read to the last sentence or two
+ */
+const COMPLETION_THRESHOLD = 95;
+
+/**
  * Sort articles by progress: articles with progress (partially read) first,
  * then articles with no progress, then articles with full progress (completed)
  */
@@ -190,9 +196,9 @@ export function sortArticlesByProgress(
     const progressA = progressMap.get(a.id)?.progress_percentage ?? 0;
     const progressB = progressMap.get(b.id)?.progress_percentage ?? 0;
 
-    // Articles with partial progress (1-99%) come first
-    const aHasPartialProgress = progressA > 0 && progressA < 100;
-    const bHasPartialProgress = progressB > 0 && progressB < 100;
+    // Articles with partial progress (1-94%) come first
+    const aHasPartialProgress = progressA > 0 && progressA < COMPLETION_THRESHOLD;
+    const bHasPartialProgress = progressB > 0 && progressB < COMPLETION_THRESHOLD;
 
     if (aHasPartialProgress && !bHasPartialProgress) return -1;
     if (!aHasPartialProgress && bHasPartialProgress) return 1;
@@ -204,9 +210,9 @@ export function sortArticlesByProgress(
     if (aHasNoProgress && !bHasNoProgress) return -1;
     if (!aHasNoProgress && bHasNoProgress) return 1;
 
-    // Articles with full progress (100%) come last
-    const aIsCompleted = progressA === 100;
-    const bIsCompleted = progressB === 100;
+    // Articles with >=95% progress are considered completed and come last
+    const aIsCompleted = progressA >= COMPLETION_THRESHOLD;
+    const bIsCompleted = progressB >= COMPLETION_THRESHOLD;
 
     if (aIsCompleted && !bIsCompleted) return 1;
     if (!aIsCompleted && bIsCompleted) return -1;

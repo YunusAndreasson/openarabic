@@ -125,7 +125,7 @@ describe('articleUtils', () => {
   });
 
   describe('sortArticlesByProgress', () => {
-    it('should prioritize articles with partial progress (1-99%)', () => {
+    it('should prioritize articles with partial progress (1-94%)', () => {
       const progressMap = new Map([
         [1, { progress_percentage: 50 }], // Partial progress
         [2, { progress_percentage: 0 }], // No progress
@@ -134,7 +134,7 @@ describe('articleUtils', () => {
       expect(result[0].id).toBe(1); // Article with partial progress comes first
     });
 
-    it('should place no-progress articles before completed articles', () => {
+    it('should place no-progress articles before completed articles (>=95%)', () => {
       const progressMap = new Map([
         [1, { progress_percentage: 100 }], // Completed
         [2, { progress_percentage: 0 }], // No progress
@@ -147,6 +147,88 @@ describe('articleUtils', () => {
       const progressMap = new Map();
       const result = sortArticlesByProgress(mockArticles, progressMap);
       expect(result).toHaveLength(2);
+    });
+
+    it('should sort articles in correct priority order (in-progress > not-opened > completed)', () => {
+      // Create extended mock articles for comprehensive testing
+      const extendedArticles: Article[] = [
+        { ...mockArticles[0], id: 1 },
+        { ...mockArticles[1], id: 2 },
+        { ...mockArticles[0], id: 3 },
+        { ...mockArticles[1], id: 4 },
+        { ...mockArticles[0], id: 5 },
+        { ...mockArticles[1], id: 6 },
+        { ...mockArticles[0], id: 7 },
+        { ...mockArticles[1], id: 8 },
+      ];
+
+      // Test with all three categories (95% threshold for completion):
+      // - In-progress: 75% (id 4), 50% (id 1), 25% (id 5), 94% (id 8)
+      // - Not-opened: 0% (id 2), null (id 6)
+      // - Completed: 95% (id 7), 100% (id 3)
+      const progressMap = new Map([
+        [1, { progress_percentage: 50 }], // In-progress
+        [2, { progress_percentage: 0 }], // Not-opened
+        [3, { progress_percentage: 100 }], // Completed
+        [4, { progress_percentage: 75 }], // In-progress
+        [5, { progress_percentage: 25 }], // In-progress
+        [6, { progress_percentage: null }], // Not-opened (null treated as 0)
+        [7, { progress_percentage: 95 }], // Completed (threshold)
+        [8, { progress_percentage: 94 }], // In-progress (just below threshold)
+      ]);
+
+      const result = sortArticlesByProgress(extendedArticles, progressMap);
+
+      // Validate complete sorting order
+      // Top tier: In-progress articles (sorted by progress descending)
+      expect(result[0].id).toBe(8); // 94% - highest in-progress
+      expect(result[1].id).toBe(4); // 75%
+      expect(result[2].id).toBe(1); // 50%
+      expect(result[3].id).toBe(5); // 25%
+
+      // Middle tier: Not-opened articles
+      expect(result[4].id).toBe(2); // 0%
+      expect(result[5].id).toBe(6); // null
+
+      // Bottom tier: Completed articles (>=95%)
+      expect(result[6].id).toBe(3); // 100%
+      expect(result[7].id).toBe(7); // 95% - at threshold
+    });
+
+    it('should treat 94% as in-progress but 95%+ as completed', () => {
+      const extendedArticles: Article[] = [
+        { ...mockArticles[0], id: 1 },
+        { ...mockArticles[1], id: 2 },
+        { ...mockArticles[0], id: 3 },
+        { ...mockArticles[1], id: 4 },
+        { ...mockArticles[0], id: 5 },
+        { ...mockArticles[1], id: 6 },
+      ];
+
+      // Test edge cases around 95% completion threshold
+      const progressMap = new Map([
+        [1, { progress_percentage: 1 }], // In-progress
+        [2, { progress_percentage: 0 }], // Not-opened
+        [3, { progress_percentage: 94 }], // In-progress (just below threshold)
+        [4, { progress_percentage: 95 }], // Completed (at threshold)
+        [5, { progress_percentage: 99 }], // Completed
+        [6, { progress_percentage: 100 }], // Completed
+      ]);
+
+      const result = sortArticlesByProgress(extendedArticles, progressMap);
+
+      // Validate edge cases are categorized correctly
+      // In-progress tier (1-94%)
+      expect(result[0].id).toBe(3); // 94% - highest in-progress
+      expect(result[1].id).toBe(1); // 1% - lowest in-progress
+
+      // Not-opened tier (0%)
+      expect(result[2].id).toBe(2); // 0% - not opened
+
+      // Completed tier (95%+)
+      expect(result[3].id).toBe(6); // 100%
+      expect(result[4].id).toBe(5); // 99%
+      expect(result[5].id).toBe(4); // 95% - at threshold
     });
   });
 
