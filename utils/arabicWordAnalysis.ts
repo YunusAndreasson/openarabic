@@ -135,6 +135,13 @@ function hasEnglishMatch(english: string, patterns: string[]): string[] {
   for (const raw of patterns) {
     const candidates = expand(raw);
     for (const candidate of candidates) {
+      // CRITICAL: Skip if pattern matches the ENTIRE English translation for multi-word phrases
+      // This prevents single-coloring of all words (defeats educational purpose)
+      // But allow single-word matches (e.g., 'و' → 'and')
+      if (candidate === norm && tokens.length > 1) {
+        continue; // Don't match the whole thing for multi-word translations
+      }
+
       if (candidate.includes(' ')) {
         // Lazily build bigrams/trigrams when needed
         if (!bigrams || !trigrams) {

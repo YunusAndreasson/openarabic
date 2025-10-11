@@ -1,0 +1,893 @@
+{
+  "meta": {
+    "generatedAt": "2025-10-11T19:57:37.311Z",
+    "config": {
+      "limit": 1000,
+      "minFrequency": 1
+    },
+    "totals": {
+      "analyzed": 869,
+      "missingRules": 109
+    }
+  },
+  "categoryCounts": {
+    "compound_prefix": 0,
+    "missing_preposition": 61,
+    "novel_pattern": 48,
+    "multi_component": 0
+  },
+  "missingRules": [
+    {
+      "arabic": "رَأَى",
+      "english": "he sees",
+      "frequency": 2,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: رَأَى → he sees"
+    },
+    {
+      "arabic": "غُرِسَتْ",
+      "english": "is planted",
+      "frequency": 2,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: غُرِسَتْ → is planted"
+    },
+    {
+      "arabic": "شَرِبَ",
+      "english": "would drink",
+      "frequency": 2,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "تَعَالَى",
+      "english": "the Exalted",
+      "frequency": 2,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "ثُمَّ",
+      "english": "and then",
+      "frequency": 2,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: ثُمَّ → and then"
+    },
+    {
+      "arabic": "دَقِيقَةٌ",
+      "english": "one minute",
+      "frequency": 2,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: دَقِيقَةٌ → one minute"
+    },
+    {
+      "arabic": "أَنْصَفَ",
+      "english": "acts justly",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: أَنْصَفَ → acts justly"
+    },
+    {
+      "arabic": "اخْرُجْ",
+      "english": "get out",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: اخْرُجْ → get out"
+    },
+    {
+      "arabic": "عَلَيَّ",
+      "english": "upon Me",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "كَانَتْ",
+      "english": "that was",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "خَلِيفَةً",
+      "english": "a vicegerent",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "عَلِقَتْ",
+      "english": "take hold",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "تَمَكَّنَتْ",
+      "english": "becomes established",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "كُلَّ",
+      "english": "at all",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "مَن",
+      "english": "he who",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: مَن → he who"
+    },
+    {
+      "arabic": "كَانَ",
+      "english": "will be",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "أَوْرَثَتْ",
+      "english": "it yields",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: أَوْرَثَتْ → it yields"
+    },
+    {
+      "arabic": "تَشْرُدْ",
+      "english": "let stray",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: تَشْرُدْ → let stray"
+    },
+    {
+      "arabic": "نَواةٍ",
+      "english": "a seed",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: نَواةٍ → a seed"
+    },
+    {
+      "arabic": "فَصَارَت",
+      "english": "which becomes",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: فَصَارَت → which becomes"
+    },
+    {
+      "arabic": "شَجَرَةً",
+      "english": "a tree",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: شَجَرَةً → a tree"
+    },
+    {
+      "arabic": "أَثمرَ",
+      "english": "bears fruit",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: أَثمرَ → bears fruit"
+    },
+    {
+      "arabic": "تَداعِيُ",
+      "english": "the spread",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: تَداعِيُ → the spread"
+    },
+    {
+      "arabic": "الْمَعاصِي",
+      "english": "of sins",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "مَمْلُوكٍ",
+      "english": "a servant",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "هُوَ",
+      "english": "it is",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: هُوَ → it is"
+    },
+    {
+      "arabic": "دَلَّ",
+      "english": "has guided",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "أُطْلِقَ",
+      "english": "have been",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "مَالِكٍ",
+      "english": "a Master",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "يَتَحَبَّبُ",
+      "english": "endears Himself",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "غِنَاهُ",
+      "english": "being self-sufficient",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: غِنَاهُ → being self-sufficient"
+    },
+    {
+      "arabic": "نَفَرٍ",
+      "english": "a group",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: نَفَرٍ → a group"
+    },
+    {
+      "arabic": "مُتَوَشِّحًا",
+      "english": "girded with",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: مُتَوَشِّحًا → girded with"
+    },
+    {
+      "arabic": "عَلَيَّ",
+      "english": "to me",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "بَشَرٌ",
+      "english": "is human",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "الْخَبِيثَ",
+      "english": "treacherous one",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "ادْنُ",
+      "english": "come closer",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: ادْنُ → come closer"
+    },
+    {
+      "arabic": "وُجُودُ",
+      "english": "to find",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: وُجُودُ → to find"
+    },
+    {
+      "arabic": "خُلِقَتْ",
+      "english": "was created",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "قَالَا",
+      "english": "they said",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "ذَلِكَ",
+      "english": "such people",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "قَدْ",
+      "english": "used to",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: قَدْ → used to"
+    },
+    {
+      "arabic": "كُنَّا",
+      "english": "we were",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "فَافْتَدِ",
+      "english": "ransom yourself",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: فَافْتَدِ → ransom yourself"
+    },
+    {
+      "arabic": "تَدْعُو",
+      "english": "it calls",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: تَدْعُو → it calls"
+    },
+    {
+      "arabic": "تَشْتَهِي",
+      "english": "it desires",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: تَشْتَهِي → it desires"
+    },
+    {
+      "arabic": "مَحْبُوبٍ",
+      "english": "something beloved",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "مَحْبُوبَةٌ",
+      "english": "is beloved",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "دَعَا",
+      "english": "it calls",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: دَعَا → it calls"
+    },
+    {
+      "arabic": "خُلِقَ",
+      "english": "been created",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "أَكَلَ",
+      "english": "would eat",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "نَكَحَ",
+      "english": "would marry",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "خُولِفَ",
+      "english": "is opposed",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "صَعُبَ",
+      "english": "becomes difficult",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "ضَلَّتْ",
+      "english": "it strays",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "فَإِذَا",
+      "english": "but when",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: فَإِذَا → but when"
+    },
+    {
+      "arabic": "اشْتَدَّ",
+      "english": "becomes intense",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: اشْتَدَّ → becomes intense"
+    },
+    {
+      "arabic": "فَاحْذَرْ",
+      "english": "beware of",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: فَاحْذَرْ → beware of"
+    },
+    {
+      "arabic": "تَعْتَرِفَ",
+      "english": "it acknowledges",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: تَعْتَرِفَ → it acknowledges"
+    },
+    {
+      "arabic": "طَمِعَتْ",
+      "english": "it covets",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: طَمِعَتْ → it covets"
+    },
+    {
+      "arabic": "يُخَيِّرُ",
+      "english": "lets choose",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: يُخَيِّرُ → lets choose"
+    },
+    {
+      "arabic": "بِشَاغِلٍ",
+      "english": "can distract",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "أَحَبَّتْ",
+      "english": "it likes",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "كَرِهَتْ",
+      "english": "it dislikes",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "مَأْمُورٌ",
+      "english": "is commanded",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: مَأْمُورٌ → is commanded"
+    },
+    {
+      "arabic": "الأَدَبِ",
+      "english": "proper manners",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "كَلِمَةٌ",
+      "english": "the word",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "يَوْمًا",
+      "english": "one day",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: يَوْمًا → one day"
+    },
+    {
+      "arabic": "تَسْتَجِيبَ",
+      "english": "to respond",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "تُؤْثِرَ",
+      "english": "to prefer",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: تُؤْثِرَ → to prefer"
+    },
+    {
+      "arabic": "دَرَجَةً",
+      "english": "a degree",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: دَرَجَةً → a degree"
+    },
+    {
+      "arabic": "يَنبُعُ",
+      "english": "springs from",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "تُعْرَضُ",
+      "english": "are presented",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: تُعْرَضُ → are presented"
+    },
+    {
+      "arabic": "سِلْسِلَةً",
+      "english": "a chain",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "أَمِنَ",
+      "english": "is safe",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: أَمِنَ → is safe"
+    },
+    {
+      "arabic": "نَفْسَكَ",
+      "english": "with yourself",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "العِنَانَ",
+      "english": "free rein",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "قَمَرَ",
+      "english": "won against",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: قَمَرَ → won against"
+    },
+    {
+      "arabic": "افْتَدَى",
+      "english": "ransom themselves",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: افْتَدَى → ransom themselves"
+    },
+    {
+      "arabic": "لَفْظُ",
+      "english": "the word",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "الاسْمِ",
+      "english": "is unusual",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "بَاطِلٌ",
+      "english": "is false",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "يَوْمِي",
+      "english": "this day",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: يَوْمِي → this day"
+    },
+    {
+      "arabic": "نِعْمَةٍ",
+      "english": "a blessing",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: نِعْمَةٍ → a blessing"
+    },
+    {
+      "arabic": "لَاحَظْتَهَا",
+      "english": "you noticed",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "تُتْعِبُ",
+      "english": "that tires",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "يَجِفُّ",
+      "english": "dries up",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: يَجِفُّ → dries up"
+    },
+    {
+      "arabic": "أَبْوَابُ",
+      "english": "are gateways",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "يَسْتَوْطِنُ",
+      "english": "takes root",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: يَسْتَوْطِنُ → takes root"
+    },
+    {
+      "arabic": "ثَقُلَ",
+      "english": "becomes heavy",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "عَلَامَةُ",
+      "english": "a sign",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "اثْبُتْ",
+      "english": "stand firm",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "حُزْمَةً",
+      "english": "a bundle",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: حُزْمَةً → a bundle"
+    },
+    {
+      "arabic": "يُجْعَلَ",
+      "english": "be made",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "وَنَهْبَةٍ",
+      "english": "or grab",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "عَلَى",
+      "english": "yourself in",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "أَمْرٍ",
+      "english": "a matter",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: أَمْرٍ → a matter"
+    },
+    {
+      "arabic": "خُلُقٍ",
+      "english": "character trait",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "دَفْعَةً",
+      "english": "a burst",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: دَفْعَةً → a burst"
+    },
+    {
+      "arabic": "يَعْصِفُ",
+      "english": "that rages",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: يَعْصِفُ → that rages"
+    },
+    {
+      "arabic": "مَصْرُوفَةٌ",
+      "english": "turned away",
+      "frequency": 1,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: مَصْرُوفَةٌ → turned away"
+    },
+    {
+      "arabic": "لِي",
+      "english": "do I",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "يَعْبَثُ",
+      "english": "would ridicule",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "فَيُعْجَبُ",
+      "english": "be amazed",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "لَا",
+      "english": "that neither",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "أَثْبَتُ",
+      "english": "more steady",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "اكْتُبْ",
+      "english": "write down",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "ذَنْبًا",
+      "english": "one sin",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "خُلُقًا",
+      "english": "one virtue",
+      "frequency": 1,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    }
+  ]
+}

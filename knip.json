@@ -40,10 +40,11 @@
     "expo/**",
     ".github/workflows/**",
     "@expo/metro-config",
-    "metro-minify-terser"
+    "metro-minify-terser",
+    "scripts/**"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
-  "ignoreBinaries": ["supabase", "gh", "eas"],
+  "ignoreBinaries": ["supabase", "gh"],
   "exclude": ["duplicates"]
 }

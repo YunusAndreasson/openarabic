@@ -36,13 +36,18 @@ export interface TooltipDimensions {
  * @param layout - The layout information for the target element
  * @param text - The text content to display
  * @param hasBookmark - Whether the tooltip has a bookmark button
+ * @param measuredWidth - Optional measured width of the tooltip content
+ * @param containerOffsetX - The X offset of the container from screen left (for proper boundary checks)
+ * @param containerWidth - The actual width of the container (for right boundary checks)
  * @returns Calculated tooltip dimensions and positioning
  */
 export const calculateTooltipDimensions = (
   layout: TooltipLayout,
   text: string,
   hasBookmark: boolean,
-  measuredWidth?: number
+  measuredWidth?: number,
+  containerOffsetX: number = 0,
+  containerWidth: number = 0
 ): TooltipDimensions => {
   const {
     ARROW_SIZE,
@@ -93,15 +98,19 @@ export const calculateTooltipDimensions = (
   let arrowLeft = finalTooltipWidth / 2;
 
   // Handle screen boundaries with improved logic
+  // Account for container offset when checking boundaries
+  const effectiveScreenMargin = Math.max(0, SCREEN_MARGIN - containerOffsetX);
+  // Use container width if available (more accurate), otherwise fall back to calculated width
+  const effectiveScreenWidth = containerWidth > 0 ? containerWidth : SCREEN_WIDTH - containerOffsetX;
   const tooltipRight = tooltipLeft + finalTooltipWidth;
 
-  if (tooltipLeft < SCREEN_MARGIN) {
-    // Tooltip would go off left edge - align to left margin
-    tooltipLeft = SCREEN_MARGIN;
-    arrowLeft = wordCenterX - SCREEN_MARGIN;
-  } else if (tooltipRight > SCREEN_WIDTH - SCREEN_MARGIN) {
-    // Tooltip would go off right edge - align to right margin
-    tooltipLeft = SCREEN_WIDTH - SCREEN_MARGIN - finalTooltipWidth;
+  if (tooltipLeft < effectiveScreenMargin) {
+    // Tooltip would go off left edge - align to effective left margin
+    tooltipLeft = effectiveScreenMargin;
+    arrowLeft = wordCenterX - effectiveScreenMargin;
+  } else if (tooltipRight > effectiveScreenWidth - SCREEN_MARGIN) {
+    // Tooltip would go off right edge - align to effective right margin
+    tooltipLeft = effectiveScreenWidth - SCREEN_MARGIN - finalTooltipWidth;
     arrowLeft = wordCenterX - tooltipLeft;
   }
 

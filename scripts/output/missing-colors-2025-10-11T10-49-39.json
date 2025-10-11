@@ -1,0 +1,69 @@
+{
+  "meta": {
+    "generatedAt": "2025-10-11T10:49:39.356Z",
+    "config": {
+      "limit": 500,
+      "minFrequency": 2
+    },
+    "totals": {
+      "analyzed": 32,
+      "missingRules": 6
+    }
+  },
+  "categoryCounts": {
+    "compound_prefix": 1,
+    "missing_preposition": 1,
+    "novel_pattern": 4,
+    "multi_component": 0
+  },
+  "missingRules": [
+    {
+      "arabic": "رَأَى",
+      "english": "he sees",
+      "frequency": 2,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: رَأَى → he sees"
+    },
+    {
+      "arabic": "إِلَّا",
+      "english": "as nothing but",
+      "frequency": 2,
+      "category": "missing_preposition",
+      "reason": "Preposition exists but English translation variant not in rules",
+      "suggestedAction": "Expand english alternatives for existing preposition pattern"
+    },
+    {
+      "arabic": "غُرِسَتْ",
+      "english": "is planted",
+      "frequency": 2,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: غُرِسَتْ → is planted"
+    },
+    {
+      "arabic": "شَجَرَةُ",
+      "english": "the tree of",
+      "frequency": 2,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: شَجَرَةُ → the tree of"
+    },
+    {
+      "arabic": "فَإِنَّمَا",
+      "english": "only truly",
+      "frequency": 2,
+      "category": "novel_pattern",
+      "reason": "Grammatical pattern not covered by current rules",
+      "suggestedAction": "Investigate new grammatical pattern: فَإِنَّمَا → only truly"
+    },
+    {
+      "arabic": "فَقَالَ",
+      "english": "and said",
+      "frequency": 2,
+      "category": "compound_prefix",
+      "reason": "Compound prefix not in ARABIC_PREFIXES or English pattern mismatch",
+      "suggestedAction": "Add compound prefix rule: ^فَقَالَ → and said"
+    }
+  ]
+}

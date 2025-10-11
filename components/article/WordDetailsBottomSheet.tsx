@@ -12,6 +12,7 @@ import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
 import { handleError } from '@/utils/errorHandling';
 import { generateAudioUrl } from '@/utils/imageUtils';
 
@@ -52,18 +53,6 @@ const WordDetailsBottomSheetComponent = ({
   // Configure snap points
   const snapPoints = useMemo(() => [380], []);
 
-  // Color mapping for consistency with WordTooltip
-  const colorMapping = useMemo(
-    () => ({
-      tint: colors.tint,
-      primary: colors.primary,
-      warning: colors.warning,
-      secondaryText: colors.secondaryText,
-      text: colors.text,
-    }),
-    [colors]
-  );
-
   // Render color-coded Arabic text
   const renderColorCodedArabic = useMemo(() => {
     if (!hasComponents || !coloredSegments.length) {
@@ -91,151 +80,37 @@ const WordDetailsBottomSheetComponent = ({
     );
   }, [hasComponents, coloredSegments, word?.word_form, colors.arabicText]);
 
+  // Generate color-coded segments using shared utility
+  const englishColoredSegments = useMemo(() => {
+    if (!word?.english) return [];
+    return generateColorCodedSegments({
+      text: word.english,
+      formattedAnalysis,
+      analysis,
+      colors,
+      defaultColor: colors.secondaryText,
+    });
+  }, [word?.english, formattedAnalysis, analysis, colors]);
+
   // Render color-coded English text
   const renderColorCodedEnglish = useMemo(() => {
     if (!word?.english) return null;
 
-    // Single words should never have grammar color-coding
-    const wordCount = word.english.trim().split(/\s+/).length;
-    if (wordCount === 1) {
-      return (
-        <ThemedText type="heading3" colorName="secondaryText" style={styles.englishTranslation}>
-          {word.english}
-        </ThemedText>
-      );
-    }
-
-    if (!formattedAnalysis?.sections?.length) {
-      return (
-        <ThemedText type="heading3" colorName="secondaryText" style={styles.englishTranslation}>
-          {word.english}
-        </ThemedText>
-      );
-    }
-
-    const originalEnglish =
-      formattedAnalysis.sections.find(s => s.type === 'original')?.content || word.english;
-
-    const componentSections = formattedAnalysis.sections.filter(s => s.type === 'components');
-
-    if (!componentSections.length) {
-      return (
-        <ThemedText type="heading3" colorName="secondaryText" style={styles.englishTranslation}>
-          {originalEnglish}
-        </ThemedText>
-      );
-    }
-
-    const matchPositions: { start: number; end: number; color: string }[] = [];
-
-    // Add bracket color coding for [the] injection
-    if (analysis?.hasBracketInjection) {
-      const bracketMatch = originalEnglish.match(/^\[the\]/);
-      if (bracketMatch) {
-        matchPositions.push({
-          start: 0,
-          end: 6, // "[the]" length
-          color: colors.tint, // Use tint color for brackets
-        });
-      }
-    }
-
-    for (const section of componentSections) {
-      if (!section.englishPart) continue;
-
-      const searchText = originalEnglish.toLowerCase();
-      const colorKey = section.colorName as keyof typeof colorMapping;
-      const colorValue = colorMapping[colorKey] || colors.text;
-
-      // Split possible multiple english matches like "his / its / it"
-      const candidates = section.englishPart
-        .toLowerCase()
-        .split('/')
-        .map(s => s.trim())
-        .filter(Boolean);
-
-      // Track duplicates (start:end) to avoid overlapping duplicates
-      const seen = new Set<string>();
-      for (const candidate of candidates) {
-        let fromIndex = 0;
-        while (fromIndex <= searchText.length) {
-          const idx = searchText.indexOf(candidate, fromIndex);
-          if (idx === -1) break;
-
-          const prevChar = idx > 0 ? searchText[idx - 1] ?? ' ' : ' ';
-          const nextIdx = idx + candidate.length;
-          const nextChar = nextIdx < searchText.length ? searchText[nextIdx] ?? ' ' : ' ';
-          const isValidMatch =
-            idx === 0 ||
-            !/[a-z]/.test(prevChar) ||
-            nextIdx === searchText.length ||
-            !/[a-z]/.test(nextChar);
-
-          if (isValidMatch) {
-            const key = `${idx}:${idx + candidate.length}`;
-            if (!seen.has(key)) {
-              seen.add(key);
-              matchPositions.push({
-                start: idx,
-                end: idx + candidate.length,
-                color: colorValue,
-              });
-            }
-            // Move past this match to find further non-overlapping matches
-            fromIndex = idx + candidate.length;
-          } else {
-            fromIndex = idx + 1;
-          }
-        }
-      }
-    }
-
-    const sortedMatches = matchPositions
-      .sort((a, b) => a.start - b.start)
-      .filter((match, i, arr) => i === 0 || match.start >= (arr[i - 1]?.end ?? 0));
-
-    const parts: { text: string; color: string; key: string }[] = [];
-    let currentIndex = 0;
-
-    for (const match of sortedMatches) {
-      if (match.start > currentIndex) {
-        parts.push({
-          text: originalEnglish.substring(currentIndex, match.start),
-          color: colors.secondaryText,
-          key: `text-${currentIndex}`,
-        });
-      }
-      parts.push({
-        text: originalEnglish.substring(match.start, match.end),
-        color: match.color,
-        key: `match-${match.start}`,
-      });
-      currentIndex = match.end;
-    }
-
-    if (currentIndex < originalEnglish.length) {
-      parts.push({
-        text: originalEnglish.substring(currentIndex),
-        color: colors.secondaryText,
-        key: 'remaining',
-      });
-    }
-
     return (
       <ThemedText type="heading3" style={styles.englishTranslation}>
-        {parts.map(part => (
+        {englishColoredSegments.map(segment => (
           <ThemedText
-            key={part.key}
+            key={segment.key}
             type="heading3"
             skipDefaultColor
-            style={[styles.englishTranslation, { color: part.color }]}
+            style={[styles.englishTranslation, { color: segment.color }]}
           >
-            {part.text}
+            {segment.text}
           </ThemedText>
         ))}
       </ThemedText>
     );
-  }, [word?.english, formattedAnalysis, colorMapping, colors.secondaryText, colors.text]);
+  }, [word?.english, englishColoredSegments]);
 
   // Audio status is now provided by centralized subscription
 

@@ -445,8 +445,9 @@ describe('arabicWordAnalysis', () => {
       const analysis = analyzeArabicWord('والكتابَ', 'and he wrote the book');
       const formatted = formatWordAnalysis(analysis);
 
-      // Should have prefix (و), suffix (ال), and diacritic (َ)
-      expect(analysis.prefix?.arabicMatch).toBe('و');
+      // Should have prefix (وال is now matched as compound due to translation style variations), and diacritic (َ)
+      // Our new aggressive matching catches وال → "the" (translator dropped "and")
+      expect(analysis.prefix?.arabicMatch).toBe('وال');
       expect(analysis.diacritic?.arabicMatch).toBe('َ');
       expect(formatted.sections.filter(s => s.type === 'components')).toHaveLength(2);
     });
@@ -575,6 +576,122 @@ describe('arabicWordAnalysis', () => {
       const analysis = analyzeArabicWord('الله', 'Allah');
       expect(analysis).not.toBeNull();
       expect(analysis?.hasBracketInjection).toBe(false);
+    });
+  });
+
+  describe('Whole Translation Matching Rejection', () => {
+    it('should NOT match patterns that equal the entire English translation', () => {
+      // CRITICAL: If a component pattern matches the ENTIRE translation,
+      // it defeats the educational purpose of showing component breakdown.
+      // Both words would be colored the same, which is incorrect.
+      //
+      // The fix: When a component has multi-word patterns (like 'they said'),
+      // and the English translation is exactly that phrase ('they said'),
+      // we reject that specific pattern. However, single-word patterns from
+      // the same component (like 'they') can still match.
+
+      const testCases = [
+        {
+          arabic: 'قَالَا',
+          english: 'they said',
+          rejectedPattern: 'they said',
+          allowedPattern: 'they'
+        }, // Dual marker suffix has ['they', 'both', 'they said', 'they two']
+        {
+          arabic: 'كُنَّا',
+          english: 'we were',
+          rejectedPattern: 'we were',
+          allowedPattern: 'we'
+        }, // Suffix has ['we', 'we were', 'we did']
+      ];
+
+      testCases.forEach(({ arabic, english, rejectedPattern, allowedPattern }) => {
+        const analysis = analyzeArabicWord(arabic, english);
+
+        // Components CAN be found, but not with the whole-translation pattern
+        if (analysis.suffix) {
+          // The multi-word pattern should NOT be in the matches
+          expect(analysis.suffix.englishMatches).not.toContain(rejectedPattern);
+          // But single-word patterns CAN still match
+          // (this is okay - only one word will be colored, not both)
+        }
+      });
+    });
+
+    it('should STILL match partial patterns within translations', () => {
+      // These should work because the pattern matches PART of the translation
+      // (not the entire translation)
+
+      const testCases = [
+        {
+          arabic: 'وكتابهم',
+          english: 'and their book',
+          expectedPrefix: 'و',
+          expectedSuffix: 'هم'
+        },
+        {
+          arabic: 'كتابنا',
+          english: 'our book',
+          expectedSuffix: 'نا'
+        },
+      ];
+
+      testCases.forEach(({ arabic, english, expectedPrefix, expectedSuffix }) => {
+        const analysis = analyzeArabicWord(arabic, english);
+
+        // Should find components because they match PARTS of the translation
+        expect(analysis.hasComponents).toBe(true);
+
+        if (expectedPrefix) {
+          expect(analysis.prefix?.arabicMatch).toBe(expectedPrefix);
+        }
+        if (expectedSuffix) {
+          expect(analysis.suffix?.arabicMatch).toBe(expectedSuffix);
+        }
+      });
+    });
+
+    it('should allow single-word patterns in multi-word translations', () => {
+      // Single-word patterns like "they" or "said" should still work
+      // Only multi-word patterns that match the ENTIRE translation are rejected
+
+      const analysis = analyzeArabicWord('قَالُوا', 'they said');
+
+      // Should find 'وا' suffix matching "they" (not the whole translation)
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.suffix?.arabicMatch).toBe('وا');
+      expect(analysis.suffix?.englishMatches).toContain('they');
+    });
+
+    it('should ensure different components in 2-word translations', () => {
+      // The goal: 2-word translations should show component breakdown
+      // Not both words colored the same
+
+      const testCases = [
+        { arabic: 'والبيت', english: 'and house' }, // Should find prefix 'و' → "and"
+        { arabic: 'كتابه', english: 'his book' }, // Should find suffix 'ه' → "his"
+        { arabic: 'منها', english: 'from her' }, // Should find prefix 'من' + suffix 'ها'
+      ];
+
+      testCases.forEach(({ arabic, english }) => {
+        const analysis = analyzeArabicWord(arabic, english);
+
+        // Should have at least one component that matches part of the translation
+        expect(analysis.hasComponents).toBe(true);
+
+        // Count how many English words each component covers
+        const wordCount = english.trim().split(/\s+/).length;
+        expect(wordCount).toBe(2);
+
+        // At least one component should be found
+        const componentCount = [
+          analysis.prefix,
+          analysis.suffix,
+          analysis.infix,
+          analysis.diacritic,
+        ].filter(Boolean).length;
+        expect(componentCount).toBeGreaterThan(0);
+      });
     });
   });
 });

@@ -50,15 +50,16 @@ export function useArabicWordAnalysis(
       normalizedArabic.startsWith('كال');
 
     // Skip injection for divine names and words that already imply definiteness
+    const lowerEnglish = englishTranslation.toLowerCase();
     const skipInjection =
       normalizedArabic.startsWith('الله') || // Divine name "Allah"
-      englishTranslation.toLowerCase().includes('god') ||
-      englishTranslation.toLowerCase().includes('allah') ||
-      englishTranslation.toLowerCase().includes('lord') ||
-      englishTranslation.toLowerCase().includes('creator') ||
-      englishTranslation.toLowerCase().includes('most high');
+      lowerEnglish.includes('god') ||
+      lowerEnglish.includes('allah') ||
+      lowerEnglish.includes('lord') ||
+      lowerEnglish.includes('creator') ||
+      lowerEnglish.includes('most high');
 
-    if (hasDefiniteArticle && !englishTranslation.toLowerCase().includes('the') && !skipInjection) {
+    if (hasDefiniteArticle && !lowerEnglish.includes('the') && !skipInjection) {
       processedEnglish = `[the] ${englishTranslation}`;
       hasBracketInjection = true;
     }
@@ -74,14 +75,7 @@ export function useArabicWordAnalysis(
     const wordAnalysis = analyzeArabicWord(arabicWord, processedEnglish);
 
     // Add bracket injection flag to the analysis
-    if (wordAnalysis) {
-      return {
-        ...wordAnalysis,
-        hasBracketInjection,
-      };
-    }
-
-    return wordAnalysis;
+    return wordAnalysis ? { ...wordAnalysis, hasBracketInjection } : null;
   }, [arabicWord, englishTranslation, enabled]);
 
   // Memoize the formatted analysis
@@ -92,20 +86,17 @@ export function useArabicWordAnalysis(
     return formatWordAnalysis(analysis);
   }, [analysis]);
 
-  // Create color mapping function
-  const getSegmentColor = useMemo(() => {
-    const colorMap = {
+  // Create color mapping
+  const colorMap = useMemo(
+    () => ({
       tint: colors.tint,
       primary: colors.primary,
       warning: colors.warning,
       secondaryText: colors.secondaryText,
       text: colors.text,
-    } as const;
-
-    return (colorName: keyof typeof colorMap): string => {
-      return colorMap[colorName] || colors.text;
-    };
-  }, [colors]);
+    }),
+    [colors.tint, colors.primary, colors.warning, colors.secondaryText, colors.text]
+  );
 
   // Convert analysis to colored segments
   const coloredSegments = useMemo((): ColoredSegment[] => {
@@ -132,11 +123,11 @@ export function useArabicWordAnalysis(
         | 'text';
       return {
         text: segment.text,
-        color: getSegmentColor(colorName),
+        color: colorMap[colorName] || colors.text,
         type: segment.type as ColoredSegment['type'],
       };
     });
-  }, [analysis, formattedAnalysis, arabicWord, colors.text, getSegmentColor]);
+  }, [analysis, formattedAnalysis, arabicWord, colors.text, colorMap]);
 
   return {
     hasComponents: analysis?.hasComponents ?? false,
