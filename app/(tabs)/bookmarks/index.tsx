@@ -19,6 +19,7 @@ import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useBookmarksScreen, useListenUI } from '@/hooks/bookmarks';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
@@ -53,6 +54,7 @@ const ListenListItem = memo(
     onArticlePress,
     drag,
     _isBeingDragged,
+    progressPercentage,
   }: {
     item: BookmarkItem;
     editMode: boolean;
@@ -60,6 +62,7 @@ const ListenListItem = memo(
     onArticlePress: (articleId: number, title: string) => void;
     drag?: () => void;
     _isBeingDragged?: boolean;
+    progressPercentage?: number;
   }) => {
     // Memoize event handlers to prevent inline function creation
     const handleDelete = useCallback(() => {
@@ -93,6 +96,7 @@ const ListenListItem = memo(
         // Add article image for bookmarks-style appearance
         imageUrl={generateImageUrl(item.articles.image_url)}
         dragHandleProps={dragHandleProps}
+        progressPercentage={progressPercentage}
       />
     );
   },
@@ -100,6 +104,7 @@ const ListenListItem = memo(
     // Optimized comparison: only check props that actually change
     if (prevProps.editMode !== nextProps.editMode) return false;
     if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
+    if (prevProps.progressPercentage !== nextProps.progressPercentage) return false;
     return prevProps.item.article_id === nextProps.item.article_id;
   }
 );
@@ -136,6 +141,13 @@ export default function ListenScreen(): JSX.Element {
     sortedReadingList,
     editMode,
   });
+
+  // Fetch reading progress for bookmarked articles
+  const articleIds = useMemo(
+    () => sortedReadingList.map(item => item.article_id),
+    [sortedReadingList]
+  );
+  const { data: progressMap } = useSafeBulkReadingProgress(articleIds);
 
   const insets = useSafeAreaInsets();
 
@@ -251,35 +263,30 @@ export default function ListenScreen(): JSX.Element {
     [prefetchArticle]
   );
 
-  // Optimized render function - simplified logic
+  // Optimized render function - unified for both list types
   const renderItem = useCallback(
     (params: { item: BookmarkItem; index?: number } | RenderItemParams<BookmarkItem>) => {
       const { item } = params;
+      const progress = progressMap?.get?.(item.article_id);
+      const progressPercentage = progress?.progress_percentage ?? 0;
 
-      if (editMode && 'drag' in params) {
-        const { drag, isActive: isDragging } = params;
-        return (
-          <ListenListItem
-            editMode={editMode}
-            item={item}
-            onDelete={handleDelete}
-            onArticlePress={handleArticlePress}
-            drag={drag}
-            _isBeingDragged={isDragging}
-          />
-        );
-      } else {
-        return (
-          <ListenListItem
-            editMode={editMode}
-            item={item}
-            onDelete={handleDelete}
-            onArticlePress={handleArticlePress}
-          />
-        );
-      }
+      // Extract drag props if available (only in DraggableFlatList)
+      const drag = 'drag' in params ? params.drag : undefined;
+      const isDragging = 'isActive' in params ? params.isActive : false;
+
+      return (
+        <ListenListItem
+          editMode={editMode}
+          item={item}
+          onDelete={handleDelete}
+          onArticlePress={handleArticlePress}
+          drag={drag}
+          _isBeingDragged={isDragging}
+          progressPercentage={progressPercentage}
+        />
+      );
     },
-    [editMode, handleDelete, handleArticlePress]
+    [editMode, handleDelete, handleArticlePress, progressMap]
   );
 
   // Memoize the key extractor to prevent inline function creation

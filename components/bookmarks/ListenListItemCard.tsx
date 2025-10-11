@@ -32,9 +32,8 @@ interface ListenListItemCardProps {
   onPlayPress?: () => void;
   // Image for bookmarks-style display
   imageUrl?: string;
-  // Reading progress
+  // Reading progress - always shown (0% = not started)
   progressPercentage?: number;
-  hasStartedReading?: boolean;
   // Avoid running mount animations when rendering many list items at once
   shouldAnimateOnMount?: boolean;
 }
@@ -52,7 +51,6 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
     onPlayPress,
     imageUrl,
     progressPercentage,
-    hasStartedReading,
     shouldAnimateOnMount = true,
   }) => {
     const isDarkMode = useIsDarkMode();
@@ -162,16 +160,14 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
                     <PlayButton onPress={onPlayPress} />
                   </View>
                 )}
-                {hasStartedReading && progressPercentage !== undefined && (
-                  <View style={styles.progressRightContainer}>
-                    <ProgressCircle
-                      percentage={progressPercentage}
-                      size={28}
-                      strokeWidth={4}
-                      style={styles.progressCircle}
-                    />
-                  </View>
-                )}
+                <View style={styles.progressRightContainer}>
+                  <ProgressCircle
+                    percentage={progressPercentage ?? 0}
+                    size={28}
+                    strokeWidth={4}
+                    style={styles.progressCircle}
+                  />
+                </View>
               </View>
             </View>
           </BaseCard>
@@ -196,7 +192,6 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
       prevProps.isBeingDragged === nextProps.isBeingDragged &&
       prevProps.imageUrl === nextProps.imageUrl &&
       prevProps.progressPercentage === nextProps.progressPercentage &&
-      prevProps.hasStartedReading === nextProps.hasStartedReading &&
       prevProps.onPress === nextProps.onPress &&
       prevProps.onDelete === nextProps.onDelete &&
       prevProps.onPlayPress === nextProps.onPlayPress &&

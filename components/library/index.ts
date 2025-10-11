@@ -7,6 +7,5 @@ export { HijriDateFooter } from './HijriDateFooter';
 export { default as HorizontalArticleSlider } from './HorizontalArticleSlider';
 export { default as HorizontalFeaturedSection } from './HorizontalFeaturedSection';
 export { default as IntelligentArticleSection } from './IntelligentArticleSection';
-export { default as ListArticleItem } from './ListArticleItem';
 export { StreakChart } from './StreakChart';
 export { StreaksBottomSheet } from './StreaksBottomSheet';

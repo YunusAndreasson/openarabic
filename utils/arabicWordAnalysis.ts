@@ -110,7 +110,12 @@ function normalizeEnglish(text: string): string {
 /**
  * Optimized function to check if English contains any patterns
  */
-function hasEnglishMatch(english: string, patterns: string[]): string[] {
+function hasEnglishMatch(
+  english: string,
+  patterns: string[],
+  arabicWord?: string,
+  componentPattern?: string
+): string[] {
   const norm = normalizeEnglish(english);
   const tokens = norm.split(WHITESPACE_REGEX).filter(Boolean);
 
@@ -138,8 +143,22 @@ function hasEnglishMatch(english: string, patterns: string[]): string[] {
       // CRITICAL: Skip if pattern matches the ENTIRE English translation for multi-word phrases
       // This prevents single-coloring of all words (defeats educational purpose)
       // But allow single-word matches (e.g., 'و' → 'and')
+      // AND allow standalone particles (where component = entire Arabic word, e.g., 'لم' → 'does not')
       if (candidate === norm && tokens.length > 1) {
-        continue; // Don't match the whole thing for multi-word translations
+        // Check if this is a standalone particle by comparing Arabic lengths
+        if (arabicWord && componentPattern) {
+          const normalizedArabic = normalizeArabic(arabicWord);
+          // Allow match if component equals entire Arabic word (standalone particle)
+          if (normalizedArabic.length === componentPattern.length) {
+            // This is a standalone particle - allow the match
+          } else {
+            // This is a compound word - skip whole-translation match
+            continue;
+          }
+        } else {
+          // No Arabic context - use old behavior (skip)
+          continue;
+        }
       }
 
       if (candidate.includes(' ')) {
@@ -224,7 +243,7 @@ function findComponent(
     }
 
     if (matches) {
-      const englishMatches = hasEnglishMatch(english, component.english);
+      const englishMatches = hasEnglishMatch(english, component.english, arabic, pattern);
       if (englishMatches.length > 0 && (!best || pattern.length > best.arabicMatch.length)) {
         best = {
           component,

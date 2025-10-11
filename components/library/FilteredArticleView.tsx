@@ -8,13 +8,14 @@ import DraggableFlatList from 'react-native-draggable-flatlist';
 
 
 import { ThemedView } from '@/components/ThemedView';
-import ListArticleItem from '@/components/library/ListArticleItem';
+import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
 import PulsatingLoader from '@/components/ui/PulsatingLoader';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
+import { generateImageUrl } from '@/utils/imageUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
 
 // Use responsive height for filtered article items
@@ -45,6 +46,9 @@ const STATIC_STYLES = StyleSheet.create({
     height: LAYOUT.SPACING.LARGE,
   },
 });
+
+// Static footer component
+const FooterComponent = () => <View style={STATIC_STYLES.footerSpacer} />;
 
 interface FilteredArticleViewProps {
   /**
@@ -126,10 +130,9 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   // useFilteredArticles now returns BOTH articles AND their progress (single source of truth)
   const { articles: visibleArticles, progressMap, isProgressLoading } = useFilteredArticles(articles);
 
-  // Memoize expensive computations
-  const articlesLength = useMemo(() => visibleArticles.length, [visibleArticles.length]);
-  const hasArticles = useMemo(() => articlesLength > 0, [articlesLength]);
-  const shouldShowEmpty = useMemo(() => !loading && !hasArticles, [loading, hasArticles]);
+  // Simple derived state (no need for useMemo on primitives)
+  const hasArticles = visibleArticles.length > 0;
+  const shouldShowEmpty = !loading && !hasArticles;
 
   // Handle drag end for reordering
   const handleDragEnd = useCallback(
@@ -155,23 +158,16 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
     []
   );
 
-  // Memoize list components
-  const ListFooterComponent = useMemo(() => {
-    return <View style={STATIC_STYLES.footerSpacer} />;
-  }, []);
-
+  // Memoize header component (only depends on HeaderComponent prop)
   const ListHeaderComponent = useMemo(() => {
+    if (!HeaderComponent) return null;
     return (
       <>
-        {HeaderComponent && (
-          <>
-            {typeof HeaderComponent === 'function' ? <HeaderComponent /> : HeaderComponent}
-            <View style={STATIC_STYLES.headerSpacing} />
-          </>
-        )}
+        {typeof HeaderComponent === 'function' ? <HeaderComponent /> : HeaderComponent}
+        <View style={STATIC_STYLES.headerSpacing} />
       </>
     );
-  }, [HeaderComponent, articlesLength]);
+  }, [HeaderComponent]);
 
   // Render item for both FlashList and DraggableFlatList
   const renderItem: (
@@ -180,45 +176,30 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
     params => {
       const { item } = params;
       const progress = progressMap.get(item.id);
-      // Only show progress circle if progress exists AND progress_percentage is not null
-      // Null indicates database issue/corruption, not "0% progress"
-      const hasStartedReading = !!progress && progress.progress_percentage !== null;
       const progressPercentage = progress?.progress_percentage ?? 0;
 
-      if (editMode && 'drag' in params) {
-        // DraggableFlatList render
-        const { drag, isActive: isDragging } = params;
-        return (
-          <ListArticleItem
-            article={item}
-            editMode={editMode}
-            onPress={!editMode ? onArticlePress : undefined}
-            onDelete={createDeleteHandler(item.id)}
-            dragHandleProps={drag ? createDragHandleProps(drag) : undefined}
-            isBeingDragged={isDragging}
-            progressPercentage={progressPercentage}
-            hasStartedReading={hasStartedReading}
-          />
-        );
-      } else {
-        // FlashList render
-        return (
-          <ListArticleItem
-            article={item}
-            editMode={editMode}
-            onPress={!editMode ? onArticlePress : undefined}
-            onDelete={createDeleteHandler(item.id)}
-            progressPercentage={progressPercentage}
-            hasStartedReading={hasStartedReading}
-          />
-        );
-      }
+      // Extract drag props if available (only in DraggableFlatList)
+      const drag = 'drag' in params ? params.drag : undefined;
+      const isDragging = 'isActive' in params ? params.isActive : false;
+
+      return (
+        <ListenListItemCard
+          title={item.title}
+          author={item.author.name}
+          difficultyLevel={item.difficulty_level}
+          imageUrl={generateImageUrl(item.image_url)}
+          editMode={editMode}
+          onPress={!editMode ? () => onArticlePress(item) : undefined}
+          onDelete={createDeleteHandler(item.id)}
+          dragHandleProps={drag ? createDragHandleProps(drag) : undefined}
+          isBeingDragged={isDragging}
+          progressPercentage={progressPercentage}
+          shouldAnimateOnMount={false}
+        />
+      );
     },
     [editMode, onArticlePress, createDeleteHandler, createDragHandleProps, progressMap]
   );
-
-  // Use stable reference to the separator component without recreating a function each render
-  const renderSeparator = SeparatorComponent;
 
   const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
 
@@ -283,9 +264,9 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
           onDragEnd={handleDragEnd}
           showsVerticalScrollIndicator={true}
           contentContainerStyle={STATIC_STYLES.listContent}
-          ItemSeparatorComponent={renderSeparator}
+          ItemSeparatorComponent={SeparatorComponent}
           ListHeaderComponent={ListHeaderComponent}
-          ListFooterComponent={ListFooterComponent}
+          ListFooterComponent={FooterComponent}
         />
       ) : (
         // Use FlashList v2 in normal mode - automatic layout
@@ -296,9 +277,9 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
           removeClippedSubviews={true}
           showsVerticalScrollIndicator={true}
           contentContainerStyle={STATIC_STYLES.listContent}
-          ItemSeparatorComponent={renderSeparator}
+          ItemSeparatorComponent={SeparatorComponent}
           ListHeaderComponent={ListHeaderComponent}
-          ListFooterComponent={ListFooterComponent}
+          ListFooterComponent={FooterComponent}
           renderItem={renderItem}
           // v2 performance optimizations
           maxItemsInRecyclePool={25} // Control memory usage for article lists

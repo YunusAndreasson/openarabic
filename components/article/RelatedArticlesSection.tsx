@@ -77,9 +77,6 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
     const articleCards = useMemo(() => {
       return relatedArticles.map((article, index) => {
         const progress = progressMap?.get?.(article.id);
-        // Only show progress circle if progress exists AND progress_percentage is not null
-        // Null indicates database issue/corruption, not "0% progress"
-        const hasStartedReading = !!progress && progress.progress_percentage !== null;
         const progressPercentage = progress?.progress_percentage ?? 0;
 
         return (
@@ -95,7 +92,6 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
                 author={article.author.name}
                 difficultyLevel={article.difficulty_level}
                 imageUrl={generateImageUrl(article.image_url)}
-                hasStartedReading={hasStartedReading}
                 progressPercentage={progressPercentage}
               />
             </Link>
