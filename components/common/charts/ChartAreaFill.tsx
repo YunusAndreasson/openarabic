@@ -23,7 +23,7 @@ export const ChartAreaFill = memo<ChartAreaFillProps>(({ path, graphWidth, topPa
   const chartColors = useChartColors();
 
   const areaPath = useMemo(
-    () => (path ? createAreaFillPath(path, graphWidth, GRAPH_HEIGHT_LARGE) : ''),
+    () => (path ? createAreaFillPath(path, GRAPH_HEIGHT_LARGE, undefined, graphWidth) : ''),
     [path, graphWidth]
   );
 

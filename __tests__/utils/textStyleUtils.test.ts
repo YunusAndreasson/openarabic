@@ -5,7 +5,6 @@ import {
   createTextStyleBase,
   determineTextColor,
   getSelectedStyle,
-  type ArabicWordColors,
   type BatchedTextColors,
   type MeaningOverlayColors,
 } from '@/utils/textStyleUtils';
@@ -22,10 +21,7 @@ describe('textStyleUtils', () => {
     error: '#FF0000',
     text: '#000000',
   };
-  const mockArabicWordColors: ArabicWordColors = {
-    wordDueUnderline: '#FF0000',
-    wordSelectionUnderline: '#0000FF',
-  };
+  const mockUnderlineColor = '#9AB5A4'; // Soft disabled color for all underlines
 
   describe('TEXT_STYLE_CONSTANTS', () => {
     it('should have correct constant values', () => {
@@ -90,24 +86,21 @@ describe('textStyleUtils', () => {
   });
 
   describe('getSelectedStyle', () => {
-    it('should return selection underline for selected word', () => {
-      const result = getSelectedStyle(true, false, mockArabicWordColors);
+    it('should return soft underline for selected words', () => {
+      const result = getSelectedStyle(true, mockUnderlineColor);
       expect(result).toHaveProperty('borderBottomWidth', 1);
-      expect(result).toHaveProperty(
-        'borderBottomColor',
-        mockArabicWordColors.wordSelectionUnderline
-      );
+      expect(result).toHaveProperty('borderBottomColor', mockUnderlineColor);
     });
 
-    it('should return due underline for due word', () => {
-      const result = getSelectedStyle(true, true, mockArabicWordColors);
-      expect(result).toHaveProperty('borderBottomWidth', 1);
-      expect(result).toHaveProperty('borderBottomColor', mockArabicWordColors.wordDueUnderline);
-    });
-
-    it('should return empty object for normal word', () => {
-      const result = getSelectedStyle(false, false, mockArabicWordColors);
+    it('should return empty object for unselected words', () => {
+      const result = getSelectedStyle(false, mockUnderlineColor);
       expect(result).toEqual({});
+    });
+
+    it('should use the provided color exactly', () => {
+      const customColor = '#FF0000';
+      const result = getSelectedStyle(true, customColor);
+      expect(result).toHaveProperty('borderBottomColor', customColor);
     });
   });
 });

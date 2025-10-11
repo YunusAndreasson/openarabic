@@ -157,32 +157,19 @@ export const createMeaningOverlayTextStyle = (
 };
 
 /**
- * Interface for color values used in Arabic word selection
+ * Creates underline style for Arabic words based on selection state
+ * @param isSelected - Whether the word is currently selected (in study list)
+ * @param color - The underline color to use
+ * @returns ViewStyle object for the underline, or empty object if not selected
  */
-export interface ArabicWordColors {
-  wordDueUnderline: string;
-  wordSelectionUnderline: string;
-}
-
-/**
- * Creates selected style for Arabic words based on selection state and due status
- * @param isSelected - Whether the word is currently selected
- * @param isDueWord - Whether the word is a due word (affects underline color)
- * @param colors - Object containing color values
- * @returns ViewStyle object for the selected state, or empty object if not selected
- */
-export const getSelectedStyle = (
-  isSelected: boolean,
-  isDueWord: boolean,
-  colors: ArabicWordColors
-): ViewStyle => {
+export const getSelectedStyle = (isSelected: boolean, color: string): ViewStyle => {
   if (!isSelected) {
     return {};
   }
 
   return {
     borderBottomWidth: 1,
-    borderBottomColor: isDueWord ? colors.wordDueUnderline : colors.wordSelectionUnderline,
+    borderBottomColor: color,
   };
 };
 

@@ -19,7 +19,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWord, useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { getSelectedStyle, type ArabicWordColors } from '@/utils/textStyleUtils';
+import { getSelectedStyle } from '@/utils/textStyleUtils';
 
 interface ArabicWordProps {
   word: SentenceWord;
@@ -29,7 +29,6 @@ interface ArabicWordProps {
     fontScale: number;
   };
   wordRef?: RefObject<ComponentRef<typeof Pressable>>;
-  isDueWord?: boolean;
   isHighlighted?: boolean;
   testID?: string;
 }
@@ -40,7 +39,6 @@ function ArabicWordComponent({
   position,
   settings,
   wordRef,
-  isDueWord = false,
   isHighlighted = false,
   testID,
 }: ArabicWordProps) {
@@ -137,15 +135,6 @@ function ArabicWordComponent({
     }
   }, [absoluteLayout, onTooltipOpen, wordRef]);
 
-  // ===== COLOR BATCHING (PREVENTS MULTIPLE COLOR CALCULATIONS) =====
-  const batchedColors = useMemo(
-    (): ArabicWordColors => ({
-      wordDueUnderline: colors.wordDueUnderline,
-      wordSelectionUnderline: colors.tint, // Use tint color for study list words
-    }),
-    [colors.wordDueUnderline, colors.tint]
-  );
-
   // Compute final styles for the word container
   // Always reserve underline space to avoid layout jump by using a transparent baseline underline
   const baseUnderlineStyle = useMemo(
@@ -168,10 +157,10 @@ function ArabicWordComponent({
     () => [
       styles.wordContainer,
       baseUnderlineStyle,
-      getSelectedStyle(isSelected, isDueWord, batchedColors),
+      getSelectedStyle(isSelected, colors.disabled), // Soft underline for all selected words
       highlightStyle,
     ],
-    [isSelected, isDueWord, batchedColors, baseUnderlineStyle, highlightStyle]
+    [isSelected, colors.disabled, baseUnderlineStyle, highlightStyle]
   );
 
   // Render colored segments or single word
@@ -241,7 +230,6 @@ export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
     prevProps.word.id !== nextProps.word.id ||
     prevProps.settings.fontScale !== nextProps.settings.fontScale ||
     prevProps.position !== nextProps.position ||
-    prevProps.isDueWord !== nextProps.isDueWord ||
     prevProps.isHighlighted !== nextProps.isHighlighted ||
     prevProps.testID !== nextProps.testID
   ) {

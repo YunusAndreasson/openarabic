@@ -14,9 +14,6 @@ import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { createPadding } from '@/utils/layoutUtils';
 
-// Static constants to prevent recreation
-const EMPTY_DUE_WORDS_SET = new Set<number>();
-
 interface ArticleSentenceProps {
   sentence: {
     id: string | number;
@@ -33,7 +30,6 @@ interface ArticleSentenceProps {
   };
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
-  dueWordRootIds?: Set<number>;
   currentHighlightedWord?: SentenceWord | null;
 }
 
@@ -59,8 +55,7 @@ const ArticleSentenceComparison = (
     prevProps.renderWord !== nextProps.renderWord ||
     prevProps.onWordPress !== nextProps.onWordPress ||
     prevProps.colors !== nextProps.colors ||
-    prevProps.containerStyle !== nextProps.containerStyle ||
-    prevProps.dueWordRootIds !== nextProps.dueWordRootIds
+    prevProps.containerStyle !== nextProps.containerStyle
   ) {
     return false;
   }
@@ -89,7 +84,6 @@ function renderWordWithProps(
   word: SentenceWord,
   index: number,
   wordRefs: RefObject<ComponentRef<typeof Pressable>>[],
-  dueWordRootIds: Set<number>,
   renderWord: ((word: SentenceWord, isHighlighted: boolean) => ReactNode) | undefined,
   onWordPress: ((word: SentenceWord, layout?: LayoutRectangle) => void) | undefined,
   settings: { fontScale: number },
@@ -102,7 +96,6 @@ function renderWordWithProps(
       ComponentRef<typeof Pressable>
     >;
   }
-  const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
   const isHighlighted = currentHighlightedWord
     ? word.id === currentHighlightedWord.id && word.word_form === currentHighlightedWord.word_form
     : false;
@@ -117,7 +110,6 @@ function renderWordWithProps(
       settings={{ fontScale: settings.fontScale }}
       wordRef={wordRefs[index]}
       position={index}
-      isDueWord={isDueWord}
       isHighlighted={isHighlighted}
     />
   );
@@ -132,7 +124,6 @@ const ArticleSentenceComponent = memo(
     settings,
     colors: propColors,
     containerStyle,
-    dueWordRootIds = EMPTY_DUE_WORDS_SET,
     currentHighlightedWord,
   }: ArticleSentenceProps) => {
     const defaultColors = useColors();
@@ -192,7 +183,6 @@ const ArticleSentenceComponent = memo(
           word,
           index,
           wordRefs.current,
-          dueWordRootIds,
           renderWord,
           onWordPress,
           settings,
@@ -200,15 +190,7 @@ const ArticleSentenceComponent = memo(
           currentHighlightedWord
         );
       });
-    }, [
-      renderWord,
-      words,
-      sentence.id,
-      settings,
-      onWordPress,
-      dueWordRootIds,
-      currentHighlightedWord,
-    ]);
+    }, [renderWord, words, sentence.id, settings, onWordPress, currentHighlightedWord]);
 
     // Use Animated.View directly - it's properly imported from react-native-reanimated
     const AnimatedView = Animated.View;

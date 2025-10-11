@@ -236,3 +236,4 @@ export function isExtraHardWord(word: StudyWord): boolean {
   const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY;
   return difficulty > 8.0;
 }
+

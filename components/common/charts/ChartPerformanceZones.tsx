@@ -25,7 +25,7 @@ export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
     const chartColors = useChartColors();
 
     const areaPath = useMemo(
-      () => (maskPath ? createAreaFillPath(maskPath, graphWidth, GRAPH_HEIGHT_LARGE) : ''),
+      () => (maskPath ? createAreaFillPath(maskPath, GRAPH_HEIGHT_LARGE, undefined, graphWidth) : ''),
       [maskPath, graphWidth]
     );
 

@@ -150,22 +150,20 @@ export const createStandardizedPerformanceZones = (
 /**
  * Creates a smooth area fill path for line charts
  * @param smoothPath - The main line path
- * @param graphWidth - Width of the graph (deprecated, will be removed)
  * @param graphHeight - Height of the graph
  * @param firstX - X coordinate of the first data point (optional, defaults to 0)
- * @param lastX - X coordinate of the last data point (optional, defaults to graphWidth)
+ * @param lastX - X coordinate of the last data point (required for proper area fill)
  * @returns Area fill path string with vertical edges (not tilted)
  */
 export const createAreaFillPath = (
   smoothPath: string,
-  graphWidth: number,
   graphHeight: number,
   firstX?: number,
   lastX?: number
 ): string => {
-  // Use provided coordinates or fall back to full width
+  // Use provided coordinates or fall back to defaults
   const startX = firstX ?? 0;
-  const endX = lastX ?? graphWidth;
+  const endX = lastX ?? 0;
 
   // Create vertical edges for fill area:
   // 1. Follow the smooth path from start to end

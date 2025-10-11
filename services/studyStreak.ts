@@ -294,9 +294,4 @@ export class ReadingStreakService {
   }
 }
 
-/**
- * @deprecated Use studyStreakService instead
- */
-export const readingStreakService = ReadingStreakService;
-
 export const studyStreakService = ReadingStreakService;

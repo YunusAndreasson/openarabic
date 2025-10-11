@@ -380,8 +380,6 @@ const lightColors: ThemeColors = {
   wordTooltipText: basePalette.forest.darkest,
   wordTooltipBorder: basePalette.sage.light,
   wordTooltipShadow: withAlpha(basePalette.forest.dark, opacity.active),
-  wordSelectionUnderline: withAlpha(basePalette.tint.primary, opacity.selection),
-  wordDueUnderline: withAlpha(basePalette.semantic.warning, opacity.due),
 
   // Navigation
   navigationRipple: withAlpha(basePalette.tint.primary, opacity.strong),
@@ -462,8 +460,6 @@ const darkColors: ThemeColors = {
   wordTooltipText: basePalette.pure.white,
   wordTooltipBorder: elevation.dark.level3,
   wordTooltipShadow: withAlpha(basePalette.pure.black, opacity.active),
-  wordSelectionUnderline: withAlpha(basePalette.tint.primaryDark, opacity.selection),
-  wordDueUnderline: withAlpha(basePalette.semantic.warningDark, opacity.due),
 
   // Navigation
   navigationRipple: withAlpha(basePalette.tint.primaryDark, opacity.active),
@@ -544,8 +540,6 @@ const sepiaColors: ThemeColors = {
   wordTooltipText: basePalette.autumn.darkest,
   wordTooltipBorder: basePalette.autumn.paper.light,
   wordTooltipShadow: withAlpha(basePalette.autumn.dark, opacity.active),
-  wordSelectionUnderline: withAlpha(basePalette.autumn.accent.primary, opacity.selection),
-  wordDueUnderline: withAlpha(basePalette.autumn.semantic.warning, opacity.due),
 
   // Navigation
   navigationRipple: withAlpha(basePalette.autumn.accent.primary, opacity.strong),

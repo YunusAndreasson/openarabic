@@ -8,7 +8,6 @@ import type { SentenceWord } from '@/types/vocabulary.types';
 
 interface UseSentenceScrubberProps {
   sortedSentences: Tables<'article_sentences'>[];
-  dueWordRootIds: Set<number>;
   sentenceWordsMap: Map<number, SentenceWord[]>;
   lastSentenceRead?: number; // Optional: last sentence read for progress calculation
   headerOffset?: number; // Optional: top padding (e.g., parallax header height)
@@ -27,7 +26,6 @@ interface UseSentenceScrubberReturn {
 
 export function useSentenceScrubber({
   sortedSentences,
-  dueWordRootIds,
   sentenceWordsMap,
   lastSentenceRead = 0,
   headerOffset = 0,
@@ -55,12 +53,12 @@ export function useSentenceScrubber({
     return progressPercentage >= 15;
   }, [progressPercentage]);
 
-  // Calculate which sentences contain due words - memoized for performance
+  // Calculate which sentences contain study words - memoized for performance
   const dueWordSentences = new Set<number>();
   if (sortedSentences && sortedSentences.length > 0) {
     sortedSentences.forEach((sentence, index) => {
       const words = sentenceWordsMap.get(sentence.id);
-      if (words?.some(word => word.root_id && dueWordRootIds.has(word.root_id))) {
+      if (words?.some(word => word.root_id)) {
         dueWordSentences.add(index);
       }
     });

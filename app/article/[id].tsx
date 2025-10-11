@@ -145,13 +145,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     }
   );
 
-  // Lightweight due word roots from cache only (no extra fetching)
-  const dueWordRootIds = useMemo(() => {
-    if (!user?.id) return new Set<number>();
-    const cachedDue = queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.due(user.id)) ?? [];
-    return new Set<number>(cachedDue.map(w => w.root_id));
-  }, [queryClient, user?.id]);
-
   const handleToggleReadingListWithFeedback = useCallback(async () => {
     if (!articleId) return;
 
@@ -249,7 +242,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     jumpToLastReadPosition,
   } = useSentenceScrubber({
     sortedSentences: sortedSentences || [],
-    dueWordRootIds,
     sentenceWordsMap,
     lastSentenceRead: effectiveLastSentenceRead,
     headerOffset: calculateHeaderHeight(0),
@@ -449,19 +441,11 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
             fontScale,
           }}
           colors={colors}
-          dueWordRootIds={dueWordRootIds}
           onWordPress={handleWordPress}
         />
       );
     },
-    [
-      getWordsForSentence,
-      fontScale,
-      colors,
-      dueWordRootIds,
-      handleWordPress,
-      displayLanguagePreference,
-    ]
+    [getWordsForSentence, fontScale, colors, handleWordPress, displayLanguagePreference]
   );
 
   // Memoize expensive computations

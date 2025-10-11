@@ -50,8 +50,6 @@ export interface ThemeColors {
   wordTooltipText: string;
   wordTooltipBorder: string;
   wordTooltipShadow: string;
-  wordSelectionUnderline: string;
-  wordDueUnderline: string;
 
   navigationRipple: string;
   headerOverlay: string;
