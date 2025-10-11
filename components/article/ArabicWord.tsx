@@ -8,12 +8,13 @@ import {
   type RefObject,
 } from 'react';
 import type { LayoutChangeEvent, LayoutRectangle, TextStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { useOpacityAnimation } from '@/hooks/animations';
+import { useOpacityAnimation, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWord, useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { TextWeight } from '@/types/ui/text.types';
@@ -27,7 +28,7 @@ interface ArabicWordProps {
   settings: {
     fontScale: number;
   };
-  wordRef?: RefObject<ComponentRef<typeof TouchableOpacity>>;
+  wordRef?: RefObject<ComponentRef<typeof Pressable>>;
   isDueWord?: boolean;
   isHighlighted?: boolean;
   testID?: string;
@@ -63,6 +64,11 @@ function ArabicWordComponent({
   const { setOpacity: setBorderOpacity } = useOpacityAnimation({
     initialOpacity: isSelected ? 1 : 0,
     duration: TIMING_CONFIG.MEDIUM.duration,
+  });
+
+  // Press animation for clear visual feedback when tapping
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    type: 'button', // Scale-only feedback using WORD_PRESS_SCALE (0.95)
   });
 
   // Update border opacity when selection changes
@@ -200,16 +206,17 @@ function ArabicWordComponent({
   }, [hasComponents, coloredSegments, baseTextProps, colors.arabicText, word.word_form]);
 
   return (
-    <TouchableOpacity
+    <Pressable
       ref={wordRef}
-      activeOpacity={LAYOUT.OPACITY.HIGH}
       style={containerStyle}
       testID={testID}
       onLayout={handleLayout}
       onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
     >
-      <View style={styles.wordView}>{renderWordContent}</View>
-    </TouchableOpacity>
+      <Animated.View style={[styles.wordView, animatedStyle]}>{renderWordContent}</Animated.View>
+    </Pressable>
   );
 }
 

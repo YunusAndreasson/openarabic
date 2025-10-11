@@ -14,31 +14,31 @@ export interface ArabicFontOption {
 
 export const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
   {
-    name: 'NotoSans',
+    name: 'NotoSansArabic-Regular',
     displayName: ArabicFont.NOTO_SANS,
     description: FontDescription.NOTO_SANS,
     previewText: 'اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ',
   },
   {
-    name: 'Madina',
+    name: 'DigitalKhattNewMadinaRegular',
     displayName: ArabicFont.MADINA,
     description: FontDescription.MADINA,
     previewText: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
   },
   {
-    name: 'Amiri',
+    name: 'Amiri-Regular',
     displayName: ArabicFont.AMIRI,
     description: FontDescription.AMIRI,
     previewText: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
   },
   {
-    name: 'Scheherazade',
+    name: 'ScheherazadeNew-Regular',
     displayName: ArabicFont.SCHEHERAZADE,
     description: FontDescription.SCHEHERAZADE,
     previewText: 'وَمَا أَرْسَلْنَاكَ إِلَّا رَحْمَةً لِّلْعَالَمِينَ',
   },
   {
-    name: 'Nastaliq',
+    name: 'NotoNastaliqUrdu-Regular',
     displayName: ArabicFont.NASTALIQ,
     description: FontDescription.NASTALIQ,
     previewText: 'إِنَّ مَعَ الْعُسْرِ يُسْرًا',

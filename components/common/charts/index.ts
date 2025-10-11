@@ -10,6 +10,7 @@ export { ChartAreaFill } from './ChartAreaFill';
 export { ChartDataPoint } from './ChartDataPoint';
 export { ChartMainLine } from './ChartMainLine';
 export { ChartPerformanceZones } from './ChartPerformanceZones';
+export { ChartReferenceLine } from './ChartReferenceLine';
 
 // Unified chart component (eliminates all duplication)
 export { VocabularyChart } from './VocabularyChart';

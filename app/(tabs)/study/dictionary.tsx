@@ -94,7 +94,7 @@ export default function DictionaryScreen(): JSX.Element {
     }
   );
 
-  const { sortedWords, sortOption, sortDirection, setSorting } = useDictionaryModal({
+  const { sortedWords, sortDirection, setSorting } = useDictionaryModal({
     studyWords: filteredByCategory || [],
   });
 
@@ -129,12 +129,8 @@ export default function DictionaryScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container}>
-      {/* Sorting header at the top */}
-      <DictionarySortingHeader
-        currentSort={sortOption}
-        sortDirection={sortDirection}
-        onSortChange={setSorting}
-      />
+      {/* Header with status legend and sort toggle */}
+      <DictionarySortingHeader sortDirection={sortDirection} onToggleDirection={setSorting} />
 
       {isLoading ? null : hasWords ? (
         <View style={styles.contentContainer}>

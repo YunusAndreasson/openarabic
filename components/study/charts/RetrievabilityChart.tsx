@@ -4,6 +4,7 @@ import { VocabularyChart, type DataPoint } from '@/components/common/charts';
 import { CHART_LABELS, generateChartSubtitle } from '@/components/common/charts/ChartMessages';
 import { calculateDataPointPositions, useGraphWidth } from '@/components/common/charts/constants';
 import { formatMonthDayUTC, formatWeekdayUTC } from '@/components/common/charts/utils';
+import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -71,7 +72,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
       return retrievabilityData.map((_, index) => allDayPositions[index] || 0);
     }, [retrievabilityData.length]);
 
-    // 🚀 Unified chart with perfect grid system and danger zones:
+    // 🚀 Unified chart with perfect grid system, danger zones, and 75% target line:
     return (
       <VocabularyChart
         path={chartData.retrievabilityPath}
@@ -83,6 +84,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         yMax={100}
         topPadding={16}
         graphWidth={graphWidth}
+        referenceLine={MEMORY_CAPACITY_THRESHOLDS.GOOD} // 75% target line
         title={CHART_LABELS.RETENTION}
         subtitle={subtitle}
         onCardPress={onInfoPress}

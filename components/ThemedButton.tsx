@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useCallback, useMemo, type JSX } from 'react';
 import type { GestureResponderEvent } from 'react-native';
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -14,7 +14,7 @@ import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui
 import { createPadding } from '@/utils/layoutUtils';
 import { createButtonTextStyle } from '@/utils/textStyleUtils';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * A themed button component that supports different visual styles,
@@ -79,7 +79,7 @@ function ThemedButtonComponent({
   const currentTheme = useCurrentTheme();
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'card',
+    type: 'button', // Scale-only feedback for better accessibility and performance
   });
 
   // Optimistic loading state - only when explicitly enabled
@@ -153,7 +153,7 @@ function ThemedButtonComponent({
   );
 
   return (
-    <AnimatedTouchable
+    <AnimatedPressable
       style={[buttonStyle, animatedStyle]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
@@ -201,7 +201,7 @@ function ThemedButtonComponent({
           )}
         </View>
       </View>
-    </AnimatedTouchable>
+    </AnimatedPressable>
   );
 }
 

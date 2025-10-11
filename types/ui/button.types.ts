@@ -1,4 +1,4 @@
-import type { TouchableOpacityProps, ViewStyle } from 'react-native';
+import type { PressableProps, ViewStyle } from 'react-native';
 
 import type { BaseAnimatedStyleProps } from './base.types';
 
@@ -21,7 +21,7 @@ export type ButtonTextWeight = 'bold' | 'normal';
  * Base button props shared across all button variants
  */
 export interface BaseButtonProps
-  extends Omit<TouchableOpacityProps, 'style'>,
+  extends Omit<PressableProps, 'style'>,
     BaseAnimatedStyleProps {
   /** Text displayed on the button */
   title: string;

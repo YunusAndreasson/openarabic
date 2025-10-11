@@ -180,7 +180,7 @@ export const STRINGS = {
     'Daily vocabulary advancement, tracking new words mastered over time.',
 
   // Practice bottom sheet subtitles (condensed for subtitle format)
-  MEMORY_STRENGTH_SUBTITLE: 'Amount of words you are expected to recall at a given time',
+  MEMORY_STRENGTH_SUBTITLE: 'Amount of words you are expected to recall at a given time. Target at least 75% before adding new words',
   WORD_MASTERY_SUBTITLE: 'Words with strong, stable memories requiring minimal review',
   LEARNED_WORDS_SUBTITLE: 'Words you have successfully learned that are building toward mastery',
   LEARNING_RATE_SUBTITLE: 'Learning efficiency and speed trends over recent days',

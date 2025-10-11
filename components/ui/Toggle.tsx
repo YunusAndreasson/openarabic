@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -101,13 +101,13 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   );
 
   return (
-    <TouchableOpacity activeOpacity={1} style={TOUCHABLE_WRAPPER_STYLE} onPress={handlePress}>
+    <Pressable style={TOUCHABLE_WRAPPER_STYLE} onPress={handlePress}>
       <Animated.View style={[containerStyle, combinedContainerStyle]}>
         <View style={styles.toggleTrack}>
           <Animated.View style={[handleStyle, handleAnimatedStyle]} />
         </View>
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 

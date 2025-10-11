@@ -10,7 +10,7 @@ export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375; // Default fallback
 
 export const FONTS = {
   ENGLISH: 'Inter',
-  ARABIC: 'NotoSans',
+  ARABIC: 'NotoSansArabic-Regular', // Default Arabic font
 } as const;
 
 // Base scale for systematic sizing
@@ -209,7 +209,7 @@ export const LAYOUT = {
       MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // 48 + 8 = 56 (increased from 40 for better balance)
     },
     WIDTH: {
-      DICTIONARY_LEFT_SECTION: BASE_UNIT * 24, // 96 - slightly reduced to give Arabic more room
+      DICTIONARY_LEFT_SECTION: BASE_UNIT * 32, // 128 - more space for English text with badges
     },
   },
 

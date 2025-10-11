@@ -82,8 +82,8 @@ export const MIN_MOUNT_DELAY = 5;
 
 /** Default scale amounts used for press animations */
 export const PRESS_SCALE = {
-  BUTTON: 0.94, // More noticeable feedback for buttons
-  CARD: 0.96, // More noticeable but still subtle for cards
+  BUTTON: 0.96, // Subtle feedback for buttons
+  CARD: 0.96, // Subtle feedback for cards
 } as const;
 
 /** Scale amount for icon button press animations */

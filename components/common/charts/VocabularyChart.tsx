@@ -7,6 +7,7 @@ import { ChartDataPoint } from '@charts/ChartDataPoint';
 import { ChartGrid } from '@charts/ChartGrid';
 import { ChartMainLine } from '@charts/ChartMainLine';
 import { ChartPerformanceZones } from '@charts/ChartPerformanceZones';
+import { ChartReferenceLine } from '@charts/ChartReferenceLine';
 import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
 import { CHART_VISUAL } from '@charts/constants';
 import { Group } from '@shopify/react-native-skia';
@@ -39,6 +40,7 @@ interface VocabularyChartProps<T> {
   graphWidth: number;
   yLabelFormatter?: (value: number) => string;
   isFuturePrediction?: boolean; // Whether this chart shows future predictions (today = index 0)
+  referenceLine?: number; // Optional reference line percentage (e.g., 75 for 75% target)
 
   // BaseChart props
   title: string;
@@ -66,7 +68,8 @@ const VocabularyChartComparison = <T,>(
     prevProps.yMax !== nextProps.yMax ||
     prevProps.topPadding !== nextProps.topPadding ||
     prevProps.graphWidth !== nextProps.graphWidth ||
-    prevProps.onCardPress !== nextProps.onCardPress
+    prevProps.onCardPress !== nextProps.onCardPress ||
+    prevProps.referenceLine !== nextProps.referenceLine
   ) {
     return false;
   }
@@ -120,6 +123,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     graphWidth,
     yLabelFormatter,
     isFuturePrediction = false,
+    referenceLine,
     title,
     subtitle,
     onCardPress,
@@ -167,6 +171,20 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
           yMax={yMax}
         />
       );
+
+      // Reference line (e.g., 75% target) - after grid, before area fill
+      if (referenceLine !== undefined) {
+        components.push(
+          <ChartReferenceLine
+            key="reference-line"
+            percentage={referenceLine}
+            graphWidth={graphWidth}
+            chartHeight={GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING}
+            topPadding={topPadding}
+            yMax={yMax}
+          />
+        );
+      }
 
       // Area fill under the line - extends to full chart width
       if (chartData.hasChartData) {
@@ -235,6 +253,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       topPadding,
       xLabelPositions,
       yMax,
+      referenceLine,
       performanceZones,
       dataPoints,
       dataPointKeys,

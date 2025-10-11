@@ -1,7 +1,7 @@
 import { ProgressBar } from '@common/ProgressBar';
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 
@@ -109,20 +109,11 @@ export const MiniPlayer = memo<MiniPlayerProps>(
       [colors.tint]
     );
 
-    // Simplified mini-player press handler without animations
-    const handleMiniPlayerPress = useCallback(() => {
-      lightFeedback();
-    }, []);
-
     // Handle play/pause with haptic feedback
-    const handlePlayPause = useCallback(
-      (event: GestureResponderEvent) => {
-        event.stopPropagation(); // Prevent card tap
-        lightFeedback();
-        onPlayPause();
-      },
-      [onPlayPause]
-    );
+    const handlePlayPause = useCallback(() => {
+      lightFeedback();
+      onPlayPause();
+    }, [onPlayPause]);
 
     // Calculate progress percentage
     const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
@@ -148,11 +139,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
         exiting={FadeOutDown.duration(200)}
         style={containerStyle}
       >
-        <Pressable
-          onPress={handleMiniPlayerPress}
-          android_ripple={createAndroidRipple(colors)}
-          style={cardStyle}
-        >
+        <View style={cardStyle}>
           {/* Subtle inner hairline at top for grab affordance */}
           <View style={hairlineStyle} pointerEvents="none" />
           {/* Main Content Row */}
@@ -213,8 +200,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
             <View style={styles.controlsContainer}>
               {/* Timer button - always visible with state indication */}
               <Pressable
-                onPress={event => {
-                  event.stopPropagation();
+                onPress={() => {
                   lightFeedback();
                   onTimerPress();
                 }}
@@ -254,7 +240,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
               backgroundColor={colors.elevation3}
             />
           </View>
-        </Pressable>
+        </View>
       </Animated.View>
     );
   }

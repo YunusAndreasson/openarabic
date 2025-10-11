@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -59,7 +59,7 @@ interface DataPointOverlayProps {
   onPress: (x: number, y: number, value: string, label: string) => void;
 }
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, label, onPress }) => {
   const [isPressed, setIsPressed] = useState(false);
@@ -112,7 +112,7 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
   );
 
   return (
-    <AnimatedTouchable
+    <AnimatedPressable
       style={[touchableStyle, animatedStyle]}
       onPress={handlePress}
       onPressIn={handlePressIn}

@@ -5,7 +5,12 @@ import { LAYOUT } from '@/constants/layout';
 import { AudioLanguage, DisplayLanguage } from '@/types/enums';
 import type { ReminderTime } from '@/types/notifications.types';
 
-export type ArabicFontName = 'Madina' | 'Amiri' | 'Scheherazade' | 'Nastaliq' | 'NotoSans';
+export type ArabicFontName =
+  | 'DigitalKhattNewMadinaRegular'
+  | 'Amiri-Regular'
+  | 'ScheherazadeNew-Regular'
+  | 'NotoNastaliqUrdu-Regular'
+  | 'NotoSansArabic-Regular';
 
 export type AudioLanguagePreference = AudioLanguage;
 export type DisplayLanguagePreference = DisplayLanguage;
@@ -29,7 +34,7 @@ const initialState: SettingsState = {
     minute: 0,
     enabled: false,
   },
-  arabicFont: 'NotoSans', // Default font
+  arabicFont: 'NotoSansArabic-Regular', // Default font
   arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // Default to 20px
   audioLanguagePreference: AudioLanguage.ENGLISH_ARABIC, // Default to English + Arabic
   audioShuffleEnabled: false, // Default to sequential playback

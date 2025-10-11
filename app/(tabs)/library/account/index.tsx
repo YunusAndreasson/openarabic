@@ -103,6 +103,7 @@ const AccountScreen: FC = () => {
   const currentTheme = useAppSelectorMemo(state => state.theme.theme);
   const currentLanguage = useAppSelectorMemo(state => state.settings.displayLanguagePreference);
   const currentAudioLanguage = useAppSelectorMemo(state => state.settings.audioLanguagePreference);
+  const currentArabicFont = useAppSelectorMemo(state => state.settings.arabicFont);
   const dispatch = useAppDispatch();
 
   const [activePicker, setActivePicker] = React.useState<string | null>(null);
@@ -272,6 +273,18 @@ const AccountScreen: FC = () => {
       ? STRINGS.AUDIO_LANGUAGE_ARABIC
       : STRINGS.AUDIO_LANGUAGE_BILINGUAL;
 
+  // Get current Arabic font display text
+  const currentArabicFontText = useMemo(() => {
+    const fontDisplayNames: Record<string, string> = {
+      'NotoSansArabic-Regular': 'Noto Sans',
+      DigitalKhattNewMadinaRegular: 'Madina',
+      'Amiri-Regular': 'Amiri',
+      'ScheherazadeNew-Regular': 'Scheherazade',
+      'NotoNastaliqUrdu-Regular': 'Nastaliq',
+    };
+    return fontDisplayNames[currentArabicFont] || 'Noto Sans';
+  }, [currentArabicFont]);
+
   // Format cache size for display
   const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : STRINGS.NO_CACHED_FILES;
 
@@ -329,7 +342,7 @@ const AccountScreen: FC = () => {
                     {STRINGS.ARABIC_FONT}
                   </ThemedText>
                 </View>
-                <CardRight type="chevron-only" />
+                <CardRight type="text-chevron" text={currentArabicFontText} />
               </View>
             </BaseCard>
 

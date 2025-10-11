@@ -30,7 +30,7 @@ import { useEfficiencyChart } from '@/hooks/vocabulary/useEfficiencyChart';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { ReviewAction } from '@/types/enums';
-import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
+import { mediumFeedback } from '@/utils/haptics';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -121,13 +121,9 @@ export default function VocabularyScreen(): JSX.Element {
     router.push(getStudyReviewRoute());
   }, [user, router]);
 
-  // Bottom sheet handler with haptic feedback
+  // Bottom sheet handler
   const handleBottomSheetChange = useCallback(
     (sheet: 'memory' | 'due' | 'learned' | 'mastered' | null) => {
-      // Trigger haptic feedback when opening a sheet
-      if (sheet !== null) {
-        selectionFeedback();
-      }
       setActiveBottomSheet(sheet);
     },
     []

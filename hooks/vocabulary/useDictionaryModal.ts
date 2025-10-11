@@ -1,15 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';
+import { isDueWord, isLearnedWord, isMasteredWord } from '@/utils/wordClassification';
 
-export type DictionarySortOption = 'difficulty' | 'alphabetical' | 'dateAdded';
 export type SortDirection = 'asc' | 'desc';
-
-export const DICTIONARY_SORT_OPTIONS = [
-  { key: 'difficulty' as const, label: 'Difficulty' },
-  { key: 'alphabetical' as const, label: 'A-Z' },
-  { key: 'dateAdded' as const, label: 'Date Added' },
-] as const;
 
 interface UseDictionaryModalProps {
   studyWords: StudyWord[];
@@ -17,85 +11,47 @@ interface UseDictionaryModalProps {
 
 interface UseDictionaryModalReturn {
   sortedWords: StudyWord[];
-  sortOption: DictionarySortOption;
   sortDirection: SortDirection;
-  setSorting: (option: DictionarySortOption, direction?: SortDirection) => void;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
+  setSorting: () => void;
 }
 
 export const useDictionaryModal = ({
   studyWords,
 }: UseDictionaryModalProps): UseDictionaryModalReturn => {
-  const [sortOption, setSortOption] = useState<DictionarySortOption>('difficulty');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [searchQuery, setSearchQuery] = useState('');
 
-  const setSorting = useCallback(
-    (option: DictionarySortOption, direction?: SortDirection) => {
-      setSortOption(prevOption => {
-        const newOption = option;
-        const newDirection =
-          direction || (prevOption === option && sortDirection === 'desc' ? 'asc' : 'desc');
-        setSortDirection(newDirection);
-        return newOption;
-      });
-    },
-    [sortDirection]
-  );
+  // Toggle sort direction (always sorts by phase)
+  const setSorting = useCallback(() => {
+    setSortDirection(prev => (prev === 'desc' ? 'asc' : 'desc'));
+  }, []);
 
-  // Sort words based on selected option and direction
+  // Sort words by phase (Due > Learned > Mastered)
   const sortedWords = useMemo(() => {
     if (!studyWords?.length) return [];
 
-    // First filter by search query
-    const filteredWords = searchQuery.trim()
-      ? studyWords.filter(word => {
-          const arabicText = word.root?.letters?.toLowerCase() || '';
-          const englishText = word.root?.meaning?.toLowerCase() || '';
-          const query = searchQuery.toLowerCase().trim();
+    // Helper function to determine word phase priority
+    // Due (0) > Learned (1) > Mastered (2) > Other (3)
+    const getPhaseValue = (word: StudyWord): number => {
+      if (isDueWord(word)) return 0; // Highest priority - needs review now
+      if (isLearnedWord(word) && !isMasteredWord(word)) return 1; // Consolidating
+      if (isMasteredWord(word)) return 2; // Well-established
+      return 3; // New words not yet in system
+    };
 
-          return arabicText.includes(query) || englishText.includes(query);
-        })
-      : studyWords;
-
-    // Then apply sorting
-    const sorted = [...filteredWords].sort((a, b) => {
-      let compareValue = 0;
-
-      switch (sortOption) {
-        case 'difficulty': {
-          const diffA = a.fsrs_difficulty ?? 1.0;
-          const diffB = b.fsrs_difficulty ?? 1.0;
-          compareValue = diffA - diffB;
-          break;
-        }
-        case 'alphabetical': {
-          const textA = a.root?.meaning || '';
-          const textB = b.root?.meaning || '';
-          compareValue = textA.localeCompare(textB);
-          break;
-        }
-        case 'dateAdded': {
-          const dateA = new Date(a.created_at).getTime();
-          const dateB = new Date(b.created_at).getTime();
-          compareValue = dateA - dateB;
-          break;
-        }
-      }
+    const sorted = [...studyWords].sort((a, b) => {
+      const phaseA = getPhaseValue(a);
+      const phaseB = getPhaseValue(b);
+      const compareValue = phaseA - phaseB;
 
       return sortDirection === 'asc' ? compareValue : -compareValue;
     });
 
     return sorted;
-  }, [studyWords, sortOption, sortDirection, searchQuery]);
+  }, [studyWords, sortDirection]);
 
   return {
     sortedWords,
-    sortOption,
     sortDirection,
     setSorting,
-    searchQuery,
-    setSearchQuery,
   };
 };

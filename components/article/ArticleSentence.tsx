@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { ComponentRef, ReactNode, RefObject } from 'react';
 import { createRef, memo, useEffect, useMemo, useRef } from 'react';
-import type { LayoutRectangle, StyleProp, TouchableOpacity, ViewStyle } from 'react-native';
+import type { LayoutRectangle, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { type AnimatedStyle } from 'react-native-reanimated';
 
@@ -88,7 +88,7 @@ const ArticleSentenceComparison = (
 function renderWordWithProps(
   word: SentenceWord,
   index: number,
-  wordRefs: RefObject<ComponentRef<typeof TouchableOpacity>>[],
+  wordRefs: RefObject<ComponentRef<typeof Pressable>>[],
   dueWordRootIds: Set<number>,
   renderWord: ((word: SentenceWord, isHighlighted: boolean) => ReactNode) | undefined,
   onWordPress: ((word: SentenceWord, layout?: LayoutRectangle) => void) | undefined,
@@ -98,8 +98,8 @@ function renderWordWithProps(
 ) {
   const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
   if (!wordRefs[index]) {
-    wordRefs[index] = createRef<ComponentRef<typeof TouchableOpacity>>() as RefObject<
-      ComponentRef<typeof TouchableOpacity>
+    wordRefs[index] = createRef<ComponentRef<typeof Pressable>>() as RefObject<
+      ComponentRef<typeof Pressable>
     >;
   }
   const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
@@ -140,7 +140,7 @@ const ArticleSentenceComponent = memo(
     const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
     const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
 
-    const wordRefs = useRef<RefObject<ComponentRef<typeof TouchableOpacity>>[]>([]);
+    const wordRefs = useRef<RefObject<ComponentRef<typeof Pressable>>[]>([]);
     const {
       animatedStyle: animatedHighlightStyle,
       startAnimation,
@@ -149,8 +149,8 @@ const ArticleSentenceComponent = memo(
 
     useEffect(() => {
       wordRefs.current = words.map(() =>
-        createRef<ComponentRef<typeof TouchableOpacity>>()
-      ) as RefObject<ComponentRef<typeof TouchableOpacity>>[];
+        createRef<ComponentRef<typeof Pressable>>()
+      ) as RefObject<ComponentRef<typeof Pressable>>[];
     }, [words]);
 
     useEffect(() => {

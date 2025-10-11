@@ -8,6 +8,7 @@ import {
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -19,6 +20,12 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import amiriFont from '@/assets/fonts/Amiri.ttf';
+import interFont from '@/assets/fonts/Inter.ttf';
+import madinaFont from '@/assets/fonts/Madina.otf';
+import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
+import notoSansFont from '@/assets/fonts/NotoSans.ttf';
+import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import { ThemedText } from '@/components/ThemedText';
 import { MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/bookmarks';
@@ -125,6 +132,17 @@ function AppContent() {
   // Use streaks context
   const { isStreaksVisible, closeStreaks } = useStreaks();
 
+  // Load fonts at runtime for Expo Go compatibility
+  // PostScript names are used for cross-platform consistency (especially iOS)
+  const [fontsLoaded] = useFonts({
+    'NotoSansArabic-Regular': notoSansFont,
+    Inter: interFont,
+    'Amiri-Regular': amiriFont,
+    DigitalKhattNewMadinaRegular: madinaFont,
+    'ScheherazadeNew-Regular': scheherazadeFont,
+    'NotoNastaliqUrdu-Regular': nastaliqFont,
+  });
+
   // Enable LayoutAnimation on Android for FAQ expand/collapse
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -215,22 +233,25 @@ function AppContent() {
 
   // Wait for all resources before setting appReady
   useEffect(() => {
+    // Fonts must be loaded (for Expo Go and runtime loading)
+    const fontsAreReady = fontsLoaded;
+
     // Auth must be fully resolved (not loading anymore)
     const authIsReady = !isAuthLoading;
 
     // Critical content must be loaded (articles, categories, etc.)
     const contentIsReady = isLoaded;
 
-    // CRITICAL: Require BOTH auth AND content to be ready
-    // This prevents janky behavior from showing UI before data is available
+    // CRITICAL: Require fonts AND auth AND content to be ready
+    // This prevents janky behavior from showing UI before resources are available
     // Once ready, never set back to false (prevents unmounting during refresh)
-    if (authIsReady && contentIsReady && !appReady) {
+    if (fontsAreReady && authIsReady && contentIsReady && !appReady) {
       setAppReady(true);
 
       // Hide splash screen when app is ready
       SplashScreen.hide();
     }
-  }, [isAuthLoading, isLoaded, appReady]);
+  }, [fontsLoaded, isAuthLoading, isLoaded, appReady]);
 
   // Initialize notifications when app is ready (Expo best practice)
   useEffect(() => {
@@ -270,13 +291,13 @@ function AppContent() {
 
   // Fallback timeout so the app doesn't remain stuck on the splash screen
   useEffect(() => {
-    if (appReady) return;
+    if (appReady || !fontsLoaded) return;
     const timer = setTimeout(() => {
       setAppReady(true);
       SplashScreen.hide();
     }, 10000);
     return () => clearTimeout(timer);
-  }, [appReady]);
+  }, [appReady, fontsLoaded]);
 
   // Cleanup effect for AppState subscription
   useEffect(() => {

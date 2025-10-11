@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, type ComponentProps, type FC } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET, enhanceTouchPadding } from '@/constants/layout';
@@ -17,7 +17,7 @@ interface TouchableIconProps extends Omit<BaseIconButtonProps, 'icon'> {
   hapticFeedback?: boolean;
 }
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // Auto-calculate optimal touch target size based on icon size
 const getOptimalTouchTarget = (iconSize: number): number => {
@@ -53,7 +53,7 @@ const TouchableIcon: FC<TouchableIconProps> = memo(
     })();
 
     return (
-      <AnimatedTouchable
+      <AnimatedPressable
         disabled={disabled}
         hitSlop={hitSlop}
         style={[
@@ -71,7 +71,7 @@ const TouchableIcon: FC<TouchableIconProps> = memo(
         onPressOut={handlePressOut}
       >
         <Ionicons color={color || colors.secondaryText} name={icon} size={size} />
-      </AnimatedTouchable>
+      </AnimatedPressable>
     );
   }
 );

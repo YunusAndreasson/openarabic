@@ -6,18 +6,17 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import DeleteButton from '@/components/bookmarks/DeleteButton';
-import { StatusBadge } from '@/components/study/StatusBadge';
 import { SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
+import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { generateAudioUrl } from '@/utils/imageUtils';
 import {
   isDueWord,
-  isExtraHardWord,
   isLearnedWord,
   isMasteredWord,
 } from '@/utils/wordClassification';
@@ -31,6 +30,7 @@ interface DictionaryWordCardProps {
 export const DictionaryWordCard = memo<DictionaryWordCardProps>(
   ({ word, editMode, onDelete }) => {
     const audioPlayer = useSimpleAudioPlayer();
+    const colors = useColors();
 
     // Transform animation for edit mode (similar to bookmarks)
     const { animatedStyle, setValue } = useTransformAnimation({
@@ -101,55 +101,75 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
         isDue: isDueWord(word),
         isLearned: isLearnedWord(word),
         isMastered: isMasteredWord(word),
-        isExtraHard: isExtraHardWord(word),
       }),
       [word]
     );
 
-    // Determine primary badge type (mutually exclusive: Due > Mastered > Learned)
-    const primaryBadgeType = wordStatus.isDue
-      ? 'due'
-      : wordStatus.isMastered
-        ? 'mastered'
-        : wordStatus.isLearned
-          ? 'learned'
-          : null;
+    // Determine status colors for dots and background (memoized for performance)
+    const statusColors = useMemo(() => {
+      const dotColors: string[] = [];
+
+      // Add Due status color (red - urgent attention)
+      if (wordStatus.isDue) {
+        dotColors.push(colors.error);
+      }
+
+      // Add Mastered or Learned status color
+      if (wordStatus.isMastered) {
+        dotColors.push(colors.success); // Green - completed achievement
+      } else if (wordStatus.isLearned) {
+        dotColors.push(colors.warning); // Yellow/amber - in progress
+      }
+
+      return dotColors;
+    }, [
+      wordStatus.isDue,
+      wordStatus.isLearned,
+      wordStatus.isMastered,
+      colors.error,
+      colors.success,
+      colors.warning,
+    ]);
+
+    // Subtle background tint for ambient status awareness (5% opacity)
+    const cardBackgroundTint = useMemo(() => {
+      if (statusColors.length === 0) return undefined;
+      return statusColors[0] + '0D'; // Append 0D for ~5% opacity
+    }, [statusColors]);
 
     return (
       <Animated.View style={[styles.cardContainer, animatedStyle]}>
         <View style={styles.cardWrapper}>
           <BaseCard
-            style={styles.card}
+            style={[styles.card, cardBackgroundTint && { backgroundColor: cardBackgroundTint }]}
             onPress={editMode ? undefined : handleCardPress}
             shadowSize="small"
             contentStyle={styles.cardContent}
           >
             <View style={styles.content}>
-              {/* Left: Status badges and English text */}
-              <View style={styles.leftSection}>
-                <View style={styles.textContainer}>
-                  {/* Status badges row (primary + optional extra hard) */}
-                  {(primaryBadgeType || wordStatus.isExtraHard) && (
-                    <View style={styles.badgesRow}>
-                      {primaryBadgeType && <StatusBadge type={primaryBadgeType} />}
-                      {wordStatus.isExtraHard && <StatusBadge type="extraHard" />}
-                    </View>
-                  )}
-
-                  {/* English meaning text */}
-                  <ThemedText
-                    type="body"
-                    variant="secondary"
-                    style={styles.englishText}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {englishText}
-                  </ThemedText>
+              {/* Status dots - left indicator for visual hierarchy */}
+              {statusColors.length > 0 && (
+                <View style={styles.dotsContainer}>
+                  {statusColors.map(color => (
+                    <View key={color} style={[styles.statusDot, { backgroundColor: color }]} />
+                  ))}
                 </View>
+              )}
+
+              {/* English text (vertically centered) */}
+              <View style={styles.leftSection}>
+                <ThemedText
+                  type="body"
+                  variant="secondary"
+                  style={styles.englishText}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {englishText}
+                </ThemedText>
               </View>
 
-              {/* Right: Arabic (prominent, right-aligned) */}
+              {/* Arabic text (vertically centered) */}
               <View style={styles.rightSection}>
                 <ThemedText
                   type="arabic"
@@ -182,7 +202,6 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
       prevProps.word.fsrs_stability === nextProps.word.fsrs_stability &&
       prevProps.word.fsrs_due === nextProps.word.fsrs_due &&
       prevProps.word.fsrs_last_review === nextProps.word.fsrs_last_review &&
-      prevProps.word.fsrs_difficulty === nextProps.word.fsrs_difficulty && // Still needed for Extra Hard badge
       prevProps.word.root?.letters === nextProps.word.root?.letters &&
       prevProps.word.root?.meaning === nextProps.word.root?.meaning &&
       prevProps.word.root?.audio_url === nextProps.word.root?.audio_url
@@ -207,7 +226,6 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     minHeight: LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM,
-    overflow: 'visible',
   },
   content: {
     flexDirection: 'row',
@@ -218,28 +236,30 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   leftSection: {
-    width: LAYOUT.CARD.WIDTH.DICTIONARY_LEFT_SECTION, // slightly reduced to give Arabic more room
+    width: LAYOUT.CARD.WIDTH.DICTIONARY_LEFT_SECTION,
     flexShrink: 0,
     paddingRight: LAYOUT.SPACING.SMALL,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  textContainer: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  badgesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.TINY, // Small gap between badges
+    justifyContent: 'center', // Vertically center English text
+    alignItems: 'flex-start', // Keep left-aligned horizontally
   },
   englishText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '600',
     textAlign: 'left',
     includeFontPadding: false,
-    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.1),
+    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1),
+  },
+  dotsContainer: {
+    flexDirection: 'column', // Vertical stack of dots
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: LAYOUT.SPACING.TINY, // 4px gap between dots
+    marginRight: LAYOUT.SPACING.SMALL, // 8px gap before English text
+  },
+  statusDot: {
+    width: 6, // 6px small dots
+    height: 6,
+    borderRadius: 3, // Perfect circle
   },
   rightSection: {
     flex: 1,

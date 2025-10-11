@@ -3,16 +3,41 @@ import { Tabs, router } from 'expo-router';
 import type { JSX } from 'react';
 import React, { Fragment, memo, useCallback, useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth';
+import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { AppTab, UiAction } from '@/types/enums';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { createAndroidRipple } from '@/utils/layoutUtils';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// Custom TabBarButton with press animation for better visual feedback
+const TabBarButton = memo((props: any) => {
+  const { children, onPress, style } = props;
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    type: 'button', // Scale-only feedback (0.96)
+  });
+
+  return (
+    <AnimatedPressable
+      {...props}
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[style, animatedStyle]}
+    >
+      {children}
+    </AnimatedPressable>
+  );
+});
+TabBarButton.displayName = 'TabBarButton';
 
 // Custom IconWithBadge component for better badge positioning and consistent shape
 const IconWithBadge = memo(
@@ -225,6 +250,7 @@ export default function TabLayout(): JSX.Element {
           tabBarIconStyle: styles.tabBarIcon,
           tabBarItemStyle: { paddingTop: 4, paddingBottom: 2 },
           tabBarStyle: tabBarStyle,
+          tabBarButton: props => <TabBarButton {...props} />,
         }}
       >
         {TAB_SCREENS.map(screen => (

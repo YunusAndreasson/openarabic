@@ -1,8 +1,8 @@
 import BaseCard from '@common/BaseCard';
 import Slider from '@react-native-community/slider';
-import { memo, useCallback, useEffect, useState, type FC } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
@@ -66,6 +66,7 @@ FontPreviewCard.displayName = 'FontPreviewCard';
 
 const ArabicFontSelector: FC = () => {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const { selectedFont, selectedFontSize, fontOptions, selectFont, setFontSize, fontSizeRange } =
     useArabicFontSelector();
 
@@ -97,6 +98,15 @@ const ArabicFontSelector: FC = () => {
     [setFontSize]
   );
 
+  // Memoize scroll content style with safe area insets
+  const scrollContentStyle = useMemo(
+    () => ({
+      gap: LAYOUT.SPACING.SMALL,
+      paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE, // Extra space + safe area
+    }),
+    [insets.bottom]
+  );
+
   return (
     <View style={styles.container}>
       <BaseCard shadowSize="small" style={styles.sliderCard}>
@@ -116,7 +126,7 @@ const ArabicFontSelector: FC = () => {
       </BaseCard>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
       >
@@ -149,10 +159,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  scrollContent: {
-    gap: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   fontCard: {
     padding: LAYOUT.SPACING.MEDIUM,
