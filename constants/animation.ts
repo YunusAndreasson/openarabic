@@ -28,9 +28,6 @@ export const TIMING_CONFIG = {
     duration: 400, // Progress bar animations
     easing: Easing.out(Easing.cubic), // Smooth progress easing
   },
-  POLLING: {
-    interval: 200, // Polling intervals for status updates
-  },
 } as const;
 
 /**
@@ -55,13 +52,6 @@ export const SPRING_CONFIG = {
     damping: 18, // Higher damping for smoother feel
     stiffness: 140, // Higher stiffness for more responsive feel
     mass: 0.4, // Lighter mass for snappier toggle feel
-    overshootClamping: false,
-    energyThreshold: 0.01,
-  },
-  SLIDE: {
-    damping: 22, // Higher damping for very smooth sliding
-    stiffness: 120, // Balanced stiffness for natural slide feel
-    mass: 0.7, // Lighter mass for snappier sliding
     overshootClamping: false,
     energyThreshold: 0.01,
   },
@@ -107,15 +97,6 @@ export const REVIEW_MIN_PROGRESS_VALUE = 1;
 /** Starting offset for toast translate animations */
 export const TOAST_INITIAL_TRANSLATE_Y = 50;
 
-/** Spring config for toast translate animations */
-export const TOAST_SPRING = {
-  damping: 18, // Higher damping for smoother toast animations
-  stiffness: 220, // Higher stiffness for more responsive feel
-  mass: 0.8, // Lighter mass for snappier response
-  overshootClamping: false,
-  energyThreshold: 0.01,
-} as const;
-
 /** Threshold to hide the header when scrolling */
 export const HEADER_SCROLL_THRESHOLD = 50;
 
@@ -138,17 +119,6 @@ export const COMPLETION_METRIC_STAGGER = 150;
 export const COMPLETION_BUTTON_DELAY = {
   BASE: 1000,
   WITH_METRICS: 1400,
-} as const;
-
-/** Spring config for toast scale animations */
-export const TOAST_SCALE_SPRING = {
-  IMPORTANT: { damping: 10, stiffness: 280, mass: 0.3 }, // More responsive for important toasts
-  DEFAULT: { damping: 12, stiffness: 220, mass: 0.4 }, // Smoother for default toasts
-} as const;
-
-export const TOAST_SCALE_CONFIG = {
-  IMPORTANT: { initialScale: 0.2, overshoot: 1.15 },
-  DEFAULT: { initialScale: 0.3, overshoot: 1.1 },
 } as const;
 
 /** Default toast visibility duration */

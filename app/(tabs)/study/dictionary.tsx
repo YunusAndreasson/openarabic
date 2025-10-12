@@ -35,12 +35,12 @@ export default function DictionaryScreen(): JSX.Element {
   useEffect(() => {
     const title =
       filter === 'due'
-        ? 'Due Words'
+        ? STRINGS.DUE_WORDS_TITLE
         : filter === 'learned'
-        ? 'Learned Words'
+        ? STRINGS.LEARNED_WORDS
         : filter === 'mastered'
-        ? 'Mastered Words'
-        : 'Dictionary';
+        ? STRINGS.MASTERED_WORDS_TITLE
+        : STRINGS.DICTIONARY_TITLE;
     navigation.setOptions({ title });
   }, [filter, navigation]);
 
@@ -108,7 +108,7 @@ export default function DictionaryScreen(): JSX.Element {
       } catch (error) {
         await handleError(error instanceof Error ? error : String(error), {
           showToast: true,
-          toastMessage: 'Failed to delete word',
+          toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
           captureSentry: !__DEV__,
         });
       }

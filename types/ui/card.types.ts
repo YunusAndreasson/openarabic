@@ -4,6 +4,7 @@ import type { BaseComponentProps } from './base.types';
 
 /**
  * Props for card components with basic styling and functionality
+ * Note: Use 'loading' prop from BaseComponentProps for loading state
  */
 export interface BaseCardProps extends BaseComponentProps {
   /** Optional callback when card is long pressed */
@@ -12,8 +13,6 @@ export interface BaseCardProps extends BaseComponentProps {
   shadowSize?: 'large' | 'medium' | 'none' | 'small';
   /** Additional styling for the content container */
   contentStyle?: StyleProp<ViewStyle>;
-  /** Alias for loading prop - more descriptive for cards */
-  isLoading?: boolean;
 }
 
 /**

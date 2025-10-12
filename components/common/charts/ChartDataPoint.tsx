@@ -1,13 +1,14 @@
-import { useChartColors } from '@charts/ChartColors';
 import { CHART_VISUAL } from '@charts/constants';
 import { Circle, Group } from '@shopify/react-native-skia';
 import { memo } from 'react';
 
+import type { ChartColors } from '@/types/ui/chart.types';
 
 interface ChartDataPointProps {
   x: number;
   y: number;
   uniqueKey?: string;
+  chartColors: ChartColors;
 }
 
 /**
@@ -18,8 +19,8 @@ export const ChartDataPoint = memo<ChartDataPointProps>(({
   x,
   y,
   uniqueKey,
+  chartColors,
 }) => {
-  const chartColors = useChartColors();
 
   return (
     <Group key={uniqueKey}>

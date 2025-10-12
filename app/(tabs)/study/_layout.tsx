@@ -1,15 +1,12 @@
 import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
 
-import DoneButton from '@/components/ui/DoneButton';
-import EditModeButton from '@/components/ui/EditModeButton';
+import { DictionaryButton, DoneButton, EditModeButton } from '@/components/ui';
 import { createNavigationOptions } from '@/constants/modal';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { AppTab, UiAction } from '@/types/enums';
 import { createTabHeaderOptions } from '@/utils/navigation/createTabHeaderOptions';
-
-import { DictionaryButton } from '../_layout';
 
 export default function StudyLayout(): JSX.Element {
   const colors = useColors();

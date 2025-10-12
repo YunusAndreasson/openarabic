@@ -10,8 +10,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/ThemedView';
 import BottomControls from '@/components/bookmarks/BottomControls';
 import EmptyState from '@/components/common/EmptyState';
+import ErrorState from '@/components/common/ErrorState';
 import { DueWordsBottomSheet } from '@/components/study/DueWordsBottomSheet';
-import ErrorMessage from '@/components/study/ErrorMessage';
 import { LearnedBottomSheet } from '@/components/study/LearnedBottomSheet';
 import { MemoryRetentionBottomSheet } from '@/components/study/MemoryRetentionBottomSheet';
 import RecommendationCard from '@/components/study/RecommendationCard';
@@ -26,7 +26,6 @@ import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useEfficiencyChart } from '@/hooks/vocabulary/useEfficiencyChart';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { ReviewAction } from '@/types/enums';
@@ -108,8 +107,6 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Get chart data for recommendations
   const { chartData } = useRetrievabilityChart(allWords || []);
-  // Note: efficiencyChartData is available but not currently used in UI
-  useEfficiencyChart(filteredStudyWords);
 
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
@@ -226,14 +223,22 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Show error message if there was an error loading data
   if (shouldShowError) {
+    const handleRetry = () => {
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
+      }
+    };
+
     return (
       <ThemedView style={styles.container}>
-        <ErrorMessage
-          customMessage={
+        <ErrorState
+          message={
             error instanceof Error
               ? error.message
-              : 'Failed to load practice data. Please try again.'
+              : STRINGS.FAILED_TO_LOAD_PRACTICE_DATA
           }
+          onRetry={handleRetry}
         />
       </ThemedView>
     );

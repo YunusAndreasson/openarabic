@@ -1,9 +1,9 @@
 /**
  * OpenArabic Color System - OKLCH Based
  *
- * This version uses OKLCH color space while preserving exact visual appearance
- * of the original hex-based colors. All colors have been reverse-engineered
- * from existing hex values to maintain perfect backwards compatibility.
+ * Uses OKLCH color space while preserving exact visual appearance of the
+ * original hex-based colors. All colors have been converted from hex values
+ * to maintain visual consistency.
  *
  * OKLCH Benefits:
  * - Perceptually uniform: Equal lightness changes = equal visual brightness changes

@@ -13,7 +13,7 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { SleepTimerAction } from '@/types/enums';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
-import { formatSecondsToClock } from '@/utils/time';
+import { formatSecondsToClock } from '@/utils/dateTimeUtils';
 
 export interface SleepTimerProps {
   isVisible: boolean;

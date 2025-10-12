@@ -1,4 +1,6 @@
+import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
+import { executeQuery } from '@/utils/supabaseHelpers';
 
 export interface ReadingStreak {
   currentStreak: number;
@@ -44,14 +46,15 @@ export class ReadingStreakService {
 
     // Check if user has any article activity on each date
     // Get all reading progress records and consider both created_at and updated_at dates
-    const { data, error } = await supabase
-      .from('reading_progress')
-      .select('created_at, updated_at')
-      .eq('user_id', userId);
-
-    if (error) {
-      throw new Error(`Failed to get reading activity: ${error.message}`);
-    }
+    const data = await executeQuery(
+      () => supabase.from('reading_progress').select('created_at, updated_at').eq('user_id', userId),
+      {
+        toastMessage: STRINGS.ERROR_LOADING_DATA,
+        analyticsEventName: 'Reading_Activity_Load_Error',
+        analyticsProperties: { userId, days },
+        showToast: false, // Silent for streak calculation
+      }
+    );
 
     // Group by date - any activity on a date counts as reading
     const activityMap = new Map<string, boolean>();

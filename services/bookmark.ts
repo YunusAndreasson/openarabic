@@ -1,7 +1,7 @@
 import { STRINGS } from '@/constants/strings';
-import { checkAuthentication, supabase } from '@/services/supabase';
+import { supabase } from '@/services/supabase';
 import type { BookmarkItem } from '@/types/bookmark.types';
-import { handleError } from '@/utils/errorHandling';
+import { executeAuthenticatedQuery } from '@/utils/supabaseHelpers';
 
 const errorConfig = {
   readingList: {
@@ -36,72 +36,73 @@ export const bookmarkService = {
    * @param articleId - The article ID to add to reading list
    */
   async addToReadingList(userId: string, articleId: number): Promise<void> {
-    await checkAuthentication(userId);
-
-    const { error } = await supabase
-      .from('reading_list')
-      .upsert({ user_id: userId, article_id: articleId }, { onConflict: 'user_id,article_id' });
-
-    if (error) {
-      await handleError(error, {
+    await executeAuthenticatedQuery(
+      userId,
+      () =>
+        supabase
+          .from('reading_list')
+          .upsert({ user_id: userId, article_id: articleId }, { onConflict: 'user_id,article_id' }),
+      {
         ...errorConfig.readingList.add,
         analyticsProperties: { articleId },
-      });
-      throw error;
-    }
+      }
+    );
   },
 
   /**
    * Removes an article from the reading list
    */
   async removeFromReadingList(userId: string, articleId: number): Promise<void> {
-    await checkAuthentication(userId);
-    const { error } = await supabase
-      .from('reading_list')
-      .delete()
-      .eq('user_id', userId)
-      .eq('article_id', articleId);
-
-    if (error) {
-      await handleError(error, {
+    await executeAuthenticatedQuery(
+      userId,
+      () => supabase.from('reading_list').delete().eq('user_id', userId).eq('article_id', articleId),
+      {
         ...errorConfig.readingList.remove,
         analyticsProperties: { articleId },
-      });
-      throw error;
-    }
+      }
+    );
   },
 
   /**
    * Checks if an article is in the user's reading list
    */
   async isInReadingList(userId: string, articleId: number): Promise<boolean> {
-    await checkAuthentication(userId);
-    const { data, error } = await supabase
-      .from('reading_list')
-      .select('article_id')
-      .eq('user_id', userId)
-      .eq('article_id', articleId)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      await handleError(error, {
-        ...errorConfig.readingList.check,
-        analyticsProperties: { articleId },
-      });
+    try {
+      const data = await executeAuthenticatedQuery(
+        userId,
+        () =>
+          supabase
+            .from('reading_list')
+            .select('article_id')
+            .eq('user_id', userId)
+            .eq('article_id', articleId)
+            .single(),
+        {
+          ...errorConfig.readingList.check,
+          analyticsProperties: { articleId },
+        }
+      );
+      return !!data;
+    } catch (error) {
+      // PGRST116 = "not found" error from Supabase, which is expected behavior
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'PGRST116') {
+        return false;
+      }
       throw error;
     }
-
-    return !!data;
   },
 
   /**
    * Gets the user's reading list
    */
   async getReadingList(userId: string): Promise<BookmarkItem[]> {
-    const { data, error } = await supabase
-      .from('reading_list')
-      .select(
-        `
+    const data = await executeAuthenticatedQuery(
+      userId,
+      () =>
+        supabase
+          .from('reading_list')
+          .select(
+            `
         user_id,
         article_id,
         added_at,
@@ -121,21 +122,22 @@ export const bookmarkService = {
           author:authors(id, name)
         )
       `
-      )
-      .eq('user_id', userId)
-      .order('added_at', { ascending: false });
+          )
+          .eq('user_id', userId)
+          .order('added_at', { ascending: false }),
+      errorConfig.readingList.load
+    );
 
-    if (error) throw error;
     return (data ?? []) as BookmarkItem[];
   },
 
   async getArticleIds(userId: string): Promise<number[]> {
-    const { data, error } = await supabase
-      .from('reading_list')
-      .select('article_id')
-      .eq('user_id', userId);
+    const data = await executeAuthenticatedQuery(
+      userId,
+      () => supabase.from('reading_list').select('article_id').eq('user_id', userId),
+      errorConfig.readingList.load
+    );
 
-    if (error) throw error;
     return (data ?? []).map(item => item.article_id);
   },
 };

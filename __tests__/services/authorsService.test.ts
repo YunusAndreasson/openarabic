@@ -50,9 +50,15 @@ describe('authorsService', () => {
       fromMock.mockReturnValue(builder);
 
       await expect(authorsService.getAuthors()).rejects.toThrow(error);
-      expect(handleError).toHaveBeenCalledWith(error, {
-        toastMessage: "Couldn't load authors. Try again",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          toastMessage: "Couldn't load authors. Try again",
+          analyticsEventName: 'Authors_Load_Error',
+          showToast: true,
+          sentrySeverity: 'error',
+        })
+      );
     });
   });
 
@@ -92,9 +98,16 @@ describe('authorsService', () => {
 
       await expect(authorsService.getAuthorsByCategory(4)).rejects.toThrow(error);
 
-      expect(handleError).toHaveBeenCalledWith(error, {
-        toastMessage: "Couldn't load authors. Try again",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          toastMessage: "Couldn't load authors. Try again",
+          analyticsEventName: 'Authors_By_Category_Load_Error',
+          analyticsProperties: { categoryId: 4 },
+          showToast: true,
+          sentrySeverity: 'error',
+        })
+      );
     });
   });
 });

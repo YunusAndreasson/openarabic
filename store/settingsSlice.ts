@@ -16,7 +16,6 @@ export type AudioLanguagePreference = AudioLanguage;
 export type DisplayLanguagePreference = DisplayLanguage;
 
 export interface SettingsState {
-  fontScale: number;
   reminderTime: ReminderTime;
   arabicFont: ArabicFontName;
   arabicFontSize: number;
@@ -24,11 +23,9 @@ export interface SettingsState {
   audioShuffleEnabled: boolean;
   displayLanguagePreference: DisplayLanguagePreference;
   dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
-  wordAudioEnabled: boolean; // Enable/disable audio playback when tapping word tooltips
 }
 
 const initialState: SettingsState = {
-  fontScale: 1,
   reminderTime: {
     hour: 19, // 7 PM default
     minute: 0,
@@ -40,7 +37,6 @@ const initialState: SettingsState = {
   audioShuffleEnabled: false, // Default to sequential playback
   displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH, // Default to Arabic + English
   dailyWordLimit: 10, // Default to 10 words per day for getting started
-  wordAudioEnabled: true, // Default to enabled for word audio playback
 };
 
 const settingsSlice = createSlice({
@@ -68,9 +64,6 @@ const settingsSlice = createSlice({
     setDailyWordLimit: (state, action: PayloadAction<number>) => {
       state.dailyWordLimit = action.payload;
     },
-    setWordAudioEnabled: (state, action: PayloadAction<boolean>) => {
-      state.wordAudioEnabled = action.payload;
-    },
   },
 });
 
@@ -82,6 +75,5 @@ export const {
   setAudioShuffleEnabled,
   setDisplayLanguagePreference,
   setDailyWordLimit,
-  setWordAudioEnabled,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

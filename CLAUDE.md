@@ -374,9 +374,12 @@ Always run these commands before completing longer sessions:
 ## Important Implementation Notes
 
 ### Analytics Service
-- **IMPORTANT**: Analytics service is currently disabled/mocked
-- All analytics calls use temporary mock implementations
-- Do not implement new Mixpanel tracking until service is restored
+- **STATUS**: Analytics service is production-ready and functional
+- Uses Mixpanel with graceful fallback when token is not configured
+- Silent operation mode (no console logging in production)
+- Lazy initialization on first analytics call
+- Core events tracked: Sign In, Sign Up, Sign Out, Practice Session Complete
+- Add new analytics events to `ANALYTICS_EVENTS` in constants/analytics.ts
 
 ### Haptic Feedback
 - **IMPORTANT**: Avoid double haptic feedback from multiple components

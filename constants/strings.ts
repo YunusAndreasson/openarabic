@@ -22,6 +22,7 @@ export const STRINGS = {
 
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
+  APPEARANCE_SECTION: 'Appearance',
 
   // Social Media
   TWITTER_URL: 'https://x.com/openarabicio',
@@ -31,7 +32,7 @@ export const STRINGS = {
   // App Store Review
   RATE_APP: 'Rate OpenArabic',
 
-  // Theme names - keeping for backward compatibility
+  // Theme names
   THEME_BIRCHES: 'Birches in Spring',
   THEME_MIDNIGHT: 'Midnight Summer',
   THEME_AUTUMN: 'Autumn Leaves',
@@ -45,6 +46,9 @@ export const STRINGS = {
   LOADING_ARTICLES: 'Loading articles',
   LOADING_CHART: 'Loading chart',
   PREPARING_AUDIO: 'Preparing audio',
+  LOADING_AUDIO_ELLIPSIS: 'Loading audio...',
+  AUDIO_READY: 'Audio ready',
+  PREPARING_PRACTICE_SESSION: 'Preparing practice session...',
 
   // Timer controls
   STOP_TIMER: 'Stop timer',
@@ -56,6 +60,7 @@ export const STRINGS = {
 
   // Navigation & controls - now imported directly from enums in components
   AUTHORS: 'Authors',
+  AUTHOR_ARTICLES: 'Author Articles',
   DIFFICULTY: 'Difficulty',
   CATEGORY: 'Category',
 
@@ -101,6 +106,9 @@ export const STRINGS = {
   NO_STUDY_WORDS: 'No words to study',
   ADD_WORDS_TO_STUDY_LIST: 'Add words from articles to study',
   SEARCH_WORDS_PLACEHOLDER: 'Search words...',
+  DUE_WORDS_TITLE: 'Due Words',
+  MASTERED_WORDS_TITLE: 'Mastered Words',
+  DICTIONARY_TITLE: 'Dictionary',
 
   PROGRESS_NOT_AVAILABLE: 'Progress unavailable',
   ERROR_LOADING_DATA: "Couldn't load data",
@@ -356,8 +364,11 @@ export const STRINGS = {
   FAILED_TO_LOAD_AUDIO_TRACKS: "Couldn't load audio tracks. " + tryAgain,
   FAILED_TO_INITIALIZE_AUDIO_SESSION: "Couldn't start audio. " + tryAgain,
   FAILED_TO_STOP_AUDIO: "Couldn't stop audio. " + tryAgain,
+  FAILED_TO_STOP_AUDIO_ON_CLOSE: "Couldn't stop audio on close. " + tryAgain,
   FAILED_TO_LOAD_AUDIO: "Couldn't load audio. " + tryAgain,
   FAILED_TO_SKIP_TO_NEXT_TRACK: "Couldn't skip track. " + tryAgain,
+  AUDIO_PLAYBACK_FAILED: "Audio playback failed. " + tryAgain,
+  AUDIO_GENERATION_FAILED: "Audio generation failed. " + tryAgain,
 
   // Reading list errors
   FAILED_TO_LOAD_BOOKMARKS: "Couldn't load bookmarks. " + tryAgain,
@@ -372,6 +383,13 @@ export const STRINGS = {
   FAILED_TO_MARK_WORD_AS_EASY: "Couldn't mark easy. " + tryAgain,
   FAILED_TO_MARK_WORD_AS_HARD: "Couldn't mark hard. " + tryAgain,
   ERROR_UPDATING_STUDY_LIST: "Couldn't update study list. " + tryAgain,
+  FAILED_TO_LOAD_STUDY_WORDS: "Couldn't load study words. " + tryAgain,
+  FAILED_TO_UPDATE_WORD: "Couldn't update word. " + tryAgain,
+  FAILED_TO_RECORD_REVIEW: "Couldn't record review. " + tryAgain,
+  FAILED_TO_UPDATE_WORD_AND_REVIEW: "Couldn't update word and record review. " + tryAgain,
+  FAILED_TO_TOGGLE_STUDY_WORD: "Couldn't toggle study word. " + tryAgain,
+  FAILED_TO_DELETE_WORD: "Couldn't delete word. " + tryAgain,
+  FAILED_TO_LOAD_PRACTICE_DATA: "Couldn't load practice data. " + tryAgain,
 
   // Timer errors
   FAILED_TO_START_SLEEP_TIMER: "Couldn't start timer. " + tryAgain,

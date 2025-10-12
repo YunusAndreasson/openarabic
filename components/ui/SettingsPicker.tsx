@@ -5,13 +5,14 @@ import BottomSheet, {
   BottomSheetView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { useOptimisticState } from '@/hooks/ui/useOptimisticState';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { lightFeedback } from '@/utils/haptics';
 
@@ -25,22 +26,51 @@ export interface SettingsPickerOption<T> {
   icon: keyof typeof Ionicons.glyphMap;
 }
 
-export interface SettingsPickerProps<T> {
-  isVisible: boolean;
-  onClose: () => void;
-  title: string;
-  options: SettingsPickerOption<T>[];
-  currentValueSelector: (state: RootState) => T;
-  onValueChange: (value: T) => any;
-  snapPoints?: number[];
-  supportsOptimisticUpdates?: boolean;
-}
-
 type RootState = {
   theme: { theme: any };
   settings: { displayLanguagePreference: any; audioLanguagePreference: any };
   [key: string]: any;
 };
+
+/**
+ * Props for SettingsPicker with Redux integration
+ */
+export interface SettingsPickerReduxProps<T> {
+  isVisible: boolean;
+  onClose: () => void;
+  title: string;
+  options: SettingsPickerOption<T>[];
+  /** Redux selector for current value - mutually exclusive with selectedValue */
+  currentValueSelector: (state: RootState) => T;
+  /** Redux action creator - mutually exclusive with onSelect */
+  onValueChange: (value: T) => any;
+  snapPoints?: number[];
+  supportsOptimisticUpdates?: boolean;
+  /** Controlled mode is disabled when using Redux */
+  selectedValue?: never;
+  onSelect?: never;
+}
+
+/**
+ * Props for SettingsPicker in controlled mode (without Redux)
+ */
+export interface SettingsPickerControlledProps<T> {
+  isVisible: boolean;
+  onClose: () => void;
+  title: string;
+  options: SettingsPickerOption<T>[];
+  /** Currently selected value - mutually exclusive with currentValueSelector */
+  selectedValue?: T;
+  /** Selection callback - mutually exclusive with onValueChange */
+  onSelect: (value: T) => void;
+  snapPoints?: number[];
+  supportsOptimisticUpdates?: boolean;
+  /** Redux mode is disabled when using controlled mode */
+  currentValueSelector?: never;
+  onValueChange?: never;
+}
+
+export type SettingsPickerProps<T> = SettingsPickerReduxProps<T> | SettingsPickerControlledProps<T>;
 
 export const SettingsPicker = <T,>({
   isVisible,
@@ -49,14 +79,31 @@ export const SettingsPicker = <T,>({
   options,
   currentValueSelector,
   onValueChange,
+  selectedValue,
+  onSelect,
   snapPoints = DEFAULT_SNAP_POINTS,
   supportsOptimisticUpdates = false,
 }: SettingsPickerProps<T>) => {
   const colors = useColors();
   const dispatch = useAppDispatch();
-  const currentValue = useAppSelectorMemo(currentValueSelector);
+
+  // Determine if we're in Redux mode or controlled mode
+  const isReduxMode = !!currentValueSelector && !!onValueChange;
+  const isControlledMode = !!onSelect;
+
+  // Get current value from Redux (always call hook, but provide fallback)
+  const reduxValue = useAppSelectorMemo(
+    currentValueSelector || (() => undefined as T)
+  );
+  const currentValue = isReduxMode ? reduxValue : selectedValue;
+
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const [optimisticValue, setOptimisticValue] = React.useState(currentValue);
+
+  // Use optimistic state hook for immediate visual feedback
+  const [displayValue, setOptimisticValue] = useOptimisticState(
+    currentValue,
+    supportsOptimisticUpdates
+  );
 
   // Show/hide modal based on isVisible prop
   useEffect(() => {
@@ -67,22 +114,21 @@ export const SettingsPicker = <T,>({
     }
   }, [isVisible]);
 
-  // Sync optimistic value with actual value when it changes
-  React.useEffect(() => {
-    if (!supportsOptimisticUpdates) {
-      setOptimisticValue(currentValue);
-    }
-  }, [currentValue, supportsOptimisticUpdates]);
-
   const handleValueSelect = useCallback(
     (value: T) => {
-      if (supportsOptimisticUpdates) {
-        setOptimisticValue(value); // Immediate visual feedback
+      // Set optimistic value for immediate visual feedback
+      setOptimisticValue(value);
+
+      // Call appropriate handler based on mode
+      if (isReduxMode && onValueChange) {
+        dispatch(onValueChange(value));
+      } else if (isControlledMode && onSelect) {
+        onSelect(value);
       }
-      dispatch(onValueChange(value));
+
       lightFeedback();
     },
-    [dispatch, onValueChange, supportsOptimisticUpdates]
+    [dispatch, onValueChange, onSelect, setOptimisticValue, isReduxMode, isControlledMode]
   );
 
   // Use built-in backdrop component
@@ -105,8 +151,6 @@ export const SettingsPicker = <T,>({
   if (!isVisible) {
     return null;
   }
-
-  const displayValue = supportsOptimisticUpdates ? optimisticValue : currentValue;
 
   return (
     <BottomSheet

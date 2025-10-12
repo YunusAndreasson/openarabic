@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { ARTICLE_QUERY_KEYS } from '@/constants/queryKeys';
 import { articlesService } from '@/services/articles';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
@@ -78,7 +79,7 @@ export function useArticlesByDueWords(
 
   // Use optimized articles query with word stats (shared cache with other hooks)
   const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
-    queryKey: ['articles', 'with-word-stats'],
+    queryKey: ARTICLE_QUERY_KEYS.withStats(),
     queryFn: () => {
       if (!wordsToUse.length || limit <= 0) return Promise.resolve([]);
       return articlesService.getArticlesWithWordStats();

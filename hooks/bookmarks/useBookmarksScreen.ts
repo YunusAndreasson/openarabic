@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TIMING_CONSTANTS } from '@/constants/animation';
+import { AUDIO_QUERY_KEYS, READING_LIST_QUERY_KEYS } from '@/constants/queryKeys';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 // Use direct service access to avoid frequent parent re-renders from time updates
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -40,7 +41,7 @@ export const useBookmarksScreen = () => {
   // Sleep timer functionality is handled by useGlobalAudioState
 
   const readingListQuery = useQuery({
-    queryKey: ['readingList', user?.id],
+    queryKey: user?.id ? READING_LIST_QUERY_KEYS.all(user.id) : ['readingList', 'none'],
     queryFn: () => {
       if (!user?.id) return Promise.resolve([]);
       return bookmarkService.getReadingList(user.id);
@@ -98,7 +99,8 @@ export const useBookmarksScreen = () => {
   }, [user?.id, queryClient]);
 
   const enhancedTracksQuery = useQuery({
-    queryKey: ['enhancedAudioTracks', user?.id, audioPreference],
+    queryKey:
+      user?.id ? AUDIO_QUERY_KEYS.tracks(user.id, audioPreference) : ['enhancedAudioTracks', 'none'],
     queryFn: () => {
       if (!user?.id) return Promise.resolve([]);
       return enhancedAudioService.getReadingListEnhancedTracks(user.id, audioPreference);
@@ -227,10 +229,10 @@ export const useBookmarksScreen = () => {
 
         // Then invalidate related queries to ensure consistency
         queryClient.invalidateQueries({
-          queryKey: ['readingList', user.id],
+          queryKey: READING_LIST_QUERY_KEYS.all(user.id),
         });
         queryClient.invalidateQueries({
-          queryKey: ['enhancedAudioTracks', user.id, audioPreference],
+          queryKey: AUDIO_QUERY_KEYS.tracks(user.id, audioPreference),
         });
       } catch (error) {
         handleError(error as Error);

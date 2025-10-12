@@ -57,6 +57,12 @@ export type AuthorId = Brand<number, 'AuthorId'>;
 export type SentenceId = Brand<number, 'SentenceId'>;
 
 /**
+ * Branded type for word type IDs
+ * Prevents mixing word type IDs with other numeric IDs
+ */
+export type WordTypeId = Brand<number, 'WordTypeId'>;
+
+/**
  * Helper to create a branded ID from a raw value
  * Use this when you receive data from the database or API
  */

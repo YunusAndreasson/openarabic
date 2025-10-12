@@ -26,7 +26,6 @@ interface ArticleSentenceProps {
   onWordPress?: (word: SentenceWord, layout?: LayoutRectangle) => void;
   settings: {
     showEnglish: boolean;
-    fontScale: number;
   };
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
@@ -43,7 +42,6 @@ const ArticleSentenceComparison = (
     prevProps.sentence.id !== nextProps.sentence.id ||
     prevProps.sentence.english !== nextProps.sentence.english ||
     prevProps.settings.showEnglish !== nextProps.settings.showEnglish ||
-    prevProps.settings.fontScale !== nextProps.settings.fontScale ||
     prevProps.words.length !== nextProps.words.length ||
     prevProps.currentHighlightedWord?.id !== nextProps.currentHighlightedWord?.id
   ) {
@@ -86,7 +84,6 @@ function renderWordWithProps(
   wordRefs: RefObject<ComponentRef<typeof Pressable>>[],
   renderWord: ((word: SentenceWord, isHighlighted: boolean) => ReactNode) | undefined,
   onWordPress: ((word: SentenceWord, layout?: LayoutRectangle) => void) | undefined,
-  settings: { fontScale: number },
   sentenceId: string | number,
   currentHighlightedWord?: SentenceWord | null
 ) {
@@ -107,7 +104,6 @@ function renderWordWithProps(
       key={`word-${wordId}-${word.position}-${index}-${sentenceId}`}
       word={word}
       onTooltipOpen={layout => onWordPress?.(word, layout)}
-      settings={{ fontScale: settings.fontScale }}
       wordRef={wordRefs[index]}
       position={index}
       isHighlighted={isHighlighted}
@@ -154,11 +150,11 @@ const ArticleSentenceComponent = memo(
     const englishTextStyle = useMemo(
       () => ({
         ...styles.englishText,
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
         color: colors.englishText,
-        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * settings.fontScale,
+        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
       }),
-      [colors.englishText, settings.fontScale]
+      [colors.englishText]
     );
 
     const backgroundStyle = useMemo(() => {
@@ -185,12 +181,11 @@ const ArticleSentenceComponent = memo(
           wordRefs.current,
           renderWord,
           onWordPress,
-          settings,
           sentence.id,
           currentHighlightedWord
         );
       });
-    }, [renderWord, words, sentence.id, settings, onWordPress, currentHighlightedWord]);
+    }, [renderWord, words, sentence.id, onWordPress, currentHighlightedWord]);
 
     // Use Animated.View directly - it's properly imported from react-native-reanimated
     const AnimatedView = Animated.View;

@@ -148,7 +148,7 @@ export const TYPOGRAPHY_HIERARCHY = {
 // Dynamic word area height based on screen proportions and touch targets
 export const WORD_AREA_MIN_HEIGHT = TOUCH_TARGETS.LARGE * 7.5; // ~360px, responsive to touch targets
 
-// Export touch targets for backward compatibility and external use
+// Export touch targets for external use
 export const MIN_TOUCH_TARGET = TOUCH_TARGETS;
 
 // Utility function for enhancing touch padding (moved out of constants)

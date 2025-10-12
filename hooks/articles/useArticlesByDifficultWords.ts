@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { ARTICLE_QUERY_KEYS } from '@/constants/queryKeys';
 import { articlesService } from '@/services/articles';
 import { strugglingWordsService } from '@/services/strugglingWords';
 import type { Article } from '@/types/articles.types';
@@ -46,7 +47,7 @@ export function useArticlesByDifficultWords(
 
   // Use optimized articles query with word stats (shared cache with due words hook)
   const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
-    queryKey: ['articles', 'with-word-stats'],
+    queryKey: ARTICLE_QUERY_KEYS.withStats(),
     queryFn: () => {
       if (!difficultWords.length) return Promise.resolve([]);
       return articlesService.getArticlesWithWordStats();

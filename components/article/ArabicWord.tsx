@@ -25,9 +25,6 @@ interface ArabicWordProps {
   word: SentenceWord;
   onTooltipOpen: (layout: LayoutRectangle) => void;
   position?: number;
-  settings: {
-    fontScale: number;
-  };
   wordRef?: RefObject<ComponentRef<typeof Pressable>>;
   isHighlighted?: boolean;
   testID?: string;
@@ -37,7 +34,6 @@ function ArabicWordComponent({
   word,
   onTooltipOpen,
   position,
-  settings,
   wordRef,
   isHighlighted = false,
   testID,
@@ -99,8 +95,8 @@ function ArabicWordComponent({
 
   // Pre-calculate text size once when component mounts (will never change)
   const calculatedFontSize = useMemo(
-    () => settings.fontScale * LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    [settings.fontScale]
+    () => LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    []
   );
 
   // Base text props for Arabic text
@@ -228,7 +224,6 @@ export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
   // Check primitive values first for early return
   if (
     prevProps.word.id !== nextProps.word.id ||
-    prevProps.settings.fontScale !== nextProps.settings.fontScale ||
     prevProps.position !== nextProps.position ||
     prevProps.isHighlighted !== nextProps.isHighlighted ||
     prevProps.testID !== nextProps.testID

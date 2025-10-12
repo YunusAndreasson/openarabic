@@ -1,4 +1,5 @@
 import { useColors } from '@/hooks/theme/useColors';
+import type { ThemeColors } from '@/types/ui/theme.types';
 import type { ChartColors } from '@/types/ui/chart.types';
 import { withOpacity } from '@/utils/colorUtils';
 
@@ -23,12 +24,11 @@ export const CHART_OPACITY = {
 } as const;
 
 /**
- * Hook to get theme-aware chart colors with unified sage-green system
+ * Pure function to get theme-aware chart colors
+ * Used by components rendering inside Skia Canvas (no Context access)
  * All charts use the tint color directly for maximum simplicity
  */
-export const useChartColors = (): ChartColors => {
-  const colors = useColors();
-
+export const getChartColors = (colors: ThemeColors): ChartColors => {
   return {
     // Performance levels - using unified sage green system for visual cohesion
     performance: {
@@ -72,4 +72,14 @@ export const useChartColors = (): ChartColors => {
       ];
     },
   };
+};
+
+/**
+ * Hook to get theme-aware chart colors
+ * For components outside Skia Canvas (hooks, business logic)
+ * Components inside Skia should use getChartColors() directly
+ */
+export const useChartColors = (): ChartColors => {
+  const colors = useColors();
+  return getChartColors(colors);
 };

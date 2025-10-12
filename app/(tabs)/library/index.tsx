@@ -12,7 +12,7 @@ import FilterSection, { SubtleDivider } from '@/components/library/FilterSection
 import { HijriDateFooter } from '@/components/library/HijriDateFooter';
 import IntelligentArticleSection from '@/components/library/IntelligentArticleSection';
 import { LAYOUT } from '@/constants/layout';
-import { CACHE_TIMES } from '@/constants/queryConfig';
+import { CACHE_TIMES } from '@/constants/queryKeys';
 import { getAuthorFilterRoute, getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';

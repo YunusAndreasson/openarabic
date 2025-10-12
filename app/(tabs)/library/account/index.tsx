@@ -16,7 +16,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SocialMediaIcons } from '@/components/account';
 import AudioShuffleToggle from '@/components/account/AudioShuffleToggle';
-import { ThemedPicker } from '@/components/ui/ThemedPicker';
+import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -486,7 +486,7 @@ const AccountScreen: FC = () => {
         </BaseCard>
 
         {/* Appearance - Theme and visual settings */}
-        <SectionTitle title="Appearance" textStyle={styles.sectionTitle} />
+        <SectionTitle title={STRINGS.APPEARANCE_SECTION} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard
@@ -675,8 +675,8 @@ const AccountScreen: FC = () => {
         onTimeSet={handleTimeSet}
       />
 
-      {/* Unified ThemedPicker Modal */}
-      <ThemedPicker
+      {/* Unified SettingsPicker Modal - Controlled Mode */}
+      <SettingsPicker
         isVisible={activePicker !== null}
         onClose={handlePickerClose}
         onSelect={handlePickerSelect}

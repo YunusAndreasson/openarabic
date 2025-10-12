@@ -1,10 +1,11 @@
 import type { Rating } from 'ts-fsrs';
 
-import { checkAuthentication, supabase } from '@/services/supabase';
+import { STRINGS } from '@/constants/strings';
+import { supabase } from '@/services/supabase';
 import type { RootId, UserId } from '@/types/branded.types';
 import type { TablesInsert, TablesUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
+import { executeAuthenticatedQuery } from '@/utils/supabaseHelpers';
 
 // Interface for FSRS-specific update fields - matches RPC function requirements
 interface FSRSWordUpdate {
@@ -44,9 +45,6 @@ interface GetFSRSWordsOptions {
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
   async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}): Promise<StudyWord[]> {
-    // Validate authentication and user ID
-    await checkAuthentication(userId);
-
     // Build the query step by step with proper typing
     const query = supabase.from('study_words');
 
@@ -141,11 +139,16 @@ export const studyWordsFSRSService = {
       filteredQuery = filteredQuery.limit(options.limit);
     }
 
-    const { data, error } = await filteredQuery;
-
-    if (error) {
-      throw error;
-    }
+    const data = await executeAuthenticatedQuery(userId, () => filteredQuery, {
+      toastMessage: STRINGS.FAILED_TO_LOAD_STUDY_WORDS,
+      analyticsEventName: 'Study_Words_FSRS_Load_Error',
+      analyticsProperties: {
+        ...(options.onlyDue !== undefined && { onlyDue: options.onlyDue }),
+        ...(options.forStats !== undefined && { forStats: options.forStats }),
+        ...(options.category !== undefined && { category: options.category }),
+      },
+      showToast: false, // Silent for vocabulary loading
+    });
 
     // Type-safe mapping from database rows to StudyWord interface
     return (data || []).map(
@@ -163,26 +166,33 @@ export const studyWordsFSRSService = {
         fsrs_state: row.fsrs_state,
         fsrs_last_review: row.fsrs_last_review, // Always exists per database schema
         created_at: row.created_at,
-        root: 'root' in row ? { ...row.root, id: row.root_id } : undefined, // Add missing id field
+        root:
+          'root' in row && row.root
+            ? { ...(row.root as any), id: row.root_id }
+            : undefined, // Add missing id field
       })
     );
   },
 
   // Update word with FSRS parameters
   async updateFSRSWord(userId: string, rootId: number, update: FSRSWordUpdate): Promise<boolean> {
-    await checkAuthentication(userId);
-
     // First verify the root entry exists and belongs to the user
-    const { data: existingWord, error: checkError } = await supabase
-      .from('study_words')
-      .select('root_id')
-      .eq('root_id', rootId)
-      .eq('user_id', userId)
-      .single();
-
-    if (checkError) {
-      throw checkError;
-    }
+    const existingWord = await executeAuthenticatedQuery(
+      userId,
+      () =>
+        supabase
+          .from('study_words')
+          .select('root_id')
+          .eq('root_id', rootId)
+          .eq('user_id', userId)
+          .single(),
+      {
+        toastMessage: STRINGS.FAILED_TO_UPDATE_WORD,
+        analyticsEventName: 'Study_Word_Check_Error',
+        analyticsProperties: { rootId },
+        showToast: false,
+      }
+    );
 
     if (!existingWord) {
       throw new Error('Root entry not found or does not belong to user');
@@ -201,15 +211,21 @@ export const studyWordsFSRSService = {
       fsrs_last_review: update.fsrs_last_review,
     };
 
-    const { error } = await supabase
-      .from('study_words')
-      .update(wordUpdateData)
-      .eq('root_id', rootId)
-      .eq('user_id', userId);
-
-    if (error) {
-      throw error;
-    }
+    await executeAuthenticatedQuery(
+      userId,
+      () =>
+        supabase
+          .from('study_words')
+          .update(wordUpdateData)
+          .eq('root_id', rootId)
+          .eq('user_id', userId),
+      {
+        toastMessage: STRINGS.FAILED_TO_UPDATE_WORD,
+        analyticsEventName: 'Study_Word_Update_Error',
+        analyticsProperties: { rootId },
+        showToast: false,
+      }
+    );
 
     return true;
   },
@@ -221,8 +237,6 @@ export const studyWordsFSRSService = {
     rating: Rating,
     learningSteps: number
   ): Promise<boolean> {
-    await checkAuthentication(userId);
-
     // Add the review record
     const reviewPayload: TablesInsert<'reviews'> = {
       user_id: userId,
@@ -231,11 +245,17 @@ export const studyWordsFSRSService = {
       learning_steps: learningSteps,
       reviewed_at: new Date().toISOString(),
     };
-    const { error } = await supabase.from('reviews').insert(reviewPayload);
 
-    if (error) {
-      throw error;
-    }
+    await executeAuthenticatedQuery(
+      userId,
+      () => supabase.from('reviews').insert(reviewPayload),
+      {
+        toastMessage: STRINGS.FAILED_TO_RECORD_REVIEW,
+        analyticsEventName: 'Review_Record_Error',
+        analyticsProperties: { rootId, rating },
+        showToast: false,
+      }
+    );
 
     return true;
   },
@@ -248,74 +268,81 @@ export const studyWordsFSRSService = {
     rating: Rating,
     learningSteps: number
   ): Promise<boolean> {
-    await checkAuthentication(userId);
-
-    try {
-      // Use RPC function for atomic update and review recording
-      const { data, error } = await supabase.rpc('update_word_and_review', {
-        p_user_id: userId,
-        p_root_id: rootId,
-        p_fsrs_due: update.fsrs_due,
-        p_fsrs_stability: update.fsrs_stability,
-        p_fsrs_difficulty: update.fsrs_difficulty,
-        p_fsrs_elapsed_days: update.fsrs_elapsed_days,
-        p_fsrs_scheduled_days: update.fsrs_scheduled_days,
-        p_fsrs_learning_steps: update.fsrs_learning_steps,
-        p_fsrs_reps: update.fsrs_reps,
-        p_fsrs_lapses: update.fsrs_lapses,
-        p_fsrs_state: update.fsrs_state,
-        p_fsrs_last_review: update.fsrs_last_review,
-        p_rating: rating,
-        p_learning_steps: learningSteps,
-      });
-
-      if (error) {
-        throw error;
+    // Use RPC function for atomic update and review recording
+    const data = await executeAuthenticatedQuery(
+      userId,
+      () =>
+        supabase.rpc('update_word_and_review', {
+          p_user_id: userId,
+          p_root_id: rootId,
+          p_fsrs_due: update.fsrs_due,
+          p_fsrs_stability: update.fsrs_stability,
+          p_fsrs_difficulty: update.fsrs_difficulty,
+          p_fsrs_elapsed_days: update.fsrs_elapsed_days,
+          p_fsrs_scheduled_days: update.fsrs_scheduled_days,
+          p_fsrs_learning_steps: update.fsrs_learning_steps,
+          p_fsrs_reps: update.fsrs_reps,
+          p_fsrs_lapses: update.fsrs_lapses,
+          p_fsrs_state: update.fsrs_state,
+          p_fsrs_last_review: update.fsrs_last_review,
+          p_rating: rating,
+          p_learning_steps: learningSteps,
+        }),
+      {
+        toastMessage: STRINGS.FAILED_TO_UPDATE_WORD_AND_REVIEW,
+        analyticsEventName: 'Update_Word_And_Review_Error',
+        analyticsProperties: { rootId, rating },
+        showToast: false,
       }
+    );
 
-      return Boolean(data);
-    } catch (error) {
-      await handleError(error as Error, { showToast: false });
-
-      // Fallback to individual operations if RPC fails (e.g., during migration)
-      try {
-        await this.updateFSRSWord(userId, rootId, update);
-        await this.recordFSRSReview(userId, rootId, rating, learningSteps);
-        return true;
-      } catch (fallbackError) {
-        await handleError(fallbackError as Error, { showToast: false });
-        throw fallbackError;
-      }
-    }
+    return Boolean(data);
   },
 
   // Toggle FSRS study for roots
   async toggleFSRSStudyRoot(userId: string, rootId: number): Promise<boolean> {
-    await checkAuthentication(userId);
-
     // Check if a study entry already exists for this root
-    const { data: existing, error: checkError } = await supabase
-      .from('study_words')
-      .select('root_id')
-      .eq('user_id', userId)
-      .eq('root_id', rootId)
-      .single();
-
-    if (checkError && checkError.code !== 'PGRST116') {
-      throw checkError;
+    // Note: PGRST116 is "not found" error which is expected behavior here
+    let existing;
+    try {
+      existing = await executeAuthenticatedQuery(
+        userId,
+        () =>
+          supabase
+            .from('study_words')
+            .select('root_id')
+            .eq('user_id', userId)
+            .eq('root_id', rootId)
+            .single(),
+        {
+          toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
+          analyticsEventName: 'Toggle_Study_Word_Check_Error',
+          analyticsProperties: { rootId },
+          showToast: false,
+        }
+      );
+    } catch (error) {
+      // PGRST116 = "not found" - this is expected, word doesn't exist yet
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'PGRST116') {
+        existing = null;
+      } else {
+        throw error;
+      }
     }
 
     if (existing) {
       // Remove existing root study entry
-      const { error: deleteError } = await supabase
-        .from('study_words')
-        .delete()
-        .eq('user_id', userId)
-        .eq('root_id', rootId);
-
-      if (deleteError) {
-        throw deleteError;
-      }
+      await executeAuthenticatedQuery(
+        userId,
+        () =>
+          supabase.from('study_words').delete().eq('user_id', userId).eq('root_id', rootId),
+        {
+          toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
+          analyticsEventName: 'Toggle_Study_Word_Delete_Error',
+          analyticsProperties: { rootId },
+          showToast: false,
+        }
+      );
       return false;
     }
 
@@ -344,11 +371,16 @@ export const studyWordsFSRSService = {
       fsrs_last_review: now.toISOString(), // Explicitly set to ensure database constraint compliance
     };
 
-    const { error: insertError } = await supabase.from('study_words').insert(newEntry);
-
-    if (insertError) {
-      throw insertError;
-    }
+    await executeAuthenticatedQuery(
+      userId,
+      () => supabase.from('study_words').insert(newEntry),
+      {
+        toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
+        analyticsEventName: 'Toggle_Study_Word_Insert_Error',
+        analyticsProperties: { rootId },
+        showToast: false,
+      }
+    );
 
     return true;
   },

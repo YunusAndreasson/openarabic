@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { formatSecondsToClock } from '@/utils/time';
+import { formatSecondsToClock } from '@/utils/dateTimeUtils';
 
 interface AudioProgressIndicatorProps {
   /** Current position in seconds */

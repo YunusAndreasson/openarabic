@@ -1,17 +1,18 @@
 
-import { useChartColors } from '@charts/ChartColors';
 import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
 import { createAreaFillPath } from '@charts/utils';
 import { Mask, Path, Rect } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 
-import { useColors } from '@/hooks/theme/useColors';
 import type { PerformanceZone } from '@/types/ui/chart.types';
+import type { ThemeColors } from '@/types/ui/theme.types';
+import { withOpacity } from '@/utils/colorUtils';
 
 interface ChartPerformanceZonesProps {
   zones: PerformanceZone[];
   maskPath: string;
   graphWidth: number;
+  colors: ThemeColors;
 }
 
 /**
@@ -20,9 +21,7 @@ interface ChartPerformanceZonesProps {
  * Extends to full chart width (0 to graphWidth) for complete coverage
  */
 export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
-  ({ zones, maskPath, graphWidth }) => {
-    const colors = useColors();
-    const chartColors = useChartColors();
+  ({ zones, maskPath, graphWidth, colors }) => {
 
     const areaPath = useMemo(
       () => (maskPath ? createAreaFillPath(maskPath, GRAPH_HEIGHT_LARGE, undefined, graphWidth) : ''),
@@ -36,7 +35,7 @@ export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
         {zones.map(zone => (
           <Rect
             key={`performance-zone-${zone.color}-${zone.y}-${zone.height}`}
-            color={chartColors.withOpacity(zone.color, 0.35)}
+            color={withOpacity(zone.color, 0.35)}
             height={zone.height}
             width={graphWidth}
             x={0}

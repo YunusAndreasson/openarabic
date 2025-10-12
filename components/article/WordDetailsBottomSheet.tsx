@@ -3,16 +3,15 @@ import * as Haptics from 'expo-haptics';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ColorCodedText } from '@/components/common/ColorCodedText';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useAudioSubscription } from '@/hooks/audio/useAudioSubscription';
 import { useColors } from '@/hooks/theme/useColors';
-import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
-import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
 import { handleError } from '@/utils/errorHandling';
 import { generateAudioUrl } from '@/utils/imageUtils';
 
@@ -23,6 +22,9 @@ export interface WordDetailsBottomSheetProps {
   onAddToStudy: (word: SentenceWord) => Promise<void>;
   isInStudyList?: boolean;
 }
+
+// Constant snap points - no need for useMemo
+const SNAP_POINTS = [380];
 
 const WordDetailsBottomSheetComponent = ({
   isVisible,
@@ -43,82 +45,14 @@ const WordDetailsBottomSheetComponent = ({
     setOptimisticIsInStudyList(isInStudyList);
   }, [isInStudyList]);
 
-  // Use Arabic word analysis for color-coding
-  const { hasComponents, coloredSegments, formattedAnalysis, analysis } = useArabicWordAnalysis(
-    word?.word_form || '',
-    word?.english || '',
-    true
-  );
-
-  // Configure snap points
-  const snapPoints = useMemo(() => [380], []);
-
-  // Render color-coded Arabic text
-  const renderColorCodedArabic = useMemo(() => {
-    if (!hasComponents || !coloredSegments.length) {
-      return (
-        <ThemedText type="heading1" weight="bold" style={styles.arabicTitle} colorName="arabicText">
-          {word?.word_form}
-        </ThemedText>
-      );
-    }
-
-    return (
-      <ThemedText type="heading1" weight="bold" style={styles.arabicTitle}>
-        {coloredSegments.map(segment => (
-          <ThemedText
-            key={`${segment.type}-${segment.text}`}
-            type="heading1"
-            weight="bold"
-            skipDefaultColor
-            style={[styles.arabicTitle, { color: segment.color }]}
-          >
-            {segment.text}
-          </ThemedText>
-        ))}
-      </ThemedText>
-    );
-  }, [hasComponents, coloredSegments, word?.word_form, colors.arabicText]);
-
-  // Generate color-coded segments using shared utility
-  const englishColoredSegments = useMemo(() => {
-    if (!word?.english) return [];
-    return generateColorCodedSegments({
-      text: word.english,
-      formattedAnalysis,
-      analysis,
-      colors,
-      defaultColor: colors.secondaryText,
-    });
-  }, [word?.english, formattedAnalysis, analysis, colors]);
-
-  // Render color-coded English text
-  const renderColorCodedEnglish = useMemo(() => {
-    if (!word?.english) return null;
-
-    return (
-      <ThemedText type="heading3" style={styles.englishTranslation}>
-        {englishColoredSegments.map(segment => (
-          <ThemedText
-            key={segment.key}
-            type="heading3"
-            skipDefaultColor
-            style={[styles.englishTranslation, { color: segment.color }]}
-          >
-            {segment.text}
-          </ThemedText>
-        ))}
-      </ThemedText>
-    );
-  }, [word?.english, englishColoredSegments]);
-
-  // Audio status is now provided by centralized subscription
-
-  // Check if this word's audio is currently playing
-  const isThisWordPlaying =
-    audioStatus.isPlaying && audioStatus.currentTrack?.id === `word-details-${word?.id}`;
-  const isThisWordLoading =
-    audioStatus.isLoading && audioStatus.currentTrack?.id === `word-details-${word?.id}`;
+  // Check if this word's audio is currently playing or loading (optimized with single memo)
+  const wordAudioState = useMemo(() => {
+    const isThisTrack = audioStatus.currentTrack?.id === `word-details-${word?.id}`;
+    return {
+      isPlaying: audioStatus.isPlaying && isThisTrack,
+      isLoading: audioStatus.isLoading && isThisTrack,
+    };
+  }, [audioStatus.isPlaying, audioStatus.isLoading, audioStatus.currentTrack?.id, word?.id]);
 
   // Handle visibility changes
   useEffect(() => {
@@ -146,9 +80,7 @@ const WordDetailsBottomSheetComponent = ({
         title: word.english || word.word_form || 'Word Audio',
       };
 
-      // Stop any currently playing article audio before starting word audio
-      await simpleAudioService.stop();
-
+      // Play word audio with immediate feedback - polling starts with delay to prevent glitches
       await simpleAudioService.play(track, { immediateStatus: true });
     } catch (error) {
       handleError(error as Error, { toastMessage: 'Word audio playback failed' });
@@ -184,19 +116,37 @@ const WordDetailsBottomSheetComponent = ({
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      snapPoints={snapPoints}
+      snapPoints={SNAP_POINTS}
       onClose={onClose}
       backdropComponent={renderBackdrop}
       style={styles.modalStyle}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
-      handleIndicatorStyle={[styles.indicator, { backgroundColor: colors.modalIndicator }]}
+      handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
       {...COMMON_BOTTOM_SHEET_PROPS}
     >
       <BottomSheetView style={styles.container}>
         {/* Arabic Word Title */}
         <View style={styles.titleSection}>
-          {renderColorCodedArabic}
-          {renderColorCodedEnglish}
+          <ColorCodedText
+            text={word?.word_form || ''}
+            arabicWord={word?.word_form || ''}
+            englishTranslation={word?.english || ''}
+            type="heading1"
+            weight="bold"
+            style={styles.arabicTitle}
+            defaultColor={colors.arabicText}
+            isArabic={true}
+          />
+          {word?.english && (
+            <ColorCodedText
+              text={word.english}
+              arabicWord={word.word_form || ''}
+              type="heading3"
+              style={styles.englishTranslation}
+              defaultColor={colors.secondaryText}
+              isArabic={false}
+            />
+          )}
         </View>
 
         {/* Grammar Note */}
@@ -212,11 +162,11 @@ const WordDetailsBottomSheetComponent = ({
         <View style={styles.buttonSection}>
           <View style={styles.buttonContainer}>
             <ThemedButton
-              title={isThisWordPlaying ? 'Playing...' : 'Play Audio'}
+              title={wordAudioState.isPlaying ? 'Playing...' : 'Play Audio'}
               variant="outlined"
               onPress={handlePlayAudio}
-              disabled={!word.audio_url || isThisWordLoading}
-              loading={isThisWordLoading}
+              disabled={!word.audio_url || wordAudioState.isLoading}
+              loading={wordAudioState.isLoading}
               style={styles.actionButton}
             />
             <ThemedButton
@@ -247,9 +197,6 @@ const styles = StyleSheet.create({
     ...LAYOUT.ELEVATION.LARGE,
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  indicator: {
-    // Dynamic styling applied via colors.modalIndicator in component
   },
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,

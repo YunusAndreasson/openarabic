@@ -3,6 +3,7 @@ import { BaseChart } from '@charts/BaseChart';
 import { ChartAreaFill } from '@charts/ChartAreaFill';
 import { ChartAxes, Y_AXIS_WIDTH } from '@charts/ChartAxes';
 import { ChartCanvas, type DataPoint } from '@charts/ChartCanvas';
+import { getChartColors } from '@charts/ChartColors';
 import { ChartDataPoint } from '@charts/ChartDataPoint';
 import { ChartGrid } from '@charts/ChartGrid';
 import { ChartMainLine } from '@charts/ChartMainLine';
@@ -14,6 +15,7 @@ import { Group } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { useColors } from '@/hooks/theme/useColors';
 import type { PerformanceZone } from '@/types/ui/chart.types';
 import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';
 
@@ -132,6 +134,10 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     emptyStateText,
     bottomSummary,
   }: VocabularyChartProps<any>) => {
+    // Get colors outside Canvas (Context available here)
+    const colors = useColors();
+    const chartColors = useMemo(() => getChartColors(colors), [colors]);
+
     // Automatically set todayIndex based on chart type
     // Future prediction charts (like RetrievabilityChart) have today at index 0
     // Historical charts (like EfficiencyChart) have today at the last index
@@ -169,6 +175,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
           width={graphWidth}
           xLabelPositions={xLabelPositions}
           yMax={yMax}
+          chartColors={chartColors}
         />
       );
 
@@ -182,6 +189,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
             chartHeight={GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING}
             topPadding={topPadding}
             yMax={yMax}
+            chartColors={chartColors}
           />
         );
       }
@@ -194,6 +202,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
               path={path}
               graphWidth={graphWidth}
               topPadding={topPadding}
+              chartColors={chartColors}
             />
           </Group>
         );
@@ -207,6 +216,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
               zones={performanceZones}
               maskPath={path}
               graphWidth={graphWidth}
+              colors={colors}
             />
           </Group>
         );
@@ -216,13 +226,14 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       if (chartData.hasChartData) {
         components.push(
           <Group key="main-line-data-points">
-            <ChartMainLine path={path} />
+            <ChartMainLine path={path} chartColors={chartColors} />
             {dataPoints.map((point: ChartPoint, index: number) => (
               <ChartDataPoint
                 key={dataPointKeys[index]}
                 x={point.x}
                 y={point.y}
                 uniqueKey={dataPointKeys[index]}
+                chartColors={chartColors}
               />
             ))}
           </Group>
@@ -239,6 +250,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
                 x={milestone.x}
                 y={milestone.y}
                 uniqueKey={milestoneKeys[index]}
+                chartColors={chartColors}
               />
             ))}
           </Group>
@@ -260,6 +272,8 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       milestones,
       milestoneKeys,
       todayIndex,
+      chartColors,
+      colors,
     ]);
 
     // Memoized axes component

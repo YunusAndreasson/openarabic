@@ -14,6 +14,7 @@ import {
 } from '@/components/review';
 import PulsatingLoader from '@/components/ui/PulsatingLoader';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -101,7 +102,7 @@ export default function ReviewScreen(): JSX.Element {
               textAlign: 'center',
             }}
           >
-            Preparing practice session...
+            {STRINGS.PREPARING_PRACTICE_SESSION}
           </ThemedText>
         </View>
       </View>
@@ -130,7 +131,7 @@ export default function ReviewScreen(): JSX.Element {
                 textAlign: 'center',
               }}
             >
-              Loading audio...
+              {STRINGS.LOADING_AUDIO_ELLIPSIS}
             </ThemedText>
             <ThemedText
               style={{
@@ -151,7 +152,7 @@ export default function ReviewScreen(): JSX.Element {
                   color: colors.success,
                 }}
               >
-                Audio ready
+                {STRINGS.AUDIO_READY}
               </ThemedText>
             )}
           </View>

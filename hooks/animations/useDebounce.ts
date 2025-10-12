@@ -3,6 +3,8 @@ import { useCallback, useRef, useState } from 'react';
 /**
  * Custom hook for debouncing function calls to prevent rapid successive executions
  * Useful for preventing double-taps on buttons and other interactive elements
+ *
+ * Note: This executes immediately on first call, then blocks subsequent calls for the delay period
  */
 export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
@@ -13,8 +15,13 @@ export function useDebounce<T extends (...args: any[]) => any>(
 
   const debouncedCallback = useCallback(
     ((...args: Parameters<T>) => {
+      // Block if currently debouncing
       if (isDebouncing) return;
 
+      // Execute the callback immediately
+      const result = callback(...args);
+
+      // Set debouncing state to block subsequent calls
       setIsDebouncing(true);
 
       // Clear any existing timeout
@@ -27,8 +34,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
         setIsDebouncing(false);
       }, delay);
 
-      // Execute the callback
-      return callback(...args);
+      return result;
     }) as T,
     [callback, delay, isDebouncing]
   );

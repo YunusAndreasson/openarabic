@@ -80,10 +80,15 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'single');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      const result = await vocabularyStatsService.getUserStats('u1');
+      await expect(vocabularyStatsService.getUserStats('u1')).rejects.toThrow(err);
 
-      expect(handleError).toHaveBeenCalledWith(err, { showToast: false });
-      expect(result).toBeNull();
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          analyticsEventName: 'User_Stats_Load_Error',
+          showToast: false,
+        })
+      );
     });
   });
 
@@ -119,10 +124,15 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'limit');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      const result = await vocabularyStatsService.getMasteryProgress('u1');
+      await expect(vocabularyStatsService.getMasteryProgress('u1')).rejects.toThrow(err);
 
-      expect(handleError).toHaveBeenCalledWith(err, { showToast: false });
-      expect(result).toEqual([]);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          analyticsEventName: 'Mastery_Progress_Load_Error',
+          showToast: false,
+        })
+      );
     });
   });
 
@@ -155,10 +165,15 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'limit');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      const result = await vocabularyStatsService.getEfficiencyProgress('u1');
+      await expect(vocabularyStatsService.getEfficiencyProgress('u1')).rejects.toThrow(err);
 
-      expect(handleError).toHaveBeenCalledWith(err, { showToast: false });
-      expect(result).toEqual([]);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          analyticsEventName: 'Efficiency_Progress_Load_Error',
+          showToast: false,
+        })
+      );
     });
   });
 
@@ -201,10 +216,15 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'order');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      const result = await vocabularyStatsService.getRetrievabilityForecast('u1');
+      await expect(vocabularyStatsService.getRetrievabilityForecast('u1')).rejects.toThrow(err);
 
-      expect(handleError).toHaveBeenCalledWith(err, { showToast: false });
-      expect(result).toEqual([]);
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          analyticsEventName: 'Retrievability_Forecast_Load_Error',
+          showToast: false,
+        })
+      );
     });
   });
 
@@ -246,10 +266,15 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'single');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      const result = await vocabularyStatsService.getDifficultyDistribution('u1');
+      await expect(vocabularyStatsService.getDifficultyDistribution('u1')).rejects.toThrow(err);
 
-      expect(handleError).toHaveBeenCalledWith(err, { showToast: false });
-      expect(result).toBeNull();
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          analyticsEventName: 'Difficulty_Distribution_Load_Error',
+          showToast: false,
+        })
+      );
     });
   });
 

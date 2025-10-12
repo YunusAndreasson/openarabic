@@ -13,7 +13,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback } from '@/utils/haptics';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { createAndroidRipple } from '@/utils/layoutUtils';
-import { formatSecondsToClock, safePercent } from '@/utils/time';
+import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
 
 export interface MiniPlayerProps {
   /** Current article being played */

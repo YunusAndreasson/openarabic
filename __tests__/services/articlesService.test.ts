@@ -182,9 +182,15 @@ describe('articlesService', () => {
       fromMock.mockReturnValue(builder);
 
       await expect(articlesService.getArticlesWithWordStats()).rejects.toThrow(err);
-      expect(handleError).toHaveBeenCalledWith(err, {
-        toastMessage: "Couldn't load articles. Try again",
-      });
+      expect(handleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          toastMessage: "Couldn't load articles. Try again",
+          analyticsEventName: 'Articles_With_Stats_Load_Error',
+          showToast: true,
+          sentrySeverity: 'error',
+        })
+      );
     });
   });
 

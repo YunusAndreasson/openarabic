@@ -1,3 +1,4 @@
+import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 
 // Graph dimensions - optimized for perfect alignment and space usage with golden ratio
@@ -49,12 +50,14 @@ export const CHART_VISUAL = {
 // Time periods - optimized for mobile clarity and user comprehension
 export const DAYS_7 = 7; // Weekly view for better mobile experience and cognitive load
 
-// Standardized performance thresholds used across all charts
-// Aligned with MEMORY_CAPACITY_THRESHOLDS for gauge consistency
+/**
+ * Standardized performance thresholds used across all charts
+ * Derives from MEMORY_CAPACITY_THRESHOLDS for consistency with gauges and recommendations
+ */
 export const PERFORMANCE_THRESHOLDS = {
-  EXCELLENT: 75, // Green zone - excellent performance (75%+)
-  GOOD: 70, // Yellow zone - good performance (70-74%)
-  FAIR: 40, // Orange zone - fair performance (40-69%)
+  EXCELLENT: MEMORY_CAPACITY_THRESHOLDS.GOOD, // Green zone - excellent performance (75%+)
+  GOOD: MEMORY_CAPACITY_THRESHOLDS.MODERATE, // Yellow zone - good performance (70-74%)
+  FAIR: MEMORY_CAPACITY_THRESHOLDS.POOR, // Orange zone - fair performance (40-69%)
   POOR: 0, // Red zone - poor performance (<40%)
 } as const;
 

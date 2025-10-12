@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { READING_PROGRESS_QUERY_KEYS } from '@/constants/queryKeys';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { ReadingStreakService, type StreakHistoryData } from '@/services/studyStreak';
 
@@ -27,7 +28,9 @@ export function useStreakHistory(options: UseStreakHistoryOptions = {}): UseStre
     error,
     refetch,
   } = useQuery({
-    queryKey: ['streak-history', user?.id, days],
+    queryKey: user?.id
+      ? READING_PROGRESS_QUERY_KEYS.streakHistory(user.id, days)
+      : ['streak-history', 'none'],
     queryFn: () => {
       if (!user?.id) {
         throw new Error('User not authenticated');

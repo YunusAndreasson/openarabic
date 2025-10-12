@@ -35,7 +35,7 @@ function getFilterTitle(params: FilterParams): string {
   }
 
   if (type === 'author') {
-    return 'Author Articles';
+    return STRINGS.AUTHOR_ARTICLES;
   }
 
   return UiAction.FILTER;
@@ -46,14 +46,8 @@ const FilterHeaderLeft = () => {
   return <DoneButton onPress={() => router.back()} />;
 };
 
-const FilterHeaderRight = ({ filterType }: { filterType: string }) => {
-  // For authors, show minimal spacer to maintain layout but give title more space
-  if (filterType === 'author') {
-    return <View style={{ width: 20, height: 44 }} />;
-  }
-
-  return <View style={{ width: 20, height: 44 }} />;
-};
+// Minimal spacer to maintain layout balance
+const FilterHeaderRight = () => <View style={{ width: 20, height: 44 }} />;
 
 export default function LibraryLayout(): JSX.Element {
   const colors = useColors();
@@ -79,12 +73,11 @@ export default function LibraryLayout(): JSX.Element {
         name="filter"
         options={({ route }) => {
           const params = route.params as FilterParams;
-          const filterType = params.type ?? 'category';
 
           return createNavigationOptions(colors, {
             title: getFilterTitle(params),
             headerLeft: () => <FilterHeaderLeft />,
-            headerRight: () => <FilterHeaderRight filterType={filterType} />,
+            headerRight: () => <FilterHeaderRight />,
           });
         }}
       />

@@ -108,29 +108,6 @@ describe('updateWordAndReview', () => {
     expect(reviewSpy).not.toHaveBeenCalled();
     expect(result).toBe(true);
   });
-
-  test.each([new Error('fail'), { message: 'network down', status: 0 }])(
-    'falls back to individual updates when RPC rejects with %p',
-    async err => {
-      (supabase.rpc as jest.Mock).mockRejectedValue(err);
-      const updateSpy = jest.spyOn(studyWordsFSRSService, 'updateFSRSWord').mockResolvedValue(true);
-      const reviewSpy = jest
-        .spyOn(studyWordsFSRSService, 'recordFSRSReview')
-        .mockResolvedValue(true);
-
-      const result = await studyWordsFSRSService.updateWordAndReview(
-        'u1',
-        5,
-        update,
-        Rating.Hard,
-        2
-      );
-
-      expect(updateSpy).toHaveBeenCalledWith('u1', 5, update);
-      expect(reviewSpy).toHaveBeenCalledWith('u1', 5, Rating.Hard, 2);
-      expect(result).toBe(true);
-    }
-  );
 });
 
 describe('getFSRSWords', () => {

@@ -1,9 +1,11 @@
-import { memo, type FC } from 'react';
+/**
+ * Theme Options
+ * Shared theme configuration options used by SettingsPicker
+ */
 
-import { SettingsPicker, type SettingsPickerOption } from '@/components/ui/SettingsPicker';
+import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';
 import { Theme } from '@/constants/colors';
 import { STRINGS } from '@/constants/strings';
-import { setTheme } from '@/store/themeSlice';
 
 type ThemeOption = SettingsPickerOption<Theme>;
 
@@ -27,25 +29,3 @@ export const THEME_OPTIONS: ThemeOption[] = [
     icon: 'leaf',
   },
 ];
-
-export interface ThemePickerProps {
-  isVisible: boolean;
-  onClose: () => void;
-}
-
-export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) => {
-  return (
-    <SettingsPicker
-      isVisible={isVisible}
-      onClose={onClose}
-      title={STRINGS.THEME}
-      options={THEME_OPTIONS}
-      currentValueSelector={state => state.theme.theme}
-      onValueChange={setTheme}
-      snapPoints={[440]}
-      supportsOptimisticUpdates={true}
-    />
-  );
-});
-
-ThemePicker.displayName = 'ThemePicker';

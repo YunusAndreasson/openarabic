@@ -1,9 +1,7 @@
 import { Group, Line } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 
-import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { withOpacity } from '@/utils/colorUtils';
+import type { ChartColors } from '@/types/ui/chart.types';
 
 interface ChartGridProps {
   width: number;
@@ -11,6 +9,7 @@ interface ChartGridProps {
   topPadding?: number;
   xLabelPositions?: number[]; // X positions for vertical grid lines (daily positions)
   yMax?: number; // Maximum value for y-axis (default 100 for percentages)
+  chartColors: ChartColors;
 }
 
 /**
@@ -24,21 +23,13 @@ export const ChartGrid = memo(
     topPadding = 0,
     xLabelPositions = [],
     yMax = 100,
+    chartColors,
   }: ChartGridProps) => {
-    const isDarkMode = useIsDarkMode();
-    const colors = useColors();
-
     // Beautiful, subtle grid lines - perfect opacity for readability without distraction
-    const gridColor = useMemo(
-      () => withOpacity(isDarkMode ? colors.white : colors.black, 0.12),
-      [isDarkMode, colors.white, colors.black]
-    );
+    const gridColor = chartColors.ui.grid;
 
     // Slightly more prominent border lines for clean chart definition
-    const borderColor = useMemo(
-      () => withOpacity(isDarkMode ? colors.white : colors.black, 0.2),
-      [isDarkMode, colors.white, colors.black]
-    );
+    const borderColor = chartColors.ui.border;
 
     // Horizontal lines at exact percentages (25%, 50%, 75%, 100%) for perfect value reading
     const horizontalLines = useMemo(() => {

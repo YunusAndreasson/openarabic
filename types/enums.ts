@@ -23,28 +23,37 @@ export enum AppFeature {
 
 /**
  * Audio language preferences for content playback
+ * Using const object for zero runtime overhead
  */
-export enum AudioLanguage {
-  ARABIC_ONLY = 'arabic',
-  ENGLISH_ARABIC = 'bilingual',
-}
+export const AudioLanguage = {
+  ARABIC_ONLY: 'arabic',
+  ENGLISH_ARABIC: 'bilingual',
+} as const;
+
+export type AudioLanguage = (typeof AudioLanguage)[keyof typeof AudioLanguage];
 
 /**
  * Display language preferences for UI text
+ * Using const object for zero runtime overhead
  */
-export enum DisplayLanguage {
-  ARABIC_ONLY = 'arabic',
-  ARABIC_ENGLISH = 'bilingual',
-}
+export const DisplayLanguage = {
+  ARABIC_ONLY: 'arabic',
+  ARABIC_ENGLISH: 'bilingual',
+} as const;
+
+export type DisplayLanguage = (typeof DisplayLanguage)[keyof typeof DisplayLanguage];
 
 /**
  * Available app themes
+ * Using const object for zero runtime overhead
  */
-export enum ThemeName {
-  BIRCHES = 'Birches in Spring',
-  MIDNIGHT = 'Midnight Summer',
-  AUTUMN = 'Autumn Leaves',
-}
+export const ThemeName = {
+  BIRCHES: 'Birches in Spring',
+  MIDNIGHT: 'Midnight Summer',
+  AUTUMN: 'Autumn Leaves',
+} as const;
+
+export type ThemeName = (typeof ThemeName)[keyof typeof ThemeName];
 
 // ===== DAILY WORD LIMITS =====
 
@@ -174,23 +183,29 @@ export enum FontDescription {
 
 /**
  * Content difficulty levels
+ * Using const object for zero runtime overhead
  */
-export enum ContentDifficulty {
-  BEGINNER = 'Beginner',
-  INTERMEDIATE = 'Intermediate',
-  ADVANCED = 'Advanced',
-}
+export const ContentDifficulty = {
+  BEGINNER: 'Beginner',
+  INTERMEDIATE: 'Intermediate',
+  ADVANCED: 'Advanced',
+} as const;
+
+export type ContentDifficulty = (typeof ContentDifficulty)[keyof typeof ContentDifficulty];
 
 // ===== NAVIGATION & UI ACTIONS =====
 
 /**
  * Main app navigation tabs
+ * Using const object for zero runtime overhead
  */
-export enum AppTab {
-  READ = 'Library',
-  LISTEN = 'Bookmarks',
-  PRACTICE = 'Study',
-}
+export const AppTab = {
+  READ: 'Library',
+  LISTEN: 'Bookmarks',
+  PRACTICE: 'Study',
+} as const;
+
+export type AppTab = (typeof AppTab)[keyof typeof AppTab];
 
 /**
  * Common UI action buttons
@@ -328,22 +343,6 @@ export enum FAQCategory {
   OFFLINE_STORAGE = 'Offline & storage',
   LEARNING_APPROACH = 'Learning approach',
   PRIVACY_DATA = 'Privacy & data',
-}
-
-// ===== ERROR TYPES =====
-
-/**
- * Error categories for better error handling and analytics
- */
-export enum ErrorType {
-  NETWORK = 'network',
-  AUTHENTICATION = 'authentication',
-  VALIDATION = 'validation',
-  PERMISSION = 'permission',
-  AUDIO = 'audio',
-  STORAGE = 'storage',
-  SYNC = 'sync',
-  UNKNOWN = 'unknown',
 }
 
 // ===== ANIMATION & TIMING =====

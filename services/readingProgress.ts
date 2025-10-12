@@ -1,7 +1,7 @@
+import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
-import type { Database } from '@/types/database.types';
-
-type ReadingProgressRow = Database['public']['Tables']['reading_progress']['Row'];
+import type { Tables } from '@/types/database.types';
+import { executeQuery } from '@/utils/supabaseHelpers';
 
 export interface ReadingProgress {
   user_id: string;
@@ -73,16 +73,21 @@ export class ReadingProgressService {
    * Get reading progress for a specific article
    */
   static async getProgress(userId: string, articleId: number): Promise<ReadingProgress | null> {
-    const { data, error } = await supabase
-      .from('reading_progress')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('article_id', articleId)
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Failed to get reading progress: ${error.message}`);
-    }
+    const data = await executeQuery(
+      () =>
+        supabase
+          .from('reading_progress')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('article_id', articleId)
+          .maybeSingle(),
+      {
+        toastMessage: STRINGS.ERROR_LOADING_DATA,
+        analyticsEventName: 'Reading_Progress_Get_Error',
+        analyticsProperties: { userId, articleId },
+        showToast: false, // Silent error for reading progress
+      }
+    );
 
     return data as ReadingProgress | null;
   }
@@ -108,25 +113,23 @@ export class ReadingProgressService {
     articleIds: number[]
   ): Promise<Map<number, ReadingProgress>> {
     // Build query
-    let query = supabase
-      .from('reading_progress')
-      .select('*')
-      .eq('user_id', userId);
+    let query = supabase.from('reading_progress').select('*').eq('user_id', userId);
 
     // Only filter by articleIds if provided
     if (articleIds.length > 0) {
       query = query.in('article_id', articleIds);
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      throw new Error(`Failed to get bulk reading progress: ${error.message}`);
-    }
+    const data = await executeQuery(() => query, {
+      toastMessage: STRINGS.ERROR_LOADING_DATA,
+      analyticsEventName: 'Reading_Progress_Bulk_Get_Error',
+      analyticsProperties: { userId, count: articleIds.length },
+      showToast: false, // Silent error for reading progress
+    });
 
     // Convert to Map for easy lookup
     const progressMap = new Map<number, ReadingProgress>();
-    (data as ReadingProgressRow[]).forEach(progress => {
+    (data as Tables<'reading_progress'>[]).forEach(progress => {
       progressMap.set(progress.article_id, progress as ReadingProgress);
     });
 
@@ -160,17 +163,22 @@ export class ReadingProgressService {
     userId: string,
     sortOrder: 'asc' | 'desc' = 'asc'
   ): Promise<ReadingProgress[]> {
-    const { data, error } = await supabase
-      .from('reading_progress')
-      .select('*')
-      .eq('user_id', userId)
-      .order('progress_percentage', { ascending: sortOrder === 'asc' });
+    const data = await executeQuery(
+      () =>
+        supabase
+          .from('reading_progress')
+          .select('*')
+          .eq('user_id', userId)
+          .order('progress_percentage', { ascending: sortOrder === 'asc' }),
+      {
+        toastMessage: STRINGS.ERROR_LOADING_DATA,
+        analyticsEventName: 'Reading_Progress_By_Progress_Get_Error',
+        analyticsProperties: { userId, sortOrder },
+        showToast: false,
+      }
+    );
 
-    if (error) {
-      throw new Error(`Failed to get articles by progress: ${error.message}`);
-    }
-
-    return (data as ReadingProgressRow[]).map(row => row as ReadingProgress);
+    return (data as Tables<'reading_progress'>[]).map(row => row as ReadingProgress);
   }
 
   /**
@@ -190,18 +198,23 @@ export class ReadingProgressService {
    * Get the most recently read article for a user
    */
   static async getLastReadArticle(userId: string): Promise<ReadingProgress | null> {
-    const { data, error } = await supabase
-      .from('reading_progress')
-      .select('*')
-      .eq('user_id', userId)
-      .gt('last_sentence_read', 0) // Only articles with actual progress
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Failed to get last read article: ${error.message}`);
-    }
+    const data = await executeQuery(
+      () =>
+        supabase
+          .from('reading_progress')
+          .select('*')
+          .eq('user_id', userId)
+          .gt('last_sentence_read', 0) // Only articles with actual progress
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      {
+        toastMessage: STRINGS.ERROR_LOADING_DATA,
+        analyticsEventName: 'Last_Read_Article_Get_Error',
+        analyticsProperties: { userId },
+        showToast: false,
+      }
+    );
 
     return data as ReadingProgress | null;
   }

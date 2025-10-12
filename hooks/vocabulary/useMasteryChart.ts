@@ -12,7 +12,7 @@ import { buildSmoothChartPath } from '@/components/common/charts/pathBuilder';
 import { generateDateRange } from '@/components/common/charts/utils';
 import { MASTERY_TREND_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { parseSupabaseTimestamp } from '@/utils/dateUtils';
+import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 
 interface Milestone {
   x: number;

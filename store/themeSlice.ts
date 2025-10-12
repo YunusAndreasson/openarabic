@@ -1,18 +1,14 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
-import { Theme, Colors } from '@/constants/colors';
-
-type ThemeColors = (typeof Colors)[Theme];
+import { Theme } from '@/constants/colors';
 
 export interface ThemeState {
   theme: Theme | null;
-  colors: ThemeColors;
 }
 
 const initialState: ThemeState = {
   theme: Theme.Dark, // Default to Midnight Summer (dark theme) for new users
-  colors: Colors.dark,
 };
 
 const themeSlice = createSlice({
@@ -21,7 +17,6 @@ const themeSlice = createSlice({
   reducers: {
     setTheme: (state, action: PayloadAction<Theme>) => {
       state.theme = action.payload;
-      state.colors = Colors[action.payload];
     },
   },
 });

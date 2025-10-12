@@ -5,10 +5,11 @@ import { useCallback, useMemo } from 'react';
 // Services
 import { useToast } from '@/components/providers/ToastProvider';
 import {
-  CAPACITY_THRESHOLDS,
   DEFAULT_SESSION_COOLDOWN_HOURS,
   FSRS_QUERY_KEYS,
+  MEMORY_CAPACITY_THRESHOLDS,
 } from '@/constants/fsrs';
+import { AUDIO_QUERY_KEYS, READING_LIST_QUERY_KEYS } from '@/constants/queryKeys';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
@@ -28,9 +29,7 @@ const RELATED_QUERY_KEYS = (userId: string, audioPreference?: 'arabic' | 'biling
     FSRS_QUERY_KEYS.all(userId),
     FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
     FSRS_QUERY_KEYS.due(userId),
-    audioPreference
-      ? (['enhancedAudioTracks', userId, audioPreference] as const)
-      : (['enhancedAudioTracks', userId] as const),
+    audioPreference ? AUDIO_QUERY_KEYS.tracks(userId, audioPreference) : (['enhancedAudioTracks', userId] as const),
     FSRS_QUERY_KEYS.stats(userId),
   ] as const;
 
@@ -139,7 +138,7 @@ export const useArticleMutations = (
         const ratio = dueCount / Math.max(1, words.length);
         capacityScore = ratio > 0.25 ? 30 : ratio > 0.1 ? 50 : 75;
       }
-      return capacityScore < CAPACITY_THRESHOLDS.CAUTION;
+      return capacityScore < MEMORY_CAPACITY_THRESHOLDS.POOR;
     }
     return false;
   };
@@ -151,12 +150,12 @@ export const useArticleMutations = (
         bookmarkService.addToReadingList(userId, articleId),
       onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
         // Immediately update cache to reflect the bookmark was added
-        queryClient.setQueryData(['readingList', userId, articleId], true);
+        queryClient.setQueryData(READING_LIST_QUERY_KEYS.detail(userId, articleId), true);
 
         // Then refetch to ensure consistency
         refetchReadingListStatus();
-        queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
-        queryClient.invalidateQueries({ queryKey: ['enhancedAudioTracks', userId, audioPreference] });
+        queryClient.invalidateQueries({ queryKey: READING_LIST_QUERY_KEYS.all(userId) });
+        queryClient.invalidateQueries({ queryKey: AUDIO_QUERY_KEYS.tracks(userId, audioPreference) });
       },
       onError: (error: Error) => {
         // Silently handle errors - no toast notifications for bookmarks actions
@@ -183,12 +182,12 @@ export const useArticleMutations = (
         bookmarkService.removeFromReadingList(userId, articleId),
       onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
         // Immediately update cache to reflect the bookmark was removed
-        queryClient.setQueryData(['readingList', userId, articleId], false);
+        queryClient.setQueryData(READING_LIST_QUERY_KEYS.detail(userId, articleId), false);
 
         // Then refetch to ensure consistency
         refetchReadingListStatus();
-        queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
-        queryClient.invalidateQueries({ queryKey: ['enhancedAudioTracks', userId, audioPreference] });
+        queryClient.invalidateQueries({ queryKey: READING_LIST_QUERY_KEYS.all(userId) });
+        queryClient.invalidateQueries({ queryKey: AUDIO_QUERY_KEYS.tracks(userId, audioPreference) });
       },
       onError: (error: Error) => {
         // Silently handle errors - no toast notifications for bookmarks actions
@@ -500,5 +499,3 @@ export const useArticleMutations = (
     toggleRootMutation,
   };
 };
-
-export default useArticleMutations;

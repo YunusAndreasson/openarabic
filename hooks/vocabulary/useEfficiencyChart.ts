@@ -15,7 +15,7 @@ import { useMemo } from 'react';
 
 import { TREND_CHANGE_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { parseSupabaseTimestamp } from '@/utils/dateUtils';
+import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 
 // Efficiency data interface
 export interface EfficiencyRecord {

@@ -50,6 +50,10 @@ jest.mock('@/services/simpleAudioService', () => ({
 jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
+jest.mock('@/hooks/theme/useThemeDetection', () => ({
+  useIsDarkMode: () => false,
+  useCurrentTheme: () => 'dark',
+}));
 
 describe('WordDetailsBottomSheet - Optimistic State Management', () => {
   const mockWord: SentenceWord = {

@@ -1,7 +1,7 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { AuthorRow } from '@/types/articles.types';
-import { handleError } from '@/utils/errorHandling';
+import { executeQuery } from '@/utils/supabaseHelpers';
 
 /**
  * Result shape when selecting the `author` relation from `articles`.
@@ -12,46 +12,35 @@ interface ArticleAuthorResult {
 
 export const authorsService = {
   async getAuthors(): Promise<AuthorRow[]> {
-    const { data, error } = await supabase
-      .from('authors')
-      .select('id, name')
-      .order('name')
-      .returns<AuthorRow[]>();
-
-    if (error) {
-      await handleError(new Error(error.message), {
+    const data = await executeQuery(
+      () => supabase.from('authors').select('id, name').order('name').returns<AuthorRow[]>(),
+      {
         toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
-      });
-      throw error;
-    }
+        analyticsEventName: 'Authors_Load_Error',
+      }
+    );
+
     return data ?? [];
   },
 
   async getUniqueAuthors(): Promise<AuthorRow[]> {
     // Use a simpler approach - get all authors and filter by those with articles
-    const { data: allAuthors, error: authorsError } = await supabase
-      .from('authors')
-      .select('id, name')
-      .order('name', { ascending: true });
-
-    if (authorsError) {
-      await handleError(new Error(authorsError.message), {
+    const allAuthors = await executeQuery(
+      () => supabase.from('authors').select('id, name').order('name', { ascending: true }),
+      {
         toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
-      });
-      throw authorsError;
-    }
+        analyticsEventName: 'Authors_Load_Error',
+      }
+    );
 
     // Get unique author IDs from articles
-    const { data: articleAuthors, error: articlesError } = await supabase
-      .from('articles')
-      .select('author_id');
-
-    if (articlesError) {
-      await handleError(new Error(articlesError.message), {
+    const articleAuthors = await executeQuery(
+      () => supabase.from('articles').select('author_id'),
+      {
         toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
-      });
-      throw articlesError;
-    }
+        analyticsEventName: 'Article_Authors_Load_Error',
+      }
+    );
 
     // Filter to only authors that have articles
     const authorIdsWithArticles = new Set(articleAuthors?.map(a => a.author_id) ?? []);
@@ -62,19 +51,20 @@ export const authorsService = {
   },
 
   async getAuthorsByCategory(categoryId: number): Promise<AuthorRow[]> {
-    const { data, error } = await supabase
-      .from('articles')
-      .select('author:authors!inner(id, name)')
-      .eq('category_id', categoryId)
-      .order('name', { foreignTable: 'author' })
-      .returns<ArticleAuthorResult[]>();
-
-    if (error) {
-      await handleError(new Error(error.message), {
+    const data = await executeQuery(
+      () =>
+        supabase
+          .from('articles')
+          .select('author:authors!inner(id, name)')
+          .eq('category_id', categoryId)
+          .order('name', { foreignTable: 'author' })
+          .returns<ArticleAuthorResult[]>(),
+      {
         toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
-      });
-      throw error;
-    }
+        analyticsEventName: 'Authors_By_Category_Load_Error',
+        analyticsProperties: { categoryId },
+      }
+    );
 
     // Deduplicate authors by id to avoid repeating the same author per article
     const uniqueAuthorsMap = new Map<number, AuthorRow>();

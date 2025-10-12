@@ -1,9 +1,7 @@
 import { Line } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 
-import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { withOpacity } from '@/utils/colorUtils';
+import type { ChartColors } from '@/types/ui/chart.types';
 
 interface ChartReferenceLineProps {
   percentage: number; // The percentage value to draw the line at (e.g., 75 for 75%)
@@ -11,6 +9,7 @@ interface ChartReferenceLineProps {
   chartHeight: number;
   topPadding?: number;
   yMax?: number; // Maximum value for y-axis (default 100 for percentages)
+  chartColors: ChartColors;
 }
 
 /**
@@ -18,15 +17,9 @@ interface ChartReferenceLineProps {
  * Used to indicate target thresholds (e.g., 75% memory retention target)
  */
 export const ChartReferenceLine = memo<ChartReferenceLineProps>(
-  ({ percentage, graphWidth, chartHeight, topPadding = 0, yMax = 100 }) => {
-    const isDarkMode = useIsDarkMode();
-    const colors = useColors();
-
+  ({ percentage, graphWidth, chartHeight, topPadding = 0, yMax = 100, chartColors }) => {
     // Soft, subtle color for the reference line - slightly more visible than grid lines
-    const lineColor = useMemo(
-      () => withOpacity(isDarkMode ? colors.white : colors.black, 0.38),
-      [isDarkMode, colors.white, colors.black]
-    );
+    const lineColor = chartColors.ui.threshold;
 
     // Calculate Y position for the reference line
     const yPosition = useMemo(() => {

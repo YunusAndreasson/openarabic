@@ -34,7 +34,7 @@ class SimpleAudioService {
 
   // STABILIZATION: Add state transition smoothing
   private lastStatusUpdate = 0;
-  private statusUpdateThrottle = 500; // Match polling interval to avoid wasted updates
+  private statusUpdateThrottle = 100; // 100ms for responsive button state updates (especially for short audio)
 
   // PLAYLIST SUPPORT: Add playlist state management
   private playlist: EnhancedAudioTrack[] = [];
@@ -278,26 +278,26 @@ class SimpleAudioService {
       // Start playback immediately
       await this.currentPlayer.play?.();
 
-      // Conditionally start polling and update status
-      if (!options.skipPolling) {
-        // Start polling for status updates immediately after play() call
-        this.startStatusPolling();
+      // Update status to playing immediately
+      this.updateStatus({
+        isLoading: false,
+        isPlaying: true,
+        currentTrack: this.currentTrack,
+        currentTime: options.immediateStatus ? 0 : undefined,
+        duration: options.immediateStatus ? 0 : undefined,
+      });
 
-        // Update status to playing immediately - trust the polling to correct if needed
-        this.updateStatus({ isLoading: false, isPlaying: true });
-      } else {
-        // For optimized playback (e.g., word audio), update status immediately
+      // Start polling unless explicitly skipped
+      if (!options.skipPolling) {
+        // For immediate status (short audio), add small delay before first poll
+        // to let the player actually start playing (prevents glitchy state transitions)
         if (options.immediateStatus) {
-          this.updateStatus({
-            isLoading: false,
-            isPlaying: true,
-            currentTrack: this.currentTrack,
-            currentTime: 0,
-            duration: 0,
-          });
+          setTimeout(() => {
+            this.startStatusPolling();
+          }, 200); // 200ms delay gives player time to start
         } else {
-          // Still provide minimal status update
-          this.updateStatus({ isLoading: false, isPlaying: true });
+          // Start polling immediately for normal playback
+          this.startStatusPolling();
         }
       }
 

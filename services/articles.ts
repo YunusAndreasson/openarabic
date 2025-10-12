@@ -2,7 +2,7 @@ import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { Article, ArticleRow } from '@/types/articles.types';
 import type { ArticleId, AuthorId, CategoryId } from '@/types/branded.types';
-import { handleError } from '@/utils/errorHandling';
+import { executeQuery } from '@/utils/supabaseHelpers';
 import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
 
 // Define different column sets for different use cases
@@ -105,137 +105,102 @@ export const articlesService = {
       sortBy = 'created_at',
       sortOrder = 'desc',
     } = options;
-    try {
-      const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : LIST_VIEW_COLUMNS;
-      let query = supabase.from('articles').select(columns);
 
-      // Apply filters
-      if (categoryId) query = query.eq('category_id', categoryId);
-      if (authorId) query = query.eq('author_id', authorId);
-      if (minDifficulty) query = query.gte('difficulty_level', minDifficulty);
-      if (maxDifficulty) query = query.lte('difficulty_level', maxDifficulty);
+    const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : LIST_VIEW_COLUMNS;
+    let query = supabase.from('articles').select(columns);
 
-      // Apply sorting
-      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+    // Apply filters
+    if (categoryId) query = query.eq('category_id', categoryId);
+    if (authorId) query = query.eq('author_id', authorId);
+    if (minDifficulty) query = query.gte('difficulty_level', minDifficulty);
+    if (maxDifficulty) query = query.lte('difficulty_level', maxDifficulty);
 
-      // Apply pagination
-      if (limit > 0) {
-        query = query.range(offset, offset + limit - 1);
-      }
+    // Apply sorting
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
-      const { data, error } = await query;
-      if (error) {
-        await handleError(new Error(error.message), {
-          toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
-          analyticsProperties: {
-            ...(categoryId !== undefined && { categoryId }),
-            ...(authorId !== undefined && { authorId }),
-            limit,
-            offset,
-          },
-        });
-        throw error;
-      }
-
-      return mapToArticles((data ?? []) as unknown as ArticleRow[]);
-    } catch (err) {
-      await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
-        toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
-        analyticsProperties: {
-          ...(categoryId !== undefined && { categoryId }),
-          ...(authorId !== undefined && { authorId }),
-          ...(limit !== undefined && { limit }),
-          ...(offset !== undefined && { offset }),
-        },
-      });
-      throw err;
+    // Apply pagination
+    if (limit > 0) {
+      query = query.range(offset, offset + limit - 1);
     }
+
+    const data = await executeQuery(() => query.returns<ArticleRow[]>(), {
+      toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
+      analyticsEventName: 'Articles_Load_Error',
+      analyticsProperties: {
+        ...(categoryId !== undefined && { categoryId }),
+        ...(authorId !== undefined && { authorId }),
+        limit,
+        offset,
+      },
+    });
+
+    return mapToArticles(data ?? []);
   },
 
   // Optimized method for getting articles with word statistics for due words analysis
   async getArticlesWithWordStats(): Promise<Article[]> {
-    try {
-      const { data, error } = await supabase
-        .from('articles')
-        .select(ARTICLES_WITH_WORD_STATS)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        await handleError(new Error(error.message), {
-          toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
-        });
-        throw error;
+    const data = await executeQuery(
+      () =>
+        supabase
+          .from('articles')
+          .select(ARTICLES_WITH_WORD_STATS)
+          .order('created_at', {
+            ascending: false,
+          })
+          .returns<ArticleRow[]>(),
+      {
+        toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
+        analyticsEventName: 'Articles_With_Stats_Load_Error',
       }
-      return mapToArticles((data ?? []) as unknown as ArticleRow[]);
-    } catch (err) {
-      await handleError(
-        err instanceof Error ? err : new Error('Unknown error loading articles with word stats'),
-        {
-          toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
-        }
-      );
-      throw err;
-    }
+    );
+
+    return mapToArticles(data ?? []);
   },
 
   async getArticleById(id: ArticleId): Promise<Article> {
-    try {
-      const { data, error } = await supabase
-        .from('articles')
-        .select(DETAIL_VIEW_COLUMNS)
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        await handleError(new Error(error.message), {
-          toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
-          analyticsProperties: { id },
-        });
-        throw error;
-      }
-
-      if (!data) {
-        throw new Error('Article not found');
-      }
-
-      return mapToArticle(data as unknown as ArticleRow);
-    } catch (err) {
-      await handleError(err instanceof Error ? err : new Error('Unknown error loading article'), {
+    const data = await executeQuery(
+      () =>
+        supabase
+          .from('articles')
+          .select(DETAIL_VIEW_COLUMNS)
+          .eq('id', id)
+          .single()
+          .returns<ArticleRow>(),
+      {
         toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
+        analyticsEventName: 'Article_Load_Error',
         analyticsProperties: { id },
-      });
-      throw err;
+      }
+    );
+
+    if (!data) {
+      throw new Error('Article not found');
     }
+
+    return mapToArticle(data);
   },
 
   // Optimized method for getting article metadata only (for cards, lists)
   async getArticleCard(id: number): Promise<Article> {
-    try {
-      const { data, error } = await supabase
-        .from('articles')
-        .select(CARD_VIEW_COLUMNS)
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        await handleError(new Error(error.message), {
-          toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
-          analyticsProperties: { id },
-        });
-        throw error;
-      }
-
-      if (!data) {
-        throw new Error('Article not found');
-      }
-
-      return mapToArticle(data as unknown as ArticleRow);
-    } catch (err) {
-      await handleError(err instanceof Error ? err : new Error('Unknown error loading article'), {
+    const data = await executeQuery(
+      () =>
+        supabase
+          .from('articles')
+          .select(CARD_VIEW_COLUMNS)
+          .eq('id', id)
+          .single()
+          .returns<ArticleRow>(),
+      {
         toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
+        analyticsEventName: 'Article_Card_Load_Error',
         analyticsProperties: { id },
-      });
-      throw err;
+      }
+    );
+
+    if (!data) {
+      throw new Error('Article not found');
     }
+
+    return mapToArticle(data);
   },
 };

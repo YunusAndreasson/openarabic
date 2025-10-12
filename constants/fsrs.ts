@@ -48,17 +48,11 @@ export const SPACING_ITERATION_LIMIT = 20;
 export const URGENT_RETRIEVABILITY_THRESHOLD = 0.5;
 export const TREND_CHANGE_THRESHOLD = 0.1;
 export const MASTERY_TREND_THRESHOLD = 3;
-export const MASTERY_MILESTONES = [7, 14, 21, 30] as const;
-
-export const CAPACITY_THRESHOLDS = {
-  READY: 70, // Green zone - ready to add words
-  CAUTION: 40, // Yellow zone - add with caution
-  // Below 40 is red zone - don't add
-} as const;
 
 /**
  * Memory capacity thresholds for vocabulary retention
- * These values determine when to show warnings and color coding
+ * These values determine when to show warnings, color coding, and recommendation logic
+ * Used across: article recommendations, charts, gauges, and retention displays
  */
 export const MEMORY_CAPACITY_THRESHOLDS = {
   /** Below this threshold shows red warning (poor retention) */

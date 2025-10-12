@@ -5,7 +5,12 @@ import { useCallback, useRef, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { CACHE_TIMES } from '@/constants/queryConfig';
+import {
+  ARTICLE_QUERY_KEYS,
+  CACHE_TIMES,
+  READING_LIST_QUERY_KEYS,
+  READING_PROGRESS_QUERY_KEYS,
+} from '@/constants/queryKeys';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
@@ -50,13 +55,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // Load static data first (categories, basic articles list)
       const criticalPromises = [
         queryClient.fetchQuery({
-          queryKey: ['categories'],
+          queryKey: ARTICLE_QUERY_KEYS.categories(),
           queryFn: () => categoriesService.getCategories(),
           ...CACHE_TIMES.STATIC,
           retry: 3,
         }),
         queryClient.fetchQuery({
-          queryKey: ['articles'],
+          queryKey: ARTICLE_QUERY_KEYS.all(),
           queryFn: () => articlesService.getArticles(), // Load all articles for filtering
           ...CACHE_TIMES.ARTICLES,
           retry: 3,
@@ -67,7 +72,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // This prevents race condition where filtered view renders before progress data is available
       const readingProgressPromise = user?.id
         ? queryClient.prefetchQuery({
-            queryKey: ['reading-progress-bulk', user.id],
+            queryKey: READING_PROGRESS_QUERY_KEYS.bulk(user.id),
             queryFn: () => readingProgressService.getBulkProgress(user.id, []),
             staleTime: 0, // CRITICAL: Always fetch fresh data on app startup to prevent stale cache from blocking updates
             gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
@@ -104,7 +109,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
               .map(url => Image.prefetch(url).catch(() => null)); // Silently handle prefetch failures
             const detailPrefetches = featured.map(a =>
               queryClient.prefetchQuery({
-                queryKey: ['article', a.id],
+                queryKey: ARTICLE_QUERY_KEYS.detail(a.id),
                 queryFn: () => articlesService.getArticleById(a.id),
                 ...CACHE_TIMES.ARTICLES,
                 retry: 2,
@@ -168,13 +173,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
         setTimeout(() => {
           const backgroundPromises = [
             queryClient.prefetchQuery({
-              queryKey: ['authors'],
+              queryKey: ARTICLE_QUERY_KEYS.authors(),
               queryFn: () => authorsService.getAuthors(),
               ...CACHE_TIMES.STATIC,
               retry: 2,
             }),
             queryClient.prefetchQuery({
-              queryKey: ['readingList', user.id],
+              queryKey: READING_LIST_QUERY_KEYS.all(user.id),
               queryFn: () => bookmarkService.getReadingList(user.id),
               ...CACHE_TIMES.MEDIUM,
               retry: 2,
@@ -227,7 +232,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
     async (articleId: number) => {
       try {
         await queryClient.prefetchQuery({
-          queryKey: ['article', articleId],
+          queryKey: ARTICLE_QUERY_KEYS.detail(articleId),
           queryFn: () => articlesService.getArticleById(articleId as ArticleId),
           ...CACHE_TIMES.ARTICLES,
           retry: 2,
@@ -283,7 +288,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
     try {
       // Fetch all articles first
       const allArticles = await queryClient.fetchQuery({
-        queryKey: ['articles'],
+        queryKey: ARTICLE_QUERY_KEYS.all(),
         queryFn: () => articlesService.getArticles(),
         staleTime: 300000, // 5 minutes
         gcTime: 600000, // 10 minutes
@@ -385,5 +390,3 @@ export const useAppPreloader = (): AppPreloaderResult => {
     preloadProgress,
   };
 };
-
-export default useAppPreloader;

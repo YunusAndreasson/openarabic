@@ -66,11 +66,9 @@ const ArticleScreenContentComparison = (
 const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const colors = useColors();
   const { user } = useAuth();
-  const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
   const displayLanguagePreference = useAppSelectorMemo(
     state => state.settings.displayLanguagePreference
   );
-  const audioPreference = useAppSelectorMemo(state => state.settings.audioLanguagePreference);
   const { showToast } = useToast();
 
   const queryClient = useQueryClient();
@@ -162,7 +160,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     try {
       await stopAudioSafely(true);
     } catch (error) {
-      handleError(error as Error, { toastMessage: 'Failed to stop audio on close' });
+      handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
     }
 
     router.back();
@@ -204,18 +202,18 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         const success = await simpleAudioService.play(track);
         if (!success) {
           handleError(new Error('Failed to start audio playback'), {
-            toastMessage: 'Audio playback failed',
+            toastMessage: STRINGS.AUDIO_PLAYBACK_FAILED,
           });
         }
       } else {
         handleError(new Error('Failed to generate audio track'), {
-          toastMessage: 'Audio generation failed',
+          toastMessage: STRINGS.AUDIO_GENERATION_FAILED,
         });
       }
     } catch (error) {
-      handleError(error as Error, { toastMessage: 'Failed to handle play press' });
+      handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_START_AUDIO_PLAYBACK });
     }
-  }, [articleId, article, isPlaying, audioPreference, showToast]);
+  }, [articleId, article, isPlaying, showToast]);
 
   // Track reading progress with proper initialization
   const isActive = !!article && !isLoadingArticle;
@@ -312,7 +310,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
       // Show resume toast
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      showToast(`Resumed at ${progressPercent}%`, 3000, ToastType.INFO);
+      showToast(STRINGS.RESUMED_READING_TEMPLATE.replace('{percent}', String(progressPercent)), 3000, ToastType.INFO);
 
       // Attempt jump once on resume
       setTimeout(() => {
@@ -438,14 +436,13 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           words={words}
           settings={{
             showEnglish: displayLanguagePreference === 'bilingual',
-            fontScale,
           }}
           colors={colors}
           onWordPress={handleWordPress}
         />
       );
     },
-    [getWordsForSentence, fontScale, colors, handleWordPress, displayLanguagePreference]
+    [getWordsForSentence, colors, handleWordPress, displayLanguagePreference]
   );
 
   // Memoize expensive computations

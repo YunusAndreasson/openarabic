@@ -130,5 +130,3 @@ export const useEncouragingMetrics = (
     return encouragingFacts.slice(0, 3); // Show max 3 encouraging facts
   }, [sessionMetrics, colors]);
 };
-
-export default useEncouragingMetrics;

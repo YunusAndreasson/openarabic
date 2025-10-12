@@ -2,11 +2,10 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import React from 'react';
 
-import { TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { ArabicWord } from '../../components/article/ArabicWord';
 import ArticleCard from '../../components/library/ArticleCard';
 import CompletionScreen from '../../components/review/CompletionScreen';
-import ErrorMessage from '../../components/study/ErrorMessage';
 import { VocabularyStatCards } from '../../components/study/VocabularyStatCards';
 import { useReview } from '../../hooks/review';
 
@@ -173,7 +172,6 @@ describe('UI flow', () => {
     const { getByTestId } = render(
       <ArabicWord
         word={word}
-        settings={{ fontScale: 1 }}
         onPress={onPress}
         onTooltipOpen={onTooltipOpen}
         testID="word-1"
@@ -211,7 +209,11 @@ describe('UI flow', () => {
       };
 
       if (error) {
-        return <ErrorMessage />;
+        return (
+          <View testID="error-message">
+            <Text>Error starting review</Text>
+          </View>
+        );
       }
 
       return (

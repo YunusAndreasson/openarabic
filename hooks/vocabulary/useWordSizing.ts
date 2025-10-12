@@ -44,5 +44,3 @@ export const useWordSizing = (
     return Math.max(minFontSize, calculatedSize);
   }, [word, minFontSize, maxFontSize]);
 };
-
-export default useWordSizing;

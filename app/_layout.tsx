@@ -34,7 +34,7 @@ import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
-import { QUERY_DEFAULTS } from '@/constants/queryConfig';
+import { QUERY_DEFAULTS } from '@/constants/queryKeys';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { StreaksProvider, useStreaks } from '@/contexts/StreaksContext';
@@ -289,16 +289,6 @@ function AppContent() {
     };
   }, []);
 
-  // Fallback timeout so the app doesn't remain stuck on the splash screen
-  useEffect(() => {
-    if (appReady || !fontsLoaded) return;
-    const timer = setTimeout(() => {
-      setAppReady(true);
-      SplashScreen.hide();
-    }, 10000);
-    return () => clearTimeout(timer);
-  }, [appReady, fontsLoaded]);
-
   // Cleanup effect for AppState subscription
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
@@ -480,7 +470,7 @@ export default Sentry.wrap(function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.gestureRoot}>
       <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
+        <PersistGate loading={<View />} persistor={persistor}>
           <PersistQueryClientProvider client={queryClient} persistOptions={PERSISTENCE_OPTIONS}>
             <AuthProvider>
               <SafeAreaProvider>
