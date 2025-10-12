@@ -9,14 +9,6 @@ jest.mock('@/store/hooks', () => ({
   useAppSelectorMemo: jest.fn(),
 }));
 
-// Mock ReactReduxContext for tests
-jest.mock('react-redux', () => ({
-  ...jest.requireActual('react-redux'),
-  ReactReduxContext: {
-    Consumer: ({ children }: any) => children({ store: {} }),
-  },
-}));
-
 const mockedSelector = require('@/store/hooks').useAppSelectorMemo as jest.Mock;
 const mockedUseColorScheme = useColorScheme as jest.Mock;
 

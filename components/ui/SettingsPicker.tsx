@@ -95,7 +95,17 @@ export const SettingsPicker = <T,>({
   const reduxValue = useAppSelectorMemo(
     currentValueSelector || (() => undefined as T)
   );
-  const currentValue = isReduxMode ? reduxValue : selectedValue;
+
+  // Get the current value - with proper fallback to first option if undefined
+  const rawCurrentValue = isReduxMode ? reduxValue : selectedValue;
+  const currentValue = useMemo(() => {
+    // If we have a value, use it
+    if (rawCurrentValue !== undefined && rawCurrentValue !== null) {
+      return rawCurrentValue;
+    }
+    // Otherwise, fall back to the first option's id
+    return options[0]?.id;
+  }, [rawCurrentValue, options]);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 

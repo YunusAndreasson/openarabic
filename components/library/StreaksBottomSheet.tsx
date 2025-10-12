@@ -24,7 +24,8 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     isLoading: isStreakLoading,
     isError: isStreakError,
   } = useStreakHistory({
-    enabled: isVisible, // Only fetch when visible
+    // Always enabled - query has proper caching (5min staleTime, 10min gcTime)
+    // This prevents loading flash when opening the modal
   });
 
   // Show/hide modal based on isVisible prop

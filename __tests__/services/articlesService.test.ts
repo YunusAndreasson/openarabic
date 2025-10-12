@@ -27,6 +27,7 @@ const createThenBuilder = (response: any) => {
     lte: jest.fn().mockReturnThis(),
     order: jest.fn().mockReturnThis(),
     range: jest.fn().mockReturnThis(),
+    returns: jest.fn().mockReturnThis(),
     then: jest.fn((resolve: any) => resolve(response)),
   };
   return builder;
@@ -36,7 +37,8 @@ const createFinalBuilder = (response: any) => {
   const builder: any = {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
-    single: jest.fn().mockResolvedValue(response),
+    single: jest.fn().mockReturnThis(),
+    returns: jest.fn().mockResolvedValue(response),
   };
   return builder;
 };
