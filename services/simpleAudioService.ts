@@ -283,8 +283,8 @@ class SimpleAudioService {
         isLoading: false,
         isPlaying: true,
         currentTrack: this.currentTrack,
-        currentTime: options.immediateStatus ? 0 : undefined,
-        duration: options.immediateStatus ? 0 : undefined,
+        currentTime: 0,
+        duration: 0,
       });
 
       // Start polling unless explicitly skipped
