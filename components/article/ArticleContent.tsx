@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { FlashListProps } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { memo, useCallback, useMemo, type ReactElement } from 'react';
@@ -7,7 +6,6 @@ import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
   ViewToken,
-  ViewabilityConfig,
 } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -40,84 +38,8 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList as unknown as React.ComponentType<any>
 );
 
-// Inline utility functions since they're only used in this component
-const createViewabilityConfig = () => ({
-  itemVisiblePercentThreshold: 50, // Consider item visible when 50% is visible
-  minimumViewTime: 100, // Minimum time item must be visible before triggering
-});
-
 // Comfortable reading space constant
 const COMFORTABLE_READING_SPACE = MIN_TOUCH_TARGET.MEDIUM;
-
-const createContentContainerStyle = (bottomInset: number, topPadding: number) => ({
-  paddingTop: topPadding,
-  paddingBottom: bottomInset + COMFORTABLE_READING_SPACE, // Safe area + comfortable reading space
-});
-
-const createListContainerStyle = (backgroundColor: string) => ({
-  flex: 1,
-  backgroundColor,
-  position: 'relative' as const,
-});
-
-const createFlashListConfig = <T,>({
-  data,
-  renderItem,
-  keyExtractor,
-  contentContainerStyle,
-  ListHeaderComponent,
-  ListFooterComponent,
-  onScroll,
-  onViewableItemsChanged,
-  viewabilityConfig,
-  drawDistance,
-  scrollEventThrottle = 16,
-  showsVerticalScrollIndicator = false,
-  removeClippedSubviews = true,
-  alwaysBounceVertical = true,
-  bounces = true,
-  overScrollMode = 'always',
-  extraData,
-  initialScrollIndex,
-}: {
-  data: T[];
-  renderItem: (info: { item: T; index: number }) => React.ReactElement;
-  keyExtractor: (item: T, index: number) => string;
-  contentContainerStyle?: FlashListProps<T>['contentContainerStyle'];
-  ListHeaderComponent?: React.ComponentType<unknown> | React.ReactElement | null;
-  ListFooterComponent?: React.ComponentType<unknown> | React.ReactElement | null;
-  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  onViewableItemsChanged?: (info: { viewableItems: ViewToken[] }) => void;
-  viewabilityConfig?: ViewabilityConfig;
-  drawDistance?: number;
-  scrollEventThrottle?: number;
-  showsVerticalScrollIndicator?: boolean;
-  removeClippedSubviews?: boolean;
-  alwaysBounceVertical?: boolean;
-  bounces?: boolean;
-  overScrollMode?: 'auto' | 'always' | 'never';
-  extraData?: unknown;
-  initialScrollIndex?: number;
-}) => ({
-  data,
-  renderItem,
-  keyExtractor,
-  contentContainerStyle,
-  ListHeaderComponent,
-  ListFooterComponent,
-  onScroll,
-  onViewableItemsChanged,
-  viewabilityConfig,
-  drawDistance,
-  scrollEventThrottle,
-  showsVerticalScrollIndicator,
-  removeClippedSubviews,
-  alwaysBounceVertical,
-  bounces,
-  overScrollMode,
-  extraData,
-  initialScrollIndex,
-});
 
 // Static styles for better performance
 const styles = StyleSheet.create({
@@ -499,59 +421,30 @@ export const ArticleContent = memo<ArticleContentProps>(
 
     // Memoized content container style
     const contentContainerStyle = useMemo(
-      () => createContentContainerStyle(insets.bottom, headerHeight),
+      () => ({
+        paddingTop: headerHeight,
+        paddingBottom: insets.bottom + COMFORTABLE_READING_SPACE,
+      }),
       [insets.bottom, headerHeight]
     );
 
     // Memoized list container style
     const listContainerStyle = useMemo(
-      () => createListContainerStyle(colors.background),
+      () => ({
+        flex: 1,
+        backgroundColor: colors.background,
+        position: 'relative' as const,
+      }),
       [colors.background]
     );
 
     // Memoized viewability config
-    const viewabilityConfig = useMemo(() => createViewabilityConfig(), []);
-
-    // Create FlashList v2 configuration - no estimates needed
-    const flashListConfig = useMemo(
-      () =>
-        createFlashListConfig({
-          data: sortedSentences,
-          renderItem: renderSentenceItem,
-          keyExtractor: sentenceKeyExtractor,
-          contentContainerStyle,
-          ListHeaderComponent: headerComponent,
-          ListFooterComponent: footerComponent,
-          onScroll: onScrollAnimated as unknown as (
-            event: NativeSyntheticEvent<NativeScrollEvent>
-          ) => void,
-          onViewableItemsChanged: handleViewableItemsChanged,
-          viewabilityConfig,
-          drawDistance: SENTENCE_ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER,
-          scrollEventThrottle: SCROLL_THROTTLE,
-          showsVerticalScrollIndicator: false,
-          removeClippedSubviews: true,
-          alwaysBounceVertical: true,
-          bounces: true,
-          overScrollMode: 'always',
-          // v2 performance optimizations - maxItemsInRecyclePool is set directly on FlashList
-          // Do not set an initialScrollIndex so FlashList starts at absolute top
-          // Force re-render when highlight state changes
-          extraData: {
-            currentHighlightedWord,
-          },
-        }),
-      [
-        sortedSentences,
-        renderSentenceItem,
-        contentContainerStyle,
-        headerComponent,
-        footerComponent,
-        onScrollAnimated,
-        handleViewableItemsChanged,
-        viewabilityConfig,
-        currentHighlightedWord,
-      ]
+    const viewabilityConfig = useMemo(
+      () => ({
+        itemVisiblePercentThreshold: 50,
+        minimumViewTime: 100,
+      }),
+      []
     );
 
     return (
@@ -563,7 +456,27 @@ export const ArticleContent = memo<ArticleContentProps>(
             <AnimatedFlashList
               ref={scrollViewRef as unknown as React.RefObject<any>}
               key={`article-${id}`}
-              {...flashListConfig}
+              data={sortedSentences}
+              renderItem={renderSentenceItem}
+              keyExtractor={sentenceKeyExtractor}
+              contentContainerStyle={contentContainerStyle}
+              ListHeaderComponent={headerComponent}
+              ListFooterComponent={footerComponent}
+              onScroll={
+                onScrollAnimated as unknown as (
+                  event: NativeSyntheticEvent<NativeScrollEvent>
+                ) => void
+              }
+              onViewableItemsChanged={handleViewableItemsChanged}
+              viewabilityConfig={viewabilityConfig}
+              drawDistance={SENTENCE_ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER}
+              scrollEventThrottle={SCROLL_THROTTLE}
+              showsVerticalScrollIndicator={false}
+              removeClippedSubviews={true}
+              alwaysBounceVertical={true}
+              bounces={true}
+              overScrollMode="always"
+              extraData={{ currentHighlightedWord }}
               maxItemsInRecyclePool={30} // Control memory usage for sentence items
               onScrollToIndexFailed={({ index }: { index: number }) => {
                 // Fallback: estimate offset using fixed item height and account for header

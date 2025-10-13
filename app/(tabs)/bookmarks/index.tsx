@@ -86,8 +86,8 @@ const ListenListItem = memo(
 
     return (
       <ListenListItemCard
-        author={item.articles.author.name}
         title={item.articles.title}
+        secondaryText={item.articles.author.name}
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
         onDelete={handleDelete}

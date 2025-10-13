@@ -414,16 +414,10 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     [user?.id, handleRootPress, queryClient, refetchStudyWords]
   );
 
-  // Lightweight sentence words accessor without extra routing logic
-  const getWordsForSentence = useCallback(
-    (sentenceId: number) => sentenceWordsMap.get(sentenceId) ?? [],
-    [sentenceWordsMap]
-  );
-
   // Memoize renderSentenceItem to prevent unnecessary recreations
   const renderSentenceItem = useCallback(
     ({ item }: { item: Tables<'article_sentences'> }) => {
-      const words = getWordsForSentence(item.id);
+      const words = sentenceWordsMap.get(item.id) ?? [];
 
       if (!words || words.length === 0) {
         return <React.Fragment />;
@@ -442,11 +436,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         />
       );
     },
-    [getWordsForSentence, colors, handleWordPress, displayLanguagePreference]
+    [sentenceWordsMap, colors, handleWordPress, displayLanguagePreference]
   );
-
-  // Memoize expensive computations
-  const hasContent = useMemo(() => !!article && !!sortedSentences, [article, sortedSentences]);
 
   const tooltipProps = useMemo(
     () => ({
@@ -527,7 +518,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
   return (
     <>
-      {hasContent && articleContentProps ? <ArticleContent {...articleContentProps} /> : null}
+      {articleContentProps ? <ArticleContent {...articleContentProps} /> : null}
 
       {/* Removed mini-player for article modal */}
 

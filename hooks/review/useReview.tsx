@@ -3,8 +3,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
-import type { AnimatedStyle, SharedValue } from 'react-native-reanimated';
-import { useAnimatedStyle } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
@@ -61,7 +60,7 @@ interface UseReviewReturn {
   handleSwipeRight: () => void;
   handleLongPress: () => void;
   handleClose: () => void;
-  transparentStyle: AnimatedStyle<ViewStyle>;
+  transparentStyle: ViewStyle;
   sessionMetrics: SessionMetrics;
   // Hesitation state and callbacks
   isHesitating: boolean;
@@ -94,6 +93,11 @@ const TRANSITION_DELAYS = {
   fadeAnimation: TIMING_CONFIG.MEDIUM.duration, // Delay for fade animation
   meaningDisplay: 3000, // Display time for meaning overlay
 };
+
+// Static transparent style (no animation overhead)
+const TRANSPARENT_STYLE: ViewStyle = {
+  opacity: 1,
+} as const;
 
 export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
@@ -641,14 +645,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     };
   }, [fadeIn, stopAudioSafely, clearAllTimers]);
 
-  // Create a transparent style for non-transitioning states
-  const transparentStyle = useAnimatedStyle(
-    (): ViewStyle => ({
-      opacity: 1,
-    }),
-    []
-  );
-
   return {
     currentSentence,
     currentMeaning,
@@ -669,7 +665,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     handleSwipeRight,
     handleLongPress,
     handleClose,
-    transparentStyle,
+    transparentStyle: TRANSPARENT_STYLE,
     sessionMetrics,
     // Hesitation state and callbacks
     isHesitating,

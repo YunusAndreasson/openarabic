@@ -88,6 +88,7 @@ export default function FilterScreen(): JSX.Element {
       articles={articles}
       loading={isFetching} // Only show loading when actively fetching from network
       onArticlePress={article => router.push(getArticleRoute(article.id, article.title))}
+      filterType={filterType}
     />
   );
 }

@@ -9,6 +9,7 @@ import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeature
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import { generateImageUrl } from '@/utils/imageUtils';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 interface RelatedArticlesSectionProps {
   /**
@@ -89,8 +90,7 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
             >
               <ListenListItemCard
                 title={article.title}
-                author={article.author.name}
-                difficultyLevel={article.difficulty_level}
+                secondaryText={capitalizeFirstLetter(article.category.name)}
                 imageUrl={generateImageUrl(article.image_url)}
                 progressPercentage={progressPercentage}
               />

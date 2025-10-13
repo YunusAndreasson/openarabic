@@ -14,15 +14,13 @@ import { CARD_DRAG_SCALE, SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/an
 import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { difficultyLevelToLabel } from '@/utils/articles/difficulty';
 
 // Bookmarks thumbnail size for elegant music app aesthetic
 const BOOKMARKS_IMAGE_SIZE = 48;
 
 interface ListenListItemCardProps {
   title: string;
-  author: string;
-  difficultyLevel?: number;
+  secondaryText: string;
   onPress?: () => void;
   editMode?: boolean;
   onDelete?: () => void;
@@ -41,8 +39,7 @@ interface ListenListItemCardProps {
 export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
   ({
     title,
-    author,
-    difficultyLevel,
+    secondaryText,
     onPress,
     editMode = false,
     onDelete,
@@ -77,12 +74,12 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
       }
     }, [editMode, isBeingDragged, shouldAnimateOnMount, startAnimation, setValue]);
 
-    // Enhanced title and author styles with semantic colors
+    // Enhanced title and secondary text styles with semantic colors
     const titleOpacity = getEnhancedOpacity(
       TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
       isDarkMode
     );
-    const authorOpacity = getEnhancedOpacity(
+    const secondaryOpacity = getEnhancedOpacity(
       TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
       isDarkMode
     );
@@ -93,13 +90,10 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
       [titleOpacity]
     );
 
-    const authorTextStyle = useMemo(
-      () => [styles.authorText, { opacity: authorOpacity }],
-      [authorOpacity]
+    const secondaryTextStyle = useMemo(
+      () => [styles.secondaryText, { opacity: secondaryOpacity }],
+      [secondaryOpacity]
     );
-
-    // Helper function to get difficulty text
-    const getDifficultyText = (level: number): string => difficultyLevelToLabel(level);
 
     return (
       <Animated.View style={[styles.cardContainer, animatedStyle]}>
@@ -138,17 +132,16 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
                 >
                   {title}
                 </ThemedText>
-                <View style={styles.authorRow}>
+                <View style={styles.secondaryRow}>
                   <ThemedText
                     skipDefaultColor
                     colorName="authorText"
                     numberOfLines={1}
                     ellipsizeMode="tail"
-                    style={authorTextStyle}
+                    style={secondaryTextStyle}
                     type="label"
                   >
-                    {author}
-                    {difficultyLevel && ` • ${getDifficultyText(difficultyLevel)}`}
+                    {secondaryText}
                   </ThemedText>
                 </View>
               </View>
@@ -186,8 +179,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
     // Custom comparison function to prevent unnecessary re-renders
     return (
       prevProps.title === nextProps.title &&
-      prevProps.author === nextProps.author &&
-      prevProps.difficultyLevel === nextProps.difficultyLevel &&
+      prevProps.secondaryText === nextProps.secondaryText &&
       prevProps.editMode === nextProps.editMode &&
       prevProps.isBeingDragged === nextProps.isBeingDragged &&
       prevProps.imageUrl === nextProps.imageUrl &&
@@ -225,12 +217,12 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.TINY,
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
   },
-  authorText: {
+  secondaryText: {
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
     flex: 1,
   },
-  authorRow: {
+  secondaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,

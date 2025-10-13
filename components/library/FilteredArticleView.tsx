@@ -16,6 +16,7 @@ import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
 import { generateImageUrl } from '@/utils/imageUtils';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
 
 // Use responsive height for filtered article items
@@ -85,6 +86,11 @@ interface FilteredArticleViewProps {
    * Optional header component to display above the filter summary
    */
   HeaderComponent?: React.ComponentType | React.ReactElement | null;
+
+  /**
+   * Type of filter being applied (used to determine which metadata to show)
+   */
+  filterType?: string;
 }
 
 /**
@@ -98,6 +104,7 @@ const FilteredArticleViewComparison = (
   if (prevProps.articles !== nextProps.articles) return false;
   if (prevProps.loading !== nextProps.loading) return false;
   if (prevProps.editMode !== nextProps.editMode) return false;
+  if (prevProps.filterType !== nextProps.filterType) return false;
   if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
   if (prevProps.onArticleDelete !== nextProps.onArticleDelete) return false;
   if (prevProps.onArticleReorder !== nextProps.onArticleReorder) return false;
@@ -105,8 +112,6 @@ const FilteredArticleViewComparison = (
 
   // Array length checks before deep comparison
   if (prevProps.articles?.length !== nextProps.articles?.length) return false;
-
-  // Optional props comparison
 
   return true;
 };
@@ -125,6 +130,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   editMode = false,
   loading = false,
   HeaderComponent = null,
+  filterType,
 }) => {
   // Apply global filters/sorting state to incoming articles
   // useFilteredArticles now returns BOTH articles AND their progress (single source of truth)
@@ -182,11 +188,13 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
       const drag = 'drag' in params ? params.drag : undefined;
       const isDragging = 'isActive' in params ? params.isActive : false;
 
+      // Determine which metadata to show based on filter context
+      const secondaryText = filterType === 'author' ? capitalizeFirstLetter(item.category.name) : item.author.name;
+
       return (
         <ListenListItemCard
           title={item.title}
-          author={item.author.name}
-          difficultyLevel={item.difficulty_level}
+          secondaryText={secondaryText}
           imageUrl={generateImageUrl(item.image_url)}
           editMode={editMode}
           onPress={!editMode ? () => onArticlePress(item) : undefined}
@@ -198,7 +206,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
         />
       );
     },
-    [editMode, onArticlePress, createDeleteHandler, createDragHandleProps, progressMap]
+    [editMode, onArticlePress, createDeleteHandler, createDragHandleProps, progressMap, filterType]
   );
 
   const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
