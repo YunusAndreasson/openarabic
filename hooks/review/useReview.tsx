@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
-import type { SharedValue } from 'react-native-reanimated';
+import { useAnimatedStyle } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
@@ -46,7 +46,6 @@ interface UseReviewReturn {
   currentWord?: StudyWord | null;
   showTranslation: boolean;
   isVagueMeaning: boolean;
-  opacity: SharedValue<number>;
   isComplete: boolean;
   isUpdating: boolean;
   isLoading: boolean;
@@ -62,14 +61,11 @@ interface UseReviewReturn {
   handleClose: () => void;
   transparentStyle: ViewStyle;
   sessionMetrics: SessionMetrics;
-  // Hesitation state and callbacks
   isHesitating: boolean;
   handleHesitationStart: () => void;
   handleHesitationEnd: () => void;
-  // Add audio preloading state
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
-  // Add audio preloading completion state
   isAudioPreloadingComplete: boolean;
 }
 
@@ -94,11 +90,6 @@ const TRANSITION_DELAYS = {
   meaningDisplay: 3000, // Display time for meaning overlay
 };
 
-// Static transparent style (no animation overhead)
-const TRANSPARENT_STYLE: ViewStyle = {
-  opacity: 1,
-} as const;
-
 export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -115,6 +106,14 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     initialOpacity: 1,
     duration: TRANSITION_DELAYS.fadeAnimation,
   });
+
+  // Create animated style from opacity SharedValue for smooth fade transitions
+  const opacityStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      opacity: opacity.value,
+    };
+  }, [opacity]);
 
   // Timer cleanup hook for managing all setTimeout calls
   const { setTimer, clearTimer, clearAllTimers } = useTimerCleanup();
@@ -336,10 +335,14 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         // Clean up any playing audio before proceeding
         stopAudioSafely();
 
-        // VAGUE WORDS: Immediate transition with no delays, translation, or audio
+        // VAGUE WORDS: Very snappy transition with brief fade for consistency
         if (confidence === 'vague') {
           timeRefs.current.lastVagueTime = Date.now();
-          processFeedback(confidence, controller);
+          fadeOut();
+          setTimer('fadeAnimationVague', () => {
+            if (controller.signal.aborted) return;
+            processFeedback(confidence, controller);
+          }, 80); // Very snappy 80ms fade
           return;
         }
 
@@ -651,7 +654,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentWord,
     showTranslation,
     isVagueMeaning,
-    opacity,
     isComplete,
     isUpdating: isUpdatingUI,
     isLoading,
@@ -665,16 +667,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     handleSwipeRight,
     handleLongPress,
     handleClose,
-    transparentStyle: TRANSPARENT_STYLE,
+    transparentStyle: opacityStyle,
     sessionMetrics,
-    // Hesitation state and callbacks
     isHesitating,
     handleHesitationStart,
     handleHesitationEnd,
-    // Add audio preloading state
     isAudioPreloading,
     audioPreloadProgress,
-    // Add audio preloading completion state
     isAudioPreloadingComplete,
   };
 }

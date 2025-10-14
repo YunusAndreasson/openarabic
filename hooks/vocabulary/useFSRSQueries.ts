@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY, FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { CACHE_TIMES } from '@/constants/queryKeys';
+import { fsrsQueryOptions } from '@/constants/queryOptions';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -26,13 +26,8 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
   const queryClient = useQueryClient();
 
   const allWordsQuery = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : ['no-user'],
-    queryFn: async () => {
-      if (!userId) throw new Error('User ID is required');
-      return studyWordsFSRSService.getFSRSWords(userId, { forStats: false });
-    },
-    enabled: !!userId, // Only enable when we have userId
-    ...CACHE_TIMES.MEDIUM,
+    ...fsrsQueryOptions.all(userId || ''),
+    enabled: !!userId,
     initialData: () => {
       if (!userId) return undefined;
       return queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId));
@@ -41,10 +36,11 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
 
   // Query for due words - uses shorter stale time since it's more time-sensitive
   const dueWordsQuery = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : ['no-user', 'due'],
+    ...fsrsQueryOptions.due(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
+    enabled: !!userId,
+    // Override queryFn to check for recent session completion
     queryFn: () => {
       if (!userId) throw new Error('User ID is required');
-      // Apply cooldown only if the last session was just completed
       const lastCompletedAt = queryClient.getQueryData<number>([
         FSRS_BASE_KEY,
         userId,
@@ -60,8 +56,6 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
         ...(recentlyCompleted ? { sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS } : {}),
       });
     },
-    enabled: !!userId, // Only enable when we have userId
-    ...CACHE_TIMES.SHORT, // 1 minute - due words change frequently
     // Use data from allWordsQuery if available and filter client-side
     initialData: () => {
       if (!userId) return undefined;

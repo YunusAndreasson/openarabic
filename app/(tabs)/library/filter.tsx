@@ -8,10 +8,9 @@ import React, { useMemo } from 'react';
 import { ThemedView } from '@/components/ThemedView';
 import FilteredArticleView from '@/components/library/FilteredArticleView';
 import PulsatingLoader from '@/components/ui/PulsatingLoader';
+import { articleQueryOptions } from '@/constants/queryOptions';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { articlesService } from '@/services/articles';
-import type { Article } from '@/types/articles.types';
 
 export default function FilterScreen(): JSX.Element {
   const searchParams = useLocalSearchParams<{ id: string; type: string; name?: string }>();
@@ -26,13 +25,9 @@ export default function FilterScreen(): JSX.Element {
     isFetching,
     error,
     refetch,
-  } = useQuery<Article[]>({
-    queryKey: ['articles'],
-    queryFn: () => articlesService.getArticles(),
-    staleTime: 300000, // 5 minutes - data is fresh for 5 minutes
-    gcTime: 1800000, // 30 minutes cache
+  } = useQuery({
+    ...articleQueryOptions.all(),
     refetchOnMount: false, // Don't refetch if data is fresh (2025 best practice)
-    refetchOnWindowFocus: false,
     refetchOnReconnect: true, // Only refetch on network reconnection
   });
 

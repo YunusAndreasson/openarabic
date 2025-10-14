@@ -1,11 +1,10 @@
 import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { ARTICLE_QUERY_KEYS, CACHE_TIMES, READING_LIST_QUERY_KEYS } from '@/constants/queryKeys';
-import { articlesService } from '@/services/articles';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { CACHE_TIMES, READING_LIST_QUERY_KEYS } from '@/constants/queryKeys';
+import { articleQueryOptions, fsrsQueryOptions } from '@/constants/queryOptions';
 import { bookmarkService } from '@/services/bookmark';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
@@ -33,15 +32,8 @@ export const useArticleData = (
 ): ArticleDataResult => {
   // Fetch article data with optimized caching
   const { data: article, isLoading: isLoadingArticle } = useQuery({
-    queryKey: articleId ? ARTICLE_QUERY_KEYS.detail(articleId) : ['article', 'none'],
-    queryFn: () => {
-      if (!articleId) throw new Error('Article ID is required');
-      return articlesService.getArticleById(articleId as ArticleId);
-    },
-    enabled: !!articleId,
-    ...CACHE_TIMES.ARTICLES,
+    ...articleQueryOptions.detail(articleId || 0),
     refetchOnMount: false, // Don't refetch on mount if we have data
-    placeholderData: old => old,
   });
 
   // Check if article is in user's reading list - optimized caching
@@ -60,26 +52,16 @@ export const useArticleData = (
   });
 
   // Fetch study words with optimized caching
-  const {
-    data: studyWords = [],
-    refetch: refetchStudyWords,
-    isLoading: isLoadingStudyWords,
-  } = useQuery<StudyWord[]>({
-    queryKey: userId
-      ? FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
-      : FSRS_QUERY_KEYS.FALLBACK.allWithCooldown(DEFAULT_SESSION_COOLDOWN_HOURS),
-    queryFn: async () => {
-      if (!userId) return [];
-      return studyWordsFSRSService.getFSRSWords(userId);
-    },
+  const studyWordsQuery = useQuery({
+    ...fsrsQueryOptions.allWithCooldown(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
     enabled: !!userId,
-    ...CACHE_TIMES.MEDIUM, // 3 minutes - study words change moderately
-    networkMode: 'online',
-    retry: 3,
     refetchOnMount: true, // Previously 'always', now true to respect staleTime
-    refetchOnWindowFocus: false, // Mobile-only: no window focus concept
     placeholderData: old => old,
   });
+
+  const studyWords = studyWordsQuery.data || [];
+  const refetchStudyWords = studyWordsQuery.refetch;
+  const isLoadingStudyWords = studyWordsQuery.isLoading;
 
   // Process sentences from article data - no additional fetch needed
   const sortedSentences = useMemo(() => {

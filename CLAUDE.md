@@ -29,7 +29,7 @@ This guide provides comprehensive development rules and patterns for Claude Code
 - **State Management**: Redux Toolkit v2.8.2 with Redux Persist
 - **Data Fetching**: TanStack Query v5.85.5 (React Query) with persistence
 - **UI Performance**: @shopify/flash-list v1.7.6 for optimized lists
-- **Animation**: react-native-reanimated v3.17.4 and @shopify/react-native-skia v2.0.0
+- **Animation**: react-native-reanimated v4.1.3 and @shopify/react-native-skia v2.0.0
 - **Audio**: expo-audio v0.4.9 for playback with ElevenLabs API
 - **Spaced Repetition**: ts-fsrs v5.2.2 for vocabulary learning algorithms
 - **Backend**: Supabase JS client v2.56.0 for database, storage, and auth

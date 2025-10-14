@@ -12,14 +12,11 @@ import FilterSection, { SubtleDivider } from '@/components/library/FilterSection
 import { HijriDateFooter } from '@/components/library/HijriDateFooter';
 import IntelligentArticleSection from '@/components/library/IntelligentArticleSection';
 import { LAYOUT } from '@/constants/layout';
-import { CACHE_TIMES } from '@/constants/queryKeys';
+import { articleQueryOptions } from '@/constants/queryOptions';
 import { getAuthorFilterRoute, getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { articlesService } from '@/services/articles';
-import { authorsService } from '@/services/authors';
-import { categoriesService } from '@/services/categories';
 import type { Author, Category } from '@/types/articles.types';
 import type { AuthorId, CategoryId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
@@ -40,35 +37,18 @@ export default function ReadScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => categoriesService.getCategories(),
-    staleTime: 86400000,
-    gcTime: 172800000,
-    retry: 3,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
+  const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery(
+    articleQueryOptions.categories()
+  );
 
-  const { data: authorsData = [], isLoading: isAuthorsLoading } = useQuery({
-    queryKey: ['authors'],
-    queryFn: () => authorsService.getUniqueAuthors(),
-    staleTime: 86400000,
-    gcTime: 172800000,
-    retry: 3,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
+  const { data: authorsData = [], isLoading: isAuthorsLoading } = useQuery(
+    articleQueryOptions.authors()
+  );
 
   // Get articles for display and filtering
   const { data: articlesData = [], isLoading: isArticlesLoading } = useQuery({
-    queryKey: ['articles'],
-    queryFn: () => articlesService.getArticles(),
-    ...CACHE_TIMES.ARTICLES,
-    retry: 3,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    placeholderData: old => old,
+    ...articleQueryOptions.all(),
+    refetchOnMount: false, // Don't refetch on mount if we have data
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);

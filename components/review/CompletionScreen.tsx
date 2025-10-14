@@ -7,14 +7,7 @@ import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import {
-  COMPLETION_BUTTON_DELAY,
-  COMPLETION_METRIC_BASE_DELAY,
-  COMPLETION_METRIC_STAGGER,
-  COMPLETION_SUBTITLE_DELAY,
-  COMPLETION_TITLE_DELAY,
-  TIMING_CONFIG,
-} from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -62,9 +55,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
     <View style={[styles.contentContainer, contentStyle || {}]}>
       {/* Success Icon - Primary visual element */}
       <Animated.View
-        entering={ZoomIn.delay(TIMING_CONFIG.FAST.duration)
-          .duration(TIMING_CONFIG.ENTRANCE.duration)
-          .springify()}
+        entering={ZoomIn.duration(TIMING_CONFIG.FAST.duration).springify()}
         style={styles.iconContainer}
       >
         <Ionicons color={colors.completionSuccess} name={iconName} size={iconSize} />
@@ -72,19 +63,13 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
 
       {/* Text Content - Secondary hierarchy */}
       <View style={styles.textContainer}>
-        <Animated.View
-          entering={FadeInUp.delay(COMPLETION_TITLE_DELAY).duration(TIMING_CONFIG.GENTLE.duration)}
-        >
+        <Animated.View entering={FadeInUp.delay(50).duration(TIMING_CONFIG.FAST.duration)}>
           <ThemedText colorName="headingText" style={styles.titleText} type="heading2">
             {title}
           </ThemedText>
         </Animated.View>
 
-        <Animated.View
-          entering={FadeInUp.delay(COMPLETION_SUBTITLE_DELAY).duration(
-            TIMING_CONFIG.GENTLE.duration
-          )}
-        >
+        <Animated.View entering={FadeInUp.delay(100).duration(TIMING_CONFIG.FAST.duration)}>
           <ThemedText colorName="subtitleText" style={styles.subtitleText} type="heading3">
             {subtitle}
           </ThemedText>
@@ -96,9 +81,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
             {encouragingMetrics.map((metric, index) => (
               <Fragment key={metric.type + metric.text}>
                 <Animated.View
-                  entering={FadeInUp.delay(
-                    COMPLETION_METRIC_BASE_DELAY + index * COMPLETION_METRIC_STAGGER
-                  ).duration(TIMING_CONFIG.GENTLE.duration)}
+                  entering={FadeInUp.delay(150 + index * 40).duration(TIMING_CONFIG.FAST.duration)}
                   style={[
                     styles.metricItem,
                     {
@@ -132,9 +115,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
 
       {/* Action Button - Final hierarchy level with Link navigation */}
       <Animated.View
-        entering={FadeIn.delay(
-          encouragingMetrics ? COMPLETION_BUTTON_DELAY.WITH_METRICS : COMPLETION_BUTTON_DELAY.BASE
-        ).duration(TIMING_CONFIG.GENTLE.duration)}
+        entering={FadeIn.delay(encouragingMetrics ? 300 : 200).duration(TIMING_CONFIG.FAST.duration)}
         style={styles.buttonContainer}
       >
         {fromRemember ? (

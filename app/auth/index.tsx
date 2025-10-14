@@ -1,7 +1,8 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 import { memo } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -12,6 +13,12 @@ import { STRINGS } from '@/constants/strings';
 
 const AuthScreen = memo(function AuthScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
+  const keyboard = useAnimatedKeyboard();
+
+  // Animated style that responds to keyboard height
+  const animatedContainerStyle = useAnimatedStyle(() => ({
+    paddingBottom: keyboard.height.value > 0 ? keyboard.height.value : Math.max(insets.bottom, LAYOUT.SPACING.LARGE),
+  }));
 
   return (
     <ThemedView style={styles.container} useSafeArea={true} safeAreaEdges={['top']}>
@@ -22,11 +29,7 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
         }}
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.select({ ios: 'padding', default: 'height' })}
-        keyboardVerticalOffset={Platform.select({ ios: 0, default: 20 })}
-        style={styles.keyboardAvoidingView}
-      >
+      <Animated.View style={[styles.keyboardAvoidingView, animatedContainerStyle]}>
         <ThemedView
           scrollable
           style={styles.scrollView}
@@ -34,7 +37,6 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
             styles.scrollContent,
             {
               paddingTop: Math.max(insets.top, LAYOUT.SPACING.LARGE),
-              paddingBottom: Math.max(insets.bottom, LAYOUT.SPACING.LARGE),
             },
           ]}
         >
@@ -63,7 +65,7 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
             <Auth />
           </View>
         </ThemedView>
-      </KeyboardAvoidingView>
+      </Animated.View>
     </ThemedView>
   );
 });

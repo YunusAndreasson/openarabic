@@ -4,23 +4,18 @@ import { Image } from 'expo-image';
 import { useCallback, useRef, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import {
-  ARTICLE_QUERY_KEYS,
   CACHE_TIMES,
   READING_LIST_QUERY_KEYS,
   READING_PROGRESS_QUERY_KEYS,
 } from '@/constants/queryKeys';
+import { articleQueryOptions, fsrsQueryOptions } from '@/constants/queryOptions';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { articlesService } from '@/services/articles';
-import { authorsService } from '@/services/authors';
 import { bookmarkService } from '@/services/bookmark';
-import { categoriesService } from '@/services/categories';
 import { readingProgressService } from '@/services/readingProgress';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
 import { getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 
@@ -54,18 +49,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
       // Load static data first (categories, basic articles list)
       const criticalPromises = [
-        queryClient.fetchQuery({
-          queryKey: ARTICLE_QUERY_KEYS.categories(),
-          queryFn: () => categoriesService.getCategories(),
-          ...CACHE_TIMES.STATIC,
-          retry: 3,
-        }),
-        queryClient.fetchQuery({
-          queryKey: ARTICLE_QUERY_KEYS.all(),
-          queryFn: () => articlesService.getArticles(), // Load all articles for filtering
-          ...CACHE_TIMES.ARTICLES,
-          retry: 3,
-        }),
+        queryClient.fetchQuery(articleQueryOptions.categories()),
+        queryClient.fetchQuery(articleQueryOptions.all()),
       ];
 
       // CRITICAL FIX: Load reading progress synchronously with articles
@@ -108,12 +93,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
               .filter(Boolean)
               .map(url => Image.prefetch(url).catch(() => null)); // Silently handle prefetch failures
             const detailPrefetches = featured.map(a =>
-              queryClient.prefetchQuery({
-                queryKey: ARTICLE_QUERY_KEYS.detail(a.id),
-                queryFn: () => articlesService.getArticleById(a.id),
-                ...CACHE_TIMES.ARTICLES,
-                retry: 2,
-              })
+              queryClient.prefetchQuery(articleQueryOptions.detail(a.id))
             );
             // Fire-and-forget; do not block loader
             Promise.allSettled([...imagePrefetches, ...detailPrefetches]).catch(() => {});
@@ -128,30 +108,14 @@ export const useAppPreloader = (): AppPreloaderResult => {
         try {
           // CRITICAL: Force refresh due words on app open to get latest calculations
           await queryClient.fetchQuery({
-            queryKey: FSRS_QUERY_KEYS.due(user.id),
-            queryFn: () =>
-              studyWordsFSRSService.getFSRSWords(user.id, {
-                onlyDue: true,
-                // Align with session cooldown to avoid showing words that were just reviewed
-                sessionCooldownHours: 1,
-                limit: 100,
-              }),
+            ...fsrsQueryOptions.due(user.id, 1),
             staleTime: 0, // Always fetch fresh data on app open
-            gcTime: CACHE_TIMES.CRITICAL.gcTime,
-            retry: 2,
           });
 
           // Also refresh all words for accurate memory strength calculation
           await queryClient.fetchQuery({
-            queryKey: FSRS_QUERY_KEYS.all(user.id),
-            queryFn: () =>
-              studyWordsFSRSService.getFSRSWords(user.id, {
-                forStats: false,
-                limit: 1000,
-              }),
+            ...fsrsQueryOptions.all(user.id),
             staleTime: 0, // Always fetch fresh data on app open
-            gcTime: CACHE_TIMES.CRITICAL.gcTime,
-            retry: 2,
           });
 
           // Preload featured articles to prevent glitching when library loads
@@ -172,12 +136,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         // Use setTimeout to defer background loading slightly, allowing UI to become responsive first
         setTimeout(() => {
           const backgroundPromises = [
-            queryClient.prefetchQuery({
-              queryKey: ARTICLE_QUERY_KEYS.authors(),
-              queryFn: () => authorsService.getAuthors(),
-              ...CACHE_TIMES.STATIC,
-              retry: 2,
-            }),
+            queryClient.prefetchQuery(articleQueryOptions.authors()),
             queryClient.prefetchQuery({
               queryKey: READING_LIST_QUERY_KEYS.all(user.id),
               queryFn: () => bookmarkService.getReadingList(user.id),
@@ -231,12 +190,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
   const prefetchArticle = useCallback(
     async (articleId: number) => {
       try {
-        await queryClient.prefetchQuery({
-          queryKey: ARTICLE_QUERY_KEYS.detail(articleId),
-          queryFn: () => articlesService.getArticleById(articleId as ArticleId),
-          ...CACHE_TIMES.ARTICLES,
-          retry: 2,
-        });
+        await queryClient.prefetchQuery(articleQueryOptions.detail(articleId));
         return true;
       } catch {
         return false;
@@ -250,29 +204,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
     try {
       await Promise.allSettled([
-        queryClient.prefetchQuery({
-          queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, 1),
-          queryFn: () =>
-            studyWordsFSRSService.getFSRSWords(user.id, {
-              forStats: true,
-              limit: 1000,
-              sessionCooldownHours: 1,
-            }),
-          ...CACHE_TIMES.MEDIUM,
-          retry: 2,
-        }),
-        queryClient.prefetchQuery({
-          queryKey: FSRS_QUERY_KEYS.due(user.id),
-          queryFn: () =>
-            studyWordsFSRSService.getFSRSWords(user.id, {
-              onlyDue: true,
-              // Align with session cooldown to avoid flicker
-              sessionCooldownHours: 1,
-              limit: 100,
-            }),
-          ...CACHE_TIMES.MEDIUM,
-          retry: 2,
-        }),
+        queryClient.prefetchQuery(fsrsQueryOptions.allWithCooldown(user.id, 1)),
+        queryClient.prefetchQuery(fsrsQueryOptions.due(user.id, 1)),
       ]);
       return true;
     } catch (error) {
@@ -288,8 +221,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
     try {
       // Fetch all articles first
       const allArticles = await queryClient.fetchQuery({
-        queryKey: ARTICLE_QUERY_KEYS.all(),
-        queryFn: () => articlesService.getArticles(),
+        ...articleQueryOptions.all(),
         staleTime: 300000, // 5 minutes
         gcTime: 600000, // 10 minutes
       });
@@ -298,28 +230,16 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
       // Get user's study words to determine selection strategy
       const allStudyWords = await queryClient.fetchQuery({
-        queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-        queryFn: () =>
-          studyWordsFSRSService.getFSRSWords(user.id, {
-            forStats: true,
-            limit: 1,
-          }),
+        ...fsrsQueryOptions.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
         staleTime: 180000,
-        gcTime: 600000,
       });
 
       const hasAnyStudyWords = allStudyWords.length > 0;
 
       // Get due words for intelligent selection
       const dueWords = await queryClient.fetchQuery({
-        queryKey: FSRS_QUERY_KEYS.due(user.id),
-        queryFn: () =>
-          studyWordsFSRSService.getFSRSWords(user.id, {
-            onlyDue: true,
-            sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
-          }),
+        ...fsrsQueryOptions.due(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
         staleTime: 60000, // 1 minute for due words
-        gcTime: 300000,
       });
 
       const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
