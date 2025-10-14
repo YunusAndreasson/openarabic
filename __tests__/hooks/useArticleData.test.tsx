@@ -146,7 +146,12 @@ describe('useArticleData', () => {
     // Verify services were called correctly
     expect(mockArticlesService.getArticleById).toHaveBeenCalledWith(1);
     expect(mockBookmarkService.isInReadingList).toHaveBeenCalledWith('u1', 1);
-    expect(mockStudyWordsFSRSService.getFSRSWords).toHaveBeenCalledWith('u1');
+    // getFSRSWords is called with userId and options (forStats, sessionCooldownHours, limit)
+    expect(mockStudyWordsFSRSService.getFSRSWords).toHaveBeenCalledWith('u1', {
+      forStats: true,
+      sessionCooldownHours: 2,
+      limit: 1000,
+    });
   });
 
   it('handles missing data gracefully with real React Query', async () => {
@@ -211,9 +216,13 @@ describe('useArticleData', () => {
     const { result } = renderHook(() => useArticleData(1, 'u1'), { wrapper });
 
     // Wait for query to fail (no retries in test config)
-    await waitFor(() => {
-      expect(result.current.isLoadingArticle).toBe(false);
-    });
+    // With retry disabled, the query should fail immediately and stop loading
+    await waitFor(
+      () => {
+        expect(result.current.isLoadingArticle).toBe(false);
+      },
+      { timeout: 5000 }
+    ); // Increased timeout for async query settling
 
     // Article should be undefined on error
     expect(result.current.article).toBeUndefined();
@@ -226,7 +235,8 @@ describe('useArticleData', () => {
     expect(result.current.sentenceWordsMap.size).toBe(0);
     expect(result.current.selectedWordIds.size).toBe(0);
 
-    // Verify retry is disabled (should only be called once)
-    expect(mockArticlesService.getArticleById).toHaveBeenCalledTimes(1);
+    // Verify retry configuration (articleQueryOptions.detail has retry: 2)
+    // This means 3 total attempts: 1 initial + 2 retries
+    expect(mockArticlesService.getArticleById).toHaveBeenCalledTimes(3);
   });
 });

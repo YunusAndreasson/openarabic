@@ -30,6 +30,7 @@ This guide provides comprehensive development rules and patterns for Claude Code
 - **Data Fetching**: TanStack Query v5.85.5 (React Query) with persistence
 - **UI Performance**: @shopify/flash-list v1.7.6 for optimized lists
 - **Animation**: react-native-reanimated v4.1.3 and @shopify/react-native-skia v2.0.0
+- **Bottom Sheets**: @gorhom/bottom-sheet v5.2.6 for native bottom sheet modals
 - **Audio**: expo-audio v0.4.9 for playback with ElevenLabs API
 - **Spaced Repetition**: ts-fsrs v5.2.2 for vocabulary learning algorithms
 - **Backend**: Supabase JS client v2.56.0 for database, storage, and auth
@@ -350,6 +351,105 @@ Suggest interesting possibilities based on research:
 - Handle background audio with proper session configuration
 - Implement proper cleanup for audio resources
 - Use enhanced audio service for playlist management
+
+### Bottom Sheet Patterns (@gorhom/bottom-sheet v5.2.6)
+
+#### Core Principles
+- **Dynamic Sizing** prevents content cutoff by automatically adjusting to content height
+- **Maximum Height Limits** prevent sheets from exceeding screen height
+- **FlashList Integration** requires special configuration to avoid performance issues
+
+#### Sizing Strategy
+
+**Use `enableDynamicSizing: true` when:**
+- Content height varies dynamically (charts, variable-length lists, user-generated content)
+- You want automatic height adjustment to prevent content cutoff
+- Content is simple (no scrollable lists exceeding 50 items)
+
+```typescript
+// ✅ GOOD - Charts, streaks, dynamic content
+import { COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
+
+<BottomSheetModal {...COMMON_BOTTOM_SHEET_MODAL_PROPS}>
+  <BottomSheetView>
+    <Chart data={dynamicData} /> {/* Auto-fits to chart height */}
+  </BottomSheetView>
+</BottomSheetModal>
+```
+
+**Use `enableDynamicSizing: false` + `snapPoints` when:**
+- Content has known, fixed height (pickers with specific option counts)
+- You need precise control over sheet positions
+- You want multiple snap positions for user interaction
+
+```typescript
+// ✅ GOOD - Pickers with known heights
+const SNAP_POINTS = [320]; // Fixed height for 4 options
+
+<BottomSheet
+  snapPoints={SNAP_POINTS}
+  enableDynamicSizing={false}
+  {...otherProps}
+>
+  <BottomSheetView>{/* Fixed height content */}</BottomSheetView>
+</BottomSheet>
+```
+
+#### Critical Configuration
+
+**Always wrap content in BottomSheetView:**
+```typescript
+// ✅ GOOD - Proper wrapper
+<BottomSheetModal {...COMMON_BOTTOM_SHEET_MODAL_PROPS}>
+  <BottomSheetView style={styles.container}>
+    {content}
+  </BottomSheetView>
+</BottomSheetModal>
+
+// ❌ BAD - Missing wrapper
+<BottomSheetModal {...COMMON_BOTTOM_SHEET_MODAL_PROPS}>
+  {content}
+</BottomSheetModal>
+```
+
+**Use maxDynamicContentSize to prevent over-tall sheets:**
+```typescript
+// Automatically included in COMMON_BOTTOM_SHEET_MODAL_PROPS
+export const COMMON_BOTTOM_SHEET_MODAL_PROPS = {
+  enableDynamicSizing: true,
+  maxDynamicContentSize: SCREEN_HEIGHT * 0.85, // 85% of screen max
+  // ...other props
+} as const;
+```
+
+#### FlashList Integration (Advanced)
+
+**CRITICAL**: Never use `BottomSheetFlashList` with `enableDynamicSizing: true`
+- Causes "Maximum call stack size exceeded" errors with 100+ items
+- FlashList requires `enableDynamicSizing: false` with explicit `snapPoints`
+
+```typescript
+// ✅ GOOD - FlashList configuration
+import { BottomSheetFlashList } from '@gorhom/bottom-sheet';
+
+<BottomSheetModal
+  snapPoints={[SCREEN_HEIGHT * 0.9]}
+  enableDynamicSizing={false} // REQUIRED with lists
+>
+  <BottomSheetFlashList
+    data={items}
+    renderItem={renderItem}
+    estimatedItemSize={70} // Required for performance
+  />
+</BottomSheetModal>
+```
+
+#### Common Utilities
+
+Use shared utilities from `utils/bottomSheetUtils.tsx`:
+- `COMMON_BOTTOM_SHEET_PROPS` - For regular BottomSheet with snapPoints
+- `COMMON_BOTTOM_SHEET_MODAL_PROPS` - For BottomSheetModal with dynamic sizing
+- `useBottomSheetBackdrop(onClose)` - Consistent backdrop behavior
 
 ## Testing & Validation
 
