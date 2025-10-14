@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { memo, useCallback, useMemo, type ReactElement } from 'react';
@@ -249,7 +250,7 @@ interface ArticleContentProps {
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   colors: ThemeColors;
-  scrollViewRef: React.RefObject<any>;
+  scrollViewRef: React.RefObject<FlashListRef<Tables<'article_sentences'>>>;
   // Reading list (bookmarks/listening) functionality
   isInReadingList: boolean;
   onToggleReadingList: () => Promise<void>;

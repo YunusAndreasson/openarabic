@@ -2,6 +2,7 @@ import type { MutableRefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ViewToken } from 'react-native';
 
+import type { FlashListRef } from '@shopify/flash-list';
 import { LAYOUT } from '@/constants/layout';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -16,7 +17,7 @@ interface UseSentenceScrubberProps {
 interface UseSentenceScrubberReturn {
   currentSentenceIndex: number;
   dueWordSentences: Set<number>;
-  scrollViewRef: MutableRefObject<any>;
+  scrollViewRef: MutableRefObject<FlashListRef<Tables<'article_sentences'>> | null>;
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   handleSentenceChange: (sentenceIndex: number) => void;
   handleScrubStart: () => void;
@@ -30,7 +31,7 @@ export function useSentenceScrubber({
   lastSentenceRead = 0,
   headerOffset = 0,
 }: UseSentenceScrubberProps): UseSentenceScrubberReturn {
-  const scrollViewRef = useRef<any>(null);
+  const scrollViewRef = useRef<FlashListRef<Tables<'article_sentences'>> | null>(null);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const isUserScrubbing = useRef(false);
   const lastSentenceReadRef = useRef(lastSentenceRead);

@@ -337,6 +337,7 @@ export default function ListenScreen(): JSX.Element {
             renderItem={renderItem}
             // v2 performance optimizations
             maxItemsInRecyclePool={15} // Control memory usage for reading list
+            maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)
           />
         )}
       </ThemedView>

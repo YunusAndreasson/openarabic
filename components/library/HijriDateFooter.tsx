@@ -49,8 +49,8 @@ HijriDateFooter.displayName = 'HijriDateFooter';
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.XXXLARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   pressable: {

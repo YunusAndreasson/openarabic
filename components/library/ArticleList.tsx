@@ -1,6 +1,4 @@
 import { useHeaderHeight } from '@react-navigation/elements';
-import type { ListRenderItem } from '@shopify/flash-list';
-import { FlashList } from '@shopify/flash-list';
 import {
   forwardRef,
   memo,
@@ -12,65 +10,12 @@ import {
   type ComponentType,
   type ReactElement,
 } from 'react';
-import { RefreshControl, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { RefreshControl, ScrollView, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import ArticleCard from '@/components/library/ArticleCard';
-import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import type { Article } from '@/types/articles.types';
-import { generateImageUrl } from '@/utils/imageUtils';
-
-// v2 optimized constants - no need for item height estimates
-const DRAW_DISTANCE = LAYOUT.CARD.HEIGHT.LIST_ITEM * LIST_DRAW_DISTANCE_MULTIPLIER;
-
-// Static key extractor for better performance
-const articleKeyExtractor = (item: Article) => `article-${item.id}`;
-
-// Static separator component with StyleSheet to avoid recreating inline style objects
-const styles = StyleSheet.create({
-  articleCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  pendingCard: {
-    opacity: LAYOUT.OPACITY.HIGH,
-  },
-  separator: {
-    height: LAYOUT.SPACING.MEDIUM,
-  },
-});
-
-const SeparatorComponent = () => <View style={styles.separator} />;
-
-interface ArticleItemProps {
-  item: Article;
-}
-
-const ArticleItem = memo(({ item }: ArticleItemProps) => {
-  const [isPending] = useTransition();
-
-  // Note: Navigation is now handled by Link component in ArticleCard
-
-  return (
-    <ArticleCard
-      article={item}
-      author={item.author.name}
-      category={item.category.name}
-      categoryForDisplay={item.category.name}
-      imageUrl={generateImageUrl(item.image_url)}
-      style={[styles.articleCard, isPending && styles.pendingCard]}
-      summary={String(item.summary)}
-      title={item.title}
-      prefetch={true}
-      isRelatedArticle={false}
-      testID={`article-${item.id}`}
-    />
-  );
-});
-
-ArticleItem.displayName = 'ArticleItem';
 
 interface ArticleListProps {
   onRefresh?: () => void;
@@ -81,7 +26,12 @@ interface ArticleListProps {
   isRefreshing?: boolean;
 }
 
-const ArticleList = forwardRef<any, ArticleListProps>(
+/**
+ * ArticleList component that renders featured articles and filter sections.
+ * Uses ScrollView since there are no list items - all content is in header/footer.
+ * Featured articles use their own horizontal FlashList for proper virtualization.
+ */
+const ArticleList = forwardRef<ScrollView, ArticleListProps>(
   (
     {
       onRefresh,
@@ -94,7 +44,7 @@ const ArticleList = forwardRef<any, ArticleListProps>(
     ref
   ) => {
     const colors = useColors();
-    const listRef = useRef<any>(null);
+    const scrollViewRef = useRef<ScrollView | null>(null);
     const insets = useSafeAreaInsets();
     const headerHeight = useHeaderHeight();
     const [, startTransition] = useTransition();
@@ -111,15 +61,9 @@ const ArticleList = forwardRef<any, ArticleListProps>(
       stableInsetsBottomRef.current = insets.bottom;
     }
 
-    useImperativeHandle(ref, () => listRef.current, []);
+    useImperativeHandle(ref, () => scrollViewRef.current as ScrollView, []);
 
-    // Optimized render item with stable reference
-    const renderItem: ListRenderItem<Article> = useCallback(
-      ({ item }) => <ArticleItem item={item} />,
-      []
-    );
-
-    // Optimized refresh handler
+    // Optimized refresh handler with transition
     const handleRefreshWithTransition = useCallback(() => {
       if (onRefresh) {
         startTransition(() => {
@@ -149,15 +93,14 @@ const ArticleList = forwardRef<any, ArticleListProps>(
       [
         isRefreshing,
         handleRefreshWithTransition,
-        colors.tint, // Only depend on specific color properties
+        colors.tint,
         colors.background,
         colors.secondaryText,
-        stableHeaderHeightRef.current,
         progressViewOffset,
       ]
     );
 
-    // Optimized content container style - more specific dependencies
+    // Optimized content container style
     const safeContentContainerStyle = useMemo(
       () => ({
         ...(contentContainerStyle as any),
@@ -167,40 +110,42 @@ const ArticleList = forwardRef<any, ArticleListProps>(
       [contentContainerStyle, stableInsetsBottomRef.current]
     );
 
-    // FlashList v2 configuration - no estimates needed, automatic layout
-    const flashListConfig = useMemo(
-      () => ({
-        data: [] as Article[], // Empty data since articles are in header
-        renderItem,
-        keyExtractor: articleKeyExtractor,
-        showsVerticalScrollIndicator: false,
-        contentContainerStyle: safeContentContainerStyle,
-        ListHeaderComponent,
-        ListFooterComponent,
-        refreshControl,
-        scrollEventThrottle: 16,
-        ItemSeparatorComponent: SeparatorComponent,
-        drawDistance: DRAW_DISTANCE,
-        removeClippedSubviews: true,
-        // v2 performance optimizations
-        maxItemsInRecyclePool: 20, // Control memory usage for better performance
-        keyboardShouldPersistTaps: 'handled' as const,
-      }),
-      [
-        renderItem,
-        safeContentContainerStyle,
-        ListHeaderComponent,
-        ListFooterComponent,
-        refreshControl,
-      ]
-    );
+    // Render header component if provided
+    const renderHeader = useCallback(() => {
+      if (!ListHeaderComponent) return null;
+      if (typeof ListHeaderComponent === 'function') {
+        const Component = ListHeaderComponent;
+        return <Component />;
+      }
+      return ListHeaderComponent;
+    }, [ListHeaderComponent]);
 
-    return <FlashList ref={listRef} {...flashListConfig} />;
+    // Render footer component if provided
+    const renderFooter = useCallback(() => {
+      if (!ListFooterComponent) return null;
+      if (typeof ListFooterComponent === 'function') {
+        const Component = ListFooterComponent;
+        return <Component />;
+      }
+      return ListFooterComponent;
+    }, [ListFooterComponent]);
+
+    return (
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={safeContentContainerStyle}
+        showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
+        scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+      >
+        {renderHeader()}
+        {renderFooter()}
+      </ScrollView>
+    );
   }
 );
 
 ArticleList.displayName = 'ArticleList';
-
-// styles moved above to share separator style
 
 export default memo(ArticleList);

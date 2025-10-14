@@ -100,14 +100,43 @@ const AccountScreen: FC = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
-  const currentTheme = useAppSelectorMemo(state => state.theme.theme);
-  const currentLanguage = useAppSelectorMemo(state => state.settings.displayLanguagePreference);
-  const currentAudioLanguage = useAppSelectorMemo(state => state.settings.audioLanguagePreference);
+  // Get theme with validation
+  const rawTheme = useAppSelectorMemo(state => state.theme.theme);
+  const currentTheme = useMemo(() => rawTheme ?? 'dark' as const, [rawTheme]);
+
+  // Get language preferences from Redux with validation
+  const rawLanguagePreference = useAppSelectorMemo(state => state.settings.displayLanguagePreference);
+  const rawAudioLanguagePreference = useAppSelectorMemo(state => state.settings.audioLanguagePreference);
+
+  // Validate and provide defaults - ensure values are valid enum values
+  const currentLanguage = useMemo(() => {
+    if (rawLanguagePreference === DisplayLanguage.ARABIC_ONLY || rawLanguagePreference === DisplayLanguage.ARABIC_ENGLISH) {
+      return rawLanguagePreference;
+    }
+    return DisplayLanguage.ARABIC_ENGLISH; // Default
+  }, [rawLanguagePreference]);
+
+  const currentAudioLanguage = useMemo(() => {
+    if (rawAudioLanguagePreference === AudioLanguage.ARABIC_ONLY || rawAudioLanguagePreference === AudioLanguage.ENGLISH_ARABIC) {
+      return rawAudioLanguagePreference;
+    }
+    return AudioLanguage.ENGLISH_ARABIC; // Default
+  }, [rawAudioLanguagePreference]);
+
   const currentArabicFont = useAppSelectorMemo(state => state.settings.arabicFont);
   const dispatch = useAppDispatch();
 
   const [activePicker, setActivePicker] = React.useState<string | null>(null);
-  const currentDailyWordLimit = useAppSelectorMemo(state => state.settings.dailyWordLimit);
+
+  // Get daily word limit with validation
+  const rawDailyWordLimit = useAppSelectorMemo(state => state.settings.dailyWordLimit);
+  const currentDailyWordLimit = useMemo(() => {
+    // Validate: must be a number (0, 10, 20, or 30)
+    if (typeof rawDailyWordLimit === 'number' && rawDailyWordLimit >= 0) {
+      return rawDailyWordLimit;
+    }
+    return 10; // Default to 10 words
+  }, [rawDailyWordLimit]);
 
   const {
     reminderTime,
@@ -188,13 +217,13 @@ const AccountScreen: FC = () => {
           {
             id: DisplayLanguage.ARABIC_ONLY,
             title: STRINGS.DISPLAY_LANGUAGE_ARABIC,
-            subtitle: 'Text displays in Arabic script with English translations',
+            subtitle: 'Arabic text only',
             icon: 'text' as const,
           },
           {
             id: DisplayLanguage.ARABIC_ENGLISH,
             title: STRINGS.DISPLAY_LANGUAGE_BILINGUAL,
-            subtitle: 'Text shows both Arabic and English side by side',
+            subtitle: 'Arabic + English shown together',
             icon: 'language' as const,
           },
         ],
@@ -207,13 +236,13 @@ const AccountScreen: FC = () => {
           {
             id: AudioLanguage.ARABIC_ONLY,
             title: STRINGS.AUDIO_LANGUAGE_ARABIC,
-            subtitle: 'Audio plays in Arabic with English subtitles',
+            subtitle: 'Arabic audio only',
             icon: 'volume-high' as const,
           },
           {
             id: AudioLanguage.ENGLISH_ARABIC,
             title: STRINGS.AUDIO_LANGUAGE_BILINGUAL,
-            subtitle: 'Audio plays in both Arabic and English',
+            subtitle: 'English + Arabic played together',
             icon: 'language' as const,
           },
         ],
@@ -685,9 +714,7 @@ const AccountScreen: FC = () => {
           activePicker ? pickerConfigs[activePicker as keyof typeof pickerConfigs].options : []
         }
         selectedValue={
-          activePicker
-            ? pickerConfigs[activePicker as keyof typeof pickerConfigs].selectedValue ?? undefined
-            : undefined
+          activePicker ? pickerConfigs[activePicker as keyof typeof pickerConfigs].selectedValue : undefined
         }
         snapPoints={
           activePicker

@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/ThemedView';
 import DictionarySortingHeader from '@/components/study/DictionarySortingHeader';
 import { DictionaryWordCard } from '@/components/study/DictionaryWordCard';
+import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -139,10 +140,13 @@ export default function DictionaryScreen(): JSX.Element {
             renderItem={renderItem}
             contentContainerStyle={{ paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE }}
             showsVerticalScrollIndicator={false}
-            extraData={editMode}
+            removeClippedSubviews={true}
+            drawDistance={LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM * LIST_DRAW_DISTANCE_MULTIPLIER}
             // v2 performance optimizations
             maxItemsInRecyclePool={40} // Control memory usage for vocabulary lists
+            maintainVisibleContentPosition={{}} // Prevent scroll jumps when words are deleted (enabled by default)
             // v2 automatically handles layout - no estimates needed
+            // Note: No extraData needed - DictionaryWordCard is properly memoized and receives editMode as prop
           />
         </View>
       ) : (
