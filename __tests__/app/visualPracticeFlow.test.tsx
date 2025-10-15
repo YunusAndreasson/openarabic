@@ -39,6 +39,27 @@ jest.mock('expo-router', () => ({
   },
 }));
 
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: jest.fn(() => ({
+    play: jest.fn().mockResolvedValue(undefined),
+    pause: jest.fn().mockResolvedValue(undefined),
+    stop: jest.fn().mockResolvedValue(undefined),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+    remove: jest.fn(),
+  })),
+  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+  setIsAudioActiveAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('expo-asset', () => ({
+  Asset: {
+    fromModule: jest.fn(() => ({
+      downloadAsync: jest.fn().mockResolvedValue(undefined),
+      localUri: '/mock/asset/path.mp3',
+    })),
+  },
+}));
+
 jest.mock('@/hooks/auth', () => ({
   useAuth: () => ({ user: { id: 'test-user-123' } }),
 }));

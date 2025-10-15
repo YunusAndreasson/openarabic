@@ -100,9 +100,10 @@ export enum DailyWordLimitStatusDescription {
  */
 export enum AccountSection {
   READING_EXPERIENCE = 'Reading experience',
-  AUDIO_BOOKMARKS = 'Audio & bookmarks',
-  APP_ACCOUNT = 'App & account',
-  HELP_SUPPORT = 'Help & support',
+  AUDIO_PLAYBACK = 'Audio',
+  LEARNING = 'Learning',
+  HELP_SUPPORT = 'Support',
+  DATA_ACCOUNT = 'Account',
 }
 
 // ===== PRACTICE SYSTEM =====

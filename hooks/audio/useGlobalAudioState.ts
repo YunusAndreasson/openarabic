@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
@@ -138,9 +138,18 @@ export function useGlobalAudioState(): GlobalAudioState {
     return queuePosition;
   }, [playlistInfo, queuePosition]);
 
+  // FLICKER FIX: Store last valid article to prevent null flashing during rapid state changes
+  const lastValidArticleRef = useRef<MiniPlayerArticle | null>(null);
+
   // Format current article for mini-player with cache fallbacks (no waiting for fetch)
   const currentArticle = useMemo(() => {
-    if (!currentArticleId) return null;
+    if (!currentArticleId) {
+      // Only clear if we're truly stopping (not just transitioning states)
+      if (!audioPlayer.isPlaying && !audioPlayer.isLoading) {
+        lastValidArticleRef.current = null;
+      }
+      return lastValidArticleRef.current;
+    }
 
     const cachedArticle = queryClient.getQueryData<Article>(['article', currentArticleId]) ?? null;
     const readingList = user?.id
@@ -158,25 +167,30 @@ export function useGlobalAudioState(): GlobalAudioState {
     );
 
     if (title || imageUrl) {
-      return {
+      const article = {
         id: currentArticleId,
         title,
         author,
         image_url: imageUrl,
       };
+      lastValidArticleRef.current = article;
+      return article;
     }
 
     // Last resort: metadata-only fallback while loading
     if (audioPlayer.currentTrack?.title && (audioPlayer.isPlaying || audioPlayer.isLoading)) {
-      return {
+      const article = {
         id: currentArticleId,
         title: audioPlayer.currentTrack.title,
         author: 'Loading',
         image_url: '',
       };
+      lastValidArticleRef.current = article;
+      return article;
     }
 
-    return null;
+    // FLICKER FIX: Return last valid article instead of null during transitions
+    return lastValidArticleRef.current;
   }, [
     currentArticleId,
     queryClient,

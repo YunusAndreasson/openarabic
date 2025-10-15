@@ -25,7 +25,7 @@ jest.mock('@/utils/safeAsyncStorage', () => ({
 const createMockQuery = (queryKey: any[]): any => ({
   queryKey,
   queryHash: JSON.stringify(queryKey),
-  state: { data: {}, error: null },
+  state: { data: {}, error: null, status: 'success' },
 });
 
 describe('Query Persistence', () => {
@@ -94,14 +94,9 @@ describe('Query Persistence', () => {
     });
 
     describe('reading progress keys', () => {
-      it('should persist reading-progress query', () => {
-        const query = createMockQuery(['reading-progress', 'user-123']);
-        expect(shouldDehydrateQuery(query)).toBe(true);
-      });
-
-      it('should persist reading-progress-bulk query', () => {
+      it('should NOT persist reading-progress-bulk query (excluded to prevent HMR hydration errors)', () => {
         const query = createMockQuery(['reading-progress-bulk', 'user-123']);
-        expect(shouldDehydrateQuery(query)).toBe(true);
+        expect(shouldDehydrateQuery(query)).toBe(false);
       });
     });
 
@@ -147,6 +142,35 @@ describe('Query Persistence', () => {
 
       it('should NOT persist queries with "live" pattern in any position', () => {
         const query = createMockQuery(['some-key', 'user-123', 'live']);
+        expect(shouldDehydrateQuery(query)).toBe(false);
+      });
+    });
+
+    describe('query status checks', () => {
+      it('should NOT persist queries without success status', () => {
+        const query = {
+          queryKey: ['categories'],
+          queryHash: JSON.stringify(['categories']),
+          state: { data: {}, error: null, status: 'loading' },
+        };
+        expect(shouldDehydrateQuery(query)).toBe(false);
+      });
+
+      it('should NOT persist queries with error status', () => {
+        const query = {
+          queryKey: ['categories'],
+          queryHash: JSON.stringify(['categories']),
+          state: { data: null, error: new Error('test'), status: 'error' },
+        };
+        expect(shouldDehydrateQuery(query)).toBe(false);
+      });
+
+      it('should NOT persist queries with pending status', () => {
+        const query = {
+          queryKey: ['categories'],
+          queryHash: JSON.stringify(['categories']),
+          state: { data: undefined, error: null, status: 'pending' },
+        };
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
     });

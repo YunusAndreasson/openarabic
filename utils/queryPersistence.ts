@@ -16,8 +16,7 @@ const PERSIST_KEYS = new Set([
   'articles',
   'filtered-articles',
   'readingList',
-  'reading-progress',
-  // 'reading-progress-bulk' removed - causes hydration errors during HMR
+  // Note: 'reading-progress-bulk' is excluded (see EXCLUDED_KEYS) to prevent HMR hydration errors
 ]);
 const VOCABULARY_KEYS = new Set([FSRS_BASE_KEY]);
 const EXCLUDED_KEYS = new Set([

@@ -23,6 +23,7 @@ export const STRINGS = {
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
   APPEARANCE_SECTION: 'Appearance',
+  DATA_ACCOUNT_SECTION: 'Account',
 
   // Social Media
   TWITTER_URL: 'https://x.com/openarabicio',
@@ -207,7 +208,7 @@ export const STRINGS = {
 
   // Account
   HELP: 'Help',
-  CONTACT_SUPPORT: 'Contact support',
+  CONTACT_SUPPORT: 'Support',
   SUPPORT_EMAIL: 'yunus@edenmind.com',
   SUPPORT_EMAIL_SUBJECT: 'Open Arabic App Support',
   SUPPORT_EMAIL_BODY_TEMPLATE:
@@ -226,7 +227,7 @@ export const STRINGS = {
   ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',
 
   // Cache management - clearer and more actionable
-  CLEAR_CACHE: 'Clear Cache',
+  CLEAR_CACHE: 'Audio cache',
   NO_CACHE: 'No cache',
   NO_CACHED_FILES: 'No cached files',
   THIS_WILL_DELETE: 'This deletes',
@@ -234,7 +235,7 @@ export const STRINGS = {
   DATA_RELOAD_REQUIRED: 'Data will reload when needed',
 
   // Reading progress management
-  RESET_READING_PROGRESS: 'Reset reading progress',
+  RESET_READING_PROGRESS: 'Reading progress',
   RESET_READING_PROGRESS_CONFIRMATION: 'Are you sure you want to reset all reading progress?',
   THIS_WILL_DELETE_ALL_READING_PROGRESS: 'This will delete all reading positions and progress percentages for all articles. This cannot be undone.',
   READING_PROGRESS_RESET_SUCCESSFULLY: 'Reading progress reset successfully',

@@ -350,10 +350,34 @@ const AccountScreen: FC = () => {
           />
         )}
 
-        {/* Reading - Font and language settings */}
-        <SectionTitle title={AccountSection.READING_EXPERIENCE} textStyle={styles.sectionTitle} />
+        {/* Appearance - All visual customization together */}
+        <SectionTitle title={STRINGS.APPEARANCE_SECTION} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={() => handlePickerOpen('theme')}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="color-palette"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.THEME}
+                  </ThemedText>
+                </View>
+                <CardRight type="text-chevron" text={currentThemeText} />
+              </View>
+            </BaseCard>
+
+            <Divider />
+
             <BaseCard
               shadowSize="none"
               style={styles.interactiveCard}
@@ -402,8 +426,8 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
-        {/* Audio - Audio preferences and bookmarks settings */}
-        <SectionTitle title={AccountSection.AUDIO_BOOKMARKS} textStyle={styles.sectionTitle} />
+        {/* Audio & Playback - Audio settings */}
+        <SectionTitle title={AccountSection.AUDIO_PLAYBACK} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard
@@ -436,10 +460,34 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
-        {/* Study - Study reminders and timing */}
-        <SectionTitle title={AccountSection.APP_ACCOUNT} textStyle={styles.sectionTitle} />
+        {/* Learning - Study settings */}
+        <SectionTitle title={AccountSection.LEARNING} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={() => handlePickerOpen('dailyWordLimit')}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="book"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.DAILY_WORD_LIMIT}
+                  </ThemedText>
+                </View>
+                <CardRight type="text-chevron" text={currentDailyWordLimitText} />
+              </View>
+            </BaseCard>
+
+            <Divider />
+
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <View style={styles.cardIconContainer}>
@@ -488,58 +536,6 @@ const AccountScreen: FC = () => {
                 </BaseCard>
               </Fragment>
             )}
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => handlePickerOpen('dailyWordLimit')}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="book"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.DAILY_WORD_LIMIT}
-                  </ThemedText>
-                </View>
-                <CardRight type="text-chevron" text={currentDailyWordLimitText} />
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
-
-        {/* Appearance - Theme and visual settings */}
-        <SectionTitle title={STRINGS.APPEARANCE_SECTION} textStyle={styles.sectionTitle} />
-        <BaseCard shadowSize="small" style={styles.sectionContainer}>
-          <View style={styles.linksContainer}>
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => handlePickerOpen('theme')}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="color-palette"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.THEME}
-                  </ThemedText>
-                </View>
-                <CardRight type="text-chevron" text={currentThemeText} />
-              </View>
-            </BaseCard>
           </View>
         </BaseCard>
 
@@ -619,8 +615,8 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
-        {/* Account - Data and account actions */}
-        <SectionTitle title={STRINGS.ACCOUNT} textStyle={styles.sectionTitle} />
+        {/* Data & Account - Account management and data */}
+        <SectionTitle title={STRINGS.DATA_ACCOUNT_SECTION} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleClearCache}>
@@ -671,7 +667,15 @@ const AccountScreen: FC = () => {
                     {STRINGS.RESET_READING_PROGRESS}
                   </ThemedText>
                 </View>
-                <CardRight type="chevron-only" />
+                <ThemedText
+                  type="label"
+                  weight="medium"
+                  colorName="tint"
+                  style={styles.clearButton}
+                  onPress={handleResetReadingProgress}
+                >
+                  RESET
+                </ThemedText>
               </View>
             </BaseCard>
 
