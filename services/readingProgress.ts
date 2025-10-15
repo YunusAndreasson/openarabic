@@ -218,6 +218,26 @@ export class ReadingProgressService {
 
     return data as ReadingProgress | null;
   }
+
+  /**
+   * Delete all reading progress for a user
+   * This removes all reading positions and progress percentages
+   */
+  static async deleteAllProgress(userId: string): Promise<void> {
+    await executeQuery(
+      () =>
+        supabase
+          .from('reading_progress')
+          .delete()
+          .eq('user_id', userId),
+      {
+        toastMessage: STRINGS.FAILED_TO_RESET_READING_PROGRESS,
+        analyticsEventName: 'Reading_Progress_Delete_All_Error',
+        analyticsProperties: { userId },
+        showToast: false, // Silent error - caller will handle alert
+      }
+    );
+  }
 }
 
 export const readingProgressService = ReadingProgressService;

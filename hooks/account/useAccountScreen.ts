@@ -6,6 +6,7 @@ import * as StoreReview from 'expo-store-review';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
+import { READING_PROGRESS_QUERY_KEYS } from '@/constants/queryKeys';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAudioCache } from '@/hooks/audio/useAudioCache';
@@ -13,6 +14,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useReminders } from '@/hooks/notifications/useReminders';
 import pkg from '@/package.json';
 import { analytics } from '@/services/analytics';
+import { ReadingProgressService } from '@/services/readingProgress';
 import { supabase } from '@/services/supabase';
 import { UiAction } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
@@ -151,6 +153,49 @@ export const useAccountScreen = () => {
     );
   }, []);
 
+  const handleResetReadingProgress = useCallback(() => {
+    if (!user?.id) {
+      Alert.alert(STRINGS.ERROR, 'No user ID available');
+      return;
+    }
+
+    Alert.alert(
+      STRINGS.RESET_READING_PROGRESS,
+      STRINGS.THIS_WILL_DELETE_ALL_READING_PROGRESS,
+      [
+        {
+          text: UiAction.CANCEL,
+          style: 'cancel',
+        },
+        {
+          text: STRINGS.RESET_READING_PROGRESS,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Delete all reading progress from database
+              await ReadingProgressService.deleteAllProgress(user.id);
+
+              // Invalidate all reading progress related queries
+              await queryClient.invalidateQueries({
+                queryKey: READING_PROGRESS_QUERY_KEYS.bulk(user.id),
+              });
+              await queryClient.invalidateQueries({
+                queryKey: READING_PROGRESS_QUERY_KEYS.streak(user.id),
+              });
+
+              lightFeedback();
+              Alert.alert(STRINGS.SUCCESS, STRINGS.READING_PROGRESS_RESET_SUCCESSFULLY);
+            } catch (error) {
+              Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_RESET_READING_PROGRESS);
+              handleError(error as Error, { showToast: false });
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  }, [user?.id, queryClient]);
+
   const handleReminderToggle = useCallback(
     async (enabled: boolean) => {
       if (enabled) {
@@ -288,6 +333,7 @@ export const useAccountScreen = () => {
       handleTimeSet,
       handleReminderToggle,
       handleSignOut,
+      handleResetReadingProgress,
       handleSupportContact,
       handleRequestReview,
       appVersion,
@@ -305,6 +351,7 @@ export const useAccountScreen = () => {
       handleTimeSet,
       handleReminderToggle,
       handleSignOut,
+      handleResetReadingProgress,
       handleSupportContact,
       handleRequestReview,
       appVersion,

@@ -147,6 +147,7 @@ const AccountScreen: FC = () => {
     handleTimeSet,
     handleReminderToggle,
     handleSignOut,
+    handleResetReadingProgress,
     handleSupportContact,
     handleRequestReview,
     appVersion,
@@ -651,6 +652,26 @@ const AccountScreen: FC = () => {
                 >
                   CLEAR
                 </ThemedText>
+              </View>
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleResetReadingProgress}>
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="refresh"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.RESET_READING_PROGRESS}
+                  </ThemedText>
+                </View>
+                <CardRight type="chevron-only" />
               </View>
             </BaseCard>
 

@@ -105,6 +105,9 @@ const FloatingActionButtons = memo<{
   hasAudio?: boolean;
   isPlaying?: boolean;
   onPlayPress?: () => void;
+  showEnglish: boolean;
+  onToggleLanguage: () => void;
+  isLanguageOverridden: boolean;
   onClose: () => void;
 }>(
   ({
@@ -113,6 +116,8 @@ const FloatingActionButtons = memo<{
     hasAudio = false,
     isPlaying = false,
     onPlayPress,
+    onToggleLanguage,
+    isLanguageOverridden,
     onClose,
   }) => {
     const colors = useColors();
@@ -207,6 +212,19 @@ const FloatingActionButtons = memo<{
 
         {/* Action buttons - top right */}
         <View style={actionButtonsStyle}>
+          {/* Language toggle button - show/hide English text */}
+          <Pressable
+            style={isLanguageOverridden ? activeButtonStyle : buttonStyle}
+            onPress={onToggleLanguage}
+            android_ripple={createAndroidRipple(colors)}
+          >
+            <Ionicons
+              name="language"
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color={isLanguageOverridden ? colors.tint : colors.secondaryText}
+            />
+          </Pressable>
+
           {/* Play button - only show if article has audio */}
           {hasAudio && onPlayPress && (
             <Pressable
@@ -259,6 +277,10 @@ interface ArticleContentProps {
   isPlaying?: boolean;
   onPlayPress?: () => void;
   currentHighlightedWord?: SentenceWord | null;
+  // Language preference functionality
+  showEnglish: boolean;
+  onToggleLanguage: () => void;
+  isLanguageOverridden: boolean;
   // Close functionality
   onClose: () => void;
 }
@@ -279,6 +301,9 @@ export const ArticleContent = memo<ArticleContentProps>(
     isPlaying = false,
     onPlayPress,
     currentHighlightedWord = null,
+    showEnglish,
+    onToggleLanguage,
+    isLanguageOverridden,
     onClose,
   }) => {
     const insets = useSafeAreaInsets();
@@ -503,6 +528,9 @@ export const ArticleContent = memo<ArticleContentProps>(
               hasAudio={hasAudio}
               isPlaying={isPlaying}
               onPlayPress={onPlayPress}
+              showEnglish={showEnglish}
+              onToggleLanguage={onToggleLanguage}
+              isLanguageOverridden={isLanguageOverridden}
               onClose={onClose}
             />
           </View>
@@ -513,7 +541,12 @@ export const ArticleContent = memo<ArticleContentProps>(
   // Simplified memo comparison function - only check primitive values and stable references
   (prevProps, nextProps) => {
     // Check primitive values first for early return
-    if (prevProps.id !== nextProps.id || prevProps.isInReadingList !== nextProps.isInReadingList) {
+    if (
+      prevProps.id !== nextProps.id ||
+      prevProps.isInReadingList !== nextProps.isInReadingList ||
+      prevProps.showEnglish !== nextProps.showEnglish ||
+      prevProps.isLanguageOverridden !== nextProps.isLanguageOverridden
+    ) {
       return false;
     }
 
@@ -528,6 +561,7 @@ export const ArticleContent = memo<ArticleContentProps>(
       prevProps.handleScroll !== nextProps.handleScroll ||
       prevProps.handleViewableItemsChanged !== nextProps.handleViewableItemsChanged ||
       prevProps.onToggleReadingList !== nextProps.onToggleReadingList ||
+      prevProps.onToggleLanguage !== nextProps.onToggleLanguage ||
       prevProps.onClose !== nextProps.onClose
     ) {
       return false;

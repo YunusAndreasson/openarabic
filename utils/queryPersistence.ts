@@ -17,10 +17,15 @@ const PERSIST_KEYS = new Set([
   'filtered-articles',
   'readingList',
   'reading-progress',
-  'reading-progress-bulk',
+  // 'reading-progress-bulk' removed - causes hydration errors during HMR
 ]);
 const VOCABULARY_KEYS = new Set([FSRS_BASE_KEY]);
-const EXCLUDED_KEYS = new Set(['isInReadingList', 'enhancedAudioTracks', STRUGGLING_WORDS_KEY]);
+const EXCLUDED_KEYS = new Set([
+  'isInReadingList',
+  'enhancedAudioTracks',
+  STRUGGLING_WORDS_KEY,
+  'reading-progress-bulk', // Explicitly exclude to prevent HMR hydration errors
+]);
 const EXCLUDED_PATTERNS = new Set(['due', 'live']);
 
 // Create the persister using AsyncStorage when available
@@ -43,6 +48,13 @@ const hasExcludedPattern = (queryKey: readonly unknown[]): boolean => {
 const shouldDehydrateQuery = (query: Query): boolean => {
   const queryKey = query.queryKey;
   const firstKey = typeof queryKey[0] === 'string' ? queryKey[0] : '';
+
+  // CRITICAL: Only persist queries with successful data
+  // This prevents "dehydrated as pending ended up rejecting" errors on app restart
+  // and ensures we don't persist queries with errors
+  if (query.state.status !== 'success') {
+    return false;
+  }
 
   // Early exit for excluded patterns
   if (hasExcludedPattern(queryKey)) {

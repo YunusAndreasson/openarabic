@@ -233,6 +233,13 @@ export const STRINGS = {
   AUDIO_REDOWNLOAD_REQUIRED: 'Audio will re-download when needed',
   DATA_RELOAD_REQUIRED: 'Data will reload when needed',
 
+  // Reading progress management
+  RESET_READING_PROGRESS: 'Reset reading progress',
+  RESET_READING_PROGRESS_CONFIRMATION: 'Are you sure you want to reset all reading progress?',
+  THIS_WILL_DELETE_ALL_READING_PROGRESS: 'This will delete all reading positions and progress percentages for all articles. This cannot be undone.',
+  READING_PROGRESS_RESET_SUCCESSFULLY: 'Reading progress reset successfully',
+  FAILED_TO_RESET_READING_PROGRESS: "Couldn't reset reading progress. " + tryAgain,
+
   // Notifications
   ENABLE_NOTIFICATIONS: 'Enable notifications',
   TURN_ON_NOTIFICATIONS: 'Get daily study reminders',

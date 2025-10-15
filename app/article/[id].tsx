@@ -25,6 +25,7 @@ import PulsatingLoader from '@/components/ui/PulsatingLoader';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
+import { useArticleLanguagePreference } from '@/hooks/articles/useArticleLanguagePreference';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
@@ -34,7 +35,6 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { simpleAudioService } from '@/services/simpleAudioService';
-import { useAppSelectorMemo } from '@/store/hooks';
 import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
@@ -66,16 +66,11 @@ const ArticleScreenContentComparison = (
 const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const colors = useColors();
   const { user } = useAuth();
-  const displayLanguagePreference = useAppSelectorMemo(
-    state => state.settings.displayLanguagePreference
-  );
   const { showToast } = useToast();
 
   const queryClient = useQueryClient();
 
   const { handleScroll: handleHeaderScroll } = useHeaderVisibility();
-
-  // Note: header height not needed for current auto-scroll logic
 
   // Memoize article ID parsing to prevent unnecessary recalculations
   const articleId = useMemo(() => {
@@ -83,6 +78,11 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     const parsed = parseInt(id ?? '', 10);
     return isNaN(parsed) ? undefined : (parsed as ArticleId);
   }, [id]);
+
+  // Use article language preference hook for per-article language toggle
+  const { showEnglish, toggleLanguage, isOverridden } = useArticleLanguagePreference(articleId);
+
+  // Note: header height not needed for current auto-scroll logic
 
   const {
     article,
@@ -154,6 +154,11 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       ToastType.SUCCESS
     );
   }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
+
+  const handleToggleLanguageWithFeedback = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    toggleLanguage();
+  }, [toggleLanguage]);
 
   const handleClose = useCallback(async () => {
     // Stop audio playback completely before navigating away
@@ -429,14 +434,14 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           sentence={item}
           words={words}
           settings={{
-            showEnglish: displayLanguagePreference === 'bilingual',
+            showEnglish,
           }}
           colors={colors}
           onWordPress={handleWordPress}
         />
       );
     },
-    [sentenceWordsMap, colors, handleWordPress, displayLanguagePreference]
+    [sentenceWordsMap, colors, handleWordPress, showEnglish]
   );
 
   const tooltipProps = useMemo(
@@ -486,6 +491,9 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       hasAudio,
       isPlaying: isPlaying && currentArticle?.id === articleId,
       onPlayPress: handlePlayPress,
+      showEnglish,
+      onToggleLanguage: handleToggleLanguageWithFeedback,
+      isLanguageOverridden: isOverridden,
       onClose: handleClose,
     };
   }, [
@@ -504,6 +512,9 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     currentArticle?.id,
     articleId,
     handlePlayPress,
+    showEnglish,
+    handleToggleLanguageWithFeedback,
+    isOverridden,
     handleClose,
   ]);
 

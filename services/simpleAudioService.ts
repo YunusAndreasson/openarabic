@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
+import { playTransitionSound } from '@/utils/transitionSound';
 
 /**
  * Simple audio service - single source of truth for native audio player
@@ -41,6 +42,7 @@ class SimpleAudioService {
   private currentPlaylistIndex = 0;
   private isPlaylistMode = false;
   private onPlaylistTrackComplete: ((nextTrack: EnhancedAudioTrack | null) => void) | null = null;
+  private initialPlaylistLength = 0; // Track initial playlist size for transition sound logic
 
   // SLEEP TIMER SUPPORT: Track when sleep timer has expired
   private sleepTimerExpired = false;
@@ -365,6 +367,7 @@ class SimpleAudioService {
       this.currentPlaylistIndex = 0;
       this.isPlaylistMode = true;
       this.onPlaylistTrackComplete = onTrackComplete || null;
+      this.initialPlaylistLength = tracks.length; // Store initial playlist length
 
       // Reset sleep timer expired flag when starting new playlist
       this.resetSleepTimerExpired();
@@ -379,6 +382,7 @@ class SimpleAudioService {
       this.playlist = [];
       this.currentPlaylistIndex = 0;
       this.onPlaylistTrackComplete = null;
+      this.initialPlaylistLength = 0;
       this.resetSleepTimerExpired();
       throw error;
     }
@@ -400,11 +404,17 @@ class SimpleAudioService {
       this.playlist = [];
       this.currentPlaylistIndex = 0;
       this.onPlaylistTrackComplete = null;
+      this.initialPlaylistLength = 0;
       this.resetSleepTimerExpired();
 
       // Stop playback and notify completion
       await this.stop();
       return false;
+    }
+
+    // Play transition sound between tracks if playlist has more than 1 track
+    if (this.initialPlaylistLength > 1) {
+      await playTransitionSound();
     }
 
     // Play the next track
@@ -433,6 +443,7 @@ class SimpleAudioService {
       this.playlist = [];
       this.currentPlaylistIndex = 0;
       this.onPlaylistTrackComplete = null;
+      this.initialPlaylistLength = 0;
 
       // SLEEP TIMER SUPPORT: Reset sleep timer expired flag when stopping
       this.resetSleepTimerExpired();
@@ -595,6 +606,7 @@ class SimpleAudioService {
               this.playlist = [];
               this.currentPlaylistIndex = 0;
               this.onPlaylistTrackComplete = null;
+              this.initialPlaylistLength = 0;
               this.resetSleepTimerExpired();
               this.stop().catch(() => {
                 // Stop failed - continue with current track
@@ -766,6 +778,7 @@ class SimpleAudioService {
     this.playlist = [];
     this.currentPlaylistIndex = 0;
     this.onPlaylistTrackComplete = null;
+    this.initialPlaylistLength = 0;
   }
 }
 
