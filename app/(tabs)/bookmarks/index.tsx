@@ -95,6 +95,7 @@ const ListenListItem = memo(
         onPress={!editMode ? handlePress : undefined}
         // Add article image for bookmarks-style appearance
         imageUrl={generateImageUrl(item.articles.image_url)}
+        articleId={item.article_id}
         dragHandleProps={dragHandleProps}
         progressPercentage={progressPercentage}
       />

@@ -24,7 +24,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
-import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
+import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
   setAudioLanguagePreference,
   setDailyWordLimit,
@@ -101,12 +101,12 @@ const AccountScreen: FC = () => {
   const insets = useSafeAreaInsets();
 
   // Get theme with validation
-  const rawTheme = useAppSelectorMemo(state => state.theme.theme);
+  const rawTheme = useAppSelectorShallow(state => state.theme.theme);
   const currentTheme = useMemo(() => rawTheme ?? 'dark' as const, [rawTheme]);
 
   // Get language preferences from Redux with validation
-  const rawLanguagePreference = useAppSelectorMemo(state => state.settings.displayLanguagePreference);
-  const rawAudioLanguagePreference = useAppSelectorMemo(state => state.settings.audioLanguagePreference);
+  const rawLanguagePreference = useAppSelectorShallow(state => state.settings.displayLanguagePreference);
+  const rawAudioLanguagePreference = useAppSelectorShallow(state => state.settings.audioLanguagePreference);
 
   // Validate and provide defaults - ensure values are valid enum values
   const currentLanguage = useMemo(() => {
@@ -123,13 +123,13 @@ const AccountScreen: FC = () => {
     return AudioLanguage.ENGLISH_ARABIC; // Default
   }, [rawAudioLanguagePreference]);
 
-  const currentArabicFont = useAppSelectorMemo(state => state.settings.arabicFont);
+  const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
   const dispatch = useAppDispatch();
 
   const [activePicker, setActivePicker] = React.useState<string | null>(null);
 
   // Get daily word limit with validation
-  const rawDailyWordLimit = useAppSelectorMemo(state => state.settings.dailyWordLimit);
+  const rawDailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
   const currentDailyWordLimit = useMemo(() => {
     // Validate: must be a number (0, 10, 20, or 30)
     if (typeof rawDailyWordLimit === 'number' && rawDailyWordLimit >= 0) {

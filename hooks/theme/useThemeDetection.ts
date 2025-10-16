@@ -3,7 +3,7 @@ import { useColorScheme } from 'react-native';
 import { ReactReduxContext } from 'react-redux';
 
 import { Theme } from '@/constants/colors';
-import { useAppSelectorMemo } from '@/store/hooks';
+import { useAppSelectorShallow } from '@/store/hooks';
 
 /**
  * Enhanced hook for theme detection that combines Redux state with system preferences
@@ -17,7 +17,7 @@ export function useIsDarkMode(): boolean {
   const systemColorScheme = useColorScheme();
 
   // Always call hooks unconditionally (React hooks rules)
-  const reduxTheme = useAppSelectorMemo(state => state.theme.theme);
+  const reduxTheme = useAppSelectorShallow(state => state.theme.theme);
 
   // If Redux isn't ready, use system color scheme as fallback
   if (!reduxContext?.store) {
@@ -44,7 +44,7 @@ export function useCurrentTheme(): Theme {
   const systemColorScheme = useColorScheme();
 
   // Always call hooks unconditionally (React hooks rules)
-  const reduxTheme = useAppSelectorMemo(state => state.theme.theme);
+  const reduxTheme = useAppSelectorShallow(state => state.theme.theme);
 
   // If Redux isn't ready, use system color scheme as fallback
   if (!reduxContext?.store) {

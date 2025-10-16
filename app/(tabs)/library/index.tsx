@@ -54,21 +54,11 @@ export default function ReadScreen(): JSX.Element {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Optimized articlesData - memoize to prevent unnecessary re-renders
-  const memoizedArticlesData = useMemo(
-    () => articlesData,
-    [
-      // Only depend on articlesData itself, not individual properties
-      // This creates a stable reference unless the actual array changes
-      articlesData,
-    ]
-  );
-
   // Note: Categories are prioritized over authors since IDs overlap and categories are primary navigation
 
   // Optimized derivedData - use stable references when possible
   const categoriesWithArticles = useMemo(() => {
-    const counts = memoizedArticlesData.reduce<Record<number, number>>((acc, article) => {
+    const counts = articlesData.reduce<Record<number, number>>((acc, article) => {
       const id = article?.category?.id;
       if (id) {
         acc[id] = (acc[id] || 0) + 1;
@@ -87,11 +77,11 @@ export default function ReadScreen(): JSX.Element {
     }, []);
 
     return result;
-  }, [memoizedArticlesData, categoriesData]); // Use memoized articles data
+  }, [articlesData, categoriesData]);
 
   // Create authors with article counts
   const authorsWithArticles = useMemo(() => {
-    const counts = memoizedArticlesData.reduce<Record<number, number>>((acc, article) => {
+    const counts = articlesData.reduce<Record<number, number>>((acc, article) => {
       const id = article?.author?.id;
       if (id) {
         acc[id] = (acc[id] || 0) + 1;
@@ -110,7 +100,7 @@ export default function ReadScreen(): JSX.Element {
     }, []);
 
     return result;
-  }, [memoizedArticlesData, authorsData]); // Use memoized articles and authors data
+  }, [articlesData, authorsData]);
 
   // Note: We're now rendering regular categories and Continue Reading category separately
 
@@ -198,11 +188,11 @@ export default function ReadScreen(): JSX.Element {
   const headerSections = useMemo(() => {
     const sections = [];
 
-    if (memoizedArticlesData.length > 0) {
+    if (articlesData.length > 0) {
       sections.push(
         <IntelligentArticleSection
           key="featured"
-          articlesData={memoizedArticlesData}
+          articlesData={articlesData}
           refreshKey={refreshKey}
         />
       );
@@ -235,7 +225,7 @@ export default function ReadScreen(): JSX.Element {
     }
 
     return sections;
-  }, [memoizedArticlesData, refreshKey, categoriesWithArticles, authorsWithArticles]);
+  }, [articlesData, refreshKey, categoriesWithArticles, authorsWithArticles]);
 
   const ListHeaderComponent = useMemo(
     () => <View style={styles.headerContainer}>{headerSections}</View>,

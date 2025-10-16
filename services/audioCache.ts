@@ -1,6 +1,5 @@
 import * as Crypto from 'expo-crypto';
 import { Directory, File, Paths } from 'expo-file-system';
-import * as FileSystemLegacy from 'expo-file-system/legacy';
 
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
@@ -30,8 +29,7 @@ export class AudioCacheManager {
     try {
       const cacheDir = new Directory(this.cacheDir);
       if (!cacheDir.exists) {
-        // Note: Using legacy API until modern Directory.makeDirectoryAsync() is available
-        await FileSystemLegacy.makeDirectoryAsync(this.cacheDir, { intermediates: true });
+        await cacheDir.create();
       }
     } catch (error) {
       await handleError(error as Error, { showToast: false });
@@ -147,8 +145,7 @@ export class AudioCacheManager {
     try {
       const cacheDir = new Directory(this.cacheDir);
       if (cacheDir.exists) {
-        // Note: Using legacy API until modern Directory.deleteAsync() is available
-        await FileSystemLegacy.deleteAsync(this.cacheDir);
+        await cacheDir.delete();
         await this.ensureCacheDirectoryExists();
       }
       // Clear memory cache as well
@@ -169,13 +166,12 @@ export class AudioCacheManager {
         return 0;
       }
 
-      // Note: Using legacy API until modern Directory.list() returns File instances with size
-      const fileNames = await FileSystemLegacy.readDirectoryAsync(this.cacheDir);
-      const files = fileNames.map(fileName => new File(this.cacheDir + fileName));
+      const items = await cacheDir.list();
 
-      const totalSize = files.reduce((size: number, file: File) => {
-        if (file.exists && file.size !== null) {
-          return size + file.size;
+      const totalSize = items.reduce((size: number, item) => {
+        // Only count files, not directories
+        if ('size' in item && item.exists && item.size !== null) {
+          return size + item.size;
         }
         return size;
       }, 0);

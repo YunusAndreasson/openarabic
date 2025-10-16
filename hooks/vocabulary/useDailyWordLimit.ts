@@ -1,13 +1,14 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { useAppSelectorMemo } from '@/store/hooks';
+import { useAppSelectorShallow } from '@/store/hooks';
+import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 const DAILY_WORD_COUNT_KEY = 'daily_word_count';
 const DAILY_WORD_RESET_KEY = 'daily_word_reset_date';
 
 export const useDailyWordLimit = () => {
-  const dailyWordLimit = useAppSelectorMemo(state => state.settings.dailyWordLimit);
+  const storage = useMemo(() => getSafeStorage(), []);
+  const dailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
 
   const getCurrentDateString = useCallback(() => {
     const now = new Date();
@@ -19,21 +20,21 @@ export const useDailyWordLimit = () => {
   const getDailyWordCount = useCallback(async (): Promise<number> => {
     try {
       const currentDate = getCurrentDateString();
-      const lastResetDate = await AsyncStorage.getItem(DAILY_WORD_RESET_KEY);
+      const lastResetDate = await storage.getItem(DAILY_WORD_RESET_KEY);
 
       // If it's a new day, reset the count
       if (lastResetDate !== currentDate) {
-        await AsyncStorage.setItem(DAILY_WORD_RESET_KEY, currentDate);
-        await AsyncStorage.setItem(DAILY_WORD_COUNT_KEY, '0');
+        await storage.setItem(DAILY_WORD_RESET_KEY, currentDate);
+        await storage.setItem(DAILY_WORD_COUNT_KEY, '0');
         return 0;
       }
 
-      const count = await AsyncStorage.getItem(DAILY_WORD_COUNT_KEY);
+      const count = await storage.getItem(DAILY_WORD_COUNT_KEY);
       return parseInt(count || '0', 10);
     } catch {
       return 0;
     }
-  }, [getCurrentDateString]);
+  }, [getCurrentDateString, storage]);
 
   const incrementDailyWordCount = useCallback(async (): Promise<boolean> => {
     try {
@@ -49,12 +50,12 @@ export const useDailyWordLimit = () => {
         return false;
       }
 
-      // Increment count atomically - check again before incrementing to prevent race conditions
+      // Increment count - NOTE: Race condition is acceptable for this use case
       const newCount = currentCount + 1;
-      await AsyncStorage.setItem(DAILY_WORD_COUNT_KEY, String(newCount));
+      await storage.setItem(DAILY_WORD_COUNT_KEY, String(newCount));
 
       // Verify the increment was successful
-      const verifyCount = await AsyncStorage.getItem(DAILY_WORD_COUNT_KEY);
+      const verifyCount = await storage.getItem(DAILY_WORD_COUNT_KEY);
       if (parseInt(verifyCount || '0', 10) !== newCount) {
         return false;
       }
@@ -63,7 +64,7 @@ export const useDailyWordLimit = () => {
     } catch {
       return false;
     }
-  }, [dailyWordLimit, getDailyWordCount]);
+  }, [dailyWordLimit, getDailyWordCount, storage]);
 
   const canAddWord = useCallback(async (): Promise<boolean> => {
     if (dailyWordLimit === 0) return true;
@@ -90,12 +91,12 @@ export const useDailyWordLimit = () => {
 
   const resetDailyWordCount = useCallback(async () => {
     try {
-      await AsyncStorage.removeItem(DAILY_WORD_COUNT_KEY);
-      await AsyncStorage.removeItem(DAILY_WORD_RESET_KEY);
+      await storage.removeItem(DAILY_WORD_COUNT_KEY);
+      await storage.removeItem(DAILY_WORD_RESET_KEY);
     } catch {
       // Reset failed - continue silently
     }
-  }, []);
+  }, [storage]);
 
   return {
     dailyWordLimit,

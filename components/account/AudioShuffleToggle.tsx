@@ -8,7 +8,7 @@ import { Toggle } from '@/components/ui/Toggle';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
+import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setAudioShuffleEnabled } from '@/store/settingsSlice';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -20,7 +20,7 @@ const AudioShuffleToggle: React.FC<AudioShuffleToggleProps> = ({ style }) => {
   const colors = useColors();
   const dispatch = useAppDispatch();
 
-  const audioShuffleEnabled = useAppSelectorMemo(state => state.settings.audioShuffleEnabled);
+  const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
 
   const handleToggleChange = useCallback(
     (enabled: boolean) => {

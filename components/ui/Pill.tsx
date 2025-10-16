@@ -76,12 +76,19 @@ const Pill = memo(({ id, label, isSelected = false, onSelect, variant = 'filter'
     [containerStyle, isSelected, pressedStyle]
   );
 
+  // Determine text color - ensure contrast for selected state
+  const textColorName = useMemo(() => {
+    if (!isSelected) return 'text';
+    // For selected state, use high-contrast color based on theme
+    return isDarkMode ? 'text' : 'background';
+  }, [isSelected, isDarkMode]);
+
   // Non-interactive category pill
   if (isCategory && !onSelect) {
     return (
       <View style={containerStyle}>
         <ThemedText
-          colorName={isSelected ? 'background' : 'text'}
+          colorName={textColorName}
           ellipsizeMode="tail"
           numberOfLines={1}
           type={textType}
@@ -100,7 +107,7 @@ const Pill = memo(({ id, label, isSelected = false, onSelect, variant = 'filter'
       onPress={handlePress}
     >
       <ThemedText
-        colorName={isSelected ? 'background' : 'text'}
+        colorName={textColorName}
         ellipsizeMode="tail"
         numberOfLines={1}
         type={textType}

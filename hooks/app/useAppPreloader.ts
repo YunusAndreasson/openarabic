@@ -91,7 +91,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             const imagePrefetches = featured
               .map(a => String(a.image_url))
               .filter(Boolean)
-              .map(url => Image.prefetch(url).catch(() => null)); // Silently handle prefetch failures
+              .map(url => Image.prefetch(url, { cachePolicy: 'disk' }).catch(() => null)); // Silently handle prefetch failures
             const detailPrefetches = featured.map(a =>
               queryClient.prefetchQuery(articleQueryOptions.detail(a.id))
             );

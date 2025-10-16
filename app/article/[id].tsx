@@ -151,7 +151,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     showToast(
       isInReadingList ? STRINGS.REMOVED_FROM_BOOKMARKS : STRINGS.ADDED_TO_BOOKMARKS,
       3000,
-      ToastType.SUCCESS
+      ToastType.INFO
     );
   }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
 

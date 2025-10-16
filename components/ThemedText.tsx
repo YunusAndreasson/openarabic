@@ -14,6 +14,58 @@ import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFont
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useAppSelector } from '@/store/hooks';
 import type { ThemedTextProps } from '@/types/ui/text.types';
+import type { ThemeColors } from '@/types/ui/theme.types';
+
+/**
+ * Enhanced text color function with semantic color support
+ * Extracted to module level for performance optimization
+ */
+const getTextColor = (
+  colors: ThemeColors,
+  variant?: ThemedTextProps['variant'],
+  colorName?: ThemedTextProps['colorName'],
+  skipDefaultColor?: boolean
+): string | undefined => {
+  if (colorName) return colors[colorName];
+  if (variant) {
+    const variantColorMap = {
+      error: colors.error,
+      warning: colors.warning,
+      success: colors.success,
+      info: colors.info,
+      primary: colors.text,
+      secondary: colors.secondaryText,
+      subtle: colors.textTertiary,
+      disabled: colors.disabled,
+    } as const;
+    return variantColorMap[variant];
+  }
+  return !skipDefaultColor ? colors.text : undefined;
+};
+
+/**
+ * Base style lookup map for text types
+ * Extracted to constant for performance optimization
+ */
+const BASE_STYLE_MAP = {
+  body: null as any, // Will be assigned after styles object is created
+  bodyBold: null as any,
+  caption: null as any,
+  heading1: null as any,
+  heading2: null as any,
+  heading3: null as any,
+  label: null as any,
+  link: null as any,
+  overline: null as any,
+} as const;
+
+/**
+ * Get base style for text type
+ * Uses pre-computed lookup map for O(1) access
+ */
+const getBaseStyle = (type: ThemedTextProps['type']) => {
+  return BASE_STYLE_MAP[type as keyof typeof BASE_STYLE_MAP] || BASE_STYLE_MAP.body;
+};
 
 /**
  * ThemedText component provides consistent typography across the app
@@ -51,47 +103,6 @@ function ThemedTextComponent({
   const selectedArabicFont = useAppSelector(state => state.settings.arabicFont);
   // Only use debounced font size for Arabic text to prevent flickering during slider changes
   const debouncedArabicFontSize = useDebouncedArabicFontSize(type === 'arabic' ? 100 : 0);
-
-  // Enhanced text color function with semantic color support
-  const getTextColor = (
-    colors: ReturnType<typeof useColors>,
-    variant?: ThemedTextProps['variant'],
-    colorName?: ThemedTextProps['colorName'],
-    skipDefaultColor?: boolean
-  ) => {
-    if (colorName) return colors[colorName];
-    if (variant) {
-      const variantColorMap = {
-        error: colors.error,
-        warning: colors.warning,
-        success: colors.success,
-        info: colors.info,
-        primary: colors.text,
-        secondary: colors.secondaryText,
-        subtle: colors.textTertiary,
-        disabled: colors.disabled,
-      } as const;
-      return variantColorMap[variant];
-    }
-    return !skipDefaultColor ? colors.text : undefined;
-  };
-
-  // Enhanced base style function with micro-typography optimizations
-  const getBaseStyle = (type: ThemedTextProps['type']) => {
-    const baseStyles = {
-      body: styles.body,
-      bodyBold: styles.bodyBold,
-      caption: styles.caption,
-      heading1: styles.heading1,
-      heading2: styles.heading2,
-      heading3: styles.heading3,
-      label: styles.label,
-      link: styles.link,
-      overline: styles.overline,
-    };
-
-    return baseStyles[type as keyof typeof baseStyles] || styles.body;
-  };
 
   // Consolidated style computation with enhanced opacity handling
   const { finalStyle } = useMemo(() => {
@@ -243,3 +254,14 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 });
+
+// Populate BASE_STYLE_MAP after styles are created
+BASE_STYLE_MAP.body = styles.body;
+BASE_STYLE_MAP.bodyBold = styles.bodyBold;
+BASE_STYLE_MAP.caption = styles.caption;
+BASE_STYLE_MAP.heading1 = styles.heading1;
+BASE_STYLE_MAP.heading2 = styles.heading2;
+BASE_STYLE_MAP.heading3 = styles.heading3;
+BASE_STYLE_MAP.label = styles.label;
+BASE_STYLE_MAP.link = styles.link;
+BASE_STYLE_MAP.overline = styles.overline;

@@ -106,7 +106,7 @@ function ThemedButtonComponent({
   );
 
   const textColor = disabled
-    ? colors.secondaryText
+    ? colors.disabled
     : variant === 'filled'
     ? currentTheme === Theme.Sepia
       ? colors.white // Use white text for sepia theme filled buttons for better contrast
@@ -184,7 +184,7 @@ function ThemedButtonComponent({
               skipDefaultColor
               colorName={
                 disabled
-                  ? 'black'
+                  ? 'disabled'
                   : variant === 'filled'
                   ? currentTheme === Theme.Sepia
                     ? 'white'

@@ -396,6 +396,14 @@ const lightColors: ThemeColors = {
   chartGrid: basePalette.charts.ui.grid,
   chartThreshold: basePalette.charts.ui.threshold,
 
+  // Card gradients - pre-computed for performance
+  cardGradient: [
+    basePalette.pure.transparent,
+    basePalette.pure.transparent,
+    basePalette.pure.transparent,
+    basePalette.pure.transparent,
+  ] as const,
+
   // Utility colors
   textOverlay: withAlpha(basePalette.tint.primary, opacity.subtle),
   textShadowDark: withAlpha(basePalette.forest.dark, opacity.shadow),
@@ -476,6 +484,14 @@ const darkColors: ThemeColors = {
   chartGrid: basePalette.charts.ui.gridDark,
   chartThreshold: basePalette.charts.ui.thresholdDark,
 
+  // Card gradients - pre-computed for performance
+  cardGradient: [
+    withAlpha(basePalette.sage.darkest, 0),
+    withAlpha(basePalette.sage.darkest, 0.5),
+    withAlpha(basePalette.sage.darkest, 0.9),
+    basePalette.sage.dark,
+  ] as const,
+
   // Utility colors
   textOverlay: withAlpha(basePalette.tint.primaryDark, opacity.subtle),
   textShadowDark: withAlpha(basePalette.pure.black, opacity.shadow),
@@ -555,6 +571,14 @@ const sepiaColors: ThemeColors = {
   // Chart UI colors
   chartGrid: basePalette.charts.ui.gridSepia,
   chartThreshold: basePalette.charts.ui.thresholdSepia,
+
+  // Card gradients - pre-computed for performance
+  cardGradient: [
+    basePalette.pure.transparent,
+    basePalette.pure.transparent,
+    basePalette.pure.transparent,
+    basePalette.pure.transparent,
+  ] as const,
 
   // Utility colors
   textOverlay: withAlpha(basePalette.autumn.accent.primary, opacity.subtle),

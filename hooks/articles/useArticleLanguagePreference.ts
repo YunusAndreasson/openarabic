@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { useAppSelectorMemo } from '@/store/hooks';
+import { useAppSelectorShallow } from '@/store/hooks';
 import type { ArticleId } from '@/types/branded.types';
 import { DisplayLanguage } from '@/types/enums';
 
@@ -23,7 +23,7 @@ export function useArticleLanguagePreference(
   articleId: ArticleId | undefined
 ): UseArticleLanguagePreferenceReturn {
   // Get global display language preference
-  const globalPreference = useAppSelectorMemo(state => state.settings.displayLanguagePreference);
+  const globalPreference = useAppSelectorShallow(state => state.settings.displayLanguagePreference);
 
   // Local override state (resets when component unmounts)
   const [localOverride, setLocalOverride] = useState<DisplayLanguage | undefined>(undefined);

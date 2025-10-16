@@ -11,7 +11,6 @@ import { useStreaks } from '@/contexts/StreaksContext';
 import { useReadingStreak } from '@/hooks/articles/useReadingStreak';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { handleError } from '@/utils/errorHandling';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
@@ -31,7 +30,6 @@ const getInitials = (name: string): string => {
 
 export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   const { user } = useAuth();
   const { streak: streakData } = useReadingStreak();
   const { openStreaks } = useStreaks();
@@ -139,6 +137,8 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
             style={profilePhotoStyle}
             contentFit="cover"
             cachePolicy="memory-disk"
+            transition={200}
+            priority="high"
           />
         ) : (
           <View
@@ -157,7 +157,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
               weight="bold"
               style={[
                 styles.baseInitialsText,
-                { fontSize: size * 0.45, color: isDarkMode ? colors.black : colors.white },
+                { fontSize: size * 0.45, color: colors.background },
               ]}
             >
               {initials}

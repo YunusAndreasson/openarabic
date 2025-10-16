@@ -53,7 +53,7 @@ import {
   clearAppBadge,
   initializeNotifications,
 } from '@/services/notificationService';
-import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
+import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
@@ -120,7 +120,7 @@ Sentry.init({
 
 function AppContent() {
   const dispatch = useAppDispatch();
-  const theme = useAppSelectorMemo((state: RootState) => state.theme.theme);
+  const theme = useAppSelectorShallow((state: RootState) => state.theme.theme);
   const isDark = theme === Theme.Dark;
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);

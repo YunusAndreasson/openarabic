@@ -23,7 +23,8 @@ const EnhancedImageComparison = (
     prevProps.priority !== nextProps.priority ||
     prevProps.onLoad !== nextProps.onLoad ||
     prevProps.onError !== nextProps.onError ||
-    prevProps.testID !== nextProps.testID
+    prevProps.testID !== nextProps.testID ||
+    prevProps.allowDownscaling !== nextProps.allowDownscaling
   ) {
     return false;
   }
@@ -67,6 +68,7 @@ function EnhancedImageInternal({
   testID,
   placeholder,
   placeholderContentFit = 'cover',
+  allowDownscaling,
 }: EnhancedImageProps) {
   const colors = useColors();
 
@@ -90,6 +92,7 @@ function EnhancedImageInternal({
       ...(placeholder ? { placeholder } : {}),
       ...(placeholder ? { placeholderContentFit } : {}),
       ...(testID ? { testID } : {}),
+      ...(allowDownscaling !== undefined ? { allowDownscaling } : {}),
     }),
     [
       cachePolicy,
@@ -102,6 +105,7 @@ function EnhancedImageInternal({
       placeholder,
       placeholderContentFit,
       testID,
+      allowDownscaling,
     ]
   );
 

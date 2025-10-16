@@ -30,6 +30,8 @@ interface ListenListItemCardProps {
   onPlayPress?: () => void;
   // Image for bookmarks-style display
   imageUrl?: string;
+  // Unique article ID for recycling key
+  articleId?: number;
   // Reading progress - always shown (0% = not started)
   progressPercentage?: number;
   // Avoid running mount animations when rendering many list items at once
@@ -47,6 +49,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
     isBeingDragged = false,
     onPlayPress,
     imageUrl,
+    articleId,
     progressPercentage,
     shouldAnimateOnMount = true,
   }) => {
@@ -116,8 +119,8 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
                   <EnhancedImage
                     source={imageUrl}
                     style={styles.thumbnailImage}
-                    transition={0}
-                    recyclingKey={imageUrl}
+                    transition={150}
+                    recyclingKey={articleId ? `article-${articleId}` : imageUrl}
                   />
                 </View>
               )}
@@ -183,6 +186,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
       prevProps.editMode === nextProps.editMode &&
       prevProps.isBeingDragged === nextProps.isBeingDragged &&
       prevProps.imageUrl === nextProps.imageUrl &&
+      prevProps.articleId === nextProps.articleId &&
       prevProps.progressPercentage === nextProps.progressPercentage &&
       prevProps.onPress === nextProps.onPress &&
       prevProps.onDelete === nextProps.onDelete &&

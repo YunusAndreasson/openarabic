@@ -13,7 +13,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useOptimisticState } from '@/hooks/ui/useOptimisticState';
-import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
+import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { lightFeedback } from '@/utils/haptics';
 
 // Default snap points for settings pickers
@@ -92,7 +92,7 @@ export const SettingsPicker = <T,>({
   const isControlledMode = !!onSelect;
 
   // Get current value from Redux (always call hook, but provide fallback)
-  const reduxValue = useAppSelectorMemo(
+  const reduxValue = useAppSelectorShallow(
     currentValueSelector || (() => undefined as T)
   );
 

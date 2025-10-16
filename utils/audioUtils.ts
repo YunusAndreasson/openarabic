@@ -71,7 +71,7 @@ export async function prefetchArticleWithImage(
 
   if (imageUrl) {
     // Prefetch image - silent failure won't block functionality
-    Image.prefetch(imageUrl).catch(() => null);
+    Image.prefetch(imageUrl, { cachePolicy: 'disk' }).catch(() => null);
   } else if (prefetchArticle) {
     // Fallback to full article prefetch if no cached image
     prefetchArticle(articleId).catch(() => {});

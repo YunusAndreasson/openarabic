@@ -63,6 +63,9 @@ export interface ThemeColors {
   // Chart UI colors - simplified (main chart colors use tint directly)
   chartGrid: string;
   chartThreshold: string;
+
+  // Card gradients - pre-computed for performance
+  cardGradient: readonly string[];
 }
 
 export type ThemeColorName = keyof ThemeColors;

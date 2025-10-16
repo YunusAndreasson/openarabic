@@ -49,4 +49,7 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
 
   /** Content fit for placeholder */
   placeholderContentFit?: ImageConfig['contentFit'];
+
+  /** Allow image downscaling to match container size (defaults to true) */
+  allowDownscaling?: boolean;
 }

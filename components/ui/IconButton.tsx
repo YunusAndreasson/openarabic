@@ -8,6 +8,7 @@ import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useDebounce, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 import { createAndroidRipple } from '@/utils/layoutUtils';
 
@@ -86,6 +87,7 @@ const IconButton: FC<IconButtonProps> = ({
   iconStyle,
 }) => {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     scaleAmount: ICON_BUTTON_PRESS_SCALE,
   });
@@ -111,10 +113,10 @@ const IconButton: FC<IconButtonProps> = ({
   const finalHandler = debounce ? debouncedHandlePress : pressHandler;
   const finalDisabled = disabled || (debounce && isDebouncing);
 
-  // Determine colors
+  // Determine colors with theme-aware defaults
   const resolvedBackgroundColor =
     backgroundColor ?? (variant === 'danger' ? colors.error : colors.tint);
-  const resolvedIconColor = iconColor ?? colors.black;
+  const resolvedIconColor = iconColor ?? (isDarkMode ? colors.text : colors.black);
 
   return (
     <Pressable

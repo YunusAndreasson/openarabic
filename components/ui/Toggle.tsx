@@ -58,10 +58,10 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     return [
       containerAnimatedStyle,
       {
-        backgroundColor: value ? colors.tint : isDarkMode ? colors.border : colors.border,
+        backgroundColor: value ? colors.tint : colors.border,
       },
     ];
-  }, [containerAnimatedStyle, value, colors.tint, colors.border, isDarkMode]);
+  }, [containerAnimatedStyle, value, colors.tint, colors.border]);
 
   const containerStyle = useMemo(
     () => [

@@ -196,6 +196,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
           title={item.title}
           secondaryText={secondaryText}
           imageUrl={generateImageUrl(item.image_url)}
+          articleId={item.id}
           editMode={editMode}
           onPress={!editMode ? () => onArticlePress(item) : undefined}
           onDelete={createDeleteHandler(item.id)}

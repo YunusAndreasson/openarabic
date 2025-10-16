@@ -6,10 +6,10 @@ import { useColorScheme } from 'react-native';
 
 // Mock the selector hook so we can control the returned theme
 jest.mock('@/store/hooks', () => ({
-  useAppSelectorMemo: jest.fn(),
+  useAppSelectorShallow: jest.fn(),
 }));
 
-const mockedSelector = require('@/store/hooks').useAppSelectorMemo as jest.Mock;
+const mockedSelector = require('@/store/hooks').useAppSelectorShallow as jest.Mock;
 const mockedUseColorScheme = useColorScheme as jest.Mock;
 
 describe('useIsDarkMode', () => {

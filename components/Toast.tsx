@@ -80,28 +80,31 @@ export const Toast = memo(
       };
     }, [visible, duration, onClose]);
 
-    // Enhanced color scheme based on toast type - use elevation3 for floating elements
-    const backgroundColor = useMemo(() => {
+    // Consolidated color scheme memoization for better performance
+    const toastColors = useMemo(() => {
+      let backgroundColor: string;
+      let textColor: string;
+
       switch (type) {
         case 'success':
-          return colors.success || colors.tint;
+          backgroundColor = colors.success || colors.tint;
+          textColor = colors.white;
+          break;
         case 'error':
-          return colors.error;
+          backgroundColor = colors.error;
+          textColor = colors.white;
+          break;
         case 'important':
-          return colors.warning || colors.tint;
+          backgroundColor = colors.warning || colors.tint;
+          textColor = colors.white;
+          break;
         default:
-          return colors.elevation3; // Use elevation3 for floating toast messages
+          backgroundColor = colors.elevation2; // Darker, more visible toast in dark mode
+          textColor = colors.text;
       }
-    }, [type, colors]);
 
-    const textColor = useMemo(() => {
-      // IMPORTANT: Use dark text by default for consistency across the app
-      // Only use white text on strong/colored backgrounds
-      if (type === 'important' || type === 'error' || type === 'success') {
-        return colors.white;
-      }
-      return colors.text;
-    }, [type, colors.text, colors.white]);
+      return { backgroundColor, textColor };
+    }, [type, colors]);
 
     // For mobile-only apps, use constant screen width
     const screenWidth = SCREEN_WIDTH;
@@ -122,12 +125,12 @@ export const Toast = memo(
           skipDefaultColor
           ellipsizeMode="tail"
           numberOfLines={3} // Allow more lines for longer messages
-          style={[styles.toastText, { color: textColor }]}
+          style={[styles.toastText, { color: toastColors.textColor }]}
         >
           {message}
         </ThemedText>
       ),
-      [message, textColor]
+      [message, toastColors.textColor]
     );
 
     if (!visible) return null;
@@ -144,7 +147,7 @@ export const Toast = memo(
             styles.toast,
             {
               maxWidth: maxToastWidth,
-              backgroundColor,
+              backgroundColor: toastColors.backgroundColor,
               shadowColor: colors.shadow,
               // Add subtle border for definition
               borderWidth: isDarkMode ? 1 : 0,

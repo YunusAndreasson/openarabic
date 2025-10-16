@@ -254,6 +254,8 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
                   style={styles.profilePhoto}
                   contentFit="cover"
                   cachePolicy="memory-disk"
+                  transition={200}
+                  priority="high"
                 />
               ) : (
                 <View style={dynamicStyles.initialsContainer}>

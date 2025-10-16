@@ -92,6 +92,7 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
                 title={article.title}
                 secondaryText={capitalizeFirstLetter(article.category.name)}
                 imageUrl={generateImageUrl(article.image_url)}
+                articleId={article.id}
                 progressPercentage={progressPercentage}
               />
             </Link>

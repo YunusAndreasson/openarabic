@@ -15,10 +15,8 @@ import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
-import { withOpacity } from '@/utils/colorUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 // Extract constants outside component for better performance
@@ -147,7 +145,6 @@ function ArticleCardComponent({
   isRelatedArticle: _isRelatedArticle = false,
 }: ArticleCardProps): JSX.Element {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   // For mobile-only apps, use constant screen width
   const screenWidth = SCREEN_WIDTH;
 
@@ -168,23 +165,8 @@ function ArticleCardComponent({
     [screenWidth]
   );
 
-  // Memoize gradient colors with stable references
-  const gradientColors = useMemo(() => {
-    if (isDarkMode) {
-      return [
-        withOpacity(colors.background, 0),
-        withOpacity(colors.background, 0.5),
-        withOpacity(colors.background, 0.9),
-        colors.card,
-      ] as const;
-    }
-    return [
-      colors.transparent,
-      colors.transparent,
-      colors.transparent,
-      colors.transparent,
-    ] as const;
-  }, [colors.background, colors.card, colors.transparent, isDarkMode]);
+  // Use pre-computed gradient colors from theme for performance
+  const gradientColors = colors.cardGradient;
 
 
   // Memoize computed values for child components
@@ -232,7 +214,11 @@ function ArticleCardComponent({
     () => (
       <>
         <View style={imageContainerStyle}>
-          <EnhancedImage style={styles.image} source={imageUrl} />
+          <EnhancedImage
+            style={styles.image}
+            source={imageUrl}
+            recyclingKey={`article-${article.id}`}
+          />
           <LinearGradient {...gradientProps} />
         </View>
 
@@ -276,6 +262,7 @@ function ArticleCardComponent({
       title,
       authorDisplayText,
       summary,
+      article.id,
     ]
   );
 

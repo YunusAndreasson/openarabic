@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import type { TypedUseSelectorHook } from 'react-redux';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
@@ -13,37 +12,26 @@ export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 /**
  * Custom hook for selecting specific parts of the state with shallow equality checking.
  *
- * This hook uses `shallowEqual` by default to compare selected values, which prevents
+ * This hook uses `shallowEqual` to compare selected values, which prevents
  * re-renders when the selected object has the same properties but a different reference.
- *
- * **Important**: The selector function should be stable (memoized with useCallback) for
- * optimal performance. This hook does NOT memoize the selector - it only provides
- * shallowEqual comparison by default.
+ * This is particularly useful when selecting multiple primitive values as an object.
  *
  * @example
  * ```tsx
- * // ✅ GOOD - Inline selector (stable identity on each render)
- * const theme = useAppSelectorMemo(state => state.theme.theme);
+ * // ✅ GOOD - Selecting a single primitive (shallowEqual works like ===)
+ * const theme = useAppSelectorShallow(state => state.theme.theme);
  *
- * // ✅ ALSO GOOD - For the same reason
- * const settings = useAppSelectorMemo(state => ({
+ * // ✅ GREAT - Selecting multiple values as object (shallowEqual prevents re-renders)
+ * const settings = useAppSelectorShallow(state => ({
  *   font: state.settings.arabicFont,
  *   size: state.settings.arabicFontSize
  * }));
- *
- * // ⚠️ NOTE - If you need custom equality, pass it as second argument
- * const data = useAppSelectorMemo(state => state.data, customEqual);
+ * // Without shallowEqual, the inline object would cause re-renders on every render
+ * // With shallowEqual, only re-renders if font or size values actually change
  * ```
  */
-export function useAppSelectorMemo<Selected>(
-  selector: (state: RootState) => Selected,
-  equalityFn?: (left: Selected, right: Selected) => boolean
+export function useAppSelectorShallow<Selected>(
+  selector: (state: RootState) => Selected
 ): Selected {
-  // Note: Memoizing the selector here doesn't help because selector identity
-  // changes on every render (unless caller memoizes it). However, shallowEqual
-  // comparison of the *result* prevents unnecessary re-renders.
-  const memoizedSelector = useMemo(() => selector, [selector]);
-
-  // Use shallowEqual by default if no equality function is provided
-  return useAppSelector(memoizedSelector, equalityFn || shallowEqual);
+  return useAppSelector(selector, shallowEqual);
 }
