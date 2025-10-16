@@ -19,15 +19,17 @@ export const GRAMMAR_COLOR_MAP = {
 
 /**
  * Pre-compiled regex for word boundary detection
- * More efficient than creating new regex on every check
+ * Matches lowercase ASCII letters a-z
+ * Note: Intentionally limited to ASCII for English text matching (Arabic text handled separately)
  */
 const LETTER_REGEX = /[a-z]/;
 
 /**
- * Common English contractions mapped to their expanded forms
+ * Comprehensive English contractions mapped to their expanded forms
  * Used to match contracted text against expanded component patterns
  */
 const CONTRACTION_MAP: Record<string, string> = {
+  // Negation contractions
   "won't": 'will not',
   "can't": 'cannot',
   "don't": 'do not',
@@ -43,6 +45,44 @@ const CONTRACTION_MAP: Record<string, string> = {
   "wouldn't": 'would not',
   "shouldn't": 'should not',
   "couldn't": 'could not',
+  "mustn't": 'must not',
+  "mightn't": 'might not',
+  "shan't": 'shall not',
+
+  // "Have" contractions
+  "i've": 'i have',
+  "you've": 'you have',
+  "we've": 'we have',
+  "they've": 'they have',
+
+  // "Would/Had" contractions
+  "i'd": 'i would',
+  "you'd": 'you would',
+  "he'd": 'he would',
+  "she'd": 'she would',
+  "we'd": 'we would',
+  "they'd": 'they would',
+
+  // "Will" contractions (already covered above)
+  // "i'll", "you'll", etc. are in arabicWordAnalysis.ts CONTRACTION_MAP
+
+  // "Let" contractions
+  "let's": 'let us',
+
+  // "That/What/Where/etc" contractions
+  "that's": 'that is',
+  "there's": 'there is',
+  "here's": 'here is',
+  "what's": 'what is',
+  "who's": 'who is',
+  "where's": 'where is',
+  "when's": 'when is',
+  "why's": 'why is',
+  "how's": 'how is',
+
+  // "It" contractions (already in arabicWordAnalysis.ts)
+  // Adding here for completeness
+  "it'll": 'it will',
 };
 
 /**

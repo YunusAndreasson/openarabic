@@ -82,11 +82,15 @@ function ArabicWordComponent({
       if (wordRef?.current) {
         // Small delay to ensure the layout is fully rendered
         setTimeout(() => {
-          wordRef.current?.measureInWindow((x, y, width, height) => {
-            if (x !== undefined && y !== undefined && width > 0 && height > 0) {
-              setAbsoluteLayout({ x, y, width, height });
-            }
-          });
+          try {
+            wordRef.current?.measureInWindow((x, y, width, height) => {
+              if (x !== undefined && y !== undefined && width > 0 && height > 0) {
+                setAbsoluteLayout({ x, y, width, height });
+              }
+            });
+          } catch {
+            // Ignore measurement errors - fallback to relative layout
+          }
         }, 0);
       }
     },
@@ -116,16 +120,23 @@ function ArabicWordComponent({
     // Open the tooltip immediately (no audio playback on word press)
     // Ensure we have fresh absolute coordinates
     if (wordRef?.current) {
-      wordRef.current.measureInWindow((x, y, width, height) => {
-        if (x !== undefined && y !== undefined && width > 0 && height > 0) {
-          const freshLayout = { x, y, width, height };
-          setAbsoluteLayout(freshLayout);
-          onTooltipOpen(freshLayout);
-        } else if (absoluteLayout) {
-          // Fallback to existing layout
+      try {
+        wordRef.current.measureInWindow((x, y, width, height) => {
+          if (x !== undefined && y !== undefined && width > 0 && height > 0) {
+            const freshLayout = { x, y, width, height };
+            setAbsoluteLayout(freshLayout);
+            onTooltipOpen(freshLayout);
+          } else if (absoluteLayout) {
+            // Fallback to existing layout
+            onTooltipOpen(absoluteLayout);
+          }
+        });
+      } catch {
+        // Fallback to existing layout on error
+        if (absoluteLayout) {
           onTooltipOpen(absoluteLayout);
         }
-      });
+      }
     } else if (absoluteLayout) {
       onTooltipOpen(absoluteLayout);
     }

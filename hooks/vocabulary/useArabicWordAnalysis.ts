@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { useColors } from '@/hooks/theme/useColors';
-import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
+import { analyzeArabicWord, formatWordAnalysis, shouldInjectBracket } from '@/utils/arabicWordAnalysis';
 
 interface ColoredSegment {
   text: string;
@@ -38,30 +38,17 @@ export function useArabicWordAnalysis(
     }
 
     let processedEnglish = englishTranslation;
-    let hasBracketInjection = false;
 
-    // Inject "[the]" for Arabic words starting with "ال" (definite article)
-    // This helps users learn that "ال" = "the" even when not explicitly translated
+    // Normalize Arabic for bracket injection check (remove diacritics)
     const normalizedArabic = arabicWord.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
-    const hasDefiniteArticle =
-      normalizedArabic.startsWith('ال') ||
-      normalizedArabic.startsWith('بال') ||
-      normalizedArabic.startsWith('لل') ||
-      normalizedArabic.startsWith('كال');
 
-    // Skip injection for divine names and words that already imply definiteness
-    const lowerEnglish = englishTranslation.toLowerCase();
-    const skipInjection =
-      normalizedArabic.startsWith('الله') || // Divine name "Allah"
-      lowerEnglish.includes('god') ||
-      lowerEnglish.includes('allah') ||
-      lowerEnglish.includes('lord') ||
-      lowerEnglish.includes('creator') ||
-      lowerEnglish.includes('most high');
+    // Use shared bracket injection logic
+    const hasBracketInjection = shouldInjectBracket(normalizedArabic, englishTranslation);
 
-    if (hasDefiniteArticle && !lowerEnglish.includes('the') && !skipInjection) {
+    // Inject "[the]" for Arabic words with definite article when appropriate
+    // This helps users learn that "ال" = "the" even when not explicitly translated
+    if (hasBracketInjection) {
       processedEnglish = `[the] ${englishTranslation}`;
-      hasBracketInjection = true;
     }
 
     // CRITICAL RULE: Single English words should NEVER have grammar color-coding applied

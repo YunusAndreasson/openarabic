@@ -67,12 +67,13 @@ const OTHER_PREFIXES = [
   { arabic: 'لا', english: ['not', 'no', "don't", "doesn't", "didn't", 'do not'] },
   { arabic: 'لم', english: ['did not', "didn't", 'does not', "doesn't"] },
   { arabic: 'لن', english: ['will not', 'shall not', 'never', "won't"] },
+  { arabic: 'لئلا', english: ['to not', 'lest', 'so that not', 'in order not to'] }, // Compound negation particle
   { arabic: 'إلا', english: ['except', 'but', 'only', 'none', 'nothing but'] },
   { arabic: 'بل', english: ['but', 'rather', 'instead'] },
   { arabic: 'ثم', english: ['then', 'and then', 'afterwards', 'moreover'] },
   // Verbal subject markers (present tense)
   { arabic: 'ي', english: ['he', 'it', 'was', 'is', 'does'] }, // broader auxiliaries for gating
-  { arabic: 'ت', english: ['you', 'she', 'does', 'is'] },
+  { arabic: 'ت', english: ['you', 'she', 'it', 'does', 'is'] }, // 'it' for 3rd person feminine singular (inanimate objects)
   { arabic: 'أ', english: ['I', 'do', 'am'] },
   { arabic: 'ن', english: ['we', 'are', 'do'] },
   // Subjunctive prefix (ya + verb + tu = "to verb")
@@ -82,8 +83,9 @@ const OTHER_PREFIXES = [
   { arabic: 'إن', english: ['indeed', 'verily', 'if'] },
   { arabic: 'فإن', english: ['for', 'so', 'then', 'therefore', 'because'] }, // Compound: fa (so/then) + inna (emphasis)
   { arabic: 'إنما', english: ['only', 'truly', 'verily', 'indeed'] }, // Restrictive particle
+  { arabic: 'أما', english: ['do you not', 'do not you', 'are you not', 'have you not', 'as for'] }, // Interrogative + negation particle
   { arabic: 'ما', english: ['what', 'that which'] },
-  { arabic: 'مَنْ', english: ['who', 'whoever', 'whomever', 'he who', 'those who'] },
+  { arabic: 'من', english: ['who', 'whoever', 'whomever', 'he who', 'those who'] },
   { arabic: 'أن', english: ['that', 'to'] },
   { arabic: 'إذا', english: ['if', 'when'] },
   { arabic: 'كم', english: ['how much', 'how many', 'how'] },
@@ -248,7 +250,7 @@ function createFinalPrefixList(): WordComponent[] {
     },
     {
       arabic: '^لل',
-      english: ['for the', 'to the', 'his', 'her', 'their', 'my', 'your', 'its'],
+      english: ['for the', 'to the', 'for', 'to', 'his', 'her', 'their', 'my', 'your', 'its'],
       type: ComponentType.PREFIX
     },
     { arabic: '^كال', english: ['like the', 'as the'], type: ComponentType.PREFIX },
@@ -259,16 +261,58 @@ function createFinalPrefixList(): WordComponent[] {
   // These entries provide the particle meaning "who/whoever" which has higher priority due to longer match
   const manParticleCompounds: WordComponent[] = [
     { arabic: '^فمن', english: ['so whoever', 'then whoever', 'so who', 'then who', 'and whoever', 'and who'], type: ComponentType.PREFIX },
-    { arabic: '^ومن', english: ['and whoever', 'and who', 'also whoever', 'also who'], type: ComponentType.PREFIX },
+    { arabic: '^ومن', english: ['and whoever', 'and who', 'also whoever', 'also who', 'And whoever', 'And those', 'And for those'], type: ComponentType.PREFIX },
   ];
 
-  // 6. Add إنما particle compounds (stylistic translations often omit conjunction in English)
+  // 6. Add ما particle compounds (ما as "what/that which")
+  // Note: ما is also programmatically generated, but we add explicit entries for common translation variations
+  const maParticleCompounds: WordComponent[] = [
+    { arabic: '^وما', english: ['and what', 'also what', 'and that which', 'what'], type: ComponentType.PREFIX },
+    { arabic: '^فما', english: ['so what', 'then what', 'and what', 'what about'], type: ComponentType.PREFIX },
+  ];
+
+  // 7. Add إنما particle compounds (stylistic translations often omit conjunction in English)
   const innamaCompounds: WordComponent[] = [
     { arabic: '^فإنما', english: ['so only', 'then only', 'so truly', 'then truly', 'only truly', 'only', 'truly'], type: ComponentType.PREFIX },
     { arabic: '^وإنما', english: ['and only', 'also only', 'and truly', 'also truly'], type: ComponentType.PREFIX },
   ];
 
-  // 7. Add subject/future combined prefixes (double prefixes)
+  // 8. Add demonstrative pronoun compounds (PREPOSITION/CONJUNCTION + هذا/ذلك)
+  const demonstrativeCompounds: WordComponent[] = [
+    // بهذا - "in/with this"
+    { arabic: '^بهذا', english: ['in this', 'with this', 'by this', 'through this'], type: ComponentType.PREFIX },
+    // لهذا - "for/to this"
+    { arabic: '^لهذا', english: ['for this', 'to this', 'therefore', 'for this reason'], type: ComponentType.PREFIX },
+    // كهذا - "like this"
+    { arabic: '^كهذا', english: ['like this', 'as this', 'such as this'], type: ComponentType.PREFIX },
+    // وهذا - "and this"
+    { arabic: '^وهذا', english: ['and this', 'also this'], type: ComponentType.PREFIX },
+    // فهذا - "then/so this"
+    { arabic: '^فهذا', english: ['then this', 'so this', 'thus this', 'and this'], type: ComponentType.PREFIX },
+    // Similar patterns for هذه (this - feminine)
+    { arabic: '^بهذه', english: ['in this', 'with this', 'by this'], type: ComponentType.PREFIX },
+    { arabic: '^لهذه', english: ['for this', 'to this'], type: ComponentType.PREFIX },
+    { arabic: '^وهذه', english: ['and this', 'also this'], type: ComponentType.PREFIX },
+    { arabic: '^فهذه', english: ['then this', 'so this', 'and this'], type: ComponentType.PREFIX },
+  ];
+
+  // 9. Add PREPOSITION + PARTICLE compounds (فيما, بما, لما, etc.)
+  const prepPlusParticleCompounds: WordComponent[] = [
+    // في + ما = "in what"
+    { arabic: '^فيما', english: ['in what', 'with regard to', 'as for what'], type: ComponentType.PREFIX },
+    // ب + ما = "with what", "by what"
+    { arabic: '^بما', english: ['with what', 'by what', 'because', 'since', 'as'], type: ComponentType.PREFIX },
+    // ل + ما = "for what", "why"
+    { arabic: '^لما', english: ['for what', 'why', 'when', 'since'], type: ComponentType.PREFIX },
+    // ك + ما = "as what", "like what"
+    { arabic: '^كما', english: ['as', 'like', 'just as', 'as what', 'like what'], type: ComponentType.PREFIX },
+    // م + ما = "from what"
+    { arabic: '^مما', english: ['from what', 'of what', 'than what'], type: ComponentType.PREFIX },
+    // عن + ما = "about what"
+    { arabic: '^عما', english: ['about what', 'concerning what', 'from what'], type: ComponentType.PREFIX },
+  ];
+
+  // 10. Add subject/future combined prefixes (double prefixes)
   const subjectFutureCombos: WordComponent[] = [
     // Conjunction + subject marker
     { arabic: '^وي', english: ['and he', 'and it'], type: ComponentType.PREFIX },
@@ -312,9 +356,16 @@ function createFinalPrefixList(): WordComponent[] {
   // are now integrated into the patterns above via enhanceWithTranslationVariations()
   // and the extended prepPlusAl entries, eliminating duplicate pattern checks.
 
-  return [...baseList, ...prepPlusAl, ...manParticleCompounds, ...innamaCompounds, ...subjectFutureCombos].sort(
-    (a, b) => b.arabic.length - a.arabic.length
-  ); // Sort longest first
+  return [
+    ...baseList,
+    ...prepPlusAl,
+    ...manParticleCompounds,
+    ...maParticleCompounds,
+    ...innamaCompounds,
+    ...demonstrativeCompounds,
+    ...prepPlusParticleCompounds,
+    ...subjectFutureCombos,
+  ].sort((a, b) => b.arabic.length - a.arabic.length); // Sort longest first
 }
 
 /**
@@ -392,6 +443,18 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
     english: ['my', 'mine', 'of me'],
     type: ComponentType.SUFFIX,
   },
+  // Shadda-aware possessive suffixes (when attached to prepositions ending in ى)
+  // e.g., على + ي → علىّ or عليّ (upon me), لدى + ي → لديّ (with me)
+  {
+    arabic: 'ىّ$',
+    english: ['my', 'me', 'of me'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'يّ$',
+    english: ['my', 'me', 'of me'],
+    type: ComponentType.SUFFIX,
+  },
   {
     arabic: 'ك$',
     english: ['your', 'yours', 'of you', 'you'],
@@ -423,7 +486,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   },
   {
     arabic: 'نا$',
-    english: ['our', 'ours', 'of us', 'us'],
+    english: ['our', 'ours', 'of us', 'us', 'we'], // 'we' for first-person plural subject in verb conjugations
     type: ComponentType.SUFFIX,
   },
   {
@@ -444,7 +507,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   },
   {
     arabic: 'هما$',
-    english: ['both of them', 'their (dual)', 'them two'],
+    english: ['both of them', 'their (dual)', 'them two', 'them', 'which', 'those', 'these'],
     type: ComponentType.SUFFIX,
   },
   {

@@ -30,9 +30,34 @@ export interface WordAnalysis {
   hasBracketInjection?: boolean;
 }
 
-// Pre-compiled regex patterns for better performance
-// Only include Arabic combining marks and superscript alef; exclude letter ranges (e.g., 06EE-06EF, 06FA-06FF)
+/**
+ * Pre-compiled regex for Arabic diacritical marks
+ *
+ * Includes:
+ * - \u064B-\u065F: Arabic diacritics (fatha, kasra, damma, tanween, sukun, shadda, etc.)
+ * - \u0670: Arabic letter superscript alef
+ * - \u06D6-\u06ED: Arabic small high ligature sad/qaf/alef, etc.
+ *
+ * Excludes:
+ * - \u06EE-\u06EF: Letterforms (not diacritics)
+ * - \u06FA-\u06FF: Extended Arabic letters (not diacritics)
+ */
 const DIACRITIC_REGEX = /[\u064B-\u065F\u0670\u06D6-\u06ED]/g;
+
+/**
+ * Unicode formatting characters that should be stripped during normalization
+ *
+ * Includes:
+ * - \u200B: Zero-width space
+ * - \u200C: Zero-width non-joiner
+ * - \u200D: Zero-width joiner
+ * - \u200E: Left-to-right mark
+ * - \u200F: Right-to-left mark
+ * - \u202A-\u202E: Directional formatting characters
+ * - \uFEFF: Zero-width no-break space (BOM)
+ */
+const UNICODE_FORMAT_REGEX = /[\u200B-\u200F\u202A-\u202E\uFEFF]/g;
+
 const NON_WORD_REGEX = /[^\w\s]/g;
 const WHITESPACE_REGEX = /\s+/;
 
@@ -40,16 +65,31 @@ const WHITESPACE_REGEX = /\s+/;
 const ARABIC_NORMALIZATION_CACHE = new Map<string, string>();
 const ENGLISH_NORMALIZATION_CACHE = new Map<string, string>();
 const ANALYSIS_CACHE = new Map<string, WordAnalysis>();
-const CACHE_SIZE_LIMIT = 100;
+const CACHE_SIZE_LIMIT = 500; // Increased from 100 for better performance with common words
 
-// Contraction map hoisted and lowercased once for reuse
+// Comprehensive contraction map hoisted and lowercased once for reuse
 const CONTRACTION_MAP: Record<string, string> = {
+  // Negation contractions
   "won't": 'will not',
   "can't": 'cannot',
   "don't": 'do not',
   "doesn't": 'does not',
   "didn't": 'did not',
-  // common "will" contractions
+  "isn't": 'is not',
+  "aren't": 'are not',
+  "wasn't": 'was not',
+  "weren't": 'were not',
+  "hasn't": 'has not',
+  "haven't": 'have not',
+  "hadn't": 'had not',
+  "wouldn't": 'would not',
+  "shouldn't": 'should not',
+  "couldn't": 'could not',
+  "mustn't": 'must not',
+  "mightn't": 'might not',
+  "shan't": 'shall not',
+
+  // "Will" contractions
   "i'll": 'i will',
   "you'll": 'you will',
   "he'll": 'he will',
@@ -57,7 +97,8 @@ const CONTRACTION_MAP: Record<string, string> = {
   "it'll": 'it will',
   "we'll": 'we will',
   "they'll": 'they will',
-  // be verb contractions
+
+  // "Be" verb contractions
   "i'm": 'i am',
   "you're": 'you are',
   "he's": 'he is',
@@ -65,10 +106,38 @@ const CONTRACTION_MAP: Record<string, string> = {
   "it's": 'it is',
   "we're": 'we are',
   "they're": 'they are',
+
+  // "Have" contractions
+  "i've": 'i have',
+  "you've": 'you have',
+  "we've": 'we have',
+  "they've": 'they have',
+
+  // "Would/Had" contractions
+  "i'd": 'i would',
+  "you'd": 'you would',
+  "he'd": 'he would',
+  "she'd": 'she would',
+  "we'd": 'we would',
+  "they'd": 'they would',
+
+  // "Let" contractions
+  "let's": 'let us',
+
+  // "That/What/Where/etc" contractions
+  "that's": 'that is',
+  "there's": 'there is',
+  "here's": 'here is',
+  "what's": 'what is',
+  "who's": 'who is',
+  "where's": 'where is',
+  "when's": 'when is',
+  "why's": 'why is',
+  "how's": 'how is',
 };
 
 /**
- * Normalizes Arabic text by removing diacritics (with caching)
+ * Normalizes Arabic text by removing diacritics and Unicode formatting characters (with caching)
  */
 function normalizeArabic(text: string): string {
   const cached = ARABIC_NORMALIZATION_CACHE.get(text);
@@ -76,11 +145,19 @@ function normalizeArabic(text: string): string {
     return cached;
   }
 
-  const normalized = text.replace(DIACRITIC_REGEX, '').trim();
+  // Remove Unicode formatting characters (RTL marks, zero-width characters, etc.)
+  // then remove diacritics, then trim
+  const normalized = text
+    .replace(UNICODE_FORMAT_REGEX, '')
+    .replace(DIACRITIC_REGEX, '')
+    .trim();
 
-  // Simple cache management - clear when too large
+  // LRU cache management - evict oldest entry when cache is full
   if (ARABIC_NORMALIZATION_CACHE.size >= CACHE_SIZE_LIMIT) {
-    ARABIC_NORMALIZATION_CACHE.clear();
+    const firstKey = ARABIC_NORMALIZATION_CACHE.keys().next().value;
+    if (firstKey) {
+      ARABIC_NORMALIZATION_CACHE.delete(firstKey);
+    }
   }
   ARABIC_NORMALIZATION_CACHE.set(text, normalized);
 
@@ -98,13 +175,82 @@ function normalizeEnglish(text: string): string {
 
   const normalized = text.toLowerCase().replace(NON_WORD_REGEX, '').trim();
 
-  // Simple cache management - clear when too large
+  // LRU cache management - evict oldest entry when cache is full
   if (ENGLISH_NORMALIZATION_CACHE.size >= CACHE_SIZE_LIMIT) {
-    ENGLISH_NORMALIZATION_CACHE.clear();
+    const firstKey = ENGLISH_NORMALIZATION_CACHE.keys().next().value;
+    if (firstKey) {
+      ENGLISH_NORMALIZATION_CACHE.delete(firstKey);
+    }
   }
   ENGLISH_NORMALIZATION_CACHE.set(text, normalized);
 
   return normalized;
+}
+
+/**
+ * Expands contractions in English text BEFORE normalization
+ * This preserves apostrophes for contraction lookup before they're removed
+ *
+ * @param text - English text that may contain contractions
+ * @returns Text with contractions expanded (e.g., "don't know" → "do not know")
+ */
+function expandContractions(text: string): string {
+  let expanded = text.toLowerCase();
+
+  // Replace each contraction with its expanded form
+  for (const [contraction, expansion] of Object.entries(CONTRACTION_MAP)) {
+    // Use word boundary regex to avoid partial matches
+    const regex = new RegExp(`\\b${contraction}\\b`, 'g');
+    expanded = expanded.replace(regex, expansion);
+  }
+
+  return expanded;
+}
+
+/**
+ * Determines if a pattern should be rejected because it matches the entire translation
+ *
+ * Rules:
+ * 1. Single-word translations: always allow (e.g., 'و' → 'and')
+ * 2. Multi-word translations with standalone particle: allow if component = entire Arabic word (e.g., 'لم' → 'does not')
+ * 3. Multi-word translations with compound word: reject whole-translation matches (defeats educational purpose)
+ *
+ * @param candidate - The normalized candidate pattern
+ * @param normalizedEnglish - The normalized English translation
+ * @param tokenCount - Number of words in the English translation
+ * @param arabicWord - The original Arabic word (optional)
+ * @param componentPattern - The Arabic component pattern (optional)
+ * @returns true if the pattern should be rejected
+ */
+function shouldRejectWholeTranslationMatch(
+  candidate: string,
+  normalizedEnglish: string,
+  tokenCount: number,
+  arabicWord?: string,
+  componentPattern?: string
+): boolean {
+  // Rule 1: Single-word translations always allowed
+  if (tokenCount === 1) {
+    return false;
+  }
+
+  // Only apply rejection for whole-translation matches in multi-word phrases
+  if (candidate !== normalizedEnglish) {
+    return false;
+  }
+
+  // Rule 2: Check if this is a standalone particle (component = entire Arabic word)
+  if (arabicWord && componentPattern) {
+    const normalizedArabic = normalizeArabic(arabicWord);
+    const isStandaloneParticle = normalizedArabic.length === componentPattern.length;
+
+    // Allow standalone particles (e.g., 'لم' where the prefix IS the word)
+    // Reject compound words (e.g., 'والبيت' where 'و' is just a prefix)
+    return !isStandaloneParticle;
+  }
+
+  // Rule 3: No Arabic context provided - reject whole-translation matches by default
+  return true;
 }
 
 /**
@@ -116,7 +262,9 @@ function hasEnglishMatch(
   arabicWord?: string,
   componentPattern?: string
 ): string[] {
-  const norm = normalizeEnglish(english);
+  // Expand contractions BEFORE normalization to preserve apostrophes for lookup
+  const expandedEnglish = expandContractions(english);
+  const norm = normalizeEnglish(expandedEnglish);
   const tokens = norm.split(WHITESPACE_REGEX).filter(Boolean);
 
   // Build unigram set for fast membership checks
@@ -124,68 +272,41 @@ function hasEnglishMatch(
   let bigrams: Set<string> | null = null;
   let trigrams: Set<string> | null = null;
 
-  // Simple contraction/variant expansion for common English phrases
-  const expand = (phrase: string): string[] => {
-    const p = normalizeEnglish(phrase);
-    const variants = [p];
-    // Look up in hoisted mapping using the original lowercased phrase
-    const lowerOriginal = phrase.toLowerCase();
-    if (CONTRACTION_MAP[lowerOriginal]) {
-      variants.push(normalizeEnglish(CONTRACTION_MAP[lowerOriginal]));
-    }
-    return variants;
-  };
-
   const matches: string[] = [];
   for (const raw of patterns) {
-    const candidates = expand(raw);
-    for (const candidate of candidates) {
-      // CRITICAL: Skip if pattern matches the ENTIRE English translation for multi-word phrases
-      // This prevents single-coloring of all words (defeats educational purpose)
-      // But allow single-word matches (e.g., 'و' → 'and')
-      // AND allow standalone particles (where component = entire Arabic word, e.g., 'لم' → 'does not')
-      if (candidate === norm && tokens.length > 1) {
-        // Check if this is a standalone particle by comparing Arabic lengths
-        if (arabicWord && componentPattern) {
-          const normalizedArabic = normalizeArabic(arabicWord);
-          // Allow match if component equals entire Arabic word (standalone particle)
-          if (normalizedArabic.length === componentPattern.length) {
-            // This is a standalone particle - allow the match
-          } else {
-            // This is a compound word - skip whole-translation match
-            continue;
-          }
-        } else {
-          // No Arabic context - use old behavior (skip)
-          continue;
-        }
-      }
+    // Normalize the pattern for matching
+    const candidate = normalizeEnglish(raw);
 
-      if (candidate.includes(' ')) {
-        // Lazily build bigrams/trigrams when needed
-        if (!bigrams || !trigrams) {
-          bigrams = new Set(
-            tokens
-              .map((_, i) => (i + 1 < tokens.length ? `${tokens[i]} ${tokens[i + 1]}` : ''))
-              .filter(Boolean)
-          );
-          trigrams = new Set(
-            tokens
-              .map((_, i) =>
-                i + 2 < tokens.length ? `${tokens[i]} ${tokens[i + 1]} ${tokens[i + 2]}` : ''
-              )
-              .filter(Boolean)
-          );
-        }
+    // Check if we should reject this whole-translation match
+    if (shouldRejectWholeTranslationMatch(candidate, norm, tokens.length, arabicWord, componentPattern)) {
+      continue;
+    }
+
+    if (candidate.includes(' ')) {
+      // Lazily build bigrams/trigrams when needed
+      if (bigrams === null || trigrams === null) {
+        bigrams = new Set(
+          tokens
+            .map((_, i) => (i + 1 < tokens.length ? `${tokens[i]} ${tokens[i + 1]}` : ''))
+            .filter(Boolean)
+        );
+        trigrams = new Set(
+          tokens
+            .map((_, i) =>
+              i + 2 < tokens.length ? `${tokens[i]} ${tokens[i + 1]} ${tokens[i + 2]}` : ''
+            )
+            .filter(Boolean)
+        );
+      }
+      // Explicit null checks for TypeScript
+      if (bigrams !== null && trigrams !== null) {
         if (bigrams.has(candidate) || trigrams.has(candidate)) {
           matches.push(raw);
-          break;
         }
-      } else {
-        if (unigrams.has(candidate)) {
-          matches.push(raw);
-          break;
-        }
+      }
+    } else {
+      if (unigrams.has(candidate)) {
+        matches.push(raw);
       }
     }
   }
@@ -229,7 +350,18 @@ function findComponent(
       matches = arabic.trim().endsWith(pattern);
     }
 
-    // Heuristic disambiguation for very short subject markers to avoid false positives
+    /**
+     * Heuristic disambiguation for very short subject markers to avoid false positives
+     *
+     * Problem: Single-letter prefixes (ي، ت، أ، ن) are very common in Arabic and can create false matches
+     * Solution: Require remaining word to have minimum structure:
+     *   - At least 3 characters long
+     *   - At least 2 consonants (excluding ا، و، ي which are often vowels)
+     *
+     * Example:
+     *   - "يكتب" (he writes) ✓ passes: remaining "كتب" has length 3 and consonants ك، ت، ب
+     *   - "يد" (hand) ✗ fails: remaining "د" too short
+     */
     if (matches && type === ComponentType.PREFIX) {
       if (pattern === 'ي' || pattern === 'ت' || pattern === 'أ' || pattern === 'ن') {
         const remaining = arabic.slice(pattern.length);
@@ -259,7 +391,8 @@ function findComponent(
 }
 
 /**
- * Simplified overlap resolution - keeps the longer component
+ * Overlap resolution for prefix and suffix - keeps the longer component
+ * Note: Infixes are found AFTER prefix/suffix removal, so no infix overlap is possible by design
  */
 function resolveOverlap(
   normalized: string,
@@ -301,13 +434,55 @@ function findDiacritic(arabic: string, english: string): AnalyzedComponent | und
 }
 
 /**
+ * Determines if bracket injection ([the]) should be applied for definite article
+ * Shared logic to avoid duplication between analysis and hook
+ */
+export function shouldInjectBracket(
+  normalizedArabic: string,
+  englishTranslation: string
+): boolean {
+  // Check if word has definite article prefix patterns
+  // Note: Use startsWith (not includes) to match definite article at word beginning
+  const hasDefiniteArticle =
+    normalizedArabic.startsWith('ال') ||
+    normalizedArabic.startsWith('بال') ||
+    normalizedArabic.startsWith('لل') ||
+    normalizedArabic.startsWith('كال');
+
+  if (!hasDefiniteArticle) {
+    return false;
+  }
+
+  // Already has "the" in translation (check for whole word, not substring)
+  // Use word boundary regex to avoid matching "the" inside words like "then", "other", "rather"
+  const lowerTranslation = englishTranslation.toLowerCase();
+  const theWordRegex = /\bthe\b/;
+  if (theWordRegex.test(lowerTranslation)) {
+    return false;
+  }
+
+  // Skip injection for divine names and words that already imply definiteness
+  const lowerEnglish = englishTranslation.toLowerCase();
+  const skipInjection =
+    normalizedArabic.includes('الله') || // Divine name "Allah"
+    lowerEnglish.includes('god') ||
+    lowerEnglish.includes('allah') ||
+    lowerEnglish.includes('lord') ||
+    lowerEnglish.includes('creator') ||
+    lowerEnglish.includes('most high');
+
+  return !skipInjection;
+}
+
+/**
  * Main function to analyze an Arabic word and its English translation for components
  */
 export function analyzeArabicWord(arabic: string, english: string): WordAnalysis {
-  // Create cache key from normalized inputs
+  // Create cache key from normalized Arabic and original English
+  // Note: Use original English to avoid cache collisions from punctuation removal
+  // e.g., "book, guide" and "book; guide" should be cached separately
   const normalized = normalizeArabic(arabic);
-  const normalizedEnglish = normalizeEnglish(english);
-  const cacheKey = `${normalized}|${normalizedEnglish}`;
+  const cacheKey = `${normalized}|${english}`;
 
   // Check cache first
   const cachedResult = ANALYSIS_CACHE.get(cacheKey);
@@ -315,26 +490,8 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     return cachedResult;
   }
 
-  // Check for bracket injection (same logic as in useArabicWordAnalysis hook)
-  let hasBracketInjection = false;
-  const hasDefiniteArticle =
-    normalized.includes('ال') ||
-    normalized.startsWith('بال') ||
-    normalized.startsWith('لل') ||
-    normalized.startsWith('كال');
-
-  // Skip injection for divine names and words that already imply definiteness
-  const skipInjection =
-    normalized.includes('الله') || // Divine name "Allah"
-    english.toLowerCase().includes('god') ||
-    english.toLowerCase().includes('allah') ||
-    english.toLowerCase().includes('lord') ||
-    english.toLowerCase().includes('creator') ||
-    english.toLowerCase().includes('most high');
-
-  if (hasDefiniteArticle && !english.toLowerCase().includes('the') && !skipInjection) {
-    hasBracketInjection = true;
-  }
+  // Check for bracket injection using shared logic
+  const hasBracketInjection = shouldInjectBracket(normalized, english);
 
   // Check for diacritical prefixes in original text first (before normalization)
   const diacriticalPrefix = findComponent(arabic, english, ARABIC_PREFIXES, ComponentType.PREFIX);
