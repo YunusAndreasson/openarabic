@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
@@ -8,7 +7,7 @@ import type {
   NativeSyntheticEvent,
   ViewToken,
 } from 'react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   runOnJS,
   useAnimatedScrollHandler,
@@ -17,6 +16,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
+import { FloatingActionButtons } from '@/components/article/FloatingActionButtons';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import {
@@ -26,13 +26,11 @@ import {
 } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
-import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
-import { createAndroidRipple } from '@/utils/layoutUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -97,168 +95,6 @@ const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
 
 // Static key extractor for better performance
 const sentenceKeyExtractor = (item: Tables<'article_sentences'>) => item.id.toString();
-
-// Floating action buttons component positioned over parallax header
-const FloatingActionButtons = memo<{
-  isInReadingList: boolean;
-  onToggleReadingList: () => Promise<void>;
-  hasAudio?: boolean;
-  isPlaying?: boolean;
-  onPlayPress?: () => void;
-  showEnglish: boolean;
-  onToggleLanguage: () => void;
-  isLanguageOverridden: boolean;
-  onClose: () => void;
-}>(
-  ({
-    isInReadingList,
-    onToggleReadingList,
-    hasAudio = false,
-    isPlaying = false,
-    onPlayPress,
-    onToggleLanguage,
-    isLanguageOverridden,
-    onClose,
-  }) => {
-    const colors = useColors();
-    const insets = useSafeAreaInsets();
-    const [optimisticIsInReadingList, setOptimisticIsInReadingList] =
-      React.useState(isInReadingList);
-    // No dark mode specific styling needed here
-
-    // Sync optimistic state with prop when it changes (from external updates)
-    React.useEffect(() => {
-      setOptimisticIsInReadingList(isInReadingList);
-    }, [isInReadingList]);
-
-    // Optimistic toggle handler
-    const handleOptimisticToggle = React.useCallback(async () => {
-      // Optimistic update - immediately show the new state
-      const newState = !optimisticIsInReadingList;
-      setOptimisticIsInReadingList(newState);
-
-      try {
-        await onToggleReadingList();
-        // Success - the optimistic state should match the actual state now
-      } catch {
-        // Revert optimistic update on error
-        setOptimisticIsInReadingList(optimisticIsInReadingList);
-        // Error handling completed silently
-      }
-    }, [onToggleReadingList, optimisticIsInReadingList]);
-
-    const buttonStyle = useMemo(
-      () => ({
-        width: MIN_TOUCH_TARGET.MEDIUM,
-        height: MIN_TOUCH_TARGET.MEDIUM,
-        borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
-        backgroundColor: colors.elevation1,
-        opacity: 0.65, // 2025 best practice: More subtle circular background
-        alignItems: 'center' as const,
-        justifyContent: 'center' as const,
-        ...LAYOUT.ELEVATION.SUBTLE,
-      }),
-      [colors.elevation1]
-    );
-
-    const activeButtonStyle = useMemo(
-      () => ({
-        ...buttonStyle,
-        backgroundColor: colors.elevation2,
-        opacity: 0.75, // 2025 best practice: Slightly more visible when active
-      }),
-      [buttonStyle, colors.elevation2]
-    );
-
-    // Memoize button positions with safe area insets
-    const closeButtonStyle = useMemo(
-      () => ({
-        position: 'absolute' as const,
-        top: LAYOUT.SPACING.LARGE, // Increased from SMALL to LARGE for better spacing
-        left: LAYOUT.SPACING.SMALL,
-        zIndex: LAYOUT.Z_INDEX.OVERLAY,
-      }),
-      [insets.top]
-    );
-
-    const actionButtonsStyle = useMemo(
-      () => ({
-        position: 'absolute' as const,
-        top: LAYOUT.SPACING.LARGE, // Increased from SMALL to LARGE for better spacing
-        right: LAYOUT.SPACING.SMALL,
-        zIndex: LAYOUT.Z_INDEX.OVERLAY,
-        flexDirection: 'row' as const,
-        gap: LAYOUT.SPACING.TINY,
-      }),
-      [insets.top]
-    );
-
-    return (
-      <>
-        {/* Close button - top left */}
-        <View style={closeButtonStyle}>
-          <Pressable
-            style={buttonStyle}
-            onPress={onClose}
-            android_ripple={createAndroidRipple(colors)}
-          >
-            <Ionicons
-              name="close"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={colors.secondaryText}
-            />
-          </Pressable>
-        </View>
-
-        {/* Action buttons - top right */}
-        <View style={actionButtonsStyle}>
-          {/* Language toggle button - show/hide English text */}
-          <Pressable
-            style={isLanguageOverridden ? activeButtonStyle : buttonStyle}
-            onPress={onToggleLanguage}
-            android_ripple={createAndroidRipple(colors)}
-          >
-            <Ionicons
-              name="language"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={isLanguageOverridden ? colors.tint : colors.secondaryText}
-            />
-          </Pressable>
-
-          {/* Play button - only show if article has audio */}
-          {hasAudio && onPlayPress && (
-            <Pressable
-              style={isPlaying ? activeButtonStyle : buttonStyle}
-              onPress={onPlayPress}
-              android_ripple={createAndroidRipple(colors)}
-            >
-              <Ionicons
-                name={isPlaying ? 'pause' : 'play'}
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                color={isPlaying ? colors.tint : colors.secondaryText}
-              />
-            </Pressable>
-          )}
-
-          {/* Playlist button */}
-          <Pressable
-            style={optimisticIsInReadingList ? activeButtonStyle : buttonStyle}
-            onPress={handleOptimisticToggle}
-            android_ripple={createAndroidRipple(colors)}
-          >
-            <Ionicons
-              name="bookmark"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={optimisticIsInReadingList ? colors.tint : colors.secondaryText}
-            />
-          </Pressable>
-        </View>
-      </>
-    );
-  }
-);
-
-FloatingActionButtons.displayName = 'FloatingActionButtons';
 
 interface ArticleContentProps {
   id: string;

@@ -1,16 +1,7 @@
-import { useQueryClient } from '@tanstack/react-query';
-import * as Haptics from 'expo-haptics';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  AppState,
-  Platform,
-  View,
-  type LayoutRectangle,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
+import React, { memo, useCallback, useMemo } from 'react';
+import { Platform, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -22,27 +13,9 @@ import {
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider, useToast } from '@/components/providers';
 import PulsatingLoader from '@/components/ui/PulsatingLoader';
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { STRINGS } from '@/constants/strings';
-import { useArticleData } from '@/hooks/articles/useArticleData';
-import { useArticleLanguagePreference } from '@/hooks/articles/useArticleLanguagePreference';
-import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
-import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
-import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
-import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
-import { useAuth } from '@/hooks/auth/useAuth';
+import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
 import { useColors } from '@/hooks/theme/useColors';
-import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
-import { enhancedAudioService } from '@/services/enhancedAudioService';
-import { simpleAudioService } from '@/services/simpleAudioService';
-import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
-import { ToastType } from '@/types/enums';
-import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
-import { getCurrentArticleId, isAudioBusy, stopAudioSafely } from '@/utils/audioUtils';
-import { handleError } from '@/utils/errorHandling';
-import { calculateHeaderHeight } from '@/utils/gradientUtils';
-import { lightFeedback } from '@/utils/haptics';
 
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
@@ -65,359 +38,38 @@ const ArticleScreenContentComparison = (
 // Inner component with toast context access - optimized with React.memo
 const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const colors = useColors();
-  const { user } = useAuth();
   const { showToast } = useToast();
 
-  const queryClient = useQueryClient();
-
-  const { handleScroll: handleHeaderScroll } = useHeaderVisibility();
-
-  // Memoize article ID parsing to prevent unnecessary recalculations
-  const articleId = useMemo(() => {
-    if (!id) return undefined;
-    const parsed = parseInt(id ?? '', 10);
-    return isNaN(parsed) ? undefined : (parsed as ArticleId);
-  }, [id]);
-
-  // Use article language preference hook for per-article language toggle
-  const { showEnglish, toggleLanguage, isOverridden } = useArticleLanguagePreference(articleId);
-
-  // Note: header height not needed for current auto-scroll logic
-
+  // Extract all business logic into hook
   const {
-    article,
     isLoadingArticle,
+    article,
     sortedSentences,
     sentenceWordsMap,
-    refetchStudyWords,
+    showEnglish,
+    isOverridden,
     isInReadingList,
-    refetchReadingListStatus,
-  } = useArticleData(articleId, user?.id);
-
-  // Audio state for synchronization
-  const { isPlaying, currentArticle } = useGlobalAudioState();
-
-  const [activeTooltip, setActiveTooltip] = useState<{
-    word: SentenceWord;
-    layout: LayoutRectangle;
-  } | null>(null);
-
-  const [wordDetailsBottomSheet, setWordDetailsBottomSheet] = useState<{
-    isVisible: boolean;
-    word: SentenceWord | null;
-  }>({
-    isVisible: false,
-    word: null,
-  });
-
-  // Track button state locally for immediate UI updates
-  const [localStudyStates, setLocalStudyStates] = useState<Map<number, boolean>>(new Map());
-
-  // State to track current sentence index for reading progress
-  // This allows useReadingProgress to receive the current value, not a stale ref
-  const [currentSentenceIndexForProgress, setCurrentSentenceIndexForProgress] = useState(0);
-
-  // Keep a ref to avoid handleScroll identity changes when tooltip toggles
-  const activeTooltipRef = useRef<typeof activeTooltip>(null);
-  useEffect(() => {
-    activeTooltipRef.current = activeTooltip;
-  }, [activeTooltip]);
-
-  // Handle scroll to close tooltip and hide header with stable identity
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      handleHeaderScroll(event);
-      if (activeTooltipRef.current) {
-        setActiveTooltip(null);
-      }
-    },
-    [handleHeaderScroll]
-  );
-
-  // Article mutations for reading list and word management
-  const { handleToggleReadingList, handleRootPress } = useArticleMutations(
-    user?.id,
-    refetchReadingListStatus,
-    async () => {
-      await refetchStudyWords();
-    }
-  );
-
-  const handleToggleReadingListWithFeedback = useCallback(async () => {
-    if (!articleId) return;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await handleToggleReadingList(articleId, isInReadingList);
-    showToast(
-      isInReadingList ? STRINGS.REMOVED_FROM_BOOKMARKS : STRINGS.ADDED_TO_BOOKMARKS,
-      3000,
-      ToastType.INFO
-    );
-  }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
-
-  const handleToggleLanguageWithFeedback = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    toggleLanguage();
-  }, [toggleLanguage]);
-
-  const handleClose = useCallback(async () => {
-    // Stop audio playback completely before navigating away
-    try {
-      await stopAudioSafely(true);
-    } catch (error) {
-      handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
-    }
-
-    router.back();
-  }, []);
-
-  // Check if article has audio available
-  const hasAudio = useMemo(() => {
-    const hasAudioUrls = !!(article?.audio_url || article?.audio_url_bilingual);
-
-    return hasAudioUrls;
-  }, [article?.audio_url, article?.audio_url_bilingual, articleId]);
-
-  // Handle play button press
-  const handlePlayPress = useCallback(async () => {
-    if (!articleId || !article) return;
-
-    try {
-      if (isAudioBusy()) return;
-
-      const currentArticleId = getCurrentArticleId();
-
-      if (isPlaying && currentArticleId === articleId) {
-        // Currently playing this article, so stop completely
-        lightFeedback();
-        await simpleAudioService.stop();
-        return;
-      }
-
-      // Generate fresh audio track for this article
-      // Always use Arabic audio for word highlighting to match timestamps
-      lightFeedback();
-
-      const track = await enhancedAudioService.generateEnhancedAudioTrack(
-        articleId,
-        'arabic' // Force Arabic audio for word highlighting
-      );
-
-      if (track) {
-        const success = await simpleAudioService.play(track);
-        if (!success) {
-          handleError(new Error('Failed to start audio playback'), {
-            toastMessage: STRINGS.AUDIO_PLAYBACK_FAILED,
-          });
-        }
-      } else {
-        handleError(new Error('Failed to generate audio track'), {
-          toastMessage: STRINGS.AUDIO_GENERATION_FAILED,
-        });
-      }
-    } catch (error) {
-      handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_START_AUDIO_PLAYBACK });
-    }
-  }, [articleId, article, isPlaying, showToast]);
-
-  // Track reading progress with proper initialization
-  const isActive = !!article && !isLoadingArticle;
-
-  const { lastSentenceRead, updateProgress, initialLastSentenceRead, hadExistingProgressOnMount } =
-    useReadingProgress({
-      articleId: articleId ?? 0, // Use 0 if articleId is undefined/null
-      totalSentences: sortedSentences?.length ?? 0,
-      currentSentenceIndex: currentSentenceIndexForProgress,
-      isActive,
-    });
-
-  // Use 0 as fallback when reading progress is not available yet
-  const effectiveLastSentenceRead = lastSentenceRead ?? 0;
-
-  // Initialize sentence scrubber with actual reading progress
-  const {
+    hasAudio,
+    isPlaying,
     currentSentenceIndex,
     scrollViewRef,
+    activeTooltip,
+    wordDetailsModal,
+    isInStudyList,
+    handleScroll,
     handleViewableItemsChanged,
+    handleToggleReadingListWithFeedback,
+    handleToggleLanguageWithFeedback,
+    handlePlayPress,
+    handleClose,
+    handleWordPress,
+    handleCloseTooltip,
+    handleOpenWordDetails,
+    handleAddWordToStudy,
     handleSentenceChange,
     handleScrubStart,
     handleScrubEnd,
-    jumpToLastReadPosition,
-  } = useSentenceScrubber({
-    sortedSentences: sortedSentences || [],
-    sentenceWordsMap,
-    lastSentenceRead: effectiveLastSentenceRead,
-    headerOffset: calculateHeaderHeight(0),
-  });
-
-  // Update state when currentSentenceIndex from scrubber changes
-  // This syncs the scrubber's value with what useReadingProgress sees
-  useEffect(() => {
-    setCurrentSentenceIndexForProgress(currentSentenceIndex);
-  }, [currentSentenceIndex]);
-
-  // Update reading progress when current sentence changes (but only after initial load)
-  useEffect(() => {
-    if (!!article && !isLoadingArticle && currentSentenceIndex >= 0) {
-      updateProgress(currentSentenceIndex);
-    }
-  }, [currentSentenceIndex, article, isLoadingArticle, updateProgress]);
-
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
-        void refetchStudyWords?.();
-      }
-    });
-
-    return () => subscription.remove();
-  }, [user?.id, refetchStudyWords]);
-
-  // Cleanup scroll timeout and audio on unmount
-  useEffect(() => {
-    return () => {
-      // Stop audio playback when component unmounts (fire-and-forget)
-      stopAudioSafely();
-    };
-  }, []);
-
-  // Resume-on-open behavior (original working behavior)
-  const hasHandledInitialResumeRef = useRef(false);
-  const RESUME_WINDOW_TIMEOUT = 1500;
-  const RESUME_JUMP_DELAY = 500;
-
-  const resumeWindowActiveRef = useRef(false);
-  useEffect(() => {
-    if (article && sortedSentences && sortedSentences.length > 0 && !isLoadingArticle) {
-      resumeWindowActiveRef.current = true;
-      const timeoutId = setTimeout(() => {
-        resumeWindowActiveRef.current = false;
-      }, RESUME_WINDOW_TIMEOUT);
-      return () => clearTimeout(timeoutId);
-    }
-    return () => {};
-  }, [article, sortedSentences, isLoadingArticle]);
-
-  useEffect(() => {
-    if (
-      !hasHandledInitialResumeRef.current &&
-      !isLoadingArticle &&
-      article &&
-      sortedSentences &&
-      sortedSentences.length > 0 &&
-      hadExistingProgressOnMount &&
-      resumeWindowActiveRef.current
-    ) {
-      const baselineLastSentence = initialLastSentenceRead ?? 0;
-      const progressPercent = Math.round((baselineLastSentence / sortedSentences.length) * 100);
-
-      // Show resume toast
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      showToast(STRINGS.RESUMED_READING_TEMPLATE.replace('{percent}', String(progressPercent)), 3000, ToastType.INFO);
-
-      // Attempt jump once on resume
-      setTimeout(() => {
-        // Primary: delegate to hook (handles measurement and safety flags)
-        try {
-          jumpToLastReadPosition();
-        } catch {
-          // noop
-        }
-      }, RESUME_JUMP_DELAY);
-
-      // Mark as handled - this prevents any further resume logic
-      hasHandledInitialResumeRef.current = true;
-    }
-  }, [
-    isLoadingArticle,
-    article,
-    sortedSentences,
-    hadExistingProgressOnMount,
-    jumpToLastReadPosition,
-    showToast,
-  ]);
-
-  const handleWordPress = useCallback(
-    (word: SentenceWord, layout?: LayoutRectangle) => {
-      if (layout && layout.width > 0) {
-        if (activeTooltip?.word.id === word.id) {
-          // Close tooltip if same word is tapped again
-          setActiveTooltip(null);
-        } else {
-          // Always open new tooltip immediately for different words
-          setActiveTooltip({ word, layout });
-        }
-      }
-    },
-    [activeTooltip]
-  );
-
-  const handleCloseTooltip = useCallback(() => {
-    setActiveTooltip(null);
-  }, []);
-
-  const handleOpenWordDetails = useCallback(() => {
-    if (activeTooltip?.word) {
-      // Close the tooltip first to avoid layering conflicts
-      setActiveTooltip(null);
-
-      // Then open the bottom sheet
-      setWordDetailsBottomSheet({
-        isVisible: true,
-        word: activeTooltip.word,
-      });
-    }
-  }, [activeTooltip]);
-
-  const handleCloseWordDetails = useCallback(() => {
-    setWordDetailsBottomSheet({
-      isVisible: false,
-      word: null,
-    });
-  }, []);
-
-  const handleAddWordToStudy = useCallback(
-    async (word: SentenceWord) => {
-      if (!user?.id || !word.root_id) return;
-
-      // Direct haptic feedback without debounce (same as Play Audio)
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-      // Add/remove the word to/from study list first
-      const result = await handleRootPress(word.root_id);
-
-      // If operation failed (daily limit reached), don't update local state
-      if (result === undefined) {
-        return;
-      }
-
-      // Use the mutation result directly to determine new state
-      const isNowInStudy = result;
-
-      // Update local state immutably to reflect the new state
-      setLocalStudyStates(prev => {
-        const next = new Map(prev);
-        next.set(word.root_id, isNowInStudy);
-        return next;
-      });
-
-      // Invalidate queries to sync with backend
-      await queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
-      await queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
-      await queryClient.invalidateQueries({
-        queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-      });
-
-      // Refetch study words data
-      await refetchStudyWords?.();
-
-      // Keep bottom sheet open for additional interactions
-    },
-     
-    [user?.id, handleRootPress, queryClient, refetchStudyWords]
-  );
+  } = useArticleScreen({ id, showToast });
 
   // Memoize renderSentenceItem to prevent unnecessary recreations
   const renderSentenceItem = useCallback(
@@ -489,7 +141,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       isInReadingList,
       onToggleReadingList: handleToggleReadingListWithFeedback,
       hasAudio,
-      isPlaying: isPlaying && currentArticle?.id === articleId,
+      isPlaying,
       onPlayPress: handlePlayPress,
       showEnglish,
       onToggleLanguage: handleToggleLanguageWithFeedback,
@@ -509,8 +161,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleToggleReadingListWithFeedback,
     hasAudio,
     isPlaying,
-    currentArticle?.id,
-    articleId,
     handlePlayPress,
     showEnglish,
     handleToggleLanguageWithFeedback,
@@ -536,28 +186,15 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       <WordTooltip {...tooltipProps} />
 
       <WordDetailsBottomSheet
-        isVisible={wordDetailsBottomSheet.isVisible}
-        onClose={handleCloseWordDetails}
-        word={wordDetailsBottomSheet.word}
+        isVisible={wordDetailsModal.isVisible}
+        onClose={wordDetailsModal.close}
+        word={wordDetailsModal.data}
         onAddToStudy={handleAddWordToStudy}
-        isInStudyList={
-          wordDetailsBottomSheet.word?.root_id
-            ? localStudyStates.get(wordDetailsBottomSheet.word.root_id) ??
-              (user?.id
-                ? (() => {
-                    const allWords =
-                      queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(user.id)) ?? [];
-                    return allWords.some(
-                      word => word.root_id === wordDetailsBottomSheet.word?.root_id
-                    );
-                  })()
-                : false)
-            : false
-        }
+        isInStudyList={isInStudyList}
       />
 
       {/* Scrubber moved out of ArticleContent to avoid ArticleContent rerenders */}
-      {!wordDetailsBottomSheet.isVisible && <SentenceScrubber {...sentenceScrubberProps} />}
+      {!wordDetailsModal.isVisible && <SentenceScrubber {...sentenceScrubberProps} />}
     </>
   );
 }, ArticleScreenContentComparison);

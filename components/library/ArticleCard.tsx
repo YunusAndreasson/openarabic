@@ -184,7 +184,7 @@ function ArticleCardComponent({
   // Memoize gradient props to prevent unnecessary re-renders
   const gradientProps = useMemo(
     () => ({
-      colors: gradientColors,
+      colors: [...gradientColors] as [string, string, ...string[]], // Convert readonly array to gradient tuple type
       start: GRADIENT_START_POINT,
       end: GRADIENT_END_POINT,
       style: styles.gradient,

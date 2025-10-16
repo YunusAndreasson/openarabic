@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { WithSpringConfig } from 'react-native-reanimated';
 import {
@@ -14,6 +14,7 @@ import {
   PRESS_SCALE,
   SPRING_CONFIG,
 } from '@/constants/animation';
+import { useMountSafety } from '@/hooks/common/useMountSafety';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 export type PressAnimationType = 'button' | 'card' | 'custom';
@@ -89,7 +90,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
 
   // Animation value
   const pressed = useSharedValue(0);
-  const isMountedRef = useRef(true);
+  const isMountedRef = useMountSafety();
 
   // Create animated style
   const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
@@ -129,21 +130,13 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     if (isMountedRef.current) {
       runOnUI(animatePressIn)();
     }
-  }, [animatePressIn]);
+  }, [animatePressIn, isMountedRef]);
 
   const handlePressOut = useCallback(() => {
     if (isMountedRef.current) {
       runOnUI(animatePressOut)();
     }
-  }, [animatePressOut]);
-
-  // Cleanup
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  }, [animatePressOut, isMountedRef]);
 
   return {
     animatedStyle,

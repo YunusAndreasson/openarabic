@@ -84,12 +84,14 @@ const WordDisplayInternal = ({
   );
 
   // ===== OPTIMIZED ANIMATION HANDLING =====
+  // Always start at 0 opacity, let useEffect be single source of truth for animation state
   const { animatedStyle: translationAnimatedStyle, setOpacity } = useOpacityAnimation({
-    initialOpacity: translation ? 1 : 0,
+    initialOpacity: 0,
     duration: ANIMATION_CONFIG.TRANSLATION_DURATION,
   });
 
   useEffect(() => {
+    // Single animation trigger - no double-trigger on mount
     setOpacity(translation ? 1 : 0);
   }, [translation, setOpacity]);
 

@@ -45,21 +45,55 @@ const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 96px
 const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 56px
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px
 
-export const MiniPlayer = memo<MiniPlayerProps>(
-  ({
-    article,
-    isPlaying,
-    isTimerActive,
-    position,
-    duration,
-    queuePosition,
-    onPlayPause,
-    onTimerPress,
-  }) => {
-    const colors = useColors();
+// Custom comparison function for React.memo
+// Only re-render when visual display actually changes
+// This prevents excessive re-renders from high-frequency position updates (2x/second)
+const MiniPlayerComparison = (prev: MiniPlayerProps, next: MiniPlayerProps): boolean => {
+  // Re-render if different article
+  if (prev.article.id !== next.article.id) return false;
 
-    // Memoize dynamic styles for better performance
-    const containerStyle = useMemo(
+  // Re-render if play/pause state changes
+  if (prev.isPlaying !== next.isPlaying) return false;
+  if (prev.isTimerActive !== next.isTimerActive) return false;
+
+  // Re-render if duration changes (new track)
+  if (prev.duration !== next.duration) return false;
+
+  // Only re-render when display text changes (full seconds)
+  // Position updates 2x/second but display only shows seconds
+  const prevSeconds = Math.floor(prev.position);
+  const nextSeconds = Math.floor(next.position);
+  if (prevSeconds !== nextSeconds) return false;
+
+  // Re-render if queue position changes
+  if (
+    prev.queuePosition?.current !== next.queuePosition?.current ||
+    prev.queuePosition?.total !== next.queuePosition?.total
+  ) {
+    return false;
+  }
+
+  // Props are "equal enough" - skip re-render
+  return true;
+};
+
+const MiniPlayerComponent = ({
+  article,
+  isPlaying,
+  isTimerActive,
+  position,
+  duration,
+  queuePosition,
+  onPlayPause,
+  onTimerPress,
+}: MiniPlayerProps) => {
+  const colors = useColors();
+
+  // Memoize image URL to prevent duplicate generation on every render
+  const imageUrl = useMemo(() => generateImageUrl(article.image_url), [article.image_url]);
+
+  // Memoize dynamic styles for better performance
+  const containerStyle = useMemo(
       () => [styles.container, { bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY }],
       []
     );
@@ -147,11 +181,11 @@ export const MiniPlayer = memo<MiniPlayerProps>(
             {/* Artwork */}
             <View style={styles.artworkContainer}>
               <EnhancedImage
-                source={generateImageUrl(article.image_url)}
+                source={imageUrl}
                 style={artworkStyle}
                 priority="high"
                 transition={0}
-                recyclingKey={generateImageUrl(article.image_url)}
+                recyclingKey={imageUrl}
               />
             </View>
 
@@ -243,8 +277,10 @@ export const MiniPlayer = memo<MiniPlayerProps>(
         </View>
       </Animated.View>
     );
-  }
-);
+};
+
+// Export with custom comparison for optimal performance
+export const MiniPlayer = memo<MiniPlayerProps>(MiniPlayerComponent, MiniPlayerComparison);
 
 MiniPlayer.displayName = 'MiniPlayer';
 

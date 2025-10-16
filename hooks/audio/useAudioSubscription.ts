@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import { useMountSafety } from '@/hooks/common/useMountSafety';
 import type { AudioStatus } from '@/services/simpleAudioService';
 import { simpleAudioService } from '@/services/simpleAudioService';
 
@@ -9,7 +10,7 @@ import { simpleAudioService } from '@/services/simpleAudioService';
  */
 export function useAudioSubscription() {
   const [status, setStatus] = useState<AudioStatus>(() => simpleAudioService.getStatus());
-  const isMountedRef = useRef(true);
+  const isMountedRef = useMountSafety();
 
   // Single subscription to audio service
   useEffect(() => {
@@ -31,15 +32,7 @@ export function useAudioSubscription() {
     });
 
     return unsubscribe;
-  }, []);
-
-  // Track component mount status
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  }, [isMountedRef]);
 
   return {
     status,

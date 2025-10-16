@@ -5,7 +5,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 
-import { REVIEW_MIN_PROGRESS_VALUE, TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
@@ -38,14 +38,12 @@ const STATIC_STYLES = StyleSheet.create({
 interface ReviewHeaderProps {
   progress: number;
   maxProgress: number;
-  animationKey: number;
   onClose?: () => void;
 }
 
 const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
   progress,
   maxProgress,
-  animationKey,
   onClose,
 }) => {
   const colors = useColors();
@@ -53,11 +51,6 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
   const displayProgress = useMemo(
     () => Math.max(progress, maxProgress),
     [progress, maxProgress]
-  );
-
-  const animationTriggered = useMemo(
-    () => animationKey > REVIEW_MIN_PROGRESS_VALUE,
-    [animationKey]
   );
 
   // Handle close with haptic feedback
@@ -71,11 +64,10 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
   const progressBarProps = useMemo(
     () => ({
       animationDuration: TIMING_CONFIG.PROGRESS.duration,
-      animationTriggered,
       progress: displayProgress,
       height: LAYOUT.SPACING.MEDIUM, // Standard height (12px)
     }),
-    [animationTriggered, displayProgress]
+    [displayProgress]
   );
 
   const closeButtonStyle = useMemo(
@@ -86,7 +78,7 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
   return (
     <View style={STATIC_STYLES.header}>
       <View style={STATIC_STYLES.progressContainer}>
-        <ProgressBar key={animationKey} {...progressBarProps} />
+        <ProgressBar {...progressBarProps} />
       </View>
       {onClose && (
         <Pressable
@@ -112,7 +104,6 @@ const ReviewHeaderComparison = (
   // Compare primitive values first (fastest)
   if (prevProps.progress !== nextProps.progress) return false;
   if (prevProps.maxProgress !== nextProps.maxProgress) return false;
-  if (prevProps.animationKey !== nextProps.animationKey) return false;
   if (prevProps.onClose !== nextProps.onClose) return false;
 
   return true;

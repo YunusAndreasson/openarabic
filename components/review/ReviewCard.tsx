@@ -1,8 +1,8 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
-import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-reanimated';
+import type { AnimatedStyle as ReanimatedAnimatedStyle, SharedValue } from 'react-native-reanimated';
 import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
 import WordDisplayComponent from '@/components/review/WordDisplay';
@@ -50,7 +50,7 @@ interface ReviewCardProps {
   // Hesitation props
   onHesitationStart?: () => void;
   onHesitationEnd?: () => void;
-  isHesitating?: boolean;
+  isHesitating?: SharedValue<boolean>;
 }
 
 const ReviewCardInternal = ({
@@ -65,9 +65,30 @@ const ReviewCardInternal = ({
   showTranslation = false,
   onHesitationStart,
   onHesitationEnd,
-  isHesitating = false,
+  isHesitating,
 }: ReviewCardProps) => {
   const colors = useColors();
+
+  // ===== SHARED VALUE SYNC FOR UI UPDATES =====
+  // Sync SharedValue to local state for React re-renders (needed for WordDisplay hint)
+  const [showHint, setShowHint] = useState(false);
+
+  useEffect(() => {
+    if (!isHesitating) return;
+
+    // Poll the SharedValue at 60fps to sync with React state
+    const interval = setInterval(() => {
+      const currentValue = isHesitating.value;
+      setShowHint(prev => {
+        if (prev !== currentValue) {
+          return currentValue;
+        }
+        return prev;
+      });
+    }, 16); // ~60fps
+
+    return () => clearInterval(interval);
+  }, [isHesitating]);
 
   // ===== HESITATION TIMER =====
   const hesitationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -132,8 +153,10 @@ const ReviewCardInternal = ({
     }
     if (translateX.value > 0) {
       // Right swipe - success (green) or vague (orange) depending on hesitation state
-      const startColor = isHesitating ? vagueStart : successStart;
-      const endColor = isHesitating ? vagueEnd : successEnd;
+      // Read SharedValue directly on UI thread for better performance
+      const isCurrentlyHesitating = isHesitating?.value ?? false;
+      const startColor = isCurrentlyHesitating ? vagueStart : successStart;
+      const endColor = isCurrentlyHesitating ? vagueEnd : successEnd;
       return {
         backgroundColor: interpolateColor(t, [0, 1], [startColor, endColor]),
       };
@@ -156,10 +179,11 @@ const ReviewCardInternal = ({
   useEffect(() => {
     // CRITICAL FIX: Don't start timer if translation is showing (prevents timer restart during feedback)
     // This prevents the bug where onHesitationEnd → isHesitating=false triggers new timer while showing translation
+    const isCurrentlyHesitating = isHesitating?.value ?? false;
     if (
       word &&
       englishTranslation &&
-      !isHesitating &&
+      !isCurrentlyHesitating &&
       !hesitationTimeoutRef.current &&
       !showTranslation
     ) {
@@ -187,12 +211,12 @@ const ReviewCardInternal = ({
     const props = {
       word,
       translation: showTranslation ? translation : undefined,
-      showFirstLetterOnly: isHesitating,
+      showFirstLetterOnly: showHint, // Use synced state instead of SharedValue
       englishTranslation: englishTranslation || undefined, // Always pass English translation when available
     };
 
     return props;
-  }, [word, showTranslation, translation, isHesitating, englishTranslation]);
+  }, [word, showTranslation, translation, showHint, englishTranslation]);
 
   // ===== CLEANUP (HANDLED BY HOOK) =====
   // Cleanup is now handled by the useSwipeGesture hook
@@ -227,7 +251,7 @@ const ReviewCardComparison = (prevProps: ReviewCardProps, nextProps: ReviewCardP
     prevProps.showTranslation === nextProps.showTranslation &&
     prevProps.onHesitationStart === nextProps.onHesitationStart &&
     prevProps.onHesitationEnd === nextProps.onHesitationEnd &&
-    prevProps.isHesitating === nextProps.isHesitating
+    prevProps.isHesitating === nextProps.isHesitating // SharedValue reference comparison
   );
 };
 

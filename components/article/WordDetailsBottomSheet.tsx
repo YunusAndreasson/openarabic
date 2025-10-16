@@ -1,5 +1,4 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import * as Haptics from 'expo-haptics';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -13,6 +12,7 @@ import { simpleAudioService } from '@/services/simpleAudioService';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
+import { lightFeedback } from '@/utils/haptics';
 import { generateAudioUrl } from '@/utils/imageUtils';
 
 export interface WordDetailsBottomSheetProps {
@@ -67,8 +67,8 @@ const WordDetailsBottomSheetComponent = ({
   const handlePlayAudio = useCallback(async () => {
     if (!word?.audio_url) return;
 
-    // Direct haptic feedback without debounce
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Haptic feedback with debouncing
+    lightFeedback();
 
     try {
       const fullAudioUrl = generateAudioUrl(word.audio_url);
@@ -93,7 +93,7 @@ const WordDetailsBottomSheetComponent = ({
 
     // Instant UI feedback - use functional update to avoid stale closure
     setOptimisticIsInStudyList(prev => !prev);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    lightFeedback();
 
     try {
       await onAddToStudy(word);

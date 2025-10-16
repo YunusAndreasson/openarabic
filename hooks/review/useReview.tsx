@@ -3,7 +3,8 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
-import { useAnimatedStyle } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
+import { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
@@ -52,7 +53,6 @@ interface UseReviewReturn {
   wordQueue: StudyWord[];
   progress: number;
   maxProgress: number;
-  progressAnimationKey: number;
   wordFontSize: number;
   currentWordKey: string;
   handleSwipeLeft: () => void;
@@ -61,7 +61,7 @@ interface UseReviewReturn {
   handleClose: () => void;
   transparentStyle: ViewStyle;
   sessionMetrics: SessionMetrics;
-  isHesitating: boolean;
+  isHesitating: SharedValue<boolean>;
   handleHesitationStart: () => void;
   handleHesitationEnd: () => void;
   isAudioPreloading: boolean;
@@ -124,12 +124,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // UI state
   const [showTranslation, setShowTranslation] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
-  const [progressAnimationKey, setProgressAnimationKey] = useState(0);
   const [isVagueMeaning, setIsVagueMeaning] = useState(false);
   // Ensure UI re-renders when updating state changes so gestures re-enable
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
-  // Hesitation state
-  const [isHesitating, setIsHesitating] = useState(false);
+  // Hesitation state as SharedValue for UI thread performance
+  const isHesitating = useSharedValue(false);
 
   // Consolidated time tracking refs
   const timeRefs = useRef<ReviewTimeRefs>({
@@ -162,7 +161,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     stopAudioSafely();
 
     stateRefs.current.maxProgress = 100;
-    setProgressAnimationKey(prev => prev + 1);
   }, [stopAudioSafely]);
 
   const { currentWord, isComplete, progress, updateWord, invalidateQueries, wordQueue, isLoading } =
@@ -184,15 +182,25 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // Derive currentSentence directly from currentWord (React 19 auto-memoizes)
   const currentSentence = { wordForm: currentWord?.root?.letters ?? '' };
 
-  // Track which word hesitation applies to
-  const hesitationWordKeyRef = useRef<string>('');
-
   // Unique key for the current word to trigger renders (React 19 auto-memoizes)
   const currentWordKey = currentWord
     ? `${currentWord.root_id}-${currentWord.fsrs_last_review ?? ''}-${
         currentWord.fsrs_reps ?? 0
       }`
     : 'none';
+
+  // Track which word hesitation applies to
+  const hesitationWordKeyRef = useRef<string>('');
+
+  // Stable refs for callback optimization
+  const currentWordRef = useRef(currentWord);
+  const currentWordKeyRef = useRef(currentWordKey);
+
+  // Update refs when values change
+  useEffect(() => {
+    currentWordRef.current = currentWord;
+    currentWordKeyRef.current = currentWordKey;
+  }, [currentWord, currentWordKey]);
 
   // Ensure translation is hidden when advancing to a new word
   useEffect(() => {
@@ -243,7 +251,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // CRITICAL FIX: Reset hesitation immediately before processing feedback
       // This prevents hint from showing on the next word during transition
       // Must happen BEFORE updateWord changes currentWord to prevent timing issues
-      setIsHesitating(false);
+      isHesitating.value = false;
       hesitationWordKeyRef.current = '';
 
       try {
@@ -416,7 +424,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       const safeProgress = Math.min(100, Math.max(0, progress));
       if (safeProgress > stateRefs.current.maxProgress) {
         stateRefs.current.maxProgress = safeProgress;
-        setProgressAnimationKey(prev => prev + 1);
         timeRefs.current.lastProgressUpdate = now;
         // UI progress updated
       }
@@ -427,7 +434,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         // Use a ref to track if we've already updated this cycle
         if (!stateRefs.current.progressUpdatedForCompletion) {
           stateRefs.current.progressUpdatedForCompletion = true;
-          setProgressAnimationKey(prev => prev + 1);
         }
       }
     }
@@ -439,7 +445,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     if (isComplete && !stateRefs.current.progressUpdatedForCompletion) {
       stateRefs.current.maxProgress = 100;
       stateRefs.current.progressUpdatedForCompletion = true;
-      setProgressAnimationKey(prev => prev + 1);
     }
 
     // Reset the flag when completion state changes
@@ -481,6 +486,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
 
     const wordId = String(currentWord.root_id);
+    // generateAudioUrl is a pure utility function - no need in dependency array
     const audioUrl = generateAudioUrl(currentWord.root.audio_url);
 
     // Play audio for Arabic words (preloaded, so should be instant)
@@ -495,7 +501,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     isComplete,
     showTranslation,
     playAudio,
-    generateAudioUrl,
     isAudioPreloading,
     isAudioPreloadingComplete,
   ]);
@@ -525,34 +530,34 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   }, [currentWord, isComplete, triggerCompletionTransition]);
 
   const handleSwipeLeft = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
     // Gesture swipe left - after hesitation: unknown, otherwise: unknown
     handleKnowledgeResponse('unknown');
-  }, [handleKnowledgeResponse, isComplete, currentWord]);
+  }, [handleKnowledgeResponse, isComplete]);
 
   const handleSwipeRight = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
     // Gesture swipe right - after hesitation: vague, otherwise: known
-    const confidence = isHesitating ? 'vague' : 'known';
+    const confidence = isHesitating.value ? 'vague' : 'known';
     handleKnowledgeResponse(confidence);
-  }, [handleKnowledgeResponse, isComplete, currentWord, isHesitating]);
+  }, [handleKnowledgeResponse, isComplete, isHesitating]);
 
   const handleLongPress = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
     handleKnowledgeResponse('vague');
-  }, [currentWord, isComplete, handleKnowledgeResponse]);
+  }, [isComplete, handleKnowledgeResponse]);
 
-  // Hesitation callbacks
+  // Hesitation callbacks - stable with refs
   const handleHesitationStart = useCallback(() => {
-    setIsHesitating(true);
-    // Track which word this hesitation is for
-    hesitationWordKeyRef.current = currentWordKey;
-  }, [currentWordKey]);
+    isHesitating.value = true;
+    // Track which word this hesitation is for using ref for stability
+    hesitationWordKeyRef.current = currentWordKeyRef.current;
+  }, [isHesitating]);
 
   const handleHesitationEnd = useCallback(() => {
-    setIsHesitating(false);
+    isHesitating.value = false;
     hesitationWordKeyRef.current = '';
-  }, []);
+  }, [isHesitating]);
 
   const handleClose = useCallback(() => {
     const mounted = { current: true };
@@ -660,7 +665,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     wordQueue,
     progress,
     maxProgress: stateRefs.current.maxProgress,
-    progressAnimationKey,
     wordFontSize,
     currentWordKey,
     handleSwipeLeft,

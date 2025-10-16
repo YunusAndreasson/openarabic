@@ -14,6 +14,11 @@ export interface ProgressBarProps {
    */
   height?: number;
   /**
+   * Duration of the animation in milliseconds
+   * @default TIMING_CONFIG.PROGRESS.duration
+   */
+  animationDuration?: number;
+  /**
    * Custom style for the progress bar container
    */
   style?: ViewStyle;

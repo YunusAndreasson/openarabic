@@ -4,8 +4,9 @@ import { Image } from 'expo-image';
 import { articlesService } from '@/services/articles';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import type { Article } from '@/types/articles.types';
+import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { ArticleId } from '@/types/branded.types';
-import { generateImageUrl } from '@/utils/imageUtils';
+import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
 
 /**
  * Extract current article ID from audio status
@@ -76,4 +77,50 @@ export async function prefetchArticleWithImage(
     // Fallback to full article prefetch if no cached image
     prefetchArticle(articleId).catch(() => {});
   }
+}
+
+/**
+ * Word audio data interface for track generation
+ */
+export interface WordAudioData {
+  id: number | string;
+  audio_url?: string | null;
+  audio_url_en?: string | null;
+  title?: string;
+  root_id?: number;
+  letters?: string;
+  meaning?: string;
+  english?: string;
+  word_form?: string;
+}
+
+/**
+ * Generate an audio track from word data
+ * Prefers Arabic audio, falls back to English audio if available
+ * @param word - Word data containing audio URLs and metadata
+ * @param trackIdPrefix - Optional prefix for the track ID (default: 'word')
+ * @returns Audio track or null if no audio URL available
+ */
+export function generateWordAudioTrack(
+  word: WordAudioData,
+  trackIdPrefix: string = 'word'
+): EnhancedAudioTrack | null {
+  // Prefer Arabic audio, fallback to English audio if available
+  const audioUrl = generateAudioUrl(word.audio_url) || generateAudioUrl(word.audio_url_en);
+
+  if (!audioUrl) {
+    return null;
+  }
+
+  // Generate track with appropriate title
+  const trackTitle =
+    word.letters || word.meaning || word.english || word.word_form || 'Arabic Pronunciation';
+
+  const track: EnhancedAudioTrack = {
+    id: `${trackIdPrefix}-${word.id || word.root_id}-${word.audio_url ? 'ar' : 'en'}`,
+    audioUrl,
+    title: trackTitle,
+  };
+
+  return track;
 }

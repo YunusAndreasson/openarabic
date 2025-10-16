@@ -1,10 +1,11 @@
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
@@ -51,50 +52,50 @@ export function useAuthForm(): UseAuthFormReturn {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  const isMountedRef = useRef(true);
+  const isMountedRef = useMountSafety();
 
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  const validateEmail = useCallback(
+    (value: string) => {
+      if (!value) return false;
+      if (!EMAIL_REGEX.test(value)) {
+        if (isMountedRef.current) setEmailError(STRINGS.ENTER_VALID_EMAIL);
+        return false;
+      }
+      if (isMountedRef.current) setEmailError('');
+      return true;
+    },
+    [isMountedRef]
+  );
 
-  const validateEmail = useCallback((value: string) => {
-    if (!value) return false;
-    if (!EMAIL_REGEX.test(value)) {
-      if (isMountedRef.current) setEmailError(STRINGS.ENTER_VALID_EMAIL);
-      return false;
-    }
-    if (isMountedRef.current) setEmailError('');
-    return true;
-  }, []);
-
-  const validatePassword = useCallback((value: string) => {
-    if (!value) {
-      if (isMountedRef.current) setPasswordError(STRINGS.ENTER_PASSWORD);
-      return false;
-    }
-    if (value.length < PASSWORD_REQUIREMENTS.minLength) {
-      if (isMountedRef.current)
-        setPasswordError(
-          STRINGS.PASSWORD_USE_AT_LEAST_TEMPLATE.replace(
-            '{minLength}',
-            PASSWORD_REQUIREMENTS.minLength.toString()
-          )
-        );
-      return false;
-    }
-    if (
-      !PASSWORD_REQUIREMENTS.hasUpperCase.test(value) ||
-      !PASSWORD_REQUIREMENTS.hasLowerCase.test(value) ||
-      !PASSWORD_REQUIREMENTS.hasNumber.test(value)
-    ) {
-      if (isMountedRef.current) setPasswordError(STRINGS.PASSWORD_ADD_CHARACTER_TYPES);
-      return false;
-    }
-    if (isMountedRef.current) setPasswordError('');
-    return true;
-  }, []);
+  const validatePassword = useCallback(
+    (value: string) => {
+      if (!value) {
+        if (isMountedRef.current) setPasswordError(STRINGS.ENTER_PASSWORD);
+        return false;
+      }
+      if (value.length < PASSWORD_REQUIREMENTS.minLength) {
+        if (isMountedRef.current)
+          setPasswordError(
+            STRINGS.PASSWORD_USE_AT_LEAST_TEMPLATE.replace(
+              '{minLength}',
+              PASSWORD_REQUIREMENTS.minLength.toString()
+            )
+          );
+        return false;
+      }
+      if (
+        !PASSWORD_REQUIREMENTS.hasUpperCase.test(value) ||
+        !PASSWORD_REQUIREMENTS.hasLowerCase.test(value) ||
+        !PASSWORD_REQUIREMENTS.hasNumber.test(value)
+      ) {
+        if (isMountedRef.current) setPasswordError(STRINGS.PASSWORD_ADD_CHARACTER_TYPES);
+        return false;
+      }
+      if (isMountedRef.current) setPasswordError('');
+      return true;
+    },
+    [isMountedRef]
+  );
 
   const signInWithEmail = useCallback(async () => {
     const isEmailValid = validateEmail(email);

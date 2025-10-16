@@ -9,12 +9,9 @@ import DeleteButton from '@/components/bookmarks/DeleteButton';
 import { SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
-import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
+import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
-import { generateAudioUrl } from '@/utils/imageUtils';
 import {
   isDueWord,
   isLearnedWord,
@@ -29,8 +26,10 @@ interface DictionaryWordCardProps {
 
 export const DictionaryWordCard = memo<DictionaryWordCardProps>(
   ({ word, editMode, onDelete }) => {
-    const audioPlayer = useSimpleAudioPlayer();
     const colors = useColors();
+
+    // Use consolidated word audio playback hook
+    const playWordAudio = useWordAudioPlayback({ showErrorToast: false });
 
     // Transform animation for edit mode (similar to bookmarks)
     const { animatedStyle, setValue } = useTransformAnimation({
@@ -53,37 +52,15 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const handleCardPress = useCallback(async () => {
       if (editMode) return;
 
-      try {
-        selectionFeedback();
-
-        // Prefer Arabic audio, fallback to English audio if available
-        const audioUrl =
-          generateAudioUrl(word.root?.audio_url) || generateAudioUrl(word.root?.audio_url_en);
-        if (!audioUrl) return;
-
-        const track = {
-          id: `word-${word.root_id}-${word.root?.audio_url ? 'ar' : 'en'}`,
-          audioUrl,
-          title: word.root?.letters || word.root?.meaning || 'Arabic Pronunciation',
-        };
-
-        await audioPlayer.play(track);
-      } catch (error) {
-        await handleError(error instanceof Error ? error : String(error), {
-          showToast: false,
-          captureSentry: !__DEV__,
-        });
-      }
-    }, [
-      word.root?.audio_url,
-      word.root?.audio_url_en,
-      word.root_id,
-      word.root?.letters,
-      word.root?.meaning,
-      audioPlayer,
-      editMode,
-      generateAudioUrl,
-    ]);
+      // Play word audio using consolidated hook (includes haptics & error handling)
+      await playWordAudio({
+        id: word.root_id,
+        audio_url: word.root?.audio_url,
+        audio_url_en: word.root?.audio_url_en,
+        letters: word.root?.letters,
+        meaning: word.root?.meaning,
+      });
+    }, [editMode, word.root_id, word.root?.audio_url, word.root?.audio_url_en, word.root?.letters, word.root?.meaning, playWordAudio]);
 
     // Handle delete button press
     const handleDeletePress = useCallback(() => {

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
-import { runOnJS, useSharedValue, withDecay, withSpring } from 'react-native-reanimated';
+import { runOnJS, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { SPRING_CONFIG } from '@/constants/animation';
 import { SCREEN_WIDTH } from '@/constants/layout';
@@ -18,7 +18,6 @@ export interface SwipeGestureOptions {
   swipeThresholdRatio?: number;
   maxTranslationRatio?: number;
   springConfig?: typeof SPRING_CONFIG.CARD;
-  useDecay?: boolean; // Enable physics-based momentum decay (disabled by default for snappier feel)
 }
 
 export interface SwipeGestureResult {
@@ -45,7 +44,6 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
     swipeThresholdRatio = GESTURE_CONSTANTS.SWIPE_THRESHOLD_RATIO,
     maxTranslationRatio = GESTURE_CONSTANTS.MAX_TRANSLATION_RATIO,
     springConfig = SPRING_CONFIG.CARD,
-    useDecay = true, // Enabled with snappy deceleration for natural momentum
   } = options;
 
   const translateX = useSharedValue(0);
@@ -129,24 +127,8 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
 
             if (Math.abs(translationX) > swipeThreshold || hasSignificantVelocity) {
               const isRight = translationX > 0;
-
-              // Use snappy decay for natural momentum if enabled and has velocity
-              if (useDecay && hasSignificantVelocity) {
-                isAnimatingRef.value = true;
-                translateX.value = withDecay(
-                  {
-                    velocity: velocityX,
-                    deceleration: 0.92, // Very snappy deceleration (lower = faster stop)
-                    clamp: [-(SCREEN_WIDTH * 1.3), SCREEN_WIDTH * 1.3],
-                  },
-                  () => {
-                    isAnimatingRef.value = false;
-                    runOnJS(handleSwipeComplete)(isRight);
-                  }
-                );
-              } else {
-                runOnJS(handleSwipeComplete)(isRight);
-              }
+              // Trigger swipe completion immediately for snappy response
+              runOnJS(handleSwipeComplete)(isRight);
             } else {
               // Simple reset on UI thread with spring animation
               isAnimatingRef.value = true;

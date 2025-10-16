@@ -26,7 +26,11 @@ const getTextColor = (
   colorName?: ThemedTextProps['colorName'],
   skipDefaultColor?: boolean
 ): string | undefined => {
-  if (colorName) return colors[colorName];
+  if (colorName) {
+    const color = colors[colorName];
+    // ThemedText only uses string colors, not gradient arrays
+    return typeof color === 'string' ? color : undefined;
+  }
   if (variant) {
     const variantColorMap = {
       error: colors.error,
@@ -47,7 +51,7 @@ const getTextColor = (
  * Base style lookup map for text types
  * Extracted to constant for performance optimization
  */
-const BASE_STYLE_MAP = {
+const BASE_STYLE_MAP: Record<string, any> = {
   body: null as any, // Will be assigned after styles object is created
   bodyBold: null as any,
   caption: null as any,
@@ -57,14 +61,14 @@ const BASE_STYLE_MAP = {
   label: null as any,
   link: null as any,
   overline: null as any,
-} as const;
+};
 
 /**
  * Get base style for text type
  * Uses pre-computed lookup map for O(1) access
  */
 const getBaseStyle = (type: ThemedTextProps['type']) => {
-  return BASE_STYLE_MAP[type as keyof typeof BASE_STYLE_MAP] || BASE_STYLE_MAP.body;
+  return BASE_STYLE_MAP[type as keyof typeof BASE_STYLE_MAP] || BASE_STYLE_MAP['body'];
 };
 
 /**
@@ -256,12 +260,12 @@ const styles = StyleSheet.create({
 });
 
 // Populate BASE_STYLE_MAP after styles are created
-BASE_STYLE_MAP.body = styles.body;
-BASE_STYLE_MAP.bodyBold = styles.bodyBold;
-BASE_STYLE_MAP.caption = styles.caption;
-BASE_STYLE_MAP.heading1 = styles.heading1;
-BASE_STYLE_MAP.heading2 = styles.heading2;
-BASE_STYLE_MAP.heading3 = styles.heading3;
-BASE_STYLE_MAP.label = styles.label;
-BASE_STYLE_MAP.link = styles.link;
-BASE_STYLE_MAP.overline = styles.overline;
+BASE_STYLE_MAP['body'] = styles.body;
+BASE_STYLE_MAP['bodyBold'] = styles.bodyBold;
+BASE_STYLE_MAP['caption'] = styles.caption;
+BASE_STYLE_MAP['heading1'] = styles.heading1;
+BASE_STYLE_MAP['heading2'] = styles.heading2;
+BASE_STYLE_MAP['heading3'] = styles.heading3;
+BASE_STYLE_MAP['label'] = styles.label;
+BASE_STYLE_MAP['link'] = styles.link;
+BASE_STYLE_MAP['overline'] = styles.overline;

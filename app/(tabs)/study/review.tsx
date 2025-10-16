@@ -55,7 +55,6 @@ export default function ReviewScreen(): JSX.Element {
     isComplete,
     progress,
     maxProgress,
-    progressAnimationKey,
     currentWordKey,
     handleSwipeLeft,
     handleSwipeRight,
@@ -166,7 +165,6 @@ export default function ReviewScreen(): JSX.Element {
       {/* Progress header at top of screen */}
       <View style={{ paddingTop: LAYOUT.SPACING.LARGE }}>
         <ReviewHeader
-          animationKey={progressAnimationKey}
           maxProgress={maxProgress}
           progress={progress}
           onClose={handleClose}
