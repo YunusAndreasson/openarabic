@@ -5,7 +5,6 @@ import Animated from 'react-native-reanimated';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useToggleAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ToggleProps } from '@/types/ui/form.types';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -33,7 +32,6 @@ function getToggleDimensions() {
 
 export function Toggle({ value, onValueChange }: ToggleProps) {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   const isMounted = useRef(false);
 
   const { TOGGLE_HEIGHT, HANDLE_SIZE, TOGGLE_WIDTH, TRAVEL_DISTANCE } = getToggleDimensions();
