@@ -1,8 +1,7 @@
-'use no memo';
 import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { memo, useCallback, useMemo, type ReactElement } from 'react';
+import React, { useCallback, type ReactElement } from 'react';
 import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -122,31 +121,30 @@ interface ArticleContentProps {
   onClose: () => void;
 }
 
-export const ArticleContent = memo<ArticleContentProps>(
-  ({
-    id,
-    article,
-    sortedSentences,
-    renderSentenceItem,
-    handleScroll,
-    handleViewableItemsChanged,
-    colors,
-    scrollViewRef,
-    isInReadingList,
-    onToggleReadingList,
-    hasAudio = false,
-    isPlaying = false,
-    onPlayPress,
-    currentHighlightedWord = null,
-    showEnglish,
-    onToggleLanguage,
-    isLanguageOverridden,
-    onClose,
-  }) => {
+export function ArticleContent({
+  id,
+  article,
+  sortedSentences,
+  renderSentenceItem,
+  handleScroll,
+  handleViewableItemsChanged,
+  colors,
+  scrollViewRef,
+  isInReadingList,
+  onToggleReadingList,
+  hasAudio = false,
+  isPlaying = false,
+  onPlayPress,
+  currentHighlightedWord = null,
+  showEnglish,
+  onToggleLanguage,
+  isLanguageOverridden,
+  onClose,
+}: ArticleContentProps) {
     const insets = useSafeAreaInsets();
 
-    // Compute header height once per safe-area change
-    const headerHeight = useMemo(() => calculateHeaderHeight(insets.top), [insets.top]);
+    // React Compiler auto-memoizes
+    const headerHeight = calculateHeaderHeight(insets.top);
 
     // Shared scroll value for parallax header
     const scrollY = useSharedValue(0);
@@ -181,11 +179,11 @@ export const ArticleContent = memo<ArticleContentProps>(
     const onScrollAnimated = useAnimatedScrollHandler({
       onScroll: event => {
         const y = event.contentOffset.y;
-        scrollY.value = y;
+        scrollY.set(y);
         // Emit to JS only if scrolled enough to matter to header/tooltip logic
-        const dy = Math.abs(y - lastEmittedY.value);
+        const dy = Math.abs(y - lastEmittedY.get());
         if (dy >= 8 || y === 0) {
-          lastEmittedY.value = y;
+          lastEmittedY.set(y);
           runOnJS(handleScrollJS)(y);
         }
       },
@@ -193,28 +191,23 @@ export const ArticleContent = memo<ArticleContentProps>(
 
     // Reserve right-side space so text never sits under floating action buttons
     // Updated to account for only one button now (bookmarks button)
-    const rightOverlayPadding = useMemo(() => MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE, []);
+    // React Compiler auto-memoizes
+    const rightOverlayPadding = MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE;
 
-    const titleContainerStyle = useMemo(
-      () => [
-        styles.titleContainer,
-        {
-          paddingRight: rightOverlayPadding,
-          marginTop: -(LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.SMALL),
-        },
-      ],
-      [rightOverlayPadding]
-    );
+    // React Compiler auto-memoizes
+    const titleContainerStyle = [
+      styles.titleContainer,
+      {
+        paddingRight: rightOverlayPadding,
+        marginTop: -(LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.SMALL),
+      },
+    ];
 
-    const authorContainerStyle = useMemo(
-      () => [styles.authorContainer, { paddingRight: rightOverlayPadding }],
-      [rightOverlayPadding]
-    );
+    // React Compiler auto-memoizes
+    const authorContainerStyle = [styles.authorContainer, { paddingRight: rightOverlayPadding }];
 
-    const summaryContainerStyle = useMemo(
-      () => [styles.summaryContainer, { paddingRight: rightOverlayPadding }],
-      [rightOverlayPadding]
-    );
+    // React Compiler auto-memoizes
+    const summaryContainerStyle = [styles.summaryContainer, { paddingRight: rightOverlayPadding }];
 
     const dividerStyle = {
       height: StyleSheet.hairlineWidth,
@@ -225,90 +218,76 @@ export const ArticleContent = memo<ArticleContentProps>(
     } as const;
 
     // Render title/author below the hero image but above content
-    const headerComponent = useMemo(
-      () => (
-        <View>
-          <View style={titleContainerStyle}>
-            <ThemedText
-              type="heading1"
-              colorName="headingText"
-              style={[styles.titleText, styles.leftAlign]}
-            >
-              {article.title}
-            </ThemedText>
-          </View>
+    // React Compiler auto-memoizes
+    const headerComponent = (
+      <View>
+        <View style={titleContainerStyle}>
+          <ThemedText
+            type="heading1"
+            colorName="headingText"
+            style={[styles.titleText, styles.leftAlign]}
+          >
+            {article.title}
+          </ThemedText>
+        </View>
 
-          <View style={authorContainerStyle}>
+        <View style={authorContainerStyle}>
+          <ThemedText
+            type="body"
+            weight="medium"
+            colorName="authorText"
+            style={styles.authorText}
+          >
+            {article.author.name}
+            {' \u00B7 '}
+            {article.category.name
+              ? article.category.name.charAt(0).toUpperCase() + article.category.name.slice(1)
+              : ''}
+          </ThemedText>
+        </View>
+
+        {/* Summary section - positioned between author and content for natural reading flow */}
+        {article.summary && (
+          <View style={summaryContainerStyle}>
             <ThemedText
               type="body"
-              weight="medium"
-              colorName="authorText"
-              style={styles.authorText}
+              weight="normal"
+              colorName="subtitleText"
+              style={styles.summaryText}
             >
-              {article.author.name}
-              {' \u00B7 '}
-              {article.category.name
-                ? article.category.name.charAt(0).toUpperCase() + article.category.name.slice(1)
-                : ''}
+              {article.summary}
             </ThemedText>
           </View>
-
-          {/* Summary section - positioned between author and content for natural reading flow */}
-          {article.summary && (
-            <View style={summaryContainerStyle}>
-              <ThemedText
-                type="body"
-                weight="normal"
-                colorName="subtitleText"
-                style={styles.summaryText}
-              >
-                {article.summary}
-              </ThemedText>
-            </View>
-          )}
-          <View style={dividerStyle} />
-        </View>
-      ),
-      [article, titleContainerStyle, authorContainerStyle, summaryContainerStyle]
+        )}
+        <View style={dividerStyle} />
+      </View>
     );
 
     // Get articles from cache for recommendations (avoid re-querying here)
     const queryClient = useQueryClient();
     const articlesData = queryClient.getQueryData<Article[]>(['articles']) || [];
 
-    // Memoized footer component with stable references
-    const footerComponent = useMemo(
-      () => <RelatedArticlesSection currentArticleId={article.id} articlesData={articlesData} />,
-      [article.id, articlesData]
-    );
+    // React Compiler auto-memoizes
+    const footerComponent = <RelatedArticlesSection currentArticleId={article.id} articlesData={articlesData} />;
 
-    // Memoized content container style
-    const contentContainerStyle = useMemo(
-      () => ({
-        paddingTop: headerHeight,
-        paddingBottom: insets.bottom + COMFORTABLE_READING_SPACE,
-      }),
-      [insets.bottom, headerHeight]
-    );
+    // React Compiler auto-memoizes
+    const contentContainerStyle = {
+      paddingTop: headerHeight,
+      paddingBottom: insets.bottom + COMFORTABLE_READING_SPACE,
+    };
 
-    // Memoized list container style
-    const listContainerStyle = useMemo(
-      () => ({
-        flex: 1,
-        backgroundColor: colors.background,
-        position: 'relative' as const,
-      }),
-      [colors.background]
-    );
+    // React Compiler auto-memoizes
+    const listContainerStyle = {
+      flex: 1,
+      backgroundColor: colors.background,
+      position: 'relative' as const,
+    };
 
-    // Memoized viewability config
-    const viewabilityConfig = useMemo(
-      () => ({
-        itemVisiblePercentThreshold: 50,
-        minimumViewTime: 100,
-      }),
-      []
-    );
+    // React Compiler auto-memoizes
+    const viewabilityConfig = {
+      itemVisiblePercentThreshold: 50,
+      minimumViewTime: 100,
+    };
 
     return (
       <Animated.View style={[styles.flexOne, animatedStyle]}>
@@ -374,38 +353,6 @@ export const ArticleContent = memo<ArticleContentProps>(
         ) : null}
       </Animated.View>
     );
-  },
-  // Simplified memo comparison function - only check primitive values and stable references
-  (prevProps, nextProps) => {
-    // Check primitive values first for early return
-    if (
-      prevProps.id !== nextProps.id ||
-      prevProps.isInReadingList !== nextProps.isInReadingList ||
-      prevProps.showEnglish !== nextProps.showEnglish ||
-      prevProps.isLanguageOverridden !== nextProps.isLanguageOverridden
-    ) {
-      return false;
-    }
-
-    // Check stable references
-    if (
-      prevProps.article.id !== nextProps.article.id ||
-      prevProps.article.title !== nextProps.article.title ||
-      prevProps.article.author.id !== nextProps.article.author.id ||
-      prevProps.article.author.name !== nextProps.article.author.name ||
-      prevProps.sortedSentences !== nextProps.sortedSentences ||
-      prevProps.renderSentenceItem !== nextProps.renderSentenceItem ||
-      prevProps.handleScroll !== nextProps.handleScroll ||
-      prevProps.handleViewableItemsChanged !== nextProps.handleViewableItemsChanged ||
-      prevProps.onToggleReadingList !== nextProps.onToggleReadingList ||
-      prevProps.onToggleLanguage !== nextProps.onToggleLanguage ||
-      prevProps.onClose !== nextProps.onClose
-    ) {
-      return false;
-    }
-
-    return true;
-  }
-);
+}
 
 ArticleContent.displayName = 'ArticleContent';
