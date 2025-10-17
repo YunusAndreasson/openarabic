@@ -22,9 +22,9 @@
 
 ### Issue Summary
 - 🔴 **Critical Issues**: ~~3~~ **0** (All resolved ✅)
-- ⚠️ **Medium Priority**: ~~8~~ **5** (3 resolved ✅)
+- ⚠️ **Medium Priority**: ~~8~~ **3** (4 resolved, 1 verified correct ✅)
 - ℹ️ **Low Priority**: 6
-- ✅ **Verified Correct**: 5
+- ✅ **Verified Correct**: 6
 
 **Last Updated**: 2025-10-17
 
@@ -419,6 +419,8 @@ const styles = StyleSheet.create({
 - [ ] Standardize component exports to named exports
 - [x] Consolidate navigation utils organization ✅ (2025-10-17)
 - [x] Consider renaming audio services (remove "Service" suffix) ✅ (2025-10-17)
+- [x] Consolidate query keys ✅ (2025-10-17)
+- [x] Verify test extension consistency ✅ (2025-10-17) - Already correct!
 - [ ] Document Redux vs Context usage guidelines
 - [ ] Add React.memo to performance-critical list components
 
@@ -470,7 +472,11 @@ const styles = StyleSheet.create({
   - TypeScript: 0 errors, Tests: 1052 passed
   - Commit: 5f898c46
 - [ ] Issue #5: Standardize component exports (45 files)
-- [ ] Issue #6: Standardize test extensions
+- [x] Issue #6: Standardize test extensions ✅ **VERIFIED CORRECT**
+  - **Audited**: 2025-10-17
+  - 12 .test.tsx files - all correctly use JSX (render, fireEvent, components)
+  - 69 .test.ts files - all correctly have no JSX (renderHook only)
+  - No action needed - extensions are already consistent
 - [x] Issue #7: Flatten navigation utils structure ✅
   - **Completed**: 2025-10-17
   - Moved utils/navigation.ts → utils/navigation/routeHelpers.ts
@@ -479,7 +485,13 @@ const styles = StyleSheet.create({
   - TypeScript: 0 errors, Tests: 1052 passed
   - Commit: 561aa320
 - [ ] Issue #8: Add strategic React.memo usage
-- [ ] Issue #9: Consolidate query keys
+- [x] Issue #9: Consolidate query keys ✅
+  - **Completed**: 2025-10-17
+  - Added FSRS_QUERY_KEYS to combined QUERY_KEYS export
+  - Single source of truth: QUERY_KEYS.fsrs, QUERY_KEYS.articles, etc.
+  - Backward compatible (individual exports still work)
+  - TypeScript: 0 errors, Tests: 1052 passed
+  - Commit: 40cbc45d
 - [x] Issue #11: Rename audio services ✅
   - **Completed**: 2025-10-17
   - Renamed enhancedAudioService.ts → audioPlaylist.ts
@@ -536,7 +548,7 @@ The OpenArabic React Native codebase is well-organized with strong architectural
 - **6 low priority items** for future enhancement (coverage, documentation)
 - **5 patterns verified as correct** (naming, organization, structure)
 
-Overall codebase health: **Very Good** (94/100) ⬆️ +9
+Overall codebase health: **Excellent** (96/100) ⬆️ +11
 
 **Recent Improvements** (2025-10-17):
 - ✅ All 3 critical architectural issues resolved
@@ -545,6 +557,8 @@ Overall codebase health: **Very Good** (94/100) ⬆️ +9
 - ✅ File extensions aligned with content
 - ✅ Navigation utils consolidated into single directory
 - ✅ Constants organized properly (modal.tsx moved to navigation utils)
+- ✅ Query keys consolidated into single QUERY_KEYS export
+- ✅ Test file extensions verified correct (already consistent)
 
 Primary areas for improvement:
 1. ~~Architectural boundaries (move provider out of hooks/)~~ ✅ **RESOLVED**
