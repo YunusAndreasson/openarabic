@@ -2,8 +2,8 @@ import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
 
 import DoneButton from '@/components/ui/DoneButton';
-import { createNavigationOptions } from '@/constants/modal';
 import { STRINGS } from '@/constants/strings';
+import { createNavigationOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
 
 export default function AccountLayout(): JSX.Element {

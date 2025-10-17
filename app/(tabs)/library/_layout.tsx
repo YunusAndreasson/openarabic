@@ -4,8 +4,8 @@ import { View } from 'react-native';
 
 import { HeaderProfile } from '@/components/HeaderProfile';
 import DoneButton from '@/components/ui/DoneButton';
-import { createNavigationOptions } from '@/constants/modal';
 import { STRINGS } from '@/constants/strings';
+import { createNavigationOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
 import { AppTab, UiAction } from '@/types/enums';
 import type { FilterParams } from '@/types/navigation.types';
