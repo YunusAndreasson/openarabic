@@ -40,7 +40,7 @@ jest.mock('@/hooks/audio/useAudioSubscription', () => ({
     },
   }),
 }));
-jest.mock('@/services/simpleAudioService', () => ({
+jest.mock('@/services/audioPlayer', () => ({
   simpleAudioService: {
     stop: jest.fn(),
     play: jest.fn(),

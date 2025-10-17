@@ -2,7 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 
 import { articlesService } from '@/services/articles';
-import { simpleAudioService } from '@/services/simpleAudioService';
+import { simpleAudioService } from '@/services/audioPlayer';
 import type { Article } from '@/types/articles.types';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { ArticleId } from '@/types/branded.types';

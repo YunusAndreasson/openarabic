@@ -35,7 +35,7 @@ jest.mock('@/utils/errorHandling');
 jest.mock('@/utils/imageUtils');
 
 import { STRINGS } from '@/constants/strings';
-import { enhancedAudioService } from '@/services/enhancedAudioService';
+import { enhancedAudioService } from '@/services/audioPlaylist';
 import { handleError } from '@/utils/errorHandling';
 import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
 

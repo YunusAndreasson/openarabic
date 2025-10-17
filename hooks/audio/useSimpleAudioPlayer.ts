@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { useMountSafety } from '@/hooks/common/useMountSafety';
-import { simpleAudioService } from '@/services/simpleAudioService';
+import { simpleAudioService } from '@/services/audioPlayer';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 
 import { useAudioSubscription } from './useAudioSubscription';

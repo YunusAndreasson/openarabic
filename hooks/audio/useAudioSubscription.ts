@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
 import { useMountSafety } from '@/hooks/common/useMountSafety';
-import type { AudioStatus } from '@/services/simpleAudioService';
-import { simpleAudioService } from '@/services/simpleAudioService';
+import type { AudioStatus } from '@/services/audioPlayer';
+import { simpleAudioService } from '@/services/audioPlayer';
 
 /**
  * Centralized audio service subscription hook

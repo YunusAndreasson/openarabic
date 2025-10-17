@@ -6,7 +6,7 @@ import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useBookmarksScreen } from '@/hooks/bookmarks/useBookmarksScreen';
-import { simpleAudioService } from '@/services/simpleAudioService';
+import { simpleAudioService } from '@/services/audioPlayer';
 import type { Article } from '@/types/articles.types';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import { successFeedback } from '@/utils/haptics';

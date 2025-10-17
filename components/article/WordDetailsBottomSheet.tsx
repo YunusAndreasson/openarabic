@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useAudioSubscription } from '@/hooks/audio/useAudioSubscription';
 import { useColors } from '@/hooks/theme/useColors';
-import { simpleAudioService } from '@/services/simpleAudioService';
+import { simpleAudioService } from '@/services/audioPlayer';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';

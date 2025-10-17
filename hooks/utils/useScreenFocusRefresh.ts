@@ -3,7 +3,7 @@ import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 import { InteractionManager } from 'react-native';
 
-import { simpleAudioService } from '@/services/simpleAudioService';
+import { simpleAudioService } from '@/services/audioPlayer';
 import { handleError } from '@/utils/errorHandling';
 
 /**
