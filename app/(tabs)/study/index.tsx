@@ -17,7 +17,7 @@ import { MemoryRetentionBottomSheet } from '@/components/study/MemoryRetentionBo
 import RecommendationCard from '@/components/study/RecommendationCard';
 import { VocabularyStatCards } from '@/components/study/VocabularyStatCards';
 import { WordsMasteredBottomSheet } from '@/components/study/WordsMasteredBottomSheet';
-import PulsatingLoader from '@/components/ui/PulsatingLoader';
+import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';

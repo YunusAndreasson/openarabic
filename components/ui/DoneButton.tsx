@@ -19,7 +19,7 @@ interface DoneButtonProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
+export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     includeOpacity: true,
@@ -76,5 +76,3 @@ const styles = StyleSheet.create({
   button: HEADER_BUTTON_STYLE,
   buttonText: HEADER_BUTTON_TEXT_STYLE,
 });
-
-export default DoneButton;

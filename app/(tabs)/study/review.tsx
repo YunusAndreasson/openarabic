@@ -12,7 +12,7 @@ import {
   ReviewCard,
   ReviewHeader,
 } from '@/components/review';
-import PulsatingLoader from '@/components/ui/PulsatingLoader';
+import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useReview } from '@/hooks/review';

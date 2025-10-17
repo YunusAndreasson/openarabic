@@ -12,7 +12,7 @@ import {
 } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider, useToast } from '@/components/providers';
-import PulsatingLoader from '@/components/ui/PulsatingLoader';
+import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Tables } from '@/types/database.types';

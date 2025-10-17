@@ -38,7 +38,7 @@ interface EditModeButtonProps {
   hideWhenEmpty?: boolean;
 }
 
-const EditModeButton: FC<EditModeButtonProps> = ({
+const EditModeButtonComponent: FC<EditModeButtonProps> = ({
   type,
   onEditModeChange,
   style,
@@ -121,4 +121,4 @@ const styles = StyleSheet.create({
   buttonText: HEADER_BUTTON_TEXT_STYLE,
 });
 
-export default memo(EditModeButton);
+export const EditModeButton = memo(EditModeButtonComponent);

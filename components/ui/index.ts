@@ -3,12 +3,12 @@
  * Reusable UI primitives and form controls
  */
 
-export { default as DictionaryButton } from './DictionaryButton';
-export { default as DoneButton } from './DoneButton';
-export { default as EditModeButton } from './EditModeButton';
-export { default as IconButton } from './IconButton';
-export { default as Pill } from './Pill';
-export { default as PulsatingLoader } from './PulsatingLoader';
+export { DictionaryButton } from './DictionaryButton';
+export { DoneButton } from './DoneButton';
+export { EditModeButton } from './EditModeButton';
+export { IconButton } from './IconButton';
+export { Pill } from './Pill';
+export { PulsatingLoader } from './PulsatingLoader';
 export { SettingsPicker, type SettingsPickerOption, type SettingsPickerProps } from './SettingsPicker';
 export { TimePicker } from './TimePicker';
 export { Toggle } from './Toggle';

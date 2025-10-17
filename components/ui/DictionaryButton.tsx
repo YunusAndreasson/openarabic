@@ -16,7 +16,7 @@ interface DictionaryButtonProps {
   itemCount?: number;
 }
 
-function DictionaryButton(props: DictionaryButtonProps): JSX.Element | null {
+export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | null {
   const { hideWhenEmpty, itemCount } = props;
   const colors = useColors();
   const { session } = useAuth();
@@ -79,5 +79,3 @@ const styles = StyleSheet.create({
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
   },
 });
-
-export default DictionaryButton;

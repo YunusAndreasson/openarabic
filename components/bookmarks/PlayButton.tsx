@@ -1,7 +1,7 @@
 import type { Ionicons } from '@expo/vector-icons';
 import { useMemo, type ComponentProps, type FC } from 'react';
 
-import IconButton from '@/components/ui/IconButton';
+import { IconButton } from '@/components/ui/IconButton';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';

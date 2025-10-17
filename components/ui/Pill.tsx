@@ -9,7 +9,7 @@ import type { PillProps } from '@/types/ui/pill.types';
 /**
  * A simple pill component for filters and categories
  */
-function Pill({ id, label, isSelected = false, onSelect, variant = 'filter' }: PillProps) {
+export function Pill({ id, label, isSelected = false, onSelect, variant = 'filter' }: PillProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
@@ -113,5 +113,3 @@ function Pill({ id, label, isSelected = false, onSelect, variant = 'filter' }: P
     </Pressable>
   );
 }
-
-export default Pill;

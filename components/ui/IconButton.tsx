@@ -73,7 +73,7 @@ interface IconButtonProps {
   iconStyle?: TextStyle;
 }
 
-const IconButton: FC<IconButtonProps> = ({
+export const IconButton: FC<IconButtonProps> = ({
   icon,
   onPress,
   disabled = false,
@@ -154,5 +154,3 @@ const styles = StyleSheet.create({
     width: MIN_TOUCH_TARGET.MEDIUM,
   },
 });
-
-export default IconButton;

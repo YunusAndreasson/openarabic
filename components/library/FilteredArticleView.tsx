@@ -9,7 +9,7 @@ import DraggableFlatList from 'react-native-draggable-flatlist';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
-import PulsatingLoader from '@/components/ui/PulsatingLoader';
+import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
