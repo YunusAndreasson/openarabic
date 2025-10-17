@@ -1,5 +1,4 @@
-'use no memo';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -34,19 +33,18 @@ const DEFAULT_TRACK_WIDTH = SCRUBBER_CONSTANTS.DEFAULT_TRACK_WIDTH;
 const SPRING_CONFIG = { damping: 20, stiffness: 400 };
 const TOOLTIP_SPRING_CONFIG = { damping: 15, stiffness: 300 };
 
-export const SentenceScrubber = React.memo<SentenceScrubberProps>(
-  ({ currentSentence, totalSentences, onSentenceChange, onScrubStart, onScrubEnd }) => {
-    const colors = useColors();
-    const lastSentenceRef = useRef(currentSentence);
+export function SentenceScrubber({ currentSentence, totalSentences, onSentenceChange, onScrubStart, onScrubEnd }: SentenceScrubberProps) {
+  const colors = useColors();
+  const lastSentenceRef = useRef(currentSentence);
 
     // Shared values for performance
     const trackWidth = useSharedValue(DEFAULT_TRACK_WIDTH as number);
     const handlePosition = useSharedValue(0);
     const lastIndex = useSharedValue(currentSentence);
 
-    // Memoized calculations to prevent unnecessary recalculations
-    const isValidScrubber = useMemo(() => totalSentences > 1, [totalSentences]);
-    const maxSentenceIndex = useMemo(() => totalSentences - 1, [totalSentences]);
+    // React Compiler auto-memoizes
+    const isValidScrubber = totalSentences > 1;
+    const maxSentenceIndex = totalSentences - 1;
 
     // ===== PAN GESTURE HOOK (v2 OPTIMIZED) =====
     const {
@@ -58,15 +56,15 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
       onUpdate: useCallback(
         (progress: number) => {
           'worklet';
-          if (trackWidth.value > 0) {
+          if (trackWidth.get() > 0) {
             // Update handle position immediately for responsive feel
-            handlePosition.value = progress * (trackWidth.value - HANDLE_SIZE);
+            handlePosition.set(progress * (trackWidth.get() - HANDLE_SIZE));
 
             // Calculate sentence index efficiently
             const sentenceIndex = Math.round(progress * maxSentenceIndex);
             // Only bridge to JS when the index actually changes
-            if (sentenceIndex !== lastIndex.value) {
-              lastIndex.value = sentenceIndex;
+            if (sentenceIndex !== lastIndex.get()) {
+              lastIndex.set(sentenceIndex);
               runOnJS(onSentenceChange)(sentenceIndex);
             }
           }
@@ -103,7 +101,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
       if (!isDragging.value && trackWidth.value > 0 && isValidScrubber) {
         const progress = currentSentence / maxSentenceIndex;
         const newPosition = progress * (trackWidth.value - HANDLE_SIZE);
-        handlePosition.value = withSpring(newPosition, SPRING_CONFIG);
+        handlePosition.set(withSpring(newPosition, SPRING_CONFIG));
 
         // Update ref when position changes externally (not from scrubbing)
         lastSentenceRef.current = currentSentence;
@@ -112,7 +110,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
       }
     }, [currentSentence, maxSentenceIndex, isValidScrubber, isDragging, trackWidth]);
 
-    // Memoized track layout handler
+    // React Compiler auto-memoizes
     const onLayout = useCallback(
       (event: LayoutChangeEvent) => {
         const width = event.nativeEvent.layout.width;
@@ -132,28 +130,28 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
 
     // Gesture is now handled by the usePanGesture hook
 
-    // Memoized animated styles for better performance - Updated for dynamic sizing
+    // React Compiler auto-memoizes
     const handleStyle = useAnimatedStyle(() => {
-      const size = isDragging.value ? HANDLE_SIZE_ACTIVE : HANDLE_SIZE;
+      const size = isDragging.get() ? HANDLE_SIZE_ACTIVE : HANDLE_SIZE;
       const offset = (size - HANDLE_SIZE) / 2; // Adjust position to keep centered
 
       return {
-        transform: [{ translateX: handlePosition.value - offset }],
+        transform: [{ translateX: handlePosition.get() - offset }],
         width: size,
         height: size,
         borderRadius: size / 2,
-        top: -(size - (isDragging.value ? TRACK_HEIGHT_ACTIVE : TRACK_HEIGHT)) / 2,
+        top: -(size - (isDragging.get() ? TRACK_HEIGHT_ACTIVE : TRACK_HEIGHT)) / 2,
       };
     }, [handlePosition, isDragging]);
 
     // Updated tooltip positioning - ABOVE the thumb (Jakob's Law)
     const tooltipStyle = useAnimatedStyle(
       () => ({
-        opacity: showTooltip.value,
+        opacity: showTooltip.get(),
         transform: [
-          { translateX: handlePosition.value - LAYOUT.SPACING.XXXLARGE }, // Center tooltip
+          { translateX: handlePosition.get() - LAYOUT.SPACING.XXXLARGE }, // Center tooltip
           { translateY: -30 }, // Position higher above the thumb for better visibility and prevent clipping
-          { scale: withSpring(showTooltip.value > 0 ? 1 : 0.8, TOOLTIP_SPRING_CONFIG) },
+          { scale: withSpring(showTooltip.get() > 0 ? 1 : 0.8, TOOLTIP_SPRING_CONFIG) },
         ],
       }),
       [showTooltip, handlePosition]
@@ -161,32 +159,23 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
 
     // Dynamic track style for better visibility during interaction
     const trackStyle = useAnimatedStyle(() => {
-      const height = isDragging.value ? TRACK_HEIGHT_ACTIVE : TRACK_HEIGHT;
+      const height = isDragging.get() ? TRACK_HEIGHT_ACTIVE : TRACK_HEIGHT;
       return {
         height,
         borderRadius: height / 2,
         backgroundColor: colors.secondaryText, // Use secondaryText for better visibility across themes
-        opacity: isDragging.value ? LAYOUT.OPACITY.HOVER : LAYOUT.OPACITY.MEDIUM, // Higher opacity for better visibility
+        opacity: isDragging.get() ? LAYOUT.OPACITY.HOVER : LAYOUT.OPACITY.MEDIUM, // Higher opacity for better visibility
       };
     }, [isDragging, colors.secondaryText]);
 
-    // Memoized styles for static elements
-    const tooltipBubbleStyle = useMemo(
-      () => [styles.tooltipBubble, { backgroundColor: colors.wordTooltipBg }],
-      [colors.wordTooltipBg]
-    );
+    // React Compiler auto-memoizes
+    const tooltipBubbleStyle = [styles.tooltipBubble, { backgroundColor: colors.wordTooltipBg }];
 
-    const tooltipTextStyle = useMemo(
-      () => [styles.tooltipText, { color: colors.wordTooltipText }],
-      [colors.wordTooltipText]
-    );
+    const tooltipTextStyle = [styles.tooltipText, { color: colors.wordTooltipText }];
 
-    const handleColorStyle = useMemo(
-      () => ({
-        backgroundColor: colors.tint,
-      }),
-      [colors.tint]
-    );
+    const handleColorStyle = {
+      backgroundColor: colors.tint,
+    };
 
     // Early return for invalid state
     if (!isValidScrubber) return null;
@@ -213,8 +202,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
         </GestureDetector>
       </View>
     );
-  }
-);
+}
 
 SentenceScrubber.displayName = 'SentenceScrubber';
 
