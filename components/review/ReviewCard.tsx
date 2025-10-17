@@ -5,7 +5,7 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import type { AnimatedStyle as ReanimatedAnimatedStyle, SharedValue } from 'react-native-reanimated';
 import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
-import WordDisplayComponent from '@/components/review/WordDisplay';
+import { WordDisplay as WordDisplayComponent } from '@/components/review/WordDisplay';
 import { SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
@@ -232,4 +232,3 @@ export function ReviewCard({
 
 ReviewCard.displayName = 'ReviewCard';
 
-export default ReviewCard;

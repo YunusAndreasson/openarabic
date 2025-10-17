@@ -31,7 +31,7 @@ interface CompletionScreenProps {
   fromRemember?: boolean; // For dismissTo navigation
 }
 
-const CompletionScreen: FC<CompletionScreenProps> = ({
+export const CompletionScreen: FC<CompletionScreenProps> = ({
   title = STRINGS.SESSION_COMPLETE,
   subtitle,
   buttonText = UiAction.CONTINUE,
@@ -229,4 +229,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CompletionScreen;
+

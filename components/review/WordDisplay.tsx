@@ -147,4 +147,3 @@ export function WordDisplay({
 
 WordDisplay.displayName = 'WordDisplay';
 
-export default WordDisplay;

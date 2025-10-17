@@ -86,4 +86,3 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
 
 ReviewHeader.displayName = 'ReviewHeader';
 
-export default ReviewHeader;

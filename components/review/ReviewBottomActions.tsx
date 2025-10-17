@@ -90,4 +90,3 @@ export const ReviewBottomActions: FC = () => {
 
 ReviewBottomActions.displayName = 'ReviewBottomActions';
 
-export default ReviewBottomActions;
