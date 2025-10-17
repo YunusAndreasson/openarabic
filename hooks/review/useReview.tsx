@@ -1,4 +1,3 @@
-'use no memo';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -112,7 +111,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const opacityStyle = useAnimatedStyle(() => {
     'worklet';
     return {
-      opacity: opacity.value,
+      opacity: opacity.get(),
     };
   }, [opacity]);
 
