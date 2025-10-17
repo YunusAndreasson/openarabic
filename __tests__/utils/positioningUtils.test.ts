@@ -1,8 +1,6 @@
 import {
   TOOLTIP_CONSTANTS,
-  calculateArrowPosition,
   calculateTooltipDimensions,
-  handleScreenBoundaries,
   type TooltipLayout,
 } from '@/utils/positioningUtils';
 
@@ -175,39 +173,4 @@ describe('Positioning Utilities', () => {
     });
   });
 
-  describe('calculateArrowPosition', () => {
-    it('should calculate arrow position correctly', () => {
-      const result = calculateArrowPosition(100, 50, 100, 6);
-      expect(result).toBe(50); // 100 - 50
-    });
-
-    it('should clamp arrow position to minimum', () => {
-      const result = calculateArrowPosition(10, 50, 100, 6);
-      expect(result).toBe(6); // Clamped to arrow size
-    });
-
-    it('should clamp arrow position to maximum', () => {
-      const result = calculateArrowPosition(200, 50, 100, 6);
-      expect(result).toBe(94); // 100 - 6 (clamped to max)
-    });
-  });
-
-  describe('handleScreenBoundaries', () => {
-    it('should return original position when within bounds', () => {
-      const result = handleScreenBoundaries(100, 50, 16);
-      expect(result).toBe(100);
-    });
-
-    it('should adjust position when too close to left edge', () => {
-      const result = handleScreenBoundaries(5, 50, 16);
-      expect(result).toBe(16);
-    });
-
-    it('should adjust position when too close to right edge', () => {
-      // SCREEN_WIDTH defaults to 375 in test environments
-      const screenWidth = 375;
-      const result = handleScreenBoundaries(350, 50, 16);
-      expect(result).toBe(screenWidth - 16 - 50); // SCREEN_WIDTH - margin - width
-    });
-  });
 });

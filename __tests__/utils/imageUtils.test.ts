@@ -1,4 +1,4 @@
-import { generateAudioUrl, generateImageUrl, reconstructFullUrl } from '../../utils/imageUtils';
+import { generateAudioUrl, generateImageUrl } from '../../utils/imageUtils';
 
 describe('imageUtils', () => {
   describe('generateImageUrl', () => {
@@ -53,10 +53,4 @@ describe('imageUtils', () => {
     });
   });
 
-  describe('reconstructFullUrl', () => {
-    it('should reconstruct URLs with custom bucket', () => {
-      const result = reconstructFullUrl('test.jpg', 'custom-bucket');
-      expect(result).toContain('/storage/v1/object/public/custom-bucket/test.jpg');
-    });
-  });
 });

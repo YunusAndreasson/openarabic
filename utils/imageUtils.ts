@@ -40,9 +40,3 @@ export const generateAudioUrl = (audioUrl: string | null | undefined): string | 
   return `${SUPABASE_URL}/storage/v1/object/public/audio/${audioUrl}`;
 };
 
-/**
- * Reconstruct a full Supabase storage URL from a filename and bucket
- */
-export const reconstructFullUrl = (filename: string, bucket: string): string => {
-  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filename}`;
-};

@@ -42,17 +42,3 @@ export const withErrorHandlingDefault = <TArgs extends unknown[], TReturn>(
   };
 };
 
-/**
- * Creates a standardized error handler for common operations
- * @param operationName - Name of the operation for analytics
- * @param customToastMessage - Custom toast message (optional)
- * @returns Error handling function
- */
-export const createErrorHandler = (operationName: string, customToastMessage?: string) => {
-  return async (error: Error) => {
-    await handleError(error, {
-      analyticsEventName: operationName,
-      toastMessage: customToastMessage,
-    });
-  };
-};

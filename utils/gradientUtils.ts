@@ -110,36 +110,3 @@ export function createThemeBackgroundGradient(
   ] as const;
 }
 
-/**
- * Create simple overlay gradient for audio player (used in audio components)
- */
-export function createAudioOverlayGradient(shadowColor: string): readonly [string, string, string] {
-  return [
-    withOpacity(shadowColor, 0.3), // Lighter at top
-    withOpacity(shadowColor, 0.5), // Medium in middle
-    withOpacity(shadowColor, 0.7), // Darker at bottom for text readability
-  ] as const;
-}
-
-/**
- * Create overlay colors for audio player controls
- */
-export function createAudioOverlayColors(colors: ThemeColors): {
-  controlBackground: string;
-  progressBackground: string;
-  dragIndicator: string;
-  timerActive: string;
-  textPrimary: string;
-  textSecondary: string;
-  textTertiary: string;
-} {
-  return {
-    controlBackground: withOpacity(colors.white, 0.28), // Using opacity.selection for interactive elements
-    progressBackground: withOpacity(colors.white, 0.15), // Using opacity.border for tracks
-    dragIndicator: withOpacity(colors.white, 0.68), // Using opacity.backdrop for visibility
-    timerActive: withOpacity(colors.warning, 0.92), // Using opacity.modal for strong states
-    textPrimary: colors.white, // Use theme-aware white for text
-    textSecondary: withOpacity(colors.white, 0.85), // Secondary text
-    textTertiary: withOpacity(colors.white, 0.75), // Tertiary text
-  };
-}

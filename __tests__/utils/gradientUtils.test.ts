@@ -1,7 +1,5 @@
 import {
   calculateHeaderHeight,
-  createAudioOverlayColors,
-  createAudioOverlayGradient,
   createBackgroundGradientColors,
   createImageGradientColors,
   createStrongDarkOverlayGradient,
@@ -103,32 +101,4 @@ describe('gradientUtils', () => {
     });
   });
 
-  describe('createAudioOverlayGradient', () => {
-    it('should create audio overlay gradient', () => {
-      const shadowColor = '#000000';
-      const result = createAudioOverlayGradient(shadowColor);
-
-      expect(result).toHaveLength(3);
-      expect(result[0]).toContain('rgba(0,0,0,0.3)');
-      expect(result[1]).toContain('rgba(0,0,0,0.5)');
-      expect(result[2]).toContain('rgba(0,0,0,0.7)');
-    });
-  });
-
-  describe('createAudioOverlayColors', () => {
-    it('should create audio overlay colors', () => {
-      const result = createAudioOverlayColors(mockThemeColors);
-
-      expect(result).toHaveProperty('controlBackground');
-      expect(result).toHaveProperty('progressBackground');
-      expect(result).toHaveProperty('dragIndicator');
-      expect(result).toHaveProperty('timerActive');
-      expect(result).toHaveProperty('textPrimary');
-      expect(result).toHaveProperty('textSecondary');
-      expect(result).toHaveProperty('textTertiary');
-
-      expect(result.textPrimary).toBe(mockThemeColors.white);
-      expect(result.timerActive).toContain('rgba(255,165,0,0.92)'); // Warning color
-    });
-  });
 });
