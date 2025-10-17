@@ -45,7 +45,7 @@ jest.mock('../../components/library/ArticleCard', () => {
   const { TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    default: ({ onPress, testID }: any) => <TouchableOpacity onPress={onPress} testID={testID} />,
+    ArticleCard: ({ onPress, testID }: any) => <TouchableOpacity onPress={onPress} testID={testID} />,
   };
 });
 
@@ -65,7 +65,7 @@ jest.mock('../../components/review/CompletionScreen', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
-    default: ({ testID = 'completion-screen' }: { testID?: string }) => <View testID={testID} />,
+    CompletionScreen: ({ testID = 'completion-screen' }: { testID?: string }) => <View testID={testID} />,
   };
 });
 
