@@ -271,6 +271,28 @@ export default function EditArticlePage() {
           </div>
         </div>
 
+        <div className="flex gap-4 pt-4">
+          <Button
+            type="submit"
+            disabled={saving || uploading}
+            className="flex-1 cursor-pointer"
+          >
+            {saving || uploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {uploading ? 'Uploading...' : 'Saving...'}
+              </>
+            ) : (
+              'Save Changes'
+            )}
+          </Button>
+          <Link href="/">
+            <Button type="button" variant="outline" className="cursor-pointer">
+              Cancel
+            </Button>
+          </Link>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="image">Image</Label>
           <div className="space-y-4">
@@ -319,28 +341,6 @@ export default function EditArticlePage() {
               Select an existing image from the library or upload a new one
             </p>
           </div>
-        </div>
-
-        <div className="flex gap-4 pt-4">
-          <Button
-            type="submit"
-            disabled={saving || uploading}
-            className="flex-1"
-          >
-            {saving || uploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {uploading ? 'Uploading...' : 'Saving...'}
-              </>
-            ) : (
-              'Save Changes'
-            )}
-          </Button>
-          <Link href="/">
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
-          </Link>
         </div>
       </form>
 

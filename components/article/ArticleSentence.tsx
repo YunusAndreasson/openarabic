@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { ComponentRef, ReactNode, RefObject } from 'react';
-import { createRef, useEffect, useRef } from 'react';
+import { createRef, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { LayoutRectangle, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { type AnimatedStyle } from 'react-native-reanimated';
@@ -32,6 +32,15 @@ interface ArticleSentenceProps {
   currentHighlightedWord?: SentenceWord | null;
 }
 
+// Helper function to create word press handler
+// Defined outside render to avoid recreating on every call
+function createWordPressHandler(
+  word: SentenceWord,
+  onWordPress: ((word: SentenceWord, layout?: LayoutRectangle) => void) | undefined
+) {
+  return (layout: LayoutRectangle) => onWordPress?.(word, layout);
+}
+
 function renderWordWithProps(
   word: SentenceWord,
   index: number,
@@ -39,7 +48,7 @@ function renderWordWithProps(
   renderWord: ((word: SentenceWord, isHighlighted: boolean) => ReactNode) | undefined,
   onWordPress: ((word: SentenceWord, layout?: LayoutRectangle) => void) | undefined,
   sentenceId: string | number,
-  currentHighlightedWord?: SentenceWord | null
+  currentHighlightedWord: SentenceWord | null | undefined
 ) {
   const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
   if (!wordRefs[index]) {
@@ -57,7 +66,7 @@ function renderWordWithProps(
     <ArabicWord
       key={`word-${wordId}-${word.position}-${index}-${sentenceId}`}
       word={word}
-      onTooltipOpen={layout => onWordPress?.(word, layout)}
+      onTooltipOpen={createWordPressHandler(word, onWordPress)}
       wordRef={wordRefs[index]}
       position={index}
       isHighlighted={isHighlighted}
@@ -99,46 +108,61 @@ export function ArticleSentence({
     }
   }, [isHighlighted, startAnimation, reverseAnimation]);
 
-  // Style calculations
-  const englishTextStyle = {
-    ...styles.englishText,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    color: colors.englishText,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
-  };
+  // Memoize English text style to prevent recreation
+  const englishTextStyle = useMemo(
+    () => ({
+      ...styles.englishText,
+      fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+      color: colors.englishText,
+      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+    }),
+    [colors.englishText]
+  );
 
-  const backgroundStyle = Object.assign(
-    {
-      position: 'absolute' as const,
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-      backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
+  // Memoize background style to prevent recreation
+  const backgroundStyle = useMemo(
+    () =>
+      Object.assign(
+        {
+          position: 'absolute' as const,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+          backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
+        },
+        animatedHighlightStyle
+      ) as AnimatedStyle<ViewStyle>,
+    [colors.tint, colors.transparent, animatedHighlightStyle]
+  );
+
+  // Create stable handler for word press
+  const handleWordPressCallback = useCallback(
+    (word: SentenceWord, layout?: LayoutRectangle) => {
+      onWordPress?.(word, layout);
     },
-    animatedHighlightStyle
-  ) as AnimatedStyle<ViewStyle>;
+    [onWordPress]
+  );
 
-  // Rendered words
-  const renderedWords = words.map((word, index) => {
-    return renderWordWithProps(
-      word,
-      index,
-      wordRefs.current,
-      renderWord,
-      onWordPress,
-      sentence.id,
-      currentHighlightedWord
-    );
-  });
-
-  // Use Animated.View directly - it's properly imported from react-native-reanimated
-  const AnimatedView = Animated.View;
+  // Memoize rendered words to prevent unnecessary recreations
+  const renderedWords = useMemo(() => {
+    return words.map((word, index) => {
+      return renderWordWithProps(
+        word,
+        index,
+        wordRefs.current,
+        renderWord,
+        handleWordPressCallback,
+        sentence.id,
+        currentHighlightedWord
+      );
+    });
+  }, [words, renderWord, handleWordPressCallback, sentence.id, currentHighlightedWord]);
 
   return (
     <View style={[styles.container, containerStyle]}>
-      <AnimatedView style={backgroundStyle} />
+      <Animated.View style={backgroundStyle} />
       {settings.showEnglish && sentence.english && (
         <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>
       )}

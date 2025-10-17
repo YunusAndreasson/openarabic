@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 import { Button } from '@/components/ui/button';

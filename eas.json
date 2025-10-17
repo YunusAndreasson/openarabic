@@ -55,7 +55,7 @@
         "resourceClass": "medium"
       },
       "android": {
-        "resourceClass": "large",
+        "resourceClass": "medium",
         "buildType": "app-bundle"
       },
       "env": {

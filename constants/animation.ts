@@ -106,8 +106,8 @@ export const LIST_DRAW_DISTANCE_MULTIPLIER = 3;
 /** Larger multiplier used for sentence lists */
 export const SENTENCE_DRAW_DISTANCE_MULTIPLIER = 12;
 
-/** Default scroll event throttle for smooth animations */
-export const SCROLL_EVENT_THROTTLE = 64;
+/** Default scroll event throttle for smooth animations (16ms = 60fps, 8ms = 120fps) */
+export const SCROLL_EVENT_THROTTLE = 8;
 
 /** Delay before completion metrics appear */
 export const COMPLETION_METRIC_BASE_DELAY = 800;

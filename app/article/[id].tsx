@@ -67,13 +67,16 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleAddWordToStudy,
   } = useArticleScreen({ id, showToast });
 
+  // Memoize settings object to prevent recreation on every sentence
+  const settings = useMemo(() => ({ showEnglish }), [showEnglish]);
+
   // Memoize renderSentenceItem to prevent unnecessary recreations
   const renderSentenceItem = useCallback(
     ({ item }: { item: Tables<'article_sentences'> }) => {
       const words = sentenceWordsMap.get(item.id) ?? [];
 
       if (!words || words.length === 0) {
-        return <React.Fragment />;
+        return null;
       }
 
       return (
@@ -81,15 +84,13 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           key={item.id}
           sentence={item}
           words={words}
-          settings={{
-            showEnglish,
-          }}
+          settings={settings}
           colors={colors}
           onWordPress={handleWordPress}
         />
       );
     },
-    [sentenceWordsMap, colors, handleWordPress, showEnglish]
+    [sentenceWordsMap, colors, handleWordPress, settings]
   );
 
   const tooltipProps = useMemo(

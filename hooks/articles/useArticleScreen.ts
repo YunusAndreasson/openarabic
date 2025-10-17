@@ -92,6 +92,8 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       handleHeaderScroll(event);
+
+      // Close tooltip immediately when scrolling starts
       if (activeTooltipRef.current) {
         setActiveTooltip(null);
       }
@@ -261,14 +263,14 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {
       if (layout && layout.width > 0) {
-        if (activeTooltip?.word.id === word.id) {
+        if (activeTooltipRef.current?.word.id === word.id) {
           setActiveTooltip(null);
         } else {
           setActiveTooltip({ word, layout });
         }
       }
     },
-    [activeTooltip]
+    [] // No dependencies - uses ref for stable callback identity
   );
 
   const handleCloseTooltip = useCallback(() => {

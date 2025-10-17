@@ -36,6 +36,18 @@ export default function RootLayout({
                   >
                     Images
                   </Link>
+                  <Link
+                    href="/admin"
+                    className="text-sm font-medium hover:underline underline-offset-4"
+                  >
+                    Admin
+                  </Link>
+                  <Link
+                    href="/admin/analytics"
+                    className="text-sm font-medium hover:underline underline-offset-4"
+                  >
+                    Analytics
+                  </Link>
                 </nav>
               </div>
             </div>

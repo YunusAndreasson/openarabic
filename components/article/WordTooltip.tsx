@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
@@ -74,6 +74,15 @@ const STATIC_STYLES = StyleSheet.create({
     // Ensure text doesn't overflow horizontally
     maxWidth: '100%',
   },
+  chevronIcon: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+    opacity: LAYOUT.OPACITY.MEDIUM,
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
 
 // Default dimensions for fallback
@@ -101,35 +110,6 @@ export function WordTooltip({
       springConfig: SPRING_CONFIG.RESPONSIVE,
     });
 
-    // Convert window coordinates (from measureInWindow) to local overlay coordinates
-    const containerRef = useRef<View | null>(null);
-    const containerOffsetXRef = useRef<number>(0);
-    const containerWidthRef = useRef<number>(0);
-
-    const measureContainerOffset = () => {
-      if (containerRef.current?.measureInWindow) {
-        try {
-          containerRef.current.measureInWindow((x: number, _y: number, width: number /* height */) => {
-            if (typeof x === 'number') {
-              containerOffsetXRef.current = x;
-            }
-            if (typeof width === 'number' && width > 0) {
-              containerWidthRef.current = width;
-            }
-          });
-        } catch {
-          // ignore
-        }
-      }
-    };
-
-    // Only measure once when tooltip becomes visible
-    useEffect(() => {
-      if (visible && layout) {
-        measureContainerOffset();
-      }
-    }, [visible, layout, measureContainerOffset]);
-
     // Arabic word analysis for English color-coding
     const { formattedAnalysis, analysis } = useArabicWordAnalysis(
       arabicWord || '',
@@ -154,7 +134,7 @@ export function WordTooltip({
 
     // Render color-coded English text
     const renderColorCodedEnglish = (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={STATIC_STYLES.textContainer}>
         <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText} numberOfLines={1}>
           {coloredSegments.map(segment => (
             <ThemedText
@@ -170,25 +150,25 @@ export function WordTooltip({
       </View>
     );
 
-    // Calculate tooltip dimensions with optimized processing
+    // Calculate tooltip dimensions using window coordinates directly
+    // No coordinate conversion needed - overlay is full-screen absolute
     const dimensions = !layout
       ? DEFAULT_DIMENSIONS
       : (() => {
-          const adjustedLayout: TooltipLayout = {
-            x: (layout as TooltipLayout).x - containerOffsetXRef.current,
-            y: (layout as TooltipLayout).y,
-            width: (layout as TooltipLayout).width,
-            height: (layout as TooltipLayout).height,
-          } as TooltipLayout;
+          // Validate coordinates are reasonable before showing tooltip
+          if (layout.x < 0 || layout.y < 0 || layout.x > SCREEN_WIDTH) {
+            return DEFAULT_DIMENSIONS; // Skip tooltip for invalid coordinates
+          }
+
           // Use combined text from segments for dimension calculation
           const displayedText = coloredSegments.map(s => s.text).join('');
           return calculateTooltipDimensions(
-            adjustedLayout,
+            layout as TooltipLayout, // Use window coordinates directly
             displayedText,
             false,
             undefined,
-            containerOffsetXRef.current,
-            containerWidthRef.current
+            0, // No container offset needed
+            SCREEN_WIDTH // Use screen width directly for boundary checks
           );
         })();
 
@@ -227,12 +207,7 @@ export function WordTooltip({
     if (!visible || !layout) return null;
 
     return (
-      <View
-        ref={containerRef}
-        style={containerStyle}
-        pointerEvents="box-none"
-        onLayout={measureContainerOffset}
-      >
+      <View style={containerStyle} pointerEvents="box-none">
         <Pressable
           onPress={handleOpenWordDetails}
           onPressIn={handlePressIn}
@@ -241,7 +216,15 @@ export function WordTooltip({
         >
           <Animated.View style={[tooltipStyle, animatedStyle]} testID="word-tooltip">
             <View style={arrowStyle} />
-            <View style={STATIC_STYLES.contentContainer}>{renderColorCodedEnglish}</View>
+            <View style={STATIC_STYLES.contentContainer}>
+              {renderColorCodedEnglish}
+              <Ionicons
+                name="chevron-forward"
+                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                color={colors.secondaryText}
+                style={STATIC_STYLES.chevronIcon}
+              />
+            </View>
           </Animated.View>
         </Pressable>
       </View>

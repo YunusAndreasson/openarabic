@@ -409,6 +409,16 @@ class SimpleAudioService {
 
     // Play transition sound between tracks if playlist has more than 1 track
     if (this.initialPlaylistLength > 1) {
+      // CRITICAL: Pause current player to release audio session for transition sound
+      // Without this, the transition sound fails to acquire the audio session
+      if (this.currentPlayer) {
+        try {
+          this.currentPlayer.pause();
+        } catch {
+          // Ignore pause errors - transition sound will still attempt to play
+        }
+      }
+
       await playTransitionSound();
     }
 

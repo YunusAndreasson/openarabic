@@ -98,7 +98,7 @@ interface ArticleContentProps {
   id: string;
   article: Article;
   sortedSentences: Tables<'article_sentences'>[];
-  renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => ReactElement;
+  renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => ReactElement | null;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   colors: ThemeColors;
