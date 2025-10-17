@@ -1,4 +1,4 @@
-import { memo, useMemo, type FC } from 'react';
+import { useMemo, type FC } from 'react';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -52,16 +52,6 @@ export const SectionTitle: FC<SectionTitleProps> = ({
 };
 
 SectionTitle.displayName = 'SectionTitle';
-
-const areEqual = (prevProps: SectionTitleProps, nextProps: SectionTitleProps) => {
-  return (
-    prevProps.title === nextProps.title &&
-    prevProps.subtitle === nextProps.subtitle &&
-    prevProps.isFirstSection === nextProps.isFirstSection &&
-    prevProps.containerStyle === nextProps.containerStyle
-  );
-};
-
 
 const styles = StyleSheet.create({
   container: {

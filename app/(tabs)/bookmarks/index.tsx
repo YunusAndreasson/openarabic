@@ -1,5 +1,5 @@
 import { EmptyState } from '@common/EmptyState';
-import ListSeparator from '@common/ListSeparator';
+import { ListSeparator } from '@common/ListSeparator';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';

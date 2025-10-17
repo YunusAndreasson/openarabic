@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/ThemedView';
 import { BottomControls } from '@/components/bookmarks/BottomControls';
 import { EmptyState } from '@/components/common/EmptyState';
-import ErrorState from '@/components/common/ErrorState';
+import { ErrorState } from '@/components/common/ErrorState';
 import { DueWordsBottomSheet } from '@/components/study/DueWordsBottomSheet';
 import { LearnedBottomSheet } from '@/components/study/LearnedBottomSheet';
 import { MemoryRetentionBottomSheet } from '@/components/study/MemoryRetentionBottomSheet';

@@ -1,5 +1,5 @@
 import { EmptyState } from '@common/EmptyState';
-import ListSeparator from '@common/ListSeparator';
+import { ListSeparator } from '@common/ListSeparator';
 import { FlashList } from '@shopify/flash-list';
 import React, { type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
