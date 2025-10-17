@@ -1,8 +1,7 @@
-'use no memo';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -57,7 +56,7 @@ const getMemberSinceDate = (createdAt?: string) => {
   return createdAt || '2024-01-01T00:00:00.000Z';
 };
 
-const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, createdAt }) => {
+function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps) {
   const colors = useColors();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
@@ -71,7 +70,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
       try {
         cancelAnimation(scaleValue);
         cancelAnimation(opacityValue);
-        // Reset to default values
+        // Reset to default values (use .value in cleanup for reliability)
         scaleValue.value = 1;
         opacityValue.value = 0;
       } catch {
@@ -100,7 +99,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
       } finally {
         // Animate in after loading (cancel any existing animation first)
         cancelAnimation(opacityValue);
-        opacityValue.value = withTiming(1, TIMING_CONFIG.ENTRANCE);
+        opacityValue.set(withTiming(1, TIMING_CONFIG.ENTRANCE));
       }
     };
 
@@ -182,65 +181,64 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
   // Handle photo press animation
   const handlePhotoPress = useCallback(() => {
     cancelAnimation(scaleValue);
-    scaleValue.value = withSequence(
-      withSpring(PRESS_SCALE.BUTTON, SPRING_CONFIG.BUTTON),
-      withSpring(1, SPRING_CONFIG.BUTTON)
+    scaleValue.set(
+      withSequence(
+        withSpring(PRESS_SCALE.BUTTON, SPRING_CONFIG.BUTTON),
+        withSpring(1, SPRING_CONFIG.BUTTON)
+      )
     );
     handlePhotoSelect();
   }, [scaleValue, handlePhotoSelect]);
 
   // Animated styles
   const containerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: opacityValue.value,
+    opacity: opacityValue.get(),
   }));
 
   const photoAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scaleValue.value }],
+    transform: [{ scale: scaleValue.get() }],
   }));
 
-  // Memoized styles
-  const dynamicStyles = useMemo(
-    () => ({
-      profileCard: {
-        backgroundColor: colors.elevation1,
-        shadowColor: colors.shadow,
-        ...LAYOUT.ELEVATION.SMALL,
-      },
-      photoRing: {
-        width: PROFILE_PHOTO_SIZE + 4,
-        height: PROFILE_PHOTO_SIZE + 4,
-        borderRadius: (PROFILE_PHOTO_SIZE + 4) / 2,
-        borderWidth: LAYOUT.BORDER.WIDTH.THICK,
-        borderColor: colors.tint,
-        justifyContent: 'center' as const,
-        alignItems: 'center' as const,
-        position: 'relative' as const,
-      },
-      initialsContainer: {
-        width: PROFILE_PHOTO_SIZE,
-        height: PROFILE_PHOTO_SIZE,
-        borderRadius: PROFILE_PHOTO_SIZE / 2,
-        backgroundColor: colors.tint,
-        justifyContent: 'center' as const,
-        alignItems: 'center' as const,
-      },
-      editIconContainer: {
-        position: 'absolute' as const,
-        bottom: -2,
-        right: -2,
-        width: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
-        height: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
-        borderRadius: LAYOUT.BUTTON.ICON_SIZE.MEDIUM / 2,
-        backgroundColor: colors.tint,
-        justifyContent: 'center' as const,
-        alignItems: 'center' as const,
-        borderWidth: LAYOUT.BORDER.WIDTH.THICK,
-        borderColor: colors.background,
-      },
-      initialsText: { color: colors.background },
-    }),
-    [colors]
-  );
+  // Dynamic styles (React Compiler auto-memoizes)
+  const dynamicStyles = {
+    profileCard: {
+      backgroundColor: colors.elevation1,
+      shadowColor: colors.shadow,
+      ...LAYOUT.ELEVATION.SMALL,
+    },
+    photoRing: {
+      width: PROFILE_PHOTO_SIZE + 4,
+      height: PROFILE_PHOTO_SIZE + 4,
+      borderRadius: (PROFILE_PHOTO_SIZE + 4) / 2,
+      borderWidth: LAYOUT.BORDER.WIDTH.THICK,
+      borderColor: colors.tint,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+      position: 'relative' as const,
+    },
+    initialsContainer: {
+      width: PROFILE_PHOTO_SIZE,
+      height: PROFILE_PHOTO_SIZE,
+      borderRadius: PROFILE_PHOTO_SIZE / 2,
+      backgroundColor: colors.tint,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+    },
+    editIconContainer: {
+      position: 'absolute' as const,
+      bottom: -2,
+      right: -2,
+      width: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
+      height: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
+      borderRadius: LAYOUT.BUTTON.ICON_SIZE.MEDIUM / 2,
+      backgroundColor: colors.tint,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+      borderWidth: LAYOUT.BORDER.WIDTH.THICK,
+      borderColor: colors.background,
+    },
+    initialsText: { color: colors.background },
+  };
 
   return (
     <Animated.View style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}>
@@ -291,7 +289,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, cre
       </View>
     </Animated.View>
   );
-});
+}
 
 AccountBadge.displayName = 'AccountBadge';
 
