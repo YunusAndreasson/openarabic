@@ -187,10 +187,11 @@ export function useSentenceScrubber({
 
   // Handle scrub end - allow automatic updates again
   const handleScrubEnd = useCallback(() => {
-    // Small delay to prevent immediate position correction when user finishes scrubbing
+    // Delay must exceed scroll animation duration to prevent race condition
+    // scrollToIndex with animated: true takes ~250-300ms
     setTimeout(() => {
       isUserScrubbing.current = false;
-    }, 150);
+    }, 400); // Safe margin for animation completion
   }, []);
 
   return {
