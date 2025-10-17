@@ -1,8 +1,7 @@
-'use no memo';
 import { BaseChart } from '@charts/BaseChart';
 import { useChartColors } from '@charts/ChartColors';
 import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import {
   cancelAnimation,
@@ -54,11 +53,10 @@ const RETENTION_THRESHOLDS = {
   GOOD: MEMORY_CAPACITY_THRESHOLDS.GOOD, // Green: 75%+ - good retention
 } as const;
 
-export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
-  ({ studyWords = [], onInfoPress }) => {
-    const colors = useColors();
-    const chartColors = useChartColors();
-    const { chartData } = useRetrievabilityChart(studyWords);
+export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRetentionGaugeProps) {
+  const colors = useColors();
+  const chartColors = useChartColors();
+  const { chartData } = useRetrievabilityChart(studyWords);
 
     // Get current retention value from the chart data
     const currentRetention = chartData.insights.currentRetrievability;
@@ -108,15 +106,15 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
       // Update previous retention
       prevRetentionRef.current = next;
 
-      retentionShared.value = withSpring(next, {
+      retentionShared.set(withSpring(next, {
         ...SPRING_CONFIG.CARD,
         overshootClamping: true, // Prevent going beyond target value
-      });
+      }));
     }, [currentRetention, retentionShared]);
 
     // Push only rounded values to JS to limit re-renders
     useAnimatedReaction(
-      () => Math.round(retentionShared.value),
+      () => Math.round(retentionShared.get()),
       (rounded, prev) => {
         if (rounded !== prev) {
           runOnJS(setAnimatedRetention)(rounded);
@@ -127,18 +125,13 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
     // Static geometry values
     const sweep = (animatedRetention / 100) * TOTAL_SWEEP;
 
-    const animatedFilledPath = useMemo(() => {
-      const p = Skia.Path.Make();
-      p.addArc(GAUGE_BOUNDS, START_ANGLE, sweep);
-      return p;
-    }, [sweep]);
+    // React Compiler auto-memoizes
+    const animatedFilledPath = Skia.Path.Make();
+    animatedFilledPath.addArc(GAUGE_BOUNDS, START_ANGLE, sweep);
 
-    // Create full background track path
-    const backgroundTrackPath = useMemo(() => {
-      const p = Skia.Path.Make();
-      p.addArc(GAUGE_BOUNDS, START_ANGLE, TOTAL_SWEEP);
-      return p;
-    }, []);
+    // Create full background track path (React Compiler auto-memoizes)
+    const backgroundTrackPath = Skia.Path.Make();
+    backgroundTrackPath.addArc(GAUGE_BOUNDS, START_ANGLE, TOTAL_SWEEP);
 
     // Determine color based on retention thresholds
     const getRetentionColor = () => {
@@ -153,12 +146,10 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
 
     const retentionColor = getRetentionColor();
 
-    const dynamicStyles = useMemo(
-      () => ({
-        retentionText: { color: retentionColor },
-      }),
-      [retentionColor]
-    );
+    // React Compiler auto-memoizes
+    const dynamicStyles = {
+      retentionText: { color: retentionColor },
+    };
 
     return (
       <BaseChart
@@ -209,8 +200,7 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
         </View>
       </BaseChart>
     );
-  }
-);
+}
 
 MemoryRetentionGauge.displayName = 'MemoryRetentionGauge';
 
