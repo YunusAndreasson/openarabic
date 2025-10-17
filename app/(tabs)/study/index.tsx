@@ -14,7 +14,7 @@ import ErrorState from '@/components/common/ErrorState';
 import { DueWordsBottomSheet } from '@/components/study/DueWordsBottomSheet';
 import { LearnedBottomSheet } from '@/components/study/LearnedBottomSheet';
 import { MemoryRetentionBottomSheet } from '@/components/study/MemoryRetentionBottomSheet';
-import RecommendationCard from '@/components/study/RecommendationCard';
+import { RecommendationCard } from '@/components/study/RecommendationCard';
 import { VocabularyStatCards } from '@/components/study/VocabularyStatCards';
 import { WordsMasteredBottomSheet } from '@/components/study/WordsMasteredBottomSheet';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';

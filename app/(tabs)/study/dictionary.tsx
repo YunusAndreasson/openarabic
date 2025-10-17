@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 import { ThemedView } from '@/components/ThemedView';
-import DictionarySortingHeader from '@/components/study/DictionarySortingHeader';
+import { DictionarySortingHeader } from '@/components/study/DictionarySortingHeader';
 import { DictionaryWordCard } from '@/components/study/DictionaryWordCard';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';

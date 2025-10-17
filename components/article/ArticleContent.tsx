@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { FloatingActionButtons } from '@/components/article/FloatingActionButtons';
-import ParallaxHeader from '@/components/article/ParallaxHeader';
+import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import {
   SCROLL_EVENT_THROTTLE,

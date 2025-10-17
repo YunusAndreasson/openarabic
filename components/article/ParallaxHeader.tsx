@@ -170,4 +170,5 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
 
 ParallaxHeaderInternal.displayName = 'ParallaxHeader';
 
-export default ParallaxHeaderInternal;
+
+export const ParallaxHeader = ParallaxHeaderInternal;

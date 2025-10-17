@@ -16,7 +16,7 @@ interface RecommendationCardProps {
   trend: 'improving' | 'declining' | 'stable';
 }
 
-const RecommendationCard = memo<RecommendationCardProps>(
+export const RecommendationCard = memo<RecommendationCardProps>(
   ({ studyWords, dueWordsCount, currentRetention, learningWords, masteredWords, trend }) => {
     const recommendation = useRecommendationEngine({
       studyWords,
@@ -60,4 +60,3 @@ const styles = StyleSheet.create({
 
 RecommendationCard.displayName = 'RecommendationCard';
 
-export default RecommendationCard;

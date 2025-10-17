@@ -26,7 +26,7 @@ export interface WordDetailsBottomSheetProps {
 // Constant snap points - no need for useMemo
 const SNAP_POINTS = [380];
 
-function WordDetailsBottomSheet({
+export function WordDetailsBottomSheet({
   isVisible,
   onClose,
   word,
@@ -232,4 +232,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default WordDetailsBottomSheet;

@@ -12,7 +12,7 @@ import * as Haptics from 'expo-haptics';
 import React from 'react';
 
 import { mockExpoHaptics } from '@/__tests__/setup/commonMocks';
-import WordDetailsBottomSheet from '@/components/article/WordDetailsBottomSheet';
+import { WordDetailsBottomSheet } from '@/components/article/WordDetailsBottomSheet';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
 // Mock dependencies

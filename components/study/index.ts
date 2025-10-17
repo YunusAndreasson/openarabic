@@ -1,7 +1,7 @@
-export { default as MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
-export { default as DictionarySortingHeader } from './DictionarySortingHeader';
+export { MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
+export { DictionarySortingHeader } from './DictionarySortingHeader';
 export { DictionaryWordCard } from './DictionaryWordCard';
-export { default as VocabularyStatCards } from './VocabularyStatCards';
+export { VocabularyStatCards } from './VocabularyStatCards';
 
 export { EfficiencyChart, MasteryChart, RetrievabilityChart } from './charts';
 

@@ -17,7 +17,7 @@ interface DictionarySortingHeaderProps {
  * Header component that displays status legend and sort direction toggle
  * Legend explains the colored left borders on dictionary cards
  */
-const DictionarySortingHeader: FC<DictionarySortingHeaderProps> = ({
+const DictionarySortingHeaderComponent: FC<DictionarySortingHeaderProps> = ({
   sortDirection,
   onToggleDirection,
 }) => {
@@ -119,6 +119,7 @@ const styles = StyleSheet.create({
   },
 });
 
+export const DictionarySortingHeader = memo(DictionarySortingHeaderComponent);
+
 DictionarySortingHeader.displayName = 'DictionarySortingHeader';
 
-export default memo(DictionarySortingHeader);
