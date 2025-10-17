@@ -1,4 +1,3 @@
-'use no memo';
 import { useCallback, useEffect, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
@@ -166,7 +165,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   const safeRunCallback = useCallback(
     (callback?: () => void) => {
       'worklet';
-      if (callback && isMounted.value) {
+      if (callback && isMounted.get()) {
         runOnJS(callback)();
       }
     },
@@ -177,11 +176,11 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   const animateOpacityTo = useCallback(
     (targetValue: number, onComplete?: () => void) => {
       'worklet';
-      opacity.value = withTiming(targetValue, timingConfig, finished => {
+      opacity.set(withTiming(targetValue, timingConfig, finished => {
         if (finished) {
           safeRunCallback(onComplete);
         }
-      });
+      }));
     },
     [opacity, timingConfig, safeRunCallback]
   );
@@ -211,20 +210,22 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   const reset = useCallback(() => {
     'worklet';
     cancelAnimation(opacity);
-    opacity.value = validInitialOpacity;
+    opacity.set(validInitialOpacity);
   }, [opacity, validInitialOpacity]);
 
   const startAnimation = useCallback(
     (startDelay = delay, onComplete?: () => void) => {
       'worklet';
       const safeDelay = Math.max(0, startDelay);
-      opacity.value = withDelay(
-        safeDelay,
-        withTiming(1, timingConfig, finished => {
-          if (finished) {
-            safeRunCallback(onComplete);
-          }
-        })
+      opacity.set(
+        withDelay(
+          safeDelay,
+          withTiming(1, timingConfig, finished => {
+            if (finished) {
+              safeRunCallback(onComplete);
+            }
+          })
+        )
       );
     },
     [opacity, delay, timingConfig, safeRunCallback]
@@ -234,13 +235,15 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     (startDelay = delay, onComplete?: () => void) => {
       'worklet';
       const safeDelay = Math.max(0, startDelay);
-      opacity.value = withDelay(
-        safeDelay,
-        withTiming(validInitialOpacity, timingConfig, finished => {
-          if (finished) {
-            safeRunCallback(onComplete);
-          }
-        })
+      opacity.set(
+        withDelay(
+          safeDelay,
+          withTiming(validInitialOpacity, timingConfig, finished => {
+            if (finished) {
+              safeRunCallback(onComplete);
+            }
+          })
+        )
       );
     },
     [opacity, validInitialOpacity, delay, timingConfig, safeRunCallback]
@@ -250,7 +253,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
     'worklet';
     return {
-      opacity: opacity.value,
+      opacity: opacity.get(),
     };
   }, [opacity]) as AnimatedStyleProp<ViewStyle>;
 
@@ -258,7 +261,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   useEffect(() => {
     if (autoStart && isMounted.value) {
       // Set directly to target without initial flash to prevent visual glitch
-      opacity.value = withDelay(MIN_MOUNT_DELAY, withTiming(1, timingConfig));
+      opacity.set(withDelay(MIN_MOUNT_DELAY, withTiming(1, timingConfig)));
     }
   }, [autoStart, opacity, timingConfig, isMounted]);
 
