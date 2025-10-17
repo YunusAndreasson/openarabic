@@ -44,7 +44,7 @@ import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
-import { FSRSDataProvider } from '@/hooks/vocabulary/FSRSDataProvider';
+import { FSRSDataProvider } from '@/components/providers/FSRSDataProvider';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
 import { analytics } from '@/services/analytics';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';

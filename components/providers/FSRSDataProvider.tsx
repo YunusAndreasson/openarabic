@@ -2,7 +2,7 @@ import React, { createContext, useContext, useMemo, type ReactNode } from 'react
 
 import type { StudyWord } from '@/types/vocabulary.types';
 
-import { useFSRSQueries } from './useFSRSQueries';
+import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 
 interface FSRSDataContextValue {
   studyWords: StudyWord[] | undefined;

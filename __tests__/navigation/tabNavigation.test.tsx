@@ -16,7 +16,7 @@ import { createTestQueryClient } from '../helpers/testUtils';
 import TabLayout from '../../app/(tabs)/_layout';
 
 // Mock the FSRSDataProvider context to simplify tests
-jest.mock('@/hooks/vocabulary/FSRSDataProvider', () => ({
+jest.mock('@/components/providers/FSRSDataProvider', () => ({
   useFSRSData: () => ({
     studyWords: [],
     isLoading: false,
