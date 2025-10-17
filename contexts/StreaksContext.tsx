@@ -43,5 +43,5 @@ export const StreaksProvider = ({ children }: StreaksProviderProps): React.React
     [isStreaksVisible, openStreaks, closeStreaks]
   );
 
-  return <StreaksContext.Provider value={contextValue}>{children}</StreaksContext.Provider>;
+  return <StreaksContext value={contextValue}>{children}</StreaksContext>;
 };

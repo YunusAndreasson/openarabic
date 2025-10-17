@@ -1,4 +1,3 @@
-import { memo, useMemo } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 import { StyleSheet, Text } from 'react-native';
 
@@ -89,7 +88,7 @@ const getBaseStyle = (type: ThemedTextProps['type']) => {
  * // Custom semantic color from enhanced system
  * <ThemedText colorName="authorText">Author byline</ThemedText>
  */
-function ThemedTextComponent({
+export function ThemedText({
   style,
   type = 'body', // Most common value - hardcoded
   variant,
@@ -109,24 +108,22 @@ function ThemedTextComponent({
   const debouncedArabicFontSize = useDebouncedArabicFontSize(type === 'arabic' ? 100 : 0);
 
   // Consolidated style computation with enhanced opacity handling
-  const { finalStyle } = useMemo(() => {
-    const textColor = getTextColor(colors, variant, colorName, skipDefaultColor);
+  const textColor = getTextColor(colors, variant, colorName, skipDefaultColor);
 
-    if (type === 'arabic') {
-      // Use debounced font size for smooth updates, fallback to prop, then default
-      const fontSize = debouncedArabicFontSize || arabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
+  let finalStyle: StyleProp<TextStyle>;
 
-      return {
-        finalStyle: [
-          getArabicTextStyle(fontSize, {}, selectedArabicFont),
-          textColor && { color: textColor },
-          weight && { fontWeight: weight },
-          align && { textAlign: align },
-          style,
-        ].filter(Boolean) as StyleProp<TextStyle>,
-      };
-    }
+  if (type === 'arabic') {
+    // Use debounced font size for smooth updates, fallback to prop, then default
+    const fontSize = debouncedArabicFontSize || arabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
 
+    finalStyle = [
+      getArabicTextStyle(fontSize, {}, selectedArabicFont),
+      textColor && { color: textColor },
+      weight && { fontWeight: weight },
+      align && { textAlign: align },
+      style,
+    ].filter(Boolean) as StyleProp<TextStyle>;
+  } else {
     const baseStyle = getBaseStyle(type);
 
     // Apply enhanced opacity for better contrast
@@ -135,7 +132,7 @@ function ThemedTextComponent({
       enhancedStyle.opacity = getEnhancedOpacity(baseStyle.opacity, isDarkMode);
     }
 
-    const computedStyle = [
+    finalStyle = [
       baseStyle,
       enhancedStyle,
       textColor && { color: textColor },
@@ -143,22 +140,7 @@ function ThemedTextComponent({
       align && { textAlign: align },
       style,
     ].filter(Boolean) as StyleProp<TextStyle>;
-
-    return { finalStyle: computedStyle };
-  }, [
-    type,
-    variant,
-    colorName,
-    skipDefaultColor,
-    colors,
-    debouncedArabicFontSize,
-    arabicFontSize,
-    selectedArabicFont,
-    weight,
-    align,
-    style,
-    isDarkMode,
-  ]);
+  }
 
   return (
     <Text
@@ -170,7 +152,7 @@ function ThemedTextComponent({
   );
 }
 
-export const ThemedText = memo(ThemedTextComponent);
+ThemedText.displayName = 'ThemedText';
 
 // Enhanced typography styles with micro-adjustments and semantic relationships
 const styles = StyleSheet.create({

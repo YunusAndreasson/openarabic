@@ -1,6 +1,6 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import type { FC, ReactNode } from 'react';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
@@ -18,56 +18,51 @@ export interface GenericChartBottomSheetProps {
   chartComponent: ReactNode;
 }
 
-export const GenericChartBottomSheet: FC<GenericChartBottomSheetProps> = memo(
-  ({ isVisible, onClose, title, subtitle, chartComponent }) => {
-    const colors = useColors();
-    const { user } = useAuth();
-    const bottomSheetRef = useRef<BottomSheetModal>(null);
+export const GenericChartBottomSheet: FC<GenericChartBottomSheetProps> = ({ isVisible, onClose, title, subtitle, chartComponent }) => {
+  const colors = useColors();
+  const { user } = useAuth();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-    // Use FSRS queries to get study words data
-    useFSRSQueries({
-      userId: user?.id,
-    });
+  // Use FSRS queries to get study words data
+  useFSRSQueries({
+    userId: user?.id,
+  });
 
-    // Show/hide modal based on isVisible prop
-    useEffect(() => {
-      if (isVisible) {
-        bottomSheetRef.current?.present();
-      } else {
-        bottomSheetRef.current?.dismiss();
-      }
-    }, [isVisible]);
+  // Show/hide modal based on isVisible prop
+  useEffect(() => {
+    if (isVisible) {
+      bottomSheetRef.current?.present();
+    } else {
+      bottomSheetRef.current?.dismiss();
+    }
+  }, [isVisible]);
 
-    // Backdrop component
-    const renderBackdrop = useBottomSheetBackdrop(onClose);
+  // Backdrop component
+  const renderBackdrop = useBottomSheetBackdrop(onClose);
 
-    const dynamicStyles = useMemo(
-      () => ({
-        bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
-        indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
-      }),
-      [colors.elevation1, colors.modalIndicator]
-    );
+  const dynamicStyles = {
+    bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
+    indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
+  };
 
-    return (
-      <BottomSheetModal
-        ref={bottomSheetRef}
-        onDismiss={onClose}
-        backgroundStyle={dynamicStyles.bottomSheet}
-        handleIndicatorStyle={dynamicStyles.indicator}
-        backdropComponent={renderBackdrop}
-        {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
-      >
-        <BottomSheetView style={styles.container}>
-          <BottomSheetHeader title={title} subtitle={subtitle} />
+  return (
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      onDismiss={onClose}
+      backgroundStyle={dynamicStyles.bottomSheet}
+      handleIndicatorStyle={dynamicStyles.indicator}
+      backdropComponent={renderBackdrop}
+      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
+    >
+      <BottomSheetView style={styles.container}>
+        <BottomSheetHeader title={title} subtitle={subtitle} />
 
-          {/* Chart Content */}
-          <View style={styles.chartContainer}>{chartComponent}</View>
-        </BottomSheetView>
-      </BottomSheetModal>
-    );
-  }
-);
+        {/* Chart Content */}
+        <View style={styles.chartContainer}>{chartComponent}</View>
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+};
 
 GenericChartBottomSheet.displayName = 'GenericChartBottomSheet';
 

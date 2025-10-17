@@ -1,6 +1,5 @@
 import BaseCard from '@common/BaseCard';
 import type { JSX } from 'react';
-import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 
@@ -10,7 +9,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 // Subtle divider component for elegant section separation
-const SubtleDivider = memo(() => {
+function SubtleDivider() {
   const colors = useColors();
 
   return (
@@ -18,7 +17,7 @@ const SubtleDivider = memo(() => {
       <View style={[dividerStyles.dividerLine, { backgroundColor: colors.elevation1 }]} />
     </View>
   );
-});
+}
 
 SubtleDivider.displayName = 'SubtleDivider';
 
@@ -53,39 +52,29 @@ interface FilterSectionProps {
   filterType?: string; // Optional filter type to pass to onSelect
 }
 
-const CompactNavCard = memo(
-  ({ label, count, onPress }: { label: string; count?: number; onPress: () => void }) => {
-    const colors = useColors();
+function CompactNavCard({ label, count, onPress }: { label: string; count?: number; onPress: () => void }) {
+  const colors = useColors();
 
-    // Memoize dynamic styles for better performance
-    const countBadgeStyle = useMemo(
-      () => [compactCardStyles.countBadge, { backgroundColor: colors.elevation3 }],
-      [colors.elevation3]
-    );
+  const countBadgeStyle = [compactCardStyles.countBadge, { backgroundColor: colors.elevation3 }];
+  const countTextStyle = [compactCardStyles.countText, { color: colors.text }];
 
-    const countTextStyle = useMemo(
-      () => [compactCardStyles.countText, { color: colors.text }],
-      [colors.text]
-    );
-
-    return (
-      <BaseCard shadowSize="small" style={compactCardStyles.card} onPress={onPress}>
-        <View style={compactCardStyles.row}>
-          <ThemedText numberOfLines={1} style={compactCardStyles.label} type="body" weight="bold">
-            {capitalizeFirstLetter(label)}
-          </ThemedText>
-          {count !== undefined && (
-            <View style={countBadgeStyle}>
-              <ThemedText skipDefaultColor style={countTextStyle} type="caption">
-                {count}
-              </ThemedText>
-            </View>
-          )}
-        </View>
-      </BaseCard>
-    );
-  }
-);
+  return (
+    <BaseCard shadowSize="small" style={compactCardStyles.card} onPress={onPress}>
+      <View style={compactCardStyles.row}>
+        <ThemedText numberOfLines={1} style={compactCardStyles.label} type="body" weight="bold">
+          {capitalizeFirstLetter(label)}
+        </ThemedText>
+        {count !== undefined && (
+          <View style={countBadgeStyle}>
+            <ThemedText skipDefaultColor style={countTextStyle} type="caption">
+              {count}
+            </ThemedText>
+          </View>
+        )}
+      </View>
+    </BaseCard>
+  );
+}
 
 CompactNavCard.displayName = 'CompactNavCard';
 
@@ -119,11 +108,8 @@ const compactCardStyles = StyleSheet.create({
   },
 });
 
-const FilterSection = memo(({ items, onSelect, filterType }: FilterSectionProps): JSX.Element => {
-  const handleSelect = useCallback(
-    (id: number, name?: string) => () => onSelect(id, name, filterType),
-    [onSelect, filterType]
-  );
+function FilterSection({ items, onSelect, filterType }: FilterSectionProps): JSX.Element {
+  const handleSelect = (id: number, name?: string) => () => onSelect(id, name, filterType);
 
   // Guard against undefined or empty items
   if (!items?.length) {
@@ -142,7 +128,7 @@ const FilterSection = memo(({ items, onSelect, filterType }: FilterSectionProps)
       ))}
     </View>
   );
-});
+}
 
 FilterSection.displayName = 'FilterSection';
 

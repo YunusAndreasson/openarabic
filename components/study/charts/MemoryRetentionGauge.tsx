@@ -1,3 +1,4 @@
+'use no memo';
 import { BaseChart } from '@charts/BaseChart';
 import { useChartColors } from '@charts/ChartColors';
 import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';

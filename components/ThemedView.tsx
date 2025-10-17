@@ -1,5 +1,4 @@
 import type { JSX } from 'react';
-import { memo, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { Edge } from 'react-native-safe-area-context';
@@ -16,7 +15,7 @@ import type { ThemedViewProps } from '@/types/ui/layout.types';
  * theming and behavior across the application.
  */
 
-function ThemedViewComponent({
+export function ThemedView({
   children,
   scrollable = false,
   style,
@@ -30,50 +29,38 @@ function ThemedViewComponent({
   const colors = useColors();
 
   // Apply theme-based styling
-  const themedStyle = useMemo(
-    () => [
-      styles.container,
-      {
-        backgroundColor: colors.background,
-      },
-      style,
-    ],
-    [colors.background, style]
-  ) as StyleProp<ViewStyle>;
+  const themedStyle = [
+    styles.container,
+    {
+      backgroundColor: colors.background,
+    },
+    style,
+  ] as StyleProp<ViewStyle>;
 
   // Determine which edges to apply safe area insets to
-  const edges = useMemo((): Edge[] | undefined => {
-    // If specific edges are provided, use those
-    if (safeAreaEdges) {
-      return safeAreaEdges;
-    }
+  const edges: Edge[] | undefined = safeAreaEdges
+    ? safeAreaEdges
+    : includeBottomInset
+      ? undefined
+      : ['top', 'left', 'right'];
 
-    // Otherwise, determine based on includeBottomInset
-    // When includeBottomInset is true, return undefined to apply all edges
-    // When false, exclude the bottom edge
-    return includeBottomInset ? undefined : ['top', 'left', 'right'];
-  }, [includeBottomInset, safeAreaEdges]);
-
-  const scrollableContent = useMemo(
-    () => (
-      <ScrollView
-        // iOS best practice: Allow natural bounce behavior for tactile feedback
-        // Users expect to be able to "pull" the screen even when no refresh is needed
-        alwaysBounceVertical={true}
-        automaticallyAdjustContentInsets={false}
-        bounces={true}
-        contentContainerStyle={contentContainerStyle}
-        contentInsetAdjustmentBehavior="never"
-        removeClippedSubviews={true}
-        showsVerticalScrollIndicator={false}
-        // Allow natural overscroll behavior on Android for consistency
-        overScrollMode="always"
-        {...scrollViewProps}
-      >
-        {children}
-      </ScrollView>
-    ),
-    [children, contentContainerStyle, scrollViewProps]
+  const scrollableContent = (
+    <ScrollView
+      // iOS best practice: Allow natural bounce behavior for tactile feedback
+      // Users expect to be able to "pull" the screen even when no refresh is needed
+      alwaysBounceVertical={true}
+      automaticallyAdjustContentInsets={false}
+      bounces={true}
+      contentContainerStyle={contentContainerStyle}
+      contentInsetAdjustmentBehavior="never"
+      removeClippedSubviews={true}
+      showsVerticalScrollIndicator={false}
+      // Allow natural overscroll behavior on Android for consistency
+      overScrollMode="always"
+      {...scrollViewProps}
+    >
+      {children}
+    </ScrollView>
   );
 
   if (useSafeArea) {
@@ -97,4 +84,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export const ThemedView = memo(ThemedViewComponent);
+ThemedView.displayName = 'ThemedView';

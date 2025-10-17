@@ -1,3 +1,4 @@
+'use no memo';
 import { Canvas } from '@shopify/react-native-skia';
 import type { ReactNode } from 'react';
 import { memo, useMemo } from 'react';

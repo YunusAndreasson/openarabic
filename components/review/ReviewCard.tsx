@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -53,7 +53,7 @@ interface ReviewCardProps {
   isHesitating?: SharedValue<boolean>;
 }
 
-const ReviewCardInternal = ({
+export function ReviewCard({
   word,
   currentWord,
   onSwipeLeft,
@@ -66,7 +66,7 @@ const ReviewCardInternal = ({
   onHesitationStart,
   onHesitationEnd,
   isHesitating,
-}: ReviewCardProps) => {
+}: ReviewCardProps) {
   const colors = useColors();
 
   // ===== SHARED VALUE SYNC FOR UI UPDATES =====
@@ -98,14 +98,14 @@ const ReviewCardInternal = ({
   const HESITATION_DELAY_MS = 3000;
 
   // Clean up hesitation timer
-  const clearHesitationTimer = useCallback(() => {
+  const clearHesitationTimer = () => {
     if (hesitationTimeoutRef.current) {
       clearTimeout(hesitationTimeoutRef.current);
       hesitationTimeoutRef.current = null;
     }
     // Also reset gesture active state
     isGestureActiveRef.current = false;
-  }, []);
+  };
 
   // ===== SWIPE GESTURE HOOK (v2 OPTIMIZED) =====
   const { gesture: panGesture, translateX } = useSwipeGesture({
@@ -130,14 +130,14 @@ const ReviewCardInternal = ({
   });
 
   // ===== SWIPE BACKGROUND COLOR ANIMATION =====
-  const errorStart = useMemo(() => withOpacity(colors.error, 0), [colors.error]);
-  const errorEnd = useMemo(() => withOpacity(colors.error, 0.18), [colors.error]);
-  const successStart = useMemo(() => withOpacity(colors.success, 0), [colors.success]);
-  const successEnd = useMemo(() => withOpacity(colors.success, 0.18), [colors.success]);
+  const errorStart = withOpacity(colors.error, 0);
+  const errorEnd = withOpacity(colors.error, 0.18);
+  const successStart = withOpacity(colors.success, 0);
+  const successEnd = withOpacity(colors.success, 0.18);
 
   // Add vague colors (orange/yellow for hesitation)
-  const vagueStart = useMemo(() => withOpacity(colors.warning || '#FFA500', 0), [colors.warning]);
-  const vagueEnd = useMemo(() => withOpacity(colors.warning || '#FFA500', 0.25), [colors.warning]);
+  const vagueStart = withOpacity(colors.warning || '#FFA500', 0);
+  const vagueEnd = withOpacity(colors.warning || '#FFA500', 0.25);
 
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
@@ -206,20 +206,13 @@ const ReviewCardInternal = ({
     };
   }, [word, englishTranslation, isHesitating, onHesitationStart, showTranslation]);
 
-  // ===== MEMOIZED PROPS (PREVENT CHILD RE-RENDERS) =====
-  const wordDisplayProps = useMemo(() => {
-    const props = {
-      word,
-      translation: showTranslation ? translation : undefined,
-      showFirstLetterOnly: showHint, // Use synced state instead of SharedValue
-      englishTranslation: englishTranslation || undefined, // Always pass English translation when available
-    };
-
-    return props;
-  }, [word, showTranslation, translation, showHint, englishTranslation]);
-
-  // ===== CLEANUP (HANDLED BY HOOK) =====
-  // Cleanup is now handled by the useSwipeGesture hook
+  // Word display props
+  const wordDisplayProps = {
+    word,
+    translation: showTranslation ? translation : undefined,
+    showFirstLetterOnly: showHint, // Use synced state instead of SharedValue
+    englishTranslation: englishTranslation || undefined, // Always pass English translation when available
+  };
 
   return (
     <View style={STATIC_STYLES.swipeContainer}>
@@ -235,26 +228,8 @@ const ReviewCardInternal = ({
       </GestureDetector>
     </View>
   );
-};
+}
 
-// ===== OPTIMIZED COMPARISON FUNCTION (PREVENT UNNECESSARY RE-RENDERS) =====
-const ReviewCardComparison = (prevProps: ReviewCardProps, nextProps: ReviewCardProps): boolean => {
-  return (
-    prevProps.word === nextProps.word &&
-    prevProps.currentWord === nextProps.currentWord &&
-    prevProps.onSwipeLeft === nextProps.onSwipeLeft &&
-    prevProps.onSwipeRight === nextProps.onSwipeRight &&
-    prevProps.isUpdating === nextProps.isUpdating &&
-    prevProps.opacityStyle === nextProps.opacityStyle &&
-    prevProps.testID === nextProps.testID &&
-    prevProps.translation === nextProps.translation &&
-    prevProps.showTranslation === nextProps.showTranslation &&
-    prevProps.onHesitationStart === nextProps.onHesitationStart &&
-    prevProps.onHesitationEnd === nextProps.onHesitationEnd &&
-    prevProps.isHesitating === nextProps.isHesitating // SharedValue reference comparison
-  );
-};
-
-export const ReviewCard = memo(ReviewCardInternal, ReviewCardComparison);
+ReviewCard.displayName = 'ReviewCard';
 
 export default ReviewCard;

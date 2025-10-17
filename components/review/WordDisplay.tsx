@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -56,34 +56,27 @@ const STATIC_STYLES = StyleSheet.create({
 
 /**
  * Component to display a word with optimal styling and sizing
- * Uses React.memo with a custom comparison function to prevent unnecessary re-renders
  */
-const WordDisplayInternal = ({
+export function WordDisplay({
   word,
   style,
   translation,
   showFirstLetterOnly = false,
   englishTranslation,
-}: WordDisplayProps) => {
+}: WordDisplayProps) {
   const colors = useColors();
 
-  // ===== COLOR BATCHING (PREVENTS MULTIPLE COLOR CALCULATIONS) =====
-  const batchedColors = useMemo(
-    (): BatchedTextColors => ({
-      arabicText: colors.arabicText,
-      shadow: colors.shadow,
-      englishText: colors.englishText,
-    }),
-    [colors.arabicText, colors.shadow, colors.englishText]
-  );
+  // Color batching
+  const batchedColors: BatchedTextColors = {
+    arabicText: colors.arabicText,
+    shadow: colors.shadow,
+    englishText: colors.englishText,
+  };
 
   // Use larger font for Arabic, smaller for English
-  const arabicTextStyle = useMemo(
-    () => createTextStyle(WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE, batchedColors),
-    [batchedColors]
-  );
+  const arabicTextStyle = createTextStyle(WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE, batchedColors);
 
-  // ===== OPTIMIZED ANIMATION HANDLING =====
+  // Animation handling
   // Always start at 0 opacity, let useEffect be single source of truth for animation state
   const { animatedStyle: translationAnimatedStyle, setOpacity } = useOpacityAnimation({
     initialOpacity: 0,
@@ -95,7 +88,7 @@ const WordDisplayInternal = ({
     setOpacity(translation ? 1 : 0);
   }, [translation, setOpacity]);
 
-  const containerStyle = useMemo(() => [STATIC_STYLES.container, style], [style]);
+  const containerStyle = [STATIC_STYLES.container, style];
 
   // Using regular ThemedText for translation; style handled by typography system
 
@@ -103,48 +96,35 @@ const WordDisplayInternal = ({
   const displayWord = word;
 
   // Get the hesitation hint (first letter of English translation with dots)
-  const hesitationHint = useMemo(() => {
-    if (showFirstLetterOnly && englishTranslation && englishTranslation.length > 0) {
-      const firstLetter = englishTranslation.charAt(0).toUpperCase();
-      const hintWithDots = firstLetter + '...';
+  let hesitationHint = null;
+  if (showFirstLetterOnly && englishTranslation && englishTranslation.length > 0) {
+    const firstLetter = englishTranslation.charAt(0).toUpperCase();
+    hesitationHint = firstLetter + '...';
 
-      // Trigger subtle haptic feedback when hint appears (only once)
-      selectionFeedback();
+    // Trigger subtle haptic feedback when hint appears (only once)
+    selectionFeedback();
+  }
 
-      return hintWithDots;
-    }
-    return null;
-  }, [showFirstLetterOnly, englishTranslation, word]);
+  const arabicTextProps = {
+    skipDefaultColor: true,
+    arabicFontSize: WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE,
+    style: arabicTextStyle,
+    type: 'arabic' as const,
+    children: displayWord,
+  };
 
-  const arabicTextProps = useMemo(
-    () => ({
-      skipDefaultColor: true,
-      arabicFontSize: WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE,
-      style: arabicTextStyle,
-      type: 'arabic' as const,
-      children: displayWord,
-    }),
-    [arabicTextStyle, displayWord]
-  );
-
-  const translationTextProps = useMemo(
-    () => ({
-      variant: 'error' as const,
-      type: 'heading2' as const,
-      children: translation,
-    }),
-    [translation]
-  );
+  const translationTextProps = {
+    variant: 'error' as const,
+    type: 'heading2' as const,
+    children: translation,
+  };
 
   // Create props for hesitation hint (similar to translation but auto-shown)
-  const hesitationHintProps = useMemo(
-    () => ({
-      variant: 'warning' as const, // Use warning variant for yellow/orange hesitation hint
-      type: 'heading2' as const,
-      children: hesitationHint,
-    }),
-    [hesitationHint]
-  );
+  const hesitationHintProps = {
+    variant: 'warning' as const, // Use warning variant for yellow/orange hesitation hint
+    type: 'heading2' as const,
+    children: hesitationHint,
+  };
 
   return (
     <View style={containerStyle}>
@@ -163,23 +143,7 @@ const WordDisplayInternal = ({
       )}
     </View>
   );
-};
-
-// ===== OPTIMIZED COMPARISON FUNCTION (PREVENT UNNECESSARY RE-RENDERS) =====
-const WordDisplayComparison = (
-  prevProps: WordDisplayProps,
-  nextProps: WordDisplayProps
-): boolean => {
-  return (
-    prevProps.word === nextProps.word &&
-    prevProps.translation === nextProps.translation &&
-    prevProps.style === nextProps.style &&
-    prevProps.showFirstLetterOnly === nextProps.showFirstLetterOnly &&
-    prevProps.englishTranslation === nextProps.englishTranslation
-  );
-};
-
-export const WordDisplay = memo(WordDisplayInternal, WordDisplayComparison);
+}
 
 WordDisplay.displayName = 'WordDisplay';
 

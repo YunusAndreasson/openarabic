@@ -35,7 +35,7 @@ export function FSRSDataProvider({ children, userId }: FSRSDataProviderProps) {
     [studyWords, isLoading, error]
   );
 
-  return <FSRSDataContext.Provider value={value}>{children}</FSRSDataContext.Provider>;
+  return <FSRSDataContext value={value}>{children}</FSRSDataContext>;
 }
 
 export function useFSRSData(): FSRSDataContextValue {

@@ -1,18 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps, FC } from 'react';
-import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { ReviewAction } from '@/types/enums';
-
-// ===== INTERFACES =====
-interface BatchedBottomActionColors {
-  error: string;
-  success: string;
-}
 
 const BOTTOM_ACTIONS_CONSTANTS = {
   ICON_SIZE: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
@@ -56,93 +49,44 @@ const STATIC_STYLES = StyleSheet.create({
   },
 });
 
-const createTintColors = (colors: BatchedBottomActionColors) => ({
-  error: colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
-  success: colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
-});
-
 const createIconProps = (name: ComponentProps<typeof Ionicons>['name'], color: string) => ({
   name,
   size: BOTTOM_ACTIONS_CONSTANTS.ICON_SIZE,
   color,
 });
 
-const ReviewBottomActionsInternal: FC = memo(() => {
+export const ReviewBottomActions: FC = () => {
   const colors = useColors();
 
-  const batchedColors = useMemo(
-    () => ({
-      error: colors.error,
-      success: colors.success,
-      warning: colors.warning,
-    }),
-    [colors.error, colors.success, colors.warning]
-  );
+  const tintError = colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
+  const tintSuccess = colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
 
-  const tintColors = useMemo(
-    () => ({
-      ...createTintColors(batchedColors),
-      warning: batchedColors.warning + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
-    }),
-    [batchedColors]
-  );
+  const leftIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintError }];
+  const rightIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintSuccess }];
 
-  // Use standard colors
-  const hesitationColors = useMemo(
-    () => ({
-      left: batchedColors.error,
-      right: batchedColors.success,
-    }),
-    [batchedColors]
-  );
-
-  const iconComponents = useMemo(
-    () => ({
-      left: <Ionicons {...createIconProps('chevron-back', hesitationColors.left)} />,
-      right: <Ionicons {...createIconProps('chevron-forward', hesitationColors.right)} />,
-    }),
-    [hesitationColors]
-  );
-
-  const indicatorStyles = useMemo(
-    () => ({
-      leftIndicator: [STATIC_STYLES.swipeIndicator, { backgroundColor: tintColors.error }],
-      rightIndicator: [STATIC_STYLES.swipeIndicator, { backgroundColor: tintColors.success }],
-    }),
-    [tintColors]
-  );
-
-  const textStyles = useMemo(
-    () => ({
-      leftText: [STATIC_STYLES.indicatorText, { color: hesitationColors.left }],
-      rightText: [STATIC_STYLES.indicatorText, { color: hesitationColors.right }],
-    }),
-    [hesitationColors]
-  );
+  const leftTextStyle = [STATIC_STYLES.indicatorText, { color: colors.error }];
+  const rightTextStyle = [STATIC_STYLES.indicatorText, { color: colors.success }];
 
   return (
     <View style={STATIC_STYLES.container}>
       {/* Left indicator */}
       <View style={STATIC_STYLES.indicatorContainer}>
-        <View style={indicatorStyles.leftIndicator}>{iconComponents.left}</View>
-        <ThemedText style={textStyles.leftText}>{ReviewAction.DONT_KNOW}</ThemedText>
+        <View style={leftIndicatorStyle}>
+          <Ionicons {...createIconProps('chevron-back', colors.error)} />
+        </View>
+        <ThemedText style={leftTextStyle}>{ReviewAction.DONT_KNOW}</ThemedText>
       </View>
 
       {/* Right indicator */}
       <View style={STATIC_STYLES.indicatorContainer}>
-        <View style={indicatorStyles.rightIndicator}>{iconComponents.right}</View>
-        <ThemedText style={textStyles.rightText}>{ReviewAction.KNOW}</ThemedText>
+        <View style={rightIndicatorStyle}>
+          <Ionicons {...createIconProps('chevron-forward', colors.success)} />
+        </View>
+        <ThemedText style={rightTextStyle}>{ReviewAction.KNOW}</ThemedText>
       </View>
     </View>
   );
-});
-
-const ReviewBottomActionsComparison = (_prevProps: unknown, _nextProps: unknown): boolean => {
-  // No props to compare anymore
-  return true;
 };
-
-export const ReviewBottomActions = memo(ReviewBottomActionsInternal, ReviewBottomActionsComparison);
 
 ReviewBottomActions.displayName = 'ReviewBottomActions';
 

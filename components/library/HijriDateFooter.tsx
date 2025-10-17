@@ -1,6 +1,5 @@
 import { router } from 'expo-router';
 import moment from 'moment-hijri';
-import React, { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -10,17 +9,14 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
-export const HijriDateFooter = memo(() => {
+export function HijriDateFooter() {
   const colors = useColors();
 
-  const dateInfo = useMemo(() => {
-    const hijriMoment = moment();
-    const hijriDay = hijriMoment.iDate();
-    const hijriMonth = HIJRI_MONTHS[hijriMoment.iMonth()];
-    const hijriYear = hijriMoment.iYear();
-
-    return `${hijriDay} ${hijriMonth} ${hijriYear} ${STRINGS.AH}`;
-  }, []);
+  const hijriMoment = moment();
+  const hijriDay = hijriMoment.iDate();
+  const hijriMonth = HIJRI_MONTHS[hijriMoment.iMonth()];
+  const hijriYear = hijriMoment.iYear();
+  const dateInfo = `${hijriDay} ${hijriMonth} ${hijriYear} ${STRINGS.AH}`;
 
   const handlePress = () => {
     router.push(ROUTE_PATHS.ACCOUNT_ISLAMIC_CALENDAR);
@@ -42,9 +38,7 @@ export const HijriDateFooter = memo(() => {
       </Pressable>
     </View>
   );
-});
-
-HijriDateFooter.displayName = 'HijriDateFooter';
+}
 
 const styles = StyleSheet.create({
   container: {

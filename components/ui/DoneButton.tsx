@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { memo, useCallback, type FC } from 'react';
+import type { FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -25,7 +25,7 @@ const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
     includeOpacity: true,
   });
 
-  const handlePress = useCallback(() => {
+  const handlePress = () => {
     if (onPress) {
       onPress();
     } else {
@@ -34,7 +34,7 @@ const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
         router.back();
       }, 50); // Small delay to let the press animation complete
     }
-  }, [onPress]);
+  };
 
   return (
     <View style={styles.container}>
@@ -77,4 +77,4 @@ const styles = StyleSheet.create({
   buttonText: HEADER_BUTTON_TEXT_STYLE,
 });
 
-export default memo(DoneButton);
+export default DoneButton;

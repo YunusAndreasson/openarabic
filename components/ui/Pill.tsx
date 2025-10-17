@@ -1,4 +1,3 @@
-import { memo, useCallback, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -10,20 +9,20 @@ import type { PillProps } from '@/types/ui/pill.types';
 /**
  * A simple pill component for filters and categories
  */
-const Pill = memo(({ id, label, isSelected = false, onSelect, variant = 'filter' }: PillProps) => {
+function Pill({ id, label, isSelected = false, onSelect, variant = 'filter' }: PillProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  const handlePress = useCallback(() => {
+  const handlePress = () => {
     if (onSelect) {
       onSelect(id);
     }
-  }, [id, onSelect]);
+  };
 
   const isCategory = variant === 'category';
   const textType = isCategory ? 'overline' : 'label';
 
-  const containerStyle = useMemo(() => {
+  const containerStyle = (() => {
     const baseStyle = {
       alignItems: 'center' as const,
       borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -62,26 +61,23 @@ const Pill = memo(({ id, label, isSelected = false, onSelect, variant = 'filter'
       marginRight: LAYOUT.SPACING.SMALL,
       ...LAYOUT.ELEVATION.SUBTLE,
     };
-  }, [colors, isDarkMode, isSelected, isCategory]);
+  })();
 
-  const pressedStyle = useMemo(
-    () => ({
-      backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
-    }),
-    [isDarkMode, colors]
-  );
+  const pressedStyle = {
+    backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
+  };
 
-  const getPressableStyle = useCallback(
-    ({ pressed }: { pressed: boolean }) => [containerStyle, pressed && !isSelected && pressedStyle],
-    [containerStyle, isSelected, pressedStyle]
-  );
+  const getPressableStyle = ({ pressed }: { pressed: boolean }) => [
+    containerStyle,
+    pressed && !isSelected && pressedStyle,
+  ];
 
   // Determine text color - ensure contrast for selected state
-  const textColorName = useMemo(() => {
+  const textColorName = (() => {
     if (!isSelected) return 'text';
     // For selected state, use high-contrast color based on theme
     return isDarkMode ? 'text' : 'background';
-  }, [isSelected, isDarkMode]);
+  })();
 
   // Non-interactive category pill
   if (isCategory && !onSelect) {
@@ -116,8 +112,6 @@ const Pill = memo(({ id, label, isSelected = false, onSelect, variant = 'filter'
       </ThemedText>
     </Pressable>
   );
-});
-
-Pill.displayName = 'Pill';
+}
 
 export default Pill;

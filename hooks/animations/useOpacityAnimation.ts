@@ -1,3 +1,4 @@
+'use no memo';
 import { useCallback, useEffect, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';

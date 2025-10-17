@@ -1,5 +1,4 @@
 import type { JSX } from 'react';
-import { memo, useMemo } from 'react';
 
 import HorizontalArticleSlider from '@/components/library/HorizontalArticleSlider';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
@@ -22,28 +21,7 @@ interface HorizontalFeaturedSectionProps {
   scope?: string;
 }
 
-/**
- * Custom comparison function for React.memo optimization
- */
-const HorizontalFeaturedSectionComparison = (
-  prevProps: HorizontalFeaturedSectionProps,
-  nextProps: HorizontalFeaturedSectionProps
-): boolean => {
-  // Quick path comparisons first (most likely to change)
-  if (prevProps.refreshKey !== nextProps.refreshKey) return false;
-  if (prevProps.scope !== nextProps.scope) return false;
-
-  // Array reference and length checks
-  if (prevProps.articlesData !== nextProps.articlesData) return false;
-  if (prevProps.articlesData?.length !== nextProps.articlesData?.length) return false;
-
-  return true;
-};
-
-/**
- * Internal component implementation
- */
-const HorizontalFeaturedSectionInternal = memo(function HorizontalFeaturedSectionInternal({
+function HorizontalFeaturedSection({
   articlesData,
   refreshKey,
   scope = 'global',
@@ -51,10 +29,11 @@ const HorizontalFeaturedSectionInternal = memo(function HorizontalFeaturedSectio
   // Use the multiple featured articles selection hook
   const featuredArticles = useMultipleFeaturedArticles(articlesData, refreshKey, scope);
 
-  const selectedArticles = useMemo(() => featuredArticles.articles, [featuredArticles.articles]);
+  const selectedArticles = featuredArticles.articles;
 
   return <HorizontalArticleSlider articles={selectedArticles} />;
-},
-HorizontalFeaturedSectionComparison);
+}
 
-export default HorizontalFeaturedSectionInternal;
+HorizontalFeaturedSection.displayName = 'HorizontalFeaturedSection';
+
+export default HorizontalFeaturedSection;

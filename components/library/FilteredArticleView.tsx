@@ -1,7 +1,7 @@
 import EmptyState from '@common/EmptyState';
 import ListSeparator from '@common/ListSeparator';
 import { FlashList } from '@shopify/flash-list';
-import React, { memo, useCallback, useMemo, type FC } from 'react';
+import React, { type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
@@ -93,36 +93,13 @@ interface FilteredArticleViewProps {
   filterType?: string;
 }
 
-/**
- * Custom comparison function for React.memo optimization
- */
-const FilteredArticleViewComparison = (
-  prevProps: FilteredArticleViewProps,
-  nextProps: FilteredArticleViewProps
-): boolean => {
-  // Quick path comparisons first (most likely to change)
-  if (prevProps.articles !== nextProps.articles) return false;
-  if (prevProps.loading !== nextProps.loading) return false;
-  if (prevProps.editMode !== nextProps.editMode) return false;
-  if (prevProps.filterType !== nextProps.filterType) return false;
-  if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
-  if (prevProps.onArticleDelete !== nextProps.onArticleDelete) return false;
-  if (prevProps.onArticleReorder !== nextProps.onArticleReorder) return false;
-  if (prevProps.HeaderComponent !== nextProps.HeaderComponent) return false;
-
-  // Array length checks before deep comparison
-  if (prevProps.articles?.length !== nextProps.articles?.length) return false;
-
-  return true;
-};
-
 // Static empty functions to avoid infinite render loops
 const noop = () => {};
 
 /**
- * Internal component implementation
+ * A specialized component for displaying filtered articles in modal contexts
  */
-const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
+const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   articles,
   onArticlePress = noop,
   onArticleDelete = noop,
@@ -141,100 +118,82 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   const shouldShowEmpty = !loading && !hasArticles;
 
   // Handle drag end for reordering
-  const handleDragEnd = useCallback(
-    ({ data }: { data: Article[] }) => {
-      const orderedIds = data.map(article => article.id);
-      onArticleReorder(orderedIds);
-    },
-    [onArticleReorder]
-  );
+  const handleDragEnd = ({ data }: { data: Article[] }) => {
+    const orderedIds = data.map(article => article.id);
+    onArticleReorder(orderedIds);
+  };
 
-  // Memoize delete handler creator to prevent inline function creation
-  const createDeleteHandler = useCallback(
-    (articleId: number) => () => onArticleDelete(articleId),
-    [onArticleDelete]
-  );
+  // Delete handler creator
+  const createDeleteHandler = (articleId: number) => () => onArticleDelete(articleId);
 
-  // Memoize drag handle props creator to prevent object recreation
-  const createDragHandleProps = useCallback(
-    (drag: () => void) => ({
-      onLongPress: drag,
-      delayLongPress: 100,
-    }),
-    []
-  );
+  // Drag handle props creator
+  const createDragHandleProps = (drag: () => void) => ({
+    onLongPress: drag,
+    delayLongPress: 100,
+  });
 
-  // Memoize header component (only depends on HeaderComponent prop)
-  const ListHeaderComponent = useMemo(() => {
-    if (!HeaderComponent) return null;
-    return (
+  // Header component
+  let ListHeaderComponent = null;
+  if (HeaderComponent) {
+    ListHeaderComponent = (
       <>
         {typeof HeaderComponent === 'function' ? <HeaderComponent /> : HeaderComponent}
         <View style={STATIC_STYLES.headerSpacing} />
       </>
     );
-  }, [HeaderComponent]);
+  }
 
   // Render item for both FlashList and DraggableFlatList
-  const renderItem: (
+  const renderItem = (
     params: { item: Article; index?: number } | RenderItemParams<Article>
-  ) => React.JSX.Element = useCallback(
-    params => {
-      const { item } = params;
-      const progress = progressMap.get(item.id);
-      const progressPercentage = progress?.progress_percentage ?? 0;
+  ): React.JSX.Element => {
+    const { item } = params;
+    const progress = progressMap.get(item.id);
+    const progressPercentage = progress?.progress_percentage ?? 0;
 
-      // Extract drag props if available (only in DraggableFlatList)
-      const drag = 'drag' in params ? params.drag : undefined;
-      const isDragging = 'isActive' in params ? params.isActive : false;
+    // Extract drag props if available (only in DraggableFlatList)
+    const drag = 'drag' in params ? params.drag : undefined;
+    const isDragging = 'isActive' in params ? params.isActive : false;
 
-      // Determine which metadata to show based on filter context
-      const secondaryText = filterType === 'author' ? capitalizeFirstLetter(item.category.name) : item.author.name;
+    // Determine which metadata to show based on filter context
+    const secondaryText = filterType === 'author' ? capitalizeFirstLetter(item.category.name) : item.author.name;
 
-      return (
-        <ListenListItemCard
-          title={item.title}
-          secondaryText={secondaryText}
-          imageUrl={generateImageUrl(item.image_url)}
-          articleId={item.id}
-          editMode={editMode}
-          onPress={!editMode ? () => onArticlePress(item) : undefined}
-          onDelete={createDeleteHandler(item.id)}
-          dragHandleProps={drag ? createDragHandleProps(drag) : undefined}
-          isBeingDragged={isDragging}
-          progressPercentage={progressPercentage}
-          shouldAnimateOnMount={false}
-        />
-      );
-    },
-    [editMode, onArticlePress, createDeleteHandler, createDragHandleProps, progressMap, filterType]
-  );
+    return (
+      <ListenListItemCard
+        title={item.title}
+        secondaryText={secondaryText}
+        imageUrl={generateImageUrl(item.image_url)}
+        articleId={item.id}
+        editMode={editMode}
+        onPress={!editMode ? () => onArticlePress(item) : undefined}
+        onDelete={createDeleteHandler(item.id)}
+        dragHandleProps={drag ? createDragHandleProps(drag) : undefined}
+        isBeingDragged={isDragging}
+        progressPercentage={progressPercentage}
+        shouldAnimateOnMount={false}
+      />
+    );
+  };
 
-  const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
+  const keyExtractor = (item: Article) => item.id.toString();
 
   // v2 handles layout automatically - no overrideItemLayout needed
 
-  // Memoize empty state props - only shows when filters eliminate all results
-  const emptyStateProps = useMemo(
-    () => ({
-      description: STRINGS.TRY_ADJUSTING_FILTERS,
-      icon: 'funnel' as const,
-      title: STRINGS.NO_ARTICLES_FOUND,
-      hideArticlesButton: true,
-      containerStyle: STATIC_STYLES.emptyContainer,
-    }),
-    []
-  );
+  // Empty state props - only shows when filters eliminate all results
+  const emptyStateProps = {
+    description: STRINGS.TRY_ADJUSTING_FILTERS,
+    icon: 'funnel' as const,
+    title: STRINGS.NO_ARTICLES_FOUND,
+    hideArticlesButton: true,
+    containerStyle: STATIC_STYLES.emptyContainer,
+  };
 
-  // Memoize ThemedView props
-  const themedViewProps = useMemo(
-    () => ({
-      includeBottomInset: false,
-      safeAreaEdges: ['left', 'right'] as ('left' | 'right' | 'bottom' | 'top')[],
-      style: STATIC_STYLES.container,
-    }),
-    []
-  );
+  // ThemedView props
+  const themedViewProps = {
+    includeBottomInset: false,
+    safeAreaEdges: ['left', 'right'] as ('left' | 'right' | 'bottom' | 'top')[],
+    style: STATIC_STYLES.container,
+  };
 
   // Show loading state when:
   // 1. Loading articles and no articles cached yet
@@ -298,11 +257,6 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   );
 };
 
-/**
- * A specialized component for displaying filtered articles in modal contexts
- */
-const FilteredArticleView = memo(FilteredArticleViewInternal, FilteredArticleViewComparison);
+FilteredArticleView.displayName = 'FilteredArticleView';
 
 export default FilteredArticleView;
-
-FilteredArticleView.displayName = 'FilteredArticleView';

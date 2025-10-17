@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { ComponentProps } from 'react';
-import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
+import type { ComponentProps, Ref } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GestureResponderEvent, TextInputProps } from 'react-native';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -18,6 +18,7 @@ interface ThemedInputProps extends TextInputProps {
   onBlur?: (e: any) => void;
   onRightIconPress?: (e: GestureResponderEvent) => void;
   style?: TextInputProps['style'];
+  ref?: Ref<TextInput>;
 }
 
 const InputIcon = ({
@@ -61,91 +62,89 @@ const RightInputIcon = ({
   </TouchableOpacity>
 );
 
-export const ThemedInput = forwardRef<TextInput, ThemedInputProps>(
-  ({ icon, rightIcon, onRightIconPress, style, onFocus, onBlur, error, hint, ...props }, ref) => {
-    const colors = useColors();
-    const [isFocused, setIsFocused] = useState(false);
-    const [prevError, setPrevError] = useState(error);
+export function ThemedInput({ icon, rightIcon, onRightIconPress, style, onFocus, onBlur, error, hint, ref, ...props }: ThemedInputProps) {
+  const colors = useColors();
+  const [isFocused, setIsFocused] = useState(false);
+  const [prevError, setPrevError] = useState(error);
 
-    useEffect(() => {
-      if (error && !prevError) {
-        errorFeedback();
-      }
-      setPrevError(error);
-    }, [error, prevError]);
+  useEffect(() => {
+    if (error && !prevError) {
+      errorFeedback();
+    }
+    setPrevError(error);
+  }, [error, prevError]);
 
-    const containerStyles = useMemo(
-      () => [
-        styles.container,
-        {
-          backgroundColor: colors.elevation1,
-          borderColor: error ? colors.icon : isFocused ? colors.tabIconSelected : colors.tint,
-        },
-        isFocused && styles.containerFocused,
-      ],
-      [colors.elevation1, colors.icon, colors.tabIconSelected, colors.tint, error, isFocused]
-    );
-
-    const inputStyle = useMemo(
-      () => [styles.input, { color: colors.text }, style],
-      [colors.text, style]
-    );
-
-    const handleFocus = useCallback(
-      (e: any) => {
-        setIsFocused(true);
-        onFocus?.(e);
+  const containerStyles = useMemo(
+    () => [
+      styles.container,
+      {
+        backgroundColor: colors.elevation1,
+        borderColor: error ? colors.icon : isFocused ? colors.tabIconSelected : colors.tint,
       },
-      [onFocus]
-    );
+      isFocused && styles.containerFocused,
+    ],
+    [colors.elevation1, colors.icon, colors.tabIconSelected, colors.tint, error, isFocused]
+  );
 
-    const handleBlur = useCallback(
-      (e: any) => {
-        setIsFocused(false);
-        onBlur?.(e);
-      },
-      [onBlur]
-    );
+  const inputStyle = useMemo(
+    () => [styles.input, { color: colors.text }, style],
+    [colors.text, style]
+  );
 
-    return (
-      <View style={styles.wrapper}>
-        <View style={containerStyles}>
-          {icon ? (
-            <InputIcon colors={colors} error={error} isFocused={isFocused} name={icon} />
-          ) : null}
-          <TextInput
-            ref={ref}
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholderTextColor={colors.textTertiary}
-            selectionColor={colors.tint}
-            style={inputStyle}
-            textAlignVertical="center"
-            onBlur={handleBlur}
-            onFocus={handleFocus}
-            {...props}
+  const handleFocus = useCallback(
+    (e: any) => {
+      setIsFocused(true);
+      onFocus?.(e);
+    },
+    [onFocus]
+  );
+
+  const handleBlur = useCallback(
+    (e: any) => {
+      setIsFocused(false);
+      onBlur?.(e);
+    },
+    [onBlur]
+  );
+
+  return (
+    <View style={styles.wrapper}>
+      <View style={containerStyles}>
+        {icon ? (
+          <InputIcon colors={colors} error={error} isFocused={isFocused} name={icon} />
+        ) : null}
+        <TextInput
+          ref={ref}
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholderTextColor={colors.textTertiary}
+          selectionColor={colors.tint}
+          style={inputStyle}
+          textAlignVertical="center"
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+          {...props}
+        />
+        {rightIcon ? (
+          <RightInputIcon
+            colors={colors}
+            error={error}
+            isFocused={isFocused}
+            name={rightIcon}
+            onPress={onRightIconPress}
           />
-          {rightIcon ? (
-            <RightInputIcon
-              colors={colors}
-              error={error}
-              isFocused={isFocused}
-              name={rightIcon}
-              onPress={onRightIconPress}
-            />
-          ) : null}
-        </View>
-        {error || hint ? (
-          <View style={styles.helperTextContainer}>
-            <ThemedText type="caption" variant={error ? 'error' : 'secondary'}>
-              {error || hint}
-            </ThemedText>
-          </View>
         ) : null}
       </View>
-    );
-  }
-);
+      {error || hint ? (
+        <View style={styles.helperTextContainer}>
+          <ThemedText type="caption" variant={error ? 'error' : 'secondary'}>
+            {error || hint}
+          </ThemedText>
+        </View>
+      ) : null}
+    </View>
+  );
+}
 
 ThemedInput.displayName = 'ThemedInput';
 

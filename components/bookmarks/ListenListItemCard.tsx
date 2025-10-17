@@ -1,6 +1,6 @@
 import BaseCard from '@common/BaseCard';
 import { ProgressCircle } from '@common/ProgressCircle';
-import { memo, useEffect, useMemo, type FC } from 'react';
+import { useEffect, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -38,21 +38,20 @@ interface ListenListItemCardProps {
   shouldAnimateOnMount?: boolean;
 }
 
-export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
-  ({
-    title,
-    secondaryText,
-    onPress,
-    editMode = false,
-    onDelete,
-    dragHandleProps,
-    isBeingDragged = false,
-    onPlayPress,
-    imageUrl,
-    articleId,
-    progressPercentage,
-    shouldAnimateOnMount = true,
-  }) => {
+export const ListenListItemCard: FC<ListenListItemCardProps> = ({
+  title,
+  secondaryText,
+  onPress,
+  editMode = false,
+  onDelete,
+  dragHandleProps,
+  isBeingDragged = false,
+  onPlayPress,
+  imageUrl,
+  articleId,
+  progressPercentage,
+  shouldAnimateOnMount = true,
+}) => {
     const isDarkMode = useIsDarkMode();
 
     const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
@@ -77,124 +76,101 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
       }
     }, [editMode, isBeingDragged, shouldAnimateOnMount, startAnimation, setValue]);
 
-    // Enhanced title and secondary text styles with semantic colors
-    const titleOpacity = getEnhancedOpacity(
-      TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
-      isDarkMode
-    );
-    const secondaryOpacity = getEnhancedOpacity(
-      TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
-      isDarkMode
-    );
+  // Enhanced title and secondary text styles with semantic colors
+  const titleOpacity = getEnhancedOpacity(
+    TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
+    isDarkMode
+  );
+  const secondaryOpacity = getEnhancedOpacity(
+    TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
+    isDarkMode
+  );
 
-    // Memoize dynamic styles for better performance
-    const titleTextStyle = useMemo(
-      () => [styles.titleText, { opacity: titleOpacity }],
-      [titleOpacity]
-    );
+  // Dynamic styles
+  const titleTextStyle = [styles.titleText, { opacity: titleOpacity }];
 
-    const secondaryTextStyle = useMemo(
-      () => [styles.secondaryText, { opacity: secondaryOpacity }],
-      [secondaryOpacity]
-    );
+  const secondaryTextStyle = [styles.secondaryText, { opacity: secondaryOpacity }];
 
-    return (
-      <Animated.View style={[styles.cardContainer, animatedStyle]}>
-        {/* Drag Handle - shows on left in edit mode */}
-        {editMode && dragHandleProps && (
-          <View style={styles.dragHandleContainer}>
-            <DragHandle
-              onLongPress={dragHandleProps.onLongPress}
-              delayLongPress={dragHandleProps.delayLongPress}
-            />
-          </View>
-        )}
+  return (
+    <Animated.View style={[styles.cardContainer, animatedStyle]}>
+      {/* Drag Handle - shows on left in edit mode */}
+      {editMode && dragHandleProps && (
+        <View style={styles.dragHandleContainer}>
+          <DragHandle
+            onLongPress={dragHandleProps.onLongPress}
+            delayLongPress={dragHandleProps.delayLongPress}
+          />
+        </View>
+      )}
 
-        <View style={styles.cardWrapper}>
-          <BaseCard shadowSize="small" onPress={editMode ? undefined : onPress}>
-            <View style={styles.cardContent}>
-              {/* Article thumbnail - bookmarks style */}
-              {imageUrl && (
-                <View style={styles.imageContainer}>
-                  <EnhancedImage
-                    source={imageUrl}
-                    style={styles.thumbnailImage}
-                    transition={150}
-                    recyclingKey={articleId ? `article-${articleId}` : imageUrl}
-                  />
-                </View>
-              )}
-
-              <View style={styles.textContent}>
-                <ThemedText
-                  colorName="headingText"
-                  style={titleTextStyle}
-                  type="heading3"
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  {title}
-                </ThemedText>
-                <View style={styles.secondaryRow}>
-                  <ThemedText
-                    skipDefaultColor
-                    colorName="authorText"
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    style={secondaryTextStyle}
-                    type="label"
-                  >
-                    {secondaryText}
-                  </ThemedText>
-                </View>
+      <View style={styles.cardWrapper}>
+        <BaseCard shadowSize="small" onPress={editMode ? undefined : onPress}>
+          <View style={styles.cardContent}>
+            {/* Article thumbnail - bookmarks style */}
+            {imageUrl && (
+              <View style={styles.imageContainer}>
+                <EnhancedImage
+                  source={imageUrl}
+                  style={styles.thumbnailImage}
+                  transition={150}
+                  recyclingKey={articleId ? `article-${articleId}` : imageUrl}
+                />
               </View>
+            )}
 
-              {/* Right side content: play button (if available) and progress status */}
-              <View style={styles.rightSideContainer}>
-                {!editMode && onPlayPress && (
-                  <View style={styles.playButtonContainer}>
-                    <PlayButton onPress={onPlayPress} />
-                  </View>
-                )}
-                <View style={styles.progressRightContainer}>
-                  <ProgressCircle
-                    percentage={progressPercentage ?? 0}
-                    size={28}
-                    strokeWidth={4}
-                    style={styles.progressCircle}
-                  />
-                </View>
+            <View style={styles.textContent}>
+              <ThemedText
+                colorName="headingText"
+                style={titleTextStyle}
+                type="heading3"
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {title}
+              </ThemedText>
+              <View style={styles.secondaryRow}>
+                <ThemedText
+                  skipDefaultColor
+                  colorName="authorText"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={secondaryTextStyle}
+                  type="label"
+                >
+                  {secondaryText}
+                </ThemedText>
               </View>
             </View>
-          </BaseCard>
-        </View>
 
-        {/* Delete Button - shows on right in edit mode */}
-        {editMode && onDelete && (
-          <View style={styles.deleteButtonContainer}>
-            <DeleteButton onPress={onDelete} />
+            {/* Right side content: play button (if available) and progress status */}
+            <View style={styles.rightSideContainer}>
+              {!editMode && onPlayPress && (
+                <View style={styles.playButtonContainer}>
+                  <PlayButton onPress={onPlayPress} />
+                </View>
+              )}
+              <View style={styles.progressRightContainer}>
+                <ProgressCircle
+                  percentage={progressPercentage ?? 0}
+                  size={28}
+                  strokeWidth={4}
+                  style={styles.progressCircle}
+                />
+              </View>
+            </View>
           </View>
-        )}
-      </Animated.View>
-    );
-  },
-  (prevProps, nextProps) => {
-    // Custom comparison function to prevent unnecessary re-renders
-    return (
-      prevProps.title === nextProps.title &&
-      prevProps.secondaryText === nextProps.secondaryText &&
-      prevProps.editMode === nextProps.editMode &&
-      prevProps.isBeingDragged === nextProps.isBeingDragged &&
-      prevProps.imageUrl === nextProps.imageUrl &&
-      prevProps.articleId === nextProps.articleId &&
-      prevProps.progressPercentage === nextProps.progressPercentage &&
-      prevProps.onPress === nextProps.onPress &&
-      prevProps.onDelete === nextProps.onDelete &&
-      prevProps.onPlayPress === nextProps.onPlayPress &&
-      prevProps.dragHandleProps === nextProps.dragHandleProps
-    );
-  }
-);
+        </BaseCard>
+      </View>
+
+      {/* Delete Button - shows on right in edit mode */}
+      {editMode && onDelete && (
+        <View style={styles.deleteButtonContainer}>
+          <DeleteButton onPress={onDelete} />
+        </View>
+      )}
+    </Animated.View>
+  );
+};
 
 ListenListItemCard.displayName = 'ListenListItemCard';
 

@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
@@ -31,52 +31,52 @@ interface PulsatingLoaderProps {
  * A pulsating circle loader component for smooth loading states
  * Uses the brand sage color by default and follows Material Design principles
  */
-const PulsatingLoader = memo<PulsatingLoaderProps>(
-  ({ size = 48, colorName = 'tint', duration = 1500 }) => {
-    const colors = useColors();
+function PulsatingLoader({ size = 48, colorName = 'tint', duration = 1500 }: PulsatingLoaderProps) {
+  const colors = useColors();
 
-    // Shared value for the scale animation
-    const scale = useSharedValue(0.8);
+  // Shared value for the scale animation
+  const scale = useSharedValue(0.8);
 
-    // Start the pulsating animation when component mounts
-    React.useEffect(() => {
-      scale.value = withRepeat(
+  // Start the pulsating animation when component mounts
+  React.useEffect(() => {
+    scale.set(
+      withRepeat(
         withTiming(1.2, {
           duration: duration / 2,
           easing: Easing.bezier(0.4, 0.0, 0.2, 1), // Material Design easing
         }),
         -1, // Infinite loop
         true // Reverse direction
-      );
-    }, [scale, duration]);
-
-    // Animated style for the pulsating effect
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: scale.value }],
-    }));
-
-    // Get the loader color based on the color name
-    const loaderColor = colors[colorName];
-
-    return (
-      <View style={[styles.container, { width: size, height: size }]}>
-        <Animated.View
-          style={[
-            styles.loader,
-            animatedStyle,
-            {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              borderWidth: Math.max(3, size * 0.06), // Minimum 3px, scales with size
-              borderColor: loaderColor,
-            },
-          ]}
-        />
-      </View>
+      )
     );
-  }
-);
+  }, [scale, duration]);
+
+  // Animated style for the pulsating effect
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.get() }],
+  }));
+
+  // Get the loader color based on the color name
+  const loaderColor = colors[colorName];
+
+  return (
+    <View style={[styles.container, { width: size, height: size }]}>
+      <Animated.View
+        style={[
+          styles.loader,
+          animatedStyle,
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            borderWidth: Math.max(3, size * 0.06), // Minimum 3px, scales with size
+            borderColor: loaderColor,
+          },
+        ]}
+      />
+    </View>
+  );
+}
 
 PulsatingLoader.displayName = 'PulsatingLoader';
 

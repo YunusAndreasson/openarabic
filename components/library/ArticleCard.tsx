@@ -2,7 +2,6 @@ import BaseCard from '@common/BaseCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -65,35 +64,6 @@ type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
   isRelatedArticle?: boolean; // For related articles navigation
 };
 
-// Custom comparison function for memo optimization
-const ArticleCardComparison = (
-  prevProps: ArticleCardProps,
-  nextProps: ArticleCardProps
-): boolean => {
-  // Quick path comparisons for most common changes
-  if (
-    prevProps.title !== nextProps.title ||
-    prevProps.author !== nextProps.author ||
-    prevProps.imageUrl !== nextProps.imageUrl ||
-    prevProps.category !== nextProps.category ||
-    prevProps.categoryForDisplay !== nextProps.categoryForDisplay ||
-    prevProps.summary !== nextProps.summary ||
-    prevProps.article.id !== nextProps.article.id ||
-    prevProps.prefetch !== nextProps.prefetch ||
-    prevProps.isRelatedArticle !== nextProps.isRelatedArticle ||
-    prevProps.testID !== nextProps.testID
-  ) {
-    return false;
-  }
-
-  // Style comparison (usually stable but check for custom styles)
-  if (prevProps.style !== nextProps.style) {
-    return false;
-  }
-
-  return true;
-};
-
 // Static styles object to prevent recreation
 const styles = StyleSheet.create({
   contentContainer: {
@@ -131,7 +101,7 @@ const SUMMARY_STYLE = {
  * High-performance article card component optimized for list rendering
  * Now with Expo Router v6 Link integration for better performance and native feel
  */
-function ArticleCardComponent({
+export default function ArticleCard({
   title,
   author,
   imageUrl,
@@ -148,7 +118,7 @@ function ArticleCardComponent({
   // For mobile-only apps, use constant screen width
   const screenWidth = SCREEN_WIDTH;
 
-  // Optimized press animation - memoize animation hook parameters
+  // Press animation
   const { animatedStyle, setValue: _setValue } = useTransformAnimation({
     type: 'scale',
     initialValue: 1,
@@ -158,22 +128,14 @@ function ArticleCardComponent({
     stiffness: SPRING_CONFIG.RESPONSIVE.stiffness,
   });
 
-  // Handle press animation - scale down on press, back up on release
-  // Memoize image height calculation - screenWidth is stable for mobile
-  const imageHeight = useMemo(
-    () => Math.round((screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO),
-    [screenWidth]
-  );
+  // Image height calculation - screenWidth is stable for mobile
+  const imageHeight = Math.round((screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO);
 
   // Use pre-computed gradient colors from theme for performance
   const gradientColors = colors.cardGradient;
 
-
-  // Memoize computed values for child components
-  const imageContainerStyle = useMemo(
-    () => [styles.imageContainer, { height: imageHeight }],
-    [imageHeight]
-  );
+  // Computed values for child components
+  const imageContainerStyle = [styles.imageContainer, { height: imageHeight }];
 
   const capitalizedCategory = capitalizeFirstLetter(category);
   const capitalizedCategoryForDisplay = categoryForDisplay
@@ -181,38 +143,31 @@ function ArticleCardComponent({
     : '';
   const authorDisplayText = `${author} • ${capitalizedCategoryForDisplay}`;
 
-  // Memoize gradient props to prevent unnecessary re-renders
-  const gradientProps = useMemo(
-    () => ({
-      colors: [...gradientColors] as [string, string, ...string[]], // Convert readonly array to gradient tuple type
-      start: GRADIENT_START_POINT,
-      end: GRADIENT_END_POINT,
-      style: styles.gradient,
-    }),
-    [gradientColors]
-  );
+  // Gradient props
+  const gradientProps = {
+    colors: [...gradientColors] as [string, string, ...string[]], // Convert readonly array to gradient tuple type
+    start: GRADIENT_START_POINT,
+    end: GRADIENT_END_POINT,
+    style: styles.gradient,
+  };
 
   // Generate article route with proper parameters
-  const articleHref = useMemo(
-    () => getArticleRoute(article.id, article.title),
-    [article.id, article.title]
-  );
+  const articleHref = getArticleRoute(article.id, article.title);
 
   const router = useRouter();
 
   // Handle navigation with router.push to avoid Link navigation errors
-  const handlePress = useCallback(() => {
+  const handlePress = () => {
     try {
       router.push(articleHref);
     } catch (error) {
       console.error('[ArticleCard] Navigation error:', error);
     }
-  }, [router, articleHref]);
+  };
 
-  // Create the card content component
-  const cardContent = useMemo(
-    () => (
-      <>
+  return (
+    <Animated.View style={animatedStyle}>
+      <BaseCard style={style} testID={testID} onPress={handlePress}>
         <View style={imageContainerStyle}>
           <EnhancedImage
             style={styles.image}
@@ -251,34 +206,9 @@ function ArticleCardComponent({
             </ThemedText>
           </View>
         </View>
-      </>
-    ),
-    [
-      imageContainerStyle,
-      imageUrl,
-      gradientProps,
-      category,
-      capitalizedCategory,
-      title,
-      authorDisplayText,
-      summary,
-      article.id,
-    ]
-  );
-
-  return (
-    <Animated.View style={animatedStyle}>
-      <BaseCard
-        style={style}
-        testID={testID}
-        onPress={handlePress}
-      >
-        {cardContent}
       </BaseCard>
     </Animated.View>
   );
 }
 
-const ArticleCard = memo(ArticleCardComponent, ArticleCardComparison);
-
-export default ArticleCard;
+ArticleCard.displayName = 'ArticleCard';

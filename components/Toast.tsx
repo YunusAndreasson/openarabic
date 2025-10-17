@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,120 +46,102 @@ const styles = StyleSheet.create({
   },
 });
 
-export const Toast = memo(
-  ({
-    visible,
-    message,
-    duration = DEFAULT_DURATION,
-    onClose,
-    type = ToastType.INFO,
-  }: ToastProps) => {
-    const isDarkMode = useIsDarkMode();
-    const colors = useColors();
-    const insets = useSafeAreaInsets();
+export function Toast({
+  visible,
+  message,
+  duration = DEFAULT_DURATION,
+  onClose,
+  type = ToastType.INFO,
+}: ToastProps) {
+  const isDarkMode = useIsDarkMode();
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
 
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    useEffect(() => {
+  useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (visible) {
+      timerRef.current = setTimeout(() => {
+        onClose();
+      }, duration);
+    }
+
+    return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
+    };
+  }, [visible, duration, onClose]);
 
-      if (visible) {
-        timerRef.current = setTimeout(() => {
-          onClose();
-        }, duration);
-      }
+  // Determine toast colors based on type
+  let backgroundColor: string;
+  let textColor: string;
 
-      return () => {
-        if (timerRef.current) {
-          clearTimeout(timerRef.current);
-          timerRef.current = null;
-        }
-      };
-    }, [visible, duration, onClose]);
+  switch (type) {
+    case 'success':
+      backgroundColor = colors.success || colors.tint;
+      textColor = colors.white;
+      break;
+    case 'error':
+      backgroundColor = colors.error;
+      textColor = colors.white;
+      break;
+    case 'important':
+      backgroundColor = colors.warning || colors.tint;
+      textColor = colors.white;
+      break;
+    default:
+      backgroundColor = colors.elevation2; // Darker, more visible toast in dark mode
+      textColor = colors.text;
+  }
 
-    // Consolidated color scheme memoization for better performance
-    const toastColors = useMemo(() => {
-      let backgroundColor: string;
-      let textColor: string;
+  // For mobile-only apps, use constant screen width
+  const screenWidth = SCREEN_WIDTH;
+  const maxToastWidth = screenWidth * MAX_TOAST_WIDTH_RATIO;
 
-      switch (type) {
-        case 'success':
-          backgroundColor = colors.success || colors.tint;
-          textColor = colors.white;
-          break;
-        case 'error':
-          backgroundColor = colors.error;
-          textColor = colors.white;
-          break;
-        case 'important':
-          backgroundColor = colors.warning || colors.tint;
-          textColor = colors.white;
-          break;
-        default:
-          backgroundColor = colors.elevation2; // Darker, more visible toast in dark mode
-          textColor = colors.text;
-      }
+  // Position higher on screen for better visibility
+  const containerStyle = {
+    ...styles.toastContainer,
+    top: insets.top + LAYOUT.SPACING.XLARGE * 2, // Position at top for prominence
+  };
 
-      return { backgroundColor, textColor };
-    }, [type, colors]);
+  if (!visible) return null;
 
-    // For mobile-only apps, use constant screen width
-    const screenWidth = SCREEN_WIDTH;
-    const maxToastWidth = screenWidth * MAX_TOAST_WIDTH_RATIO;
-
-    // Position higher on screen for better visibility
-    const containerStyle = useMemo(
-      () => ({
-        ...styles.toastContainer,
-        top: insets.top + LAYOUT.SPACING.XLARGE * 2, // Position at top for prominence
-      }),
-      [insets.top]
-    );
-
-    const toastContent = useMemo(
-      () => (
+  return (
+    <Animated.View
+      pointerEvents="none"
+      entering={FadeInUp.duration(TIMING_CONFIG.FAST.duration)}
+      exiting={FadeOutUp.duration(TIMING_CONFIG.FAST.duration)}
+      style={containerStyle}
+    >
+      <View
+        style={[
+          styles.toast,
+          {
+            maxWidth: maxToastWidth,
+            backgroundColor,
+            shadowColor: colors.shadow,
+            // Add subtle border for definition
+            borderWidth: isDarkMode ? 1 : 0,
+            borderColor: isDarkMode ? colors.border : colors.transparent,
+          },
+        ]}
+      >
         <ThemedText
           skipDefaultColor
           ellipsizeMode="tail"
           numberOfLines={3} // Allow more lines for longer messages
-          style={[styles.toastText, { color: toastColors.textColor }]}
+          style={[styles.toastText, { color: textColor }]}
         >
           {message}
         </ThemedText>
-      ),
-      [message, toastColors.textColor]
-    );
-
-    if (!visible) return null;
-
-    return (
-      <Animated.View
-        pointerEvents="none"
-        entering={FadeInUp.duration(TIMING_CONFIG.FAST.duration)}
-        exiting={FadeOutUp.duration(TIMING_CONFIG.FAST.duration)}
-        style={containerStyle}
-      >
-        <View
-          style={[
-            styles.toast,
-            {
-              maxWidth: maxToastWidth,
-              backgroundColor: toastColors.backgroundColor,
-              shadowColor: colors.shadow,
-              // Add subtle border for definition
-              borderWidth: isDarkMode ? 1 : 0,
-              borderColor: isDarkMode ? colors.border : colors.transparent,
-            },
-          ]}
-        >
-          {toastContent}
-        </View>
-      </Animated.View>
-    );
-  }
-);
-
-Toast.displayName = 'Toast';
+      </View>
+    </Animated.View>
+  );
+}

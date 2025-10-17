@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -85,37 +85,14 @@ const DEFAULT_DIMENSIONS = {
   arrowLeft: 60,
 } as const;
 
-const WordTooltipComparison = (
-  prevProps: WordTooltipProps,
-  nextProps: WordTooltipProps
-): boolean => {
-  if (
-    prevProps.visible !== nextProps.visible ||
-    prevProps.text !== nextProps.text ||
-    prevProps.arabicWord !== nextProps.arabicWord ||
-    prevProps.onOpenWordDetails !== nextProps.onOpenWordDetails ||
-    prevProps.onClose !== nextProps.onClose ||
-    prevProps.zIndex !== nextProps.zIndex
-  ) {
-    return false;
-  }
-
-  const prevLayout = prevProps.layout;
-  const nextLayout = nextProps.layout;
-
-  if (!prevLayout && !nextLayout) return true;
-  if (!prevLayout || !nextLayout) return false;
-
-  return (
-    prevLayout.x === nextLayout.x &&
-    prevLayout.y === nextLayout.y &&
-    prevLayout.width === nextLayout.width &&
-    prevLayout.height === nextLayout.height
-  );
-};
-
-export const WordTooltip = memo(
-  ({ visible, text = '', arabicWord, layout, zIndex, onOpenWordDetails }: WordTooltipProps) => {
+export function WordTooltip({
+  visible,
+  text = '',
+  arabicWord,
+  layout,
+  zIndex,
+  onOpenWordDetails,
+}: WordTooltipProps) {
     const colors = useColors();
 
     // Press animation for better user feedback
@@ -129,7 +106,7 @@ export const WordTooltip = memo(
     const containerOffsetXRef = useRef<number>(0);
     const containerWidthRef = useRef<number>(0);
 
-    const measureContainerOffset = useCallback(() => {
+    const measureContainerOffset = () => {
       if (containerRef.current?.measureInWindow) {
         try {
           containerRef.current.measureInWindow((x: number, _y: number, width: number /* height */) => {
@@ -144,7 +121,7 @@ export const WordTooltip = memo(
           // ignore
         }
       }
-    }, []);
+    };
 
     // Only measure once when tooltip becomes visible
     useEffect(() => {
@@ -160,122 +137,92 @@ export const WordTooltip = memo(
       !!(arabicWord && text)
     );
 
-    // Stable handlers
-    const handleOpenWordDetails = useCallback(() => {
+    const handleOpenWordDetails = () => {
       if (onOpenWordDetails) {
         onOpenWordDetails();
       }
-    }, [onOpenWordDetails]);
+    };
 
     // Generate color-coded segments using shared utility
-    const coloredSegments = useMemo(
-      () =>
-        generateColorCodedSegments({
-          text,
-          formattedAnalysis,
-          analysis,
-          colors,
-          defaultColor: colors.text,
-        }),
-      [text, formattedAnalysis, analysis, colors]
-    );
+    const coloredSegments = generateColorCodedSegments({
+      text,
+      formattedAnalysis,
+      analysis,
+      colors,
+      defaultColor: colors.text,
+    });
 
     // Render color-coded English text
-    const renderColorCodedEnglish = useMemo(() => {
-      return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText} numberOfLines={1}>
-            {coloredSegments.map(segment => (
-              <ThemedText
-                key={segment.key}
-                skipDefaultColor
-                style={[STATIC_STYLES.singleLineText, { color: segment.color }]}
-                numberOfLines={1}
-              >
-                {segment.text}
-              </ThemedText>
-            ))}
-          </ThemedText>
-        </View>
-      );
-    }, [coloredSegments]);
+    const renderColorCodedEnglish = (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText} numberOfLines={1}>
+          {coloredSegments.map(segment => (
+            <ThemedText
+              key={segment.key}
+              skipDefaultColor
+              style={[STATIC_STYLES.singleLineText, { color: segment.color }]}
+              numberOfLines={1}
+            >
+              {segment.text}
+            </ThemedText>
+          ))}
+        </ThemedText>
+      </View>
+    );
 
     // Calculate tooltip dimensions with optimized processing
-    const dimensions = useMemo(() => {
-      if (!layout) {
-        return DEFAULT_DIMENSIONS;
-      }
+    const dimensions = !layout
+      ? DEFAULT_DIMENSIONS
+      : (() => {
+          const adjustedLayout: TooltipLayout = {
+            x: (layout as TooltipLayout).x - containerOffsetXRef.current,
+            y: (layout as TooltipLayout).y,
+            width: (layout as TooltipLayout).width,
+            height: (layout as TooltipLayout).height,
+          } as TooltipLayout;
+          // Use combined text from segments for dimension calculation
+          const displayedText = coloredSegments.map(s => s.text).join('');
+          return calculateTooltipDimensions(
+            adjustedLayout,
+            displayedText,
+            false,
+            undefined,
+            containerOffsetXRef.current,
+            containerWidthRef.current
+          );
+        })();
 
-      const adjustedLayout: TooltipLayout = {
-        x: (layout as TooltipLayout).x - containerOffsetXRef.current,
-        y: (layout as TooltipLayout).y,
-        width: (layout as TooltipLayout).width,
-        height: (layout as TooltipLayout).height,
-      } as TooltipLayout;
-      // Use combined text from segments for dimension calculation
-      const displayedText = coloredSegments.map(s => s.text).join('');
-      return calculateTooltipDimensions(
-        adjustedLayout,
-        displayedText,
-        false,
-        undefined,
-        containerOffsetXRef.current,
-        containerWidthRef.current
-      );
-    }, [layout, coloredSegments]);
+    const containerStyle = {
+      ...STATIC_STYLES.overlay,
+      zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
+    };
 
-    // Memoized styles with optimized dependencies
-    const containerStyle = useMemo(
-      () => ({
-        ...STATIC_STYLES.overlay,
-        zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
-      }),
-      [zIndex]
-    );
+    const effectiveTooltipHeight = Math.max(dimensions.tooltipHeight, MIN_TOUCH_TARGET.MEDIUM);
 
-    const effectiveTooltipHeight = useMemo(
-      () => Math.max(dimensions.tooltipHeight, MIN_TOUCH_TARGET.MEDIUM),
-      [dimensions.tooltipHeight]
-    );
+    const tooltipStyle = {
+      ...STATIC_STYLES.tooltip,
+      top: dimensions.tooltipTop,
+      left: dimensions.tooltipLeft,
+      width: dimensions.tooltipWidth,
+      height: effectiveTooltipHeight,
+      backgroundColor: colors.elevation1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+      zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
+      ...LAYOUT.ELEVATION.LARGE,
+    };
 
-    const tooltipStyle = useMemo(
-      () => ({
-        ...STATIC_STYLES.tooltip,
-        top: dimensions.tooltipTop,
-        left: dimensions.tooltipLeft,
-        width: dimensions.tooltipWidth,
-        height: effectiveTooltipHeight,
-        backgroundColor: colors.elevation1,
-        borderColor: colors.border,
-        shadowColor: colors.shadow,
-        zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
-        ...LAYOUT.ELEVATION.LARGE,
-      }),
-      [
-        dimensions.tooltipTop,
-        dimensions.tooltipLeft,
-        dimensions.tooltipWidth,
-        effectiveTooltipHeight,
-        colors.elevation1,
-        colors.border,
-        colors.shadow,
-      ]
-    );
-
-    const arrowStyle = useMemo(
-      () => ({
-        ...STATIC_STYLES.arrow,
-        left: dimensions.arrowLeft,
-        top: effectiveTooltipHeight,
-        borderTopWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
-        borderLeftWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
-        borderRightWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
-        borderTopColor: colors.elevation1,
-        borderLeftColor: colors.transparent,
-        borderRightColor: colors.transparent,
-      }),
-      [dimensions.arrowLeft, effectiveTooltipHeight, colors.elevation1, colors.transparent]
-    );
+    const arrowStyle = {
+      ...STATIC_STYLES.arrow,
+      left: dimensions.arrowLeft,
+      top: effectiveTooltipHeight,
+      borderTopWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
+      borderLeftWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
+      borderRightWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
+      borderTopColor: colors.elevation1,
+      borderLeftColor: colors.transparent,
+      borderRightColor: colors.transparent,
+    };
 
     if (!visible || !layout) return null;
 
@@ -299,8 +246,6 @@ export const WordTooltip = memo(
         </Pressable>
       </View>
     );
-  },
-  WordTooltipComparison
-);
+}
 
 WordTooltip.displayName = 'WordTooltip';

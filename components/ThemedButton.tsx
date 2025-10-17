@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo, useCallback, useMemo, type JSX } from 'react';
+import React, { type JSX } from 'react';
 import type { GestureResponderEvent } from 'react-native';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -59,7 +59,7 @@ const getIconSize = (size: ButtonSize, customSize?: number) => {
   }
 };
 
-function ThemedButtonComponent({
+export function ThemedButton({
   variant = 'filled', // Most common value - hardcoded
   title,
   icon,
@@ -87,23 +87,20 @@ function ThemedButtonComponent({
   const isActuallyLoading = loading || (enableOptimisticLoading && optimisticLoading);
 
   // Create the press handler with optional optimistic loading
-  const pressHandler = useCallback(
-    (event: GestureResponderEvent) => {
-      if (onPress && !disabled && !isActuallyLoading) {
-        if (enableOptimisticLoading) {
-          setOptimisticLoading(true); // Immediately show loading
-          onPress(event);
-          // Auto-clear optimistic loading after 500ms as fallback (much shorter)
-          setTimeout(() => {
-            setOptimisticLoading(false);
-          }, 500);
-        } else {
-          onPress(event);
-        }
+  const pressHandler = (event: GestureResponderEvent) => {
+    if (onPress && !disabled && !isActuallyLoading) {
+      if (enableOptimisticLoading) {
+        setOptimisticLoading(true); // Immediately show loading
+        onPress(event);
+        // Auto-clear optimistic loading after 500ms as fallback (much shorter)
+        setTimeout(() => {
+          setOptimisticLoading(false);
+        }, 500);
+      } else {
+        onPress(event);
       }
-    },
-    [onPress, disabled, isActuallyLoading, enableOptimisticLoading]
-  );
+    }
+  };
 
   const textColor = disabled
     ? colors.disabled
@@ -114,43 +111,31 @@ function ThemedButtonComponent({
       ? colors.black
       : colors.text
     : colors.tint;
-  const iconSize = useMemo(() => getIconSize(size, customIconSize), [size, customIconSize]);
+  const iconSize = getIconSize(size, customIconSize);
 
   // Button styles
-  const buttonStyle = useMemo(
-    () => [
-      styles.button,
-      size === 'large' && styles.buttonLarge,
-      size === 'small' && styles.buttonSmall,
-      variant === 'filled' && {
-        backgroundColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint,
-      },
-      variant === 'outlined' && {
-        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-        borderColor: isActuallyLoading || disabled ? colors.border : colors.tint,
-      },
-    ],
-    [size, variant, colors.tint, colors.cardBorder, disabled, isActuallyLoading]
-  );
+  const buttonStyle = [
+    styles.button,
+    size === 'large' && styles.buttonLarge,
+    size === 'small' && styles.buttonSmall,
+    variant === 'filled' && {
+      backgroundColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint,
+    },
+    variant === 'outlined' && {
+      borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+      borderColor: isActuallyLoading || disabled ? colors.border : colors.tint,
+    },
+  ];
 
-  const buttonTextStyle = useMemo(
-    () => [
-      styles.buttonText,
-      size === 'large' && styles.buttonTextLarge,
-      size === 'small' && styles.buttonTextSmall,
-    ],
-    [size]
-  );
+  const buttonTextStyle = [
+    styles.buttonText,
+    size === 'large' && styles.buttonTextLarge,
+    size === 'small' && styles.buttonTextSmall,
+  ];
 
-  const iconContainerStyle = useMemo(
-    () => [styles.iconContainer, size === 'small' && styles.iconContainerSmall],
-    [size]
-  );
+  const iconContainerStyle = [styles.iconContainer, size === 'small' && styles.iconContainerSmall];
 
-  const textOpacityStyle = useMemo(
-    () => (isActuallyLoading && !icon ? styles.hiddenText : null),
-    [isActuallyLoading, icon]
-  );
+  const textOpacityStyle = isActuallyLoading && !icon ? styles.hiddenText : null;
 
   return (
     <AnimatedPressable
@@ -247,4 +232,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export const ThemedButton = memo(ThemedButtonComponent);
+ThemedButton.displayName = 'ThemedButton';

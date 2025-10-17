@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
@@ -8,9 +7,10 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
 
-export const SocialMediaIcons = memo(() => {
+export function SocialMediaIcons() {
   const colors = useColors();
-  const handleSocialMediaPress = useCallback(async (url: string) => {
+
+  const handleSocialMediaPress = async (url: string) => {
     try {
       await Linking.openURL(url);
     } catch (error) {
@@ -22,7 +22,7 @@ export const SocialMediaIcons = memo(() => {
         sentrySeverity: 'info', // Not critical, just informational
       });
     }
-  }, []);
+  };
 
   return (
     <View style={styles.container}>
@@ -57,9 +57,7 @@ export const SocialMediaIcons = memo(() => {
       />
     </View>
   );
-});
-
-SocialMediaIcons.displayName = 'SocialMediaIcons';
+}
 
 const styles = StyleSheet.create({
   container: {

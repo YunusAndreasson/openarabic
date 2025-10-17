@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { memo, type ComponentProps, type ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -38,84 +38,82 @@ function handleBrowseArticles(): void {
  * - Figure-Ground: Clear distinction between content and background
  * - Continuation: Natural flow from icon to title to description
  */
-const EmptyState = memo(
-  ({
-    title,
-    description,
-    actionText,
-    icon = 'book',
-    onAction,
-    containerStyle,
-    submessage,
-    customActionButton,
-    iconSize = DEFAULT_ICON_SIZE,
-    hideArticlesButton = false,
-  }: EmptyStateProps) => {
-    const colors = useColors(); // Source colors internally
+function EmptyState({
+  title,
+  description,
+  actionText,
+  icon = 'book',
+  onAction,
+  containerStyle,
+  submessage,
+  customActionButton,
+  iconSize = DEFAULT_ICON_SIZE,
+  hideArticlesButton = false,
+}: EmptyStateProps) {
+  const colors = useColors(); // Source colors internally
 
-    const defaultActionButton = !hideArticlesButton && (
-      <ThemedButton
-        style={styles.customActionButton}
-        title={STRINGS.BROWSE_ARTICLES}
-        onPress={handleBrowseArticles}
-      />
-    );
+  const defaultActionButton = !hideArticlesButton && (
+    <ThemedButton
+      style={styles.customActionButton}
+      title={STRINGS.BROWSE_ARTICLES}
+      onPress={handleBrowseArticles}
+    />
+  );
 
-    return (
-      <View style={[styles.container, containerStyle]}>
-        <View style={styles.contentContainer}>
-          {icon && (
-            <View style={styles.iconContainer}>
-              <Ionicons
-                color={colors.tint}
-                name={icon as ComponentProps<typeof Ionicons>['name']}
-                size={iconSize}
-                style={styles.icon}
-              />
-            </View>
+  return (
+    <View style={[styles.container, containerStyle]}>
+      <View style={styles.contentContainer}>
+        {icon && (
+          <View style={styles.iconContainer}>
+            <Ionicons
+              color={colors.tint}
+              name={icon as ComponentProps<typeof Ionicons>['name']}
+              size={iconSize}
+              style={styles.icon}
+            />
+          </View>
+        )}
+
+        <View style={styles.textContent}>
+          <ThemedText align="center" style={styles.title} type="body" weight="bold">
+            {title}
+          </ThemedText>
+
+          {description && (
+            <ThemedText
+              align="center"
+              style={styles.description}
+              type="body"
+              variant="secondary"
+              weight="bold"
+            >
+              {description}
+            </ThemedText>
           )}
 
-          <View style={styles.textContent}>
-            <ThemedText align="center" style={styles.title} type="body" weight="bold">
-              {title}
+          {submessage && (
+            <ThemedText align="center" style={styles.submessage} type="body" variant="subtle">
+              {submessage}
             </ThemedText>
-
-            {description && (
-              <ThemedText
-                align="center"
-                style={styles.description}
-                type="body"
-                variant="secondary"
-                weight="bold"
-              >
-                {description}
-              </ThemedText>
-            )}
-
-            {submessage && (
-              <ThemedText align="center" style={styles.submessage} type="body" variant="subtle">
-                {submessage}
-              </ThemedText>
-            )}
-          </View>
-        </View>
-
-        <View style={styles.actionArea}>
-          {customActionButton ||
-            defaultActionButton ||
-            (actionText && onAction && (
-              <ThemedButton
-                icon={icon}
-                style={styles.customActionButton}
-                title={actionText}
-                onPress={onAction}
-              />
-            ))}
+          )}
         </View>
       </View>
-    );
-  }
-);
+
+      <View style={styles.actionArea}>
+        {customActionButton ||
+          defaultActionButton ||
+          (actionText && onAction && (
+            <ThemedButton
+              icon={icon}
+              style={styles.customActionButton}
+              title={actionText}
+              onPress={onAction}
+            />
+          ))}
+      </View>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   actionArea: {
@@ -167,7 +165,5 @@ const styles = StyleSheet.create({
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
   },
 });
-
-EmptyState.displayName = 'EmptyState';
 
 export default EmptyState;

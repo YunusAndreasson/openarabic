@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { ComponentRef, ReactNode, RefObject } from 'react';
-import { createRef, memo, useEffect, useMemo, useRef } from 'react';
+import { createRef, useEffect, useRef } from 'react';
 import type { LayoutRectangle, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { type AnimatedStyle } from 'react-native-reanimated';
@@ -31,52 +31,6 @@ interface ArticleSentenceProps {
   containerStyle?: StyleProp<ViewStyle>;
   currentHighlightedWord?: SentenceWord | null;
 }
-
-// Custom comparison function for React.memo optimization
-const ArticleSentenceComparison = (
-  prevProps: ArticleSentenceProps,
-  nextProps: ArticleSentenceProps
-): boolean => {
-  // Check primitive values first for early return
-  if (
-    prevProps.sentence.id !== nextProps.sentence.id ||
-    prevProps.sentence.english !== nextProps.sentence.english ||
-    prevProps.settings.showEnglish !== nextProps.settings.showEnglish ||
-    prevProps.words.length !== nextProps.words.length ||
-    prevProps.currentHighlightedWord?.id !== nextProps.currentHighlightedWord?.id
-  ) {
-    return false;
-  }
-
-  // Check stable references
-  if (
-    prevProps.renderWord !== nextProps.renderWord ||
-    prevProps.onWordPress !== nextProps.onWordPress ||
-    prevProps.colors !== nextProps.colors ||
-    prevProps.containerStyle !== nextProps.containerStyle
-  ) {
-    return false;
-  }
-
-  // Check if any word properties changed
-  for (let i = 0; i < prevProps.words.length; i++) {
-    const prevWord = prevProps.words[i];
-    const nextWord = nextProps.words[i];
-    if (
-      !prevWord ||
-      !nextWord ||
-      prevWord.id !== nextWord.id ||
-      prevWord.english !== nextWord.english ||
-      prevWord.word_form !== nextWord.word_form ||
-      prevWord.position !== nextWord.position ||
-      prevWord.root_id !== nextWord.root_id
-    ) {
-      return false;
-    }
-  }
-
-  return true;
-};
 
 function renderWordWithProps(
   word: SentenceWord,
@@ -111,97 +65,89 @@ function renderWordWithProps(
   );
 }
 
-const ArticleSentenceComponent = memo(
-  ({
-    sentence,
-    words,
-    renderWord,
-    onWordPress,
-    settings,
-    colors: propColors,
-    containerStyle,
-    currentHighlightedWord,
-  }: ArticleSentenceProps) => {
-    const defaultColors = useColors();
-    const colors = propColors || defaultColors;
-    const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
-    const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
+export function ArticleSentence({
+  sentence,
+  words,
+  renderWord,
+  onWordPress,
+  settings,
+  colors: propColors,
+  containerStyle,
+  currentHighlightedWord,
+}: ArticleSentenceProps) {
+  const defaultColors = useColors();
+  const colors = propColors || defaultColors;
+  const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
+  const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
 
-    const wordRefs = useRef<RefObject<ComponentRef<typeof Pressable>>[]>([]);
-    const {
-      animatedStyle: animatedHighlightStyle,
-      startAnimation,
-      reverseAnimation,
-    } = useOpacityAnimation({ initialOpacity: 0 });
+  const wordRefs = useRef<RefObject<ComponentRef<typeof Pressable>>[]>([]);
+  const {
+    animatedStyle: animatedHighlightStyle,
+    startAnimation,
+    reverseAnimation,
+  } = useOpacityAnimation({ initialOpacity: 0 });
 
-    useEffect(() => {
-      wordRefs.current = words.map(() =>
-        createRef<ComponentRef<typeof Pressable>>()
-      ) as RefObject<ComponentRef<typeof Pressable>>[];
-    }, [words]);
+  useEffect(() => {
+    wordRefs.current = words.map(() =>
+      createRef<ComponentRef<typeof Pressable>>()
+    ) as RefObject<ComponentRef<typeof Pressable>>[];
+  }, [words]);
 
-    useEffect(() => {
-      if (isHighlighted) {
-        startAnimation(0, reverseAnimation);
-      }
-    }, [isHighlighted, startAnimation, reverseAnimation]);
+  useEffect(() => {
+    if (isHighlighted) {
+      startAnimation(0, reverseAnimation);
+    }
+  }, [isHighlighted, startAnimation, reverseAnimation]);
 
-    // Memoize expensive style calculations
-    const englishTextStyle = useMemo(
-      () => ({
-        ...styles.englishText,
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-        color: colors.englishText,
-        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
-      }),
-      [colors.englishText]
+  // Style calculations
+  const englishTextStyle = {
+    ...styles.englishText,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    color: colors.englishText,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+  };
+
+  const backgroundStyle = Object.assign(
+    {
+      position: 'absolute' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+      backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
+    },
+    animatedHighlightStyle
+  ) as AnimatedStyle<ViewStyle>;
+
+  // Rendered words
+  const renderedWords = words.map((word, index) => {
+    return renderWordWithProps(
+      word,
+      index,
+      wordRefs.current,
+      renderWord,
+      onWordPress,
+      sentence.id,
+      currentHighlightedWord
     );
+  });
 
-    const backgroundStyle = useMemo(() => {
-      const baseStyle = {
-        position: 'absolute' as const,
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-        backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
-      };
+  // Use Animated.View directly - it's properly imported from react-native-reanimated
+  const AnimatedView = Animated.View;
 
-      // Combine with animated style properties
-      return Object.assign(baseStyle, animatedHighlightStyle) as AnimatedStyle<ViewStyle>;
-    }, [colors.tint, colors.transparent, animatedHighlightStyle]);
+  return (
+    <View style={[styles.container, containerStyle]}>
+      <AnimatedView style={backgroundStyle} />
+      {settings.showEnglish && sentence.english && (
+        <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>
+      )}
+      <View style={styles.wordsContainer}>{renderedWords}</View>
+    </View>
+  );
+}
 
-    // Memoize rendered words to prevent unnecessary recreations
-    const renderedWords = useMemo(() => {
-      return words.map((word, index) => {
-        return renderWordWithProps(
-          word,
-          index,
-          wordRefs.current,
-          renderWord,
-          onWordPress,
-          sentence.id,
-          currentHighlightedWord
-        );
-      });
-    }, [renderWord, words, sentence.id, onWordPress, currentHighlightedWord]);
-
-    // Use Animated.View directly - it's properly imported from react-native-reanimated
-    const AnimatedView = Animated.View;
-
-    return (
-      <View style={[styles.container, containerStyle]}>
-        <AnimatedView style={backgroundStyle} />
-        {settings.showEnglish && sentence.english && (
-          <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>
-        )}
-        <View style={styles.wordsContainer}>{renderedWords}</View>
-      </View>
-    );
-  },
-  ArticleSentenceComparison
-);
+ArticleSentence.displayName = 'ArticleSentence';
 
 const styles = StyleSheet.create({
   container: {
@@ -225,5 +171,3 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
-
-export const ArticleSentence = ArticleSentenceComponent;

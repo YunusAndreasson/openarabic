@@ -1,8 +1,5 @@
 import {
-  memo,
-  useCallback,
   useEffect,
-  useMemo,
   useState,
   type ComponentRef,
   type RefObject,
@@ -30,7 +27,7 @@ interface ArabicWordProps {
   testID?: string;
 }
 
-function ArabicWordComponent({
+export function ArabicWord({
   word,
   onTooltipOpen,
   position,
@@ -71,52 +68,43 @@ function ArabicWordComponent({
   }, [isSelected, setBorderOpacity]);
 
   // Capture layout and measure absolute position
-  const handleLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      const layoutRect = event.nativeEvent.layout;
+  const handleLayout = (event: LayoutChangeEvent) => {
+    const layoutRect = event.nativeEvent.layout;
 
-      // Immediately set the relative layout as fallback
-      setAbsoluteLayout(layoutRect);
+    // Immediately set the relative layout as fallback
+    setAbsoluteLayout(layoutRect);
 
-      // Then try to get absolute coordinates asynchronously
-      if (wordRef?.current) {
-        // Small delay to ensure the layout is fully rendered
-        setTimeout(() => {
-          try {
-            wordRef.current?.measureInWindow((x, y, width, height) => {
-              if (x !== undefined && y !== undefined && width > 0 && height > 0) {
-                setAbsoluteLayout({ x, y, width, height });
-              }
-            });
-          } catch {
-            // Ignore measurement errors - fallback to relative layout
-          }
-        }, 0);
-      }
-    },
-    [wordRef]
-  );
+    // Then try to get absolute coordinates asynchronously
+    if (wordRef?.current) {
+      // Small delay to ensure the layout is fully rendered
+      setTimeout(() => {
+        try {
+          wordRef.current?.measureInWindow((x, y, width, height) => {
+            if (x !== undefined && y !== undefined && width > 0 && height > 0) {
+              setAbsoluteLayout({ x, y, width, height });
+            }
+          });
+        } catch {
+          // Ignore measurement errors - fallback to relative layout
+        }
+      }, 0);
+    }
+  };
 
   // Pre-calculate text size once when component mounts (will never change)
-  const calculatedFontSize = useMemo(
-    () => LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    []
-  );
+  const calculatedFontSize = LAYOUT.TYPOGRAPHY.SCALE.LARGE;
 
   // Base text props for Arabic text
-  const baseTextProps = useMemo(
-    () => ({
-      type: 'arabic' as const,
-      skipDefaultColor: true, // We'll handle colors manually
-      arabicFontSize: calculatedFontSize,
-      weight: (isSelected ? 'semibold' : 'normal') as TextWeight,
-      style: styles.textStyle as TextStyle,
-    }),
-    [isSelected, calculatedFontSize]
-  );
+  const baseTextProps = {
+    type: 'arabic' as const,
+    skipDefaultColor: true, // We'll handle colors manually
+    arabicFontSize: calculatedFontSize,
+    weight: (isSelected ? 'semibold' : 'normal') as TextWeight,
+    style: styles.textStyle as TextStyle,
+  };
 
   // Show tooltip on quick press with fade animation (manual trigger)
-  const handlePress = useCallback(() => {
+  const handlePress = () => {
     // Open the tooltip immediately (no audio playback on word press)
     // Ensure we have fresh absolute coordinates
     if (wordRef?.current) {
@@ -140,53 +128,43 @@ function ArabicWordComponent({
     } else if (absoluteLayout) {
       onTooltipOpen(absoluteLayout);
     }
-  }, [absoluteLayout, onTooltipOpen, wordRef]);
+  };
 
   // Compute final styles for the word container
   // Always reserve underline space to avoid layout jump by using a transparent baseline underline
-  const baseUnderlineStyle = useMemo(
-    () => ({ borderBottomWidth: 1, borderBottomColor: colors.transparent }),
-    [colors.transparent]
-  );
+  const baseUnderlineStyle = { borderBottomWidth: 1, borderBottomColor: colors.transparent };
 
   // Highlight style when word is being played - subtle but visible
-  const highlightStyle = useMemo(
-    () => ({
-      backgroundColor: isHighlighted
-        ? `${colors.tint}33` // Clear 20% opacity sage green background
-        : colors.transparent,
-      // No border, padding, or font changes to prevent any visual shifts
-    }),
-    [isHighlighted, colors.transparent, colors.tint]
-  );
+  const highlightStyle = {
+    backgroundColor: isHighlighted
+      ? `${colors.tint}33` // Clear 20% opacity sage green background
+      : colors.transparent,
+    // No border, padding, or font changes to prevent any visual shifts
+  };
 
-  const containerStyle = useMemo(
-    () => [
-      styles.wordContainer,
-      baseUnderlineStyle,
-      getSelectedStyle(isSelected, colors.disabled), // Soft underline for all selected words
-      highlightStyle,
-    ],
-    [isSelected, colors.disabled, baseUnderlineStyle, highlightStyle]
-  );
+  const containerStyle = [
+    styles.wordContainer,
+    baseUnderlineStyle,
+    getSelectedStyle(isSelected, colors.disabled), // Soft underline for all selected words
+    highlightStyle,
+  ];
 
   // Render colored segments or single word
-  const renderWordContent = useMemo(() => {
-    if (!hasComponents || coloredSegments.length <= 1) {
-      // Single color word - use default Arabic text color
-      return (
-        <ThemedText
-          {...baseTextProps}
-          colorName="arabicText"
-          style={[baseTextProps.style, { color: colors.arabicText }]}
-        >
-          {word.word_form}
-        </ThemedText>
-      );
-    }
-
+  let renderWordContent;
+  if (!hasComponents || coloredSegments.length <= 1) {
+    // Single color word - use default Arabic text color
+    renderWordContent = (
+      <ThemedText
+        {...baseTextProps}
+        colorName="arabicText"
+        style={[baseTextProps.style, { color: colors.arabicText }]}
+      >
+        {word.word_form}
+      </ThemedText>
+    );
+  } else {
     // Multi-colored segments - render each with its own color
-    return (
+    renderWordContent = (
       <ThemedText {...baseTextProps}>
         {coloredSegments.map(segment => (
           <ThemedText
@@ -199,7 +177,7 @@ function ArabicWordComponent({
         ))}
       </ThemedText>
     );
-  }, [hasComponents, coloredSegments, baseTextProps, colors.arabicText, word.word_form]);
+  }
 
   return (
     <Pressable
@@ -231,33 +209,4 @@ const styles = StyleSheet.create({
   wordView: {},
 });
 
-export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
-  // Check primitive values first for early return
-  if (
-    prevProps.word.id !== nextProps.word.id ||
-    prevProps.position !== nextProps.position ||
-    prevProps.isHighlighted !== nextProps.isHighlighted ||
-    prevProps.testID !== nextProps.testID
-  ) {
-    return false;
-  }
-
-  // Check word properties that affect rendering
-  if (
-    prevProps.word.english !== nextProps.word.english ||
-    prevProps.word.word_form !== nextProps.word.word_form ||
-    prevProps.word.root_id !== nextProps.word.root_id
-  ) {
-    return false;
-  }
-
-  // Check stable references
-  if (
-    prevProps.onTooltipOpen !== nextProps.onTooltipOpen ||
-    prevProps.wordRef !== nextProps.wordRef
-  ) {
-    return false;
-  }
-
-  return true;
-});
+ArabicWord.displayName = 'ArabicWord';

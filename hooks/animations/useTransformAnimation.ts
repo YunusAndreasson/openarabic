@@ -1,3 +1,4 @@
+'use no memo';
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import type {

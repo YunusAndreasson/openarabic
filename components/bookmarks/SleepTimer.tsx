@@ -3,7 +3,7 @@ import BottomSheet, {
   type BottomSheetBackdropProps,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -27,14 +27,14 @@ export interface SleepTimerProps {
 const timerOptions = [5, 10, 15, 30, 45, 60]; // minutes
 const DEFAULT_SELECTED_MINUTES = 15; // Pre-select 15 minutes
 
-const SleepTimerComponent = ({
+function SleepTimer({
   isVisible,
   onClose,
   onTimerSet,
   onTimerCancel,
   isTimerActive = false,
   remainingTime = 0,
-}: SleepTimerProps) => {
+}: SleepTimerProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const colors = useColors();
 
@@ -42,7 +42,7 @@ const SleepTimerComponent = ({
   const [selectedMinutes, setSelectedMinutes] = useState<number>(DEFAULT_SELECTED_MINUTES);
 
   // Configure snap points - fixed values for better performance
-  const snapPoints = useMemo(() => [isTimerActive ? 280 : 380], [isTimerActive]);
+  const snapPoints = [isTimerActive ? 280 : 380];
 
   // Handle visibility changes
   useEffect(() => {
@@ -53,29 +53,23 @@ const SleepTimerComponent = ({
     }
   }, [isVisible]);
 
-  const handleSetTimer = useCallback(() => {
+  const handleSetTimer = () => {
     successFeedback();
     onTimerSet(selectedMinutes);
     onClose();
-  }, [selectedMinutes, onTimerSet, onClose]);
+  };
 
-  const handleCancelTimer = useCallback(() => {
+  const handleCancelTimer = () => {
     lightFeedback();
     onTimerCancel();
     onClose();
-  }, [onTimerCancel, onClose]);
+  };
 
-  const handleOptionSelect = useCallback(
-    (minutes: number) => () => setSelectedMinutes(minutes),
-    []
-  );
+  const handleOptionSelect = (minutes: number) => () => setSelectedMinutes(minutes);
 
   // Use built-in backdrop component
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} onPress={onClose} />
-    ),
-    [onClose]
+  const renderBackdrop = (props: BottomSheetBackdropProps) => (
+    <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} onPress={onClose} />
   );
 
   // Don't render anything if not visible
@@ -145,13 +139,7 @@ const SleepTimerComponent = ({
       </BottomSheetView>
     </BottomSheet>
   );
-};
-
-// Memo comparison - include timer state for proper re-rendering
-const arePropsEqual = (prevProps: SleepTimerProps, nextProps: SleepTimerProps): boolean =>
-  prevProps.isVisible === nextProps.isVisible &&
-  prevProps.isTimerActive === nextProps.isTimerActive &&
-  prevProps.remainingTime === nextProps.remainingTime;
+}
 
 const styles = StyleSheet.create({
   background: {
@@ -219,6 +207,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const SleepTimer = memo(SleepTimerComponent, arePropsEqual);
+SleepTimer.displayName = 'SleepTimer';
 
 export default SleepTimer;

@@ -1,6 +1,6 @@
 import BaseCard from '@common/BaseCard';
 import Slider from '@react-native-community/slider';
-import { memo, useCallback, useEffect, useMemo, useState, type FC } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,13 +21,13 @@ interface FontPreviewCardProps {
   onSelect: (fontName: ArabicFontName) => void;
 }
 
-const FontPreviewCard = memo(({ option, isSelected, fontSize, onSelect }: FontPreviewCardProps) => {
+function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreviewCardProps) {
   const colors = useColors();
 
-  const handlePress = useCallback(() => {
+  const handlePress = () => {
     selectionFeedback();
     onSelect(option.name);
-  }, [option.name, onSelect]);
+  };
 
   return (
     <BaseCard
@@ -60,7 +60,7 @@ const FontPreviewCard = memo(({ option, isSelected, fontSize, onSelect }: FontPr
       </ThemedText>
     </BaseCard>
   );
-});
+}
 
 FontPreviewCard.displayName = 'FontPreviewCard';
 
@@ -81,31 +81,24 @@ const ArabicFontSelector: FC = () => {
     }
   }, [selectedFontSize, localFontSize, isSliding]);
 
-  const handleFontSizeChange = useCallback((value: number) => {
+  const handleFontSizeChange = (value: number) => {
     setLocalFontSize(value);
-  }, []);
+  };
 
-  const handleSlidingStart = useCallback(() => {
+  const handleSlidingStart = () => {
     setIsSliding(true);
-  }, []);
+  };
 
-  const handleSlidingComplete = useCallback(
-    (value: number) => {
-      setIsSliding(false);
-      selectionFeedback();
-      setFontSize(value);
-    },
-    [setFontSize]
-  );
+  const handleSlidingComplete = (value: number) => {
+    setIsSliding(false);
+    selectionFeedback();
+    setFontSize(value);
+  };
 
-  // Memoize scroll content style with safe area insets
-  const scrollContentStyle = useMemo(
-    () => ({
-      gap: LAYOUT.SPACING.SMALL,
-      paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE, // Extra space + safe area
-    }),
-    [insets.bottom]
-  );
+  const scrollContentStyle = {
+    gap: LAYOUT.SPACING.SMALL,
+    paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE, // Extra space + safe area
+  };
 
   return (
     <View style={styles.container}>

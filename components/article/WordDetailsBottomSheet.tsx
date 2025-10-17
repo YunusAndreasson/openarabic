@@ -1,5 +1,5 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ColorCodedText } from '@/components/common/ColorCodedText';
@@ -26,13 +26,13 @@ export interface WordDetailsBottomSheetProps {
 // Constant snap points - no need for useMemo
 const SNAP_POINTS = [380];
 
-const WordDetailsBottomSheetComponent = ({
+function WordDetailsBottomSheet({
   isVisible,
   onClose,
   word,
   onAddToStudy,
   isInStudyList = false,
-}: WordDetailsBottomSheetProps) => {
+}: WordDetailsBottomSheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const colors = useColors();
   const { status: audioStatus } = useAudioSubscription();
@@ -45,14 +45,12 @@ const WordDetailsBottomSheetComponent = ({
     setOptimisticIsInStudyList(isInStudyList);
   }, [isInStudyList]);
 
-  // Check if this word's audio is currently playing or loading (optimized with single memo)
-  const wordAudioState = useMemo(() => {
-    const isThisTrack = audioStatus.currentTrack?.id === `word-details-${word?.id}`;
-    return {
-      isPlaying: audioStatus.isPlaying && isThisTrack,
-      isLoading: audioStatus.isLoading && isThisTrack,
-    };
-  }, [audioStatus.isPlaying, audioStatus.isLoading, audioStatus.currentTrack?.id, word?.id]);
+  // Check if this word's audio is currently playing or loading
+  const isThisTrack = audioStatus.currentTrack?.id === `word-details-${word?.id}`;
+  const wordAudioState = {
+    isPlaying: audioStatus.isPlaying && isThisTrack,
+    isLoading: audioStatus.isLoading && isThisTrack,
+  };
 
   // Handle visibility changes
   useEffect(() => {
@@ -64,7 +62,7 @@ const WordDetailsBottomSheetComponent = ({
   }, [isVisible]);
 
   // Handle play audio
-  const handlePlayAudio = useCallback(async () => {
+  const handlePlayAudio = async () => {
     if (!word?.audio_url) return;
 
     // Haptic feedback with debouncing
@@ -85,10 +83,10 @@ const WordDetailsBottomSheetComponent = ({
     } catch (error) {
       handleError(error as Error, { toastMessage: 'Word audio playback failed' });
     }
-  }, [word]);
+  };
 
   // Handle add to study with optimistic update for instant feedback
-  const handleAddToStudy = useCallback(async () => {
+  const handleAddToStudy = async () => {
     if (!word) return;
 
     // Instant UI feedback - use functional update to avoid stale closure
@@ -103,7 +101,7 @@ const WordDetailsBottomSheetComponent = ({
       setOptimisticIsInStudyList(prev => !prev);
       handleError(error as Error, { toastMessage: 'Failed to update study list' });
     }
-  }, [word, onAddToStudy]);
+  };
 
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
@@ -180,17 +178,9 @@ const WordDetailsBottomSheetComponent = ({
       </BottomSheetView>
     </BottomSheet>
   );
-};
+}
 
-// Memo comparison
-const arePropsEqual = (
-  prevProps: WordDetailsBottomSheetProps,
-  nextProps: WordDetailsBottomSheetProps
-): boolean =>
-  prevProps.isVisible === nextProps.isVisible &&
-  prevProps.word?.id === nextProps.word?.id &&
-  prevProps.isInStudyList === nextProps.isInStudyList &&
-  prevProps.onAddToStudy === nextProps.onAddToStudy;
+WordDetailsBottomSheet.displayName = 'WordDetailsBottomSheet';
 
 const styles = StyleSheet.create({
   background: {
@@ -241,7 +231,5 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
 });
-
-const WordDetailsBottomSheet = memo(WordDetailsBottomSheetComponent, arePropsEqual);
 
 export default WordDetailsBottomSheet;

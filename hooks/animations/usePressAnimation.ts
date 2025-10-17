@@ -1,3 +1,4 @@
+'use no memo';
 import { useCallback, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { WithSpringConfig } from 'react-native-reanimated';

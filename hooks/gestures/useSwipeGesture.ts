@@ -1,3 +1,4 @@
+'use no memo';
 import { useCallback, useMemo, useRef } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import { runOnJS, useSharedValue, withSpring } from 'react-native-reanimated';

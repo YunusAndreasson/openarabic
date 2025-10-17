@@ -1,3 +1,4 @@
+'use no memo';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';

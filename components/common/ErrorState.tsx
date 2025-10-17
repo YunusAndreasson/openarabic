@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -16,7 +16,7 @@ interface ErrorStateProps {
 /**
  * A component for displaying error messages
  */
-const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
+function ErrorState({ message, onRetry }: ErrorStateProps) {
   // Provide haptic feedback when error state is shown
   useEffect(() => {
     errorFeedback();
@@ -36,7 +36,7 @@ const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
       ) : null}
     </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   buttonContainer: {
@@ -52,7 +52,5 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });
-
-ErrorState.displayName = 'ErrorState';
 
 export default ErrorState;

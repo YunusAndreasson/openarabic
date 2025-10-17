@@ -1,3 +1,4 @@
+'use no memo';
 import { useEffect, useCallback } from 'react';
 import {
   useSharedValue,

@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -8,34 +7,6 @@ import type { EnhancedImageProps } from '@/types/ui/image.types';
 
 // Optimized constants - most common values are hardcoded as defaults
 const IMAGE_SIZE = '100%' as const;
-
-// Custom comparison function for memo optimization
-const EnhancedImageComparison = (
-  prevProps: EnhancedImageProps,
-  nextProps: EnhancedImageProps
-): boolean => {
-  // Quick path comparisons for most common changes
-  if (
-    prevProps.source !== nextProps.source ||
-    prevProps.contentFit !== nextProps.contentFit ||
-    prevProps.contentPosition !== nextProps.contentPosition ||
-    prevProps.cachePolicy !== nextProps.cachePolicy ||
-    prevProps.priority !== nextProps.priority ||
-    prevProps.onLoad !== nextProps.onLoad ||
-    prevProps.onError !== nextProps.onError ||
-    prevProps.testID !== nextProps.testID ||
-    prevProps.allowDownscaling !== nextProps.allowDownscaling
-  ) {
-    return false;
-  }
-
-  // Style comparison (usually stable but check for custom styles)
-  if (prevProps.style !== nextProps.style) {
-    return false;
-  }
-
-  return true;
-};
 
 // Static styles object to prevent recreation
 const styles = StyleSheet.create({
@@ -54,7 +25,7 @@ const styles = StyleSheet.create({
  * High-performance image component optimized for loading and caching
  * Uses Expo Image v3 with modern features and smart defaults
  */
-function EnhancedImageInternal({
+export function EnhancedImage({
   source,
   style,
   contentFit = 'cover', // Most common value - hardcoded
@@ -72,51 +43,27 @@ function EnhancedImageInternal({
 }: EnhancedImageProps) {
   const colors = useColors();
 
-  // Memoize container style with minimal dependencies
-  const containerStyle = useMemo(
-    () => [styles.container, { backgroundColor: colors.elevation2 }, style],
-    [colors.elevation2, style]
-  );
+  const containerStyle = [styles.container, { backgroundColor: colors.elevation2 }, style];
 
-  // Memoize Image props to prevent unnecessary re-renders
-  const imageProps = useMemo(
-    () => ({
-      cachePolicy,
-      contentFit,
-      contentPosition,
-      priority,
-      transition,
-      recyclingKey,
-      source,
-      style: styles.image,
-      ...(placeholder ? { placeholder } : {}),
-      ...(placeholder ? { placeholderContentFit } : {}),
-      ...(testID ? { testID } : {}),
-      ...(allowDownscaling !== undefined ? { allowDownscaling } : {}),
-    }),
-    [
-      cachePolicy,
-      contentFit,
-      contentPosition,
-      priority,
-      transition,
-      recyclingKey,
-      source,
-      placeholder,
-      placeholderContentFit,
-      testID,
-      allowDownscaling,
-    ]
-  );
+  const imageProps = {
+    cachePolicy,
+    contentFit,
+    contentPosition,
+    priority,
+    transition,
+    recyclingKey,
+    source,
+    style: styles.image,
+    ...(placeholder ? { placeholder } : {}),
+    ...(placeholder ? { placeholderContentFit } : {}),
+    ...(testID ? { testID } : {}),
+    ...(allowDownscaling !== undefined ? { allowDownscaling } : {}),
+  };
 
-  // Memoize callback props separately to avoid recreating imageProps
-  const eventHandlers = useMemo(
-    () => ({
-      ...(onLoad ? { onLoad } : {}),
-      ...(onError ? { onError } : {}),
-    }),
-    [onLoad, onError]
-  );
+  const eventHandlers = {
+    ...(onLoad ? { onLoad } : {}),
+    ...(onError ? { onError } : {}),
+  };
 
   return (
     <View style={containerStyle}>
@@ -125,4 +72,4 @@ function EnhancedImageInternal({
   );
 }
 
-export const EnhancedImage = memo(EnhancedImageInternal, EnhancedImageComparison);
+EnhancedImage.displayName = 'EnhancedImage';

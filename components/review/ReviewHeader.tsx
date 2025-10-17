@@ -1,9 +1,7 @@
 import { ProgressBar } from '@common/ProgressBar';
 import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
-import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -41,44 +39,33 @@ interface ReviewHeaderProps {
   onClose?: () => void;
 }
 
-const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
+export const ReviewHeader: FC<ReviewHeaderProps> = ({
   progress,
   maxProgress,
   onClose,
 }) => {
   const colors = useColors();
 
-  const displayProgress = useMemo(
-    () => Math.max(progress, maxProgress),
-    [progress, maxProgress]
-  );
+  const displayProgress = Math.max(progress, maxProgress);
 
   // Handle close with haptic feedback
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     if (onClose) {
       selectionFeedback();
       onClose();
     }
-  }, [onClose]);
+  };
 
-  const progressBarProps = useMemo(
-    () => ({
-      animationDuration: TIMING_CONFIG.PROGRESS.duration,
-      progress: displayProgress,
-      height: LAYOUT.SPACING.MEDIUM, // Standard height (12px)
-    }),
-    [displayProgress]
-  );
-
-  const closeButtonStyle = useMemo(
-    () => [STATIC_STYLES.closeButton, { backgroundColor: colors.elevation1 }],
-    [colors.elevation1]
-  );
+  const closeButtonStyle = [STATIC_STYLES.closeButton, { backgroundColor: colors.elevation1 }];
 
   return (
     <View style={STATIC_STYLES.header}>
       <View style={STATIC_STYLES.progressContainer}>
-        <ProgressBar {...progressBarProps} />
+        <ProgressBar
+          animationDuration={TIMING_CONFIG.PROGRESS.duration}
+          progress={displayProgress}
+          height={LAYOUT.SPACING.MEDIUM}
+        />
       </View>
       {onClose && (
         <Pressable
@@ -96,20 +83,6 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
     </View>
   );
 };
-
-const ReviewHeaderComparison = (
-  prevProps: ReviewHeaderProps,
-  nextProps: ReviewHeaderProps
-): boolean => {
-  // Compare primitive values first (fastest)
-  if (prevProps.progress !== nextProps.progress) return false;
-  if (prevProps.maxProgress !== nextProps.maxProgress) return false;
-  if (prevProps.onClose !== nextProps.onClose) return false;
-
-  return true;
-};
-
-export const ReviewHeader = memo(ReviewHeaderInternal, ReviewHeaderComparison);
 
 ReviewHeader.displayName = 'ReviewHeader';
 

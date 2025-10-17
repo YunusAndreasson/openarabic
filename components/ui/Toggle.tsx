@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -31,7 +31,7 @@ function getToggleDimensions() {
   };
 }
 
-function ToggleComponent({ value, onValueChange }: ToggleProps) {
+export function Toggle({ value, onValueChange }: ToggleProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const isMounted = useRef(false);
@@ -49,56 +49,45 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     }
   }, [value, forceAnimateToInitialState]);
 
-  const handlePress = useCallback(() => {
+  const handlePress = () => {
     selectionFeedback();
     onValueChange(!value);
-  }, [onValueChange, value]);
+  };
 
-  const combinedContainerStyle = useMemo(() => {
-    return [
-      containerAnimatedStyle,
-      {
-        backgroundColor: value ? colors.tint : colors.border,
-      },
-    ];
-  }, [containerAnimatedStyle, value, colors.tint, colors.border]);
+  const combinedContainerStyle = [
+    containerAnimatedStyle,
+    {
+      backgroundColor: value ? colors.tint : colors.border,
+    },
+  ];
 
-  const containerStyle = useMemo(
-    () => [
-      styles.container,
-      {
-        width: TOGGLE_WIDTH,
-        height: TOGGLE_HEIGHT,
-        borderRadius: TOGGLE_HEIGHT / 2,
-      },
-    ],
-    [TOGGLE_HEIGHT, TOGGLE_WIDTH]
-  );
+  const containerStyle = [
+    styles.container,
+    {
+      width: TOGGLE_WIDTH,
+      height: TOGGLE_HEIGHT,
+      borderRadius: TOGGLE_HEIGHT / 2,
+    },
+  ];
 
-  const shadowStyle = useMemo(
-    () => ({
-      shadowColor: colors.shadow,
-      shadowOpacity: LAYOUT.OPACITY.SUBTLE,
-    }),
-    [colors.shadow, isDarkMode]
-  );
+  const shadowStyle = {
+    shadowColor: colors.shadow,
+    shadowOpacity: LAYOUT.OPACITY.SUBTLE,
+  };
 
-  const handleStyle = useMemo(
-    () => [
-      styles.handle,
-      {
-        width: HANDLE_SIZE,
-        height: HANDLE_SIZE,
-        borderRadius: HANDLE_SIZE / 2,
-        backgroundColor: value
-          ? colors.elevation3 // Floating elevated surface when active
-          : colors.elevation2, // Raised surface when inactive
-        ...shadowStyle,
-      },
-      styles.shadow,
-    ],
-    [HANDLE_SIZE, value, colors.elevation2, colors.elevation3, shadowStyle]
-  );
+  const handleStyle = [
+    styles.handle,
+    {
+      width: HANDLE_SIZE,
+      height: HANDLE_SIZE,
+      borderRadius: HANDLE_SIZE / 2,
+      backgroundColor: value
+        ? colors.elevation3 // Floating elevated surface when active
+        : colors.elevation2, // Raised surface when inactive
+      ...shadowStyle,
+    },
+    styles.shadow,
+  ];
 
   return (
     <Pressable style={TOUCHABLE_WRAPPER_STYLE} onPress={handlePress}>
@@ -111,7 +100,7 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   );
 }
 
-export const Toggle = memo(ToggleComponent);
+Toggle.displayName = 'Toggle';
 
 const styles = StyleSheet.create({
   container: {

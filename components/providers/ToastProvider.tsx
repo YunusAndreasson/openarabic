@@ -86,7 +86,7 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
   );
 
   return (
-    <ToastContext.Provider value={contextValue}>
+    <ToastContext value={contextValue}>
       {children}
       <Toast
         duration={toastState.duration}
@@ -95,6 +95,6 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
         visible={toastState.visible}
         onClose={handleClose}
       />
-    </ToastContext.Provider>
+    </ToastContext>
   );
 };

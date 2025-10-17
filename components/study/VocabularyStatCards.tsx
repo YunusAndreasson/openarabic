@@ -6,7 +6,6 @@
  */
 import BaseCard from '@common/BaseCard';
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 
@@ -37,7 +36,7 @@ interface StatCardProps {
   formatAsDecimal?: boolean;
 }
 
-const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress, formatAsDecimal = false }) => {
+function StatCard({ label, value, color, icon, onPress, formatAsDecimal = false }: StatCardProps) {
   const displayValue = formatAsDecimal ? value.toFixed(1) : Math.round(value).toString();
 
   return (
@@ -53,86 +52,70 @@ const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress, form
       </ThemedText>
     </BaseCard>
   );
-});
+}
 
 StatCard.displayName = 'StatCard';
 
-export const VocabularyStatCards = memo(
-  ({
-    masteredWords = 0,
-    learnedWords = 0,
-    dueWords = 0,
-    onInfoPress,
-    onDuePress,
-    onLearnedPress,
-    onMasteredPress,
-    studyWords = [],
-  }: VocabularyStatCardsProps) => {
-    const colors = useColors();
+export function VocabularyStatCards({
+  masteredWords = 0,
+  learnedWords = 0,
+  dueWords = 0,
+  onInfoPress,
+  onDuePress,
+  onLearnedPress,
+  onMasteredPress,
+  studyWords = [],
+}: VocabularyStatCardsProps) {
+  const colors = useColors();
 
-    // Memoize stats array with proper dependencies to prevent unnecessary recreation
-    const stats = useMemo(
-      () => [
-        {
-          label: VocabularyStatCategory.DUE,
-          value: dueWords,
-          color: colors.error,
-          icon: 'time' as const,
-          onPress: onDuePress, // Due words now open prognosis chart
-          formatAsDecimal: false,
-        },
-        {
-          label: VocabularyStatCategory.LEARNED,
-          value: learnedWords,
-          color: colors.warning,
-          icon: 'school' as const,
-          onPress: onLearnedPress,
-          formatAsDecimal: false,
-        },
-        {
-          label: VocabularyStatCategory.MASTERED,
-          value: masteredWords,
-          color: colors.success,
-          icon: 'trophy' as const,
-          onPress: onMasteredPress,
-          formatAsDecimal: false,
-        },
-      ],
-      [
-        dueWords,
-        learnedWords,
-        masteredWords,
-        colors.error,
-        colors.warning,
-        colors.success,
-        onDuePress,
-        onLearnedPress,
-        onMasteredPress,
-      ]
-    );
+  const stats = [
+    {
+      label: VocabularyStatCategory.DUE,
+      value: dueWords,
+      color: colors.error,
+      icon: 'time' as const,
+      onPress: onDuePress,
+      formatAsDecimal: false,
+    },
+    {
+      label: VocabularyStatCategory.LEARNED,
+      value: learnedWords,
+      color: colors.warning,
+      icon: 'school' as const,
+      onPress: onLearnedPress,
+      formatAsDecimal: false,
+    },
+    {
+      label: VocabularyStatCategory.MASTERED,
+      value: masteredWords,
+      color: colors.success,
+      icon: 'trophy' as const,
+      onPress: onMasteredPress,
+      formatAsDecimal: false,
+    },
+  ];
 
-    return (
-      <View style={styles.container}>
-        <MemoryRetentionGauge studyWords={studyWords} onInfoPress={onInfoPress} />
+  return (
+    <View style={styles.container}>
+      <MemoryRetentionGauge studyWords={studyWords} onInfoPress={onInfoPress} />
 
-        {/* Stats row below gauge */}
-        <View style={styles.statsRow}>
-          {stats.map(stat => (
-            <StatCard
-              key={stat.label}
-              label={stat.label}
-              value={stat.value}
-              color={stat.color}
-              icon={stat.icon}
-              onPress={stat.onPress}
-              formatAsDecimal={stat.formatAsDecimal}
-            />
-          ))}
-        </View>
+      {/* Stats row below gauge */}
+      <View style={styles.statsRow}>
+        {stats.map(stat => (
+          <StatCard
+            key={stat.label}
+            label={stat.label}
+            value={stat.value}
+            color={stat.color}
+            icon={stat.icon}
+            onPress={stat.onPress}
+            formatAsDecimal={stat.formatAsDecimal}
+          />
+        ))}
       </View>
-    );
-  }
-);
+    </View>
+  );
+}
 
 VocabularyStatCards.displayName = 'VocabularyStatCards';
 

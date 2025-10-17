@@ -1,6 +1,6 @@
 import { Y_AXIS_WIDTH } from '@charts/ChartAxes';
 import BaseCard from '@common/BaseCard';
-import { memo, type ReactNode, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 
@@ -30,100 +30,91 @@ interface BaseChartProps {
  * Base chart component that provides consistent structure
  * and state handling across all vocabulary charts.
  */
-export const BaseChart = memo(
-  ({
-    title = '',
-    subtitle = '',
-    hideTitle = false,
-    onCardPress,
-    children,
-    hasData,
-    contentHeight = 176, // Optimized to match GRAPH_HEIGHT_LARGE
-    emptyStateText = STRINGS.CHART_EMPTY_STATE,
-    bottomSummary,
-  }: BaseChartProps) => {
-    const colors = useColors();
+export function BaseChart({
+  title = '',
+  subtitle = '',
+  hideTitle = false,
+  onCardPress,
+  children,
+  hasData,
+  contentHeight = 176, // Optimized to match GRAPH_HEIGHT_LARGE
+  emptyStateText = STRINGS.CHART_EMPTY_STATE,
+  bottomSummary,
+}: BaseChartProps) {
+  const colors = useColors();
 
-    const emptyContainerStyle = useMemo(
-      () => [styles.emptyContainer, { backgroundColor: colors.elevation2 }],
-      [colors.elevation2]
-    );
+  const emptyContainerStyle = [styles.emptyContainer, { backgroundColor: colors.elevation2 }];
+  const chartSectionStyle = [styles.chartSection, { minHeight: contentHeight }];
 
-    const chartSectionStyle = useMemo(
-      () => [styles.chartSection, { minHeight: contentHeight }],
-      [contentHeight]
-    );
-
-    // Empty state
-    if (!hasData) {
-      return (
-        <BaseCard shadowSize="small" onPress={onCardPress}>
-          <View style={styles.content}>
-            {!hideTitle && (
-              <View style={styles.titleGroup}>
-                <ThemedText style={styles.cardTitle} type="heading2" weight="bold">
-                  {title}
-                </ThemedText>
-                <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
-                  {subtitle}
-                </ThemedText>
-              </View>
-            )}
-            <View style={emptyContainerStyle}>
-              <ThemedText colorName="secondaryText" style={styles.emptyText}>
-                {emptyStateText}
-              </ThemedText>
-            </View>
-          </View>
-        </BaseCard>
-      );
-    }
-
-    // Main chart with data
+  // Empty state
+  if (!hasData) {
     return (
       <BaseCard shadowSize="small" onPress={onCardPress}>
         <View style={styles.content}>
-          {/* Header Section */}
           {!hideTitle && (
-            <View style={styles.headerSection}>
-              <View style={styles.titleGroup}>
-                <ThemedText style={styles.cardTitle} type="heading2" weight="bold">
-                  {title}
-                </ThemedText>
-                <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
-                  {subtitle}
-                </ThemedText>
-              </View>
+            <View style={styles.titleGroup}>
+              <ThemedText style={styles.cardTitle} type="heading2" weight="bold">
+                {title}
+              </ThemedText>
+              <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
+                {subtitle}
+              </ThemedText>
             </View>
           )}
-
-          {/* Chart Content */}
-          <View style={chartSectionStyle}>{children}</View>
-
-          {hasData && bottomSummary && bottomSummary.length > 0 ? (
-            <View style={styles.summaryRow}>
-              {bottomSummary.map(item => (
-                <View key={item.label} style={styles.summaryItem}>
-                  <ThemedText
-                    type="caption"
-                    variant="secondary"
-                    weight="bold"
-                    style={styles.summaryLabel}
-                  >
-                    {item.label}
-                  </ThemedText>
-                  <ThemedText type="caption" style={styles.summaryValue}>
-                    {item.value}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-          ) : null}
+          <View style={emptyContainerStyle}>
+            <ThemedText colorName="secondaryText" style={styles.emptyText}>
+              {emptyStateText}
+            </ThemedText>
+          </View>
         </View>
       </BaseCard>
     );
   }
-);
+
+  // Main chart with data
+  return (
+    <BaseCard shadowSize="small" onPress={onCardPress}>
+      <View style={styles.content}>
+        {/* Header Section */}
+        {!hideTitle && (
+          <View style={styles.headerSection}>
+            <View style={styles.titleGroup}>
+              <ThemedText style={styles.cardTitle} type="heading2" weight="bold">
+                {title}
+              </ThemedText>
+              <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
+                {subtitle}
+              </ThemedText>
+            </View>
+          </View>
+        )}
+
+        {/* Chart Content */}
+        <View style={chartSectionStyle}>{children}</View>
+
+        {hasData && bottomSummary && bottomSummary.length > 0 ? (
+          <View style={styles.summaryRow}>
+            {bottomSummary.map(item => (
+              <View key={item.label} style={styles.summaryItem}>
+                <ThemedText
+                  type="caption"
+                  variant="secondary"
+                  weight="bold"
+                  style={styles.summaryLabel}
+                >
+                  {item.label}
+                </ThemedText>
+                <ThemedText type="caption" style={styles.summaryValue}>
+                  {item.value}
+                </ThemedText>
+              </View>
+            ))}
+          </View>
+        ) : null}
+      </View>
+    </BaseCard>
+  );
+}
 
 BaseChart.displayName = 'BaseChart';
 

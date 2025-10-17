@@ -7,6 +7,6 @@ export const AuthContext = createContext<AuthResult | null>(null);
 
 export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const auth = useProvideAuth();
-  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
+  return <AuthContext value={auth}>{children}</AuthContext>;
 };
 

@@ -5,7 +5,7 @@ import BottomSheet, {
 } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -24,23 +24,19 @@ export interface TimePickerProps {
 
 const SNAP_POINTS = [500];
 
-export const TimePicker = memo(
-  ({ isVisible, onClose, onTimeSet, initialHour = 12, initialMinute = 0 }: TimePickerProps) => {
-    const colors = useColors();
-    const bottomSheetRef = useRef<BottomSheet>(null);
+export function TimePicker({ isVisible, onClose, onTimeSet, initialHour = 12, initialMinute = 0 }: TimePickerProps) {
+  const colors = useColors();
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
-    // Create initial date from hour and minute
-    const initialDate = useMemo(() => {
-      const date = new Date();
-      date.setHours(initialHour, initialMinute, 0, 0);
-      return date;
-    }, [initialHour, initialMinute]);
+  // Create initial date from hour and minute
+  const initialDate = new Date();
+  initialDate.setHours(initialHour, initialMinute, 0, 0);
 
-    const [selectedDate, setSelectedDate] = useState(initialDate);
-    const [showPicker, setShowPicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [showPicker, setShowPicker] = useState(false);
 
-    // Snap point is static so define outside component
-    const snapPoints = SNAP_POINTS;
+  // Snap point is static so define outside component
+  const snapPoints = SNAP_POINTS;
 
     // Show/hide modal based on isVisible prop
     useEffect(() => {
@@ -54,140 +50,124 @@ export const TimePicker = memo(
       }
     }, [isVisible]);
 
-    const extractTimeAndSet = useCallback(
-      (date: Date) => {
-        const hour = date.getHours();
-        const minute = date.getMinutes();
-        onTimeSet(hour, minute);
-      },
-      [onTimeSet]
-    );
+  const extractTimeAndSet = (date: Date) => {
+    const hour = date.getHours();
+    const minute = date.getMinutes();
+    onTimeSet(hour, minute);
+  };
 
-    const handleDateChange = useCallback(
-      (event: DateTimePickerEvent, date?: Date) => {
-        if (Platform.OS === 'android') {
-          setShowPicker(false);
+  const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowPicker(false);
 
-          if (event.type === 'set' && date) {
-            setSelectedDate(date);
-            extractTimeAndSet(date);
-          }
-          onClose();
-        } else if (date) {
-          setSelectedDate(date);
-        }
-      },
-      [extractTimeAndSet, onClose]
-    );
-
-    const handleConfirm = useCallback(() => {
-      extractTimeAndSet(selectedDate);
+      if (event.type === 'set' && date) {
+        setSelectedDate(date);
+        extractTimeAndSet(date);
+      }
       onClose();
-    }, [selectedDate, extractTimeAndSet, onClose]);
-
-    const formatTime = useCallback(
-      (date: Date) =>
-        date.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        }),
-      []
-    );
-
-    // Use built-in backdrop component
-    const renderBackdrop = useCallback(
-      (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          onPress={onClose}
-        />
-      ),
-      [onClose]
-    );
-
-    const dynamicStyles = useMemo(
-      () => ({
-        bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
-        indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
-      }),
-      [colors.elevation1, colors.modalIndicator]
-    );
-
-    // Android: Show native picker directly
-    if (Platform.OS === 'android' && showPicker) {
-      return (
-        <DateTimePicker
-          value={selectedDate}
-          mode="time"
-          is24Hour={true}
-          display="default"
-          onChange={handleDateChange}
-          textColor={colors.text}
-          accentColor={colors.tint}
-        />
-      );
+    } else if (date) {
+      setSelectedDate(date);
     }
+  };
 
-    // Only render on iOS and when visible
-    if (Platform.OS !== 'ios' || !isVisible) {
-      return null;
-    }
+  const handleConfirm = () => {
+    extractTimeAndSet(selectedDate);
+    onClose();
+  };
 
-    // iOS: Show bottom sheet with native picker
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+
+  // Use built-in backdrop component
+  const renderBackdrop = (props: BottomSheetBackdropProps) => (
+    <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      appearsOnIndex={0}
+      onPress={onClose}
+    />
+  );
+
+  const dynamicStyles = {
+    bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
+    indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
+  };
+
+  // Android: Show native picker directly
+  if (Platform.OS === 'android' && showPicker) {
     return (
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={0}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        enableOverDrag={false}
-        enableDynamicSizing={false}
-        animateOnMount={true}
-        activeOffsetY={[-10, 10]}
-        onClose={onClose}
-        backgroundStyle={dynamicStyles.bottomSheet}
-        handleIndicatorStyle={dynamicStyles.indicator}
-        backdropComponent={renderBackdrop}
-      >
-        <BottomSheetView style={styles.container}>
-          {/* Time Display */}
-          <View style={styles.timeDisplay}>
-            <ThemedText
-              colorName="subtitleText"
-              style={styles.timeText}
-              type="heading1"
-              weight="bold"
-            >
-              {formatTime(selectedDate)}
-            </ThemedText>
-          </View>
-
-          {/* Native Time Picker */}
-          <View style={styles.pickerContainer}>
-            <DateTimePicker
-              value={selectedDate}
-              mode="time"
-              is24Hour={true}
-              display="spinner"
-              onChange={handleDateChange}
-              style={styles.picker}
-              textColor={colors.text}
-              accentColor={colors.tint}
-            />
-          </View>
-
-          {/* Actions */}
-          <View style={styles.actions}>
-            <ThemedButton title={STRINGS.SET_TIME} onPress={handleConfirm} />
-          </View>
-        </BottomSheetView>
-      </BottomSheet>
+      <DateTimePicker
+        value={selectedDate}
+        mode="time"
+        is24Hour={true}
+        display="default"
+        onChange={handleDateChange}
+        textColor={colors.text}
+        accentColor={colors.tint}
+      />
     );
   }
-);
+
+  // Only render on iOS and when visible
+  if (Platform.OS !== 'ios' || !isVisible) {
+    return null;
+  }
+
+  // iOS: Show bottom sheet with native picker
+  return (
+    <BottomSheet
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      enablePanDownToClose
+      enableOverDrag={false}
+      enableDynamicSizing={false}
+      animateOnMount={true}
+      activeOffsetY={[-10, 10]}
+      onClose={onClose}
+      backgroundStyle={dynamicStyles.bottomSheet}
+      handleIndicatorStyle={dynamicStyles.indicator}
+      backdropComponent={renderBackdrop}
+    >
+      <BottomSheetView style={styles.container}>
+        {/* Time Display */}
+        <View style={styles.timeDisplay}>
+          <ThemedText
+            colorName="subtitleText"
+            style={styles.timeText}
+            type="heading1"
+            weight="bold"
+          >
+            {formatTime(selectedDate)}
+          </ThemedText>
+        </View>
+
+        {/* Native Time Picker */}
+        <View style={styles.pickerContainer}>
+          <DateTimePicker
+            value={selectedDate}
+            mode="time"
+            is24Hour={true}
+            display="spinner"
+            onChange={handleDateChange}
+            style={styles.picker}
+            textColor={colors.text}
+            accentColor={colors.tint}
+          />
+        </View>
+
+        {/* Actions */}
+        <View style={styles.actions}>
+          <ThemedButton title={STRINGS.SET_TIME} onPress={handleConfirm} />
+        </View>
+      </BottomSheetView>
+    </BottomSheet>
+  );
+}
 
 TimePicker.displayName = 'TimePicker';
 
