@@ -1,4 +1,3 @@
-'use no memo';
 import { useCallback, useMemo, useRef } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import { runOnJS, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -54,10 +53,12 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
   // Optimized reset function (worklet-ready)
   const resetPosition = useCallback(() => {
     'worklet';
-    isAnimatingRef.value = true;
-    translateX.value = withSpring(0, springConfig, () => {
-      isAnimatingRef.value = false;
-    });
+    isAnimatingRef.set(true);
+    translateX.set(
+      withSpring(0, springConfig, () => {
+        isAnimatingRef.set(false);
+      })
+    );
   }, [translateX, isAnimatingRef, springConfig]);
 
   // Optimized swipe handler with minimal JS bridging
@@ -101,19 +102,19 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
         })
         .onUpdate(event => {
           'worklet';
-          if (!isAnimatingRef.value && event.translationX !== undefined) {
+          if (!isAnimatingRef.get() && event.translationX !== undefined) {
             // Inline clamping logic for better performance
             const maxTranslation = SCREEN_WIDTH * maxTranslationRatio;
             const clampedTranslation = Math.max(
               -maxTranslation,
               Math.min(maxTranslation, event.translationX)
             );
-            translateX.value = clampedTranslation;
+            translateX.set(clampedTranslation);
           }
         })
         .onEnd(event => {
           'worklet';
-          if (!isAnimatingRef.value && event.translationX !== undefined && event.velocityX !== undefined) {
+          if (!isAnimatingRef.get() && event.translationX !== undefined && event.velocityX !== undefined) {
             const translationX = event.translationX;
             const velocityX = event.velocityX;
 
@@ -132,10 +133,12 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
               runOnJS(handleSwipeComplete)(isRight);
             } else {
               // Simple reset on UI thread with spring animation
-              isAnimatingRef.value = true;
-              translateX.value = withSpring(0, springConfig, () => {
-                isAnimatingRef.value = false;
-              });
+              isAnimatingRef.set(true);
+              translateX.set(
+                withSpring(0, springConfig, () => {
+                  isAnimatingRef.set(false);
+                })
+              );
             }
           }
         }),
