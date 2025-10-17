@@ -108,7 +108,7 @@ const compactCardStyles = StyleSheet.create({
   },
 });
 
-function FilterSection({ items, onSelect, filterType }: FilterSectionProps): JSX.Element {
+export function FilterSection({ items, onSelect, filterType }: FilterSectionProps): JSX.Element {
   const handleSelect = (id: number, name?: string) => () => onSelect(id, name, filterType);
 
   // Guard against undefined or empty items
@@ -133,4 +133,3 @@ function FilterSection({ items, onSelect, filterType }: FilterSectionProps): JSX
 FilterSection.displayName = 'FilterSection';
 
 export { SubtleDivider };
-export default FilterSection;

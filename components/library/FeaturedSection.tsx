@@ -1,7 +1,7 @@
 import { memo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import ArticleCard from '@/components/library/ArticleCard';
+import { ArticleCard } from '@/components/library/ArticleCard';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
@@ -14,7 +14,7 @@ interface FeaturedSectionProps {
 /**
  * A section displaying the featured article
  */
-const FeaturedSection: FC<FeaturedSectionProps> = ({ article }) => {
+const FeaturedSectionComponent: FC<FeaturedSectionProps> = ({ article }) => {
   // No need for prefetching here - it's done during app preload
   // Note: Navigation is now handled by Link component in ArticleCard
 
@@ -45,6 +45,5 @@ const styles = StyleSheet.create({
   container: {},
 });
 
+export const FeaturedSection = memo(FeaturedSectionComponent);
 FeaturedSection.displayName = 'FeaturedSection';
-
-export default memo(FeaturedSection);

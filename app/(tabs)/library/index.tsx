@@ -7,10 +7,10 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
-import ArticleList from '@/components/library/ArticleList';
-import FilterSection, { SubtleDivider } from '@/components/library/FilterSection';
+import { ArticleList } from '@/components/library/ArticleList';
+import { FilterSection, SubtleDivider } from '@/components/library/FilterSection';
 import { HijriDateFooter } from '@/components/library/HijriDateFooter';
-import IntelligentArticleSection from '@/components/library/IntelligentArticleSection';
+import { IntelligentArticleSection } from '@/components/library/IntelligentArticleSection';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueryOptions } from '@/constants/queryOptions';
 import { getAuthorFilterRoute, getCategoryFilterRoute } from '@/constants/routes';

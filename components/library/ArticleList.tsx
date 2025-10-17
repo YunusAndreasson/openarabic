@@ -29,7 +29,7 @@ interface ArticleListProps {
  * Uses ScrollView since there are no list items - all content is in header/footer.
  * Featured articles use their own horizontal FlashList for proper virtualization.
  */
-function ArticleList({
+export function ArticleList({
   onRefresh,
   ListHeaderComponent,
   ListFooterComponent,
@@ -128,5 +128,3 @@ function ArticleList({
 }
 
 ArticleList.displayName = 'ArticleList';
-
-export default ArticleList;

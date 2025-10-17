@@ -2,7 +2,7 @@ import { FlashList } from '@shopify/flash-list';
 import { memo, useCallback, useRef, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import ArticleCard from '@/components/library/ArticleCard';
+import { ArticleCard } from '@/components/library/ArticleCard';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -34,7 +34,7 @@ const getContentAwareHeight = (summary: string): number => {
 /**
  * Horizontal slider displaying multiple articles in a swipeable ScrollView
  */
-const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({ articles }) => {
+const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ articles }) => {
   const colors = useColors();
   const lastVisibleCardIndex = useRef<number>(-1);
 
@@ -138,6 +138,5 @@ const styles = StyleSheet.create({
   },
 });
 
+export const HorizontalArticleSlider = memo(HorizontalArticleSliderComponent);
 HorizontalArticleSlider.displayName = 'HorizontalArticleSlider';
-
-export default memo(HorizontalArticleSlider);

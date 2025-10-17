@@ -99,7 +99,7 @@ const noop = () => {};
 /**
  * A specialized component for displaying filtered articles in modal contexts
  */
-const FilteredArticleView: FC<FilteredArticleViewProps> = ({
+export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   articles,
   onArticlePress = noop,
   onArticleDelete = noop,
@@ -258,5 +258,3 @@ const FilteredArticleView: FC<FilteredArticleViewProps> = ({
 };
 
 FilteredArticleView.displayName = 'FilteredArticleView';
-
-export default FilteredArticleView;

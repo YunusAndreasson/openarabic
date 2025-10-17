@@ -1,11 +1,11 @@
-export { default as ArticleList } from '@/components/library/ArticleList';
-export { default as FeaturedSection } from '@/components/library/FeaturedSection';
-export { default as FilteredArticleView } from '@/components/library/FilteredArticleView';
+export { ArticleList } from '@/components/library/ArticleList';
+export { FeaturedSection } from '@/components/library/FeaturedSection';
+export { FilteredArticleView } from '@/components/library/FilteredArticleView';
 export { StreakMetrics } from '@/components/library/StreakMetrics';
-export { default as FilterSection } from './FilterSection';
+export { FilterSection } from './FilterSection';
 export { HijriDateFooter } from './HijriDateFooter';
-export { default as HorizontalArticleSlider } from './HorizontalArticleSlider';
-export { default as HorizontalFeaturedSection } from './HorizontalFeaturedSection';
-export { default as IntelligentArticleSection } from './IntelligentArticleSection';
+export { HorizontalArticleSlider } from './HorizontalArticleSlider';
+export { HorizontalFeaturedSection } from './HorizontalFeaturedSection';
+export { IntelligentArticleSection } from './IntelligentArticleSection';
 export { StreakChart } from './StreakChart';
 export { StreaksBottomSheet } from './StreaksBottomSheet';

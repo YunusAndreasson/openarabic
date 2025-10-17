@@ -4,7 +4,7 @@ import React from 'react';
 
 import { Text, TouchableOpacity, View } from 'react-native';
 import { ArabicWord } from '../../components/article/ArabicWord';
-import ArticleCard from '../../components/library/ArticleCard';
+import { ArticleCard } from '../../components/library/ArticleCard';
 import CompletionScreen from '../../components/review/CompletionScreen';
 import { VocabularyStatCards } from '../../components/study/VocabularyStatCards';
 import { useReview } from '../../hooks/review';

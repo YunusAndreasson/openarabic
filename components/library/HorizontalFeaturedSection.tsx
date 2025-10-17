@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import HorizontalArticleSlider from '@/components/library/HorizontalArticleSlider';
+import { HorizontalArticleSlider } from '@/components/library/HorizontalArticleSlider';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
 import type { Article } from '@/types/articles.types';
 
@@ -21,7 +21,7 @@ interface HorizontalFeaturedSectionProps {
   scope?: string;
 }
 
-function HorizontalFeaturedSection({
+export function HorizontalFeaturedSection({
   articlesData,
   refreshKey,
   scope = 'global',
@@ -35,5 +35,3 @@ function HorizontalFeaturedSection({
 }
 
 HorizontalFeaturedSection.displayName = 'HorizontalFeaturedSection';
-
-export default HorizontalFeaturedSection;

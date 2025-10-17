@@ -101,7 +101,7 @@ const SUMMARY_STYLE = {
  * High-performance article card component optimized for list rendering
  * Now with Expo Router v6 Link integration for better performance and native feel
  */
-export default function ArticleCard({
+export function ArticleCard({
   title,
   author,
   imageUrl,

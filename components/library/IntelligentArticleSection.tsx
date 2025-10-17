@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import HorizontalFeaturedSection from '@/components/library/HorizontalFeaturedSection';
+import { HorizontalFeaturedSection } from '@/components/library/HorizontalFeaturedSection';
 import type { Article } from '@/types/articles.types';
 
 interface IntelligentArticleSectionProps {
@@ -11,7 +11,7 @@ interface IntelligentArticleSectionProps {
 /**
  * Simplified IntelligentArticleSection that uses the GenericFeaturedSection
  */
-function IntelligentArticleSection({
+export function IntelligentArticleSection({
   articlesData,
   refreshKey,
 }: IntelligentArticleSectionProps): JSX.Element | null {
@@ -21,5 +21,3 @@ function IntelligentArticleSection({
 }
 
 IntelligentArticleSection.displayName = 'IntelligentArticleSection';
-
-export default IntelligentArticleSection;
