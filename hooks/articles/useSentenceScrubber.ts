@@ -113,28 +113,37 @@ export function useSentenceScrubber({
       // Update state immediately for responsive scrubber feedback
       setCurrentSentenceIndex(clampedIndex);
 
-      // Scroll to the sentence (FlashList index = sentence index + 1 for header)
-      const flashListIndex = clampedIndex + 1;
-
+      // Scroll to the sentence - use direct methods for edges
       if (scrollViewRef.current) {
-        try {
-          scrollViewRef.current.scrollToIndex({
-            index: flashListIndex,
-            animated: true,
-            viewPosition:
-              clampedIndex === 0
-                ? 0 // First sentence → show at absolute top
-                : clampedIndex === sortedSentences.length - 1
-                  ? 1 // Last sentence → show at absolute bottom
-                  : 0.1, // Middle sentences → comfortable reading position
-          });
-        } catch {
-          // Fallback to offset-based scrolling using proper sentence height constant + header offset
-          const estimatedOffset = headerOffset + clampedIndex * LAYOUT.SENTENCE_ITEM.HEIGHT;
+        // Edge cases: use direct scrolling for guaranteed positioning
+        if (clampedIndex === 0) {
+          // First sentence → scroll to absolute top (offset 0)
           scrollViewRef.current.scrollToOffset({
-            offset: estimatedOffset,
+            offset: 0,
             animated: true,
           });
+        } else if (clampedIndex === sortedSentences.length - 1) {
+          // Last sentence → scroll to absolute bottom
+          scrollViewRef.current.scrollToEnd({
+            animated: true,
+          });
+        } else {
+          // Middle sentences → use scrollToIndex with comfortable positioning
+          const flashListIndex = clampedIndex + 1; // +1 for header
+          try {
+            scrollViewRef.current.scrollToIndex({
+              index: flashListIndex,
+              animated: true,
+              viewPosition: 0.1, // Show near top for comfortable reading
+            });
+          } catch {
+            // Fallback to offset-based scrolling
+            const estimatedOffset = headerOffset + clampedIndex * LAYOUT.SENTENCE_ITEM.HEIGHT;
+            scrollViewRef.current.scrollToOffset({
+              offset: estimatedOffset,
+              animated: true,
+            });
+          }
         }
       }
     },
@@ -155,29 +164,41 @@ export function useSentenceScrubber({
     isJumpingToLastPosition.current = true;
     isJumpingRef.current = true;
 
-    const flashListIndex = lastSentenceReadRef.current + 1; // +1 for header
+    const targetIndex = lastSentenceReadRef.current;
 
-    try {
-      scrollViewRef.current.scrollToIndex({
-        index: flashListIndex,
-        animated: true,
-        viewPosition:
-          lastSentenceReadRef.current === 0
-            ? 0 // First sentence → show at absolute top
-            : lastSentenceReadRef.current === sortedSentences.length - 1
-              ? 1 // Last sentence → show at absolute bottom
-              : 0.1, // Middle sentences → comfortable reading position
-      });
-      setCurrentSentenceIndex(lastSentenceReadRef.current);
-    } catch {
-      // Fallback to offset-based scrolling using proper sentence height constant + header offset
-      const estimatedOffset =
-        headerOffset + lastSentenceReadRef.current * LAYOUT.SENTENCE_ITEM.HEIGHT;
+    // Edge cases: use direct scrolling for guaranteed positioning
+    if (targetIndex === 0) {
+      // First sentence → scroll to absolute top (offset 0)
       scrollViewRef.current.scrollToOffset({
-        offset: estimatedOffset,
+        offset: 0,
         animated: true,
       });
-      setCurrentSentenceIndex(lastSentenceReadRef.current);
+      setCurrentSentenceIndex(targetIndex);
+    } else if (targetIndex === sortedSentences.length - 1) {
+      // Last sentence → scroll to absolute bottom
+      scrollViewRef.current.scrollToEnd({
+        animated: true,
+      });
+      setCurrentSentenceIndex(targetIndex);
+    } else {
+      // Middle sentences → use scrollToIndex with comfortable positioning
+      const flashListIndex = targetIndex + 1; // +1 for header
+      try {
+        scrollViewRef.current.scrollToIndex({
+          index: flashListIndex,
+          animated: true,
+          viewPosition: 0.1, // Show near top for comfortable reading
+        });
+        setCurrentSentenceIndex(targetIndex);
+      } catch {
+        // Fallback to offset-based scrolling
+        const estimatedOffset = headerOffset + targetIndex * LAYOUT.SENTENCE_ITEM.HEIGHT;
+        scrollViewRef.current.scrollToOffset({
+          offset: estimatedOffset,
+          animated: true,
+        });
+        setCurrentSentenceIndex(targetIndex);
+      }
     }
 
     // Clear the flags after a delay to allow the scroll animation to complete
