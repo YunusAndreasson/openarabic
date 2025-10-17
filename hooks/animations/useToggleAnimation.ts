@@ -1,4 +1,3 @@
-'use no memo';
 import { useEffect, useCallback } from 'react';
 import {
   useSharedValue,
@@ -43,18 +42,20 @@ export const useToggleAnimation = (
       'worklet';
 
       // Use spring for smoother, more natural movement
-      translateX.value = withSpring(toActive ? distance : 0, SPRING_CONFIG.TOGGLE);
+      translateX.set(withSpring(toActive ? distance : 0, SPRING_CONFIG.TOGGLE));
 
       // Add subtle scale animation for better feedback
-      toggleScale.value = withSequence(
-        withTiming(TOGGLE_PRESS_SCALE, {
-          duration: TIMING_CONFIG.FAST.duration,
-          easing: TIMING_CONFIG.FAST.easing,
-        }),
-        withTiming(1, {
-          duration: TIMING_CONFIG.FAST.duration,
-          easing: TIMING_CONFIG.FAST.easing,
-        })
+      toggleScale.set(
+        withSequence(
+          withTiming(TOGGLE_PRESS_SCALE, {
+            duration: TIMING_CONFIG.FAST.duration,
+            easing: TIMING_CONFIG.FAST.easing,
+          }),
+          withTiming(1, {
+            duration: TIMING_CONFIG.FAST.duration,
+            easing: TIMING_CONFIG.FAST.easing,
+          })
+        )
       );
     },
     [translateX, toggleScale]
@@ -64,8 +65,8 @@ export const useToggleAnimation = (
   const forceAnimateToInitialState = useCallback(
     (toActive: boolean) => {
       'worklet';
-      translateX.value = toActive ? travelDistance : 0;
-      toggleScale.value = 1;
+      translateX.set(toActive ? travelDistance : 0);
+      toggleScale.set(1);
     },
     [translateX, toggleScale, travelDistance]
   );
@@ -78,13 +79,13 @@ export const useToggleAnimation = (
 
   const containerAnimatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ scale: toggleScale.value }],
+      transform: [{ scale: toggleScale.get() }],
     };
   });
 
   const handleAnimatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateX: translateX.value }],
+      transform: [{ translateX: translateX.get() }],
     };
   });
 
