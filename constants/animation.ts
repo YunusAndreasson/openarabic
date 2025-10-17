@@ -62,6 +62,13 @@ export const SPRING_CONFIG = {
     overshootClamping: false,
     energyThreshold: 0.01,
   },
+  SCRUBBER: {
+    damping: 35, // Higher damping to eliminate wobble and overshoot
+    stiffness: 500, // Higher stiffness for quick settle
+    mass: 0.5, // Light mass for snappy feel
+    overshootClamping: true, // Prevent overshoot completely
+    energyThreshold: 0.001,
+  },
 } as const;
 
 /** Minimum duration for opacity animations */

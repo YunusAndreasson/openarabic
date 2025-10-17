@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePanGesture } from '@/hooks/gestures/usePanGesture';
 import { useColors } from '@/hooks/theme/useColors';
@@ -25,13 +26,9 @@ interface SentenceScrubberProps {
 }
 
 // Constants for better performance - Updated for Jakob's Law compliance
-const HANDLE_SIZE = SCRUBBER_CONSTANTS.HANDLE_SIZE;
-const HANDLE_SIZE_ACTIVE = SCRUBBER_CONSTANTS.HANDLE_SIZE_ACTIVE;
-const TRACK_HEIGHT = SCRUBBER_CONSTANTS.TRACK_HEIGHT;
-const TRACK_HEIGHT_ACTIVE = SCRUBBER_CONSTANTS.TRACK_HEIGHT_ACTIVE;
+const HANDLE_SIZE = 24; // Fixed size for cleaner appearance
+const TRACK_HEIGHT = 6; // Fixed height for simpler visuals
 const DEFAULT_TRACK_WIDTH = SCRUBBER_CONSTANTS.DEFAULT_TRACK_WIDTH;
-const SPRING_CONFIG = { damping: 20, stiffness: 400 };
-const TOOLTIP_SPRING_CONFIG = { damping: 15, stiffness: 300 };
 
 export function SentenceScrubber({ currentSentence, totalSentences, onSentenceChange, onScrubStart, onScrubEnd }: SentenceScrubberProps) {
   const colors = useColors();
@@ -73,7 +70,7 @@ export function SentenceScrubber({ currentSentence, totalSentences, onSentenceCh
       ),
       onEnd: onScrubEnd,
       testId: 'sentence-scrubber-gesture',
-      springConfig: TOOLTIP_SPRING_CONFIG,
+      springConfig: SPRING_CONFIG.SCRUBBER,
       trackWidth,
     });
 
@@ -101,14 +98,24 @@ export function SentenceScrubber({ currentSentence, totalSentences, onSentenceCh
       if (!isDragging.value && trackWidth.value > 0 && isValidScrubber) {
         const progress = currentSentence / maxSentenceIndex;
         const newPosition = progress * (trackWidth.value - HANDLE_SIZE);
-        handlePosition.set(withSpring(newPosition, SPRING_CONFIG));
+
+        // Check if this is a scroll-driven update (sentence changed without user scrubbing)
+        const isScrollDriven = Math.abs(currentSentence - lastSentenceRef.current) === 1;
+
+        if (isScrollDriven) {
+          // Instant update for scroll-driven changes (responsive feel, no lag)
+          handlePosition.value = newPosition;
+        } else {
+          // Gentle spring for manual scrub or jumps (smooth feel)
+          handlePosition.value = withSpring(newPosition, SPRING_CONFIG.SCRUBBER);
+        }
 
         // Update ref when position changes externally (not from scrubbing)
         lastSentenceRef.current = currentSentence;
         // Sync lastIndex shared value to prevent redundant runOnJS on next drag
         lastIndex.value = currentSentence;
       }
-    }, [currentSentence, maxSentenceIndex, isValidScrubber, isDragging, trackWidth]);
+    }, [currentSentence, maxSentenceIndex, isValidScrubber, isDragging, trackWidth, handlePosition, lastIndex]);
 
     // React Compiler auto-memoizes
     const onLayout = useCallback(
@@ -130,41 +137,36 @@ export function SentenceScrubber({ currentSentence, totalSentences, onSentenceCh
 
     // Gesture is now handled by the usePanGesture hook
 
-    // React Compiler auto-memoizes
+    // Simplified handleStyle - fixed size, position only
     const handleStyle = useAnimatedStyle(() => {
-      const size = isDragging.get() ? HANDLE_SIZE_ACTIVE : HANDLE_SIZE;
-      const offset = (size - HANDLE_SIZE) / 2; // Adjust position to keep centered
-
       return {
-        transform: [{ translateX: handlePosition.get() - offset }],
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        top: -(size - (isDragging.get() ? TRACK_HEIGHT_ACTIVE : TRACK_HEIGHT)) / 2,
+        transform: [{ translateX: handlePosition.get() }],
+        width: HANDLE_SIZE,
+        height: HANDLE_SIZE,
+        borderRadius: HANDLE_SIZE / 2,
+        top: -(HANDLE_SIZE - TRACK_HEIGHT) / 2,
       };
-    }, [handlePosition, isDragging]);
+    }, [handlePosition]);
 
-    // Updated tooltip positioning - ABOVE the thumb (Jakob's Law)
+    // Simplified tooltip - opacity only, no scale animation
     const tooltipStyle = useAnimatedStyle(
       () => ({
         opacity: showTooltip.get(),
         transform: [
           { translateX: handlePosition.get() - LAYOUT.SPACING.XXXLARGE }, // Center tooltip
-          { translateY: -30 }, // Position higher above the thumb for better visibility and prevent clipping
-          { scale: withSpring(showTooltip.get() > 0 ? 1 : 0.8, TOOLTIP_SPRING_CONFIG) },
+          { translateY: -30 }, // Position higher above the thumb for better visibility
         ],
       }),
       [showTooltip, handlePosition]
     );
 
-    // Dynamic track style for better visibility during interaction
+    // Simplified track style - fixed height, subtle opacity change only
     const trackStyle = useAnimatedStyle(() => {
-      const height = isDragging.get() ? TRACK_HEIGHT_ACTIVE : TRACK_HEIGHT;
       return {
-        height,
-        borderRadius: height / 2,
-        backgroundColor: colors.secondaryText, // Use secondaryText for better visibility across themes
-        opacity: isDragging.get() ? LAYOUT.OPACITY.HOVER : LAYOUT.OPACITY.MEDIUM, // Higher opacity for better visibility
+        height: TRACK_HEIGHT,
+        borderRadius: TRACK_HEIGHT / 2,
+        backgroundColor: colors.secondaryText,
+        opacity: isDragging.get() ? LAYOUT.OPACITY.HIGH : LAYOUT.OPACITY.MEDIUM,
       };
     }, [isDragging, colors.secondaryText]);
 

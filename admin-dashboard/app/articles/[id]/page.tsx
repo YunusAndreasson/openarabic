@@ -19,6 +19,7 @@ import {
 import { ArrowLeft, Loader2, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { ImagePicker } from '@/components/image-picker';
+import { SentenceAudioVerifier } from '@/components/sentence-audio-verifier';
 
 const SUPABASE_STORAGE_URL = 'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
 
@@ -342,6 +343,11 @@ export default function EditArticlePage() {
           </Link>
         </div>
       </form>
+
+      {/* Sentence Audio Verification */}
+      <div className="mt-8 border-t pt-6">
+        <SentenceAudioVerifier articleId={articleId} />
+      </div>
     </div>
   );
 }
