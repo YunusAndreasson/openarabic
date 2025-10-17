@@ -1,5 +1,4 @@
-'use no memo';
-import { memo, useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -32,69 +31,55 @@ function ProgressBarComponent({
   // Animated progress value for smooth transitions
   const progressValue = useSharedValue(0);
 
-  const safeProgress = useMemo(() => {
-    // Handle invalid inputs that could crash
-    if (typeof rawProgress !== 'number' || isNaN(rawProgress) || !isFinite(rawProgress)) {
-      return 0;
-    }
-
+  // Handle invalid inputs that could crash (React Compiler auto-memoizes)
+  let safeProgress = 0;
+  if (typeof rawProgress === 'number' && !isNaN(rawProgress) && isFinite(rawProgress)) {
     // Clamp to 0-100 range and ensure it's a safe number
-    return Math.max(0, Math.min(100, rawProgress));
-  }, [rawProgress]);
+    safeProgress = Math.max(0, Math.min(100, rawProgress));
+  }
 
   // Animate progress changes smoothly
   useEffect(() => {
-    progressValue.value = withTiming(safeProgress, {
-      duration: animationDuration,
-      easing: TIMING_CONFIG.PROGRESS.easing,
-    });
+    progressValue.set(
+      withTiming(safeProgress, {
+        duration: animationDuration,
+        easing: TIMING_CONFIG.PROGRESS.easing,
+      })
+    );
   }, [safeProgress, progressValue, animationDuration]);
 
-  // Determine background color based on theme if not provided
-  const bgColor = useMemo(() => {
-    if (backgroundColor) return backgroundColor;
-    return colors.progressBackground;
-  }, [backgroundColor, colors.progressBackground]);
+  // Determine background color based on theme if not provided (React Compiler auto-memoizes)
+  const bgColor = backgroundColor || colors.progressBackground;
 
-  // Determine fill color based on theme if not provided
-  const progressFillColor = useMemo(() => {
-    return fillColor || colors.progressIndicator;
-  }, [fillColor, colors.progressIndicator]);
+  // Determine fill color based on theme if not provided (React Compiler auto-memoizes)
+  const progressFillColor = fillColor || colors.progressIndicator;
 
-  // Container styles (static)
-  const containerStyle = useMemo(
-    () =>
-      [
-        defaultStyles.container,
-        {
-          height,
-          backgroundColor: bgColor,
-          borderRadius: height / 2,
-        },
-        style,
-      ] as StyleProp<ViewStyle>,
-    [height, bgColor, style]
-  );
+  // Container styles (React Compiler auto-memoizes)
+  const containerStyle = [
+    defaultStyles.container,
+    {
+      height,
+      backgroundColor: bgColor,
+      borderRadius: height / 2,
+    },
+    style,
+  ] as StyleProp<ViewStyle>;
 
-  // Base fill styles (static parts)
-  const baseFillStyle = useMemo(
-    () =>
-      [
-        defaultStyles.fill,
-        {
-          backgroundColor: progressFillColor,
-          borderRadius: height / 2,
-        },
-        fillStyle,
-      ] as StyleProp<ViewStyle>,
-    [height, progressFillColor, fillStyle]
-  );
+  // Base fill styles (React Compiler auto-memoizes)
+  const baseFillStyle = [
+    defaultStyles.fill,
+    {
+      backgroundColor: progressFillColor,
+      borderRadius: height / 2,
+    },
+    fillStyle,
+  ] as StyleProp<ViewStyle>;
 
   // Animated fill width based on progress value
   const animatedFillStyle = useAnimatedStyle(() => {
     'worklet';
     return {
-      width: `${progressValue.value}%`,
+      width: `${progressValue.get()}%`,
     };
   }, [progressValue]);
 
@@ -115,4 +100,6 @@ const defaultStyles = StyleSheet.create({
   },
 });
 
-export const ProgressBar = memo(ProgressBarComponent);
+ProgressBarComponent.displayName = 'ProgressBar';
+
+export const ProgressBar = ProgressBarComponent;
