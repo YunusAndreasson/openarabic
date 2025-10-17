@@ -147,7 +147,7 @@ Based on this pilot, I recommend **proceeding with the full migration** because:
 Migrate in order of increasing complexity:
 
 1. ✅ **PulsatingLoader.tsx** - COMPLETE (pilot)
-2. ⚠️ **useOpacityAnimation.ts** - Simple opacity hook
+2. ✅ **useOpacityAnimation.ts** - COMPLETE (8 migrations, thread-aware)
 3. ⚠️ **useToggleAnimation.ts** - Toggle states
 4. ⚠️ **AccountBadge.tsx** - Profile photo animations
 5. ⚠️ **ProgressBar.tsx** - Progress animations
@@ -170,6 +170,42 @@ For each file:
 4. ✅ Commit individually
 5. ✅ If any issues, revert and document
 
+### ⚠️ Thread-Aware Migration (IMPORTANT)
+
+**CRITICAL**: Different APIs for JS thread vs UI thread!
+
+**UI Thread (worklets, useAnimatedStyle):**
+- **Reads**: `sharedValue.get()`
+- **Writes**: `sharedValue.set(X)`
+
+**JS Thread (useEffect, event handlers):**
+- **Reads**: `sharedValue.value`
+- **Writes**: `sharedValue.value = X` OR `sharedValue.set(X)` (both work)
+
+Example from useOpacityAnimation:
+```typescript
+// ✅ CORRECT - UI thread worklet
+const animatedStyle = useAnimatedStyle(() => {
+  'worklet';
+  return { opacity: opacity.get() };  // .get() in worklet
+}, [opacity]);
+
+// ✅ CORRECT - JS thread effect
+useEffect(() => {
+  if (autoStart && isMounted.value) {  // .value for read
+    opacity.set(withDelay(...));        // .set() for write (works on both threads)
+  }
+}, [autoStart, opacity]);
+
+// ✅ CORRECT - JS thread cleanup
+useEffect(() => {
+  return () => {
+    isMounted.value = false;  // .value = for write in cleanup
+    cancelAnimation(opacity);
+  };
+}, [opacity, isMounted]);
+```
+
 ---
 
 ## 🎉 Conclusion
@@ -179,7 +215,9 @@ For each file:
 - Migration is **simple and low-risk**
 - Benefits are **clear and immediate**
 - Pilot proves the approach **works perfectly**
-- Ready to proceed with remaining 13 files
+- Thread-aware patterns documented
+- **Progress: 2/14 files complete** (PulsatingLoader + useOpacityAnimation)
+- Ready to proceed with remaining 12 files
 
 **Estimated Total Time**: 1-2 hours for all 14 files (careful, incremental approach)
 
@@ -187,7 +225,9 @@ For each file:
 
 ## 📝 Next Steps
 
-1. ✅ Continue with `useOpacityAnimation.ts`
-2. ✅ Migrate one file at a time
-3. ✅ Test thoroughly between each migration
-4. ✅ Celebrate when all 14 files are migrated! 🎉
+1. ✅ ~~`PulsatingLoader.tsx`~~ - COMPLETE
+2. ✅ ~~`useOpacityAnimation.ts`~~ - COMPLETE
+3. ⏭️ **Continue with `useToggleAnimation.ts`**
+4. ✅ Migrate one file at a time
+5. ✅ Test thoroughly between each migration
+6. ✅ Celebrate when all 14 files are migrated! 🎉
