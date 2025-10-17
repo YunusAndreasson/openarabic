@@ -318,7 +318,11 @@ export function ArticleContent({
               alwaysBounceVertical={true}
               bounces={true}
               overScrollMode="always"
-              extraData={{ currentHighlightedWord }}
+              extraData={{
+                currentHighlightedWord,
+                showEnglish, // Track English visibility for proper recycling
+                themeMode: colors.text, // Track theme changes via stable color value
+              }}
               maxItemsInRecyclePool={30} // Control memory usage for sentence items
               onScrollToIndexFailed={({ index }: { index: number }) => {
                 // Fallback: estimate offset using fixed item height and account for header

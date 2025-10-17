@@ -97,7 +97,6 @@ export function ArabicWord({
   // Base text props for Arabic text
   const baseTextProps = {
     type: 'arabic' as const,
-    skipDefaultColor: true, // We'll handle colors manually
     arabicFontSize: calculatedFontSize,
     weight: (isSelected ? 'semibold' : 'normal') as TextWeight,
     style: styles.textStyle as TextStyle,
@@ -152,24 +151,24 @@ export function ArabicWord({
   // Render colored segments or single word
   let renderWordContent;
   if (!hasComponents || coloredSegments.length <= 1) {
-    // Single color word - use default Arabic text color
+    // Single color word - use semantic color name for consistent theming
     renderWordContent = (
       <ThemedText
         {...baseTextProps}
         colorName="arabicText"
-        style={[baseTextProps.style, { color: colors.arabicText }]}
       >
         {word.word_form}
       </ThemedText>
     );
   } else {
-    // Multi-colored segments - render each with its own color
+    // Multi-colored segments - render each with its own explicit color
     renderWordContent = (
-      <ThemedText {...baseTextProps}>
+      <ThemedText {...baseTextProps} skipDefaultColor>
         {coloredSegments.map(segment => (
           <ThemedText
             key={`${segment.type}-${segment.text}-${segment.color}`}
             {...baseTextProps}
+            skipDefaultColor
             style={[baseTextProps.style, { color: segment.color }]}
           >
             {segment.text}

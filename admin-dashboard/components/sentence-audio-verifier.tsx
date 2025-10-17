@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Loader2, Volume2, AlertCircle } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Play, Pause, Loader2, Volume2, AlertCircle, Edit, Save, X } from 'lucide-react';
 
 type Sentence = Database['public']['Tables']['article_sentences']['Row'];
 
@@ -37,6 +38,9 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
     sentenceId: number | null;
     audioType: AudioType | null;
   }>({ sentenceId: null, audioType: null });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editedText, setEditedText] = useState<string>('');
+  const [saving, setSaving] = useState(false);
 
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
 
@@ -63,6 +67,48 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
       setError('Failed to load sentences. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEdit = (sentence: Sentence) => {
+    setEditingId(sentence.id);
+    setEditedText(sentence.english);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditedText('');
+  };
+
+  const handleSave = async (sentenceId: number) => {
+    if (!editedText.trim()) {
+      alert('English text cannot be empty');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error: updateError } = await supabase
+        .from('article_sentences')
+        .update({ english: editedText })
+        .eq('id', sentenceId);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setSentences((prevSentences) =>
+        prevSentences.map((s) =>
+          s.id === sentenceId ? { ...s, english: editedText } : s
+        )
+      );
+
+      setEditingId(null);
+      setEditedText('');
+    } catch (err) {
+      console.error('Error saving sentence:', err);
+      alert('Failed to save sentence. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -169,10 +215,57 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
               <div className="flex-1 space-y-2">
                 {/* English Text */}
                 <div className="text-sm">
-                  <span className="text-xs font-medium text-muted-foreground uppercase">
-                    English:
-                  </span>
-                  <p className="mt-1 text-foreground">{sentence.english}</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-muted-foreground uppercase">
+                      English:
+                    </span>
+                    {editingId !== sentence.id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(sentence)}
+                        className="h-6 px-2"
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                    )}
+                  </div>
+                  {editingId === sentence.id ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={editedText}
+                        onChange={(e) => setEditedText(e.target.value)}
+                        className="min-h-[80px]"
+                        disabled={saving}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleSave(sentence.id)}
+                          disabled={saving}
+                        >
+                          {saving ? (
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          ) : (
+                            <Save className="h-3 w-3 mr-1" />
+                          )}
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleCancelEdit}
+                          disabled={saving}
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-foreground">{sentence.english}</p>
+                  )}
                 </div>
 
                 {/* Arabic Text (RTL) */}
@@ -180,7 +273,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
                   <span className="text-xs font-medium text-muted-foreground uppercase">
                     Arabic:
                   </span>
-                  <p className="mt-1 text-foreground text-right text-xl" dir="rtl">
+                  <p className="mt-1 text-foreground text-right text-3xl font-medium" dir="rtl">
                     {sentence.arabic}
                   </p>
                 </div>
