@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
-import ArabicFontSelector from '@/components/account/ArabicFontSelector';
+import { ArabicFontSelector } from '@/components/account/ArabicFontSelector';
 import { LAYOUT } from '@/constants/layout';
 
 const FontSelectorScreen: FC = () => {

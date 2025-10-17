@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { memo, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -12,7 +12,7 @@ import { PASSWORD_REQUIREMENTS, useAuthForm } from '@/hooks/auth/useAuthForm';
 /**
  * Authentication component that handles both sign in and sign up
  */
-function Auth(): JSX.Element {
+export function Auth(): JSX.Element {
   const [showPassword, setShowPassword] = useState(false);
   const handleTogglePassword = useCallback(() => {
     setShowPassword(prev => !prev);
@@ -160,4 +160,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default memo(Auth);

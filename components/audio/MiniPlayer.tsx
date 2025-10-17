@@ -284,7 +284,6 @@ export const MiniPlayer = memo<MiniPlayerProps>(MiniPlayerComponent, MiniPlayerC
 
 MiniPlayer.displayName = 'MiniPlayer';
 
-export default MiniPlayer;
 
 const styles = StyleSheet.create({
   container: {

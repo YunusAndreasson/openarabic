@@ -64,7 +64,7 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
 
 FontPreviewCard.displayName = 'FontPreviewCard';
 
-const ArabicFontSelector: FC = () => {
+export const ArabicFontSelector: FC = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { selectedFont, selectedFontSize, fontOptions, selectFont, setFontSize, fontSizeRange } =
@@ -178,4 +178,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ArabicFontSelector;

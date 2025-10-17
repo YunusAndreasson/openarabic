@@ -56,7 +56,7 @@ const getMemberSinceDate = (createdAt?: string) => {
   return createdAt || '2024-01-01T00:00:00.000Z';
 };
 
-function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps) {
+export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps) {
   const colors = useColors();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
@@ -342,4 +342,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AccountBadge;

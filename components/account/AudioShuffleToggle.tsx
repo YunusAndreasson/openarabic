@@ -16,7 +16,7 @@ interface AudioShuffleToggleProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const AudioShuffleToggle: React.FC<AudioShuffleToggleProps> = ({ style }) => {
+export const AudioShuffleToggle: React.FC<AudioShuffleToggleProps> = ({ style }) => {
   const colors = useColors();
   const dispatch = useAppDispatch();
 
@@ -71,4 +71,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AudioShuffleToggle;

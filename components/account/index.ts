@@ -3,5 +3,5 @@
  * Components for the account/settings screen
  */
 
-export { default as AccountBadge } from './AccountBadge';
+export { AccountBadge } from './AccountBadge';
 export { SocialMediaIcons } from './SocialMediaIcons';
