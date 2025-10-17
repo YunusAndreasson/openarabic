@@ -10,7 +10,7 @@ import DraggableFlatList from 'react-native-draggable-flatlist';
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
-import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
+import { LIST_DRAW_DISTANCE_MULTIPLIER, SCROLL_EVENT_THROTTLE } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
@@ -243,14 +243,13 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
           drawDistance={ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER}
           keyExtractor={keyExtractor}
           removeClippedSubviews={true}
+          scrollEventThrottle={SCROLL_EVENT_THROTTLE}
           showsVerticalScrollIndicator={true}
           contentContainerStyle={STATIC_STYLES.listContent}
           ItemSeparatorComponent={SeparatorComponent}
           ListHeaderComponent={ListHeaderComponent}
           ListFooterComponent={FooterComponent}
           renderItem={renderItem}
-          // v2 performance optimizations
-          maxItemsInRecyclePool={25} // Control memory usage for article lists
         />
       )}
     </ThemedView>

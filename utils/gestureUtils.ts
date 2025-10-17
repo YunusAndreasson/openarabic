@@ -11,18 +11,6 @@ export const GESTURE_CONSTANTS = {
   HAPTIC_THRESHOLD: 0.02, // Minimum movement for haptic feedback
 } as const;
 
-// ===== SCRUBBER CONSTANTS =====
-export const SCRUBBER_CONSTANTS = {
-  HANDLE_SIZE: 20,
-  HANDLE_SIZE_ACTIVE: 28,
-  TRACK_HEIGHT: 4,
-  TRACK_HEIGHT_ACTIVE: 12,
-  DEFAULT_TRACK_WIDTH: 300,
-  // v2 Performance optimizations
-  TOOLTIP_ANIMATION_DURATION: 200,
-  POSITION_UPDATE_THRESHOLD: 0.01, // Minimum change to trigger update
-} as const;
-
 // ===== GESTURE CONFIGURATION =====
 export const GESTURE_CONFIG = {
   MIN_DISTANCE: GESTURE_CONSTANTS.MIN_DISTANCE,

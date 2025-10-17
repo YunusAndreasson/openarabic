@@ -21,7 +21,6 @@ import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import {
   SCROLL_EVENT_THROTTLE,
-  SENTENCE_DRAW_DISTANCE_MULTIPLIER,
   TIMING_CONFIG,
 } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -91,7 +90,6 @@ const styles = StyleSheet.create({
 // Static constants for better performance
 const SENTENCE_ITEM_HEIGHT = LAYOUT.SENTENCE_ITEM.HEIGHT;
 const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
-const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
 
 // Static key extractor for better performance
 const sentenceKeyExtractor = (item: Tables<'article_sentences'>) => item.id.toString();
@@ -312,9 +310,9 @@ export function ArticleContent({
               }
               onViewableItemsChanged={handleViewableItemsChanged}
               viewabilityConfig={viewabilityConfig}
-              drawDistance={SENTENCE_ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER}
+              estimatedItemSize={SENTENCE_ITEM_HEIGHT}
               scrollEventThrottle={SCROLL_THROTTLE}
-              showsVerticalScrollIndicator={false}
+              showsVerticalScrollIndicator={true}
               removeClippedSubviews={true}
               alwaysBounceVertical={true}
               bounces={true}
@@ -324,7 +322,6 @@ export function ArticleContent({
                 showEnglish, // Track English visibility for proper recycling
                 themeMode: colors.text, // Track theme changes via stable color value
               }}
-              maxItemsInRecyclePool={30} // Control memory usage for sentence items
               onScrollToIndexFailed={({ index }: { index: number }) => {
                 // Fallback: estimate offset using fixed item height and account for header
                 const estimatedOffset = Math.max(

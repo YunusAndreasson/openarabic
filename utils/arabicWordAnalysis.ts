@@ -7,6 +7,7 @@ import {
   ComponentType,
   type WordComponent,
 } from '@/constants/arabicWordComponents';
+import type { ColoredSegment } from '@/types/vocabulary.types';
 
 export interface AnalyzedComponent {
   component: WordComponent;
@@ -849,6 +850,52 @@ function reconstructWithColors(analysis: WordAnalysis) {
   }
 
   return { segments, totalText: arabic };
+}
+
+/**
+ * Pre-computes colored segments for a word given theme colors
+ * Used during data loading to avoid computing during render
+ */
+export function computeColoredSegments(
+  arabicWord: string,
+  englishTranslation: string,
+  colors: { tint: string; primary: string; warning: string; secondaryText: string; text: string }
+): ColoredSegment[] {
+  // Check single-word rule
+  const normalizedArabic = normalizeArabic(arabicWord);
+  const processedEnglish = shouldInjectBracket(normalizedArabic, englishTranslation)
+    ? `[the] ${englishTranslation}`
+    : englishTranslation;
+
+  const wordCount = processedEnglish.trim().split(/\s+/).length;
+  if (wordCount === 1) {
+    return [{ text: arabicWord, color: colors.text, type: 'root' as const }];
+  }
+
+  const analysis = analyzeArabicWord(arabicWord, processedEnglish);
+
+  if (!analysis?.hasComponents) {
+    return [{ text: arabicWord, color: colors.text, type: 'root' as const }];
+  }
+
+  const formatted = formatWordAnalysis(analysis);
+  if (!formatted?.reconstructedArabic) {
+    return [{ text: arabicWord, color: colors.text, type: 'root' as const }];
+  }
+
+  const colorMap: Record<string, string> = {
+    tint: colors.tint,
+    primary: colors.primary,
+    warning: colors.warning,
+    secondaryText: colors.secondaryText,
+    text: colors.text,
+  };
+
+  return formatted.reconstructedArabic.segments.map(segment => ({
+    text: segment.text,
+    color: colorMap[segment.colorName] || colors.text,
+    type: segment.type as ColoredSegment['type'],
+  }));
 }
 
 /**

@@ -2,6 +2,15 @@ import type { RootId, UserId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 
 /**
+ * Pre-computed color segment for Arabic word rendering
+ */
+export interface ColoredSegment {
+  text: string;
+  color: string;
+  type: 'prefix' | 'infix' | 'suffix' | 'diacritic' | 'root';
+}
+
+/**
  * Enhanced sentence word type with root and word type information
  * Used in article views, word details, and vocabulary components
  */
@@ -11,6 +20,8 @@ export interface SentenceWord extends Omit<Tables<'sentence_words'>, 'root_id'> 
   root: Tables<'roots'> | null;
   word_type: Tables<'word_types'> | null;
   sentence?: Tables<'article_sentences'> | null;
+  /** Pre-computed colored segments for performance (computed once at load time) */
+  coloredSegments?: ColoredSegment[];
 }
 
 /**

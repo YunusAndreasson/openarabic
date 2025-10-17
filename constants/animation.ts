@@ -62,13 +62,6 @@ export const SPRING_CONFIG = {
     overshootClamping: false,
     energyThreshold: 0.01,
   },
-  SCRUBBER: {
-    damping: 35, // Higher damping to eliminate wobble and overshoot
-    stiffness: 500, // Higher stiffness for quick settle
-    mass: 0.5, // Light mass for snappy feel
-    overshootClamping: true, // Prevent overshoot completely
-    energyThreshold: 0.001,
-  },
 } as const;
 
 /** Minimum duration for opacity animations */
@@ -114,7 +107,7 @@ export const LIST_DRAW_DISTANCE_MULTIPLIER = 3;
 export const SENTENCE_DRAW_DISTANCE_MULTIPLIER = 12;
 
 /** Default scroll event throttle for smooth animations */
-export const SCROLL_EVENT_THROTTLE = 16;
+export const SCROLL_EVENT_THROTTLE = 64;
 
 /** Delay before completion metrics appear */
 export const COMPLETION_METRIC_BASE_DELAY = 800;

@@ -3,7 +3,6 @@ import {
   GESTURE_CONFIG,
   GESTURE_CONSTANTS,
   GestureUtils,
-  SCRUBBER_CONSTANTS,
 } from '@/utils/gestureUtils';
 
 describe('gestureUtils', () => {
@@ -15,18 +14,6 @@ describe('gestureUtils', () => {
       expect(GESTURE_CONSTANTS.MAX_TRANSLATION_RATIO).toBe(LAYOUT.OPACITY.HOVER);
       expect(GESTURE_CONSTANTS.DEBOUNCE_DELAY).toBe(16);
       expect(GESTURE_CONSTANTS.HAPTIC_THRESHOLD).toBe(0.02);
-    });
-  });
-
-  describe('SCRUBBER_CONSTANTS', () => {
-    it('should have correct constant values', () => {
-      expect(SCRUBBER_CONSTANTS.HANDLE_SIZE).toBe(20);
-      expect(SCRUBBER_CONSTANTS.HANDLE_SIZE_ACTIVE).toBe(28);
-      expect(SCRUBBER_CONSTANTS.TRACK_HEIGHT).toBe(4);
-      expect(SCRUBBER_CONSTANTS.TRACK_HEIGHT_ACTIVE).toBe(12);
-      expect(SCRUBBER_CONSTANTS.DEFAULT_TRACK_WIDTH).toBe(300);
-      expect(SCRUBBER_CONSTANTS.TOOLTIP_ANIMATION_DURATION).toBe(200);
-      expect(SCRUBBER_CONSTANTS.POSITION_UPDATE_THRESHOLD).toBe(0.01);
     });
   });
 

@@ -325,6 +325,7 @@ export default function ListenScreen(): JSX.Element {
             drawDistance={ITEM_HEIGHT * 3}
             keyExtractor={memoizedKeyExtractor}
             removeClippedSubviews={true}
+            scrollEventThrottle={64}
             // iOS best practice: Allow natural bounce behavior for tactile feedback
             bounces={true}
             alwaysBounceVertical={true}
@@ -336,8 +337,6 @@ export default function ListenScreen(): JSX.Element {
             ListEmptyComponent={EmptyStateComponent}
             ListHeaderComponent={null}
             renderItem={renderItem}
-            // v2 performance optimizations
-            maxItemsInRecyclePool={15} // Control memory usage for reading list
             maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)
           />
         )}

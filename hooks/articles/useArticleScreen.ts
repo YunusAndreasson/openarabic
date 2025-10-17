@@ -1,7 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, type LayoutRectangle, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { AppState, type LayoutRectangle, type NativeScrollEvent, type NativeSyntheticEvent, type ViewToken } from 'react-native';
+
+import type { FlashListRef } from '@shopify/flash-list';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -10,7 +12,6 @@ import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleLanguagePreference } from '@/hooks/articles/useArticleLanguagePreference';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
-import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
@@ -18,11 +19,11 @@ import { useModalState } from '@/hooks/ui/useModalState';
 import { enhancedAudioService } from '@/services/audioPlaylist';
 import { simpleAudioService } from '@/services/audioPlayer';
 import type { ArticleId } from '@/types/branded.types';
+import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { getCurrentArticleId, isAudioBusy, stopAudioSafely } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
-import { calculateHeaderHeight } from '@/utils/gradientUtils';
 import { selectionFeedback } from '@/utils/haptics';
 
 export interface UseArticleScreenOptions {
@@ -176,7 +177,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
 
   // Reading progress
   const isActive = !!article && !isLoadingArticle;
-  const { lastSentenceRead, updateProgress, initialLastSentenceRead, hadExistingProgressOnMount } =
+  const { updateProgress, initialLastSentenceRead: _initialLastSentenceRead, hadExistingProgressOnMount: _hadExistingProgressOnMount } =
     useReadingProgress({
       articleId: articleId ?? 0,
       totalSentences: sortedSentences?.length ?? 0,
@@ -184,23 +185,47 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
       isActive,
     });
 
-  const effectiveLastSentenceRead = lastSentenceRead ?? 0;
+  // Track current sentence for reading progress
+  const scrollViewRef = useRef<FlashListRef<Tables<'article_sentences'>> | null>(null);
+  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
 
-  // Sentence scrubber
-  const {
-    currentSentenceIndex,
-    scrollViewRef,
-    handleViewableItemsChanged,
-    handleSentenceChange,
-    handleScrubStart,
-    handleScrubEnd,
-    jumpToLastReadPosition,
-  } = useSentenceScrubber({
-    sortedSentences: sortedSentences || [],
-    sentenceWordsMap,
-    lastSentenceRead: effectiveLastSentenceRead,
-    headerOffset: calculateHeaderHeight(0),
-  });
+  // Handle viewable items changed to track current sentence
+  const handleViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems.length === 0) return;
+
+      // Find all visible sentences (excluding header at index 0)
+      const visibleSentences = viewableItems
+        .filter(
+          item =>
+            typeof item.index === 'number' &&
+            item.index > 0 && // Skip header
+            item.isViewable === true
+        )
+        .map(item => ({
+          index: (item.index as number) - 1, // Convert to sentence index
+          item: item,
+        }))
+        .filter(({ index }) => index >= 0 && index < (sortedSentences?.length ?? 0));
+
+      if (visibleSentences.length > 0) {
+        // Sort by index to ensure we pick the topmost visible sentence
+        visibleSentences.sort((a, b) => a.index - b.index);
+
+        // Use the first visible sentence (top of viewport)
+        const firstVisibleSentence = visibleSentences[0];
+        if (firstVisibleSentence) {
+          const newSentenceIndex = firstVisibleSentence.index;
+
+          // Only update if the sentence actually changed to prevent unnecessary re-renders
+          if (newSentenceIndex !== currentSentenceIndex) {
+            setCurrentSentenceIndex(newSentenceIndex);
+          }
+        }
+      }
+    },
+    [currentSentenceIndex, sortedSentences?.length]
+  );
 
   // Sync sentence index
   useEffect(() => {
@@ -231,55 +256,6 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
       stopAudioSafely();
     };
   }, []);
-
-  // Resume-on-open behavior
-  const hasHandledInitialResumeRef = useRef(false);
-  const RESUME_WINDOW_TIMEOUT = 1500;
-  const RESUME_JUMP_DELAY = 500;
-  const resumeWindowActiveRef = useRef(false);
-
-  useEffect(() => {
-    if (article && sortedSentences && sortedSentences.length > 0 && !isLoadingArticle) {
-      resumeWindowActiveRef.current = true;
-      const timeoutId = setTimeout(() => {
-        resumeWindowActiveRef.current = false;
-      }, RESUME_WINDOW_TIMEOUT);
-      return () => clearTimeout(timeoutId);
-    }
-    return () => {};
-  }, [article, sortedSentences, isLoadingArticle]);
-
-  useEffect(() => {
-    if (
-      !hasHandledInitialResumeRef.current &&
-      !isLoadingArticle &&
-      article &&
-      sortedSentences &&
-      sortedSentences.length > 0 &&
-      hadExistingProgressOnMount &&
-      resumeWindowActiveRef.current
-    ) {
-      const baselineLastSentence = initialLastSentenceRead ?? 0;
-      const progressPercent = Math.round((baselineLastSentence / sortedSentences.length) * 100);
-      selectionFeedback();
-      showToast(STRINGS.RESUMED_READING_TEMPLATE.replace('{percent}', String(progressPercent)), 3000, ToastType.INFO);
-      setTimeout(() => {
-        try {
-          jumpToLastReadPosition();
-        } catch {
-          // noop
-        }
-      }, RESUME_JUMP_DELAY);
-      hasHandledInitialResumeRef.current = true;
-    }
-  }, [
-    isLoadingArticle,
-    article,
-    sortedSentences,
-    hadExistingProgressOnMount,
-    jumpToLastReadPosition,
-    showToast,
-  ]);
 
   // Word interaction handlers
   const handleWordPress = useCallback(
@@ -364,8 +340,5 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     handleCloseTooltip,
     handleOpenWordDetails,
     handleAddWordToStudy,
-    handleSentenceChange,
-    handleScrubStart,
-    handleScrubEnd,
   };
 }

@@ -140,6 +140,7 @@ module.exports = [
       '**/*.test.*',
       '**/*.spec.*',
       'translate/',
+      'admin-dashboard/',
     ],
   },
 ];

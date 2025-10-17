@@ -6,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   ArticleSentence,
-  SentenceScrubber,
   WordDetailsBottomSheet,
   WordTooltip,
 } from '@/components/article';
@@ -51,7 +50,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     isInReadingList,
     hasAudio,
     isPlaying,
-    currentSentenceIndex,
+    currentSentenceIndex: _currentSentenceIndex,
     scrollViewRef,
     activeTooltip,
     wordDetailsModal,
@@ -66,9 +65,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleCloseTooltip,
     handleOpenWordDetails,
     handleAddWordToStudy,
-    handleSentenceChange,
-    handleScrubStart,
-    handleScrubEnd,
   } = useArticleScreen({ id, showToast });
 
   // Memoize renderSentenceItem to prevent unnecessary recreations
@@ -106,23 +102,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       onOpenWordDetails: handleOpenWordDetails,
     }),
     [activeTooltip, handleCloseTooltip, handleOpenWordDetails]
-  );
-
-  const sentenceScrubberProps = useMemo(
-    () => ({
-      currentSentence: currentSentenceIndex,
-      totalSentences: sortedSentences?.length ?? 0,
-      onSentenceChange: handleSentenceChange,
-      onScrubStart: handleScrubStart,
-      onScrubEnd: handleScrubEnd,
-    }),
-    [
-      currentSentenceIndex,
-      sortedSentences?.length,
-      handleSentenceChange,
-      handleScrubStart,
-      handleScrubEnd,
-    ]
   );
 
   // Only create articleContentProps when article is defined to avoid TypeScript errors
@@ -192,9 +171,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         onAddToStudy={handleAddWordToStudy}
         isInStudyList={isInStudyList}
       />
-
-      {/* Scrubber moved out of ArticleContent to avoid ArticleContent rerenders */}
-      {!wordDetailsModal.isVisible && <SentenceScrubber {...sentenceScrubberProps} />}
     </>
   );
 }, ArticleScreenContentComparison);

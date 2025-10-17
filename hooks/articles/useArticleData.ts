@@ -4,10 +4,12 @@ import { useMemo } from 'react';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { CACHE_TIMES, READING_LIST_QUERY_KEYS } from '@/constants/queryKeys';
 import { articleQueryOptions, fsrsQueryOptions } from '@/constants/queryOptions';
+import { useColors } from '@/hooks/theme/useColors';
 import { bookmarkService } from '@/services/bookmark';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
+import { computeColoredSegments } from '@/utils/arabicWordAnalysis';
 
 interface ArticleDataResult {
   article: Article | undefined;
@@ -30,6 +32,9 @@ export const useArticleData = (
   articleId: number | undefined,
   userId: string | undefined
 ): ArticleDataResult => {
+  // Get theme colors for pre-computing word color analysis
+  const colors = useColors();
+
   // Fetch article data with optimized caching
   const { data: article, isLoading: isLoadingArticle } = useQuery({
     ...articleQueryOptions.detail(articleId || 0),
@@ -86,24 +91,37 @@ export const useArticleData = (
   }, [studyWords]);
 
   // Create sentence words map from article data - no additional fetch needed
+  // Pre-compute color analysis at load time for optimal render performance
   const sentenceWordsMap = useMemo(() => {
     const map = new Map<number, SentenceWord[]>();
-    // Early return if no sentences
-    if (!sortedSentences?.length) return map;
+    // Early return if no sentences or colors not ready
+    if (!sortedSentences?.length || !colors) return map;
 
     // Process all sentences in one pass
     return sortedSentences.reduce((acc, sentence) => {
       if (sentence.sentence_words?.length) {
-        acc.set(
-          sentence.id,
-          sentence.sentence_words
-            .slice() // Create a new array to avoid mutating the original
-            .sort((a, b) => a.position - b.position)
-        );
+        const wordsWithColors = sentence.sentence_words
+          .slice() // Create a new array to avoid mutating the original
+          .sort((a, b) => a.position - b.position)
+          .map(word => ({
+            ...word,
+            coloredSegments: computeColoredSegments(
+              word.word_form,
+              word.english || '',
+              {
+                tint: colors.tint,
+                primary: colors.primary,
+                warning: colors.warning,
+                secondaryText: colors.secondaryText,
+                text: colors.text,
+              }
+            ),
+          }));
+        acc.set(sentence.id, wordsWithColors);
       }
       return acc;
     }, new Map<number, SentenceWord[]>());
-  }, [sortedSentences]);
+  }, [sortedSentences, colors]);
 
   return {
     article,

@@ -19,7 +19,8 @@
     "!**/patches/**",
     "!**/docs/**",
     "!**/translate/**",
-    "!**/supabase/migrations/**"
+    "!**/supabase/migrations/**",
+    "!**/admin-dashboard/**"
   ],
   "ignore": [
     "patches/**",
@@ -41,7 +42,8 @@
     ".github/workflows/**",
     "@expo/metro-config",
     "metro-minify-terser",
-    "scripts/**"
+    "scripts/**",
+    "admin-dashboard/**"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,

@@ -48,6 +48,7 @@
     "__mocks__",
     "__tests__",
     "**/*.test.*",
-    "**/*.spec.*"
+    "**/*.spec.*",
+    "admin-dashboard"
   ]
 }

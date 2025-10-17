@@ -13,7 +13,7 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useArabicWord, useArabicWordAnalysis } from '@/hooks/vocabulary';
+import { useArabicWord } from '@/hooks/vocabulary';
 import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { getSelectedStyle } from '@/utils/textStyleUtils';
@@ -44,12 +44,9 @@ export function ArabicWord({
     position,
   });
 
-  // Use the new analysis hook for color-coding
-  const { hasComponents, coloredSegments } = useArabicWordAnalysis(
-    word.word_form,
-    word.english || '',
-    true // Always enabled for now
-  );
+  // Use pre-computed colored segments from data loading (optimized for performance)
+  const coloredSegments = word.coloredSegments || [];
+  const hasComponents = coloredSegments.length > 1;
 
   // Use opacity animation for border
   const { setOpacity: setBorderOpacity } = useOpacityAnimation({
