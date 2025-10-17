@@ -8,7 +8,7 @@ jest.mock('expo-router', () => ({
 
 import { router } from 'expo-router';
 
-import { typedPush, typedReplace } from '@/utils/navigation';
+import { typedPush, typedReplace } from '@/utils/navigation/routeHelpers';
 
 describe('navigation', () => {
   beforeEach(() => {
