@@ -1,4 +1,3 @@
-'use no memo';
 import { useMemo } from 'react';
 import { Gesture } from 'react-native-gesture-handler';
 import { runOnJS, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -46,17 +45,17 @@ export const usePanGesture = (options: PanGestureOptions): PanGestureResult => {
         .enabled(enabled)
         .onBegin(() => {
           'worklet';
-          isDragging.value = true;
-          showTooltip.value = withSpring(1, springConfig);
+          isDragging.set(true);
+          showTooltip.set(withSpring(1, springConfig));
           if (onBegin) {
             runOnJS(onBegin)();
           }
         })
         .onUpdate(event => {
           'worklet';
-          if (trackWidth && trackWidth.value > 0 && event.x >= 0) {
+          if (trackWidth && trackWidth.get() > 0 && event.x >= 0) {
             // Calculate progress based on track width
-            const progress = Math.max(0, Math.min(1, event.x / trackWidth.value));
+            const progress = Math.max(0, Math.min(1, event.x / trackWidth.get()));
 
             // Only call onUpdate if values are valid
             if (progress >= 0 && progress <= 1) {
@@ -66,8 +65,8 @@ export const usePanGesture = (options: PanGestureOptions): PanGestureResult => {
         })
         .onEnd(() => {
           'worklet';
-          isDragging.value = false;
-          showTooltip.value = withSpring(0, springConfig);
+          isDragging.set(false);
+          showTooltip.set(withSpring(0, springConfig));
           if (onEnd) {
             runOnJS(onEnd)();
           }
