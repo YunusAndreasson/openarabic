@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
 
-import { PASSWORD_REQUIREMENTS, useAuthForm } from './useAuthForm';
+import { PASSWORD_REQUIREMENTS, useAuthForm } from '@/hooks/auth/useAuthForm';
 
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn() },

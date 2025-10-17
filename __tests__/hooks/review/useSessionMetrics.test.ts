@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
 
-import { useSessionMetrics } from './useSessionMetrics';
+import { useSessionMetrics } from '@/hooks/review/useSessionMetrics';
 
 describe('useSessionMetrics', () => {
   describe('Basic metric updates', () => {

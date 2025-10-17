@@ -30,12 +30,12 @@ describe('useProvideAuth', () => {
     // This test just verifies the module can be imported
     // The actual hook functionality is tested through integration tests
     expect(() => {
-      require('./useProvideAuth');
+      require('../../../hooks/auth/useProvideAuth');
     }).not.toThrow();
   });
 
   it('exports the expected hook function', () => {
-    const module = require('./useProvideAuth');
+    const module = require('../../../hooks/auth/useProvideAuth');
     expect(module.useProvideAuth).toBeDefined();
     expect(typeof module.useProvideAuth).toBe('function');
   });

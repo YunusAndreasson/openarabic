@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react-native';
 import { describe, it, expect, jest } from '@jest/globals';
 
 import { AuthContext } from '@/components/providers/AuthProvider';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 describe('useAuth', () => {
   it('throws when used outside AuthProvider', () => {
