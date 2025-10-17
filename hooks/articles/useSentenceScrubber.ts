@@ -121,7 +121,12 @@ export function useSentenceScrubber({
           scrollViewRef.current.scrollToIndex({
             index: flashListIndex,
             animated: true,
-            viewPosition: 0.1, // Show sentence near top (10% from top for better visibility)
+            viewPosition:
+              clampedIndex === 0
+                ? 0 // First sentence → show at absolute top
+                : clampedIndex === sortedSentences.length - 1
+                  ? 1 // Last sentence → show at absolute bottom
+                  : 0.1, // Middle sentences → comfortable reading position
           });
         } catch {
           // Fallback to offset-based scrolling using proper sentence height constant + header offset
@@ -156,7 +161,12 @@ export function useSentenceScrubber({
       scrollViewRef.current.scrollToIndex({
         index: flashListIndex,
         animated: true,
-        viewPosition: 0.1,
+        viewPosition:
+          lastSentenceReadRef.current === 0
+            ? 0 // First sentence → show at absolute top
+            : lastSentenceReadRef.current === sortedSentences.length - 1
+              ? 1 // Last sentence → show at absolute bottom
+              : 0.1, // Middle sentences → comfortable reading position
       });
       setCurrentSentenceIndex(lastSentenceReadRef.current);
     } catch {
