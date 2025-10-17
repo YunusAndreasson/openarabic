@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, type LayoutRectangle, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleLanguagePreference } from '@/hooks/articles/useArticleLanguagePreference';
@@ -129,7 +130,13 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     } catch (error) {
       handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
     }
-    router.back();
+
+    // Check if we can go back, otherwise navigate to library home
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.push(ROUTE_PATHS.LIBRARY_TAB);
+    }
   }, []);
 
   // Check audio availability
