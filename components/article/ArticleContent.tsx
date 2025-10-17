@@ -285,8 +285,9 @@ export function ArticleContent({
 
     // React Compiler auto-memoizes
     const viewabilityConfig = {
-      itemVisiblePercentThreshold: 50,
-      minimumViewTime: 100,
+      itemVisiblePercentThreshold: 15, // Only count items near top (15% visible)
+      minimumViewTime: 0, // Immediate updates for accurate scrubber tracking
+      waitForInteraction: false, // Update during scroll for real-time sync
     };
 
     return (

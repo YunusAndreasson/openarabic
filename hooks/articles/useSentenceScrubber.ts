@@ -87,6 +87,9 @@ export function useSentenceScrubber({
         .filter(({ index }) => index >= 0 && index < sortedSentences.length);
 
       if (visibleSentences.length > 0) {
+        // Sort by index to ensure we pick the topmost visible sentence
+        visibleSentences.sort((a, b) => a.index - b.index);
+
         // Use the first visible sentence (top of viewport)
         const firstVisibleSentence = visibleSentences[0];
         if (firstVisibleSentence) {
