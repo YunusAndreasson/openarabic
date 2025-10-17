@@ -1,4 +1,3 @@
-'use no memo';
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import type {
@@ -231,14 +230,18 @@ export const useTransformAnimation = (
 
         // Different animation based on type
         if (useSpring) {
-          value.value = withSpring(targetValue, springConfig, finished =>
-            handleAnimationComplete(finished, onComplete)
+          value.set(
+            withSpring(targetValue, springConfig, finished =>
+              handleAnimationComplete(finished, onComplete)
+            )
           );
         } else {
-          value.value = withDelay(
-            delay,
-            withTiming(targetValue, timingConfig, finished =>
-              handleAnimationComplete(finished, onComplete)
+          value.set(
+            withDelay(
+              delay,
+              withTiming(targetValue, timingConfig, finished =>
+                handleAnimationComplete(finished, onComplete)
+              )
             )
           );
         }
@@ -263,12 +266,16 @@ export const useTransformAnimation = (
         const reverseTarget = type === 'slide' ? startPosition : initialValue;
 
         if (useSpring) {
-          value.value = withSpring(reverseTarget, springConfig, finished =>
-            handleAnimationComplete(finished, onComplete)
+          value.set(
+            withSpring(reverseTarget, springConfig, finished =>
+              handleAnimationComplete(finished, onComplete)
+            )
           );
         } else {
-          value.value = withTiming(reverseTarget, timingConfig, finished =>
-            handleAnimationComplete(finished, onComplete)
+          value.set(
+            withTiming(reverseTarget, timingConfig, finished =>
+              handleAnimationComplete(finished, onComplete)
+            )
           );
         }
       } catch (error) {
@@ -297,12 +304,16 @@ export const useTransformAnimation = (
       try {
         cancelAnimation(value);
         if (useSpring) {
-          value.value = withSpring(newValue, springConfig, finished =>
-            handleAnimationComplete(finished, onComplete)
+          value.set(
+            withSpring(newValue, springConfig, finished =>
+              handleAnimationComplete(finished, onComplete)
+            )
           );
         } else {
-          value.value = withTiming(newValue, timingConfig, finished =>
-            handleAnimationComplete(finished, onComplete)
+          value.set(
+            withTiming(newValue, timingConfig, finished =>
+              handleAnimationComplete(finished, onComplete)
+            )
           );
         }
       } catch (error) {
@@ -319,32 +330,32 @@ export const useTransformAnimation = (
   const reset = useCallback(() => {
     'worklet';
     cancelAnimation(value);
-    value.value = startPosition;
+    value.set(startPosition);
   }, [value, startPosition]);
 
   // Use derived value for efficient transform calculation
   const transformStyle = useDerivedValue(() => {
     switch (type) {
       case 'scale':
-        return { transform: [{ scale: value.value }] };
+        return { transform: [{ scale: value.get() }] };
       case 'slide':
       case 'translateX':
-        return { transform: [{ translateX: value.value }] };
+        return { transform: [{ translateX: value.get() }] };
       case 'translateY':
-        return { transform: [{ translateY: value.value }] };
+        return { transform: [{ translateY: value.get() }] };
       case 'rotate':
-        return { transform: [{ rotate: `${value.value}deg` }] };
+        return { transform: [{ rotate: `${value.get()}deg` }] };
       default:
-        return { transform: [{ scale: value.value }] };
+        return { transform: [{ scale: value.get() }] };
     }
   }, [type]);
 
   // Create the animated style using the derived value
-  const animatedStyle = useAnimatedStyle(() => transformStyle.value, [transformStyle]);
+  const animatedStyle = useAnimatedStyle(() => transformStyle.get(), [transformStyle]);
 
   // Optional: React to animation completion for debugging
   useAnimatedReaction(
-    () => value.value,
+    () => value.get(),
     _currentValue => {
       // Could add logging or side effects here if needed
       // For now, just a placeholder for future enhancements
