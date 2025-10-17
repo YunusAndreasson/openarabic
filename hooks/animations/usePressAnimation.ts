@@ -1,4 +1,3 @@
-'use no memo';
 import { useCallback, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { WithSpringConfig } from 'react-native-reanimated';
@@ -96,10 +95,10 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   // Create animated style
   const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
     'worklet';
-    const scale = interpolate(pressed.value, [0, 1], [1, finalScaleAmount], 'clamp');
+    const scale = interpolate(pressed.get(), [0, 1], [1, finalScaleAmount], 'clamp');
 
     if (finalIncludeOpacity) {
-      const opacity = interpolate(pressed.value, [0, 1], [1, finalOpacityAmount], 'clamp');
+      const opacity = interpolate(pressed.get(), [0, 1], [1, finalOpacityAmount], 'clamp');
       return {
         transform: [{ scale }],
         opacity,
@@ -119,12 +118,12 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   // Press handlers - optimized to run on UI thread
   const animatePressIn = useCallback(() => {
     'worklet';
-    pressed.value = withSpring(1, finalSpringConfig);
+    pressed.set(withSpring(1, finalSpringConfig));
   }, [pressed, finalSpringConfig]);
 
   const animatePressOut = useCallback(() => {
     'worklet';
-    pressed.value = withSpring(0, finalSpringConfig);
+    pressed.set(withSpring(0, finalSpringConfig));
   }, [pressed, finalSpringConfig]);
 
   const handlePressIn = useCallback(() => {
