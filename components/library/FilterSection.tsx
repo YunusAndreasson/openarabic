@@ -1,4 +1,4 @@
-import BaseCard from '@common/BaseCard';
+import { BaseCard } from '@common/BaseCard';
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 

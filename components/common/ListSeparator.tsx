@@ -6,9 +6,8 @@ interface ListSeparatorProps {
   height?: number;
 }
 
-function ListSeparator({ height = LAYOUT.SPACING.MEDIUM }: ListSeparatorProps) {
+export function ListSeparator({ height = LAYOUT.SPACING.MEDIUM }: ListSeparatorProps) {
   const separatorStyle = { height };
   return <View style={separatorStyle} />;
 }
 
-export default ListSeparator;

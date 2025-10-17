@@ -4,7 +4,7 @@
  * Displays practice session options using a scientifically-grounded 3-phase color system
  * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
  */
-import BaseCard from '@common/BaseCard';
+import { BaseCard } from '@common/BaseCard';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 

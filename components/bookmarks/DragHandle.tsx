@@ -13,7 +13,7 @@ export interface DragHandleProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const DragHandle: FC<DragHandleProps> = ({
+export const DragHandle: FC<DragHandleProps> = ({
   onLongPress,
   delayLongPress = TIMING_CONFIG.FAST.duration,
   style,
@@ -45,4 +45,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DragHandle;

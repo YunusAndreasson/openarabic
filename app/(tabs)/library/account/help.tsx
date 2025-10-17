@@ -6,8 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import BaseCard from '@/components/common/BaseCard';
-import SectionTitle from '@/components/common/SectionTitle';
+import { BaseCard } from '@/components/common/BaseCard';
+import { SectionTitle } from '@/components/common/SectionTitle';
 import { FAQ_DATA, type FAQCategoryData, type FAQItem } from '@/constants/faq';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';

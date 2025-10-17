@@ -27,7 +27,7 @@ export interface SleepTimerProps {
 const timerOptions = [5, 10, 15, 30, 45, 60]; // minutes
 const DEFAULT_SELECTED_MINUTES = 15; // Pre-select 15 minutes
 
-function SleepTimer({
+export function SleepTimer({
   isVisible,
   onClose,
   onTimerSet,
@@ -209,4 +209,3 @@ const styles = StyleSheet.create({
 
 SleepTimer.displayName = 'SleepTimer';
 
-export default SleepTimer;

@@ -6,7 +6,7 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
 
-const DeleteButton: FC<
+export const DeleteButton: FC<
   Omit<BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>, 'icon'>
 > = ({ onPress, disabled = false }) => {
   const colors = useColors();
@@ -24,4 +24,3 @@ const DeleteButton: FC<
   );
 };
 
-export default DeleteButton;

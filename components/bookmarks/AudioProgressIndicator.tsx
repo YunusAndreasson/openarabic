@@ -31,7 +31,7 @@ interface AudioProgressIndicatorProps {
   useWhiteText?: boolean;
 }
 
-const AudioProgressIndicator = ({
+export const AudioProgressIndicator = ({
   position,
   duration,
   progressPercentage,
@@ -115,4 +115,3 @@ const styles = StyleSheet.create({
 
 AudioProgressIndicator.displayName = 'AudioProgressIndicator';
 
-export default memo(AudioProgressIndicator);

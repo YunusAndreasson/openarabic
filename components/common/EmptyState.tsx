@@ -38,7 +38,7 @@ function handleBrowseArticles(): void {
  * - Figure-Ground: Clear distinction between content and background
  * - Continuation: Natural flow from icon to title to description
  */
-function EmptyState({
+export function EmptyState({
   title,
   description,
   actionText,
@@ -166,4 +166,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EmptyState;

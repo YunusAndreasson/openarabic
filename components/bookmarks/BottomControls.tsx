@@ -17,7 +17,7 @@ export type BottomControlsProps = {
   secondaryDisabled?: boolean;
 };
 
-const BottomControls = memo<BottomControlsProps>(
+export const BottomControls = memo<BottomControlsProps>(
   ({
     primaryLabel,
     onPrimaryPress,
@@ -130,4 +130,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BottomControls;

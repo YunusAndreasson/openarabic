@@ -13,7 +13,7 @@ interface SectionTitleProps {
   isFirstSection?: boolean;
 }
 
-const SectionTitle: FC<SectionTitleProps> = ({
+export const SectionTitle: FC<SectionTitleProps> = ({
   title,
   subtitle,
   containerStyle,
@@ -62,7 +62,6 @@ const areEqual = (prevProps: SectionTitleProps, nextProps: SectionTitleProps) =>
   );
 };
 
-export default memo(SectionTitle, areEqual);
 
 const styles = StyleSheet.create({
   container: {

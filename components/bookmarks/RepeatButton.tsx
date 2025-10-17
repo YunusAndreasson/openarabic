@@ -19,7 +19,7 @@ interface RepeatButtonProps
   onToggle: () => void;
 }
 
-const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => {
+export const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => {
   const colors = useColors();
 
   // Simple icon rotation animation
@@ -107,4 +107,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RepeatButton;

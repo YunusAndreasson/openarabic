@@ -18,7 +18,7 @@ interface ListenHeaderProps {
   hasCurrentWord?: boolean;
 }
 
-const ListenHeader = memo<ListenHeaderProps>(
+export const ListenHeader = memo<ListenHeaderProps>(
   ({ progress, maxProgress, animationKey, onClose, onManageWord, hasCurrentWord = false }) => {
     const colors = useColors();
 
@@ -126,4 +126,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ListenHeader;

@@ -1,6 +1,6 @@
 // External Libraries
-import BaseCard from '@common/BaseCard';
-import SectionTitle from '@common/SectionTitle';
+import { BaseCard } from '@common/BaseCard';
+import { SectionTitle } from '@common/SectionTitle';
 import { Ionicons } from '@expo/vector-icons';
 import { TimePicker } from '@ui/TimePicker';
 import { Toggle } from '@ui/Toggle';

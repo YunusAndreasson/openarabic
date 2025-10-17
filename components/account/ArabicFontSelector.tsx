@@ -1,4 +1,4 @@
-import BaseCard from '@common/BaseCard';
+import { BaseCard } from '@common/BaseCard';
 import Slider from '@react-native-community/slider';
 import { useEffect, useState, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';

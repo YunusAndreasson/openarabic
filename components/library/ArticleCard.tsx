@@ -1,4 +1,4 @@
-import BaseCard from '@common/BaseCard';
+import { BaseCard } from '@common/BaseCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';

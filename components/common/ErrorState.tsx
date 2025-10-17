@@ -16,7 +16,7 @@ interface ErrorStateProps {
 /**
  * A component for displaying error messages
  */
-function ErrorState({ message, onRetry }: ErrorStateProps) {
+export function ErrorState({ message, onRetry }: ErrorStateProps) {
   // Provide haptic feedback when error state is shown
   useEffect(() => {
     errorFeedback();
@@ -53,4 +53,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ErrorState;

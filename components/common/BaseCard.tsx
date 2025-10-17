@@ -8,7 +8,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { BaseCardProps } from '@/types/ui/card.types';
 import { createCardContentStyle } from '@/utils/textStyleUtils';
 
-const BaseCard: FC<BaseCardProps> = ({
+export const BaseCard: FC<BaseCardProps> = ({
   children,
   style,
   onPress,
@@ -104,4 +104,3 @@ const styles = StyleSheet.create({
 
 BaseCard.displayName = 'BaseCard';
 
-export default BaseCard;

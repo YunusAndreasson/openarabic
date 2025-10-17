@@ -1,4 +1,4 @@
-import BaseCard from '@common/BaseCard';
+import { BaseCard } from '@common/BaseCard';
 import { ProgressCircle } from '@common/ProgressCircle';
 import { useEffect, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';

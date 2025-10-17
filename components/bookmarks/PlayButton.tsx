@@ -17,7 +17,7 @@ function getIconName(isPlaying: boolean): 'pause' | 'play' {
   return isPlaying ? 'pause' : 'play';
 }
 
-const PlayButton: FC<PlayButtonProps> = ({ onPress, isPlaying = false, disabled = false }) => {
+export const PlayButton: FC<PlayButtonProps> = ({ onPress, isPlaying = false, disabled = false }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const currentTheme = useCurrentTheme();
@@ -47,4 +47,3 @@ const PlayButton: FC<PlayButtonProps> = ({ onPress, isPlaying = false, disabled 
   );
 };
 
-export default PlayButton;
