@@ -97,14 +97,20 @@ export const AUDIO_QUERY_KEYS = {
 } as const;
 
 /**
+ * Import FSRS keys for combined export
+ */
+import { FSRS_QUERY_KEYS } from './fsrs';
+
+/**
  * Combined export for convenience
- * Includes FSRS keys which are already centralized in constants/fsrs.ts
+ * Single source of truth for all query keys across the application
  */
 export const QUERY_KEYS = {
   articles: ARTICLE_QUERY_KEYS,
   readingList: READING_LIST_QUERY_KEYS,
   readingProgress: READING_PROGRESS_QUERY_KEYS,
   audio: AUDIO_QUERY_KEYS,
+  fsrs: FSRS_QUERY_KEYS,
 } as const;
 
 /**
