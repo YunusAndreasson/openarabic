@@ -65,6 +65,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleCloseTooltip,
     handleOpenWordDetails,
     handleAddWordToStudy,
+    handleFlashListLoad,
   } = useArticleScreen({ id, showToast });
 
   // Memoize settings object to prevent recreation on every sentence
@@ -127,6 +128,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       onToggleLanguage: handleToggleLanguageWithFeedback,
       isLanguageOverridden: isOverridden,
       onClose: handleClose,
+      onFlashListLoad: handleFlashListLoad,
     };
   }, [
     article,
@@ -146,6 +148,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleToggleLanguageWithFeedback,
     isOverridden,
     handleClose,
+    handleFlashListLoad,
   ]);
 
   // Show loader while article is loading

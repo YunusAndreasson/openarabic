@@ -124,6 +124,16 @@ export const SettingsPicker = <T,>({
     }
   }, [isVisible]);
 
+  // Handle sheet position changes - sync parent state when dismissed via gesture
+  const handleChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
   const handleValueSelect = useCallback(
     (value: T) => {
       // Set optimistic value for immediate visual feedback
@@ -157,21 +167,17 @@ export const SettingsPicker = <T,>({
     [colors.elevation1, colors.modalIndicator]
   );
 
-  // Only render when visible
-  if (!isVisible) {
-    return null;
-  }
-
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={0}
+      index={-1}
       snapPoints={snapPoints}
       enablePanDownToClose
       enableOverDrag={false}
       enableDynamicSizing={false}
       animateOnMount={true}
       activeOffsetY={[-10, 10]}
+      onChange={handleChange}
       onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}

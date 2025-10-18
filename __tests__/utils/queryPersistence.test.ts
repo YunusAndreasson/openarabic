@@ -42,7 +42,7 @@ describe('Query Persistence', () => {
 
       // Captured config from factory
       expect(captured.lastOptions).toBeDefined();
-      expect(captured.lastOptions.key).toBe('REACT_QUERY_OFFLINE_CACHE');
+      expect(captured.lastOptions.key).toBe('REACT_QUERY_OFFLINE_CACHE_V2');
       expect(captured.lastOptions.throttleTime).toBe(1000);
       expect(captured.lastOptions.storage).toBe('MOCK_STORAGE');
       expect(typeof captured.lastOptions.serialize).toBe('function');
@@ -87,9 +87,9 @@ describe('Query Persistence', () => {
     });
 
     describe('user data keys', () => {
-      it('should persist readingList query', () => {
+      it('should NOT persist readingList query (user-specific & auth-dependent)', () => {
         const query = createMockQuery(['readingList', 'user-123']);
-        expect(shouldDehydrateQuery(query)).toBe(true);
+        expect(shouldDehydrateQuery(query)).toBe(false);
       });
     });
 
@@ -101,9 +101,14 @@ describe('Query Persistence', () => {
     });
 
     describe('vocabulary keys', () => {
-      it('should persist fsrs-words query without excluded patterns', () => {
-        const query = createMockQuery(['fsrs-words', 'user-123']);
+      it('should persist fsrs-words query without userId (fallback queries)', () => {
+        const query = createMockQuery(['fsrs-words']);
         expect(shouldDehydrateQuery(query)).toBe(true);
+      });
+
+      it('should NOT persist fsrs-words query with userId (user-specific)', () => {
+        const query = createMockQuery(['fsrs-words', 'f6020b4d-9c1d-4002-afd6-33eee6ce4c25']);
+        expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
       it('should NOT persist fsrs-words query with "due" pattern', () => {
@@ -113,6 +118,16 @@ describe('Query Persistence', () => {
 
       it('should NOT persist fsrs-words query with "live" pattern', () => {
         const query = createMockQuery(['fsrs-words', 'user-123', 'live']);
+        expect(shouldDehydrateQuery(query)).toBe(false);
+      });
+
+      it('should NOT persist fsrs-words query with "cooldown" pattern', () => {
+        const query = createMockQuery(['fsrs-words', 'user-123', 'all', 'cooldown', 1]);
+        expect(shouldDehydrateQuery(query)).toBe(false);
+      });
+
+      it('should NOT persist fsrs-words stats query with userId', () => {
+        const query = createMockQuery(['fsrs-words', 'f6020b4d-9c1d-4002-afd6-33eee6ce4c25', 'stats']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
     });
@@ -142,6 +157,11 @@ describe('Query Persistence', () => {
 
       it('should NOT persist queries with "live" pattern in any position', () => {
         const query = createMockQuery(['some-key', 'user-123', 'live']);
+        expect(shouldDehydrateQuery(query)).toBe(false);
+      });
+
+      it('should NOT persist queries with "cooldown" pattern in any position', () => {
+        const query = createMockQuery(['some-key', 'user-123', 'cooldown', 2]);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
     });

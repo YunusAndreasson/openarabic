@@ -55,7 +55,7 @@ const GRADIENT_STYLE = {
 type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
   author: string;
   category: string;
-  categoryForDisplay: string;
+  pillLabel?: string; // Optional custom pill label (defaults to category)
   imageUrl: string;
   summary: string;
   title: string;
@@ -106,7 +106,7 @@ export function ArticleCard({
   author,
   imageUrl,
   category,
-  categoryForDisplay,
+  pillLabel,
   summary,
   style,
   testID,
@@ -137,9 +137,10 @@ export function ArticleCard({
   // Computed values for child components
   const imageContainerStyle = [styles.imageContainer, { height: imageHeight }];
 
-  const capitalizedCategory = capitalizeFirstLetter(category);
-  const categoryForAuthorDisplay = categoryForDisplay || category;
-  const authorDisplayText = formatAuthorCategory(author, categoryForAuthorDisplay);
+  // Use pillLabel if provided, otherwise use category for the pill
+  const pillText = pillLabel ?? category;
+  const capitalizedPillText = capitalizeFirstLetter(pillText);
+  const authorDisplayText = formatAuthorCategory(author, category);
 
   // Gradient props
   const gradientProps = {
@@ -176,7 +177,7 @@ export function ArticleCard({
         </View>
 
         <View style={styles.pillContainer}>
-          <Pill id={category} label={capitalizedCategory} variant="category" />
+          <Pill id={pillText} label={capitalizedPillText} variant="category" />
         </View>
 
         <View style={styles.contentContainer}>

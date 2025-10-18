@@ -53,11 +53,33 @@ function getSummaryColor(wordCount: number): {
   text: string;
   label: string;
 } {
-  if (wordCount <= 30) {
+  if (wordCount < 20) {
+    return { bg: 'bg-yellow-500', text: 'text-yellow-700', label: 'Short' };
+  } else if (wordCount <= 30) {
     return { bg: 'bg-green-500', text: 'text-green-700', label: 'Good' };
   } else {
     return { bg: 'bg-orange-500', text: 'text-orange-700', label: 'Long' };
   }
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  // Today
+  if (diffDays === 0) return 'Today';
+
+  // Yesterday
+  if (diffDays === 1) return 'Yesterday';
+
+  // All other dates - show simple format
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
@@ -68,7 +90,7 @@ type Article = Database['public']['Tables']['articles']['Row'] & {
 type Author = Database['public']['Tables']['authors']['Row'];
 type Category = Database['public']['Tables']['categories']['Row'];
 
-type SortField = 'title' | 'author' | 'category' | 'summary';
+type SortField = 'title' | 'author' | 'category' | 'summary' | 'created_at';
 type SortDirection = 'asc' | 'desc' | null;
 
 export default function ArticlesPage() {
@@ -234,6 +256,11 @@ export default function ArticlesPage() {
           const wordsB = countWords(b.summary);
           comparison = wordsA - wordsB;
           break;
+        case 'created_at':
+          const dateA = new Date(a.created_at).getTime();
+          const dateB = new Date(b.created_at).getTime();
+          comparison = dateA - dateB;
+          break;
       }
 
       return sortDirection === 'asc' ? comparison : -comparison;
@@ -313,12 +340,23 @@ export default function ArticlesPage() {
                     {getSortIcon('summary')}
                   </Button>
                 </TableHead>
+                <TableHead className="w-40">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="-ml-3 h-8 data-[state=open]:bg-accent"
+                    onClick={() => toggleSort('created_at')}
+                  >
+                    Date Added
+                    {getSortIcon('created_at')}
+                  </Button>
+                </TableHead>
               </TableRow>
             </TableHeader>
           <TableBody>
             {filteredArticles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No articles found
                 </TableCell>
               </TableRow>
@@ -418,6 +456,11 @@ export default function ArticlesPage() {
                           </div>
                         </TooltipContent>
                       </Tooltip>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(article.created_at)}
+                      </span>
                     </TableCell>
                   </TableRow>
                 );

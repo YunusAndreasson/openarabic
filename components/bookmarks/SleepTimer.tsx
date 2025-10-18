@@ -3,7 +3,7 @@ import BottomSheet, {
   type BottomSheetBackdropProps,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -53,6 +53,16 @@ export function SleepTimer({
     }
   }, [isVisible]);
 
+  // Handle sheet position changes - sync parent state when dismissed via gesture
+  const handleChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
   const handleSetTimer = () => {
     successFeedback();
     onTimerSet(selectedMinutes);
@@ -72,17 +82,13 @@ export function SleepTimer({
     <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} onPress={onClose} />
   );
 
-  // Don't render anything if not visible
-  if (!isVisible) {
-    return null;
-  }
-
   return (
     <BottomSheet
       ref={bottomSheetRef}
       snapPoints={snapPoints}
-      index={0}
+      index={-1}
       enablePanDownToClose={true}
+      onChange={handleChange}
       onClose={onClose}
       backdropComponent={renderBackdrop}
       style={styles.modalStyle}

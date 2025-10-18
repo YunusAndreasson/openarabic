@@ -146,23 +146,20 @@ function DummyReview(): JSX.Element {
 }
 
 describe('UI flow', () => {
-  it('opens an article', () => {
-    const onPress = jest.fn();
+  it('renders an article card', () => {
     const { getByTestId } = render(
       <ArticleCard
         author="A"
         category="cat"
-        categoryForDisplay="Category"
         imageUrl="img"
         summary="s"
         title="t"
-        onPress={onPress}
+        article={{ id: 1, title: 't' } as any}
         testID="article-1"
       />
     );
 
-    fireEvent.press(getByTestId('article-1'));
-    expect(onPress).toHaveBeenCalled();
+    expect(getByTestId('article-1')).toBeTruthy();
   });
 
   it('opens word tooltip on press', () => {

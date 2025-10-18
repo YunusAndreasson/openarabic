@@ -1,5 +1,5 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ColorCodedText } from '@/components/common/ColorCodedText';
@@ -61,6 +61,16 @@ export function WordDetailsBottomSheet({
     }
   }, [isVisible]);
 
+  // Handle sheet position changes - sync parent state when dismissed via gesture
+  const handleChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
   // Handle play audio
   const handlePlayAudio = async () => {
     if (!word?.audio_url) return;
@@ -115,6 +125,7 @@ export function WordDetailsBottomSheet({
     <BottomSheet
       ref={bottomSheetRef}
       snapPoints={SNAP_POINTS}
+      onChange={handleChange}
       onClose={onClose}
       backdropComponent={renderBackdrop}
       style={styles.modalStyle}

@@ -179,7 +179,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
 
   // Reading progress
   const isActive = !!article && !isLoadingArticle;
-  const { updateProgress, initialLastSentenceRead: _initialLastSentenceRead, hadExistingProgressOnMount: _hadExistingProgressOnMount } =
+  const { updateProgress, initialLastSentenceRead, hadExistingProgressOnMount } =
     useReadingProgress({
       articleId: articleId ?? 0,
       totalSentences: sortedSentences?.length ?? 0,
@@ -190,6 +190,12 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   // Track current sentence for reading progress
   const scrollViewRef = useRef<FlashListRef<Tables<'article_sentences'>> | null>(null);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
+
+  // FlashList ready state for scroll-to-position
+  const [isFlashListReady, setIsFlashListReady] = useState(false);
+  const handleFlashListLoad = useCallback(() => {
+    setIsFlashListReady(true);
+  }, []);
 
   // Handle viewable items changed to track current sentence
   const handleViewableItemsChanged = useCallback(
@@ -240,6 +246,23 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
       updateProgress(currentSentenceIndex);
     }
   }, [currentSentenceIndex, article, isLoadingArticle, updateProgress]);
+
+  // Scroll to last read position when FlashList is ready
+  useEffect(() => {
+    if (isFlashListReady && hadExistingProgressOnMount && initialLastSentenceRead > 0) {
+      scrollViewRef.current?.scrollToIndex({
+        index: initialLastSentenceRead + 1,
+        animated: true,
+        viewPosition: 0.1,
+      });
+
+      // Show toast notification
+      const totalSentences = sortedSentences?.length ?? 1;
+      const percentage = Math.round((initialLastSentenceRead / totalSentences) * 100);
+      const message = STRINGS.RESUMED_READING_TEMPLATE.replace('{percent}', percentage.toString());
+      showToast(message, 3000, ToastType.INFO);
+    }
+  }, [isFlashListReady, hadExistingProgressOnMount, initialLastSentenceRead, sortedSentences?.length, showToast]);
 
   // Refetch on app state change
   useEffect(() => {
@@ -342,5 +365,6 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     handleCloseTooltip,
     handleOpenWordDetails,
     handleAddWordToStudy,
+    handleFlashListLoad,
   };
 }

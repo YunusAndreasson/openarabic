@@ -1,6 +1,6 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
@@ -37,6 +37,16 @@ export const GenericChartBottomSheet: FC<GenericChartBottomSheetProps> = ({ isVi
     }
   }, [isVisible]);
 
+  // Handle sheet position changes - sync parent state when dismissed via gesture
+  const handleChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
+
   // Backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
 
@@ -48,6 +58,7 @@ export const GenericChartBottomSheet: FC<GenericChartBottomSheetProps> = ({ isVi
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
+      onChange={handleChange}
       onDismiss={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}

@@ -24,8 +24,8 @@ const FeaturedSectionComponent: FC<FeaturedSectionProps> = ({ article }) => {
       <ArticleCard
         article={article}
         author={article.author.name}
-        category={STRINGS.RECOMMENDED}
-        categoryForDisplay={article.category.name}
+        category={article.category.name}
+        pillLabel={STRINGS.RECOMMENDED}
         imageUrl={generateImageUrl(article.image_url)}
         style={styles.cardStyle}
         summary={String(article.summary)}

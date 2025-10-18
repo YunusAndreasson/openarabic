@@ -213,7 +213,7 @@ const MiniPlayerComponent = ({
                 onPress={onTimerPress}
                 backgroundColor={timerButtonColor}
                 iconColor={timerIconColor}
-                iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               />
 
               {/* Stop button - playback is only started via PLAY ALL */}
@@ -222,7 +222,7 @@ const MiniPlayerComponent = ({
                 onPress={onPlayPause}
                 backgroundColor={colors.tint}
                 iconColor={colors.black}
-                iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               />
             </View>
           </View>

@@ -20,6 +20,7 @@ import { UiAction } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
+import { clearPersistedQueryCache } from '@/utils/queryPersistence';
 
 const useUserWithCreationDate = () => {
   const { user } = useAuth();
@@ -103,8 +104,11 @@ export const useAccountScreen = () => {
               await clearCache();
               setCacheSize(0);
 
-              // Clear React Query cache
+              // Clear React Query in-memory cache
               queryClient.clear();
+
+              // Clear React Query persisted AsyncStorage cache (fixes hydration errors)
+              await clearPersistedQueryCache();
 
               lightFeedback();
               Alert.alert(STRINGS.SUCCESS, STRINGS.CACHE_CLEARED_SUCCESSFULLY);

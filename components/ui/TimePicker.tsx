@@ -5,7 +5,7 @@ import BottomSheet, {
 } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -49,6 +49,16 @@ export function TimePicker({ isVisible, onClose, onTimeSet, initialHour = 12, in
         bottomSheetRef.current?.close();
       }
     }, [isVisible]);
+
+  // Handle sheet position changes - sync parent state when dismissed via gesture
+  const handleChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   const extractTimeAndSet = (date: Date) => {
     const hour = date.getHours();
@@ -112,8 +122,8 @@ export function TimePicker({ isVisible, onClose, onTimeSet, initialHour = 12, in
     );
   }
 
-  // Only render on iOS and when visible
-  if (Platform.OS !== 'ios' || !isVisible) {
+  // Only render on iOS
+  if (Platform.OS !== 'ios') {
     return null;
   }
 
@@ -121,13 +131,14 @@ export function TimePicker({ isVisible, onClose, onTimeSet, initialHour = 12, in
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={0}
+      index={-1}
       snapPoints={snapPoints}
       enablePanDownToClose
       enableOverDrag={false}
       enableDynamicSizing={false}
       animateOnMount={true}
       activeOffsetY={[-10, 10]}
+      onChange={handleChange}
       onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}

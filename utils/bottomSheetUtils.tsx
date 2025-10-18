@@ -22,9 +22,11 @@ export const useBottomSheetBackdrop = (onClose: () => void) => {
 /**
  * Common bottom sheet props for consistent behavior
  * Reduces prop duplication across all bottom sheet components
+ *
+ * NOTE: index is -1 (closed) by default. Use expand() to show the sheet.
  */
 export const COMMON_BOTTOM_SHEET_PROPS = {
-  index: 0,
+  index: -1,
   enablePanDownToClose: true,
   enableOverDrag: false,
   enableDynamicSizing: false,

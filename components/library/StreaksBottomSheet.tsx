@@ -1,5 +1,5 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -36,6 +36,16 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
       bottomSheetRef.current?.dismiss();
     }
   }, [isVisible]);
+
+  // Handle sheet position changes - sync parent state when dismissed via gesture
+  const handleChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
@@ -118,6 +128,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
+      onChange={handleChange}
       onDismiss={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}

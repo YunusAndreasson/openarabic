@@ -16,10 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Loader2, Upload } from 'lucide-react';
+import { ArrowLeft, Loader2, Upload, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { ImagePicker } from '@/components/image-picker';
 import { SentenceAudioVerifier } from '@/components/sentence-audio-verifier';
+import { SummaryPreviewDialog } from '@/components/summary-preview-dialog';
 
 const SUPABASE_STORAGE_URL = 'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
 
@@ -59,6 +60,14 @@ export default function EditArticlePage() {
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
+
+  // AI Summary Optimization state
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [optimizedSummary, setOptimizedSummary] = useState<string | null>(null);
+  const [originalSummary, setOriginalSummary] = useState('');
+  const [originalWordCount, setOriginalWordCount] = useState(0);
+  const [optimizedWordCount, setOptimizedWordCount] = useState(0);
 
   useEffect(() => {
     fetchData();
@@ -110,6 +119,74 @@ export default function EditArticlePage() {
     setImageUrl(selectedImageUrl);
     setImagePreview(selectedImageUrl);
     setImageFile(null); // Clear any uploaded file
+  };
+
+  const countWords = (text: string): number => {
+    return text.trim().split(/\s+/).filter(Boolean).length;
+  };
+
+  const handleOptimizeSummary = () => {
+    const wordCount = countWords(summary);
+    setOriginalSummary(summary);
+    setOriginalWordCount(wordCount);
+    setShowPreviewDialog(true);
+    setOptimizedSummary(null);
+  };
+
+  const handleStartOptimization = async () => {
+    const wordCount = countWords(summary);
+    setIsOptimizing(true);
+
+    try {
+      const response = await fetch('/api/ai/optimize-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          articleId,
+          currentSummary: summary,
+          wordCount,
+          title,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to optimize summary');
+      }
+
+      setOptimizedSummary(data.optimizedSummary);
+      setOptimizedWordCount(data.wordCount);
+    } catch (error) {
+      console.error('Error optimizing summary:', error);
+      alert(error instanceof Error ? error.message : 'Failed to optimize summary');
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
+  const handleOptimizedSummaryChange = (value: string) => {
+    setOptimizedSummary(value);
+    setOptimizedWordCount(countWords(value));
+  };
+
+  const handleSaveSummary = () => {
+    if (!optimizedSummary) return;
+
+    // Update the form state with the optimized summary
+    setSummary(optimizedSummary);
+
+    // Close dialog
+    setShowPreviewDialog(false);
+    setOptimizedSummary(null);
+  };
+
+  const handleCancelOptimization = () => {
+    setShowPreviewDialog(false);
+    setOptimizedSummary(null);
+    setIsOptimizing(false);
   };
 
   const uploadImage = async (): Promise<string> => {
@@ -226,7 +303,20 @@ export default function EditArticlePage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="summary">Summary</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="summary">Summary</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleOptimizeSummary}
+              disabled={!summary.trim()}
+              className="cursor-pointer"
+            >
+              <Sparkles className="mr-2 h-3.5 w-3.5" />
+              Optimize with AI
+            </Button>
+          </div>
           <Textarea
             id="summary"
             value={summary}
@@ -235,6 +325,9 @@ export default function EditArticlePage() {
             placeholder="Article summary"
             rows={4}
           />
+          <p className="text-xs text-muted-foreground">
+            {countWords(summary)} words (target: 20-30 words)
+          </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -348,6 +441,20 @@ export default function EditArticlePage() {
       <div className="mt-8 border-t pt-6">
         <SentenceAudioVerifier articleId={articleId} />
       </div>
+
+      <SummaryPreviewDialog
+        open={showPreviewDialog}
+        onOpenChange={setShowPreviewDialog}
+        originalSummary={originalSummary}
+        optimizedSummary={optimizedSummary}
+        originalWordCount={originalWordCount}
+        optimizedWordCount={optimizedWordCount}
+        isOptimizing={isOptimizing}
+        onSave={handleSaveSummary}
+        onCancel={handleCancelOptimization}
+        onOptimizedSummaryChange={handleOptimizedSummaryChange}
+        onStartOptimization={handleStartOptimization}
+      />
     </div>
   );
 }

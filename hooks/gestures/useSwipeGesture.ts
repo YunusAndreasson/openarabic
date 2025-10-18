@@ -11,6 +11,7 @@ export interface SwipeGestureOptions {
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   onSwipeComplete?: (isRight: boolean) => void;
+  onGestureBegin?: () => void;
   onGestureStart?: () => void;
   onGestureEnd?: () => void;
   minDistance?: number;
@@ -37,6 +38,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
     onSwipeLeft,
     onSwipeRight,
     onSwipeComplete,
+    onGestureBegin,
     onGestureStart,
     onGestureEnd,
     minDistance = GESTURE_CONFIG.MIN_DISTANCE,
@@ -94,6 +96,12 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
         .enabled(enabled)
         .minDistance(minDistance)
         .activeOffsetX(activeOffsetX)
+        .onBegin(() => {
+          'worklet';
+          if (onGestureBegin) {
+            runOnJS(onGestureBegin)();
+          }
+        })
         .onStart(() => {
           'worklet';
           if (onGestureStart) {
@@ -152,6 +160,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
       maxTranslationRatio,
       swipeThresholdRatio,
       springConfig,
+      onGestureBegin,
       onGestureStart,
       onGestureEnd,
     ]

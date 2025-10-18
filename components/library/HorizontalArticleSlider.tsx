@@ -71,7 +71,6 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
             article={info.item}
             author={info.item.author.name}
             category={info.item.category.name}
-            categoryForDisplay={info.item.category.name}
             imageUrl={generateImageUrl(info.item.image_url)}
             style={cardStyle}
             summary={String(info.item.summary)}

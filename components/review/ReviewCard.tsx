@@ -3,7 +3,12 @@ import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import type { AnimatedStyle as ReanimatedAnimatedStyle, SharedValue } from 'react-native-reanimated';
-import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, {
+  interpolateColor,
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 
 import { WordDisplay as WordDisplayComponent } from '@/components/review/WordDisplay';
 import { SPRING_CONFIG } from '@/constants/animation';
@@ -73,22 +78,16 @@ export function ReviewCard({
   // Sync SharedValue to local state for React re-renders (needed for WordDisplay hint)
   const [showHint, setShowHint] = useState(false);
 
-  useEffect(() => {
-    if (!isHesitating) return;
-
-    // Poll the SharedValue at 60fps to sync with React state
-    const interval = setInterval(() => {
-      const currentValue = isHesitating.value;
-      setShowHint(prev => {
-        if (prev !== currentValue) {
-          return currentValue;
-        }
-        return prev;
-      });
-    }, 16); // ~60fps
-
-    return () => clearInterval(interval);
-  }, [isHesitating]);
+  // Use native Reanimated reaction instead of 60fps polling for better performance
+  useAnimatedReaction(
+    () => (isHesitating ? isHesitating.value : false),
+    (currentValue, previousValue) => {
+      if (currentValue !== previousValue) {
+        runOnJS(setShowHint)(currentValue);
+      }
+    },
+    [isHesitating]
+  );
 
   // ===== HESITATION TIMER =====
   const hesitationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -119,13 +118,17 @@ export function ReviewCard({
         onHesitationEnd();
       }
     }, // Clear timer when swipe completes
-    // Clear hesitation timer when user starts interacting (swiping)
-    // CRITICAL FIX: Do NOT call onHesitationEnd() here - it must be called AFTER
-    // the swipe handler reads isHesitating state. Calling it here causes a race
-    // condition where vague words are incorrectly marked as known.
-    onGestureStart: () => {
+    // Clear hesitation timer when user first touches the card (BEGAN state)
+    // This provides immediate feedback as soon as finger touches screen
+    onGestureBegin: () => {
       clearHesitationTimer();
       isGestureActiveRef.current = true;
+    },
+    // onStart is called when gesture is activated (swipe recognized)
+    // We use onBegin for earlier detection (on first touch)
+    onGestureStart: () => {
+      // Gesture is now active (swipe recognized)
+      // Timer already cleared in onBegin
     },
   });
 

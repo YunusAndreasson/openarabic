@@ -23,17 +23,15 @@ class SimpleAudioService {
   private currentTrack: EnhancedAudioTrack | null = null;
   private listeners: Set<(status: AudioStatus) => void> = new Set();
   private eventSubscription: { remove: () => void } | null = null;
-  private loadingTimeout: ReturnType<typeof setTimeout> | null = null;
-  private stuckCheckTimeout: ReturnType<typeof setTimeout> | null = null;
   private audioSessionConfigured = false;
 
   // Player cache to avoid recreation for frequently played audio
   private playerCache: Map<string, AudioPlayer> = new Map();
   private readonly MAX_CACHE_SIZE = 5; // Reduced for simplicity
 
-  // STABILIZATION: Add state transition smoothing
+  // STABILIZATION: Minimal throttling since native updateInterval already limits updates
   private lastStatusUpdate = 0;
-  private statusUpdateThrottle = 100; // 100ms for responsive button state updates (especially for short audio)
+  private statusUpdateThrottle = 50; // 50ms minimal throttle, native updateInterval (500ms) handles most throttling
 
   // PLAYLIST SUPPORT: Add playlist state management
   private playlist: EnhancedAudioTrack[] = [];
@@ -45,9 +43,6 @@ class SimpleAudioService {
   // SLEEP TIMER SUPPORT: Track when sleep timer has expired
   private sleepTimerExpired = false;
 
-  // DIAGNOSTIC: Track if we've already retried play() for this track
-  private hasRetriedPlay = false;
-
   // APP STATE SUPPORT: Track app state for background audio handling
   private appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
@@ -58,6 +53,13 @@ class SimpleAudioService {
     currentTime: 0,
     duration: 0,
     currentTrack: null,
+    // Native states
+    isLoaded: false,
+    isBuffering: false,
+    playbackState: 'idle',
+    timeControlStatus: 'paused',
+    reasonForWaitingToPlay: '',
+    didJustFinish: false,
   };
 
   /**
@@ -167,6 +169,12 @@ class SimpleAudioService {
         currentTrack: null,
         currentTime: 0,
         duration: 0,
+        isLoaded: false,
+        isBuffering: false,
+        playbackState: 'idle',
+        timeControlStatus: 'paused',
+        reasonForWaitingToPlay: '',
+        didJustFinish: false,
       });
     } catch (error) {
       // Even if reset fails, clear the configuration flag to force reconfiguration
@@ -274,7 +282,12 @@ class SimpleAudioService {
    */
   async play(
     track: EnhancedAudioTrack,
-    options: { skipPolling?: boolean; immediateStatus?: boolean; skipLoadingState?: boolean } = {}
+    options: {
+      skipPolling?: boolean;
+      immediateStatus?: boolean;
+      skipLoadingState?: boolean;
+      isRetry?: boolean;
+    } = {}
   ): Promise<boolean> {
     try {
       // CRITICAL: Ensure audio session is active before EVERY play attempt
@@ -292,9 +305,6 @@ class SimpleAudioService {
       this.currentPlayer = await this.createOrReusePlayer(track.audioUrl);
       this.currentTrack = track;
 
-      // Reset retry flag for new track
-      this.hasRetriedPlay = false;
-
       // IMMEDIATE FEEDBACK: Update status to loading right away
       // RESET: Ensure progress starts from 0 for new tracks
       // FLICKER FIX: Skip loading state for playlist starts (audio is cached, loads instantly)
@@ -305,6 +315,12 @@ class SimpleAudioService {
           currentTrack: this.currentTrack,
           currentTime: 0,
           duration: 0,
+          isLoaded: false,
+          isBuffering: true,
+          playbackState: 'idle',
+          timeControlStatus: 'paused',
+          reasonForWaitingToPlay: '',
+          didJustFinish: false,
         });
       }
 
@@ -327,30 +343,13 @@ class SimpleAudioService {
       this.currentPlayer.play();
 
       // Update status to playing (actual state will come from event subscription)
+      // Note: Native states (isLoaded, isBuffering) will be updated by event subscription
       this.updateStatus({
-        isLoading: false,
         isPlaying: true,
         currentTrack: this.currentTrack,
         currentTime: 0,
         duration: 0,
       });
-
-      // Set shorter loading timeout since audio should be cached
-      this.loadingTimeout = setTimeout(() => {
-        if (this.status.isLoading) {
-          // RESET: Clear progress on loading timeout
-          this.updateStatus({
-            isLoading: false,
-            isPlaying: false,
-            currentTime: 0,
-            duration: 0,
-          });
-          this.stopEventSubscription();
-        }
-      }, 3000); // Reduced from 10s to 3s for cached audio
-
-      // HEALTH CHECK: Verify player actually started playing
-      this.scheduleHealthCheck();
 
       return true;
     } catch (error) {
@@ -360,6 +359,12 @@ class SimpleAudioService {
         isPlaying: false,
         currentTime: 0,
         duration: 0,
+        isLoaded: false,
+        isBuffering: false,
+        playbackState: 'idle',
+        timeControlStatus: 'paused',
+        reasonForWaitingToPlay: '',
+        didJustFinish: false,
       });
 
       if (this.currentPlayer) {
@@ -370,42 +375,24 @@ class SimpleAudioService {
         }
       }
 
-      // CRITICAL FIX: Try to recover from audio session corruption
-      try {
-        await this.resetAudioSession();
+      // CRITICAL FIX: Try to recover from audio session corruption (only on first attempt)
+      if (!options.isRetry) {
+        try {
+          await this.resetAudioSession();
 
-        // Retry playback once after reset
-        const retrySuccess = await this.play(track, options);
-        if (retrySuccess) {
-          return true;
+          // Retry playback once after reset with isRetry flag to prevent infinite recursion
+          const retrySuccess = await this.play(track, { ...options, isRetry: true });
+          if (retrySuccess) {
+            return true;
+          }
+        } catch {
+          // Reset failed, continue with error handling
         }
-      } catch {
-        // Reset failed, continue with error handling
       }
 
       handleError(error as Error, { toastMessage: 'Failed to start audio playback' });
       return false;
     }
-  }
-
-  /**
-   * Schedule a health check to verify player actually started
-   */
-  private scheduleHealthCheck(): void {
-    // Clear any existing health check
-    if (this.stuckCheckTimeout) {
-      clearTimeout(this.stuckCheckTimeout);
-    }
-
-    // Wait 500ms then check if player is actually playing
-    this.stuckCheckTimeout = setTimeout(() => {
-      if (!this.currentPlayer) {
-        return;
-      }
-
-      // Silent health check - no action needed, just for monitoring
-      // The event subscription retry mechanism handles failures automatically
-    }, 500); // Wait 500ms for player to start
   }
 
   /**
@@ -518,9 +505,6 @@ class SimpleAudioService {
       // SLEEP TIMER SUPPORT: Reset sleep timer expired flag when stopping
       this.resetSleepTimerExpired();
 
-      // DIAGNOSTIC: Reset retry flag when stopping
-      this.hasRetriedPlay = false;
-
       await this.stopInternal();
       // RESET: Clear all progress and track data when stopping
       this.updateStatus({
@@ -529,6 +513,12 @@ class SimpleAudioService {
         currentTrack: null,
         currentTime: 0,
         duration: 0,
+        isLoaded: false,
+        isBuffering: false,
+        playbackState: 'idle',
+        timeControlStatus: 'paused',
+        reasonForWaitingToPlay: '',
+        didJustFinish: false,
       });
     } catch (stopError) {
       // RESET: Even on error, ensure all progress is cleared
@@ -538,6 +528,12 @@ class SimpleAudioService {
         currentTrack: null,
         currentTime: 0,
         duration: 0,
+        isLoaded: false,
+        isBuffering: false,
+        playbackState: 'idle',
+        timeControlStatus: 'paused',
+        reasonForWaitingToPlay: '',
+        didJustFinish: false,
       });
       // Re-throw to make the error visible
       throw new Error(`Failed to stop audio playback: ${stopError}`);
@@ -656,36 +652,26 @@ class SimpleAudioService {
       PLAYBACK_STATUS_UPDATE,
       (nativeStatus: any) => {
         try {
-          // Extract values from native status
+          // Extract all native values from expo-audio playbackStatusUpdate
           const isPlaying = nativeStatus.playing ?? false;
           const currentTime = nativeStatus.currentTime ?? 0;
           const duration = nativeStatus.duration ?? 0;
+          const isLoaded = nativeStatus.isLoaded ?? false;
+          const isBuffering = nativeStatus.isBuffering ?? false;
+          const playbackState = nativeStatus.playbackState ?? 'unknown';
+          const timeControlStatus = nativeStatus.timeControlStatus ?? 'paused';
+          const reasonForWaitingToPlay = nativeStatus.reasonForWaitingToPlay ?? '';
+          const didJustFinish = nativeStatus.didJustFinish ?? false;
 
-          // CRITICAL FIX: If player not playing at start, retry play() ONCE
-          // This fixes the intermittent issue where native player doesn't start
-          // Only retry once per track to avoid glitchy multiple retries
-          // Only retry if currentTime is 0 (actual startup failure, not transient pause)
-          if (!this.status.duration || currentTime < 1) {
-            if (!isPlaying && !this.hasRetriedPlay && currentTime < 0.1) {
-              this.hasRetriedPlay = true;
-
-              if (this.currentPlayer) {
-                // Small delay to let player stabilize before retry
-                setTimeout(() => {
-                  if (this.currentPlayer) {
-                    this.currentPlayer.play();
-                  }
-                }, 50); // 50ms delay
-              }
-            }
-          }
+          // Derive isLoading from native states (more accurate than custom logic)
+          const isLoading = !isLoaded || isBuffering;
 
           // Add safety checks for invalid values
           const safeCurrentTime = isNaN(currentTime) || !isFinite(currentTime) ? 0 : Math.max(0, currentTime);
           const safeDuration = isNaN(duration) || !isFinite(duration) ? 0 : Math.max(0, duration);
 
-          // PLAYLIST SUPPORT: Check if current track has completed
-          if (this.isPlaylistMode && safeDuration > 0 && safeCurrentTime >= safeDuration - 0.5) {
+          // PLAYLIST SUPPORT: Use native didJustFinish for track completion
+          if (this.isPlaylistMode && didJustFinish) {
             // Don't advance if sleep timer has expired
             if (this.sleepTimerExpired) {
               // Sleep timer expired - stop playlist instead of advancing
@@ -701,22 +687,28 @@ class SimpleAudioService {
               return;
             }
 
-            // Track is within 0.5 seconds of completion, advance to next track
+            // Track just finished, advance to next track
             this.advanceToNextTrack().catch(() => {
               // Track advancement failed - continue with current track
             });
             return;
           }
 
-          // SINGLE TRACK SUPPORT: Check if current single track has completed
-          if (!this.isPlaylistMode && safeDuration > 0 && safeCurrentTime >= safeDuration - 0.1) {
+          // SINGLE TRACK SUPPORT: Use native didJustFinish for completion
+          if (!this.isPlaylistMode && didJustFinish) {
             // Single track has finished playing, reset status but keep player for potential replay
             this.stopEventSubscription();
             this.updateStatus({
               isPlaying: false,
               isLoading: false,
-              currentTime: safeDuration, // Set to full duration
+              currentTime: safeDuration,
               duration: safeDuration,
+              isLoaded,
+              isBuffering: false,
+              playbackState: 'ended',
+              timeControlStatus,
+              reasonForWaitingToPlay,
+              didJustFinish: true,
             });
             return;
           }
@@ -725,14 +717,22 @@ class SimpleAudioService {
           const hasChanged =
             Math.abs(this.status.currentTime - safeCurrentTime) > 0.1 ||
             Math.abs(this.status.duration - safeDuration) > 0.1 ||
-            this.status.isPlaying !== isPlaying;
+            this.status.isPlaying !== isPlaying ||
+            this.status.isLoaded !== isLoaded ||
+            this.status.isBuffering !== isBuffering;
 
           if (hasChanged) {
             this.updateStatus({
               isPlaying,
               currentTime: safeCurrentTime,
               duration: safeDuration,
-              isLoading: false,
+              isLoading,
+              isLoaded,
+              isBuffering,
+              playbackState,
+              timeControlStatus,
+              reasonForWaitingToPlay,
+              didJustFinish,
             });
           }
         } catch (eventError) {
@@ -744,6 +744,12 @@ class SimpleAudioService {
             isLoading: false,
             currentTime: 0,
             duration: 0,
+            isLoaded: false,
+            isBuffering: false,
+            playbackState: 'unknown',
+            timeControlStatus: 'paused',
+            reasonForWaitingToPlay: '',
+            didJustFinish: false,
           });
           // Log error for debugging
           console.error('Audio event subscription failed:', eventError);
@@ -759,10 +765,6 @@ class SimpleAudioService {
     if (this.eventSubscription) {
       this.eventSubscription.remove();
       this.eventSubscription = null;
-    }
-    if (this.loadingTimeout) {
-      clearTimeout(this.loadingTimeout);
-      this.loadingTimeout = null;
     }
   }
 
@@ -787,15 +789,21 @@ class SimpleAudioService {
   }
 
   /**
-   * STABILIZATION: Enhanced status update with throttling to prevent rapid changes
+   * STABILIZATION: Enhanced status update with minimal throttling
+   * Native updateInterval (500ms) handles most throttling, this is just a safety net
    */
   private updateStatus(updates: Partial<AudioStatus>): void {
     const now = Date.now();
 
-    // Throttle status updates to prevent rapid UI changes
+    // Minimal throttle to prevent rapid UI changes
+    // Critical updates (playing/loading state changes) bypass throttling
     if (now - this.lastStatusUpdate < this.statusUpdateThrottle) {
-      // Only allow critical updates (like stopping) to bypass throttling
-      const isCriticalUpdate = updates.isPlaying === false || updates.isLoading === false;
+      const isCriticalUpdate =
+        updates.isPlaying !== undefined ||
+        updates.isLoading !== undefined ||
+        updates.isLoaded !== undefined ||
+        updates.isBuffering !== undefined;
+
       if (!isCriticalUpdate) {
         return;
       }
@@ -865,11 +873,20 @@ class SimpleAudioService {
 }
 
 export interface AudioStatus {
+  // Player state
   isPlaying: boolean;
-  isLoading: boolean;
+  isLoading: boolean; // Derived from !isLoaded || isBuffering
   currentTime: number;
   duration: number;
   currentTrack: EnhancedAudioTrack | null;
+
+  // Native expo-audio states (from AudioPlayer.playbackStatusUpdate)
+  isLoaded: boolean; // Whether audio has finished loading and is ready to play
+  isBuffering: boolean; // Whether player is currently buffering data
+  playbackState: string; // 'ready' | 'ended' | 'buffering' | 'idle' | 'unknown'
+  timeControlStatus: string; // 'playing' | 'paused' | 'waiting'
+  reasonForWaitingToPlay: string; // Why player is waiting (if applicable)
+  didJustFinish: boolean; // Whether audio just finished playing
 }
 
 // Export singleton instance

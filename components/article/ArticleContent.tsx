@@ -117,6 +117,8 @@ interface ArticleContentProps {
   isLanguageOverridden: boolean;
   // Close functionality
   onClose: () => void;
+  // FlashList ready callback for scroll-to-position
+  onFlashListLoad: () => void;
 }
 
 export function ArticleContent({
@@ -138,6 +140,7 @@ export function ArticleContent({
   onToggleLanguage,
   isLanguageOverridden,
   onClose,
+  onFlashListLoad,
 }: ArticleContentProps) {
     const insets = useSafeAreaInsets();
 
@@ -337,6 +340,7 @@ export function ArticleContent({
                   // noop
                 }
               }}
+              onLoad={onFlashListLoad}
             />
 
             {/* Floating action buttons */}
