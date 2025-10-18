@@ -1,10 +1,11 @@
 import { EmptyState } from '@common/EmptyState';
 import { ListSeparator } from '@common/ListSeparator';
 import { FlashList } from '@shopify/flash-list';
-import React, { type FC } from 'react';
+import React, { type FC, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 import { ThemedView } from '@/components/ThemedView';
@@ -28,11 +29,6 @@ const SeparatorComponent = () => <ListSeparator height={LAYOUT.SPACING.MEDIUM} /
 const STATIC_STYLES = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  listContent: {
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   emptyContainer: {
     flex: 1,
@@ -109,6 +105,8 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   HeaderComponent = null,
   filterType,
 }) => {
+  const insets = useSafeAreaInsets();
+
   // Apply global filters/sorting state to incoming articles
   // useFilteredArticles now returns BOTH articles AND their progress (single source of truth)
   const { articles: visibleArticles, progressMap, isProgressLoading } = useFilteredArticles(articles);
@@ -116,6 +114,16 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   // Simple derived state (no need for useMemo on primitives)
   const hasArticles = visibleArticles.length > 0;
   const shouldShowEmpty = !loading && !hasArticles;
+
+  // Dynamic list content style with safe area insets
+  const listContentStyle = useMemo(
+    () => ({
+      paddingTop: LAYOUT.SPACING.MEDIUM, // Add spacing between header and first card
+      paddingBottom: LAYOUT.SCREEN_PADDING.bottomDefault(insets.bottom),
+      paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    }),
+    [insets.bottom]
+  );
 
   // Handle drag end for reordering
   const handleDragEnd = ({ data }: { data: Article[] }) => {
@@ -231,7 +239,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
           renderItem={renderItem}
           onDragEnd={handleDragEnd}
           showsVerticalScrollIndicator={true}
-          contentContainerStyle={STATIC_STYLES.listContent}
+          contentContainerStyle={listContentStyle}
           ItemSeparatorComponent={SeparatorComponent}
           ListHeaderComponent={ListHeaderComponent}
           ListFooterComponent={FooterComponent}
@@ -245,7 +253,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
           removeClippedSubviews={true}
           scrollEventThrottle={SCROLL_EVENT_THROTTLE}
           showsVerticalScrollIndicator={true}
-          contentContainerStyle={STATIC_STYLES.listContent}
+          contentContainerStyle={listContentStyle}
           ItemSeparatorComponent={SeparatorComponent}
           ListHeaderComponent={ListHeaderComponent}
           ListFooterComponent={FooterComponent}

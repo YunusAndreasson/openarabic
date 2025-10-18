@@ -70,7 +70,6 @@ export const RecommendationCard = memo<RecommendationCardProps>(
 const styles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    marginTop: LAYOUT.SPACING.LARGE, // Match spacing between gauge and stat cards
   },
   container: {
     paddingVertical: LAYOUT.SPACING.MEDIUM,

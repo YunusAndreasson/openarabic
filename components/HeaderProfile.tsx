@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { ICON_CONTAINER, LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useStreaks } from '@/contexts/StreaksContext';
 import { usePressAnimation } from '@/hooks/animations';
@@ -120,7 +120,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
                 bottom: 0,
                 right: 0,
                 backgroundColor: colors.background,
-                borderRadius: 6,
+                borderRadius: LAYOUT.BORDER_RADIUS.SMALL_CIRCLE,
                 paddingHorizontal: LAYOUT.SPACING.MICRO / 2,
                 paddingVertical: 0,
                 fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
@@ -203,9 +203,9 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   baseStreakBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: ICON_CONTAINER.SMALL_SIZE,
+    height: ICON_CONTAINER.SMALL_SIZE,
+    borderRadius: ICON_CONTAINER.SMALL_RADIUS,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     justifyContent: 'center',
     alignItems: 'center',

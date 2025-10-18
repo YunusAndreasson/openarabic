@@ -190,7 +190,7 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Memoize bottom padding calculation with minimal dependencies
   const contentPaddingBottom = useMemo(
-    () => insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL,
+    () => LAYOUT.SCREEN_PADDING.bottomWithControls(insets.bottom),
     [insets.bottom]
   );
 
@@ -372,6 +372,6 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.TINY, // Subtle loading indicator
   },
   vocabularySection: {
-    // No margin needed - spacing handled by contentContainer
+    gap: LAYOUT.SPACING.MEDIUM, // 12px gap between VocabularyStatCards and RecommendationCard
   },
 });

@@ -28,7 +28,7 @@ const dividerStyles = StyleSheet.create({
   },
   dividerLine: {
     height: 1,
-    opacity: 0.25, // Even more subtle opacity for elegance
+    opacity: LAYOUT.OPACITY.LIGHT,
     width: '90%', // Slightly narrower for elegant spacing
   },
 });

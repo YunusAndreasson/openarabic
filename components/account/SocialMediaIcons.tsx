@@ -72,13 +72,13 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   icon: {
-    opacity: 0.6,
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
   logo: {
-    width: 80,
-    height: 40,
-    opacity: 0.3,
+    width: LAYOUT.BRAND.LOGO_WIDTH,
+    height: LAYOUT.BRAND.LOGO_HEIGHT,
+    opacity: LAYOUT.OPACITY.SUBTLE,
     backgroundColor: 'transparent', // Override EnhancedImage's default background
-    borderRadius: 0, // Remove border radius for clean logo display
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
   },
 });

@@ -151,6 +151,20 @@ export const WORD_AREA_MIN_HEIGHT = TOUCH_TARGETS.LARGE * 7.5; // ~360px, respon
 // Export touch targets for external use
 export const MIN_TOUCH_TARGET = TOUCH_TARGETS;
 
+// Status indicator constants for consistent visual feedback
+export const STATUS_INDICATOR = {
+  DOT_SIZE: 6, // Small status dots used in cards and headers
+  DOT_RADIUS: 3, // Perfect circle radius for 6px dots
+} as const;
+
+// Icon container constants for consistent sizing
+export const ICON_CONTAINER = {
+  SMALL_SIZE: TOUCH_TARGETS.SMALL, // 32 - standard small icon container
+  SMALL_RADIUS: TOUCH_TARGETS.SMALL / 2, // 16 - half for perfect circle
+  MEDIUM_SIZE: TOUCH_TARGETS.MEDIUM, // 44 - standard medium icon container
+  MEDIUM_RADIUS: TOUCH_TARGETS.MEDIUM / 2, // 22 - half for perfect circle
+} as const;
+
 // Utility function for enhancing touch padding (moved out of constants)
 export const enhanceTouchPadding = (currentSize: number): number => {
   const needed = TOUCH_TARGETS.MEDIUM - currentSize;
@@ -169,17 +183,19 @@ export const LAYOUT = {
 
   /**
    * Standardized opacity values for consistent visual appearance
-   * Simplified to follow Miller's Law - max 7 essential opacity levels
+   * Comprehensive scale from very subtle to full opacity
    */
   OPACITY: {
-    SUBTLE: 0.3,
-    MEDIUM: 0.5,
-    HIGH: 0.7,
-    FULL: 1.0,
-
-    HOVER: 0.8,
-    PRESSED: 0.6,
-    OVERLAY: 0.4,
+    FAINT: 0.15, // Very subtle elements (chart cursors, hints)
+    LIGHT: 0.25, // Dividers, subtle separators
+    SUBTLE: 0.3, // Secondary elements, disabled states
+    OVERLAY: 0.4, // Modal overlays, backgrounds
+    MEDIUM: 0.5, // Mid-level visibility
+    PRESSED: 0.6, // Button pressed state
+    HIGH: 0.7, // Primary visibility
+    ACTIVE: 0.75, // Active button state
+    HOVER: 0.8, // Hover state
+    FULL: 1.0, // Complete opacity
   },
 
   BOTTOM_BAR: {
@@ -187,17 +203,16 @@ export const LAYOUT = {
   },
 
   BORDER_RADIUS: {
+    NONE: 0, // No border radius
+    TINY: 3, // Perfect circles for 6px elements (STATUS_INDICATOR dots)
+    SMALL_CIRCLE: 6, // Small rounded elements
     SMALL: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
     MEDIUM: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
+    LARGE: SPACING_SCALE.LARGE, // 16 - for larger cards/containers
     PILL: 9999, // Keep as is for perfect circles
   },
 
   CARD: {
-    PADDING: {
-      SMALL: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
-      MEDIUM: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
-      LARGE: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
-    },
     HEIGHT: {
       // Dynamic heights based on content
       LIST_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // 48 + 32 = 80
@@ -215,7 +230,6 @@ export const LAYOUT = {
 
   INPUT: {
     HEIGHT: TOUCH_TARGETS.LARGE + BASE_UNIT, // 52 - responsive to touch targets + padding
-    BORDER_RADIUS: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
     BORDER_WIDTH: {
       DEFAULT: Math.round(BASE_UNIT * 0.375), // 1.5 rounded to 2 - prevents sub-pixel rendering
       FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
@@ -270,6 +284,15 @@ export const LAYOUT = {
 
   CHART: {
     Y_AXIS_WIDTH: BASE_UNIT * 7, // 28 - reduced from 36 for tighter left spacing
+    CURSOR_WIDTH: 2, // Chart interaction cursor width
+    BADGE_PADDING: SPACING_SCALE.SMALL, // 8 - Chart badge padding
+    BADGE_DOT_MARGIN: BASE_UNIT * 1.5, // 6 - Margin for badge dots
+  },
+
+  /** Brand assets standardized dimensions */
+  BRAND: {
+    LOGO_WIDTH: BASE_UNIT * 20, // 80 - Standard logo width
+    LOGO_HEIGHT: BASE_UNIT * 10, // 40 - Standard logo height (2:1 ratio)
   },
 
   /** Standard height for thin progress bars */
@@ -279,9 +302,6 @@ export const LAYOUT = {
 
   /** Common component dimensions */
   COMPONENT: {
-    BADGE: {
-      SIZE: BASE_UNIT * 6, // 24 - standard badge size
-    },
     PROGRESS_BAR_WIDTH: BASE_UNIT * 10, // 40 - standard progress bar width
   },
 
@@ -406,6 +426,30 @@ export const LAYOUT = {
     CONTENT_CONTAINER: {
       paddingHorizontal: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
     },
+  },
+
+  /**
+   * Standardized screen padding utilities for consistent spacing
+   * DRY approach to bottom padding calculations across all screens
+   */
+  SCREEN_PADDING: {
+    /**
+     * Standard bottom padding for screens without persistent bottom controls
+     * Accounts for tab bar + safe area + small buffer
+     * @param safeAreaBottom - Bottom safe area inset from useSafeAreaInsets()
+     */
+    bottomDefault: (safeAreaBottom: number): number =>
+      safeAreaBottom + (IS_IOS ? 73 : 58) + SPACING_SCALE.SMALL,
+    // = safeAreaBottom + BOTTOM_BAR.HEIGHT + 8px buffer
+
+    /**
+     * Bottom padding for screens with persistent bottom controls (floating buttons)
+     * Adds extra space for floating action buttons above tab bar
+     * @param safeAreaBottom - Bottom safe area inset from useSafeAreaInsets()
+     */
+    bottomWithControls: (safeAreaBottom: number): number =>
+      safeAreaBottom + (IS_IOS ? 73 : 58) + SPACING_SCALE.XLARGE + SPACING_SCALE.SMALL,
+    // = safeAreaBottom + BOTTOM_BAR.HEIGHT + 24px controls + 8px buffer
   },
 };
 

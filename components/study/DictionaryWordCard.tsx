@@ -7,7 +7,7 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from '@/components/bookmarks/DeleteButton';
 import { SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
@@ -234,9 +234,9 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.SMALL, // 8px gap before English text
   },
   statusDot: {
-    width: 6, // 6px small dots
-    height: 6,
-    borderRadius: 3, // Perfect circle
+    width: STATUS_INDICATOR.DOT_SIZE,
+    height: STATUS_INDICATOR.DOT_SIZE,
+    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
   },
   rightSection: {
     flex: 1,

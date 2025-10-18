@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import React from 'react';
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 
+import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DataPoint } from '@/types/ui/chart.types';
 
@@ -54,7 +55,7 @@ export function ChartCanvas({ children, width, height = GRAPH_HEIGHT_LARGE + CHA
             left: x,
             height,
             backgroundColor: colors.tint,
-            opacity: 0.15,
+            opacity: LAYOUT.OPACITY.FAINT,
           },
         ]}
       />
@@ -101,22 +102,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderRadius: 999,
+    paddingHorizontal: LAYOUT.CHART.BADGE_PADDING,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
   },
   badgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 6,
+    width: STATUS_INDICATOR.DOT_SIZE,
+    height: STATUS_INDICATOR.DOT_SIZE,
+    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
+    marginRight: LAYOUT.CHART.BADGE_DOT_MARGIN,
   },
   badgeText: {
     fontWeight: '600',
   },
   cursor: {
     position: 'absolute',
-    width: 2,
+    width: LAYOUT.CHART.CURSOR_WIDTH,
     top: 0,
   },
 });

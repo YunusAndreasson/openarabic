@@ -56,7 +56,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         height: MIN_TOUCH_TARGET.MEDIUM,
         borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
         backgroundColor: colors.elevation1,
-        opacity: 0.65, // 2025 best practice: More subtle circular background
+        opacity: LAYOUT.OPACITY.PRESSED,
         alignItems: 'center' as const,
         justifyContent: 'center' as const,
         ...LAYOUT.ELEVATION.SUBTLE,
@@ -68,7 +68,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
       () => ({
         ...buttonStyle,
         backgroundColor: colors.elevation2,
-        opacity: 0.75, // 2025 best practice: Slightly more visible when active
+        opacity: LAYOUT.OPACITY.ACTIVE,
       }),
       [buttonStyle, colors.elevation2]
     );

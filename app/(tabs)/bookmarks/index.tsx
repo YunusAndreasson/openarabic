@@ -212,9 +212,7 @@ export default function ListenScreen(): JSX.Element {
       // No paddingTop needed - content should be directly under header
       // Account for BottomControls height + tab bar + safe area when controls are visible
       paddingBottom: stableHasArticles
-        ? LAYOUT.BOTTOM_BAR.HEIGHT +
-          LAYOUT.SPACING.XLARGE +
-          Math.max(insets.bottom, LAYOUT.SPACING.SMALL)
+        ? LAYOUT.SCREEN_PADDING.bottomWithControls(insets.bottom)
         : LAYOUT.SPACING.MEDIUM,
     }),
     [stableHasArticles, insets.bottom]

@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { MemoryRetentionGauge } from '@/components/study/charts/MemoryRetentionGauge';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { ICON_CONTAINER, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { VocabularyStatCategory } from '@/types/enums';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -132,7 +132,7 @@ VocabularyStatCards.displayName = 'VocabularyStatCards';
 
 const styles = StyleSheet.create({
   container: {
-    gap: LAYOUT.SPACING.LARGE,
+    gap: LAYOUT.SPACING.SMALL,
   },
   statsRow: {
     flexDirection: 'row',
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: MIN_TOUCH_TARGET.SMALL,
     height: MIN_TOUCH_TARGET.SMALL,
-    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
+    borderRadius: ICON_CONTAINER.SMALL_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,

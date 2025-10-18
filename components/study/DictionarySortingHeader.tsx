@@ -3,7 +3,7 @@ import { memo, useCallback, type FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, STATUS_INDICATOR } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SortDirection } from '@/hooks/vocabulary/useDictionaryModal';
 import { selectionFeedback } from '@/utils/haptics';
@@ -105,9 +105,9 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.SMALL, // 8px gap between dot and text (matches card dot marginRight)
   },
   colorDot: {
-    width: 6, // Match card dot size
-    height: 6,
-    borderRadius: 3, // Perfect circle
+    width: STATUS_INDICATOR.DOT_SIZE,
+    height: STATUS_INDICATOR.DOT_SIZE,
+    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
   },
   toggleButton: {
     width: MIN_TOUCH_TARGET.SMALL, // 32px

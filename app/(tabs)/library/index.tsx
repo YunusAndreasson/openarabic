@@ -240,7 +240,7 @@ export default function ReadScreen(): JSX.Element {
       ...styles.listContentContainer,
       backgroundColor: colors.background,
       paddingTop: 0,
-      paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
+      paddingBottom: LAYOUT.SCREEN_PADDING.bottomDefault(insets.bottom),
     }),
     [colors, insets.bottom]
   );
