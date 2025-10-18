@@ -39,9 +39,6 @@ export interface GlobalAudioState {
   isTimerActive: boolean;
   sleepTimerRemainingTime: number;
 
-  // Mini-player visibility
-  shouldHideMiniPlayer: boolean;
-
   // Actions
   onPlayPause: () => void;
   onTimerPress: () => void;
@@ -234,10 +231,6 @@ export function useGlobalAudioState(): GlobalAudioState {
     await audioPlayer.preconfigureAudioSession();
   }, [audioPlayer]);
 
-  const shouldHideMiniPlayer = useMemo(() => {
-    return false; // Mini-player is always shown
-  }, []);
-
   return {
     isPlaying: audioPlayer.isPlaying,
     audioState: audioPlayer.isPlaying
@@ -253,7 +246,6 @@ export function useGlobalAudioState(): GlobalAudioState {
     isTimerActive: sleepTimer.state.isActive,
     showSleepTimerModal,
     sleepTimerRemainingTime: sleepTimer.state.remainingTime,
-    shouldHideMiniPlayer,
     onPlayPause: handlePlayPause,
     onTimerPress: handleTimerPress,
     onSleepTimerSet: handleSleepTimerSet,

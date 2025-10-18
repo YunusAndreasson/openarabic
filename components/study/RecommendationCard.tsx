@@ -56,7 +56,7 @@ export const RecommendationCard = memo<RecommendationCardProps>(
               {recommendation.message}
             </ThemedText>
             <Ionicons
-              name="information-circle-outline"
+              name="chevron-forward"
               size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
               color={colors.disabled}
             />

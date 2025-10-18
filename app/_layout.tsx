@@ -409,16 +409,8 @@ const AudioOverlays = memo(function AudioOverlays() {
   const rawShouldShow = useMemo(
     () =>
       Boolean(globalAudioState.currentArticle) &&
-      (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
-      !globalAudioState.showSleepTimerModal &&
-      !globalAudioState.shouldHideMiniPlayer,
-    [
-      globalAudioState.currentArticle,
-      globalAudioState.isPlaying,
-      globalAudioState.audioState,
-      globalAudioState.showSleepTimerModal,
-      globalAudioState.shouldHideMiniPlayer,
-    ]
+      (globalAudioState.isPlaying || globalAudioState.audioState === 'loading'),
+    [globalAudioState.currentArticle, globalAudioState.isPlaying, globalAudioState.audioState]
   );
 
   // STABILIZATION: Show immediately, hide with delay to prevent mount/unmount flicker

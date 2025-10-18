@@ -22,19 +22,30 @@ This guide provides comprehensive development rules and patterns for Claude Code
 
 ### Command Execution Workflow
 When running validation or test commands:
-- **Run at the end only** - Don't run validation commands after every change; only run `yarn validate` once at the end of the session when all work is complete
+- **CRITICAL: NEVER run validation during development** - Make all changes first, then validate once at the very end
+- **Run at the end only** - Only run `yarn validate` once when ALL work is complete and user confirms
 - **Execute directly** - Run commands without asking permission or explaining what you're about to do
 - **Be efficient** - Run `yarn validate` once, not individual steps (tsc, eslint, knip separately)
 - **Show only errors** - If a command fails, show the error output and fix it
 - **Verify once** - Re-run only to confirm the fix worked
 - **No verbose explanations** - Don't explain what commands do or why you're running them
 
+**Anti-pattern - DO NOT DO THIS:**
+```
+❌ Make edit → run tsc → run eslint → make another edit → run tsc again → run eslint again
+```
+
+**Correct pattern:**
+```
+✅ Make edit 1 → Make edit 2 → Make edit 3 → (user confirms done) → yarn validate once
+```
+
 **Examples of approved commands** (run these directly):
-- `yarn validate` - Full validation suite (typecheck + lint + unused exports) - **RUN ONLY AT END**
-- `npx tsc --noEmit` - TypeScript type checking
-- `yarn lint:fix` or `npx eslint` - Linting with auto-fix
-- `yarn test` - Run tests
-- `yarn check-unused` - Check for unused exports
+- `yarn validate` - Full validation suite (typecheck + lint + unused exports) - **RUN ONLY ONCE AT END**
+- `npx tsc --noEmit` - TypeScript type checking (only if uncertain about types)
+- `yarn lint:fix` or `npx eslint` - Linting with auto-fix (only at end)
+- `yarn test` - Run tests (only when testing features)
+- `yarn check-unused` - Check for unused exports (only at end)
 
 ## Technical Stack
 

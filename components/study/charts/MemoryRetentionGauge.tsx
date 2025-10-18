@@ -1,5 +1,6 @@
 import { BaseChart } from '@charts/BaseChart';
 import { useChartColors } from '@charts/ChartColors';
+import { Ionicons } from '@expo/vector-icons';
 import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -159,6 +160,15 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
         onCardPress={onInfoPress}
       >
         <View style={styles.container}>
+          {/* Chevron indicator in top-right corner */}
+          <View style={styles.chevronContainer}>
+            <Ionicons
+              name="chevron-forward"
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+              color={colors.disabled}
+            />
+          </View>
+
           <View style={styles.gaugeContainer}>
             <Canvas style={styles.canvas}>
               <Group>
@@ -246,6 +256,12 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'transparent',
+  },
+  chevronContainer: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.TINY,
+    right: LAYOUT.SPACING.SMALL,
+    zIndex: 10,
   },
 });
 

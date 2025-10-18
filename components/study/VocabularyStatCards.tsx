@@ -37,19 +37,30 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, color, icon, onPress, formatAsDecimal = false }: StatCardProps) {
+  const colors = useColors();
   const displayValue = formatAsDecimal ? value.toFixed(1) : Math.round(value).toString();
 
   return (
     <BaseCard shadowSize="small" style={styles.statCard} onPress={onPress}>
-      <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
-        <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
+      <View style={styles.cardWrapper}>
+        <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
+          <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
+        </View>
+        <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
+          {displayValue}
+        </ThemedText>
+        <ThemedText type="caption" colorName="textTertiary" style={styles.statLabel}>
+          {label}
+        </ThemedText>
+        {/* Chevron indicator in top-right corner */}
+        <View style={styles.chevronContainer}>
+          <Ionicons
+            name="chevron-forward"
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            color={colors.disabled}
+          />
+        </View>
       </View>
-      <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
-        {displayValue}
-      </ThemedText>
-      <ThemedText type="caption" colorName="textTertiary" style={styles.statLabel}>
-        {label}
-      </ThemedText>
     </BaseCard>
   );
 }
@@ -130,11 +141,14 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+  cardWrapper: {
+    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   iconContainer: {
     width: MIN_TOUCH_TARGET.SMALL,
@@ -154,6 +168,11 @@ const styles = StyleSheet.create({
   statLabel: {
     textAlign: 'center',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  },
+  chevronContainer: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.SMALL,
+    right: LAYOUT.SPACING.SMALL,
   },
 });
 

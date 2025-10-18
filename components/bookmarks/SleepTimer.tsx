@@ -1,6 +1,7 @@
-import BottomSheet, {
+import {
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
+  BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -14,6 +15,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { SleepTimerAction } from '@/types/enums';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
 import { formatSecondsToClock } from '@/utils/dateTimeUtils';
+import { COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface SleepTimerProps {
   isVisible: boolean;
@@ -35,7 +37,7 @@ export function SleepTimer({
   isTimerActive = false,
   remainingTime = 0,
 }: SleepTimerProps) {
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const colors = useColors();
 
   // Pre-select 15 minutes as default
@@ -47,9 +49,9 @@ export function SleepTimer({
   // Handle visibility changes
   useEffect(() => {
     if (isVisible) {
-      bottomSheetRef.current?.expand();
+      bottomSheetRef.current?.present();
     } else {
-      bottomSheetRef.current?.close();
+      bottomSheetRef.current?.dismiss();
     }
   }, [isVisible]);
 
@@ -89,15 +91,13 @@ export function SleepTimer({
   );
 
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={bottomSheetRef}
       snapPoints={snapPoints}
-      index={-1}
-      enablePanDownToClose={true}
+      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
       onChange={handleChange}
-      onClose={onClose}
+      onDismiss={onClose}
       backdropComponent={renderBackdrop}
-      style={styles.modalStyle}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
       handleIndicatorStyle={[styles.indicator, { backgroundColor: colors.modalIndicator }]}
     >
@@ -149,7 +149,7 @@ export function SleepTimer({
           </View>
         )}
       </BottomSheetView>
-    </BottomSheet>
+    </BottomSheetModal>
   );
 }
 
@@ -166,9 +166,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.LARGE,
-  },
-  modalStyle: {
-    zIndex: 99999,
   },
 
   header: LAYOUT.BOTTOM_SHEET.HEADER,
