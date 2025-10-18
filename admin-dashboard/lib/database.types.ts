@@ -391,6 +391,47 @@ export type Database = {
         };
         Relationships: [];
       };
+      translation_improvements: {
+        Row: {
+          id: number;
+          sentence_word_id: number;
+          suggested_english: string;
+          suggested_grammar_note: string | null;
+          status: string;
+          reviewer_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          sentence_word_id: number;
+          suggested_english: string;
+          suggested_grammar_note?: string | null;
+          status?: string;
+          reviewer_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          sentence_word_id?: number;
+          suggested_english?: string;
+          suggested_grammar_note?: string | null;
+          status?: string;
+          reviewer_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'translation_improvements_sentence_word_id_fkey';
+            columns: ['sentence_word_id'];
+            isOneToOne: false;
+            referencedRelation: 'sentence_words';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
     };
     Views: {
       daily_efficiency_stats: {

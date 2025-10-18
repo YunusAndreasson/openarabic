@@ -106,8 +106,8 @@ const styles = StyleSheet.create({
     right: -LAYOUT.SPACING.MEDIUM, // -6px to move badge further right
     top: -LAYOUT.SPACING.MICRO, // -2px for compact positioning
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    width: LAYOUT.COMPONENT.BADGE.SIZE,
-    height: LAYOUT.COMPONENT.BADGE.SIZE,
+    width: LAYOUT.SPACING.XLARGE,
+    height: LAYOUT.SPACING.XLARGE,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,

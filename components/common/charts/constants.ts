@@ -9,7 +9,7 @@ const X_AXIS_LABEL_PADDING = 8; // Reduced from 12 for tighter spacing
 export const GRAPH_WIDTH =
   SCREEN_WIDTH -
   LAYOUT.SCREEN_EDGE_PADDING * 2 -
-  LAYOUT.CARD.PADDING.MEDIUM * 2 -
+  LAYOUT.SPACING.MEDIUM * 2 -
   16 - // Reduced from 24 for more graph space
   X_AXIS_LABEL_PADDING;
 
@@ -64,7 +64,7 @@ export const PERFORMANCE_THRESHOLDS = {
 // Standardized chart layout constants for consistent alignment
 export const CHART_LAYOUT = {
   // Card content padding - consistent across all charts
-  CONTENT_PADDING: LAYOUT.CARD.PADDING.MEDIUM, // 12px
+  CONTENT_PADDING: LAYOUT.SPACING.MEDIUM, // 12px
 
   // Chart spacing within cards
   ELEMENT_SPACING: LAYOUT.SPACING.LARGE, // 16px between major elements

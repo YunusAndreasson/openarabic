@@ -161,7 +161,7 @@ export const useChartTooltip = () => {
 const styles = StyleSheet.create({
   tooltip: {
     ...LAYOUT.ELEVATION.SUBTLE,
-    borderRadius: LAYOUT.INPUT.BORDER_RADIUS,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     padding: LAYOUT.SPACING.SMALL,
     position: 'absolute',

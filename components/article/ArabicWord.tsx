@@ -1,4 +1,5 @@
 import {
+  memo,
   useEffect,
   useRef,
   type ComponentRef,
@@ -17,14 +18,14 @@ import { getSelectedStyle } from '@/utils/textStyleUtils';
 
 interface ArabicWordProps {
   word: SentenceWord;
-  onTooltipOpen: (layout: LayoutRectangle) => void;
+  onTooltipOpen?: (word: SentenceWord, layout: LayoutRectangle) => void;
   position?: number;
   wordRef?: RefObject<ComponentRef<typeof Pressable>>;
   isHighlighted?: boolean;
   testID?: string;
 }
 
-export function ArabicWord({
+const ArabicWordInternal = function ArabicWord({
   word,
   onTooltipOpen,
   position,
@@ -64,7 +65,7 @@ export function ArabicWord({
 
   // Show tooltip on press - always measure fresh for 100% reliability
   const handlePress = () => {
-    if (!wordRef?.current) return;
+    if (!wordRef?.current || !onTooltipOpen) return;
 
     try {
       wordRef.current.measureInWindow((x, y, width, height) => {
@@ -76,7 +77,7 @@ export function ArabicWord({
           width > 0 &&
           height > 0
         ) {
-          onTooltipOpen({ x, y, width, height });
+          onTooltipOpen(word, { x, y, width, height });
         }
       });
     } catch {
@@ -143,7 +144,7 @@ export function ArabicWord({
       {renderWordContent}
     </Pressable>
   );
-}
+};
 
 const styles = StyleSheet.create({
   textStyle: {
@@ -159,4 +160,6 @@ const styles = StyleSheet.create({
   },
 });
 
-ArabicWord.displayName = 'ArabicWord';
+ArabicWordInternal.displayName = 'ArabicWord';
+
+export const ArabicWord = memo(ArabicWordInternal);

@@ -121,3 +121,9 @@ VALID_CATEGORIES = {
 
 # Default category for fallback
 DEFAULT_CATEGORY = "aqeedah"
+
+# OpenRouter configuration for validation
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+DEEPSEEK_MODEL = "deepseek/deepseek-chat-v3"
+VALIDATION_MAX_RETRIES = 3

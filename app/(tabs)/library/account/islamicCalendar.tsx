@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   eventContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
   },
   eventDates: {
     gap: LAYOUT.SPACING.TINY,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     flexDirection: 'row',
     gap: LAYOUT.SPACING.SMALL,
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
   },
   noteText: {
     flex: 1,

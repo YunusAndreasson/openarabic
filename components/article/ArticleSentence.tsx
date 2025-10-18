@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { ComponentRef, ReactNode, RefObject } from 'react';
-import { createRef, useCallback, useEffect, useMemo, useRef } from 'react';
+import { createRef, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { LayoutRectangle, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { type AnimatedStyle } from 'react-native-reanimated';
@@ -32,15 +32,6 @@ interface ArticleSentenceProps {
   currentHighlightedWord?: SentenceWord | null;
 }
 
-// Helper function to create word press handler
-// Defined outside render to avoid recreating on every call
-function createWordPressHandler(
-  word: SentenceWord,
-  onWordPress: ((word: SentenceWord, layout?: LayoutRectangle) => void) | undefined
-) {
-  return (layout: LayoutRectangle) => onWordPress?.(word, layout);
-}
-
 function renderWordWithProps(
   word: SentenceWord,
   index: number,
@@ -66,7 +57,7 @@ function renderWordWithProps(
     <ArabicWord
       key={`word-${wordId}-${word.position}-${index}-${sentenceId}`}
       word={word}
-      onTooltipOpen={createWordPressHandler(word, onWordPress)}
+      onTooltipOpen={onWordPress}
       wordRef={wordRefs[index]}
       position={index}
       isHighlighted={isHighlighted}
@@ -74,7 +65,7 @@ function renderWordWithProps(
   );
 }
 
-export function ArticleSentence({
+const ArticleSentenceInternal = function ArticleSentence({
   sentence,
   words,
   renderWord,
@@ -169,9 +160,11 @@ export function ArticleSentence({
       <View style={styles.wordsContainer}>{renderedWords}</View>
     </View>
   );
-}
+};
 
-ArticleSentence.displayName = 'ArticleSentence';
+ArticleSentenceInternal.displayName = 'ArticleSentence';
+
+export const ArticleSentence = memo(ArticleSentenceInternal);
 
 const styles = StyleSheet.create({
   container: {

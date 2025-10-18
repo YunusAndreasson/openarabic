@@ -48,6 +48,12 @@ export default function RootLayout({
                   >
                     Analytics
                   </Link>
+                  <Link
+                    href="/admin/translation-reviews"
+                    className="text-sm font-medium hover:underline underline-offset-4"
+                  >
+                    Translation Reviews
+                  </Link>
                 </nav>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, type ReactElement } from 'react';
+import React, { memo, useCallback, type ReactElement } from 'react';
 import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -121,7 +121,7 @@ interface ArticleContentProps {
   onFlashListLoad: () => void;
 }
 
-export function ArticleContent({
+const ArticleContentInternal = function ArticleContent({
   id,
   article,
   sortedSentences,
@@ -358,6 +358,8 @@ export function ArticleContent({
         ) : null}
       </Animated.View>
     );
-}
+};
 
-ArticleContent.displayName = 'ArticleContent';
+ArticleContentInternal.displayName = 'ArticleContent';
+
+export const ArticleContent = memo(ArticleContentInternal);
