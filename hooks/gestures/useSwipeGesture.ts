@@ -133,7 +133,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
 
             // Inline swipe action logic
             const swipeThreshold = SCREEN_WIDTH * swipeThresholdRatio;
-            const hasSignificantVelocity = Math.abs(velocityX) > 600; // Lower threshold = more responsive
+            const hasSignificantVelocity = Math.abs(velocityX) > GESTURE_CONSTANTS.VELOCITY_THRESHOLD;
 
             if (Math.abs(translationX) > swipeThreshold || hasSignificantVelocity) {
               const isRight = translationX > 0;

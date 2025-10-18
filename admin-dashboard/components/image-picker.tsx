@@ -17,6 +17,13 @@ import { Loader2, Images, Search, Check, ChevronLeft, ChevronRight } from 'lucid
 
 const SUPABASE_STORAGE_URL = 'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
 const IMAGES_PER_PAGE = 24;
+const CACHE_KEY = 'image-picker-cache';
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+interface CachedImageData {
+  images: string[];
+  timestamp: number;
+}
 
 interface ImagePickerProps {
   onSelect: (imageUrl: string) => void;
@@ -34,8 +41,8 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
   const [totalImages, setTotalImages] = useState(0);
 
   useEffect(() => {
-    if (open && images.length === 0) {
-      fetchImages();
+    if (open) {
+      loadImages();
     }
   }, [open]);
 
@@ -55,6 +62,55 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
   const endIndex = startIndex + IMAGES_PER_PAGE;
   const currentImages = filteredImages.slice(startIndex, endIndex);
 
+  const getCachedImages = (): string[] | null => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (!cached) return null;
+
+      const cachedData: CachedImageData = JSON.parse(cached);
+      const now = Date.now();
+
+      // Check if cache is still valid
+      if (now - cachedData.timestamp < CACHE_DURATION) {
+        return cachedData.images;
+      }
+
+      // Cache expired, remove it
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    } catch (error) {
+      console.error('Error reading image cache:', error);
+      return null;
+    }
+  };
+
+  const setCachedImages = (imageList: string[]) => {
+    try {
+      const cacheData: CachedImageData = {
+        images: imageList,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    } catch (error) {
+      console.error('Error saving image cache:', error);
+    }
+  };
+
+  const loadImages = async () => {
+    // Try to load from cache first
+    const cachedImages = getCachedImages();
+
+    if (cachedImages && cachedImages.length > 0) {
+      setImages(cachedImages);
+      setFilteredImages(cachedImages);
+      setTotalImages(cachedImages.length);
+      return;
+    }
+
+    // No cache or expired, fetch from server
+    await fetchImages();
+  };
+
   const fetchImages = async () => {
     setLoading(true);
     try {
@@ -71,6 +127,9 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
           return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
         })
         .map((file) => file.name);
+
+      // Save to cache
+      setCachedImages(imageFiles);
 
       setImages(imageFiles);
       setFilteredImages(imageFiles);

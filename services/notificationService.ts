@@ -33,6 +33,7 @@ Notifications.setNotificationHandler({
 
 let isInitialized = false;
 let notificationSubscription: Notifications.Subscription | null = null;
+let responseSubscription: Notifications.Subscription | null = null;
 
 // Initialize notifications during app startup (Expo best practice)
 export async function initializeNotifications(): Promise<boolean> {
@@ -88,8 +89,12 @@ export async function initializeNotifications(): Promise<boolean> {
 
 // Set up notification listeners (Expo best practice)
 function setupNotificationListeners(): void {
+  // Clean up existing subscriptions before creating new ones
   if (notificationSubscription) {
     notificationSubscription.remove();
+  }
+  if (responseSubscription) {
+    responseSubscription.remove();
   }
 
   // Listen for notification received events
@@ -98,7 +103,7 @@ function setupNotificationListeners(): void {
   });
 
   // Listen for notification response events (when user interacts with notification)
-  Notifications.addNotificationResponseReceivedListener(response => {
+  responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
     const { actionIdentifier } = response;
 
     if (actionIdentifier === 'complete') {
@@ -113,6 +118,10 @@ export function cleanupNotifications(): void {
   if (notificationSubscription) {
     notificationSubscription.remove();
     notificationSubscription = null;
+  }
+  if (responseSubscription) {
+    responseSubscription.remove();
+    responseSubscription = null;
   }
 }
 

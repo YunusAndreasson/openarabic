@@ -1,6 +1,7 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ColorCodedText } from '@/components/common/ColorCodedText';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -10,7 +11,7 @@ import { useAudioSubscription } from '@/hooks/audio/useAudioSubscription';
 import { useColors } from '@/hooks/theme/useColors';
 import { simpleAudioService } from '@/services/audioPlayer';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 import { generateAudioUrl } from '@/utils/imageUtils';
@@ -33,9 +34,12 @@ export function WordDetailsBottomSheet({
   onAddToStudy,
   isInStudyList = false,
 }: WordDetailsBottomSheetProps) {
-  const bottomSheetRef = useRef<BottomSheet>(null);
   const colors = useColors();
+  const insets = useSafeAreaInsets();
+
+  // Only subscribe to audio when sheet is visible - prevents performance issues
   const { status: audioStatus } = useAudioSubscription();
+  const shouldUseAudioStatus = !!(isVisible && word);
 
   // Optimistic state for instant UI feedback
   const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useState(isInStudyList);
@@ -45,31 +49,12 @@ export function WordDetailsBottomSheet({
     setOptimisticIsInStudyList(isInStudyList);
   }, [isInStudyList]);
 
-  // Check if this word's audio is currently playing or loading
-  const isThisTrack = audioStatus.currentTrack?.id === `word-details-${word?.id}`;
+  // Check if this word's audio is currently playing or loading (only when visible)
+  const isThisTrack = shouldUseAudioStatus && audioStatus.currentTrack?.id === `word-details-${word?.id}`;
   const wordAudioState = {
-    isPlaying: audioStatus.isPlaying && isThisTrack,
-    isLoading: audioStatus.isLoading && isThisTrack,
+    isPlaying: shouldUseAudioStatus && audioStatus.isPlaying && isThisTrack,
+    isLoading: shouldUseAudioStatus && audioStatus.isLoading && isThisTrack,
   };
-
-  // Handle visibility changes
-  useEffect(() => {
-    if (isVisible) {
-      bottomSheetRef.current?.expand();
-    } else {
-      bottomSheetRef.current?.close();
-    }
-  }, [isVisible]);
-
-  // Handle sheet position changes - sync parent state when dismissed via gesture
-  const handleChange = useCallback(
-    (index: number) => {
-      if (index === -1) {
-        onClose();
-      }
-    },
-    [onClose]
-  );
 
   // Handle play audio
   const handlePlayAudio = async () => {
@@ -113,40 +98,63 @@ export function WordDetailsBottomSheet({
     }
   };
 
+  // Handle sheet position changes - sync parent state when sheet closes
+  const handleChange = useCallback(
+    (index: number) => {
+      // onChange fires when animation completes and sheet reaches new position
+      if (index === -1 && isVisible) {
+        onClose(); // Update parent state
+      }
+    },
+    [onClose, isVisible]
+  );
+
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
 
-  // Don't render anything if not visible or no word (use optimistic visibility for immediate feedback)
-  if (!isVisible || !word) {
+  // Memoize button section style with safe area inset
+  const buttonSectionStyle = useMemo(
+    () => [
+      styles.buttonSection,
+      {
+        paddingBottom: Math.max(insets.bottom, LAYOUT.SPACING.MEDIUM),
+      },
+    ],
+    [insets.bottom]
+  );
+
+  // Don't render without data
+  if (!word) {
     return null;
   }
 
   return (
     <BottomSheet
-      ref={bottomSheetRef}
+      index={isVisible ? 0 : -1}
       snapPoints={SNAP_POINTS}
+      enablePanDownToClose={true}
+      enableOverDrag={false}
+      animateOnMount={true}
       onChange={handleChange}
-      onClose={onClose}
       backdropComponent={renderBackdrop}
       style={styles.modalStyle}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
       handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
-      {...COMMON_BOTTOM_SHEET_PROPS}
     >
       <BottomSheetView style={styles.container}>
         {/* Arabic Word Title */}
         <View style={styles.titleSection}>
           <ColorCodedText
-            text={word?.word_form || ''}
-            arabicWord={word?.word_form || ''}
-            englishTranslation={word?.english || ''}
+            text={word.word_form || ''}
+            arabicWord={word.word_form || ''}
+            englishTranslation={word.english || ''}
             type="heading1"
             weight="bold"
             style={styles.arabicTitle}
             defaultColor={colors.arabicText}
             isArabic={true}
           />
-          {word?.english && (
+          {word.english && (
             <ColorCodedText
               text={word.english}
               arabicWord={word.word_form || ''}
@@ -168,7 +176,7 @@ export function WordDetailsBottomSheet({
         )}
 
         {/* Action Buttons */}
-        <View style={styles.buttonSection}>
+        <View style={buttonSectionStyle}>
           <View style={styles.buttonContainer}>
             <ThemedButton
               title={wordAudioState.isPlaying ? 'Playing...' : 'Play Audio'}

@@ -98,6 +98,7 @@ export function TimePicker({ isVisible, onClose, onTimeSet, initialHour = 12, in
       {...props}
       disappearsOnIndex={-1}
       appearsOnIndex={0}
+      pressBehavior="close"
       onPress={onClose}
     />
   );

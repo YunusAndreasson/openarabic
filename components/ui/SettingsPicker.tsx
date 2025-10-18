@@ -154,7 +154,13 @@ export const SettingsPicker = <T,>({
   // Use built-in backdrop component
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} onPress={onClose} />
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        pressBehavior="close"
+        onPress={onClose}
+      />
     ),
     [onClose]
   );

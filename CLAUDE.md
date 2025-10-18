@@ -20,6 +20,22 @@ This guide provides comprehensive development rules and patterns for Claude Code
 - Place business logic in hooks, not components
 - Remove obsolete code when introducing new features
 
+### Command Execution Workflow
+When running validation or test commands:
+- **Run at the end only** - Don't run validation commands after every change; only run `yarn validate` once at the end of the session when all work is complete
+- **Execute directly** - Run commands without asking permission or explaining what you're about to do
+- **Be efficient** - Run `yarn validate` once, not individual steps (tsc, eslint, knip separately)
+- **Show only errors** - If a command fails, show the error output and fix it
+- **Verify once** - Re-run only to confirm the fix worked
+- **No verbose explanations** - Don't explain what commands do or why you're running them
+
+**Examples of approved commands** (run these directly):
+- `yarn validate` - Full validation suite (typecheck + lint + unused exports) - **RUN ONLY AT END**
+- `npx tsc --noEmit` - TypeScript type checking
+- `yarn lint:fix` or `npx eslint` - Linting with auto-fix
+- `yarn test` - Run tests
+- `yarn check-unused` - Check for unused exports
+
 ## Technical Stack
 
 ### Core Technologies

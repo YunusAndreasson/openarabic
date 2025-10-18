@@ -1,8 +1,8 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import React, { memo, useCallback, useEffect, useMemo, useState, type FC } from 'react';
-import { LayoutAnimation, StyleSheet, View } from 'react-native';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
+import { LayoutAnimation, type ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -18,35 +18,46 @@ interface FAQItemComponentProps {
   item: FAQItem;
   isExpanded: boolean;
   onToggle: (id: string) => void;
+  onLayout?: (id: string, y: number) => void;
 }
 
 // Minimal, robust FAQ item component
-const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, onToggle }) => {
-  const colors = useColors();
+const FAQItemComponent: FC<FAQItemComponentProps> = memo(
+  ({ item, isExpanded, onToggle, onLayout }) => {
+    const colors = useColors();
 
-  const handlePress = useCallback(() => {
-    // Use spring-based LayoutAnimation for natural expand/collapse feel
-    if (LayoutAnimation && typeof LayoutAnimation.configureNext === 'function') {
-      LayoutAnimation.configureNext({
-        duration: 300,
-        create: {
-          type: LayoutAnimation.Types.spring,
-          property: LayoutAnimation.Properties.opacity,
-          springDamping: 0.8,
-        },
-        update: {
-          type: LayoutAnimation.Types.spring,
-          springDamping: 0.8,
-        },
-        delete: {
-          type: LayoutAnimation.Types.spring,
-          property: LayoutAnimation.Properties.opacity,
-          springDamping: 0.8,
-        },
-      });
-    }
-    onToggle(item.id);
-  }, [item.id, onToggle]);
+    const handlePress = useCallback(() => {
+      // Use spring-based LayoutAnimation for natural expand/collapse feel
+      if (LayoutAnimation && typeof LayoutAnimation.configureNext === 'function') {
+        LayoutAnimation.configureNext({
+          duration: 300,
+          create: {
+            type: LayoutAnimation.Types.spring,
+            property: LayoutAnimation.Properties.opacity,
+            springDamping: 0.8,
+          },
+          update: {
+            type: LayoutAnimation.Types.spring,
+            springDamping: 0.8,
+          },
+          delete: {
+            type: LayoutAnimation.Types.spring,
+            property: LayoutAnimation.Properties.opacity,
+            springDamping: 0.8,
+          },
+        });
+      }
+      onToggle(item.id);
+    }, [item.id, onToggle]);
+
+    const handleLayout = useCallback(
+      (event: { nativeEvent: { layout: { y: number } } }) => {
+        if (onLayout) {
+          onLayout(item.id, event.nativeEvent.layout.y);
+        }
+      },
+      [item.id, onLayout]
+    );
 
   const buttonStyle = useMemo(
     () => [
@@ -71,7 +82,7 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
   );
 
     return (
-      <View style={styles.faqItemContainer}>
+      <View style={styles.faqItemContainer} onLayout={handleLayout}>
         <BaseCard shadowSize="small" style={buttonStyle} onPress={handlePress}>
           <View style={styles.faqButtonContent}>
             <ThemedText
@@ -98,7 +109,8 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
         )}
       </View>
     );
-  });
+  }
+);
 FAQItemComponent.displayName = 'FAQItemComponent';
 
 // Main Help screen
@@ -106,8 +118,15 @@ const HelpScreen: FC = () => {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ expandItem?: string }>();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const scrollViewRef = useRef<ScrollView>(null);
+  const itemPositionsRef = useRef<Map<string, number>>(new Map());
 
-  // Auto-expand item from URL params
+  // Track item positions for scroll-to functionality
+  const handleItemLayout = useCallback((id: string, y: number) => {
+    itemPositionsRef.current.set(id, y);
+  }, []);
+
+  // Auto-expand item from URL params and scroll to it
   useEffect(() => {
     const itemToExpand = params.expandItem;
     if (!itemToExpand) return;
@@ -117,6 +136,18 @@ const HelpScreen: FC = () => {
       newSet.add(itemToExpand);
       return newSet;
     });
+
+    // Scroll to the expanded item after a short delay to allow for layout
+    const scrollTimeout = setTimeout(() => {
+      const itemY = itemPositionsRef.current.get(itemToExpand);
+      if (itemY !== undefined && scrollViewRef.current) {
+        // Scroll with offset to show the item near the top, accounting for header
+        const scrollOffset = Math.max(0, itemY - LAYOUT.SPACING.LARGE);
+        scrollViewRef.current.scrollTo({ y: scrollOffset, animated: true });
+      }
+    }, 350); // Slightly longer than LayoutAnimation duration (300ms)
+
+    return () => clearTimeout(scrollTimeout);
   }, [params.expandItem]);
 
   const handleToggleItem = useCallback((id: string) => {
@@ -142,6 +173,7 @@ const HelpScreen: FC = () => {
         scrollable={true}
         style={styles.flexOne}
         useSafeArea={false}
+        scrollViewRef={scrollViewRef}
         contentContainerStyle={[
           styles.scrollContentDynamic,
           {
@@ -168,6 +200,7 @@ const HelpScreen: FC = () => {
                   isExpanded={expandedItems.has(item.id)}
                   item={item}
                   onToggle={handleToggleItem}
+                  onLayout={handleItemLayout}
                 />
               ))}
             </View>

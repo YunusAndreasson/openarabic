@@ -301,11 +301,12 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   }, []);
 
   const handleOpenWordDetails = useCallback(() => {
-    if (activeTooltip?.word) {
+    const tooltip = activeTooltipRef.current;
+    if (tooltip?.word) {
       setActiveTooltip(null);
-      wordDetailsModal.open(activeTooltip.word);
+      wordDetailsModal.open(tooltip.word);
     }
-  }, [activeTooltip, wordDetailsModal]);
+  }, [wordDetailsModal]);
 
   const handleAddWordToStudy = useCallback(
     async (word: SentenceWord) => {

@@ -7,7 +7,6 @@ import { AUDIO_QUERY_KEYS, READING_LIST_QUERY_KEYS } from '@/constants/queryKeys
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 // Use direct service access to avoid frequent parent re-renders from time updates
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useScreenFocusRefresh } from '@/hooks/utils/useScreenFocusRefresh';
 import { bookmarkService } from '@/services/bookmark';
 import { enhancedAudioService } from '@/services/audioPlaylist';
 import { simpleAudioService } from '@/services/audioPlayer';
@@ -23,6 +22,25 @@ import {
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { shuffleArray } from '@/utils/list';
+
+/**
+ * Official React Query pattern for refetching on screen focus
+ * Skips the first focus (mount) and refetches on subsequent focuses
+ * Automatically respects query's staleTime configuration
+ */
+function useRefreshOnFocus<T>(refetch: () => Promise<T>) {
+  const firstTimeRef = useRef(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (firstTimeRef.current) {
+        firstTimeRef.current = false;
+        return;
+      }
+      refetch();
+    }, [refetch])
+  );
+}
 
 export const useBookmarksScreen = () => {
   const { user } = useAuth();
@@ -130,22 +148,10 @@ export const useBookmarksScreen = () => {
     return !isDataCached && isReadingListLoading && sortedReadingList.length === 0;
   }, [isDataCached, isReadingListLoading, sortedReadingList.length]);
 
-  useScreenFocusRefresh(
-    queryClient,
-    'readingList',
-    user?.id,
-    TIMING_CONSTANTS.MILLISECONDS_PER_SECOND * TIMING_CONSTANTS.SECONDS_PER_MINUTE * 5,
-    true,
-    true
-  );
-  useScreenFocusRefresh(
-    queryClient,
-    'enhancedAudioTracks',
-    user?.id,
-    TIMING_CONSTANTS.MILLISECONDS_PER_SECOND * TIMING_CONSTANTS.SECONDS_PER_MINUTE * 5,
-    true,
-    true
-  );
+  // Refetch on screen focus using official React Query pattern
+  // Automatically respects staleTime (5 minutes) - no manual throttling needed
+  useRefreshOnFocus(readingListQuery.refetch);
+  useRefreshOnFocus(enhancedTracksQuery.refetch);
 
   const isCurrentlyPlaying = simpleAudioService.getStatus().isPlaying;
 

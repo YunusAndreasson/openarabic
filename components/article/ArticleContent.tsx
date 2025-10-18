@@ -313,7 +313,6 @@ export function ArticleContent({
               }
               onViewableItemsChanged={handleViewableItemsChanged}
               viewabilityConfig={viewabilityConfig}
-              estimatedItemSize={SENTENCE_ITEM_HEIGHT}
               scrollEventThrottle={SCROLL_THROTTLE}
               showsVerticalScrollIndicator={true}
               removeClippedSubviews={true}

@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, ImageIcon, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Loader2, ImageIcon, ArrowUpDown, ArrowUp, ArrowDown, Repeat } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -82,9 +82,21 @@ function formatDate(dateString: string): string {
   });
 }
 
+function hasRepeatFlags(article: Article): boolean {
+  if (!article.article_sentences) return false;
+
+  return article.article_sentences.some(
+    (sentence) => sentence.english_repeat === true || sentence.arabic_repeat === true
+  );
+}
+
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
   categories: { name: string } | null;
+  article_sentences?: Array<{
+    english_repeat: boolean | null;
+    arabic_repeat: boolean | null;
+  }>;
 };
 
 type Author = Database['public']['Tables']['authors']['Row'];
@@ -126,7 +138,7 @@ export default function ArticlesPage() {
       const [articlesRes, authorsRes, categoriesRes] = await Promise.all([
         supabase
           .from('articles')
-          .select('*, authors(name), categories(name)')
+          .select('*, authors(name), categories(name), article_sentences(english_repeat, arabic_repeat)')
           .order('created_at', { ascending: false }),
         supabase.from('authors').select('*').order('name'),
         supabase.from('categories').select('*').order('name'),
@@ -340,6 +352,7 @@ export default function ArticlesPage() {
                     {getSortIcon('summary')}
                   </Button>
                 </TableHead>
+                <TableHead className="w-20 text-center">Repeat</TableHead>
                 <TableHead className="w-40">
                   <Button
                     variant="ghost"
@@ -356,7 +369,7 @@ export default function ArticlesPage() {
           <TableBody>
             {filteredArticles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   No articles found
                 </TableCell>
               </TableRow>
@@ -456,6 +469,20 @@ export default function ArticlesPage() {
                           </div>
                         </TooltipContent>
                       </Tooltip>
+                    </TableCell>
+                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                      {hasRepeatFlags(article) && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center justify-center cursor-help">
+                              <Repeat className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-sm">Has sentence repeat flags</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">

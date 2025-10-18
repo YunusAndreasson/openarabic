@@ -13,7 +13,13 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 export const useBottomSheetBackdrop = (onClose: () => void) => {
   return useCallback(
     (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} onPress={onClose} />
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        pressBehavior="close"  // Prevents stuck backdrop by ensuring proper dismissal
+        onPress={onClose}
+      />
     ),
     [onClose]
   );

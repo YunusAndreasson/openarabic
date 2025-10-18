@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 /**
  * Generic hook for managing modal/bottom sheet state with optional data payload
@@ -57,11 +57,15 @@ export function useModalState<T>() {
     [isVisible, open, close]
   );
 
-  return {
-    isVisible,
-    data,
-    open,
-    close,
-    toggle,
-  };
+  // Memoize the return object to prevent unnecessary re-renders in dependent components
+  return useMemo(
+    () => ({
+      isVisible,
+      data,
+      open,
+      close,
+      toggle,
+    }),
+    [isVisible, data, open, close, toggle]
+  );
 }

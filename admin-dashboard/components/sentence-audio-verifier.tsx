@@ -6,8 +6,9 @@ import type { Database } from '@/lib/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Play, Pause, Loader2, Volume2, AlertCircle, Edit, Save, X } from 'lucide-react';
+import { Play, Pause, Loader2, Volume2, AlertCircle, Edit, Save, X, Sparkles } from 'lucide-react';
 import { useGlobalTranslationCache } from '@/hooks/useGlobalTranslationCache';
+import { TranslationImprovementModal } from './translation-improvement-modal';
 
 type Sentence = Database['public']['Tables']['article_sentences']['Row'];
 type SentenceWord = Database['public']['Tables']['sentence_words']['Row'];
@@ -94,6 +95,9 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
     word: SentenceWord;
     position: { x: number; y: number };
   } | null>(null);
+  const [improvementModalOpen, setImprovementModalOpen] = useState(false);
+  const [selectedSentenceForImprovement, setSelectedSentenceForImprovement] =
+    useState<SentenceWithWords | null>(null);
 
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -425,6 +429,16 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
     }
   };
 
+  const handleOpenImprovementModal = (sentence: SentenceWithWords) => {
+    setSelectedSentenceForImprovement(sentence);
+    setImprovementModalOpen(true);
+  };
+
+  const handleSaveImprovement = async (wordId: number, newEnglish: string) => {
+    // Use the existing handleSaveTranslation function
+    await handleSaveTranslation(wordId, newEnglish);
+  };
+
   const renderArabicWords = (sentence: SentenceWithWords) => {
     if (!sentence.sentence_words || sentence.sentence_words.length === 0) {
       return sentence.arabic;
@@ -557,15 +571,27 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
                       English:
                     </span>
                     {editingId !== sentence.id && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(sentence)}
-                        className="h-6 px-2 cursor-pointer"
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenImprovementModal(sentence)}
+                          className="h-6 px-2 cursor-pointer"
+                          title="Improve translations with AI"
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          AI Improve
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(sentence)}
+                          className="h-6 px-2 cursor-pointer"
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                      </div>
                     )}
                   </div>
                   {editingId === sentence.id ? (
@@ -854,6 +880,25 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
         >
           {hoveredWord.word.english}
         </div>
+      )}
+
+      {/* Translation Improvement Modal */}
+      {selectedSentenceForImprovement && (
+        <TranslationImprovementModal
+          open={improvementModalOpen}
+          onOpenChange={setImprovementModalOpen}
+          arabicSentence={selectedSentenceForImprovement.arabic}
+          englishSentence={selectedSentenceForImprovement.english}
+          words={
+            selectedSentenceForImprovement.sentence_words?.map((w) => ({
+              arabic: w.arabic,
+              english: w.english,
+              position: w.position,
+              id: w.id,
+            })) || []
+          }
+          onSave={handleSaveImprovement}
+        />
       )}
     </div>
   );

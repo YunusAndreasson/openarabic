@@ -6,6 +6,7 @@ export const GESTURE_CONSTANTS = {
   RESET_DELAY: 50,
   MIN_DISTANCE: 0.1,
   MAX_TRANSLATION_RATIO: LAYOUT.OPACITY.HOVER,
+  VELOCITY_THRESHOLD: 600, // Velocity threshold for swipe detection
   // v2 Performance optimizations
   DEBOUNCE_DELAY: 16, // 60fps
   HAPTIC_THRESHOLD: 0.02, // Minimum movement for haptic feedback
@@ -18,33 +19,4 @@ export const GESTURE_CONFIG = {
   // v2 Performance optimizations
   SIMULTANEOUS_GESTURES: true,
   SHOULD_CANCEL_WHEN_OUTSIDE: true,
-} as const;
-
-// ===== GESTURE STATE TYPES =====
-export type GestureState = 'idle' | 'active' | 'cancelled' | 'ended';
-export type SwipeDirection = 'left' | 'right' | 'none';
-
-// ===== GESTURE UTILITIES =====
-export const GestureUtils = {
-  /**
-   * Calculate swipe direction based on translation
-   */
-  getSwipeDirection: (translationX: number, threshold: number): SwipeDirection => {
-    if (Math.abs(translationX) < threshold) return 'none';
-    return translationX > 0 ? 'right' : 'left';
-  },
-
-  /**
-   * Check if gesture should be enabled based on state
-   */
-  shouldEnableGesture: (isUpdating: boolean, isTransitioning: boolean): boolean => {
-    return !isUpdating && !isTransitioning;
-  },
-
-  /**
-   * Clamp translation value within bounds
-   */
-  clampTranslation: (value: number, min: number, max: number): number => {
-    return Math.max(min, Math.min(max, value));
-  },
 } as const;

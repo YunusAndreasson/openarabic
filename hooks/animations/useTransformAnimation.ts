@@ -13,9 +13,7 @@ import {
   SlideInRight,
   SlideOutLeft,
   SlideOutRight,
-  useAnimatedReaction,
   useAnimatedStyle,
-  useDerivedValue,
   useSharedValue,
   withDelay,
   withSpring,
@@ -333,8 +331,8 @@ export const useTransformAnimation = (
     value.set(startPosition);
   }, [value, startPosition]);
 
-  // Use derived value for efficient transform calculation
-  const transformStyle = useDerivedValue(() => {
+  // Create animated style directly (no intermediate derived value needed)
+  const animatedStyle = useAnimatedStyle(() => {
     switch (type) {
       case 'scale':
         return { transform: [{ scale: value.get() }] };
@@ -348,20 +346,7 @@ export const useTransformAnimation = (
       default:
         return { transform: [{ scale: value.get() }] };
     }
-  }, [type]);
-
-  // Create the animated style using the derived value
-  const animatedStyle = useAnimatedStyle(() => transformStyle.get(), [transformStyle]);
-
-  // Optional: React to animation completion for debugging
-  useAnimatedReaction(
-    () => value.get(),
-    _currentValue => {
-      // Could add logging or side effects here if needed
-      // For now, just a placeholder for future enhancements
-    },
-    [value]
-  );
+  }, [type, value]);
 
   // Cleanup animations on unmount
   useEffect(() => {

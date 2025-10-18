@@ -24,6 +24,7 @@ export function ThemedView({
   includeBottomInset = true,
   safeAreaEdges,
   scrollViewProps,
+  scrollViewRef,
   ...otherProps
 }: ThemedViewProps): JSX.Element {
   const colors = useColors();
@@ -46,6 +47,7 @@ export function ThemedView({
 
   const scrollableContent = (
     <ScrollView
+      ref={scrollViewRef}
       // iOS best practice: Allow natural bounce behavior for tactile feedback
       // Users expect to be able to "pull" the screen even when no refresh is needed
       alwaysBounceVertical={true}
