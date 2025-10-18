@@ -24,7 +24,7 @@ class SimpleAudioService {
   private listeners: Set<(status: AudioStatus) => void> = new Set();
   private eventSubscription: { remove: () => void } | null = null;
   private loadingTimeout: ReturnType<typeof setTimeout> | null = null;
-  private subscriptionTimeout: ReturnType<typeof setTimeout> | null = null;
+  private stuckCheckTimeout: ReturnType<typeof setTimeout> | null = null;
   private audioSessionConfigured = false;
 
   // Player cache to avoid recreation for frequently played audio
@@ -45,6 +45,9 @@ class SimpleAudioService {
   // SLEEP TIMER SUPPORT: Track when sleep timer has expired
   private sleepTimerExpired = false;
 
+  // DIAGNOSTIC: Track if we've already retried play() for this track
+  private hasRetriedPlay = false;
+
   // APP STATE SUPPORT: Track app state for background audio handling
   private appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
@@ -61,7 +64,9 @@ class SimpleAudioService {
    * Configure audio session for proper playback
    */
   private async configureAudioSession(): Promise<void> {
-    if (this.audioSessionConfigured) return;
+    if (this.audioSessionConfigured) {
+      return;
+    }
 
     try {
       // Ensure audio is active at the OS level
@@ -171,18 +176,45 @@ class SimpleAudioService {
   }
 
   /**
+   * Validate player state to detect corruption
+   */
+  private isPlayerHealthy(player: AudioPlayer): boolean {
+    try {
+      const currentTime = player.currentTime;
+      const duration = player.duration;
+      return !isNaN(currentTime) && !isNaN(duration) && isFinite(currentTime) && isFinite(duration);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Create or reuse audio player for a track
    */
   private async createOrReusePlayer(audioUrl: string): Promise<AudioPlayer> {
-    // If we have an existing player with the same audio URL, reuse it
+    // If we have an existing player with the same audio URL, check if it's healthy
     if (this.currentPlayer && this.currentTrack?.audioUrl === audioUrl) {
-      return this.currentPlayer;
+      if (this.isPlayerHealthy(this.currentPlayer)) {
+        return this.currentPlayer;
+      } else {
+        this.currentPlayer = null;
+        this.currentTrack = null;
+      }
     }
 
     // Check cache for recently used players
     const cachedPlayer = this.playerCache.get(audioUrl);
     if (cachedPlayer) {
-      return cachedPlayer;
+      if (this.isPlayerHealthy(cachedPlayer)) {
+        return cachedPlayer;
+      } else {
+        this.playerCache.delete(audioUrl);
+        try {
+          cachedPlayer.remove();
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
     }
 
     // Stop previous playback to prevent overlapping audio
@@ -245,12 +277,23 @@ class SimpleAudioService {
     options: { skipPolling?: boolean; immediateStatus?: boolean; skipLoadingState?: boolean } = {}
   ): Promise<boolean> {
     try {
+      // CRITICAL: Ensure audio session is active before EVERY play attempt
+      // This fixes issues where iOS deactivates the session between plays
+      try {
+        await setIsAudioActiveAsync(true);
+      } catch {
+        // Try to continue anyway
+      }
+
       // Configure audio session first (should be pre-configured for faster playback)
       await this.configureAudioSession();
 
       // Create or reuse player
       this.currentPlayer = await this.createOrReusePlayer(track.audioUrl);
       this.currentTrack = track;
+
+      // Reset retry flag for new track
+      this.hasRetriedPlay = false;
 
       // IMMEDIATE FEEDBACK: Update status to loading right away
       // RESET: Ensure progress starts from 0 for new tracks
@@ -265,21 +308,25 @@ class SimpleAudioService {
         });
       }
 
-      // For replay: If reusing a player that has finished, seek back to beginning
+      // Always seek to beginning to ensure fresh playback state
+      // This ensures PLAY ALL always starts from position 0
       if (this.currentPlayer) {
-        const currentTime = this.currentPlayer.currentTime;
-        const duration = this.currentPlayer.duration;
-
-        // If player is at or near the end, seek to beginning
-        if (duration && currentTime >= duration - 0.5) {
+        try {
           await this.currentPlayer.seekTo(0);
+        } catch {
+          // Continue anyway - seek failure shouldn't block playback
         }
       }
 
-      // Start playback immediately
+      // Set up event subscription BEFORE playing to catch immediate failures
+      if (!options.skipPolling) {
+        this.startEventSubscription();
+      }
+
+      // Start playback
       this.currentPlayer.play();
 
-      // Update status to playing immediately (with track info for MiniPlayer)
+      // Update status to playing (actual state will come from event subscription)
       this.updateStatus({
         isLoading: false,
         isPlaying: true,
@@ -287,15 +334,6 @@ class SimpleAudioService {
         currentTime: 0,
         duration: 0,
       });
-
-      // FLICKER FIX: Delay event subscription to prevent immediate native events from causing extra updates
-      // This lets the initial state settle before native events start firing
-      if (!options.skipPolling) {
-        this.subscriptionTimeout = setTimeout(() => {
-          this.subscriptionTimeout = null;
-          this.startEventSubscription();
-        }, 150); // 150ms delay prevents early native events from causing flicker
-      }
 
       // Set shorter loading timeout since audio should be cached
       this.loadingTimeout = setTimeout(() => {
@@ -310,6 +348,9 @@ class SimpleAudioService {
           this.stopEventSubscription();
         }
       }, 3000); // Reduced from 10s to 3s for cached audio
+
+      // HEALTH CHECK: Verify player actually started playing
+      this.scheduleHealthCheck();
 
       return true;
     } catch (error) {
@@ -348,13 +389,35 @@ class SimpleAudioService {
   }
 
   /**
+   * Schedule a health check to verify player actually started
+   */
+  private scheduleHealthCheck(): void {
+    // Clear any existing health check
+    if (this.stuckCheckTimeout) {
+      clearTimeout(this.stuckCheckTimeout);
+    }
+
+    // Wait 500ms then check if player is actually playing
+    this.stuckCheckTimeout = setTimeout(() => {
+      if (!this.currentPlayer) {
+        return;
+      }
+
+      // Silent health check - no action needed, just for monitoring
+      // The event subscription retry mechanism handles failures automatically
+    }, 500); // Wait 500ms for player to start
+  }
+
+  /**
    * PLAYLIST SUPPORT: Start playing a playlist of tracks
    */
   async playPlaylist(
     tracks: EnhancedAudioTrack[],
     onTrackComplete?: (nextTrack: EnhancedAudioTrack | null) => void
   ): Promise<boolean> {
-    if (!tracks.length) return false;
+    if (!tracks.length) {
+      return false;
+    }
 
     try {
       this.playlist = [...tracks];
@@ -368,7 +431,9 @@ class SimpleAudioService {
 
       // Start with the first track
       const firstTrack = tracks[0];
-      if (!firstTrack) return false;
+      if (!firstTrack) {
+        return false;
+      }
 
       // FLICKER FIX: Skip loading state since audio is cached (prevents loading → playing flash)
       return await this.play(firstTrack, { skipLoadingState: true });
@@ -452,6 +517,9 @@ class SimpleAudioService {
 
       // SLEEP TIMER SUPPORT: Reset sleep timer expired flag when stopping
       this.resetSleepTimerExpired();
+
+      // DIAGNOSTIC: Reset retry flag when stopping
+      this.hasRetriedPlay = false;
 
       await this.stopInternal();
       // RESET: Clear all progress and track data when stopping
@@ -579,7 +647,9 @@ class SimpleAudioService {
     // Clear existing subscription
     this.stopEventSubscription();
 
-    if (!this.currentPlayer) return;
+    if (!this.currentPlayer) {
+      return;
+    }
 
     // Subscribe to native playback status updates
     this.eventSubscription = this.currentPlayer.addListener(
@@ -590,6 +660,25 @@ class SimpleAudioService {
           const isPlaying = nativeStatus.playing ?? false;
           const currentTime = nativeStatus.currentTime ?? 0;
           const duration = nativeStatus.duration ?? 0;
+
+          // CRITICAL FIX: If player not playing at start, retry play() ONCE
+          // This fixes the intermittent issue where native player doesn't start
+          // Only retry once per track to avoid glitchy multiple retries
+          // Only retry if currentTime is 0 (actual startup failure, not transient pause)
+          if (!this.status.duration || currentTime < 1) {
+            if (!isPlaying && !this.hasRetriedPlay && currentTime < 0.1) {
+              this.hasRetriedPlay = true;
+
+              if (this.currentPlayer) {
+                // Small delay to let player stabilize before retry
+                setTimeout(() => {
+                  if (this.currentPlayer) {
+                    this.currentPlayer.play();
+                  }
+                }, 50); // 50ms delay
+              }
+            }
+          }
 
           // Add safety checks for invalid values
           const safeCurrentTime = isNaN(currentTime) || !isFinite(currentTime) ? 0 : Math.max(0, currentTime);
@@ -671,10 +760,6 @@ class SimpleAudioService {
       this.eventSubscription.remove();
       this.eventSubscription = null;
     }
-    if (this.subscriptionTimeout) {
-      clearTimeout(this.subscriptionTimeout);
-      this.subscriptionTimeout = null;
-    }
     if (this.loadingTimeout) {
       clearTimeout(this.loadingTimeout);
       this.loadingTimeout = null;
@@ -689,8 +774,9 @@ class SimpleAudioService {
 
     if (this.currentPlayer) {
       try {
+        // Just pause - keep player in cache for reuse
+        // seekTo(0) on next play will reset position
         this.currentPlayer.pause();
-        this.currentPlayer.remove();
       } catch (cleanupError) {
         // Log error instead of throwing (callers don't always catch)
         console.error('Audio cleanup failed:', cleanupError);

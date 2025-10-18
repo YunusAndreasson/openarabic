@@ -201,16 +201,12 @@ export function useGlobalAudioState(): GlobalAudioState {
   ]);
 
   // Action handlers
+  // MiniPlayer only shows when playing, so this only needs to handle stop
   const handlePlayPause = useCallback(async () => {
-    if (audioPlayer.isPlaying) {
-      await audioPlayer.pause();
-      return;
-    }
-
-    // If not playing and we have a current track, resume; otherwise do nothing here.
-    // Play for a new track is handled by screen-level actions (e.g., handleArticlePlay).
-    await audioPlayer.resume();
-  }, [audioPlayer.isPlaying, audioPlayer.pause, audioPlayer.resume]);
+    // Stop behavior: stops playback and clears current track (hides MiniPlayer)
+    // Note: Play is only initiated via PLAY ALL from Listen tab
+    await audioPlayer.stop();
+  }, [audioPlayer.stop]);
 
   const handleTimerPress = useCallback(() => {
     setShowSleepTimerModal(true);

@@ -3,11 +3,13 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useStreaks } from '@/contexts/StreaksContext';
+import { usePressAnimation } from '@/hooks/animations';
 import { useReadingStreak } from '@/hooks/articles/useReadingStreak';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -34,6 +36,10 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   const { streak: streakData } = useReadingStreak();
   const { openStreaks } = useStreaks();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
+
+  // Press animations for both buttons
+  const streakPressAnimation = usePressAnimation({ type: 'button' });
+  const profilePressAnimation = usePressAnimation({ type: 'button' });
 
   const currentStreak = streakData?.currentStreak ?? 0;
   const hasStreak = currentStreak > 0;
@@ -92,10 +98,12 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
       {/* Streak Counter - Circular Badge Design */}
       <Pressable
         onPress={handleStreakPress}
+        onPressIn={streakPressAnimation.handlePressIn}
+        onPressOut={streakPressAnimation.handlePressOut}
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
         style={{ padding: LAYOUT.SPACING.TINY }} // Standard padding for touch targets
       >
-        <View style={streakBadgeStyle}>
+        <Animated.View style={[streakBadgeStyle, streakPressAnimation.animatedStyle]}>
           <Ionicons
             name="flame"
             size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
@@ -126,44 +134,51 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
           >
             {currentStreak}
           </ThemedText>
-        </View>
+        </Animated.View>
       </Pressable>
 
       {/* Profile Button */}
-      <Pressable onPress={handlePress} style={styles.profileButton}>
-        {profilePhotoUri ? (
-          <Image
-            source={{ uri: profilePhotoUri }}
-            style={profilePhotoStyle}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={200}
-            priority="high"
-          />
-        ) : (
-          <View
-            style={[
-              styles.initialsContainer,
-              {
-                backgroundColor: colors.tint,
-                width: size,
-                height: size,
-                borderRadius: size / 2,
-              },
-            ]}
-          >
-            <ThemedText
-              type="label"
-              weight="bold"
+      <Pressable
+        onPress={handlePress}
+        onPressIn={profilePressAnimation.handlePressIn}
+        onPressOut={profilePressAnimation.handlePressOut}
+        style={styles.profileButton}
+      >
+        <Animated.View style={profilePressAnimation.animatedStyle}>
+          {profilePhotoUri ? (
+            <Image
+              source={{ uri: profilePhotoUri }}
+              style={profilePhotoStyle}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              transition={200}
+              priority="high"
+            />
+          ) : (
+            <View
               style={[
-                styles.baseInitialsText,
-                { fontSize: size * 0.45, color: colors.background },
+                styles.initialsContainer,
+                {
+                  backgroundColor: colors.tint,
+                  width: size,
+                  height: size,
+                  borderRadius: size / 2,
+                },
               ]}
             >
-              {initials}
-            </ThemedText>
-          </View>
-        )}
+              <ThemedText
+                type="label"
+                weight="bold"
+                style={[
+                  styles.baseInitialsText,
+                  { fontSize: size * 0.45, color: colors.background },
+                ]}
+              >
+                {initials}
+              </ThemedText>
+            </View>
+          )}
+        </Animated.View>
       </Pressable>
     </View>
   );

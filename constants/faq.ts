@@ -93,6 +93,27 @@ export const FAQ_DATA: FAQCategoryData[] = [
         category: FAQCategoryEnum.FEATURES,
       },
       {
+        id: 'why-review-before-adding',
+        question: 'Why should I review before adding more words?',
+        answer:
+          "Your brain can only consolidate a limited amount of new information at once. When you add too many words without reviewing existing ones, you overwhelm your memory system and reduce long-term retention.\n\nBy completing your Due reviews before adding new vocabulary, you give your brain time to strengthen existing neural connections. This creates a solid foundation for new learning and prevents the frustration of constantly relearning forgotten words.\n\nMonitor your Memory Strength metric - target at least 75% before adding new vocabulary to maintain a healthy learning load.",
+        category: FAQCategoryEnum.FEATURES,
+      },
+      {
+        id: 'understanding-memory-strength',
+        question: 'How does Memory Strength work?',
+        answer:
+          "Memory Strength represents your overall recall probability - the percentage of words you're expected to remember right now. It's calculated across all your vocabulary using the FSRS algorithm.\n\nDue words are scheduled for review at their optimal timing. These reviews are critical - they catch words before they fade from memory and recalibrate the algorithm's predictions for your next review interval.\n\nLearned words have successfully graduated to long-term memory (FSRS State 2). They still need regular review to build stability, but the intervals between reviews grow longer with each successful recall.\n\nMastered words have achieved high stability through consistent successful reviews. These words require minimal maintenance - their review intervals can extend to months or even years while maintaining strong retention.",
+        category: FAQCategoryEnum.FEATURES,
+      },
+      {
+        id: 'how-spaced-repetition-works-detailed',
+        question: 'How does the spacing algorithm work?',
+        answer:
+          "Your memory follows a predictable forgetting curve. Information fades rapidly at first, then more slowly over time. Spaced repetition leverages this by showing you words just before you're likely to forget them.\n\nEach successful review strengthens the memory and extends the interval before the next review. Words you recall easily appear less frequently, while challenging words get more practice. This optimizes your time - you focus effort where it's needed most.\n\nOpenArabic uses the FSRS algorithm, which adapts to your individual learning patterns. It considers your response speed, consistency, and review history to calculate the optimal moment to show each word again. Complete your Due reviews daily for best results - even a few missed days can cause review backlogs and interrupt the spacing intervals that make the system effective.",
+        category: FAQCategoryEnum.FEATURES,
+      },
+      {
         id: 'audio-features',
         question: 'What audio features are available?',
         answer:

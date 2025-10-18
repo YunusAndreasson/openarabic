@@ -1,18 +1,16 @@
 import { ProgressBar } from '@common/ProgressBar';
-import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback, useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { memo, useMemo } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
+import { IconButton } from '@/components/ui/IconButton';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { lightFeedback } from '@/utils/haptics';
 import { generateImageUrl } from '@/utils/imageUtils';
-import { createAndroidRipple } from '@/utils/layoutUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
 
 export interface MiniPlayerProps {
@@ -44,6 +42,19 @@ export interface MiniPlayerProps {
 const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 96px
 const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 56px
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px
+
+// Static container style - positioned above bottom bar
+const CONTAINER_STYLE = [
+  StyleSheet.create({
+    container: {
+      position: 'absolute' as const,
+      left: LAYOUT.SCREEN_EDGE_PADDING,
+      right: LAYOUT.SCREEN_EDGE_PADDING,
+      zIndex: LAYOUT.Z_INDEX.OVERLAY,
+    },
+  }).container,
+  { bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY },
+];
 
 // Custom comparison function for React.memo
 // Only re-render when visual display actually changes
@@ -79,7 +90,7 @@ const MiniPlayerComparison = (prev: MiniPlayerProps, next: MiniPlayerProps): boo
 
 const MiniPlayerComponent = ({
   article,
-  isPlaying,
+  isPlaying: _isPlaying,
   isTimerActive,
   position,
   duration,
@@ -93,61 +104,27 @@ const MiniPlayerComponent = ({
   const imageUrl = useMemo(() => generateImageUrl(article.image_url), [article.image_url]);
 
   // Memoize dynamic styles for better performance
-  const containerStyle = useMemo(
-      () => [styles.container, { bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY }],
-      []
+  const cardStyle = useMemo(
+    () => [
+      styles.card,
+      {
+        backgroundColor: colors.elevation2,
+        ...LAYOUT.ELEVATION.MEDIUM,
+      },
+    ],
+    [colors.elevation2]
+  );
+
+    // Memoize button colors
+    const timerButtonColor = useMemo(
+      () => (isTimerActive ? colors.warning : colors.elevation3),
+      [isTimerActive, colors.warning, colors.elevation3]
     );
 
-    const cardStyle = useMemo(
-      () => [
-        styles.card,
-        {
-          backgroundColor: colors.elevation2,
-          borderColor: colors.border,
-          ...LAYOUT.ELEVATION.MEDIUM,
-        },
-      ],
-      [colors.elevation2, colors.border]
+    const timerIconColor = useMemo(
+      () => (isTimerActive ? colors.background : colors.secondaryText),
+      [isTimerActive, colors.background, colors.secondaryText]
     );
-
-    const hairlineStyle = useMemo(
-      () => [styles.hairline, { backgroundColor: colors.border }],
-      [colors.border]
-    );
-
-    const artworkStyle = useMemo(
-      () => [
-        styles.artwork,
-        {
-          borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-          borderColor: colors.border,
-        },
-      ],
-      [colors.border]
-    );
-
-    const timerButtonStyle = useMemo(
-      () => [
-        styles.timerButton,
-        {
-          backgroundColor: isTimerActive ? colors.warning : colors.elevation3,
-          borderWidth: isTimerActive ? 0 : LAYOUT.BORDER.WIDTH.THIN,
-          borderColor: isTimerActive ? colors.transparent : colors.border,
-        },
-      ],
-      [isTimerActive, colors.warning, colors.elevation3, colors.border, colors.transparent]
-    );
-
-    const playButtonStyle = useMemo(
-      () => [styles.playButton, { backgroundColor: colors.tint }],
-      [colors.tint]
-    );
-
-    // Handle play/pause with haptic feedback
-    const handlePlayPause = useCallback(() => {
-      lightFeedback();
-      onPlayPause();
-    }, [onPlayPause]);
 
     // Calculate progress percentage
     const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
@@ -169,20 +146,18 @@ const MiniPlayerComponent = ({
 
     return (
       <Animated.View
-        entering={FadeInUp.duration(TIMING_CONFIG.GENTLE.duration)}
+        entering={FadeInUp.delay(150).duration(TIMING_CONFIG.GENTLE.duration)}
         exiting={FadeOutDown.duration(200)}
-        style={containerStyle}
+        style={CONTAINER_STYLE}
       >
         <View style={cardStyle}>
-          {/* Subtle inner hairline at top for grab affordance */}
-          <View style={hairlineStyle} pointerEvents="none" />
           {/* Main Content Row */}
           <View style={styles.contentRow}>
             {/* Artwork */}
             <View style={styles.artworkContainer}>
               <EnhancedImage
                 source={imageUrl}
-                style={artworkStyle}
+                style={styles.artwork}
                 priority="high"
                 transition={0}
                 recyclingKey={imageUrl}
@@ -233,34 +208,22 @@ const MiniPlayerComponent = ({
             {/* Controls */}
             <View style={styles.controlsContainer}>
               {/* Timer button - always visible with state indication */}
-              <Pressable
-                onPress={() => {
-                  lightFeedback();
-                  onTimerPress();
-                }}
-                android_ripple={createAndroidRipple(colors)}
-                style={timerButtonStyle}
-              >
-                <Ionicons
-                  name="timer"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  color={isTimerActive ? colors.background : colors.secondaryText}
-                />
-              </Pressable>
+              <IconButton
+                icon="timer"
+                onPress={onTimerPress}
+                backgroundColor={timerButtonColor}
+                iconColor={timerIconColor}
+                iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+              />
 
-              {/* Play/Pause button */}
-              <Pressable
-                onPress={handlePlayPause}
-                android_ripple={createAndroidRipple(colors)}
-                style={playButtonStyle}
-              >
-                <Ionicons
-                  name={isPlaying ? 'pause' : 'play'}
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  color={colors.black}
-                  style={!isPlaying && styles.playIconOffset}
-                />
-              </Pressable>
+              {/* Stop button - playback is only started via PLAY ALL */}
+              <IconButton
+                icon="stop"
+                onPress={onPlayPause}
+                backgroundColor={colors.tint}
+                iconColor={colors.black}
+                iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+              />
             </View>
           </View>
 
@@ -271,7 +234,7 @@ const MiniPlayerComponent = ({
               height={PROGRESS_HEIGHT}
               style={styles.progressBar}
               fillColor={colors.tint}
-              backgroundColor={colors.elevation3}
+              backgroundColor={colors.border}
             />
           </View>
         </View>
@@ -286,27 +249,10 @@ MiniPlayer.displayName = 'MiniPlayer';
 
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    left: LAYOUT.SCREEN_EDGE_PADDING,
-    right: LAYOUT.SCREEN_EDGE_PADDING,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY, // Proper z-index from layout system
-  },
-
   card: {
     height: MINI_PLAYER_HEIGHT,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
-  },
-
-  hairline: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: LAYOUT.BORDER.WIDTH.THIN,
-    backgroundColor: 'transparent', // Will be set dynamically
   },
 
   contentRow: {
@@ -386,32 +332,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
-    paddingLeft: LAYOUT.SPACING.SMALL,
-    paddingRight: LAYOUT.SPACING.MEDIUM,
-  },
-
-  timerButton: {
-    // Larger size for better usability
-    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE, // Back to 28px (was 24px)
-    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
-    borderRadius: LAYOUT.BUTTON.ICON_SIZE.XLARGE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Add subtle elevation when inactive for better visual hierarchy
-    ...LAYOUT.ELEVATION.SUBTLE,
-  },
-
-  playButton: {
-    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    borderRadius: LAYOUT.BUTTON.HEIGHT.MEDIUM / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...LAYOUT.ELEVATION.SUBTLE,
-  },
-
-  playIconOffset: {
-    marginLeft: LAYOUT.SPACING.HALF_TINY,
   },
 
   progressContainer: {

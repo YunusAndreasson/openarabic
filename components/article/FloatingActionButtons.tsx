@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useOptimisticToggle } from '@/hooks/ui/useOptimisticToggle';
 import { createAndroidRipple } from '@/utils/layoutUtils';
@@ -37,6 +39,12 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
   }) => {
     const colors = useColors();
     const insets = useSafeAreaInsets();
+
+    // Press animations for all buttons
+    const closePressAnimation = usePressAnimation({ type: 'button' });
+    const languagePressAnimation = usePressAnimation({ type: 'button' });
+    const playPressAnimation = usePressAnimation({ type: 'button' });
+    const bookmarkPressAnimation = usePressAnimation({ type: 'button' });
 
     // Use optimistic toggle hook for immediate UI feedback
     const { value: optimisticIsInReadingList, toggle: handleOptimisticToggle } =
@@ -93,15 +101,18 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         {/* Close button - top left */}
         <View style={closeButtonStyle}>
           <Pressable
-            style={buttonStyle}
             onPress={onClose}
+            onPressIn={closePressAnimation.handlePressIn}
+            onPressOut={closePressAnimation.handlePressOut}
             android_ripple={createAndroidRipple(colors)}
           >
-            <Ionicons
-              name="close"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={colors.secondaryText}
-            />
+            <Animated.View style={[buttonStyle, closePressAnimation.animatedStyle]}>
+              <Ionicons
+                name="close"
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={colors.secondaryText}
+              />
+            </Animated.View>
           </Pressable>
         </View>
 
@@ -109,43 +120,67 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         <View style={actionButtonsStyle}>
           {/* Language toggle button - show/hide English text */}
           <Pressable
-            style={isLanguageOverridden ? activeButtonStyle : buttonStyle}
             onPress={onToggleLanguage}
+            onPressIn={languagePressAnimation.handlePressIn}
+            onPressOut={languagePressAnimation.handlePressOut}
             android_ripple={createAndroidRipple(colors)}
           >
-            <Ionicons
-              name="language"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={isLanguageOverridden ? colors.tint : colors.secondaryText}
-            />
+            <Animated.View
+              style={[
+                isLanguageOverridden ? activeButtonStyle : buttonStyle,
+                languagePressAnimation.animatedStyle,
+              ]}
+            >
+              <Ionicons
+                name="language"
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={isLanguageOverridden ? colors.tint : colors.secondaryText}
+              />
+            </Animated.View>
           </Pressable>
 
           {/* Play button - only show if article has audio */}
           {hasAudio && onPlayPress && (
             <Pressable
-              style={isPlaying ? activeButtonStyle : buttonStyle}
               onPress={onPlayPress}
+              onPressIn={playPressAnimation.handlePressIn}
+              onPressOut={playPressAnimation.handlePressOut}
               android_ripple={createAndroidRipple(colors)}
             >
-              <Ionicons
-                name={isPlaying ? 'pause' : 'play'}
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                color={isPlaying ? colors.tint : colors.secondaryText}
-              />
+              <Animated.View
+                style={[
+                  isPlaying ? activeButtonStyle : buttonStyle,
+                  playPressAnimation.animatedStyle,
+                ]}
+              >
+                <Ionicons
+                  name={isPlaying ? 'pause' : 'play'}
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                  color={isPlaying ? colors.tint : colors.secondaryText}
+                />
+              </Animated.View>
             </Pressable>
           )}
 
           {/* Playlist button */}
           <Pressable
-            style={optimisticIsInReadingList ? activeButtonStyle : buttonStyle}
             onPress={handleOptimisticToggle}
+            onPressIn={bookmarkPressAnimation.handlePressIn}
+            onPressOut={bookmarkPressAnimation.handlePressOut}
             android_ripple={createAndroidRipple(colors)}
           >
-            <Ionicons
-              name="bookmark"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={optimisticIsInReadingList ? colors.tint : colors.secondaryText}
-            />
+            <Animated.View
+              style={[
+                optimisticIsInReadingList ? activeButtonStyle : buttonStyle,
+                bookmarkPressAnimation.animatedStyle,
+              ]}
+            >
+              <Ionicons
+                name="bookmark"
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={optimisticIsInReadingList ? colors.tint : colors.secondaryText}
+              />
+            </Animated.View>
           </Pressable>
         </View>
       </>

@@ -21,7 +21,7 @@ import {
   stopAudioSafely,
 } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 import { shuffleArray } from '@/utils/list';
 
 export const useBookmarksScreen = () => {
@@ -163,11 +163,13 @@ export const useBookmarksScreen = () => {
 
     const isCurrentlyPlayingNow = currentStatus.isPlaying;
 
-    if (isAudioBusy()) return;
+    if (isAudioBusy()) {
+      return;
+    }
 
     if (isCurrentlyPlayingNow && currentPlaybackMode === 'all') {
       try {
-        lightFeedback();
+        selectionFeedback();
         await simpleAudioService.stop();
         // STABILIZATION: Debounce playback mode change
         playbackModeTimeoutRef.current = setTimeout(() => {
@@ -180,7 +182,7 @@ export const useBookmarksScreen = () => {
       }
     } else if (currentTracks.length) {
       try {
-        lightFeedback();
+        selectionFeedback();
         // STABILIZATION: Set playback mode immediately for UI feedback
         setPlaybackMode('all');
 
@@ -220,7 +222,7 @@ export const useBookmarksScreen = () => {
     async (articleId: number) => {
       if (!user?.id) return;
       try {
-        lightFeedback();
+        selectionFeedback();
         await bookmarkService.removeFromReadingList(user.id, articleId as ArticleId);
         dispatch(removeFromCustomOrder(articleId));
 
@@ -248,7 +250,7 @@ export const useBookmarksScreen = () => {
       const currentArticleId = getCurrentArticleId();
 
       if (isCurrentlyPlaying && currentArticleId === articleId) {
-        lightFeedback();
+        selectionFeedback();
         await simpleAudioService.stop();
         // STABILIZATION: Debounce playback mode change
         playbackModeTimeoutRef.current = setTimeout(() => {
@@ -260,7 +262,7 @@ export const useBookmarksScreen = () => {
       // Always generate fresh track to ensure correct audio preference
       // Don't use pre-generated tracks as they might have stale preferences
       try {
-        lightFeedback();
+        selectionFeedback();
         setPlaybackMode('all');
 
         // PREFETCH: warm article data and image so audio components show artwork instantly

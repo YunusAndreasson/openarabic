@@ -40,6 +40,12 @@ export const useSimpleAudioPlayer = () => {
     await simpleAudioService.stop();
   }, [isMountedRef]);
 
+  // Seek function
+  const seekTo = useCallback(async (position: number): Promise<void> => {
+    if (!isMountedRef.current) return;
+    await simpleAudioService.seekTo(position);
+  }, [isMountedRef]);
+
   // Pre-configure audio session function
   const preconfigureAudioSession = useCallback(async (): Promise<void> => {
     if (!isMountedRef.current) return;
@@ -59,6 +65,7 @@ export const useSimpleAudioPlayer = () => {
     pause,
     resume,
     stop,
+    seekTo,
     preconfigureAudioSession,
 
     // Full status object for advanced use cases

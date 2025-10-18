@@ -27,6 +27,7 @@ import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
 import { AudioAction, ToastType } from '@/types/enums';
 import { generateImageUrl } from '@/utils/imageUtils';
+import { formatAuthorCategory } from '@/utils/stringUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
 
 const styles = StyleSheet.create({
@@ -84,10 +85,15 @@ const ListenListItem = memo(
       };
     }, [drag]);
 
+    const authorCategoryText = formatAuthorCategory(
+      item.articles.author.name,
+      item.articles.category.name
+    );
+
     return (
       <ListenListItemCard
         title={item.articles.title}
-        secondaryText={item.articles.author.name}
+        secondaryText={authorCategoryText}
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
         onDelete={handleDelete}

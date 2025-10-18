@@ -1,6 +1,7 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo, useCallback, useMemo, useState, type FC } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import React, { memo, useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { LayoutAnimation, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -69,41 +70,54 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
     [colors.background, colors.cardBorder]
   );
 
-  return (
-    <View style={styles.faqItemContainer}>
-      <BaseCard shadowSize="small" style={buttonStyle} onPress={handlePress}>
-        <View style={styles.faqButtonContent}>
-          <ThemedText
-            type="body"
-            weight="medium"
-            colorName={isExpanded ? 'tint' : 'text'}
-            style={styles.faqQuestionText}
-          >
-            {item.question}
-          </ThemedText>
-          <Ionicons
-            name={isExpanded ? 'chevron-down' : 'chevron-forward'}
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={isExpanded ? colors.tint : colors.textTertiary}
-          />
-        </View>
-      </BaseCard>
-      {isExpanded && (
-        <View style={answerContainerStyle}>
-          <ThemedText type="body" colorName="metadataText">
-            {item.answer}
-          </ThemedText>
-        </View>
-      )}
-    </View>
-  );
-});
+    return (
+      <View style={styles.faqItemContainer}>
+        <BaseCard shadowSize="small" style={buttonStyle} onPress={handlePress}>
+          <View style={styles.faqButtonContent}>
+            <ThemedText
+              type="body"
+              weight="medium"
+              colorName={isExpanded ? 'tint' : 'text'}
+              style={styles.faqQuestionText}
+            >
+              {item.question}
+            </ThemedText>
+            <Ionicons
+              name={isExpanded ? 'chevron-down' : 'chevron-forward'}
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color={isExpanded ? colors.tint : colors.textTertiary}
+            />
+          </View>
+        </BaseCard>
+        {isExpanded && (
+          <View style={answerContainerStyle}>
+            <ThemedText type="body" colorName="metadataText">
+              {item.answer}
+            </ThemedText>
+          </View>
+        )}
+      </View>
+    );
+  });
 FAQItemComponent.displayName = 'FAQItemComponent';
 
 // Main Help screen
 const HelpScreen: FC = () => {
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ expandItem?: string }>();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  // Auto-expand item from URL params
+  useEffect(() => {
+    const itemToExpand = params.expandItem;
+    if (!itemToExpand) return;
+
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      newSet.add(itemToExpand);
+      return newSet;
+    });
+  }, [params.expandItem]);
 
   const handleToggleItem = useCallback((id: string) => {
     setExpandedItems(prev => {

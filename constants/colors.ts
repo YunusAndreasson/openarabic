@@ -71,7 +71,7 @@ const semanticOKLCH = {
  * Pure Values - Green-tinted neutrals
  */
 const pureOKLCH = {
-  white: { l: 0.9965, c: 0.0026, h: 106.4 },        // #FEFEFC
+  white: { l: 0.9965, c: 0.004, h: 157.0 },         // Sage-green brand tint
   black: { l: 0.1613, c: 0.0115, h: 150.9 },        // #0A0F0B
 } as const;
 
@@ -443,7 +443,7 @@ const darkColors: ThemeColors = {
   // Interactive elements
   tint: basePalette.tint.primaryDark,
   tintBackground: withAlpha(basePalette.tint.primaryDark, opacity.medium),
-  tabIconDefault: basePalette.forest.lighter,
+  tabIconDefault: basePalette.forest.medium,
   tabIconSelected: basePalette.tint.primaryDark,
   icon: textHierarchy.dark.metadata,
   disabled: basePalette.sage.medium,

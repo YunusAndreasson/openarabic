@@ -20,7 +20,7 @@ export function getCurrentArticleId(): number | undefined {
 }
 
 /**
- * Check if audio service is currently busy (loading or transitioning)
+ * Check if audio service is currently busy (loading)
  * @returns true if audio is loading, false otherwise
  */
 export function isAudioBusy(): boolean {

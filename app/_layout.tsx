@@ -405,8 +405,8 @@ const styles = StyleSheet.create({
 const AudioOverlays = memo(function AudioOverlays() {
   const globalAudioState = useGlobalAudioState();
 
-  // Memoize the mini player visibility to prevent unnecessary re-renders
-  const shouldShowMiniPlayer = useMemo(
+  // Calculate raw visibility condition
+  const rawShouldShow = useMemo(
     () =>
       Boolean(globalAudioState.currentArticle) &&
       (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
@@ -420,6 +420,32 @@ const AudioOverlays = memo(function AudioOverlays() {
       globalAudioState.shouldHideMiniPlayer,
     ]
   );
+
+  // STABILIZATION: Show immediately, hide with delay to prevent mount/unmount flicker
+  const [shouldShowMiniPlayer, setShouldShowMiniPlayer] = useState(rawShouldShow);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (rawShouldShow) {
+      // Show immediately - clear any pending hide
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      setShouldShowMiniPlayer(true);
+    } else {
+      // Hide with delay to prevent flicker during rapid state changes
+      hideTimeoutRef.current = setTimeout(() => {
+        setShouldShowMiniPlayer(false);
+      }, 300); // 300ms delay before hiding
+    }
+
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, [rawShouldShow]);
 
   return (
     <>

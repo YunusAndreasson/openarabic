@@ -16,7 +16,7 @@ import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { capitalizeFirstLetter, formatAuthorCategory } from '@/utils/stringUtils';
 
 // Extract constants outside component for better performance
 const GOLDEN_RATIO = 1.618; // True golden ratio for optimal image-to-content proportions
@@ -138,10 +138,8 @@ export function ArticleCard({
   const imageContainerStyle = [styles.imageContainer, { height: imageHeight }];
 
   const capitalizedCategory = capitalizeFirstLetter(category);
-  const capitalizedCategoryForDisplay = categoryForDisplay
-    ? capitalizeFirstLetter(categoryForDisplay)
-    : '';
-  const authorDisplayText = `${author} • ${capitalizedCategoryForDisplay}`;
+  const categoryForAuthorDisplay = categoryForDisplay || category;
+  const authorDisplayText = formatAuthorCategory(author, categoryForAuthorDisplay);
 
   // Gradient props
   const gradientProps = {

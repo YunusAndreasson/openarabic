@@ -114,9 +114,9 @@ describe('Positioning Utilities', () => {
       const containerOffset = -5; // Unusual but possible edge case
       const result = calculateTooltipDimensions(layout, 'Test', false, undefined, containerOffset);
 
-      // effectiveScreenMargin = max(0, 16 - (-5)) = 21px
-      // Should enforce larger margin to compensate for negative container offset
-      expect(result.tooltipLeft).toBeGreaterThanOrEqual(21);
+      // containerOffset is now deprecated and ignored
+      // effectiveScreenMargin is always SCREEN_MARGIN (16px)
+      expect(result.tooltipLeft).toBeGreaterThanOrEqual(16);
     });
 
     it('should use container width when provided', () => {
@@ -166,10 +166,11 @@ describe('Positioning Utilities', () => {
       const containerWidth = 0; // Not provided
       const result = calculateTooltipDimensions(layout, 'Test', false, undefined, containerOffset, containerWidth);
 
-      // Should fall back to SCREEN_WIDTH - containerOffset = 375 - 10 = 365px
-      // Right boundary at 365 - 16 = 349px
+      // containerOffset is now deprecated and ignored
+      // When containerWidth is 0, falls back to SCREEN_WIDTH (375px)
+      // Right boundary at 375 - 16 = 359px
       const rightEdge = result.tooltipLeft + result.tooltipWidth;
-      expect(rightEdge).toBeLessThanOrEqual(349);
+      expect(rightEdge).toBeLessThanOrEqual(359);
     });
   });
 
