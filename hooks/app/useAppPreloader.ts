@@ -48,9 +48,10 @@ export const useAppPreloader = (): AppPreloaderResult => {
       setPreloadProgress(10);
 
       // Load static data first (categories, basic articles list)
+      // Use ensureQueryData to prioritize cache over network (TanStack Query v5 best practice)
       const criticalPromises = [
-        queryClient.fetchQuery(articleQueryOptions.categories()),
-        queryClient.fetchQuery(articleQueryOptions.all()),
+        queryClient.ensureQueryData(articleQueryOptions.categories()),
+        queryClient.ensureQueryData(articleQueryOptions.all()),
       ];
 
       // CRITICAL FIX: Load reading progress synchronously with articles
@@ -136,7 +137,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         // Use setTimeout to defer background loading slightly, allowing UI to become responsive first
         setTimeout(() => {
           const backgroundPromises = [
-            queryClient.prefetchQuery(articleQueryOptions.authors()),
+            queryClient.ensureQueryData(articleQueryOptions.authors()),
             queryClient.prefetchQuery({
               queryKey: READING_LIST_QUERY_KEYS.all(user.id),
               queryFn: () => bookmarkService.getReadingList(user.id),
@@ -219,12 +220,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
     if (!user?.id) return false;
 
     try {
-      // Fetch all articles first
-      const allArticles = await queryClient.fetchQuery({
-        ...articleQueryOptions.all(),
-        staleTime: 300000, // 5 minutes
-        gcTime: 600000, // 10 minutes
-      });
+      // Use ensureQueryData to prioritize cache for immutable articles
+      const allArticles = await queryClient.ensureQueryData(articleQueryOptions.all());
 
       if (!allArticles || allArticles.length === 0) return false;
 
