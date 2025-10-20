@@ -1,5 +1,6 @@
 export interface ThemeColors {
   primary: string;
+  secondary: string;
   background: string;
   text: string;
   secondaryText: string;
@@ -42,6 +43,8 @@ export interface ThemeColors {
   textShadowDark: string;
   textShadowLight: string;
   info: string;
+  accent: string;
+  violet: string;
 
   modalIndicator: string;
 

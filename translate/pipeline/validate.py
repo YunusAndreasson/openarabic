@@ -64,22 +64,23 @@ from utils.validation_db import (
     save_validation_improvements,
 )
 
-# Configure logging
+# Configure logging - suppress all except errors during progress bar
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,  # Only show warnings and errors
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
 def validate_article_translations(
-    article_id: int, client: OpenRouterClient | None = None
+    article_id: int, client: OpenRouterClient | None = None, verbose: bool = False
 ) -> bool:
     """Validate all word translations for a single article.
 
     Args:
         article_id: ID of the article to validate
         client: Optional pre-configured OpenRouter client
+        verbose: Enable verbose logging
 
     Returns:
         bool: True if validation succeeded, False otherwise
@@ -88,19 +89,22 @@ def validate_article_translations(
     article_title = get_article_title(article_id)
     title_display = f" ({article_title})" if article_title else ""
 
-    logger.info(f"Validating article {article_id}{title_display}")
+    if verbose:
+        logger.info(f"Validating article {article_id}{title_display}")
 
     try:
         # Fetch words grouped by sentence
         sentences_data = fetch_article_words_for_validation(article_id)
 
         if not sentences_data:
-            logger.warning(f"No sentences found for article {article_id}")
+            if verbose:
+                logger.warning(f"No sentences found for article {article_id}")
             return False
 
         total_sentences = len(sentences_data)
         total_words = sum(len(s["words_data"]) for s in sentences_data)
-        logger.info(f"Fetched {total_sentences} sentences with {total_words} words")
+        if verbose:
+            logger.info(f"Fetched {total_sentences} sentences with {total_words} words")
 
         # Create client if not provided
         if client is None:
@@ -115,18 +119,20 @@ def validate_article_translations(
             words_data = sentence["words_data"]
             sentence_arabic = sentence["sentence_arabic"]
 
-            logger.info(
-                f"Processing sentence {i}/{total_sentences} ({len(words_data)} words): {sentence_arabic[:60]}..."
-            )
+            if verbose:
+                logger.info(
+                    f"Processing sentence {i}/{total_sentences} ({len(words_data)} words): {sentence_arabic[:60]}..."
+                )
 
             try:
                 # Validate sentence with retry logic
-                validation_response = _validate_with_retry(client, words_data)
+                validation_response = _validate_with_retry(client, words_data, verbose)
 
                 if not validation_response:
-                    logger.warning(
-                        f"Sentence {i}/{total_sentences} validation failed: {sentence_arabic[:50]}..."
-                    )
+                    if verbose:
+                        logger.warning(
+                            f"Sentence {i}/{total_sentences} validation failed: {sentence_arabic[:50]}..."
+                        )
                     failed_sentences += 1
                     continue
 
@@ -139,14 +145,16 @@ def validate_article_translations(
                 all_words_data.extend(words_data)
 
             except Exception as e:
-                logger.warning(
-                    f"Sentence {i}/{total_sentences} error: {str(e)[:100]}"
-                )
+                if verbose:
+                    logger.warning(
+                        f"Sentence {i}/{total_sentences} error: {str(e)[:100]}"
+                    )
                 failed_sentences += 1
                 continue
 
         if not all_validations:
-            logger.error(f"All {total_sentences} sentences failed validation")
+            if verbose:
+                logger.error(f"All {total_sentences} sentences failed validation")
             return False
 
         # Save all validations to database
@@ -154,19 +162,20 @@ def validate_article_translations(
             all_validations, all_words_data
         )
 
-        # Log summary
-        if failed_sentences > 0:
+        # Log summary (always show summary)
+        if failed_sentences > 0 and verbose:
             logger.warning(f"   {failed_sentences}/{total_sentences} sentences failed")
 
-        if saved_count > 0:
-            logger.info(
-                f"✅ Article {article_id}: {saved_count} improvements saved, {skipped_count} correct"
-            )
-            logger.info(f"   {saved_count}/{total_words} words need review")
-        else:
-            logger.info(
-                f"✅ Article {article_id}: All {total_words} words are correct! No improvements needed."
-            )
+        if verbose:
+            if saved_count > 0:
+                logger.info(
+                    f"✅ Article {article_id}: {saved_count} improvements saved, {skipped_count} correct"
+                )
+                logger.info(f"   {saved_count}/{total_words} words need review")
+            else:
+                logger.info(
+                    f"✅ Article {article_id}: All {total_words} words are correct! No improvements needed."
+                )
 
         return True
 
@@ -176,13 +185,14 @@ def validate_article_translations(
 
 
 def _validate_with_retry(
-    client: OpenRouterClient, words_data: list[dict]
+    client: OpenRouterClient, words_data: list[dict], verbose: bool = False
 ) -> dict | None:
     """Validate words with retry logic for parse errors.
 
     Args:
         client: OpenRouter client
         words_data: List of word dictionaries
+        verbose: Enable verbose logging
 
     Returns:
         dict: Parsed validation response or None if all retries fail
@@ -196,17 +206,20 @@ def _validate_with_retry(
         except ValueError as e:
             # Parse error - retry with stricter prompt
             if retry_count < VALIDATION_MAX_RETRIES - 1:
-                logger.warning(
-                    f"Parse error on attempt {retry_count + 1}, retrying: {e}"
-                )
+                if verbose:
+                    logger.warning(
+                        f"Parse error on attempt {retry_count + 1}, retrying: {e}"
+                    )
                 continue
             else:
-                logger.error(f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}")
+                if verbose:
+                    logger.error(f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}")
                 return None
 
         except Exception as e:
             # Other errors (API errors, etc.) - log and fail
-            logger.error(f"Validation API call failed: {e}")
+            if verbose:
+                logger.error(f"Validation API call failed: {e}")
             return None
 
     return None
@@ -222,19 +235,16 @@ def validate_all_articles(verbose: bool = False) -> int:
         int: Count of successfully validated articles
     """
     if verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    logger.info("🔍 Starting validation of all articles")
+        logging.getLogger().setLevel(logging.INFO)
 
     try:
         # Fetch all article IDs
         article_ids = get_all_article_ids()
 
         if not article_ids:
-            logger.warning("No articles found in database")
+            if verbose:
+                logger.warning("No articles found in database")
             return 0
-
-        logger.info(f"Found {len(article_ids)} articles to validate")
 
         # Create client once for all articles
         client = OpenRouterClient()
@@ -245,22 +255,23 @@ def validate_all_articles(verbose: bool = False) -> int:
 
         for article_id in tqdm(article_ids, desc="Validating articles", unit="article"):
             try:
-                if validate_article_translations(article_id, client):
+                if validate_article_translations(article_id, client, verbose):
                     success_count += 1
                 else:
                     failed_count += 1
             except Exception as e:
-                logger.error(f"Article {article_id} validation failed: {e}")
+                if verbose:
+                    logger.error(f"Article {article_id} validation failed: {e}")
                 failed_count += 1
                 continue
 
-        logger.info(
-            f"✅ Validation complete: {success_count} succeeded, {failed_count} failed"
-        )
+        # Always show final summary
+        print(f"\n✅ Validation complete: {success_count} succeeded, {failed_count} failed")
         return success_count
 
     except Exception as e:
-        logger.error(f"Failed to validate all articles: {e}", exc_info=True)
+        if verbose:
+            logger.error(f"Failed to validate all articles: {e}", exc_info=True)
         return 0
 
 
@@ -313,8 +324,9 @@ Examples:
 
     # Validate specific article
     if args.article_id:
-        logger.info(f"🔍 Validating article {args.article_id}")
-        success = validate_article_translations(args.article_id)
+        if args.verbose:
+            logger.info(f"🔍 Validating article {args.article_id}")
+        success = validate_article_translations(args.article_id, verbose=args.verbose)
         return 0 if success else 1
 
     # Validate all articles

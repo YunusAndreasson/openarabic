@@ -227,9 +227,9 @@ export const STRINGS = {
   ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',
 
   // Cache management - clearer and more actionable
-  CLEAR_CACHE: 'Audio cache',
+  CLEAR_CACHE: 'App cache',
   NO_CACHE: 'No cache',
-  NO_CACHED_FILES: 'No cached files',
+  NO_CACHED_FILES: 'No cached files to clear',
   THIS_WILL_DELETE: 'This deletes',
   AUDIO_REDOWNLOAD_REQUIRED: 'Audio will re-download when needed',
   DATA_RELOAD_REQUIRED: 'Data will reload when needed',

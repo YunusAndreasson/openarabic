@@ -119,6 +119,6 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.XLARGE,
   },
   articleSpacing: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL,
   },
 });

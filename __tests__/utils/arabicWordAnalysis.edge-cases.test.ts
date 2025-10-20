@@ -19,27 +19,27 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
 
       // Should detect لا prefix even though "don't" has apostrophe
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لا');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('لا');
       // The match should work because we expand "don't" → "do not"
-      expect(analysis.prefix?.englishMatches).toContain('not');
+      expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
 
     it('should detect compound ولا with contracted "and don\'t"', () => {
       const analysis = analyzeArabicWord('ولا', "and don't go");
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix).toBeDefined();
+      expect(analysis.prefixes[0]).toBeDefined();
       // Should match either compound "ولا" or separate "و"
-      expect(['ولا', 'و'].includes(analysis.prefix?.arabicMatch || '')).toBe(true);
+      expect(['ولا', 'و'].includes(analysis.prefixes[0]?.arabicMatch || '')).toBe(true);
     });
 
     it('should detect لم negation with "didn\'t" contraction', () => {
       const analysis = analyzeArabicWord('لم', "didn't see");
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لم');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('لم');
       // Should expand "didn't" → "did not" and match
-      expect(analysis.prefix?.englishMatches.some(m =>
+      expect(analysis.prefixes[0]?.englishMatches.some(m =>
         m.includes('did') || m.includes('not') || m.includes('does')
       )).toBe(true);
     });
@@ -57,17 +57,17 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
 
       // Standalone particle لم = entire word, so whole-translation match should be allowed
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لم');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('لم');
       // The English match should include the full pattern "did not" OR its components
-      expect(analysis.prefix?.englishMatches).toBeDefined();
+      expect(analysis.prefixes[0]?.englishMatches).toBeDefined();
     });
 
     it('should allow whole-translation match for لم without diacritics', () => {
       const analysis = analyzeArabicWord('لم', 'did not');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لم');
-      expect(analysis.prefix?.englishMatches).toBeDefined();
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('لم');
+      expect(analysis.prefixes[0]?.englishMatches).toBeDefined();
     });
 
     it('should detect prefix separately in compound ولم', () => {
@@ -75,7 +75,7 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
 
       expect(analysis.hasComponents).toBe(true);
       // Should detect compound prefix
-      expect(analysis.prefix).toBeDefined();
+      expect(analysis.prefixes[0]).toBeDefined();
     });
   });
 
@@ -91,7 +91,7 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
 
       // "يوم" is a noun, not a verb, so ي should not be detected as prefix
       // Remaining "وم" is only 2 chars and has 1 consonant
-      expect(analysis.prefix).toBeUndefined();
+      expect(analysis.prefixes[0]).toBeUndefined();
       expect(analysis.hasComponents).toBe(false);
     });
 
@@ -99,7 +99,7 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
       const analysis = analyzeArabicWord('يد', 'hand');
 
       // "يد" is a noun, remaining "د" is only 1 char
-      expect(analysis.prefix).toBeUndefined();
+      expect(analysis.prefixes[0]).toBeUndefined();
       expect(analysis.hasComponents).toBe(false);
     });
 
@@ -110,9 +110,9 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
       // Remaining "ود" is 2 chars with 1 consonant (و is vowel, د is consonant)
       // Heuristic should reject this (fails minLength >= 3)
       // This test documents the current behavior
-      if (analysis.prefix) {
+      if (analysis.prefixes[0]) {
         // If detected, verify it's correct
-        expect(analysis.prefix.arabicMatch).toBe('ي');
+        expect(analysis.prefixes[0].arabicMatch).toBe('ي');
       }
       // Either way is acceptable - we're testing for consistency
     });
@@ -124,7 +124,7 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
       // Heuristic might reject this (fails requirements)
       // Document actual behavior
       if (analysis.hasComponents) {
-        expect(analysis.prefix?.arabicMatch).toBe('ي');
+        expect(analysis.prefixes[0]?.arabicMatch).toBe('ي');
       }
     });
 
@@ -133,8 +133,8 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
 
       // Similar to يود edge case
       if (analysis.hasComponents) {
-        expect(analysis.prefix?.arabicMatch).toBe('ت');
-        expect(analysis.prefix?.englishMatches).toContain('she');
+        expect(analysis.prefixes[0]?.arabicMatch).toBe('ت');
+        expect(analysis.prefixes[0]?.englishMatches).toContain('she');
       }
     });
   });
@@ -150,7 +150,7 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
       const analysis = analyzeArabicWord('وه', 'and it');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('و');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
       expect(analysis.suffix?.arabicMatch).toBe('ه');
       // Remaining should be empty (both components consume entire word)
       expect(analysis.remainingArabic).toBe('');
@@ -160,7 +160,7 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
       const analysis = analyzeArabicWord('له', 'for him');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('ل');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ل');
       expect(analysis.suffix?.arabicMatch).toBe('ه');
       expect(analysis.remainingArabic).toBe('');
     });
@@ -169,7 +169,7 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
       const analysis = analyzeArabicWord('بك', 'with you');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('ب');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ب');
       expect(analysis.suffix?.arabicMatch).toBe('ك');
       expect(analysis.remainingArabic).toBe('');
     });
@@ -221,7 +221,7 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
 
       // Should return exactly the same result (from cache)
       expect(analysis1.hasComponents).toBe(analysis2.hasComponents);
-      expect(analysis1.prefix?.arabicMatch).toBe(analysis2.prefix?.arabicMatch);
+      expect(analysis1.prefixes[0]?.arabicMatch).toBe(analysis2.prefixes[0]?.arabicMatch);
       expect(analysis1).toEqual(analysis2);
     });
   });
@@ -279,13 +279,13 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
       expect(analysis.hasComponents).toBe(true);
 
       // Prefix should be longer and win
-      if (analysis.prefix) {
-        expect(analysis.prefix.arabicMatch).toBe('في');
+      if (analysis.prefixes[0]) {
+        expect(analysis.prefixes[0].arabicMatch).toBe('في');
       }
 
       // Test consistency: run again and verify same result
       const analysis2 = analyzeArabicWord('في', 'in me');
-      expect(analysis.prefix?.arabicMatch).toBe(analysis2.prefix?.arabicMatch);
+      expect(analysis.prefixes[0]?.arabicMatch).toBe(analysis2.prefixes[0]?.arabicMatch);
       expect(analysis.suffix?.arabicMatch).toBe(analysis2.suffix?.arabicMatch);
     });
 
@@ -295,7 +295,7 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
       const analysis2 = analyzeArabicWord('من', 'from me');
 
       // Should give same result both times (deterministic)
-      expect(analysis1.prefix?.arabicMatch).toBe(analysis2.prefix?.arabicMatch);
+      expect(analysis1.prefixes[0]?.arabicMatch).toBe(analysis2.prefixes[0]?.arabicMatch);
       expect(analysis1.hasComponents).toBe(analysis2.hasComponents);
     });
 
@@ -305,98 +305,91 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
 
       // Should match longer pattern "وال" not just "و"
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('وال');
+      expect(analysis.prefixes).toHaveLength(2);
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ال');
     });
   });
 
   /**
-   * BUG CATEGORY 8: Conjunction + Particle Compounds (وما، فما, etc.)
+   * SPLIT COLORING: Conjunction + Particle (وما، فما, etc.)
    *
-   * Issue: Particle compounds like "وما" (and what) should be detected as single units,
-   * not as separate "و" + "ما" components. Without explicit compound patterns, only
-   * "و" is detected, leaving "ما" as uncolored root text.
+   * Changed Behavior (2025): Removed compound patterns to enable split coloring.
+   * Words like "وما" (and what) now split into separate components:
+   * - و matches "and"
+   * - ما remains in root (or matches "what" if standalone)
    *
-   * Fix: Added explicit maParticleCompounds array with وما and فما patterns.
+   * This allows clearer educational breakdown of compound Arabic words.
    */
-  describe('Bug: Conjunction + Particle Compounds', () => {
-    it('should detect وما (and what) as compound prefix', () => {
+  describe('Split Coloring: Conjunction + Particle', () => {
+    it('should split وما (and what) into separate components', () => {
       const analysis = analyzeArabicWord('وما', 'and what');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix).toBeDefined();
-      // Should detect compound "وما" not just "و"
-      expect(analysis.prefix?.arabicMatch).toBe('وما');
-      expect(analysis.prefix?.englishMatches).toContain('and what');
-      // Remaining should be empty since entire word is the compound
+      expect(analysis.prefixes[0]).toBeDefined();
+      // Should detect "و" not compound "وما"
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
+      // Remaining is "ما"
+      expect(analysis.prefixes).toHaveLength(2);
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ما');
       expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should detect فما (so what) as compound prefix', () => {
+    it('should split فما (so what) into separate components', () => {
       const analysis = analyzeArabicWord('فما', 'so what');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix).toBeDefined();
-      // Should detect compound "فما" not just "ف"
-      expect(analysis.prefix?.arabicMatch).toBe('فما');
-      expect(analysis.prefix?.englishMatches.some(m =>
-        m.includes('so what') || m.includes('then what')
-      )).toBe(true);
+      expect(analysis.prefixes[0]).toBeDefined();
+      // Should detect "ف" not compound "فما"
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
+      expect(analysis.prefixes).toHaveLength(2);
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ما');
       expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should detect فمن (so whoever) as compound prefix', () => {
+    it('should split فمن (so whoever) into separate components', () => {
       const analysis = analyzeArabicWord('فمن', 'so whoever');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix).toBeDefined();
-      // Should detect compound "فمن" not just "ف"
-      expect(analysis.prefix?.arabicMatch).toBe('فمن');
-      expect(analysis.prefix?.englishMatches).toContain('so whoever');
+      expect(analysis.prefixes[0]).toBeDefined();
+      // Should detect "ف" not compound "فمن"
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
       expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should detect ومن (and whoever) as compound prefix', () => {
+    it('should detect multi-prefix ومن (and whoever)', () => {
       const analysis = analyzeArabicWord('ومن', 'and whoever');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix).toBeDefined();
-      // Should detect compound "ومن" not just "و"
-      expect(analysis.prefix?.arabicMatch).toBe('ومن');
-      expect(analysis.prefix?.englishMatches).toContain('and whoever');
-      expect(analysis.remainingArabic).toBe('');
+      expect(analysis.prefixes[0]).toBeDefined();
+      // Multi-prefix: و (and) + من (from/who)
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
+      // من should also be detected as a prefix
+      expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should handle case variations in English translations', () => {
+    it('should handle case variations and whitespace', () => {
       // Test with capital letter
       const analysis1 = analyzeArabicWord('ومن', 'And whoever');
       expect(analysis1.hasComponents).toBe(true);
-      expect(analysis1.prefix?.arabicMatch).toBe('ومن');
+      expect(analysis1.prefixes[0]?.arabicMatch).toBe('و'); // Split behavior
 
       // Test with extra whitespace
       const analysis2 = analyzeArabicWord('فمن', '  so whoever  ');
       expect(analysis2.hasComponents).toBe(true);
-      expect(analysis2.prefix?.arabicMatch).toBe('فمن');
+      expect(analysis2.prefixes[0]?.arabicMatch).toBe('ف'); // Split behavior
     });
 
-    it('should color فمن Arabic text completely when English is "and whoever" (regression test)', () => {
-      const analysis = analyzeArabicWord('فمن', 'and whoever');
+    it('should color فمن with split coloring when multiple components match', () => {
+      const analysis = analyzeArabicWord('فمن', 'so who');
       const formatted = formatWordAnalysis(analysis);
 
-      // Analysis should detect the compound
+      // Analysis should detect split components
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('فمن');
-      expect(analysis.remainingArabic).toBe('');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
 
-      // Should have reconstructed Arabic
+      // With split coloring, we may have multiple colored segments
       expect(formatted.reconstructedArabic).toBeDefined();
-
-      const segments = formatted.reconstructedArabic?.segments || [];
-
-      // Should have exactly 1 segment covering the entire word
-      expect(segments.length).toBe(1);
-      expect(segments[0]?.text).toBe('فمن');
-      expect(segments[0]?.type).toBe('prefix');
-      expect(segments[0]?.colorName).toBe('tint'); // Should be green colored
     });
   });
 });

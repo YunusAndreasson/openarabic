@@ -49,29 +49,3 @@ export type CategoryId = Brand<number, 'CategoryId'>;
  * Prevents mixing author IDs with other numeric IDs
  */
 export type AuthorId = Brand<number, 'AuthorId'>;
-
-/**
- * Branded type for sentence IDs
- * Prevents mixing sentence IDs with other numeric IDs
- */
-export type SentenceId = Brand<number, 'SentenceId'>;
-
-/**
- * Branded type for word type IDs
- * Prevents mixing word type IDs with other numeric IDs
- */
-export type WordTypeId = Brand<number, 'WordTypeId'>;
-
-/**
- * Helper to create a branded ID from a raw value
- * Use this when you receive data from the database or API
- */
-export const brandId = <T extends Brand<number | string, string>>(value: number | string): T =>
-  value as T;
-
-/**
- * Helper to extract the raw value from a branded ID
- * Use this when you need to pass the ID to external APIs
- */
-export const unbrandId = <T extends number | string>(value: Brand<T, string>): T =>
-  value as T;

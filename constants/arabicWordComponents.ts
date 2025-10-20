@@ -18,6 +18,26 @@ export enum ComponentType {
   DIACRITIC = 'diacritic',
 }
 
+/**
+ * Grammatical roles for components - used for color differentiation and educational value
+ */
+export enum GrammaticalRole {
+  CONJUNCTION = 'conjunction',        // و, ف - connecting words/clauses
+  DEFINITE_ARTICLE = 'article',       // ال - the
+  PREPOSITION = 'preposition',        // ب, ل, ك, في, من, على, عن, إلى - with, to, like, in, from, on, about, to
+  SUBJECT_PREFIX = 'subject',         // ت, ي, ن, أ - verb conjugation markers (you, he, we, I)
+  FUTURE_TENSE = 'future',            // س, سوف - will/shall
+  NEGATION = 'negation',              // لا, لم, لن, لئلا, إلا, بل - not, no, except
+  PARTICLE = 'particle',              // قد, إن, فإن, إنما, أما, أن, إذا, ثم - various grammatical particles
+  INTERROGATIVE = 'interrogative',    // ما, من, كم - what, who, how (question words)
+  POSSESSIVE = 'possessive',          // ي, ك, ه, ها, نا, كم, هم, هن - my, your, his, her, our, their
+  PLURAL = 'plural',                  // ون, ين, ات - plural markers
+  VERB_CONJUGATION = 'verb',          // ت, وا, تم, تن, كن - perfect tense verb endings (I, you, they)
+  DEMONSTRATIVE = 'demonstrative',    // هذا, هذه, ذلك, تلك - this, that (pointing words)
+  CASE_ENDING = 'case',               // ُ, َ, ِ - nominative, accusative, genitive diacritics
+  GENERIC = 'generic',                // Fallback for unclassified components
+}
+
 export interface WordComponent {
   /** Arabic text pattern (regex) */
   arabic: string;
@@ -25,6 +45,8 @@ export interface WordComponent {
   english: string[];
   /** Type of component */
   type: ComponentType;
+  /** Grammatical role for color assignment and educational clarity (optional for backward compatibility during transition) */
+  role?: GrammaticalRole;
 }
 
 /**
@@ -38,339 +60,97 @@ export interface WordComponent {
 
 // 1. Base components for programmatic generation
 const BASE_CONJUNCTIONS = [
-  { arabic: 'و', english: ['and', 'also', 'plus', 'along with', 'while', 'by'] }, // 'by' for oaths (e.g., "by Allah")
-  { arabic: 'ف', english: ['so', 'then', 'thus', 'therefore', 'consequently', 'and', 'for', 'about', 'but'] }, // 'about' for interrogatives like "what about", 'but' for adversative uses
+  { arabic: 'و', english: ['and', 'also', 'plus', 'along with', 'while', 'by'], role: GrammaticalRole.CONJUNCTION }, // 'by' for oaths (e.g., "by Allah")
+  { arabic: 'ف', english: ['so', 'then', 'thus', 'therefore', 'consequently', 'and', 'for', 'about', 'but'], role: GrammaticalRole.CONJUNCTION }, // 'about' for interrogatives like "what about", 'but' for adversative uses
 ];
 
 const BASE_PREPOSITIONS = [
   {
     arabic: 'ب',
     english: ['with', 'by', 'in', 'via', 'through', 'using', 'according to', 'of', 'for', 'at', 'concerning', 'based'],
+    role: GrammaticalRole.PREPOSITION,
   },
-  { arabic: 'ل', english: ['to', 'for', 'toward', 'because of', 'in order to', 'of'] },
-  { arabic: 'ك', english: ['like', 'as', 'such as', 'similar to'] },
-  { arabic: 'في', english: ['in', 'at', 'inside', 'within', 'upon'] },
-  { arabic: 'من', english: ['from', 'of', 'than', 'out of'] },
-  { arabic: 'على', english: ['on', 'upon', 'over', 'above', 'against', 'to'] }, // 'to' for obligation/direction
-  { arabic: 'عن', english: ['about', 'from', 'concerning', 'regarding'] },
-  { arabic: 'إلى', english: ['to', 'towards', 'into', 'until'] },
+  { arabic: 'ل', english: ['to', 'for', 'toward', 'because of', 'in order to', 'of'], role: GrammaticalRole.PREPOSITION },
+  { arabic: 'ك', english: ['like', 'as', 'such as', 'similar to'], role: GrammaticalRole.PREPOSITION },
+  { arabic: 'في', english: ['in', 'at', 'inside', 'within', 'upon'], role: GrammaticalRole.PREPOSITION },
+  { arabic: 'من', english: ['from', 'of', 'than', 'out of'], role: GrammaticalRole.PREPOSITION },
+  { arabic: 'م', english: ['from', 'of'], role: GrammaticalRole.PREPOSITION }, // Shortened form in contractions (من + من → مِمَّن → normalized: م + من)
+  { arabic: 'على', english: ['on', 'upon', 'over', 'above', 'against', 'to'], role: GrammaticalRole.PREPOSITION }, // 'to' for obligation/direction
+  { arabic: 'عل', english: ['on', 'upon', 'to'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (على + ي → عليّ → normalized: عل + ي)
+  { arabic: 'عن', english: ['about', 'from', 'concerning', 'regarding'], role: GrammaticalRole.PREPOSITION },
+  { arabic: 'إلى', english: ['to', 'towards', 'into', 'until'], role: GrammaticalRole.PREPOSITION },
+  { arabic: 'إل', english: ['to', 'towards'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (إلى + ي → إليّ → normalized: إل + ي)
+  { arabic: 'لدى', english: ['with', 'at', 'by', 'near'], role: GrammaticalRole.PREPOSITION },
+  { arabic: 'لد', english: ['with', 'at'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (لدى + ي → لديّ → normalized: لد + ي)
+  // Note: ما moved to OTHER_PREFIXES to avoid compound generation (وما, فما)
 ];
 
-const DEFINITE_ARTICLE = { arabic: 'ال', english: ['the'] };
+const DEFINITE_ARTICLE = { arabic: 'ال', english: ['the'], role: GrammaticalRole.DEFINITE_ARTICLE };
 
-// 2. Other standalone prefixes
+//  2. Other standalone prefixes
 const OTHER_PREFIXES = [
   // Future tense markers
-  { arabic: 'س', english: ['will', 'shall'] },
-  { arabic: 'سوف', english: ['will', 'shall'] },
+  { arabic: 'س', english: ['will', 'shall'], role: GrammaticalRole.FUTURE_TENSE },
+  { arabic: 'سوف', english: ['will', 'shall'], role: GrammaticalRole.FUTURE_TENSE },
   // Negation particles
-  { arabic: 'لا', english: ['not', 'no', "don't", "doesn't", "didn't", 'do not'] },
-  { arabic: 'لم', english: ['did not', "didn't", 'does not', "doesn't"] },
-  { arabic: 'لن', english: ['will not', 'shall not', 'never', "won't"] },
-  { arabic: 'لئلا', english: ['to not', 'lest', 'so that not', 'in order not to'] }, // Compound negation particle
-  { arabic: 'إلا', english: ['except', 'but', 'only', 'none', 'nothing but'] },
-  { arabic: 'بل', english: ['but', 'rather', 'instead'] },
-  { arabic: 'ثم', english: ['then', 'and then', 'afterwards', 'moreover'] },
+  { arabic: 'لا', english: ['not', 'no', "don't", "doesn't", "didn't", 'do not'], role: GrammaticalRole.NEGATION },
+  { arabic: 'لم', english: ['did not', "didn't", 'does not', "doesn't"], role: GrammaticalRole.NEGATION },
+  { arabic: 'لن', english: ['will not', 'shall not', 'never', "won't"], role: GrammaticalRole.NEGATION },
+  { arabic: 'لئلا', english: ['to not', 'lest', 'so that not', 'in order not to'], role: GrammaticalRole.NEGATION }, // Compound negation particle
+  { arabic: 'إلا', english: ['except', 'but', 'only', 'none', 'nothing but'], role: GrammaticalRole.NEGATION },
+  { arabic: 'بل', english: ['but', 'rather', 'instead'], role: GrammaticalRole.CONJUNCTION },
+  { arabic: 'ثم', english: ['then', 'and then', 'afterwards', 'moreover'], role: GrammaticalRole.CONJUNCTION }, // Actually a conjunction
   // Verbal subject markers (present tense)
-  { arabic: 'ي', english: ['he', 'it', 'was', 'is', 'does'] }, // broader auxiliaries for gating
-  { arabic: 'ت', english: ['you', 'she', 'it', 'does', 'is'] }, // 'it' for 3rd person feminine singular (inanimate objects)
-  { arabic: 'أ', english: ['I', 'do', 'am'] },
-  { arabic: 'ن', english: ['we', 'are', 'do'] },
-  // Subjunctive prefix (ya + verb + tu = "to verb")
-  { arabic: 'ي', english: ['to'] }, // subjunctive marker for "to [verb]"
+  { arabic: 'ي', english: ['he', 'it', 'was', 'is', 'does', 'to'], role: GrammaticalRole.SUBJECT_PREFIX }, // broader auxiliaries for gating, includes subjunctive 'to'
+  { arabic: 'ت', english: ['you', 'she', 'it', 'does', 'is'], role: GrammaticalRole.SUBJECT_PREFIX }, // 'it' for 3rd person feminine singular (inanimate objects)
+  { arabic: 'أ', english: ['I', 'do', 'am'], role: GrammaticalRole.SUBJECT_PREFIX },
+  { arabic: 'ن', english: ['we', 'are', 'do'], role: GrammaticalRole.SUBJECT_PREFIX },
   // Aspect particles & common compounds
-  { arabic: 'قد', english: ['already', 'indeed', 'used to', 'sometimes'] },
-  { arabic: 'إن', english: ['indeed', 'verily', 'if'] },
-  { arabic: 'فإن', english: ['for', 'so', 'then', 'therefore', 'because'] }, // Compound: fa (so/then) + inna (emphasis)
-  { arabic: 'إنما', english: ['only', 'truly', 'verily', 'indeed'] }, // Restrictive particle
-  { arabic: 'أما', english: ['do you not', 'do not you', 'are you not', 'have you not', 'as for'] }, // Interrogative + negation particle
-  { arabic: 'ما', english: ['what', 'that which'] },
-  { arabic: 'من', english: ['who', 'whoever', 'whomever', 'he who', 'those who'] },
-  { arabic: 'أن', english: ['that', 'to'] },
-  { arabic: 'إذا', english: ['if', 'when'] },
-  { arabic: 'كم', english: ['how much', 'how many', 'how'] },
+  { arabic: 'قد', english: ['already', 'indeed', 'used to', 'sometimes'], role: GrammaticalRole.PARTICLE },
+  { arabic: 'إن', english: ['indeed', 'verily', 'if'], role: GrammaticalRole.PARTICLE },
+  { arabic: 'فإن', english: ['for', 'so', 'then', 'therefore', 'because'], role: GrammaticalRole.PARTICLE }, // Compound: fa (so/then) + inna (emphasis)
+  { arabic: 'إنما', english: ['only', 'truly', 'verily', 'indeed'], role: GrammaticalRole.PARTICLE }, // Restrictive particle
+  { arabic: 'أما', english: ['do you not', 'do not you', 'are you not', 'have you not', 'as for'], role: GrammaticalRole.INTERROGATIVE }, // Interrogative + negation particle
+  { arabic: 'ما', english: ['what', 'that which'], role: GrammaticalRole.INTERROGATIVE }, // Interrogative/relative - multi-word OK for standalone, removed from PARTICLES to prevent compounds
+  { arabic: 'من', english: ['who', 'whoever', 'whomever', 'he who', 'those who'], role: GrammaticalRole.INTERROGATIVE }, // Relative pronoun - multi-word OK for standalone, removed from PARTICLES to prevent compounds
+  { arabic: 'أن', english: ['that', 'to'], role: GrammaticalRole.PARTICLE },
+  { arabic: 'إذا', english: ['if', 'when'], role: GrammaticalRole.PARTICLE },
+  { arabic: 'كم', english: ['how much', 'how many', 'how'], role: GrammaticalRole.INTERROGATIVE },
+  // Particles/prepositions ending in ى (alef maksura)
+  { arabic: 'حتى', english: ['until', 'even', 'so that'], role: GrammaticalRole.PARTICLE },
+  { arabic: 'حت', english: ['until', 'even'], role: GrammaticalRole.PARTICLE }, // Shortened form before possessive suffixes (حتى + ي → حتيّ → normalized: حت + ي)
+  { arabic: 'متى', english: ['when', 'whenever'], role: GrammaticalRole.INTERROGATIVE },
+  { arabic: 'مت', english: ['when'], role: GrammaticalRole.INTERROGATIVE }, // Shortened form before possessive suffixes (متى + ي → متيّ → normalized: مت + ي)
+  { arabic: 'أنى', english: ['where', 'how', 'wherever'], role: GrammaticalRole.INTERROGATIVE },
+  { arabic: 'أن', english: ['where', 'how'], role: GrammaticalRole.INTERROGATIVE }, // Shortened form before possessive suffixes (أنى + ي → أنيّ → normalized: أن + ي) - different from أن particle
 ];
-
-/**
- * =================================================================================
- * PROGRAMMATIC PREFIX GENERATION
- * =================================================================================
- */
-
-/**
- * Generates English combinations from multiple arrays.
- */
-function combineEnglish(...arrays: string[][]): string[] {
-  if (arrays.length === 0 || !arrays[0]) {
-    return [];
-  }
-  let result = arrays[0];
-  for (let i = 1; i < arrays.length; i++) {
-    const currentArray = arrays[i];
-    if (!currentArray) continue;
-    result = result.flatMap(a => currentArray.map(b => `${a} ${b}`));
-  }
-  return result;
-}
-
-/**
- * Generates valid Arabic prefix combinations programmatically.
- */
-function generatePrefixCombinations(): WordComponent[] {
-  const combinations: WordComponent[] = [];
-  const allPrepositions = [...BASE_PREPOSITIONS, { arabic: 'في', english: ['in'] }];
-
-  // Conjunction + Preposition
-  for (const conj of BASE_CONJUNCTIONS) {
-    for (const prep of allPrepositions) {
-      combinations.push({
-        arabic: `^${conj.arabic}${prep.arabic}`,
-        english: combineEnglish([conj.english[0] ?? ''], prep.english),
-        type: ComponentType.PREFIX,
-      });
-    }
-  }
-
-  // Conjunction + Preposition + Definite Article
-  for (const conj of BASE_CONJUNCTIONS) {
-    for (const prep of allPrepositions) {
-      combinations.push({
-        arabic: `^${conj.arabic}${prep.arabic}${DEFINITE_ARTICLE.arabic}`,
-        english: combineEnglish([conj.english[0] ?? ''], prep.english, DEFINITE_ARTICLE.english),
-        type: ComponentType.PREFIX,
-      });
-    }
-  }
-
-  // Conjunction + Definite Article
-  for (const conj of BASE_CONJUNCTIONS) {
-    combinations.push({
-      arabic: `^${conj.arabic}${DEFINITE_ARTICLE.arabic}`,
-      english: combineEnglish([conj.english[0] ?? ''], DEFINITE_ARTICLE.english),
-      type: ComponentType.PREFIX,
-    });
-  }
-
-  // Conjunction + Particle (common discourse particles)
-  const PARTICLES: { arabic: string; english: string[] }[] = [
-    { arabic: 'قد', english: ['already', 'indeed'] },
-    { arabic: 'لا', english: ['not', 'no'] },
-    { arabic: 'ما', english: ['what', 'that which'] },
-    { arabic: 'أن', english: ['that', 'to'] },
-    { arabic: 'إذا', english: ['when', 'if'] },
-    { arabic: 'من', english: ['who', 'whoever', 'whomever'] }, // Added for فمن compound
-    { arabic: 'إنما', english: ['only', 'truly', 'verily', 'indeed'] }, // Added for فإنما compound
-  ];
-  for (const conj of BASE_CONJUNCTIONS) {
-    for (const particle of PARTICLES) {
-      combinations.push({
-        arabic: `^${conj.arabic}${particle.arabic}`,
-        english: combineEnglish([conj.english[0] ?? ''], particle.english),
-        type: ComponentType.PREFIX,
-      });
-    }
-  }
-
-  return combinations;
-}
-
-/**
- * Enhances programmatically generated combinations with translation style variations.
- * Translators often drop conjunctions or use possessive interpretations, so we add
- * these alternatives to the existing patterns to avoid duplicates.
- */
-function enhanceWithTranslationVariations(combinations: WordComponent[]): WordComponent[] {
-  const possessives = ['his', 'her', 'their', 'my', 'your', 'its'];
-  const theVariation = ['the', ...possessives];
-
-  return combinations.map(comp => {
-    // Enhance و+ال: add "the" (dropped "and") and possessives
-    if (comp.arabic === '^وال') {
-      return { ...comp, english: [...comp.english, ...theVariation] };
-    }
-    // Enhance ف+ال: add "the" (dropped "so/then") and possessives
-    if (comp.arabic === '^فال') {
-      return { ...comp, english: [...comp.english, ...theVariation] };
-    }
-    // Enhance و+ب+ال: add possessive interpretations
-    if (comp.arabic === '^وبال') {
-      return { ...comp, english: [...comp.english, ...possessives] };
-    }
-    // Enhance ف+ب+ال: add possessive interpretations
-    if (comp.arabic === '^فبال') {
-      return { ...comp, english: [...comp.english, ...possessives] };
-    }
-    // Enhance ولا: add "do not" (dropped "and" from "and not")
-    if (comp.arabic === '^ولا') {
-      return { ...comp, english: [...comp.english, 'do not', "don't"] };
-    }
-    return comp;
-  });
-}
 
 /**
  * Create the final list of all prefixes for export.
+ * Only base patterns - sequential detection handles multiple prefixes.
  */
 function createFinalPrefixList(): WordComponent[] {
-  // 1. Start with generated combinations and enhance them with translation variations
-  const combinations = enhanceWithTranslationVariations(generatePrefixCombinations());
-
-  // 2. Add all base prefixes as individual, anchored patterns
   const individualBasePrefixes = [
     ...BASE_CONJUNCTIONS,
     ...BASE_PREPOSITIONS,
     ...OTHER_PREFIXES,
   ].map(p => ({
     ...p,
-    arabic: `^${p.arabic}`, // Ensure it's anchored at the start
+    arabic: `^${p.arabic}`,
     type: ComponentType.PREFIX,
   }));
 
-  // 3. Add the flexible, un-anchored definite article for cases like 'وبال'
   const flexibleDefiniteArticle: WordComponent = {
     ...DEFINITE_ARTICLE,
     type: ComponentType.PREFIX,
   };
 
-  const baseList: WordComponent[] = [
-    ...combinations,
+  return [
     ...individualBasePrefixes,
     flexibleDefiniteArticle,
-    // Add flexible 'في' for rare cases like 'والفيالبيت'
-    { arabic: 'في', english: ['in'], type: ComponentType.PREFIX },
-  ];
-
-  // 4. Add preposition + definite article combinations without conjunction
-  // Including possessive interpretations where translators use "his/her/their" instead of "with/by/for the"
-  const prepPlusAl: WordComponent[] = [
-    {
-      arabic: '^بال',
-      english: ['with the', 'in the', 'by the', 'his', 'her', 'their', 'my', 'your', 'its'],
-      type: ComponentType.PREFIX
-    },
-    {
-      arabic: '^لل',
-      english: ['for the', 'to the', 'for', 'to', 'his', 'her', 'their', 'my', 'your', 'its'],
-      type: ComponentType.PREFIX
-    },
-    { arabic: '^كال', english: ['like the', 'as the'], type: ComponentType.PREFIX },
-  ];
-
-  // 5. Add من particle compounds (من as "who/whoever", not preposition "from")
-  // Note: من also exists as preposition "from" in BASE_PREPOSITIONS, creating compounds like فمن="so from"
-  // These entries provide the particle meaning "who/whoever" which has higher priority due to longer match
-  const manParticleCompounds: WordComponent[] = [
-    { arabic: '^فمن', english: ['so whoever', 'then whoever', 'so who', 'then who', 'and whoever', 'and who'], type: ComponentType.PREFIX },
-    { arabic: '^ومن', english: ['and whoever', 'and who', 'also whoever', 'also who', 'And whoever', 'And those', 'And for those'], type: ComponentType.PREFIX },
-  ];
-
-  // 6. Add ما particle compounds (ما as "what/that which")
-  // Note: ما is also programmatically generated, but we add explicit entries for common translation variations
-  const maParticleCompounds: WordComponent[] = [
-    { arabic: '^وما', english: ['and what', 'also what', 'and that which', 'what'], type: ComponentType.PREFIX },
-    { arabic: '^فما', english: ['so what', 'then what', 'and what', 'what about'], type: ComponentType.PREFIX },
-  ];
-
-  // 7. Add إنما particle compounds (stylistic translations often omit conjunction in English)
-  const innamaCompounds: WordComponent[] = [
-    { arabic: '^فإنما', english: ['so only', 'then only', 'so truly', 'then truly', 'only truly', 'only', 'truly'], type: ComponentType.PREFIX },
-    { arabic: '^وإنما', english: ['and only', 'also only', 'and truly', 'also truly'], type: ComponentType.PREFIX },
-  ];
-
-  // 8. Add demonstrative pronoun compounds (PREPOSITION/CONJUNCTION + هذا/ذلك)
-  const demonstrativeCompounds: WordComponent[] = [
-    // بهذا - "in/with this"
-    { arabic: '^بهذا', english: ['in this', 'with this', 'by this', 'through this'], type: ComponentType.PREFIX },
-    // لهذا - "for/to this"
-    { arabic: '^لهذا', english: ['for this', 'to this', 'therefore', 'for this reason'], type: ComponentType.PREFIX },
-    // كهذا - "like this"
-    { arabic: '^كهذا', english: ['like this', 'as this', 'such as this'], type: ComponentType.PREFIX },
-    // وهذا - "and this"
-    { arabic: '^وهذا', english: ['and this', 'also this'], type: ComponentType.PREFIX },
-    // فهذا - "then/so this"
-    { arabic: '^فهذا', english: ['then this', 'so this', 'thus this', 'and this'], type: ComponentType.PREFIX },
-    // Similar patterns for هذه (this - feminine)
-    { arabic: '^بهذه', english: ['in this', 'with this', 'by this'], type: ComponentType.PREFIX },
-    { arabic: '^لهذه', english: ['for this', 'to this'], type: ComponentType.PREFIX },
-    { arabic: '^وهذه', english: ['and this', 'also this'], type: ComponentType.PREFIX },
-    { arabic: '^فهذه', english: ['then this', 'so this', 'and this'], type: ComponentType.PREFIX },
-  ];
-
-  // 9. Add PREPOSITION + PARTICLE compounds (فيما, بما, لما, etc.)
-  const prepPlusParticleCompounds: WordComponent[] = [
-    // في + ما = "in what"
-    { arabic: '^فيما', english: ['in what', 'with regard to', 'as for what'], type: ComponentType.PREFIX },
-    // ب + ما = "with what", "by what"
-    { arabic: '^بما', english: ['with what', 'by what', 'because', 'since', 'as'], type: ComponentType.PREFIX },
-    // ل + ما = "for what", "why"
-    { arabic: '^لما', english: ['for what', 'why', 'when', 'since'], type: ComponentType.PREFIX },
-    // ك + ما = "as what", "like what"
-    { arabic: '^كما', english: ['as', 'like', 'just as', 'as what', 'like what'], type: ComponentType.PREFIX },
-    // م + ما = "from what"
-    { arabic: '^مما', english: ['from what', 'of what', 'than what'], type: ComponentType.PREFIX },
-    // عن + ما = "about what"
-    { arabic: '^عما', english: ['about what', 'concerning what', 'from what'], type: ComponentType.PREFIX },
-  ];
-
-  // 10. Add subject/future combined prefixes (double prefixes)
-  const subjectFutureCombos: WordComponent[] = [
-    // Conjunction + subject marker
-    { arabic: '^وي', english: ['and he', 'and it'], type: ComponentType.PREFIX },
-    // ف (then/so) + subject marker
-    {
-      arabic: '^في',
-      english: ['then he', 'so he', 'then it', 'so it'],
-      type: ComponentType.PREFIX,
-    },
-    // س (will) + subject marker
-    { arabic: '^سي', english: ['he will', 'it will'], type: ComponentType.PREFIX },
-    // ف + س + ي (then/so he will)
-    {
-      arabic: '^فسي',
-      english: ['then he will', 'so he will', 'then it will', 'so it will'],
-      type: ComponentType.PREFIX,
-    },
-    // و + سوف (and will)
-    {
-      arabic: '^وسوف',
-      english: ['and will', 'and he will', 'and it will'],
-      type: ComponentType.PREFIX,
-    },
-    // ف + سوف (then/so will)
-    {
-      arabic: '^فسوف',
-      english: ['then will', 'so will', 'then he will', 'so he will', 'then it will', 'so it will'],
-      type: ComponentType.PREFIX,
-    },
-    // و + لن (and will not)
-    { arabic: '^ولن', english: ['and will not', "and won't"], type: ComponentType.PREFIX },
-    // ف + لن (then/so will not)
-    {
-      arabic: '^فلن',
-      english: ['then will not', 'so will not', "then won't", "so won't"],
-      type: ComponentType.PREFIX,
-    },
-  ];
-
-  // Note: Translation style variations (dropped conjunctions, possessive interpretations)
-  // are now integrated into the patterns above via enhanceWithTranslationVariations()
-  // and the extended prepPlusAl entries, eliminating duplicate pattern checks.
-
-  return [
-    ...baseList,
-    ...prepPlusAl,
-    ...manParticleCompounds,
-    ...maParticleCompounds,
-    ...innamaCompounds,
-    ...demonstrativeCompounds,
-    ...prepPlusParticleCompounds,
-    ...subjectFutureCombos,
-  ].sort((a, b) => b.arabic.length - a.arabic.length); // Sort longest first
+  ].sort((a, b) => b.arabic.length - a.arabic.length);
 }
 
-/**
- * Complete Arabic prefixes, programmatically generated and sorted for optimal matching.
- */
 export const ARABIC_PREFIXES: WordComponent[] = createFinalPrefixList();
 
 /**
@@ -406,7 +186,7 @@ export const ARABIC_INFIXES: WordComponent[] = [
     type: ComponentType.INFIX,
   },
 
-  // Intensive/repetitive infix patterns
+  // Intensive/repetitive infix patterns (Form II: doubled middle radical)
   {
     arabic: 'رر',
     english: ['repeatedly', 'again and again', 'continuously'],
@@ -415,6 +195,28 @@ export const ARABIC_INFIXES: WordComponent[] = [
   {
     arabic: 'لل',
     english: ['repeatedly', 'continuously', 'persistently'],
+    type: ComponentType.INFIX,
+  },
+  {
+    arabic: 'مم',
+    english: ['make', 'cause to', 'intensify', 'thoroughly'],
+    type: ComponentType.INFIX,
+  },
+  {
+    arabic: 'كك',
+    english: ['intensely', 'repeatedly', 'thoroughly'],
+    type: ComponentType.INFIX,
+  },
+  {
+    arabic: 'دد',
+    english: ['repeatedly', 'intensify', 'multiply'],
+    type: ComponentType.INFIX,
+  },
+
+  // Reciprocal/associative infix (Forms III & VI: long alif between radicals)
+  {
+    arabic: 'ا',
+    english: ['with', 'mutually', 'reciprocally', 'together with'],
     type: ComponentType.INFIX,
   },
 
@@ -440,6 +242,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   // Pronouns - possessive (normalized, no diacritics)
   {
     arabic: 'ي$',
+    role: GrammaticalRole.POSSESSIVE,
     english: ['my', 'mine', 'of me'],
     type: ComponentType.SUFFIX,
   },
@@ -448,32 +251,38 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   {
     arabic: 'ىّ$',
     english: ['my', 'me', 'of me'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'يّ$',
     english: ['my', 'me', 'of me'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ك$',
     english: ['your', 'yours', 'of you', 'you'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ه$',
     english: ['his', 'its', 'it', 'of him', 'him', 'himself', 'he', 'their'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   // Object pronoun - me
   {
     arabic: 'ني$',
     english: ['me', 'my', 'of me'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ها$',
     english: ['her', 'hers', 'its', 'it', 'of her', 'their'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   // Common transliteration-equivalent: final "هِ" often maps to "it/its"; we already catch via 'ه$'
@@ -481,44 +290,52 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   // Subjunctive suffix (ya + verb + tu = "to verb")
   {
     arabic: 'تُ$',
+    role: GrammaticalRole.PARTICLE,
     english: ['to'],
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'نا$',
     english: ['our', 'ours', 'of us', 'us', 'we'], // 'we' for first-person plural subject in verb conjugations
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'كم$',
     english: ['your', 'yours', 'you all', 'you'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'هم$',
     english: ['their', 'theirs', 'them'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   // Dual possessive/object pronouns
   {
     arabic: 'كما$',
     english: ['you two', 'both of you', 'your (dual)'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'هما$',
     english: ['both of them', 'their (dual)', 'them two', 'them', 'which', 'those', 'these'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'هن$',
     english: ['their', 'theirs', 'them'],
+    role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
 
   // Perfect tense subject endings
   {
     arabic: 'ت$',
+    role: GrammaticalRole.VERB_CONJUGATION,
     english: ['I', 'you'],
     type: ComponentType.SUFFIX,
   },
@@ -526,27 +343,32 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   // Common plural verbal/pronoun endings
   {
     arabic: 'وا$',
+    role: GrammaticalRole.VERB_CONJUGATION,
     english: ['they', 'them', 'they did'],
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'تم$',
+    role: GrammaticalRole.VERB_CONJUGATION,
     english: ['you', 'you all', 'you did'],
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'كن$',
+    role: GrammaticalRole.VERB_CONJUGATION,
     english: ['you', 'you all', 'you were'],
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'تن$',
+    role: GrammaticalRole.VERB_CONJUGATION,
     english: ['you', 'you all'],
     type: ComponentType.SUFFIX,
   },
   // Conditional particle as suffix for compound words like فإن
   {
     arabic: 'إن$',
+    role: GrammaticalRole.PARTICLE,
     english: ['if'],
     type: ComponentType.SUFFIX,
   },
@@ -554,22 +376,52 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   // Dual & plural markers - only include plausible word equivalents
   {
     arabic: 'ان$',
+    role: GrammaticalRole.PLURAL,
     english: ['two', 'both'],
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ين$',
+    role: GrammaticalRole.PLURAL,
     english: ['two', 'both'],
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ون$',
+    role: GrammaticalRole.PLURAL,
     english: ['they', 'those who'],
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ات$',
+    role: GrammaticalRole.PLURAL,
     english: ['times', 'instances'],
+    type: ComponentType.SUFFIX,
+  },
+
+  // Demonstrative pronouns - singular words only
+  {
+    arabic: 'هذا$',
+    role: GrammaticalRole.DEMONSTRATIVE,
+    english: ['this'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'هذه$',
+    role: GrammaticalRole.DEMONSTRATIVE,
+    english: ['this'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'ذلك$',
+    role: GrammaticalRole.DEMONSTRATIVE,
+    english: ['that'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'تلك$',
+    role: GrammaticalRole.DEMONSTRATIVE,
+    english: ['that'],
     type: ComponentType.SUFFIX,
   },
 ];
@@ -581,70 +433,84 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
 export const ARABIC_DIACRITICS: WordComponent[] = [
   // Fatha (ــَ) - short "a" vowel, often indicates accusative case or adverbial usage
   {
-    arabic: 'َ$', // Fatha at end of word
-    english: ['he', 'a', 'an', 'as', 'the'],
+    arabic: 'َ', // Fatha at end of word
+    english: ['he', 'a', 'an', 'as'],
     type: ComponentType.DIACRITIC,
   },
 
   // Kasra (ــِ) - short "i" vowel, often indicates genitive case
   {
-    arabic: 'ِ$', // Kasra at end of word
-    english: ['in', 'of', 'with', 'the'],
+    arabic: 'ِ', // Kasra at end of word
+    english: ['in', 'of', 'with'],
     type: ComponentType.DIACRITIC,
   },
 
   // Damma (ــُ) - short "u" vowel, often indicates nominative case
   {
-    arabic: 'ُ$', // Damma at end of word
+    arabic: 'ُ', // Damma at end of word
     english: ['he', 'it', 'they', 'of'],
     type: ComponentType.DIACRITIC,
   },
 
   // Tanween Fath (ــًا) - nunation with fatha, indicates indefinite accusative
   {
-    arabic: 'ًا$',
+    arabic: 'ًا',
     english: ['an', 'as', 'a', 'one'],
     type: ComponentType.DIACRITIC,
   },
 
   // Standalone Tanween Fath (ــً) - without alif, common on taa marboota
   {
-    arabic: 'ً$',
+    arabic: 'ً',
     english: ['a', 'an', 'one'],
     type: ComponentType.DIACRITIC,
   },
 
   // Tanween Kasr (ــٍ) - nunation with kasra, indicates indefinite genitive
   {
-    arabic: 'ٍ$',
+    arabic: 'ٍ',
     english: ['of', 'in', 'at', 'a', 'something'],
     type: ComponentType.DIACRITIC,
   },
 
   // Tanween Damm (ــٌ) - nunation with damma, indicates indefinite nominative
   {
-    arabic: 'ٌ$',
-    english: ['a', 'an', 'is', 'the word', 'one'],
+    arabic: 'ٌ',
+    english: ['a', 'an', 'is', 'one'],
+    type: ComponentType.DIACRITIC,
+  },
+
+  // Dual Nominative (ــانِ) - dual form in nominative case
+  {
+    arabic: 'انِ',
+    english: ['two', 'both', 'dual'],
+    type: ComponentType.DIACRITIC,
+  },
+
+  // Dual Accusative/Genitive (ــينِ) - dual form in accusative or genitive case
+  {
+    arabic: 'ينِ',
+    english: ['two', 'both', 'dual'],
     type: ComponentType.DIACRITIC,
   },
 
   // Taa Marboota (ــتْ) - feminine past tense / passive marker
   {
-    arabic: 'تْ$',
+    arabic: 'تْ',
     english: ['was', 'did', 'has', 'have been', 'take', 'takes', 'becomes', 'is', 'it'],
     type: ComponentType.DIACRITIC,
   },
 
   // First person plural past tense (ــنَا) - "we did"
   {
-    arabic: 'نَا$',
+    arabic: 'نَا',
     english: ['we', 'we were', 'we did'],
     type: ComponentType.DIACRITIC,
   },
 
   // Dual subject marker (ــَا) - "they two" / dual
   {
-    arabic: 'َا$',
+    arabic: 'َا',
     english: ['they', 'both', 'they said', 'they two'],
     type: ComponentType.DIACRITIC,
   },
@@ -662,7 +528,7 @@ export const COMPONENT_TYPE_CONFIG = {
   },
   [ComponentType.INFIX]: {
     label: 'Infix',
-    colorName: 'primary' as const, // Primary color for distinction from prefix/suffix
+    colorName: 'violet' as const, // Purple for transformation (verb forms VII, VIII, X)
     icon: '↔',
   },
   [ComponentType.SUFFIX]: {
@@ -672,7 +538,28 @@ export const COMPONENT_TYPE_CONFIG = {
   },
   [ComponentType.DIACRITIC]: {
     label: 'Diacritic',
-    colorName: 'secondaryText' as const, // Medium sage color for subtle but visible marking
+    colorName: 'accent' as const, // Azure blue for visibility
     icon: '◌',
   },
+} as const;
+
+/**
+ * Grammatical role color mapping for educational differentiation
+ * Used when components have a defined grammatical role for more precise coloring
+ */
+export const GRAMMATICAL_ROLE_COLORS = {
+  [GrammaticalRole.CONJUNCTION]: 'secondary' as const,       // Forest green for conjunctions (و, ف)
+  [GrammaticalRole.DEFINITE_ARTICLE]: 'tint' as const,     // SAGE GREEN for article (ال)
+  [GrammaticalRole.PREPOSITION]: 'warning' as const,          // AMBER/ORANGE for prepositions (ب, ل, ك, في)
+  [GrammaticalRole.SUBJECT_PREFIX]: 'secondary' as const,  // Forest green for verb conjugation (ت, ي, ن, أ)
+  [GrammaticalRole.FUTURE_TENSE]: 'info' as const,         // Info color for future tense (س, سوف) - distinct from prepositions
+  [GrammaticalRole.NEGATION]: 'error' as const,            // Red for negation (لا, لم, لن)
+  [GrammaticalRole.PARTICLE]: 'accent' as const,           // Azure blue for particles (قد, إن)
+  [GrammaticalRole.INTERROGATIVE]: 'accent' as const,      // Azure blue for questions (ما, من, كم) - distinct from possessives
+  [GrammaticalRole.POSSESSIVE]: 'violet' as const,         // Violet for possessive suffixes (ي, ك, ه)
+  [GrammaticalRole.PLURAL]: 'primary' as const,            // Primary (gray/sage) for plural markers (ون, ين, ات)
+  [GrammaticalRole.VERB_CONJUGATION]: 'success' as const, // Success green for verb endings (ت, وا, تم, تن, كن)
+  [GrammaticalRole.DEMONSTRATIVE]: 'primary' as const,     // Primary color for demonstratives (هذا, ذلك) - same as plural
+  [GrammaticalRole.CASE_ENDING]: 'accent' as const,        // Azure blue for case diacritics (ُ, َ, ِ)
+  [GrammaticalRole.GENERIC]: 'tint' as const,              // Sage green fallback
 } as const;

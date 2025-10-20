@@ -4,6 +4,7 @@ import type { ThemeColors } from '@/types/ui/theme.types';
 
 const mockColors: ThemeColors = {
   primary: '#4A9B6F',
+  secondary: '#2B3C35',
   background: '#FFFFFF',
   text: '#000000',
   secondaryText: '#6B7280',
@@ -44,6 +45,8 @@ const mockColors: ThemeColors = {
   textShadowDark: 'rgba(0, 0, 0, 0.4)',
   textShadowLight: 'rgba(0, 0, 0, 0.2)',
   info: '#3B82F6',
+  accent: '#3B82F6',
+  violet: '#9333EA',
   modalIndicator: '#D1D5DB',
   backdropOverlay: 'rgba(0, 0, 0, 0.4)',
   wordTooltipBg: '#FFFFFF',
@@ -61,8 +64,8 @@ const mockColors: ThemeColors = {
   chartThreshold: '#F59E0B',
 };
 
-describe('Compound Prefix English Coloring', () => {
-  it('should color entire compound prefix in English (وعن → "and from")', () => {
+describe('Multi-Prefix English Coloring', () => {
+  it('should color multi-prefix components with different colors (وعن → "and from")', () => {
     const analysis = analyzeArabicWord('وعن', 'and from');
     const formatted = formatWordAnalysis(analysis);
 
@@ -75,25 +78,28 @@ describe('Compound Prefix English Coloring', () => {
     });
 
     console.log('\n=== وعن (and from) ===');
-    console.log('Analysis prefix:', analysis.prefix?.arabicMatch);
-    console.log('English matches:', analysis.prefix?.englishMatches);
+    console.log('Analysis prefix:', analysis.prefixes[0]?.arabicMatch);
+    console.log('English matches:', analysis.prefixes[0]?.englishMatches);
     console.log('Formatted sections:', JSON.stringify(formatted.sections, null, 2));
     console.log('Color-coded segments:', JSON.stringify(result, null, 2));
 
-    // Should color the entire phrase "and from"
+    // Should color the phrase with multi-prefix detection
     expect(result.length).toBeGreaterThan(0);
 
-    // Find the colored segment(s)
-    const coloredSegments = result.filter(s => s.color === mockColors.tint);
-    expect(coloredSegments.length).toBeGreaterThan(0);
+    // Multi-prefix: و (and) = secondary, عن (from) = warning
+    const conjunctionSegments = result.filter(s => s.color === mockColors.secondary);
+    const prepositionSegments = result.filter(s => s.color === mockColors.warning);
 
-    // The colored text should include both "and" and "from"
-    const coloredText = coloredSegments.map(s => s.text).join(' ');
-    expect(coloredText).toContain('and');
-    expect(coloredText).toContain('from');
+    // Should have "and" in secondary color (conjunction)
+    const conjunctionText = conjunctionSegments.map(s => s.text).join(' ').toLowerCase();
+    expect(conjunctionText).toContain('and');
+
+    // Should have "from" in warning color (preposition)
+    const prepositionText = prepositionSegments.map(s => s.text).join(' ').toLowerCase();
+    expect(prepositionText).toContain('from');
   });
 
-  it('should color compound prefix with suffix (وعنه → "and from him")', () => {
+  it('should color multi-prefix with suffix (وعنه → "and from him")', () => {
     const analysis = analyzeArabicWord('وعنه', 'and from him');
     const formatted = formatWordAnalysis(analysis);
 
@@ -106,23 +112,27 @@ describe('Compound Prefix English Coloring', () => {
     });
 
     console.log('\n=== وعنه (and from him) ===');
-    console.log('Analysis prefix:', analysis.prefix?.arabicMatch);
+    console.log('Analysis prefix:', analysis.prefixes[0]?.arabicMatch);
     console.log('Analysis suffix:', analysis.suffix?.arabicMatch);
     console.log('Formatted sections:', JSON.stringify(formatted.sections, null, 2));
     console.log('Color-coded segments:', JSON.stringify(result, null, 2));
 
-    // Should have at least 2 colors: tint (prefix) and warning (suffix)
+    // Should have at least 3 colors: secondary (و), warning (عن), violet (ه)
     const colors = new Set(result.map(s => s.color));
     expect(colors.size).toBeGreaterThan(1);
 
-    // Should color "and from" with prefix color (tint)
-    const prefixSegments = result.filter(s => s.color === mockColors.tint);
-    const prefixText = prefixSegments.map(s => s.text).join(' ').toLowerCase();
-    expect(prefixText).toContain('and');
-    expect(prefixText).toContain('from');
+    // Multi-prefix: و (and) = secondary
+    const conjunctionSegments = result.filter(s => s.color === mockColors.secondary);
+    const conjunctionText = conjunctionSegments.map(s => s.text).join(' ').toLowerCase();
+    expect(conjunctionText).toContain('and');
 
-    // Should color "him" with suffix color (warning)
-    const suffixSegments = result.filter(s => s.color === mockColors.warning);
+    // Multi-prefix: عن (from) = warning
+    const prepositionSegments = result.filter(s => s.color === mockColors.warning);
+    const prepositionText = prepositionSegments.map(s => s.text).join(' ').toLowerCase();
+    expect(prepositionText).toContain('from');
+
+    // Suffix: ه (him) = violet (possessive)
+    const suffixSegments = result.filter(s => s.color === mockColors.violet);
     const suffixText = suffixSegments.map(s => s.text).join('').toLowerCase();
     expect(suffixText).toContain('him');
   });

@@ -1,0 +1,63 @@
+/**
+ * Tests for multi-prefix detection (previously compound prefix tests)
+ * Validates that sequential prefixes are detected separately with distinct grammatical roles
+ */
+
+import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
+import { GrammaticalRole } from '@/constants/arabicWordComponents';
+
+describe('Multi-Prefix Detection (formerly compounds)', () => {
+  it('should detect و (conjunction) + من (interrogative) as separate prefixes', () => {
+    const analysis = analyzeArabicWord('ومن', 'and who');
+
+    expect(analysis.hasComponents).toBe(true);
+    expect(analysis.prefixes).toHaveLength(2);
+    expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
+    expect(analysis.prefixes[0]?.role).toBe(GrammaticalRole.CONJUNCTION);
+    expect(analysis.prefixes[1]?.arabicMatch).toBe('من');
+    expect(analysis.prefixes[1]?.role).toBe(GrammaticalRole.INTERROGATIVE);
+  });
+
+  it('should format multiple prefixes separately in sections', () => {
+    const analysis = analyzeArabicWord('والدجال', 'and the Dajjal');
+    const formatted = formatWordAnalysis(analysis);
+
+    const prefixSections = formatted.sections.filter(s => s.type === 'components' && s.icon === '→');
+    expect(prefixSections).toHaveLength(2);
+    expect(prefixSections[0]?.englishPart).toContain('and');
+    expect(prefixSections[1]?.englishPart).toContain('the');
+  });
+
+  it('should color-code و (conjunction) with primary color', () => {
+    const analysis = analyzeArabicWord('والدجال', 'and the Dajjal');
+    const formatted = formatWordAnalysis(analysis);
+
+    const segments = formatted.reconstructedArabic?.segments ?? [];
+    expect(segments.length).toBeGreaterThan(0);
+    const firstPrefix = segments.find(s => s.type === 'prefix' && s.text.includes('و'));
+    expect(firstPrefix).toBeDefined();
+    expect(firstPrefix?.colorName).toBe('secondary'); // Conjunction gets secondary color (forest green)
+  });
+
+  it('should color-code ال (article) with tint color', () => {
+    const analysis = analyzeArabicWord('والدجال', 'and the Dajjal');
+    const formatted = formatWordAnalysis(analysis);
+
+    const segments = formatted.reconstructedArabic?.segments ?? [];
+    const secondPrefix = segments.filter(s => s.type === 'prefix')[1];
+    expect(secondPrefix).toBeDefined();
+    expect(secondPrefix?.colorName).toBe('tint'); // Article gets tint color (sage green)
+  });
+
+  it('should detect triple prefix: و + ب + ال', () => {
+    const analysis = analyzeArabicWord('وبالحق', 'and with the truth');
+
+    expect(analysis.prefixes).toHaveLength(3);
+    expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
+    expect(analysis.prefixes[0]?.role).toBe(GrammaticalRole.CONJUNCTION);
+    expect(analysis.prefixes[1]?.arabicMatch).toBe('ب');
+    expect(analysis.prefixes[1]?.role).toBe(GrammaticalRole.PREPOSITION);
+    expect(analysis.prefixes[2]?.arabicMatch).toBe('ال');
+    expect(analysis.prefixes[2]?.role).toBe(GrammaticalRole.DEFINITE_ARTICLE);
+  });
+});

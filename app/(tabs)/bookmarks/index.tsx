@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
 
 // Memoized separator component for both DraggableFlatList and FlashList
-const ItemSeparator = memo(() => <ListSeparator height={LAYOUT.SPACING.MEDIUM} />);
+const ItemSeparator = memo(() => <ListSeparator height={LAYOUT.SPACING.SMALL} />);
 
 // Memoized key extractor to prevent inline function creation
 const keyExtractor = (item: BookmarkItem) => `${item.article_id}`;

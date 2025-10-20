@@ -37,8 +37,6 @@ export function useArabicWordAnalysis(
       return null;
     }
 
-    let processedEnglish = englishTranslation;
-
     // Normalize Arabic for bracket injection check (remove diacritics)
     const normalizedArabic = arabicWord.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
 
@@ -47,22 +45,13 @@ export function useArabicWordAnalysis(
 
     // Inject "[the]" for Arabic words with definite article when appropriate
     // This helps users learn that "ال" = "the" even when not explicitly translated
-    if (hasBracketInjection) {
-      processedEnglish = `[the] ${englishTranslation}`;
-    }
+    const processedEnglish = hasBracketInjection
+      ? `[the] ${englishTranslation}`
+      : englishTranslation;
 
-    // CRITICAL RULE: Single English words should NEVER have grammar color-coding applied
-    // Check the processed English translation word count before doing any analysis
-    const wordCount = processedEnglish.trim().split(/\s+/).length;
-    if (wordCount === 1) {
-      // Return null analysis to prevent color-coding for single words
-      return null;
-    }
-
-    const wordAnalysis = analyzeArabicWord(arabicWord, processedEnglish);
-
-    // Add bracket injection flag to the analysis
-    return wordAnalysis ? { ...wordAnalysis, hasBracketInjection } : null;
+    // Analyze word (single-word check happens inside analyzeArabicWord now)
+    // analyzeArabicWord already returns hasBracketInjection in the result
+    return analyzeArabicWord(arabicWord, processedEnglish);
   }, [arabicWord, englishTranslation, enabled]);
 
   // Memoize the formatted analysis
@@ -78,11 +67,15 @@ export function useArabicWordAnalysis(
     () => ({
       tint: colors.tint,
       primary: colors.primary,
-      warning: colors.warning,
+      secondary: colors.secondary,        // Add 'secondary' for conjunctions/subject prefixes
       secondaryText: colors.secondaryText,
+      warning: colors.warning,
+      accent: colors.accent,
+      violet: colors.violet,
+      error: colors.error,                // Add 'error' for negation
       text: colors.text,
     }),
-    [colors.tint, colors.primary, colors.warning, colors.secondaryText, colors.text]
+    [colors.tint, colors.primary, colors.secondary, colors.secondaryText, colors.warning, colors.accent, colors.violet, colors.error, colors.text]
   );
 
   // Convert analysis to colored segments
@@ -105,8 +98,12 @@ export function useArabicWordAnalysis(
       const colorName = segment.colorName as
         | 'tint'
         | 'primary'
-        | 'warning'
+        | 'secondary'
         | 'secondaryText'
+        | 'warning'
+        | 'accent'
+        | 'violet'
+        | 'error'
         | 'text';
       return {
         text: segment.text,

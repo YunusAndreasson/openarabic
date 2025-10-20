@@ -46,7 +46,11 @@ const ArabicWordInternal = function ArabicWord({
 
   // Use pre-computed colored segments from data loading (optimized for performance)
   const coloredSegments = word.coloredSegments || [];
-  const hasComponents = coloredSegments.length > 1;
+
+  // Check if word has colored components (not just multiple segments)
+  // A word can have components even with only 1 segment if that segment is colored
+  const hasComponents = coloredSegments.length > 0 &&
+    coloredSegments.some(seg => seg.color !== colors.text && seg.color !== colors.arabicText);
 
   // Cleanup on unmount to prevent memory leaks
   useEffect(() => {
@@ -85,44 +89,49 @@ const ArabicWordInternal = function ArabicWord({
     }
   };
 
-  // Compute final styles for the word container
-  // Always reserve underline space to avoid layout jump by using a transparent baseline underline
+  // Debug logging: Long press any word to see detailed analysis in console
+  const handleLongPress = () => {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🐛 WORD DEBUG (Long Press)');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📝 Word:', word.word_form, '→', word.english);
+    console.log('🆔 IDs:', `word=${word.id} root=${word.root_id} pos=${position}`);
+    console.log('🎨 Components:', `hasComponents=${hasComponents} segments=${coloredSegments.length}`);
+    console.log('📊 Segments:', JSON.stringify(coloredSegments, null, 2));
+    console.log('🎯 State:', `selected=${isSelected} highlighted=${isHighlighted}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  };
+
+  // Word container styles - transparent underline reserves space to prevent layout jumps
   const baseUnderlineStyle = { borderBottomWidth: 1, borderBottomColor: colors.transparent };
 
-  // Highlight style when word is being played - subtle but visible
+  // Subtle highlight when word is being played (20% opacity)
   const highlightStyle = {
-    backgroundColor: isHighlighted
-      ? `${colors.tint}33` // Clear 20% opacity sage green background
-      : colors.transparent,
-    // No border, padding, or font changes to prevent any visual shifts
+    backgroundColor: isHighlighted ? `${colors.tint}33` : colors.transparent,
   };
 
   const containerStyle = [
     styles.wordContainer,
     baseUnderlineStyle,
-    getSelectedStyle(isSelected, colors.disabled), // Soft underline for all selected words
+    getSelectedStyle(isSelected, colors.disabled),
     highlightStyle,
   ];
 
-  // Render colored segments or single word
+  // Render word with colored segments or default color
   let renderWordContent;
-  if (!hasComponents || coloredSegments.length <= 1) {
-    // Single color word - use semantic color name for consistent theming
+  if (!hasComponents) {
     renderWordContent = (
-      <ThemedText
-        {...baseTextProps}
-        colorName="arabicText"
-      >
+      <ThemedText {...baseTextProps} colorName="arabicText">
         {word.word_form}
       </ThemedText>
     );
   } else {
-    // Multi-colored segments - render each with its own explicit color
+    // Render segments with grammar colors (handles single or multiple segments)
     renderWordContent = (
       <ThemedText {...baseTextProps} skipDefaultColor>
-        {coloredSegments.map(segment => (
+        {coloredSegments.map((segment, index) => (
           <ThemedText
-            key={`${segment.type}-${segment.text}-${segment.color}`}
+            key={`${index}-${segment.type}-${segment.text}`}
             {...baseTextProps}
             skipDefaultColor
             style={[baseTextProps.style, { color: segment.color }]}
@@ -140,6 +149,7 @@ const ArabicWordInternal = function ArabicWord({
       style={containerStyle}
       testID={testID}
       onPress={handlePress}
+      onLongPress={handleLongPress}
     >
       {renderWordContent}
     </Pressable>

@@ -117,12 +117,6 @@ export function WordTooltip({
       !!(arabicWord && text)
     );
 
-    const handleOpenWordDetails = () => {
-      if (onOpenWordDetails) {
-        onOpenWordDetails();
-      }
-    };
-
     // Generate color-coded segments using shared utility
     const coloredSegments = generateColorCodedSegments({
       text,
@@ -131,6 +125,12 @@ export function WordTooltip({
       colors,
       defaultColor: colors.text,
     });
+
+    const handleOpenWordDetails = () => {
+      if (onOpenWordDetails) {
+        onOpenWordDetails();
+      }
+    };
 
     // Render color-coded English text
     const renderColorCodedEnglish = (

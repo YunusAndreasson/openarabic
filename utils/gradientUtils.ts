@@ -1,3 +1,4 @@
+import { Colors } from '@/constants/colors';
 import { SCREEN_WIDTH } from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
@@ -77,7 +78,7 @@ export function createBackgroundGradientColors(
  * Create strong dark overlay gradient for excellent text contrast (used in IslamicCalendarHeader)
  */
 export function createStrongDarkOverlayGradient(
-  baseColor = '#000000'
+  baseColor = Colors.light.black
 ): readonly [string, string, string, string, string, string, string] {
   return [
     'transparent',

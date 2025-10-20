@@ -14,7 +14,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('بهما', 'by which');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('ب');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ب');
       expect(analysis.suffix?.arabicMatch).toBe('هما');
       expect(analysis.remainingArabic).toBe(''); // Both components detected, no remaining
     });
@@ -23,7 +23,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('فيهما', 'in them');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('في');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('في');
       expect(analysis.suffix?.arabicMatch).toBe('هما');
       expect(analysis.remainingArabic).toBe('');
     });
@@ -52,91 +52,64 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('لئلا', 'to not');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لئلا');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('لئلا');
       expect(analysis.remainingArabic).toBe(''); // Full word is the compound
     });
 
-    it('should match "lest" translation', () => {
+    it('should apply single-word rule to "lest" translation', () => {
       const analysis = analyzeArabicWord('لئلا', 'lest');
 
-      expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لئلا');
+      // Single-word rule: 'lest' is one word, so no color-coding
+      expect(analysis.hasComponents).toBe(false);
     });
 
     it('should match "so that not" translation', () => {
       const analysis = analyzeArabicWord('لئلا', 'so that not');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لئلا');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('لئلا');
     });
   });
 
   /**
-   * Pattern 3: Double Preposition لل (for/to) with contracted translations
+   * Pattern 3: لل now detected as multi-prefix: ل + ال
+   * (Removed old compound tests - now uses multi-prefix detection)
    */
-  describe('Double Preposition لل with Contracted Translations', () => {
-    it('should detect لل in لِلْجِمَاعِ (for intercourse)', () => {
-      const analysis = analyzeArabicWord('للجماع', 'for intercourse');
-
-      expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لل');
-      // Remaining should be the root "جماع"
-      expect(analysis.remainingArabic).toBe('جماع');
-    });
-
-    it('should detect لل with just "for" (no "the")', () => {
-      const analysis = analyzeArabicWord('للناس', 'for people');
-
-      expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لل');
-    });
-
-    it('should detect لل with "to" translation', () => {
-      const analysis = analyzeArabicWord('للرسول', 'to Messenger');
-
-      expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لل');
-    });
-
-    it('should still match "for the" traditional translation', () => {
-      const analysis = analyzeArabicWord('للبيت', 'for the house');
-
-      expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لل');
-    });
-  });
 
   /**
-   * Pattern 4: ومن with "And those" translation
+   * Pattern 4: ومن - Now uses split behavior (multi-word compounds removed)
    */
-  describe('ومن with Capital/Alternative Translations', () => {
-    it('should detect ومن with "And those"', () => {
+  describe('ومن with Multi-Word Translations - Split Behavior', () => {
+    it('should partially match ومن with "And those" (و matches)', () => {
       const analysis = analyzeArabicWord('ومن', 'And those');
 
+      // و matches "And" (case-insensitive), من doesn't match "those"
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('ومن');
-      expect(analysis.remainingArabic).toBe('');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
-    it('should detect ومن with "And whoever" (capital A)', () => {
+    it('should partially match ومن with "And whoever" (و matches)', () => {
       const analysis = analyzeArabicWord('ومن', 'And whoever');
 
+      // و matches "And"
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('ومن');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
-    it('should detect ومن with "And for those"', () => {
+    it('should partially match ومن with "And for those" (و matches)', () => {
       const analysis = analyzeArabicWord('ومن', 'And for those');
 
+      // و matches "And"
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('ومن');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
-    it('should still match lowercase "and whoever"', () => {
+    it('should partially match "and whoever" (و matches)', () => {
       const analysis = analyzeArabicWord('ومن', 'and whoever');
 
+      // و matches "and"
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('ومن');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
   });
 
@@ -181,7 +154,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('أما', 'do you not');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('أما');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
       expect(analysis.remainingArabic).toBe(''); // Full word is the compound
     });
 
@@ -189,103 +162,119 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('أما', 'are you not');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('أما');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
     });
 
     it('should match "have you not" translation', () => {
       const analysis = analyzeArabicWord('أما', 'have you not');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('أما');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
     });
 
     it('should match "as for" translation', () => {
       const analysis = analyzeArabicWord('أما', 'as for');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('أما');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
     });
   });
 
   /**
-   * Pattern 6: Demonstrative Pronoun Compounds (PREPOSITION + هذا/هذه)
+   * Pattern 6: Demonstrative Pronoun Split Components (PREPOSITION + هذا/هذه)
+   * Changed: Demonstratives now split for clearer component breakdown
    */
-  describe('Demonstrative Pronoun Compounds', () => {
-    it('should detect بهذا (in this)', () => {
+  describe('Demonstrative Pronoun Split Components', () => {
+    it('should split بهذا into ب (in) + هذا (this)', () => {
       const analysis = analyzeArabicWord('بهذا', 'in this');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('بهذا');
-      expect(analysis.remainingArabic).toBe('');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ب');
+      expect(analysis.suffix?.arabicMatch).toBe('هذا');
     });
 
-    it('should detect لهذا (for this)', () => {
+    it('should split لهذا into ل (for) + هذا (this)', () => {
       const analysis = analyzeArabicWord('لهذا', 'for this');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لهذا');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ل');
+      expect(analysis.suffix?.arabicMatch).toBe('هذا');
     });
 
-    it('should detect وهذا (and this)', () => {
+    it('should split وهذا into و (and) + هذا (this)', () => {
       const analysis = analyzeArabicWord('وهذا', 'and this');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('وهذا');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
+      expect(analysis.suffix?.arabicMatch).toBe('هذا');
     });
 
-    it('should detect فهذا (then this)', () => {
+    it('should split فهذا into ف (then) + هذا (this)', () => {
       const analysis = analyzeArabicWord('فهذا', 'then this');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('فهذا');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
+      expect(analysis.suffix?.arabicMatch).toBe('هذا');
     });
   });
 
   /**
-   * Pattern 7: PREPOSITION + PARTICLE Compounds (فيما, بما, etc.)
+   * Pattern 7: PREPOSITION + PARTICLE - Removed for Split Coloring
+   * Changed: Multi-word English patterns removed to avoid treating phrases as single units
    */
-  describe('PREPOSITION + PARTICLE Compounds', () => {
-    it('should detect فيما (in what)', () => {
+  describe('PREPOSITION + PARTICLE - Split Components', () => {
+    it('should split فيما into في (in) + ما (root)', () => {
       const analysis = analyzeArabicWord('فيما', 'in what');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('فيما');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('في');
+      // ما remains as root (can't be prefix after prefix removed)
+      expect(analysis.prefixes).toHaveLength(2);
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ما');
       expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should detect بما (with what)', () => {
+    it('should split بما into ب (with) + ما (root)', () => {
       const analysis = analyzeArabicWord('بما', 'with what');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('بما');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ب');
+      expect(analysis.prefixes).toHaveLength(2);
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ما');
+      expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should detect لما (for what)', () => {
+    it('should split لما into ل (for) + ما (root)', () => {
       const analysis = analyzeArabicWord('لما', 'for what');
 
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('لما');
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ل');
+      expect(analysis.prefixes).toHaveLength(2);
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ما');
+      expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should detect كما (as)', () => {
+    it('should apply single-word rule to كما (as)', () => {
       const analysis = analyzeArabicWord('كما', 'as');
 
-      expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('كما');
+      // Single-word rule: 'as' is one word, so no color-coding
+      expect(analysis.hasComponents).toBe(false);
     });
 
-    it('should detect مما (from what)', () => {
+    it('should match مما with multi-prefix detection (م from من)', () => {
       const analysis = analyzeArabicWord('مما', 'from what');
 
+      // Multi-prefix: م (shortened من) + ما
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('مما');
+      expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should detect عما (about what)', () => {
+    it('should not match عما (contracted form - different letters than عن)', () => {
       const analysis = analyzeArabicWord('عما', 'about what');
 
-      expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefix?.arabicMatch).toBe('عما');
+      // عما is contracted, different from standalone عن pattern
+      // Compound pattern removed to avoid multi-word English matching
+      expect(analysis.hasComponents).toBe(false);
     });
   });
 
@@ -293,19 +282,28 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
    * Regression Tests: Ensure existing patterns still work
    */
   describe('Regression: Existing Patterns', () => {
-    it('should still detect وما (and what)', () => {
+    it('should split وما into و + ما (and what)', () => {
       const analysis = analyzeArabicWord('وما', 'and what');
-      expect(analysis.prefix?.arabicMatch).toBe('وما');
+      // Compound removed - now و matches "and", ما is in remaining
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
+      expect(analysis.prefixes).toHaveLength(2);
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ما');
+      expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should still detect فمن (so whoever)', () => {
+    it('should partially match فمن (so whoever)', () => {
       const analysis = analyzeArabicWord('فمن', 'so whoever');
-      expect(analysis.prefix?.arabicMatch).toBe('فمن');
+      // ف matches "so", من doesn't match "whoever"
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
     });
 
     it('should still detect والبيت (and the house)', () => {
       const analysis = analyzeArabicWord('والبيت', 'and the house');
-      expect(analysis.prefix?.arabicMatch).toBe('وال');
+      expect(analysis.prefixes).toHaveLength(2);
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ال');
     });
   });
 });

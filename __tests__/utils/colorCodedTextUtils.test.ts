@@ -77,6 +77,8 @@ describe('colorCodedTextUtils', () => {
         primary: 'primary',
         warning: 'warning',
         secondaryText: 'secondaryText',
+        accent: 'accent',
+        violet: 'violet',
         text: 'text',
       });
     });
@@ -223,12 +225,12 @@ describe('colorCodedTextUtils', () => {
         defaultColor: mockColors.text,
       });
 
-      // Bracket injection adds [the] at the beginning and colors it
-      // The result should have [the] as a colored segment
+      // Bracket injection adds [the] in analysis but displays as "the" without brackets
+      // The result should have "the" (not "[the]") as a colored segment
       expect(result.length).toBeGreaterThan(0);
 
-      // Find segment starting with [the]
-      const bracketSegment = result.find(s => s.text.startsWith('[the]'));
+      // Find segment with "the" (brackets removed for display)
+      const bracketSegment = result.find(s => s.text === 'the');
       expect(bracketSegment).toBeDefined();
       expect(bracketSegment?.color).toBe(mockColors.tint);
     });
@@ -268,8 +270,8 @@ describe('colorCodedTextUtils', () => {
       // Should NOT trigger single-word bypass because displayedText is "[the] house" (2 words)
       expect(result.length).toBeGreaterThan(1);
 
-      // Should have colored "[the]" bracket
-      const bracketSegment = result.find(s => s.text === '[the]');
+      // Should have colored "the" (brackets removed for display)
+      const bracketSegment = result.find(s => s.text === 'the');
       expect(bracketSegment).toBeDefined();
       expect(bracketSegment?.color).toBe(mockColors.tint);
     });

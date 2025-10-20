@@ -24,7 +24,7 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
 const DRAW_DISTANCE_MULTIPLIER = LIST_DRAW_DISTANCE_MULTIPLIER;
 
-const SeparatorComponent = () => <ListSeparator height={LAYOUT.SPACING.MEDIUM} />;
+const SeparatorComponent = () => <ListSeparator height={LAYOUT.SPACING.SMALL} />;
 
 const STATIC_STYLES = StyleSheet.create({
   container: {

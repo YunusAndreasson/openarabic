@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     // FilterSection provides its own marginTop for proper section spacing
   },
   scrollContainer: {
-    paddingVertical: LAYOUT.SPACING.TINY,
+    paddingTop: LAYOUT.SPACING.TINY,
   },
   cardContainer: {
     width: CARD_WIDTH,

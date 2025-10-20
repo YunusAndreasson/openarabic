@@ -14,6 +14,8 @@ export const GRAMMAR_COLOR_MAP = {
   primary: 'primary',
   warning: 'warning',
   secondaryText: 'secondaryText',
+  accent: 'accent',
+  violet: 'violet',
   text: 'text',
 } as const;
 
@@ -135,7 +137,7 @@ export const generateColorCodedSegments = ({
   colors,
   defaultColor,
 }: ColorCodedTextOptions): ColoredTextSegment[] => {
-  // No analysis available
+  // No formattedAnalysis available
   if (!formattedAnalysis?.sections?.length) {
     return [{ text, color: defaultColor, key: 'no-analysis' }];
   }
@@ -145,10 +147,20 @@ export const generateColorCodedSegments = ({
     formattedAnalysis.sections.find((s: { type: string }) => s.type === 'original')?.content ||
     text;
 
-  // Single words should never have grammar color-coding
-  // CRITICAL: Check displayedText (with brackets) not original text parameter
+  // CRITICAL: Single-word rule - applies even if analysis is null (test scenario)
+  // Single words should never have grammar color-coding for educational clarity
   if (!shouldApplyColorCoding(displayedText)) {
     return [{ text: displayedText, color: defaultColor, key: 'single-word' }];
+  }
+
+  // No analysis available or no components found
+  // analyzeArabicWord() now handles single-word check, so we just trust hasComponents
+  // Note: Some tests pass analysis=null with manual formattedAnalysis, so check both
+  const hasComponentSections = formattedAnalysis.sections.some(
+    (s: { type: string }) => s.type === 'components'
+  );
+  if ((!analysis?.hasComponents && analysis !== null) || !hasComponentSections) {
+    return [{ text: displayedText, color: defaultColor, key: 'no-components' }];
   }
 
   const componentSections = formattedAnalysis.sections.filter(
@@ -160,16 +172,45 @@ export const generateColorCodedSegments = ({
     return [{ text: displayedText, color: defaultColor, key: 'no-components' }];
   }
 
-  const matchPositions: { start: number; end: number; color: string }[] = [];
+  const matchPositions: { start: number; end: number; color: string; componentType?: string; isBracketInjection?: boolean }[] = [];
+
+  /**
+   * Score a match based on component type and position in text
+   * Prefixes score higher at START, suffixes score higher at END
+   */
+  const getPositionalScore = (
+    match: { start: number; end: number; componentType?: string },
+    textLength: number
+  ): number => {
+    // Bracket injection always has highest priority at start
+    if (match.componentType === 'bracket') return 2.0;
+
+    if (!match.componentType || textLength === 0) return 0.5;
+
+    const relativePosition = match.start / textLength;
+
+    if (match.componentType === 'prefix') {
+      // Prefixes score higher at start: 1.0 at position 0 → 0.0 at end
+      return 1 - relativePosition;
+    } else if (match.componentType === 'suffix') {
+      // Suffixes score higher at end: 0.0 at position 0 → 1.0 at end
+      return relativePosition;
+    }
+    // Neutral score for infix/diacritic (can appear anywhere)
+    return 0.5;
+  };
 
   // Add bracket color coding for [the] injection
+  // Display as "the" without brackets in the colored segment
   if (analysis?.hasBracketInjection) {
     const bracketMatch = displayedText.match(/^\[the\]/);
     if (bracketMatch) {
       matchPositions.push({
         start: 0,
-        end: 5, // "[the]" length (5 characters)
-        color: colors.tint, // Use tint color for brackets
+        end: 5, // "[the]" length (5 characters including brackets)
+        color: colors.tint, // Use tint color for definite article
+        componentType: 'bracket', // Special type for bracket injection
+        isBracketInjection: true, // Flag to remove brackets when displaying
       });
     }
   }
@@ -178,9 +219,21 @@ export const generateColorCodedSegments = ({
   const colorMapping: Record<string, string> = {
     tint: colors.tint,
     primary: colors.primary,
-    warning: colors.warning,
+    secondary: colors.secondary,        // Add 'secondary' for conjunctions/subject prefixes
     secondaryText: colors.secondaryText,
+    warning: colors.warning,
+    accent: colors.accent,
+    violet: colors.violet,
+    error: colors.error,                // Add 'error' for negation
     text: colors.text,
+  };
+
+  // Icon to component type mapping
+  const iconToComponentType: Record<string, string> = {
+    '→': 'prefix',
+    '←': 'suffix',
+    '↔': 'infix',
+    '◌': 'diacritic',
   };
 
   // Process each component section
@@ -189,13 +242,34 @@ export const generateColorCodedSegments = ({
 
     const searchText = displayedText.toLowerCase();
     const colorKey = section.colorName as keyof typeof colorMapping;
-    const colorValue = colorMapping[colorKey] || colors.text || '#000000';
+    const colorValue = colorMapping[colorKey] || colors.text;
+
+    // Detect component type from icon (→ = prefix, ← = suffix, ↔ = infix, ◌ = diacritic)
+    const componentType = section.icon ? iconToComponentType[section.icon] : undefined;
 
     // Split possible multiple english matches like "his / its / it"
+    // Also split compound patterns like "and the" into individual words
     const baseCandidates = section.englishPart
       .toLowerCase()
       .split('/')
-      .map(s => s.trim())
+      .flatMap(s => {
+        const trimmed = s.trim();
+        // Split space-separated compound patterns into individual words
+        // BUT keep compound intact if it's a potential contraction target (e.g., "do not")
+        if (trimmed.includes(' ')) {
+          // Check if this compound is a contraction expansion (e.g., "do not" from "don't")
+          const isContractionExpansion = Object.values(CONTRACTION_MAP).includes(trimmed);
+
+          if (isContractionExpansion) {
+            // Keep compound for contraction matching (e.g., "do not" → matches "don't")
+            return [trimmed];
+          } else {
+            // Split into individual words for separate coloring (e.g., "and the" → ["and", "the"])
+            return trimmed.split(/\s+/);
+          }
+        }
+        return [trimmed];
+      })
       .filter(Boolean);
 
     // Expand candidates to include contracted forms
@@ -237,6 +311,7 @@ export const generateColorCodedSegments = ({
               start: idx,
               end: idx + candidate.length,
               color: colorValue,
+              componentType, // Store component type for positional scoring
             });
           }
           // Move past this match to find further non-overlapping matches
@@ -248,10 +323,46 @@ export const generateColorCodedSegments = ({
     }
   }
 
-  // Sort and filter overlapping matches
-  const sortedMatches = matchPositions
-    .sort((a, b) => a.start - b.start)
-    .filter((match, i, arr) => i === 0 || match.start >= (arr[i - 1]?.end ?? 0));
+  // Sort and filter overlapping matches using positional scoring
+  // When matches overlap, keep the one with the highest positional score
+  const textLength = displayedText.length;
+  const sortedByPosition = [...matchPositions].sort((a, b) => a.start - b.start);
+
+  const selectedMatches: typeof matchPositions = [];
+  let i = 0;
+
+  while (i < sortedByPosition.length) {
+    const current = sortedByPosition[i];
+    if (!current) break;
+
+    // Find all matches that overlap with current
+    const overlapping = [current];
+    let j = i + 1;
+
+    while (j < sortedByPosition.length) {
+      const next = sortedByPosition[j];
+      if (!next || next.start >= current.end) break; // No overlap
+      overlapping.push(next);
+      j++;
+    }
+
+    // If multiple matches overlap, choose the one with highest positional score
+    if (overlapping.length > 1) {
+      const bestMatch = overlapping.reduce((best, match) => {
+        const bestScore = getPositionalScore(best, textLength);
+        const matchScore = getPositionalScore(match, textLength);
+        return matchScore > bestScore ? match : best;
+      });
+      selectedMatches.push(bestMatch);
+      // Skip all overlapping matches
+      i = j;
+    } else {
+      selectedMatches.push(current);
+      i++;
+    }
+  }
+
+  const sortedMatches = selectedMatches.sort((a, b) => a.start - b.start);
 
   // Build final segments
   const parts: ColoredTextSegment[] = [];
@@ -265,8 +376,17 @@ export const generateColorCodedSegments = ({
         key: `text-${currentIndex}`,
       });
     }
+
+    // Get the matched text
+    let matchedText = displayedText.substring(match.start, match.end);
+
+    // Remove brackets from bracket injection matches (display "the" instead of "[the]")
+    if (match.isBracketInjection && matchedText.startsWith('[') && matchedText.endsWith(']')) {
+      matchedText = matchedText.slice(1, -1); // Remove [ and ]
+    }
+
     parts.push({
-      text: displayedText.substring(match.start, match.end),
+      text: matchedText,
       color: match.color,
       key: `match-${match.start}`,
     });
@@ -293,5 +413,7 @@ export const createColorMapping = (colors: ThemeColors) => ({
   primary: colors.primary,
   warning: colors.warning,
   secondaryText: colors.secondaryText,
+  accent: colors.accent,
+  violet: colors.violet,
   text: colors.text,
 });

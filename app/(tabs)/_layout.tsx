@@ -90,7 +90,7 @@ IconWithBadge.displayName = 'IconWithBadge';
 // Static styles for better performance
 const styles = StyleSheet.create({
   tabBarIcon: {
-    marginTop: 2, // Minimal margin for compact tab bar
+    marginTop: LAYOUT.SPACING.HALF_TINY, // Minimal margin for compact tab bar
   },
   focusedIcon: {
     opacity: 1,
@@ -157,7 +157,7 @@ export default function TabLayout(): JSX.Element {
           tabBarInactiveTintColor: colors.tabIconDefault,
           tabBarShowLabel: false,
           tabBarIconStyle: styles.tabBarIcon,
-          tabBarItemStyle: { paddingTop: 4, paddingBottom: 2 },
+          tabBarItemStyle: { paddingTop: LAYOUT.SPACING.TINY, paddingBottom: LAYOUT.SPACING.HALF_TINY },
           tabBarStyle: tabBarStyle,
           tabBarButton: props => <TabBarButton {...props} />,
         }}

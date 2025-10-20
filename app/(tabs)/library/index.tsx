@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleList } from '@/components/library/ArticleList';
-import { FilterSection, SubtleDivider } from '@/components/library/FilterSection';
+import { FilterSection } from '@/components/library/FilterSection';
 import { HijriDateFooter } from '@/components/library/HijriDateFooter';
 import { IntelligentArticleSection } from '@/components/library/IntelligentArticleSection';
 import { LAYOUT } from '@/constants/layout';
@@ -200,27 +200,23 @@ export default function ReadScreen(): JSX.Element {
 
     if (categoriesWithArticles.length > 0) {
       sections.push(
-        <React.Fragment key="categories">
-          <FilterSection
-            items={categoriesWithArticles}
-            onSelect={handleSelectFilter}
-            filterType="category"
-          />
-          <SubtleDivider />
-        </React.Fragment>
+        <FilterSection
+          key="categories"
+          items={categoriesWithArticles}
+          onSelect={handleSelectFilter}
+          filterType="category"
+        />
       );
     }
 
     if (authorsWithArticles.length > 0) {
       sections.push(
-        <React.Fragment key="authors">
-          <FilterSection
-            items={authorsWithArticles}
-            onSelect={handleSelectFilter}
-            filterType="author"
-          />
-          <SubtleDivider />
-        </React.Fragment>
+        <FilterSection
+          key="authors"
+          items={authorsWithArticles}
+          onSelect={handleSelectFilter}
+          filterType="author"
+        />
       );
     }
 

@@ -188,10 +188,7 @@ const HelpScreen: FC = () => {
         }}
       >
         {FAQ_DATA.map((category: FAQCategoryData, categoryIndex) => (
-          <View
-            key={category.name}
-            style={categoryIndex > 0 ? styles.categorySpacingConditional : undefined}
-          >
+          <View key={category.name}>
             <SectionTitle title={category.name} isFirstSection={categoryIndex === 0} />
             <View style={styles.categoryContainer}>
               {category.items.map(item => (
@@ -225,12 +222,9 @@ const styles = StyleSheet.create({
   categoryContainer: {
     gap: LAYOUT.SPACING.SMALL,
   },
-  categorySpacingConditional: {
-    marginTop: LAYOUT.SPACING.LARGE,
-  },
   // FAQ Item styles moved from inline for better performance
   faqItemContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    // Spacing handled by parent container's gap property
   },
   faqButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,

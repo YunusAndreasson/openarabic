@@ -78,7 +78,7 @@ export const useAccountScreen = () => {
     };
   }, [getCacheSize]);
 
-  // Generic cache clearing function that clears both audio and query caches
+  // Clear all caches: audio files, query data, and persisted storage
   const handleClearCache = useCallback(async () => {
     if (cacheSize === 0) {
       Alert.alert(STRINGS.NO_CACHE, STRINGS.NO_CACHED_FILES);
@@ -87,9 +87,9 @@ export const useAccountScreen = () => {
 
     Alert.alert(
       STRINGS.CLEAR_CACHE,
-      `${STRINGS.THIS_WILL_DELETE} ${formatBytes(cacheSize)} of cached data. ${
-        STRINGS.AUDIO_REDOWNLOAD_REQUIRED
-      } ${STRINGS.DATA_RELOAD_REQUIRED}`,
+      `This will clear ${formatBytes(cacheSize)} of cached data including audio files, articles, and all app data. ${
+        STRINGS.DATA_RELOAD_REQUIRED
+      }`,
       [
         {
           text: UiAction.CANCEL,
@@ -107,11 +107,14 @@ export const useAccountScreen = () => {
               // Clear React Query in-memory cache
               queryClient.clear();
 
-              // Clear React Query persisted AsyncStorage cache (fixes hydration errors)
+              // Clear React Query persisted AsyncStorage cache
               await clearPersistedQueryCache();
 
               lightFeedback();
-              Alert.alert(STRINGS.SUCCESS, STRINGS.CACHE_CLEARED_SUCCESSFULLY);
+              Alert.alert(
+                STRINGS.SUCCESS,
+                'All caches cleared successfully. Audio, articles, and app data will reload when needed.'
+              );
             } catch (error) {
               Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
               handleError(error as Error, { showToast: false });

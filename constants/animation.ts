@@ -109,26 +109,8 @@ export const SENTENCE_DRAW_DISTANCE_MULTIPLIER = 12;
 /** Default scroll event throttle for smooth animations (16ms = 60fps, 8ms = 120fps) */
 export const SCROLL_EVENT_THROTTLE = 8;
 
-/** Delay before completion metrics appear */
-export const COMPLETION_METRIC_BASE_DELAY = 800;
-
-/** Delay step between each completion metric */
-export const COMPLETION_METRIC_STAGGER = 150;
-
-/** Delay before the continue button appears */
-export const COMPLETION_BUTTON_DELAY = {
-  BASE: 1000,
-  WITH_METRICS: 1400,
-} as const;
-
 /** Default toast visibility duration */
 export const DEFAULT_TOAST_DURATION = 4000;
-
-/** Delay before completion title appears */
-export const COMPLETION_TITLE_DELAY = 400;
-
-/** Delay before completion subtitle appears */
-export const COMPLETION_SUBTITLE_DELAY = 600;
 
 /**
  * General timing constants for delays, timeouts, and intervals

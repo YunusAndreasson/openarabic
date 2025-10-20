@@ -139,8 +139,8 @@ export function ReviewCard({
   const successEnd = withOpacity(colors.success, 0.18);
 
   // Add vague colors (orange/yellow for hesitation)
-  const vagueStart = withOpacity(colors.warning || '#FFA500', 0);
-  const vagueEnd = withOpacity(colors.warning || '#FFA500', 0.25);
+  const vagueStart = withOpacity(colors.warning, 0);
+  const vagueEnd = withOpacity(colors.warning, 0.25);
 
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';

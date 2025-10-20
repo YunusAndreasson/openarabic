@@ -6,7 +6,9 @@ This guide explains how to use the word translation validation system that check
 
 The validation system:
 - ✅ Checks morphological accuracy (prefixes/suffixes correctly rendered)
-- ✅ Verifies English word count matches Arabic morpheme count
+- ✅ Verifies English word count matches Arabic morpheme count EXACTLY
+- ✅ **Enforces NO EXTRA WORDS rule** - prevents adding prepositions/articles not in Arabic
+- ✅ Validates one-to-one morpheme-to-word mapping for educational clarity
 - ✅ Validates theological correctness (no shirk/bidah in grammar notes)
 - ✅ **Only saves to database when real improvements are suggested** (not for correct words)
 - ✅ Skips words where DeepSeek confirms current translation is correct
@@ -83,10 +85,23 @@ ORDER BY asent.position, sw.position
 - Prevents token limit issues with large articles
 - Better error handling - if one sentence fails, others can still succeed
 - Validation checks:
-  - Morphological accuracy (prefix/suffix count)
-  - English word count matches Arabic morphemes
+  - **Morpheme-by-morpheme matching** (one English word per Arabic morpheme)
+  - **NO EXTRA WORDS rule** - English must not add prepositions/articles not in Arabic
+  - Prefix validation (wa/fa/bi/li/al must be rendered if present)
+  - Suffix validation (pronouns must be rendered if present)
+  - Root accuracy (minimal translation without additions)
   - Theological correctness
   - Specific suggestions if issues found
+
+**Educational Purpose**: The system enforces strict one-to-one correspondence between Arabic morphemes and English words. This helps students learn Arabic morphology by seeing exactly how each component translates.
+
+**Examples of validation rules**:
+- ✅ باب (baab) → "door" (correct: 1 morpheme = 1 word)
+- ❌ باب (baab) → "door of" (WRONG: added "of" with no Arabic source)
+- ✅ وَكِتَابٌ (wa-kitaabun) → "and book" (correct: 2 morphemes = 2 words)
+- ❌ كِتَابٌ (kitaabun) → "the book" (WRONG: no ال prefix in Arabic)
+- ✅ فَمَن (fa-man) → "so whoever" (correct: prefix + root = 2 words)
+- ❌ فَمَن (fa-man) → "whoever" (WRONG: missing "fa" prefix translation)
 
 ### 3. Parse Response
 

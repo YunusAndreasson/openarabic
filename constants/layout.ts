@@ -172,7 +172,10 @@ export const enhanceTouchPadding = (currentSize: number): number => {
 };
 
 export const LAYOUT = {
-  SCREEN_EDGE_PADDING: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
+  /** Left/right screen edge padding for all content (12px) */
+  SCREEN_HORIZONTAL_PADDING: SPACING_SCALE.MEDIUM,
+  /** @deprecated Use SCREEN_HORIZONTAL_PADDING for clarity */
+  SCREEN_EDGE_PADDING: SPACING_SCALE.MEDIUM, // 12 - Alias for backwards compatibility
 
   CONTENT_SPACING: {
     TOP: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale

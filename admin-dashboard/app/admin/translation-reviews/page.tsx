@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { AutoTextarea } from '@/components/ui/auto-textarea';
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Check, X, AlertCircle, FileText, ExternalLink } from 'lucide-react';
+import { Loader2, Check, X, AlertCircle, FileText } from 'lucide-react';
 
 interface SentenceWord {
   id: number;
@@ -70,7 +70,6 @@ export default function TranslationReviewsPage() {
   // Local edit states for inline editing
   const [editedEnglish, setEditedEnglish] = useState<Record<number, string>>({});
   const [editedGrammarNote, setEditedGrammarNote] = useState<Record<number, string | null>>({});
-  const [reviewerNotes, setReviewerNotes] = useState<Record<number, string>>({});
 
   useEffect(() => {
     fetchImprovements();
@@ -153,7 +152,6 @@ export default function TranslationReviewsPage() {
           action,
           suggested_english: editedEnglish[improvementId],
           suggested_grammar_note: editedGrammarNote[improvementId],
-          reviewer_notes: reviewerNotes[improvementId] || null,
         }),
       });
 
@@ -180,11 +178,6 @@ export default function TranslationReviewsPage() {
         delete newState[improvementId];
         return newState;
       });
-      setReviewerNotes((prev) => {
-        const newState = { ...prev };
-        delete newState[improvementId];
-        return newState;
-      });
     } catch (err) {
       console.error(`Error ${action}ing improvement:`, err);
       alert(err instanceof Error ? err.message : `Failed to ${action} improvement`);
@@ -197,14 +190,6 @@ export default function TranslationReviewsPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(date);
-  };
-
   if (loading && improvements.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -215,34 +200,33 @@ export default function TranslationReviewsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Translation Reviews</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-2xl font-bold">Translation Reviews</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Review and approve AI-suggested translation improvements
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="border rounded-lg p-4 bg-card">
-          <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
-          <div className="text-sm text-muted-foreground">Pending Review</div>
+      <div className="flex gap-6 text-sm">
+        <div>
+          <span className="font-bold text-orange-600">{stats.pending}</span>
+          <span className="text-muted-foreground ml-1">Pending</span>
         </div>
-        <div className="border rounded-lg p-4 bg-card">
-          <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
-          <div className="text-sm text-muted-foreground">Approved</div>
+        <div>
+          <span className="font-bold text-green-600">{stats.approved}</span>
+          <span className="text-muted-foreground ml-1">Approved</span>
         </div>
-        <div className="border rounded-lg p-4 bg-card">
-          <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
-          <div className="text-sm text-muted-foreground">Rejected</div>
+        <div>
+          <span className="font-bold text-red-600">{stats.rejected}</span>
+          <span className="text-muted-foreground ml-1">Rejected</span>
         </div>
       </div>
 
       {/* Filter */}
-      <div className="flex items-center gap-4">
-        <span className="text-sm font-medium">Status:</span>
+      <div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-48">
             <SelectValue />
@@ -272,150 +256,112 @@ export default function TranslationReviewsPage() {
       )}
 
       {/* Table */}
-      {!loading && !error && improvements.length === 0 ? (
-        <div className="text-center py-12 border rounded-lg bg-muted/30">
-          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">
-            No {statusFilter} translation improvements found
-          </p>
-        </div>
-      ) : (
+      {!loading && !error && (
         <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">#</TableHead>
-                <TableHead className="w-32">Article</TableHead>
-                <TableHead className="w-24">Sentence</TableHead>
+                <TableHead>Sentence</TableHead>
                 <TableHead className="w-32">Arabic Word</TableHead>
-                <TableHead className="w-40">Current English</TableHead>
-                <TableHead className="w-40">New English</TableHead>
-                <TableHead className="w-48">Current Grammar</TableHead>
-                <TableHead className="w-56">New Grammar</TableHead>
-                <TableHead className="w-48">Reviewer Notes</TableHead>
+                <TableHead className="w-[300px]">English Translation</TableHead>
+                <TableHead className="w-[390px]">Grammar Notes</TableHead>
                 {statusFilter === 'pending' && (
-                  <TableHead className="w-32 text-center">Actions</TableHead>
+                  <TableHead className="w-16 text-center">Actions</TableHead>
                 )}
-                <TableHead className="w-32">Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {improvements.map((improvement, index) => {
+              {improvements.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    No {statusFilter} improvements found
+                  </TableCell>
+                </TableRow>
+              ) : (
+              improvements.map((improvement, index) => {
                 const isProcessing = processingIds.has(improvement.id);
                 const word = improvement.sentence_words;
                 const sentence = word.article_sentences;
-                const article = sentence?.articles;
 
                 return (
                   <TableRow key={improvement.id} className={isProcessing ? 'opacity-50' : ''}>
-                    <TableCell className="text-muted-foreground">{index + 1}</TableCell>
+                    <TableCell className="text-muted-foreground align-top">{index + 1}</TableCell>
 
-                    {/* Article */}
-                    <TableCell>
-                      {article ? (
-                        <a
-                          href={`/articles/${article.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-sm hover:underline text-blue-600 dark:text-blue-400"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <span className="truncate max-w-[120px]">{article.title}</span>
-                          <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                        </a>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-
-                    {/* Sentence Position */}
-                    <TableCell>
-                      <div className="text-xs text-muted-foreground">
-                        S{sentence?.position || '?'} / W{word.position}
+                    {/* Sentence English */}
+                    <TableCell className="align-top">
+                      <div className="text-sm text-muted-foreground">
+                        {sentence?.english || '—'}
                       </div>
                     </TableCell>
 
                     {/* Arabic Word */}
-                    <TableCell>
-                      <span className="text-lg font-medium" dir="rtl">
+                    <TableCell className="align-top">
+                      <div className="text-2xl font-bold" dir="rtl">
                         {word.word_form}
-                      </span>
+                      </div>
                     </TableCell>
 
-                    {/* Current English */}
-                    <TableCell>
-                      <span className="text-sm">{word.english}</span>
-                    </TableCell>
+                    {/* English Translation */}
+                    <TableCell className="align-top">
+                      <div className="flex flex-col gap-3">
+                        {/* Current English */}
+                        <div className="text-sm text-muted-foreground border-l-2 border-muted pl-2 min-h-[24px]">
+                          {word.english}
+                        </div>
 
-                    {/* New English (Editable) */}
-                    <TableCell>
-                      <Input
-                        value={editedEnglish[improvement.id] || ''}
-                        onChange={(e) =>
-                          setEditedEnglish((prev) => ({
-                            ...prev,
-                            [improvement.id]: e.target.value,
-                          }))
-                        }
-                        disabled={isProcessing || statusFilter !== 'pending'}
-                        className="text-sm font-medium bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
-                      />
-                    </TableCell>
-
-                    {/* Current Grammar Note */}
-                    <TableCell>
-                      <span className="text-xs text-muted-foreground italic">
-                        {word.grammar_note || '—'}
-                      </span>
-                    </TableCell>
-
-                    {/* New Grammar Note (Editable) */}
-                    <TableCell>
-                      <Textarea
-                        value={editedGrammarNote[improvement.id] || ''}
-                        onChange={(e) =>
-                          setEditedGrammarNote((prev) => ({
-                            ...prev,
-                            [improvement.id]: e.target.value || null,
-                          }))
-                        }
-                        disabled={isProcessing || statusFilter !== 'pending'}
-                        placeholder="Optional"
-                        className="text-xs italic bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 min-h-[80px] resize-y"
-                      />
-                    </TableCell>
-
-                    {/* Reviewer Notes */}
-                    <TableCell>
-                      {statusFilter === 'pending' ? (
-                        <Textarea
-                          value={reviewerNotes[improvement.id] || ''}
+                        {/* New English (Editable) */}
+                        <Input
+                          value={editedEnglish[improvement.id] || ''}
                           onChange={(e) =>
-                            setReviewerNotes((prev) => ({
+                            setEditedEnglish((prev) => ({
                               ...prev,
                               [improvement.id]: e.target.value,
                             }))
                           }
-                          disabled={isProcessing}
-                          placeholder="Optional notes..."
-                          className="text-xs min-h-[60px]"
+                          disabled={isProcessing || statusFilter !== 'pending'}
+                          placeholder="Enter improved translation..."
+                          className="text-sm font-medium bg-muted/50"
                         />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          {improvement.reviewer_notes || '—'}
-                        </span>
-                      )}
+                      </div>
+                    </TableCell>
+
+                    {/* Grammar Notes (Stacked) */}
+                    <TableCell className="align-top">
+                      <div className="flex flex-col gap-3">
+                        {/* Current Grammar Note */}
+                        <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words border-l-2 border-muted pl-2 min-h-[24px]">
+                          {word.grammar_note || (
+                            <span className="opacity-50">No existing grammar note</span>
+                          )}
+                        </div>
+
+                        {/* New Grammar Note (Editable) */}
+                        <AutoTextarea
+                          value={editedGrammarNote[improvement.id] || ''}
+                          onChange={(e) =>
+                            setEditedGrammarNote((prev) => ({
+                              ...prev,
+                              [improvement.id]: e.target.value || null,
+                            }))
+                          }
+                          disabled={isProcessing || statusFilter !== 'pending'}
+                          placeholder="Add grammar note (e.g., verb form, case, tense)..."
+                          minRows={2}
+                          className="text-sm bg-muted/50"
+                        />
+                      </div>
                     </TableCell>
 
                     {/* Actions */}
                     {statusFilter === 'pending' && (
-                      <TableCell>
-                        <div className="flex gap-2">
+                      <TableCell className="align-top">
+                        <div className="flex flex-col gap-2 items-center">
                           <Button
                             size="sm"
                             onClick={() => handleAction(improvement.id, 'approve')}
                             disabled={isProcessing}
-                            className="cursor-pointer bg-green-600 hover:bg-green-700"
+                            className="cursor-pointer bg-green-600 hover:bg-green-700 p-2 h-8 w-8"
                           >
                             {isProcessing ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -428,33 +374,19 @@ export default function TranslationReviewsPage() {
                             variant="destructive"
                             onClick={() => handleAction(improvement.id, 'reject')}
                             disabled={isProcessing}
-                            className="cursor-pointer"
+                            className="cursor-pointer p-2 h-8 w-8"
                           >
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
                     )}
-
-                    {/* Date */}
-                    <TableCell>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDate(improvement.created_at)}
-                      </span>
-                    </TableCell>
                   </TableRow>
                 );
-              })}
+              })
+              )}
             </TableBody>
           </Table>
-        </div>
-      )}
-
-      {/* Context Preview */}
-      {improvements.length > 0 && (
-        <div className="text-sm text-muted-foreground">
-          Showing {improvements.length} {statusFilter} improvement
-          {improvements.length !== 1 ? 's' : ''}
         </div>
       )}
     </div>

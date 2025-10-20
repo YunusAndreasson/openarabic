@@ -111,9 +111,14 @@ export const useArticleData = (
               {
                 tint: colors.tint,
                 primary: colors.primary,
-                warning: colors.warning,
+                secondary: colors.secondary,
                 secondaryText: colors.secondaryText,
+                warning: colors.warning,
+                accent: colors.accent,
+                violet: colors.violet,
+                error: colors.error,
                 text: colors.text,
+                arabicText: colors.arabicText,
               }
             ),
           }));

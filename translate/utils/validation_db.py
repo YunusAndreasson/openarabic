@@ -7,7 +7,6 @@ Handles fetching words from database and saving validation improvements.
 import logging
 from typing import Any
 
-from data.validation_models import WordValidationRequest
 from utils.storage_utils import get_supabase_client
 
 logger = logging.getLogger(__name__)

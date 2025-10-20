@@ -68,6 +68,28 @@ const semanticOKLCH = {
 } as const;
 
 /**
+ * Azure Accent - Blue tones for diacritics and accents
+ * Hue range: 210-230° (azure blue)
+ * Complements sage green (tint) and golden orange (warning)
+ */
+const azureOKLCH = {
+  light:      { l: 0.55, c: 0.10, h: 230 },         // Medium azure for light mode
+  dark:       { l: 0.70, c: 0.12, h: 230 },         // Lighter azure for dark mode
+  sepia:      { l: 0.50, c: 0.08, h: 210 },         // Muted blue-gray for sepia
+} as const;
+
+/**
+ * Violet - Purple tones for infixes (verb form transformations)
+ * Hue range: 300-320° (purple-violet)
+ * Represents transformation - the role of infixes in verb forms VII, VIII, X
+ */
+const violetOKLCH = {
+  light:      { l: 0.55, c: 0.12, h: 300 },         // Medium purple for light mode
+  dark:       { l: 0.72, c: 0.14, h: 300 },         // Light purple for dark mode visibility
+  sepia:      { l: 0.50, c: 0.10, h: 320 },         // Muted purple-pink for sepia
+} as const;
+
+/**
  * Pure Values - Green-tinted neutrals
  */
 const pureOKLCH = {
@@ -191,6 +213,18 @@ const semantic = {
   warningDark: oklchToHex(semanticOKLCH.warningDark.l, semanticOKLCH.warningDark.c, semanticOKLCH.warningDark.h),
 } as const;
 
+const azure = {
+  light: oklchToHex(azureOKLCH.light.l, azureOKLCH.light.c, azureOKLCH.light.h),
+  dark:  oklchToHex(azureOKLCH.dark.l, azureOKLCH.dark.c, azureOKLCH.dark.h),
+  sepia: oklchToHex(azureOKLCH.sepia.l, azureOKLCH.sepia.c, azureOKLCH.sepia.h),
+} as const;
+
+const violet = {
+  light: oklchToHex(violetOKLCH.light.l, violetOKLCH.light.c, violetOKLCH.light.h),
+  dark:  oklchToHex(violetOKLCH.dark.l, violetOKLCH.dark.c, violetOKLCH.dark.h),
+  sepia: oklchToHex(violetOKLCH.sepia.l, violetOKLCH.sepia.c, violetOKLCH.sepia.h),
+} as const;
+
 const pure = {
   white: oklchToHex(pureOKLCH.white.l, pureOKLCH.white.c, pureOKLCH.white.h),
   black: oklchToHex(pureOKLCH.black.l, pureOKLCH.black.c, pureOKLCH.black.h),
@@ -261,6 +295,8 @@ const basePalette = {
   sage,
   tint,
   semantic,
+  azure,
+  violet,
   pure,
   autumn,
   sepiaPure,
@@ -328,6 +364,7 @@ const elevation = {
 const lightColors: ThemeColors = {
   // Core brand colors
   primary: basePalette.forest.dark,
+  secondary: basePalette.forest.dark,
   background: basePalette.sage.lighter,
   text: basePalette.forest.darkest,
   secondaryText: basePalette.forest.medium,
@@ -340,7 +377,9 @@ const lightColors: ThemeColors = {
   error: basePalette.semantic.error,
   success: basePalette.semantic.success,
   warning: basePalette.semantic.warning,
-  info: basePalette.forest.light,
+  info: basePalette.forest.lighter, // Lighter sage for future tense - distinct from conjunctions
+  accent: basePalette.azure.light,
+  violet: basePalette.violet.light,
 
   // Text hierarchy
   englishText: basePalette.forest.medium,
@@ -416,6 +455,7 @@ const lightColors: ThemeColors = {
 const darkColors: ThemeColors = {
   // Core brand colors
   primary: basePalette.tint.primaryDark,
+  secondary: basePalette.forest.light,
   background: basePalette.sage.darkest,
   text: basePalette.pure.white,
   secondaryText: textHierarchy.dark.subtitle,
@@ -428,7 +468,9 @@ const darkColors: ThemeColors = {
   error: basePalette.semantic.errorDark,
   success: basePalette.semantic.successDark,
   warning: basePalette.semantic.warningDark,
-  info: basePalette.forest.lighter,
+  info: basePalette.tint.primaryDark, // Lighter sage for future tense - distinct from conjunctions (dark mode)
+  accent: basePalette.azure.dark,
+  violet: basePalette.violet.dark,
 
   // Text hierarchy
   englishText: textHierarchy.dark.subtitle,
@@ -504,6 +546,7 @@ const darkColors: ThemeColors = {
 const sepiaColors: ThemeColors = {
   // Core brand colors
   primary: basePalette.autumn.dark,
+  secondary: basePalette.autumn.medium,
   background: basePalette.autumn.paper.lighter,
   text: basePalette.autumn.darkest,
   secondaryText: basePalette.autumn.medium,
@@ -516,7 +559,9 @@ const sepiaColors: ThemeColors = {
   error: basePalette.autumn.semantic.error,
   success: basePalette.autumn.semantic.success,
   warning: basePalette.autumn.semantic.warning,
-  info: basePalette.autumn.light,
+  info: basePalette.autumn.lighter, // Lighter warm tone for future tense - distinct from conjunctions (sepia mode)
+  accent: basePalette.azure.sepia,
+  violet: basePalette.violet.sepia,
 
   // Text hierarchy
   englishText: basePalette.autumn.medium,

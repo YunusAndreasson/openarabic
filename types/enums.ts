@@ -127,35 +127,6 @@ export enum VocabularyStatCategory {
   TOTAL = 'Total words',
 }
 
-// ===== MEMORY STRENGTH SYSTEM =====
-
-/**
- * Memory strength levels for the 3-phase system
- */
-export enum MemoryStrengthLevel {
-  LOW = 'Low memory strength',
-  MEDIUM = 'Medium memory strength',
-  HIGH = 'High memory strength',
-}
-
-/**
- * Memory retention phases in the 3-phase system
- */
-export enum MemoryRetentionPhase {
-  PRESERVE_MEMORY = 'Preserve memory',
-  CONSOLIDATE = 'Consolidate',
-  READY_TO_ADD = 'Ready to add',
-}
-
-/**
- * Phase recommendations for user guidance
- */
-export enum PhaseRecommendation {
-  RED = 'Your review load is high. Clear due reviews before adding new words.',
-  ORANGE = 'Some words need consolidation. Strengthen them first; add a few only if reviews stay steady.',
-  GREEN = "Your load is balanced. It's a good time to add new words while keeping up daily reviews.",
-}
-
 // ===== FONT OPTIONS =====
 
 /**
@@ -383,18 +354,6 @@ export enum SpacingScale {
   XLARGE = 'xlarge',
   XXLARGE = 'xxlarge',
   XXXLARGE = 'xxxlarge',
-}
-
-// ===== FILE & MEDIA TYPES =====
-
-/**
- * Supported file types for media handling
- */
-export enum FileType {
-  AUDIO = 'audio',
-  IMAGE = 'image',
-  TEXT = 'text',
-  JSON = 'json',
 }
 
 // ===== CALENDAR & DATE TYPES =====

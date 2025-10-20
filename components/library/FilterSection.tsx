@@ -8,35 +8,10 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
-// Subtle divider component for elegant section separation
-function SubtleDivider() {
-  const colors = useColors();
-
-  return (
-    <View style={dividerStyles.divider}>
-      <View style={[dividerStyles.dividerLine, { backgroundColor: colors.elevation1 }]} />
-    </View>
-  );
-}
-
-SubtleDivider.displayName = 'SubtleDivider';
-
-const dividerStyles = StyleSheet.create({
-  divider: {
-    alignItems: 'center',
-    marginVertical: LAYOUT.SPACING.SMALL,
-  },
-  dividerLine: {
-    height: 1,
-    opacity: LAYOUT.OPACITY.LIGHT,
-    width: '90%', // Slightly narrower for elegant spacing
-  },
-});
-
 const styles = StyleSheet.create({
   filterSectionContainer: {
     marginTop: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.SMALL,
   },
 });
 
@@ -82,7 +57,7 @@ const compactCardStyles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   row: {
     flexDirection: 'row',
@@ -131,5 +106,3 @@ export function FilterSection({ items, onSelect, filterType }: FilterSectionProp
 }
 
 FilterSection.displayName = 'FilterSection';
-
-export { SubtleDivider };

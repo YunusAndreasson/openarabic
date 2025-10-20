@@ -77,13 +77,14 @@ describe('gradientUtils', () => {
   });
 
   describe('createStrongDarkOverlayGradient', () => {
-    it('should create strong dark overlay gradient', () => {
+    it('should create strong dark overlay gradient with sage-tinted black', () => {
       const result = createStrongDarkOverlayGradient();
 
       expect(result).toHaveLength(7);
       expect(result[0]).toBe('transparent');
-      expect(result[1]).toBe('rgba(0,0,0,0.1)');
-      expect(result[6]).toBe('rgba(0,0,0,0.95)');
+      // Uses sage-tinted black (#0A0F0B = rgba(10,15,11)) from OKLCH color system
+      expect(result[1]).toBe('rgba(10,15,11,0.1)');
+      expect(result[6]).toBe('rgba(10,15,11,0.95)');
     });
   });
 

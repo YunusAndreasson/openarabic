@@ -22,8 +22,8 @@ export function createTabHeaderOptions({
   rightComponent,
   colors,
 }: TabHeaderOptions): NativeStackNavigationOptions {
-  const backgroundColor = colors?.background || '#FFFFFF';
-  const textColor = colors?.headingText || '#000000';
+  const backgroundColor = colors.background;
+  const textColor = colors.headingText;
 
   // Pre-computed styles for better performance
   const headerStyles = {
@@ -32,8 +32,8 @@ export function createTabHeaderOptions({
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
       justifyContent: 'space-between' as const,
-      paddingHorizontal: 16,
-      paddingBottom: 2, // Reduced bottom padding for tighter spacing
+      paddingHorizontal: LAYOUT.SPACING.LARGE,
+      paddingBottom: LAYOUT.SPACING.HALF_TINY, // Reduced bottom padding for tighter spacing
     },
     titleText: {
       fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
