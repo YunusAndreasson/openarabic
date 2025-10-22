@@ -42,7 +42,7 @@ describe('Database Example Grammar Rules', () => {
 
   describe('Split Behavior: فإنما (fa-innama)', () => {
     it('should detect إنما as standalone prefix', () => {
-      const innama = ARABIC_PREFIXES.find(p => p.arabic === '^إنما');
+      const innama = ARABIC_PREFIXES.find(p => p.arabic === 'إنما');
       expect(innama).toBeDefined();
       expect(innama?.english).toContain('only');
     });
@@ -76,14 +76,14 @@ describe('Database Example Grammar Rules', () => {
 
   describe('Standalone Particles', () => {
     it('should detect إنما as standalone particle', () => {
-      const innama = ARABIC_PREFIXES.find(p => p.arabic === '^إنما');
+      const innama = ARABIC_PREFIXES.find(p => p.arabic === 'إنما');
       expect(innama).toBeDefined();
       expect(innama?.english).toContain('only');
     });
 
     it('should have من/مَنْ entries in ARABIC_PREFIXES', () => {
       // Check for both normalized (من) and diacritical (مَنْ) versions
-      const manEntries = ARABIC_PREFIXES.filter(p => p.arabic === '^من' || p.arabic === '^مَنْ');
+      const manEntries = ARABIC_PREFIXES.filter(p => p.arabic === 'من' || p.arabic === 'مَنْ');
       expect(manEntries.length).toBeGreaterThan(0);
 
       // Should have particle ("who/whoever") meaning in at least one version

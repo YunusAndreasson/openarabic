@@ -15,6 +15,9 @@ Usage:
     # Validate all articles
     uv run python pipeline/validate.py --all
 
+    # Start from a specific article number
+    uv run python pipeline/validate.py --all --start-from 10
+
     # Validate with verbose logging
     uv run python pipeline/validate.py --all --verbose
 """
@@ -225,11 +228,12 @@ def _validate_with_retry(
     return None
 
 
-def validate_all_articles(verbose: bool = False) -> int:
+def validate_all_articles(verbose: bool = False, start_from: int = 1) -> int:
     """Validate all articles in database.
 
     Args:
         verbose: Enable verbose logging
+        start_from: Article number to start from (1-indexed, default: 1)
 
     Returns:
         int: Count of successfully validated articles
@@ -245,6 +249,21 @@ def validate_all_articles(verbose: bool = False) -> int:
             if verbose:
                 logger.warning("No articles found in database")
             return 0
+
+        # Apply start_from offset (convert from 1-indexed to 0-indexed)
+        total_articles = len(article_ids)
+        if start_from > 1:
+            start_index = start_from - 1
+            if start_index >= total_articles:
+                logger.warning(
+                    f"start_from ({start_from}) exceeds total articles ({total_articles})"
+                )
+                return 0
+            article_ids = article_ids[start_index:]
+            if verbose:
+                logger.info(
+                    f"Starting from article #{start_from} (skipping first {start_index} articles)"
+                )
 
         # Create client once for all articles
         client = OpenRouterClient()
@@ -286,9 +305,11 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python pipeline/validate.py --article-id 123    # Validate specific article
-  python pipeline/validate.py --all               # Validate all articles
-  python pipeline/validate.py --all --verbose     # Validate with debug logging
+  python pipeline/validate.py --article-id 123           # Validate specific article
+  python pipeline/validate.py --all                      # Validate all articles
+  python pipeline/validate.py --all --start-from 10      # Start from article #10
+  python pipeline/validate.py --all --start-from 45      # Start from article #45
+  python pipeline/validate.py --all --verbose            # Validate with debug logging
         """,
     )
 
@@ -302,6 +323,13 @@ Examples:
         "--all",
         action="store_true",
         help="Validate all articles in database",
+    )
+
+    parser.add_argument(
+        "--start-from",
+        type=int,
+        default=1,
+        help="Article number to start from (1-indexed, default: 1)",
     )
 
     parser.add_argument(
@@ -331,7 +359,7 @@ Examples:
 
     # Validate all articles
     if args.all:
-        success_count = validate_all_articles(args.verbose)
+        success_count = validate_all_articles(args.verbose, args.start_from)
         return 0 if success_count > 0 else 1
 
     return 1

@@ -3,7 +3,7 @@
 ## 🚀 Features
 
 - [ ] Add folders
-- [x] Play article with higlight
+- [x] Play article with highlight
 - [x] Add bottomsheet for tooltip
   - [x] Play
   - [x] Add to study

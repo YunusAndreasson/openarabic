@@ -49,8 +49,8 @@ describe('Bug Report: wa-an and fa-idha WITH DIACRITICS', () => {
 describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
   describe('ومن (and from)', () => {
     it('should find individual prefixes و and من in ARABIC_PREFIXES', () => {
-      const waPrefix = ARABIC_PREFIXES.find(p => p.arabic === '^و');
-      const minPrefix = ARABIC_PREFIXES.find(p => p.arabic === '^من');
+      const waPrefix = ARABIC_PREFIXES.find(p => p.arabic === 'و');
+      const minPrefix = ARABIC_PREFIXES.find(p => p.arabic === 'من');
 
       console.log('Found و:', waPrefix?.english);
       console.log('Found من:', minPrefix?.english);

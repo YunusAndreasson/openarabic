@@ -18,7 +18,7 @@ export const STRINGS = {
   DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
   DISPLAY_LANGUAGE_BILINGUAL: 'Arabic + English',
   DAILY_WORD_LIMIT: 'Daily word limit',
-  DAILY_WORD_LIMIT_DESCRIPTION: 'Maximum words to add per day',
+  DAILY_WORD_LIMIT_DESCRIPTION: 'Maximum number of words per day',
 
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
@@ -144,7 +144,7 @@ export const STRINGS = {
   ARE_YOU_SURE_SIGN_OUT: 'Are you sure you want to sign out of your account?',
   ENTER_VALID_EMAIL: 'Enter a valid email',
   ENTER_PASSWORD: 'Enter your password',
-  PASSWORD_ADD_CHARACTER_TYPES: 'Add uppercase, lowercase and a number',
+  PASSWORD_ADD_CHARACTER_TYPES: 'Add uppercase, lowercase, and a number',
   PASSWORD_USE_AT_LEAST_TEMPLATE: 'Use at least {minLength} characters',
 
   RESET_PROGRESS: 'Reset progress',
@@ -175,7 +175,7 @@ export const STRINGS = {
   LEARNING_PROGRESS: 'Learning Progress',
   REVIEW_TIMING: 'Memory strength',
   REVIEW_TIMING_EXPLANATION:
-    'Reviews are scheduled when recall drops. Clearing due words restores memory strength; consolidating weak words moves you toward green.',
+    'Reviews are scheduled when recall drops. Clearing due words restores memory strength; strengthening weak words improves overall retention.',
   MEMORY_STRENGTH_OPTIMAL_TIMING: 'Optimal timing for reviews based on your memory strength',
   MEMORY_STRENGTH_CHARTS_DESCRIPTION:
     'These charts show detailed stats about your memory strength and learning progress. Use them to understand how your vocabulary retention works and track improvement over time.',
@@ -189,7 +189,7 @@ export const STRINGS = {
     'Daily vocabulary advancement, tracking new words mastered over time.',
 
   // Practice bottom sheet subtitles (condensed for subtitle format)
-  MEMORY_STRENGTH_SUBTITLE: 'Amount of words you are expected to recall at a given time. Target at least 75% before adding new words',
+  MEMORY_STRENGTH_SUBTITLE: 'Percentage of words you are expected to recall at a given time. Target at least 75% before adding new words',
   WORD_MASTERY_SUBTITLE: 'Words with strong, stable memories requiring minimal review',
   LEARNED_WORDS_SUBTITLE: 'Words you have successfully learned that are building toward mastery',
   LEARNING_RATE_SUBTITLE: 'Learning efficiency and speed trends over recent days',
@@ -237,7 +237,7 @@ export const STRINGS = {
   // Reading progress management
   RESET_READING_PROGRESS: 'Reading progress',
   RESET_READING_PROGRESS_CONFIRMATION: 'Are you sure you want to reset all reading progress?',
-  THIS_WILL_DELETE_ALL_READING_PROGRESS: 'This will delete all reading positions and progress percentages for all articles. This cannot be undone.',
+  THIS_WILL_DELETE_ALL_READING_PROGRESS: 'This will delete reading positions and progress percentages for all articles. This cannot be undone.',
   READING_PROGRESS_RESET_SUCCESSFULLY: 'Reading progress reset successfully',
   FAILED_TO_RESET_READING_PROGRESS: "Couldn't reset reading progress. " + tryAgain,
 
@@ -449,7 +449,7 @@ export const STRINGS = {
 
   // Learning method content
   LEARNING_METHOD_INTRO:
-    "Language acquisition occurs through understanding bilingual sentences, not grammar instruction. According to Krashen's Input Hypothesis, the brain naturally identifies patterns through exposure to comprehensible input.",
+    "Language acquisition occurs through understanding sentences with translations, not grammar instruction. According to Krashen's Input Hypothesis, the brain naturally identifies patterns through exposure to comprehensible input.",
   TRANSLATIONS_EXPOSE_STRUCTURES:
     'Translations provide meaning context while exposing you to Arabic structures just beyond your current level.',
   BRAIN_AUTOMATICALLY_IDENTIFIES:
@@ -499,7 +499,7 @@ export const STRINGS = {
   MODERN_STANDARD_ARABIC_DESC:
     'Simplified classical Arabic for contemporary media and formal contexts. Easy transition from classical foundation.',
   PROCESS_EXPOSURE_BUILDS_COMPETENCE:
-    'Consistent exposure to comprehensible input builds linguistic competence over time. Each reading session contributes to your developing Arabic system through unconscious acquisition.',
+    'Consistent exposure to comprehensible input builds linguistic competence over time. Each reading session contributes to your developing Arabic competence through unconscious acquisition.',
   APPROACH_VALIDATED_BY_RESEARCH:
     'This approach has successfully taught Arabic for centuries. Modern SLA research validates combining authentic texts with translation support for optimal comprehensible input.',
 

@@ -88,6 +88,100 @@ export function clearAnalysisCache(): void {
   ENGLISH_NORMALIZATION_CACHE.clear();
 }
 
+/**
+ * Cache helper with LRU (Least Recently Used) eviction strategy
+ * Evicts the oldest entry when cache size reaches the limit
+ */
+function cacheWithLRUEviction<K, V>(
+  cache: Map<K, V>,
+  key: K,
+  value: V,
+  limit: number = CACHE_SIZE_LIMIT
+): void {
+  if (cache.size >= limit) {
+    const firstKey = cache.keys().next().value;
+    if (firstKey !== undefined) {
+      cache.delete(firstKey);
+    }
+  }
+  cache.set(key, value);
+}
+
+/**
+ * Validation configuration - single source of truth for all validation rules
+ */
+const VALIDATION_CONFIG = {
+  /** Arabic letters that are often vowels (weak letters), excluded from consonant count */
+  WEAK_LETTERS: ['ا', 'و', 'ي'] as const,
+
+  /** Single-letter prefixes that require structural validation to avoid false positives */
+  SUBJECT_MARKERS: ['ي', 'ت', 'ن', 'أ'] as const,
+
+  /** High-risk suffix patterns that require validation (common as root letters) */
+  HIGH_RISK_SUFFIXES: ['ه', 'ها', 'ي', 'ك'] as const,
+
+  /** Known prepositions that end in ي when taking pronoun suffixes (علي، لدي، إلي) */
+  PREPOSITIONS_WITH_SUFFIXES: ['علي', 'لدي', 'إلي'] as const,
+
+  /** Minimum validation thresholds for prefix detection */
+  PREFIX_VALIDATION: {
+    MIN_REMAINING_LENGTH: 3,
+    MIN_CONSONANTS: 2,
+  } as const,
+
+  /** Minimum validation thresholds for suffix detection */
+  SUFFIX_VALIDATION: {
+    MIN_REMAINING_LENGTH: 3,
+    MIN_CONSONANTS: 2,
+    /** Extra length required if remaining starts with subject marker (accounts for prefix + 3-char root) */
+    HIDDEN_PREFIX_MIN_LENGTH: 4,
+  } as const,
+} as const;
+
+/**
+ * Validation helper functions - reusable building blocks for structural validation
+ */
+
+/**
+ * Check if a character is a weak letter (often used as vowel in Arabic)
+ */
+function isWeakLetter(char: string): boolean {
+  return VALIDATION_CONFIG.WEAK_LETTERS.includes(char as (typeof VALIDATION_CONFIG.WEAK_LETTERS)[number]);
+}
+
+/**
+ * Count consonants in Arabic text (excluding weak letters ا، و، ي)
+ */
+function countConsonants(text: string): number {
+  return text.split('').filter(ch => !isWeakLetter(ch)).length;
+}
+
+/**
+ * Check if text has substantial structure (minimum length and consonants)
+ * Used to distinguish roots from affixes
+ */
+function hasSubstantialStructure(
+  text: string,
+  minLength: number,
+  minConsonants: number
+): boolean {
+  return text.length >= minLength && countConsonants(text) >= minConsonants;
+}
+
+/**
+ * Check if a pattern is a subject marker prefix (ي، ت، ن، أ)
+ */
+function isSubjectMarker(pattern: string): boolean {
+  return VALIDATION_CONFIG.SUBJECT_MARKERS.includes(pattern as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number]);
+}
+
+/**
+ * Check if a pattern is a high-risk suffix requiring validation
+ */
+function isHighRiskSuffix(pattern: string): boolean {
+  return VALIDATION_CONFIG.HIGH_RISK_SUFFIXES.includes(pattern as (typeof VALIDATION_CONFIG.HIGH_RISK_SUFFIXES)[number]);
+}
+
 // Comprehensive contraction map hoisted and lowercased once for reuse
 const CONTRACTION_MAP: Record<string, string> = {
   // Negation contractions
@@ -173,14 +267,7 @@ function normalizeArabic(text: string): string {
     .replace(DIACRITIC_REGEX, '')
     .trim();
 
-  // LRU cache management - evict oldest entry when cache is full
-  if (ARABIC_NORMALIZATION_CACHE.size >= CACHE_SIZE_LIMIT) {
-    const firstKey = ARABIC_NORMALIZATION_CACHE.keys().next().value;
-    if (firstKey) {
-      ARABIC_NORMALIZATION_CACHE.delete(firstKey);
-    }
-  }
-  ARABIC_NORMALIZATION_CACHE.set(text, normalized);
+  cacheWithLRUEviction(ARABIC_NORMALIZATION_CACHE, text, normalized);
 
   return normalized;
 }
@@ -196,14 +283,7 @@ function normalizeEnglish(text: string): string {
 
   const normalized = text.toLowerCase().replace(NON_WORD_REGEX, '').trim();
 
-  // LRU cache management - evict oldest entry when cache is full
-  if (ENGLISH_NORMALIZATION_CACHE.size >= CACHE_SIZE_LIMIT) {
-    const firstKey = ENGLISH_NORMALIZATION_CACHE.keys().next().value;
-    if (firstKey) {
-      ENGLISH_NORMALIZATION_CACHE.delete(firstKey);
-    }
-  }
-  ENGLISH_NORMALIZATION_CACHE.set(text, normalized);
+  cacheWithLRUEviction(ENGLISH_NORMALIZATION_CACHE, text, normalized);
 
   return normalized;
 }
@@ -347,8 +427,7 @@ function findComponent(
   let best: AnalyzedComponent | undefined;
 
   for (const component of components) {
-    // Remove regex anchors to get the actual pattern
-    const pattern = component.arabic.replace(/[\^$]/g, '');
+    const pattern = component.arabic;
 
     // Check if pattern matches based on type
     let matches = false;
@@ -385,12 +464,13 @@ function findComponent(
      *   - "يد" (hand) ✗ fails: remaining "د" too short
      */
     if (matches && type === ComponentType.PREFIX) {
-      if (pattern === 'ي' || pattern === 'ت' || pattern === 'أ' || pattern === 'ن') {
+      if (isSubjectMarker(pattern)) {
         const remaining = arabic.slice(pattern.length);
-        const minLengthSatisfied = remaining.length >= 3;
-        const consonants = remaining.split('').filter(ch => !['ا', 'و', 'ي'].includes(ch));
-        const hasTwoConsonants = consonants.length >= 2;
-        if (!minLengthSatisfied || !hasTwoConsonants) {
+        if (!hasSubstantialStructure(
+          remaining,
+          VALIDATION_CONFIG.PREFIX_VALIDATION.MIN_REMAINING_LENGTH,
+          VALIDATION_CONFIG.PREFIX_VALIDATION.MIN_CONSONANTS
+        )) {
           matches = false;
         }
       }
@@ -422,7 +502,7 @@ function findComponent(
      */
     if (matches && type === ComponentType.SUFFIX) {
       // Only apply validation to high-risk single/double letter suffixes
-      if (pattern === 'ه' || pattern === 'ها' || pattern === 'ي' || pattern === 'ك') {
+      if (isHighRiskSuffix(pattern)) {
         const remaining = arabic.slice(0, arabic.length - pattern.length);
 
         // Special case: prefix + suffix with no root (e.g., له، بك، وه)
@@ -439,18 +519,18 @@ function findComponent(
           // Example: يكره → remove ه → يكر (3 chars starting with ي prefix = 2 char root)
           // NOTE: Only check subject markers (ي، ت، ن، أ) which are rarely root-initial
           // Don't check ل، ب، ك، و، ف which commonly appear in roots (e.g., لذة، بذر، كره)
-          const subjectMarkers = ['ي', 'ت', 'ن', 'أ'];
-          const startsWithSubjectMarker = subjectMarkers.includes(remaining.charAt(0));
+          const startsWithSubjectMarker = isSubjectMarker(remaining.charAt(0));
           const hasHiddenPrefix = startsWithSubjectMarker && remaining.length === 3;
 
           // Minimum length check: need at least 3 characters for legitimate suffix attachment
           // OR 4+ if it starts with a prefix letter (to account for prefix + 3-char root)
           // This distinguishes "كتابه" (4 chars → كتاب) from "كره" (3 chars → كر)
-          const minLengthSatisfied = hasHiddenPrefix ? remaining.length >= 4 : remaining.length >= 3;
+          const minLengthRequired = hasHiddenPrefix
+            ? VALIDATION_CONFIG.SUFFIX_VALIDATION.HIDDEN_PREFIX_MIN_LENGTH
+            : VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_REMAINING_LENGTH;
 
-          // Consonant check: need at least 2 consonants (not counting weak letters)
-          const consonants = remaining.split('').filter(ch => !['ا', 'و', 'ي'].includes(ch));
-          const hasTwoConsonants = consonants.length >= 2;
+          const minLengthSatisfied = remaining.length >= minLengthRequired;
+          const hasTwoConsonants = countConsonants(remaining) >= VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS;
 
           // فعيل pattern detection: words like سفيه، كريه (root ends in ه with ي before it)
           // Pattern: C¹ C² ي ه → likely فعيل adjectival form where ه is root letter
@@ -460,8 +540,7 @@ function findComponent(
                                          remaining.charAt(2) === 'ي';
 
           // Check if remaining is a known preposition ending in ى that takes suffixes
-          const knownPrepositionsWithSuffixes = ['علي', 'لدي', 'إلي']; // على، لدى، إلى without the ى when suffix attached
-          const isKnownPreposition = knownPrepositionsWithSuffixes.includes(remaining);
+          const isKnownPreposition = (VALIDATION_CONFIG.PREPOSITIONS_WITH_SUFFIXES as readonly string[]).includes(remaining);
 
           // Only reject as فعيل if it's not a known preposition
           const isFa3eelPattern = potentialFa3eelPattern && !isKnownPreposition;
@@ -831,14 +910,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
       hasBracketInjection,
     };
 
-    // Cache single-word result
-    if (ANALYSIS_CACHE.size >= CACHE_SIZE_LIMIT) {
-      const firstKey = ANALYSIS_CACHE.keys().next().value;
-      if (firstKey) {
-        ANALYSIS_CACHE.delete(firstKey);
-      }
-    }
-    ANALYSIS_CACHE.set(cacheKey, singleWordResult);
+    cacheWithLRUEviction(ANALYSIS_CACHE, cacheKey, singleWordResult);
 
     return singleWordResult;
   }
@@ -929,14 +1001,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     hasBracketInjection,
   };
 
-  // Cache the result and manage cache size
-  if (ANALYSIS_CACHE.size >= CACHE_SIZE_LIMIT) {
-    const firstKey = ANALYSIS_CACHE.keys().next().value;
-    if (firstKey) {
-      ANALYSIS_CACHE.delete(firstKey);
-    }
-  }
-  ANALYSIS_CACHE.set(cacheKey, result);
+  cacheWithLRUEviction(ANALYSIS_CACHE, cacheKey, result);
 
   return result;
 }
@@ -996,17 +1061,13 @@ function getDiacriticColorName(diacritic: AnalyzedComponent | undefined, analysi
   // If diacritic inherits color from a related component, use that component's color logic
   if (diacritic.inheritColorFrom === ComponentType.SUFFIX && analysis?.suffix) {
     // Match suffix color logic: use role-based color if available, otherwise type-based
-    return analysis.suffix.role
-      ? GRAMMATICAL_ROLE_COLORS[analysis.suffix.role]
-      : COMPONENT_TYPE_CONFIG[ComponentType.SUFFIX].colorName;
+    return getComponentColorName(analysis.suffix, ComponentType.SUFFIX);
   }
 
   if (diacritic.inheritColorFrom === ComponentType.PREFIX && analysis?.prefixes) {
     // Match prefix color logic: also uses role-based colors
     const prefix = analysis.prefixes[0];  // Get first prefix (most relevant for diacritic)
-    return prefix?.role
-      ? GRAMMATICAL_ROLE_COLORS[prefix.role]
-      : COMPONENT_TYPE_CONFIG[ComponentType.PREFIX].colorName;
+    return getComponentColorName(prefix, ComponentType.PREFIX);
   }
 
   if (diacritic.inheritColorFrom) {
@@ -1016,6 +1077,23 @@ function getDiacriticColorName(diacritic: AnalyzedComponent | undefined, analysi
 
   // Otherwise use the diacritic's own color
   return COMPONENT_TYPE_CONFIG[ComponentType.DIACRITIC].colorName;
+}
+
+/**
+ * Get the appropriate color name for a component based on role or type
+ * Uses role-based color if available, otherwise falls back to type-based color
+ */
+function getComponentColorName(
+  component: AnalyzedComponent | undefined,
+  defaultType: ComponentType
+): string {
+  if (!component) {
+    return COMPONENT_TYPE_CONFIG[defaultType].colorName;
+  }
+
+  return component.role
+    ? GRAMMATICAL_ROLE_COLORS[component.role]
+    : COMPONENT_TYPE_CONFIG[defaultType].colorName;
 }
 
 /**
@@ -1047,9 +1125,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
       }
 
       // Use role-based color if available, otherwise fall back to type-based color
-      const colorName = prefix.role
-        ? GRAMMATICAL_ROLE_COLORS[prefix.role]
-        : COMPONENT_TYPE_CONFIG[ComponentType.PREFIX].colorName;
+      const colorName = getComponentColorName(prefix, ComponentType.PREFIX);
 
       segments.push({
         text: arabic.substring(processed, originalEnd),
@@ -1124,9 +1200,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
       if (suffixWithoutDiacritic) {
         segments.push({
           text: suffixWithoutDiacritic,
-          colorName: analysis.suffix.role
-            ? GRAMMATICAL_ROLE_COLORS[analysis.suffix.role]
-            : COMPONENT_TYPE_CONFIG[ComponentType.SUFFIX].colorName,
+          colorName: getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
           type: 'suffix',
         });
       }
@@ -1138,9 +1212,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
     } else {
       segments.push({
         text: suffixText,
-        colorName: analysis.suffix.role
-          ? GRAMMATICAL_ROLE_COLORS[analysis.suffix.role]
-          : COMPONENT_TYPE_CONFIG[ComponentType.SUFFIX].colorName,
+        colorName: getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
         type: 'suffix',
       });
     }
@@ -1225,9 +1297,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
       if (suffixWithoutDiacritic) {
         segments.push({
           text: suffixWithoutDiacritic,
-          colorName: analysis.suffix.role
-            ? GRAMMATICAL_ROLE_COLORS[analysis.suffix.role]
-            : COMPONENT_TYPE_CONFIG[ComponentType.SUFFIX].colorName,
+          colorName: getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
           type: 'suffix',
         });
       }
@@ -1239,9 +1309,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
     } else {
       segments.push({
         text: suffixText,
-        colorName: analysis.suffix.role
-          ? GRAMMATICAL_ROLE_COLORS[analysis.suffix.role]
-          : COMPONENT_TYPE_CONFIG[ComponentType.SUFFIX].colorName,
+        colorName: getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
         type: 'suffix',
       });
     }
@@ -1374,9 +1442,7 @@ export function formatWordAnalysis(analysis: WordAnalysis) {
   if (analysis.prefixes) {
     analysis.prefixes.forEach((prefix) => {
       // Use role-based color if role is defined, otherwise fall back to type-based color
-      const colorName = prefix.role
-        ? GRAMMATICAL_ROLE_COLORS[prefix.role]
-        : COMPONENT_TYPE_CONFIG[ComponentType.PREFIX].colorName;
+      const colorName = getComponentColorName(prefix, ComponentType.PREFIX);
 
       sections.push({
         type: 'components',
@@ -1400,9 +1466,7 @@ export function formatWordAnalysis(analysis: WordAnalysis) {
 
   if (analysis.suffix) {
     // Use role-based color if role is defined, otherwise fall back to type-based color
-    const colorName = analysis.suffix.role
-      ? GRAMMATICAL_ROLE_COLORS[analysis.suffix.role]
-      : COMPONENT_TYPE_CONFIG[ComponentType.SUFFIX].colorName;
+    const colorName = getComponentColorName(analysis.suffix, ComponentType.SUFFIX);
 
     sections.push({
       type: 'components',
