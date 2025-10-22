@@ -38,6 +38,7 @@
     "babel.config.js",
     "metro.config.cjs",
     "jest.config.js",
+    "eslint.config.js",
     "build",
     "dist",
     ".expo",

@@ -79,6 +79,15 @@ const ENGLISH_NORMALIZATION_CACHE = new Map<string, string>();
 const ANALYSIS_CACHE = new Map<string, WordAnalysis>();
 const CACHE_SIZE_LIMIT = 500; // Increased from 100 for better performance with common words
 
+/**
+ * Clear all analysis caches - useful for testing or after updating component definitions
+ */
+export function clearAnalysisCache(): void {
+  ANALYSIS_CACHE.clear();
+  ARABIC_NORMALIZATION_CACHE.clear();
+  ENGLISH_NORMALIZATION_CACHE.clear();
+}
+
 // Comprehensive contraction map hoisted and lowercased once for reuse
 const CONTRACTION_MAP: Record<string, string> = {
   // Negation contractions
@@ -322,6 +331,7 @@ function hasEnglishMatch(
       }
     }
   }
+
   return matches;
 }
 
@@ -383,6 +393,84 @@ function findComponent(
         if (!minLengthSatisfied || !hasTwoConsonants) {
           matches = false;
         }
+      }
+    }
+
+    /**
+     * Root structure validation for suffixes to avoid false positives
+     *
+     * Problem: Suffix patterns can match root letters (e.g., ه in وجه "face" vs كتابه "his book")
+     * Solution: Validate that removing suffix leaves substantial word structure:
+     *   - At least 3 characters remaining (distinguishes root from suffix)
+     *   - At least 2 consonants (excluding ا، و، ي which are often vowels)
+     *   - Special pattern detection for فعيل (fa'īl) adjectival forms ending in root ه
+     *   - Exception: Allow prefix+suffix combinations (e.g., له، بك، وه)
+     *
+     * High-risk suffixes requiring validation:
+     *   - ه (he, his, it) - extremely common as root letter (و-ج-ه, ف-ق-ه, ك-ر-ه)
+     *   - ها (her, its) - common in feminine patterns
+     *   - ي (my) - appears in nisba adjectives (مصري, عربي)
+     *   - ك (your) - less common but still possible
+     *
+     * Examples:
+     *   - "كره" (hate, root ك-ر-ه) ✗ fails: remaining "كر" only 2 chars
+     *   - "وجه" (face, root و-ج-ه) ✗ fails: remaining "وج" only 1 consonant
+     *   - "سفيه" (foolish, root س-ف-ه) ✗ fails: فعيل pattern detected
+     *   - "كتابه" (his book) ✓ passes: remaining "كتاب" is 4 chars with 3 consonants
+     *   - "بيته" (his house) ✓ passes: remaining "بيت" is 3 chars with 3 consonants
+     *   - "له" (for him) ✓ passes: special case - prefix ل + suffix ه
+     */
+    if (matches && type === ComponentType.SUFFIX) {
+      // Only apply validation to high-risk single/double letter suffixes
+      if (pattern === 'ه' || pattern === 'ها' || pattern === 'ي' || pattern === 'ك') {
+        const remaining = arabic.slice(0, arabic.length - pattern.length);
+
+        // Special case: prefix + suffix with no root (e.g., له، بك، وه)
+        // Or standalone suffix (e.g., single letter ه)
+        // Only allow for single-character prefixes or empty (standalone suffix)
+        // Two-character remainders (كر، وج، نز) are root remnants, not prefix-only
+        const isLikelyPrefixOnly = remaining.length <= 1;
+
+        if (!isLikelyPrefixOnly) {
+          // Apply validation for words with roots (3+ chars remaining)
+
+          // Additional check: If remaining starts with a SUBJECT MARKER and is exactly 3 chars,
+          // the root is only 2 chars (not enough)
+          // Example: يكره → remove ه → يكر (3 chars starting with ي prefix = 2 char root)
+          // NOTE: Only check subject markers (ي، ت، ن، أ) which are rarely root-initial
+          // Don't check ل، ب، ك، و، ف which commonly appear in roots (e.g., لذة، بذر، كره)
+          const subjectMarkers = ['ي', 'ت', 'ن', 'أ'];
+          const startsWithSubjectMarker = subjectMarkers.includes(remaining.charAt(0));
+          const hasHiddenPrefix = startsWithSubjectMarker && remaining.length === 3;
+
+          // Minimum length check: need at least 3 characters for legitimate suffix attachment
+          // OR 4+ if it starts with a prefix letter (to account for prefix + 3-char root)
+          // This distinguishes "كتابه" (4 chars → كتاب) from "كره" (3 chars → كر)
+          const minLengthSatisfied = hasHiddenPrefix ? remaining.length >= 4 : remaining.length >= 3;
+
+          // Consonant check: need at least 2 consonants (not counting weak letters)
+          const consonants = remaining.split('').filter(ch => !['ا', 'و', 'ي'].includes(ch));
+          const hasTwoConsonants = consonants.length >= 2;
+
+          // فعيل pattern detection: words like سفيه، كريه (root ends in ه with ي before it)
+          // Pattern: C¹ C² ي ه → likely فعيل adjectival form where ه is root letter
+          // Exception: Don't apply to known prepositions that take suffixes (على، لدى، إلى)
+          const potentialFa3eelPattern = pattern === 'ه' &&
+                                         remaining.length === 3 &&
+                                         remaining.charAt(2) === 'ي';
+
+          // Check if remaining is a known preposition ending in ى that takes suffixes
+          const knownPrepositionsWithSuffixes = ['علي', 'لدي', 'إلي']; // على، لدى، إلى without the ى when suffix attached
+          const isKnownPreposition = knownPrepositionsWithSuffixes.includes(remaining);
+
+          // Only reject as فعيل if it's not a known preposition
+          const isFa3eelPattern = potentialFa3eelPattern && !isKnownPreposition;
+
+          if (!minLengthSatisfied || !hasTwoConsonants || isFa3eelPattern) {
+            matches = false;
+          }
+        }
+        // If isLikelyPrefixOnly, allow the suffix (don't set matches = false)
       }
     }
 
@@ -597,12 +685,25 @@ function areGrammaticallyRelated(
 
   /**
    * Relationship 1: Pronoun Suffix + Case Agreement
-   * SUFFIX (pronouns like ه، ها، هم) + DIACRITIC with overlapping pronoun
-   * Example: أَضَافَهُ → ه (suffix "it") + ُ (damma also has "it")
-   * Both express pronoun system (suffix + case marker)
+   * SUFFIX (pronouns like ه، ها، هم) + DIACRITIC
+   * Example: عَلَيْهِ → ه (suffix "him") + ِ (genitive case marker)
+   *
+   * Educational decision: Diacritics on pronoun suffixes should inherit the suffix color
+   * to visually group the pronoun with its case marking (هِ, هُ, هَ all = "him")
+   *
+   * This is more pedagogically clear than separating them, even if the diacritic's
+   * English meaning ("in", "of") doesn't overlap with the pronoun's meaning ("him")
    */
   if (componentType === ComponentType.SUFFIX) {
-    // Check if overlap includes pronoun patterns
+    // Check if this is a pronoun suffix (possessive role)
+    const isPronounSuffix = overlappingComponent.role === GrammaticalRole.POSSESSIVE;
+
+    if (isPronounSuffix) {
+      // Always inherit color for pronoun suffixes + diacritics
+      return true;
+    }
+
+    // For non-pronoun suffixes, still check for English overlap (old logic)
     const pronounPatterns = ['he', 'it', 'they', 'his', 'her', 'their', 'him', 'them'];
     const hasOverlappingPronoun = normalizedOverlap.some(m => pronounPatterns.includes(m));
     if (hasOverlappingPronoun) {
@@ -778,7 +879,18 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
       resolvedSuffix,
     ]);
 
-    if (matchAnalysis.hasUnique) {
+    // Special case: Pronoun suffix + diacritic (educational grouping)
+    // Always inherit color for diacritics on pronoun suffixes, even without English overlap
+    const isPronounSuffixPresent = resolvedSuffix?.role === GrammaticalRole.POSSESSIVE;
+
+    if (isPronounSuffixPresent) {
+      // Diacritic on pronoun suffix → inherit suffix color for visual grouping
+      // Example: עَלَيْهِ → ה + ִ both colored purple (pronoun + case marker)
+      resolvedDiacritic = {
+        ...diacritic,
+        inheritColorFrom: ComponentType.SUFFIX,
+      };
+    } else if (matchAnalysis.hasUnique) {
       // Case 1: Diacritic has unique English match → keep with its own color
       resolvedDiacritic = diacritic;
     } else if (matchAnalysis.overlappingComponent) {
@@ -876,12 +988,29 @@ function mapToOriginalPosition(
 
 /**
  * Get the appropriate color name for a diacritic based on color inheritance
+ * Must match the exact color logic used by the component it inherits from (including role-based colors)
  */
-function getDiacriticColorName(diacritic: AnalyzedComponent | undefined): string {
+function getDiacriticColorName(diacritic: AnalyzedComponent | undefined, analysis?: WordAnalysis): string {
   if (!diacritic) return 'text';
 
-  // If diacritic inherits color from a related component, use that color
+  // If diacritic inherits color from a related component, use that component's color logic
+  if (diacritic.inheritColorFrom === ComponentType.SUFFIX && analysis?.suffix) {
+    // Match suffix color logic: use role-based color if available, otherwise type-based
+    return analysis.suffix.role
+      ? GRAMMATICAL_ROLE_COLORS[analysis.suffix.role]
+      : COMPONENT_TYPE_CONFIG[ComponentType.SUFFIX].colorName;
+  }
+
+  if (diacritic.inheritColorFrom === ComponentType.PREFIX && analysis?.prefixes) {
+    // Match prefix color logic: also uses role-based colors
+    const prefix = analysis.prefixes[0];  // Get first prefix (most relevant for diacritic)
+    return prefix?.role
+      ? GRAMMATICAL_ROLE_COLORS[prefix.role]
+      : COMPONENT_TYPE_CONFIG[ComponentType.PREFIX].colorName;
+  }
+
   if (diacritic.inheritColorFrom) {
+    // Fallback for other component types (infix, etc.)
     return COMPONENT_TYPE_CONFIG[diacritic.inheritColorFrom].colorName;
   }
 
@@ -901,6 +1030,8 @@ function reconstructWithColors(analysis: WordAnalysis) {
   if (analysis.prefixes && analysis.prefixes.length > 0) {
     for (let i = 0; i < analysis.prefixes.length; i++) {
       const prefix = analysis.prefixes[i];
+      if (!prefix) continue; // TypeScript strict null check
+
       const prefixLength = prefix.arabicMatch.length;
       const isLastPrefix = i === analysis.prefixes.length - 1;
 
@@ -1001,7 +1132,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
       }
       segments.push({
         text: analysis.diacritic.arabicMatch,
-        colorName: getDiacriticColorName(analysis.diacritic),
+        colorName: getDiacriticColorName(analysis.diacritic, analysis),
         type: 'diacritic',
       });
     } else {
@@ -1059,7 +1190,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
         }
         segments.push({
           text: analysis.diacritic.arabicMatch,
-          colorName: getDiacriticColorName(analysis.diacritic),
+          colorName: getDiacriticColorName(analysis.diacritic, analysis),
           type: 'diacritic',
         });
       } else {
@@ -1102,7 +1233,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
       }
       segments.push({
         text: analysis.diacritic.arabicMatch,
-        colorName: getDiacriticColorName(analysis.diacritic),
+        colorName: getDiacriticColorName(analysis.diacritic, analysis),
         type: 'diacritic',
       });
     } else {
@@ -1132,7 +1263,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
       }
       segments.push({
         text: analysis.diacritic.arabicMatch,
-        colorName: getDiacriticColorName(analysis.diacritic),
+        colorName: getDiacriticColorName(analysis.diacritic, analysis),
         type: 'diacritic',
       });
     } else {
@@ -1284,9 +1415,8 @@ export function formatWordAnalysis(analysis: WordAnalysis) {
 
   if (analysis.diacritic) {
     // If diacritic inherits color from related component, use that color instead
-    const colorName = analysis.diacritic.inheritColorFrom
-      ? COMPONENT_TYPE_CONFIG[analysis.diacritic.inheritColorFrom].colorName
-      : COMPONENT_TYPE_CONFIG[ComponentType.DIACRITIC].colorName;
+    // Must use getDiacriticColorName to get role-based colors (e.g., violet for POSSESSIVE)
+    const colorName = getDiacriticColorName(analysis.diacritic, analysis);
 
     sections.push({
       type: 'components',

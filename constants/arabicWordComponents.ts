@@ -75,7 +75,8 @@ const BASE_PREPOSITIONS = [
   { arabic: 'في', english: ['in', 'at', 'inside', 'within', 'upon'], role: GrammaticalRole.PREPOSITION },
   { arabic: 'من', english: ['from', 'of', 'than', 'out of'], role: GrammaticalRole.PREPOSITION },
   { arabic: 'م', english: ['from', 'of'], role: GrammaticalRole.PREPOSITION }, // Shortened form in contractions (من + من → مِمَّن → normalized: م + من)
-  { arabic: 'على', english: ['on', 'upon', 'over', 'above', 'against', 'to'], role: GrammaticalRole.PREPOSITION }, // 'to' for obligation/direction
+  { arabic: 'على', english: ['on', 'upon', 'over', 'above', 'against', 'to', 'in'], role: GrammaticalRole.PREPOSITION }, // 'to' for obligation/direction, 'in' for certain contexts
+  { arabic: 'علي', english: ['on', 'upon', 'in'], role: GrammaticalRole.PREPOSITION }, // Form with suffix (على + ه → عليه, not عليه): alef maksura ى → yeh ي before pronoun suffixes
   { arabic: 'عل', english: ['on', 'upon', 'to'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (على + ي → عليّ → normalized: عل + ي)
   { arabic: 'عن', english: ['about', 'from', 'concerning', 'regarding'], role: GrammaticalRole.PREPOSITION },
   { arabic: 'إلى', english: ['to', 'towards', 'into', 'until'], role: GrammaticalRole.PREPOSITION },
