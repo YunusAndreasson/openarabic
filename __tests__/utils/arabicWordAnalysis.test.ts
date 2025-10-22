@@ -44,10 +44,11 @@ describe('arabicWordAnalysis', () => {
     expect(analysis.hasComponents).toBe(true);
 
     const formatted = formatWordAnalysis(analysis);
-    const coloredSegments = formatted.reconstructedArabic?.segments.filter(
-      s => s.colorName !== 'text'
-    );
-    expect(coloredSegments).toHaveLength(2);
+    // Should have 3 segments: prefix (و), root (بيت), suffix (ها)
+    expect(formatted.reconstructedArabic?.segments).toHaveLength(3);
+    expect(formatted.reconstructedArabic?.segments[0].type).toBe('prefix');
+    expect(formatted.reconstructedArabic?.segments[1].type).toBe('root');
+    expect(formatted.reconstructedArabic?.segments[2].type).toBe('suffix');
   });
 
   // Test normalization
@@ -124,6 +125,22 @@ describe('arabicWordAnalysis', () => {
       });
     });
 
+    it('should match مع preposition (with)', () => {
+      // Test مع prefix detection
+      const tests = [
+        { arabic: 'معه', english: 'with him', expectedPrefix: 'مع' },
+        { arabic: 'معك', english: 'with you', expectedPrefix: 'مع' },
+        { arabic: 'معنا', english: 'with us', expectedPrefix: 'مع' },
+        { arabic: 'معهم', english: 'with them', expectedPrefix: 'مع' },
+      ];
+
+      tests.forEach(({ arabic, english, expectedPrefix }) => {
+        const analysis = analyzeArabicWord(arabic, english);
+        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.prefixes.some(p => p.arabicMatch === expectedPrefix)).toBe(true);
+      });
+    });
+
     it('should require English correspondence to avoid false positives', () => {
       // Test that components are only matched when their English equivalents exist
       const analysis = analyzeArabicWord('والبيت', 'house'); // "house" only, no "and"
@@ -178,22 +195,28 @@ describe('arabicWordAnalysis', () => {
       }
     });
 
-    it.skip('should handle verbal prefix ي for "was" and third person', () => {
-      // TODO: ي prefix detection needs investigation - currently not matching multi-word translations
-      const tests = [
-        { arabic: 'يُكتب', english: 'he was writing', expectedPrefix: 'ي' },
-        { arabic: 'يُقرأ', english: 'it was read', expectedPrefix: 'ي' },
-        { arabic: 'يُفهم', english: 'he was understood', expectedPrefix: 'ي' },
-        { arabic: 'يُحب', english: 'he loves', expectedPrefix: 'ي' },
+    it('should handle verbal prefix ي for "was" and third person', () => {
+      // Test cases where remaining word after ي has sufficient length (>=3 chars)
+      const validTests = [
+        { arabic: 'يُكتب', english: 'he was writing', expectedPrefix: 'ي' }, // Remaining: كتب (3 chars) ✓
+        { arabic: 'يُقرأ', english: 'it was read', expectedPrefix: 'ي' },     // Remaining: قرأ (3 chars) ✓
+        { arabic: 'يُفهم', english: 'he was understood', expectedPrefix: 'ي' }, // Remaining: فهم (3 chars) ✓
       ];
 
-      tests.forEach(({ arabic, english, expectedPrefix }) => {
+      validTests.forEach(({ arabic, english, expectedPrefix }) => {
         const analysis = analyzeArabicWord(arabic, english);
         // ي prefix should be detected when English has subject/auxiliary matches
+        // AND remaining word structure is sufficient (>=3 chars, >=2 consonants)
         expect(analysis.hasComponents).toBe(true);
         expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
         expect(analysis.prefixes[0]?.arabicMatch).toBe(expectedPrefix);
       });
+
+      // Test case where remaining word is too short (validation should reject)
+      const analysis = analyzeArabicWord('يُحب', 'he loves');
+      // Remaining "حب" is only 2 chars - fails MIN_REMAINING_LENGTH validation
+      expect(analysis.prefixes[0]).toBeUndefined();
+      expect(analysis.hasComponents).toBe(false);
     });
 
     it('should not match ي prefix when English has no correspondence', () => {
@@ -455,7 +478,8 @@ describe('arabicWordAnalysis', () => {
       expect(formatted.reconstructedArabic).toBeDefined();
       expect(formatted.reconstructedArabic?.segments).toHaveLength(2);
       expect(formatted.reconstructedArabic?.segments[0].text).toBe('كتاب');
-      expect(formatted.reconstructedArabic?.segments[0].colorName).toBe('text');
+      // Root segments use 'arabicText' color, not 'text'
+      expect(formatted.reconstructedArabic?.segments[0].colorName).toBe('arabicText');
       expect(formatted.reconstructedArabic?.segments[1].text).toBe('َ');
       expect(formatted.reconstructedArabic?.segments[1].colorName).toBe('accent');
       expect(formatted.reconstructedArabic?.segments[1].type).toBe('diacritic');
@@ -847,7 +871,7 @@ describe('arabicWordAnalysis', () => {
         // Verify the patterns exist in our suffix definitions
         const { ARABIC_SUFFIXES } = require('../../constants/arabicWordComponents');
         const shaddaSuffixes = ARABIC_SUFFIXES.filter(
-          s => s.arabic === 'ىّ$' || s.arabic === 'يّ$'
+          s => s.arabic === 'ىّ' || s.arabic === 'يّ'
         );
         expect(shaddaSuffixes.length).toBe(2);
         expect(shaddaSuffixes.some(s => s.english.includes('me'))).toBe(true);

@@ -83,6 +83,7 @@ const BASE_PREPOSITIONS = [
   { arabic: 'إل', english: ['to', 'towards'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (إلى + ي → إليّ → normalized: إل + ي)
   { arabic: 'لدى', english: ['with', 'at', 'by', 'near'], role: GrammaticalRole.PREPOSITION },
   { arabic: 'لد', english: ['with', 'at'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (لدى + ي → لديّ → normalized: لد + ي)
+  { arabic: 'مع', english: ['with', 'together with', 'alongside', 'along with'], role: GrammaticalRole.PREPOSITION },
   // Note: ما moved to OTHER_PREFIXES to avoid compound generation (وما, فما)
 ];
 
@@ -129,6 +130,7 @@ const OTHER_PREFIXES = [
 /**
  * Create the final list of all prefixes for export.
  * Only base patterns - sequential detection handles multiple prefixes.
+ * Note: No regex anchors needed - matching logic uses startsWith/endsWith
  */
 function createFinalPrefixList(): WordComponent[] {
   const individualBasePrefixes = [
@@ -137,7 +139,6 @@ function createFinalPrefixList(): WordComponent[] {
     ...OTHER_PREFIXES,
   ].map(p => ({
     ...p,
-    arabic: `^${p.arabic}`,
     type: ComponentType.PREFIX,
   }));
 
@@ -214,21 +215,10 @@ export const ARABIC_INFIXES: WordComponent[] = [
     type: ComponentType.INFIX,
   },
 
-  // Reciprocal/associative infix (Forms III & VI: long alif between radicals)
-  {
-    arabic: 'ا',
-    english: ['with', 'mutually', 'reciprocally', 'together with'],
-    type: ComponentType.INFIX,
-  },
-
-  // Diminutive infix patterns (common in classical Arabic)
-  {
-    arabic: 'ي',
-    english: ['little', 'small', 'dear', 'beloved'],
-    type: ComponentType.INFIX,
-  },
-
   // Comparative/superlative infix أ (when internal, different from causative)
+  // Note: Removed ا (alif) and ي (yaa') infix patterns due to root letter ambiguity
+  // These single-letter patterns caused false positives when root letters coincided
+  // with English translations containing trigger words ('with', 'little', etc.)
   {
     arabic: 'أع',
     english: ['more', 'most', 'greater', 'superior'],
@@ -238,11 +228,12 @@ export const ARABIC_INFIXES: WordComponent[] = [
 
 /**
  * Arabic suffixes with their English equivalents
+ * Note: No regex anchors needed - matching logic uses startsWith/endsWith
  */
 export const ARABIC_SUFFIXES: WordComponent[] = [
   // Pronouns - possessive (normalized, no diacritics)
   {
-    arabic: 'ي$',
+    arabic: 'ي',
     role: GrammaticalRole.POSSESSIVE,
     english: ['my', 'mine', 'of me'],
     type: ComponentType.SUFFIX,
@@ -250,84 +241,84 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   // Shadda-aware possessive suffixes (when attached to prepositions ending in ى)
   // e.g., على + ي → علىّ or عليّ (upon me), لدى + ي → لديّ (with me)
   {
-    arabic: 'ىّ$',
+    arabic: 'ىّ',
     english: ['my', 'me', 'of me'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'يّ$',
+    arabic: 'يّ',
     english: ['my', 'me', 'of me'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'ك$',
+    arabic: 'ك',
     english: ['your', 'yours', 'of you', 'you'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'ه$',
+    arabic: 'ه',
     english: ['his', 'its', 'it', 'of him', 'him', 'himself', 'he', 'their'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   // Object pronoun - me
   {
-    arabic: 'ني$',
+    arabic: 'ني',
     english: ['me', 'my', 'of me'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'ها$',
+    arabic: 'ها',
     english: ['her', 'hers', 'its', 'it', 'of her', 'their'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
-  // Common transliteration-equivalent: final "هِ" often maps to "it/its"; we already catch via 'ه$'
-  // Keep 'it/its' present for 'ه$' to handle cases like "...هِ"
+  // Common transliteration-equivalent: final "هِ" often maps to "it/its"; we already catch via 'ה' suffix
+  // Keep 'it/its' present for 'ה' to handle cases like "...هِ"
   // Subjunctive suffix (ya + verb + tu = "to verb")
   {
-    arabic: 'تُ$',
+    arabic: 'تُ',
     role: GrammaticalRole.PARTICLE,
     english: ['to'],
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'نا$',
+    arabic: 'نا',
     english: ['our', 'ours', 'of us', 'us', 'we'], // 'we' for first-person plural subject in verb conjugations
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'كم$',
+    arabic: 'كم',
     english: ['your', 'yours', 'you all', 'you'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'هم$',
+    arabic: 'هم',
     english: ['their', 'theirs', 'them'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   // Dual possessive/object pronouns
   {
-    arabic: 'كما$',
+    arabic: 'كما',
     english: ['you two', 'both of you', 'your (dual)'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'هما$',
+    arabic: 'هما',
     english: ['both of them', 'their (dual)', 'them two', 'them', 'which', 'those', 'these'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'هن$',
+    arabic: 'هن',
     english: ['their', 'theirs', 'them'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
@@ -335,7 +326,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
 
   // Perfect tense subject endings
   {
-    arabic: 'ت$',
+    arabic: 'ت',
     role: GrammaticalRole.VERB_CONJUGATION,
     english: ['I', 'you'],
     type: ComponentType.SUFFIX,
@@ -343,32 +334,32 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
 
   // Common plural verbal/pronoun endings
   {
-    arabic: 'وا$',
+    arabic: 'وا',
     role: GrammaticalRole.VERB_CONJUGATION,
     english: ['they', 'them', 'they did'],
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'تم$',
+    arabic: 'تم',
     role: GrammaticalRole.VERB_CONJUGATION,
     english: ['you', 'you all', 'you did'],
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'كن$',
+    arabic: 'كن',
     role: GrammaticalRole.VERB_CONJUGATION,
     english: ['you', 'you all', 'you were'],
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'تن$',
+    arabic: 'تن',
     role: GrammaticalRole.VERB_CONJUGATION,
     english: ['you', 'you all'],
     type: ComponentType.SUFFIX,
   },
   // Conditional particle as suffix for compound words like فإن
   {
-    arabic: 'إن$',
+    arabic: 'إن',
     role: GrammaticalRole.PARTICLE,
     english: ['if'],
     type: ComponentType.SUFFIX,
@@ -376,25 +367,25 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
 
   // Dual & plural markers - only include plausible word equivalents
   {
-    arabic: 'ان$',
+    arabic: 'ان',
     role: GrammaticalRole.PLURAL,
     english: ['two', 'both'],
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'ين$',
+    arabic: 'ين',
     role: GrammaticalRole.PLURAL,
     english: ['two', 'both'],
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'ون$',
+    arabic: 'ون',
     role: GrammaticalRole.PLURAL,
     english: ['they', 'those who'],
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'ات$',
+    arabic: 'ات',
     role: GrammaticalRole.PLURAL,
     english: ['times', 'instances'],
     type: ComponentType.SUFFIX,
@@ -402,30 +393,30 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
 
   // Demonstrative pronouns - singular words only
   {
-    arabic: 'هذا$',
+    arabic: 'هذا',
     role: GrammaticalRole.DEMONSTRATIVE,
     english: ['this'],
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'هذه$',
+    arabic: 'هذه',
     role: GrammaticalRole.DEMONSTRATIVE,
     english: ['this'],
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'ذلك$',
+    arabic: 'ذلك',
     role: GrammaticalRole.DEMONSTRATIVE,
     english: ['that'],
     type: ComponentType.SUFFIX,
   },
   {
-    arabic: 'تلك$',
+    arabic: 'تلك',
     role: GrammaticalRole.DEMONSTRATIVE,
     english: ['that'],
     type: ComponentType.SUFFIX,
   },
-];
+].sort((a, b) => b.arabic.length - a.arabic.length); // Sort by length (longest first) for efficient matching
 
 /**
  * Arabic diacritics with their English equivalents
