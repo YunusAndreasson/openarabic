@@ -48,8 +48,9 @@ export function calculateRetrievability(
 
 /**
  * Generate forecast dates for the next 7 days
+ * Internal helper function for calculateRetrievabilityForecast and calculateDueWordsForecast
  */
-export function generateForecastDates(days: number = 7): Date[] {
+function generateForecastDates(days: number = 7): Date[] {
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
@@ -111,21 +112,6 @@ export function calculateRetrievabilityForecast(
     const averageRetrievability = wordCount > 0 ? (totalRetrievability / wordCount) * 100 : 0;
     return { date, averageRetrievability, wordCount, criticalWords, urgentWords };
   });
-}
-
-/**
- * Calculate critical words count for a given date
- */
-export function calculateCriticalWords(
-  studyWords: StudyWord[],
-  targetDate: Date = new Date()
-): number {
-  const validWords = studyWords.filter(w => w.fsrs_last_review && (w.fsrs_reps ?? 0) > 0);
-
-  return validWords.filter(word => {
-    const retrievability = calculateRetrievability(word, targetDate);
-    return retrievability < CRITICAL_RETRIEVABILITY_THRESHOLD;
-  }).length;
 }
 
 /**

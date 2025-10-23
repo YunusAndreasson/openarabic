@@ -3,7 +3,7 @@ import type { Rating } from 'ts-fsrs';
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { RootId, UserId } from '@/types/branded.types';
-import type { TablesInsert, TablesUpdate } from '@/types/database.types';
+import type { TablesInsert } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { executeAuthenticatedQuery } from '@/utils/supabaseHelpers';
 
@@ -12,6 +12,9 @@ interface FSRSWordUpdate {
   fsrs_due: string;
   fsrs_stability: number;
   fsrs_difficulty: number;
+  // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
+  // The elapsed_days field is deprecated in ts-fsrs and will be removed in v6.0.0
+  // See: https://open-spaced-repetition.github.io/ts-fsrs/interfaces/Card.html
   fsrs_elapsed_days: number;
   fsrs_scheduled_days: number;
   fsrs_reps: number;
@@ -172,92 +175,6 @@ export const studyWordsFSRSService = {
             : undefined, // Add missing id field
       })
     );
-  },
-
-  // Update word with FSRS parameters
-  async updateFSRSWord(userId: string, rootId: number, update: FSRSWordUpdate): Promise<boolean> {
-    // First verify the root entry exists and belongs to the user
-    const existingWord = await executeAuthenticatedQuery(
-      userId,
-      () =>
-        supabase
-          .from('study_words')
-          .select('root_id')
-          .eq('root_id', rootId)
-          .eq('user_id', userId)
-          .single(),
-      {
-        toastMessage: STRINGS.FAILED_TO_UPDATE_WORD,
-        analyticsEventName: 'Study_Word_Check_Error',
-        analyticsProperties: { rootId },
-        showToast: false,
-      }
-    );
-
-    if (!existingWord) {
-      throw new Error('Root entry not found or does not belong to user');
-    }
-
-    const wordUpdateData: TablesUpdate<'study_words'> = {
-      fsrs_due: update.fsrs_due,
-      fsrs_stability: update.fsrs_stability,
-      fsrs_difficulty: update.fsrs_difficulty,
-      fsrs_elapsed_days: update.fsrs_elapsed_days,
-      fsrs_scheduled_days: update.fsrs_scheduled_days,
-      fsrs_learning_steps: update.fsrs_learning_steps,
-      fsrs_reps: update.fsrs_reps,
-      fsrs_lapses: update.fsrs_lapses,
-      fsrs_state: update.fsrs_state,
-      fsrs_last_review: update.fsrs_last_review,
-    };
-
-    await executeAuthenticatedQuery(
-      userId,
-      () =>
-        supabase
-          .from('study_words')
-          .update(wordUpdateData)
-          .eq('root_id', rootId)
-          .eq('user_id', userId),
-      {
-        toastMessage: STRINGS.FAILED_TO_UPDATE_WORD,
-        analyticsEventName: 'Study_Word_Update_Error',
-        analyticsProperties: { rootId },
-        showToast: false,
-      }
-    );
-
-    return true;
-  },
-
-  // Record a review with FSRS parameters
-  async recordFSRSReview(
-    userId: string,
-    rootId: number,
-    rating: Rating,
-    learningSteps: number
-  ): Promise<boolean> {
-    // Add the review record
-    const reviewPayload: TablesInsert<'reviews'> = {
-      user_id: userId,
-      root_id: rootId,
-      grade: rating,
-      learning_steps: learningSteps,
-      reviewed_at: new Date().toISOString(),
-    };
-
-    await executeAuthenticatedQuery(
-      userId,
-      () => supabase.from('reviews').insert(reviewPayload),
-      {
-        toastMessage: STRINGS.FAILED_TO_RECORD_REVIEW,
-        analyticsEventName: 'Review_Record_Error',
-        analyticsProperties: { rootId, rating },
-        showToast: false,
-      }
-    );
-
-    return true;
   },
 
   // Batch update FSRS parameters and record a review in a single atomic operation

@@ -44,9 +44,6 @@ interface EnhancedFSRSStateTracking extends FSRSStateTracking {
   queueInitialized: boolean;
 }
 
-// Spacing queue to track recently processed words
-type SpacingQueue = SpacingState;
-
 export function useFSRS({
   userId,
   onComplete,
@@ -65,11 +62,11 @@ export function useFSRS({
     uniqueWords: new Set<number>(),
   });
 
-  // Priority queue for efficient reordering - using proper signature
+  // Priority queue for efficient reordering
   const queueRef = useRef<PriorityQueue<StudyWord>>(new PriorityQueue<StudyWord>());
 
-  // Spacing queue to enforce MIN_WORD_SPACING
-  const spacingQueueRef = useRef<SpacingQueue>(createSpacingState());
+  // Spacing queue to enforce MIN_WORD_SPACING between repeats
+  const spacingQueueRef = useRef<SpacingState>(createSpacingState());
 
   // Enhanced state tracking
   const stateTrackingRef = useRef<EnhancedFSRSStateTracking>({
@@ -81,8 +78,7 @@ export function useFSRS({
   // Track the last initialized set of due words (by root_id signature)
   const lastQueueSignatureRef = useRef<string | null>(null);
 
-  // Timeouts for queue initialization and completion callbacks
-  const initTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Timeout for completion callback (Phase 2.2: removed initTimeoutRef - now synchronous)
   const completionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queryClient = useQueryClient();
@@ -132,7 +128,7 @@ export function useFSRS({
     updateSpacingState(spacingQueueRef.current, processedWordId);
   }, []);
 
-  // Initialize queue when due words are fetched (after loading) and re-init if the set changes
+  // Phase 2.2: Initialize queue synchronously (removed setTimeout wrapper)
   useEffect(() => {
     if (isLoading || !dueWords) return;
 
@@ -154,69 +150,60 @@ export function useFSRS({
     stateTrackingRef.current.queueInitialized = true;
     lastQueueSignatureRef.current = signature;
 
-    // Clear any existing timeouts before setting new ones
-    if (initTimeoutRef.current) {
-      clearTimeout(initTimeoutRef.current);
-      initTimeoutRef.current = null;
-    }
+    // Clear completion timeout if exists
     if (completionTimeoutRef.current) {
       clearTimeout(completionTimeoutRef.current);
       completionTimeoutRef.current = null;
     }
 
-    // Initialize queue based on current due words
-    initTimeoutRef.current = setTimeout(() => {
-      if (effectiveDueWords.length > 0) {
-        countersRef.current.totalWords = effectiveDueWords.length;
-        countersRef.current.uniqueWords = new Set(effectiveDueWords.map(word => word.root_id));
-        countersRef.current.processedWords = 0;
-        countersRef.current.knownWords = 0;
+    // Initialize queue synchronously (no setTimeout wrapper)
+    if (effectiveDueWords.length > 0) {
+      countersRef.current.totalWords = effectiveDueWords.length;
+      countersRef.current.uniqueWords = new Set(effectiveDueWords.map(word => word.root_id));
+      countersRef.current.processedWords = 0;
+      countersRef.current.knownWords = 0;
 
-        // Reset spacing queue
-        spacingQueueRef.current = createSpacingState();
+      // Reset spacing queue
+      spacingQueueRef.current = createSpacingState();
 
-        // Set all state in a predictable order
-        setProgress(0);
-        setIsComplete(false);
-        stateTrackingRef.current.completionTriggered = false;
-        stateTrackingRef.current.isProcessingUpdate = false;
+      // Set all state in a predictable order
+      setProgress(0);
+      setIsComplete(false);
+      stateTrackingRef.current.completionTriggered = false;
+      stateTrackingRef.current.isProcessingUpdate = false;
 
-        queueRef.current = new PriorityQueue<StudyWord>();
+      queueRef.current = new PriorityQueue<StudyWord>();
 
-        // Prioritize words by due date and FSRS metrics using heapify
-        const items = effectiveDueWords;
-        const priorities = effectiveDueWords.map(w => calculateWordPriority(w));
-        queueRef.current.heapify(items, priorities);
-        const ordered = queueRef.current.toArray();
-        setWordQueue(ordered);
+      // Prioritize words by due date and FSRS metrics using heapify
+      const items = effectiveDueWords;
+      const priorities = effectiveDueWords.map(w => calculateWordPriority(w));
+      queueRef.current.heapify(items, priorities);
+      const ordered = queueRef.current.toArray();
+      setWordQueue(ordered);
 
-        const first = getNextWordWithSpacing();
+      const first = getNextWordWithSpacing();
 
-        if (first) {
-          // We have available words, start session
-          setCurrentWord(first);
-        } else {
-          setIsComplete(true);
-          if (onComplete && !stateTrackingRef.current.completionTriggered) {
-            stateTrackingRef.current.completionTriggered = true;
-            onComplete();
-          }
-        }
+      if (first) {
+        // We have available words, start session
+        setCurrentWord(first);
       } else {
-        // FIXED: Only complete if there are truly no words available
         setIsComplete(true);
         if (onComplete && !stateTrackingRef.current.completionTriggered) {
           stateTrackingRef.current.completionTriggered = true;
           onComplete();
         }
       }
-    }, 0);
+    } else {
+      // No words available - complete immediately
+      setIsComplete(true);
+      if (onComplete && !stateTrackingRef.current.completionTriggered) {
+        stateTrackingRef.current.completionTriggered = true;
+        onComplete();
+      }
+    }
 
     return () => {
-      if (initTimeoutRef.current) {
-        clearTimeout(initTimeoutRef.current);
-        initTimeoutRef.current = null;
-      }
+      // Cleanup completion timeout on unmount
       if (completionTimeoutRef.current) {
         clearTimeout(completionTimeoutRef.current);
         completionTimeoutRef.current = null;
@@ -225,7 +212,9 @@ export function useFSRS({
   }, [dueWords, isLoading, onComplete, getNextWordWithSpacing]);
 
   const convertToFSRSCard = useCallback((word: StudyWord): Card => {
-    if (!word.fsrs_reps && !word.fsrs_stability && !word.fsrs_last_review) {
+    // Phase 1.3: Use explicit null checks instead of truthy checks
+    // fsrs_reps: 0 and fsrs_stability: 0 are valid but falsy
+    if (word.fsrs_state === State.New || (word.fsrs_reps == null && word.fsrs_stability == null && !word.fsrs_last_review)) {
       const emptyCard = createEmptyCard(new Date());
       return {
         ...emptyCard,
@@ -237,7 +226,7 @@ export function useFSRS({
       due: word.fsrs_due ? new Date(word.fsrs_due) : new Date(),
       stability: word.fsrs_stability ?? 0,
       difficulty: word.fsrs_difficulty ?? 6.5,
-      elapsed_days: word.fsrs_elapsed_days ?? 0,
+      elapsed_days: word.fsrs_elapsed_days ?? 0, // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
       scheduled_days: word.fsrs_scheduled_days ?? 0,
       learning_steps: word.fsrs_learning_steps ?? 0,
       reps: word.fsrs_reps ?? 0,
@@ -263,23 +252,64 @@ export function useFSRS({
 
       stateTrackingRef.current.isProcessingUpdate = true;
 
-      const card = convertToFSRSCard(currentWord);
+      // Phase 1.4: Add error handling around FSRS algorithm
+      let newCard: Card;
+      try {
+        const card = convertToFSRSCard(currentWord);
+        const now = new Date();
+
+        const rating =
+          confidence === 'known' ? Rating.Good : confidence === 'vague' ? Rating.Hard : Rating.Again;
+
+        const result = fsrsInstance.next(card, now, rating);
+        newCard = result.card;
+      } catch (error) {
+        // Log error for debugging
+        console.error('FSRS algorithm error:', error, {
+          wordId: currentWord.root_id,
+          currentState: currentWord.fsrs_state,
+          reps: currentWord.fsrs_reps,
+        });
+
+        // Track analytics
+        handleError(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            toastType: ToastType.ERROR,
+            analyticsEventName: 'FSRS_Algorithm_Error',
+            analyticsProperties: {
+              rootId: currentWord.root_id,
+              confidence,
+            },
+          }
+        );
+
+        // Graceful fallback: Simple increment without FSRS
+        const fallbackCard: Card = {
+          due: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+          stability: currentWord.fsrs_stability ?? 0.4,
+          difficulty: currentWord.fsrs_difficulty ?? 6.5,
+          elapsed_days: currentWord.fsrs_elapsed_days ?? 0, // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
+          scheduled_days: 0,
+          learning_steps: currentWord.fsrs_learning_steps ?? 0,
+          reps: (currentWord.fsrs_reps ?? 0) + 1,
+          lapses: currentWord.fsrs_lapses ?? 0,
+          state: currentWord.fsrs_state ?? State.New,
+          last_review: new Date(),
+        };
+
+        newCard = fallbackCard;
+      }
+
       const now = new Date();
 
-      const rating =
-        confidence === 'known' ? Rating.Good : confidence === 'vague' ? Rating.Hard : Rating.Again;
-
-      const { card: newCard } = fsrsInstance.next(card, now, rating);
-
-      // Prepare FSRS update payload
-      const shortCooldownMs = 10 * 60 * 1000; // 10 minutes
-      const nextDueDate =
-        confidence === 'known' ? newCard.due : new Date(now.getTime() + shortCooldownMs);
-
+      // Phase 1.2: Use FSRS-calculated due date (trust learning_steps: ['1m', '10m'])
+      // No need to override - FSRS handles this correctly
       const wordUpdateData = {
-        fsrs_due: nextDueDate.toISOString(),
+        fsrs_due: newCard.due.toISOString(),
         fsrs_stability: newCard.stability,
         fsrs_difficulty: newCard.difficulty,
+        // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
         fsrs_elapsed_days: newCard.elapsed_days,
         fsrs_scheduled_days: newCard.scheduled_days,
         fsrs_reps: newCard.reps,
@@ -296,20 +326,20 @@ export function useFSRS({
         countersRef.current.knownWords += 1;
       } else {
         // For vague/unknown responses, add the word back to the spacing queue
-        // Keep in-memory FSRS state updated but DON'T persist to DB yet
+        // Word will stay in session until marked as "known"
         const updatedWord: StudyWord = {
           ...currentWord,
-          // Update in-memory FSRS state for next review in this session
+          // Use FSRS-calculated state for next review in this session
           fsrs_stability: newCard.stability,
           fsrs_difficulty: newCard.difficulty,
-          fsrs_elapsed_days: newCard.elapsed_days,
+          fsrs_elapsed_days: newCard.elapsed_days, // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
           fsrs_scheduled_days: newCard.scheduled_days,
           fsrs_reps: newCard.reps,
           fsrs_learning_steps: newCard.learning_steps,
           fsrs_lapses: newCard.lapses,
           fsrs_state: newCard.state,
           fsrs_last_review: now.toISOString(),
-          // DON'T update fsrs_due - keep original due date for DB persistence later
+          fsrs_due: newCard.due.toISOString(),
         };
         spacingQueueRef.current.spacedWords.push({
           word: updatedWord,
@@ -410,28 +440,27 @@ export function useFSRS({
       setCurrentWord(nextItem || null);
       setWordQueue(remaining);
 
-      // CRITICAL FIX: Only persist to database when word is marked as KNOWN
-      // Vague/unknown words stay in session-only spacing queue until mastered
-      // This prevents vague words from getting 10-min cooldown and disappearing
-      if (confidence === 'known') {
-        // Persist update; errors won't block UI progression
-        try {
-          await studyWordsFSRSService.updateWordAndReview(
-            userId,
-            rootId,
-            wordUpdateData,
-            rating,
-            newCard.learning_steps
-          );
-        } catch (error) {
-          const errObj =
-            error instanceof Error
-              ? error
-              : new Error((error as { message?: string })?.message ?? JSON.stringify(error));
-          handleError(errObj, { toastType: ToastType.IMPORTANT });
-        }
+      // Phase 1.1: ALWAYS persist ALL ratings to database for FSRS to learn properly
+      // FSRS algorithm needs all rating data (Good, Hard, Again) to calculate optimal difficulty/stability
+      // Non-"known" words still stay in session queue (lines 338-358) until marked as "known"
+      const rating =
+        confidence === 'known' ? Rating.Good : confidence === 'vague' ? Rating.Hard : Rating.Again;
+
+      try {
+        await studyWordsFSRSService.updateWordAndReview(
+          userId,
+          rootId,
+          wordUpdateData,
+          rating,
+          newCard.learning_steps
+        );
+      } catch (error) {
+        const errObj =
+          error instanceof Error
+            ? error
+            : new Error((error as { message?: string })?.message ?? JSON.stringify(error));
+        handleError(errObj, { toastType: ToastType.IMPORTANT });
       }
-      // For vague/unknown: word stays in spacing queue, no DB update until known
 
       stateTrackingRef.current.isProcessingUpdate = false;
     },
@@ -469,11 +498,7 @@ export function useFSRS({
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      // Clean up all timers
-      if (initTimeoutRef.current) {
-        clearTimeout(initTimeoutRef.current);
-        initTimeoutRef.current = null;
-      }
+      // Clean up completion timer (Phase 2.2: initTimeoutRef removed)
       if (completionTimeoutRef.current) {
         clearTimeout(completionTimeoutRef.current);
         completionTimeoutRef.current = null;
@@ -487,10 +512,9 @@ export function useFSRS({
   const invalidateQueries = useCallback(() => {
     if (!userId) return;
 
-    // Only due-words flow is supported
+    // Invalidate all FSRS-related queries to ensure cache consistency
+    queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
     queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(userId) });
-
-    // Also invalidate related queries
     queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(userId) });
 
     stateTrackingRef.current.queueInitialized = false;

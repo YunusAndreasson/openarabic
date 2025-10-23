@@ -84,7 +84,7 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
 
     useEffect(() => {
       const next = Math.max(0, Math.min(100, currentRetention));
-      const delta = Math.abs(retentionShared.value - next);
+      const delta = Math.abs(retentionShared.get() - next);
       if (delta < 0.5) return;
 
       // Check if we're entering the green area (75%+) for the first time

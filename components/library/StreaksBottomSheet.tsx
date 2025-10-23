@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   // Section 1: Header (highest hierarchy)
   header: {
     ...LAYOUT.BOTTOM_SHEET.HEADER,
-    marginBottom: LAYOUT.SPACING.XLARGE, // 24px - major section separation
+    marginBottom: LAYOUT.SPACING.LARGE, // 16px - tighter grouping with metric cards
   },
   mainTitle: {
     marginBottom: LAYOUT.SPACING.TINY, // 4px - tight coupling with subtitle
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   // Section 2: Streak Metrics (secondary hierarchy)
   streakMetricsContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE, // 16px - moderate section separation
+    marginBottom: LAYOUT.SPACING.XLARGE, // 24px - clear section separation
   },
   // Section 3: Chart (tertiary hierarchy)
   chartContainer: {
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   chartSubtitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px - tertiary descriptive text (1.54x ratio from 20px)
     textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.TINY, // 4px - minimal space before chart
+    marginBottom: 0, // Tight coupling with chart below
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   // State containers

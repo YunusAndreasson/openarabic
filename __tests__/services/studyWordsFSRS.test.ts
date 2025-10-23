@@ -95,8 +95,6 @@ describe('updateWordAndReview', () => {
 
   it('calls RPC to update and record review', async () => {
     (supabase.rpc as jest.Mock).mockResolvedValue({ data: true, error: null });
-    const updateSpy = jest.spyOn(studyWordsFSRSService, 'updateFSRSWord').mockResolvedValue(true);
-    const reviewSpy = jest.spyOn(studyWordsFSRSService, 'recordFSRSReview').mockResolvedValue(true);
 
     const result = await studyWordsFSRSService.updateWordAndReview('u1', 5, update, Rating.Good, 3);
 
@@ -104,8 +102,6 @@ describe('updateWordAndReview', () => {
       'update_word_and_review',
       expect.objectContaining({ p_user_id: 'u1', p_root_id: 5, p_rating: Rating.Good })
     );
-    expect(updateSpy).not.toHaveBeenCalled();
-    expect(reviewSpy).not.toHaveBeenCalled();
     expect(result).toBe(true);
   });
 });

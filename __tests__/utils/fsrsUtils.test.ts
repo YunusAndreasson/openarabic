@@ -1,11 +1,9 @@
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
-  calculateCriticalWords,
   calculateRetrievability,
   calculateRetrievabilityForecast,
   calculateRetrievabilityTrend,
-  generateForecastDates,
 } from '@/utils/fsrsUtils';
 
 // Helper to create study words for this test
@@ -51,30 +49,6 @@ describe('fsrsUtils', () => {
     });
   });
 
-  describe('generateForecastDates', () => {
-    it('should generate correct number of dates', () => {
-      const dates = generateForecastDates(7);
-      expect(dates).toHaveLength(7);
-    });
-
-    it('should generate dates starting from today', () => {
-      const dates = generateForecastDates(3);
-      const today = new Date();
-      today.setHours(23, 59, 59, 999);
-
-      expect(dates[0].getTime()).toBe(today.getTime());
-    });
-
-    it('should generate future dates', () => {
-      const dates = generateForecastDates(3);
-      const today = new Date();
-      today.setHours(23, 59, 59, 999);
-
-      expect(dates[1].getTime()).toBeGreaterThan(today.getTime());
-      expect(dates[2].getTime()).toBeGreaterThan(dates[1].getTime());
-    });
-  });
-
   describe('calculateRetrievabilityForecast', () => {
     it('should calculate forecast for reviewed words', () => {
       const now = new Date().toISOString();
@@ -116,10 +90,9 @@ describe('fsrsUtils', () => {
     });
   });
 
-  describe('calculateCriticalWords', () => {
-    it('should count critical words correctly', () => {
+  describe('calculateRetrievabilityForecast - critical words tracking', () => {
+    it('should track critical words in forecast data', () => {
       const reviewDate = '2024-01-01T00:00:00Z';
-      const targetDate = new Date('2024-01-02T00:00:00Z'); // 1 day later
       const words = [
         createStudyWord({
           fsrs_stability: 1, // Very low stability = critical
@@ -133,10 +106,11 @@ describe('fsrsUtils', () => {
         }),
       ];
 
-      const result = calculateCriticalWords(words, targetDate);
-      // The word with stability 1 will have very low retrievability after 1 day
-      // R = exp(-1/1) ≈ 0.368, which is < 0.7 threshold
-      expect(result).toBe(1);
+      const result = calculateRetrievabilityForecast(words, 1);
+      // The forecast should include criticalWords count
+      // Word with stability 1 will have low retrievability (< 0.7 threshold)
+      expect(result[0].criticalWords).toBeGreaterThan(0);
+      expect(result[0].wordCount).toBe(2);
     });
   });
 

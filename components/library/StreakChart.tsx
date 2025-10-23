@@ -1,7 +1,6 @@
 import { memo, useMemo } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DailyReadingActivity, StreakPeriod } from '@/services/studyStreak';
@@ -37,33 +36,6 @@ const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPerio
   return map;
 };
 
-const generateWeekLabels = (
-  dailyActivityLength: number,
-  chartWidth: number,
-  barWidth: number
-): { text: string; position: number }[] => {
-  const labels: { text: string; position: number }[] = [];
-  const daysAgo = dailyActivityLength - 1;
-  const barSpacing = 2;
-  const totalBarWidth = barWidth + barSpacing;
-
-  // Add week markers at regular intervals
-  for (let i = 7; i <= daysAgo; i += 7) {
-    const weeksAgo = Math.floor(i / 7);
-    const position = chartWidth - i * totalBarWidth - barWidth / 2;
-
-    // Only show if there's enough space
-    if (position >= 30 && position <= chartWidth - 30) {
-      labels.push({
-        text: `${weeksAgo}w`,
-        position,
-      });
-    }
-  }
-
-  return labels;
-};
-
 export const StreakChart = memo<StreakChartProps>(
   ({ dailyActivity, streakPeriods, height = CHART_HEIGHT }) => {
     const colors = useColors();
@@ -71,7 +43,7 @@ export const StreakChart = memo<StreakChartProps>(
     // Memoize expensive calculations
     const chartData = useMemo(() => {
       // Calculate bar width based on available space
-      const chartWidth = SCREEN_WIDTH - LAYOUT.SPACING.LARGE * 2;
+      const chartWidth = SCREEN_WIDTH - LAYOUT.SPACING.XLARGE * 2;
       const barWidth = Math.max(
         8,
         (chartWidth - (dailyActivity.length - 1) * 2) / dailyActivity.length
@@ -111,14 +83,10 @@ export const StreakChart = memo<StreakChartProps>(
         };
       });
 
-      // Generate week labels
-      const weekLabels = generateWeekLabels(dailyActivity.length, chartWidth, barWidth);
-
       return {
         chartWidth,
         barWidth,
         bars,
-        weekLabels,
       };
     }, [dailyActivity, streakPeriods, colors.warning, colors.tint, colors.textTertiary]);
 
@@ -126,7 +94,6 @@ export const StreakChart = memo<StreakChartProps>(
     const staticStyles = useMemo(
       () => ({
         barsContainer: { width: chartData.chartWidth },
-        labelsContainer: { width: chartData.chartWidth },
       }),
       [chartData.chartWidth]
     );
@@ -151,26 +118,6 @@ export const StreakChart = memo<StreakChartProps>(
               />
             ))}
           </View>
-        </View>
-
-        {/* Week labels */}
-        <View style={[styles.labelsContainer, staticStyles.labelsContainer]}>
-          {chartData.weekLabels.map(label => (
-            <ThemedText
-              key={`week-${label.text}-${label.position}`}
-              type="caption"
-              colorName="textTertiary"
-              style={[
-                styles.label,
-                {
-                  left: label.position,
-                  transform: [{ translateX: -12 }], // Center the text
-                },
-              ]}
-            >
-              {label.text}
-            </ThemedText>
-          ))}
         </View>
       </View>
     );
@@ -197,16 +144,5 @@ const styles = StyleSheet.create({
   },
   bar: {
     borderRadius: BAR_RADIUS,
-  },
-  labelsContainer: {
-    position: 'relative',
-    height: LAYOUT.SPACING.MEDIUM, // Reduced from LARGE to minimize bottom space
-    marginTop: LAYOUT.SPACING.TINY, // Reduced from SMALL for tighter spacing
-  },
-  label: {
-    position: 'absolute',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    textAlign: 'center',
-    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
   },
 });
