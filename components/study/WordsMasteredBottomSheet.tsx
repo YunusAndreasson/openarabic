@@ -1,11 +1,10 @@
 import { memo } from 'react';
 
+import { GenericBottomSheet } from '@/components/common/GenericBottomSheet';
 import { MasteryChart } from '@/components/study/charts/MasteryChart';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-
-import { GenericChartBottomSheet } from './GenericChartBottomSheet';
 
 interface WordsMasteredBottomSheetProps {
   isVisible: boolean;
@@ -21,13 +20,14 @@ export const WordsMasteredBottomSheet = memo<WordsMasteredBottomSheetProps>(
     });
 
     return (
-      <GenericChartBottomSheet
+      <GenericBottomSheet
         isVisible={isVisible}
         onClose={onClose}
         title={STRINGS.WORD_MASTERY}
         subtitle={STRINGS.WORD_MASTERY_SUBTITLE}
-        chartComponent={<MasteryChart studyWords={studyWords ?? []} hideTitle={true} />}
-      />
+      >
+        <MasteryChart studyWords={studyWords ?? []} hideTitle={true} />
+      </GenericBottomSheet>
     );
   },
 );

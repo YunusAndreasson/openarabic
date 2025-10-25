@@ -63,9 +63,8 @@ DEFAULT_VOICE_SETTINGS = {
 ENGLISH_VOICE_SETTINGS = {
     "stability": 0.95,           # Maximum stability for consistent output
     "similarity_boost": 1.0,     # Maximum similarity to original voice
-    "style": 0.0,                # No exaggeration, pure neutral
     "use_speaker_boost": True,   # Enhanced speaker clarity
-    "speed": 0.85,               # Slower for better clarity
+    "speed": 0.90,               # Slower for better clarity
 }
 
 # Audio pause configuration for bilingual audio

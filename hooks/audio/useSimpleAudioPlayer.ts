@@ -22,18 +22,6 @@ export const useSimpleAudioPlayer = () => {
     [isMountedRef],
   );
 
-  // Pause function
-  const pause = useCallback(async (): Promise<void> => {
-    if (!isMountedRef.current) return;
-    await simpleAudioService.pause();
-  }, [isMountedRef]);
-
-  // Resume function
-  const resume = useCallback(async (): Promise<void> => {
-    if (!isMountedRef.current) return;
-    await simpleAudioService.resume();
-  }, [isMountedRef]);
-
   // Stop function
   const stop = useCallback(async (): Promise<void> => {
     if (!isMountedRef.current) return;
@@ -65,8 +53,6 @@ export const useSimpleAudioPlayer = () => {
 
     // Actions
     play,
-    pause,
-    resume,
     stop,
     seekTo,
     preconfigureAudioSession,

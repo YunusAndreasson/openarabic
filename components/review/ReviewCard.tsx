@@ -18,6 +18,7 @@ import { SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
 import { useColors } from '@/hooks/theme/useColors';
+import type { StudyWord } from '@/types/vocabulary.types';
 import type { AnimatedStyleProp as AppAnimatedStyleProp } from '@/types/ui/base.types';
 import { withOpacity } from '@/utils/colorUtils';
 
@@ -46,7 +47,7 @@ const STATIC_STYLES = StyleSheet.create({
 
 interface ReviewCardProps {
   word: string;
-  currentWord?: any; // Current word object for accessing English translation
+  currentWord?: StudyWord | null; // Current word object for accessing English translation
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   isUpdating: boolean;
@@ -178,8 +179,8 @@ export function ReviewCard({
     };
   }, []);
 
-  // Get English translation for hint - try multiple sources
-  const englishTranslation = currentWord?.root?.meaning || currentWord?.meaning || '';
+  // Get English translation for hint from root
+  const englishTranslation = currentWord?.root?.meaning || '';
 
   // Auto-start hesitation timer when word appears (if not already hesitating)
   useEffect(() => {

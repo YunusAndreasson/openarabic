@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from 'react';
  *
  * Note: This executes immediately on first call, then blocks subsequent calls for the delay period
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
   delay: number = 300,

@@ -8,6 +8,8 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWord } from '@/hooks/vocabulary';
 import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
+import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
 import { getSelectedStyle } from '@/utils/textStyleUtils';
 
 interface ArabicWordProps {
@@ -89,7 +91,64 @@ const ArabicWordInternal = function ArabicWord({
       '🎨 Components:',
       `hasComponents=${hasComponents} segments=${coloredSegments.length}`,
     );
-    console.log('📊 Segments:', JSON.stringify(coloredSegments, null, 2));
+    console.log('📊 Arabic Segments:', JSON.stringify(coloredSegments, null, 2));
+
+    // Compute English colored segments for debugging
+    try {
+      const analysis = analyzeArabicWord(word.word_form, word.english || '');
+      const formatted = formatWordAnalysis(analysis);
+
+      const englishSegments = generateColorCodedSegments({
+        text: word.english || '',
+        formattedAnalysis: formatted,
+        analysis,
+        colors,
+        defaultColor: colors.text,
+      });
+
+      console.log(
+        '📝 English Segments:',
+        JSON.stringify(
+          englishSegments.map(s => ({ text: s.text, color: s.color })),
+          null,
+          2,
+        ),
+      );
+
+      console.log(
+        '🔍 Analysis Details:',
+        JSON.stringify(
+          {
+            hasComponents: analysis.hasComponents,
+            prefixes: analysis.prefixes.map(p => ({
+              arabic: p.arabicMatch,
+              english: p.englishMatches,
+              role: p.role,
+            })),
+            suffix: analysis.suffix
+              ? {
+                  arabic: analysis.suffix.arabicMatch,
+                  english: analysis.suffix.englishMatches,
+                  role: analysis.suffix.role,
+                }
+              : null,
+            infix: analysis.infix
+              ? {
+                  arabic: analysis.infix.arabicMatch,
+                  english: analysis.infix.englishMatches,
+                }
+              : null,
+            remainingArabic: analysis.remainingArabic,
+            remainingEnglish: analysis.remainingEnglish,
+          },
+          null,
+          2,
+        ),
+      );
+    } catch (error) {
+      console.log('⚠️ English coloring analysis failed:', error);
+    }
+
     console.log('🎯 State:', `selected=${isSelected} highlighted=${isHighlighted}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   };
@@ -121,8 +180,11 @@ const ArabicWordInternal = function ArabicWord({
     // Render segments with grammar colors (handles single or multiple segments)
     renderWordContent = (
       <ThemedText {...baseTextProps} skipDefaultColor>
+        {/* Index required: segments can have duplicate type-text (e.g., multiple "prefix-وَ") */}
+        {/* coloredSegments are computed once and stable, so index is safe */}
         {coloredSegments.map((segment, index) => (
           <ThemedText
+            // eslint-disable-next-line react/no-array-index-key
             key={`${index}-${segment.type}-${segment.text}`}
             {...baseTextProps}
             skipDefaultColor

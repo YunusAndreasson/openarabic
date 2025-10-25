@@ -3,6 +3,7 @@
  * Tests for potential bugs, boundary conditions, and robustness
  */
 
+import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { generateColorCodedSegments, shouldApplyColorCoding } from '@/utils/colorCodedTextUtils';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis } from '@/utils/arabicWordAnalysis';
@@ -66,6 +67,7 @@ const mockColors: ThemeColors = {
   completionSuccess: '#10B981',
   chartGrid: '#E5E7EB',
   chartThreshold: '#F59E0B',
+  grammar: MOCK_GRAMMAR_COLORS,
 };
 
 describe('Color-Coding Edge Cases', () => {

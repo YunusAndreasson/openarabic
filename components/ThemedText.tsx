@@ -50,16 +50,16 @@ const getTextColor = (
  * Base style lookup map for text types
  * Extracted to constant for performance optimization
  */
-const BASE_STYLE_MAP: Record<string, any> = {
-  body: null as any, // Will be assigned after styles object is created
-  bodyBold: null as any,
-  caption: null as any,
-  heading1: null as any,
-  heading2: null as any,
-  heading3: null as any,
-  label: null as any,
-  link: null as any,
-  overline: null as any,
+const BASE_STYLE_MAP: Record<string, TextStyle | null> = {
+  body: null, // Will be assigned after styles object is created
+  bodyBold: null,
+  caption: null,
+  heading1: null,
+  heading2: null,
+  heading3: null,
+  label: null,
+  link: null,
+  overline: null,
 };
 
 /**

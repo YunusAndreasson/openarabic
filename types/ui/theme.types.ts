@@ -45,6 +45,8 @@ export interface ThemeColors {
   info: string;
   accent: string;
   violet: string;
+  indigo: string;
+  coral: string;
 
   modalIndicator: string;
 
@@ -69,6 +71,23 @@ export interface ThemeColors {
 
   // Card gradients - pre-computed for performance
   cardGradient: readonly string[];
+
+  // Grammar color palette - dedicated educational colors for grammar concepts
+  grammar: {
+    preposition: string;
+    possessive: string;
+    particle: string;
+    interrogative: string;
+    verbConjugation: string;
+    negation: string;
+    subjectPrefix: string;
+    plural: string;
+    demonstrative: string;
+    conjunction: string;
+    futureTense: string;
+    definiteArticle: string;
+  };
 }
 
 export type ThemeColorName = keyof ThemeColors;
+export type GrammarColorName = keyof ThemeColors['grammar'];

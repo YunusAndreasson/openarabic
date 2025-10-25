@@ -3,6 +3,7 @@
  * Verifies new features added during the color-coding enhancement session
  */
 
+import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -67,6 +68,7 @@ const mockColors: ThemeColors = {
   completionSuccess: '#10B981',
   chartGrid: '#E5E7EB',
   chartThreshold: '#F59E0B',
+  grammar: MOCK_GRAMMAR_COLORS,
 };
 
 describe('Recent Grammar Pattern Additions', () => {
@@ -96,10 +98,10 @@ describe('Recent Grammar Pattern Additions', () => {
         defaultColor: mockColors.text,
       });
 
-      // "for" should be colored with conjunction color (ف = secondary)
+      // "for" should be colored with particle color (ف = particle role for distinction from و)
       const forSegment = result.find(s => s.text.toLowerCase() === 'for');
       expect(forSegment).toBeDefined();
-      expect(forSegment?.color).toBe(mockColors.secondary);
+      expect(forSegment?.color).toBe(mockColors.grammar.particle);
     });
   });
 
@@ -130,10 +132,10 @@ describe('Recent Grammar Pattern Additions', () => {
         defaultColor: mockColors.text,
       });
 
-      // "by" should be colored with conjunction color (و = secondary)
+      // "by" should be colored with conjunction color (و = conjunction role)
       const bySegment = result.find(s => s.text.toLowerCase() === 'by');
       expect(bySegment).toBeDefined();
-      expect(bySegment?.color).toBe(mockColors.secondary);
+      expect(bySegment?.color).toBe(mockColors.grammar.conjunction);
     });
 
     it('should NOT match "by" in "nearby" (word boundary)', () => {

@@ -111,11 +111,16 @@ export const useArticleData = (
               secondary: colors.secondary,
               secondaryText: colors.secondaryText,
               warning: colors.warning,
+              error: colors.error,
+              success: colors.success,
+              info: colors.info,
               accent: colors.accent,
               violet: colors.violet,
-              error: colors.error,
+              indigo: colors.indigo,
+              coral: colors.coral,
               text: colors.text,
               arabicText: colors.arabicText,
+              grammar: colors.grammar,
             }),
           }));
         acc.set(sentence.id, wordsWithColors);

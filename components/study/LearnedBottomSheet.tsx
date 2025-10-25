@@ -1,11 +1,10 @@
 import { memo } from 'react';
 
+import { GenericBottomSheet } from '@/components/common/GenericBottomSheet';
 import { LearnedChart } from '@/components/study/charts/LearnedChart';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-
-import { GenericChartBottomSheet } from './GenericChartBottomSheet';
 
 interface LearnedBottomSheetProps {
   isVisible: boolean;
@@ -20,13 +19,14 @@ export const LearnedBottomSheet = memo<LearnedBottomSheetProps>(({ isVisible, on
   });
 
   return (
-    <GenericChartBottomSheet
+    <GenericBottomSheet
       isVisible={isVisible}
       onClose={onClose}
       title={STRINGS.LEARNED_WORDS}
       subtitle={STRINGS.LEARNED_WORDS_SUBTITLE}
-      chartComponent={<LearnedChart studyWords={studyWords ?? []} hideTitle={true} />}
-    />
+    >
+      <LearnedChart studyWords={studyWords ?? []} hideTitle={true} />
+    </GenericBottomSheet>
   );
 });
 

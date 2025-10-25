@@ -485,3 +485,69 @@ class TestValidateFinalTranslation:
         assert len(essential_issues) == 0, (
             f"Unexpected essential field issues: {essential_issues}"
         )
+
+
+def test_article_audio_summary_exclusion():
+    """Test that article summary is not included in audio generation."""
+    # This test verifies that the create_article_audio function does not generate
+    # audio for the article summary, even when a summary is provided
+
+    from unittest.mock import patch, MagicMock
+    import tempfile
+    import os
+
+    # Sample data
+    sentences = [
+        {
+            "arabic_text": "هذا نص تجريبي",
+            "english_text": "This is a test text",
+            "tashkeel": "هذا نص تجريبي"
+        }
+    ]
+    article_title = "Test Article"
+    article_summary = "This is a test summary that should NOT be included in audio"
+
+    # Track what text is being processed
+    generated_texts = []
+
+    def mock_generate_speech(text, voice_id, voice_settings=None):
+        generated_texts.append(text)
+        return {
+            "audio": b"fake_audio_data",
+            "duration": 1.0,
+            "voice_id": voice_id,
+            "text": text
+        }
+
+    # Mock the generate_speech function
+    with patch('audio.audio_utils.generate_speech', side_effect=mock_generate_speech):
+        # Mock the storage operations to avoid actual file operations
+        with patch('audio.audio_utils.get_supabase_client') as mock_client:
+            with patch('audio.audio_utils.get_storage_url') as mock_url:
+                mock_url.return_value = "https://fake-url.com/audio.mp3"
+
+                # Import and call the function
+                from audio.audio_utils import create_article_audio
+
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    result = create_article_audio(
+                        sentences=sentences,
+                        article_title=article_title,
+                        article_summary=article_summary,
+                        output_dir=temp_dir
+                    )
+
+        # Verify that generate_speech was called
+        assert len(generated_texts) > 0, "generate_speech should have been called"
+
+        # Verify that the summary text was NOT included in any call
+        summary_found = any(article_summary in text for text in generated_texts)
+        assert not summary_found, f"Summary text should not be in generated audio calls. Found in: {generated_texts}"
+
+        # Verify that the title text WAS included
+        title_found = any(article_title in text for text in generated_texts)
+        assert title_found, f"Title text should be in generated audio calls. Not found in: {generated_texts}"
+
+        # Verify that sentence text WAS included
+        sentence_found = any("هذا نص تجريبي" in text for text in generated_texts)
+        assert sentence_found, f"Sentence text should be in generated audio calls. Not found in: {generated_texts}"

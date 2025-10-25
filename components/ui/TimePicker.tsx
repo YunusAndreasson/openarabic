@@ -190,18 +190,8 @@ export function TimePicker({
 TimePicker.displayName = 'TimePicker';
 
 const styles = StyleSheet.create({
-  bottomSheet: {
-    ...LAYOUT.ELEVATION.LARGE,
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  backdrop: {
-    // backgroundColor handled dynamically via colors.backdropOverlay
-  },
-  indicator: {
-    width: LAYOUT.BOTTOM_SHEET.INDICATOR.WIDTH,
-    height: LAYOUT.BOTTOM_SHEET.INDICATOR.HEIGHT,
-  },
+  bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
+  indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   container: {
     paddingBottom: LAYOUT.SPACING.LARGE,
   },

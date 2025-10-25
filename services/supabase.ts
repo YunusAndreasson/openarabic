@@ -89,13 +89,11 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
       };
     }
 
-    const errorMessage =
-      !data.session?.user ? 'User must be authenticated' : 'User ID mismatch';
+    const errorMessage = !data.session?.user ? 'User must be authenticated' : 'User ID mismatch';
 
     const error_ = new Error(errorMessage);
     await handleError(error_, {
-      analyticsEventName:
-        !data.session?.user ? 'Auth_Required' : 'Auth_User_Mismatch',
+      analyticsEventName: !data.session?.user ? 'Auth_Required' : 'Auth_User_Mismatch',
       sentrySeverity: 'info',
     });
     throw error_;

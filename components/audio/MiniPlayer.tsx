@@ -38,7 +38,7 @@ export interface MiniPlayerProps {
 }
 
 // Layout constants using proper LAYOUT system from layout.ts
-const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 96px
+const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 112px (taller for 2-line title)
 const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 56px
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px
 
@@ -171,7 +171,7 @@ const MiniPlayerComponent = ({
                 colorName="headingText"
                 style={styles.title}
                 type="heading3"
-                numberOfLines={1}
+                numberOfLines={2}
                 ellipsizeMode="tail"
               >
                 {article.title}
@@ -213,6 +213,7 @@ const MiniPlayerComponent = ({
               backgroundColor={timerButtonColor}
               iconColor={timerIconColor}
               iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              hapticType="none"
             />
 
             {/* Stop button - playback is only started via PLAY ALL */}

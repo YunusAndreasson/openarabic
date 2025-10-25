@@ -55,6 +55,7 @@ export async function playTransitionSound(): Promise<void> {
       };
 
       // Subscribe to playback status updates
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       eventSubscription = transitionPlayer.addListener(PLAYBACK_STATUS_UPDATE, (status: any) => {
         try {
           const isPlaying = status.playing ?? false;

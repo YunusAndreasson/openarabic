@@ -1,3 +1,4 @@
+import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -62,6 +63,7 @@ const mockColors: ThemeColors = {
   completionSuccess: '#10B981',
   chartGrid: '#E5E7EB',
   chartThreshold: '#F59E0B',
+  grammar: MOCK_GRAMMAR_COLORS,
 };
 
 describe('Multi-Prefix English Coloring', () => {
@@ -80,9 +82,9 @@ describe('Multi-Prefix English Coloring', () => {
     // Should color the phrase with multi-prefix detection
     expect(result.length).toBeGreaterThan(0);
 
-    // Multi-prefix: و (and) = secondary, عن (from) = warning
-    const conjunctionSegments = result.filter(s => s.color === mockColors.secondary);
-    const prepositionSegments = result.filter(s => s.color === mockColors.warning);
+    // Multi-prefix: و (and) = conjunction, عن (from) = preposition
+    const conjunctionSegments = result.filter(s => s.color === mockColors.grammar.conjunction);
+    const prepositionSegments = result.filter(s => s.color === mockColors.grammar.preposition);
 
     // Should have "and" in secondary color (conjunction)
     const conjunctionText = conjunctionSegments
@@ -111,28 +113,28 @@ describe('Multi-Prefix English Coloring', () => {
       defaultColor: mockColors.text,
     });
 
-    // Should have at least 3 colors: secondary (و), warning (عن), violet (ه)
+    // Should have at least 3 colors: conjunction (و), preposition (عن), possessive (ه)
     const colors = new Set(result.map(s => s.color));
     expect(colors.size).toBeGreaterThan(1);
 
-    // Multi-prefix: و (and) = secondary
-    const conjunctionSegments = result.filter(s => s.color === mockColors.secondary);
+    // Multi-prefix: و (and) = conjunction
+    const conjunctionSegments = result.filter(s => s.color === mockColors.grammar.conjunction);
     const conjunctionText = conjunctionSegments
       .map(s => s.text)
       .join(' ')
       .toLowerCase();
     expect(conjunctionText).toContain('and');
 
-    // Multi-prefix: عن (from) = warning
-    const prepositionSegments = result.filter(s => s.color === mockColors.warning);
+    // Multi-prefix: عن (from) = preposition
+    const prepositionSegments = result.filter(s => s.color === mockColors.grammar.preposition);
     const prepositionText = prepositionSegments
       .map(s => s.text)
       .join(' ')
       .toLowerCase();
     expect(prepositionText).toContain('from');
 
-    // Suffix: ه (him) = violet (possessive)
-    const suffixSegments = result.filter(s => s.color === mockColors.violet);
+    // Suffix: ه (him) = possessive
+    const suffixSegments = result.filter(s => s.color === mockColors.grammar.possessive);
     const suffixText = suffixSegments
       .map(s => s.text)
       .join('')

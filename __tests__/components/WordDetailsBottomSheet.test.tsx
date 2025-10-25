@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import React from 'react';
 
 import { mockExpoHaptics } from '@/__tests__/setup/commonMocks';
+import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { WordDetailsBottomSheet } from '@/components/article/WordDetailsBottomSheet';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
@@ -29,6 +30,7 @@ jest.mock('@/hooks/theme/useColors', () => ({
     modalIndicator: '#BDBDBD',
     transparent: 'transparent',
     wordDueUnderline: '#FF5722',
+    grammar: MOCK_GRAMMAR_COLORS,
   }),
 }));
 jest.mock('@/hooks/audio/useAudioSubscription', () => ({

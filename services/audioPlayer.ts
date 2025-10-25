@@ -650,6 +650,7 @@ class SimpleAudioService {
     // Subscribe to native playback status updates
     this.eventSubscription = this.currentPlayer.addListener(
       PLAYBACK_STATUS_UPDATE,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (nativeStatus: any) => {
         try {
           // Extract all native values from expo-audio playbackStatusUpdate

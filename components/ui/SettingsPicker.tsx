@@ -13,6 +13,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useOptimisticState } from '@/hooks/ui/useOptimisticState';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
+import type { RootState } from '@/store/store';
 import { lightFeedback } from '@/utils/haptics';
 
 // Default snap points for settings pickers
@@ -25,12 +26,6 @@ export interface SettingsPickerOption<T> {
   icon: keyof typeof Ionicons.glyphMap;
 }
 
-type RootState = {
-  theme: { theme: any };
-  settings: { displayLanguagePreference: any; audioLanguagePreference: any };
-  [key: string]: any;
-};
-
 /**
  * Props for SettingsPicker with Redux integration
  */
@@ -42,7 +37,7 @@ export interface SettingsPickerReduxProps<T> {
   /** Redux selector for current value - mutually exclusive with selectedValue */
   currentValueSelector: (state: RootState) => T;
   /** Redux action creator - mutually exclusive with onSelect */
-  onValueChange: (value: T) => any;
+  onValueChange: (value: T) => { type: string; payload: T };
   snapPoints?: number[];
   supportsOptimisticUpdates?: boolean;
   /** Controlled mode is disabled when using Redux */
@@ -189,7 +184,7 @@ export const SettingsPicker = <T,>({
       <BottomSheetView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <ThemedText type="heading3" weight="bold">
+          <ThemedText type="heading3" weight="bold" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
             {title}
           </ThemedText>
         </View>
@@ -249,14 +244,8 @@ export const SettingsPicker = <T,>({
 };
 
 const styles = StyleSheet.create({
-  bottomSheet: {
-    ...LAYOUT.ELEVATION.LARGE,
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  indicator: {
-    // Styling handled via dynamicStyles
-  },
+  bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
+  indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   container: {
     paddingBottom: LAYOUT.SPACING.SMALL,
   },

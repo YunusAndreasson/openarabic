@@ -138,7 +138,7 @@ export const ChartAxes = memo<AxisLabelsProps>(
           ]}
         >
           {xLabels.map((label, index) => {
-            const isToday = index === todayIndex; // Today is always the last label
+            const isToday = index === todayIndex; // Current day is distinguished by color/weight
             const position = xLabelPositions[index];
             const labelConfig = labelPositions[index];
 
@@ -160,13 +160,13 @@ export const ChartAxes = memo<AxisLabelsProps>(
                   style={[
                     styles.xLabelText,
                     {
-                      color: isToday ? colors.tint : textColor, // Use tint color for Today label
-                      fontWeight: isToday ? '700' : '500', // Bolder for Today
+                      color: isToday ? colors.tint : textColor, // Use tint color for current day
+                      fontWeight: isToday ? '700' : '500', // Bolder for current day
                       textAlign: 'center',
                     },
                   ]}
                 >
-                  {isToday ? 'Today' : label}
+                  {label}
                 </ThemedText>
               </View>
             );

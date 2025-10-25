@@ -220,7 +220,7 @@ export const LAYOUT = {
       // Dynamic heights based on content
       LIST_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // 48 + 32 = 80
       AUDIO_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.XLARGE * 2, // 48 + 40 = 88
-      MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.XLARGE * 2, // 48 + 48 = 96 (increased from 72 for better proportions)
+      MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.XXLARGE * 2, // 48 + 64 = 112 (taller for 2-line title)
       VOCABULARY_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // 48 + 32 = 80 (single-row compact layout)
     },
     IMAGE: {
@@ -286,7 +286,7 @@ export const LAYOUT = {
   },
 
   CHART: {
-    Y_AXIS_WIDTH: BASE_UNIT * 7, // 28 - reduced from 36 for tighter left spacing
+    Y_AXIS_WIDTH: BASE_UNIT * 8, // 32 - adjusted for "100%" label visibility
     CURSOR_WIDTH: 2, // Chart interaction cursor width
     BADGE_PADDING: SPACING_SCALE.SMALL, // 8 - Chart badge padding
     BADGE_DOT_MARGIN: BASE_UNIT * 1.5, // 6 - Margin for badge dots
@@ -328,6 +328,14 @@ export const LAYOUT = {
       indicator: {
         width: BASE_UNIT * 9, // 36 - consistent indicator width
         height: BASE_UNIT, // 4 - consistent indicator height
+      },
+      // Shared text styles for bottom sheet headers (DRY)
+      title: {
+        marginBottom: SPACING_SCALE.TINY, // 4px - tight coupling with subtitle
+        textAlign: 'center' as const,
+      },
+      subtitle: {
+        textAlign: 'center' as const, // Typography from ThemedText type="body"
       },
     },
   },

@@ -48,27 +48,33 @@ const createSpacing = (options: SpacingOptions, type: 'padding' | 'margin'): Vie
   }
 
   if (options.horizontal) {
-    (style as any)[`${type}Horizontal`] = SPACING_MAP[options.horizontal];
+    const horizontalKey = `${type}Horizontal` as keyof ViewStyle;
+    style[horizontalKey] = SPACING_MAP[options.horizontal] as never;
   }
 
   if (options.vertical) {
-    (style as any)[`${type}Vertical`] = SPACING_MAP[options.vertical];
+    const verticalKey = `${type}Vertical` as keyof ViewStyle;
+    style[verticalKey] = SPACING_MAP[options.vertical] as never;
   }
 
   if (options.top) {
-    (style as any)[`${type}Top`] = SPACING_MAP[options.top];
+    const topKey = `${type}Top` as keyof ViewStyle;
+    style[topKey] = SPACING_MAP[options.top] as never;
   }
 
   if (options.bottom) {
-    (style as any)[`${type}Bottom`] = SPACING_MAP[options.bottom];
+    const bottomKey = `${type}Bottom` as keyof ViewStyle;
+    style[bottomKey] = SPACING_MAP[options.bottom] as never;
   }
 
   if (options.left) {
-    (style as any)[`${type}Left`] = SPACING_MAP[options.left];
+    const leftKey = `${type}Left` as keyof ViewStyle;
+    style[leftKey] = SPACING_MAP[options.left] as never;
   }
 
   if (options.right) {
-    (style as any)[`${type}Right`] = SPACING_MAP[options.right];
+    const rightKey = `${type}Right` as keyof ViewStyle;
+    style[rightKey] = SPACING_MAP[options.right] as never;
   }
 
   return style;

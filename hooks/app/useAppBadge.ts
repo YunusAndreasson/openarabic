@@ -7,6 +7,7 @@ import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { canUseBadge, clearAppBadge, setAppBadgeCount } from '@/services/notificationService';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
  * Hook that efficiently monitors due words count and updates the app badge
@@ -119,7 +120,7 @@ export function useAppBadge(): void {
     const unsubscribe = queryClient.getQueryCache().subscribe(event => {
       // Only react to query updates for our specific key
       if (event.type === 'updated' && event.query.queryKey === queryKey) {
-        const newDueWords = event.query.state.data as any[];
+        const newDueWords = event.query.state.data as StudyWord[] | undefined;
         if (newDueWords && appStateRef.current === 'active') {
           updateBadgeDebounced(newDueWords.length ?? 0);
         }

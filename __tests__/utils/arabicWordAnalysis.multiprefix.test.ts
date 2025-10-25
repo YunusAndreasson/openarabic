@@ -38,17 +38,17 @@ describe('Multi-Prefix Detection (formerly compounds)', () => {
     expect(segments.length).toBeGreaterThan(0);
     const firstPrefix = segments.find(s => s.type === 'prefix' && s.text.includes('و'));
     expect(firstPrefix).toBeDefined();
-    expect(firstPrefix?.colorName).toBe('secondary'); // Conjunction gets secondary color (forest green)
+    expect(firstPrefix?.colorName).toBe('grammar.conjunction'); // Conjunction gets grammar conjunction color
   });
 
-  it('should color-code ال (article) with tint color', () => {
+  it('should color-code ال (article) with definite article color', () => {
     const analysis = analyzeArabicWord('والدجال', 'and the Dajjal');
     const formatted = formatWordAnalysis(analysis);
 
     const segments = formatted.reconstructedArabic?.segments ?? [];
     const secondPrefix = segments.filter(s => s.type === 'prefix')[1];
     expect(secondPrefix).toBeDefined();
-    expect(secondPrefix?.colorName).toBe('tint'); // Article gets tint color (sage green)
+    expect(secondPrefix?.colorName).toBe('grammar.definiteArticle'); // Article gets grammar definite article color
   });
 
   it('should detect triple prefix: و + ب + ال', () => {

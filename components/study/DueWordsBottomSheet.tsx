@@ -1,11 +1,10 @@
 import { memo, useMemo } from 'react';
 
+import { GenericBottomSheet } from '@/components/common/GenericBottomSheet';
 import { DueWordsPrognosisChart } from '@/components/study/charts/DueWordsPrognosisChart';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-
-import { GenericChartBottomSheet } from './GenericChartBottomSheet';
 
 interface DueWordsBottomSheetProps {
   isVisible: boolean;
@@ -27,13 +26,14 @@ export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, 
   }, [allWords]);
 
   return (
-    <GenericChartBottomSheet
+    <GenericBottomSheet
       isVisible={isVisible}
       onClose={onClose}
       title={STRINGS.DUE_WORDS_FORECAST}
       subtitle={STRINGS.DUE_WORDS_FORECAST_SUBTITLE}
-      chartComponent={<DueWordsPrognosisChart studyWords={filteredStudyWords} hideTitle={true} />}
-    />
+    >
+      <DueWordsPrognosisChart studyWords={filteredStudyWords} hideTitle={true} />
+    </GenericBottomSheet>
   );
 });
 

@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
+import type { PanGesture } from 'react-native-gesture-handler';
 import { Gesture } from 'react-native-gesture-handler';
+import type { SharedValue } from 'react-native-reanimated';
 import { runOnJS, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { SPRING_CONFIG } from '@/constants/animation';
@@ -22,9 +24,9 @@ export interface SwipeGestureOptions {
 }
 
 export interface SwipeGestureResult {
-  gesture: any;
-  translateX: any;
-  isAnimatingRef: any;
+  gesture: PanGesture;
+  translateX: SharedValue<number>;
+  isAnimatingRef: SharedValue<boolean>;
   resetPosition: () => void;
 }
 

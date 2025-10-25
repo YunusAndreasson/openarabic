@@ -1,4 +1,4 @@
-import type { FlashListRef } from '@shopify/flash-list';
+import type { FlashListProps, FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { memo, useCallback, type ReactElement } from 'react';
@@ -26,7 +26,7 @@ import { calculateHeaderHeight } from '@/utils/gradientUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
 const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList as unknown as React.ComponentType<any>,
+  FlashList as React.ComponentType<FlashListProps<Tables<'article_sentences'>>>,
 );
 
 // Comfortable reading space constant
@@ -288,7 +288,8 @@ const ArticleContentInternal = function ArticleContent({
           {/* Sticky Parallax Header behind content */}
           <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
           <AnimatedFlashList
-            ref={scrollViewRef as unknown as React.RefObject<any>}
+            // @ts-expect-error - AnimatedFlashList ref type mismatch with Reanimated
+            ref={scrollViewRef}
             key={`article-${id}`}
             data={sortedSentences}
             renderItem={renderSentenceItem}

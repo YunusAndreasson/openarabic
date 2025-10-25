@@ -86,8 +86,10 @@ export function ArticleList({
   );
 
   // Content container style
-  const safeContentContainerStyle = {
-    ...(contentContainerStyle as any),
+  const safeContentContainerStyle: ViewStyle = {
+    ...(typeof contentContainerStyle === 'object' && !Array.isArray(contentContainerStyle)
+      ? contentContainerStyle
+      : {}),
     paddingBottom:
       stableInsetsBottomRef.current + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   };

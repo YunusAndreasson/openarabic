@@ -64,8 +64,8 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
       expect(segments.length).toBeGreaterThanOrEqual(1);
       expect(segments[0]?.type).toBe('prefix');
       expect(segments[0]?.colorName).not.toBe('text'); // Should be colored, not white
-      // First prefix 'و' is conjunction = secondary color
-      expect(segments[0]?.colorName).toBe('secondary');
+      // First prefix 'و' is conjunction = grammar.conjunction color
+      expect(segments[0]?.colorName).toBe('grammar.conjunction');
     });
   });
 

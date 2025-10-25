@@ -110,6 +110,9 @@ const styles = StyleSheet.create({
  * - Memoized chart data calculations
  * - Optimized Skia rendering with stable references
  */
+// Generic component accepts different types for tooltipDataPoints (e.g., MasteryRecord, EfficiencyData)
+// TypeScript infers the type from usage, but we need to allow `any` in the definition
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const VocabularyChart = memo<VocabularyChartProps<any>>(
   ({
     path,
@@ -133,6 +136,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     emptyStateText,
     bottomSummary,
   }: VocabularyChartProps<any>) => {
+    /* eslint-enable @typescript-eslint/no-explicit-any */
     // Get colors outside Canvas (Context available here)
     const colors = useColors();
     const chartColors = useMemo(() => getChartColors(colors), [colors]);

@@ -14,7 +14,8 @@ interface UseStreakHistoryResult {
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
-  refetch: () => Promise<any>;
+  // TanStack Query refetch function with proper types
+  refetch: () => Promise<unknown>;
 }
 
 export function useStreakHistory(options: UseStreakHistoryOptions = {}): UseStreakHistoryResult {

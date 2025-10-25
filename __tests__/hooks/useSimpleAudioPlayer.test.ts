@@ -2,7 +2,7 @@
  * useSimpleAudioPlayer Hook Tests
  *
  * Tests the audio player hook that manages:
- * - Audio playback (play, pause, resume, stop)
+ * - Audio playback (play, stop)
  * - Seeking to position
  * - Audio session configuration
  * - Status subscription (isPlaying, isLoading, currentTime, duration, currentTrack)
@@ -25,8 +25,6 @@ import type { EnhancedAudioTrack } from '@/types/audio.types';
 jest.mock('@/services/audioPlayer', () => ({
   simpleAudioService: {
     play: jest.fn(),
-    pause: jest.fn(),
-    resume: jest.fn(),
     stop: jest.fn(),
     seekTo: jest.fn(),
     preconfigureAudioSession: jest.fn(),
@@ -88,8 +86,6 @@ describe('useSimpleAudioPlayer Hook', () => {
 
     // Mock service methods
     (simpleAudioService.play as jest.Mock).mockResolvedValue(true);
-    (simpleAudioService.pause as jest.Mock).mockResolvedValue(undefined);
-    (simpleAudioService.resume as jest.Mock).mockResolvedValue(undefined);
     (simpleAudioService.stop as jest.Mock).mockResolvedValue(undefined);
     (simpleAudioService.seekTo as jest.Mock).mockResolvedValue(undefined);
     (simpleAudioService.preconfigureAudioSession as jest.Mock).mockResolvedValue(undefined);
@@ -110,8 +106,6 @@ describe('useSimpleAudioPlayer Hook', () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       expect(typeof result.current.play).toBe('function');
-      expect(typeof result.current.pause).toBe('function');
-      expect(typeof result.current.resume).toBe('function');
       expect(typeof result.current.stop).toBe('function');
       expect(typeof result.current.seekTo).toBe('function');
       expect(typeof result.current.preconfigureAudioSession).toBe('function');
@@ -181,70 +175,6 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.play).toHaveBeenCalledTimes(2);
       expect(simpleAudioService.play).toHaveBeenCalledWith(track1);
       expect(simpleAudioService.play).toHaveBeenCalledWith(track2);
-    });
-  });
-
-  describe('Pause Function', () => {
-    it('should pause audio playback', async () => {
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      await act(async () => {
-        await result.current.pause();
-      });
-
-      expect(simpleAudioService.pause).toHaveBeenCalled();
-    });
-
-    it('should not call service when unmounted', async () => {
-      mockIsMountedRef.current = false;
-
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      await act(async () => {
-        await result.current.pause();
-      });
-
-      expect(simpleAudioService.pause).not.toHaveBeenCalled();
-    });
-
-    it('should handle pause errors gracefully', async () => {
-      (simpleAudioService.pause as jest.Mock).mockRejectedValueOnce(new Error('Pause failed'));
-
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      await expect(result.current.pause()).rejects.toThrow('Pause failed');
-    });
-  });
-
-  describe('Resume Function', () => {
-    it('should resume audio playback', async () => {
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      await act(async () => {
-        await result.current.resume();
-      });
-
-      expect(simpleAudioService.resume).toHaveBeenCalled();
-    });
-
-    it('should not call service when unmounted', async () => {
-      mockIsMountedRef.current = false;
-
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      await act(async () => {
-        await result.current.resume();
-      });
-
-      expect(simpleAudioService.resume).not.toHaveBeenCalled();
-    });
-
-    it('should handle resume errors', async () => {
-      (simpleAudioService.resume as jest.Mock).mockRejectedValueOnce(new Error('Resume failed'));
-
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      await expect(result.current.resume()).rejects.toThrow('Resume failed');
     });
   });
 
@@ -465,7 +395,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Complete Playback Workflow', () => {
-    it('should handle play → pause → resume → stop workflow', async () => {
+    it('should handle play → stop workflow', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
       const track = createMockTrack();
 
@@ -475,18 +405,6 @@ describe('useSimpleAudioPlayer Hook', () => {
       });
       expect(simpleAudioService.play).toHaveBeenCalledWith(track);
 
-      // Pause
-      await act(async () => {
-        await result.current.pause();
-      });
-      expect(simpleAudioService.pause).toHaveBeenCalled();
-
-      // Resume
-      await act(async () => {
-        await result.current.resume();
-      });
-      expect(simpleAudioService.resume).toHaveBeenCalled();
-
       // Stop
       await act(async () => {
         await result.current.stop();
@@ -494,19 +412,19 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.stop).toHaveBeenCalled();
     });
 
-    it('should handle play → seek → pause workflow', async () => {
+    it('should handle play → seek → stop workflow', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
       const track = createMockTrack();
 
       await act(async () => {
         await result.current.play(track);
         await result.current.seekTo(60);
-        await result.current.pause();
+        await result.current.stop();
       });
 
       expect(simpleAudioService.play).toHaveBeenCalledWith(track);
       expect(simpleAudioService.seekTo).toHaveBeenCalledWith(60);
-      expect(simpleAudioService.pause).toHaveBeenCalled();
+      expect(simpleAudioService.stop).toHaveBeenCalled();
     });
   });
 
@@ -519,8 +437,6 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       await act(async () => {
         await result.current.play(track);
-        await result.current.pause();
-        await result.current.resume();
         await result.current.stop();
         await result.current.seekTo(30);
         await result.current.preconfigureAudioSession();
@@ -528,8 +444,6 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       // None of these should call the service when unmounted
       expect(simpleAudioService.play).not.toHaveBeenCalled();
-      expect(simpleAudioService.pause).not.toHaveBeenCalled();
-      expect(simpleAudioService.resume).not.toHaveBeenCalled();
       expect(simpleAudioService.stop).not.toHaveBeenCalled();
       expect(simpleAudioService.seekTo).not.toHaveBeenCalled();
       expect(simpleAudioService.preconfigureAudioSession).not.toHaveBeenCalled();
@@ -549,9 +463,9 @@ describe('useSimpleAudioPlayer Hook', () => {
       // Become unmounted
       mockIsMountedRef.current = false;
       await act(async () => {
-        await result.current.pause();
+        await result.current.stop();
       });
-      expect(simpleAudioService.pause).not.toHaveBeenCalled();
+      expect(simpleAudioService.stop).not.toHaveBeenCalled();
     });
   });
 
@@ -602,26 +516,6 @@ describe('useSimpleAudioPlayer Hook', () => {
       });
 
       expect(simpleAudioService.play).toHaveBeenCalledTimes(3);
-    });
-
-    it('should handle pause without play', async () => {
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      await act(async () => {
-        await result.current.pause();
-      });
-
-      expect(simpleAudioService.pause).toHaveBeenCalled();
-    });
-
-    it('should handle resume without play', async () => {
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      await act(async () => {
-        await result.current.resume();
-      });
-
-      expect(simpleAudioService.resume).toHaveBeenCalled();
     });
 
     it('should handle stop without play', async () => {
@@ -708,14 +602,14 @@ describe('useSimpleAudioPlayer Hook', () => {
         await Promise.all([
           result.current.play(track),
           result.current.seekTo(30),
-          result.current.pause(),
+          result.current.stop(),
         ]);
       });
 
       // All operations should complete
       expect(simpleAudioService.play).toHaveBeenCalled();
       expect(simpleAudioService.seekTo).toHaveBeenCalled();
-      expect(simpleAudioService.pause).toHaveBeenCalled();
+      expect(simpleAudioService.stop).toHaveBeenCalled();
     });
   });
 });

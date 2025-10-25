@@ -641,12 +641,12 @@ def create_article_audio(
     """
     Create article-level audio files in one pass:
     1. Arabic-only MP3: all sentences concatenated with 500ms delays
-    2. Bilingual MP3: title + summary + English/Arabic mixed with 500ms delays
+    2. Bilingual MP3: title + English/Arabic mixed with 500ms delays
 
     Args:
         sentences: List of sentence dictionaries with 'arabic_text', 'english_text', 'tashkeel'
         article_title: Article title for bilingual audio intro
-        article_summary: Article summary for bilingual audio intro
+        article_summary: Article summary (NOT used in audio generation - kept for API compatibility)
         output_dir: Directory to save temporary files
 
     Returns:
@@ -663,7 +663,7 @@ def create_article_audio(
         arabic_segments = []
         bilingual_segments = []
 
-        # Add title and summary to bilingual audio if provided
+        # Add title to bilingual audio if provided (summary is excluded)
         if article_title and article_title.strip():
             title_response = generate_speech(
                 text=article_title.strip(),
@@ -676,17 +676,8 @@ def create_article_audio(
             else:
                 logger.warning("Failed to generate title audio")
 
-        if article_summary and article_summary.strip():
-            summary_response = generate_speech(
-                text=article_summary.strip(),
-                voice_id=ENGLISH_VOICE_ID,
-                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
-            )
-            if summary_response and summary_response.get("audio"):
-                bilingual_segments.append(summary_response["audio"])
-                # Summary audio generated
-            else:
-                logger.warning("Failed to generate summary audio")
+        # Note: Article summary is intentionally excluded from audio generation
+        # as per requirements - only title and sentence content are included
 
         # Process each sentence
 

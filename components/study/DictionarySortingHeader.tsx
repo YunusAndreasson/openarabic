@@ -1,12 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback, type FC } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { memo, type FC } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET, STATUS_INDICATOR } from '@/constants/layout';
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SortDirection } from '@/hooks/vocabulary/useDictionaryModal';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface DictionarySortingHeaderProps {
   sortDirection: SortDirection;
@@ -22,11 +21,6 @@ const DictionarySortingHeaderComponent: FC<DictionarySortingHeaderProps> = ({
   onToggleDirection,
 }) => {
   const colors = useColors();
-
-  const handleTogglePress = useCallback(() => {
-    selectionFeedback();
-    onToggleDirection();
-  }, [onToggleDirection]);
 
   return (
     <View style={styles.container}>
@@ -56,26 +50,15 @@ const DictionarySortingHeaderComponent: FC<DictionarySortingHeaderProps> = ({
         </View>
 
         {/* Sort direction toggle on the right */}
-        <Pressable
-          style={[
-            styles.toggleButton,
-            {
-              backgroundColor: colors.elevation1,
-              borderColor: colors.border,
-            },
-          ]}
-          onPress={handleTogglePress}
-          android_ripple={{
-            color: colors.tint,
-            radius: MIN_TOUCH_TARGET.SMALL / 2,
-          }}
-        >
-          <Ionicons
-            name={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'}
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={colors.text}
-          />
-        </Pressable>
+        <HeaderIconButton
+          iconName={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'}
+          onPress={onToggleDirection}
+          size="small"
+          iconColor={colors.text}
+          backgroundColor={colors.elevation1}
+          withBorder
+          borderColor={colors.border}
+        />
       </View>
     </View>
   );
@@ -108,14 +91,6 @@ const styles = StyleSheet.create({
     width: STATUS_INDICATOR.DOT_SIZE,
     height: STATUS_INDICATOR.DOT_SIZE,
     borderRadius: STATUS_INDICATOR.DOT_RADIUS,
-  },
-  toggleButton: {
-    width: MIN_TOUCH_TARGET.SMALL, // 32px
-    height: MIN_TOUCH_TARGET.SMALL, // 32px
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL, // 8px
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL, // 1px
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
 

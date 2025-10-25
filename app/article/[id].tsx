@@ -1,3 +1,4 @@
+import type { FlashListRef } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import React, { memo, useCallback, useMemo } from 'react';
@@ -114,7 +115,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       handleScroll,
       handleViewableItemsChanged,
       colors,
-      scrollViewRef: scrollViewRef as React.RefObject<any>,
+      scrollViewRef: scrollViewRef as React.RefObject<FlashListRef<Tables<'article_sentences'>>>,
       isInReadingList,
       onToggleReadingList: handleToggleReadingListWithFeedback,
       hasAudio,
@@ -179,20 +180,19 @@ export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
 
-  const Container = Platform.OS === 'android' ? SafeAreaView : View;
-  const containerProps =
-    Platform.OS === 'android'
-      ? ({
-          style: [FLEX_ONE_STYLE, { backgroundColor: colors.background }],
-          edges: ['top'] as const,
-        } as const)
-      : ({ style: [FLEX_ONE_STYLE, { backgroundColor: colors.background }] } as const);
+  const containerStyle = [FLEX_ONE_STYLE, { backgroundColor: colors.background }];
 
   return (
     <ToastProvider>
-      <Container {...(containerProps as any)}>
-        <ArticleScreenContent id={id ?? ''} />
-      </Container>
+      {Platform.OS === 'android' ? (
+        <SafeAreaView style={containerStyle} edges={['top']}>
+          <ArticleScreenContent id={id ?? ''} />
+        </SafeAreaView>
+      ) : (
+        <View style={containerStyle}>
+          <ArticleScreenContent id={id ?? ''} />
+        </View>
+      )}
     </ToastProvider>
   );
 }

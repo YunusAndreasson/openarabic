@@ -2,7 +2,6 @@
 
 ## 🚀 Features
 
-- [ ] Add folders
 - [x] Play article with highlight
 - [x] Add bottomsheet for tooltip
   - [x] Play

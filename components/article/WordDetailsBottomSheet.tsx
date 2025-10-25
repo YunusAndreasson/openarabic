@@ -203,11 +203,7 @@ export function WordDetailsBottomSheet({
 WordDetailsBottomSheet.displayName = 'WordDetailsBottomSheet';
 
 const styles = StyleSheet.create({
-  background: {
-    ...LAYOUT.ELEVATION.LARGE,
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
+  background: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,

@@ -2,6 +2,7 @@
  * Test for user-reported bug: Arabic white but English green
  * Tests consistency between Arabic coloring (modal display) and English coloring (tooltip)
  */
+import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
 
@@ -11,6 +12,7 @@ const COLORS = {
   warning: '#FFAA00',
   secondaryText: '#888888',
   text: '#000000',
+  grammar: MOCK_GRAMMAR_COLORS,
 };
 
 describe('Modal-Tooltip Consistency Bug', () => {
@@ -41,13 +43,13 @@ describe('Modal-Tooltip Consistency Bug', () => {
       segments.forEach((seg, i) => {});
 
       // CRITICAL: Arabic should be colored, not white
-      // Now renders as multiple segments for multi-prefix: و (conjunction=secondary) + من (preposition)
+      // Now renders as multiple segments for multi-prefix: و (conjunction) + من (preposition)
       expect(segments.length).toBeGreaterThan(0);
       const firstColoredSegment = segments.find(s => s.type === 'prefix');
       expect(firstColoredSegment).toBeDefined();
       expect(firstColoredSegment?.colorName).not.toBe('text'); // Not white
-      // First prefix 'و' is conjunction = secondary color
-      expect(segments[0]?.colorName).toBe('secondary');
+      // First prefix 'و' is conjunction = grammar.conjunction color
+      expect(segments[0]?.colorName).toBe('grammar.conjunction');
     });
 
     it('should have colored English segments (tooltip)', () => {

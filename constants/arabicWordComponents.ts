@@ -67,9 +67,10 @@ const BASE_CONJUNCTIONS = [
   }, // 'by' for oaths (e.g., "by Allah")
   {
     arabic: 'ف',
-    english: ['so', 'then', 'thus', 'therefore', 'consequently', 'and', 'for', 'about', 'but'],
-    role: GrammaticalRole.CONJUNCTION,
-  }, // 'about' for interrogatives like "what about", 'but' for adversative uses
+    english: ['so', 'then', 'thus', 'therefore', 'consequently', 'for', 'about', 'but'],
+    role: GrammaticalRole.PARTICLE,
+  }, // Changed to PARTICLE for visual distinction from simple conjunction و - consequential/sequential meaning
+  // Note: "and" removed from ف to prevent false positives when و already matches "and"
 ];
 
 const BASE_PREPOSITIONS = [
@@ -88,6 +89,7 @@ const BASE_PREPOSITIONS = [
       'at',
       'concerning',
       'based',
+      'as',
     ],
     role: GrammaticalRole.PREPOSITION,
   },
@@ -121,8 +123,10 @@ const BASE_PREPOSITIONS = [
     role: GrammaticalRole.PREPOSITION,
   },
   { arabic: 'إلى', english: ['to', 'towards', 'into', 'until'], role: GrammaticalRole.PREPOSITION },
+  { arabic: 'إلي', english: ['to', 'towards'], role: GrammaticalRole.PREPOSITION }, // Form before pronoun suffixes (إلى + ه → إليه)
   { arabic: 'إل', english: ['to', 'towards'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (إلى + ي → إليّ → normalized: إل + ي)
   { arabic: 'لدى', english: ['with', 'at', 'by', 'near'], role: GrammaticalRole.PREPOSITION },
+  { arabic: 'لدي', english: ['with', 'at'], role: GrammaticalRole.PREPOSITION }, // Form before pronoun suffixes (لدى + ه → لديه)
   { arabic: 'لد', english: ['with', 'at'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (لدى + ي → لديّ → normalized: لد + ي)
   {
     arabic: 'مع',
@@ -191,22 +195,14 @@ const OTHER_PREFIXES = [
     role: GrammaticalRole.PARTICLE,
   },
   { arabic: 'إن', english: ['indeed', 'verily', 'if'], role: GrammaticalRole.PARTICLE },
-  {
-    arabic: 'فإن',
-    english: ['for', 'so', 'then', 'therefore', 'because'],
-    role: GrammaticalRole.PARTICLE,
-  }, // Compound: fa (so/then) + inna (emphasis)
-  {
-    arabic: 'إنما',
-    english: ['only', 'truly', 'verily', 'indeed'],
-    role: GrammaticalRole.PARTICLE,
-  }, // Restrictive particle
+  // Note: "فإن" compound removed - should be detected as ف + إن (two prefixes) per database-examples test
+  // Note: "إنما" compound removed - should be detected as إن + ما (two prefixes) per database-examples test
   {
     arabic: 'أما',
     english: ['do you not', 'do not you', 'are you not', 'have you not', 'as for'],
     role: GrammaticalRole.INTERROGATIVE,
   }, // Interrogative + negation particle
-  { arabic: 'ما', english: ['what', 'that which'], role: GrammaticalRole.INTERROGATIVE }, // Interrogative/relative - multi-word OK for standalone, removed from PARTICLES to prevent compounds
+  { arabic: 'ما', english: ['what', 'that which', 'only'], role: GrammaticalRole.INTERROGATIVE }, // Interrogative/relative - multi-word OK for standalone, 'only' in restrictive contexts (إنما)
   {
     arabic: 'من',
     english: ['who', 'whoever', 'whomever', 'he who', 'those who'],
@@ -356,7 +352,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   },
   {
     arabic: 'ه',
-    english: ['his', 'its', 'it', 'of him', 'him', 'himself', 'he', 'their'],
+    english: ['his', 'its', 'it', 'of him', 'him', 'himself', 'he', 'their', 'whose'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
@@ -369,7 +365,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   },
   {
     arabic: 'ها',
-    english: ['her', 'hers', 'its', 'it', 'of her', 'their'],
+    english: ['her', 'hers', 'its', 'it', 'of her', 'their', 'them'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
@@ -633,21 +629,21 @@ export const COMPONENT_TYPE_CONFIG = {
 
 /**
  * Grammatical role color mapping for educational differentiation
- * Used when components have a defined grammatical role for more precise coloring
+ * Uses dedicated grammar.* color palette (65-188° hue range) for sage-centric harmony
  */
 export const GRAMMATICAL_ROLE_COLORS = {
-  [GrammaticalRole.CONJUNCTION]: 'secondary' as const, // Forest green for conjunctions (و, ف)
-  [GrammaticalRole.DEFINITE_ARTICLE]: 'tint' as const, // SAGE GREEN for article (ال)
-  [GrammaticalRole.PREPOSITION]: 'warning' as const, // AMBER/ORANGE for prepositions (ب, ل, ك, في)
-  [GrammaticalRole.SUBJECT_PREFIX]: 'secondary' as const, // Forest green for verb conjugation (ت, ي, ن, أ)
-  [GrammaticalRole.FUTURE_TENSE]: 'info' as const, // Info color for future tense (س, سوف) - distinct from prepositions
-  [GrammaticalRole.NEGATION]: 'error' as const, // Red for negation (لا, لم, لن)
-  [GrammaticalRole.PARTICLE]: 'accent' as const, // Azure blue for particles (قد, إن)
-  [GrammaticalRole.INTERROGATIVE]: 'accent' as const, // Azure blue for questions (ما, من, كم) - distinct from possessives
-  [GrammaticalRole.POSSESSIVE]: 'violet' as const, // Violet for possessive suffixes (ي, ك, ه)
-  [GrammaticalRole.PLURAL]: 'primary' as const, // Primary (gray/sage) for plural markers (ون, ين, ات)
-  [GrammaticalRole.VERB_CONJUGATION]: 'success' as const, // Success green for verb endings (ت, وا, تم, تن, كن)
-  [GrammaticalRole.DEMONSTRATIVE]: 'primary' as const, // Primary color for demonstratives (هذا, ذلك) - same as plural
-  [GrammaticalRole.CASE_ENDING]: 'accent' as const, // Azure blue for case diacritics (ُ, َ, ِ)
-  [GrammaticalRole.GENERIC]: 'tint' as const, // Sage green fallback
+  [GrammaticalRole.PREPOSITION]: 'grammar.preposition' as const, // Amber-green (85°) [15 uses]
+  [GrammaticalRole.POSSESSIVE]: 'grammar.possessive' as const, // Cool sage (160°) [13 uses]
+  [GrammaticalRole.PARTICLE]: 'grammar.particle' as const, // Teal (172°) [9 uses]
+  [GrammaticalRole.INTERROGATIVE]: 'grammar.interrogative' as const, // Lime (105°) [8 uses]
+  [GrammaticalRole.VERB_CONJUGATION]: 'grammar.verbConjugation' as const, // Core sage (150°) [5 uses]
+  [GrammaticalRole.NEGATION]: 'grammar.negation' as const, // Olive (125°) [5 uses]
+  [GrammaticalRole.SUBJECT_PREFIX]: 'grammar.subjectPrefix' as const, // Cyan-green (180°) [4 uses]
+  [GrammaticalRole.PLURAL]: 'grammar.plural' as const, // Yellow-sage (140°) [4 uses]
+  [GrammaticalRole.DEMONSTRATIVE]: 'grammar.demonstrative' as const, // Sage-2 (155°) [4 uses]
+  [GrammaticalRole.CONJUNCTION]: 'grammar.conjunction' as const, // Blue-sage (165°) [4 uses]
+  [GrammaticalRole.FUTURE_TENSE]: 'grammar.futureTense' as const, // Cool cyan (188°) [2 uses]
+  [GrammaticalRole.DEFINITE_ARTICLE]: 'grammar.definiteArticle' as const, // Golden (65°) [1 use]
+  [GrammaticalRole.CASE_ENDING]: 'grammar.particle' as const, // Fallback: teal (unused)
+  [GrammaticalRole.GENERIC]: 'grammar.verbConjugation' as const, // Fallback: core sage (unused)
 } as const;

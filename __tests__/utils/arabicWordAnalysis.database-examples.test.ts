@@ -37,40 +37,111 @@ describe('Database Example Grammar Rules', () => {
   });
 
   describe('Split Behavior: فإنما (fa-innama)', () => {
-    it('should detect إنما as standalone prefix', () => {
+    it('should detect إن and ما as separate particles (not monolithic إنما)', () => {
+      // إنما is no longer a single prefix - it's decomposed
       const innama = ARABIC_PREFIXES.find(p => p.arabic === 'إنما');
-      expect(innama).toBeDefined();
-      expect(innama?.english).toContain('only');
+      expect(innama).toBeUndefined(); // Should NOT exist
+
+      // Instead, we have separate components
+      const inna = ARABIC_PREFIXES.find(p => p.arabic === 'إن');
+      const ma = ARABIC_PREFIXES.find(p => p.arabic === 'ما');
+      expect(inna).toBeDefined();
+      expect(ma).toBeDefined();
+      expect(ma?.english).toContain('only');
     });
 
-    it('should analyze فَإِنَّمَا with split components', () => {
+    it('should analyze فَإِنَّ with two separate prefixes (fa + inna)', () => {
+      const analysis = analyzeArabicWord('فإن', 'so indeed');
+
+      // فإن compound removed - now splits into ف (conjunction) + إن (particle)
+      // Both components match English translation and get different colors
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes).toHaveLength(2);
+
+      // First prefix: ف (particle) - "so" - Changed from conjunction to particle for distinct coloring from و
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
+      expect(analysis.prefixes[0]?.englishMatches).toContain('so');
+      expect(analysis.prefixes[0]?.role).toBe('particle');
+
+      // Second prefix: إن (particle) - "indeed"
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('إن');
+      expect(analysis.prefixes[1]?.englishMatches).toContain('indeed');
+      expect(analysis.prefixes[1]?.role).toBe('particle');
+
+      // No remaining root (the whole word is prefixes)
+      expect(analysis.remainingArabic).toBe('');
+    });
+
+    it('should analyze فَإِنَّمَا with complete translation "so indeed only"', () => {
+      const analysis = analyzeArabicWord('فإنما', 'so indeed only');
+
+      // New behavior: ف + إن + ما detected as three separate prefixes
+      // فإن compound removed - now splits into ف (conjunction) + إن (particle)
+      // All three components match when translation is complete
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes).toHaveLength(3);
+
+      // First prefix: ف (conjunction) - "so"
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
+      expect(analysis.prefixes[0]?.englishMatches).toContain('so');
+
+      // Second prefix: إن (particle) - "indeed"
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('إن');
+      expect(analysis.prefixes[1]?.englishMatches).toContain('indeed');
+
+      // Third prefix: ما (particle) - "only"
+      expect(analysis.prefixes[2]?.arabicMatch).toBe('ما');
+      expect(analysis.prefixes[2]?.englishMatches).toContain('only');
+
+      // No remaining root (the whole word is prefixes)
+      expect(analysis.remainingArabic).toBe('');
+    });
+
+    it('should analyze فَإِنَّمَا with simplified translation "so only"', () => {
       const analysis = analyzeArabicWord('فإنما', 'so only');
 
-      // فإن matches "so" (compound prefix), remaining is ما
-      // This is because فإن is defined as a compound prefix in OTHER_PREFIXES
+      // When إن has no English equivalent in translation, only ف is detected
+      // ما cannot be detected because it's a prefix (must be at start of remaining)
+      // and it comes after إن which blocks it
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.prefixes[0]).toBeDefined();
-      expect(analysis.prefixes[0]?.arabicMatch).toBe('فإن');
-      expect(analysis.remainingArabic).toBe('ما');
+      expect(analysis.prefixes).toHaveLength(1);
+
+      // Only prefix: ف (conjunction) - "so"
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
+      expect(analysis.prefixes[0]?.englishMatches).toContain('so');
+
+      // Remaining includes إنما (undetected particles)
+      expect(analysis.remainingArabic).toBe('إنما');
     });
 
-    it('should handle multi-word translations for إنما', () => {
-      const analysis = analyzeArabicWord('إنما', 'only truly');
-      const formatted = formatWordAnalysis(analysis);
+    it('should handle standalone إنما as two prefixes', () => {
+      const analysis = analyzeArabicWord('إنما', 'indeed only');
 
-      // إنما as standalone can match multi-word "only truly"
+      // إنما is now detected as إن + ما (two separate prefixes)
       expect(analysis.hasComponents).toBe(true);
-      const componentSection = formatted.sections.find(s => s.type === 'components');
-      expect(componentSection).toBeDefined();
-      expect(componentSection?.englishPart).toMatch(/only|truly/);
+      expect(analysis.prefixes).toHaveLength(2);
+
+      // First prefix: إن
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('إن');
+      expect(analysis.prefixes[0]?.englishMatches).toContain('indeed');
+
+      // Second prefix: ما
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ما');
+      expect(analysis.prefixes[1]?.englishMatches).toContain('only');
     });
   });
 
   describe('Standalone Particles', () => {
-    it('should detect إنما as standalone particle', () => {
-      const innama = ARABIC_PREFIXES.find(p => p.arabic === 'إنما');
-      expect(innama).toBeDefined();
-      expect(innama?.english).toContain('only');
+    it('should detect إن and ما as separate particles for إنما construction', () => {
+      // إنما is no longer a monolithic prefix - it's decomposed into إن + ما
+      const inna = ARABIC_PREFIXES.find(p => p.arabic === 'إن');
+      const ma = ARABIC_PREFIXES.find(p => p.arabic === 'ما');
+
+      expect(inna).toBeDefined();
+      expect(inna?.english).toContain('indeed');
+
+      expect(ma).toBeDefined();
+      expect(ma?.english).toContain('only'); // ما can mean "only" in restrictive contexts like إنما
     });
 
     it('should have من/مَنْ entries in ARABIC_PREFIXES', () => {

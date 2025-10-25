@@ -14,8 +14,6 @@ interface ThemedInputProps extends TextInputProps {
   rightIcon?: ComponentProps<typeof Ionicons>['name'];
   error?: string;
   hint?: string;
-  onFocus?: (e: any) => void;
-  onBlur?: (e: any) => void;
   onRightIconPress?: (e: GestureResponderEvent) => void;
   style?: TextInputProps['style'];
   ref?: Ref<TextInput>;
@@ -103,7 +101,7 @@ export function ThemedInput({
   );
 
   const handleFocus = useCallback(
-    (e: any) => {
+    (e: Parameters<NonNullable<TextInputProps['onFocus']>>[0]) => {
       setIsFocused(true);
       onFocus?.(e);
     },
@@ -111,7 +109,7 @@ export function ThemedInput({
   );
 
   const handleBlur = useCallback(
-    (e: any) => {
+    (e: Parameters<NonNullable<TextInputProps['onBlur']>>[0]) => {
       setIsFocused(false);
       onBlur?.(e);
     },

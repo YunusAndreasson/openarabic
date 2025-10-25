@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import type { JSX } from 'react';
 import React, { Fragment, memo, useEffect, useMemo } from 'react';
+import type { PressableProps } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -19,7 +20,7 @@ import { router } from 'expo-router';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // Custom TabBarButton with press animation for better visual feedback
-const TabBarButton = memo((props: any) => {
+const TabBarButton = memo((props: PressableProps) => {
   const { children, onPress, style } = props;
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'button', // Scale-only feedback (0.96)

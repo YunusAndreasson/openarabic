@@ -20,7 +20,7 @@ const STATIC_STYLES = StyleSheet.create({
   },
   progressContainer: {
     flex: 1,
-    marginVertical: LAYOUT.SPACING.TINY, // Minimal margin for highest positioning
+    marginBottom: LAYOUT.SPACING.TINY, // Bottom margin only for spacing
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   closeButton: {

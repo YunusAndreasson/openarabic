@@ -90,6 +90,28 @@ const violetOKLCH = {
 } as const;
 
 /**
+ * Indigo - Deep blue tones for future tense
+ * Hue range: 260-270° (indigo blue)
+ * Represents forward motion and temporal progression
+ */
+const indigoOKLCH = {
+  light: { l: 0.52, c: 0.11, h: 265 }, // Rich indigo for light mode
+  dark: { l: 0.68, c: 0.13, h: 265 }, // Lighter indigo for dark mode
+  sepia: { l: 0.48, c: 0.09, h: 270 }, // Muted blue-purple for sepia
+} as const;
+
+/**
+ * Coral - Warm terracotta for definite article
+ * Hue range: 30-40° (coral/terracotta)
+ * Earthy warm tone distinct from error red
+ */
+const coralOKLCH = {
+  light: { l: 0.62, c: 0.1, h: 35 }, // Warm coral for light mode
+  dark: { l: 0.72, c: 0.11, h: 35 }, // Light coral for dark mode
+  sepia: { l: 0.58, c: 0.09, h: 40 }, // Terracotta for sepia mode
+} as const;
+
+/**
  * Pure Values - Green-tinted neutrals
  */
 const pureOKLCH = {
@@ -103,6 +125,77 @@ const pureOKLCH = {
 const sepiaPureOKLCH = {
   white: { l: 0.9912, c: 0.0069, h: 88.6 }, // #FEFCF7
   black: { l: 0.1544, c: 0.0073, h: 34.3 }, // #0F0B0A
+} as const;
+
+/**
+ * Grammar Color Family - Dedicated educational palette for grammar concept coloring
+ * Hue range: 65-270° (golden → green → cyan → blue → purple-violet) - Extended sage-centric harmony
+ * 12 perceptually distinct colors with 15-25° spacing for visual clarity
+ * Common pairs (و+ي, ب+suffix) get 25° separation to prevent confusion
+ * Lightness adjusts per theme: light (0.52-0.62), dark (+0.08), sepia (-0.02-0.04)
+ * Chroma varies 0.08-0.13 to enhance distinction while maintaining cohesion
+ */
+const grammarOKLCH = {
+  golden: {
+    light: { l: 0.6, c: 0.11, h: 65 },
+    dark: { l: 0.68, c: 0.11, h: 65 },
+    sepia: { l: 0.58, c: 0.09, h: 68 },
+  },
+  amber: {
+    light: { l: 0.58, c: 0.12, h: 90 },
+    dark: { l: 0.66, c: 0.12, h: 90 },
+    sepia: { l: 0.56, c: 0.1, h: 93 },
+  },
+  lime: {
+    light: { l: 0.62, c: 0.13, h: 110 },
+    dark: { l: 0.7, c: 0.13, h: 110 },
+    sepia: { l: 0.6, c: 0.11, h: 113 },
+  },
+  olive: {
+    light: { l: 0.52, c: 0.1, h: 125 },
+    dark: { l: 0.6, c: 0.1, h: 125 },
+    sepia: { l: 0.5, c: 0.08, h: 128 },
+  },
+  yellowGreen: {
+    light: { l: 0.58, c: 0.11, h: 140 },
+    dark: { l: 0.66, c: 0.11, h: 140 },
+    sepia: { l: 0.56, c: 0.09, h: 142 },
+  },
+  sage: {
+    light: { l: 0.56, c: 0.09, h: 155 },
+    dark: { l: 0.64, c: 0.09, h: 155 },
+    sepia: { l: 0.54, c: 0.07, h: 157 },
+  },
+  mintGreen: {
+    light: { l: 0.58, c: 0.1, h: 170 },
+    dark: { l: 0.66, c: 0.1, h: 170 },
+    sepia: { l: 0.56, c: 0.08, h: 172 },
+  },
+  seafoam: {
+    light: { l: 0.54, c: 0.11, h: 185 },
+    dark: { l: 0.62, c: 0.11, h: 185 },
+    sepia: { l: 0.52, c: 0.09, h: 187 },
+  },
+  teal: {
+    light: { l: 0.56, c: 0.12, h: 200 },
+    dark: { l: 0.64, c: 0.12, h: 200 },
+    sepia: { l: 0.54, c: 0.1, h: 202 },
+  },
+  skyBlue: {
+    light: { l: 0.58, c: 0.1, h: 225 },
+    dark: { l: 0.66, c: 0.1, h: 225 },
+    sepia: { l: 0.56, c: 0.08, h: 227 },
+  },
+  periwinkle: {
+    light: { l: 0.6, c: 0.09, h: 250 },
+    dark: { l: 0.68, c: 0.09, h: 250 },
+    sepia: { l: 0.58, c: 0.07, h: 252 },
+  },
+  violet: {
+    light: { l: 0.58, c: 0.08, h: 270 },
+    dark: { l: 0.66, c: 0.08, h: 270 },
+    sepia: { l: 0.56, c: 0.06, h: 272 },
+  },
 } as const;
 
 /**
@@ -241,6 +334,18 @@ const violet = {
   sepia: oklchToHex(violetOKLCH.sepia.l, violetOKLCH.sepia.c, violetOKLCH.sepia.h),
 } as const;
 
+const indigo = {
+  light: oklchToHex(indigoOKLCH.light.l, indigoOKLCH.light.c, indigoOKLCH.light.h),
+  dark: oklchToHex(indigoOKLCH.dark.l, indigoOKLCH.dark.c, indigoOKLCH.dark.h),
+  sepia: oklchToHex(indigoOKLCH.sepia.l, indigoOKLCH.sepia.c, indigoOKLCH.sepia.h),
+} as const;
+
+const coral = {
+  light: oklchToHex(coralOKLCH.light.l, coralOKLCH.light.c, coralOKLCH.light.h),
+  dark: oklchToHex(coralOKLCH.dark.l, coralOKLCH.dark.c, coralOKLCH.dark.h),
+  sepia: oklchToHex(coralOKLCH.sepia.l, coralOKLCH.sepia.c, coralOKLCH.sepia.h),
+} as const;
+
 const pure = {
   white: oklchToHex(pureOKLCH.white.l, pureOKLCH.white.c, pureOKLCH.white.h),
   black: oklchToHex(pureOKLCH.black.l, pureOKLCH.black.c, pureOKLCH.black.h),
@@ -250,6 +355,201 @@ const pure = {
 const sepiaPure = {
   white: oklchToHex(sepiaPureOKLCH.white.l, sepiaPureOKLCH.white.c, sepiaPureOKLCH.white.h),
   black: oklchToHex(sepiaPureOKLCH.black.l, sepiaPureOKLCH.black.c, sepiaPureOKLCH.black.h),
+} as const;
+
+const grammar = {
+  golden: {
+    light: oklchToHex(
+      grammarOKLCH.golden.light.l,
+      grammarOKLCH.golden.light.c,
+      grammarOKLCH.golden.light.h,
+    ),
+    dark: oklchToHex(
+      grammarOKLCH.golden.dark.l,
+      grammarOKLCH.golden.dark.c,
+      grammarOKLCH.golden.dark.h,
+    ),
+    sepia: oklchToHex(
+      grammarOKLCH.golden.sepia.l,
+      grammarOKLCH.golden.sepia.c,
+      grammarOKLCH.golden.sepia.h,
+    ),
+  },
+  amber: {
+    light: oklchToHex(
+      grammarOKLCH.amber.light.l,
+      grammarOKLCH.amber.light.c,
+      grammarOKLCH.amber.light.h,
+    ),
+    dark: oklchToHex(
+      grammarOKLCH.amber.dark.l,
+      grammarOKLCH.amber.dark.c,
+      grammarOKLCH.amber.dark.h,
+    ),
+    sepia: oklchToHex(
+      grammarOKLCH.amber.sepia.l,
+      grammarOKLCH.amber.sepia.c,
+      grammarOKLCH.amber.sepia.h,
+    ),
+  },
+  lime: {
+    light: oklchToHex(
+      grammarOKLCH.lime.light.l,
+      grammarOKLCH.lime.light.c,
+      grammarOKLCH.lime.light.h,
+    ),
+    dark: oklchToHex(grammarOKLCH.lime.dark.l, grammarOKLCH.lime.dark.c, grammarOKLCH.lime.dark.h),
+    sepia: oklchToHex(
+      grammarOKLCH.lime.sepia.l,
+      grammarOKLCH.lime.sepia.c,
+      grammarOKLCH.lime.sepia.h,
+    ),
+  },
+  olive: {
+    light: oklchToHex(
+      grammarOKLCH.olive.light.l,
+      grammarOKLCH.olive.light.c,
+      grammarOKLCH.olive.light.h,
+    ),
+    dark: oklchToHex(
+      grammarOKLCH.olive.dark.l,
+      grammarOKLCH.olive.dark.c,
+      grammarOKLCH.olive.dark.h,
+    ),
+    sepia: oklchToHex(
+      grammarOKLCH.olive.sepia.l,
+      grammarOKLCH.olive.sepia.c,
+      grammarOKLCH.olive.sepia.h,
+    ),
+  },
+  yellowGreen: {
+    light: oklchToHex(
+      grammarOKLCH.yellowGreen.light.l,
+      grammarOKLCH.yellowGreen.light.c,
+      grammarOKLCH.yellowGreen.light.h,
+    ),
+    dark: oklchToHex(
+      grammarOKLCH.yellowGreen.dark.l,
+      grammarOKLCH.yellowGreen.dark.c,
+      grammarOKLCH.yellowGreen.dark.h,
+    ),
+    sepia: oklchToHex(
+      grammarOKLCH.yellowGreen.sepia.l,
+      grammarOKLCH.yellowGreen.sepia.c,
+      grammarOKLCH.yellowGreen.sepia.h,
+    ),
+  },
+  sage: {
+    light: oklchToHex(
+      grammarOKLCH.sage.light.l,
+      grammarOKLCH.sage.light.c,
+      grammarOKLCH.sage.light.h,
+    ),
+    dark: oklchToHex(grammarOKLCH.sage.dark.l, grammarOKLCH.sage.dark.c, grammarOKLCH.sage.dark.h),
+    sepia: oklchToHex(
+      grammarOKLCH.sage.sepia.l,
+      grammarOKLCH.sage.sepia.c,
+      grammarOKLCH.sage.sepia.h,
+    ),
+  },
+  mintGreen: {
+    light: oklchToHex(
+      grammarOKLCH.mintGreen.light.l,
+      grammarOKLCH.mintGreen.light.c,
+      grammarOKLCH.mintGreen.light.h,
+    ),
+    dark: oklchToHex(
+      grammarOKLCH.mintGreen.dark.l,
+      grammarOKLCH.mintGreen.dark.c,
+      grammarOKLCH.mintGreen.dark.h,
+    ),
+    sepia: oklchToHex(
+      grammarOKLCH.mintGreen.sepia.l,
+      grammarOKLCH.mintGreen.sepia.c,
+      grammarOKLCH.mintGreen.sepia.h,
+    ),
+  },
+  seafoam: {
+    light: oklchToHex(
+      grammarOKLCH.seafoam.light.l,
+      grammarOKLCH.seafoam.light.c,
+      grammarOKLCH.seafoam.light.h,
+    ),
+    dark: oklchToHex(
+      grammarOKLCH.seafoam.dark.l,
+      grammarOKLCH.seafoam.dark.c,
+      grammarOKLCH.seafoam.dark.h,
+    ),
+    sepia: oklchToHex(
+      grammarOKLCH.seafoam.sepia.l,
+      grammarOKLCH.seafoam.sepia.c,
+      grammarOKLCH.seafoam.sepia.h,
+    ),
+  },
+  teal: {
+    light: oklchToHex(
+      grammarOKLCH.teal.light.l,
+      grammarOKLCH.teal.light.c,
+      grammarOKLCH.teal.light.h,
+    ),
+    dark: oklchToHex(grammarOKLCH.teal.dark.l, grammarOKLCH.teal.dark.c, grammarOKLCH.teal.dark.h),
+    sepia: oklchToHex(
+      grammarOKLCH.teal.sepia.l,
+      grammarOKLCH.teal.sepia.c,
+      grammarOKLCH.teal.sepia.h,
+    ),
+  },
+  skyBlue: {
+    light: oklchToHex(
+      grammarOKLCH.skyBlue.light.l,
+      grammarOKLCH.skyBlue.light.c,
+      grammarOKLCH.skyBlue.light.h,
+    ),
+    dark: oklchToHex(
+      grammarOKLCH.skyBlue.dark.l,
+      grammarOKLCH.skyBlue.dark.c,
+      grammarOKLCH.skyBlue.dark.h,
+    ),
+    sepia: oklchToHex(
+      grammarOKLCH.skyBlue.sepia.l,
+      grammarOKLCH.skyBlue.sepia.c,
+      grammarOKLCH.skyBlue.sepia.h,
+    ),
+  },
+  periwinkle: {
+    light: oklchToHex(
+      grammarOKLCH.periwinkle.light.l,
+      grammarOKLCH.periwinkle.light.c,
+      grammarOKLCH.periwinkle.light.h,
+    ),
+    dark: oklchToHex(
+      grammarOKLCH.periwinkle.dark.l,
+      grammarOKLCH.periwinkle.dark.c,
+      grammarOKLCH.periwinkle.dark.h,
+    ),
+    sepia: oklchToHex(
+      grammarOKLCH.periwinkle.sepia.l,
+      grammarOKLCH.periwinkle.sepia.c,
+      grammarOKLCH.periwinkle.sepia.h,
+    ),
+  },
+  violet: {
+    light: oklchToHex(
+      grammarOKLCH.violet.light.l,
+      grammarOKLCH.violet.light.c,
+      grammarOKLCH.violet.light.h,
+    ),
+    dark: oklchToHex(
+      grammarOKLCH.violet.dark.l,
+      grammarOKLCH.violet.dark.c,
+      grammarOKLCH.violet.dark.h,
+    ),
+    sepia: oklchToHex(
+      grammarOKLCH.violet.sepia.l,
+      grammarOKLCH.violet.sepia.c,
+      grammarOKLCH.violet.sepia.h,
+    ),
+  },
 } as const;
 
 const autumn = {
@@ -413,9 +713,12 @@ const basePalette = {
   semantic,
   azure,
   violet,
+  indigo,
+  coral,
   pure,
   autumn,
   sepiaPure,
+  grammar,
   charts: {
     ui: {
       grid: sage.light,
@@ -493,9 +796,11 @@ const lightColors: ThemeColors = {
   error: basePalette.semantic.error,
   success: basePalette.semantic.success,
   warning: basePalette.semantic.warning,
-  info: basePalette.forest.lighter, // Lighter sage for future tense - distinct from conjunctions
+  info: basePalette.forest.lighter, // Lighter sage for info - distinct from conjunctions
   accent: basePalette.azure.light,
   violet: basePalette.violet.light,
+  indigo: basePalette.indigo.light,
+  coral: basePalette.coral.light,
 
   // Text hierarchy
   englishText: basePalette.forest.medium,
@@ -566,6 +871,23 @@ const lightColors: ThemeColors = {
   modalIndicator: basePalette.forest.lighter,
   white: basePalette.pure.white,
   black: basePalette.pure.black,
+
+  // Grammar color palette - dedicated educational colors for grammar concepts
+  // Frequency-based assignment with maximum hue separation for roles that appear together
+  grammar: {
+    preposition: basePalette.grammar.amber.light, // 90° - High frequency (15 uses)
+    possessive: basePalette.grammar.sage.light, // 155° - High frequency (13 uses) - 65° from prep
+    particle: basePalette.grammar.lime.light, // 110° - Medium-high frequency (9 uses) - 20° from prep
+    interrogative: basePalette.grammar.seafoam.light, // 185° - Medium frequency (8 uses) - 75° from particle
+    verbConjugation: basePalette.grammar.mintGreen.light, // 170° - Medium frequency (5 uses)
+    negation: basePalette.grammar.olive.light, // 125° - Medium frequency (5 uses)
+    subjectPrefix: basePalette.grammar.skyBlue.light, // 225° - Low frequency (4 uses) - 135° from amber, 25° from conjunction
+    plural: basePalette.grammar.yellowGreen.light, // 140° - Low frequency (4 uses)
+    demonstrative: basePalette.grammar.teal.light, // 200° - Low frequency (4 uses)
+    conjunction: basePalette.grammar.periwinkle.light, // 250° - Low frequency (4 uses) - 95° from sage, 25° from subjectPrefix
+    futureTense: basePalette.grammar.violet.light, // 270° - Very low frequency (2 uses)
+    definiteArticle: basePalette.grammar.golden.light, // 65° - Rare (1 use) - 25° from prep
+  },
 } as const;
 
 const darkColors: ThemeColors = {
@@ -584,9 +906,11 @@ const darkColors: ThemeColors = {
   error: basePalette.semantic.errorDark,
   success: basePalette.semantic.successDark,
   warning: basePalette.semantic.warningDark,
-  info: basePalette.tint.primaryDark, // Lighter sage for future tense - distinct from conjunctions (dark mode)
+  info: basePalette.tint.primaryDark, // Lighter sage for info - distinct from conjunctions (dark mode)
   accent: basePalette.azure.dark,
   violet: basePalette.violet.dark,
+  indigo: basePalette.indigo.dark,
+  coral: basePalette.coral.dark,
 
   // Text hierarchy
   englishText: textHierarchy.dark.subtitle,
@@ -657,6 +981,23 @@ const darkColors: ThemeColors = {
   modalIndicator: basePalette.forest.light,
   white: basePalette.pure.white,
   black: basePalette.pure.black,
+
+  // Grammar color palette - dedicated educational colors for grammar concepts (dark mode)
+  // Same hue assignments as light mode, adjusted lightness for dark background contrast
+  grammar: {
+    preposition: basePalette.grammar.amber.dark, // 90° - High frequency (15 uses)
+    possessive: basePalette.grammar.sage.dark, // 155° - High frequency (13 uses) - 65° from prep
+    particle: basePalette.grammar.lime.dark, // 110° - Medium-high frequency (9 uses) - 20° from prep
+    interrogative: basePalette.grammar.seafoam.dark, // 185° - Medium frequency (8 uses) - 75° from particle
+    verbConjugation: basePalette.grammar.mintGreen.dark, // 170° - Medium frequency (5 uses)
+    negation: basePalette.grammar.olive.dark, // 125° - Medium frequency (5 uses)
+    subjectPrefix: basePalette.grammar.skyBlue.dark, // 225° - Low frequency (4 uses) - 135° from amber, 25° from conjunction
+    plural: basePalette.grammar.yellowGreen.dark, // 140° - Low frequency (4 uses)
+    demonstrative: basePalette.grammar.teal.dark, // 200° - Low frequency (4 uses)
+    conjunction: basePalette.grammar.periwinkle.dark, // 250° - Low frequency (4 uses) - 95° from sage, 25° from subjectPrefix
+    futureTense: basePalette.grammar.violet.dark, // 270° - Very low frequency (2 uses)
+    definiteArticle: basePalette.grammar.golden.dark, // 65° - Rare (1 use) - 25° from prep
+  },
 } as const;
 
 const sepiaColors: ThemeColors = {
@@ -675,9 +1016,11 @@ const sepiaColors: ThemeColors = {
   error: basePalette.autumn.semantic.error,
   success: basePalette.autumn.semantic.success,
   warning: basePalette.autumn.semantic.warning,
-  info: basePalette.autumn.lighter, // Lighter warm tone for future tense - distinct from conjunctions (sepia mode)
+  info: basePalette.autumn.lighter, // Lighter warm tone for info - distinct from conjunctions (sepia mode)
   accent: basePalette.azure.sepia,
   violet: basePalette.violet.sepia,
+  indigo: basePalette.indigo.sepia,
+  coral: basePalette.coral.sepia,
 
   // Text hierarchy
   englishText: basePalette.autumn.medium,
@@ -748,6 +1091,23 @@ const sepiaColors: ThemeColors = {
   modalIndicator: basePalette.autumn.lighter,
   white: basePalette.sepiaPure.white,
   black: basePalette.sepiaPure.black,
+
+  // Grammar color palette - dedicated educational colors for grammar concepts (sepia mode)
+  // Same hue assignments as other modes, adjusted for sepia background warmth
+  grammar: {
+    preposition: basePalette.grammar.amber.sepia, // 90° - High frequency (15 uses)
+    possessive: basePalette.grammar.sage.sepia, // 155° - High frequency (13 uses) - 65° from prep
+    particle: basePalette.grammar.lime.sepia, // 110° - Medium-high frequency (9 uses) - 20° from prep
+    interrogative: basePalette.grammar.seafoam.sepia, // 185° - Medium frequency (8 uses) - 75° from particle
+    verbConjugation: basePalette.grammar.mintGreen.sepia, // 170° - Medium frequency (5 uses)
+    negation: basePalette.grammar.olive.sepia, // 125° - Medium frequency (5 uses)
+    subjectPrefix: basePalette.grammar.skyBlue.sepia, // 225° - Low frequency (4 uses) - 135° from amber, 25° from conjunction
+    plural: basePalette.grammar.yellowGreen.sepia, // 140° - Low frequency (4 uses)
+    demonstrative: basePalette.grammar.teal.sepia, // 200° - Low frequency (4 uses)
+    conjunction: basePalette.grammar.periwinkle.sepia, // 250° - Low frequency (4 uses) - 95° from sage, 25° from subjectPrefix
+    futureTense: basePalette.grammar.violet.sepia, // 270° - Very low frequency (2 uses)
+    definiteArticle: basePalette.grammar.golden.sepia, // 65° - Rare (1 use) - 25° from prep
+  },
 } as const;
 
 export const Colors = { light: lightColors, dark: darkColors, sepia: sepiaColors } as const;

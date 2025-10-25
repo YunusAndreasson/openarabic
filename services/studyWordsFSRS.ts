@@ -169,6 +169,7 @@ export const studyWordsFSRSService = {
         fsrs_state: row.fsrs_state,
         fsrs_last_review: row.fsrs_last_review, // Always exists per database schema
         created_at: row.created_at,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         root: 'root' in row && row.root ? { ...(row.root as any), id: row.root_id } : undefined, // Add missing id field
       }),
     );

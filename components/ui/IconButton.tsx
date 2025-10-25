@@ -64,8 +64,9 @@ interface IconButtonProps {
    * Type of haptic feedback
    * - 'light': Light haptic feedback (play buttons)
    * - 'selection': Selection haptic feedback (delete/action buttons)
+   * - 'none': No haptic feedback
    */
-  hapticType?: 'light' | 'selection';
+  hapticType?: 'light' | 'selection' | 'none';
 
   /**
    * Additional icon style offset (e.g., for play icon alignment)
@@ -99,9 +100,10 @@ export const IconButton: FC<IconButtonProps> = ({
     // Trigger appropriate haptic feedback
     if (hapticType === 'light') {
       lightFeedback();
-    } else {
+    } else if (hapticType === 'selection') {
       selectionFeedback();
     }
+    // 'none' - no haptic feedback
 
     onPress();
   }, [disabled, onPress, hapticType]);

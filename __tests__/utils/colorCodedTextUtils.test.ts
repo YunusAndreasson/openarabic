@@ -1,3 +1,4 @@
+import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis, WordAnalysis } from '@/utils/arabicWordAnalysis';
 import {
@@ -67,6 +68,7 @@ const mockColors: ThemeColors = {
   completionSuccess: '#10B981',
   chartGrid: '#E5E7EB',
   chartThreshold: '#F59E0B',
+  grammar: MOCK_GRAMMAR_COLORS,
 };
 
 describe('colorCodedTextUtils', () => {

@@ -221,17 +221,44 @@ export const generateColorCodedSegments = ({
     }
   }
 
-  // Build color mapping
+  // Build color mapping - includes all theme colors that might be referenced
   const colorMapping: Record<string, string> = {
+    // Core UI colors
     tint: colors.tint,
     primary: colors.primary,
-    secondary: colors.secondary, // Add 'secondary' for conjunctions/subject prefixes
+    secondary: colors.secondary,
+    background: colors.background,
+    text: colors.text,
     secondaryText: colors.secondaryText,
+    border: colors.border,
+
+    // Semantic colors
+    error: colors.error,
+    success: colors.success,
     warning: colors.warning,
+    info: colors.info,
     accent: colors.accent,
     violet: colors.violet,
-    error: colors.error, // Add 'error' for negation
-    text: colors.text,
+    indigo: colors.indigo,
+    coral: colors.coral,
+
+    // Text colors
+    arabicText: colors.arabicText,
+    englishText: colors.englishText,
+
+    // Grammar colors - dedicated educational palette
+    'grammar.preposition': colors.grammar.preposition,
+    'grammar.possessive': colors.grammar.possessive,
+    'grammar.particle': colors.grammar.particle,
+    'grammar.interrogative': colors.grammar.interrogative,
+    'grammar.verbConjugation': colors.grammar.verbConjugation,
+    'grammar.negation': colors.grammar.negation,
+    'grammar.subjectPrefix': colors.grammar.subjectPrefix,
+    'grammar.plural': colors.grammar.plural,
+    'grammar.demonstrative': colors.grammar.demonstrative,
+    'grammar.conjunction': colors.grammar.conjunction,
+    'grammar.futureTense': colors.grammar.futureTense,
+    'grammar.definiteArticle': colors.grammar.definiteArticle,
   };
 
   // Icon to component type mapping

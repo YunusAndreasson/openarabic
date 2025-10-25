@@ -215,7 +215,7 @@ async function queryMultiWordTranslations(): Promise<WordData[]> {
 
   for (const row of rows) {
     const key = `${row.word_form}|${row.english}`;
-    frequencyMap.set(key, (frequencyMap.get(key) || 0) + 1);
+    frequencyMap.set(key, (frequencyMap.get(key) ?? 0) + 1);
   }
 
   // Convert to WordData array

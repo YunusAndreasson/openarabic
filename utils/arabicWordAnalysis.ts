@@ -43,7 +43,7 @@ export interface WordAnalysis {
 }
 
 /**
- * Pre-compiled regex for Arabic diacritical marks
+ * Pre-compiled regex for Arabic diacritical marks (for .replace() operations)
  *
  * Includes:
  * - \u064B-\u065F: Arabic diacritics (fatha, kasra, damma, tanween, sukun, shadda, etc.)
@@ -53,8 +53,16 @@ export interface WordAnalysis {
  * Excludes:
  * - \u06EE-\u06EF: Letterforms (not diacritics)
  * - \u06FA-\u06FF: Extended Arabic letters (not diacritics)
+ *
+ * Note: Uses /g flag for .replace() to remove ALL diacritics.
  */
-const DIACRITIC_REGEX = /[\u064B-\u065F\u0670\u06D6-\u06ED]/g;
+const DIACRITIC_REGEX_GLOBAL = /[\u064B-\u065F\u0670\u06D6-\u06ED]/g;
+
+/**
+ * Non-global version of diacritic regex for .test() operations
+ * The /g flag causes stateful behavior that breaks consecutive .test() calls.
+ */
+const DIACRITIC_REGEX = /[\u064B-\u065F\u0670\u06D6-\u06ED]/;
 
 /**
  * Unicode formatting characters that should be stripped during normalization
@@ -115,6 +123,8 @@ const VALIDATION_CONFIG = {
   WEAK_LETTERS: ['ا', 'و', 'ي'] as const,
 
   /** Single-letter prefixes that require structural validation to avoid false positives */
+  // Note: 'ن' included - with HIDDEN_PREFIX_MIN_LENGTH=3, it prevents false positives (نزه)
+  // while still allowing valid cases (نفسه where ن+ف+س = 3 chars)
   SUBJECT_MARKERS: ['ي', 'ت', 'ن', 'أ'] as const,
 
   /** High-risk suffix patterns that require validation (common as root letters) */
@@ -131,10 +141,11 @@ const VALIDATION_CONFIG = {
 
   /** Minimum validation thresholds for suffix detection */
   SUFFIX_VALIDATION: {
-    MIN_REMAINING_LENGTH: 3,
-    MIN_CONSONANTS: 2,
-    /** Extra length required if remaining starts with subject marker (accounts for prefix + 3-char root) */
-    HIDDEN_PREFIX_MIN_LENGTH: 4,
+    MIN_REMAINING_LENGTH: 2, // Allow 2-letter roots (رب, يد, دم, فم, etc.)
+    MIN_CONSONANTS_3PLUS: 2, // For 3+ char roots, require 2 consonants
+    MIN_CONSONANTS_2CHAR: 1, // For 2-char roots, require only 1 consonant (allows يد, فم)
+    /** Extra length required if remaining starts with subject marker (accounts for prefix + 2-char root, including shadda cases) */
+    HIDDEN_PREFIX_MIN_LENGTH: 3,
   } as const,
 } as const;
 
@@ -262,9 +273,17 @@ function normalizeArabic(text: string): string {
     return cached;
   }
 
+  // Normalize alef wasla (ٱ U+0671) to regular alef (ا U+0627)
+  // Alef wasla is an orthographic variant used for the definite article
+  // and should be treated as regular alef for analysis purposes
+  let normalized = text.replace(/ٱ/g, 'ا');
+
   // Remove Unicode formatting characters (RTL marks, zero-width characters, etc.)
   // then remove diacritics, then trim
-  const normalized = text.replace(UNICODE_FORMAT_REGEX, '').replace(DIACRITIC_REGEX, '').trim();
+  normalized = normalized
+    .replace(UNICODE_FORMAT_REGEX, '')
+    .replace(DIACRITIC_REGEX_GLOBAL, '')
+    .trim();
 
   cacheWithLRUEviction(ARABIC_NORMALIZATION_CACHE, text, normalized);
 
@@ -523,24 +542,40 @@ function findComponent(
         if (!isLikelyPrefixOnly) {
           // Apply validation for words with roots (3+ chars remaining)
 
-          // Additional check: If remaining starts with a SUBJECT MARKER and is exactly 3 chars,
-          // the root is only 2 chars (not enough)
-          // Example: يكره → remove ه → يكر (3 chars starting with ي prefix = 2 char root)
+          // Additional check: If remaining starts with a SUBJECT MARKER, it may have a hidden prefix
+          // Example: يسره → remove ه → يسر (3 chars starting with ي = prefix + 2-char root with potential shadda)
+          // Example: نزه → remove ه → نز (2 chars starting with ن = would be invalid, ن is part of root)
           // NOTE: Only check subject markers (ي، ت، ن، أ) which are rarely root-initial
           // Don't check ل، ب، ك، و، ف which commonly appear in roots (e.g., لذة، بذر، كره)
           const startsWithSubjectMarker = isSubjectMarker(remaining.charAt(0));
-          const hasHiddenPrefix = startsWithSubjectMarker && remaining.length === 3;
 
-          // Minimum length check: need at least 3 characters for legitimate suffix attachment
-          // OR 4+ if it starts with a prefix letter (to account for prefix + 3-char root)
-          // This distinguishes "كتابه" (4 chars → كتاب) from "كره" (3 chars → كر)
+          // Check if English contains possessive pronouns indicating noun + possessive suffix
+          // Example: "يدي" = "my hand" → possessive pronoun "my" indicates noun, not verb
+          const possessivePronouns = ['my', 'your', 'his', 'her', 'its', 'our', 'their'];
+          const englishWords = english.toLowerCase().split(/\s+/);
+          const hasPossessivePronoun = englishWords.some(word => possessivePronouns.includes(word));
+
+          // Hidden prefix check: length must be exactly 3 (prefix + 2-char root) OR 2 (too short, reject)
+          // BUT: If English has possessive pronoun, it's a noun with possessive suffix, not verb
+          const hasHiddenPrefix =
+            startsWithSubjectMarker && remaining.length <= 3 && !hasPossessivePronoun;
+
+          // Minimum length check: need at least 2 characters for legitimate suffix attachment
+          // OR 3+ if it starts with a prefix letter (to account for prefix + 2-char root, including shadda cases like سرّ)
+          // This allows 2-letter roots like رب (Lord), يد (hand), دم (blood), فم (mouth), and shadda-doubled roots
           const minLengthRequired = hasHiddenPrefix
             ? VALIDATION_CONFIG.SUFFIX_VALIDATION.HIDDEN_PREFIX_MIN_LENGTH
             : VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_REMAINING_LENGTH;
 
           const minLengthSatisfied = remaining.length >= minLengthRequired;
-          const hasTwoConsonants =
-            countConsonants(remaining) >= VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS;
+
+          // Smart consonant validation: 2-char roots need only 1 consonant, 3+ need 2
+          // This allows both "رب" (2 consonants) and "يد" (1 consonant) as valid roots
+          const minConsonantsRequired =
+            remaining.length === 2
+              ? VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS_2CHAR
+              : VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS_3PLUS;
+          const hasEnoughConsonants = countConsonants(remaining) >= minConsonantsRequired;
 
           // فعيل pattern detection: words like سفيه، كريه (root ends in ه with ي before it)
           // Pattern: C¹ C² ي ه → likely فعيل adjectival form where ه is root letter
@@ -556,7 +591,7 @@ function findComponent(
           // Only reject as فعيل if it's not a known preposition
           const isFa3eelPattern = potentialFa3eelPattern && !isKnownPreposition;
 
-          if (!minLengthSatisfied || !hasTwoConsonants || isFa3eelPattern) {
+          if (!minLengthSatisfied || !hasEnoughConsonants || isFa3eelPattern) {
             matches = false;
           }
         }
@@ -843,6 +878,12 @@ function areGrammaticallyRelated(
 /**
  * Detect multiple prefixes sequentially from an Arabic word
  * Returns array of detected prefixes with their grammatical roles and the remaining Arabic text
+ *
+ * Validation rules to prevent over-detection:
+ * 1. Only ONE definite article (ال) per word (Arabic grammar rule)
+ * 2. Must leave minimum 2-char root after all prefixes (structural validation)
+ * 3. Track seen roles to prevent grammatically impossible combinations
+ * 4. Prevent double-lam detection (لل = ل + ال assimilation, not two ل prefixes)
  */
 function detectPrefixes(
   normalizedArabic: string,
@@ -851,8 +892,11 @@ function detectPrefixes(
   const detectedPrefixes: AnalyzedComponent[] = [];
   let remaining = normalizedArabic;
 
+  // Track which roles we've seen to prevent duplicates
+  const seenRoles = new Set<GrammaticalRole>();
+
   // Keep trying to find prefixes until none are found
-  // This allows detecting multiple prefixes in sequence (e.g., و + ال + ب)
+  // This allows detecting multiple prefixes in sequence (e.g., و + ال, ب + ال, ف + ال)
   let continueDetection = true;
   let iterationCount = 0;
   const MAX_ITERATIONS = 5; // Safety limit to prevent infinite loops
@@ -865,7 +909,98 @@ function detectPrefixes(
       // Extract role from the matched component
       const role = prefixMatch.component.role || GrammaticalRole.GENERIC;
 
-      // Create analyzed component with role and position
+      const remainingAfterPrefix = remaining.substring(prefixMatch.arabicMatch.length);
+
+      // VALIDATION 1: Prevent duplicate definite article (ال)
+      // Arabic grammar: only ONE definite article per word
+      if (
+        role === GrammaticalRole.DEFINITE_ARTICLE &&
+        seenRoles.has(GrammaticalRole.DEFINITE_ARTICLE)
+      ) {
+        // Already have a definite article - reject this match and stop
+        continueDetection = false;
+        continue;
+      }
+
+      // VALIDATION 2: Prevent consuming entire word as prefixes in specific cases
+      // 2a. Prevent breaking known nouns like "بال" (mind)
+      // Specific case: after detecting "ال", don't detect "ب" if it would leave "ال" as root
+      // This prevents: "البال" → "ال" + "ب" + "ال" (WRONG - ال is article, not a root)
+      // Should be: "البال" → "ال" + "بال" (CORRECT - mind is the root)
+      if (remainingAfterPrefix === 'ال') {
+        // Accepting this prefix would leave just "ال" which is an article, not a root
+        continueDetection = false;
+        continue;
+      }
+
+      // VALIDATION 3: Prevent double-letter detection for assimilation cases
+      // 3a. لله (lil-laahi) - ل + الله with divine names
+      // Example: لِلَّهِ (for God) = ل (for) + الله (Allah with assimilated article)
+      // BUT: ل + ل is VALID for regular nouns like للقلم (for the pen)
+      const hasLamPrefix = detectedPrefixes.some(p => p.arabicMatch === 'ل');
+      const isSingleLamMatch = prefixMatch.arabicMatch === 'ل'; // Not 'ال'
+      const lowerEnglish = english.toLowerCase();
+      const isDivineName =
+        lowerEnglish.includes('god') ||
+        lowerEnglish.includes('allah') ||
+        lowerEnglish.includes('lord') ||
+        remaining.includes('الله'); // Check if الله appears in remaining
+
+      if (hasLamPrefix && isSingleLamMatch && isDivineName) {
+        // Already have a lam prefix, this is another lam, and it's a divine name
+        // Reject this match to keep الله intact
+        continueDetection = false;
+        continue;
+      }
+
+      // 3b. مما (mimma) - من + ما assimilation
+      // Example: مِمَّا (from what) = من (from) + ما (what) with assimilated ن
+      // Pattern: After detecting م (shortened من), don't consume ما as another prefix
+      // This leaves ما (what) as the root/remaining portion
+      const hasMeemPrefix = detectedPrefixes.some(p => p.arabicMatch === 'م');
+      const isMeemMatch = prefixMatch.arabicMatch === 'م';
+      const isMaMatch = prefixMatch.arabicMatch === 'ما';
+
+      // Block م + م (double meem)
+      if (hasMeemPrefix && isMeemMatch) {
+        // Already have a meem prefix, this is another meem - likely من + ما assimilation
+        // Reject to prevent مما being detected as م + م + ا
+        continueDetection = false;
+        continue;
+      }
+
+      // Block م + ما (meem followed by ma)
+      if (hasMeemPrefix && isMaMatch) {
+        // Already detected م, and now trying to detect ما
+        // This is the مما assimilation pattern: leave ما as root, not another prefix
+        continueDetection = false;
+        continue;
+      }
+
+      // VALIDATION 4: Prevent single-letter prepositions AFTER definite article
+      // Arabic grammar: Prepositions come BEFORE ال (e.g., بال = bi-al), not after
+      // Example: "البركة" (al-baraka) = ال + بركة, NOT ال + ب + ركة
+      // Example: "المعاني" (al-ma'ani) = ال + معاني, NOT ال + م + عاني
+      // The ب in بركة is part of the root ب-ر-ك (blessing), not a preposition
+      // The م in معاني is part of the root م-ع-ن (meaning), not a preposition
+      // "of" in English comes from the genitive case (kasra), not from these letters
+      const hasDefiniteArticle = seenRoles.has(GrammaticalRole.DEFINITE_ARTICLE);
+      const isSingleLetterPreposition =
+        role === GrammaticalRole.PREPOSITION &&
+        prefixMatch.arabicMatch.length === 1 &&
+        ['ب', 'ل', 'ك', 'م'].includes(prefixMatch.arabicMatch);
+
+      if (hasDefiniteArticle && isSingleLetterPreposition) {
+        // Already have definite article, and this is a single-letter preposition
+        // Reject this match - prepositions come before ال, not after
+        // Stop detection to preserve the root
+        continueDetection = false;
+        continue;
+      }
+
+      // All validations passed - accept this prefix
+      seenRoles.add(role);
+
       const analyzedPrefix: AnalyzedComponent = {
         ...prefixMatch,
         role,
@@ -875,12 +1010,7 @@ function detectPrefixes(
       detectedPrefixes.push(analyzedPrefix);
 
       // Remove matched prefix from remaining text
-      remaining = remaining.substring(prefixMatch.arabicMatch.length);
-
-      // If remaining text is too short, stop
-      if (remaining.length < 2) {
-        continueDetection = false;
-      }
+      remaining = remainingAfterPrefix;
     } else {
       // No more prefixes found
       continueDetection = false;
@@ -888,6 +1018,75 @@ function detectPrefixes(
   }
 
   return { prefixes: detectedPrefixes, remainingArabic: remaining };
+}
+
+/**
+ * Calculate remaining English words after removing words matched by components
+ * @param originalEnglish - The original English translation
+ * @param components - All detected components (prefixes, suffix, infix, diacritic)
+ * @returns Remaining English words that weren't matched by any component
+ */
+function calculateRemainingEnglish(
+  originalEnglish: string,
+  components: {
+    prefixes: AnalyzedComponent[];
+    suffix?: AnalyzedComponent;
+    infix?: AnalyzedComponent;
+    diacritic?: AnalyzedComponent;
+  },
+): string {
+  // Collect all English matches from all components
+  const matchedWords = new Set<string>();
+
+  // Add prefix matches
+  components.prefixes.forEach(prefix => {
+    prefix.englishMatches.forEach(match => {
+      // Split multi-word matches and add each word
+      match
+        .toLowerCase()
+        .split(/\s+/)
+        .forEach(word => matchedWords.add(word.trim()));
+    });
+  });
+
+  // Add suffix matches
+  if (components.suffix) {
+    components.suffix.englishMatches.forEach(match => {
+      match
+        .toLowerCase()
+        .split(/\s+/)
+        .forEach(word => matchedWords.add(word.trim()));
+    });
+  }
+
+  // Add infix matches
+  if (components.infix) {
+    components.infix.englishMatches.forEach(match => {
+      match
+        .toLowerCase()
+        .split(/\s+/)
+        .forEach(word => matchedWords.add(word.trim()));
+    });
+  }
+
+  // Add diacritic matches
+  if (components.diacritic) {
+    components.diacritic.englishMatches.forEach(match => {
+      match
+        .toLowerCase()
+        .split(/\s+/)
+        .forEach(word => matchedWords.add(word.trim()));
+    });
+  }
+
+  // Remove matched words from original English
+  const words = originalEnglish.toLowerCase().split(/\s+/);
+  const remainingWords = words.filter(word => {
+    const trimmed = word.trim();
+    return trimmed && !matchedWords.has(trimmed);
+  });
+
+  return remainingWords.join(' ');
 }
 
 /**
@@ -938,7 +1137,77 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     english,
   );
 
-  const suffix = findComponent(normalized, english, ARABIC_SUFFIXES, ComponentType.SUFFIX);
+  // CRITICAL: Detect suffix from remaining text AFTER prefixes to avoid false "hidden prefix" detection
+  // Example: "تجده" → prefix "ت" detected → check suffix on "جده" (not full "تجده")
+  // This prevents validation from incorrectly flagging already-detected prefixes as "hidden"
+  let suffix = findComponent(
+    remainingAfterPrefixes,
+    english,
+    ARABIC_SUFFIXES,
+    ComponentType.SUFFIX,
+  );
+
+  // ADDITIONAL VALIDATION: Prevent suffix from matching same English words as prefix
+  // Example: "يكره" (he hates) → prefix ي matches "he", suffix ה shouldn't also match "he"
+  // If prefix exists AND suffix English overlaps with prefix English AND remaining would be < 3 chars → reject suffix
+  if (suffix && detectedPrefixes.length > 0) {
+    const prefixEnglishWords = new Set<string>();
+    detectedPrefixes.forEach(prefix => {
+      prefix.englishMatches.forEach(match => {
+        match
+          .toLowerCase()
+          .split(/\s+/)
+          .forEach(word => prefixEnglishWords.add(word));
+      });
+    });
+
+    const suffixEnglishWords = suffix.englishMatches.flatMap(match =>
+      match.toLowerCase().split(/\s+/),
+    );
+    const hasOverlap = suffixEnglishWords.some(word => prefixEnglishWords.has(word));
+
+    if (hasOverlap) {
+      // Overlap detected - check if remaining is too short
+      const remainingAfterSuffix = remainingAfterPrefixes.substring(
+        0,
+        remainingAfterPrefixes.length - suffix.arabicMatch.length,
+      );
+
+      // If remaining < 3 chars and there's English overlap, this is likely a false positive
+      // Real case: "يكره" → ي(he) + كره, removing ה leaves "كر" (2 chars) - FALSE POSITIVE
+      // Valid case: "يكتبه" → ي + كتبה, removing ה leaves "كتب" (3+ chars) - OK
+      if (remainingAfterSuffix.length < 3) {
+        suffix = undefined; // Reject this suffix as false positive
+      }
+    }
+  }
+
+  // ADDITIONAL VALIDATION: Prevent high-risk suffix matching subject pronouns when no prefix exists
+  // Example: "כרה" (he hates) → NO prefix, "he" is verb conjugation, not suffix ה
+  // Example: "وجه" (he faced) → NO prefix, "he" is verb conjugation, not suffix ה
+  // Valid case: "دمه" (his blood) → NO prefix, but "his" is possessive (valid suffix)
+  // Valid case: "كنا" (we were) → NO prefix, "we" matches suffix נا (valid)
+  // Only apply to high-risk suffixes (ה, ها, ي, כ) that can be confused with root letters
+  if (suffix && detectedPrefixes.length === 0 && isHighRiskSuffix(suffix.arabicMatch)) {
+    const remainingAfterSuffix = remainingAfterPrefixes.substring(
+      0,
+      remainingAfterPrefixes.length - suffix.arabicMatch.length,
+    );
+
+    if (remainingAfterSuffix.length < 3) {
+      // Check if English contains subject pronouns (these belong to verb conjugation, not suffixes)
+      // Only check for pronouns that match the high-risk suffix (he/she/it/i)
+      // Don't check "we" (נא suffix is almost always valid) or "you" (varied usage)
+      const subjectPronouns = ['he', 'she', 'it', 'i'];
+      const englishWords = english.toLowerCase().split(/\s+/);
+      const hasSubjectPronoun = englishWords.some(word => subjectPronouns.includes(word));
+
+      if (hasSubjectPronoun) {
+        // Subject pronoun in English + no prefix + would leave < 3 chars → likely verb conjugation, not suffix
+        suffix = undefined; // Reject this suffix as false positive
+      }
+    }
+  }
 
   // Check for diacritics in the original text (before normalization)
   const diacritic = findDiacritic(arabic, english);
@@ -1011,6 +1280,14 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     }
   }
 
+  // Calculate remaining English by removing matched component words
+  const remainingEnglish = calculateRemainingEnglish(english, {
+    prefixes: finalPrefixes,
+    suffix: resolvedSuffix,
+    infix,
+    diacritic: resolvedDiacritic,
+  });
+
   const result: WordAnalysis = {
     original: { arabic, english },
     prefixes: finalPrefixes, // Array of prefixes
@@ -1019,7 +1296,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     diacritic: resolvedDiacritic,
     hasComponents: !!(finalPrefixes.length > 0 || infix || resolvedSuffix || resolvedDiacritic),
     remainingArabic: remaining.trim(),
-    remainingEnglish: normalizeEnglish(english),
+    remainingEnglish,
     hasBracketInjection,
   };
 
@@ -1410,11 +1687,29 @@ export function computeColoredSegments(
     secondary: string;
     secondaryText: string;
     warning: string;
+    error: string;
+    success: string;
+    info: string;
     accent: string;
     violet: string;
-    error: string;
+    indigo: string;
+    coral: string;
     text: string;
     arabicText: string;
+    grammar: {
+      preposition: string;
+      possessive: string;
+      particle: string;
+      interrogative: string;
+      verbConjugation: string;
+      negation: string;
+      subjectPrefix: string;
+      plural: string;
+      demonstrative: string;
+      conjunction: string;
+      futureTense: string;
+      definiteArticle: string;
+    };
   },
 ): ColoredSegment[] {
   // Apply bracket injection if needed
@@ -1442,11 +1737,27 @@ export function computeColoredSegments(
     secondary: colors.secondary,
     secondaryText: colors.secondaryText,
     warning: colors.warning,
+    error: colors.error,
+    success: colors.success,
+    info: colors.info,
     accent: colors.accent,
     violet: colors.violet,
-    error: colors.error,
+    indigo: colors.indigo,
+    coral: colors.coral,
     text: colors.text,
     arabicText: colors.arabicText,
+    'grammar.preposition': colors.grammar.preposition,
+    'grammar.possessive': colors.grammar.possessive,
+    'grammar.particle': colors.grammar.particle,
+    'grammar.interrogative': colors.grammar.interrogative,
+    'grammar.verbConjugation': colors.grammar.verbConjugation,
+    'grammar.negation': colors.grammar.negation,
+    'grammar.subjectPrefix': colors.grammar.subjectPrefix,
+    'grammar.plural': colors.grammar.plural,
+    'grammar.demonstrative': colors.grammar.demonstrative,
+    'grammar.conjunction': colors.grammar.conjunction,
+    'grammar.futureTense': colors.grammar.futureTense,
+    'grammar.definiteArticle': colors.grammar.definiteArticle,
   };
 
   return formatted.reconstructedArabic.segments.map(segment => ({
