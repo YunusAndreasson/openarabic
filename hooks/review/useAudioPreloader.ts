@@ -20,7 +20,7 @@ interface UseAudioPreloaderReturn {
  */
 export const useAudioPreloader = (
   wordQueue: StudyWord[],
-  isSessionComplete: boolean
+  isSessionComplete: boolean,
 ): UseAudioPreloaderReturn => {
   const [isPreloading, setIsPreloading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -115,11 +115,7 @@ export const useAudioPreloader = (
   // Effect: Preload audio when session starts
   useEffect(() => {
     const shouldPreload =
-      wordQueue &&
-      wordQueue.length > 0 &&
-      !isPreloading &&
-      !isSessionComplete &&
-      !isComplete;
+      wordQueue && wordQueue.length > 0 && !isPreloading && !isSessionComplete && !isComplete;
 
     if (!shouldPreload) return;
 
@@ -135,13 +131,7 @@ export const useAudioPreloader = (
     lastPreloadedWordsRef.current = currentWords;
 
     preloadSessionAudio(wordQueue);
-  }, [
-    wordQueue,
-    isPreloading,
-    isSessionComplete,
-    isComplete,
-    preloadSessionAudio,
-  ]);
+  }, [wordQueue, isPreloading, isSessionComplete, isComplete, preloadSessionAudio]);
 
   // Reset preload flag when session completes
   useEffect(() => {

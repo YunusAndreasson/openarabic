@@ -89,14 +89,14 @@ export const FAQ_DATA: FAQCategoryData[] = [
         id: 'learned-vs-mastered',
         question: 'What is the difference between Learned and Mastered?',
         answer:
-          "Learned words have moved to long-term memory (FSRS State 2) and need regular review to build retention strength. Mastered words have achieved high stability through consistent successful reviews—their intervals extend to months or years between reviews. FSRS tracks retention strength and schedules each review just before forgetting occurs.",
+          'Learned words have moved to long-term memory (FSRS State 2) and need regular review to build retention strength. Mastered words have achieved high stability through consistent successful reviews—their intervals extend to months or years between reviews. FSRS tracks retention strength and schedules each review just before forgetting occurs.',
         category: FAQCategoryEnum.FEATURES,
       },
       {
         id: 'why-review-before-adding',
         question: 'Why should I review before adding more words?',
         answer:
-          "Your brain consolidates limited information at once. Adding too many words without reviewing existing ones overwhelms memory and reduces retention.\n\nComplete Due reviews before adding vocabulary—this strengthens neural connections and prevents relearning forgotten words.\n\nTarget 75% Memory Strength before adding new words. This threshold ensures existing vocabulary is stable before expanding your learning load.",
+          'Your brain consolidates limited information at once. Adding too many words without reviewing existing ones overwhelms memory and reduces retention.\n\nComplete Due reviews before adding vocabulary—this strengthens neural connections and prevents relearning forgotten words.\n\nTarget 75% Memory Strength before adding new words. This threshold ensures existing vocabulary is stable before expanding your learning load.',
         category: FAQCategoryEnum.FEATURES,
       },
       {

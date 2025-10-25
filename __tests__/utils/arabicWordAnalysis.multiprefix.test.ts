@@ -22,7 +22,9 @@ describe('Multi-Prefix Detection (formerly compounds)', () => {
     const analysis = analyzeArabicWord('والدجال', 'and the Dajjal');
     const formatted = formatWordAnalysis(analysis);
 
-    const prefixSections = formatted.sections.filter(s => s.type === 'components' && s.icon === '→');
+    const prefixSections = formatted.sections.filter(
+      s => s.type === 'components' && s.icon === '→',
+    );
     expect(prefixSections).toHaveLength(2);
     expect(prefixSections[0]?.englishPart).toContain('and');
     expect(prefixSections[1]?.englishPart).toContain('the');

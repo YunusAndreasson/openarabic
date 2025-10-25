@@ -8,6 +8,7 @@
 ## 🔍 Problem Statement
 
 The system defines two single-letter infixes that appear frequently in Arabic:
+
 1. **ا (alif)** - Maps to: "with", "mutually", "reciprocally", "together with"
 2. **ي (yaa')** - Maps to: "little", "small", "dear", "beloved"
 
@@ -28,12 +29,14 @@ else if (type === ComponentType.INFIX) {
 ```
 
 **Requirements**:
+
 - Infix must be INTERNAL (not at position 0 or final position)
 - Must appear in the Arabic word ✓
 - Must have matching English word ✓ (via findComponent logic)
 - Must NOT be claimed by prefix/suffix ✓ (via claiming logic)
 
 **What's MISSING**:
+
 - NO validation to distinguish root letters from grammatical infixes
 - NO morphological pattern detection (Forms III/VI for alif, diminutive pattern for yaa')
 
@@ -47,12 +50,14 @@ else if (type === ComponentType.INFIX) {
 **Expected**: Alif is a ROOT LETTER (middle radical و became ا)
 
 **Scenario A: No false positive (English doesn't contain infix words)**
+
 ```
 English: "he said"
 Result: ✓ NO MATCH (English lacks "with", "mutually", etc.)
 ```
 
 **Scenario B: FALSE POSITIVE (English contains "with")**
+
 ```
 English: "he said with authority"
 Analysis:
@@ -74,6 +79,7 @@ Analysis:
 **Expected**: Alif is a ROOT LETTER (both و became ا)
 
 **Scenario: FALSE POSITIVE**
+
 ```
 English: "with the door"
 Analysis:
@@ -83,6 +89,7 @@ Result: ✓ NO MATCH (claiming logic works!)
 ```
 
 **But what if:**
+
 ```
 English: "door together"
 Analysis:
@@ -97,6 +104,7 @@ Result: ❌ POTENTIAL FALSE POSITIVE
 **Expected**: Yaa' is a ROOT LETTER (final radical)
 
 **Scenario: FALSE POSITIVE**
+
 ```
 English: "he saw the little child"
 Analysis:
@@ -109,6 +117,7 @@ Analysis:
 ```
 
 **Edge case: Yaa' in middle**
+
 ```
 Arabic: بيت (house) - Root: ب-ي-ت
 English: "little house"
@@ -142,6 +151,7 @@ This is ambiguous - we can't tell if "with" is from the Form III pattern or from
 ### Likelihood of False Positives
 
 **For Alif (ا) Infix**:
+
 - **Ubiquity**: Alif appears in 60-70% of Arabic words as root letter or vowel
 - **English trigger words**: "with", "mutually", "reciprocally", "together with"
 - **Claiming protection**: "with" often claimed by preposition ب ✓
@@ -151,6 +161,7 @@ This is ambiguous - we can't tell if "with" is from the Form III pattern or from
   - Still problematic for phrases like "he said mutually" (unlikely but possible)
 
 **For Yaa' (ي) Infix**:
+
 - **Ubiquity**: Yaa' appears in 40-50% of Arabic words (root letter, nisba suffix, possessive)
 - **English trigger words**: "little", "small", "dear", "beloved"
 - **Position filtering**: End position rejected (good) ✓
@@ -162,6 +173,7 @@ This is ambiguous - we can't tell if "with" is from the Form III pattern or from
 ### Test Suite Evidence
 
 **Current test coverage**:
+
 - ✅ Form VIII (ت) tested - ~10 tests
 - ✅ Form X (ست) tested - ~5 tests
 - ✅ Form VII (ن) tested - ~3 tests
@@ -175,6 +187,7 @@ This is ambiguous - we can't tell if "with" is from the Form III pattern or from
 ## 🎯 Recommendations
 
 ### Option A: Remove ا and ي Patterns (SAFEST)
+
 ```typescript
 // Remove from ARABIC_INFIXES in arabicWordComponents.ts
 // Lines 218-229
@@ -185,11 +198,13 @@ This is ambiguous - we can't tell if "with" is from the Form III pattern or from
 ```
 
 **Pros**:
+
 - Eliminates all false positives from these patterns
 - Test suite still passes (no tests for these patterns)
 - Other infixes (ت، ن، ست) continue working
 
 **Cons**:
+
 - Loses ability to detect legitimate Form III verbs (قاتل، جادل، حارب)
 - Loses ability to detect diminutive forms (كُلَيْب، هُنَيْدة)
 
@@ -212,10 +227,12 @@ if (pattern === 'ي') {
 ```
 
 **Pros**:
+
 - Could achieve higher accuracy
 - Preserves legitimate Form III/diminutive detection
 
 **Cons**:
+
 - Very complex implementation
 - Requires diacritics (not available in normalized text)
 - Would need complete morphological analyzer
@@ -225,11 +242,13 @@ if (pattern === 'ي') {
 Keep current implementation and accept edge cases.
 
 **Pros**:
+
 - No code changes needed
 - False positive rate is actually low (5-15% for alif, <5% for yaa')
 - Claiming logic prevents most common cases
 
 **Cons**:
+
 - Educational tool should minimize confusion
 - Even 5-15% false positives undermine user trust
 
@@ -238,12 +257,14 @@ Keep current implementation and accept edge cases.
 ## ✅ Recommended Action: **Option A (Remove Patterns)**
 
 **Rationale**:
+
 1. **No test coverage** - Suggests these aren't actively used
 2. **Educational clarity** - False positives more harmful than missing rare patterns
 3. **Complexity trade-off** - Option B too complex for marginal benefit
 4. **User expectation** - System should only color when confident
 
 **Impact Assessment**:
+
 - **Tests**: All 203 passing tests should still pass (none test these patterns)
 - **User experience**: Slightly fewer colorings, but higher accuracy
 - **Maintenance**: Simpler code, fewer edge cases

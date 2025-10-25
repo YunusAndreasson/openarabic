@@ -28,7 +28,8 @@ AnimatedPressable.displayName = 'Animated.Pressable';
 const Animated = {
   View: AnimatedView,
   Pressable: AnimatedPressable,
-  createAnimatedComponent: Component => React.forwardRef((props, ref) => React.createElement(Component, { ...props, ref })),
+  createAnimatedComponent: Component =>
+    React.forwardRef((props, ref) => React.createElement(Component, { ...props, ref })),
 };
 
 module.exports = {

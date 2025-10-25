@@ -10,7 +10,6 @@ import React, { Fragment, memo, useCallback, useMemo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-
 import { THEME_OPTIONS } from '@/components/ThemePicker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -92,7 +91,7 @@ const CardRight = memo(
         style={styles.cardRightChevron}
       />
     );
-  }
+  },
 );
 CardRight.displayName = 'CardRight';
 
@@ -102,22 +101,32 @@ const AccountScreen: FC = () => {
 
   // Get theme with validation
   const rawTheme = useAppSelectorShallow(state => state.theme.theme);
-  const currentTheme = useMemo(() => rawTheme ?? 'dark' as const, [rawTheme]);
+  const currentTheme = useMemo(() => rawTheme ?? ('dark' as const), [rawTheme]);
 
   // Get language preferences from Redux with validation
-  const rawLanguagePreference = useAppSelectorShallow(state => state.settings.displayLanguagePreference);
-  const rawAudioLanguagePreference = useAppSelectorShallow(state => state.settings.audioLanguagePreference);
+  const rawLanguagePreference = useAppSelectorShallow(
+    state => state.settings.displayLanguagePreference,
+  );
+  const rawAudioLanguagePreference = useAppSelectorShallow(
+    state => state.settings.audioLanguagePreference,
+  );
 
   // Validate and provide defaults - ensure values are valid enum values
   const currentLanguage = useMemo(() => {
-    if (rawLanguagePreference === DisplayLanguage.ARABIC_ONLY || rawLanguagePreference === DisplayLanguage.ARABIC_ENGLISH) {
+    if (
+      rawLanguagePreference === DisplayLanguage.ARABIC_ONLY ||
+      rawLanguagePreference === DisplayLanguage.ARABIC_ENGLISH
+    ) {
       return rawLanguagePreference;
     }
     return DisplayLanguage.ARABIC_ENGLISH; // Default
   }, [rawLanguagePreference]);
 
   const currentAudioLanguage = useMemo(() => {
-    if (rawAudioLanguagePreference === AudioLanguage.ARABIC_ONLY || rawAudioLanguagePreference === AudioLanguage.ENGLISH_ARABIC) {
+    if (
+      rawAudioLanguagePreference === AudioLanguage.ARABIC_ONLY ||
+      rawAudioLanguagePreference === AudioLanguage.ENGLISH_ARABIC
+    ) {
       return rawAudioLanguagePreference;
     }
     return AudioLanguage.ENGLISH_ARABIC; // Default
@@ -170,7 +179,7 @@ const AccountScreen: FC = () => {
     () => ({
       color: colors.error,
     }),
-    [colors.error]
+    [colors.error],
   );
 
   // Unified picker handlers
@@ -200,7 +209,7 @@ const AccountScreen: FC = () => {
       }
       // Don't close picker on selection - let user close manually
     },
-    [activePicker, dispatch]
+    [activePicker, dispatch],
   );
 
   // Picker configurations
@@ -282,7 +291,7 @@ const AccountScreen: FC = () => {
         snapPoints: [520],
       },
     }),
-    [currentTheme, currentLanguage, currentAudioLanguage, currentDailyWordLimit]
+    [currentTheme, currentLanguage, currentAudioLanguage, currentDailyWordLimit],
   );
 
   // Get current theme display text
@@ -653,7 +662,11 @@ const AccountScreen: FC = () => {
 
             <Divider />
 
-            <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleResetReadingProgress}>
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleResetReadingProgress}
+            >
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
@@ -739,7 +752,9 @@ const AccountScreen: FC = () => {
           activePicker ? pickerConfigs[activePicker as keyof typeof pickerConfigs].options : []
         }
         selectedValue={
-          activePicker ? pickerConfigs[activePicker as keyof typeof pickerConfigs].selectedValue : undefined
+          activePicker
+            ? pickerConfigs[activePicker as keyof typeof pickerConfigs].selectedValue
+            : undefined
         }
         snapPoints={
           activePicker

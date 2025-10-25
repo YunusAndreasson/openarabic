@@ -6,7 +6,6 @@ import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IslamicCalendarHeader } from '@/components/article';
@@ -90,10 +89,10 @@ export default function IslamicCalendarScreen(): JSX.Element {
                                   color: event.isActive
                                     ? colors.warning
                                     : isUpcoming
-                                    ? colors.success
-                                    : isPast
-                                    ? colors.textTertiary
-                                    : colors.interactiveSecondary,
+                                      ? colors.success
+                                      : isPast
+                                        ? colors.textTertiary
+                                        : colors.interactiveSecondary,
                                 },
                               ]}
                             >
@@ -101,8 +100,8 @@ export default function IslamicCalendarScreen(): JSX.Element {
                                 ? STRINGS.DAY_OF_TEMPLATE.replace(
                                     '{day}',
                                     Math.floor(
-                                      (event.progress ?? 0) * (event.duration ?? 1)
-                                    ).toString()
+                                      (event.progress ?? 0) * (event.duration ?? 1),
+                                    ).toString(),
                                   ).replace('{duration}', String(event.duration))
                                 : formatDaysUntil(event.daysFromNow)}
                             </ThemedText>

@@ -1,4 +1,3 @@
-
 import { useChartColors } from '@charts/ChartColors';
 import {
   calculateDataPointPositions,
@@ -60,7 +59,7 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
 
     const maxRetrievability = Math.max(
       100,
-      Math.max(...retrievabilityData.map(d => d.averageRetrievability))
+      Math.max(...retrievabilityData.map(d => d.averageRetrievability)),
     );
 
     // Create smooth curve using shared path builder utility

@@ -16,7 +16,7 @@
 export const getEnvVar = (
   key: string,
   fallback?: string,
-  warnIfMissing = false
+  warnIfMissing = false,
 ): string | undefined => {
   const value = process.env[key] || fallback;
 
@@ -53,5 +53,5 @@ export const getRequiredEnvVar = (key: string, errorMessage?: string): string =>
  */
 export const hasEnvVar = (key: string): boolean => {
   const value = process.env[key];
-  return Boolean(value && value.trim());
+  return Boolean(value?.trim());
 };

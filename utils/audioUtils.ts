@@ -56,7 +56,7 @@ export async function stopAudioSafely(throwOnError: boolean = false): Promise<vo
 export async function prefetchArticleWithImage(
   articleId: number,
   queryClient: QueryClient,
-  prefetchArticle?: (id: number) => Promise<boolean | void>
+  prefetchArticle?: (id: number) => Promise<boolean | void>,
 ): Promise<void> {
   // Prefetch article data
   queryClient
@@ -103,7 +103,7 @@ export interface WordAudioData {
  */
 export function generateWordAudioTrack(
   word: WordAudioData,
-  trackIdPrefix: string = 'word'
+  trackIdPrefix: string = 'word',
 ): EnhancedAudioTrack | null {
   // Prefer Arabic audio, fallback to English audio if available
   const audioUrl = generateAudioUrl(word.audio_url) || generateAudioUrl(word.audio_url_en);

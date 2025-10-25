@@ -10,7 +10,7 @@ export const vocabularyStatsService = {
         supabase
           .from('user_study_stats')
           .select(
-            'total_words, mastered_words, learning_words, due_words, avg_difficulty, avg_stability'
+            'total_words, mastered_words, learning_words, due_words, avg_difficulty, avg_stability',
           )
           .eq('user_id', userId)
           .single(),
@@ -19,7 +19,7 @@ export const vocabularyStatsService = {
         analyticsEventName: 'User_Stats_Load_Error',
         analyticsProperties: { userId },
         showToast: false, // Silent for stats
-      }
+      },
     );
 
     if (!data) return null;
@@ -42,7 +42,7 @@ export const vocabularyStatsService = {
         toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
         analyticsEventName: 'Mastery_Progress_Load_Error',
         showToast: false,
-      }
+      },
     );
 
     // Note: daily_mastery_stats view may have additional fields not in type definition
@@ -57,8 +57,7 @@ export const vocabularyStatsService = {
         cumulativeWords: Number(d.cumulative_words ?? 0),
         cumulativeMastered: Number(d.cumulative_mastered ?? 0),
         masteryRate: Math.round(
-          (Number(d.cumulative_mastered ?? 0) / Math.max(1, Number(d.cumulative_words ?? 0))) *
-            100
+          (Number(d.cumulative_mastered ?? 0) / Math.max(1, Number(d.cumulative_words ?? 0))) * 100,
         ),
       })) ?? []
     );
@@ -71,7 +70,7 @@ export const vocabularyStatsService = {
         toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
         analyticsEventName: 'Efficiency_Progress_Load_Error',
         showToast: false,
-      }
+      },
     );
 
     // Note: daily_efficiency_stats view may have additional fields not in type definition
@@ -99,7 +98,7 @@ export const vocabularyStatsService = {
         toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
         analyticsEventName: 'Retrievability_Forecast_Load_Error',
         showToast: false,
-      }
+      },
     );
 
     return (
@@ -120,7 +119,7 @@ export const vocabularyStatsService = {
         toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
         analyticsEventName: 'Difficulty_Distribution_Load_Error',
         showToast: false,
-      }
+      },
     );
 
     if (!data) return null;

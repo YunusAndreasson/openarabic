@@ -38,11 +38,11 @@ export default function ReadScreen(): JSX.Element {
   const { user } = useAuth();
 
   const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery(
-    articleQueryOptions.categories()
+    articleQueryOptions.categories(),
   );
 
   const { data: authorsData = [], isLoading: isAuthorsLoading } = useQuery(
-    articleQueryOptions.authors()
+    articleQueryOptions.authors(),
   );
 
   // Get articles for display and filtering
@@ -181,7 +181,7 @@ export default function ReadScreen(): JSX.Element {
         return;
       }
     },
-    [categoriesData, authorsData]
+    [categoriesData, authorsData],
   );
 
   // Optimized header component - memoize individual sections
@@ -194,7 +194,7 @@ export default function ReadScreen(): JSX.Element {
           key="featured"
           articlesData={articlesData}
           refreshKey={refreshKey}
-        />
+        />,
       );
     }
 
@@ -205,7 +205,7 @@ export default function ReadScreen(): JSX.Element {
           items={categoriesWithArticles}
           onSelect={handleSelectFilter}
           filterType="category"
-        />
+        />,
       );
     }
 
@@ -216,7 +216,7 @@ export default function ReadScreen(): JSX.Element {
           items={authorsWithArticles}
           onSelect={handleSelectFilter}
           filterType="author"
-        />
+        />,
       );
     }
 
@@ -225,7 +225,7 @@ export default function ReadScreen(): JSX.Element {
 
   const ListHeaderComponent = useMemo(
     () => <View style={styles.headerContainer}>{headerSections}</View>,
-    [headerSections]
+    [headerSections],
   );
 
   // Static footer component - no props needed
@@ -238,7 +238,7 @@ export default function ReadScreen(): JSX.Element {
       paddingTop: 0,
       paddingBottom: LAYOUT.SCREEN_PADDING.bottomDefault(insets.bottom),
     }),
-    [colors, insets.bottom]
+    [colors, insets.bottom],
   );
 
   const isLoading = isArticlesLoading || isCategoriesLoading || isAuthorsLoading;

@@ -44,7 +44,7 @@ function ProgressBarComponent({
       withTiming(safeProgress, {
         duration: animationDuration,
         easing: TIMING_CONFIG.PROGRESS.easing,
-      })
+      }),
     );
   }, [safeProgress, progressValue, animationDuration]);
 

@@ -287,7 +287,7 @@ class SimpleAudioService {
       immediateStatus?: boolean;
       skipLoadingState?: boolean;
       isRetry?: boolean;
-    } = {}
+    } = {},
   ): Promise<boolean> {
     try {
       // CRITICAL: Ensure audio session is active before EVERY play attempt
@@ -400,7 +400,7 @@ class SimpleAudioService {
    */
   async playPlaylist(
     tracks: EnhancedAudioTrack[],
-    onTrackComplete?: (nextTrack: EnhancedAudioTrack | null) => void
+    onTrackComplete?: (nextTrack: EnhancedAudioTrack | null) => void,
   ): Promise<boolean> {
     if (!tracks.length) {
       return false;
@@ -667,7 +667,8 @@ class SimpleAudioService {
           const isLoading = !isLoaded || isBuffering;
 
           // Add safety checks for invalid values
-          const safeCurrentTime = isNaN(currentTime) || !isFinite(currentTime) ? 0 : Math.max(0, currentTime);
+          const safeCurrentTime =
+            isNaN(currentTime) || !isFinite(currentTime) ? 0 : Math.max(0, currentTime);
           const safeDuration = isNaN(duration) || !isFinite(duration) ? 0 : Math.max(0, duration);
 
           // PLAYLIST SUPPORT: Use native didJustFinish for track completion
@@ -754,7 +755,7 @@ class SimpleAudioService {
           // Log error for debugging
           console.error('Audio event subscription failed:', eventError);
         }
-      }
+      },
     );
   }
 

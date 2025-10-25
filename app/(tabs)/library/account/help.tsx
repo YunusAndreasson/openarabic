@@ -56,30 +56,30 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
           onLayout(item.id, event.nativeEvent.layout.y);
         }
       },
-      [item.id, onLayout]
+      [item.id, onLayout],
     );
 
-  const buttonStyle = useMemo(
-    () => [
-      styles.faqButton,
-      {
-        borderColor: isExpanded ? colors.tint : colors.cardBorder,
-      },
-    ],
-    [colors.tint, colors.cardBorder, isExpanded]
-  );
+    const buttonStyle = useMemo(
+      () => [
+        styles.faqButton,
+        {
+          borderColor: isExpanded ? colors.tint : colors.cardBorder,
+        },
+      ],
+      [colors.tint, colors.cardBorder, isExpanded],
+    );
 
-  const answerContainerStyle = useMemo(
-    () => [
-      styles.faqAnswerContainer,
-      {
-        backgroundColor: colors.background,
-        borderColor: colors.cardBorder,
-        ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation for expanded content
-      },
-    ],
-    [colors.background, colors.cardBorder]
-  );
+    const answerContainerStyle = useMemo(
+      () => [
+        styles.faqAnswerContainer,
+        {
+          backgroundColor: colors.background,
+          borderColor: colors.cardBorder,
+          ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation for expanded content
+        },
+      ],
+      [colors.background, colors.cardBorder],
+    );
 
     return (
       <View style={styles.faqItemContainer} onLayout={handleLayout}>
@@ -109,7 +109,7 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
         )}
       </View>
     );
-  }
+  },
 );
 FAQItemComponent.displayName = 'FAQItemComponent';
 

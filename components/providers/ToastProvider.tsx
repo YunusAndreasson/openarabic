@@ -51,7 +51,7 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
         type,
       });
     },
-    []
+    [],
   );
 
   const showImportantToast = useCallback(
@@ -63,7 +63,7 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
         type: ToastType.IMPORTANT,
       });
     },
-    []
+    [],
   );
 
   const handleClose = useCallback(() => {
@@ -82,7 +82,7 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const contextValue = useMemo(
     () => ({ showToast, showImportantToast }),
-    [showToast, showImportantToast]
+    [showToast, showImportantToast],
   );
 
   return (

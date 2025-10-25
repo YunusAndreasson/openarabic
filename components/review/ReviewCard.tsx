@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
-import type { AnimatedStyle as ReanimatedAnimatedStyle, SharedValue } from 'react-native-reanimated';
+import type {
+  AnimatedStyle as ReanimatedAnimatedStyle,
+  SharedValue,
+} from 'react-native-reanimated';
 import Animated, {
   interpolateColor,
   runOnJS,
@@ -86,7 +89,7 @@ export function ReviewCard({
         runOnJS(setShowHint)(currentValue);
       }
     },
-    [isHesitating]
+    [isHesitating],
   );
 
   // ===== HESITATION TIMER =====
@@ -234,4 +237,3 @@ export function ReviewCard({
 }
 
 ReviewCard.displayName = 'ReviewCard';
-

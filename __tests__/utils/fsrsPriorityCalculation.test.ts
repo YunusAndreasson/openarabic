@@ -188,7 +188,7 @@ describe('FSRS Priority Calculation Logic', () => {
           fsrs_due: new Date(Date.now() - Math.random() * 86400000).toISOString(),
           fsrs_stability: Math.random() * 10 + 1,
           fsrs_difficulty: Math.random() * 5 + 5,
-        })
+        }),
       );
 
       const priorities = largeWordSet.map(calculateWordPriority);

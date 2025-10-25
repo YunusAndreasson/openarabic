@@ -7,7 +7,6 @@ import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
@@ -109,7 +108,11 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
 
   // Apply global filters/sorting state to incoming articles
   // useFilteredArticles now returns BOTH articles AND their progress (single source of truth)
-  const { articles: visibleArticles, progressMap, isProgressLoading } = useFilteredArticles(articles);
+  const {
+    articles: visibleArticles,
+    progressMap,
+    isProgressLoading,
+  } = useFilteredArticles(articles);
 
   // Simple derived state (no need for useMemo on primitives)
   const hasArticles = visibleArticles.length > 0;
@@ -122,7 +125,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
       paddingBottom: LAYOUT.SCREEN_PADDING.bottomDefault(insets.bottom),
       paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     }),
-    [insets.bottom]
+    [insets.bottom],
   );
 
   // Handle drag end for reordering
@@ -153,7 +156,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
 
   // Render item for both FlashList and DraggableFlatList
   const renderItem = (
-    params: { item: Article; index?: number } | RenderItemParams<Article>
+    params: { item: Article; index?: number } | RenderItemParams<Article>,
   ): React.JSX.Element => {
     const { item } = params;
     const progress = progressMap.get(item.id);
@@ -164,7 +167,8 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     const isDragging = 'isActive' in params ? params.isActive : false;
 
     // Determine which metadata to show based on filter context
-    const secondaryText = filterType === 'author' ? capitalizeFirstLetter(item.category.name) : item.author.name;
+    const secondaryText =
+      filterType === 'author' ? capitalizeFirstLetter(item.category.name) : item.author.name;
 
     return (
       <ListenListItemCard
@@ -206,9 +210,10 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   // Show loading state when:
   // 1. Loading articles and no articles cached yet
   // 2. Loading progress data on first render (prevents showing items without indicators)
-  const isInitialProgressLoad = isProgressLoading && visibleArticles.length > 0 && progressMap.size === 0;
+  const isInitialProgressLoad =
+    isProgressLoading && visibleArticles.length > 0 && progressMap.size === 0;
   const shouldShowLoading =
-    loading && (visibleArticles.length === 0 || (articles?.length && !shouldShowEmpty)) ||
+    (loading && (visibleArticles.length === 0 || (articles?.length && !shouldShowEmpty))) ||
     isInitialProgressLoad;
 
   if (shouldShowLoading) {

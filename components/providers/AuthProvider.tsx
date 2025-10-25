@@ -9,4 +9,3 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const auth = useProvideAuth();
   return <AuthContext value={auth}>{children}</AuthContext>;
 };
-

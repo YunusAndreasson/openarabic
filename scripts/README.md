@@ -36,12 +36,14 @@ npx tsx scripts/analyze-missing-colors.ts \
 The script produces two types of output:
 
 **1. Console Output**
+
 - Categorized list of missing rules
 - Frequency analysis
 - Suggested actions for each category
 - Summary statistics
 
 **2. JSON Output** (when using `--output-json`)
+
 - Structured data for programmatic analysis
 - Saved to `scripts/output/missing-colors-{timestamp}.json`
 - Includes metadata, category counts, and full rule details
@@ -49,21 +51,25 @@ The script produces two types of output:
 #### Categories
 
 **Compound Prefix**
+
 - Examples: فَقَالَ (and said), وعن (and from)
 - Pattern: Conjunction + preposition/particle combinations
 - Action: Add missing compound prefix rules
 
 **Missing Preposition**
+
 - Examples: إِلَّا (as nothing but)
 - Pattern: Preposition exists but English variant missing
 - Action: Expand english alternatives in arabicWordComponents.ts
 
 **Multi-Component**
+
 - Examples: Words with both prefix and suffix
 - Pattern: Multiple components not detected together
 - Action: Review findComponent() detection logic
 
 **Novel Pattern**
+
 - Examples: رَأَى (he sees), غُرِسَتْ (is planted)
 - Pattern: New grammatical patterns not in system
 - Action: Investigate and potentially add new rules
@@ -97,6 +103,7 @@ Novel Patterns:         9
 #### Workflow
 
 1. **Run Analysis**
+
    ```bash
    npx tsx scripts/analyze-missing-colors.ts --limit=500 --min-frequency=5 --output-json
    ```

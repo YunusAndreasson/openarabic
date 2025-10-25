@@ -9,6 +9,7 @@
 ## 🎯 Pilot Objective
 
 Validate that migrating from Reanimated's `.value` API to the new `.get()/.set()` API is:
+
 1. Safe and risk-free
 2. Compatible with React Compiler
 3. Maintains animation performance
@@ -19,6 +20,7 @@ Validate that migrating from Reanimated's `.value` API to the new `.get()/.set()
 ## 📋 What Changed
 
 ### Before (`.value` API with `'use no memo'`)
+
 ```typescript
 'use no memo';
 import React, { memo } from 'react';
@@ -43,6 +45,7 @@ const PulsatingLoader = memo<PulsatingLoaderProps>(({ ... }) => {
 ```
 
 ### After (`.get()/.set()` API - React Compiler compatible)
+
 ```typescript
 import React from 'react';
 
@@ -72,18 +75,21 @@ function PulsatingLoader({ ... }: PulsatingLoaderProps) {
 ## ✅ Results
 
 ### Changes Made
+
 - ✅ Removed `'use no memo'` directive
 - ✅ Removed `memo` wrapper
 - ✅ Migrated `scale.value =` → `scale.set()`
 - ✅ Migrated `scale.value` → `scale.get()`
 
 ### Test Results
+
 - ✅ **All 1,061 tests passing**
 - ✅ **No TypeScript errors**
 - ✅ **No runtime errors**
 - ✅ **Zero regressions detected**
 
 ### Migration Complexity
+
 - **Time**: ~5 minutes
 - **Changes**: 2 lines (1 write, 1 read)
 - **Difficulty**: Very Easy
@@ -94,25 +100,33 @@ function PulsatingLoader({ ... }: PulsatingLoaderProps) {
 ## 🔍 Key Findings
 
 ### 1. API Migration is Simple
+
 The `.value` → `.get()/.set()` migration is straightforward:
+
 - **Writes**: `sharedValue.value = X` → `sharedValue.set(X)`
 - **Reads**: `sharedValue.value` → `sharedValue.get()`
 
 ### 2. React Compiler Compatible
+
 After removing `'use no memo'`, the component is now fully compatible with React Compiler:
+
 - No manual memoization needed
 - Compiler optimizes automatically
 - Cleaner, simpler code
 
 ### 3. Animation Performance Maintained
+
 The pulsating animation works identically:
+
 - Same smooth animation
 - Same timing and easing
 - Same visual appearance
 - No performance degradation
 
 ### 4. Tests Confirm Safety
+
 All tests pass without any changes needed:
+
 - No test updates required
 - No mock changes needed
 - Same behavior verified
@@ -121,13 +135,13 @@ All tests pass without any changes needed:
 
 ## 📊 Comparison
 
-| Aspect | `.value` API | `.get()/.set()` API |
-|--------|--------------|---------------------|
-| **Code Clarity** | `scale.value = X` | `scale.set(X)` |
-| **React Compiler** | ❌ Requires `'use no memo'` | ✅ Fully compatible |
-| **Performance** | ✅ Fast | ✅ Fast (identical) |
-| **Migration Effort** | N/A | ✅ Very Easy |
-| **Risk** | N/A | ✅ None observed |
+| Aspect               | `.value` API                | `.get()/.set()` API |
+| -------------------- | --------------------------- | ------------------- |
+| **Code Clarity**     | `scale.value = X`           | `scale.set(X)`      |
+| **React Compiler**   | ❌ Requires `'use no memo'` | ✅ Fully compatible |
+| **Performance**      | ✅ Fast                     | ✅ Fast (identical) |
+| **Migration Effort** | N/A                         | ✅ Very Easy        |
+| **Risk**             | N/A                         | ✅ None observed    |
 
 ---
 
@@ -164,6 +178,7 @@ Migrate in order of increasing complexity:
 ### ⚡ Best Practices
 
 For each file:
+
 1. ✅ Make the migration
 2. ✅ Run tests immediately
 3. ✅ Manual visual testing if it's a visible component
@@ -175,14 +190,17 @@ For each file:
 **CRITICAL**: Different APIs for JS thread vs UI thread!
 
 **UI Thread (worklets, useAnimatedStyle):**
+
 - **Reads**: `sharedValue.get()`
 - **Writes**: `sharedValue.set(X)`
 
 **JS Thread (useEffect, event handlers):**
+
 - **Reads**: `sharedValue.value`
 - **Writes**: `sharedValue.value = X` OR `sharedValue.set(X)` (both work)
 
 Example from useOpacityAnimation:
+
 ```typescript
 // ✅ CORRECT - UI thread worklet
 const animatedStyle = useAnimatedStyle(() => {

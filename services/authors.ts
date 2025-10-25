@@ -17,7 +17,7 @@ export const authorsService = {
       {
         toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
         analyticsEventName: 'Authors_Load_Error',
-      }
+      },
     );
 
     return data ?? [];
@@ -30,17 +30,14 @@ export const authorsService = {
       {
         toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
         analyticsEventName: 'Authors_Load_Error',
-      }
+      },
     );
 
     // Get unique author IDs from articles
-    const articleAuthors = await executeQuery(
-      () => supabase.from('articles').select('author_id'),
-      {
-        toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
-        analyticsEventName: 'Article_Authors_Load_Error',
-      }
-    );
+    const articleAuthors = await executeQuery(() => supabase.from('articles').select('author_id'), {
+      toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
+      analyticsEventName: 'Article_Authors_Load_Error',
+    });
 
     // Filter to only authors that have articles
     const authorIdsWithArticles = new Set(articleAuthors?.map(a => a.author_id) ?? []);
@@ -63,7 +60,7 @@ export const authorsService = {
         toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
         analyticsEventName: 'Authors_By_Category_Load_Error',
         analyticsProperties: { categoryId },
-      }
+      },
     );
 
     // Deduplicate authors by id to avoid repeating the same author per article

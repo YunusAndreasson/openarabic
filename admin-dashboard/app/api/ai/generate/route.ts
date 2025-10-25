@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return NextResponse.json(
         { error: 'Prompt is required and must be a non-empty string' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: errorMessage,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

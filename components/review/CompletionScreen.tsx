@@ -115,7 +115,9 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
 
       {/* Action Button - Final hierarchy level with Link navigation */}
       <Animated.View
-        entering={FadeIn.delay(encouragingMetrics ? 300 : 200).duration(TIMING_CONFIG.FAST.duration)}
+        entering={FadeIn.delay(encouragingMetrics ? 300 : 200).duration(
+          TIMING_CONFIG.FAST.duration,
+        )}
         style={styles.buttonContainer}
       >
         {fromRemember ? (
@@ -228,5 +230,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-

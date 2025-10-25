@@ -8,7 +8,6 @@ import BottomSheet, {
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -92,9 +91,7 @@ export const SettingsPicker = <T,>({
   const isControlledMode = !!onSelect;
 
   // Get current value from Redux (always call hook, but provide fallback)
-  const reduxValue = useAppSelectorShallow(
-    currentValueSelector || (() => undefined as T)
-  );
+  const reduxValue = useAppSelectorShallow(currentValueSelector || (() => undefined as T));
 
   // Get the current value - with proper fallback to first option if undefined
   const rawCurrentValue = isReduxMode ? reduxValue : selectedValue;
@@ -112,7 +109,7 @@ export const SettingsPicker = <T,>({
   // Use optimistic state hook for immediate visual feedback
   const [displayValue, setOptimisticValue] = useOptimisticState(
     currentValue,
-    supportsOptimisticUpdates
+    supportsOptimisticUpdates,
   );
 
   // Show/hide modal based on isVisible prop
@@ -131,7 +128,7 @@ export const SettingsPicker = <T,>({
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   const handleValueSelect = useCallback(
@@ -148,7 +145,7 @@ export const SettingsPicker = <T,>({
 
       lightFeedback();
     },
-    [dispatch, onValueChange, onSelect, setOptimisticValue, isReduxMode, isControlledMode]
+    [dispatch, onValueChange, onSelect, setOptimisticValue, isReduxMode, isControlledMode],
   );
 
   // Use built-in backdrop component
@@ -162,7 +159,7 @@ export const SettingsPicker = <T,>({
         onPress={onClose}
       />
     ),
-    [onClose]
+    [onClose],
   );
 
   const dynamicStyles = useMemo(
@@ -170,7 +167,7 @@ export const SettingsPicker = <T,>({
       bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
       indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
     }),
-    [colors.elevation1, colors.modalIndicator]
+    [colors.elevation1, colors.modalIndicator],
   );
 
   return (

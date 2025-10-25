@@ -22,13 +22,18 @@ interface ChartCanvasProps {
  * across all vocabulary charts including tooltips and data point overlays.
  * Height includes bottom padding to prevent data point clipping.
  */
-export function ChartCanvas({ children, width, height = GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING, dataPoints = [] }: ChartCanvasProps) {
+export function ChartCanvas({
+  children,
+  width,
+  height = GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING,
+  dataPoints = [],
+}: ChartCanvasProps) {
   const graphWidth = useGraphWidth();
   const resolvedWidth = width ?? graphWidth;
   const { tooltip, showTooltip, hideTooltip } = useChartTooltip();
   const colors = useColors();
 
-    // Validate dataPoints to prevent frozen object errors (React Compiler auto-memoizes)
+  // Validate dataPoints to prevent frozen object errors (React Compiler auto-memoizes)
   const validDataPoints = dataPoints.filter(
     point =>
       point &&
@@ -37,7 +42,7 @@ export function ChartCanvas({ children, width, height = GRAPH_HEIGHT_LARGE + CHA
       typeof point.label === 'string' &&
       typeof point.value === 'string' &&
       !Number.isNaN(point.x) &&
-      !Number.isNaN(point.y)
+      !Number.isNaN(point.y),
   );
 
   const canvasStyle = { width: resolvedWidth, height };
@@ -69,7 +74,7 @@ export function ChartCanvas({ children, width, height = GRAPH_HEIGHT_LARGE + CHA
         <Canvas style={canvasStyle}>{children}</Canvas>
 
         {/* Interactive Data Point Overlays */}
-        {validDataPoints.map((point) => {
+        {validDataPoints.map(point => {
           return (
             <DataPointOverlay
               key={`data-point-${Math.round(point.x)}-${Math.round(point.y)}`}

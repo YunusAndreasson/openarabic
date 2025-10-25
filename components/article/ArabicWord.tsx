@@ -1,10 +1,4 @@
-import {
-  memo,
-  useEffect,
-  useRef,
-  type ComponentRef,
-  type RefObject,
-} from 'react';
+import { memo, useEffect, useRef, type ComponentRef, type RefObject } from 'react';
 import type { LayoutRectangle, TextStyle } from 'react-native';
 import { Pressable, StyleSheet } from 'react-native';
 
@@ -49,7 +43,8 @@ const ArabicWordInternal = function ArabicWord({
 
   // Check if word has colored components (not just multiple segments)
   // A word can have components even with only 1 segment if that segment is colored
-  const hasComponents = coloredSegments.length > 0 &&
+  const hasComponents =
+    coloredSegments.length > 0 &&
     coloredSegments.some(seg => seg.color !== colors.text && seg.color !== colors.arabicText);
 
   // Cleanup on unmount to prevent memory leaks
@@ -74,13 +69,7 @@ const ArabicWordInternal = function ArabicWord({
     try {
       wordRef.current.measureInWindow((x, y, width, height) => {
         // Only call tooltip if component is still mounted and coordinates are valid
-        if (
-          isMountedRef.current &&
-          x !== undefined &&
-          y !== undefined &&
-          width > 0 &&
-          height > 0
-        ) {
+        if (isMountedRef.current && x !== undefined && y !== undefined && width > 0 && height > 0) {
           onTooltipOpen(word, { x, y, width, height });
         }
       });
@@ -96,7 +85,10 @@ const ArabicWordInternal = function ArabicWord({
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('📝 Word:', word.word_form, '→', word.english);
     console.log('🆔 IDs:', `word=${word.id} root=${word.root_id} pos=${position}`);
-    console.log('🎨 Components:', `hasComponents=${hasComponents} segments=${coloredSegments.length}`);
+    console.log(
+      '🎨 Components:',
+      `hasComponents=${hasComponents} segments=${coloredSegments.length}`,
+    );
     console.log('📊 Segments:', JSON.stringify(coloredSegments, null, 2));
     console.log('🎯 State:', `selected=${isSelected} highlighted=${isHighlighted}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

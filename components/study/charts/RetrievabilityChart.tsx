@@ -24,11 +24,7 @@ interface RetrievabilityRecord {
 }
 
 export const RetrievabilityChart = memo<RetrievabilityChartProps>(
-  ({
-    studyWords = [],
-    onInfoPress,
-    hideTitle = false,
-  }: RetrievabilityChartProps) => {
+  ({ studyWords = [], onInfoPress, hideTitle = false }: RetrievabilityChartProps) => {
     const graphWidth = useGraphWidth();
     const { retrievabilityData, chartData } = useRetrievabilityChart(studyWords);
 
@@ -64,7 +60,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
     // Stabilize x labels and positions to maximize memoization effectiveness
     const xLabels = useMemo(
       () => retrievabilityData.map(d => formatWeekdayUTC(d.date)),
-      [retrievabilityData]
+      [retrievabilityData],
     );
 
     const xLabelPositions = useMemo(() => {
@@ -94,7 +90,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         emptyStateText=""
       />
     );
-  }
+  },
 );
 
 RetrievabilityChart.displayName = 'RetrievabilityChart';

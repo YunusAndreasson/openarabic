@@ -52,5 +52,4 @@ describe('imageUtils', () => {
       expect(result).toContain('/storage/v1/object/public/audio/test.mp3');
     });
   });
-
 });

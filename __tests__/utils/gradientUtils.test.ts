@@ -101,5 +101,4 @@ describe('gradientUtils', () => {
       expect(result[9]).toBe(backgroundColor);
     });
   });
-
 });

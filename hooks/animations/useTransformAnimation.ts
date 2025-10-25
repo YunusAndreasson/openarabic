@@ -148,7 +148,7 @@ interface TransformAnimationResult {
  * Combines functionality from useScaleAnimation and useSlideAnimation
  */
 export const useTransformAnimation = (
-  options: TransformAnimationOptions = {}
+  options: TransformAnimationOptions = {},
 ): TransformAnimationResult => {
   const {
     type = 'scale',
@@ -167,7 +167,7 @@ export const useTransformAnimation = (
   // For slide animations, calculate the start position based on direction
   const startPosition = useMemo(
     () => (type === 'slide' ? (direction === 'right' ? screenWidth : -screenWidth) : initialValue),
-    [type, direction, initialValue, screenWidth]
+    [type, direction, initialValue, screenWidth],
   );
 
   // Initialize the shared value
@@ -176,7 +176,7 @@ export const useTransformAnimation = (
   // Memoize animation configurations
   const springConfig = useMemo(
     () => ({ damping: damping ?? 15, stiffness: stiffness ?? 120 }),
-    [damping, stiffness]
+    [damping, stiffness],
   );
 
   const timingConfig = useMemo(
@@ -184,7 +184,7 @@ export const useTransformAnimation = (
       duration,
       easing: TIMING_CONFIG.MEDIUM.easing,
     }),
-    [duration]
+    [duration],
   );
 
   // Create optimized entering and exiting animations based on transform type
@@ -215,7 +215,7 @@ export const useTransformAnimation = (
         runOnJS(onComplete)();
       }
     },
-    []
+    [],
   );
 
   // Function to start the animation
@@ -230,17 +230,17 @@ export const useTransformAnimation = (
         if (useSpring) {
           value.set(
             withSpring(targetValue, springConfig, finished =>
-              handleAnimationComplete(finished, onComplete)
-            )
+              handleAnimationComplete(finished, onComplete),
+            ),
           );
         } else {
           value.set(
             withDelay(
               delay,
               withTiming(targetValue, timingConfig, finished =>
-                handleAnimationComplete(finished, onComplete)
-              )
-            )
+                handleAnimationComplete(finished, onComplete),
+              ),
+            ),
           );
         }
       } catch (error) {
@@ -250,7 +250,7 @@ export const useTransformAnimation = (
         }
       }
     },
-    [value, targetValue, delay, useSpring, springConfig, timingConfig, handleAnimationComplete]
+    [value, targetValue, delay, useSpring, springConfig, timingConfig, handleAnimationComplete],
   );
 
   // Function to reverse the animation
@@ -266,14 +266,14 @@ export const useTransformAnimation = (
         if (useSpring) {
           value.set(
             withSpring(reverseTarget, springConfig, finished =>
-              handleAnimationComplete(finished, onComplete)
-            )
+              handleAnimationComplete(finished, onComplete),
+            ),
           );
         } else {
           value.set(
             withTiming(reverseTarget, timingConfig, finished =>
-              handleAnimationComplete(finished, onComplete)
-            )
+              handleAnimationComplete(finished, onComplete),
+            ),
           );
         }
       } catch (error) {
@@ -292,7 +292,7 @@ export const useTransformAnimation = (
       springConfig,
       timingConfig,
       handleAnimationComplete,
-    ]
+    ],
   );
 
   // Directly set the value with animation
@@ -304,14 +304,14 @@ export const useTransformAnimation = (
         if (useSpring) {
           value.set(
             withSpring(newValue, springConfig, finished =>
-              handleAnimationComplete(finished, onComplete)
-            )
+              handleAnimationComplete(finished, onComplete),
+            ),
           );
         } else {
           value.set(
             withTiming(newValue, timingConfig, finished =>
-              handleAnimationComplete(finished, onComplete)
-            )
+              handleAnimationComplete(finished, onComplete),
+            ),
           );
         }
       } catch (error) {
@@ -321,7 +321,7 @@ export const useTransformAnimation = (
         }
       }
     },
-    [value, useSpring, springConfig, timingConfig, handleAnimationComplete]
+    [value, useSpring, springConfig, timingConfig, handleAnimationComplete],
   );
 
   // Reset function
@@ -378,6 +378,6 @@ export const useTransformAnimation = (
       entering,
       exiting,
       type,
-    ]
+    ],
   );
 };

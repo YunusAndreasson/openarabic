@@ -26,7 +26,7 @@ interface UseArticlesByDueWordsResult {
  */
 export function useArticlesByDueWords(
   userId: string | undefined,
-  limit = 10
+  limit = 10,
 ): UseArticlesByDueWordsResult {
   // Fetch due words for the current user with optimized query
   const { data: dueWords = [], isLoading: isLoadingDueWords } = useQuery({

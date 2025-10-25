@@ -62,7 +62,7 @@ interface ParallaxHeaderProps {
  */
 const ParallaxHeaderComparison = (
   prevProps: ParallaxHeaderProps,
-  nextProps: ParallaxHeaderProps
+  nextProps: ParallaxHeaderProps,
 ): boolean => {
   // Quick path comparisons first (most likely to change)
   if (prevProps.article !== nextProps.article) return false;
@@ -97,7 +97,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
       ...STATIC_STYLES.container,
       height: headerHeight,
     }),
-    [headerHeight]
+    [headerHeight],
   );
 
   // Memoize image section style with dynamic height
@@ -106,7 +106,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
       ...STATIC_STYLES.imageSection,
       height: headerHeight,
     }),
-    [headerHeight]
+    [headerHeight],
   );
 
   // Memoize image source - images are guaranteed to be available
@@ -141,7 +141,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
       priority: 'high' as const,
       cachePolicy: 'disk' as const,
     }),
-    [imageSource]
+    [imageSource],
   );
 
   return (
@@ -169,6 +169,5 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
 }, ParallaxHeaderComparison);
 
 ParallaxHeaderInternal.displayName = 'ParallaxHeader';
-
 
 export const ParallaxHeader = ParallaxHeaderInternal;

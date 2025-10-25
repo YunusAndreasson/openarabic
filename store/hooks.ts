@@ -31,7 +31,7 @@ export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
  * ```
  */
 export function useAppSelectorShallow<Selected>(
-  selector: (state: RootState) => Selected
+  selector: (state: RootState) => Selected,
 ): Selected {
   return useAppSelector(selector, shallowEqual);
 }

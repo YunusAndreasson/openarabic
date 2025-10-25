@@ -8,6 +8,7 @@
 ## 🎯 Issue
 
 One test was skipped with `it.skip()`:
+
 - **Test**: "should handle verbal prefix ي for "was" and third person"
 - **Location**: `__tests__/utils/arabicWordAnalysis.test.ts:182`
 - **Reason**: TODO comment said "ي prefix detection needs investigation - currently not matching multi-word translations"
@@ -19,12 +20,14 @@ One test was skipped with `it.skip()`:
 The test was written **before** the root structure validation logic was implemented. The test included cases that should FAIL validation by design:
 
 **Original Test Cases**:
+
 1. `يُكتب` (he was writing) - Remaining after ي: `كتب` (3 chars) ✅ Should PASS
 2. `يُقرأ` (it was read) - Remaining: `قرأ` (3 chars) ✅ Should PASS
 3. `يُفهم` (he was understood) - Remaining: `فهم` (3 chars) ✅ Should PASS
 4. `يُحب` (he loves) - Remaining: `حب` (2 chars) ❌ Should FAIL validation
 
 **Validation Rules** (from `arabicWordAnalysis.ts:466-477`):
+
 ```typescript
 // Subject marker validation requires:
 // - MIN_REMAINING_LENGTH: 3 characters
@@ -48,6 +51,7 @@ The test was written **before** the root structure validation logic was implemen
    - Invalid case (`يُحب`) → Expect rejection by validation
 
 ### Before:
+
 ```typescript
 it.skip('should handle verbal prefix ي for "was" and third person', () => {
   // TODO: ي prefix detection needs investigation - currently not matching multi-word translations
@@ -62,12 +66,13 @@ it.skip('should handle verbal prefix ي for "was" and third person', () => {
 ```
 
 ### After:
+
 ```typescript
 it('should handle verbal prefix ي for "was" and third person', () => {
   // Test cases where remaining word after ي has sufficient length (>=3 chars)
   const validTests = [
     { arabic: 'يُكتب', english: 'he was writing', expectedPrefix: 'ي' }, // ✓ كتب (3 chars)
-    { arabic: 'يُقرأ', english: 'it was read', expectedPrefix: 'ي' },     // ✓ قرأ (3 chars)
+    { arabic: 'يُقرأ', english: 'it was read', expectedPrefix: 'ي' }, // ✓ قرأ (3 chars)
     { arabic: 'يُفهم', english: 'he was understood', expectedPrefix: 'ي' }, // ✓ فهم (3 chars)
   ];
 
@@ -90,12 +95,14 @@ it('should handle verbal prefix ي for "was" and third person', () => {
 ## 📊 Test Results
 
 ### Before Fix
+
 ```
 Test Suites: 6 passed, 6 total
 Tests:       1 skipped, 203 passed, 204 total
 ```
 
 ### After Fix
+
 ```
 Test Suites: 6 passed, 6 total
 Tests:       204 passed, 204 total  ✅
@@ -106,6 +113,7 @@ Tests:       204 passed, 204 total  ✅
 ## ✅ Validation
 
 **Full Validation Suite**:
+
 ```bash
 $ yarn validate
 ✅ TypeScript: No errors
@@ -119,6 +127,7 @@ $ yarn validate
 ## 🎓 Why This Fix Is Correct
 
 ### Linguistic Correctness
+
 The validation logic correctly implements Arabic morphological rules:
 
 1. **Subject markers (ي، ت، أ، ن)** are verb prefixes
@@ -129,7 +138,9 @@ The validation logic correctly implements Arabic morphological rules:
    - Minimum 2 consonants (excluding ا، و، ي)
 
 ### Test Correctness
+
 The updated test:
+
 - ✅ Tests cases that SHOULD pass validation (3+ char roots)
 - ✅ Tests cases that SHOULD fail validation (2 char roots)
 - ✅ Documents the validation rules in comments

@@ -75,7 +75,7 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
         });
       }
     },
-    [clearTimerInterval, onTimerComplete]
+    [clearTimerInterval, onTimerComplete],
   );
 
   // Cancel timer function
@@ -122,7 +122,7 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
       state,
       actions,
     }),
-    [state.isActive, state.remainingTime]
+    [state.isActive, state.remainingTime],
   );
 
   return result;

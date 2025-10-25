@@ -60,7 +60,7 @@ describe('vocabularyStatsService', () => {
 
       expect(supabase.from).toHaveBeenCalledWith('user_study_stats');
       expect(builder.select).toHaveBeenCalledWith(
-        'total_words, mastered_words, learning_words, due_words, avg_difficulty, avg_stability'
+        'total_words, mastered_words, learning_words, due_words, avg_difficulty, avg_stability',
       );
       expect(builder.eq).toHaveBeenCalledWith('user_id', 'u1');
       expect(result).toEqual({
@@ -87,7 +87,7 @@ describe('vocabularyStatsService', () => {
         expect.objectContaining({
           analyticsEventName: 'User_Stats_Load_Error',
           showToast: false,
-        })
+        }),
       );
     });
   });
@@ -95,9 +95,7 @@ describe('vocabularyStatsService', () => {
   describe('getMasteryProgress', () => {
     it('maps data correctly', async () => {
       const response = {
-        data: [
-          { date: '2024-01-01', cumulative_words: 2, cumulative_mastered: 1 },
-        ],
+        data: [{ date: '2024-01-01', cumulative_words: 2, cumulative_mastered: 1 }],
         error: null,
       };
       const builder = createBuilder(response, 'limit');
@@ -131,7 +129,7 @@ describe('vocabularyStatsService', () => {
         expect.objectContaining({
           analyticsEventName: 'Mastery_Progress_Load_Error',
           showToast: false,
-        })
+        }),
       );
     });
   });
@@ -172,7 +170,7 @@ describe('vocabularyStatsService', () => {
         expect.objectContaining({
           analyticsEventName: 'Efficiency_Progress_Load_Error',
           showToast: false,
-        })
+        }),
       );
     });
   });
@@ -223,7 +221,7 @@ describe('vocabularyStatsService', () => {
         expect.objectContaining({
           analyticsEventName: 'Retrievability_Forecast_Load_Error',
           showToast: false,
-        })
+        }),
       );
     });
   });
@@ -273,24 +271,51 @@ describe('vocabularyStatsService', () => {
         expect.objectContaining({
           analyticsEventName: 'Difficulty_Distribution_Load_Error',
           showToast: false,
-        })
+        }),
       );
     });
   });
 
   describe('getAllChartData', () => {
     it('aggregates data from all helpers', async () => {
-      const userStats = { totalWords: 1, masteredWords: 1, learningWords: 0, dueWords: 0, avgDifficulty: 5, avgStability: 0.5 };
-      const mastery = [ { date: 'd', cumulativeWords: 1, cumulativeMastered: 1, masteryRate: 100 } ];
-      const efficiency = [ { date: 'd', wordsReviewed: 1, avgEfficiency: 0.9 } ];
-      const retrieve = [ { forecastDate: 'd', wordCount: 1, avgRetrievabilityPercent: 90, criticalWords: 0, urgentWords: 0 } ];
-      const difficulty = { totalWords: 1, easyWords: 1, mediumWords: 0, hardWords: 0, easyPercentage: 100, mediumPercentage: 0, hardPercentage: 0 };
+      const userStats = {
+        totalWords: 1,
+        masteredWords: 1,
+        learningWords: 0,
+        dueWords: 0,
+        avgDifficulty: 5,
+        avgStability: 0.5,
+      };
+      const mastery = [{ date: 'd', cumulativeWords: 1, cumulativeMastered: 1, masteryRate: 100 }];
+      const efficiency = [{ date: 'd', wordsReviewed: 1, avgEfficiency: 0.9 }];
+      const retrieve = [
+        {
+          forecastDate: 'd',
+          wordCount: 1,
+          avgRetrievabilityPercent: 90,
+          criticalWords: 0,
+          urgentWords: 0,
+        },
+      ];
+      const difficulty = {
+        totalWords: 1,
+        easyWords: 1,
+        mediumWords: 0,
+        hardWords: 0,
+        easyPercentage: 100,
+        mediumPercentage: 0,
+        hardPercentage: 0,
+      };
 
       jest.spyOn(vocabularyStatsService, 'getUserStats').mockResolvedValueOnce(userStats);
       jest.spyOn(vocabularyStatsService, 'getMasteryProgress').mockResolvedValueOnce(mastery);
       jest.spyOn(vocabularyStatsService, 'getEfficiencyProgress').mockResolvedValueOnce(efficiency);
-      jest.spyOn(vocabularyStatsService, 'getRetrievabilityForecast').mockResolvedValueOnce(retrieve);
-      jest.spyOn(vocabularyStatsService, 'getDifficultyDistribution').mockResolvedValueOnce(difficulty);
+      jest
+        .spyOn(vocabularyStatsService, 'getRetrievabilityForecast')
+        .mockResolvedValueOnce(retrieve);
+      jest
+        .spyOn(vocabularyStatsService, 'getDifficultyDistribution')
+        .mockResolvedValueOnce(difficulty);
 
       const result = await vocabularyStatsService.getAllChartData('u1');
 
@@ -310,4 +335,3 @@ describe('vocabularyStatsService', () => {
     });
   });
 });
-

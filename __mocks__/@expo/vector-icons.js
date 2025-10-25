@@ -10,7 +10,7 @@ const createMockIcon = name => {
         ...props,
         testID: `mock-icon-${name}`,
       },
-      props.name || name
+      props.name || name,
     );
 
   MockIcon.displayName = `Mock${name}`;

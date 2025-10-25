@@ -20,7 +20,7 @@ const WORD_SIZING = {
  */
 export const useWordSizing = (
   word: string | undefined,
-  options: WordSizingOptions = {}
+  options: WordSizingOptions = {},
 ): number => {
   const {
     minFontSize = WORD_SIZING.DEFAULT_MIN_FONT_SIZE,

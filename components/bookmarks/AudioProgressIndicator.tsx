@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -114,4 +113,3 @@ const styles = StyleSheet.create({
 });
 
 AudioProgressIndicator.displayName = 'AudioProgressIndicator';
-

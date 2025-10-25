@@ -63,7 +63,7 @@ export function useAppBadge(): void {
         }
       }
     },
-    [canUseBadgeState]
+    [canUseBadgeState],
   );
 
   // Clear badge efficiently

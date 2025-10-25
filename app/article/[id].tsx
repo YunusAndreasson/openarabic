@@ -4,11 +4,7 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { Platform, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import {
-  ArticleSentence,
-  WordDetailsBottomSheet,
-  WordTooltip,
-} from '@/components/article';
+import { ArticleSentence, WordDetailsBottomSheet, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider, useToast } from '@/components/providers';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
@@ -29,7 +25,7 @@ const LOADING_CONTAINER_STYLE = {
 // Custom comparison function for React.memo optimization
 const ArticleScreenContentComparison = (
   prevProps: { id: string },
-  nextProps: { id: string }
+  nextProps: { id: string },
 ): boolean => {
   return prevProps.id === nextProps.id;
 };
@@ -91,7 +87,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         />
       );
     },
-    [sentenceWordsMap, colors, handleWordPress, settings]
+    [sentenceWordsMap, colors, handleWordPress, settings],
   );
 
   const tooltipProps = useMemo(
@@ -103,7 +99,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       onClose: handleCloseTooltip,
       onOpenWordDetails: handleOpenWordDetails,
     }),
-    [activeTooltip, handleCloseTooltip, handleOpenWordDetails]
+    [activeTooltip, handleCloseTooltip, handleOpenWordDetails],
   );
 
   // Only create articleContentProps when article is defined to avoid TypeScript errors

@@ -38,7 +38,7 @@ export const useListenUI = ({ sortedReadingList, editMode }: ListenUIParams) => 
         router.push(getArticleRoute(articleId as ArticleId, article.title));
       }
     },
-    [prefetchArticle, sortedReadingList, editMode]
+    [prefetchArticle, sortedReadingList, editMode],
   );
 
   const handleDragEnd = useCallback(
@@ -47,7 +47,7 @@ export const useListenUI = ({ sortedReadingList, editMode }: ListenUIParams) => 
       const newOrder = data.map(item => item.article_id);
       dispatch(setCustomOrder(newOrder));
     },
-    [dispatch]
+    [dispatch],
   );
 
   return {

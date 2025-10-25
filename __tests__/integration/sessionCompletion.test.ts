@@ -225,8 +225,8 @@ describe('Session Completion Flow - Integration Test', () => {
           review.confidence === 'known'
             ? review.stability * 0.3
             : review.confidence === 'vague'
-            ? review.stability * 0.1
-            : 0;
+              ? review.stability * 0.1
+              : 0;
 
         totalIncrease += increase;
         wordsReviewed++;

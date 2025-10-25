@@ -72,7 +72,7 @@ export const useArabicFontSelector = (): UseArabicFontSelectorResult => {
     (fontName: ArabicFontName) => {
       dispatch(setArabicFont(fontName));
     },
-    [dispatch]
+    [dispatch],
   );
 
   const setFontSize = useCallback(
@@ -80,11 +80,11 @@ export const useArabicFontSelector = (): UseArabicFontSelectorResult => {
       // Ensure size is within bounds
       const clampedSize = Math.max(
         FONT_SIZE_RANGE.MIN,
-        Math.min(FONT_SIZE_RANGE.MAX, Math.round(size))
+        Math.min(FONT_SIZE_RANGE.MAX, Math.round(size)),
       );
       dispatch(setArabicFontSize(clampedSize));
     },
-    [dispatch]
+    [dispatch],
   );
 
   const getSelectedFontOption = useCallback((): ArabicFontOption => {
@@ -110,6 +110,6 @@ export const useArabicFontSelector = (): UseArabicFontSelectorResult => {
       getSelectedFontOption,
       fontSizeRange: FONT_SIZE_RANGE,
     }),
-    [selectedFont, selectedFontSize, selectFont, setFontSize, getSelectedFontOption]
+    [selectedFont, selectedFontSize, selectFont, setFontSize, getSelectedFontOption],
   );
 };

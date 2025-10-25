@@ -10,4 +10,3 @@ export function ListSeparator({ height = LAYOUT.SPACING.MEDIUM }: ListSeparatorP
   const separatorStyle = { height };
   return <View style={separatorStyle} />;
 }
-

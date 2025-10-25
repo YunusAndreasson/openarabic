@@ -100,7 +100,7 @@ describe('updateWordAndReview', () => {
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'update_word_and_review',
-      expect.objectContaining({ p_user_id: 'u1', p_root_id: 5, p_rating: Rating.Good })
+      expect.objectContaining({ p_user_id: 'u1', p_root_id: 5, p_rating: Rating.Good }),
     );
     expect(result).toBe(true);
   });
@@ -124,7 +124,7 @@ describe('getFSRSWords', () => {
     expect(supabase.from).toHaveBeenCalledWith('study_words');
     // Now uses .or() to include both due words and new words (state 0)
     expect(builder.or).toHaveBeenCalledWith(
-      `fsrs_due.lte.${new Date('2024-01-01T00:00:00.000Z').toISOString()},fsrs_state.eq.0`
+      `fsrs_due.lte.${new Date('2024-01-01T00:00:00.000Z').toISOString()},fsrs_state.eq.0`,
     );
   });
 
@@ -170,7 +170,7 @@ describe('getFSRSWords', () => {
     // State 0 (New) words are due for first review, not learning
     // Only states 1, 3, or state 2 with low stability are learning
     expect(builder.or).toHaveBeenCalledWith(
-      'fsrs_state.in.(1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
+      'fsrs_state.in.(1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)',
     );
   });
 
@@ -209,7 +209,7 @@ describe('getFSRSWords', () => {
 
       // Verify that the cooldown filter was applied correctly
       expect(builder.or).toHaveBeenCalledWith(
-        expect.stringContaining('fsrs_last_review.is.null,fsrs_last_review.lt.')
+        expect.stringContaining('fsrs_last_review.is.null,fsrs_last_review.lt.'),
       );
     });
 
@@ -261,10 +261,10 @@ describe('getFSRSWords', () => {
       // Verify both filters were applied
       expect(builder.or).toHaveBeenCalledTimes(2); // Once for due filter, once for cooldown
       expect(builder.or).toHaveBeenCalledWith(
-        expect.stringContaining('fsrs_due.lte.') // Due filter includes new words
+        expect.stringContaining('fsrs_due.lte.'), // Due filter includes new words
       );
       expect(builder.or).toHaveBeenCalledWith(
-        expect.stringContaining('fsrs_last_review.is.null,fsrs_last_review.lt.') // Cooldown filter
+        expect.stringContaining('fsrs_last_review.is.null,fsrs_last_review.lt.'), // Cooldown filter
       );
     });
   });

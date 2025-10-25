@@ -230,7 +230,7 @@ describe('useArticlesByDifficultWords', () => {
   it('returns loading state when words query is loading', async () => {
     // Don't resolve the promise immediately
     mockStrugglingWordsService.getStrugglingWords.mockImplementation(
-      () => new Promise(() => {}) // Never resolves
+      () => new Promise(() => {}), // Never resolves
     );
     mockArticlesService.getArticlesWithWordStats.mockResolvedValue([]);
 

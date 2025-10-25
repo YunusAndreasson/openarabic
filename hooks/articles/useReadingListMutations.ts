@@ -13,7 +13,7 @@ import { handleError } from '@/utils/errorHandling';
 interface ReadingListMutationsResult {
   handleToggleReadingList: (
     articleId: ArticleId | undefined,
-    isInReadingList: boolean
+    isInReadingList: boolean,
   ) => Promise<void>;
   addToReadingListMutation: UseMutationResult<
     void,
@@ -35,7 +35,7 @@ interface ReadingListMutationsResult {
  * @returns Object with reading list mutation functions
  */
 export const useReadingListMutations = (
-  refetchReadingListStatus: () => void
+  refetchReadingListStatus: () => void,
 ): ReadingListMutationsResult => {
   const queryClient = useQueryClient();
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
@@ -52,7 +52,9 @@ export const useReadingListMutations = (
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: READING_LIST_QUERY_KEYS.all(userId) });
-        queryClient.invalidateQueries({ queryKey: AUDIO_QUERY_KEYS.tracks(userId, audioPreference) });
+        queryClient.invalidateQueries({
+          queryKey: AUDIO_QUERY_KEYS.tracks(userId, audioPreference),
+        });
       },
       onError: (error: Error) => {
         // Silently handle errors - no toast notifications for bookmarks actions
@@ -69,7 +71,7 @@ export const useReadingListMutations = (
         }
       },
     }),
-    [queryClient, refetchReadingListStatus, audioPreference]
+    [queryClient, refetchReadingListStatus, audioPreference],
   );
 
   // Memoize mutation options for removing from reading list
@@ -84,14 +86,16 @@ export const useReadingListMutations = (
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: READING_LIST_QUERY_KEYS.all(userId) });
-        queryClient.invalidateQueries({ queryKey: AUDIO_QUERY_KEYS.tracks(userId, audioPreference) });
+        queryClient.invalidateQueries({
+          queryKey: AUDIO_QUERY_KEYS.tracks(userId, audioPreference),
+        });
       },
       onError: (error: Error) => {
         // Silently handle errors - no toast notifications for bookmarks actions
         handleError(error, { showToast: false, captureSentry: false });
       },
     }),
-    [queryClient, refetchReadingListStatus, audioPreference]
+    [queryClient, refetchReadingListStatus, audioPreference],
   );
 
   // Initialize mutations with memoized options
@@ -150,7 +154,7 @@ export const useReadingListMutations = (
         handleError(error as Error);
       }
     },
-    [addToReadingListMutation, removeFromReadingListMutation]
+    [addToReadingListMutation, removeFromReadingListMutation],
   );
 
   return {

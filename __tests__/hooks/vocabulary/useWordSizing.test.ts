@@ -13,7 +13,7 @@ jest.mock('../../../constants/layout', () => {
 describe('useWordSizing', () => {
   it('returns max font size for short words', () => {
     const { result } = renderHook(() =>
-      useWordSizing('سلام', { maxFontSize: 100, minFontSize: 50 })
+      useWordSizing('سلام', { maxFontSize: 100, minFontSize: 50 }),
     );
     expect(result.current).toBe(100);
   });
@@ -26,7 +26,7 @@ describe('useWordSizing', () => {
 
     const longWord = 'a'.repeat(51); // word length > 50 characters
     const { result } = renderHook(() =>
-      useWordSizing(longWord, { maxFontSize: 100, minFontSize: 40 })
+      useWordSizing(longWord, { maxFontSize: 100, minFontSize: 40 }),
     );
     expect(result.current).toBe(40);
 
@@ -36,7 +36,7 @@ describe('useWordSizing', () => {
 
   it('returns max font size when word is undefined', () => {
     const { result } = renderHook(() =>
-      useWordSizing(undefined, { maxFontSize: 120, minFontSize: 60 })
+      useWordSizing(undefined, { maxFontSize: 120, minFontSize: 60 }),
     );
     expect(result.current).toBe(120);
   });
@@ -44,7 +44,7 @@ describe('useWordSizing', () => {
   it('returns max font size for words equal to long word threshold', () => {
     const thresholdWord = 'abcdefghijklmno'; // 15 characters
     const { result } = renderHook(() =>
-      useWordSizing(thresholdWord, { maxFontSize: 100, minFontSize: 50 })
+      useWordSizing(thresholdWord, { maxFontSize: 100, minFontSize: 50 }),
     );
     expect(result.current).toBe(100);
   });
@@ -57,7 +57,7 @@ describe('useWordSizing', () => {
 
     const longWord = 'abcdefghijklmnopqrst'; // 20 characters
     const { result } = renderHook(() =>
-      useWordSizing(longWord, { maxFontSize: 100, minFontSize: 50 })
+      useWordSizing(longWord, { maxFontSize: 100, minFontSize: 50 }),
     );
     expect(result.current).toBe(75);
 

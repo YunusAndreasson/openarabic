@@ -9,7 +9,7 @@ let globalToastHandler: ((message: string, duration?: number, type?: ToastType) 
 
 // Function to set the toast handler (call this in your ToastProvider)
 export const setGlobalToastHandler = (
-  handler: (message: string, duration?: number, type?: ToastType) => void
+  handler: (message: string, duration?: number, type?: ToastType) => void,
 ): void => {
   globalToastHandler = handler;
 };
@@ -52,7 +52,7 @@ const captureInSentry = (
   errorObj: Error,
   sentrySeverity?: string,
   sentryTags?: Record<string, string>,
-  sentryExtra?: Record<string, unknown>
+  sentryExtra?: Record<string, unknown>,
 ): void => {
   try {
     Sentry.withScope(scope => {
@@ -82,7 +82,7 @@ const showToastMessage = (
   errorObj: Error,
   message?: string,
   duration?: number,
-  type?: ToastType
+  type?: ToastType,
 ): void => {
   if (globalToastHandler) {
     const toastMessage = message || errorObj.message;
@@ -93,7 +93,7 @@ const showToastMessage = (
 const trackErrorAnalytics = async (
   errorObj: Error,
   eventName?: string,
-  additionalProperties?: Record<string, boolean | number | string>
+  additionalProperties?: Record<string, boolean | number | string>,
 ): Promise<void> => {
   try {
     const analyticsProperties = {
@@ -117,7 +117,7 @@ const trackErrorAnalytics = async (
  */
 export const handleError = async (
   error: Error | string,
-  options: ErrorOptions = {}
+  options: ErrorOptions = {},
 ): Promise<void> => {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const errorObj = typeof error === 'string' ? new Error(error) : error;
@@ -143,7 +143,7 @@ export const handleError = async (
     // In development, throw the error to make it visible
     if (__DEV__) {
       throw new Error(
-        `Error handling failed: ${errorHandlingError}. Original error: ${errorObj.message}`
+        `Error handling failed: ${errorHandlingError}. Original error: ${errorObj.message}`,
       );
     }
 

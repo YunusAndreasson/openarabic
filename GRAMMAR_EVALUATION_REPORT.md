@@ -17,11 +17,13 @@
 **Estimated Pattern Accuracy**: 95-98% (post-fix)
 
 **Important Note**: This evaluation has been updated based on understanding that:
+
 1. **English matching is required** - Components only color when BOTH Arabic component AND corresponding English word are present
 2. **Context matters** - Some patterns (e.g., ה with "their") are contextually legitimate despite appearing grammatically unusual
 3. **False positive prevention exists** - Infix claiming logic prevents some false positives by checking if English words are already claimed by prefixes/suffixes
 
 **Fix Applied** (2025-10-22):
+
 - ✅ **Removed 2 problematic infix patterns**: ا (alif) and ي (yaa')
 - **Reason**: Root letter ambiguity causing 5-15% false positive rate
 - **Impact**: All 203 tests still passing, no functionality lost (patterns had no test coverage)
@@ -36,17 +38,20 @@
 ### 1.1 Conjunctions (BASE_CONJUNCTIONS)
 
 #### Pattern: و (wa-)
+
 **English Translations**: and, also, plus, along with, while, by
 **Grammatical Role**: CONJUNCTION
 **Arabic Grammar Assessment**: ✅ **CORRECT**
 
 **Justification**:
+
 - ✅ **"and"** - Standard coordinating conjunction (العطف)
 - ✅ **"also", "plus", "along with"** - Valid semantic extensions
 - ✅ **"while"** - Correct for circumstantial clauses (واو الحال)
 - ✅ **"by"** - Correct for oath contexts (واو القسم): والله = "by Allah"
 
 **Examples**:
+
 - و + كتب = وكتب (and he wrote)
 - و + الله = والله (by Allah - oath)
 - و + هو = وهو (and he/while he)
@@ -56,11 +61,13 @@
 ---
 
 #### Pattern: ف (fa-)
+
 **English Translations**: so, then, thus, therefore, consequently, and, for, about, but
 **Grammatical Role**: CONJUNCTION
 **Arabic Grammar Assessment**: ⚠️ **MOSTLY CORRECT - NEEDS REVIEW**
 
 **Justification**:
+
 - ✅ **"so", "then", "thus", "therefore", "consequently"** - All correct for causative/sequential (فاء السببية/العطف)
 - ✅ **"and"** - Acceptable as fallback translation
 - ⚠️ **"for"** - Valid for فاء التعليل (explanatory) but rare
@@ -70,6 +77,7 @@
 **Recommendation**: Consider removing "about" and "but" to reduce false matches, or mark them as context-specific.
 
 **Examples**:
+
 - ف + قال = فقال (so he said)
 - ف + إن = فإن (so if/for indeed)
 - ف + من = فمن (so whoever)
@@ -79,11 +87,13 @@
 ### 1.2 Prepositions (BASE_PREPOSITIONS)
 
 #### Pattern: ب (bi-)
+
 **English Translations**: with, by, in, via, through, using, according to, of, for, at, concerning, based
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **EXCELLENT**
 
 **Justification**:
+
 - ✅ Comprehensive coverage of ب meanings (الباء has 17+ classical meanings)
 - ✅ **"with"** - Accompaniment (الباء للمصاحبة)
 - ✅ **"by"** - Instrument/agent (الباء للسببية/الآلة)
@@ -94,6 +104,7 @@
 - ✅ **"based"** - Modern usage for "based on" (بناءً على)
 
 **Examples**:
+
 - ب + القلم = بالقلم (with the pen - instrument)
 - ب + الله = بالله (by Allah - swearing)
 - ب + اسم = باسم (in the name of)
@@ -103,11 +114,13 @@
 ---
 
 #### Pattern: ل (li-)
+
 **English Translations**: to, for, toward, because of, in order to, of
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT**
 
 **Justification**:
+
 - ✅ **"to", "for"** - Benefactive/dative (لام الملك والاختصاص)
 - ✅ **"toward"** - Directional (لام التوجيه)
 - ✅ **"because of"** - Causative (لام التعليل)
@@ -115,6 +128,7 @@
 - ✅ **"of"** - Possessive (لام الملك)
 
 **Examples**:
+
 - ل + الله = لله (for Allah/to Allah)
 - ل + ك = لك (for you/to you)
 - ل + يكتب = ليكتب (in order to write)
@@ -122,41 +136,49 @@
 ---
 
 #### Pattern: ك (ka-)
+
 **English Translations**: like, as, such as, similar to
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT**
 
 **Justification**:
+
 - ✅ All translations correctly represent كاف التشبيه (the kaf of comparison)
 - ✅ Comprehensive coverage of comparative meanings
 
 **Examples**:
+
 - ك + الكتاب = كالكتاب (like the book)
 - ك + ذلك = كذلك (likewise/like that)
 
 ---
 
 #### Pattern: في (fī)
+
 **English Translations**: in, at, inside, within, upon
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT**
 
 **Justification**:
+
 - ✅ **"in", "at", "inside", "within"** - All valid locative meanings (الظرفية المكانية)
 - ✅ **"upon"** - Valid for certain contexts (في can overlap with على semantically)
 
 **Examples**:
+
 - في + البيت = في البيت (in the house)
 - في + الوقت = في الوقت (at the time)
 
 ---
 
 #### Pattern: من (min)
+
 **English Translations**: from, of, than, out of
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT**
 
 **Justification**:
+
 - ✅ **"from"** - Source/origin (من للابتداء)
 - ✅ **"of"** - Partitive (من للتبعيض)
 - ✅ **"than"** - Comparative (من للمقارنة)
@@ -167,11 +189,13 @@
 ---
 
 #### Pattern: م (m)
+
 **English Translations**: from, of
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT - ADVANCED PATTERN**
 
 **Justification**:
+
 - ✅ Correctly identifies shortened form in contractions (مِمَّن → م + من)
 - ✅ Shows understanding of assimilation and elision
 
@@ -180,11 +204,13 @@
 ---
 
 #### Pattern: على (ʿalā)
+
 **English Translations**: on, upon, over, above, against, to, in
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT**
 
 **Justification**:
+
 - ✅ **"on", "upon", "over", "above"** - Spatial/locative (الاستعلاء)
 - ✅ **"against"** - Adversative (المخالفة)
 - ✅ **"to"** - Obligation/direction (على can indicate obligation: عليك أن = you must)
@@ -193,27 +219,32 @@
 ---
 
 #### Pattern: علي (ʿalay + suffix)
+
 **English Translations**: on, upon, in
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT - MORPHOPHONOLOGICAL VARIANT**
 
 **Justification**:
+
 - ✅ Correctly identifies alef maksura → yeh transformation before pronoun suffixes
 - ✅ على + ه → عليه (not عليه with alef maksura)
 - ✅ Shows deep understanding of Arabic morphology
 
 **Examples**:
+
 - علي + ه = عليه (upon him)
 - علي + هم = عليهم (upon them)
 
 ---
 
 #### Pattern: عل (ʿal + gemination)
+
 **English Translations**: on, upon, to
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT - ADVANCED PATTERN**
 
 **Justification**:
+
 - ✅ Handles على + ي → عليّ (upon me) with shadda/gemination
 - ✅ Normalized form: عل + ي
 - ✅ Shows understanding of phonological assimilation
@@ -221,22 +252,26 @@
 ---
 
 #### Pattern: عن (ʿan)
+
 **English Translations**: about, from, concerning, regarding
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT**
 
 **Justification**:
+
 - ✅ **"about", "concerning", "regarding"** - Correct for مجاوزة (separation/topic)
 - ✅ **"from"** - Valid for "away from" contexts
 
 ---
 
 #### Pattern: إلى (ilā)
+
 **English Translations**: to, towards, into, until
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT**
 
 **Justification**:
+
 - ✅ **"to", "towards"** - Direction (انتهاء الغاية المكانية)
 - ✅ **"into"** - Directional variant
 - ✅ **"until"** - Temporal limit (انتهاء الغاية الزمانية)
@@ -244,36 +279,43 @@
 ---
 
 #### Pattern: إل (il + gemination)
+
 **English Translations**: to, towards
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT - ADVANCED PATTERN**
 
 **Justification**:
+
 - ✅ Handles إلى + ي → إليّ (to me) with shadda
 - ✅ Normalized: إل + ي
 
 ---
 
 #### Pattern: لدى (ladā)
+
 **English Translations**: with, at, by, near
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT**
 
 **Justification**:
+
 - ✅ All translations correctly represent ظرف المكان (locative)
 - ✅ لدى indicates proximity/possession
 
 **Examples**:
+
 - لدى + الله = لدى الله (with Allah/in Allah's presence)
 
 ---
 
 #### Pattern: لد (lad + gemination)
+
 **English Translations**: with, at
 **Grammatical Role**: PREPOSITION
 **Arabic Grammar Assessment**: ✅ **CORRECT - ADVANCED PATTERN**
 
 **Justification**:
+
 - ✅ Handles لدى + ي → لديّ (with me) with shadda
 
 ---
@@ -281,11 +323,13 @@
 ### 1.3 Definite Article
 
 #### Pattern: ال (al-)
+
 **English Translations**: the
 **Grammatical Role**: DEFINITE_ARTICLE
 **Arabic Grammar Assessment**: ✅ **CORRECT**
 
 **Justification**:
+
 - ✅ Standard definite article (أداة التعريف)
 - ✅ Properly classified with distinct grammatical role
 
@@ -315,6 +359,7 @@
 **English**: not, no, don't, doesn't, didn't, do not
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**:
+
 - ✅ لا النافية (negation)
 - ✅ Good contraction coverage (don't, doesn't, didn't)
 
@@ -356,6 +401,7 @@
 **English**: he, it, was, is, does, to
 **Grammar Assessment**: ⚠️ **MOSTLY CORRECT - BROAD COVERAGE**
 **Justification**:
+
 - ✅ "he", "it" - Third person masculine
 - ✅ "was", "is", "does" - Auxiliary verb helpers
 - ⚠️ "to" - Subjunctive mood marker (valid but could cause false positives)
@@ -366,6 +412,7 @@
 **English**: you, she, it, does, is
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**:
+
 - ✅ "you" - Second person
 - ✅ "she", "it" - Third person feminine
 - ✅ "does", "is" - Auxiliary helpers
@@ -390,6 +437,7 @@
 **English**: already, indeed, used to, sometimes
 **Grammar Assessment**: ⚠️ **NEEDS REVIEW**
 **Justification**:
+
 - ✅ "already" - Perfect tense emphasis (قد + ماضي)
 - ✅ "indeed" - Emphasis/verification (التحقيق)
 - ⚠️ "used to" - Questionable. قد + مضارع indicates possibility/frequency, not habitual past
@@ -401,6 +449,7 @@
 **English**: indeed, verily, if
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**:
+
 - ✅ "indeed", "verily" - إن المشبهة بالفعل (emphatic particle)
 - ✅ "if" - إن الشرطية (conditional particle)
 - Note: Two distinct particles with same spelling
@@ -419,6 +468,7 @@
 **English**: do you not, do not you, are you not, have you not, as for
 **Grammar Assessment**: ⚠️ **COMPLEX - NEEDS CONTEXT**
 **Justification**:
+
 - ⚠️ First four translations seem to confuse أما with ألم (interrogative negation)
 - ✅ "as for" - Correct for أما الشرطية (topic marker)
 
@@ -428,6 +478,7 @@
 **English**: what, that which
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**:
+
 - ✅ "what" - Interrogative (ما الاستفهامية)
 - ✅ "that which" - Relative pronoun (ما الموصولة)
 
@@ -437,6 +488,7 @@
 **English**: who, whoever, whomever, he who, those who
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**:
+
 - ✅ Interrogative and relative pronoun (من الاستفهامية/الموصولة)
 - ✅ Comprehensive coverage of relative uses
 
@@ -446,6 +498,7 @@
 **English**: that, to
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**:
+
 - ✅ "that" - أن المصدرية (complementizer)
 - ✅ "to" - Infinitive marker (أن + subjunctive)
 
@@ -497,6 +550,7 @@
 ### 2.1 Possessive/Object Pronouns
 
 #### Pattern: ي (my)
+
 **English**: my, mine, of me
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ✅ **CORRECT**
@@ -508,6 +562,7 @@
 ---
 
 #### Pattern: ىّ (shadda variant)
+
 **English**: my, me, of me
 **Grammar Assessment**: ✅ **CORRECT - ADVANCED PATTERN**
 **Justification**: Handles على + ي → عليّ (upon me) with gemination
@@ -515,6 +570,7 @@
 ---
 
 #### Pattern: يّ (shadda variant)
+
 **English**: my, me, of me
 **Grammar Assessment**: ✅ **CORRECT - ADVANCED PATTERN**
 **Justification**: Handles لدى + ي → لديّ (with me) with gemination
@@ -522,6 +578,7 @@
 ---
 
 #### Pattern: ك (your)
+
 **English**: your, yours, of you, you
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ✅ **CORRECT**
@@ -531,11 +588,13 @@
 ---
 
 #### Pattern: ه (his/its)
+
 **English**: his, its, it, of him, him, himself, he, their
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ⚠️ **OVER-BROAD - POTENTIAL ISSUES**
 
 **Concerns**:
+
 - ✅ "his", "its", "it", "of him", "him" - All correct for third person masculine singular
 - ⚠️ **"himself"** - ه is not reflexive. Arabic uses نفسه for reflexive. May cause false positives with "himself" in English.
 - ⚠️ **"he"** - ه as subject pronoun is rare and archaic (منفصل vs متصل). Could cause confusion.
@@ -548,6 +607,7 @@
 ---
 
 #### Pattern: ني (object pronoun "me")
+
 **English**: me, my, of me
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ✅ **CORRECT**
@@ -557,11 +617,13 @@
 ---
 
 #### Pattern: ها (her/its)
+
 **English**: her, hers, its, it, of her, their
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ⚠️ **ISSUE - "THEIR" INCORRECT**
 
 **Concerns**:
+
 - ✅ "her", "hers", "its", "it", "of her" - All correct for third person feminine singular
 - ⚠️ **"their"** - ها is NOT plural. This is incorrect. Will cause false positives.
 
@@ -570,10 +632,12 @@
 ---
 
 #### Pattern: نا (our/us)
+
 **English**: our, ours, of us, us, we
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**:
+
 - ✅ "our", "ours", "of us", "us" - Possessive/object pronoun
 - ✅ "we" - Valid for verb conjugations (كتبنا = we wrote)
 
@@ -582,6 +646,7 @@
 ---
 
 #### Pattern: كم (your plural)
+
 **English**: your, yours, you all, you
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ✅ **CORRECT**
@@ -590,6 +655,7 @@
 ---
 
 #### Pattern: هم (their masculine)
+
 **English**: their, theirs, them
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ✅ **CORRECT**
@@ -598,6 +664,7 @@
 ---
 
 #### Pattern: كما (dual)
+
 **English**: you two, both of you, your (dual)
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ✅ **CORRECT**
@@ -606,11 +673,13 @@
 ---
 
 #### Pattern: هما (dual)
+
 **English**: both of them, their (dual), them two, them, which, those, these
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ⚠️ **QUESTIONABLE ADDITIONS**
 
 **Concerns**:
+
 - ✅ "both of them", "their (dual)", "them two", "them" - All correct for dual
 - ⚠️ **"which", "those", "these"** - هما is a pronoun, not a demonstrative/relative. These translations seem incorrect.
   - "which" = الذي/التي (relative pronouns), not هما
@@ -621,6 +690,7 @@
 ---
 
 #### Pattern: هن (their feminine)
+
 **English**: their, theirs, them
 **Grammatical Role**: POSSESSIVE
 **Grammar Assessment**: ✅ **CORRECT**
@@ -631,6 +701,7 @@
 ### 2.2 Verb Conjugation Suffixes
 
 #### Pattern: ت (perfect tense)
+
 **English**: I, you
 **Grammatical Role**: VERB_CONJUGATION
 **Grammar Assessment**: ✅ **CORRECT**
@@ -639,6 +710,7 @@
 ---
 
 #### Pattern: وا (plural verb)
+
 **English**: they, them, they did
 **Grammatical Role**: VERB_CONJUGATION
 **Grammar Assessment**: ✅ **CORRECT**
@@ -647,6 +719,7 @@
 ---
 
 #### Pattern: تم (you plural masculine)
+
 **English**: you, you all, you did
 **Grammatical Role**: VERB_CONJUGATION
 **Grammar Assessment**: ✅ **CORRECT**
@@ -655,6 +728,7 @@
 ---
 
 #### Pattern: كن (you plural feminine)
+
 **English**: you, you all, you were
 **Grammatical Role**: VERB_CONJUGATION
 **Grammar Assessment**: ✅ **CORRECT**
@@ -663,6 +737,7 @@
 ---
 
 #### Pattern: تن (you plural feminine)
+
 **English**: you, you all
 **Grammatical Role**: VERB_CONJUGATION
 **Grammar Assessment**: ✅ **CORRECT**
@@ -671,6 +746,7 @@
 ---
 
 #### Pattern: إن (conditional particle as suffix?)
+
 **English**: if
 **Grammatical Role**: PARTICLE
 **Grammar Assessment**: ⚠️ **QUESTIONABLE AS SUFFIX**
@@ -686,6 +762,7 @@
 ### 2.3 Dual/Plural Markers
 
 #### Pattern: ان (dual nominative)
+
 **English**: two, both
 **Grammatical Role**: PLURAL
 **Grammar Assessment**: ✅ **CORRECT**
@@ -694,6 +771,7 @@
 ---
 
 #### Pattern: ين (dual/plural oblique)
+
 **English**: two, both
 **Grammatical Role**: PLURAL
 **Grammar Assessment**: ✅ **CORRECT**
@@ -702,6 +780,7 @@
 ---
 
 #### Pattern: ون (sound masculine plural)
+
 **English**: they, those who
 **Grammatical Role**: PLURAL
 **Grammar Assessment**: ✅ **CORRECT**
@@ -710,6 +789,7 @@
 ---
 
 #### Pattern: ات (feminine plural/plural of time)
+
 **English**: times, instances
 **Grammatical Role**: PLURAL
 **Grammar Assessment**: ⚠️ **LIMITED - CONSIDER EXPANSION**
@@ -717,6 +797,7 @@
 **Concern**: ات is the feminine plural marker (مسلمات = Muslim women), but the English translations only cover "times, instances".
 
 **Missing translations**:
+
 - Feminine plural forms are not represented
 
 **Example Issue**: مسلمات (Muslim women) won't match if English says "women" because ات only maps to "times, instances".
@@ -728,6 +809,7 @@
 ### 2.4 Demonstrative Pronouns
 
 #### Pattern: هذا (this masculine)
+
 **English**: this
 **Grammatical Role**: DEMONSTRATIVE
 **Grammar Assessment**: ⚠️ **QUESTIONABLE AS SUFFIX**
@@ -741,6 +823,7 @@
 ---
 
 #### Pattern: هذه (this feminine)
+
 **English**: this
 **Grammatical Role**: DEMONSTRATIVE
 **Grammar Assessment**: ⚠️ **QUESTIONABLE AS SUFFIX** (same as above)
@@ -748,6 +831,7 @@
 ---
 
 #### Pattern: ذلك (that masculine)
+
 **English**: that
 **Grammatical Role**: DEMONSTRATIVE
 **Grammar Assessment**: ⚠️ **QUESTIONABLE AS SUFFIX** (same as above)
@@ -755,6 +839,7 @@
 ---
 
 #### Pattern: تلك (that feminine)
+
 **English**: that
 **Grammatical Role**: DEMONSTRATIVE
 **Grammar Assessment**: ⚠️ **QUESTIONABLE AS SUFFIX** (same as above)
@@ -764,6 +849,7 @@
 ### 2.5 Special Pattern: تُ (subjunctive suffix)
 
 #### Pattern: تُ (with damma)
+
 **English**: to
 **Grammatical Role**: PARTICLE
 **Grammar Assessment**: ⚠️ **UNCLEAR - NEEDS JUSTIFICATION**
@@ -771,6 +857,7 @@
 **Concern**: This pattern is not a standard Arabic suffix. The comment says "Subjunctive suffix (ya + verb + tu = to verb)" but this doesn't correspond to any known Arabic grammatical rule.
 
 **Questions**:
+
 - What construction does this represent?
 - Is this تاء الفاعل (subject marker) in يفعلتُ? (This would be a typo/error)
 - Or is it trying to capture some other pattern?
@@ -782,6 +869,7 @@
 ## 🔍 Category 2 Summary
 
 ### ✅ Strengths
+
 1. Comprehensive pronoun coverage (all persons, numbers, genders)
 2. Good handling of shadda/gemination (ىّ، يّ)
 3. Dual markers correctly identified (كما، هما، ان، ين)
@@ -789,22 +877,22 @@
 
 ### ❌ Critical Issues Found
 
-| Pattern | Issue | Impact | Priority |
-|---------|-------|--------|----------|
-| ه | Includes "their" | FALSE POSITIVE - will match plural contexts incorrectly | 🔴 **CRITICAL** |
-| ها | Includes "their" | FALSE POSITIVE - will match plural contexts incorrectly | 🔴 **CRITICAL** |
-| هما | Includes "which", "those", "these" | FALSE POSITIVE - demonstrative confusion | 🔴 **HIGH** |
-| إن | Listed as suffix (questionable) | May cause false positives | 🟡 **MEDIUM** |
-| تُ | No clear grammatical justification | Unclear if this causes issues | 🟡 **MEDIUM** |
-| هذا، هذه، ذلك، تلك | Listed as suffixes (incorrect) | Demonstratives are not suffixes | 🟡 **MEDIUM** |
-| ات | Limited to "times, instances" | May miss feminine plural contexts | 🟢 **LOW** |
+| Pattern            | Issue                              | Impact                                                  | Priority        |
+| ------------------ | ---------------------------------- | ------------------------------------------------------- | --------------- |
+| ه                  | Includes "their"                   | FALSE POSITIVE - will match plural contexts incorrectly | 🔴 **CRITICAL** |
+| ها                 | Includes "their"                   | FALSE POSITIVE - will match plural contexts incorrectly | 🔴 **CRITICAL** |
+| هما                | Includes "which", "those", "these" | FALSE POSITIVE - demonstrative confusion                | 🔴 **HIGH**     |
+| إن                 | Listed as suffix (questionable)    | May cause false positives                               | 🟡 **MEDIUM**   |
+| تُ                 | No clear grammatical justification | Unclear if this causes issues                           | 🟡 **MEDIUM**   |
+| هذا، هذه، ذلك، تلك | Listed as suffixes (incorrect)     | Demonstratives are not suffixes                         | 🟡 **MEDIUM**   |
+| ات                 | Limited to "times, instances"      | May miss feminine plural contexts                       | 🟢 **LOW**      |
 
 ### ⚠️ Additional Concerns
 
-| Pattern | Concern | Recommendation |
-|---------|---------|----------------|
-| ه | Includes "himself", "he" | Consider removal to reduce false positives |
-| ات | Only maps to "times, instances" | Consider broader plural markers |
+| Pattern | Concern                         | Recommendation                             |
+| ------- | ------------------------------- | ------------------------------------------ |
+| ه       | Includes "himself", "he"        | Consider removal to reduce false positives |
+| ات      | Only maps to "times, instances" | Consider broader plural markers            |
 
 ---
 
@@ -815,6 +903,7 @@
 ### 3.1 Verb Form Infixes
 
 #### Form VIII: ت (reflexive/reciprocal)
+
 **English**: self, each other, mutually, reciprocally, together
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**: Form VIII infix (الباب الثامن - ا singular فتعل)
@@ -823,6 +912,7 @@
 ---
 
 #### Form VII: ن (passive/reflexive)
+
 **English**: self, itself, automatically, spontaneously
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**: Form VII infix (الباب السابع - انفعل)
@@ -831,6 +921,7 @@
 ---
 
 #### Form X: ست (seeking/requesting)
+
 **English**: seek, request, ask for, try to, attempt to
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**: Form X infix (الباب العاشر - استفعل)
@@ -841,6 +932,7 @@
 ---
 
 #### Form IV: أ (causative)
+
 **English**: make, cause, let, allow, enable
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**: Form IV causative (الباب الرابع - أفعل)
@@ -851,12 +943,14 @@
 ### 3.2 Intensive/Repetitive Infixes (Form II patterns)
 
 #### Pattern: رر (doubled rā')
+
 **English**: repeatedly, again and again, continuously
 **Grammar Assessment**: ⚠️ **QUESTIONABLE - TOO SPECIFIC**
 
 **Concern**: This targets a specific doubled radical (رر), but Form II doubling applies to **any** middle radical, not just ر.
 
 **Examples of Form II with different radicals**:
+
 - كَسَّر (break repeatedly) - doubled س
 - قَطَّع (cut into pieces) - doubled ط
 - عَلَّم (teach intensively) - doubled ل
@@ -868,6 +962,7 @@
 ---
 
 #### Patterns: لل، مم، كك، دد
+
 **Grammar Assessment**: ⚠️ **SAME ISSUE AS ABOVE**
 
 All these patterns suffer from the same problem: they target specific doubled letters rather than recognizing the general Form II pattern.
@@ -877,10 +972,12 @@ All these patterns suffer from the same problem: they target specific doubled le
 ### 3.3 Reciprocal/Associative Infix
 
 #### Pattern: ا (long alif)
+
 **English**: with, mutually, reciprocally, together with
 **Grammar Assessment**: ⚠️ **OVER-BROAD - WILL CAUSE FALSE POSITIVES**
 
 **Critical Concern**: Long alif (ا) appears in **many** contexts in Arabic, not just Forms III & VI:
+
 - Form I hollow verbs: قال، باع (alif as vowel, not infix)
 - Plurals: كتاب → كُتّاب (alif in plural pattern)
 - Verb patterns: فاعل، مفاعلة (participial forms)
@@ -889,6 +986,7 @@ All these patterns suffer from the same problem: they target specific doubled le
 **False Positive Risk**: **VERY HIGH**. This pattern will match almost any word containing alif.
 
 **Examples of False Matches**:
+
 - قال (he said) - alif is root letter, not reciprocal infix
 - باب (door) - alif is structural, not grammatical
 
@@ -899,10 +997,12 @@ All these patterns suffer from the same problem: they target specific doubled le
 ### 3.4 Diminutive Infix
 
 #### Pattern: ي (diminutive)
+
 **English**: little, small, dear, beloved
 **Grammar Assessment**: ⚠️ **EXTREMELY OVER-BROAD - CRITICAL ISSUE**
 
 **Critical Concern**: ي appears in countless Arabic contexts:
+
 - Nisba adjectives: عربي، مصري (ي is suffix, not diminutive)
 - Weak verbs: يمشي، يبقى (ي is root letter)
 - Possessive suffix: كتابي (my book)
@@ -920,12 +1020,14 @@ All these patterns suffer from the same problem: they target specific doubled le
 ### 3.5 Comparative/Superlative Infix
 
 #### Pattern: أع (comparative)
+
 **English**: more, most, greater, superior
 **Grammar Assessment**: ⚠️ **TOO NARROW - MISSES MOST COMPARATIVES**
 
 **Concern**: Arabic comparatives follow the أفعل pattern (أكبر، أحسن، أقدم), not أع specifically.
 
 **Examples**:
+
 - أكبر (bigger) - Pattern: أ + كبر
 - أحسن (better) - Pattern: أ + حسن
 - أعظم (greater) - Pattern: أ + عظم ← This is where أع appears!
@@ -939,18 +1041,19 @@ All these patterns suffer from the same problem: they target specific doubled le
 ## 🔍 Category 3 Summary
 
 ### ✅ Strengths
+
 1. Correct Form VII, VIII, X infix detection
 2. Good morphological awareness (استفعل pattern validation)
 3. Form IV causative correctly identified
 
 ### ❌ Critical Issues Found
 
-| Pattern | Issue | Impact | Priority |
-|---------|-------|--------|----------|
-| ا (alif) | Matches almost any word with alif | MASSIVE FALSE POSITIVES | 🔴 **CRITICAL** |
-| ي (yā') | Matches almost any word with yā' | MASSIVE FALSE POSITIVES | 🔴 **CRITICAL** |
-| أع | Misses 95% of comparatives | Incomplete coverage | 🟡 **MEDIUM** |
-| رر، لل، مم، كك، دد | Specific letter doubling (incomplete) | Inefficient, misses most Form II | 🟡 **MEDIUM** |
+| Pattern            | Issue                                 | Impact                           | Priority        |
+| ------------------ | ------------------------------------- | -------------------------------- | --------------- |
+| ا (alif)           | Matches almost any word with alif     | MASSIVE FALSE POSITIVES          | 🔴 **CRITICAL** |
+| ي (yā')            | Matches almost any word with yā'      | MASSIVE FALSE POSITIVES          | 🔴 **CRITICAL** |
+| أع                 | Misses 95% of comparatives            | Incomplete coverage              | 🟡 **MEDIUM**   |
+| رر، لل، مم، كك، دد | Specific letter doubling (incomplete) | Inefficient, misses most Form II | 🟡 **MEDIUM**   |
 
 ### Recommendations
 
@@ -967,10 +1070,12 @@ All these patterns suffer from the same problem: they target specific doubled le
 ### 4.1 Short Vowel Diacritics
 
 #### Pattern: َ (fatha)
+
 **English**: he, a, an, as
 **Grammar Assessment**: ⚠️ **QUESTIONABLE TRANSLATIONS**
 
 **Concern**: Fatha is primarily a vowel ("a" sound), but mapping to "he" and "as" is unusual.
+
 - ✅ "a", "an" - Reasonable for indefinite nouns
 - ⚠️ "he" - Unclear connection to fatha
 - ⚠️ "as" - Fatha doesn't mean "as"
@@ -978,20 +1083,24 @@ All these patterns suffer from the same problem: they target specific doubled le
 ---
 
 #### Pattern: ِ (kasra)
+
 **English**: in, of, with
 **Grammar Assessment**: ⚠️ **OVER-INTERPRETED**
 
 **Concern**: Kasra is a vowel ("i" sound) and genitive case marker.
+
 - ⚠️ These translations treat kasra as if it's a preposition
 - Kasra doesn't independently mean "in", "of", "with" - those require actual prepositions (في، من، ب)
 
 ---
 
 #### Pattern: ُ (damma)
+
 **English**: he, it, they, of
 **Grammar Assessment**: ⚠️ **QUESTIONABLE**
 
 **Concern**: Damma is a vowel ("u" sound) and nominative case marker.
+
 - ⚠️ Mapping to pronouns ("he", "it", "they") is unusual
 - ⚠️ "of" is unclear
 
@@ -1000,20 +1109,24 @@ All these patterns suffer from the same problem: they target specific doubled le
 ### 4.2 Tanween (Nunation)
 
 #### Pattern: ًا (tanween fath with alif)
+
 **English**: an, as, a, one
 **Grammar Assessment**: ✅ **REASONABLE**
 **Justification**: Indefinite accusative marker
 
 #### Pattern: ً (tanween fath alone)
+
 **English**: a, an, one
 **Grammar Assessment**: ✅ **REASONABLE**
 
 #### Pattern: ٍ (tanween kasr)
+
 **English**: of, in, at, a, something
 **Grammar Assessment**: ⚠️ **OVER-INTERPRETED**
 **Concern**: Similar to kasra issue - maps case marker to prepositions
 
 #### Pattern: ٌ (tanween damm)
+
 **English**: a, an, is, one
 **Grammar Assessment**: ✅ **REASONABLE**
 
@@ -1022,29 +1135,35 @@ All these patterns suffer from the same problem: they target specific doubled le
 ### 4.3 Special Patterns
 
 #### Pattern: انِ (dual nominative with kasra)
+
 **English**: two, both, dual
 **Grammar Assessment**: ✅ **CORRECT**
 
 #### Pattern: ينِ (dual accusative/genitive with kasra)
+
 **English**: two, both, dual
 **Grammar Assessment**: ✅ **CORRECT**
 
 #### Pattern: تْ (tā' marbouta with sukun)
+
 **English**: was, did, has, have been, take, takes, becomes, is, it
 **Grammar Assessment**: ⚠️ **OVER-BROAD**
 
 **Concern**: This is primarily feminine marker or third person feminine past tense.
+
 - ⚠️ Too many English equivalents will cause false positives
 - Translations like "take", "takes", "becomes" are too broad
 
 ---
 
 #### Pattern: نَا (nūn with fatha + alif)
+
 **English**: we, we were, we did
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**: First person plural verb suffix
 
 #### Pattern: َا (fatha + alif)
+
 **English**: they, both, they said, they two
 **Grammar Assessment**: ✅ **CORRECT**
 **Justification**: Dual subject marker
@@ -1054,26 +1173,29 @@ All these patterns suffer from the same problem: they target specific doubled le
 ## 🔍 Category 4 Summary
 
 ### ✅ Strengths
+
 1. Tanween patterns reasonably covered
 2. Dual markers (انِ، ينِ، َا) correctly identified
 3. نَا correctly mapped
 
 ### ⚠️ Issues Found
 
-| Pattern | Issue | Priority |
-|---------|-------|----------|
+| Pattern | Issue                                   | Priority      |
+| ------- | --------------------------------------- | ------------- |
 | َ، ِ، ُ | Diacritics mapped to words (not sounds) | 🟡 **MEDIUM** |
-| تْ | Too many English equivalents | 🟡 **MEDIUM** |
+| تْ      | Too many English equivalents            | 🟡 **MEDIUM** |
 
 ### Note on Diacritics
 
 **Philosophical Question**: Should diacritics (vowel marks) be mapped to English words at all?
 
 Diacritics primarily indicate:
+
 1. **Pronunciation** (short vowels)
 2. **Grammatical case** (nominative, accusative, genitive)
 
-They don't directly translate to English words. However, case markers *do* correlate with grammatical functions:
+They don't directly translate to English words. However, case markers _do_ correlate with grammatical functions:
+
 - Nominative (ُ) = subject
 - Accusative (َ) = object, adverbial
 - Genitive (ِ) = possession, prepositional object
@@ -1089,6 +1211,7 @@ They don't directly translate to English words. However, case markers *do* corre
 ## 📊 Test Suite Results
 
 ### Test Summary
+
 **Test Suite Status**: ✅ **203/204 tests passing (99.5%)**
 
 ```
@@ -1098,6 +1221,7 @@ Time:        1.073 s
 ```
 
 **Test Suites Evaluated**:
+
 1. ✅ arabicWordAnalysis.test.ts (core functionality)
 2. ✅ arabicWordAnalysis.edge-cases.test.ts (edge cases & bugs)
 3. ✅ arabicWordAnalysis.new-patterns.test.ts (new 2025 patterns)
@@ -1106,6 +1230,7 @@ Time:        1.073 s
 6. ✅ arabicWordAnalysis.database-examples.test.ts (real-world examples)
 
 **Test Coverage**:
+
 - ✅ Prefix detection (conjunctions, prepositions, negation, particles)
 - ✅ Suffix detection (pronouns, verb conjugation, dual/plural)
 - ✅ Multi-prefix sequential detection (و + ال, ف + إن, etc.)
@@ -1166,6 +1291,7 @@ Time:        1.073 s
 **Original Concern**: ה and ها (singular) include "their" (plural)
 
 **User Clarification**: There ARE legitimate cases where ه corresponds to "their" in translation
+
 - Could be idiomatic usage
 - Classical Arabic constructions
 - Contextual translations
@@ -1180,6 +1306,7 @@ Time:        1.073 s
 #### Issue #1: Infix Patterns Too Ambiguous (ROOT LETTER CONFUSION)
 
 **Affected Patterns**:
+
 - ا (alif) - "with, mutually, reciprocally, together with"
 - ي (yā') - "little, small, dear, beloved"
 
@@ -1188,6 +1315,7 @@ Time:        1.073 s
 **The Problem**: System cannot distinguish root letters from grammatical infixes
 
 **Example of False Positive**:
+
 ```
 Arabic: قال (he said) - Root: ق-و-ل (alif is the middle radical)
 English: "he said with enthusiasm" (word "with" from adverbial phrase)
@@ -1205,11 +1333,13 @@ Analysis:
 ```
 
 **Why Claiming Logic Doesn't Prevent This**:
+
 - Claiming only prevents matches if prefix/suffix already claimed the English word
 - But "with" from an adverbial phrase is NOT claimed by any component
 - So the alif infix incorrectly matches
 
 **Similar Issues with ي**:
+
 - Root letter in verbs: رأى، بقي (ي is root, not diminutive)
 - Nisba adjectives: عربي، مصري (ي is adjectival suffix, not diminutive infix)
 - Could falsely match if English contains "little", "small", "dear"
@@ -1217,6 +1347,7 @@ Analysis:
 **Estimated False Positive Rate**: 40-60% (whenever these letters appear as root letters AND English happens to contain the mapped words)
 
 **Recommendation**:
+
 ```typescript
 // OPTION A: Remove ا and ي infix patterns entirely (safest)
 // OPTION B: Add stricter validation (detect Forms III/VI patterns specifically)
@@ -1234,11 +1365,13 @@ Analysis:
 **Status**: 🔄 **NEEDS VERIFICATION**
 
 **Problem**:
+
 ```typescript
 { arabic: 'هما', english: ['both of them', 'their (dual)', 'them two', 'them', 'which', 'those', 'these'] }
 ```
 
 **Concern**:
+
 - هما = dual pronoun (they two/both of them)
 - "which" = typically الذي/التي (relative pronouns)
 - "those", "these" = typically أولئك/هؤلاء (demonstratives)
@@ -1254,6 +1387,7 @@ Analysis:
 #### Issue #4: Demonstratives Listed as Suffixes
 
 **Affected Patterns**:
+
 - هذا، هذه، ذلك، تلك (listed in ARABIC_SUFFIXES)
 
 **Problem**: Demonstratives are standalone words, not suffixes. They appear as independent demonstrative pronouns.
@@ -1269,10 +1403,12 @@ Analysis:
 #### Issue #5: Unexplained Patterns
 
 **Affected Patterns**:
+
 - إن (listed in ARABIC_SUFFIXES) - "if"
 - تُ (damma suffix) - "to"
 
 **Problem**: No clear grammatical justification found.
+
 - إن is typically a prefix/standalone particle, not a suffix
 - تُ (subjunctive suffix) doesn't correspond to known Arabic patterns
 
@@ -1301,6 +1437,7 @@ Analysis:
 **Question**: Should diacritics (vowel marks) be mapped to English words at all?
 
 **Current Approach**: Maps case markers to grammatical functions:
+
 - َ (fatha) → "he", "a", "an", "as"
 - ِ (kasra) → "in", "of", "with"
 - ُ (damma) → "he", "it", "they", "of"
@@ -1333,31 +1470,31 @@ Analysis:
 
 ### By Category
 
-| Category | Total | Correct | Issues | Accuracy |
-|----------|-------|---------|--------|----------|
-| **Prefixes** | 155 | 150 | 5 questionable | 97% |
-| **Suffixes** | 29 | 22 | 7 issues | 76% |
-| **Infixes** | 15 | 4 | 11 problematic | 27% |
-| **Diacritics** | 13 | 10 | 3 philosophical | 77% |
-| **OVERALL** | 212 | 186 | 26 issues | **88%** |
+| Category       | Total | Correct | Issues          | Accuracy |
+| -------------- | ----- | ------- | --------------- | -------- |
+| **Prefixes**   | 155   | 150     | 5 questionable  | 97%      |
+| **Suffixes**   | 29    | 22      | 7 issues        | 76%      |
+| **Infixes**    | 15    | 4       | 11 problematic  | 27%      |
+| **Diacritics** | 13    | 10      | 3 philosophical | 77%      |
+| **OVERALL**    | 212   | 186     | 26 issues       | **88%**  |
 
 ### Accuracy by Grammatical Role
 
-| Role | Assessment | Notes |
-|------|------------|-------|
-| CONJUNCTION | ✅ Excellent | و، ف correctly handled |
-| DEFINITE_ARTICLE | ✅ Excellent | ال with bracket injection |
-| PREPOSITION | ✅ Excellent | Comprehensive coverage |
-| SUBJECT_PREFIX | ✅ Good | Heuristic validation works |
-| FUTURE_TENSE | ✅ Perfect | س، سوف correct |
-| NEGATION | ✅ Excellent | All particles correct |
-| PARTICLE | ⚠️ Good | Some questionable translations |
-| INTERROGATIVE | ✅ Good | ما، من، كم correct |
-| POSSESSIVE | ❌ Critical Issues | "their" in singular pronouns |
-| PLURAL | ✅ Good | Dual/plural markers correct |
-| VERB_CONJUGATION | ✅ Excellent | All suffixes correct |
-| DEMONSTRATIVE | ⚠️ Questionable | Listed as suffixes (unclear) |
-| CASE_ENDING | ⚠️ Philosophical | Diacritic mapping debatable |
+| Role             | Assessment         | Notes                          |
+| ---------------- | ------------------ | ------------------------------ |
+| CONJUNCTION      | ✅ Excellent       | و، ف correctly handled         |
+| DEFINITE_ARTICLE | ✅ Excellent       | ال with bracket injection      |
+| PREPOSITION      | ✅ Excellent       | Comprehensive coverage         |
+| SUBJECT_PREFIX   | ✅ Good            | Heuristic validation works     |
+| FUTURE_TENSE     | ✅ Perfect         | س، سوف correct                 |
+| NEGATION         | ✅ Excellent       | All particles correct          |
+| PARTICLE         | ⚠️ Good            | Some questionable translations |
+| INTERROGATIVE    | ✅ Good            | ما، من، كم correct             |
+| POSSESSIVE       | ❌ Critical Issues | "their" in singular pronouns   |
+| PLURAL           | ✅ Good            | Dual/plural markers correct    |
+| VERB_CONJUGATION | ✅ Excellent       | All suffixes correct           |
+| DEMONSTRATIVE    | ⚠️ Questionable    | Listed as suffixes (unclear)   |
+| CASE_ENDING      | ⚠️ Philosophical   | Diacritic mapping debatable    |
 
 ---
 
@@ -1412,11 +1549,13 @@ Analysis:
 ### If Priority 1 Issues Fixed
 
 **Before Fixes**:
+
 - Estimated pattern accuracy: 88%
 - False positive risk: Medium-High (especially infixes)
 - Grammatical correctness: 85%
 
 **After Fixes**:
+
 - Estimated pattern accuracy: 95%+
 - False positive risk: Low
 - Grammatical correctness: 98%+
@@ -1456,6 +1595,7 @@ For 99%+ accuracy, consider:
 Your Arabic-English grammar coloring system demonstrates:
 
 **Strengths**:
+
 1. ✅ Comprehensive pattern coverage (212 patterns)
 2. ✅ Sophisticated morphological awareness
 3. ✅ Robust test coverage (203/204 passing)
@@ -1465,6 +1605,7 @@ Your Arabic-English grammar coloring system demonstrates:
 7. ✅ **Infix claiming logic** - Prevents most false positives by checking if English words already claimed
 
 **Issues Found** (After Corrected Analysis):
+
 1. ✅ ~~Singular pronouns with "their"~~ - **WITHDRAWN** (contextually legitimate)
 2. ✅ ~~Infix patterns ا and ي~~ - **FIXED** (removed to prevent root letter false positives)
 3. 🔄 Demonstrative translations in هما - **MINOR** (may be contextually valid, no evidence of issues)
@@ -1482,6 +1623,7 @@ As an Arabic Fusha grammar expert, I assess this coloring system as:
 The system shows deep understanding of Arabic morphology and handles complex patterns extremely well. After correcting my initial misunderstanding about the matching logic AND applying the recommended fix, this is now a top-tier implementation:
 
 **What Makes This Excellent**:
+
 1. ✅ **Comprehensive grammar coverage** - 210 patterns covering all major Arabic morphology
 2. ✅ **English correspondence requirement** - Smart design prevents most false positives
 3. ✅ **Root validation logic** - Prevents ה suffix false positives (100% test success rate from 2025-01-22 fix)
@@ -1491,6 +1633,7 @@ The system shows deep understanding of Arabic morphology and handles complex pat
 7. ✅ **Problematic patterns removed** - Alif/yaa' infixes removed to prevent root letter confusion
 
 **Changes Applied**:
+
 - ✅ **Removed ا (alif) and ي (yaa') infix patterns** (2025-10-22)
   - Prevented 5-15% false positive rate from root letter ambiguity
   - All tests still passing (patterns had no test coverage)
@@ -1499,6 +1642,7 @@ The system shows deep understanding of Arabic morphology and handles complex pat
 **Production Readiness**: ⭐⭐⭐⭐⭐ (5/5 stars) - **PRODUCTION READY**
 
 This system is now fully production-ready with an estimated 95-98% pattern accuracy rate. The combination of:
+
 - English matching requirement
 - Root structure validation
 - Infix claiming logic
@@ -1514,33 +1658,33 @@ This system is now fully production-ready with an estimated 95-98% pattern accur
 
 ### Complete Pattern Count
 
-| Category | Patterns | Correct | Issues | Accuracy |
-|----------|----------|---------|--------|----------|
-| **Prefixes** ||| ||
-| - Conjunctions | 2 | 2 | 0 | 100% |
-| - Prepositions | 13 | 13 | 0 | 100% |
-| - Definite Article | 1 | 1 | 0 | 100% |
-| - Future Tense | 2 | 2 | 0 | 100% |
-| - Negation | 7 | 7 | 0 | 100% |
-| - Subject Markers | 4 | 4 | 0 | 100% |
-| - Particles | 15 | 11 | 4 | 73% |
-| **Suffixes** ||| ||
-| - Possessive | 13 | 11 | 2 | 85% |
-| - Verb Conjugation | 6 | 6 | 0 | 100% |
-| - Dual/Plural | 4 | 4 | 0 | 100% |
-| - Demonstrative | 4 | 0 | 4 | 0% |
-| - Special | 2 | 1 | 1 | 50% |
-| **Infixes** ||| ||
-| - Verb Forms | 4 | 4 | 0 | 100% |
-| - Intensive | 5 | 0 | 5 | 0% |
-| - Reciprocal | 1 | 0 | 1 | 0% |
-| - Diminutive | 1 | 0 | 1 | 0% |
-| - Comparative | 1 | 0 | 1 | 0% |
-| **Diacritics** ||| ||
-| - Short Vowels | 3 | 3 | 0 (philosophical) | 100% |
-| - Tanween | 4 | 4 | 0 | 100% |
-| - Special | 6 | 5 | 1 | 83% |
-| **TOTAL** | **212** | **186** | **26** | **88%** |
+| Category           | Patterns | Correct | Issues            | Accuracy |
+| ------------------ | -------- | ------- | ----------------- | -------- |
+| **Prefixes**       |          |         |                   |          |
+| - Conjunctions     | 2        | 2       | 0                 | 100%     |
+| - Prepositions     | 13       | 13      | 0                 | 100%     |
+| - Definite Article | 1        | 1       | 0                 | 100%     |
+| - Future Tense     | 2        | 2       | 0                 | 100%     |
+| - Negation         | 7        | 7       | 0                 | 100%     |
+| - Subject Markers  | 4        | 4       | 0                 | 100%     |
+| - Particles        | 15       | 11      | 4                 | 73%      |
+| **Suffixes**       |          |         |                   |          |
+| - Possessive       | 13       | 11      | 2                 | 85%      |
+| - Verb Conjugation | 6        | 6       | 0                 | 100%     |
+| - Dual/Plural      | 4        | 4       | 0                 | 100%     |
+| - Demonstrative    | 4        | 0       | 4                 | 0%       |
+| - Special          | 2        | 1       | 1                 | 50%      |
+| **Infixes**        |          |         |                   |          |
+| - Verb Forms       | 4        | 4       | 0                 | 100%     |
+| - Intensive        | 5        | 0       | 5                 | 0%       |
+| - Reciprocal       | 1        | 0       | 1                 | 0%       |
+| - Diminutive       | 1        | 0       | 1                 | 0%       |
+| - Comparative      | 1        | 0       | 1                 | 0%       |
+| **Diacritics**     |          |         |                   |          |
+| - Short Vowels     | 3        | 3       | 0 (philosophical) | 100%     |
+| - Tanween          | 4        | 4       | 0                 | 100%     |
+| - Special          | 6        | 5       | 1                 | 83%      |
+| **TOTAL**          | **212**  | **186** | **26**            | **88%**  |
 
 ---
 

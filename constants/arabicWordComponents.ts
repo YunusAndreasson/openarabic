@@ -22,20 +22,20 @@ export enum ComponentType {
  * Grammatical roles for components - used for color differentiation and educational value
  */
 export enum GrammaticalRole {
-  CONJUNCTION = 'conjunction',        // و, ف - connecting words/clauses
-  DEFINITE_ARTICLE = 'article',       // ال - the
-  PREPOSITION = 'preposition',        // ب, ل, ك, في, من, على, عن, إلى - with, to, like, in, from, on, about, to
-  SUBJECT_PREFIX = 'subject',         // ت, ي, ن, أ - verb conjugation markers (you, he, we, I)
-  FUTURE_TENSE = 'future',            // س, سوف - will/shall
-  NEGATION = 'negation',              // لا, لم, لن, لئلا, إلا, بل - not, no, except
-  PARTICLE = 'particle',              // قد, إن, فإن, إنما, أما, أن, إذا, ثم - various grammatical particles
-  INTERROGATIVE = 'interrogative',    // ما, من, كم - what, who, how (question words)
-  POSSESSIVE = 'possessive',          // ي, ك, ه, ها, نا, كم, هم, هن - my, your, his, her, our, their
-  PLURAL = 'plural',                  // ون, ين, ات - plural markers
-  VERB_CONJUGATION = 'verb',          // ت, وا, تم, تن, كن - perfect tense verb endings (I, you, they)
-  DEMONSTRATIVE = 'demonstrative',    // هذا, هذه, ذلك, تلك - this, that (pointing words)
-  CASE_ENDING = 'case',               // ُ, َ, ِ - nominative, accusative, genitive diacritics
-  GENERIC = 'generic',                // Fallback for unclassified components
+  CONJUNCTION = 'conjunction', // و, ف - connecting words/clauses
+  DEFINITE_ARTICLE = 'article', // ال - the
+  PREPOSITION = 'preposition', // ب, ل, ك, في, من, على, عن, إلى - with, to, like, in, from, on, about, to
+  SUBJECT_PREFIX = 'subject', // ت, ي, ن, أ - verb conjugation markers (you, he, we, I)
+  FUTURE_TENSE = 'future', // س, سوف - will/shall
+  NEGATION = 'negation', // لا, لم, لن, لئلا, إلا, بل - not, no, except
+  PARTICLE = 'particle', // قد, إن, فإن, إنما, أما, أن, إذا, ثم - various grammatical particles
+  INTERROGATIVE = 'interrogative', // ما, من, كم - what, who, how (question words)
+  POSSESSIVE = 'possessive', // ي, ك, ه, ها, نا, كم, هم, هن - my, your, his, her, our, their
+  PLURAL = 'plural', // ون, ين, ات - plural markers
+  VERB_CONJUGATION = 'verb', // ت, وا, تم, تن, كن - perfect tense verb endings (I, you, they)
+  DEMONSTRATIVE = 'demonstrative', // هذا, هذه, ذلك, تلك - this, that (pointing words)
+  CASE_ENDING = 'case', // ُ, َ, ِ - nominative, accusative, genitive diacritics
+  GENERIC = 'generic', // Fallback for unclassified components
 }
 
 export interface WordComponent {
@@ -60,30 +60,75 @@ export interface WordComponent {
 
 // 1. Base components for programmatic generation
 const BASE_CONJUNCTIONS = [
-  { arabic: 'و', english: ['and', 'also', 'plus', 'along with', 'while', 'by'], role: GrammaticalRole.CONJUNCTION }, // 'by' for oaths (e.g., "by Allah")
-  { arabic: 'ف', english: ['so', 'then', 'thus', 'therefore', 'consequently', 'and', 'for', 'about', 'but'], role: GrammaticalRole.CONJUNCTION }, // 'about' for interrogatives like "what about", 'but' for adversative uses
+  {
+    arabic: 'و',
+    english: ['and', 'also', 'plus', 'along with', 'while', 'by'],
+    role: GrammaticalRole.CONJUNCTION,
+  }, // 'by' for oaths (e.g., "by Allah")
+  {
+    arabic: 'ف',
+    english: ['so', 'then', 'thus', 'therefore', 'consequently', 'and', 'for', 'about', 'but'],
+    role: GrammaticalRole.CONJUNCTION,
+  }, // 'about' for interrogatives like "what about", 'but' for adversative uses
 ];
 
 const BASE_PREPOSITIONS = [
   {
     arabic: 'ب',
-    english: ['with', 'by', 'in', 'via', 'through', 'using', 'according to', 'of', 'for', 'at', 'concerning', 'based'],
+    english: [
+      'with',
+      'by',
+      'in',
+      'via',
+      'through',
+      'using',
+      'according to',
+      'of',
+      'for',
+      'at',
+      'concerning',
+      'based',
+    ],
     role: GrammaticalRole.PREPOSITION,
   },
-  { arabic: 'ل', english: ['to', 'for', 'toward', 'because of', 'in order to', 'of'], role: GrammaticalRole.PREPOSITION },
-  { arabic: 'ك', english: ['like', 'as', 'such as', 'similar to'], role: GrammaticalRole.PREPOSITION },
-  { arabic: 'في', english: ['in', 'at', 'inside', 'within', 'upon'], role: GrammaticalRole.PREPOSITION },
+  {
+    arabic: 'ل',
+    english: ['to', 'for', 'toward', 'because of', 'in order to', 'of'],
+    role: GrammaticalRole.PREPOSITION,
+  },
+  {
+    arabic: 'ك',
+    english: ['like', 'as', 'such as', 'similar to'],
+    role: GrammaticalRole.PREPOSITION,
+  },
+  {
+    arabic: 'في',
+    english: ['in', 'at', 'inside', 'within', 'upon'],
+    role: GrammaticalRole.PREPOSITION,
+  },
   { arabic: 'من', english: ['from', 'of', 'than', 'out of'], role: GrammaticalRole.PREPOSITION },
   { arabic: 'م', english: ['from', 'of'], role: GrammaticalRole.PREPOSITION }, // Shortened form in contractions (من + من → مِمَّن → normalized: م + من)
-  { arabic: 'على', english: ['on', 'upon', 'over', 'above', 'against', 'to', 'in'], role: GrammaticalRole.PREPOSITION }, // 'to' for obligation/direction, 'in' for certain contexts
+  {
+    arabic: 'على',
+    english: ['on', 'upon', 'over', 'above', 'against', 'to', 'in'],
+    role: GrammaticalRole.PREPOSITION,
+  }, // 'to' for obligation/direction, 'in' for certain contexts
   { arabic: 'علي', english: ['on', 'upon', 'in'], role: GrammaticalRole.PREPOSITION }, // Form with suffix (على + ه → عليه, not عليه): alef maksura ى → yeh ي before pronoun suffixes
   { arabic: 'عل', english: ['on', 'upon', 'to'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (على + ي → عليّ → normalized: عل + ي)
-  { arabic: 'عن', english: ['about', 'from', 'concerning', 'regarding'], role: GrammaticalRole.PREPOSITION },
+  {
+    arabic: 'عن',
+    english: ['about', 'from', 'concerning', 'regarding'],
+    role: GrammaticalRole.PREPOSITION,
+  },
   { arabic: 'إلى', english: ['to', 'towards', 'into', 'until'], role: GrammaticalRole.PREPOSITION },
   { arabic: 'إل', english: ['to', 'towards'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (إلى + ي → إليّ → normalized: إل + ي)
   { arabic: 'لدى', english: ['with', 'at', 'by', 'near'], role: GrammaticalRole.PREPOSITION },
   { arabic: 'لد', english: ['with', 'at'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (لدى + ي → لديّ → normalized: لد + ي)
-  { arabic: 'مع', english: ['with', 'together with', 'alongside', 'along with'], role: GrammaticalRole.PREPOSITION },
+  {
+    arabic: 'مع',
+    english: ['with', 'together with', 'alongside', 'along with'],
+    role: GrammaticalRole.PREPOSITION,
+  },
   // Note: ما moved to OTHER_PREFIXES to avoid compound generation (وما, فما)
 ];
 
@@ -95,26 +140,78 @@ const OTHER_PREFIXES = [
   { arabic: 'س', english: ['will', 'shall'], role: GrammaticalRole.FUTURE_TENSE },
   { arabic: 'سوف', english: ['will', 'shall'], role: GrammaticalRole.FUTURE_TENSE },
   // Negation particles
-  { arabic: 'لا', english: ['not', 'no', "don't", "doesn't", "didn't", 'do not'], role: GrammaticalRole.NEGATION },
-  { arabic: 'لم', english: ['did not', "didn't", 'does not', "doesn't"], role: GrammaticalRole.NEGATION },
-  { arabic: 'لن', english: ['will not', 'shall not', 'never', "won't"], role: GrammaticalRole.NEGATION },
-  { arabic: 'لئلا', english: ['to not', 'lest', 'so that not', 'in order not to'], role: GrammaticalRole.NEGATION }, // Compound negation particle
-  { arabic: 'إلا', english: ['except', 'but', 'only', 'none', 'nothing but'], role: GrammaticalRole.NEGATION },
+  {
+    arabic: 'لا',
+    english: ['not', 'no', "don't", "doesn't", "didn't", 'do not'],
+    role: GrammaticalRole.NEGATION,
+  },
+  {
+    arabic: 'لم',
+    english: ['did not', "didn't", 'does not', "doesn't"],
+    role: GrammaticalRole.NEGATION,
+  },
+  {
+    arabic: 'لن',
+    english: ['will not', 'shall not', 'never', "won't"],
+    role: GrammaticalRole.NEGATION,
+  },
+  {
+    arabic: 'لئلا',
+    english: ['to not', 'lest', 'so that not', 'in order not to'],
+    role: GrammaticalRole.NEGATION,
+  }, // Compound negation particle
+  {
+    arabic: 'إلا',
+    english: ['except', 'but', 'only', 'none', 'nothing but'],
+    role: GrammaticalRole.NEGATION,
+  },
   { arabic: 'بل', english: ['but', 'rather', 'instead'], role: GrammaticalRole.CONJUNCTION },
-  { arabic: 'ثم', english: ['then', 'and then', 'afterwards', 'moreover'], role: GrammaticalRole.CONJUNCTION }, // Actually a conjunction
+  {
+    arabic: 'ثم',
+    english: ['then', 'and then', 'afterwards', 'moreover'],
+    role: GrammaticalRole.CONJUNCTION,
+  }, // Actually a conjunction
   // Verbal subject markers (present tense)
-  { arabic: 'ي', english: ['he', 'it', 'was', 'is', 'does', 'to'], role: GrammaticalRole.SUBJECT_PREFIX }, // broader auxiliaries for gating, includes subjunctive 'to'
-  { arabic: 'ت', english: ['you', 'she', 'it', 'does', 'is'], role: GrammaticalRole.SUBJECT_PREFIX }, // 'it' for 3rd person feminine singular (inanimate objects)
+  {
+    arabic: 'ي',
+    english: ['he', 'it', 'was', 'is', 'does', 'to'],
+    role: GrammaticalRole.SUBJECT_PREFIX,
+  }, // broader auxiliaries for gating, includes subjunctive 'to'
+  {
+    arabic: 'ت',
+    english: ['you', 'she', 'it', 'does', 'is'],
+    role: GrammaticalRole.SUBJECT_PREFIX,
+  }, // 'it' for 3rd person feminine singular (inanimate objects)
   { arabic: 'أ', english: ['I', 'do', 'am'], role: GrammaticalRole.SUBJECT_PREFIX },
   { arabic: 'ن', english: ['we', 'are', 'do'], role: GrammaticalRole.SUBJECT_PREFIX },
   // Aspect particles & common compounds
-  { arabic: 'قد', english: ['already', 'indeed', 'used to', 'sometimes'], role: GrammaticalRole.PARTICLE },
+  {
+    arabic: 'قد',
+    english: ['already', 'indeed', 'used to', 'sometimes'],
+    role: GrammaticalRole.PARTICLE,
+  },
   { arabic: 'إن', english: ['indeed', 'verily', 'if'], role: GrammaticalRole.PARTICLE },
-  { arabic: 'فإن', english: ['for', 'so', 'then', 'therefore', 'because'], role: GrammaticalRole.PARTICLE }, // Compound: fa (so/then) + inna (emphasis)
-  { arabic: 'إنما', english: ['only', 'truly', 'verily', 'indeed'], role: GrammaticalRole.PARTICLE }, // Restrictive particle
-  { arabic: 'أما', english: ['do you not', 'do not you', 'are you not', 'have you not', 'as for'], role: GrammaticalRole.INTERROGATIVE }, // Interrogative + negation particle
+  {
+    arabic: 'فإن',
+    english: ['for', 'so', 'then', 'therefore', 'because'],
+    role: GrammaticalRole.PARTICLE,
+  }, // Compound: fa (so/then) + inna (emphasis)
+  {
+    arabic: 'إنما',
+    english: ['only', 'truly', 'verily', 'indeed'],
+    role: GrammaticalRole.PARTICLE,
+  }, // Restrictive particle
+  {
+    arabic: 'أما',
+    english: ['do you not', 'do not you', 'are you not', 'have you not', 'as for'],
+    role: GrammaticalRole.INTERROGATIVE,
+  }, // Interrogative + negation particle
   { arabic: 'ما', english: ['what', 'that which'], role: GrammaticalRole.INTERROGATIVE }, // Interrogative/relative - multi-word OK for standalone, removed from PARTICLES to prevent compounds
-  { arabic: 'من', english: ['who', 'whoever', 'whomever', 'he who', 'those who'], role: GrammaticalRole.INTERROGATIVE }, // Relative pronoun - multi-word OK for standalone, removed from PARTICLES to prevent compounds
+  {
+    arabic: 'من',
+    english: ['who', 'whoever', 'whomever', 'he who', 'those who'],
+    role: GrammaticalRole.INTERROGATIVE,
+  }, // Relative pronoun - multi-word OK for standalone, removed from PARTICLES to prevent compounds
   { arabic: 'أن', english: ['that', 'to'], role: GrammaticalRole.PARTICLE },
   { arabic: 'إذا', english: ['if', 'when'], role: GrammaticalRole.PARTICLE },
   { arabic: 'كم', english: ['how much', 'how many', 'how'], role: GrammaticalRole.INTERROGATIVE },
@@ -147,10 +244,9 @@ function createFinalPrefixList(): WordComponent[] {
     type: ComponentType.PREFIX,
   };
 
-  return [
-    ...individualBasePrefixes,
-    flexibleDefiniteArticle,
-  ].sort((a, b) => b.arabic.length - a.arabic.length);
+  return [...individualBasePrefixes, flexibleDefiniteArticle].sort(
+    (a, b) => b.arabic.length - a.arabic.length,
+  );
 }
 
 export const ARABIC_PREFIXES: WordComponent[] = createFinalPrefixList();
@@ -540,18 +636,18 @@ export const COMPONENT_TYPE_CONFIG = {
  * Used when components have a defined grammatical role for more precise coloring
  */
 export const GRAMMATICAL_ROLE_COLORS = {
-  [GrammaticalRole.CONJUNCTION]: 'secondary' as const,       // Forest green for conjunctions (و, ف)
-  [GrammaticalRole.DEFINITE_ARTICLE]: 'tint' as const,     // SAGE GREEN for article (ال)
-  [GrammaticalRole.PREPOSITION]: 'warning' as const,          // AMBER/ORANGE for prepositions (ب, ل, ك, في)
-  [GrammaticalRole.SUBJECT_PREFIX]: 'secondary' as const,  // Forest green for verb conjugation (ت, ي, ن, أ)
-  [GrammaticalRole.FUTURE_TENSE]: 'info' as const,         // Info color for future tense (س, سوف) - distinct from prepositions
-  [GrammaticalRole.NEGATION]: 'error' as const,            // Red for negation (لا, لم, لن)
-  [GrammaticalRole.PARTICLE]: 'accent' as const,           // Azure blue for particles (قد, إن)
-  [GrammaticalRole.INTERROGATIVE]: 'accent' as const,      // Azure blue for questions (ما, من, كم) - distinct from possessives
-  [GrammaticalRole.POSSESSIVE]: 'violet' as const,         // Violet for possessive suffixes (ي, ك, ه)
-  [GrammaticalRole.PLURAL]: 'primary' as const,            // Primary (gray/sage) for plural markers (ون, ين, ات)
+  [GrammaticalRole.CONJUNCTION]: 'secondary' as const, // Forest green for conjunctions (و, ف)
+  [GrammaticalRole.DEFINITE_ARTICLE]: 'tint' as const, // SAGE GREEN for article (ال)
+  [GrammaticalRole.PREPOSITION]: 'warning' as const, // AMBER/ORANGE for prepositions (ب, ل, ك, في)
+  [GrammaticalRole.SUBJECT_PREFIX]: 'secondary' as const, // Forest green for verb conjugation (ت, ي, ن, أ)
+  [GrammaticalRole.FUTURE_TENSE]: 'info' as const, // Info color for future tense (س, سوف) - distinct from prepositions
+  [GrammaticalRole.NEGATION]: 'error' as const, // Red for negation (لا, لم, لن)
+  [GrammaticalRole.PARTICLE]: 'accent' as const, // Azure blue for particles (قد, إن)
+  [GrammaticalRole.INTERROGATIVE]: 'accent' as const, // Azure blue for questions (ما, من, كم) - distinct from possessives
+  [GrammaticalRole.POSSESSIVE]: 'violet' as const, // Violet for possessive suffixes (ي, ك, ه)
+  [GrammaticalRole.PLURAL]: 'primary' as const, // Primary (gray/sage) for plural markers (ون, ين, ات)
   [GrammaticalRole.VERB_CONJUGATION]: 'success' as const, // Success green for verb endings (ت, وا, تم, تن, كن)
-  [GrammaticalRole.DEMONSTRATIVE]: 'primary' as const,     // Primary color for demonstratives (هذا, ذلك) - same as plural
-  [GrammaticalRole.CASE_ENDING]: 'accent' as const,        // Azure blue for case diacritics (ُ, َ, ِ)
-  [GrammaticalRole.GENERIC]: 'tint' as const,              // Sage green fallback
+  [GrammaticalRole.DEMONSTRATIVE]: 'primary' as const, // Primary color for demonstratives (هذا, ذلك) - same as plural
+  [GrammaticalRole.CASE_ENDING]: 'accent' as const, // Azure blue for case diacritics (ُ, َ, ِ)
+  [GrammaticalRole.GENERIC]: 'tint' as const, // Sage green fallback
 } as const;

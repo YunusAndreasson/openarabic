@@ -2663,9 +2663,9 @@
   integrity sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==
 
 "@types/yargs@^17.0.33", "@types/yargs@^17.0.8":
-  version "17.0.33"
-  resolved "https://registry.yarnpkg.com/@types/yargs/-/yargs-17.0.33.tgz#8c32303da83eec050a84b3c7ae7b9f922d13e32d"
-  integrity sha512-WpxBCKWPLr4xSsHgz511rFJAM+wS28w2zEO1QDNY5zM/S8ok70NNfztH0xwhqKyaK0OHCbN98LDAZuy1ctxDkA==
+  version "17.0.34"
+  resolved "https://registry.yarnpkg.com/@types/yargs/-/yargs-17.0.34.tgz#1c2f9635b71d5401827373a01ce2e8a7670ea839"
+  integrity sha512-KExbHVa92aJpw9WDQvzBaGVE2/Pz+pLZQloT2hjL8IqsZnV62rlPOYvNnLmf/L2dyllfVUOVBj64M0z/46eR2A==
   dependencies:
     "@types/yargs-parser" "*"
 
@@ -3960,9 +3960,9 @@ ee-first@1.1.1:
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
 electron-to-chromium@^1.5.238:
-  version "1.5.239"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.239.tgz#46b24e9f5f22ba6bdfa015aa5d2690700aadeb1f"
-  integrity sha512-1y5w0Zsq39MSPmEjHjbizvhYoTaulVtivpxkp5q5kaPmQtsK6/2nvAzGRxNMS9DoYySp9PkW0MAQDwU1m764mg==
+  version "1.5.240"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.240.tgz#bfd946570a723aa3754370065d02e23e30824774"
+  integrity sha512-OBwbZjWgrCOH+g6uJsA2/7Twpas2OlepS9uvByJjR2datRDuKGYeD+nP8lBBks2qnB7bGJNHDUx7c/YLaT3QMQ==
 
 emittery@^0.13.1:
   version "0.13.1"
@@ -4179,16 +4179,21 @@ escodegen@^2.0.0:
   optionalDependencies:
     source-map "~0.6.1"
 
-eslint-plugin-react-hooks@^7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-7.0.0.tgz#a255a1db826ea42b0e37f160430e4bd0b4b659f9"
-  integrity sha512-fNXaOwvKwq2+pXiRpXc825Vd63+KM4DLL40Rtlycb8m7fYpp6efrTp1sa6ZbP/Ap58K2bEKFXRmhURE+CJAQWw==
+eslint-config-prettier@^9.1.0:
+  version "9.1.2"
+  resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-9.1.2.tgz#90deb4fa0259592df774b600dbd1d2249a78ce91"
+  integrity sha512-iI1f+D2ViGn+uvv5HuHVUamg8ll4tN+JRHGc6IJi4TP9Kl976C57fzPXgseXNs8v0iA8aSJpHsTWjDb9QJamGQ==
+
+eslint-plugin-react-hooks@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-7.0.1.tgz#66e258db58ece50723ef20cc159f8aa908219169"
+  integrity sha512-O0d0m04evaNzEPoSW+59Mezf8Qt0InfgGIBJnpC0h3NH/WjUAR7BIKUfysC6todmtiZ/A0oUVS8Gce0WhBrHsA==
   dependencies:
     "@babel/core" "^7.24.4"
     "@babel/parser" "^7.24.4"
     hermes-parser "^0.25.1"
-    zod "^3.22.4 || ^4.0.0"
-    zod-validation-error "^3.0.3 || ^4.0.0"
+    zod "^3.25.0 || ^4.0.0"
+    zod-validation-error "^3.5.0 || ^4.0.0"
 
 eslint-plugin-react@^7.37.5:
   version "7.37.5"
@@ -4488,10 +4493,10 @@ expo-manifests@~1.0.8:
     "@expo/config" "~12.0.8"
     expo-json-utils "~0.15.0"
 
-expo-modules-autolinking@3.0.18:
-  version "3.0.18"
-  resolved "https://registry.yarnpkg.com/expo-modules-autolinking/-/expo-modules-autolinking-3.0.18.tgz#4485da6ff15c92560c0ce80e442a4fadb91af1ed"
-  integrity sha512-zanQWn4QrqJtyYGHUdL6OqjU8LKXIOgqF1PAkpNV33SPNb2ZFMBxM4vB1Y8EvqGeoouV7zRqxgXtXvDkAIFndA==
+expo-modules-autolinking@3.0.19:
+  version "3.0.19"
+  resolved "https://registry.yarnpkg.com/expo-modules-autolinking/-/expo-modules-autolinking-3.0.19.tgz#a7c21de54d666156f9fc9ca700b6d0485e7e0aa5"
+  integrity sha512-tSMYGnfZmAaN77X8iMLiaSgbCFnA7eh6s2ac09J2N2N0Rcf2RCE27jg0c0XenTMTWUcM4QvLhsNHof/WtlKqPw==
   dependencies:
     "@expo/spawn-async" "^1.7.2"
     chalk "^4.1.0"
@@ -4618,10 +4623,10 @@ expo-updates@^29.0.12:
     ignore "^5.3.1"
     resolve-from "^5.0.0"
 
-expo@54.0.19:
-  version "54.0.19"
-  resolved "https://registry.yarnpkg.com/expo/-/expo-54.0.19.tgz#0a77c55edc3348e6aadf556a3c7d2439a9889096"
-  integrity sha512-ZbCwBfrYnW7p5P9KGP/Dj9B79EpqP1au8qVDtwqqv6lOVHAYE3SWiooiZK9P8Nx3iViAVL11SF+HLOTPX+kaqA==
+expo@54.0.20:
+  version "54.0.20"
+  resolved "https://registry.yarnpkg.com/expo/-/expo-54.0.20.tgz#fa5fa5468bdd12763324c41f509733f823d285af"
+  integrity sha512-mWHky+H63W60P5Oo+VbtqzF2sLvdaoSSwG57H9rlq1DrgIla++QJZuwJkXXo55lYPymVmkVhwG6FjWYKKylwpw==
   dependencies:
     "@babel/runtime" "^7.20.0"
     "@expo/cli" "54.0.13"
@@ -4639,7 +4644,7 @@ expo@54.0.19:
     expo-file-system "~19.0.17"
     expo-font "~14.0.9"
     expo-keep-awake "~15.0.7"
-    expo-modules-autolinking "3.0.18"
+    expo-modules-autolinking "3.0.19"
     expo-modules-core "3.0.22"
     pretty-format "^29.7.0"
     react-refresh "^0.14.2"
@@ -7483,6 +7488,11 @@ prelude-ls@^1.2.1:
   resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.2.1.tgz#debc6489d7a6e6b0e7611888cec880337d316396"
   integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
 
+prettier@^3.4.2:
+  version "3.6.2"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.6.2.tgz#ccda02a1003ebbb2bfda6f83a074978f608b9393"
+  integrity sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==
+
 pretty-bytes@^5.6.0:
   version "5.6.0"
   resolved "https://registry.yarnpkg.com/pretty-bytes/-/pretty-bytes-5.6.0.tgz#356256f643804773c82f64723fe78c92c62beaeb"
@@ -9362,12 +9372,12 @@ zod-to-json-schema@^3.24.6:
   resolved "https://registry.yarnpkg.com/zod-to-json-schema/-/zod-to-json-schema-3.24.6.tgz#5920f020c4d2647edfbb954fa036082b92c9e12d"
   integrity sha512-h/z3PKvcTcTetyjl1fkj79MHNEjm+HpD6NXheWjzOekY7kV+lwDYnHw+ivHkijnCSMz1yJaWBD9vu/Fcmk+vEg==
 
-"zod-validation-error@^3.0.3 || ^4.0.0":
+"zod-validation-error@^3.5.0 || ^4.0.0":
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/zod-validation-error/-/zod-validation-error-4.0.2.tgz#bc605eba49ce0fcd598c127fee1c236be3f22918"
   integrity sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==
 
-"zod@^3.22.4 || ^4.0.0", zod@^4.1.11:
+"zod@^3.25.0 || ^4.0.0", zod@^4.1.11:
   version "4.1.12"
   resolved "https://registry.yarnpkg.com/zod/-/zod-4.1.12.tgz#64f1ea53d00eab91853195653b5af9eee68970f0"
   integrity sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==

@@ -40,7 +40,7 @@ describe('bookmarkService', () => {
       expect(fromMock).toHaveBeenCalledWith('reading_list');
       expect(upsert).toHaveBeenCalledWith(
         { user_id: 'u1', article_id: 10 },
-        { onConflict: 'user_id,article_id' }
+        { onConflict: 'user_id,article_id' },
       );
     });
 
@@ -81,7 +81,7 @@ describe('bookmarkService', () => {
 
       expect(handleError).toHaveBeenCalledWith(
         error,
-        expect.objectContaining({ analyticsProperties: { articleId: 5 } })
+        expect.objectContaining({ analyticsProperties: { articleId: 5 } }),
       );
     });
   });
@@ -177,7 +177,7 @@ describe('bookmarkService', () => {
 
       expect(handleError).toHaveBeenCalledWith(
         error,
-        expect.objectContaining({ toastMessage: "Couldn't remove article. Try again" })
+        expect.objectContaining({ toastMessage: "Couldn't remove article. Try again" }),
       );
     });
   });

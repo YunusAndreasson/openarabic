@@ -184,9 +184,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Unique key for the current word to trigger renders (React 19 auto-memoizes)
   const currentWordKey = currentWord
-    ? `${currentWord.root_id}-${currentWord.fsrs_last_review ?? ''}-${
-        currentWord.fsrs_reps ?? 0
-      }`
+    ? `${currentWord.root_id}-${currentWord.fsrs_last_review ?? ''}-${currentWord.fsrs_reps ?? 0}`
     : 'none';
 
   // Track which word hesitation applies to
@@ -223,11 +221,15 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       setIsVagueMeaning(isVague);
       setShowTranslation(true);
 
-      setTimer('meaningDisplay', () => {
-        setShowTranslation(false);
-      }, TRANSITION_DELAYS.meaningDisplay);
+      setTimer(
+        'meaningDisplay',
+        () => {
+          setShowTranslation(false);
+        },
+        TRANSITION_DELAYS.meaningDisplay,
+      );
     },
-    [setTimer]
+    [setTimer],
   );
 
   // Shows translation if needed
@@ -238,7 +240,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       const meaning = currentWord?.root?.meaning || 'No translation available';
       showTranslationWithTimeout(meaning, confidence === 'vague');
     },
-    [currentWord?.root?.meaning, showTranslationWithTimeout]
+    [currentWord?.root?.meaning, showTranslationWithTimeout],
   );
 
   // Process the word update in FSRS
@@ -287,7 +289,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       triggerCompletionTransition,
       setTimer,
       clearTimer,
-    ]
+    ],
   );
 
   // Enhanced audio playback function for single audio files
@@ -314,11 +316,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const handleKnowledgeResponse = useCallback(
     (confidence: 'known' | 'vague' | 'unknown') => {
       // Guard conditions: exit early if we're already in a processing state
-      if (
-        stateRefs.current.isUpdatingWord ||
-        isComplete ||
-        stateRefs.current.completionTriggered
-      ) {
+      if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
         return;
       }
 
@@ -337,56 +335,76 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       updateMetrics(confidence, currentWord?.fsrs_stability ?? undefined);
 
       // Start transition animation
-      setTimer('initialTransition', () => {
-        if (controller.signal.aborted) return;
+      setTimer(
+        'initialTransition',
+        () => {
+          if (controller.signal.aborted) return;
 
-        // Clean up any playing audio before proceeding
-        stopAudioSafely();
+          // Clean up any playing audio before proceeding
+          stopAudioSafely();
 
-        // VAGUE WORDS: Very snappy transition with brief fade for consistency
-        if (confidence === 'vague') {
-          timeRefs.current.lastVagueTime = Date.now();
-          fadeOut();
-          setTimer('fadeAnimationVague', () => {
-            if (controller.signal.aborted) return;
-            processFeedback(confidence, controller);
-          }, 80); // Very snappy 80ms fade
-          return;
-        }
+          // VAGUE WORDS: Very snappy transition with brief fade for consistency
+          if (confidence === 'vague') {
+            timeRefs.current.lastVagueTime = Date.now();
+            fadeOut();
+            setTimer(
+              'fadeAnimationVague',
+              () => {
+                if (controller.signal.aborted) return;
+                processFeedback(confidence, controller);
+              },
+              80,
+            ); // Very snappy 80ms fade
+            return;
+          }
 
-        // KNOWN WORDS: Fade out and proceed quickly
-        if (confidence === 'known') {
-          fadeOut();
-          setTimer('fadeAnimation', () => {
-            if (controller.signal.aborted) return;
-            processFeedback(confidence, controller);
-          }, TRANSITION_DELAYS.fadeAnimation);
-          return;
-        }
+          // KNOWN WORDS: Fade out and proceed quickly
+          if (confidence === 'known') {
+            fadeOut();
+            setTimer(
+              'fadeAnimation',
+              () => {
+                if (controller.signal.aborted) return;
+                processFeedback(confidence, controller);
+              },
+              TRANSITION_DELAYS.fadeAnimation,
+            );
+            return;
+          }
 
-        // UNKNOWN WORDS: Show translation + play audio + delay before next word
-        if (confidence === 'unknown') {
-          setTimer('fadeAnimationUnknown', () => {
-            if (controller.signal.aborted) return;
+          // UNKNOWN WORDS: Show translation + play audio + delay before next word
+          if (confidence === 'unknown') {
+            setTimer(
+              'fadeAnimationUnknown',
+              () => {
+                if (controller.signal.aborted) return;
 
-            // Show translation overlay with red text
-            displayMeaning(confidence);
+                // Show translation overlay with red text
+                displayMeaning(confidence);
 
-            // Play English feedback audio
-            if (currentWord?.root?.audio_url_en) {
-              const englishAudioUrl = generateAudioUrl(currentWord.root.audio_url_en);
-              if (englishAudioUrl) {
-                playAudio(englishAudioUrl);
-              }
-            }
+                // Play English feedback audio
+                if (currentWord?.root?.audio_url_en) {
+                  const englishAudioUrl = generateAudioUrl(currentWord.root.audio_url_en);
+                  if (englishAudioUrl) {
+                    playAudio(englishAudioUrl);
+                  }
+                }
 
-            // Wait for meaning display before processing
-            setTimer('meaningTimeout', () => {
-              processFeedback(confidence, controller);
-            }, TRANSITION_DELAYS.meaningDisplay);
-          }, TRANSITION_DELAYS.fadeAnimation);
-        }
-      }, TRANSITION_DELAYS.initial);
+                // Wait for meaning display before processing
+                setTimer(
+                  'meaningTimeout',
+                  () => {
+                    processFeedback(confidence, controller);
+                  },
+                  TRANSITION_DELAYS.meaningDisplay,
+                );
+              },
+              TRANSITION_DELAYS.fadeAnimation,
+            );
+          }
+        },
+        TRANSITION_DELAYS.initial,
+      );
     },
     [
       isComplete,
@@ -398,7 +416,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       setTimer,
       stopAudioSafely,
       updateMetrics,
-    ]
+    ],
   );
 
   // Effect: Handle completion transition
@@ -589,27 +607,23 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     });
 
     // Schedule navigation with timer cleanup
-    setTimer('navigation', () => {
-      if (mounted.current) {
-        if (onClose) {
-          onClose();
-        } else if (fromRemember) {
-          router.replace(ROUTE_PATHS.STUDY_TAB);
-        } else {
-          router.back();
+    setTimer(
+      'navigation',
+      () => {
+        if (mounted.current) {
+          if (onClose) {
+            onClose();
+          } else if (fromRemember) {
+            router.replace(ROUTE_PATHS.STUDY_TAB);
+          } else {
+            router.back();
+          }
         }
-      }
-      mounted.current = false;
-    }, 100);
-  }, [
-    invalidateQueries,
-    user?.id,
-    queryClient,
-    onClose,
-    fromRemember,
-    setTimer,
-    stopAudioSafely,
-  ]);
+        mounted.current = false;
+      },
+      100,
+    );
+  }, [invalidateQueries, user?.id, queryClient, onClose, fromRemember, setTimer, stopAudioSafely]);
 
   // Cleanup effect
   useEffect(() => {

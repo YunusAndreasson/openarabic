@@ -63,6 +63,7 @@ module.exports = {
     'expo-haptics': '<rootDir>/__mocks__/expo-haptics.js',
     'expo-notifications': '<rootDir>/__mocks__/expo-notifications.js',
     'expo-audio': '<rootDir>/__mocks__/expo-audio.js',
+    'expo-asset': '<rootDir>/__mocks__/expo-asset.js',
 
     // Path aliases for cleaner imports
     '^@/(.*)$': '<rootDir>/$1',

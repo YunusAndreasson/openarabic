@@ -1,4 +1,3 @@
-
 import {
   calculateDataPointPositions,
   CHART_VISUAL,
@@ -6,11 +5,7 @@ import {
   GRAPH_HEIGHT_LARGE,
 } from '@charts/constants';
 import { buildSmoothChartPath } from '@charts/pathBuilder';
-import {
-  calculateEfficiencyScore,
-  generateDateRange,
-  isSameDay,
-} from '@charts/utils';
+import { calculateEfficiencyScore, generateDateRange, isSameDay } from '@charts/utils';
 import { useMemo } from 'react';
 
 import { TREND_CHANGE_THRESHOLD } from '@/constants/fsrs';
@@ -92,7 +87,8 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
     const { path: efficiencyPath, points } = buildSmoothChartPath({
       data: efficiencyData,
       dataPointPositions,
-      calculateY: data => TOP_PADDING + (chartHeight - (data.averageEfficiency / maxEfficiency) * chartHeight),
+      calculateY: data =>
+        TOP_PADDING + (chartHeight - (data.averageEfficiency / maxEfficiency) * chartHeight),
       buildPoint: (x, y, data) => ({ x, y, efficiency: data.averageEfficiency, date: data.date }),
     });
 
@@ -115,8 +111,8 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
       change > TREND_CHANGE_THRESHOLD
         ? 'improving'
         : change < -TREND_CHANGE_THRESHOLD
-        ? 'declining'
-        : 'stable';
+          ? 'declining'
+          : 'stable';
 
     // Show the chart whenever the user has any study words, regardless of due words
     const hasData = (studyWords?.length ?? 0) > 0;

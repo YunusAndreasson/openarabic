@@ -8,7 +8,6 @@ import { BaseCard } from '@common/BaseCard';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import { MemoryRetentionGauge } from '@/components/study/charts/MemoryRetentionGauge';
 import { ICON_CONTAINER, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -175,4 +174,3 @@ const styles = StyleSheet.create({
     right: LAYOUT.SPACING.SMALL,
   },
 });
-

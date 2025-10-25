@@ -3,7 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
@@ -25,12 +24,12 @@ export const ListenHeader = memo<ListenHeaderProps>(
     // Memoize dynamic styles for better performance
     const closeButtonStyle = useMemo(
       () => [styles.closeButton, { backgroundColor: colors.elevation1 }],
-      [colors.elevation1]
+      [colors.elevation1],
     );
 
     const manageButtonStyle = useMemo(
       () => [styles.manageButton, { backgroundColor: colors.elevation1 }],
-      [colors.elevation1]
+      [colors.elevation1],
     );
 
     // Handle close with haptic feedback
@@ -88,7 +87,7 @@ export const ListenHeader = memo<ListenHeaderProps>(
         )}
       </View>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({
@@ -125,4 +124,3 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.HOVER,
   },
 });
-

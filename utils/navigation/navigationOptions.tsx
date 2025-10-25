@@ -25,7 +25,7 @@ export function createNavigationOptions(
   },
   options: {
     isRegularScreen?: boolean;
-  } & Partial<NativeStackNavigationOptions> = {}
+  } & Partial<NativeStackNavigationOptions> = {},
 ): NativeStackNavigationOptions {
   const { isRegularScreen, ...overrides } = options;
 

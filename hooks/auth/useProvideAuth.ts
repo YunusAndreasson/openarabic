@@ -242,7 +242,7 @@ export function useProvideAuth(): AuthResult {
       refreshSession,
       isAuthenticated: !!session?.user,
     }),
-    [session, isLoading, authError, refreshSession]
+    [session, isLoading, authError, refreshSession],
   );
 
   return authResult;

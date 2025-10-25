@@ -85,7 +85,7 @@ export default function VocabularyScreen(): JSX.Element {
         // Still force a lightweight refresh of due counts to avoid stale UI after app restarts
         queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
       }
-    }, [user?.id, prefetchVocabularyData, queryClient])
+    }, [user?.id, prefetchVocabularyData, queryClient]),
   );
 
   // Use the FSRS queries hook for data fetching
@@ -102,7 +102,7 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Filter study words for memory capacity gauge (needs all words, not just due)
   const filteredStudyWords = useMemo(() => {
-    return allWords?.filter(word => word != null && word.root_id != null) ?? [];
+    return allWords?.filter(word => word?.root_id != null) ?? [];
   }, [allWords]);
 
   // Get chart data for recommendations
@@ -123,7 +123,7 @@ export default function VocabularyScreen(): JSX.Element {
     (sheet: 'memory' | 'due' | 'learned' | 'mastered' | null) => {
       setActiveBottomSheet(sheet);
     },
-    []
+    [],
   );
 
   // Handle memory strength gauge info press - now opens bottom sheet
@@ -191,7 +191,7 @@ export default function VocabularyScreen(): JSX.Element {
   // Memoize bottom padding calculation with minimal dependencies
   const contentPaddingBottom = useMemo(
     () => LAYOUT.SCREEN_PADDING.bottomWithControls(insets.bottom),
-    [insets.bottom]
+    [insets.bottom],
   );
 
   // Calculate loading and content states (needed for animations before any early returns)
@@ -233,11 +233,7 @@ export default function VocabularyScreen(): JSX.Element {
     return (
       <ThemedView style={styles.container}>
         <ErrorState
-          message={
-            error instanceof Error
-              ? error.message
-              : STRINGS.FAILED_TO_LOAD_PRACTICE_DATA
-          }
+          message={error instanceof Error ? error.message : STRINGS.FAILED_TO_LOAD_PRACTICE_DATA}
           onRetry={handleRetry}
         />
       </ThemedView>

@@ -79,6 +79,5 @@ export type ParamsForRoute<T extends RoutePath> = RouteParams[T];
 /**
  * Type guard to check if a route requires params
  */
-export type RouteRequiresParams<T extends RoutePath> = RouteParams[T] extends Record<string, never>
-  ? false
-  : true;
+export type RouteRequiresParams<T extends RoutePath> =
+  RouteParams[T] extends Record<string, never> ? false : true;

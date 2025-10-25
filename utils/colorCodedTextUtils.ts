@@ -157,14 +157,14 @@ export const generateColorCodedSegments = ({
   // analyzeArabicWord() now handles single-word check, so we just trust hasComponents
   // Note: Some tests pass analysis=null with manual formattedAnalysis, so check both
   const hasComponentSections = formattedAnalysis.sections.some(
-    (s: { type: string }) => s.type === 'components'
+    (s: { type: string }) => s.type === 'components',
   );
   if ((!analysis?.hasComponents && analysis !== null) || !hasComponentSections) {
     return [{ text: displayedText, color: defaultColor, key: 'no-components' }];
   }
 
   const componentSections = formattedAnalysis.sections.filter(
-    (s: { type: string }) => s.type === 'components'
+    (s: { type: string }) => s.type === 'components',
   );
 
   // No components found
@@ -172,7 +172,13 @@ export const generateColorCodedSegments = ({
     return [{ text: displayedText, color: defaultColor, key: 'no-components' }];
   }
 
-  const matchPositions: { start: number; end: number; color: string; componentType?: string; isBracketInjection?: boolean }[] = [];
+  const matchPositions: {
+    start: number;
+    end: number;
+    color: string;
+    componentType?: string;
+    isBracketInjection?: boolean;
+  }[] = [];
 
   /**
    * Score a match based on component type and position in text
@@ -180,7 +186,7 @@ export const generateColorCodedSegments = ({
    */
   const getPositionalScore = (
     match: { start: number; end: number; componentType?: string },
-    textLength: number
+    textLength: number,
   ): number => {
     // Bracket injection always has highest priority at start
     if (match.componentType === 'bracket') return 2.0;
@@ -219,12 +225,12 @@ export const generateColorCodedSegments = ({
   const colorMapping: Record<string, string> = {
     tint: colors.tint,
     primary: colors.primary,
-    secondary: colors.secondary,        // Add 'secondary' for conjunctions/subject prefixes
+    secondary: colors.secondary, // Add 'secondary' for conjunctions/subject prefixes
     secondaryText: colors.secondaryText,
     warning: colors.warning,
     accent: colors.accent,
     violet: colors.violet,
-    error: colors.error,                // Add 'error' for negation
+    error: colors.error, // Add 'error' for negation
     text: colors.text,
   };
 
@@ -279,7 +285,7 @@ export const generateColorCodedSegments = ({
       candidates.push(candidate);
       // Check if this candidate has a contracted form
       const contractedForm = Object.keys(CONTRACTION_MAP).find(
-        key => CONTRACTION_MAP[key] === candidate
+        key => CONTRACTION_MAP[key] === candidate,
       );
       if (contractedForm) {
         candidates.push(contractedForm);
@@ -294,9 +300,9 @@ export const generateColorCodedSegments = ({
         const idx = searchText.indexOf(candidate, fromIndex);
         if (idx === -1) break;
 
-        const prevChar = idx > 0 ? searchText[idx - 1] ?? ' ' : ' ';
+        const prevChar = idx > 0 ? (searchText[idx - 1] ?? ' ') : ' ';
         const nextIdx = idx + candidate.length;
-        const nextChar = nextIdx < searchText.length ? searchText[nextIdx] ?? ' ' : ' ';
+        const nextChar = nextIdx < searchText.length ? (searchText[nextIdx] ?? ' ') : ' ';
         const isValidMatch =
           idx === 0 ||
           isNonLetter(prevChar) ||

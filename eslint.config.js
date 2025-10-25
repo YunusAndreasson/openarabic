@@ -4,6 +4,7 @@ const typescriptParser = require('@typescript-eslint/parser');
 const reactPlugin = require('eslint-plugin-react');
 const reactHooksPlugin = require('eslint-plugin-react-hooks');
 const unusedImportsPlugin = require('eslint-plugin-unused-imports');
+const prettierConfig = require('eslint-config-prettier');
 
 module.exports = [
   js.configs.recommended,
@@ -38,9 +39,14 @@ module.exports = [
         },
       ],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      '@typescript-eslint/prefer-optional-chain': 'warn',
       'no-unused-vars': 'off',
     },
   },
@@ -116,10 +122,10 @@ module.exports = [
       ],
       'no-console': 'off',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'off',
+      'react-hooks/exhaustive-deps': 'warn',
       'react/react-in-jsx-scope': 'off',
       'react/jsx-no-bind': 'off',
-      'react/no-array-index-key': 'warn',
+      'react/no-array-index-key': 'error',
       'react/jsx-key': 'error',
       'react/jsx-fragments': 'off',
       'react/display-name': 'off',
@@ -143,4 +149,5 @@ module.exports = [
       'admin-dashboard/',
     ],
   },
+  prettierConfig,
 ];

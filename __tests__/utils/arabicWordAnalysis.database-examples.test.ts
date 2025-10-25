@@ -20,10 +20,6 @@ describe('Database Example Grammar Rules', () => {
     it('should partially match فَمَنْ with "and whoever" (من matches)', () => {
       const analysis = analyzeArabicWord('فمن', 'and whoever');
 
-      console.log('Analysis for فمن (and whoever):');
-      console.log('Prefix:', analysis.prefixes[0]);
-      console.log('Has components:', analysis.hasComponents);
-
       // ف doesn't match "and", but من could match "whoever" if checked as standalone
       // With split behavior, ف tries first but doesn't match
       // Actual behavior: may have partial match or no match depending on implementation
@@ -49,10 +45,6 @@ describe('Database Example Grammar Rules', () => {
 
     it('should analyze فَإِنَّمَا with split components', () => {
       const analysis = analyzeArabicWord('فإنما', 'so only');
-
-      console.log('\nAnalysis for فإنما (so only):');
-      console.log('Prefix:', analysis.prefixes[0]);
-      console.log('Has components:', analysis.hasComponents);
 
       // فإن matches "so" (compound prefix), remaining is ما
       // This is because فإن is defined as a compound prefix in OTHER_PREFIXES
@@ -88,7 +80,7 @@ describe('Database Example Grammar Rules', () => {
 
       // Should have particle ("who/whoever") meaning in at least one version
       const hasWhoMeaning = manEntries.some(entry =>
-        entry.english.some(e => e.includes('who') || e.includes('whoever'))
+        entry.english.some(e => e.includes('who') || e.includes('whoever')),
       );
       expect(hasWhoMeaning).toBe(true);
     });
@@ -126,7 +118,7 @@ describe('Database Example Grammar Rules', () => {
 
       // Should match "by" as one of the و alternatives
       const byMatch = analysisByAllah.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('by')
+        m.toLowerCase().includes('by'),
       );
       expect(byMatch).toBe(true);
     });
@@ -138,8 +130,9 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should detect compound و+ال
-      const hasWaOrAl = analysis.prefixes[0]?.arabicMatch.includes('و') ||
-                        analysis.prefixes[0]?.arabicMatch.includes('ال');
+      const hasWaOrAl =
+        analysis.prefixes[0]?.arabicMatch.includes('و') ||
+        analysis.prefixes[0]?.arabicMatch.includes('ال');
       expect(hasWaOrAl).toBe(true);
     });
   });
@@ -165,7 +158,7 @@ describe('Database Example Grammar Rules', () => {
 
       // Should match "based" as one of the ب alternatives
       const basedMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('based')
+        m.toLowerCase().includes('based'),
       );
       expect(basedMatch).toBe(true);
     });
@@ -180,8 +173,8 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لم');
 
       // Should match "does not" as one of the لم alternatives
-      const doesNotMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('does') && m.toLowerCase().includes('not')
+      const doesNotMatch = analysis.prefixes[0]?.englishMatches.some(
+        m => m.toLowerCase().includes('does') && m.toLowerCase().includes('not'),
       );
       expect(doesNotMatch).toBe(true);
     });
@@ -193,7 +186,8 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match compound و+لا (may be "ولا" or just "و" depending on priority)
-      const hasWaOrWaLa = analysis.prefixes[0]?.arabicMatch === 'ولا' || analysis.prefixes[0]?.arabicMatch === 'و';
+      const hasWaOrWaLa =
+        analysis.prefixes[0]?.arabicMatch === 'ولا' || analysis.prefixes[0]?.arabicMatch === 'و';
       expect(hasWaOrWaLa).toBe(true);
     });
   });
@@ -207,8 +201,8 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('كم');
 
       // Should match "how much"
-      const howMuchMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('how') && m.toLowerCase().includes('much')
+      const howMuchMatch = analysis.prefixes[0]?.englishMatches.some(
+        m => m.toLowerCase().includes('how') && m.toLowerCase().includes('much'),
       );
       expect(howMuchMatch).toBe(true);
     });

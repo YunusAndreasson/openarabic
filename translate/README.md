@@ -157,23 +157,23 @@ The pipeline supports the following arguments:
 
 The pipeline automatically maps folder names to database authors:
 
-| Folder                         | Author Name                |
-| ------------------------------ | -------------------------- |
-| `1_al_imam_an_nawawi`          | al-Imam an-Nawawi          |
-| `2_ibn_al_qayyim` | Ibn al-Qayyim al-Jawziyyah |
-| `3_ibn_taymiyyah`              | Ibn Taymiyyah              |
-| `4_ibn_al_jawzi`               | Ibn al-Jawzi               |
-| `5_ibn_kathir`                 | Ibn Kathir                 |
-| `6_al_imam_al_bukhari`         | al-Imam al-Bukhari         |
-| `7_al_imam_muslim`             | al-Imam Muslim             |
-| `8_ibn_hajar_al_asqalani`      | Ibn Hajar al-Asqalani      |
-| `9_al_imam_malik`              | al-Imam Malik              |
-| `10_al_imam_ash_shafii`        | al-Imam ash-Shafii         |
-| `11_al_imam_ahmad_ibn_hanbal`  | al-Imam Ahmad ibn Hanbal   |
-| `12_al_imam_at_tirmidhi`       | al-Imam at-Tirmidhi        |
-| `13_al_imam_as_suyuti`         | al-Imam as-Suyuti          |
-| `14_at_tabari`                 | at-Tabari                  |
-| `15_al_imam_al_dhahabi`        | al-Imam al-Dhahabi         |
+| Folder                        | Author Name                |
+| ----------------------------- | -------------------------- |
+| `1_al_imam_an_nawawi`         | al-Imam an-Nawawi          |
+| `2_ibn_al_qayyim`             | Ibn al-Qayyim al-Jawziyyah |
+| `3_ibn_taymiyyah`             | Ibn Taymiyyah              |
+| `4_ibn_al_jawzi`              | Ibn al-Jawzi               |
+| `5_ibn_kathir`                | Ibn Kathir                 |
+| `6_al_imam_al_bukhari`        | al-Imam al-Bukhari         |
+| `7_al_imam_muslim`            | al-Imam Muslim             |
+| `8_ibn_hajar_al_asqalani`     | Ibn Hajar al-Asqalani      |
+| `9_al_imam_malik`             | al-Imam Malik              |
+| `10_al_imam_ash_shafii`       | al-Imam ash-Shafii         |
+| `11_al_imam_ahmad_ibn_hanbal` | al-Imam Ahmad ibn Hanbal   |
+| `12_al_imam_at_tirmidhi`      | al-Imam at-Tirmidhi        |
+| `13_al_imam_as_suyuti`        | al-Imam as-Suyuti          |
+| `14_at_tabari`                | at-Tabari                  |
+| `15_al_imam_al_dhahabi`       | al-Imam al-Dhahabi         |
 
 ## File Naming Convention
 
@@ -320,25 +320,21 @@ export OPENAI_ORG_ID="your_organization_id_here"
 For individual root word translation, set up Google Cloud Translate:
 
 1. **Create a Google Cloud Project**:
-
    - Go to [Google Cloud Console](https://console.cloud.google.com/)
    - Create a new project or select an existing one
    - Note your Project ID
 
 2. **Enable the Cloud Translation API**:
-
    - In the Google Cloud Console, go to "APIs & Services" > "Library"
    - Search for "Cloud Translation API"
    - Click "Enable"
 
 3. **Create API Credentials**:
-
    - Go to "APIs & Services" > "Credentials"
    - Click "Create Credentials" > "API Key"
    - Copy the API key
 
 4. **Create Service Account Credentials**:
-
    - Go to "APIs & Services" > "Credentials"
    - Click "Create Credentials" > "Service Account"
    - Fill in service account details and click "Create"
@@ -356,13 +352,11 @@ For individual root word translation, set up Google Cloud Translate:
 For single word audio generation, set up Google Cloud TTS:
 
 1. **Enable the Text-to-Speech API**:
-
    - In the Google Cloud Console, go to "APIs & Services" > "Library"
    - Search for "Text-to-Speech API"
    - Click "Enable"
 
 2. **Use Existing Credentials**:
-
    - The same service account credentials used for Google Cloud Translate will work
    - Ensure your JSON credentials file has access to the Text-to-Speech API
    - The `GOOGLE_CLOUD_CREDENTIALS_PATH` environment variable should already be set
@@ -458,13 +452,11 @@ The pipeline now supports comprehensive bilingual audio generation for language 
 #### Audio Types Generated
 
 1. **Arabic-Only Audio** (`audio_url`)
-
    - Traditional Arabic TTS using ElevenLabs
    - Optimized for native Arabic speakers
    - Uses tashkeel (diacritical marks) when available
 
 2. **English-Only Audio** (`audio_url_english`)
-
    - Clear English pronunciation using ElevenLabs
    - Natural English voice (Rachel) for clarity
    - Perfect for English-only learners

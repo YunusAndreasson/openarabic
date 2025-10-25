@@ -25,17 +25,31 @@ interface ColorCodedTextProps {
  * For English text (isArabic=false): Uses generateColorCodedSegments (includes [the] if needed)
  */
 export const ColorCodedText = memo<ColorCodedTextProps>(
-  ({ text, arabicWord = '', englishTranslation, type = 'body', weight = 'normal', style, defaultColor, isArabic = false }) => {
+  ({
+    text,
+    arabicWord = '',
+    englishTranslation,
+    type = 'body',
+    weight = 'normal',
+    style,
+    defaultColor,
+    isArabic = false,
+  }) => {
     const colors = useColors();
 
     // Use Arabic word analysis for color-coding
     // For Arabic rendering: pass englishTranslation to enable analysis
     // For English rendering: pass the text itself as translation
-    const translationForAnalysis = isArabic ? (englishTranslation || '') : text;
-    const { hasComponents, coloredSegments: arabicSegments, formattedAnalysis, analysis } = useArabicWordAnalysis(
+    const translationForAnalysis = isArabic ? englishTranslation || '' : text;
+    const {
+      hasComponents,
+      coloredSegments: arabicSegments,
+      formattedAnalysis,
+      analysis,
+    } = useArabicWordAnalysis(
       arabicWord,
       translationForAnalysis,
-      !!(arabicWord && translationForAnalysis)
+      !!(arabicWord && translationForAnalysis),
     );
 
     // Generate color-coded segments based on text type
@@ -84,7 +98,7 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
         ))}
       </ThemedText>
     );
-  }
+  },
 );
 
 ColorCodedText.displayName = 'ColorCodedText';

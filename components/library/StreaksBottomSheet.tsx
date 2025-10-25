@@ -44,7 +44,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   // Use common backdrop component
@@ -56,7 +56,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
       bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
       indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
     }),
-    [colors.elevation1, colors.modalIndicator]
+    [colors.elevation1, colors.modalIndicator],
   );
 
   // Memoize content to prevent unnecessary re-renders

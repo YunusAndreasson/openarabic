@@ -80,7 +80,7 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
         </View>
       );
     },
-    [colors.card, colors.shadow]
+    [colors.card, colors.shadow],
   );
 
   // Skip rendering if no articles

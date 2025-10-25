@@ -58,12 +58,12 @@ const IconWithBadge = memo(
   }) => {
     const containerStyle = useMemo(
       () => [styles.iconContainer, { width: size, height: size }],
-      [size]
+      [size],
     );
 
     const badgeContainerStyle = useMemo(
       () => [styles.badgeContainer, { backgroundColor: colors.error }],
-      [colors.error]
+      [colors.error],
     );
 
     return (
@@ -83,7 +83,7 @@ const IconWithBadge = memo(
         )}
       </View>
     );
-  }
+  },
 );
 IconWithBadge.displayName = 'IconWithBadge';
 
@@ -137,7 +137,7 @@ export default function TabLayout(): JSX.Element {
       paddingTop: 0,
       paddingBottom: 0,
     }),
-    [colors.elevation0]
+    [colors.elevation0],
   );
 
   if (!colors) {
@@ -157,7 +157,10 @@ export default function TabLayout(): JSX.Element {
           tabBarInactiveTintColor: colors.tabIconDefault,
           tabBarShowLabel: false,
           tabBarIconStyle: styles.tabBarIcon,
-          tabBarItemStyle: { paddingTop: LAYOUT.SPACING.TINY, paddingBottom: LAYOUT.SPACING.HALF_TINY },
+          tabBarItemStyle: {
+            paddingTop: LAYOUT.SPACING.TINY,
+            paddingBottom: LAYOUT.SPACING.HALF_TINY,
+          },
           tabBarStyle: tabBarStyle,
           tabBarButton: props => <TabBarButton {...props} />,
         }}

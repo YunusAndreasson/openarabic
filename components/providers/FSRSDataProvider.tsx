@@ -32,7 +32,7 @@ export function FSRSDataProvider({ children, userId }: FSRSDataProviderProps) {
       isLoading,
       error,
     }),
-    [studyWords, isLoading, error]
+    [studyWords, isLoading, error],
   );
 
   return <FSRSDataContext value={value}>{children}</FSRSDataContext>;

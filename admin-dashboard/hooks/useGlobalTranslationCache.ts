@@ -51,7 +51,7 @@ export function useGlobalTranslationCache(): UseGlobalTranslationCacheReturn {
 
   const buildTranslationMap = useCallback((words: SentenceWord[]) => {
     const map = new Map<string, Set<string>>();
-    words.forEach((word) => {
+    words.forEach(word => {
       if (!map.has(word.word_form)) {
         map.set(word.word_form, new Set());
       }
@@ -60,35 +60,39 @@ export function useGlobalTranslationCache(): UseGlobalTranslationCacheReturn {
     return map;
   }, []);
 
-  const calculateStats = useCallback((cacheData: CacheData | null, map: Map<string, Set<string>>) => {
-    if (!cacheData) {
+  const calculateStats = useCallback(
+    (cacheData: CacheData | null, map: Map<string, Set<string>>) => {
+      if (!cacheData) {
+        return {
+          totalWords: 0,
+          uniqueWords: 0,
+          totalTranslations: 0,
+          lastUpdated: null,
+          cacheSizeKB: 0,
+          avgTranslationsPerWord: 0,
+        };
+      }
+
+      const totalTranslations = Array.from(map.values()).reduce(
+        (sum, translations) => sum + translations.size,
+        0,
+      );
+
+      const cacheString = JSON.stringify(cacheData);
+      const cacheSizeKB = Math.round((cacheString.length * 2) / 1024); // UTF-16, 2 bytes per char
+
       return {
-        totalWords: 0,
-        uniqueWords: 0,
-        totalTranslations: 0,
-        lastUpdated: null,
-        cacheSizeKB: 0,
-        avgTranslationsPerWord: 0,
+        totalWords: cacheData.words.length,
+        uniqueWords: map.size,
+        totalTranslations,
+        lastUpdated: new Date(cacheData.timestamp),
+        cacheSizeKB,
+        avgTranslationsPerWord:
+          map.size > 0 ? Math.round((totalTranslations / map.size) * 10) / 10 : 0,
       };
-    }
-
-    const totalTranslations = Array.from(map.values()).reduce(
-      (sum, translations) => sum + translations.size,
-      0
-    );
-
-    const cacheString = JSON.stringify(cacheData);
-    const cacheSizeKB = Math.round((cacheString.length * 2) / 1024); // UTF-16, 2 bytes per char
-
-    return {
-      totalWords: cacheData.words.length,
-      uniqueWords: map.size,
-      totalTranslations,
-      lastUpdated: new Date(cacheData.timestamp),
-      cacheSizeKB,
-      avgTranslationsPerWord: map.size > 0 ? Math.round((totalTranslations / map.size) * 10) / 10 : 0,
-    };
-  }, []);
+    },
+    [],
+  );
 
   const loadFromLocalStorage = useCallback((): CacheData | null => {
     try {
@@ -121,7 +125,11 @@ export function useGlobalTranslationCache(): UseGlobalTranslationCacheReturn {
     console.log('Fetching all words from database...');
 
     while (hasMore) {
-      const { data, error: fetchError, count } = await supabase
+      const {
+        data,
+        error: fetchError,
+        count,
+      } = await supabase
         .from('sentence_words')
         .select('id, word_form, english, position, grammar_note, sentence_id', { count: 'exact' })
         .order('word_form')
@@ -172,7 +180,7 @@ export function useGlobalTranslationCache(): UseGlobalTranslationCacheReturn {
         words,
         stats: {
           totalWords: words.length,
-          uniqueWords: new Set(words.map((w) => w.word_form)).size,
+          uniqueWords: new Set(words.map(w => w.word_form)).size,
           totalTranslations: 0, // Will be calculated
         },
       };
@@ -188,7 +196,13 @@ export function useGlobalTranslationCache(): UseGlobalTranslationCacheReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [loadFromLocalStorage, buildTranslationMap, calculateStats, saveToLocalStorage, fetchFromDatabase]);
+  }, [
+    loadFromLocalStorage,
+    buildTranslationMap,
+    calculateStats,
+    saveToLocalStorage,
+    fetchFromDatabase,
+  ]);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -202,7 +216,7 @@ export function useGlobalTranslationCache(): UseGlobalTranslationCacheReturn {
         words,
         stats: {
           totalWords: words.length,
-          uniqueWords: new Set(words.map((w) => w.word_form)).size,
+          uniqueWords: new Set(words.map(w => w.word_form)).size,
           totalTranslations: 0,
         },
       };

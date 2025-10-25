@@ -56,7 +56,7 @@ const getRandomArticles = (articles: Article[], count: number): Article[] => {
 export function useMultipleFeaturedArticles(
   articlesData: Article[],
   refreshKey: number,
-  scope: string = 'global'
+  scope: string = 'global',
 ): MultipleFeaturedArticlesResult {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -71,7 +71,7 @@ export function useMultipleFeaturedArticles(
   // Use the existing hooks for due and difficult words with cached data
   const { hasEnoughArticles: hasDueWordArticles, dueWordRootIds } = useArticlesByDueWords(
     user?.id,
-    10
+    10,
   );
 
   const { hasEnoughArticles: hasDifficultWordArticles, difficultWordRootIds } =
@@ -104,19 +104,19 @@ export function useMultipleFeaturedArticles(
   const stableDueWordRootIds = useMemo(() => Array.from(dueWordRootIds).sort(), [dueWordRootIds]);
   const stableDifficultWordRootIds = useMemo(
     () => Array.from(difficultWordRootIds).sort(),
-    [difficultWordRootIds]
+    [difficultWordRootIds],
   );
 
   // Create stable Set from stable array to prevent infinite loops
   // This ensures the Set reference only changes when the actual word IDs change
   const stableDueWordSet = useMemo(
     () => new Set(stableDueWordRootIds),
-    [stableDueWordRootIds.join(',')]
+    [stableDueWordRootIds.join(',')],
   );
 
   const stableDifficultWordSet = useMemo(
     () => new Set(stableDifficultWordRootIds),
-    [stableDifficultWordRootIds.join(',')]
+    [stableDifficultWordRootIds.join(',')],
   );
 
   // State to store the computed selection (only for refreshes)
@@ -162,8 +162,7 @@ export function useMultipleFeaturedArticles(
     } else if (refreshKey === 0) {
       // For initial load (refreshKey === 0), use intelligent selection
       if (
-        !initialSelectionRef.current ||
-        initialSelectionRef.current.refreshKey !== 0 ||
+        initialSelectionRef.current?.refreshKey !== 0 ||
         initialSelectionRef.current.scope !== scope
       ) {
         // First time or scope change - perform intelligent selection
@@ -174,9 +173,9 @@ export function useMultipleFeaturedArticles(
           const dueWordArticles = articlesData.filter(article =>
             article.article_sentences?.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
-                stableDueWordSet.has(word.root_id)
-              )
-            )
+                stableDueWordSet.has(word.root_id),
+              ),
+            ),
           );
 
           if (dueWordArticles.length > 0) {
@@ -205,9 +204,9 @@ export function useMultipleFeaturedArticles(
           const difficultWordArticles = articlesData.filter(article =>
             article.article_sentences?.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
-                stableDifficultWordSet.has(word.root_id)
-              )
-            )
+                stableDifficultWordSet.has(word.root_id),
+              ),
+            ),
           );
 
           if (difficultWordArticles.length > 0) {

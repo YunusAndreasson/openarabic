@@ -23,14 +23,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, ImageIcon, ArrowUpDown, ArrowUp, ArrowDown, Repeat } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-const SUPABASE_STORAGE_URL = 'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
+const SUPABASE_STORAGE_URL =
+  'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
 
 function normalizeImageUrl(imageUrl: string): string {
   if (!imageUrl) return '';
@@ -86,7 +82,7 @@ function hasRepeatFlags(article: Article): boolean {
   if (!article.article_sentences) return false;
 
   return article.article_sentences.some(
-    (sentence) => sentence.english_repeat === true || sentence.arabic_repeat === true
+    sentence => sentence.english_repeat === true || sentence.arabic_repeat === true,
   );
 }
 
@@ -138,7 +134,9 @@ export default function ArticlesPage() {
       const [articlesRes, authorsRes, categoriesRes] = await Promise.all([
         supabase
           .from('articles')
-          .select('*, authors(name), categories(name), article_sentences(english_repeat, arabic_repeat)')
+          .select(
+            '*, authors(name), categories(name), article_sentences(english_repeat, arabic_repeat)',
+          )
           .order('created_at', { ascending: false }),
         supabase.from('authors').select('*').order('name'),
         supabase.from('categories').select('*').order('name'),
@@ -161,9 +159,9 @@ export default function ArticlesPage() {
   const updateArticle = async (
     articleId: number,
     field: 'author_id' | 'category_id',
-    value: number
+    value: number,
   ) => {
-    setUpdatingIds((prev) => new Set(prev).add(articleId));
+    setUpdatingIds(prev => new Set(prev).add(articleId));
     try {
       const { error } = await supabase
         .from('articles')
@@ -173,25 +171,33 @@ export default function ArticlesPage() {
       if (error) throw error;
 
       // Update local state
-      setArticles((prev) =>
-        prev.map((article) => {
+      setArticles(prev =>
+        prev.map(article => {
           if (article.id === articleId) {
             if (field === 'author_id') {
-              const author = authors.find((a) => a.id === value);
-              return { ...article, author_id: value, authors: author ? { name: author.name } : null };
+              const author = authors.find(a => a.id === value);
+              return {
+                ...article,
+                author_id: value,
+                authors: author ? { name: author.name } : null,
+              };
             } else {
-              const category = categories.find((c) => c.id === value);
-              return { ...article, category_id: value, categories: category ? { name: category.name } : null };
+              const category = categories.find(c => c.id === value);
+              return {
+                ...article,
+                category_id: value,
+                categories: category ? { name: category.name } : null,
+              };
             }
           }
           return article;
-        })
+        }),
       );
     } catch (error) {
       console.error('Error updating article:', error);
       alert('Failed to update article');
     } finally {
-      setUpdatingIds((prev) => {
+      setUpdatingIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(articleId);
         return newSet;
@@ -242,10 +248,10 @@ export default function ArticlesPage() {
   };
 
   let filteredArticles = articles.filter(
-    (article) =>
+    article =>
       article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       article.authors?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.categories?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      article.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Apply sorting if active
@@ -297,7 +303,7 @@ export default function ArticlesPage() {
               type="search"
               placeholder="Search articles..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="w-64"
             />
           </div>
@@ -366,136 +372,136 @@ export default function ArticlesPage() {
                 </TableHead>
               </TableRow>
             </TableHeader>
-          <TableBody>
-            {filteredArticles.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  No articles found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredArticles.map((article) => {
-                const wordCount = countWords(article.summary);
-                const summaryStatus = getSummaryColor(wordCount);
-                const isUpdating = updatingIds.has(article.id);
+            <TableBody>
+              {filteredArticles.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    No articles found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredArticles.map(article => {
+                  const wordCount = countWords(article.summary);
+                  const summaryStatus = getSummaryColor(wordCount);
+                  const isUpdating = updatingIds.has(article.id);
 
-                return (
-                  <TableRow
-                    key={article.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => {
-                      router.push(`/articles/${article.id}`);
-                    }}
-                  >
-                    <TableCell>
-                      <div className="relative h-12 w-20 overflow-hidden rounded bg-muted flex items-center justify-center">
-                        {article.image_url ? (
-                          <Image
-                            src={normalizeImageUrl(article.image_url)}
-                            alt={article.title}
-                            fill
-                            className="object-cover"
-                            sizes="80px"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <div className="max-w-md truncate">{article.title}</div>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Select
-                        value={article.author_id.toString()}
-                        onValueChange={(value) =>
-                          updateArticle(article.id, 'author_id', parseInt(value))
-                        }
-                        disabled={isUpdating}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {authors.map((author) => (
-                            <SelectItem key={author.id} value={author.id.toString()}>
-                              {author.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Select
-                        value={article.category_id.toString()}
-                        onValueChange={(value) =>
-                          updateArticle(article.id, 'category_id', parseInt(value))
-                        }
-                        disabled={isUpdating}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id.toString()}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-2 cursor-help">
-                            <div className={`h-3 w-3 rounded-full ${summaryStatus.bg}`} />
-                            <span className={`text-xs font-medium ${summaryStatus.text}`}>
-                              {wordCount}w
-                            </span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-md">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">{summaryStatus.label}</span>
-                              <span className="text-muted-foreground">({wordCount} words)</span>
-                            </div>
-                            <p className="text-sm">{article.summary}</p>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                      {hasRepeatFlags(article) && (
+                  return (
+                    <TableRow
+                      key={article.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => {
+                        router.push(`/articles/${article.id}`);
+                      }}
+                    >
+                      <TableCell>
+                        <div className="relative h-12 w-20 overflow-hidden rounded bg-muted flex items-center justify-center">
+                          {article.image_url ? (
+                            <Image
+                              src={normalizeImageUrl(article.image_url)}
+                              alt={article.title}
+                              fill
+                              className="object-cover"
+                              sizes="80px"
+                              onError={e => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="max-w-md truncate">{article.title}</div>
+                      </TableCell>
+                      <TableCell onClick={e => e.stopPropagation()}>
+                        <Select
+                          value={article.author_id.toString()}
+                          onValueChange={value =>
+                            updateArticle(article.id, 'author_id', parseInt(value))
+                          }
+                          disabled={isUpdating}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {authors.map(author => (
+                              <SelectItem key={author.id} value={author.id.toString()}>
+                                {author.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell onClick={e => e.stopPropagation()}>
+                        <Select
+                          value={article.category_id.toString()}
+                          onValueChange={value =>
+                            updateArticle(article.id, 'category_id', parseInt(value))
+                          }
+                          disabled={isUpdating}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map(category => (
+                              <SelectItem key={category.id} value={category.id.toString()}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell onClick={e => e.stopPropagation()}>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="flex items-center justify-center cursor-help">
-                              <Repeat className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="flex items-center gap-2 cursor-help">
+                              <div className={`h-3 w-3 rounded-full ${summaryStatus.bg}`} />
+                              <span className={`text-xs font-medium ${summaryStatus.text}`}>
+                                {wordCount}w
+                              </span>
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-sm">Has sentence repeat flags</p>
+                          <TooltipContent className="max-w-md">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">{summaryStatus.label}</span>
+                                <span className="text-muted-foreground">({wordCount} words)</span>
+                              </div>
+                              <p className="text-sm">{article.summary}</p>
+                            </div>
                           </TooltipContent>
                         </Tooltip>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {formatDate(article.created_at)}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                      </TableCell>
+                      <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                        {hasRepeatFlags(article) && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-center cursor-help">
+                                <Repeat className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-sm">Has sentence repeat flags</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {formatDate(article.created_at)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
         <div className="text-sm text-muted-foreground">
           Showing {filteredArticles.length} of {articles.length} articles

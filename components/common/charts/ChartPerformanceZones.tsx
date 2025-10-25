@@ -1,4 +1,3 @@
-
 import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
 import { createAreaFillPath } from '@charts/utils';
 import { Mask, Path, Rect } from '@shopify/react-native-skia';
@@ -22,10 +21,10 @@ interface ChartPerformanceZonesProps {
  */
 export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
   ({ zones, maskPath, graphWidth, colors }) => {
-
     const areaPath = useMemo(
-      () => (maskPath ? createAreaFillPath(maskPath, GRAPH_HEIGHT_LARGE, undefined, graphWidth) : ''),
-      [maskPath, graphWidth]
+      () =>
+        maskPath ? createAreaFillPath(maskPath, GRAPH_HEIGHT_LARGE, undefined, graphWidth) : '',
+      [maskPath, graphWidth],
     );
 
     if (!maskPath || zones.length === 0 || !areaPath) return null;
@@ -44,7 +43,7 @@ export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
         ))}
       </Mask>
     );
-  }
+  },
 );
 
 ChartPerformanceZones.displayName = 'ChartPerformanceZones';

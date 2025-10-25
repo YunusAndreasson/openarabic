@@ -2,7 +2,6 @@ import { BaseCard } from '@common/BaseCard';
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -27,7 +26,15 @@ interface FilterSectionProps {
   filterType?: string; // Optional filter type to pass to onSelect
 }
 
-function CompactNavCard({ label, count, onPress }: { label: string; count?: number; onPress: () => void }) {
+function CompactNavCard({
+  label,
+  count,
+  onPress,
+}: {
+  label: string;
+  count?: number;
+  onPress: () => void;
+}) {
   const colors = useColors();
 
   const countBadgeStyle = [compactCardStyles.countBadge, { backgroundColor: colors.elevation3 }];

@@ -57,7 +57,7 @@ describe('authorsService', () => {
           analyticsEventName: 'Authors_Load_Error',
           showToast: true,
           sentrySeverity: 'error',
-        })
+        }),
       );
     });
   });
@@ -106,7 +106,7 @@ describe('authorsService', () => {
           analyticsProperties: { categoryId: 4 },
           showToast: true,
           sentrySeverity: 'error',
-        })
+        }),
       );
     });
   });

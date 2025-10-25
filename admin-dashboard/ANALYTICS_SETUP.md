@@ -35,6 +35,7 @@ yarn dev
 ### 4. View Analytics
 
 Navigate to `http://localhost:3001/admin/analytics` to see:
+
 - **Hard Words Leaderboard** - Most difficult Arabic roots based on FSRS data
 - **Content Completeness** - Missing audio files, grammar notes, difficulty levels
 - **User Study Analytics** - Active users, mastery stats, due words
@@ -49,6 +50,7 @@ Navigate to `http://localhost:3001/admin/analytics` to see:
 ## Troubleshooting
 
 **Still showing "No Study Data Available"?**
+
 - Check that you added the service role key to `.env.local`
 - Verify you restarted the dev server after adding the key
 - Check browser console for any error messages

@@ -2,11 +2,7 @@ import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { memo, useCallback, type ReactElement } from 'react';
-import type {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ViewToken,
-} from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   runOnJS,
@@ -19,10 +15,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { FloatingActionButtons } from '@/components/article/FloatingActionButtons';
 import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
-import {
-  SCROLL_EVENT_THROTTLE,
-  TIMING_CONFIG,
-} from '@/constants/animation';
+import { SCROLL_EVENT_THROTTLE, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import type { Article } from '@/types/articles.types';
@@ -33,7 +26,7 @@ import { calculateHeaderHeight } from '@/utils/gradientUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
 const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList as unknown as React.ComponentType<any>
+  FlashList as unknown as React.ComponentType<any>,
 );
 
 // Comfortable reading space constant
@@ -142,222 +135,219 @@ const ArticleContentInternal = function ArticleContent({
   onClose,
   onFlashListLoad,
 }: ArticleContentProps) {
-    const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
 
-    // React Compiler auto-memoizes
-    const headerHeight = calculateHeaderHeight(insets.top);
+  // React Compiler auto-memoizes
+  const headerHeight = calculateHeaderHeight(insets.top);
 
-    // Shared scroll value for parallax header
-    const scrollY = useSharedValue(0);
-    // Reduce cross-thread calls by emitting JS updates only when change is meaningful
-    const lastEmittedY = useSharedValue(0);
+  // Shared scroll value for parallax header
+  const scrollY = useSharedValue(0);
+  // Reduce cross-thread calls by emitting JS updates only when change is meaningful
+  const lastEmittedY = useSharedValue(0);
 
-    // Optimized fade-in animation for snappy article appearance
-    const { animatedStyle, startAnimation } = useOpacityAnimation({
-      initialOpacity: 0,
-      duration: TIMING_CONFIG.FAST.duration, // 150ms for snappier feel
-    });
+  // Optimized fade-in animation for snappy article appearance
+  const { animatedStyle, startAnimation } = useOpacityAnimation({
+    initialOpacity: 0,
+    duration: TIMING_CONFIG.FAST.duration, // 150ms for snappier feel
+  });
 
-    // Trigger animation when content becomes available
-    React.useEffect(() => {
-      if (sortedSentences && sortedSentences.length > 0) {
-        startAnimation();
+  // Trigger animation when content becomes available
+  React.useEffect(() => {
+    if (sortedSentences && sortedSentences.length > 0) {
+      startAnimation();
+    }
+  }, [sortedSentences, startAnimation]);
+
+  // Forward JS scroll needs from UI thread
+  const handleScrollJS = useCallback(
+    (y: number) => {
+      const evt = {
+        nativeEvent: { contentOffset: { y } },
+      } as NativeSyntheticEvent<NativeScrollEvent>;
+      handleScroll(evt);
+    },
+    [handleScroll],
+  );
+
+  // UI-thread scroll handler for smoothness
+  const onScrollAnimated = useAnimatedScrollHandler({
+    onScroll: event => {
+      const y = event.contentOffset.y;
+      scrollY.set(y);
+      // Emit to JS only if scrolled enough to matter to header/tooltip logic
+      const dy = Math.abs(y - lastEmittedY.get());
+      if (dy >= 8 || y === 0) {
+        lastEmittedY.set(y);
+        runOnJS(handleScrollJS)(y);
       }
-    }, [sortedSentences, startAnimation]);
+    },
+  });
 
-    // Forward JS scroll needs from UI thread
-    const handleScrollJS = useCallback(
-      (y: number) => {
-        const evt = {
-          nativeEvent: { contentOffset: { y } },
-        } as NativeSyntheticEvent<NativeScrollEvent>;
-        handleScroll(evt);
-      },
-      [handleScroll]
-    );
+  // Reserve right-side space so text never sits under floating action buttons
+  // Updated to account for only one button now (bookmarks button)
+  // React Compiler auto-memoizes
+  const rightOverlayPadding = MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE;
 
-    // UI-thread scroll handler for smoothness
-    const onScrollAnimated = useAnimatedScrollHandler({
-      onScroll: event => {
-        const y = event.contentOffset.y;
-        scrollY.set(y);
-        // Emit to JS only if scrolled enough to matter to header/tooltip logic
-        const dy = Math.abs(y - lastEmittedY.get());
-        if (dy >= 8 || y === 0) {
-          lastEmittedY.set(y);
-          runOnJS(handleScrollJS)(y);
-        }
-      },
-    });
+  // React Compiler auto-memoizes
+  const titleContainerStyle = [
+    styles.titleContainer,
+    {
+      paddingRight: rightOverlayPadding,
+      marginTop: -(LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.SMALL),
+    },
+  ];
 
-    // Reserve right-side space so text never sits under floating action buttons
-    // Updated to account for only one button now (bookmarks button)
-    // React Compiler auto-memoizes
-    const rightOverlayPadding = MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE;
+  // React Compiler auto-memoizes
+  const authorContainerStyle = [styles.authorContainer, { paddingRight: rightOverlayPadding }];
 
-    // React Compiler auto-memoizes
-    const titleContainerStyle = [
-      styles.titleContainer,
-      {
-        paddingRight: rightOverlayPadding,
-        marginTop: -(LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.SMALL),
-      },
-    ];
+  // React Compiler auto-memoizes
+  const summaryContainerStyle = [styles.summaryContainer, { paddingRight: rightOverlayPadding }];
 
-    // React Compiler auto-memoizes
-    const authorContainerStyle = [styles.authorContainer, { paddingRight: rightOverlayPadding }];
+  const dividerStyle = {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    opacity: 0.4,
+    marginHorizontal: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  } as const;
 
-    // React Compiler auto-memoizes
-    const summaryContainerStyle = [styles.summaryContainer, { paddingRight: rightOverlayPadding }];
+  // Render title/author below the hero image but above content
+  // React Compiler auto-memoizes
+  const headerComponent = (
+    <View>
+      <View style={titleContainerStyle}>
+        <ThemedText
+          type="heading1"
+          colorName="headingText"
+          style={[styles.titleText, styles.leftAlign]}
+        >
+          {article.title}
+        </ThemedText>
+      </View>
 
-    const dividerStyle = {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: colors.border,
-      opacity: 0.4,
-      marginHorizontal: LAYOUT.SPACING.MEDIUM,
-      marginBottom: LAYOUT.SPACING.MEDIUM,
-    } as const;
+      <View style={authorContainerStyle}>
+        <ThemedText type="body" weight="medium" colorName="authorText" style={styles.authorText}>
+          {article.author.name}
+          {' \u00B7 '}
+          {article.category.name
+            ? article.category.name.charAt(0).toUpperCase() + article.category.name.slice(1)
+            : ''}
+        </ThemedText>
+      </View>
 
-    // Render title/author below the hero image but above content
-    // React Compiler auto-memoizes
-    const headerComponent = (
-      <View>
-        <View style={titleContainerStyle}>
-          <ThemedText
-            type="heading1"
-            colorName="headingText"
-            style={[styles.titleText, styles.leftAlign]}
-          >
-            {article.title}
-          </ThemedText>
-        </View>
-
-        <View style={authorContainerStyle}>
+      {/* Summary section - positioned between author and content for natural reading flow */}
+      {article.summary && (
+        <View style={summaryContainerStyle}>
           <ThemedText
             type="body"
-            weight="medium"
-            colorName="authorText"
-            style={styles.authorText}
+            weight="normal"
+            colorName="subtitleText"
+            style={styles.summaryText}
           >
-            {article.author.name}
-            {' \u00B7 '}
-            {article.category.name
-              ? article.category.name.charAt(0).toUpperCase() + article.category.name.slice(1)
-              : ''}
+            {article.summary}
           </ThemedText>
         </View>
+      )}
+      <View style={dividerStyle} />
+    </View>
+  );
 
-        {/* Summary section - positioned between author and content for natural reading flow */}
-        {article.summary && (
-          <View style={summaryContainerStyle}>
-            <ThemedText
-              type="body"
-              weight="normal"
-              colorName="subtitleText"
-              style={styles.summaryText}
-            >
-              {article.summary}
-            </ThemedText>
-          </View>
-        )}
-        <View style={dividerStyle} />
-      </View>
-    );
+  // Get articles from cache for recommendations (avoid re-querying here)
+  const queryClient = useQueryClient();
+  const articlesData = queryClient.getQueryData<Article[]>(['articles']) || [];
 
-    // Get articles from cache for recommendations (avoid re-querying here)
-    const queryClient = useQueryClient();
-    const articlesData = queryClient.getQueryData<Article[]>(['articles']) || [];
+  // React Compiler auto-memoizes
+  const footerComponent = (
+    <RelatedArticlesSection currentArticleId={article.id} articlesData={articlesData} />
+  );
 
-    // React Compiler auto-memoizes
-    const footerComponent = <RelatedArticlesSection currentArticleId={article.id} articlesData={articlesData} />;
+  // React Compiler auto-memoizes
+  const contentContainerStyle = {
+    paddingTop: headerHeight,
+    paddingBottom: insets.bottom + COMFORTABLE_READING_SPACE,
+  };
 
-    // React Compiler auto-memoizes
-    const contentContainerStyle = {
-      paddingTop: headerHeight,
-      paddingBottom: insets.bottom + COMFORTABLE_READING_SPACE,
-    };
+  // React Compiler auto-memoizes
+  const listContainerStyle = {
+    flex: 1,
+    backgroundColor: colors.background,
+    position: 'relative' as const,
+  };
 
-    // React Compiler auto-memoizes
-    const listContainerStyle = {
-      flex: 1,
-      backgroundColor: colors.background,
-      position: 'relative' as const,
-    };
+  // React Compiler auto-memoizes
+  const viewabilityConfig = {
+    itemVisiblePercentThreshold: 15, // Only count items near top (15% visible)
+    minimumViewTime: 0, // Immediate updates for accurate scrubber tracking
+    waitForInteraction: false, // Update during scroll for real-time sync
+  };
 
-    // React Compiler auto-memoizes
-    const viewabilityConfig = {
-      itemVisiblePercentThreshold: 15, // Only count items near top (15% visible)
-      minimumViewTime: 0, // Immediate updates for accurate scrubber tracking
-      waitForInteraction: false, // Update during scroll for real-time sync
-    };
-
-    return (
-      <Animated.View style={[styles.flexOne, animatedStyle]}>
-        {sortedSentences && sortedSentences.length > 0 ? (
-          <View style={listContainerStyle}>
-            {/* Sticky Parallax Header behind content */}
-            <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
-            <AnimatedFlashList
-              ref={scrollViewRef as unknown as React.RefObject<any>}
-              key={`article-${id}`}
-              data={sortedSentences}
-              renderItem={renderSentenceItem}
-              keyExtractor={sentenceKeyExtractor}
-              contentContainerStyle={contentContainerStyle}
-              ListHeaderComponent={headerComponent}
-              ListFooterComponent={footerComponent}
-              onScroll={
-                onScrollAnimated as unknown as (
-                  event: NativeSyntheticEvent<NativeScrollEvent>
-                ) => void
+  return (
+    <Animated.View style={[styles.flexOne, animatedStyle]}>
+      {sortedSentences && sortedSentences.length > 0 ? (
+        <View style={listContainerStyle}>
+          {/* Sticky Parallax Header behind content */}
+          <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
+          <AnimatedFlashList
+            ref={scrollViewRef as unknown as React.RefObject<any>}
+            key={`article-${id}`}
+            data={sortedSentences}
+            renderItem={renderSentenceItem}
+            keyExtractor={sentenceKeyExtractor}
+            contentContainerStyle={contentContainerStyle}
+            ListHeaderComponent={headerComponent}
+            ListFooterComponent={footerComponent}
+            onScroll={
+              onScrollAnimated as unknown as (
+                event: NativeSyntheticEvent<NativeScrollEvent>,
+              ) => void
+            }
+            onViewableItemsChanged={handleViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
+            scrollEventThrottle={SCROLL_THROTTLE}
+            showsVerticalScrollIndicator={true}
+            removeClippedSubviews={true}
+            alwaysBounceVertical={true}
+            bounces={true}
+            overScrollMode="always"
+            extraData={{
+              currentHighlightedWord,
+              showEnglish, // Track English visibility for proper recycling
+              themeMode: colors.text, // Track theme changes via stable color value
+            }}
+            onScrollToIndexFailed={({ index }: { index: number }) => {
+              // Fallback: estimate offset using fixed item height and account for header
+              const estimatedOffset = Math.max(
+                0,
+                (index - 1) * SENTENCE_ITEM_HEIGHT + headerHeight,
+              );
+              try {
+                scrollViewRef.current?.scrollToOffset({
+                  offset: estimatedOffset,
+                  animated: true,
+                });
+              } catch {
+                // noop
               }
-              onViewableItemsChanged={handleViewableItemsChanged}
-              viewabilityConfig={viewabilityConfig}
-              scrollEventThrottle={SCROLL_THROTTLE}
-              showsVerticalScrollIndicator={true}
-              removeClippedSubviews={true}
-              alwaysBounceVertical={true}
-              bounces={true}
-              overScrollMode="always"
-              extraData={{
-                currentHighlightedWord,
-                showEnglish, // Track English visibility for proper recycling
-                themeMode: colors.text, // Track theme changes via stable color value
-              }}
-              onScrollToIndexFailed={({ index }: { index: number }) => {
-                // Fallback: estimate offset using fixed item height and account for header
-                const estimatedOffset = Math.max(
-                  0,
-                  (index - 1) * SENTENCE_ITEM_HEIGHT + headerHeight
-                );
-                try {
-                  scrollViewRef.current?.scrollToOffset({
-                    offset: estimatedOffset,
-                    animated: true,
-                  });
-                } catch {
-                  // noop
-                }
-              }}
-              onLoad={onFlashListLoad}
-            />
+            }}
+            onLoad={onFlashListLoad}
+          />
 
-            {/* Floating action buttons */}
-            <FloatingActionButtons
-              isInReadingList={isInReadingList}
-              onToggleReadingList={onToggleReadingList}
-              hasAudio={hasAudio}
-              isPlaying={isPlaying}
-              onPlayPress={onPlayPress}
-              showEnglish={showEnglish}
-              onToggleLanguage={onToggleLanguage}
-              isLanguageOverridden={isLanguageOverridden}
-              onClose={onClose}
-            />
-          </View>
-        ) : null}
-      </Animated.View>
-    );
+          {/* Floating action buttons */}
+          <FloatingActionButtons
+            isInReadingList={isInReadingList}
+            onToggleReadingList={onToggleReadingList}
+            hasAudio={hasAudio}
+            isPlaying={isPlaying}
+            onPlayPress={onPlayPress}
+            showEnglish={showEnglish}
+            onToggleLanguage={onToggleLanguage}
+            isLanguageOverridden={isLanguageOverridden}
+            onClose={onClose}
+          />
+        </View>
+      ) : null}
+    </Animated.View>
+  );
 };
 
 ArticleContentInternal.displayName = 'ArticleContent';

@@ -29,7 +29,7 @@ export const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest
       initialValue: 0,
       targetValue: 360,
       duration: TIMING_CONFIG.SLOW.duration,
-    }
+    },
   );
 
   // Trigger rotation animation when enabled state changes
@@ -51,7 +51,7 @@ export const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest
       borderColor: colors.borderOverlay,
       opacity: enabled ? 1 : 0.7,
     }),
-    [enabled, colors.elevation1, colors.elevation2, colors.borderOverlay]
+    [enabled, colors.elevation1, colors.elevation2, colors.borderOverlay],
   );
 
   return (
@@ -106,4 +106,3 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
 });
-

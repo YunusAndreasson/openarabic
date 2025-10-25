@@ -1,4 +1,5 @@
 # Screen Spacing Consistency Analysis
+
 **OpenArabic App - Main Screens Padding & Spacing Audit**
 
 ---
@@ -6,6 +7,7 @@
 ## Executive Summary
 
 Found **significant inconsistencies** in padding/spacing across main screens:
+
 - 4 different paddingBottom formulas
 - Inconsistent use of LAYOUT.COMMON_STYLES
 - Different top padding approaches
@@ -16,6 +18,7 @@ Found **significant inconsistencies** in padding/spacing across main screens:
 ## Current State
 
 ### **Read Screen** (`app/(tabs)/library/index.tsx`)
+
 ```typescript
 // StyleSheet
 container: LAYOUT.COMMON_STYLES.CONTAINER ✅
@@ -32,6 +35,7 @@ listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER ✅
 ```
 
 ### **Study Screen** (`app/(tabs)/study/index.tsx`)
+
 ```typescript
 // StyleSheet
 container: LAYOUT.COMMON_STYLES.CONTAINER ✅
@@ -47,6 +51,7 @@ contentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER ✅
 ```
 
 ### **Bookmarks Screen** (`app/(tabs)/bookmarks/index.tsx`)
+
 ```typescript
 // StyleSheet
 container: LAYOUT.COMMON_STYLES.CONTAINER ✅
@@ -64,6 +69,7 @@ container: LAYOUT.COMMON_STYLES.CONTAINER ✅
 ```
 
 ### **FilteredArticleView** (`components/library/FilteredArticleView.tsx`)
+
 ```typescript
 // StyleSheet
 container: { flex: 1 } ⚠️ NOT using LAYOUT.COMMON_STYLES.CONTAINER
@@ -82,29 +88,30 @@ listContent: {
 
 ### 🔴 **CRITICAL** - Inconsistent Bottom Padding
 
-| Screen | Formula | Approximate Value |
-|--------|---------|-------------------|
-| Read | `insets + bar + TINY` | **66-81px** |
-| Study | `insets + bar + XLARGE + SMALL` | **94-109px** |
-| Bookmarks | `bar + XLARGE + max(insets, SMALL)` | **90-105px** |
-| FilteredArticleView | `bar + LARGE` | **74-89px** ⚠️ Missing insets! |
+| Screen              | Formula                             | Approximate Value              |
+| ------------------- | ----------------------------------- | ------------------------------ |
+| Read                | `insets + bar + TINY`               | **66-81px**                    |
+| Study               | `insets + bar + XLARGE + SMALL`     | **94-109px**                   |
+| Bookmarks           | `bar + XLARGE + max(insets, SMALL)` | **90-105px**                   |
+| FilteredArticleView | `bar + LARGE`                       | **74-89px** ⚠️ Missing insets! |
 
 **Problem**: FilteredArticleView doesn't account for safe area insets, causing potential cutoff on devices with home indicators.
 
 ### 🟡 **MEDIUM** - Inconsistent Top Padding
 
-| Screen | Top Padding |
-|--------|-------------|
-| Read | `0` (explicit) |
-| Study | Default (from CONTENT_CONTAINER) = `0` |
-| Bookmarks | Default = `0` |
-| FilteredArticleView | `LAYOUT.SPACING.MEDIUM` (12px) |
+| Screen              | Top Padding                            |
+| ------------------- | -------------------------------------- |
+| Read                | `0` (explicit)                         |
+| Study               | Default (from CONTENT_CONTAINER) = `0` |
+| Bookmarks           | Default = `0`                          |
+| FilteredArticleView | `LAYOUT.SPACING.MEDIUM` (12px)         |
 
 **Problem**: FilteredArticleView adds top padding while other screens don't, causing visual inconsistency when navigating from Read → Filter.
 
 ### 🟡 **MEDIUM** - Different Spacing Additions
 
 Three different spacing patterns for bottom padding:
+
 1. Read: `TINY` (4px)
 2. Study: `XLARGE + SMALL` (32px)
 3. Bookmarks: `XLARGE + max(insets, SMALL)` (dynamic)
@@ -126,6 +133,7 @@ Three different spacing patterns for bottom padding:
 ### Design Intent
 
 Each screen seems to have different bottom UI:
+
 - **Read**: No persistent bottom UI → minimal padding
 - **Study**: BottomControls button → needs extra space (XLARGE)
 - **Bookmarks**: BottomControls button → needs extra space (XLARGE)
@@ -145,8 +153,7 @@ export const SCREEN_PADDING = {
    * Standard bottom padding for screens without persistent bottom controls
    * Accounts for tab bar + safe area + small buffer
    */
-  BOTTOM_DEFAULT: (insets: number) =>
-    insets + LAYOUT.BOTTOM_BAR.HEIGHT + SPACING_SCALE.SMALL,
+  BOTTOM_DEFAULT: (insets: number) => insets + LAYOUT.BOTTOM_BAR.HEIGHT + SPACING_SCALE.SMALL,
   // = insets + 58-73 + 8 = ~70-85px
 
   /**
@@ -163,23 +170,24 @@ export const SCREEN_PADDING = {
 
 ```typescript
 // Read screen (no controls)
-paddingBottom: SCREEN_PADDING.BOTTOM_DEFAULT(insets.bottom)
+paddingBottom: SCREEN_PADDING.BOTTOM_DEFAULT(insets.bottom);
 
 // Study screen (with BottomControls)
-paddingBottom: SCREEN_PADDING.BOTTOM_WITH_CONTROLS(insets.bottom)
+paddingBottom: SCREEN_PADDING.BOTTOM_WITH_CONTROLS(insets.bottom);
 
 // Bookmarks screen (with BottomControls)
 paddingBottom: stableHasArticles
   ? SCREEN_PADDING.BOTTOM_WITH_CONTROLS(insets.bottom)
-  : LAYOUT.SPACING.MEDIUM
+  : LAYOUT.SPACING.MEDIUM;
 
 // FilteredArticleView (part of Read tab)
-paddingBottom: SCREEN_PADDING.BOTTOM_DEFAULT(insets.bottom)
+paddingBottom: SCREEN_PADDING.BOTTOM_DEFAULT(insets.bottom);
 ```
 
 ### Option 2: Keep Current Patterns, Document Intent
 
 If the differences are intentional:
+
 1. Document why each screen uses different padding
 2. Add comments explaining the formula
 3. Ensure FilteredArticleView matches Read screen
@@ -189,17 +197,20 @@ If the differences are intentional:
 ## Implementation Plan
 
 ### Phase 1: Add SCREEN_PADDING Constants ✅
+
 - [ ] Add `SCREEN_PADDING` to `constants/layout.ts`
 - [ ] Define `BOTTOM_DEFAULT` and `BOTTOM_WITH_CONTROLS`
 - [ ] Add TypeScript types for safe area insets
 
 ### Phase 2: Refactor Main Screens
+
 - [ ] Update Read screen to use `SCREEN_PADDING.BOTTOM_DEFAULT`
 - [ ] Update Study screen to use `SCREEN_PADDING.BOTTOM_WITH_CONTROLS`
 - [ ] Update Bookmarks screen to use `SCREEN_PADDING.BOTTOM_WITH_CONTROLS`
 - [ ] **CRITICAL**: Update FilteredArticleView to match Read screen
 
 ### Phase 3: Validation
+
 - [ ] Visual regression test on all main screens
 - [ ] Test on devices with different safe area insets (iPhone with notch/home indicator)
 - [ ] Verify scroll-to-bottom behavior
@@ -212,11 +223,13 @@ If the differences are intentional:
 ### 🔴 **URGENT**: FilteredArticleView Safe Area Bug
 
 **Current**:
+
 ```typescript
 paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.LARGE,
 ```
 
 **Fixed**:
+
 ```typescript
 paddingBottom: SCREEN_PADDING.BOTTOM_DEFAULT(insets.bottom),
 // Also needs useSafeAreaInsets() hook
@@ -225,11 +238,13 @@ paddingBottom: SCREEN_PADDING.BOTTOM_DEFAULT(insets.bottom),
 ### Remove Redundant Top Padding
 
 **Current** (FilteredArticleView):
+
 ```typescript
 paddingTop: LAYOUT.SPACING.MEDIUM,  // ❌ Inconsistent
 ```
 
 **Fixed**:
+
 ```typescript
 paddingTop: 0,  // ✅ Match Read screen
 ```
@@ -239,12 +254,14 @@ paddingTop: 0,  // ✅ Match Read screen
 ## Expected Outcomes
 
 ### Before
+
 - 4 different bottom padding formulas
 - FilteredArticleView missing safe area insets
 - Inconsistent user experience when navigating
 - Potential content cutoff on newer iPhones
 
 ### After
+
 - 2 standardized bottom padding patterns (default vs with controls)
 - All screens properly account for safe areas
 - Consistent spacing across all main screens
@@ -270,6 +287,7 @@ paddingTop: 0,  // ✅ Match Read screen
 ### Vertical Gaps Between Components
 
 #### **Study Screen** - Component Stack
+
 ```typescript
 <VocabularyStatCards />
 // Gap between cards?
@@ -277,12 +295,14 @@ paddingTop: 0,  // ✅ Match Read screen
 ```
 
 **VocabularyStatCards internal**:
+
 - Gap between MemoryRetentionGauge and stats row: `LAYOUT.SPACING.LARGE` (16px) ✅
 - Gap between stat cards: `LAYOUT.SPACING.SMALL` (8px) ✅
 
 **Between major components**: Need to verify gap
 
 #### **Read Screen** - Article List
+
 ```typescript
 // List item separator
 <ArticleCard />
@@ -291,9 +311,11 @@ paddingTop: 0,  // ✅ Match Read screen
 ```
 
 **ArticleCard internal**:
+
 - Gap in text container: `LAYOUT.SPACING.SMALL` (8px) ✅
 
 #### **Bookmarks Screen** - Audio List
+
 ```typescript
 // List item separator
 <ListenListItemCard />
@@ -302,6 +324,7 @@ paddingTop: 0,  // ✅ Match Read screen
 ```
 
 #### **FilteredArticleView** - Filtered List
+
 ```typescript
 // List item separator
 <ListenListItemCard />
@@ -312,6 +335,7 @@ paddingTop: 0,  // ✅ Match Read screen
 ### ✅ **GOOD** - Consistent List Separators
 
 All lists use `LAYOUT.SPACING.MEDIUM` (12px) for item separators:
+
 - Read screen article list
 - Bookmarks screen audio list
 - FilteredArticleView article list
@@ -319,6 +343,7 @@ All lists use `LAYOUT.SPACING.MEDIUM` (12px) for item separators:
 ### ✅ **GOOD** - Consistent Card Internal Spacing
 
 All cards use `LAYOUT.SPACING.SMALL` (8px) for internal element gaps:
+
 - VocabularyStatCards stats row
 - ArticleCard text container
 - DictionaryWordCard margin
@@ -326,6 +351,7 @@ All cards use `LAYOUT.SPACING.SMALL` (8px) for internal element gaps:
 ### 🔍 **TO VERIFY** - Major Component Gaps
 
 Need to check spacing between major sections:
+
 - Study: VocabularyStatCards → RecommendationCard
 - Read: Header sections → Article list
 - Bookmarks: Controls → List

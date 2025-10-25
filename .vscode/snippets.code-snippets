@@ -30,9 +30,9 @@
       "  );",
       "});",
       "",
-      "${1:ComponentName}.displayName = '${1:ComponentName}';"
+      "${1:ComponentName}.displayName = '${1:ComponentName}';",
     ],
-    "description": "Create a performance-optimized React Native component"
+    "description": "Create a performance-optimized React Native component",
   },
 
   "Custom Hook with Error Handling": {
@@ -74,9 +74,9 @@
       "    error,",
       "    handleAction,",
       "  }), [data, isLoading, error, handleAction]);",
-      "};"
+      "};",
     ],
-    "description": "Create a custom hook with error handling and performance optimization"
+    "description": "Create a custom hook with error handling and performance optimization",
   },
 
   "Test Suite Template": {
@@ -118,9 +118,9 @@
       "",
       "    expect(result.current.${11:resultProperty}).toBe(${12:expectedResult});",
       "  });",
-      "});"
+      "});",
     ],
-    "description": "Create a comprehensive test suite"
+    "description": "Create a comprehensive test suite",
   },
 
   "Service Function with Types": {
@@ -147,9 +147,9 @@
       "    handleError(error, { context: '${4:functionName}', ${5:param} });",
       "    throw error;",
       "  }",
-      "};"
+      "};",
     ],
-    "description": "Create a service function with proper error handling and types"
+    "description": "Create a service function with proper error handling and types",
   },
 
   "Type Definition": {
@@ -165,9 +165,9 @@
       "export interface ${8:PropsType} {",
       "  ${9:prop}: ${10:type};",
       "  ${11:onAction}?: (${12:param}: ${13:type}) => void;",
-      "}"
+      "}",
     ],
-    "description": "Create TypeScript type definitions"
+    "description": "Create TypeScript type definitions",
   },
 
   "Constants Definition": {
@@ -178,9 +178,9 @@
       "  ${4:// Additional constants}",
       "} as const;",
       "",
-      "export type ${5:ConstantType} = typeof ${1:CONSTANT_NAME}[keyof typeof ${1:CONSTANT_NAME}];"
+      "export type ${5:ConstantType} = typeof ${1:CONSTANT_NAME}[keyof typeof ${1:CONSTANT_NAME}];",
     ],
-    "description": "Create constants with proper typing"
+    "description": "Create constants with proper typing",
   },
 
   "Error Boundary Component": {
@@ -236,8 +236,8 @@
       "",
       "    return this.props.children;",
       "  }",
-      "}"
+      "}",
     ],
-    "description": "Create an error boundary component"
-  }
+    "description": "Create an error boundary component",
+  },
 }

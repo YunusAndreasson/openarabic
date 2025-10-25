@@ -52,7 +52,7 @@ export const getStudyReviewRoute = (
     mode: 'new' | 'random' | 'spaced';
     count: number;
     fromRemember: string;
-  }>
+  }>,
 ): string => {
   const queryParts: string[] = [];
   if (params?.rootId) queryParts.push(`rootId=${params.rootId}`);

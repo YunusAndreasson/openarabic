@@ -459,7 +459,7 @@ export const LAYOUT = {
 export const getArabicTextStyle = (
   fontSize: number,
   additionalStyles: TextStyle = {},
-  fontFamily: string = FONTS.ARABIC
+  fontFamily: string = FONTS.ARABIC,
 ): TextStyle => {
   return {
     fontFamily,
@@ -478,7 +478,7 @@ export const getArabicTextStyle = (
 export const getEnhancedOpacity = (
   baseOpacity: number,
   isDarkMode: boolean = false,
-  isInteractive: boolean = false
+  isInteractive: boolean = false,
 ): number => {
   let adjustedOpacity = baseOpacity;
 

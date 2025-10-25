@@ -28,29 +28,29 @@ The grammar color system has a **confirmed, significant issue** with suffix dete
 
 ### Confirmed False Positives
 
-| Arabic Word | English Translation | Root | Issue | Detected Suffix |
-|-------------|-------------------|------|-------|-----------------|
-| وجه | "he faced" | و-ج-ه (face) | ✓ Detected ה as suffix | ה |
-| سفيه | "his foolish behavior" | س-ف-ه (foolish) | ✓ Detected ה as suffix | ה |
-| كره | "he hates" | ك-ر-ه (hate) | ✓ Detected ה as suffix | ה |
-| نزه | "he is pure" | ن-ز-ه (purity) | ✓ Detected ה as suffix | ה |
+| Arabic Word | English Translation    | Root            | Issue                  | Detected Suffix |
+| ----------- | ---------------------- | --------------- | ---------------------- | --------------- |
+| وجه         | "he faced"             | و-ج-ه (face)    | ✓ Detected ה as suffix | ה               |
+| سفيه        | "his foolish behavior" | س-ف-ه (foolish) | ✓ Detected ה as suffix | ה               |
+| كره         | "he hates"             | ك-ر-ه (hate)    | ✓ Detected ה as suffix | ה               |
+| نزه         | "he is pure"           | ن-ز-ه (purity)  | ✓ Detected ה as suffix | ה               |
 
 ### Correctly Rejected (No False Positive)
 
-| Arabic Word | English Translation | Why It Passed |
-|-------------|-------------------|---------------|
-| فقيه | "scholar" | No pronoun words in English (no trigger) |
-| فكاهة | "humor" | Ends in ة not standalone ה |
-| جباهة | "his forehead" | Ends in ة pattern (protected) |
+| Arabic Word | English Translation | Why It Passed                            |
+| ----------- | ------------------- | ---------------------------------------- |
+| فقيه        | "scholar"           | No pronoun words in English (no trigger) |
+| فكاهة       | "humor"             | Ends in ة not standalone ה               |
+| جباهة       | "his forehead"      | Ends in ة pattern (protected)            |
 
 ### Control Group (Legitimate Suffixes - Must Still Work)
 
-| Arabic Word | English | Expected | Result |
-|-------------|---------|----------|--------|
-| كتابه | "his book" | Detect ה suffix | ✅ PASS |
-| كتابها | "her book" | Detect ها suffix | ✅ PASS |
-| كتابي | "my book" | Detect ي suffix | ✅ PASS |
-| كتابهم | "their book" | Detect هم suffix | ✅ PASS |
+| Arabic Word | English      | Expected         | Result  |
+| ----------- | ------------ | ---------------- | ------- |
+| كتابه       | "his book"   | Detect ה suffix  | ✅ PASS |
+| كتابها      | "her book"   | Detect ها suffix | ✅ PASS |
+| كتابي       | "my book"    | Detect ي suffix  | ✅ PASS |
+| كتابهم      | "their book" | Detect هم suffix | ✅ PASS |
 
 **Critical Finding**: All legitimate suffix detection still works. Any fix must preserve this!
 
@@ -77,6 +77,7 @@ False positives occur when **BOTH** conditions are met:
 2. **English Pronoun Present**: Translation contains "he", "his", "it", "my", etc.
 
 **Example Perfect Storm**:
+
 - Arabic: كره (root: ك-ر-ه)
 - English: "he hates"
 - ✗ Ends with ה: ✓
@@ -86,6 +87,7 @@ False positives occur when **BOTH** conditions are met:
 ### Why Some Tests Passed
 
 **فقيه (scholar)** passed because:
+
 - Ends with ה: ✓
 - English "scholar" contains pronouns: ✗
 - → No false match (English gate prevented it)
@@ -109,6 +111,7 @@ The suffix detection in `arabicWordAnalysis.ts` (lines 331-404) has:
 ### Comparison: Prefix vs Suffix Protection
 
 **Prefixes have protection** (lines 377-386):
+
 ```typescript
 if (pattern === 'ي' || pattern === 'ت' || pattern === 'أ' || pattern === 'ن') {
   const remaining = arabic.slice(pattern.length);
@@ -132,6 +135,7 @@ if (pattern === 'ي' || pattern === 'ت' || pattern === 'أ' || pattern === 'ن'
 **Approach**: Validate that removing suffix leaves valid Arabic root structure
 
 **Implementation**:
+
 ```typescript
 // After detecting potential suffix, validate remaining structure
 if (matches && type === ComponentType.SUFFIX) {
@@ -143,9 +147,7 @@ if (matches && type === ComponentType.SUFFIX) {
   }
 
   // Consonant check: ensure valid root structure
-  const consonants = remaining.split('').filter(ch =>
-    !['ا', 'و', 'ي'].includes(ch)
-  );
+  const consonants = remaining.split('').filter(ch => !['ا', 'و', 'ي'].includes(ch));
   if (consonants.length < 2) {
     matches = false;
   }
@@ -153,12 +155,14 @@ if (matches && type === ComponentType.SUFFIX) {
 ```
 
 **Pros**:
+
 - ✅ Mirrors existing prefix protection (consistency)
 - ✅ Low complexity (~30 minutes implementation)
 - ✅ No external dependencies
 - ✅ Preserves legitimate suffix detection
 
 **Cons**:
+
 - ⚠️ May still have edge cases with 2-letter roots
 - ⚠️ Heuristic-based (not 100% accurate)
 
@@ -171,6 +175,7 @@ if (matches && type === ComponentType.SUFFIX) {
 **Approach**: Require stronger English context (not just presence of pronoun)
 
 **Implementation**:
+
 ```typescript
 // Check pronoun position and context
 // Example: "his book" → pronoun at START (likely legitimate)
@@ -179,16 +184,16 @@ if (matches && type === ComponentType.SUFFIX) {
 
 const pronounPosition = getPronounPosition(english, pronounWords);
 const isLikelyGenuineSuffix =
-  pronounPosition === 'start' &&
-  followedByNoun(english) &&
-  !precededByVerb(arabic);
+  pronounPosition === 'start' && followedByNoun(english) && !precededByVerb(arabic);
 ```
 
 **Pros**:
+
 - ✅ More sophisticated matching
 - ✅ Could reduce false positives significantly
 
 **Cons**:
+
 - ❌ High complexity (requires NLP-like analysis)
 - ❌ English-dependent (Arabic grammar shouldn't rely on English quality)
 - ❌ Fragile to translation variations
@@ -202,6 +207,7 @@ const isLikelyGenuineSuffix =
 **Approach**: Build/integrate Arabic root dictionary to validate
 
 **Implementation**:
+
 ```typescript
 // Check if word (without suffix) exists as known root
 const potentialRoot = removeNormalization(arabic, pattern);
@@ -213,11 +219,13 @@ if (isKnownRoot) {
 ```
 
 **Pros**:
+
 - ✅ Most accurate solution (95%+ accuracy)
 - ✅ Linguistically sound
 - ✅ Future-proof for expansion
 
 **Cons**:
+
 - ❌ Requires building/sourcing root dictionary
 - ❌ Higher implementation time (1-2 days)
 - ❌ Maintenance overhead (dictionary updates)
@@ -231,6 +239,7 @@ if (isKnownRoot) {
 ### **Implement Option A: Root Structure Validation**
 
 **Rationale**:
+
 1. Quick implementation (~30-60 minutes)
 2. Mirrors existing prefix protection (code consistency)
 3. No external dependencies
@@ -248,6 +257,7 @@ if (isKnownRoot) {
 4. **Verify control group** - ensure legitimate suffixes (كتابه, كتابها) still work
 
 **Success Metrics**:
+
 - ✅ All 4 false positive tests pass (وجه, سفيه, كره, نزه)
 - ✅ All 4 legitimate suffix tests pass (كتابه, كتابها, كتابي, كتابهم)
 - ✅ Accuracy rate: 95%+
@@ -259,11 +269,13 @@ if (isKnownRoot) {
 ### Why This Matters for Arabic Learners
 
 **False positives teach incorrect grammar**:
+
 - Students see كره (root: k-r-h) colored as if ה is "he"
 - Confusion: "Is ה part of the word or attached pronoun?"
 - Undermines trust in the educational tool
 
 **Correct behavior builds understanding**:
+
 - Root letters: Plain color (part of word meaning)
 - Grammatical suffixes: Colored (attached element)
 - Clear visual distinction = better learning
@@ -271,6 +283,7 @@ if (isKnownRoot) {
 ### Arabic Morphology Facts
 
 **Common Roots Ending in ה**:
+
 - و-ج-ه (face, direction)
 - ف-ق-ه (jurisprudence, understanding)
 - ك-ر-ה (hate, dislike)
@@ -280,11 +293,13 @@ if (isKnownRoot) {
 These are **extremely common** in Islamic and classical texts. False positives are not rare edge cases!
 
 **Structure of Arabic Roots**:
+
 - Usually 3 consonants (triliteral): ك-ت-ب, ف-ع-ل
 - Can be 4 consonants (quadriliteral): د-ح-ر-ج, ت-ر-ج-م
 - Suffixes attach AFTER the root is fully formed
 
 **Valid Pattern**:
+
 ```
 Root + Pattern + Suffix
 ك-ت-ب + kitāb + -hu → كتابه (his book)

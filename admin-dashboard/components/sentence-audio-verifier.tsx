@@ -56,20 +56,18 @@ const ArabicWord = React.memo(
     return (
       <span className="relative inline-block">
         <span
-          onClick={(e) => onClick(word, e)}
-          onMouseEnter={(e) => onHover(word, e)}
+          onClick={e => onClick(word, e)}
+          onMouseEnter={e => onHover(word, e)}
           onMouseLeave={onLeave}
           className={`cursor-pointer rounded px-0.5 transition-colors ${
-            hasAlternatives
-              ? 'bg-orange-100 hover:bg-orange-200'
-              : 'hover:bg-primary/10'
+            hasAlternatives ? 'bg-orange-100 hover:bg-orange-200' : 'hover:bg-primary/10'
           }`}
         >
           {word.word_form}
         </span>
       </span>
     );
-  }
+  },
 );
 ArabicWord.displayName = 'ArabicWord';
 
@@ -109,15 +107,15 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
   const wordsWithAlternatives = useMemo(() => {
     const wordIds = new Set<number>();
 
-    sentences.forEach((sentence) => {
-      sentence.sentence_words?.forEach((word) => {
+    sentences.forEach(sentence => {
+      sentence.sentence_words?.forEach(word => {
         const translations = translationsMap.get(word.word_form);
         if (!translations) return;
 
         const currentWordCount = word.english.trim().split(/\s+/).length;
         if (currentWordCount !== 1) return;
 
-        const hasAlternatives = Array.from(translations).some((translation) => {
+        const hasAlternatives = Array.from(translations).some(translation => {
           const wordCount = translation.trim().split(/\s+/).length;
           return translation !== word.english.trim() && wordCount >= 2;
         });
@@ -138,7 +136,11 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
   // Close tooltip on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (selectedWord && tooltipRef.current && !tooltipRef.current.contains(event.target as Node)) {
+      if (
+        selectedWord &&
+        tooltipRef.current &&
+        !tooltipRef.current.contains(event.target as Node)
+      ) {
         setSelectedWord(null);
         setCustomTranslation('');
       }
@@ -155,7 +157,8 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
 
       const { data, error: fetchError } = await supabase
         .from('article_sentences')
-        .select(`
+        .select(
+          `
           *,
           sentence_words (
             id,
@@ -164,7 +167,8 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
             position,
             grammar_note
           )
-        `)
+        `,
+        )
         .eq('article_id', articleId)
         .order('position');
 
@@ -205,10 +209,8 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
       if (updateError) throw updateError;
 
       // Update local state
-      setSentences((prevSentences) =>
-        prevSentences.map((s) =>
-          s.id === sentenceId ? { ...s, english: editedText } : s
-        )
+      setSentences(prevSentences =>
+        prevSentences.map(s => (s.id === sentenceId ? { ...s, english: editedText } : s)),
       );
 
       setEditingId(null);
@@ -224,7 +226,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
   const handleToggleRepeat = async (
     sentenceId: number,
     field: 'english_repeat' | 'arabic_repeat',
-    currentValue: boolean | null
+    currentValue: boolean | null,
   ) => {
     try {
       const newValue = !currentValue;
@@ -237,10 +239,8 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
       if (updateError) throw updateError;
 
       // Update local state
-      setSentences((prevSentences) =>
-        prevSentences.map((s) =>
-          s.id === sentenceId ? { ...s, [field]: newValue } : s
-        )
+      setSentences(prevSentences =>
+        prevSentences.map(s => (s.id === sentenceId ? { ...s, [field]: newValue } : s)),
       );
 
       console.log(`✓ Updated ${field} to ${newValue} for sentence ${sentenceId}`);
@@ -261,7 +261,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
     if (currentWordCount !== 1) return [];
 
     // Get all translations with 2+ words that are different from current
-    return Array.from(translations).filter((translation) => {
+    return Array.from(translations).filter(translation => {
       const wordCount = translation.trim().split(/\s+/).length;
       return translation !== word.english.trim() && wordCount >= 2;
     });
@@ -271,7 +271,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
     (word: SentenceWord): boolean => {
       return wordsWithAlternatives.has(word.id);
     },
-    [wordsWithAlternatives]
+    [wordsWithAlternatives],
   );
 
   const handleWordHover = useCallback((word: SentenceWord, e: React.MouseEvent) => {
@@ -306,7 +306,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
       setCustomTranslation(word.english);
       setHoveredWord(null); // Hide hover tooltip when opening edit popup
     },
-    [getAlternativeTranslations]
+    [getAlternativeTranslations],
   );
 
   const handleSaveCustomSingle = async () => {
@@ -325,13 +325,13 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
       if (updateError) throw updateError;
 
       // Update local state
-      setSentences((prevSentences) =>
-        prevSentences.map((sentence) => ({
+      setSentences(prevSentences =>
+        prevSentences.map(sentence => ({
           ...sentence,
-          sentence_words: sentence.sentence_words?.map((w) =>
-            w.id === selectedWord.word.id ? { ...w, english: customTranslation.trim() } : w
+          sentence_words: sentence.sentence_words?.map(w =>
+            w.id === selectedWord.word.id ? { ...w, english: customTranslation.trim() } : w,
           ),
-        }))
+        })),
       );
 
       // Refresh global cache
@@ -357,7 +357,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
 
     const wordForm = selectedWord.word.word_form;
     const confirmed = confirm(
-      `This will update ALL instances of "${wordForm}" across all articles. Continue?`
+      `This will update ALL instances of "${wordForm}" across all articles. Continue?`,
     );
 
     if (!confirmed) return;
@@ -372,13 +372,13 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
       if (updateError) throw updateError;
 
       // Update local state for all matching words in current article
-      setSentences((prevSentences) =>
-        prevSentences.map((sentence) => ({
+      setSentences(prevSentences =>
+        prevSentences.map(sentence => ({
           ...sentence,
-          sentence_words: sentence.sentence_words?.map((w) =>
-            w.word_form === wordForm ? { ...w, english: customTranslation.trim() } : w
+          sentence_words: sentence.sentence_words?.map(w =>
+            w.word_form === wordForm ? { ...w, english: customTranslation.trim() } : w,
           ),
-        }))
+        })),
       );
 
       // Refresh global cache
@@ -408,13 +408,13 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
       if (updateError) throw updateError;
 
       // Update local state
-      setSentences((prevSentences) =>
-        prevSentences.map((sentence) => ({
+      setSentences(prevSentences =>
+        prevSentences.map(sentence => ({
           ...sentence,
-          sentence_words: sentence.sentence_words?.map((w) =>
-            w.id === wordId ? { ...w, english: newTranslation } : w
+          sentence_words: sentence.sentence_words?.map(w =>
+            w.id === wordId ? { ...w, english: newTranslation } : w,
           ),
-        }))
+        })),
       );
 
       // Refresh global cache to get updated translations
@@ -449,7 +449,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
 
     return (
       <span className="inline-flex flex-wrap gap-1" dir="rtl">
-        {sortedWords.map((word) => (
+        {sortedWords.map(word => (
           <ArabicWord
             key={word.id}
             word={word}
@@ -464,7 +464,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
   };
 
   const stopAllAudio = () => {
-    Object.values(audioRefs.current).forEach((audio) => {
+    Object.values(audioRefs.current).forEach(audio => {
       audio.pause();
       audio.currentTime = 0;
     });
@@ -499,7 +499,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
 
     // Play the audio
     const audio = audioRefs.current[audioKey];
-    audio.play().catch((err) => {
+    audio.play().catch(err => {
       console.error('Error playing audio:', err);
       setPlayingState({ sentenceId: null, audioType: null });
     });
@@ -529,7 +529,12 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
       <div className="flex items-center gap-2 p-4 border border-destructive/50 bg-destructive/10 rounded-lg">
         <AlertCircle className="h-5 w-5 text-destructive" />
         <p className="text-sm text-destructive">{error}</p>
-        <Button variant="outline" size="sm" onClick={fetchSentences} className="ml-auto cursor-pointer">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchSentences}
+          className="ml-auto cursor-pointer"
+        >
           Retry
         </Button>
       </div>
@@ -598,7 +603,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
                     <div className="space-y-2">
                       <Textarea
                         value={editedText}
-                        onChange={(e) => setEditedText(e.target.value)}
+                        onChange={e => setEditedText(e.target.value)}
                         className="min-h-[80px]"
                         disabled={saving}
                       />
@@ -646,11 +651,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
                     size="sm"
                     variant={getAudioButtonVariant(sentence.id, 'arabic')}
                     onClick={() =>
-                      handlePlayPause(
-                        sentence.id,
-                        'arabic',
-                        normalizeAudioUrl(sentence.audio_url)
-                      )
+                      handlePlayPause(sentence.id, 'arabic', normalizeAudioUrl(sentence.audio_url))
                     }
                     className="flex-1 cursor-pointer"
                   >
@@ -669,7 +670,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
                       handlePlayPause(
                         sentence.id,
                         'english',
-                        normalizeAudioUrl(sentence.audio_url_english)
+                        normalizeAudioUrl(sentence.audio_url_english),
                       )
                     }
                     className="flex-1 cursor-pointer"
@@ -689,7 +690,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
                       handlePlayPause(
                         sentence.id,
                         'bilingual',
-                        normalizeAudioUrl(sentence.audio_url_bilingual)
+                        normalizeAudioUrl(sentence.audio_url_bilingual),
                       )
                     }
                     className="flex-1 cursor-pointer"
@@ -710,11 +711,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
                       type="checkbox"
                       checked={sentence.english_repeat || false}
                       onChange={() =>
-                        handleToggleRepeat(
-                          sentence.id,
-                          'english_repeat',
-                          sentence.english_repeat
-                        )
+                        handleToggleRepeat(sentence.id, 'english_repeat', sentence.english_repeat)
                       }
                       className="w-4 h-4 cursor-pointer"
                     />
@@ -725,11 +722,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
                       type="checkbox"
                       checked={sentence.arabic_repeat || false}
                       onChange={() =>
-                        handleToggleRepeat(
-                          sentence.id,
-                          'arabic_repeat',
-                          sentence.arabic_repeat
-                        )
+                        handleToggleRepeat(sentence.id, 'arabic_repeat', sentence.arabic_repeat)
                       }
                       className="w-4 h-4 cursor-pointer"
                     />
@@ -762,7 +755,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
             transform: 'translate(-50%, -100%)',
             animation: 'none',
           }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           <div className="space-y-3">
             <div>
@@ -791,7 +784,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
               </div>
               <Input
                 value={customTranslation}
-                onChange={(e) => setCustomTranslation(e.target.value)}
+                onChange={e => setCustomTranslation(e.target.value)}
                 placeholder="Enter translation..."
                 disabled={savingTranslation}
                 className="w-full"
@@ -844,9 +837,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
                       className="w-full text-left px-2 py-1.5 text-sm rounded border border-orange-200 hover:bg-orange-50 hover:border-orange-400 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span className="font-medium">{translation}</span>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        (Click to use)
-                      </span>
+                      <span className="text-xs text-muted-foreground ml-2">(Click to use)</span>
                     </button>
                   ))}
                 </div>
@@ -890,7 +881,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
           arabicSentence={selectedSentenceForImprovement.arabic}
           englishSentence={selectedSentenceForImprovement.english}
           words={
-            selectedSentenceForImprovement.sentence_words?.map((w) => ({
+            selectedSentenceForImprovement.sentence_words?.map(w => ({
               arabic: w.arabic,
               english: w.english,
               position: w.position,

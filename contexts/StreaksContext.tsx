@@ -40,7 +40,7 @@ export const StreaksProvider = ({ children }: StreaksProviderProps): React.React
 
   const contextValue = useMemo(
     () => ({ isStreaksVisible, openStreaks, closeStreaks }),
-    [isStreaksVisible, openStreaks, closeStreaks]
+    [isStreaksVisible, openStreaks, closeStreaks],
   );
 
   return <StreaksContext value={contextValue}>{children}</StreaksContext>;

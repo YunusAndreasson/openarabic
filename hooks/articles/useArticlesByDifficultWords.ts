@@ -25,7 +25,7 @@ interface UseArticlesByDifficultWordsResult {
  */
 export function useArticlesByDifficultWords(
   userId: string | undefined,
-  limit = 10
+  limit = 10,
 ): UseArticlesByDifficultWordsResult {
   // Fetch difficult words for the current user with optimized query
   const { data: difficultWords = [], isLoading: isLoadingDifficultWords } = useQuery({

@@ -105,7 +105,7 @@ export function useGlobalAudioState(): GlobalAudioState {
     }
 
     const currentIndex = sortedEnhancedTracks.findIndex(
-      track => track.articleId === currentArticleId
+      track => track.articleId === currentArticleId,
     );
 
     if (currentIndex === -1) {
@@ -150,7 +150,7 @@ export function useGlobalAudioState(): GlobalAudioState {
 
     const cachedArticle = queryClient.getQueryData<Article>(['article', currentArticleId]) ?? null;
     const readingList = user?.id
-      ? queryClient.getQueryData<BookmarkItem[]>(['readingList', user.id]) ?? null
+      ? (queryClient.getQueryData<BookmarkItem[]>(['readingList', user.id]) ?? null)
       : null;
     const readingListArticle =
       readingList?.find(i => i.article_id === currentArticleId)?.articles ?? null;
@@ -160,7 +160,7 @@ export function useGlobalAudioState(): GlobalAudioState {
     const imageUrl = String(
       cachedArticle?.image_url ||
         readingListArticle?.image_url ||
-        audioPlayer.currentTrack?.imageUrl
+        audioPlayer.currentTrack?.imageUrl,
     );
 
     if (title || imageUrl) {
@@ -215,7 +215,7 @@ export function useGlobalAudioState(): GlobalAudioState {
       sleepTimer.actions.startTimer(minutes);
       // Don't close modal immediately - let it stay open to show countdown
     },
-    [sleepTimer.actions]
+    [sleepTimer.actions],
   );
 
   const handleSleepTimerCancel = useCallback(() => {
@@ -236,8 +236,8 @@ export function useGlobalAudioState(): GlobalAudioState {
     audioState: audioPlayer.isPlaying
       ? AUDIO_STATES.PLAYING
       : audioPlayer.isLoading
-      ? AUDIO_STATES.LOADING
-      : AUDIO_STATES.IDLE,
+        ? AUDIO_STATES.LOADING
+        : AUDIO_STATES.IDLE,
     isLoading: audioPlayer.isLoading,
     currentArticle,
     queuePosition: enhancedQueuePosition,

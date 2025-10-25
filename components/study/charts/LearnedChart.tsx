@@ -57,7 +57,7 @@ export const LearnedChart = memo<LearnedChartProps>(
         emptyStateText={EMPTY_STATE_MESSAGES.learned}
       />
     );
-  }
+  },
 );
 
 LearnedChart.displayName = 'LearnedChart';

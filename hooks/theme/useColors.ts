@@ -21,7 +21,7 @@ export function useColors(): ThemeColors {
   // Always call hooks unconditionally (React hooks rules)
   const reduxTheme = useAppSelector(
     state => state.theme.theme || Theme.Dark,
-    (prev, next) => prev === next
+    (prev, next) => prev === next,
   );
 
   // If Redux isn't ready, use system color scheme as fallback

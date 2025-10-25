@@ -55,9 +55,7 @@ describe('Visual Feedback - Background Colors', () => {
 
       // ReviewCard.tsx line 128-134: Left swipe logic
       const startColor = isHesitating ? COLORS.warning : COLORS.error;
-      const endColor = isHesitating
-        ? `${COLORS.warning}40`
-        : `${COLORS.error}2E`;
+      const endColor = isHesitating ? `${COLORS.warning}40` : `${COLORS.error}2E`;
 
       // Left swipe always shows red (unknown), not orange
       expect(startColor).toBe(COLORS.error);
@@ -67,8 +65,7 @@ describe('Visual Feedback - Background Colors', () => {
     it('should show transparent background when not swiping', () => {
       const translateX = 0; // No swipe
 
-      const backgroundColor =
-        translateX === 0 ? COLORS.transparent : COLORS.success;
+      const backgroundColor = translateX === 0 ? COLORS.transparent : COLORS.success;
 
       expect(backgroundColor).toBe(COLORS.transparent);
     });

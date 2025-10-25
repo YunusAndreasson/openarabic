@@ -40,7 +40,7 @@ export function Auth(): JSX.Element {
       setEmail(text);
       if (emailError) validateEmail(text);
     },
-    [emailError, validateEmail, setEmail]
+    [emailError, validateEmail, setEmail],
   );
 
   const handlePasswordChange = useCallback(
@@ -48,7 +48,7 @@ export function Auth(): JSX.Element {
       setPassword(text);
       if (passwordError) validatePassword(text);
     },
-    [passwordError, validatePassword, setPassword]
+    [passwordError, validatePassword, setPassword],
   );
 
   const handleEmailBlur = useCallback(() => {
@@ -102,7 +102,7 @@ export function Auth(): JSX.Element {
               isRegistering
                 ? STRINGS.PASSWORD_REQUIREMENTS_HINT.replace(
                     '{minLength}',
-                    PASSWORD_REQUIREMENTS.minLength.toString()
+                    PASSWORD_REQUIREMENTS.minLength.toString(),
                   )
                 : undefined
             }
@@ -159,4 +159,3 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
-

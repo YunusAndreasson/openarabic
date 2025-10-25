@@ -11,7 +11,7 @@ type StudyWordContext = {
 interface ArticleMutationsResult {
   handleToggleReadingList: (
     articleId: ArticleId | undefined,
-    isInReadingList: boolean
+    isInReadingList: boolean,
   ) => Promise<void>;
   handleWordPress: (wordId: RootId) => void;
   handleRootPress: (rootId: RootId) => Promise<boolean | undefined>;
@@ -54,7 +54,7 @@ interface ArticleMutationsResult {
 export const useArticleMutations = (
   _userId: string | undefined,
   refetchReadingListStatus: () => void,
-  refetchStudyWords?: () => Promise<void>
+  refetchStudyWords?: () => Promise<void>,
 ): ArticleMutationsResult => {
   // Use focused hooks for each concern
   const readingListMutations = useReadingListMutations(refetchReadingListStatus);

@@ -9,11 +9,13 @@
 
 **Word**: عَلَيْهِ → "in him"
 **Expected**:
+
 - Prefix: على (on/upon/in)
 - Suffix: ه (him)
 - Diacritic: ِ (kasra)
 
 **Actual** (before fix):
+
 - Only kasra colored
 - Suffix ه not detected
 
@@ -25,18 +27,18 @@ The **فعيل pattern detection** was incorrectly rejecting preposition + suffi
 
 ```typescript
 // Before fix - too broad
-const isFa3eelPattern = pattern === 'ه' &&
-                        remaining.length === 3 &&
-                        remaining.charAt(2) === 'ي';
+const isFa3eelPattern = pattern === 'ه' && remaining.length === 3 && remaining.charAt(2) === 'ي';
 ```
 
 **Problem Flow**:
+
 1. Word: عليه (on him)
 2. Suffix ه detection checks remaining: علي (3 chars)
 3. علي ends with ي → **Incorrectly flagged as فعيل pattern**
 4. Suffix rejected ✗
 
 **Why This Happened**:
+
 - The فعيل check was designed to catch roots like سفيه (root: س-ف-ه)
 - But it also caught prepositions like علي (على + suffix)
 - على، لدى، إلى are prepositions that commonly take suffixes directly
@@ -57,6 +59,7 @@ const isFa3eelPattern = potentialFa3eelPattern && !isKnownPreposition;
 ```
 
 **How It Works**:
+
 1. Detects potential فعيل pattern (3 chars ending in ي + suffix ه)
 2. Checks if remaining is known preposition (على، لدى، إلى)
 3. If preposition → Allow suffix ✓
@@ -68,11 +71,11 @@ const isFa3eelPattern = potentialFa3eelPattern && !isKnownPreposition;
 
 ### New Tests Added (3)
 
-| Word | Translation | Expected | Result |
-|------|-------------|----------|--------|
-| عليه | "in him" | Detect ה suffix | ✅ PASS |
-| لديه | "with him" | Detect ה suffix | ✅ PASS |
-| إليه | "to him" | Detect ה suffix | ✅ PASS |
+| Word | Translation | Expected        | Result  |
+| ---- | ----------- | --------------- | ------- |
+| عليه | "in him"    | Detect ה suffix | ✅ PASS |
+| لديه | "with him"  | Detect ה suffix | ✅ PASS |
+| إليه | "to him"    | Detect ה suffix | ✅ PASS |
 
 ### Full Test Suite
 
@@ -89,15 +92,16 @@ Full Test Suite: 204/204 passing (1 skipped) ✓
 
 In Arabic, prepositions like على، لدى، إلى commonly attach pronoun suffixes:
 
-| Preposition | + Pronoun | Result | Meaning |
-|-------------|-----------|--------|---------|
-| على | + ه | عليه | on him / in him |
-| على | + ها | عليها | on her / in her |
-| على | + هم | عليهم | on them / in them |
-| لدى | + ه | لديه | with him / at him |
-| إلى | + ه | إليه | to him / towards him |
+| Preposition | + Pronoun | Result | Meaning              |
+| ----------- | --------- | ------ | -------------------- |
+| على         | + ه       | عليه   | on him / in him      |
+| على         | + ها      | عليها  | on her / in her      |
+| على         | + هم      | عليهم  | on them / in them    |
+| لدى         | + ه       | لديه   | with him / at him    |
+| إلى         | + ه       | إليه   | to him / towards him |
 
 **Morphological Note**: When suffixes attach, the final ى often changes:
+
 - على → علي + ه → عليه
 - لدى → لدي + ه → لديه
 - إلى → إلي + ه → إليه
@@ -121,11 +125,13 @@ The complete validation now handles:
 ## 🔧 Files Modified
 
 ### Implementation
+
 - `utils/arabicWordAnalysis.ts` (lines 445-461)
   - Added `knownPrepositionsWithSuffixes` list
   - Modified فعيل pattern check to exclude prepositions
 
 ### Tests
+
 - `__tests__/utils/root-vs-suffix-investigation.test.ts`
   - Added Category 4: "PREPOSITION + SUFFIX" (3 tests)
   - Total tests: 18 → 21
@@ -138,6 +144,7 @@ The complete validation now handles:
 **After**: Full grammatical analysis including preposition + suffix combinations
 
 **Example**: عَلَيْهِ now shows:
+
 - على (preposition) - colored
 - ה (pronoun) - colored
 - ِ (kasra) - colored
@@ -154,16 +161,19 @@ This provides complete grammatical breakdown for learners! 🎓
 ### Why This Matters
 
 In Arabic, pronoun suffixes can have case-marking diacritics:
+
 - הִ (hi) = genitive "him" (after preposition)
 - הُ (hu) = nominative "he/his"
 - הَ (ha) = accusative "him" (as object)
 
 **Before**: Diacritic and suffix had different colors
+
 - ה colored purple (pronoun suffix)
 - ִ colored blue (diacritic)
 - Student confusion: Are these separate elements?
 
 **After**: Both inherit suffix color (purple)
+
 - הִ both purple → visually grouped as single unit "him"
 - הُ both purple → "he/his"
 - הَ both purple → "him" (object)
@@ -188,6 +198,7 @@ if (isPronounSuffixPresent) {
 ```
 
 **Key Design Decision**: This happens **before** checking English word overlap, because:
+
 - Kasra (ِ) matches: 'in', 'of', 'with'
 - Suffix ה matches: 'him', 'his', 'he'
 - No overlap between these words!
@@ -198,19 +209,23 @@ if (isPronounSuffixPresent) {
 Updated `getDiacriticColorName()` to match the **exact** color logic of inherited components:
 
 ```typescript
-function getDiacriticColorName(diacritic: AnalyzedComponent | undefined, analysis: WordAnalysis): string {
+function getDiacriticColorName(
+  diacritic: AnalyzedComponent | undefined,
+  analysis: WordAnalysis,
+): string {
   // If diacritic inherits color from suffix with POSSESSIVE role
   if (diacritic.inheritColorFrom === ComponentType.SUFFIX && analysis.suffix) {
     // Match suffix color logic: use role-based color if available
     return analysis.suffix.role
-      ? GRAMMATICAL_ROLE_COLORS[analysis.suffix.role]  // 'violet' for POSSESSIVE!
-      : COMPONENT_TYPE_CONFIG[ComponentType.SUFFIX].colorName;  // 'warning' fallback
+      ? GRAMMATICAL_ROLE_COLORS[analysis.suffix.role] // 'violet' for POSSESSIVE!
+      : COMPONENT_TYPE_CONFIG[ComponentType.SUFFIX].colorName; // 'warning' fallback
   }
   // ...
 }
 ```
 
 **Critical Bug Fix**:
+
 - **Before**: Returned 'warning' (generic suffix color, mapped to gold #d1b56f)
 - **After**: Returns 'violet' (POSSESSIVE role color, mapped to purple #b28fef)
 
@@ -220,11 +235,11 @@ function getDiacriticColorName(diacritic: AnalyzedComponent | undefined, analysi
 
 Added 3 new tests (all passing ✓):
 
-| Word | Suffix | Diacritic | Result ✓ |
-|------|--------|-----------|----------|
-| עَلَيْהִ (in him) | ה | ِ | Both purple ✓ |
-| كِتَابَهُ (his book) | ه | ُ | Both purple ✓ |
-| رَأَيْتُهَ (I saw him) | ه | َ | Both purple ✓ |
+| Word                   | Suffix | Diacritic | Result ✓      |
+| ---------------------- | ------ | --------- | ------------- |
+| עَلَيْהִ (in him)      | ה      | ِ         | Both purple ✓ |
+| كِتَابَهُ (his book)   | ه      | ُ         | Both purple ✓ |
+| رَأَيْتُهَ (I saw him) | ه      | َ         | Both purple ✓ |
 
 **Full Test Suite**: 24/24 passing ✓
 

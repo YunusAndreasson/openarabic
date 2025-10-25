@@ -70,7 +70,7 @@ export function useWordAudioPlayback(options: UseWordAudioPlaybackOptions = {}) 
         });
       }
     },
-    [showErrorToast, errorMessage, enableHaptics, isMountedRef, play]
+    [showErrorToast, errorMessage, enableHaptics, isMountedRef, play],
   );
 
   return playWordAudio;

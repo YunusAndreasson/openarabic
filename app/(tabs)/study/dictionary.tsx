@@ -8,7 +8,6 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-
 import { ThemedView } from '@/components/ThemedView';
 import { DictionarySortingHeader } from '@/components/study/DictionarySortingHeader';
 import { DictionaryWordCard } from '@/components/study/DictionaryWordCard';
@@ -38,10 +37,10 @@ export default function DictionaryScreen(): JSX.Element {
       filter === 'due'
         ? STRINGS.DUE_WORDS_TITLE
         : filter === 'learned'
-        ? STRINGS.LEARNED_WORDS
-        : filter === 'mastered'
-        ? STRINGS.MASTERED_WORDS_TITLE
-        : STRINGS.DICTIONARY_TITLE;
+          ? STRINGS.LEARNED_WORDS
+          : filter === 'mastered'
+            ? STRINGS.MASTERED_WORDS_TITLE
+            : STRINGS.DICTIONARY_TITLE;
     navigation.setOptions({ title });
   }, [filter, navigation]);
 
@@ -52,7 +51,7 @@ export default function DictionaryScreen(): JSX.Element {
           reset();
         }
       };
-    }, [editMode, reset])
+    }, [editMode, reset]),
   );
 
   // Get all study words and due words
@@ -92,7 +91,7 @@ export default function DictionaryScreen(): JSX.Element {
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
       }
-    }
+    },
   );
 
   const { sortedWords, sortDirection, setSorting } = useDictionaryModal({
@@ -114,7 +113,7 @@ export default function DictionaryScreen(): JSX.Element {
         });
       }
     },
-    [user?.id, toggleRootMutation]
+    [user?.id, toggleRootMutation],
   );
 
   const renderItem = useCallback(
@@ -125,7 +124,7 @@ export default function DictionaryScreen(): JSX.Element {
         onDelete={() => handleDeleteWord(props.item.root_id)}
       />
     ),
-    [editMode, handleDeleteWord]
+    [editMode, handleDeleteWord],
   );
 
   return (

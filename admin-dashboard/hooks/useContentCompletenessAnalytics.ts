@@ -41,14 +41,22 @@ export function useContentCompletenessAnalytics(): UseContentCompletenessAnalyti
 
     try {
       // Fetch sentence data (table is called article_sentences in the mobile app)
-      const { data: sentences, error: sentencesError, count: sentencesCount } = await supabaseAdmin
+      const {
+        data: sentences,
+        error: sentencesError,
+        count: sentencesCount,
+      } = await supabaseAdmin
         .from('article_sentences')
         .select('id, audio_url_english, audio_url', { count: 'exact' });
 
       if (sentencesError) throw sentencesError;
 
       // Fetch word data
-      const { data: words, error: wordsError, count: wordsCount } = await supabaseAdmin
+      const {
+        data: words,
+        error: wordsError,
+        count: wordsCount,
+      } = await supabaseAdmin
         .from('sentence_words')
         .select('id, grammar_note, difficulty_level', { count: 'exact' });
 
@@ -57,18 +65,23 @@ export function useContentCompletenessAnalytics(): UseContentCompletenessAnalyti
       // Calculate missing audio
       const missingEnglishAudio = sentences?.filter(s => !s.audio_url_english).length || 0;
       const missingArabicAudio = sentences?.filter(s => !s.audio_url).length || 0;
-      const missingBothAudio = sentences?.filter(s => !s.audio_url_english && !s.audio_url).length || 0;
+      const missingBothAudio =
+        sentences?.filter(s => !s.audio_url_english && !s.audio_url).length || 0;
 
       // Calculate missing word data
-      const missingGrammarNotes = words?.filter(w => !w.grammar_note || w.grammar_note.trim() === '').length || 0;
+      const missingGrammarNotes =
+        words?.filter(w => !w.grammar_note || w.grammar_note.trim() === '').length || 0;
       const missingDifficultyLevel = words?.filter(w => w.difficulty_level === null).length || 0;
 
       // Calculate overall completeness percentage
       const totalItems = (sentencesCount || 0) * 2 + (wordsCount || 0) * 2; // Each sentence needs 2 audios, each word needs grammar + difficulty
       const completedItems =
-        ((sentencesCount || 0) * 2 - missingEnglishAudio - missingArabicAudio) +
+        (sentencesCount || 0) * 2 -
+        missingEnglishAudio -
+        missingArabicAudio +
         ((wordsCount || 0) * 2 - missingGrammarNotes - missingDifficultyLevel);
-      const completenessPercentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+      const completenessPercentage =
+        totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
       setStats({
         totalSentences: sentencesCount || 0,

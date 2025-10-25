@@ -17,7 +17,10 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
 
   // Animated style that responds to keyboard height
   const animatedContainerStyle = useAnimatedStyle(() => ({
-    paddingBottom: keyboard.height.value > 0 ? keyboard.height.value : Math.max(insets.bottom, LAYOUT.SPACING.LARGE),
+    paddingBottom:
+      keyboard.height.value > 0
+        ? keyboard.height.value
+        : Math.max(insets.bottom, LAYOUT.SPACING.LARGE),
   }));
 
   return (
@@ -57,7 +60,7 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
               {
                 paddingHorizontal: Math.max(
                   insets.left + LAYOUT.SPACING.LARGE,
-                  LAYOUT.SPACING.LARGE
+                  LAYOUT.SPACING.LARGE,
                 ),
               },
             ]}

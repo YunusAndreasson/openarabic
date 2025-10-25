@@ -194,7 +194,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
         </View>
       </View>
     );
-  }
+  },
 );
 
 IslamicCalendarHeader.displayName = 'IslamicCalendarHeader';

@@ -127,7 +127,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
                   text: 'Open Settings',
                   onPress: () => Linking.openSettings(),
                 },
-              ]
+              ],
             );
             return;
           }
@@ -139,7 +139,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
             [
               { text: 'Cancel', style: 'cancel' },
               { text: 'Open Settings', onPress: () => Linking.openSettings() },
-            ]
+            ],
           );
           return;
         }
@@ -184,8 +184,8 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
     scaleValue.set(
       withSequence(
         withSpring(PRESS_SCALE.BUTTON, SPRING_CONFIG.BUTTON),
-        withSpring(1, SPRING_CONFIG.BUTTON)
-      )
+        withSpring(1, SPRING_CONFIG.BUTTON),
+      ),
     );
     handlePhotoSelect();
   }, [scaleValue, handlePhotoSelect]);
@@ -341,4 +341,3 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.HIGH,
   },
 });
-

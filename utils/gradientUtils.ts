@@ -19,7 +19,7 @@ export function calculateHeaderHeight(safeAreaTop: number): number {
  */
 export function createImageGradientColors(
   colors: ThemeColors,
-  isDarkMode: boolean
+  isDarkMode: boolean,
 ): readonly [string, string, string, string, string, string, string] {
   if (isDarkMode) {
     // Dark mode - use dark overlay for light text visibility
@@ -52,7 +52,7 @@ export function createImageGradientColors(
  */
 export function createBackgroundGradientColors(
   colors: ThemeColors,
-  isDarkMode: boolean
+  isDarkMode: boolean,
 ): readonly [string, string, string, string, string, string, string, string, string, string] {
   const bgColor = colors.background;
 
@@ -78,7 +78,7 @@ export function createBackgroundGradientColors(
  * Create strong dark overlay gradient for excellent text contrast (used in IslamicCalendarHeader)
  */
 export function createStrongDarkOverlayGradient(
-  baseColor = Colors.light.black
+  baseColor = Colors.light.black,
 ): readonly [string, string, string, string, string, string, string] {
   return [
     'transparent',
@@ -95,7 +95,7 @@ export function createStrongDarkOverlayGradient(
  * Create theme-aware background gradient with hex opacity values (used in IslamicCalendarHeader)
  */
 export function createThemeBackgroundGradient(
-  backgroundColor: string
+  backgroundColor: string,
 ): readonly [string, string, string, string, string, string, string, string, string, string] {
   return [
     'transparent',
@@ -110,4 +110,3 @@ export function createThemeBackgroundGradient(
     backgroundColor,
   ] as const;
 }
-

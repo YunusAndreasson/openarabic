@@ -36,13 +36,13 @@ export async function POST(request: NextRequest) {
     if (!arabicSentence || !englishSentence || !words || words.length === 0) {
       return NextResponse.json(
         { error: 'Missing required fields: arabicSentence, englishSentence, words' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Build word list for prompt
     const wordList = words
-      .map((w) => `${w.position}. Arabic: "${w.arabic}" → Current English: "${w.english}"`)
+      .map(w => `${w.position}. Arabic: "${w.arabic}" → Current English: "${w.english}"`)
       .join('\n');
 
     // Build the AI prompt
@@ -152,9 +152,9 @@ Return ONLY the JSON array. NO markdown, NO code blocks, NO explanations.`;
           success: false,
           error: 'Failed to parse AI response. The AI did not return valid JSON.',
           rawResponse: aiResponse.substring(0, 500), // Limit size
-          parseError: parseError instanceof Error ? parseError.message : 'Unknown parse error'
+          parseError: parseError instanceof Error ? parseError.message : 'Unknown parse error',
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -174,7 +174,7 @@ Return ONLY the JSON array. NO markdown, NO code blocks, NO explanations.`;
         success: false,
         error: errorMessage,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

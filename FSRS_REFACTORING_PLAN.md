@@ -21,26 +21,26 @@ These are the app's core UX requirements that must be preserved:
 
 ### What Works Well ✅
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| `fsrsInstance.next()` usage | ✅ Good | Using v4.0.0+ API correctly |
-| Query caching (TanStack Query) | ✅ Good | Proper FSRS-specific cache keys |
-| Atomic DB updates (RPC) | ✅ Good | `update_word_and_review` ensures consistency |
-| State enum usage | ✅ Good | Properly uses `State.New`, etc. |
-| Parameter configuration | ✅ Good | Uses library defaults wisely |
-| Position-based spacing concept | ✅ Good | Better than time-based for sessions |
+| Feature                        | Status  | Notes                                        |
+| ------------------------------ | ------- | -------------------------------------------- |
+| `fsrsInstance.next()` usage    | ✅ Good | Using v4.0.0+ API correctly                  |
+| Query caching (TanStack Query) | ✅ Good | Proper FSRS-specific cache keys              |
+| Atomic DB updates (RPC)        | ✅ Good | `update_word_and_review` ensures consistency |
+| State enum usage               | ✅ Good | Properly uses `State.New`, etc.              |
+| Parameter configuration        | ✅ Good | Uses library defaults wisely                 |
+| Position-based spacing concept | ✅ Good | Better than time-based for sessions          |
 
 ### What Needs Refactoring 🔧
 
-| Issue | Severity | Current Behavior | Target Behavior |
-|-------|----------|------------------|-----------------|
-| Only persisting "known" ratings | 🔴 Critical | FSRS never sees Hard/Again ratings | Persist ALL ratings, keep words in session queue |
-| Overriding FSRS due dates | 🟡 Medium | Hardcoded 10min for vague/unknown | Use FSRS's calculated intervals from learning_steps |
-| Complex spacing queue | 🟡 Medium | `spacedWords` array with counters | Simplified Set-based tracking |
-| New card detection (truthy checks) | 🟡 Medium | `!word.fsrs_reps` fails for 0 | Use null checks or State enum |
-| No error handling | 🟡 Medium | FSRS errors crash session | Graceful fallback with logging |
-| `setTimeout(0)` in queue init | 🟢 Low | Potential race conditions | Synchronous initialization |
-| Deprecated `elapsed_days` | 🟡 Medium | Will break in ts-fsrs v6 | Remove field, plan migration |
+| Issue                              | Severity    | Current Behavior                   | Target Behavior                                     |
+| ---------------------------------- | ----------- | ---------------------------------- | --------------------------------------------------- |
+| Only persisting "known" ratings    | 🔴 Critical | FSRS never sees Hard/Again ratings | Persist ALL ratings, keep words in session queue    |
+| Overriding FSRS due dates          | 🟡 Medium   | Hardcoded 10min for vague/unknown  | Use FSRS's calculated intervals from learning_steps |
+| Complex spacing queue              | 🟡 Medium   | `spacedWords` array with counters  | Simplified Set-based tracking                       |
+| New card detection (truthy checks) | 🟡 Medium   | `!word.fsrs_reps` fails for 0      | Use null checks or State enum                       |
+| No error handling                  | 🟡 Medium   | FSRS errors crash session          | Graceful fallback with logging                      |
+| `setTimeout(0)` in queue init      | 🟢 Low      | Potential race conditions          | Synchronous initialization                          |
+| Deprecated `elapsed_days`          | 🟡 Medium   | Will break in ts-fsrs v6           | Remove field, plan migration                        |
 
 ---
 
@@ -51,6 +51,7 @@ These are the app's core UX requirements that must be preserved:
 #### 1.1 Fix Database Persistence for All Ratings
 
 **Current Code** (`hooks/vocabulary/useFSRS.ts:416-434`):
+
 ```typescript
 // CRITICAL FIX: Only persist to database when word is marked as KNOWN
 if (confidence === 'known') {
@@ -60,14 +61,15 @@ if (confidence === 'known') {
 ```
 
 **Target Code**:
+
 ```typescript
 // ALWAYS persist FSRS updates for ALL ratings
 const { card: newCard } = fsrsInstance.next(card, now, rating);
 
 const wordUpdateData = {
-  fsrs_due: newCard.due.toISOString(),  // Use FSRS calculation
-  fsrs_stability: newCard.stability,    // Must persist for algorithm
-  fsrs_difficulty: newCard.difficulty,  // Must persist for algorithm
+  fsrs_due: newCard.due.toISOString(), // Use FSRS calculation
+  fsrs_stability: newCard.stability, // Must persist for algorithm
+  fsrs_difficulty: newCard.difficulty, // Must persist for algorithm
   fsrs_elapsed_days: newCard.elapsed_days,
   fsrs_scheduled_days: newCard.scheduled_days,
   fsrs_reps: newCard.reps,
@@ -84,7 +86,7 @@ try {
     rootId,
     wordUpdateData,
     rating,
-    newCard.learning_steps
+    newCard.learning_steps,
   );
 } catch (error) {
   handleError(error instanceof Error ? error : new Error(String(error)), {
@@ -96,7 +98,7 @@ try {
 if (confidence !== 'known') {
   const updatedWord: StudyWord = {
     ...currentWord,
-    ...wordUpdateData,  // Use the FSRS-calculated state
+    ...wordUpdateData, // Use the FSRS-calculated state
   };
   spacingQueueRef.current.spacedWords.push({
     word: updatedWord,
@@ -106,11 +108,13 @@ if (confidence !== 'known') {
 ```
 
 **Why This Matters**:
+
 - FSRS algorithm needs ALL rating data to calculate optimal difficulty/stability
 - Your UX requirement (session-based learning) is still satisfied by keeping words in queue
 - Best of both worlds: FSRS learns properly + words stay in session until "known"
 
 **Files to Change**:
+
 - `hooks/vocabulary/useFSRS.ts` (lines 250-436)
 
 ---
@@ -118,12 +122,14 @@ if (confidence !== 'known') {
 #### 1.2 Remove Hardcoded 10-Minute Cooldown Override
 
 **Current Code** (`hooks/vocabulary/useFSRS.ts:275-277`):
+
 ```typescript
 const nextDueDate =
   confidence === 'known' ? newCard.due : new Date(now.getTime() + shortCooldownMs);
 ```
 
 **Target Code**:
+
 ```typescript
 // Trust FSRS's calculated due date from learning_steps
 const nextDueDate = newCard.due;
@@ -133,17 +139,19 @@ const nextDueDate = newCard.due;
 ```
 
 **Why This Matters**:
+
 - FSRS's `learning_steps: ['1m', '10m']` already provides proper spacing
 - Overriding defeats the algorithm's adaptive interval calculation
 - FSRS knows how to progress through learning steps based on rating history
 
 **Configuration Reference** (`constants/fsrs.ts`):
+
 ```typescript
 export const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
 export const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
 
 export const OPTIMIZED_FSRS_CONFIG = {
-  learning_steps: DEFAULT_LEARNING_STEPS,    // FSRS uses these automatically
+  learning_steps: DEFAULT_LEARNING_STEPS, // FSRS uses these automatically
   relearning_steps: DEFAULT_RELEARNING_STEPS, // For lapses
   request_retention: 0.95,
   maximum_interval: 180,
@@ -154,6 +162,7 @@ export const OPTIMIZED_FSRS_CONFIG = {
 ```
 
 **Files to Change**:
+
 - `hooks/vocabulary/useFSRS.ts` (lines 266-290)
 - Remove `shortCooldownMs` constant
 
@@ -162,6 +171,7 @@ export const OPTIMIZED_FSRS_CONFIG = {
 #### 1.3 Fix New Card Detection
 
 **Current Code** (`hooks/vocabulary/useFSRS.ts:228`):
+
 ```typescript
 if (!word.fsrs_reps && !word.fsrs_stability && !word.fsrs_last_review) {
   const emptyCard = createEmptyCard(new Date());
@@ -170,6 +180,7 @@ if (!word.fsrs_reps && !word.fsrs_stability && !word.fsrs_last_review) {
 ```
 
 **Target Code**:
+
 ```typescript
 // Option A: Use explicit null checks (safer)
 if (word.fsrs_reps == null && word.fsrs_stability == null && !word.fsrs_last_review) {
@@ -191,11 +202,13 @@ if (word.fsrs_state === State.New && word.fsrs_reps === 0) {
 ```
 
 **Why This Matters**:
+
 - `fsrs_reps: 0` is falsy but valid (card just reviewed for first time)
 - `fsrs_stability: 0` is falsy but valid (very unstable card)
 - Using truthy checks can incorrectly reset cards that have been reviewed
 
 **Files to Change**:
+
 - `hooks/vocabulary/useFSRS.ts` (function `convertToFSRSCard`, lines 227-248)
 
 ---
@@ -203,6 +216,7 @@ if (word.fsrs_state === State.New && word.fsrs_reps === 0) {
 #### 1.4 Add Error Handling Around FSRS Algorithm
 
 **Current Code** (`hooks/vocabulary/useFSRS.ts:266-272`):
+
 ```typescript
 const card = convertToFSRSCard(currentWord);
 const now = new Date();
@@ -211,6 +225,7 @@ const { card: newCard } = fsrsInstance.next(card, now, rating); // No error hand
 ```
 
 **Target Code**:
+
 ```typescript
 let newCard: Card;
 
@@ -218,9 +233,7 @@ try {
   const card = convertToFSRSCard(currentWord);
   const now = new Date();
   const rating =
-    confidence === 'known' ? Rating.Good
-    : confidence === 'vague' ? Rating.Hard
-    : Rating.Again;
+    confidence === 'known' ? Rating.Good : confidence === 'vague' ? Rating.Hard : Rating.Again;
 
   const result = fsrsInstance.next(card, now, rating);
   newCard = result.card;
@@ -233,17 +246,14 @@ try {
   });
 
   // Track analytics
-  handleError(
-    error instanceof Error ? error : new Error(String(error)),
-    {
-      toastType: ToastType.ERROR,
-      analyticsEventName: 'FSRS_Algorithm_Error',
-      analyticsProperties: {
-        rootId: currentWord.root_id,
-        confidence,
-      },
-    }
-  );
+  handleError(error instanceof Error ? error : new Error(String(error)), {
+    toastType: ToastType.ERROR,
+    analyticsEventName: 'FSRS_Algorithm_Error',
+    analyticsProperties: {
+      rootId: currentWord.root_id,
+      confidence,
+    },
+  });
 
   // Graceful fallback: Simple increment without FSRS
   const fallbackCard: Card = {
@@ -270,11 +280,13 @@ const wordUpdateData = {
 ```
 
 **Why This Matters**:
+
 - Corrupted database data shouldn't crash review sessions
 - Provides debugging information when FSRS fails
 - Graceful degradation maintains app functionality
 
 **Files to Change**:
+
 - `hooks/vocabulary/useFSRS.ts` (function `updateWord`, lines 250-449)
 
 ---
@@ -284,6 +296,7 @@ const wordUpdateData = {
 #### 2.1 Simplify Spacing Queue Implementation
 
 **Current Implementation** (`utils/fsrsSpacing.ts`):
+
 ```typescript
 export interface SpacingState {
   recentWords: number[];
@@ -293,7 +306,7 @@ export interface SpacingState {
 export function updateSpacingCounters(
   spacingState: SpacingState,
   processedWordId: number,
-  minSpacing: number = MIN_WORD_SPACING
+  minSpacing: number = MIN_WORD_SPACING,
 ) {
   spacingState.recentWords.push(processedWordId);
   if (spacingState.recentWords.length > minSpacing) {
@@ -306,11 +319,12 @@ export function updateSpacingCounters(
 ```
 
 **Proposed Simplification**:
+
 ```typescript
 // Simpler: Just track recent word IDs in a Set
 export interface SpacingState {
-  recentWordIds: Set<number>;  // Last N word IDs
-  spacedWords: StudyWord[];    // Words waiting to be re-shown
+  recentWordIds: Set<number>; // Last N word IDs
+  spacedWords: StudyWord[]; // Words waiting to be re-shown
 }
 
 export function createSpacingState(): SpacingState {
@@ -323,7 +337,7 @@ export function createSpacingState(): SpacingState {
 export function markWordProcessed(
   spacingState: SpacingState,
   processedWordId: number,
-  minSpacing: number = MIN_WORD_SPACING
+  minSpacing: number = MIN_WORD_SPACING,
 ): void {
   spacingState.recentWordIds.add(processedWordId);
 
@@ -336,11 +350,11 @@ export function markWordProcessed(
 
 export function getNextWordWithSpacing(
   queue: PriorityQueue<StudyWord>,
-  spacingState: SpacingState
+  spacingState: SpacingState,
 ): StudyWord | null {
   // First, check if any spaced words are ready
   const readyWords = spacingState.spacedWords.filter(
-    word => !spacingState.recentWordIds.has(word.root_id)
+    word => !spacingState.recentWordIds.has(word.root_id),
   );
 
   if (readyWords.length > 0) {
@@ -351,8 +365,8 @@ export function getNextWordWithSpacing(
     });
 
     // Remove from spaced list
-    spacingState.spacedWords = spacingState.spacedWords.filter(
-      word => spacingState.recentWordIds.has(word.root_id)
+    spacingState.spacedWords = spacingState.spacedWords.filter(word =>
+      spacingState.recentWordIds.has(word.root_id),
     );
   }
 
@@ -376,12 +390,14 @@ export function getNextWordWithSpacing(
 ```
 
 **Benefits**:
+
 - Simpler mental model (Set instead of counters)
 - Less state to manage
 - Same functional behavior
 - More readable code
 
 **Files to Change**:
+
 - `utils/fsrsSpacing.ts` (entire file)
 - `hooks/vocabulary/useFSRS.ts` (spacing queue usage)
 
@@ -390,6 +406,7 @@ export function getNextWordWithSpacing(
 #### 2.2 Remove setTimeout(0) from Queue Initialization
 
 **Current Code** (`hooks/vocabulary/useFSRS.ts:168`):
+
 ```typescript
 initTimeoutRef.current = setTimeout(() => {
   // Complex initialization logic
@@ -397,6 +414,7 @@ initTimeoutRef.current = setTimeout(() => {
 ```
 
 **Target Code**:
+
 ```typescript
 // Execute synchronously - no setTimeout wrapper
 useEffect(() => {
@@ -465,11 +483,13 @@ useEffect(() => {
 ```
 
 **Why This Matters**:
+
 - Removes potential race conditions
 - More predictable execution order
 - Clearer code flow
 
 **Files to Change**:
+
 - `hooks/vocabulary/useFSRS.ts` (queue initialization effect, lines 136-225)
 - Remove `initTimeoutRef` and `completionTimeoutRef` refs
 
@@ -482,6 +502,7 @@ useEffect(() => {
 **Issue**: ts-fsrs documentation states this field is deprecated and will be removed in v6.0.0
 
 **Current Usage**:
+
 - Database schema: `fsrs_elapsed_days` column
 - Service layer: `FSRSWordUpdate` interface
 - Hook layer: `convertToFSRSCard` function
@@ -490,18 +511,20 @@ useEffect(() => {
 **Migration Plan**:
 
 **Step 1: Add TODO comments** (now)
+
 ```typescript
 interface FSRSWordUpdate {
   fsrs_due: string;
   fsrs_stability: number;
   fsrs_difficulty: number;
-  fsrs_elapsed_days: number;  // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
+  fsrs_elapsed_days: number; // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
   fsrs_scheduled_days: number;
   // ...
 }
 ```
 
 **Step 2: Create database migration** (before upgrading to ts-fsrs v6)
+
 ```sql
 -- Migration: Remove fsrs_elapsed_days column
 -- Run this BEFORE upgrading to ts-fsrs v6
@@ -509,12 +532,14 @@ ALTER TABLE study_words DROP COLUMN IF EXISTS fsrs_elapsed_days;
 ```
 
 **Step 3: Remove from TypeScript** (when upgrading to v6)
+
 - Remove from `FSRSWordUpdate` interface
 - Remove from `convertToFSRSCard` function
 - Remove from all service calls
 - Update database types
 
 **Files to Track**:
+
 - `services/studyWordsFSRS.ts`
 - `hooks/vocabulary/useFSRS.ts`
 - `types/database.types.ts`
@@ -525,20 +550,23 @@ ALTER TABLE study_words DROP COLUMN IF EXISTS fsrs_elapsed_days;
 #### 3.2 Verify `enable_short_term` Configuration
 
 **Current Config** (`constants/fsrs.ts:73`):
+
 ```typescript
 export const OPTIMIZED_FSRS_CONFIG = {
   // ...
-  enable_short_term: true,  // Is this being used?
+  enable_short_term: true, // Is this being used?
   // ...
-}
+};
 ```
 
 **Research Needed**:
+
 - Check ts-fsrs v5 docs for what `enable_short_term` actually does
 - Verify if app is using short-term scheduler methods
 - If not using short-term specific features, set to `false`
 
 **Action Items**:
+
 - [ ] Research `enable_short_term` behavior in ts-fsrs v5 docs
 - [ ] Check if code uses any short-term scheduler methods
 - [ ] Update to `false` if not needed, or document why `true` is correct
@@ -550,11 +578,13 @@ export const OPTIMIZED_FSRS_CONFIG = {
 **Current**: Manual implementation in `utils/fsrsUtils.ts:28-46`
 
 **Action Items**:
+
 - [ ] Check ts-fsrs v5 API for built-in retrievability calculation method
 - [ ] If library provides it, migrate to use built-in function
 - [ ] If not available, document that custom implementation is intentional
 
 **Benefits of Using Library Function** (if available):
+
 - Automatically stays in sync with FSRS updates
 - Less maintenance burden
 - Guaranteed correct implementation
@@ -718,24 +748,28 @@ describe('FSRS Session Integration', () => {
 If issues arise after refactoring:
 
 ### Phase 1 Rollback
+
 - Revert commit for specific phase
 - Re-enable "known-only" persistence temporarily
 - Document issues found
 - Fix and re-deploy
 
 ### Database Migration Rollback
+
 ```sql
 -- If elapsed_days migration causes issues
 ALTER TABLE study_words ADD COLUMN fsrs_elapsed_days INTEGER DEFAULT 0;
 ```
 
 ### Feature Flags (Future Enhancement)
+
 Consider adding feature flags for gradual rollout:
+
 ```typescript
 const FSRS_CONFIG = {
-  persistAllRatings: true,  // Toggle Phase 1.1
-  useFSRSDueDates: true,    // Toggle Phase 1.2
-  simplifiedSpacing: true,  // Toggle Phase 2.1
+  persistAllRatings: true, // Toggle Phase 1.1
+  useFSRSDueDates: true, // Toggle Phase 1.2
+  simplifiedSpacing: true, // Toggle Phase 2.1
 };
 ```
 
@@ -744,24 +778,28 @@ const FSRS_CONFIG = {
 ## Success Metrics
 
 ### Functional Metrics
+
 - [ ] All unit tests passing
 - [ ] Integration tests passing
 - [ ] Manual test scenarios completed
 - [ ] No regression in existing features
 
 ### FSRS Algorithm Metrics
+
 - [ ] Difficulty values adjust based on Hard/Again ratings
 - [ ] Stability values increase properly for Good ratings
 - [ ] Learning steps (1m → 10m) are followed
 - [ ] Long-term retention improves over time
 
 ### Code Quality Metrics
+
 - [ ] Lines of code reduced by >20% (simplified spacing queue)
 - [ ] Cyclomatic complexity reduced in `useFSRS` hook
 - [ ] Zero new TypeScript errors
 - [ ] Zero new ESLint warnings
 
 ### User Experience Metrics
+
 - [ ] Session completion rate unchanged
 - [ ] No increase in app crashes
 - [ ] Review session performance maintained (<50ms per word)
@@ -771,37 +809,43 @@ const FSRS_CONFIG = {
 
 ## Timeline Estimate
 
-| Phase | Tasks | Estimated Time | Priority |
-|-------|-------|----------------|----------|
-| Phase 1 | Critical fixes (1.1-1.4) | 4-6 hours | HIGH |
-| Phase 2 | Simplifications (2.1-2.2) | 3-4 hours | MEDIUM |
-| Phase 3 | Future-proofing (3.1-3.3) | 2-3 hours | LOW |
-| Testing | Unit + integration + manual | 4-5 hours | HIGH |
-| **Total** | | **13-18 hours** | |
+| Phase     | Tasks                       | Estimated Time  | Priority |
+| --------- | --------------------------- | --------------- | -------- |
+| Phase 1   | Critical fixes (1.1-1.4)    | 4-6 hours       | HIGH     |
+| Phase 2   | Simplifications (2.1-2.2)   | 3-4 hours       | MEDIUM   |
+| Phase 3   | Future-proofing (3.1-3.3)   | 2-3 hours       | LOW      |
+| Testing   | Unit + integration + manual | 4-5 hours       | HIGH     |
+| **Total** |                             | **13-18 hours** |          |
 
 ---
 
 ## Notes & Decisions
 
 ### Why 3 Levels Instead of 4?
+
 **Decision**: Keep 3-level system (known/vague/unknown)
 **Reasoning**:
+
 - Simpler UX for users
 - "Easy" rating is optional in FSRS
 - Most users struggle to differentiate between "Good" and "Easy"
 - Three levels map well to confidence: confident → somewhat → not at all
 
 ### Why Session-Based Learning?
+
 **Decision**: Keep session requirement that all words become "known"
 **Reasoning**:
+
 - Provides clear completion criteria
 - Prevents sessions from feeling endless
 - Encourages thorough review
 - Compatible with FSRS if we persist all ratings
 
 ### Why Position-Based Spacing?
+
 **Decision**: Keep MIN_WORD_SPACING = 3 (position-based, not time-based)
 **Reasoning**:
+
 - More predictable than time-based in fast sessions
 - User sees variety within session
 - Works well with session-based learning model
@@ -835,9 +879,11 @@ const FSRS_CONFIG = {
 All Phase 1 critical fixes have been successfully implemented:
 
 #### Phase 1.1: Persist All Ratings to Database ✅
+
 **Files Changed**: `hooks/vocabulary/useFSRS.ts` (lines 453-473)
 
 **Changes Made**:
+
 - Removed conditional `if (confidence === 'known')` check
 - Now ALWAYS persists all ratings (Good, Hard, Again) to database
 - FSRS algorithm receives complete rating history for proper difficulty/stability calculation
@@ -846,9 +892,11 @@ All Phase 1 critical fixes have been successfully implemented:
 **Impact**: FSRS can now properly adapt intervals based on ALL user performance data, not just successful reviews.
 
 #### Phase 1.2: Remove Hardcoded Cooldown Override ✅
+
 **Files Changed**: `hooks/vocabulary/useFSRS.ts` (lines 317-330)
 
 **Changes Made**:
+
 - Removed hardcoded 10-minute cooldown: `const shortCooldownMs = 10 * 60 * 1000`
 - Removed conditional override: `confidence === 'known' ? newCard.due : new Date(now.getTime() + shortCooldownMs)`
 - Now uses FSRS's calculated `newCard.due` for ALL ratings
@@ -857,9 +905,11 @@ All Phase 1 critical fixes have been successfully implemented:
 **Impact**: FSRS's built-in learning step progression (1min → 10min) now functions as designed.
 
 #### Phase 1.3: Fix New Card Detection ✅
+
 **Files Changed**: `hooks/vocabulary/useFSRS.ts` (lines 227-250)
 
 **Changes Made**:
+
 - Changed from truthy checks: `!word.fsrs_reps && !word.fsrs_stability`
 - To explicit null checks: `word.fsrs_state === State.New || (word.fsrs_reps == null && word.fsrs_stability == null && !word.fsrs_last_review)`
 - Prevents cards with `reps: 0` or `stability: 0` from being incorrectly treated as new
@@ -867,9 +917,11 @@ All Phase 1 critical fixes have been successfully implemented:
 **Impact**: Cards with valid zero values no longer get incorrectly reset.
 
 #### Phase 1.4: Add Error Handling Around FSRS Algorithm ✅
+
 **Files Changed**: `hooks/vocabulary/useFSRS.ts` (lines 266-313)
 
 **Changes Made**:
+
 - Wrapped `fsrsInstance.next()` call in try-catch block
 - Added detailed error logging with word context
 - Added analytics tracking for FSRS errors
@@ -879,6 +931,7 @@ All Phase 1 critical fixes have been successfully implemented:
 **Impact**: Corrupted data or FSRS algorithm failures are handled gracefully without breaking UX.
 
 #### Test Results:
+
 - ✅ All 127 FSRS-specific tests passing
 - ✅ All 1100 total tests passing
 - ✅ Zero TypeScript errors
@@ -890,8 +943,10 @@ All Phase 1 critical fixes have been successfully implemented:
 **Status**: ✅ COMPLETED (Partial - 2.2 only)
 
 #### Phase 2.1: Simplify Spacing Queue ⏭️ SKIPPED
+
 **Decision**: Current implementation is solid and well-tested
 **Reasoning**:
+
 - The `remainingSpacing` counter approach is clear and functional
 - All 127 FSRS tests pass with current implementation
 - No performance issues detected
@@ -901,9 +956,11 @@ All Phase 1 critical fixes have been successfully implemented:
 **Recommendation**: Keep current implementation.
 
 #### Phase 2.2: Remove setTimeout(0) from Queue Initialization ✅
+
 **Files Changed**: `hooks/vocabulary/useFSRS.ts` (lines 84-85, 134-215, 500-512)
 
 **Changes Made**:
+
 - Removed `initTimeoutRef` completely
 - Made queue initialization synchronous (removed setTimeout wrapper)
 - Kept `completionTimeoutRef` for COMPLETION_DELAY_MS (intentional delay)
@@ -918,17 +975,21 @@ All Phase 1 critical fixes have been successfully implemented:
 **Status**: ✅ COMPLETED
 
 #### Phase 3.1: Add TODO Comments for elapsed_days Deprecation ✅
+
 **Files Changed**:
+
 - `services/studyWordsFSRS.ts` (lines 15-18)
 - `hooks/vocabulary/useFSRS.ts` (lines 232, 295, 316, 338)
 
 **Changes Made**:
+
 - Added TODO comments at all 5 usage locations of `fsrs_elapsed_days`
 - Linked to official ts-fsrs documentation
 - Noted that field will be removed in v6.0.0
 - Created clear migration path for future upgrade
 
 **Migration Steps** (for ts-fsrs v6 upgrade):
+
 ```sql
 -- Database migration (run before upgrading package)
 ALTER TABLE study_words DROP COLUMN IF EXISTS fsrs_elapsed_days;
@@ -942,14 +1003,17 @@ interface FSRSWordUpdate {
 ```
 
 #### Phase 3.2: Verify enable_short_term Configuration ✅
+
 **Files Changed**: `constants/fsrs.ts` (lines 73-77)
 
 **Findings**:
+
 - ts-fsrs v5 documentation doesn't clearly explain `enable_short_term` parameter
 - Current setting (`true`) works correctly with session-based learning
 - No observable issues with current configuration
 
 **Changes Made**:
+
 - Added TODO comment to research behavior in future
 - Documented current working state
 - Added note about possible short-term vs long-term memory modeling
@@ -961,6 +1025,7 @@ interface FSRSWordUpdate {
 ## Final Validation Results
 
 ### All Tests Passing ✅
+
 ```
 Test Suites: 87 passed, 87 total
 Tests:       1100 passed, 1100 total
@@ -969,18 +1034,21 @@ Time:        5.369 s
 ```
 
 ### TypeScript Validation ✅
+
 ```
 npx tsc --noEmit
 ✅ No errors found
 ```
 
 ### ESLint Validation ✅
+
 ```
 yarn lint:fix
 ✅ 0 errors, 1 warning (pre-existing, unrelated to refactoring)
 ```
 
 ### Knip (Unused Exports) ✅
+
 ```
 yarn check-unused
 ✅ No unused exports in refactored files
@@ -991,16 +1059,19 @@ yarn check-unused
 ## Summary of All Changes
 
 ### Critical Fixes (Phase 1) - ALL COMPLETED ✅
+
 1. ✅ **Persist all ratings to database** - FSRS now learns from all user performance
 2. ✅ **Use FSRS-calculated intervals** - Removed hardcoded 10-minute override
 3. ✅ **Fix new card detection** - Proper null checks instead of truthy checks
 4. ✅ **Add error handling** - Graceful fallback for FSRS algorithm failures
 
 ### Simplifications (Phase 2) - PARTIAL ✅
+
 1. ⏭️ **Spacing queue** - Skipped (current implementation solid)
 2. ✅ **Remove setTimeout(0)** - Synchronous queue initialization
 
 ### Future-Proofing (Phase 3) - ALL COMPLETED ✅
+
 1. ✅ **elapsed_days deprecation** - TODO comments added, migration path documented
 2. ✅ **enable_short_term config** - Documented for future research
 
@@ -1033,19 +1104,20 @@ Total: 3 files changed
 
 **Before vs After Refactoring:**
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| Tests Passing | 1100/1100 | 1100/1100 | ✅ No regression |
-| TypeScript Errors | 0 | 0 | ✅ No new errors |
-| ESLint Warnings | 1 | 1 | ✅ No new warnings |
-| FSRS Learning Accuracy | ⚠️ Partial (only Good ratings) | ✅ Complete (all ratings) | 🎉 **Major improvement** |
-| Queue Init Performance | ~same (setTimeout delay) | ✅ Slightly faster (synchronous) | 📈 Minor improvement |
+| Metric                 | Before                         | After                            | Change                   |
+| ---------------------- | ------------------------------ | -------------------------------- | ------------------------ |
+| Tests Passing          | 1100/1100                      | 1100/1100                        | ✅ No regression         |
+| TypeScript Errors      | 0                              | 0                                | ✅ No new errors         |
+| ESLint Warnings        | 1                              | 1                                | ✅ No new warnings       |
+| FSRS Learning Accuracy | ⚠️ Partial (only Good ratings) | ✅ Complete (all ratings)        | 🎉 **Major improvement** |
+| Queue Init Performance | ~same (setTimeout delay)       | ✅ Slightly faster (synchronous) | 📈 Minor improvement     |
 
 ---
 
 ## Breaking Changes
 
 **None.** All changes are backward compatible:
+
 - Database schema unchanged (except TODO notes for future)
 - API interfaces unchanged
 - User experience unchanged (session-based learning preserved)
@@ -1058,6 +1130,7 @@ Total: 3 files changed
 When upgrading to ts-fsrs v6.0.0:
 
 ### Step 1: Database Migration
+
 ```sql
 -- Remove deprecated column
 ALTER TABLE study_words DROP COLUMN IF EXISTS fsrs_elapsed_days;
@@ -1067,6 +1140,7 @@ ALTER TABLE study_words DROP COLUMN IF EXISTS fsrs_elapsed_days;
 ```
 
 ### Step 2: Code Changes
+
 ```typescript
 // Remove from FSRSWordUpdate interface (services/studyWordsFSRS.ts)
 interface FSRSWordUpdate {
@@ -1080,11 +1154,13 @@ interface FSRSWordUpdate {
 ```
 
 ### Step 3: Update Package
+
 ```bash
 yarn add ts-fsrs@^6.0.0
 ```
 
 ### Step 4: Test
+
 ```bash
 yarn test
 yarn validate

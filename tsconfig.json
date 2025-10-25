@@ -2,6 +2,7 @@
   "extends": "expo/tsconfig.base.json",
   "compilerOptions": {
     "strict": true,
+    "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
@@ -27,10 +28,7 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "lib": ["ESNext"],
-    "incremental": true,
-    "composite": true,
-    "removeComments": true,
-    "types": ["react", "react-native"]
+    "incremental": true
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
   "exclude": [

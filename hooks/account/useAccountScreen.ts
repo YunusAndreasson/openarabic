@@ -113,7 +113,7 @@ export const useAccountScreen = () => {
               lightFeedback();
               Alert.alert(
                 STRINGS.SUCCESS,
-                'All caches cleared successfully. Audio, articles, and app data will reload when needed.'
+                'All caches cleared successfully. Audio, articles, and app data will reload when needed.',
               );
             } catch (error) {
               Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
@@ -121,7 +121,7 @@ export const useAccountScreen = () => {
             }
           },
         },
-      ]
+      ],
     );
   }, [cacheSize, clearCache, queryClient]);
 
@@ -150,13 +150,13 @@ export const useAccountScreen = () => {
             } catch (error) {
               Alert.alert(
                 STRINGS.ERROR,
-                error instanceof Error ? error.message : STRINGS.FAILED_TO_SIGN_OUT
+                error instanceof Error ? error.message : STRINGS.FAILED_TO_SIGN_OUT,
               );
             }
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   }, []);
 
@@ -199,7 +199,7 @@ export const useAccountScreen = () => {
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   }, [user?.id, queryClient]);
 
@@ -233,7 +233,7 @@ export const useAccountScreen = () => {
       await updateReminderTime(newReminderTime);
       lightFeedback();
     },
-    [reminderTime, updateReminderTime]
+    [reminderTime, updateReminderTime],
   );
 
   useEffect(() => {
@@ -272,7 +272,7 @@ export const useAccountScreen = () => {
       await updateReminderTime(newReminderTime);
       lightFeedback();
     },
-    [reminderTime, updateReminderTime]
+    [reminderTime, updateReminderTime],
   );
 
   const handleSupportContact = useCallback(async () => {
@@ -292,7 +292,7 @@ export const useAccountScreen = () => {
         subject: STRINGS.SUPPORT_EMAIL_SUBJECT,
         body: STRINGS.SUPPORT_EMAIL_BODY_TEMPLATE.replace('{version}', pkg.version).replace(
           '{email}',
-          user?.email || STRINGS.NO_EMAIL
+          user?.email || STRINGS.NO_EMAIL,
         ),
         isHtml: false,
       });
@@ -366,7 +366,7 @@ export const useAccountScreen = () => {
       user,
       handleClearCache,
       cacheSize,
-    ]
+    ],
   );
 
   return result;

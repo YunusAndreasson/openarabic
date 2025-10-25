@@ -17,11 +17,11 @@ export const useBottomSheetBackdrop = (onClose: () => void) => {
         {...props}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
-        pressBehavior="close"  // Prevents stuck backdrop by ensuring proper dismissal
+        pressBehavior="close" // Prevents stuck backdrop by ensuring proper dismissal
         onPress={onClose}
       />
     ),
-    [onClose]
+    [onClose],
   );
 };
 

@@ -1,4 +1,3 @@
-
 import { BaseChart } from '@charts/BaseChart';
 import { ChartAreaFill } from '@charts/ChartAreaFill';
 import { ChartAxes, Y_AXIS_WIDTH } from '@charts/ChartAxes';
@@ -57,7 +56,7 @@ interface VocabularyChartProps<T> {
 // Optimized comparison function with shallow array checks and stable references
 const VocabularyChartComparison = <T,>(
   prevProps: VocabularyChartProps<T>,
-  nextProps: VocabularyChartProps<T>
+  nextProps: VocabularyChartProps<T>,
 ): boolean => {
   // Quick primitive comparisons first
   if (
@@ -145,7 +144,10 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       xLabels.length > 0 ? (isFuturePrediction ? 0 : xLabels.length - 1) : undefined;
 
     // Memoized chart data calculations for better performance
-    const contentHeight = useMemo(() => GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING + CONTENT_HEIGHT_OFFSET, []);
+    const contentHeight = useMemo(
+      () => GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING + CONTENT_HEIGHT_OFFSET,
+      [],
+    );
 
     const chartData = useMemo(
       () => ({
@@ -153,7 +155,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
         hasPerformanceZones: path && dataPoints.length > 0 && performanceZones.length > 0,
         hasMilestones: milestones.length > 0,
       }),
-      [path, dataPoints.length, performanceZones.length, milestones.length]
+      [path, dataPoints.length, performanceZones.length, milestones.length],
     );
 
     // Memoized data point keys for stable rendering
@@ -176,7 +178,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
           xLabelPositions={xLabelPositions}
           yMax={yMax}
           chartColors={chartColors}
-        />
+        />,
       );
 
       // Reference line (e.g., 75% target) - after grid, before area fill
@@ -190,7 +192,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
             topPadding={topPadding}
             yMax={yMax}
             chartColors={chartColors}
-          />
+          />,
         );
       }
 
@@ -204,7 +206,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
               topPadding={topPadding}
               chartColors={chartColors}
             />
-          </Group>
+          </Group>,
         );
       }
 
@@ -218,7 +220,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
               graphWidth={graphWidth}
               colors={colors}
             />
-          </Group>
+          </Group>,
         );
       }
 
@@ -236,7 +238,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
                 chartColors={chartColors}
               />
             ))}
-          </Group>
+          </Group>,
         );
       }
 
@@ -253,7 +255,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
                 chartColors={chartColors}
               />
             ))}
-          </Group>
+          </Group>,
         );
       }
 
@@ -291,7 +293,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
           isFuturePrediction={isFuturePrediction}
         />
       ),
-      [topPadding, graphWidth, xLabelPositions, yMax, xLabels, yLabelFormatter, isFuturePrediction]
+      [topPadding, graphWidth, xLabelPositions, yMax, xLabels, yLabelFormatter, isFuturePrediction],
     );
 
     return (
@@ -316,7 +318,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       </BaseChart>
     );
   },
-  VocabularyChartComparison
+  VocabularyChartComparison,
 );
 
 VocabularyChart.displayName = 'VocabularyChart';

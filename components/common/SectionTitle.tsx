@@ -25,14 +25,14 @@ export const SectionTitle: FC<SectionTitleProps> = ({
       marginBottom: 0,
       ...(textStyle as TextStyle),
     }),
-    [textStyle]
+    [textStyle],
   );
 
   const subtitleStyle = useMemo(
     () => ({
       marginTop: LAYOUT.SPACING.TINY,
     }),
-    []
+    [],
   );
 
   return (

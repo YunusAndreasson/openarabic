@@ -20,6 +20,6 @@ const GenericFeaturedSectionInternal = ({
   if (!article) return null;
 
   return <FeaturedSection article={article} />;
-}
+};
 
 export const GenericFeaturedSection = memo(GenericFeaturedSectionInternal);

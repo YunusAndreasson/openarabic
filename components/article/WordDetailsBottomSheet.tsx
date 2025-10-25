@@ -50,7 +50,8 @@ export function WordDetailsBottomSheet({
   }, [isInStudyList]);
 
   // Check if this word's audio is currently playing or loading (only when visible)
-  const isThisTrack = shouldUseAudioStatus && audioStatus.currentTrack?.id === `word-details-${word?.id}`;
+  const isThisTrack =
+    shouldUseAudioStatus && audioStatus.currentTrack?.id === `word-details-${word?.id}`;
   const wordAudioState = {
     isPlaying: shouldUseAudioStatus && audioStatus.isPlaying && isThisTrack,
     isLoading: shouldUseAudioStatus && audioStatus.isLoading && isThisTrack,
@@ -106,7 +107,7 @@ export function WordDetailsBottomSheet({
         onClose(); // Update parent state
       }
     },
-    [onClose, isVisible]
+    [onClose, isVisible],
   );
 
   // Use common backdrop component
@@ -120,7 +121,7 @@ export function WordDetailsBottomSheet({
         paddingBottom: Math.max(insets.bottom, LAYOUT.SPACING.MEDIUM),
       },
     ],
-    [insets.bottom]
+    [insets.bottom],
   );
 
   // Don't render without data
@@ -250,4 +251,3 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
 });
-

@@ -37,7 +37,7 @@ export function useReadTabDataLoaded(): boolean {
     query =>
       query.queryKey[0] === 'filtered-articles' &&
       query.queryKey[1] === 'category' &&
-      (query.state.status === 'success' || query.state.status === 'error')
+      (query.state.status === 'success' || query.state.status === 'error'),
   );
   const hasSomeCategoryData = categoryArticleQueries.length > 0;
 

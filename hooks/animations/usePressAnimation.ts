@@ -9,11 +9,7 @@ import {
   withSpring,
 } from 'react-native-reanimated';
 
-import {
-  CARD_PRESS_OPACITY,
-  PRESS_SCALE,
-  SPRING_CONFIG,
-} from '@/constants/animation';
+import { CARD_PRESS_OPACITY, PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
@@ -85,7 +81,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   const finalOpacityAmount = opacityAmount ?? CARD_PRESS_OPACITY;
   const finalIncludeOpacity = includeOpacity ?? type === 'card';
   const finalSpringConfig = useRef(
-    springConfig ?? (type === 'card' ? SPRING_CONFIG.CARD : SPRING_CONFIG.BUTTON)
+    springConfig ?? (type === 'card' ? SPRING_CONFIG.CARD : SPRING_CONFIG.BUTTON),
   ).current;
 
   // Animation value

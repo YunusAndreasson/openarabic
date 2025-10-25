@@ -77,12 +77,6 @@ describe('Multi-Prefix English Coloring', () => {
       defaultColor: mockColors.text,
     });
 
-    console.log('\n=== وعن (and from) ===');
-    console.log('Analysis prefix:', analysis.prefixes[0]?.arabicMatch);
-    console.log('English matches:', analysis.prefixes[0]?.englishMatches);
-    console.log('Formatted sections:', JSON.stringify(formatted.sections, null, 2));
-    console.log('Color-coded segments:', JSON.stringify(result, null, 2));
-
     // Should color the phrase with multi-prefix detection
     expect(result.length).toBeGreaterThan(0);
 
@@ -91,11 +85,17 @@ describe('Multi-Prefix English Coloring', () => {
     const prepositionSegments = result.filter(s => s.color === mockColors.warning);
 
     // Should have "and" in secondary color (conjunction)
-    const conjunctionText = conjunctionSegments.map(s => s.text).join(' ').toLowerCase();
+    const conjunctionText = conjunctionSegments
+      .map(s => s.text)
+      .join(' ')
+      .toLowerCase();
     expect(conjunctionText).toContain('and');
 
     // Should have "from" in warning color (preposition)
-    const prepositionText = prepositionSegments.map(s => s.text).join(' ').toLowerCase();
+    const prepositionText = prepositionSegments
+      .map(s => s.text)
+      .join(' ')
+      .toLowerCase();
     expect(prepositionText).toContain('from');
   });
 
@@ -111,29 +111,32 @@ describe('Multi-Prefix English Coloring', () => {
       defaultColor: mockColors.text,
     });
 
-    console.log('\n=== وعنه (and from him) ===');
-    console.log('Analysis prefix:', analysis.prefixes[0]?.arabicMatch);
-    console.log('Analysis suffix:', analysis.suffix?.arabicMatch);
-    console.log('Formatted sections:', JSON.stringify(formatted.sections, null, 2));
-    console.log('Color-coded segments:', JSON.stringify(result, null, 2));
-
     // Should have at least 3 colors: secondary (و), warning (عن), violet (ه)
     const colors = new Set(result.map(s => s.color));
     expect(colors.size).toBeGreaterThan(1);
 
     // Multi-prefix: و (and) = secondary
     const conjunctionSegments = result.filter(s => s.color === mockColors.secondary);
-    const conjunctionText = conjunctionSegments.map(s => s.text).join(' ').toLowerCase();
+    const conjunctionText = conjunctionSegments
+      .map(s => s.text)
+      .join(' ')
+      .toLowerCase();
     expect(conjunctionText).toContain('and');
 
     // Multi-prefix: عن (from) = warning
     const prepositionSegments = result.filter(s => s.color === mockColors.warning);
-    const prepositionText = prepositionSegments.map(s => s.text).join(' ').toLowerCase();
+    const prepositionText = prepositionSegments
+      .map(s => s.text)
+      .join(' ')
+      .toLowerCase();
     expect(prepositionText).toContain('from');
 
     // Suffix: ه (him) = violet (possessive)
     const suffixSegments = result.filter(s => s.color === mockColors.violet);
-    const suffixText = suffixSegments.map(s => s.text).join('').toLowerCase();
+    const suffixText = suffixSegments
+      .map(s => s.text)
+      .join('')
+      .toLowerCase();
     expect(suffixText).toContain('him');
   });
 });

@@ -19,7 +19,7 @@ export const useSimpleAudioPlayer = () => {
       if (!isMountedRef.current) return false;
       return await simpleAudioService.play(track);
     },
-    [isMountedRef]
+    [isMountedRef],
   );
 
   // Pause function
@@ -41,10 +41,13 @@ export const useSimpleAudioPlayer = () => {
   }, [isMountedRef]);
 
   // Seek function
-  const seekTo = useCallback(async (position: number): Promise<void> => {
-    if (!isMountedRef.current) return;
-    await simpleAudioService.seekTo(position);
-  }, [isMountedRef]);
+  const seekTo = useCallback(
+    async (position: number): Promise<void> => {
+      if (!isMountedRef.current) return;
+      await simpleAudioService.seekTo(position);
+    },
+    [isMountedRef],
+  );
 
   // Pre-configure audio session function
   const preconfigureAudioSession = useCallback(async (): Promise<void> => {

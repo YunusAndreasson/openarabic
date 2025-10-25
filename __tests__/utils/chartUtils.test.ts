@@ -1,8 +1,4 @@
-import {
-  generateDataPointKeys,
-  generateMilestoneKeys,
-  type ChartPoint,
-} from '@/utils/chartUtils';
+import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';
 
 describe('chartUtils', () => {
   const mockDate1 = new Date('2023-01-01T00:00:00.000Z');

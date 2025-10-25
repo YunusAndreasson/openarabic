@@ -10,7 +10,6 @@ import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-
 import { ThemedView } from '@/components/ThemedView';
 import { BottomControls } from '@/components/bookmarks/BottomControls';
 import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
@@ -87,7 +86,7 @@ const ListenListItem = memo(
 
     const authorCategoryText = formatAuthorCategory(
       item.articles.author.name,
-      item.articles.category.name
+      item.articles.category.name,
     );
 
     return (
@@ -113,7 +112,7 @@ const ListenListItem = memo(
     if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
     if (prevProps.progressPercentage !== nextProps.progressPercentage) return false;
     return prevProps.item.article_id === nextProps.item.article_id;
-  }
+  },
 );
 
 ListenListItem.displayName = 'ListenListItem';
@@ -132,7 +131,7 @@ export default function ListenScreen(): JSX.Element {
           reset();
         }
       };
-    }, [editMode, reset])
+    }, [editMode, reset]),
   );
 
   // Simplified destructuring - only get what we actually use
@@ -152,7 +151,7 @@ export default function ListenScreen(): JSX.Element {
   // Fetch reading progress for bookmarked articles
   const articleIds = useMemo(
     () => sortedReadingList.map(item => item.article_id),
-    [sortedReadingList]
+    [sortedReadingList],
   );
   const { data: progressMap } = useSafeBulkReadingProgress(articleIds);
 
@@ -215,7 +214,7 @@ export default function ListenScreen(): JSX.Element {
         ? LAYOUT.SCREEN_PADDING.bottomWithControls(insets.bottom)
         : LAYOUT.SPACING.MEDIUM,
     }),
-    [stableHasArticles, insets.bottom]
+    [stableHasArticles, insets.bottom],
   );
 
   // STABILIZATION: Memoize bottom controls style with stable conditions
@@ -234,7 +233,7 @@ export default function ListenScreen(): JSX.Element {
       opacity: stableHasArticles ? 1 : 0,
       pointerEvents: stableHasArticles ? ('auto' as const) : ('none' as const),
     }),
-    [stableHasArticles]
+    [stableHasArticles],
   );
 
   // Memoize shared components to prevent recreation
@@ -253,7 +252,7 @@ export default function ListenScreen(): JSX.Element {
           }}
         />
       ) : null,
-    [shouldShowEmpty]
+    [shouldShowEmpty],
   );
 
   // Create the article press handler
@@ -265,7 +264,7 @@ export default function ListenScreen(): JSX.Element {
       });
       router.push(getArticleRoute(articleId as ArticleId, title));
     },
-    [prefetchArticle]
+    [prefetchArticle],
   );
 
   // Optimized render function - unified for both list types
@@ -291,7 +290,7 @@ export default function ListenScreen(): JSX.Element {
         />
       );
     },
-    [editMode, handleDelete, handleArticlePress, progressMap]
+    [editMode, handleDelete, handleArticlePress, progressMap],
   );
 
   // Memoize the key extractor to prevent inline function creation

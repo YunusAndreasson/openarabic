@@ -410,7 +410,7 @@ const AudioOverlays = memo(function AudioOverlays() {
     () =>
       Boolean(globalAudioState.currentArticle) &&
       (globalAudioState.isPlaying || globalAudioState.audioState === 'loading'),
-    [globalAudioState.currentArticle, globalAudioState.isPlaying, globalAudioState.audioState]
+    [globalAudioState.currentArticle, globalAudioState.isPlaying, globalAudioState.audioState],
   );
 
   // STABILIZATION: Show immediately, hide with delay to prevent mount/unmount flicker

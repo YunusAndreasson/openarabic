@@ -48,7 +48,7 @@ export const calculateTooltipDimensions = (
   hasBookmark: boolean,
   measuredWidth?: number,
   _containerOffsetX: number = 0,
-  containerWidth: number = 0
+  containerWidth: number = 0,
 ): TooltipDimensions => {
   const {
     ARROW_SIZE,
@@ -133,4 +133,3 @@ export const calculateTooltipDimensions = (
     arrowLeft,
   };
 };
-

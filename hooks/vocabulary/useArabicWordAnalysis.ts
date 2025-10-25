@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 
 import { useColors } from '@/hooks/theme/useColors';
-import { analyzeArabicWord, formatWordAnalysis, shouldInjectBracket } from '@/utils/arabicWordAnalysis';
+import {
+  analyzeArabicWord,
+  formatWordAnalysis,
+  shouldInjectBracket,
+} from '@/utils/arabicWordAnalysis';
 
 interface ColoredSegment {
   text: string;
@@ -27,7 +31,7 @@ interface UseArabicWordAnalysisResult {
 export function useArabicWordAnalysis(
   arabicWord: string,
   englishTranslation: string,
-  enabled = true
+  enabled = true,
 ): UseArabicWordAnalysisResult {
   const colors = useColors();
 
@@ -67,15 +71,25 @@ export function useArabicWordAnalysis(
     () => ({
       tint: colors.tint,
       primary: colors.primary,
-      secondary: colors.secondary,        // Add 'secondary' for conjunctions/subject prefixes
+      secondary: colors.secondary, // Add 'secondary' for conjunctions/subject prefixes
       secondaryText: colors.secondaryText,
       warning: colors.warning,
       accent: colors.accent,
       violet: colors.violet,
-      error: colors.error,                // Add 'error' for negation
+      error: colors.error, // Add 'error' for negation
       text: colors.text,
     }),
-    [colors.tint, colors.primary, colors.secondary, colors.secondaryText, colors.warning, colors.accent, colors.violet, colors.error, colors.text]
+    [
+      colors.tint,
+      colors.primary,
+      colors.secondary,
+      colors.secondaryText,
+      colors.warning,
+      colors.accent,
+      colors.violet,
+      colors.error,
+      colors.text,
+    ],
   );
 
   // Convert analysis to colored segments

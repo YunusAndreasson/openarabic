@@ -52,4 +52,3 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });
-

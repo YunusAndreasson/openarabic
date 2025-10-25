@@ -44,4 +44,3 @@ const styles = StyleSheet.create({
     width: MIN_TOUCH_TARGET.LARGE,
   },
 });
-

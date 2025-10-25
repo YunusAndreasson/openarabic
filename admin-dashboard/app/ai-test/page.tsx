@@ -103,7 +103,7 @@ export default function AITestPage() {
             id="system"
             placeholder="You are a helpful assistant..."
             value={systemPrompt}
-            onChange={(e) => setSystemPrompt(e.target.value)}
+            onChange={e => setSystemPrompt(e.target.value)}
             rows={2}
           />
         </div>
@@ -114,17 +114,13 @@ export default function AITestPage() {
             id="prompt"
             placeholder="Enter your prompt here..."
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={e => setPrompt(e.target.value)}
             rows={4}
             className="resize-none"
           />
         </div>
 
-        <Button
-          onClick={handleSubmit}
-          disabled={loading || !prompt.trim()}
-          className="w-full"
-        >
+        <Button onClick={handleSubmit} disabled={loading || !prompt.trim()} className="w-full">
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -150,9 +146,7 @@ export default function AITestPage() {
         <div className="border rounded-lg p-6 bg-card">
           <h2 className="text-lg font-semibold mb-3">Response</h2>
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <pre className="whitespace-pre-wrap bg-muted p-4 rounded-lg text-sm">
-              {response}
-            </pre>
+            <pre className="whitespace-pre-wrap bg-muted p-4 rounded-lg text-sm">{response}</pre>
           </div>
         </div>
       )}
@@ -173,7 +167,9 @@ export default function AITestPage() {
             size="sm"
             onClick={() => {
               setPrompt('What are 3 tips for learning Arabic vocabulary?');
-              setSystemPrompt('You are an expert Arabic language teacher. Be concise and practical.');
+              setSystemPrompt(
+                'You are an expert Arabic language teacher. Be concise and practical.',
+              );
             }}
           >
             Arabic Learning Tips
@@ -192,7 +188,7 @@ export default function AITestPage() {
       <div className="border rounded-lg p-6 bg-muted/30">
         <h2 className="text-lg font-semibold mb-3">Usage in Code</h2>
         <pre className="bg-black text-green-400 p-4 rounded-lg text-xs overflow-x-auto">
-{`// Import the client
+          {`// Import the client
 import { sendPrompt, MODELS } from '@/lib/openrouter';
 
 // Basic usage

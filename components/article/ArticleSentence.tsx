@@ -39,7 +39,7 @@ function renderWordWithProps(
   renderWord: ((word: SentenceWord, isHighlighted: boolean) => ReactNode) | undefined,
   onWordPress: ((word: SentenceWord, layout?: LayoutRectangle) => void) | undefined,
   sentenceId: string | number,
-  currentHighlightedWord: SentenceWord | null | undefined
+  currentHighlightedWord: SentenceWord | null | undefined,
 ) {
   const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
   if (!wordRefs[index]) {
@@ -88,9 +88,9 @@ const ArticleSentenceInternal = function ArticleSentence({
   } = useOpacityAnimation({ initialOpacity: 0 });
 
   useEffect(() => {
-    wordRefs.current = words.map(() =>
-      createRef<ComponentRef<typeof Pressable>>()
-    ) as RefObject<ComponentRef<typeof Pressable>>[];
+    wordRefs.current = words.map(() => createRef<ComponentRef<typeof Pressable>>()) as RefObject<
+      ComponentRef<typeof Pressable>
+    >[];
   }, [words]);
 
   useEffect(() => {
@@ -107,7 +107,7 @@ const ArticleSentenceInternal = function ArticleSentence({
       color: colors.englishText,
       lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
     }),
-    [colors.englishText]
+    [colors.englishText],
   );
 
   // Memoize background style to prevent recreation
@@ -123,9 +123,9 @@ const ArticleSentenceInternal = function ArticleSentence({
           borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
           backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
         },
-        animatedHighlightStyle
+        animatedHighlightStyle,
       ) as AnimatedStyle<ViewStyle>,
-    [colors.tint, colors.transparent, animatedHighlightStyle]
+    [colors.tint, colors.transparent, animatedHighlightStyle],
   );
 
   // Create stable handler for word press
@@ -133,7 +133,7 @@ const ArticleSentenceInternal = function ArticleSentence({
     (word: SentenceWord, layout?: LayoutRectangle) => {
       onWordPress?.(word, layout);
     },
-    [onWordPress]
+    [onWordPress],
   );
 
   // Memoize rendered words to prevent unnecessary recreations
@@ -146,7 +146,7 @@ const ArticleSentenceInternal = function ArticleSentence({
         renderWord,
         handleWordPressCallback,
         sentence.id,
-        currentHighlightedWord
+        currentHighlightedWord,
       );
     });
   }, [words, renderWord, handleWordPressCallback, sentence.id, currentHighlightedWord]);

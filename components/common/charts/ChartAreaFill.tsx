@@ -1,4 +1,3 @@
-
 import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
 import { createAreaFillPath } from '@charts/utils';
 import { LinearGradient, Path, vec } from '@shopify/react-native-skia';
@@ -21,25 +20,26 @@ interface ChartAreaFillProps {
 // Skia LinearGradient positions expect a mutable number[] type in our TS setup
 const GRADIENT_STOPS: number[] = [0, 0.3, 0.7, 1];
 
-export const ChartAreaFill = memo<ChartAreaFillProps>(({ path, graphWidth, topPadding = 0, chartColors }) => {
+export const ChartAreaFill = memo<ChartAreaFillProps>(
+  ({ path, graphWidth, topPadding = 0, chartColors }) => {
+    const areaPath = useMemo(
+      () => (path ? createAreaFillPath(path, GRAPH_HEIGHT_LARGE, undefined, graphWidth) : ''),
+      [path, graphWidth],
+    );
 
-  const areaPath = useMemo(
-    () => (path ? createAreaFillPath(path, GRAPH_HEIGHT_LARGE, undefined, graphWidth) : ''),
-    [path, graphWidth]
-  );
+    if (!path || !areaPath) return null;
 
-  if (!path || !areaPath) return null;
-
-  return (
-    <Path path={areaPath}>
-      <LinearGradient
-        colors={chartColors.getAreaFillGradient()}
-        end={vec(0, GRAPH_HEIGHT_LARGE)}
-        positions={GRADIENT_STOPS}
-        start={vec(0, topPadding)}
-      />
-    </Path>
-  );
-});
+    return (
+      <Path path={areaPath}>
+        <LinearGradient
+          colors={chartColors.getAreaFillGradient()}
+          end={vec(0, GRAPH_HEIGHT_LARGE)}
+          positions={GRADIENT_STOPS}
+          start={vec(0, topPadding)}
+        />
+      </Path>
+    );
+  },
+);
 
 ChartAreaFill.displayName = 'ChartAreaFill';

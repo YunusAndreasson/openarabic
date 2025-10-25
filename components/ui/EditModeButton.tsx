@@ -78,10 +78,10 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
   const buttonText = optimisticEditMode
     ? UiAction.DONE
     : type === 'listen'
-    ? UiAction.MANAGE
-    : type === 'dictionary'
-    ? UiAction.MANAGE
-    : UiAction.EDIT;
+      ? UiAction.MANAGE
+      : type === 'dictionary'
+        ? UiAction.MANAGE
+        : UiAction.EDIT;
 
   return (
     <AnimatedPressable

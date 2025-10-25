@@ -32,15 +32,12 @@ const response = await sendPrompt('Write a haiku about Arabic');
 console.log(response);
 
 // With custom options
-const response = await sendPrompt(
-  'Explain quantum computing',
-  {
-    model: MODELS.CLAUDE_3_HAIKU,
-    temperature: 0.5,
-    maxTokens: 500,
-    systemPrompt: 'You are a helpful teacher. Be concise.',
-  }
-);
+const response = await sendPrompt('Explain quantum computing', {
+  model: MODELS.CLAUDE_3_HAIKU,
+  temperature: 0.5,
+  maxTokens: 500,
+  systemPrompt: 'You are a helpful teacher. Be concise.',
+});
 ```
 
 ### Option 2: Via API Route (Client-Side)
@@ -70,23 +67,23 @@ The utility includes constants for popular models:
 import { MODELS } from '@/lib/openrouter';
 
 // Anthropic Claude
-MODELS.CLAUDE_35_SONNET  // 'anthropic/claude-3.5-sonnet' (default)
-MODELS.CLAUDE_3_OPUS     // 'anthropic/claude-3-opus'
-MODELS.CLAUDE_3_SONNET   // 'anthropic/claude-3-sonnet'
-MODELS.CLAUDE_3_HAIKU    // 'anthropic/claude-3-haiku'
+MODELS.CLAUDE_35_SONNET; // 'anthropic/claude-3.5-sonnet' (default)
+MODELS.CLAUDE_3_OPUS; // 'anthropic/claude-3-opus'
+MODELS.CLAUDE_3_SONNET; // 'anthropic/claude-3-sonnet'
+MODELS.CLAUDE_3_HAIKU; // 'anthropic/claude-3-haiku'
 
 // OpenAI
-MODELS.GPT4_TURBO        // 'openai/gpt-4-turbo'
-MODELS.GPT4              // 'openai/gpt-4'
-MODELS.GPT35_TURBO       // 'openai/gpt-3.5-turbo'
+MODELS.GPT4_TURBO; // 'openai/gpt-4-turbo'
+MODELS.GPT4; // 'openai/gpt-4'
+MODELS.GPT35_TURBO; // 'openai/gpt-3.5-turbo'
 
 // Google
-MODELS.GEMINI_PRO        // 'google/gemini-pro'
-MODELS.GEMINI_PRO_15     // 'google/gemini-pro-1.5'
+MODELS.GEMINI_PRO; // 'google/gemini-pro'
+MODELS.GEMINI_PRO_15; // 'google/gemini-pro-1.5'
 
 // Meta
-MODELS.LLAMA_3_70B       // 'meta-llama/llama-3-70b-instruct'
-MODELS.LLAMA_3_8B        // 'meta-llama/llama-3-8b-instruct'
+MODELS.LLAMA_3_70B; // 'meta-llama/llama-3-70b-instruct'
+MODELS.LLAMA_3_8B; // 'meta-llama/llama-3-8b-instruct'
 ```
 
 See [OpenRouter Models](https://openrouter.ai/models) for the full list.
@@ -94,6 +91,7 @@ See [OpenRouter Models](https://openrouter.ai/models) for the full list.
 ## Testing
 
 Visit the test page at `/ai-test` to:
+
 - Try different prompts and models
 - Test system prompts
 - See example usage
@@ -104,6 +102,7 @@ Visit the test page at `/ai-test` to:
 ### `sendPrompt(prompt, options)`
 
 **Parameters:**
+
 - `prompt` (string, required) - The user prompt to send
 - `options` (object, optional):
   - `model` (string) - Model to use (default: 'anthropic/claude-3.5-sonnet')
@@ -120,19 +119,21 @@ Visit the test page at `/ai-test` to:
 OpenRouter provides analytics and cost tracking at [openrouter.ai/activity](https://openrouter.ai/activity).
 
 Each API call includes:
+
 - `HTTP-Referer: https://openarabic.io` - For analytics
 - `X-Title: OpenArabic Admin Dashboard` - For identification
 
 ## Security Notes
 
 ✅ API key is stored in `.env.local` (not committed to git)
-✅ API key is server-side only (no NEXT_PUBLIC_ prefix)
+✅ API key is server-side only (no NEXT*PUBLIC* prefix)
 ✅ API route validates inputs before making requests
 ✅ Error messages don't expose sensitive information
 
 ## Next Steps
 
 You can now use the OpenRouter client for:
+
 - Generating article summaries
 - Creating quiz questions
 - Translating content

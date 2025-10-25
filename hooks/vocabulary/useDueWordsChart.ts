@@ -1,4 +1,3 @@
-
 import { useChartColors } from '@charts/ChartColors';
 import {
   calculateDataPointPositions,
@@ -57,7 +56,7 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
 
     const maxDueWords = Math.max(
       10, // Minimum scale of 10 for better visualization
-      Math.max(...dueWordsData.map(d => d.dueWords))
+      Math.max(...dueWordsData.map(d => d.dueWords)),
     );
 
     // Create smooth curve using shared path builder utility

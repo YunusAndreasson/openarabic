@@ -226,7 +226,9 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // Can't have both overlapping, must choose one
       if (hasPrefix && hasSuffix) {
         // If both present, they shouldn't overlap
-        expect(analysis.prefixes[0]!.arabicMatch.length + analysis.suffix!.arabicMatch.length).toBeLessThanOrEqual(2);
+        expect(
+          analysis.prefixes[0]!.arabicMatch.length + analysis.suffix!.arabicMatch.length,
+        ).toBeLessThanOrEqual(2);
       }
     });
 

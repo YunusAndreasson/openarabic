@@ -38,7 +38,7 @@ function useRefreshOnFocus<T>(refetch: () => Promise<T>) {
         return;
       }
       refetch();
-    }, [refetch])
+    }, [refetch]),
   );
 }
 
@@ -117,8 +117,9 @@ export const useBookmarksScreen = () => {
   }, [user?.id, queryClient]);
 
   const enhancedTracksQuery = useQuery({
-    queryKey:
-      user?.id ? AUDIO_QUERY_KEYS.tracks(user.id, audioPreference) : ['enhancedAudioTracks', 'none'],
+    queryKey: user?.id
+      ? AUDIO_QUERY_KEYS.tracks(user.id, audioPreference)
+      : ['enhancedAudioTracks', 'none'],
     queryFn: () => {
       if (!user?.id) return Promise.resolve([]);
       return enhancedAudioService.getReadingListEnhancedTracks(user.id, audioPreference);
@@ -134,12 +135,12 @@ export const useBookmarksScreen = () => {
     if (!enhancedTracks.length || !sortedReadingList.length) return enhancedTracks;
 
     const articlePositionMap = new Map(
-      sortedReadingList.map((item, index) => [item.article_id, index])
+      sortedReadingList.map((item, index) => [item.article_id, index]),
     );
 
     return [...enhancedTracks].sort((a, b) => {
-      const posA = a.articleId ? articlePositionMap.get(a.articleId) ?? 999 : 999;
-      const posB = b.articleId ? articlePositionMap.get(b.articleId) ?? 999 : 999;
+      const posA = a.articleId ? (articlePositionMap.get(a.articleId) ?? 999) : 999;
+      const posB = b.articleId ? (articlePositionMap.get(b.articleId) ?? 999) : 999;
       return posA - posB;
     });
   }, [enhancedTracks, sortedReadingList]);
@@ -246,7 +247,7 @@ export const useBookmarksScreen = () => {
         handleError(error as Error);
       }
     },
-    [user?.id, dispatch, queryClient, audioPreference]
+    [user?.id, dispatch, queryClient, audioPreference],
   );
 
   const handleArticlePlay = useCallback(
@@ -276,7 +277,7 @@ export const useBookmarksScreen = () => {
 
         const track = await enhancedAudioService.generateEnhancedAudioTrack(
           articleId as ArticleId,
-          audioPreference
+          audioPreference,
         );
         if (track) {
           const success = await simpleAudioService.play(track);
@@ -297,7 +298,7 @@ export const useBookmarksScreen = () => {
         handleError(error as Error);
       }
     },
-    [isCurrentlyPlaying, sortedEnhancedTracks, audioPreference]
+    [isCurrentlyPlaying, sortedEnhancedTracks, audioPreference],
   );
 
   // Cleanup timeouts on unmount
@@ -317,7 +318,7 @@ export const useBookmarksScreen = () => {
         // Stop any playing audio when navigating away from bookmarks screen
         stopAudioSafely();
       };
-    }, [])
+    }, []),
   );
 
   return {

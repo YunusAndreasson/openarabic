@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
     // Fetch improvements with word context
     const { data: improvements, error: improvementsError } = await supabase
       .from('translation_improvements')
-      .select(`
+      .select(
+        `
         *,
         sentence_words (
           id,
@@ -44,7 +45,8 @@ export async function GET(request: NextRequest) {
           position,
           sentence_id
         )
-      `)
+      `,
+      )
       .eq('status', status)
       .order('created_at', { ascending: true });
 
@@ -65,15 +67,16 @@ export async function GET(request: NextRequest) {
     const sentenceIds = [
       ...new Set(
         improvements
-          .map((imp) => imp.sentence_words?.sentence_id)
-          .filter((id): id is number => id !== null && id !== undefined)
+          .map(imp => imp.sentence_words?.sentence_id)
+          .filter((id): id is number => id !== null && id !== undefined),
       ),
     ];
 
     // Fetch sentence data with article info
     const { data: sentences, error: sentencesError } = await supabase
       .from('article_sentences')
-      .select(`
+      .select(
+        `
         id,
         arabic,
         english,
@@ -83,7 +86,8 @@ export async function GET(request: NextRequest) {
           id,
           title
         )
-      `)
+      `,
+      )
       .in('id', sentenceIds);
 
     if (sentencesError) {
@@ -92,12 +96,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Create a map of sentence data by ID
-    const sentenceMap = new Map(
-      (sentences || []).map((s) => [s.id, s])
-    );
+    const sentenceMap = new Map((sentences || []).map(s => [s.id, s]));
 
     // Merge the data
-    const enrichedData = improvements.map((imp) => ({
+    const enrichedData = improvements.map(imp => ({
       ...imp,
       sentence_words: imp.sentence_words
         ? {
@@ -127,7 +129,7 @@ export async function GET(request: NextRequest) {
         details: errorDetails,
         fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -146,26 +148,20 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const {
-      id,
-      action,
-      suggested_english,
-      suggested_grammar_note,
-      reviewer_notes
-    } = body;
+    const { id, action, suggested_english, suggested_grammar_note, reviewer_notes } = body;
 
     // Validate inputs
     if (!id || !action) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields: id, action' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (action !== 'approve' && action !== 'reject') {
       return NextResponse.json(
         { success: false, error: 'Invalid action. Must be "approve" or "reject"' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -178,18 +174,16 @@ export async function PATCH(request: NextRequest) {
 
     if (fetchError || !improvement) {
       console.error('Error fetching improvement:', fetchError);
-      return NextResponse.json(
-        { success: false, error: 'Improvement not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Improvement not found' }, { status: 404 });
     }
 
     // If approving, apply changes to sentence_words table
     if (action === 'approve') {
       const englishToUpdate = suggested_english || improvement.suggested_english;
-      const grammarNoteToUpdate = suggested_grammar_note !== undefined
-        ? suggested_grammar_note
-        : improvement.suggested_grammar_note;
+      const grammarNoteToUpdate =
+        suggested_grammar_note !== undefined
+          ? suggested_grammar_note
+          : improvement.suggested_grammar_note;
 
       const { error: updateError } = await supabase
         .from('sentence_words')
@@ -235,9 +229,10 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: updated,
-      message: action === 'approve'
-        ? 'Translation improvement approved and applied'
-        : 'Translation improvement rejected',
+      message:
+        action === 'approve'
+          ? 'Translation improvement approved and applied'
+          : 'Translation improvement rejected',
     });
   } catch (error) {
     console.error('Error in PATCH /api/translation-improvements:', error);
@@ -249,7 +244,7 @@ export async function PATCH(request: NextRequest) {
         success: false,
         error: errorMessage,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

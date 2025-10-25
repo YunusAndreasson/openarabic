@@ -26,15 +26,10 @@ export const MemoryRetentionBottomSheet = memo<MemoryRetentionBottomSheetProps>(
         onClose={onClose}
         title={STRINGS.MEMORY_STRENGTH}
         subtitle={STRINGS.MEMORY_STRENGTH_SUBTITLE}
-        chartComponent={
-          <RetrievabilityChart
-            studyWords={studyWords ?? []}
-            hideTitle={true}
-          />
-        }
+        chartComponent={<RetrievabilityChart studyWords={studyWords ?? []} hideTitle={true} />}
       />
     );
-  }
+  },
 );
 
 MemoryRetentionBottomSheet.displayName = 'MemoryRetentionBottomSheet';

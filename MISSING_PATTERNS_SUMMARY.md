@@ -30,12 +30,14 @@
 **Risk**: 🟢 **LOW**
 
 **Why**:
+
 - Common Arabic preposition ("with")
 - Currently missing from our 210 patterns
 - Clear, unambiguous meaning
 - Appears in: מَעَהُ (with him), מَعَכَ (with you), מَעَנَا (with us)
 
 **Impact**:
+
 - Improves coverage for 2+ database entries
 - Future-proof for more content
 - Zero risk of false positives

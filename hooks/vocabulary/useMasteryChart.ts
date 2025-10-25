@@ -78,7 +78,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
         state: word.fsrs_state,
         stability: word.fsrs_stability ?? 0,
       })),
-    [studyWords]
+    [studyWords],
   );
 
   const masteryData = useMemo(() => {
@@ -126,29 +126,35 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     const { path: masteryPath, points } = buildSmoothChartPath({
       data: masteryData,
       dataPointPositions,
-      calculateY: data => TOP_PADDING + (chartHeight - (data.masteredCount / maxCount) * chartHeight),
+      calculateY: data =>
+        TOP_PADDING + (chartHeight - (data.masteredCount / maxCount) * chartHeight),
       buildPoint: (x, y, data) => ({ x, y, count: data.masteredCount, date: data.date }),
     });
 
     // Milestones based on word count thresholds (10, 25, 50, 100 words)
     const countMilestones = [10, 25, 50, 100];
-    const milestones = countMilestones.map(target => {
-      const milestone = masteryData.find(d => d.masteredCount >= target);
-      if (milestone) {
-        const index = masteryData.indexOf(milestone);
-        const x = dataPointPositions[index] || 0;
-        const y = TOP_PADDING + (chartHeight - (milestone.masteredCount / maxCount) * chartHeight);
-        return { x, y, count: target, achieved: true, date: milestone.date } as Milestone;
-      }
-      return { x: 0, y: 0, count: target, achieved: false, date: new Date() } as Milestone;
-    }).filter(m => m.achieved);
+    const milestones = countMilestones
+      .map(target => {
+        const milestone = masteryData.find(d => d.masteredCount >= target);
+        if (milestone) {
+          const index = masteryData.indexOf(milestone);
+          const x = dataPointPositions[index] || 0;
+          const y =
+            TOP_PADDING + (chartHeight - (milestone.masteredCount / maxCount) * chartHeight);
+          return { x, y, count: target, achieved: true, date: milestone.date } as Milestone;
+        }
+        return { x: 0, y: 0, count: target, achieved: false, date: new Date() } as Milestone;
+      })
+      .filter(m => m.achieved);
 
     const recent = masteryData.slice(-4);
     const older = masteryData.slice(-7, -4);
 
     const currentCount = recent[recent.length - 1]?.masteredCount || 0;
     const recentAvg =
-      recent.length > 0 ? recent.reduce((sum, day) => sum + day.masteredCount, 0) / recent.length : 0;
+      recent.length > 0
+        ? recent.reduce((sum, day) => sum + day.masteredCount, 0) / recent.length
+        : 0;
     const olderAvg =
       older.length > 0 ? older.reduce((sum, day) => sum + day.masteredCount, 0) / older.length : 0;
 
@@ -157,8 +163,8 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
       change > MASTERY_TREND_THRESHOLD
         ? 'improving'
         : change < -MASTERY_TREND_THRESHOLD
-        ? 'declining'
-        : 'stable';
+          ? 'declining'
+          : 'stable';
     const totalMastered = recent[recent.length - 1]?.masteredCount || 0;
 
     return {
@@ -204,16 +210,16 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
       })
       .filter(
         (point): point is DataPoint<MasteryRecord> =>
-          point !== null && !!point.label && !!point.value
+          point !== null && !!point.label && !!point.value,
       );
   }, [chartData.points, masteryData]);
 
   const xLabels = useMemo(
     () =>
       masteryData.map(d =>
-        d.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
+        d.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
       ),
-    [masteryData]
+    [masteryData],
   );
   const xLabelPositions = useMemo(() => chartData.points.map(p => p.x), [chartData.points]);
 

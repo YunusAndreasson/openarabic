@@ -13,7 +13,7 @@ export const strugglingWordsService = {
   async getStrugglingWords(
     userId: string,
     limit: number = 10,
-    sessionCooldownHours: number = 1
+    sessionCooldownHours: number = 1,
   ): Promise<StudyWord[]> {
     // First ensure user is authenticated
     await checkAuthentication(userId);

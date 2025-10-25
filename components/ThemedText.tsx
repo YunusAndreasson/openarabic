@@ -23,7 +23,7 @@ const getTextColor = (
   colors: ThemeColors,
   variant?: ThemedTextProps['variant'],
   colorName?: ThemedTextProps['colorName'],
-  skipDefaultColor?: boolean
+  skipDefaultColor?: boolean,
 ): string | undefined => {
   if (colorName) {
     const color = colors[colorName];

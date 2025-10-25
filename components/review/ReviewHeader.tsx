@@ -39,11 +39,7 @@ interface ReviewHeaderProps {
   onClose?: () => void;
 }
 
-export const ReviewHeader: FC<ReviewHeaderProps> = ({
-  progress,
-  maxProgress,
-  onClose,
-}) => {
+export const ReviewHeader: FC<ReviewHeaderProps> = ({ progress, maxProgress, onClose }) => {
   const colors = useColors();
 
   const displayProgress = Math.max(progress, maxProgress);
@@ -68,11 +64,7 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
         />
       </View>
       {onClose && (
-        <Pressable
-          style={closeButtonStyle}
-          onPress={handleClose}
-          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-        >
+        <Pressable style={closeButtonStyle} onPress={handleClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM}>
           <Ionicons
             name="close"
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
@@ -85,4 +77,3 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
 };
 
 ReviewHeader.displayName = 'ReviewHeader';
-

@@ -18,7 +18,13 @@ export interface GenericChartBottomSheetProps {
   chartComponent: ReactNode;
 }
 
-export const GenericChartBottomSheet: FC<GenericChartBottomSheetProps> = ({ isVisible, onClose, title, subtitle, chartComponent }) => {
+export const GenericChartBottomSheet: FC<GenericChartBottomSheetProps> = ({
+  isVisible,
+  onClose,
+  title,
+  subtitle,
+  chartComponent,
+}) => {
   const colors = useColors();
   const { user } = useAuth();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
@@ -44,7 +50,7 @@ export const GenericChartBottomSheet: FC<GenericChartBottomSheetProps> = ({ isVi
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   // Backdrop component

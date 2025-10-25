@@ -1,7 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import { useContext } from 'react';
 
-
 import { AuthContext } from '@/components/providers/AuthProvider';
 import type { AuthResult } from '@/types/auth.types';
 
@@ -9,7 +8,7 @@ export function useAuth(): AuthResult {
   const context = useContext(AuthContext);
   if (!context) {
     const error = new Error(
-      'useAuth must be used within an AuthProvider. Check that AuthProvider wraps your component tree.'
+      'useAuth must be used within an AuthProvider. Check that AuthProvider wraps your component tree.',
     );
 
     // Log to Sentry

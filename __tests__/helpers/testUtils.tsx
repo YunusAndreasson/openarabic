@@ -45,7 +45,7 @@ export const renderWithProviders = (ui: ReactElement, queryClient?: QueryClient)
     ...render(
       <Provider store={store}>
         <QueryClientProvider client={client}>{ui}</QueryClientProvider>
-      </Provider>
+      </Provider>,
     ),
     queryClient: client,
   };
@@ -57,7 +57,7 @@ export const renderWithProviders = (ui: ReactElement, queryClient?: QueryClient)
  */
 export const renderWithAppProviders = (
   ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
+  options?: Omit<RenderOptions, 'wrapper'>,
 ) => {
   const queryClient = createTestQueryClient();
 

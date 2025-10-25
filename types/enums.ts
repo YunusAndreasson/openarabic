@@ -382,7 +382,7 @@ export enum HijriMonth {
  * Type-safe way to get enum values as array
  */
 export const getEnumValues = <T extends Record<string, string | number>>(
-  enumObj: T
+  enumObj: T,
 ): EnumValues<T>[] => {
   return Object.values(enumObj) as EnumValues<T>[];
 };

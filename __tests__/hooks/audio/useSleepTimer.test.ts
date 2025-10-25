@@ -108,7 +108,7 @@ describe('useSleepTimer', () => {
       expect.objectContaining({
         toastMessage: "Couldn't start timer. Try again",
         analyticsEventName: 'Sleep_Timer_Start_Error',
-      })
+      }),
     );
   });
 

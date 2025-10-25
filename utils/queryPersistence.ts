@@ -11,9 +11,9 @@ const MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 // Pre-defined sets for faster lookups
 const PERSIST_KEYS = new Set([
-  'categories',       // Static data - safe to persist
-  'authors',          // Static data - safe to persist
-  'articles',         // Static content - safe to persist
+  'categories', // Static data - safe to persist
+  'authors', // Static data - safe to persist
+  'articles', // Static content - safe to persist
   'filtered-articles', // Derived from static articles - safe to persist
   // 'readingList' - EXCLUDED: User-specific & auth-dependent, causes hydration errors
   // Note: 'reading-progress-bulk' is excluded (see EXCLUDED_KEYS) to prevent HMR hydration errors
@@ -21,7 +21,7 @@ const PERSIST_KEYS = new Set([
 const VOCABULARY_KEYS = new Set([FSRS_BASE_KEY]);
 const EXCLUDED_KEYS = new Set([
   'isInReadingList',
-  'readingList',           // User-specific & auth-dependent - causes hydration errors
+  'readingList', // User-specific & auth-dependent - causes hydration errors
   'enhancedAudioTracks',
   STRUGGLING_WORDS_KEY,
   'reading-progress-bulk', // Explicitly exclude to prevent HMR hydration errors

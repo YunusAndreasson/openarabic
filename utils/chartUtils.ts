@@ -16,7 +16,7 @@ export interface ChartPoint {
  */
 export const generateDataPointKeys = (
   dataPoints: ChartPoint[],
-  prefix: string = 'data-point'
+  prefix: string = 'data-point',
 ): string[] => {
   return dataPoints.map((point: ChartPoint) => `${prefix}-${point.date.toISOString()}`);
 };
@@ -29,7 +29,7 @@ export const generateDataPointKeys = (
  */
 export const generateMilestoneKeys = (
   milestones: ChartPoint[],
-  prefix: string = 'milestone'
+  prefix: string = 'milestone',
 ): string[] => {
   return milestones.map((milestone: ChartPoint, index: number) => {
     const keyIdentifier =
@@ -37,4 +37,3 @@ export const generateMilestoneKeys = (
     return `${prefix}-${milestone.date.toISOString()}-${keyIdentifier}`;
   });
 };
-

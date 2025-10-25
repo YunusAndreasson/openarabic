@@ -113,17 +113,35 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
       createTestWord({
         root_id: 1,
         user_id: 'test-user-123',
-        root: { id: 1, letters: 'word-1', meaning: 'meaning-1', audio_url: null, audio_url_en: null },
+        root: {
+          id: 1,
+          letters: 'word-1',
+          meaning: 'meaning-1',
+          audio_url: null,
+          audio_url_en: null,
+        },
       }),
       createTestWord({
         root_id: 2,
         user_id: 'test-user-123',
-        root: { id: 2, letters: 'word-2', meaning: 'meaning-2', audio_url: null, audio_url_en: null },
+        root: {
+          id: 2,
+          letters: 'word-2',
+          meaning: 'meaning-2',
+          audio_url: null,
+          audio_url_en: null,
+        },
       }),
       createTestWord({
         root_id: 3,
         user_id: 'test-user-123',
-        root: { id: 3, letters: 'word-3', meaning: 'meaning-3', audio_url: null, audio_url_en: null },
+        root: {
+          id: 3,
+          letters: 'word-3',
+          meaning: 'meaning-3',
+          audio_url: null,
+          audio_url_en: null,
+        },
       }),
     ];
     studyWordsFSRSService.getFSRSWords.mockResolvedValue(mockWords);
@@ -227,5 +245,4 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
       expect(queryByTestId('completion-screen')).toBeTruthy();
     });
   });
-
 });

@@ -70,7 +70,7 @@ jest.mock('expo-router', () => {
         title:
           child.props.options?.title ||
           child.props.name.charAt(0).toUpperCase() + child.props.name.slice(1),
-      })
+      }),
     );
     const [index, setIndex] = React.useState(0);
     const navigation = {
@@ -83,12 +83,12 @@ jest.mock('expo-router', () => {
     const descriptors = routes.reduce(
       (
         acc: Record<string, { options: { title: string } }>,
-        route: { key: string; title: string }
+        route: { key: string; title: string },
       ) => {
         acc[route.key] = { options: { title: route.title } };
         return acc;
       },
-      {} as Record<string, { options: { title: string } }>
+      {} as Record<string, { options: { title: string } }>,
     );
     const state = { index, routes };
     const Active = screens[routes[index].name as keyof typeof screens];

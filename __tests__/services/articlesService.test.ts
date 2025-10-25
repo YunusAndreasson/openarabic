@@ -135,7 +135,7 @@ describe('articlesService', () => {
         expect.objectContaining({
           toastMessage: "Couldn't load articles. Try again",
           analyticsProperties: expect.objectContaining({ authorId: 5 }),
-        })
+        }),
       );
     });
   });
@@ -191,7 +191,7 @@ describe('articlesService', () => {
           analyticsEventName: 'Articles_With_Stats_Load_Error',
           showToast: true,
           sentrySeverity: 'error',
-        })
+        }),
       );
     });
   });
@@ -224,7 +224,7 @@ describe('articlesService', () => {
         expect.objectContaining({
           toastMessage: "Couldn't load article. Try again",
           analyticsProperties: { id: 3 },
-        })
+        }),
       );
     });
   });
@@ -257,7 +257,7 @@ describe('articlesService', () => {
         expect.objectContaining({
           toastMessage: "Couldn't load article. Try again",
           analyticsProperties: { id: 4 },
-        })
+        }),
       );
     });
   });

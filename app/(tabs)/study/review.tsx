@@ -164,11 +164,7 @@ export default function ReviewScreen(): JSX.Element {
     <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
       {/* Progress header at top of screen */}
       <View style={{ paddingTop: LAYOUT.SPACING.LARGE }}>
-        <ReviewHeader
-          maxProgress={maxProgress}
-          progress={progress}
-          onClose={handleClose}
-        />
+        <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
       </View>
 
       {/* Main content area */}

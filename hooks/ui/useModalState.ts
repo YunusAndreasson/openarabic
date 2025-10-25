@@ -54,7 +54,7 @@ export function useModalState<T>() {
         open(payload);
       }
     },
-    [isVisible, open, close]
+    [isVisible, open, close],
   );
 
   // Memoize the return object to prevent unnecessary re-renders in dependent components
@@ -66,6 +66,6 @@ export function useModalState<T>() {
       close,
       toggle,
     }),
-    [isVisible, data, open, close, toggle]
+    [isVisible, data, open, close, toggle],
   );
 }

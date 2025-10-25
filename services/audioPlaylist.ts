@@ -18,7 +18,7 @@ export const enhancedAudioService = {
    */
   async generateEnhancedAudioTrack(
     articleId: ArticleId,
-    audioPreference: 'arabic' | 'bilingual' = 'bilingual'
+    audioPreference: 'arabic' | 'bilingual' = 'bilingual',
   ): Promise<EnhancedAudioTrack | null> {
     try {
       // Fetch article details - audio is guaranteed to be available
@@ -56,7 +56,7 @@ export const enhancedAudioService = {
    */
   async getReadingListEnhancedTracks(
     userId: string,
-    audioPreference: 'arabic' | 'bilingual' = 'bilingual'
+    audioPreference: 'arabic' | 'bilingual' = 'bilingual',
   ): Promise<EnhancedAudioTrack[]> {
     try {
       // Fetch user's reading list with the correct audio URL selected at database level

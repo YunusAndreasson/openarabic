@@ -19,7 +19,7 @@ import { successFeedback } from '@/utils/haptics';
  */
 export const useReviewCompletion = (
   sessionMetrics?: SessionMetrics,
-  shouldExecute: boolean = true
+  shouldExecute: boolean = true,
 ) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -87,9 +87,12 @@ export const useReviewCompletion = (
       trackCompletion();
 
       // Trigger haptic feedback
-      setTimeout(() => {
-        successFeedback();
-      }, TIMING_CONFIG.FAST.duration + TIMING_CONFIG.ENTRANCE.duration / 2);
+      setTimeout(
+        () => {
+          successFeedback();
+        },
+        TIMING_CONFIG.FAST.duration + TIMING_CONFIG.ENTRANCE.duration / 2,
+      );
     });
   }, [shouldExecute]); // Only run once on mount with correct shouldExecute
 

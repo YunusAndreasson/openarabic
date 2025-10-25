@@ -121,7 +121,7 @@ export function calculateStrugglingWords(studyWords: StudyWord[]): number {
  */
 export function calculateWordCategories(
   studyWords: StudyWord[],
-  dueWordsProp?: number
+  dueWordsProp?: number,
 ): {
   dueWords: number;
   learnedWords: number;
@@ -168,7 +168,7 @@ export const getStrugglingWordsCount = (studyWords: StudyWord[]): number => {
   };
 
   return studyWords.filter(word => {
-    if (!word || word.root_id == null) return false;
+    if (word?.root_id == null) return false;
     const hasBeenReviewed = (word.fsrs_reps ?? 0) > 0;
     if (!hasBeenReviewed) return false;
     const lastStr = normalizeTs(word.fsrs_last_review);
@@ -236,4 +236,3 @@ export function isExtraHardWord(word: StudyWord): boolean {
   const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY;
   return difficulty > 8.0;
 }
-

@@ -57,7 +57,7 @@ export function useReadingProgress({
     const maxValidSentence = totalSentences - 1;
     const sanitizedLastSentence = Math.max(
       0,
-      Math.min(rawProgress.last_sentence_read, maxValidSentence)
+      Math.min(rawProgress.last_sentence_read, maxValidSentence),
     );
 
     if (sanitizedLastSentence !== rawProgress.last_sentence_read) {
@@ -159,7 +159,7 @@ export function useReadingProgress({
       // Update if we've moved to a different position (not just forward progress)
       const lastRecorded = Math.max(
         lastSavedSentenceRef.current,
-        progress?.last_sentence_read ?? 0
+        progress?.last_sentence_read ?? 0,
       );
 
       if (validSentenceIndex !== lastRecorded) {
@@ -173,7 +173,7 @@ export function useReadingProgress({
       totalSentences,
       progress?.last_sentence_read,
       updateProgressMutation,
-    ]
+    ],
   );
 
   // Auto-save progress with debouncing and improved cleanup
@@ -310,7 +310,14 @@ export function useReadingProgress({
       totalSentences,
       progressLastSentence: progress?.last_sentence_read ?? 0,
     };
-  }, [isActive, currentSentenceIndex, user?.id, articleId, totalSentences, progress?.last_sentence_read]);
+  }, [
+    isActive,
+    currentSentenceIndex,
+    user?.id,
+    articleId,
+    totalSentences,
+    progress?.last_sentence_read,
+  ]);
 
   // Also save progress immediately when component unmounts (article closed)
   useEffect(() => {
@@ -318,14 +325,11 @@ export function useReadingProgress({
       // Save final progress when hook unmounts using latest values from ref
       const data = unmountDataRef.current;
       if (data.isActive && data.currentSentenceIndex >= 0 && data.userId && data.articleId > 0) {
-        const lastRecorded = Math.max(
-          lastSavedSentenceRef.current,
-          data.progressLastSentence
-        );
+        const lastRecorded = Math.max(lastSavedSentenceRef.current, data.progressLastSentence);
         // Ensure valid bounds before saving
         const validFinalSentenceIndex = Math.max(
           0,
-          Math.min(data.currentSentenceIndex, data.totalSentences - 1)
+          Math.min(data.currentSentenceIndex, data.totalSentences - 1),
         );
 
         // Save progress if we're at a different position than last recorded

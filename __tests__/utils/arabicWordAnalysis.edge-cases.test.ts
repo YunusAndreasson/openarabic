@@ -39,9 +39,11 @@ describe('Arabic Word Analysis: Edge Cases & Potential Bugs', () => {
       expect(analysis.hasComponents).toBe(true);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لم');
       // Should expand "didn't" → "did not" and match
-      expect(analysis.prefixes[0]?.englishMatches.some(m =>
-        m.includes('did') || m.includes('not') || m.includes('does')
-      )).toBe(true);
+      expect(
+        analysis.prefixes[0]?.englishMatches.some(
+          m => m.includes('did') || m.includes('not') || m.includes('does'),
+        ),
+      ).toBe(true);
     });
   });
 

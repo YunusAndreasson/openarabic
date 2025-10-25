@@ -19,7 +19,7 @@ export const BaseCard: FC<BaseCardProps> = ({
   disabled = false, // Always false when not specified
   testID,
 }) => {
-    const colors = useColors();
+  const colors = useColors();
 
   // Use sophisticated press animation for better feel and scroll compatibility
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
@@ -103,4 +103,3 @@ const styles = StyleSheet.create({
 });
 
 BaseCard.displayName = 'BaseCard';
-

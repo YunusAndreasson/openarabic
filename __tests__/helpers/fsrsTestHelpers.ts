@@ -203,7 +203,7 @@ export const propertyTestUtils = {
   testConsistentTypes: <T, R>(
     fn: (input: T) => R,
     arbitrary: fc.Arbitrary<T>,
-    expectedType: string
+    expectedType: string,
   ) => {
     return fc.property(arbitrary, input => {
       const result = fn(input);
@@ -215,7 +215,7 @@ export const propertyTestUtils = {
   testInvariant: <T>(
     fn: (input: T) => any,
     arbitrary: fc.Arbitrary<T>,
-    invariant: (input: T, output: any) => boolean
+    invariant: (input: T, output: any) => boolean,
   ) => {
     return fc.property(arbitrary, input => {
       const output = fn(input);
@@ -274,7 +274,7 @@ export const advancedTestScenarios = {
             fsrs_state: fromState,
             fsrs_reps: index,
             fsrs_last_review: new Date(Date.now() - index * 86400000).toISOString(),
-          })
+          }),
         );
         return { transitions, words };
       });
@@ -325,7 +325,7 @@ export const createWordSet = (
     state?: number;
     reps?: number;
     lapses?: number;
-  }>
+  }>,
 ) => {
   const now = Date.now();
   return scenarios.map(
@@ -338,7 +338,7 @@ export const createWordSet = (
         fsrs_state: state,
         fsrs_reps: reps,
         fsrs_lapses: lapses,
-      })
+      }),
   );
 };
 
@@ -386,7 +386,7 @@ export const createLargeWordSet = (count: number) => {
       fsrs_state: Math.floor(Math.random() * 4), // Random state 0-3
       fsrs_reps: Math.floor(Math.random() * 10),
       fsrs_lapses: Math.floor(Math.random() * 3),
-    })
+    }),
   );
 };
 
@@ -531,7 +531,7 @@ export const testUtils = {
   // Simulate rapid user interactions
   simulateRapidClicks: async (
     updateFn: (id: number, confidence: string) => Promise<void>,
-    wordId: number
+    wordId: number,
   ) => {
     const promises = [
       updateFn(wordId, 'known'),

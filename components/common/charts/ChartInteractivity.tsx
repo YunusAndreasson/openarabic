@@ -108,7 +108,7 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
         borderColor: isPressed ? colors.tint : colors.transparent,
       },
     ],
-    [x, y, offset, touchTargetSize, isPressed, colors.tint, colors.transparent]
+    [x, y, offset, touchTargetSize, isPressed, colors.tint, colors.transparent],
   );
 
   return (
@@ -144,7 +144,7 @@ export const useChartTooltip = () => {
         visible: true,
       });
     },
-    []
+    [],
   );
 
   const hideTooltip = useCallback(() => {

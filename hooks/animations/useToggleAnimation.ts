@@ -9,11 +9,7 @@ import {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import {
-  SPRING_CONFIG,
-  TIMING_CONFIG,
-  TOGGLE_PRESS_SCALE,
-} from '@/constants/animation';
+import { SPRING_CONFIG, TIMING_CONFIG, TOGGLE_PRESS_SCALE } from '@/constants/animation';
 
 interface ToggleAnimationResult {
   containerAnimatedStyle: { transform: { scale: number }[] };
@@ -31,7 +27,7 @@ interface ToggleAnimationResult {
  */
 export const useToggleAnimation = (
   isActive: boolean,
-  travelDistance: number
+  travelDistance: number,
 ): ToggleAnimationResult => {
   const translateX = useSharedValue(isActive ? travelDistance : 0);
   const toggleScale = useSharedValue(1);
@@ -54,11 +50,11 @@ export const useToggleAnimation = (
           withTiming(1, {
             duration: TIMING_CONFIG.FAST.duration,
             easing: TIMING_CONFIG.FAST.easing,
-          })
-        )
+          }),
+        ),
       );
     },
-    [translateX, toggleScale]
+    [translateX, toggleScale],
   );
 
   // Function to immediately set toggle state without animation
@@ -68,7 +64,7 @@ export const useToggleAnimation = (
       translateX.set(toActive ? travelDistance : 0);
       toggleScale.set(1);
     },
-    [translateX, toggleScale, travelDistance]
+    [translateX, toggleScale, travelDistance],
   );
 
   // Update animation when value changes

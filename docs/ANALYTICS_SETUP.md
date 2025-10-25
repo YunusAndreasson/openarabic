@@ -47,13 +47,11 @@ Once you have your token, the analytics will automatically start sending real da
 ### Events Currently Tracked
 
 - **User Authentication:**
-
   - Sign In (with method)
   - Sign Up (with method)
   - Sign Out
 
 - **Practice Sessions:**
-
   - **Practice Session Complete** - Comprehensive learning session tracking including:
     - **Session Metrics:** words reviewed, known, vague, unknown, mastered
     - **Performance:** accuracy rate, struggle rate, unknown rate
@@ -62,14 +60,12 @@ Once you have your token, the analytics will automatically start sending real da
     - **Session Quality:** perfect session indicator, struggle indicators
 
 - **Error Tracking:**
-
   - **Error Occurred** - Comprehensive error analytics including:
     - **Error Details:** error message, error name, stack trace
     - **Context:** timestamp, custom properties, severity level
     - **User Impact:** toast shown, sentry captured
 
 - **User Properties:**
-
   - Email
   - Last Active
   - Created At

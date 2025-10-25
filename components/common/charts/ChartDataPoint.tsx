@@ -15,13 +15,7 @@ interface ChartDataPointProps {
  * Shared data point component for all vocabulary charts
  * Renders the consistent dual-circle design with golden colors
  */
-export const ChartDataPoint = memo<ChartDataPointProps>(({
-  x,
-  y,
-  uniqueKey,
-  chartColors,
-}) => {
-
+export const ChartDataPoint = memo<ChartDataPointProps>(({ x, y, uniqueKey, chartColors }) => {
   return (
     <Group key={uniqueKey}>
       {/* Outer circle with golden primary color */}

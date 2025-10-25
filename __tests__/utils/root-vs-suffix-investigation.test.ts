@@ -15,7 +15,11 @@
  * This creates FALSE POSITIVES where root letters are colored as suffixes.
  */
 
-import { analyzeArabicWord, formatWordAnalysis, clearAnalysisCache } from '@/utils/arabicWordAnalysis';
+import {
+  analyzeArabicWord,
+  formatWordAnalysis,
+  clearAnalysisCache,
+} from '@/utils/arabicWordAnalysis';
 import { ComponentType } from '@/constants/arabicWordComponents';
 
 describe('Root vs Suffix Investigation: False Positive Detection', () => {
@@ -37,11 +41,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // The final ه is PART OF THE ROOT, not a pronoun suffix
       const analysis = analyzeArabicWord('فقيه', 'scholar');
 
-      console.log('\n📋 Analysis for فقيه (scholar):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-      console.log('  English matches:', analysis.suffix?.englishMatches);
-      console.log('  Has components:', analysis.hasComponents);
-
       // EXPECTED: ه should NOT be detected as suffix
       // ACTUAL: May incorrectly detect ה as suffix if "he" appears in context
       expect(analysis.suffix).toBeUndefined();
@@ -50,10 +49,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
     it('should NOT color ه in وجه (face) when English contains "he"', () => {
       // Root: و-ج-ه (w-j-h) = face, direction
       const analysis = analyzeArabicWord('وجه', 'he faced');
-
-      console.log('\n📋 Analysis for وجه (he faced):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-      console.log('  English matches:', analysis.suffix?.englishMatches);
 
       // CRITICAL BUG: If "he" appears in English, ה will be detected as suffix
       // But ه is part of root و-ج-ه, NOT a pronoun!
@@ -68,9 +63,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Root: س-ف-ه (s-f-h) = foolishness
       const analysis = analyzeArabicWord('سفيه', 'his foolish behavior');
 
-      console.log('\n📋 Analysis for سفيه (his foolish behavior):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-
       // "his" appears in English, but ה is root, not possessive suffix
       if (analysis.suffix?.arabicMatch === 'ه') {
         console.warn('  ⚠️  FALSE POSITIVE: Root ה misidentified due to "his" in English!');
@@ -82,10 +74,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
     it('should NOT color ه in كره (he hates)', () => {
       // Root: ك-ر-ه (k-r-h) = to hate, dislike
       const analysis = analyzeArabicWord('كره', 'he hates');
-
-      console.log('\n📋 Analysis for كره (he hates):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-      console.log('  English matches:', analysis.suffix?.englishMatches);
 
       // Perfect storm: ends in ה AND English has "he"
       // But ה is part of root ك-ר-ه, not pronoun suffix!
@@ -100,9 +88,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Root: ن-ز-ه (n-z-h) = to be free from, pure
       const analysis = analyzeArabicWord('نزه', 'he is pure');
 
-      console.log('\n📋 Analysis for نزه (he is pure):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-
       if (analysis.suffix?.arabicMatch === 'ه') {
         console.warn('  ⚠️  FALSE POSITIVE detected');
       }
@@ -115,11 +100,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Prefix: ي (he)
       // This is a tricky case: prefix ي + root كره
       const analysis = analyzeArabicWord('يكره', 'he hates');
-
-      console.log('\n📋 Analysis for يكره (he hates):');
-      console.log('  Prefix detected:', analysis.prefixes[0]?.arabicMatch);
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-      console.log('  Remaining:', analysis.remainingArabic);
 
       // Should detect ي as prefix
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ي');
@@ -150,10 +130,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // The ي makes it an adjective, it's NOT "my"!
       const analysis = analyzeArabicWord('مصري', 'Egyptian man');
 
-      console.log('\n📋 Analysis for مصري (Egyptian):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-      console.log('  English matches:', analysis.suffix?.englishMatches);
-
       // Nisba ي should NOT be colored (it's derivational, not grammatical)
       // System may incorrectly detect if "my" appears: "my Egyptian friend"
       if (analysis.suffix?.arabicMatch === 'ي' && analysis.suffix?.englishMatches.includes('my')) {
@@ -167,9 +143,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
     it('should NOT color ي as possessive in عربي (Arabic)', () => {
       const analysis = analyzeArabicWord('عربي', 'my Arabic teacher');
 
-      console.log('\n📋 Analysis for عربي (my Arabic teacher):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-
       // "my" in English will trigger false positive
       // But ي is nisba (makes adjective), not possessive pronoun
       if (analysis.suffix?.arabicMatch === 'ي') {
@@ -179,9 +152,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
 
     it('should NOT color ي in إسلامي (Islamic)', () => {
       const analysis = analyzeArabicWord('إسلامي', 'Islamic principles');
-
-      console.log('\n📋 Analysis for إسلامي (Islamic):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
 
       // Less likely false positive (no "my" in English)
       // But system would still match if we said "my Islamic values"
@@ -202,9 +172,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Pattern: فَعَالَة (abstract noun form)
       const analysis = analyzeArabicWord('فكاهة', 'humor');
 
-      console.log('\n📋 Analysis for فكاهة (humor):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-
       // ها is NOT a pronoun, it's part of the pattern!
       expect(analysis.suffix?.arabicMatch).not.toBe('ها');
     });
@@ -212,9 +179,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
     it('should NOT color ها in جباهة (forehead - poetic)', () => {
       // Root: ج-ب-ه (j-b-h) = forehead
       const analysis = analyzeArabicWord('جباهة', 'his forehead');
-
-      console.log('\n📋 Analysis for جباهة (his forehead):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
 
       // Even with "his" in English, ها is not possessive suffix
       if (analysis.suffix?.arabicMatch === 'ها') {
@@ -236,10 +200,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Suffix: ه (him)
       const analysis = analyzeArabicWord('عليه', 'in him');
 
-      console.log('\n🔵 Preposition + Suffix: عليه (in him):');
-      console.log('  Prefix detected:', analysis.prefixes[0]?.arabicMatch);
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-
       // Should detect BOTH prefix and suffix
       expect(analysis.prefixes.length).toBeGreaterThan(0);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('علي'); // علي (not على) - alef maksura becomes yeh before suffixes
@@ -253,10 +213,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Suffix: ه (him)
       const analysis = analyzeArabicWord('لديه', 'with him');
 
-      console.log('\n🔵 Preposition + Suffix: لديه (with him):');
-      console.log('  Prefix detected:', analysis.prefixes[0]?.arabicMatch);
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-
       // Should detect ה suffix
       expect(analysis.suffix?.arabicMatch).toBe('ه');
     });
@@ -265,10 +221,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Preposition: إلى (to/towards)
       // Suffix: ه (him)
       const analysis = analyzeArabicWord('إليه', 'to him');
-
-      console.log('\n🔵 Preposition + Suffix: إليه (to him):');
-      console.log('  Prefix detected:', analysis.prefixes[0]?.arabicMatch);
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
 
       // Should detect ה suffix
       expect(analysis.suffix?.arabicMatch).toBe('ه');
@@ -287,10 +239,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // This is a REAL suffix, must be detected!
       const analysis = analyzeArabicWord('كتابه', 'his book');
 
-      console.log('\n✅ Control: كتابه (his book):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-      console.log('  English matches:', analysis.suffix?.englishMatches);
-
       // MUST detect this as suffix (legitimate)
       expect(analysis.suffix?.arabicMatch).toBe('ه');
       expect(analysis.suffix?.englishMatches).toContain('his');
@@ -299,9 +247,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
     it('SHOULD color ها in كتابها (her book)', () => {
       // Root: ك-ت-ب + suffix ها (her)
       const analysis = analyzeArabicWord('كتابها', 'her book');
-
-      console.log('\n✅ Control: كتابها (her book):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
 
       // MUST detect this (legitimate suffix)
       expect(analysis.suffix?.arabicMatch).toBe('ها');
@@ -312,9 +257,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Root: ك-ت-ب + suffix ي (my)
       const analysis = analyzeArabicWord('كتابي', 'my book');
 
-      console.log('\n✅ Control: كتابي (my book):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-
       // MUST detect this (legitimate suffix)
       expect(analysis.suffix?.arabicMatch).toBe('ي');
       expect(analysis.suffix?.englishMatches).toContain('my');
@@ -323,9 +265,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
     it('SHOULD color هم in كتابهم (their book)', () => {
       // Root: ك-ت-ب + suffix هم (their)
       const analysis = analyzeArabicWord('كتابهم', 'their book');
-
-      console.log('\n✅ Control: كتابهم (their book):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
 
       // MUST detect this (legitimate suffix)
       expect(analysis.suffix?.arabicMatch).toBe('هم');
@@ -342,12 +281,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Pronoun suffix ه with genitive case marker ِ
       const analysis = analyzeArabicWord('عَلَيْهِ', 'in him');
 
-      console.log('\n🎨 Diacritic inheritance: عَلَيْهِ (in him):');
-      console.log('  Prefix:', analysis.prefixes[0]?.arabicMatch);
-      console.log('  Suffix:', analysis.suffix?.arabicMatch);
-      console.log('  Diacritic:', analysis.diacritic?.arabicMatch);
-      console.log('  Diacritic inherits from:', analysis.diacritic?.inheritColorFrom);
-
       // Should detect prefix, suffix, and diacritic
       expect(analysis.prefixes.length).toBeGreaterThan(0);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('علي'); // علي (not على) - alef maksura becomes yeh before suffixes
@@ -363,11 +296,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Add "he" to match damma ُ
       const analysis = analyzeArabicWord('كِتَابَهُ', 'he read his book');
 
-      console.log('\n🎨 Diacritic inheritance: كِتَابَهُ (he read his book):');
-      console.log('  Suffix:', analysis.suffix?.arabicMatch);
-      console.log('  Diacritic:', analysis.diacritic?.arabicMatch);
-      console.log('  Diacritic inherits from:', analysis.diacritic?.inheritColorFrom);
-
       // Should detect both suffix and diacritic
       expect(analysis.suffix?.arabicMatch).toBe('ه');
 
@@ -380,11 +308,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Pronoun suffix ه with accusative case marker َ
       // English contains "he" to match fatha َ and "him" to match suffix ه
       const analysis = analyzeArabicWord('رَأَيْتُهَ', 'I saw him as he');
-
-      console.log('\n🎨 Diacritic inheritance: رَأَيْتُهَ (I saw him as he):');
-      console.log('  Suffix:', analysis.suffix?.arabicMatch);
-      console.log('  Diacritic:', analysis.diacritic?.arabicMatch);
-      console.log('  Diacritic inherits from:', analysis.diacritic?.inheritColorFrom);
 
       // Should detect suffix
       expect(analysis.suffix?.arabicMatch).toBe('ه');
@@ -406,10 +329,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       const rootAnalysis = analyzeArabicWord('شبه', 'resemblance');
       const suffixAnalysis = analyzeArabicWord('شبهه', 'his resemblance');
 
-      console.log('\n🟠 Edge Case: شبه vs شبهه:');
-      console.log('  شبه suffix:', rootAnalysis.suffix?.arabicMatch);
-      console.log('  شبهه suffix:', suffixAnalysis.suffix?.arabicMatch);
-
       // First should NOT have suffix (root ends in ه)
       // Second SHOULD have suffix (attached pronoun)
       expect(rootAnalysis.suffix).toBeUndefined();
@@ -420,10 +339,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Root: ن-ب-ه (to alert, warn)
       // Form II verbal noun: تَنْبِيه
       const analysis = analyzeArabicWord('تنبيه', 'warning');
-
-      console.log('\n🟠 Edge Case: تنبيه (warning):');
-      console.log('  Suffix detected:', analysis.suffix?.arabicMatch);
-      console.log('  Prefix detected:', analysis.prefixes[0]?.arabicMatch);
 
       // The ه is part of root ن-ب-ه, not a suffix
       // The ت is Form II prefix, should be detected
@@ -454,22 +369,12 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
 
         if (detected && !test.shouldHaveSuffix) {
           falsePositives++;
-          console.log(`  ⚠️  FALSE POSITIVE: ${test.arabic} (${test.english})`);
         } else if (!detected && test.shouldHaveSuffix) {
           falseNegatives++;
-          console.log(`  ❌ FALSE NEGATIVE: ${test.arabic} (${test.english})`);
         } else {
           correct++;
-          console.log(`  ✅ CORRECT: ${test.arabic} (${test.english})`);
         }
       });
-
-      console.log('\n📊 Statistics:');
-      console.log(`  Total: ${testCases.length}`);
-      console.log(`  Correct: ${correct} (${((correct / testCases.length) * 100).toFixed(1)}%)`);
-      console.log(`  False Positives: ${falsePositives}`);
-      console.log(`  False Negatives: ${falseNegatives}`);
-      console.log(`  Accuracy: ${((correct / testCases.length) * 100).toFixed(1)}%`);
 
       // We expect some false positives currently
       // This test documents the baseline

@@ -7,6 +7,7 @@ This guide provides comprehensive development rules and patterns for Claude Code
 ## Core Principles
 
 ### Investigation-First Development
+
 - **ALWAYS** search for existing implementations before creating new code
 - Check for related components, hooks, or utilities
 - Review relevant tests to understand expected behavior
@@ -14,6 +15,7 @@ This guide provides comprehensive development rules and patterns for Claude Code
 - Verify TypeScript types and interfaces are already defined
 
 ### Simplicity & Reliability
+
 - Strive to reduce complexity while maintaining reliability
 - Focus on understanding root causes, not implementing workarounds
 - Reuse existing functionality before creating new functions
@@ -21,7 +23,9 @@ This guide provides comprehensive development rules and patterns for Claude Code
 - Remove obsolete code when introducing new features
 
 ### Command Execution Workflow
+
 When running validation or test commands:
+
 - **CRITICAL: NEVER run validation during development** - Make all changes first, then validate once at the very end
 - **Run at the end only** - Only run `yarn validate` once when ALL work is complete and user confirms
 - **Execute directly** - Run commands without asking permission or explaining what you're about to do
@@ -31,16 +35,19 @@ When running validation or test commands:
 - **No verbose explanations** - Don't explain what commands do or why you're running them
 
 **Anti-pattern - DO NOT DO THIS:**
+
 ```
 ❌ Make edit → run tsc → run eslint → make another edit → run tsc again → run eslint again
 ```
 
 **Correct pattern:**
+
 ```
 ✅ Make edit 1 → Make edit 2 → Make edit 3 → (user confirms done) → yarn validate once
 ```
 
 **Examples of approved commands** (run these directly):
+
 - `yarn validate` - Full validation suite (typecheck + lint + unused exports) - **RUN ONLY ONCE AT END**
 - `npx tsc --noEmit` - TypeScript type checking (only if uncertain about types)
 - `yarn lint:fix` or `npx eslint` - Linting with auto-fix (only at end)
@@ -50,6 +57,7 @@ When running validation or test commands:
 ## Technical Stack
 
 ### Core Technologies
+
 - **React Native**: 0.79.5 with React 19.0.0
 - **Expo SDK**: 53 with New Architecture enabled
 - **Navigation**: Expo Router v5.1.5 with typed routes and modal presentation
@@ -66,6 +74,7 @@ When running validation or test commands:
 ## Essential Files & Constants (MANDATORY USAGE)
 
 ### Critical Constants Files
+
 - **[database.types.ts](types/database.types.ts)** - All Supabase table types and database schemas
 - **[Colors.ts](constants/Colors.ts)** - Complete theme system with light/dark modes, semantic colors, elevation system, opacity constants
 - **[layout.ts](constants/layout.ts)** - Typography hierarchy, spacing scale, shadow system, touch targets, responsive utilities
@@ -77,6 +86,7 @@ When running validation or test commands:
 - **[arabicWordComponents.ts](constants/arabicWordComponents.ts)** - Comprehensive Arabic language rules for word analysis
 
 ### Required Usage Patterns
+
 - **Typography**: Use `TYPOGRAPHY_HIERARCHY` and `LAYOUT.TYPOGRAPHY.SCALE` from layout.ts
 - **Spacing**: Use `LAYOUT.SPACING` scale (TINY=4px, SMALL=8px, MEDIUM=12px, LARGE=16px, XLARGE=24px)
 - **Elevation**: Use `LAYOUT.ELEVATION.SUBTLE/SMALL/MEDIUM/LARGE` constants for consistent elevation
@@ -89,6 +99,7 @@ When running validation or test commands:
 ## TypeScript & Code Quality (STRICT MODE)
 
 ### TypeScript Requirements
+
 - **REQUIRED**: `strict: true` - All strict type checking options enabled
 - **REQUIRED**: `noImplicitAny: true` - No implicit any types allowed
 - **REQUIRED**: `strictNullChecks: true` - Handle null/undefined explicitly
@@ -100,19 +111,26 @@ When running validation or test commands:
 ### Typing Patterns & Best Practices
 
 #### Branded IDs (Type Safety for IDs)
+
 Use branded types to prevent mixing different ID types:
+
 ```typescript
 // ✅ GOOD - Type-safe IDs
 import type { ArticleId, RootId } from '@/types/branded.types';
 
-function getArticle(id: ArticleId): Article { /* ... */ }
-function getRoot(id: RootId): Root { /* ... */ }
+function getArticle(id: ArticleId): Article {
+  /* ... */
+}
+function getRoot(id: RootId): Root {
+  /* ... */
+}
 
 // ❌ CAUGHT AT COMPILE TIME
 getArticle(rootId); // Error: RootId not assignable to ArticleId
 ```
 
 **When to cast:** At boundaries where raw IDs enter from external sources:
+
 ```typescript
 // Route params
 const articleId = parseInt(params.id) as ArticleId;
@@ -122,7 +140,9 @@ articlesService.getArticleById(id as ArticleId);
 ```
 
 #### Const Objects vs Enums
+
 Prefer const objects over enums for string constants (zero runtime overhead):
+
 ```typescript
 // ✅ GOOD - Const object (no runtime code)
 export const ToastType = {
@@ -143,32 +163,38 @@ export enum ToastType {
 **When to use enums:** Only for numeric enums or bitflags
 
 #### Optional vs Nullable Properties
+
 Be consistent with optionality patterns:
+
 ```typescript
 // ✅ GOOD - Use ? for truly optional UI props
 interface ComponentProps {
-  title?: string;        // May or may not be provided
-  onClick?: () => void;  // May or may not exist
+  title?: string; // May or may not be provided
+  onClick?: () => void; // May or may not exist
 }
 
 // ✅ GOOD - Use | null for database fields that can be NULL
 interface Article {
-  fsrs_due: string | null;       // Database can store NULL
-  fsrs_stability: number | null;  // Database can store NULL
+  fsrs_due: string | null; // Database can store NULL
+  fsrs_stability: number | null; // Database can store NULL
 }
 
 // ❌ AVOID - Don't use | undefined explicitly
 interface BadProps {
-  title: string | undefined;  // Just use title?: string
+  title: string | undefined; // Just use title?: string
 }
 ```
 
 #### Avoiding `any` Types
+
 Never use `any` in production code - always define proper types:
+
 ```typescript
 // ❌ BAD - Defeats type safety
 article.sentences?.forEach((sentence: any) => {
-  (sentence as any).words.forEach((word: any) => { /* ... */ });
+  (sentence as any).words.forEach((word: any) => {
+    /* ... */
+  });
 });
 
 // ✅ GOOD - Proper types
@@ -180,12 +206,14 @@ article.article_sentences?.forEach(sentence => {
 ```
 
 ### ESLint Rules (Flat Config)
+
 - **Import/Export**: Use `import type` for type-only imports: `import type { User } from './types'`
 - **Variable Rules**: No unused variables (prefix with `_` if intentionally unused: `_unusedParam`)
 - **React Rules**: Follow React Hooks rules strictly, always provide `key` prop for list items
 - **Code Quality**: Use types from `/types` directory, never use `any` type
 
 ### Prettier Configuration
+
 - **Semi-colons**: Always required
 - **Quotes**: Single quotes for strings, double for JSX attributes
 - **Trailing commas**: Always add for multi-line structures
@@ -197,6 +225,7 @@ article.article_sentences?.forEach(sentence => {
 ### Quick Optimization Patterns (1-5 minutes each)
 
 #### 1. React.memo for Component Memoization
+
 ```tsx
 // Wrap expensive components in React.memo
 const ExpensiveComponent = React.memo(({ data }: { data: string[] }) => {
@@ -205,6 +234,7 @@ const ExpensiveComponent = React.memo(({ data }: { data: string[] }) => {
 ```
 
 #### 2. Extract Static Constants
+
 ```tsx
 // Move static styles outside component
 const STATIC_STYLES = StyleSheet.create({
@@ -218,14 +248,16 @@ const MyComponent = () => <View style={STATIC_STYLES.container} />;
 ```
 
 #### 3. useMemo for Expensive Calculations
+
 ```tsx
 const processedData = useMemo(
   () => items.map(item => expensiveProcessing(item)).filter(Boolean),
-  [items]
+  [items],
 );
 ```
 
 #### 4. useCallback for Event Handlers
+
 ```tsx
 const handlePress = useCallback(() => {
   onPress();
@@ -233,6 +265,7 @@ const handlePress = useCallback(() => {
 ```
 
 ### Performance Targets
+
 - **Render Time**: <50ms (16.67ms ideal for 60fps)
 - **Re-render Count**: <10 for stable components
 - **Lists**: Always use @shopify/flash-list, not FlatList
@@ -240,28 +273,33 @@ const handlePress = useCallback(() => {
 ## Design System & UI Guidelines
 
 ### Color Theory & Palette
+
 - **MANDATORY**: Use semantic colors from Colors.ts only
 - **Primary palette**: `colors.tint` (sage green) for primary actions
 - **Never use hardcoded hex values** - always reference theme colors
 - **Green tint preference**: Avoid pure white, use subtle green tints for elevations
 
 ### Typography Hierarchy
+
 - **MANDATORY**: Follow `TYPOGRAPHY_HIERARCHY` constants exactly
 - **Arabic text**: Special handling with diacritics preservation
 - **Scaling**: Use systematic progression (TINY → SMALL → MEDIUM → LARGE → HUGE)
 
 ### Spacing Grid System
+
 - **MANDATORY**: Use `LAYOUT.SPACING` constants from layout.ts
 - **Base unit**: 4pt system (TINY=4px, SMALL=8px, MEDIUM=12px, etc.)
 - **No ad-hoc pixel values** - if you need a size, add it to the constants
 - **Touch targets**: Minimum 48dp using `MIN_TOUCH_TARGET` constants
 
 ### Elevation System
+
 - **MANDATORY**: Use `LAYOUT.SHADOW` constants from layout.ts
 - **Levels**: SUBTLE → SMALL → MEDIUM → LARGE for progressive elevation
 - **Consistency**: Reference BaseCard.tsx for proper elevation usage
 
 ### UX Laws (Apply to All UI Work)
+
 - **Tesler's Law**: Shift complexity to system design, not users
 - **Hick's Law**: Limit choices to reduce decision time
 - **Fitts' Law**: Large touch targets (48dp minimum), position frequently-used controls nearby
@@ -272,6 +310,7 @@ const handlePress = useCallback(() => {
 ## Arabic Text Handling (CRITICAL)
 
 ### Single-Word Color-Coding Rule
+
 - **CRITICAL**: Single English words should NEVER have grammar color-coding applied
 - Color-coding is only educational when showing how multi-word phrases are constructed from Arabic components
 - **Always check**: `text.trim().split(/\s+/).length === 1` before applying color analysis
@@ -281,10 +320,12 @@ const handlePress = useCallback(() => {
 ## Bug Fixing Methodology
 
 ### Core Principles
+
 - **CRITICAL**: Always fix the root cause, never implement workarounds or "fail safes" that mask issues
 - Every fix must address why the problem occurred, not just its symptoms
 
 ### Investigation Process
+
 1. **Root Cause Analysis**
    - Understand the problem completely - what's happening vs. what should happen
    - Trace the execution flow - follow code path from trigger to failure
@@ -304,12 +345,14 @@ const handlePress = useCallback(() => {
    - Verify test data matches real-world scenarios
 
 ### Implementation Requirements
+
 - **Fix only what's broken** - don't refactor unrelated code
 - **Use existing patterns** - follow established codebase conventions
 - **Avoid overengineering** - simple solutions preferred over complex abstractions
 - Follow existing linting rules and TypeScript strict mode
 
 ### Anti-Patterns to Avoid
+
 - ❌ Workarounds: "Let's add a try-catch to handle this error"
 - ❌ Fail safes: "We'll add validation to prevent this from happening again"
 - ❌ Overengineering: "Let's refactor this entire system while we're here"
@@ -318,13 +361,16 @@ const handlePress = useCallback(() => {
 ## Feature Development Framework
 
 ### Phase 1: First Principles Foundation
+
 Before any research, break down the feature request:
+
 - **What is the actual user problem?** (Not the solution, but the underlying need)
 - **Why does this problem exist?** (Root cause analysis)
 - **What is the simplest possible solution?** (Minimum viable approach)
 - **What assumptions are we making?** (Challenge every assumption)
 
 ### Phase 2: Codebase Research
+
 - Search for similar patterns using semantic search
 - Study existing components, hooks, utilities
 - Analyze data structures in types/database.types.ts
@@ -332,18 +378,22 @@ Before any research, break down the feature request:
 - Review API patterns in services/
 
 ### Phase 3: Collaborative Discovery
+
 Ask thoughtful questions:
+
 - "Help me understand the fundamental user problem this solves..."
 - "Looking at existing [similar feature], how should this be different?"
 - "What specific user journey are you imagining from start to finish?"
 - "From first principles, what is the user really trying to achieve?"
 
 Suggest interesting possibilities based on research:
+
 - "I found [existing pattern]. What if we extended it to also..."
 - "Looking at the data available, we could potentially also offer..."
 - "There's an opportunity to integrate with [existing feature] - would that be valuable?"
 
 ### Ready to Move Forward When:
+
 - ✅ User goals and intent are crystal clear
 - ✅ Fundamental user problem is well-understood
 - ✅ Technical approach is agreed upon with clear trade-offs
@@ -353,6 +403,7 @@ Suggest interesting possibilities based on research:
 ## Navigation Patterns
 
 ### Route Usage
+
 - **CRITICAL**: Always use correct route paths with `/(tabs)` prefix: `/(tabs)/read/article/[id]` not `/article/[id]`
 - Use Expo Router with modal presentation for overlays
 - Modal screens hide tab headers completely
@@ -360,6 +411,7 @@ Suggest interesting possibilities based on research:
 - Avoid navigation parameter bleed between screens
 
 ### Navigation Hierarchy
+
 - Read → Account (renamed from Settings)
 - Practice tab (renamed from Vocabulary) for spaced repetition
 - Visual review screen lives at `ROUTE_PATHS.PRACTICE_REVIEW` (`/practice/review`)
@@ -367,6 +419,7 @@ Suggest interesting possibilities based on research:
 ## Data Management
 
 ### Database & API Patterns
+
 - Structure Supabase queries in `services/` with typed responses
 - Use database.types.ts for all database operations
 - **CRITICAL**: Follow FSRS query key patterns for vocabulary data (keys starting with 'fsrs-words')
@@ -374,6 +427,7 @@ Suggest interesting possibilities based on research:
 - Handle errors with `handleError()` utility from utils/errorHandling.ts
 
 ### Audio & Media
+
 - Use expo-audio for all audio playback
 - Handle background audio with proper session configuration
 - Implement proper cleanup for audio resources
@@ -386,13 +440,16 @@ Suggest interesting possibilities based on research:
 The app uses three complementary state management patterns. Choose the right tool based on your specific needs:
 
 #### Redux Toolkit (Global App State)
+
 **Use Redux when:**
+
 - State needs to be accessed across multiple unrelated screens
 - State requires persistence across app sessions
 - State has complex update logic with multiple actions
 - You need time-travel debugging capabilities
 
 **Current Redux slices:**
+
 - `themeSlice` - Theme preference (light/dark mode)
 - `settingsSlice` - User preferences (audio language, fonts, shuffle)
 - `editModeSlice` - Dictionary edit mode state
@@ -400,6 +457,7 @@ The app uses three complementary state management patterns. Choose the right too
 - `filterSlice` - Library filter selections
 
 **Pattern:**
+
 ```typescript
 // Define slice
 const settingsSlice = createSlice({
@@ -419,17 +477,21 @@ dispatch(setAudioLanguagePreference('bilingual'));
 ```
 
 #### React Context (Feature-Scoped State)
+
 **Use Context when:**
+
 - State is scoped to a specific feature or subtree
 - State doesn't need persistence
 - State changes infrequently
 - You want to avoid prop drilling
 
 **Current contexts:**
+
 - `StreaksContext` - Streak modal visibility (feature-scoped to reading streaks)
 - `AuthContext` - Authentication state (provided by AuthProvider)
 
 **Pattern:**
+
 ```typescript
 // Create context with provider
 const FeatureContext = createContext<FeatureContextValue | null>(null);
@@ -453,19 +515,23 @@ export function useFeature() {
 ```
 
 #### TanStack Query (Server State)
+
 **Use React Query when:**
+
 - Data comes from an API or database
 - Data needs caching and background updates
 - You need loading/error states automatically
 - Data should be refetched on certain triggers
 
 **Current query patterns:**
+
 - `QUERY_KEYS.articles` - Article data (infinite staleTime, never changes)
 - `QUERY_KEYS.fsrs` - FSRS vocabulary (medium staleTime, user-specific)
 - `QUERY_KEYS.readingProgress` - Reading progress/streaks (short staleTime, frequently updated)
 - `QUERY_KEYS.audio` - Audio playlists (depends on reading list)
 
 **Pattern:**
+
 ```typescript
 // Query with automatic caching
 const { data, isLoading, error } = useQuery({
@@ -477,7 +543,7 @@ const { data, isLoading, error } = useQuery({
 
 // Mutation with cache invalidation
 const mutation = useMutation({
-  mutationFn: (newWord) => studyWordsFSRSService.addWord(newWord),
+  mutationFn: newWord => studyWordsFSRSService.addWord(newWord),
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.fsrs.all(userId) });
   },
@@ -502,6 +568,7 @@ Does the data come from an API/database?
 ### Best Practices
 
 **DO:**
+
 - ✅ Use `useAppSelector` with shallow equality for Redux (`useAppSelectorShallow`)
 - ✅ Memoize Context values with `useMemo`
 - ✅ Use `queryOptions` helper for type-safe React Query configurations
@@ -509,6 +576,7 @@ Does the data come from an API/database?
 - ✅ Combine patterns when appropriate (e.g., Redux for preferences + React Query for data)
 
 **DON'T:**
+
 - ❌ Store server data in Redux (use React Query instead)
 - ❌ Use Context for frequently changing values (causes re-renders of entire subtree)
 - ❌ Mix state management patterns for the same piece of state
@@ -517,6 +585,7 @@ Does the data come from an API/database?
 ### Bottom Sheet Patterns (@gorhom/bottom-sheet v5.2.6)
 
 #### Core Principles
+
 - **Dynamic Sizing** prevents content cutoff by automatically adjusting to content height
 - **Maximum Height Limits** prevent sheets from exceeding screen height
 - **FlashList Integration** requires special configuration to avoid performance issues
@@ -524,6 +593,7 @@ Does the data come from an API/database?
 #### Sizing Strategy
 
 **Use `enableDynamicSizing: true` when:**
+
 - Content height varies dynamically (charts, variable-length lists, user-generated content)
 - You want automatic height adjustment to prevent content cutoff
 - Content is simple (no scrollable lists exceeding 50 items)
@@ -540,6 +610,7 @@ import { COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 ```
 
 **Use `enableDynamicSizing: false` + `snapPoints` when:**
+
 - Content has known, fixed height (pickers with specific option counts)
 - You need precise control over sheet positions
 - You want multiple snap positions for user interaction
@@ -560,6 +631,7 @@ const SNAP_POINTS = [320]; // Fixed height for 4 options
 #### Critical Configuration
 
 **Always wrap content in BottomSheetView:**
+
 ```typescript
 // ✅ GOOD - Proper wrapper
 <BottomSheetModal {...COMMON_BOTTOM_SHEET_MODAL_PROPS}>
@@ -575,6 +647,7 @@ const SNAP_POINTS = [320]; // Fixed height for 4 options
 ```
 
 **Use maxDynamicContentSize to prevent over-tall sheets:**
+
 ```typescript
 // Automatically included in COMMON_BOTTOM_SHEET_MODAL_PROPS
 export const COMMON_BOTTOM_SHEET_MODAL_PROPS = {
@@ -587,6 +660,7 @@ export const COMMON_BOTTOM_SHEET_MODAL_PROPS = {
 #### FlashList Integration (Advanced)
 
 **CRITICAL**: Never use `BottomSheetFlashList` with `enableDynamicSizing: true`
+
 - Causes "Maximum call stack size exceeded" errors with 100+ items
 - FlashList requires `enableDynamicSizing: false` with explicit `snapPoints`
 
@@ -609,6 +683,7 @@ import { BottomSheetFlashList } from '@gorhom/bottom-sheet';
 #### Common Utilities
 
 Use shared utilities from `utils/bottomSheetUtils.tsx`:
+
 - `COMMON_BOTTOM_SHEET_PROPS` - For regular BottomSheet with snapPoints
 - `COMMON_BOTTOM_SHEET_MODAL_PROPS` - For BottomSheetModal with dynamic sizing
 - `useBottomSheetBackdrop(onClose)` - Consistent backdrop behavior
@@ -616,18 +691,23 @@ Use shared utilities from `utils/bottomSheetUtils.tsx`:
 ## Testing & Validation
 
 ### Development Workflow
+
 During development:
+
 - Focus on specific tests related to your changes
 - Test only what's necessary to validate fixes
 - Use Jest with React Native Testing Library
 - Test timeout: 10 seconds for async operations
 
 ### End of Session (REQUIRED)
+
 Always run these commands before completing longer sessions:
+
 1. `yarn validate` - Check types, linting, and dependencies
 2. Only run it at the very end
 
 ### Test Commands
+
 - `yarn test` - Run all tests
 - `yarn test:watch` - Watch mode
 - `yarn test:coverage` - Coverage report
@@ -636,6 +716,7 @@ Always run these commands before completing longer sessions:
 ## Important Implementation Notes
 
 ### Analytics Service
+
 - **STATUS**: Analytics service is production-ready and functional
 - Uses Mixpanel with graceful fallback when token is not configured
 - Silent operation mode (no console logging in production)
@@ -644,12 +725,14 @@ Always run these commands before completing longer sessions:
 - Add new analytics events to `ANALYTICS_EVENTS` in constants/analytics.ts
 
 ### Haptic Feedback
+
 - **IMPORTANT**: Avoid double haptic feedback from multiple components
 - Use appropriate feedback types: `selectionFeedback` for most interactions
 - Import from `utils/haptics.ts`
 - Check if parent/child components both trigger haptics
 
 ### Memory Management
+
 - Clean up audio resources on component unmount
 - Use proper query invalidation for FSRS vocabulary data
 - Clear persisted cache when needed via utility functions
@@ -682,6 +765,7 @@ __mocks__/                      # Mock implementations
 ## Copy & Messaging Guidelines
 
 ### General Principles
+
 - Write in plain, user-centric language; avoid jargon
 - Be concise: minimum text that conveys meaning
 - Address the user directly ("you") or use imperative verbs
@@ -689,12 +773,14 @@ __mocks__/                      # Mock implementations
 - Maintain consistent terminology and voice
 
 ### Microcopy (Buttons, Labels)
+
 - Use strong action verbs + object (e.g., **Save changes**, **Upload file**)
 - Avoid vague labels ("OK", "Click here"); be specific
 - Keep button text 1-3 words
 - Prefer sentence case
 
 ### System Messages
+
 - State what happened and how to fix in ≤ 2 short sentences
 - Use neutral language; do not blame or scold
 - Offer an actionable next step when possible
@@ -711,12 +797,14 @@ __mocks__/                      # Mock implementations
 ## Version Management
 
 Uses Islamic Calendar versioning:
+
 - Format: `YEAR.MONTH.RELEASE` (e.g., `1447.2.2`)
 - Build numbers maintained per platform in package.json (e.g., `1447.2.2+41`)
 
 ## Success Criteria
 
 A successful implementation meets these criteria:
+
 - ✅ Zero TypeScript/ESLint errors
 - ✅ All tests pass with coverage
 - ✅ Performance optimizations applied
@@ -729,4 +817,4 @@ A successful implementation meets these criteria:
 
 ---
 
-*This guide serves as the comprehensive reference for Claude Code when developing the OpenArabic Arabic language learning application. Always prioritize investigation-first development, strict type safety, and consistent use of the established design system.*
+_This guide serves as the comprehensive reference for Claude Code when developing the OpenArabic Arabic language learning application. Always prioritize investigation-first development, strict type safety, and consistent use of the established design system._

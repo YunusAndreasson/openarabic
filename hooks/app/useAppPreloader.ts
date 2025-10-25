@@ -94,7 +94,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
               .filter(Boolean)
               .map(url => Image.prefetch(url, { cachePolicy: 'disk' }).catch(() => null)); // Silently handle prefetch failures
             const detailPrefetches = featured.map(a =>
-              queryClient.prefetchQuery(articleQueryOptions.detail(a.id))
+              queryClient.prefetchQuery(articleQueryOptions.detail(a.id)),
             );
             // Fire-and-forget; do not block loader
             Promise.allSettled([...imagePrefetches, ...detailPrefetches]).catch(() => {});
@@ -197,7 +197,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         return false;
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   const prefetchVocabularyData = useCallback(async () => {
@@ -246,8 +246,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
         if (dueWordRootIds.size > 0) {
           const dueWordArticles = allArticles.filter(article =>
             article.article_sentences?.some(sentence =>
-              sentence.sentence_words?.some(word => dueWordRootIds.has(word.root_id))
-            )
+              sentence.sentence_words?.some(word => dueWordRootIds.has(word.root_id)),
+            ),
           );
 
           if (dueWordArticles.length > 0) {

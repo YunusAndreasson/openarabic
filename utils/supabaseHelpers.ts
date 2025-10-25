@@ -55,7 +55,7 @@ type SupabaseQueryBuilder<T> = PromiseLike<SupabaseQueryResult<T>>;
  */
 export async function executeQuery<T>(
   queryFn: () => SupabaseQueryBuilder<T>,
-  errorConfig: ErrorConfig = {}
+  errorConfig: ErrorConfig = {},
 ): Promise<T> {
   const { data, error } = await queryFn();
 
@@ -97,7 +97,7 @@ export async function executeQuery<T>(
 export async function executeAuthenticatedQuery<T>(
   userId: string,
   queryFn: () => SupabaseQueryBuilder<T>,
-  errorConfig: ErrorConfig = {}
+  errorConfig: ErrorConfig = {},
 ): Promise<T> {
   await checkAuthentication(userId);
   return executeQuery(queryFn, errorConfig);

@@ -11,7 +11,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   getAllKeys: jest.fn(),
 }));
 
-
 jest.mock('../../utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
@@ -48,20 +47,29 @@ describe('checkAuthentication', () => {
     getSessionMock.mockResolvedValueOnce({ data: { session: null }, error: null });
 
     await expect(checkAuthentication('user-1')).rejects.toThrow('User must be authenticated');
-    expect(handleError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({
-      analyticsEventName: 'Auth_Required',
-      sentrySeverity: 'info',
-    }));
+    expect(handleError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        analyticsEventName: 'Auth_Required',
+        sentrySeverity: 'info',
+      }),
+    );
   });
 
   it('throws an error and calls handleError when user ID mismatches', async () => {
-    getSessionMock.mockResolvedValueOnce({ data: { session: { user: { id: 'user-2' } } }, error: null });
+    getSessionMock.mockResolvedValueOnce({
+      data: { session: { user: { id: 'user-2' } } },
+      error: null,
+    });
 
     await expect(checkAuthentication('user-1')).rejects.toThrow('User ID mismatch');
-    expect(handleError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({
-      analyticsEventName: 'Auth_User_Mismatch',
-      sentrySeverity: 'info',
-    }));
+    expect(handleError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        analyticsEventName: 'Auth_User_Mismatch',
+        sentrySeverity: 'info',
+      }),
+    );
   });
 
   it('logs and rejects when getSession fails with network error', async () => {
@@ -69,8 +77,11 @@ describe('checkAuthentication', () => {
     getSessionMock.mockRejectedValueOnce(networkError);
 
     await expect(checkAuthentication('user-1')).rejects.toThrow(networkError);
-    expect(handleError).toHaveBeenCalledWith(networkError, expect.objectContaining({
-      sentrySeverity: 'error',
-    }));
+    expect(handleError).toHaveBeenCalledWith(
+      networkError,
+      expect.objectContaining({
+        sentrySeverity: 'error',
+      }),
+    );
   });
 });

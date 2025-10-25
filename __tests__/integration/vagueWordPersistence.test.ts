@@ -18,9 +18,7 @@ describe('Vague Word Persistence - Integration Test', () => {
         { word: 'word3', confidence: 'unknown' as const },
       ];
 
-      const persistedWords = wordResponses.filter(
-        response => response.confidence === 'known'
-      );
+      const persistedWords = wordResponses.filter(response => response.confidence === 'known');
 
       // Only 'known' words should be persisted
       expect(persistedWords.length).toBe(1);
@@ -39,8 +37,8 @@ describe('Vague Word Persistence - Integration Test', () => {
     it('should NOT complete session when vague words exist in spacing queue', () => {
       // Simulate useFSRS.ts line 375: allKnown check
       const totalWords = 3;
-      const knownWords = 2;  // word1, word3 are known
-      const vagueWordsInSpacing = 1;  // word2 is vague, in spacing queue
+      const knownWords = 2; // word1, word3 are known
+      const vagueWordsInSpacing = 1; // word2 is vague, in spacing queue
 
       const allKnown = knownWords >= totalWords;
       const shouldComplete = allKnown;
@@ -53,8 +51,8 @@ describe('Vague Word Persistence - Integration Test', () => {
     it('should complete session when all vague words are eventually marked known', () => {
       // Scenario: word2 was vague, but after re-presentation, user marks it known
       const totalWords = 3;
-      let knownWords = 2;  // Initially: word1, word3
-      let vagueWordsInSpacing = 1;  // word2 in spacing
+      let knownWords = 2; // Initially: word1, word3
+      let vagueWordsInSpacing = 1; // word2 in spacing
 
       // Word2 re-appears after spacing, user marks it known this time
       knownWords += 1;
@@ -115,7 +113,7 @@ describe('Vague Word Persistence - Integration Test', () => {
     });
   });
 
-  describe('Regression test: ensure fix doesn\'t break known word flow', () => {
+  describe("Regression test: ensure fix doesn't break known word flow", () => {
     it('should still persist known words immediately with FSRS due date', () => {
       const confidence = 'known';
       const shouldPersistImmediately = confidence === 'known';

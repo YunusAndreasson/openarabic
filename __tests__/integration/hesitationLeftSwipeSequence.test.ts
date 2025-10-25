@@ -458,8 +458,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       };
 
       // WordDisplay logic: only show hint if showFirstLetterOnly is true
-      const shouldShowHint =
-        state.showFirstLetterOnly && state.englishTranslation.length > 0;
+      const shouldShowHint = state.showFirstLetterOnly && state.englishTranslation.length > 0;
 
       if (shouldShowHint) {
         mockHaptic(); // This should NOT happen

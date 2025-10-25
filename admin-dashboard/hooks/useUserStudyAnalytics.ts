@@ -84,13 +84,15 @@ export function useUserStudyAnalytics(): UseUserStudyAnalyticsReturn {
       const avgWordsPerUser = Math.round(totalWords / totalUsers);
 
       // Calculate average difficulty and stability
-      const avgDifficulty = Math.round(
-        (userStats.reduce((sum, user) => sum + (user.avg_difficulty || 0), 0) / totalUsers) * 100
-      ) / 100;
+      const avgDifficulty =
+        Math.round(
+          (userStats.reduce((sum, user) => sum + (user.avg_difficulty || 0), 0) / totalUsers) * 100,
+        ) / 100;
 
-      const avgStability = Math.round(
-        (userStats.reduce((sum, user) => sum + (user.avg_stability || 0), 0) / totalUsers) * 100
-      ) / 100;
+      const avgStability =
+        Math.round(
+          (userStats.reduce((sum, user) => sum + (user.avg_stability || 0), 0) / totalUsers) * 100,
+        ) / 100;
 
       // Get top 10 users by total words
       const topUsers = userStats.slice(0, 10).map(user => ({

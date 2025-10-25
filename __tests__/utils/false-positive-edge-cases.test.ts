@@ -221,7 +221,6 @@ describe('False Positive Edge Cases', () => {
         if (expectedSuffix) {
           expect(analysis.suffix?.arabicMatch).toBe(expectedSuffix);
         }
-
       });
     });
   });
@@ -268,7 +267,6 @@ describe('False Positive Edge Cases', () => {
 
       // Should NOT detect ي prefix because remaining would be < 3 chars
       expect(analysis.prefixes.find(p => p.arabicMatch === 'ي')).toBeUndefined();
-
     });
 
     it('should accept valid prefix when remaining length is sufficient', () => {
@@ -278,7 +276,6 @@ describe('False Positive Edge Cases', () => {
 
       // SHOULD detect ي prefix because remaining is 3 chars (كتب)
       expect(analysis.prefixes.some(p => p.arabicMatch === 'ي')).toBe(true);
-
     });
 
     it('should require English match for component detection', () => {
@@ -305,7 +302,6 @@ describe('False Positive Edge Cases', () => {
           analysis.suffix?.arabicMatch === shouldNotDetect;
 
         expect(hasComponent).toBe(false);
-
       });
     });
   });
@@ -360,7 +356,6 @@ describe('False Positive Edge Cases', () => {
           stats.correctlyParsed++;
         }
       });
-
 
       // Critical assertions
       expect(stats.withInfixes).toBe(0); // NO alif/yaa infixes after fix

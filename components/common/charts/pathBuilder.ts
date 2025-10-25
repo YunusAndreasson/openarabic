@@ -44,9 +44,7 @@ export interface BuildPathResult<P> {
  * });
  * ```
  */
-export function buildSmoothChartPath<T, P>(
-  options: BuildPathOptions<T, P>
-): BuildPathResult<P> {
+export function buildSmoothChartPath<T, P>(options: BuildPathOptions<T, P>): BuildPathResult<P> {
   const { data, dataPointPositions, calculateY, buildPoint } = options;
 
   const path = Skia.Path.Make();

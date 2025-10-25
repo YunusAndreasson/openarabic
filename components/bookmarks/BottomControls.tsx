@@ -36,7 +36,7 @@ export const BottomControls = memo<BottomControlsProps>(
       () => ({
         secondaryButton: { shadowColor: colors.shadow },
       }),
-      [colors.shadow]
+      [colors.shadow],
     );
 
     return (
@@ -100,7 +100,7 @@ export const BottomControls = memo<BottomControlsProps>(
         </View>
       </View>
     );
-  }
+  },
 );
 
 BottomControls.displayName = 'BottomControls';
@@ -129,4 +129,3 @@ const styles = StyleSheet.create({
     // Intentionally empty – backgroundColor provided via theme at render time
   },
 });
-

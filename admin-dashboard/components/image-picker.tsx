@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, Images, Search, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const SUPABASE_STORAGE_URL = 'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
+const SUPABASE_STORAGE_URL =
+  'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
 const IMAGES_PER_PAGE = 24;
 const CACHE_KEY = 'image-picker-cache';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -49,9 +50,7 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
   useEffect(() => {
     setCurrentPage(1); // Reset to first page on search
     if (searchTerm) {
-      setFilteredImages(
-        images.filter((img) => img.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+      setFilteredImages(images.filter(img => img.toLowerCase().includes(searchTerm.toLowerCase())));
     } else {
       setFilteredImages(images);
     }
@@ -122,11 +121,11 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
       if (error) throw error;
 
       const imageFiles = (data || [])
-        .filter((file) => {
+        .filter(file => {
           const ext = file.name.split('.').pop()?.toLowerCase();
           return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
         })
-        .map((file) => file.name);
+        .map(file => file.name);
 
       // Save to cache
       setCachedImages(imageFiles);
@@ -180,7 +179,7 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
               type="search"
               placeholder="Search images..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-9"
             />
           </div>
@@ -197,7 +196,7 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
             <>
               <div className="overflow-y-auto flex-1 min-h-0">
                 <div className="grid grid-cols-3 md:grid-cols-4 gap-4 pr-2">
-                  {currentImages.map((imageName) => {
+                  {currentImages.map(imageName => {
                     const imageUrl = SUPABASE_STORAGE_URL + imageName;
                     const isSelected = normalizeUrl(currentImage || '') === imageUrl;
 

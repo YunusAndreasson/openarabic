@@ -79,7 +79,7 @@ describe('Recent Grammar Pattern Additions', () => {
 
       // Should match "for" as one of the ف alternatives
       const forMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('for')
+        m.toLowerCase().includes('for'),
       );
       expect(forMatch).toBe(true);
     });
@@ -113,7 +113,7 @@ describe('Recent Grammar Pattern Additions', () => {
 
       // Should match "by" as one of the و alternatives
       const byMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('by')
+        m.toLowerCase().includes('by'),
       );
       expect(byMatch).toBe(true);
     });
@@ -177,7 +177,7 @@ describe('Recent Grammar Pattern Additions', () => {
 
       // Should match "concerning" as one of the ب alternatives
       const concerningMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('concerning')
+        m.toLowerCase().includes('concerning'),
       );
       expect(concerningMatch).toBe(true);
     });
@@ -190,7 +190,7 @@ describe('Recent Grammar Pattern Additions', () => {
 
       // Should match "based" as one of the ب alternatives
       const basedMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('based')
+        m.toLowerCase().includes('based'),
       );
       expect(basedMatch).toBe(true);
     });
@@ -205,7 +205,7 @@ describe('Recent Grammar Pattern Additions', () => {
 
       // Should match "none" as one of the إلا alternatives
       const noneMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('none')
+        m.toLowerCase().includes('none'),
       );
       expect(noneMatch).toBe(true);
     });
@@ -219,8 +219,8 @@ describe('Recent Grammar Pattern Additions', () => {
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "does not" as one of the لم alternatives
-      const doesNotMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase() === 'does not' || m.toLowerCase() === "doesn't"
+      const doesNotMatch = analysis.prefixes[0]?.englishMatches.some(
+        m => m.toLowerCase() === 'does not' || m.toLowerCase() === "doesn't",
       );
       expect(doesNotMatch).toBe(true);
     });
@@ -245,8 +245,8 @@ describe('Recent Grammar Pattern Additions', () => {
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "how much" as one of the كم alternatives
-      const howMuchMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('how') && m.toLowerCase().includes('much')
+      const howMuchMatch = analysis.prefixes[0]?.englishMatches.some(
+        m => m.toLowerCase().includes('how') && m.toLowerCase().includes('much'),
       );
       expect(howMuchMatch).toBe(true);
     });
@@ -258,8 +258,8 @@ describe('Recent Grammar Pattern Additions', () => {
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "how many" as one of the كم alternatives
-      const howManyMatch = analysis.prefixes[0]?.englishMatches.some(m =>
-        m.toLowerCase().includes('how') && m.toLowerCase().includes('many')
+      const howManyMatch = analysis.prefixes[0]?.englishMatches.some(
+        m => m.toLowerCase().includes('how') && m.toLowerCase().includes('many'),
       );
       expect(howManyMatch).toBe(true);
     });

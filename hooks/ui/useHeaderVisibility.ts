@@ -38,7 +38,7 @@ export function useHeaderVisibility({
         ticking.current = false;
       });
     },
-    [isHeaderVisible, threshold]
+    [isHeaderVisible, threshold],
   );
 
   return {

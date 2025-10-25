@@ -1,7 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, type LayoutRectangle, type NativeScrollEvent, type NativeSyntheticEvent, type ViewToken } from 'react-native';
+import {
+  AppState,
+  type LayoutRectangle,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type ViewToken,
+} from 'react-native';
 
 import type { FlashListRef } from '@shopify/flash-list';
 
@@ -98,7 +104,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
         setActiveTooltip(null);
       }
     },
-    [handleHeaderScroll]
+    [handleHeaderScroll],
   );
 
   // Article mutations
@@ -107,7 +113,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     refetchReadingListStatus,
     async () => {
       await refetchStudyWords();
-    }
+    },
   );
 
   // Handlers with feedback
@@ -118,7 +124,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     showToast(
       isInReadingList ? STRINGS.REMOVED_FROM_BOOKMARKS : STRINGS.ADDED_TO_BOOKMARKS,
       3000,
-      ToastType.INFO
+      ToastType.INFO,
     );
   }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
 
@@ -208,7 +214,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
           item =>
             typeof item.index === 'number' &&
             item.index > 0 && // Skip header
-            item.isViewable === true
+            item.isViewable === true,
         )
         .map(item => ({
           index: (item.index as number) - 1, // Convert to sentence index
@@ -232,7 +238,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
         }
       }
     },
-    [currentSentenceIndex, sortedSentences?.length]
+    [currentSentenceIndex, sortedSentences?.length],
   );
 
   // Sync sentence index
@@ -262,7 +268,13 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
       const message = STRINGS.RESUMED_READING_TEMPLATE.replace('{percent}', percentage.toString());
       showToast(message, 3000, ToastType.INFO);
     }
-  }, [isFlashListReady, hadExistingProgressOnMount, initialLastSentenceRead, sortedSentences?.length, showToast]);
+  }, [
+    isFlashListReady,
+    hadExistingProgressOnMount,
+    initialLastSentenceRead,
+    sortedSentences?.length,
+    showToast,
+  ]);
 
   // Refetch on app state change
   useEffect(() => {
@@ -293,7 +305,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
         }
       }
     },
-    [] // No dependencies - uses ref for stable callback identity
+    [], // No dependencies - uses ref for stable callback identity
   );
 
   const handleCloseTooltip = useCallback(() => {
@@ -327,7 +339,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
       });
       await refetchStudyWords?.();
     },
-    [user?.id, handleRootPress, queryClient, refetchStudyWords]
+    [user?.id, handleRootPress, queryClient, refetchStudyWords],
   );
 
   // Compute isInStudyList for word details bottom sheet

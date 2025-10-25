@@ -45,7 +45,7 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
     const { articles: selectedArticles } = useMultipleFeaturedArticles(
       filteredArticles,
       0, // No refresh for stability in article context
-      `article-${currentArticleId}` // Unique scope per article for cache consistency
+      `article-${currentArticleId}`, // Unique scope per article for cache consistency
     );
 
     // Fetch bulk reading progress for selected articles
@@ -107,7 +107,7 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
     }
 
     return <View style={styles.container}>{articleCards}</View>;
-  }
+  },
 );
 
 RelatedArticlesSection.displayName = 'RelatedArticlesSection';

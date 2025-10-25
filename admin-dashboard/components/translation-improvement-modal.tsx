@@ -75,7 +75,7 @@ export function TranslationImprovementModal({
         body: JSON.stringify({
           arabicSentence,
           englishSentence,
-          words: words.map((w) => ({
+          words: words.map(w => ({
             arabic: w.arabic,
             english: w.english,
             position: w.position,
@@ -87,9 +87,7 @@ export function TranslationImprovementModal({
 
       if (!data.success) {
         const errorMsg = data.error || 'Failed to get translation suggestions';
-        const debugInfo = data.rawResponse
-          ? `\n\nAI Response Preview: ${data.rawResponse}`
-          : '';
+        const debugInfo = data.rawResponse ? `\n\nAI Response Preview: ${data.rawResponse}` : '';
         console.error('API Error:', data);
         throw new Error(errorMsg + debugInfo);
       }
@@ -104,21 +102,21 @@ export function TranslationImprovementModal({
   };
 
   const handleSaveWord = async (wordId: number, newEnglish: string) => {
-    setSavingWordIds((prev) => new Set(prev).add(wordId));
+    setSavingWordIds(prev => new Set(prev).add(wordId));
     try {
       await onSave(wordId, newEnglish);
       // Remove this suggestion from the list after successful save
-      setSuggestions((prev) =>
-        prev.filter((s) => {
-          const word = words.find((w) => w.position === s.position);
+      setSuggestions(prev =>
+        prev.filter(s => {
+          const word = words.find(w => w.position === s.position);
           return word?.id !== wordId;
-        })
+        }),
       );
     } catch (err) {
       console.error('Error saving word:', err);
       alert('Failed to save translation');
     } finally {
-      setSavingWordIds((prev) => {
+      setSavingWordIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(wordId);
         return newSet;
@@ -128,7 +126,7 @@ export function TranslationImprovementModal({
 
   const handleSaveAll = async () => {
     for (const suggestion of suggestions) {
-      const word = words.find((w) => w.position === suggestion.position);
+      const word = words.find(w => w.position === suggestion.position);
       if (word) {
         await handleSaveWord(word.id, suggestion.suggestedEnglish);
       }
@@ -145,8 +143,8 @@ export function TranslationImprovementModal({
   };
 
   // Create a merged view of all words with suggestions
-  const wordsWithSuggestions = words.map((word) => {
-    const suggestion = suggestions.find((s) => s.position === word.position);
+  const wordsWithSuggestions = words.map(word => {
+    const suggestion = suggestions.find(s => s.position === word.position);
     return {
       ...word,
       suggestion,
@@ -235,14 +233,12 @@ export function TranslationImprovementModal({
                 </TableHeader>
                 <TableBody>
                   {wordsWithSuggestions
-                    .filter((w) => w.suggestion)
-                    .map((word) => {
+                    .filter(w => w.suggestion)
+                    .map(word => {
                       const isSaving = savingWordIds.has(word.id);
                       return (
                         <TableRow key={word.id}>
-                          <TableCell className="text-muted-foreground">
-                            {word.position}
-                          </TableCell>
+                          <TableCell className="text-muted-foreground">{word.position}</TableCell>
                           <TableCell>
                             <span className="font-arabic text-lg" dir="rtl">
                               {word.arabic}

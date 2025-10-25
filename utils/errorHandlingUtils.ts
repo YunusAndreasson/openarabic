@@ -8,7 +8,7 @@ import { handleError } from '@/utils/errorHandling';
  */
 export const withErrorHandling = <TArgs extends unknown[], TReturn>(
   fn: (...args: TArgs) => Promise<TReturn>,
-  errorOptions: Parameters<typeof handleError>[1] = {}
+  errorOptions: Parameters<typeof handleError>[1] = {},
 ) => {
   return async (...args: TArgs): Promise<TReturn | undefined> => {
     try {
@@ -30,7 +30,7 @@ export const withErrorHandling = <TArgs extends unknown[], TReturn>(
 export const withErrorHandlingDefault = <TArgs extends unknown[], TReturn>(
   fn: (...args: TArgs) => Promise<TReturn>,
   defaultValue: TReturn,
-  errorOptions: Parameters<typeof handleError>[1] = {}
+  errorOptions: Parameters<typeof handleError>[1] = {},
 ) => {
   return async (...args: TArgs): Promise<TReturn> => {
     try {
@@ -41,4 +41,3 @@ export const withErrorHandlingDefault = <TArgs extends unknown[], TReturn>(
     }
   };
 };
-

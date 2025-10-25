@@ -34,7 +34,6 @@ export const oklchToHex = (l: number, c: number, h: number): string => {
   return formatHex(clampRgb(oklchColor));
 };
 
-
 /**
  * Apply alpha transparency to a color
  *

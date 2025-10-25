@@ -3,7 +3,6 @@ import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from '@/components/bookmarks/DeleteButton';
 import { SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
@@ -12,11 +11,7 @@ import { useTransformAnimation } from '@/hooks/animations';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import {
-  isDueWord,
-  isLearnedWord,
-  isMasteredWord,
-} from '@/utils/wordClassification';
+import { isDueWord, isLearnedWord, isMasteredWord } from '@/utils/wordClassification';
 
 interface DictionaryWordCardProps {
   word: StudyWord;
@@ -60,7 +55,15 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
         letters: word.root?.letters,
         meaning: word.root?.meaning,
       });
-    }, [editMode, word.root_id, word.root?.audio_url, word.root?.audio_url_en, word.root?.letters, word.root?.meaning, playWordAudio]);
+    }, [
+      editMode,
+      word.root_id,
+      word.root?.audio_url,
+      word.root?.audio_url_en,
+      word.root?.letters,
+      word.root?.meaning,
+      playWordAudio,
+    ]);
 
     // Handle delete button press
     const handleDeletePress = useCallback(() => {
@@ -79,7 +82,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
         isLearned: isLearnedWord(word),
         isMastered: isMasteredWord(word),
       }),
-      [word]
+      [word],
     );
 
     // Determine status colors for dots and background (memoized for performance)
@@ -183,7 +186,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
       prevProps.word.root?.meaning === nextProps.word.root?.meaning &&
       prevProps.word.root?.audio_url === nextProps.word.root?.audio_url
     );
-  }
+  },
 );
 
 DictionaryWordCard.displayName = 'DictionaryWordCard';

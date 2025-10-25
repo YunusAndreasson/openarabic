@@ -92,7 +92,7 @@ describe('Play Button State Transitions', () => {
     );
 
     const { rerender, getAllByTestId, queryAllByTestId } = render(
-      <TestComponent audioState={AUDIO_STATES.IDLE} />
+      <TestComponent audioState={AUDIO_STATES.IDLE} />,
     );
 
     // Initial state: should show play buttons

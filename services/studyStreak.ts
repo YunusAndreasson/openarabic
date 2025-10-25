@@ -38,7 +38,7 @@ export class ReadingStreakService {
    */
   static async getDailyReadingActivity(
     userId: string,
-    days: number = 30
+    days: number = 30,
   ): Promise<DailyReadingActivity[]> {
     const endDate = new Date();
     const startDate = new Date();
@@ -47,13 +47,14 @@ export class ReadingStreakService {
     // Check if user has any article activity on each date
     // Get all reading progress records and consider both created_at and updated_at dates
     const data = await executeQuery(
-      () => supabase.from('reading_progress').select('created_at, updated_at').eq('user_id', userId),
+      () =>
+        supabase.from('reading_progress').select('created_at, updated_at').eq('user_id', userId),
       {
         toastMessage: STRINGS.ERROR_LOADING_DATA,
         analyticsEventName: 'Reading_Activity_Load_Error',
         analyticsProperties: { userId, days },
         showToast: false, // Silent for streak calculation
-      }
+      },
     );
 
     // Group by date - any activity on a date counts as reading
@@ -106,7 +107,7 @@ export class ReadingStreakService {
   static calculateStreak(activities: DailyReadingActivity[]): ReadingStreak {
     const today = new Date();
     const todayStr = new Date(
-      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
     )
       .toISOString()
       .split('T')[0];
@@ -131,7 +132,7 @@ export class ReadingStreakService {
     const yesterday = new Date();
     yesterday.setUTCDate(yesterday.getUTCDate() - 1);
     const yesterdayStr = new Date(
-      Date.UTC(yesterday.getUTCFullYear(), yesterday.getUTCMonth(), yesterday.getUTCDate())
+      Date.UTC(yesterday.getUTCFullYear(), yesterday.getUTCMonth(), yesterday.getUTCDate()),
     )
       .toISOString()
       .split('T')[0];
@@ -148,8 +149,8 @@ export class ReadingStreakService {
           Date.UTC(
             currentDate.getUTCFullYear(),
             currentDate.getUTCMonth(),
-            currentDate.getUTCDate()
-          )
+            currentDate.getUTCDate(),
+          ),
         )
           .toISOString()
           .split('T')[0];
@@ -248,7 +249,7 @@ export class ReadingStreakService {
       const lastPeriod = periods[periods.length - 1];
       const today = new Date();
       const todayStr = new Date(
-        Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+        Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
       )
         .toISOString()
         .split('T')[0];
@@ -256,7 +257,7 @@ export class ReadingStreakService {
       const yesterday = new Date();
       yesterday.setUTCDate(yesterday.getUTCDate() - 1);
       const yesterdayStr = new Date(
-        Date.UTC(yesterday.getUTCFullYear(), yesterday.getUTCMonth(), yesterday.getUTCDate())
+        Date.UTC(yesterday.getUTCFullYear(), yesterday.getUTCMonth(), yesterday.getUTCDate()),
       )
         .toISOString()
         .split('T')[0];

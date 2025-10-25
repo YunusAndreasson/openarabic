@@ -139,7 +139,7 @@ export default function TranslationReviewsPage() {
   };
 
   const handleAction = async (improvementId: number, action: 'approve' | 'reject') => {
-    setProcessingIds((prev) => new Set(prev).add(improvementId));
+    setProcessingIds(prev => new Set(prev).add(improvementId));
 
     try {
       const response = await fetch('/api/translation-improvements', {
@@ -162,18 +162,18 @@ export default function TranslationReviewsPage() {
       }
 
       // Remove from current list
-      setImprovements((prev) => prev.filter((imp) => imp.id !== improvementId));
+      setImprovements(prev => prev.filter(imp => imp.id !== improvementId));
 
       // Update stats
       fetchStats();
 
       // Clear edit states
-      setEditedEnglish((prev) => {
+      setEditedEnglish(prev => {
         const newState = { ...prev };
         delete newState[improvementId];
         return newState;
       });
-      setEditedGrammarNote((prev) => {
+      setEditedGrammarNote(prev => {
         const newState = { ...prev };
         delete newState[improvementId];
         return newState;
@@ -182,7 +182,7 @@ export default function TranslationReviewsPage() {
       console.error(`Error ${action}ing improvement:`, err);
       alert(err instanceof Error ? err.message : `Failed to ${action} improvement`);
     } finally {
-      setProcessingIds((prev) => {
+      setProcessingIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(improvementId);
         return newSet;
@@ -279,111 +279,111 @@ export default function TranslationReviewsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-              improvements.map((improvement, index) => {
-                const isProcessing = processingIds.has(improvement.id);
-                const word = improvement.sentence_words;
-                const sentence = word.article_sentences;
+                improvements.map((improvement, index) => {
+                  const isProcessing = processingIds.has(improvement.id);
+                  const word = improvement.sentence_words;
+                  const sentence = word.article_sentences;
 
-                return (
-                  <TableRow key={improvement.id} className={isProcessing ? 'opacity-50' : ''}>
-                    <TableCell className="text-muted-foreground align-top">{index + 1}</TableCell>
+                  return (
+                    <TableRow key={improvement.id} className={isProcessing ? 'opacity-50' : ''}>
+                      <TableCell className="text-muted-foreground align-top">{index + 1}</TableCell>
 
-                    {/* Sentence English */}
-                    <TableCell className="align-top">
-                      <div className="text-sm text-muted-foreground">
-                        {sentence?.english || '—'}
-                      </div>
-                    </TableCell>
-
-                    {/* Arabic Word */}
-                    <TableCell className="align-top">
-                      <div className="text-2xl font-bold" dir="rtl">
-                        {word.word_form}
-                      </div>
-                    </TableCell>
-
-                    {/* English Translation */}
-                    <TableCell className="align-top">
-                      <div className="flex flex-col gap-3">
-                        {/* Current English */}
-                        <div className="text-sm text-muted-foreground border-l-2 border-muted pl-2 min-h-[24px]">
-                          {word.english}
-                        </div>
-
-                        {/* New English (Editable) */}
-                        <Input
-                          value={editedEnglish[improvement.id] || ''}
-                          onChange={(e) =>
-                            setEditedEnglish((prev) => ({
-                              ...prev,
-                              [improvement.id]: e.target.value,
-                            }))
-                          }
-                          disabled={isProcessing || statusFilter !== 'pending'}
-                          placeholder="Enter improved translation..."
-                          className="text-sm font-medium bg-muted/50"
-                        />
-                      </div>
-                    </TableCell>
-
-                    {/* Grammar Notes (Stacked) */}
-                    <TableCell className="align-top">
-                      <div className="flex flex-col gap-3">
-                        {/* Current Grammar Note */}
-                        <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words border-l-2 border-muted pl-2 min-h-[24px]">
-                          {word.grammar_note || (
-                            <span className="opacity-50">No existing grammar note</span>
-                          )}
-                        </div>
-
-                        {/* New Grammar Note (Editable) */}
-                        <AutoTextarea
-                          value={editedGrammarNote[improvement.id] || ''}
-                          onChange={(e) =>
-                            setEditedGrammarNote((prev) => ({
-                              ...prev,
-                              [improvement.id]: e.target.value || null,
-                            }))
-                          }
-                          disabled={isProcessing || statusFilter !== 'pending'}
-                          placeholder="Add grammar note (e.g., verb form, case, tense)..."
-                          minRows={2}
-                          className="text-sm bg-muted/50"
-                        />
-                      </div>
-                    </TableCell>
-
-                    {/* Actions */}
-                    {statusFilter === 'pending' && (
+                      {/* Sentence English */}
                       <TableCell className="align-top">
-                        <div className="flex flex-col gap-2 items-center">
-                          <Button
-                            size="sm"
-                            onClick={() => handleAction(improvement.id, 'approve')}
-                            disabled={isProcessing}
-                            className="cursor-pointer bg-green-600 hover:bg-green-700 p-2 h-8 w-8"
-                          >
-                            {isProcessing ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Check className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleAction(improvement.id, 'reject')}
-                            disabled={isProcessing}
-                            className="cursor-pointer p-2 h-8 w-8"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                        <div className="text-sm text-muted-foreground">
+                          {sentence?.english || '—'}
                         </div>
                       </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })
+
+                      {/* Arabic Word */}
+                      <TableCell className="align-top">
+                        <div className="text-2xl font-bold" dir="rtl">
+                          {word.word_form}
+                        </div>
+                      </TableCell>
+
+                      {/* English Translation */}
+                      <TableCell className="align-top">
+                        <div className="flex flex-col gap-3">
+                          {/* Current English */}
+                          <div className="text-sm text-muted-foreground border-l-2 border-muted pl-2 min-h-[24px]">
+                            {word.english}
+                          </div>
+
+                          {/* New English (Editable) */}
+                          <Input
+                            value={editedEnglish[improvement.id] || ''}
+                            onChange={e =>
+                              setEditedEnglish(prev => ({
+                                ...prev,
+                                [improvement.id]: e.target.value,
+                              }))
+                            }
+                            disabled={isProcessing || statusFilter !== 'pending'}
+                            placeholder="Enter improved translation..."
+                            className="text-sm font-medium bg-muted/50"
+                          />
+                        </div>
+                      </TableCell>
+
+                      {/* Grammar Notes (Stacked) */}
+                      <TableCell className="align-top">
+                        <div className="flex flex-col gap-3">
+                          {/* Current Grammar Note */}
+                          <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words border-l-2 border-muted pl-2 min-h-[24px]">
+                            {word.grammar_note || (
+                              <span className="opacity-50">No existing grammar note</span>
+                            )}
+                          </div>
+
+                          {/* New Grammar Note (Editable) */}
+                          <AutoTextarea
+                            value={editedGrammarNote[improvement.id] || ''}
+                            onChange={e =>
+                              setEditedGrammarNote(prev => ({
+                                ...prev,
+                                [improvement.id]: e.target.value || null,
+                              }))
+                            }
+                            disabled={isProcessing || statusFilter !== 'pending'}
+                            placeholder="Add grammar note (e.g., verb form, case, tense)..."
+                            minRows={2}
+                            className="text-sm bg-muted/50"
+                          />
+                        </div>
+                      </TableCell>
+
+                      {/* Actions */}
+                      {statusFilter === 'pending' && (
+                        <TableCell className="align-top">
+                          <div className="flex flex-col gap-2 items-center">
+                            <Button
+                              size="sm"
+                              onClick={() => handleAction(improvement.id, 'approve')}
+                              disabled={isProcessing}
+                              className="cursor-pointer bg-green-600 hover:bg-green-700 p-2 h-8 w-8"
+                            >
+                              {isProcessing ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Check className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleAction(improvement.id, 'reject')}
+                              disabled={isProcessing}
+                              className="cursor-pointer p-2 h-8 w-8"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

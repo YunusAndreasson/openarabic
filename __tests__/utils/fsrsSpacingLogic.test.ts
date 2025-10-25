@@ -303,7 +303,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
             createTestWord({
               root_id: i + 1,
               fsrs_due: new Date(Date.now() - (queueSize - i) * 3600000).toISOString(),
-            })
+            }),
           );
 
           const queue = setupQueue(words);
@@ -444,7 +444,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
     test('should maintain state consistency across multiple operations', () => {
       const words = Array.from(
         { length: 10 },
-        (_, i) => createTestWord({ root_id: (i % 3) + 1 }) // Only 3 unique root_ids
+        (_, i) => createTestWord({ root_id: (i % 3) + 1 }), // Only 3 unique root_ids
       );
       const queue = setupQueue(words);
       const state = createSpacingState();
@@ -521,7 +521,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
           fsrs_due: new Date(baseTime - 3600000).toISOString(), // Same due time
           fsrs_stability: 5, // Same stability
           fsrs_difficulty: 6.5, // Same difficulty
-        })
+        }),
       );
 
       const queue = setupQueue(identicalWords);

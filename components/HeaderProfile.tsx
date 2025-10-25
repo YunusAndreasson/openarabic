@@ -54,7 +54,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
 
   const profilePhotoStyle = useMemo(
     () => [styles.baseProfilePhoto, { width: size, height: size, borderRadius: size / 2 }],
-    [size]
+    [size],
   );
 
   // Dynamic styles for streak badge circle - prominent for better visibility
@@ -66,7 +66,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
         backgroundColor: hasStreak ? colors.warning + '20' : colors.elevation1,
       },
     ],
-    [hasStreak, colors.warning, colors.textTertiary, colors.elevation1]
+    [hasStreak, colors.warning, colors.textTertiary, colors.elevation1],
   );
 
   // Load saved profile photo
@@ -225,4 +225,3 @@ const styles = StyleSheet.create({
     // Font size and color applied dynamically
   },
 });
-

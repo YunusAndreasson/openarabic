@@ -150,7 +150,7 @@ const RIPPLE_SIZE_MAP = {
  */
 export const createAndroidRipple = (
   colors: ThemeColors,
-  size: 'small' | 'medium' | 'large' = 'medium'
+  size: 'small' | 'medium' | 'large' = 'medium',
 ) => ({
   color: colors.navigationRipple,
   radius: RIPPLE_SIZE_MAP[size] / 2,

@@ -31,7 +31,11 @@ interface PulsatingLoaderProps {
  * A pulsating circle loader component for smooth loading states
  * Uses the brand sage color by default and follows Material Design principles
  */
-export function PulsatingLoader({ size = 48, colorName = 'tint', duration = 1500 }: PulsatingLoaderProps) {
+export function PulsatingLoader({
+  size = 48,
+  colorName = 'tint',
+  duration = 1500,
+}: PulsatingLoaderProps) {
   const colors = useColors();
 
   // Shared value for the scale animation
@@ -46,8 +50,8 @@ export function PulsatingLoader({ size = 48, colorName = 'tint', duration = 1500
           easing: Easing.bezier(0.4, 0.0, 0.2, 1), // Material Design easing
         }),
         -1, // Infinite loop
-        true // Reverse direction
-      )
+        true, // Reverse direction
+      ),
     );
   }, [scale, duration]);
 

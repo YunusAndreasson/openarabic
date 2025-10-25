@@ -27,7 +27,7 @@ export const AudioShuffleToggle: React.FC<AudioShuffleToggleProps> = ({ style })
       selectionFeedback();
       dispatch(setAudioShuffleEnabled(enabled));
     },
-    [dispatch]
+    [dispatch],
   );
 
   return (
@@ -70,4 +70,3 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.MEDIUM,
   },
 });
-

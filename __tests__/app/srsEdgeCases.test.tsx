@@ -747,7 +747,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       // Create SRS with multiple word categories
       const srsMock = createSRSMock(
         ['due-word1', 'due-word2', 'struggling-word1', 'all-word1'],
-        12
+        12,
       );
 
       // Put ALL words in cooldown (due, struggling, and all words)
@@ -765,7 +765,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       // Verify that even if we try to start a session, it immediately completes
       const testSession = createSRSMock(
         ['due-word1', 'due-word2', 'struggling-word1', 'all-word1'],
-        12
+        12,
       );
       testSession.updateCooldown('due-word1');
       testSession.updateCooldown('due-word2');

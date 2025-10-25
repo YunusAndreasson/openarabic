@@ -4,7 +4,6 @@ import { useEffect, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from '@/components/bookmarks/DeleteButton';
@@ -52,38 +51,35 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = ({
   progressPercentage,
   shouldAnimateOnMount = true,
 }) => {
-    const isDarkMode = useIsDarkMode();
+  const isDarkMode = useIsDarkMode();
 
-    const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
-      type: 'scale',
-      initialValue: 1,
-      targetValue: 1,
-      useSpring: true,
-      damping: SPRING_CONFIG.RESPONSIVE.damping,
-      stiffness: SPRING_CONFIG.RESPONSIVE.stiffness,
-    });
+  const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
+    type: 'scale',
+    initialValue: 1,
+    targetValue: 1,
+    useSpring: true,
+    damping: SPRING_CONFIG.RESPONSIVE.damping,
+    stiffness: SPRING_CONFIG.RESPONSIVE.stiffness,
+  });
 
-    useEffect(() => {
-      if (isBeingDragged) {
-        setValue(CARD_DRAG_SCALE);
-      } else if (editMode) {
-        setValue(WORD_PRESS_SCALE);
-      } else if (shouldAnimateOnMount) {
-        startAnimation();
-      } else {
-        // Ensure we are at the target value without triggering an animation
-        setValue(1);
-      }
-    }, [editMode, isBeingDragged, shouldAnimateOnMount, startAnimation, setValue]);
+  useEffect(() => {
+    if (isBeingDragged) {
+      setValue(CARD_DRAG_SCALE);
+    } else if (editMode) {
+      setValue(WORD_PRESS_SCALE);
+    } else if (shouldAnimateOnMount) {
+      startAnimation();
+    } else {
+      // Ensure we are at the target value without triggering an animation
+      setValue(1);
+    }
+  }, [editMode, isBeingDragged, shouldAnimateOnMount, startAnimation, setValue]);
 
   // Enhanced title and secondary text styles with semantic colors
-  const titleOpacity = getEnhancedOpacity(
-    TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
-    isDarkMode
-  );
+  const titleOpacity = getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode);
   const secondaryOpacity = getEnhancedOpacity(
     TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
-    isDarkMode
+    isDarkMode,
   );
 
   // Dynamic styles

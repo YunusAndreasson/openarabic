@@ -9,6 +9,10 @@ export { EditModeButton } from './EditModeButton';
 export { IconButton } from './IconButton';
 export { Pill } from './Pill';
 export { PulsatingLoader } from './PulsatingLoader';
-export { SettingsPicker, type SettingsPickerOption, type SettingsPickerProps } from './SettingsPicker';
+export {
+  SettingsPicker,
+  type SettingsPickerOption,
+  type SettingsPickerProps,
+} from './SettingsPicker';
 export { TimePicker } from './TimePicker';
 export { Toggle } from './Toggle';

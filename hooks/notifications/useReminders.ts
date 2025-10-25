@@ -28,7 +28,7 @@ export function useReminders(): UseRemindersResult {
         handleError(error as Error, { showToast: false });
       }
     },
-    [dispatch]
+    [dispatch],
   );
 
   const formatReminderTime = useCallback((hour: number, minute: number): string => {
@@ -47,6 +47,6 @@ export function useReminders(): UseRemindersResult {
       updateReminderTime,
       formatReminderTime,
     }),
-    [reminderTime, updateReminderTime, formatReminderTime]
+    [reminderTime, updateReminderTime, formatReminderTime],
   );
 }

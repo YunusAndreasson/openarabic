@@ -7,7 +7,7 @@ import { TIMING_CONSTANTS } from '@/constants/animation';
  */
 export function useStableBoolean(
   value: boolean,
-  delayMs: number = TIMING_CONSTANTS.QUICK_DELAY
+  delayMs: number = TIMING_CONSTANTS.QUICK_DELAY,
 ): boolean {
   const [stable, setStable] = useState<boolean>(value);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

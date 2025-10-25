@@ -35,7 +35,7 @@ export function getBeginnerArticles(articles: Article[], limit = 20): Article[] 
 export function getArticlesByDueWords(
   articles: Article[],
   dueWords: StudyWord[],
-  limit = 10
+  limit = 10,
 ): Article[] {
   if (!articles.length || !dueWords.length) return [];
 
@@ -82,7 +82,7 @@ export function getArticlesByDueWords(
 export function getArticlesByDifficultWords(
   articles: Article[],
   difficultWords: StudyWord[],
-  limit = 10
+  limit = 10,
 ): Article[] {
   if (!articles.length || !difficultWords.length) return [];
 
@@ -111,7 +111,7 @@ export function getArticlesByDifficultWords(
 
   // Filter articles that actually have difficult words
   const articlesWithDifficultWords = articlesWithDifficultWordCount.filter(
-    item => item.difficultWordCount > 0
+    item => item.difficultWordCount > 0,
   );
 
   // Sort by difficult word count (highest first)
@@ -145,7 +145,7 @@ export function filterArticles(
     difficultyRange: [number, number];
     dateRange: 'week' | 'month' | 'all';
   },
-  filterDate: Date | null
+  filterDate: Date | null,
 ): Article[] {
   if (!articles?.length) return [];
 
@@ -188,7 +188,7 @@ const COMPLETION_THRESHOLD = 95;
  */
 export function sortArticlesByProgress(
   articles: Article[],
-  progressMap: Map<number, { progress_percentage: number | null }>
+  progressMap: Map<number, { progress_percentage: number | null }>,
 ): Article[] {
   return [...articles].sort((a, b) => {
     // Handle null explicitly - treat as 0 (no progress)

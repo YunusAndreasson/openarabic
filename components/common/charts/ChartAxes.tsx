@@ -55,7 +55,7 @@ export const ChartAxes = memo<AxisLabelsProps>(
 
     const textColor = useMemo(
       () => (isDarkMode ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7)),
-      [isDarkMode, colors.white, colors.black]
+      [isDarkMode, colors.white, colors.black],
     );
 
     // Calculate y-axis label positions and values
@@ -103,7 +103,7 @@ export const ChartAxes = memo<AxisLabelsProps>(
                   {
                     top: Math.max(
                       0,
-                      Math.min(label.y - LAYOUT.SPACING.SMALL, height - LAYOUT.SPACING.LARGE)
+                      Math.min(label.y - LAYOUT.SPACING.SMALL, height - LAYOUT.SPACING.LARGE),
                     ), // Center the label with bounds check
                     width: Y_AXIS_WIDTH,
                   },
@@ -174,7 +174,7 @@ export const ChartAxes = memo<AxisLabelsProps>(
         </View>
       </View>
     );
-  }
+  },
 );
 
 ChartAxes.displayName = 'ChartAxes';

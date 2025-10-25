@@ -10,14 +10,6 @@ describe('Bug Report: wa-an and fa-idha WITH DIACRITICS', () => {
     it('should analyze وَمِنْ with diacritics', () => {
       const analysis = analyzeArabicWord('وَمِنْ', 'and from');
 
-      console.log('\n=== WITH DIACRITICS ===');
-      console.log('Arabic: وَمِنْ');
-      console.log('English: and from');
-      console.log('Has components:', analysis.hasComponents);
-      console.log('Prefix:', analysis.prefixes[0]?.arabicMatch);
-      console.log('Prefix English:', analysis.prefixes[0]?.englishMatches);
-      console.log('Remaining:', analysis.remainingArabic);
-
       expect(analysis.hasComponents).toBe(true);
       // Now detects as multi-prefix: و + من
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
@@ -28,16 +20,8 @@ describe('Bug Report: wa-an and fa-idha WITH DIACRITICS', () => {
       const analysis = analyzeArabicWord('وَمِنْ', 'and from');
       const formatted = formatWordAnalysis(analysis);
 
-      console.log('\nFormatted وَمِنْ:');
-      console.log('Reconstructed:', JSON.stringify(formatted.reconstructedArabic, null, 2));
-
       expect(formatted.reconstructedArabic).toBeDefined();
       const segments = formatted.reconstructedArabic?.segments || [];
-
-      console.log('Segments:');
-      segments.forEach((seg, i) => {
-        console.log(`  [${i}] text="${seg.text}" type=${seg.type} color=${seg.colorName}`);
-      });
 
       // Multi-prefix detection: و + من = 2 segments minimum
       expect(segments.length).toBeGreaterThanOrEqual(1);
@@ -52,9 +36,6 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
       const waPrefix = ARABIC_PREFIXES.find(p => p.arabic === 'و');
       const minPrefix = ARABIC_PREFIXES.find(p => p.arabic === 'من');
 
-      console.log('Found و:', waPrefix?.english);
-      console.log('Found من:', minPrefix?.english);
-
       expect(waPrefix).toBeDefined();
       expect(minPrefix).toBeDefined();
       expect(waPrefix?.english).toContain('and');
@@ -63,13 +44,6 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
 
     it('should analyze ومن (and from)', () => {
       const analysis = analyzeArabicWord('ومن', 'and from');
-
-      console.log('\nAnalysis for ومن (and from):');
-      console.log('Has components:', analysis.hasComponents);
-      console.log('Prefix arabicMatch:', analysis.prefixes[0]?.arabicMatch);
-      console.log('Prefix englishMatches:', analysis.prefixes[0]?.englishMatches);
-      console.log('Remaining:', analysis.remainingArabic);
-      console.log('Full analysis:', JSON.stringify(analysis, null, 2));
 
       expect(analysis.hasComponents).toBe(true);
       // Multi-prefix: و + من
@@ -81,18 +55,10 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
       const analysis = analyzeArabicWord('ومن', 'and from');
       const formatted = formatWordAnalysis(analysis);
 
-      console.log('\nFormatted analysis:');
-      console.log('Reconstructed Arabic:', JSON.stringify(formatted.reconstructedArabic, null, 2));
-      console.log('Number of sections:', formatted.sections.length);
-
       expect(formatted.reconstructedArabic).toBeDefined();
       expect(formatted.reconstructedArabic?.segments).toBeDefined();
 
       const segments = formatted.reconstructedArabic?.segments || [];
-      console.log('\nArabic segments:');
-      segments.forEach((seg, i) => {
-        console.log(`  [${i}] text="${seg.text}" type=${seg.type} colorName=${seg.colorName}`);
-      });
 
       // Multi-prefix: و + من = at least 1 segment
       expect(segments.length).toBeGreaterThanOrEqual(1);
@@ -107,11 +73,6 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
     it('should split فإذا into ف (so) + إذا (remaining)', () => {
       const analysis = analyzeArabicWord('فإذا', 'so when');
 
-      console.log('\nAnalysis for فإذا (so when) - SPLIT:');
-      console.log('Has components:', analysis.hasComponents);
-      console.log('Prefix:', analysis.prefixes[0]?.arabicMatch);
-      console.log('Remaining:', analysis.remainingArabic);
-
       // Multi-prefix: ف (conjunction) + إذا (particle) - both prefixes
       expect(analysis.hasComponents).toBe(true);
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(2);
@@ -123,12 +84,8 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
       const analysis = analyzeArabicWord('فإذا', 'so when');
       const formatted = formatWordAnalysis(analysis);
 
-      console.log('\nFormatted analysis (split):');
-      console.log('Reconstructed Arabic:', formatted.reconstructedArabic);
-
       expect(formatted.reconstructedArabic).toBeDefined();
       const segments = formatted.reconstructedArabic?.segments || [];
-      console.log('Arabic segments:', segments);
 
       // Should have 2 segments: ف (conjunction) + إذا (particle) - both prefixes
       expect(segments.length).toBe(2);

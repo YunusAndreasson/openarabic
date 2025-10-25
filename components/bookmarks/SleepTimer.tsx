@@ -62,7 +62,7 @@ export function SleepTimer({
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   const handleSetTimer = () => {
@@ -217,4 +217,3 @@ const styles = StyleSheet.create({
 });
 
 SleepTimer.displayName = 'SleepTimer';
-

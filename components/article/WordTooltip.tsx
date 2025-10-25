@@ -102,133 +102,133 @@ export function WordTooltip({
   zIndex,
   onOpenWordDetails,
 }: WordTooltipProps) {
-    const colors = useColors();
+  const colors = useColors();
 
-    // Press animation for better user feedback
-    const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-      type: 'card',
-      springConfig: SPRING_CONFIG.RESPONSIVE,
-    });
+  // Press animation for better user feedback
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    type: 'card',
+    springConfig: SPRING_CONFIG.RESPONSIVE,
+  });
 
-    // Arabic word analysis for English color-coding
-    const { formattedAnalysis, analysis } = useArabicWordAnalysis(
-      arabicWord || '',
-      text,
-      !!(arabicWord && text)
-    );
+  // Arabic word analysis for English color-coding
+  const { formattedAnalysis, analysis } = useArabicWordAnalysis(
+    arabicWord || '',
+    text,
+    !!(arabicWord && text),
+  );
 
-    // Generate color-coded segments using shared utility
-    const coloredSegments = generateColorCodedSegments({
-      text,
-      formattedAnalysis,
-      analysis,
-      colors,
-      defaultColor: colors.text,
-    });
+  // Generate color-coded segments using shared utility
+  const coloredSegments = generateColorCodedSegments({
+    text,
+    formattedAnalysis,
+    analysis,
+    colors,
+    defaultColor: colors.text,
+  });
 
-    const handleOpenWordDetails = () => {
-      if (onOpenWordDetails) {
-        onOpenWordDetails();
-      }
-    };
+  const handleOpenWordDetails = () => {
+    if (onOpenWordDetails) {
+      onOpenWordDetails();
+    }
+  };
 
-    // Render color-coded English text
-    const renderColorCodedEnglish = (
-      <View style={STATIC_STYLES.textContainer}>
-        <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText} numberOfLines={1}>
-          {coloredSegments.map(segment => (
-            <ThemedText
-              key={segment.key}
-              skipDefaultColor
-              style={[STATIC_STYLES.singleLineText, { color: segment.color }]}
-              numberOfLines={1}
-            >
-              {segment.text}
-            </ThemedText>
-          ))}
-        </ThemedText>
-      </View>
-    );
+  // Render color-coded English text
+  const renderColorCodedEnglish = (
+    <View style={STATIC_STYLES.textContainer}>
+      <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText} numberOfLines={1}>
+        {coloredSegments.map(segment => (
+          <ThemedText
+            key={segment.key}
+            skipDefaultColor
+            style={[STATIC_STYLES.singleLineText, { color: segment.color }]}
+            numberOfLines={1}
+          >
+            {segment.text}
+          </ThemedText>
+        ))}
+      </ThemedText>
+    </View>
+  );
 
-    // Calculate tooltip dimensions using window coordinates directly
-    // No coordinate conversion needed - overlay is full-screen absolute
-    const dimensions = !layout
-      ? DEFAULT_DIMENSIONS
-      : (() => {
-          // Validate coordinates are reasonable before showing tooltip
-          if (layout.x < 0 || layout.y < 0 || layout.x > SCREEN_WIDTH) {
-            return DEFAULT_DIMENSIONS; // Skip tooltip for invalid coordinates
-          }
+  // Calculate tooltip dimensions using window coordinates directly
+  // No coordinate conversion needed - overlay is full-screen absolute
+  const dimensions = !layout
+    ? DEFAULT_DIMENSIONS
+    : (() => {
+        // Validate coordinates are reasonable before showing tooltip
+        if (layout.x < 0 || layout.y < 0 || layout.x > SCREEN_WIDTH) {
+          return DEFAULT_DIMENSIONS; // Skip tooltip for invalid coordinates
+        }
 
-          // Use combined text from segments for dimension calculation
-          const displayedText = coloredSegments.map(s => s.text).join('');
-          return calculateTooltipDimensions(
-            layout as TooltipLayout, // Use window coordinates directly
-            displayedText,
-            false,
-            undefined,
-            0, // No container offset needed
-            SCREEN_WIDTH // Use screen width directly for boundary checks
-          );
-        })();
+        // Use combined text from segments for dimension calculation
+        const displayedText = coloredSegments.map(s => s.text).join('');
+        return calculateTooltipDimensions(
+          layout as TooltipLayout, // Use window coordinates directly
+          displayedText,
+          false,
+          undefined,
+          0, // No container offset needed
+          SCREEN_WIDTH, // Use screen width directly for boundary checks
+        );
+      })();
 
-    const containerStyle = {
-      ...STATIC_STYLES.overlay,
-      zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
-    };
+  const containerStyle = {
+    ...STATIC_STYLES.overlay,
+    zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
+  };
 
-    const effectiveTooltipHeight = Math.max(dimensions.tooltipHeight, MIN_TOUCH_TARGET.MEDIUM);
+  const effectiveTooltipHeight = Math.max(dimensions.tooltipHeight, MIN_TOUCH_TARGET.MEDIUM);
 
-    const tooltipStyle = {
-      ...STATIC_STYLES.tooltip,
-      top: dimensions.tooltipTop,
-      left: dimensions.tooltipLeft,
-      width: dimensions.tooltipWidth,
-      height: effectiveTooltipHeight,
-      backgroundColor: colors.elevation1,
-      borderColor: colors.border,
-      shadowColor: colors.shadow,
-      zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
-      ...LAYOUT.ELEVATION.LARGE,
-    };
+  const tooltipStyle = {
+    ...STATIC_STYLES.tooltip,
+    top: dimensions.tooltipTop,
+    left: dimensions.tooltipLeft,
+    width: dimensions.tooltipWidth,
+    height: effectiveTooltipHeight,
+    backgroundColor: colors.elevation1,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
+    zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
+    ...LAYOUT.ELEVATION.LARGE,
+  };
 
-    const arrowStyle = {
-      ...STATIC_STYLES.arrow,
-      left: dimensions.arrowLeft,
-      top: effectiveTooltipHeight,
-      borderTopWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
-      borderLeftWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
-      borderRightWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
-      borderTopColor: colors.elevation1,
-      borderLeftColor: colors.transparent,
-      borderRightColor: colors.transparent,
-    };
+  const arrowStyle = {
+    ...STATIC_STYLES.arrow,
+    left: dimensions.arrowLeft,
+    top: effectiveTooltipHeight,
+    borderTopWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
+    borderLeftWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
+    borderRightWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
+    borderTopColor: colors.elevation1,
+    borderLeftColor: colors.transparent,
+    borderRightColor: colors.transparent,
+  };
 
-    if (!visible || !layout) return null;
+  if (!visible || !layout) return null;
 
-    return (
-      <View style={containerStyle} pointerEvents="box-none">
-        <Pressable
-          onPress={handleOpenWordDetails}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          disabled={!onOpenWordDetails}
-        >
-          <Animated.View style={[tooltipStyle, animatedStyle]} testID="word-tooltip">
-            <View style={arrowStyle} />
-            <View style={STATIC_STYLES.contentContainer}>
-              {renderColorCodedEnglish}
-              <Ionicons
-                name="chevron-forward"
-                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                color={colors.secondaryText}
-                style={STATIC_STYLES.chevronIcon}
-              />
-            </View>
-          </Animated.View>
-        </Pressable>
-      </View>
-    );
+  return (
+    <View style={containerStyle} pointerEvents="box-none">
+      <Pressable
+        onPress={handleOpenWordDetails}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={!onOpenWordDetails}
+      >
+        <Animated.View style={[tooltipStyle, animatedStyle]} testID="word-tooltip">
+          <View style={arrowStyle} />
+          <View style={STATIC_STYLES.contentContainer}>
+            {renderColorCodedEnglish}
+            <Ionicons
+              name="chevron-forward"
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+              color={colors.secondaryText}
+              style={STATIC_STYLES.chevronIcon}
+            />
+          </View>
+        </Animated.View>
+      </Pressable>
+    </View>
+  );
 }
 
 WordTooltip.displayName = 'WordTooltip';

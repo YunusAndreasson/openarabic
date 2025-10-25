@@ -25,7 +25,7 @@ export const MEANING_OVERLAY_CONSTANTS = {
 export const calculateDynamicPadding = (
   fontSize: number,
   topRatio: number = TEXT_STYLE_CONSTANTS.PADDING_TOP_RATIO,
-  bottomRatio: number = TEXT_STYLE_CONSTANTS.PADDING_BOTTOM_RATIO
+  bottomRatio: number = TEXT_STYLE_CONSTANTS.PADDING_BOTTOM_RATIO,
 ) => ({
   paddingTop: fontSize * topRatio,
   paddingBottom: fontSize * bottomRatio,
@@ -111,7 +111,7 @@ export const determineTextColor = (
   isWarning: boolean,
   isVague: boolean,
   isStruggling: boolean,
-  colors: MeaningOverlayColors
+  colors: MeaningOverlayColors,
 ): string => {
   if (isWarning) return colors.warning;
   if (isVague) return colors.warning;
@@ -129,7 +129,7 @@ export const determineTextColor = (
 export const calculateFontSize = (
   isWarning: boolean,
   isVague: boolean,
-  isStruggling: boolean
+  isStruggling: boolean,
 ): number => {
   if (isWarning || isVague || isStruggling) {
     return MEANING_OVERLAY_CONSTANTS.FONT_SIZE_SPECIAL;
@@ -147,7 +147,7 @@ export const calculateFontSize = (
 export const createMeaningOverlayTextStyle = (
   textColor: string,
   fontSize: number,
-  baseStyle: TextStyle = {}
+  baseStyle: TextStyle = {},
 ): TextStyle => {
   return {
     ...baseStyle,
@@ -219,7 +219,7 @@ export const createButtonTextStyle = (size: 'small' | 'medium' | 'large' = 'medi
 export const createCardContentStyle = (
   options: {
     includeAndroidMinHeight?: boolean;
-  } = {}
+  } = {},
 ): ViewStyle => {
   const { includeAndroidMinHeight = true } = options;
 

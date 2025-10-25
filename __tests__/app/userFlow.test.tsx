@@ -45,7 +45,9 @@ jest.mock('../../components/library/ArticleCard', () => {
   const { TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    ArticleCard: ({ onPress, testID }: any) => <TouchableOpacity onPress={onPress} testID={testID} />,
+    ArticleCard: ({ onPress, testID }: any) => (
+      <TouchableOpacity onPress={onPress} testID={testID} />
+    ),
   };
 });
 
@@ -65,7 +67,9 @@ jest.mock('../../components/review/CompletionScreen', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
-    CompletionScreen: ({ testID = 'completion-screen' }: { testID?: string }) => <View testID={testID} />,
+    CompletionScreen: ({ testID = 'completion-screen' }: { testID?: string }) => (
+      <View testID={testID} />
+    ),
   };
 });
 
@@ -156,7 +160,7 @@ describe('UI flow', () => {
         title="t"
         article={{ id: 1, title: 't' } as any}
         testID="article-1"
-      />
+      />,
     );
 
     expect(getByTestId('article-1')).toBeTruthy();
@@ -167,12 +171,7 @@ describe('UI flow', () => {
     const onTooltipOpen = jest.fn();
     const word = { id: 1, word_form: 'w', english: 'w', root_id: 1 } as any;
     const { getByTestId } = render(
-      <ArabicWord
-        word={word}
-        onPress={onPress}
-        onTooltipOpen={onTooltipOpen}
-        testID="word-1"
-      />
+      <ArabicWord word={word} onPress={onPress} onTooltipOpen={onTooltipOpen} testID="word-1" />,
     );
 
     fireEvent.press(getByTestId('word-1'));
@@ -183,7 +182,7 @@ describe('UI flow', () => {
     const onStartReview = jest.fn();
     const studyWord = { root_id: 1 } as any;
     const { getByTestId } = render(
-      <VocabularyStatCards studyWords={[studyWord]} dueWords={1} onStartReview={onStartReview} />
+      <VocabularyStatCards studyWords={[studyWord]} dueWords={1} onStartReview={onStartReview} />,
     );
 
     fireEvent.press(getByTestId('start-review-due'));

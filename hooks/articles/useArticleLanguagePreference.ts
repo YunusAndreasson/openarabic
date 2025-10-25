@@ -20,7 +20,7 @@ interface UseArticleLanguagePreferenceReturn {
  * @returns Object containing showEnglish boolean, toggle function, and override status
  */
 export function useArticleLanguagePreference(
-  articleId: ArticleId | undefined
+  articleId: ArticleId | undefined,
 ): UseArticleLanguagePreferenceReturn {
   // Get global display language preference
   const globalPreference = useAppSelectorShallow(state => state.settings.displayLanguagePreference);

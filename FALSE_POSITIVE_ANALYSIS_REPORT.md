@@ -41,14 +41,17 @@ Identify low-hanging fruit opportunities for testing the Arabic grammar coloring
 **Status**: **Verified via existing tests and recent fix**
 
 **What we did**:
+
 - Removed ا (alif) and ي (yaa') infix patterns on 2025-10-22
 - Reason: These single letters frequently appear as root letters, causing 5-15% false positive rate
 
 **Test Coverage**:
+
 - All 204 tests still pass after removal
 - Zero infix matches expected for internal alif/yaa
 
 **Example words from tests**:
+
 ```
 None - these patterns were removed and had no test coverage
 ```
@@ -64,6 +67,7 @@ None - these patterns were removed and had no test coverage
 **Pattern**: Words ending with ه/ها where English contains possessive pronouns
 
 **Test Coverage** (from existing tests):
+
 ```typescript
 { arabic: 'كتابه', english: 'his book', expectedSuffix: 'ه' }
 { arabic: 'كتابها', english: 'her book', expectedSuffix: 'ها' }
@@ -72,6 +76,7 @@ None - these patterns were removed and had no test coverage
 ```
 
 **Analysis**:
+
 - These matches are **linguistically correct**
 - ه/ها are genuine possessive pronoun suffixes
 - English matching requirement prevents false positives (e.g., "الله" won't match unless English contains "his/her/their")
@@ -87,6 +92,7 @@ None - these patterns were removed and had no test coverage
 **Pattern**: Words ≤5 characters with 2+ prefixes
 
 **Test Coverage** (from existing tests):
+
 ```typescript
 // Valid multi-prefix cases:
 { arabic: 'والكتاب', english: 'and the book', expectedPrefixes: ['و', 'ال'] }
@@ -100,11 +106,13 @@ None - these patterns were removed and had no test coverage
 ```
 
 **Validation Logic in Place**:
+
 - MIN_REMAINING_LENGTH: 3 characters (prevents over-parsing)
 - MIN_CONSONANTS: 2 consonants required
 - English matching requirement (prefix only matches if English contains corresponding word)
 
 **Test Strategy**:
+
 1. Query `sentence_words` for words starting with و/ف and length ≤5
 2. Manually review results where 2+ prefixes detected
 3. Verify remaining root has ≥3 characters
@@ -122,11 +130,13 @@ None - these patterns were removed and had no test coverage
 **Pattern**: هذا، ذلك، هذه، تلك detected as word endings (suffixes)
 
 **Analysis**:
+
 - Demonstratives are typically standalone words in Arabic
 - Rarely appear as suffixes
 - Could cause false positives if a word happens to end with these letter sequences
 
 **Current Pattern Definitions**:
+
 ```typescript
 // From arabicWordComponents.ts:
 { arabic: 'هذا', english: ['this'], type: ComponentType.SUFFIX }
@@ -134,6 +144,7 @@ None - these patterns were removed and had no test coverage
 ```
 
 **Test Strategy**:
+
 1. Search for words ending with هذا/ذلك/هذه/تلك
 2. Check if English contains "this/that"
 3. Flag cases where match occurs without corresponding English
@@ -155,11 +166,13 @@ None - these patterns were removed and had no test coverage
 **Test Coverage**: Limited but functional
 
 **Analysis**:
+
 - These are legitimate grammatical infixes for Form II verbs
 - Infix claiming logic prevents false positives
 - English must contain intensive meaning words
 
 **Example**:
+
 ```
 عَلَّمَ (to teach intensively) - علّم has doubled ل
 كَسَّرَ (to break into pieces) - كسّر has doubled س
@@ -175,24 +188,24 @@ None - these patterns were removed and had no test coverage
 
 ### Current Test Coverage
 
-| Category | Test Cases | Coverage |
-|----------|------------|----------|
-| **Total Tests** | 204 | 100% passing ✅ |
-| **Prefix Tests** | ~60 | Comprehensive ✅ |
-| **Suffix Tests** | ~90 | Comprehensive ✅ |
-| **Infix Tests** | ~10 | Good ✅ |
-| **Multi-component** | ~30 | Good ✅ |
-| **Edge Cases** | ~14 | Good ✅ |
+| Category            | Test Cases | Coverage         |
+| ------------------- | ---------- | ---------------- |
+| **Total Tests**     | 204        | 100% passing ✅  |
+| **Prefix Tests**    | ~60        | Comprehensive ✅ |
+| **Suffix Tests**    | ~90        | Comprehensive ✅ |
+| **Infix Tests**     | ~10        | Good ✅          |
+| **Multi-component** | ~30        | Good ✅          |
+| **Edge Cases**      | ~14        | Good ✅          |
 
 ### False Positive Risk Assessment
 
-| Pattern Type | Risk Level | Protection Mechanisms |
-|--------------|------------|----------------------|
-| **Alif/Yaa Infixes** | ~~HIGH~~ → NONE | ✅ Removed 2025-10-22 |
-| **ه/ها Suffixes** | NONE | ✅ English matching + linguistically correct |
-| **Multi-prefixes** | LOW | ✅ MIN_REMAINING_LENGTH + English matching |
-| **Demonstratives** | VERY LOW | ✅ English matching + rare occurrence |
-| **Doubled Radicals** | VERY LOW | ✅ Infix claiming + English matching |
+| Pattern Type         | Risk Level      | Protection Mechanisms                        |
+| -------------------- | --------------- | -------------------------------------------- |
+| **Alif/Yaa Infixes** | ~~HIGH~~ → NONE | ✅ Removed 2025-10-22                        |
+| **ه/ها Suffixes**    | NONE            | ✅ English matching + linguistically correct |
+| **Multi-prefixes**   | LOW             | ✅ MIN_REMAINING_LENGTH + English matching   |
+| **Demonstratives**   | VERY LOW        | ✅ English matching + rare occurrence        |
+| **Doubled Radicals** | VERY LOW        | ✅ Infix claiming + English matching         |
 
 **Overall System Accuracy**: **95-98%** (estimated post-fix)
 
@@ -205,6 +218,7 @@ None - these patterns were removed and had no test coverage
 **Method**: Query real production data and analyze samples
 
 **SQL Queries**:
+
 ```sql
 -- 1. Random baseline sample
 SELECT word_form, english FROM sentence_words LIMIT 500;
@@ -232,11 +246,13 @@ LIMIT 200;
 ```
 
 **Pros**:
+
 - Tests against real production data
 - Finds edge cases not in test suite
 - Quantitative validation of accuracy
 
 **Cons**:
+
 - Requires database access
 - Manual review needed for suspicious cases
 - Time-intensive
@@ -250,13 +266,14 @@ LIMIT 200;
 **Method**: Add specific test cases for identified patterns
 
 **New Tests to Add**:
+
 ```typescript
 // Test short words that shouldn't be over-parsed
 it('should not over-parse short root words', () => {
   const tests = [
-    { arabic: 'ولد', english: 'boy' },  // Root word, not و + لد
-    { arabic: 'والد', english: 'father' },  // Root word, not و + ال + د
-    { arabic: 'فرق', english: 'difference' },  // Root word, not ف + رق
+    { arabic: 'ولد', english: 'boy' }, // Root word, not و + لد
+    { arabic: 'والد', english: 'father' }, // Root word, not و + ال + د
+    { arabic: 'فرق', english: 'difference' }, // Root word, not ف + رق
   ];
 
   tests.forEach(({ arabic, english }) => {
@@ -270,11 +287,13 @@ it('should not over-parse short root words', () => {
 ```
 
 **Pros**:
+
 - Fast to implement (15-30 minutes)
 - Permanent regression protection
 - Documents expected behavior
 
 **Cons**:
+
 - Limited to known edge cases
 - May miss unknown patterns
 
@@ -287,6 +306,7 @@ it('should not over-parse short root words', () => {
 **Method**: Manually analyze a curated list of potentially problematic words
 
 **Test List**:
+
 ```
 1. Words with internal ا:
    - قال (he said) ✓ Should NOT detect alif as infix
@@ -309,11 +329,13 @@ it('should not over-parse short root words', () => {
 ```
 
 **Pros**:
+
 - Very fast (15-20 minutes)
 - Focused on highest-risk patterns
 - No infrastructure needed
 
 **Cons**:
+
 - Limited coverage
 - No quantitative metrics
 
@@ -362,6 +384,7 @@ it('should not over-parse short root words', () => {
 **Current Status**: ✅ **Production Ready**
 
 The Arabic grammar coloring system demonstrates:
+
 - ✅ High accuracy (95-98% estimated)
 - ✅ Strong protection against false positives
 - ✅ Comprehensive test coverage (204 tests passing)

@@ -12,7 +12,6 @@ import {
   withSpring,
 } from 'react-native-reanimated';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
@@ -59,157 +58,159 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
   const chartColors = useChartColors();
   const { chartData } = useRetrievabilityChart(studyWords);
 
-    // Get current retention value from the chart data
-    const currentRetention = chartData.insights.currentRetrievability;
+  // Get current retention value from the chart data
+  const currentRetention = chartData.insights.currentRetrievability;
 
-    // Animated retention value using Reanimated
-    const retentionShared = useSharedValue(0);
-    const [animatedRetention, setAnimatedRetention] = useState(0);
+  // Animated retention value using Reanimated
+  const retentionShared = useSharedValue(0);
+  const [animatedRetention, setAnimatedRetention] = useState(0);
 
-    // Cleanup animation on unmount
-    useEffect(() => {
-      return () => {
-        try {
-          cancelAnimation(retentionShared);
-          retentionShared.value = 0;
-        } catch {
-          // Animation cleanup failed - continue
-        }
-      };
-    }, [retentionShared]);
-
-    // Track previous retention to detect when entering green area
-    const prevRetentionRef = useRef(0);
-    const hasTriggeredGreenHapticRef = useRef(false);
-
-    useEffect(() => {
-      const next = Math.max(0, Math.min(100, currentRetention));
-      const delta = Math.abs(retentionShared.get() - next);
-      if (delta < 0.5) return;
-
-      // Check if we're entering the green area (75%+) for the first time
-      const wasBelowGreen = prevRetentionRef.current < MEMORY_CAPACITY_THRESHOLDS.GOOD;
-      const isNowGreen = next >= MEMORY_CAPACITY_THRESHOLDS.GOOD;
-
-      if (wasBelowGreen && isNowGreen && !hasTriggeredGreenHapticRef.current) {
-        // Trigger celebratory haptic feedback when entering green area
-        // Sequence: success + medium impact for a strong dopamine hit
-        successFeedback();
-        setTimeout(() => mediumFeedback(), TIMING_CONFIG.FAST.duration); // Small delay for distinct feel
-        hasTriggeredGreenHapticRef.current = true;
+  // Cleanup animation on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        cancelAnimation(retentionShared);
+        retentionShared.value = 0;
+      } catch {
+        // Animation cleanup failed - continue
       }
+    };
+  }, [retentionShared]);
 
-      // Reset haptic trigger if user drops below green area
-      if (next < MEMORY_CAPACITY_THRESHOLDS.GOOD) {
-        hasTriggeredGreenHapticRef.current = false;
-      }
+  // Track previous retention to detect when entering green area
+  const prevRetentionRef = useRef(0);
+  const hasTriggeredGreenHapticRef = useRef(false);
 
-      // Update previous retention
-      prevRetentionRef.current = next;
+  useEffect(() => {
+    const next = Math.max(0, Math.min(100, currentRetention));
+    const delta = Math.abs(retentionShared.get() - next);
+    if (delta < 0.5) return;
 
-      retentionShared.set(withSpring(next, {
+    // Check if we're entering the green area (75%+) for the first time
+    const wasBelowGreen = prevRetentionRef.current < MEMORY_CAPACITY_THRESHOLDS.GOOD;
+    const isNowGreen = next >= MEMORY_CAPACITY_THRESHOLDS.GOOD;
+
+    if (wasBelowGreen && isNowGreen && !hasTriggeredGreenHapticRef.current) {
+      // Trigger celebratory haptic feedback when entering green area
+      // Sequence: success + medium impact for a strong dopamine hit
+      successFeedback();
+      setTimeout(() => mediumFeedback(), TIMING_CONFIG.FAST.duration); // Small delay for distinct feel
+      hasTriggeredGreenHapticRef.current = true;
+    }
+
+    // Reset haptic trigger if user drops below green area
+    if (next < MEMORY_CAPACITY_THRESHOLDS.GOOD) {
+      hasTriggeredGreenHapticRef.current = false;
+    }
+
+    // Update previous retention
+    prevRetentionRef.current = next;
+
+    retentionShared.set(
+      withSpring(next, {
         ...SPRING_CONFIG.CARD,
         overshootClamping: true, // Prevent going beyond target value
-      }));
-    }, [currentRetention, retentionShared]);
-
-    // Push only rounded values to JS to limit re-renders
-    useAnimatedReaction(
-      () => Math.round(retentionShared.get()),
-      (rounded, prev) => {
-        if (rounded !== prev) {
-          runOnJS(setAnimatedRetention)(rounded);
-        }
-      }
+      }),
     );
+  }, [currentRetention, retentionShared]);
 
-    // Static geometry values
-    const sweep = (animatedRetention / 100) * TOTAL_SWEEP;
-
-    // React Compiler auto-memoizes
-    const animatedFilledPath = Skia.Path.Make();
-    animatedFilledPath.addArc(GAUGE_BOUNDS, START_ANGLE, sweep);
-
-    // Create full background track path (React Compiler auto-memoizes)
-    const backgroundTrackPath = Skia.Path.Make();
-    backgroundTrackPath.addArc(GAUGE_BOUNDS, START_ANGLE, TOTAL_SWEEP);
-
-    // Determine color based on retention thresholds
-    const getRetentionColor = () => {
-      if (animatedRetention < RETENTION_THRESHOLDS.POOR) {
-        return chartColors.performance.poor; // Red
-      } else if (animatedRetention < RETENTION_THRESHOLDS.MODERATE) {
-        return chartColors.performance.moderate; // Orange
-      } else {
-        return chartColors.performance.excellent; // Green
+  // Push only rounded values to JS to limit re-renders
+  useAnimatedReaction(
+    () => Math.round(retentionShared.get()),
+    (rounded, prev) => {
+      if (rounded !== prev) {
+        runOnJS(setAnimatedRetention)(rounded);
       }
-    };
+    },
+  );
 
-    const retentionColor = getRetentionColor();
+  // Static geometry values
+  const sweep = (animatedRetention / 100) * TOTAL_SWEEP;
 
-    // React Compiler auto-memoizes
-    const dynamicStyles = {
-      retentionText: { color: retentionColor },
-    };
+  // React Compiler auto-memoizes
+  const animatedFilledPath = Skia.Path.Make();
+  animatedFilledPath.addArc(GAUGE_BOUNDS, START_ANGLE, sweep);
 
-    return (
-      <BaseChart
-        contentHeight={GAUGE_HEIGHT + 20}
-        hasData={true}
-        hideTitle={true}
-        onCardPress={onInfoPress}
-      >
-        <View style={styles.container}>
-          {/* Chevron indicator in top-right corner */}
-          <View style={styles.chevronContainer}>
-            <Ionicons
-              name="chevron-forward"
-              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-              color={colors.disabled}
-            />
-          </View>
+  // Create full background track path (React Compiler auto-memoizes)
+  const backgroundTrackPath = Skia.Path.Make();
+  backgroundTrackPath.addArc(GAUGE_BOUNDS, START_ANGLE, TOTAL_SWEEP);
 
-          <View style={styles.gaugeContainer}>
-            <Canvas style={styles.canvas}>
-              <Group>
-                {/* Full background track - always shows complete arc from 0% to 100% */}
-                <Path
-                  color={colors.border}
-                  path={backgroundTrackPath}
-                  strokeCap="round"
-                  strokeWidth={GAUGE_STROKE_WIDTH}
-                  style="stroke"
-                />
+  // Determine color based on retention thresholds
+  const getRetentionColor = () => {
+    if (animatedRetention < RETENTION_THRESHOLDS.POOR) {
+      return chartColors.performance.poor; // Red
+    } else if (animatedRetention < RETENTION_THRESHOLDS.MODERATE) {
+      return chartColors.performance.moderate; // Orange
+    } else {
+      return chartColors.performance.excellent; // Green
+    }
+  };
 
-                {/* Filled portion - shows current progress */}
-                <Path
-                  path={animatedFilledPath}
-                  strokeCap="round"
-                  strokeWidth={GAUGE_STROKE_WIDTH}
-                  color={retentionColor}
-                  style="stroke"
-                />
-              </Group>
-            </Canvas>
+  const retentionColor = getRetentionColor();
 
-            {/* Center percentage - positioned to not block touch events */}
-            <View style={styles.centerSection} pointerEvents="none">
-              <ThemedText style={[styles.retentionText, dynamicStyles.retentionText]}>
-                {Math.round(animatedRetention)}%
-              </ThemedText>
-            </View>
+  // React Compiler auto-memoizes
+  const dynamicStyles = {
+    retentionText: { color: retentionColor },
+  };
 
-            {/* Transparent touch overlay to ensure entire gauge area is tappable */}
-            <Pressable style={styles.touchOverlay} onPress={onInfoPress} pointerEvents="box-only" />
-          </View>
-
-          {/* Memory Strength label below gauge */}
-          <ThemedText type="caption" colorName="textTertiary" style={styles.memoryStrengthLabel}>
-            {STRINGS.MEMORY_STRENGTH}
-          </ThemedText>
+  return (
+    <BaseChart
+      contentHeight={GAUGE_HEIGHT + 20}
+      hasData={true}
+      hideTitle={true}
+      onCardPress={onInfoPress}
+    >
+      <View style={styles.container}>
+        {/* Chevron indicator in top-right corner */}
+        <View style={styles.chevronContainer}>
+          <Ionicons
+            name="chevron-forward"
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            color={colors.disabled}
+          />
         </View>
-      </BaseChart>
-    );
+
+        <View style={styles.gaugeContainer}>
+          <Canvas style={styles.canvas}>
+            <Group>
+              {/* Full background track - always shows complete arc from 0% to 100% */}
+              <Path
+                color={colors.border}
+                path={backgroundTrackPath}
+                strokeCap="round"
+                strokeWidth={GAUGE_STROKE_WIDTH}
+                style="stroke"
+              />
+
+              {/* Filled portion - shows current progress */}
+              <Path
+                path={animatedFilledPath}
+                strokeCap="round"
+                strokeWidth={GAUGE_STROKE_WIDTH}
+                color={retentionColor}
+                style="stroke"
+              />
+            </Group>
+          </Canvas>
+
+          {/* Center percentage - positioned to not block touch events */}
+          <View style={styles.centerSection} pointerEvents="none">
+            <ThemedText style={[styles.retentionText, dynamicStyles.retentionText]}>
+              {Math.round(animatedRetention)}%
+            </ThemedText>
+          </View>
+
+          {/* Transparent touch overlay to ensure entire gauge area is tappable */}
+          <Pressable style={styles.touchOverlay} onPress={onInfoPress} pointerEvents="box-only" />
+        </View>
+
+        {/* Memory Strength label below gauge */}
+        <ThemedText type="caption" colorName="textTertiary" style={styles.memoryStrengthLabel}>
+          {STRINGS.MEMORY_STRENGTH}
+        </ThemedText>
+      </View>
+    </BaseChart>
+  );
 }
 
 MemoryRetentionGauge.displayName = 'MemoryRetentionGauge';
@@ -264,4 +265,3 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 });
-

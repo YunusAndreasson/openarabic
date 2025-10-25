@@ -3,7 +3,6 @@ import { memo, useMemo } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
-
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui/IconButton';
@@ -112,141 +111,140 @@ const MiniPlayerComponent = ({
         ...LAYOUT.ELEVATION.MEDIUM,
       },
     ],
-    [colors.elevation2]
+    [colors.elevation2],
   );
 
-    // Memoize button colors
-    const timerButtonColor = useMemo(
-      () => (isTimerActive ? colors.warning : colors.elevation3),
-      [isTimerActive, colors.warning, colors.elevation3]
-    );
+  // Memoize button colors
+  const timerButtonColor = useMemo(
+    () => (isTimerActive ? colors.warning : colors.elevation3),
+    [isTimerActive, colors.warning, colors.elevation3],
+  );
 
-    const timerIconColor = useMemo(
-      () => (isTimerActive ? colors.background : colors.secondaryText),
-      [isTimerActive, colors.background, colors.secondaryText]
-    );
+  const timerIconColor = useMemo(
+    () => (isTimerActive ? colors.background : colors.secondaryText),
+    [isTimerActive, colors.background, colors.secondaryText],
+  );
 
-    // Calculate progress percentage
-    const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
+  // Calculate progress percentage
+  const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
 
-    // Format time display with current position and total duration
-    const timeDisplay = useMemo(() => {
-      const currentTime = formatSecondsToClock(position);
-      const totalTime = formatSecondsToClock(duration);
-      return `${currentTime} / ${totalTime}`;
-    }, [position, duration]);
+  // Format time display with current position and total duration
+  const timeDisplay = useMemo(() => {
+    const currentTime = formatSecondsToClock(position);
+    const totalTime = formatSecondsToClock(duration);
+    return `${currentTime} / ${totalTime}`;
+  }, [position, duration]);
 
-    // Format queue position display
-    const queueDisplay = useMemo(() => {
-      if (queuePosition && queuePosition.total > 1) {
-        return `${queuePosition.current} of ${queuePosition.total}`;
-      }
-      return null;
-    }, [queuePosition]);
+  // Format queue position display
+  const queueDisplay = useMemo(() => {
+    if (queuePosition && queuePosition.total > 1) {
+      return `${queuePosition.current} of ${queuePosition.total}`;
+    }
+    return null;
+  }, [queuePosition]);
 
-    return (
-      <Animated.View
-        entering={FadeInUp.delay(150).duration(TIMING_CONFIG.GENTLE.duration)}
-        exiting={FadeOutDown.duration(200)}
-        style={CONTAINER_STYLE}
-      >
-        <View style={cardStyle}>
-          {/* Main Content Row */}
-          <View style={styles.contentRow}>
-            {/* Artwork */}
-            <View style={styles.artworkContainer}>
-              <EnhancedImage
-                source={imageUrl}
-                style={styles.artwork}
-                priority="high"
-                transition={0}
-                recyclingKey={imageUrl}
-              />
-            </View>
+  return (
+    <Animated.View
+      entering={FadeInUp.delay(150).duration(TIMING_CONFIG.GENTLE.duration)}
+      exiting={FadeOutDown.duration(200)}
+      style={CONTAINER_STYLE}
+    >
+      <View style={cardStyle}>
+        {/* Main Content Row */}
+        <View style={styles.contentRow}>
+          {/* Artwork */}
+          <View style={styles.artworkContainer}>
+            <EnhancedImage
+              source={imageUrl}
+              style={styles.artwork}
+              priority="high"
+              transition={0}
+              recyclingKey={imageUrl}
+            />
+          </View>
 
-            {/* Text Content and Time Display Column */}
-            <View style={styles.textColumn}>
-              {/* Text Content */}
-              <View style={styles.textContent}>
+          {/* Text Content and Time Display Column */}
+          <View style={styles.textColumn}>
+            {/* Text Content */}
+            <View style={styles.textContent}>
+              <ThemedText
+                colorName="headingText"
+                style={styles.title}
+                type="heading3"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {article.title}
+              </ThemedText>
+
+              <View style={styles.metaRow}>
                 <ThemedText
-                  colorName="headingText"
-                  style={styles.title}
-                  type="heading3"
+                  colorName="secondaryText"
+                  style={styles.artist}
+                  type="caption"
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
-                  {article.title}
+                  {article.author || 'Unknown Author'}
                 </ThemedText>
-
-                <View style={styles.metaRow}>
-                  <ThemedText
-                    colorName="secondaryText"
-                    style={styles.artist}
-                    type="caption"
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {article.author || 'Unknown Author'}
-                  </ThemedText>
-                </View>
-              </View>
-
-              {/* Time display and queue position - aligned with text content left margin */}
-              <View style={styles.timeAndQueueRow}>
-                <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
-                  {timeDisplay}
-                </ThemedText>
-                {/* Queue position indicator - placed after duration */}
-                {queueDisplay && (
-                  <ThemedText colorName="tint" style={styles.queuePosition} type="caption">
-                    {queueDisplay}
-                  </ThemedText>
-                )}
               </View>
             </View>
 
-            {/* Controls */}
-            <View style={styles.controlsContainer}>
-              {/* Timer button - always visible with state indication */}
-              <IconButton
-                icon="timer"
-                onPress={onTimerPress}
-                backgroundColor={timerButtonColor}
-                iconColor={timerIconColor}
-                iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              />
-
-              {/* Stop button - playback is only started via PLAY ALL */}
-              <IconButton
-                icon="stop"
-                onPress={onPlayPause}
-                backgroundColor={colors.tint}
-                iconColor={colors.black}
-                iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              />
+            {/* Time display and queue position - aligned with text content left margin */}
+            <View style={styles.timeAndQueueRow}>
+              <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
+                {timeDisplay}
+              </ThemedText>
+              {/* Queue position indicator - placed after duration */}
+              {queueDisplay && (
+                <ThemedText colorName="tint" style={styles.queuePosition} type="caption">
+                  {queueDisplay}
+                </ThemedText>
+              )}
             </View>
           </View>
 
-          {/* Progress Bar - at bottom like Apple Music */}
-          <View style={styles.progressContainer} pointerEvents="none">
-            <ProgressBar
-              progress={progressPercentage}
-              height={PROGRESS_HEIGHT}
-              style={styles.progressBar}
-              fillColor={colors.tint}
-              backgroundColor={colors.border}
+          {/* Controls */}
+          <View style={styles.controlsContainer}>
+            {/* Timer button - always visible with state indication */}
+            <IconButton
+              icon="timer"
+              onPress={onTimerPress}
+              backgroundColor={timerButtonColor}
+              iconColor={timerIconColor}
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            />
+
+            {/* Stop button - playback is only started via PLAY ALL */}
+            <IconButton
+              icon="stop"
+              onPress={onPlayPause}
+              backgroundColor={colors.tint}
+              iconColor={colors.black}
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
             />
           </View>
         </View>
-      </Animated.View>
-    );
+
+        {/* Progress Bar - at bottom like Apple Music */}
+        <View style={styles.progressContainer} pointerEvents="none">
+          <ProgressBar
+            progress={progressPercentage}
+            height={PROGRESS_HEIGHT}
+            style={styles.progressBar}
+            fillColor={colors.tint}
+            backgroundColor={colors.border}
+          />
+        </View>
+      </View>
+    </Animated.View>
+  );
 };
 
 // Export with custom comparison for optimal performance
 export const MiniPlayer = memo<MiniPlayerProps>(MiniPlayerComponent, MiniPlayerComparison);
 
 MiniPlayer.displayName = 'MiniPlayer';
-
 
 const styles = StyleSheet.create({
   card: {

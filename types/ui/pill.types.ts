@@ -28,5 +28,4 @@ export interface PillProps {
    * Variant of the pill
    */
   variant?: 'filter' | 'category';
-
 }

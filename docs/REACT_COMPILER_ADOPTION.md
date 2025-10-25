@@ -28,6 +28,7 @@ React Compiler (formerly React Forget) is an automatic optimization tool that el
 ### When to Opt-Out (`'use no memo'`)
 
 Add `'use no memo';` directive at the top of files that:
+
 - Use Reanimated's `.value` API for mutations
 - Use `useSharedValue` with direct `.value` assignments
 - Have Skia canvas operations
@@ -42,6 +43,7 @@ Add `'use no memo';` directive at the top of files that:
 ### Phase 1: Foundation ✅ COMPLETE
 
 **React 19 Features Adopted**
+
 - ✅ Removed `forwardRef` wrapper (2 files) - refs now standard props
 - ✅ Simplified Context Providers (4 files) - removed `.Provider` syntax
 - ✅ Enabled `reactCompiler: true` in app.json
@@ -53,6 +55,7 @@ Add `'use no memo';` directive at the top of files that:
 ### Phase 2: Code Cleanup 🔄 IN PROGRESS
 
 **Goals**:
+
 1. ✅ Identify and remove redundant React.memo wrappers (24 removed, 18 remaining)
 2. 🔄 Remove unnecessary useMemo/useCallback (49 removed, ~314 remaining)
 3. 🔄 Simplify custom comparison functions (5 removed: ReviewHeader, ReviewBottomActions, SleepTimer, HorizontalFeaturedSection, IntelligentArticleSection)
@@ -63,6 +66,7 @@ Add `'use no memo';` directive at the top of files that:
 ### Phase 3: Systematic Migration 📋 PENDING
 
 **Approach**:
+
 - Simple UI components → Let Compiler optimize (remove manual memoization)
 - Complex components → Evaluate case-by-case
 - Reanimated components → Keep protected with `'use no memo'`
@@ -81,6 +85,7 @@ Add `'use no memo';` directive at the top of files that:
 ### A. React.memo Without Custom Comparison
 
 **Pattern to Remove**:
+
 ```typescript
 // ❌ BEFORE - Redundant with Compiler
 export const SimpleComponent = React.memo(({ text, onPress }) => {
@@ -94,11 +99,13 @@ export function SimpleComponent({ text, onPress }) {
 ```
 
 **Evaluation Criteria**:
+
 - Component has primitive props only → Safe to remove
 - Component is presentational → Safe to remove
 - No complex prop transformations → Safe to remove
 
 **Keep React.memo if**:
+
 - Custom comparison function with business logic
 - Performance verified as critical via profiling
 - Inside `'use no memo'` files
@@ -106,6 +113,7 @@ export function SimpleComponent({ text, onPress }) {
 ### B. Manual useMemo/useCallback
 
 **Pattern to Remove**:
+
 ```typescript
 // ❌ BEFORE - Compiler handles automatically
 const expensiveValue = useMemo(() => data.map(processItem), [data]);
@@ -117,6 +125,7 @@ const handleClick = () => onClick(id);
 ```
 
 **When to KEEP manual memoization**:
+
 - Inside `'use no memo'` files (Reanimated code)
 - Memoizing refs or DOM/layout measurements
 - Cross-render dependencies (intentional stale closures)
@@ -125,6 +134,7 @@ const handleClick = () => onClick(id);
 ### C. Custom Comparison Functions
 
 **Pattern to Remove**:
+
 ```typescript
 // ❌ BEFORE - Simple equality, Compiler handles
 const MyComponent = React.memo(
@@ -142,6 +152,7 @@ export function MyComponent({ id, name, count }) {
 ```
 
 **Keep custom comparison if**:
+
 - Deep equality checks on nested objects
 - Specialized business logic (e.g., skip updates during animation)
 - Performance improvement verified by measurements
@@ -149,6 +160,7 @@ export function MyComponent({ id, name, count }) {
 ### D. Static Extraction Patterns
 
 **Potentially Remove**:
+
 ```typescript
 // ❌ BEFORE - Manually extracted
 const EMPTY_ARRAY = [];
@@ -165,6 +177,7 @@ function Component() {
 ```
 
 **KEEP extraction for**:
+
 - StyleSheet.create() calls (React Native optimization)
 - True constants used across multiple files
 - Large data structures (>100 lines)
@@ -176,15 +189,16 @@ function Component() {
 
 ### ✅ Already Removed (Phases 1 & 2)
 
-| Code Type | Files Changed | Lines Removed | Status |
-|-----------|---------------|---------------|--------|
-| forwardRef wrappers | 2 | ~8 | ✅ Complete |
-| .Provider suffix | 4 | ~4 | ✅ Complete |
-| React.memo (simple + custom comparison) | 34 | ~380 | ✅ Complete |
-| useMemo/useCallback (simple) | 31 | ~605 | ✅ Complete |
-| **Total** | **39** | **~987** | **✅ Complete** |
+| Code Type                               | Files Changed | Lines Removed | Status          |
+| --------------------------------------- | ------------- | ------------- | --------------- |
+| forwardRef wrappers                     | 2             | ~8            | ✅ Complete     |
+| .Provider suffix                        | 4             | ~4            | ✅ Complete     |
+| React.memo (simple + custom comparison) | 34            | ~380          | ✅ Complete     |
+| useMemo/useCallback (simple)            | 31            | ~605          | ✅ Complete     |
+| **Total**                               | **39**        | **~987**      | **✅ Complete** |
 
 **Phase 1 Files** (React 19 Native Features):
+
 - ✅ `components/ThemedInput.tsx` - removed forwardRef
 - ✅ `components/library/ArticleList.tsx` - removed forwardRef
 - ✅ `components/providers/ToastProvider.tsx` - removed .Provider
@@ -193,6 +207,7 @@ function Component() {
 - ✅ `hooks/vocabulary/FSRSDataProvider.tsx` - removed .Provider
 
 **Phase 2 Files - Batch 1** (Simple UI Components):
+
 - ✅ `components/ui/Pill.tsx` - removed React.memo, 3 useCallback, 4 useMemo
 - ✅ `components/ui/DoneButton.tsx` - removed React.memo, 1 useCallback
 - ✅ `components/common/ListSeparator.tsx` - removed React.memo
@@ -200,53 +215,63 @@ function Component() {
 - ✅ `components/common/ErrorState.tsx` - removed React.memo
 
 **Phase 2 Files - Batch 2** (Additional Simple Components):
+
 - ✅ `components/Toast.tsx` - removed React.memo, 3 useMemo
 - ✅ `components/library/HijriDateFooter.tsx` - removed React.memo, 1 useMemo
 - ✅ `components/account/SocialMediaIcons.tsx` - removed React.memo, 1 useCallback
 - ✅ `components/ui/DictionaryButton.tsx` - removed React.memo, 1 useCallback
 
 **Phase 2 Files - Batch 3** (Review Components):
+
 - ✅ `components/review/ReviewBottomActions.tsx` - removed React.memo with useless comparison, 6 useMemo
 - ✅ `components/review/ReviewHeader.tsx` - removed React.memo with custom comparison, 3 useMemo, 1 useCallback
 
 **Phase 2 Files - Batch 4** (Bottom Sheet & Study Components):
+
 - ✅ `components/bookmarks/SleepTimer.tsx` - removed React.memo with custom comparison, 1 useMemo, 4 useCallback
 - ✅ `components/study/VocabularyStatCards.tsx` - removed 2 React.memo (parent + nested StatCard), 1 useMemo
 
 **Phase 2 Files - Batch 5** (UI & Bottom Sheet Components):
+
 - ✅ `components/library/FilterSection.tsx` - removed 3 React.memo (SubtleDivider, CompactNavCard, FilterSection), 2 useMemo, 1 useCallback
 - ✅ `components/ui/TimePicker.tsx` - removed React.memo, 1 useMemo, 4 useCallback
 - ✅ `components/account/ArabicFontSelector.tsx` - removed React.memo (FontPreviewCard), 1 useMemo, 4 useCallback
 - ✅ `components/study/GenericChartBottomSheet.tsx` - removed React.memo, 1 useMemo
 
 **Phase 2 Files - Batch 6** (Article & Chart Components):
+
 - ✅ `components/library/HorizontalFeaturedSection.tsx` - removed React.memo with custom comparison, 1 useMemo
 - ✅ `components/library/IntelligentArticleSection.tsx` - removed React.memo with custom comparison
 - ✅ `components/common/charts/ChartGrid.tsx` - removed React.memo, 2 useMemo
 - ✅ `components/common/charts/BaseChart.tsx` - removed React.memo, 2 useMemo
 
 **Phase 2 Files - Batch 7** (Foundation & Tooltip Components):
+
 - ✅ `components/ui/Toggle.tsx` - removed React.memo, 5 useMemo, 1 useCallback
 - ✅ `components/ThemedView.tsx` - removed React.memo, 3 useMemo
 - ✅ `components/EnhancedImage.tsx` - removed React.memo with custom comparison, 3 useMemo
 - ✅ `components/article/WordTooltip.tsx` - removed React.memo with custom comparison, 7 useMemo, 2 useCallback
 
 **Phase 2 Files - Batch 8** (List, Review & Bottom Sheet Components):
+
 - ✅ `components/library/ArticleList.tsx` - removed React.memo, 2 useMemo, 4 useCallback
 - ✅ `components/review/WordDisplay.tsx` - removed React.memo with custom comparison, 7 useMemo
 - ✅ `components/article/WordDetailsBottomSheet.tsx` - removed React.memo with custom comparison, 1 useMemo, 2 useCallback
 
 **Phase 2 Files - Batch 9** (Performance-Critical List Components):
+
 - ✅ `components/library/ArticleCard.tsx` - removed React.memo with custom comparison (40-line ArticleCardComparison), 4 useMemo, 1 useCallback
 - ✅ `components/review/ReviewCard.tsx` - removed React.memo with custom comparison (ReviewCardComparison), 6 useMemo, 1 useCallback
 - ✅ `components/article/ArticleSentence.tsx` - removed React.memo with custom comparison (40+ line ArticleSentenceComparison), 3 useMemo
 
 **Phase 2 Files - Batch 10** (Foundation Components):
+
 - ✅ `components/ThemedButton.tsx` - removed React.memo, 5 useMemo, 1 useCallback
 - ✅ `components/ThemedText.tsx` - removed React.memo, 1 useMemo
 - ✅ `components/bookmarks/ListenListItemCard.tsx` - removed React.memo with custom comparison (10+ prop checks), 2 useMemo
 
 **Phase 2 Files - Batch 11** (Final Cleanup - Complex Components):
+
 - ✅ `components/article/ArabicWord.tsx` - removed React.memo with custom comparison (10+ checks), 3 useCallback, 6 useMemo
 - ✅ `components/library/FilteredArticleView.tsx` - removed React.memo with custom comparison, 5 useCallback, 4 useMemo
 - ✅ `components/common/BaseCard.tsx` - removed React.memo, 4 useMemo
@@ -254,61 +279,63 @@ function Component() {
 ### 🔍 Remaining Components (Protected Reanimated Files)
 
 **Current Stats** (from codebase search):
+
 - Components with `React.memo`: 3 remaining (40 removed, 43 total found - **all 3 are protected Reanimated files**)
 - Files with `useMemo/useCallback`: 67 files (~202 occurrences remaining)
 - Protected Reanimated files: 14 files
 
-| Component/File | Optimization Type | Complexity | Priority | Status |
-|----------------|-------------------|------------|----------|--------|
-| components/ui/Toggle.tsx | React.memo + 5 useMemo + 1 useCallback | Medium | High | ✅ Complete |
-| components/ui/Pill.tsx | React.memo + useMemo/useCallback | Low | High | ✅ Complete |
-| components/ui/IconButton.tsx | No React.memo | Low | - | ✅ Already Good |
-| components/ui/DoneButton.tsx | React.memo + useCallback | Low | High | ✅ Complete |
-| components/ui/DictionaryButton.tsx | React.memo + useCallback | Low | High | ✅ Complete |
-| components/common/ListSeparator.tsx | React.memo | Low | High | ✅ Complete |
-| components/common/EmptyState.tsx | React.memo | Low | High | ✅ Complete |
-| components/common/ErrorState.tsx | React.memo | Low | High | ✅ Complete |
-| components/Toast.tsx | React.memo + useMemo | Low | High | ✅ Complete |
-| components/library/HijriDateFooter.tsx | React.memo + useMemo | Low | High | ✅ Complete |
-| components/account/SocialMediaIcons.tsx | React.memo + useCallback | Low | High | ✅ Complete |
-| components/review/ReviewHeader.tsx | React.memo + custom compare | Low | High | ✅ Complete |
-| components/review/ReviewBottomActions.tsx | React.memo + useless compare | Low | High | ✅ Complete |
-| components/bookmarks/SleepTimer.tsx | React.memo + custom compare + useCallback | Low | High | ✅ Complete |
-| components/study/VocabularyStatCards.tsx | React.memo + nested memo + useMemo | Low | High | ✅ Complete |
-| components/library/FilterSection.tsx | React.memo + nested memos + useCallback | Low | High | ✅ Complete |
-| components/ui/TimePicker.tsx | React.memo + useMemo + useCallback | Low | High | ✅ Complete |
-| components/account/ArabicFontSelector.tsx | React.memo (nested) + useCallback + useMemo | Low | High | ✅ Complete |
-| components/study/GenericChartBottomSheet.tsx | React.memo + useMemo | Low | High | ✅ Complete |
-| components/library/HorizontalFeaturedSection.tsx | React.memo + custom compare + useMemo | Low | High | ✅ Complete |
-| components/library/IntelligentArticleSection.tsx | React.memo + custom compare | Low | High | ✅ Complete |
-| components/common/charts/ChartGrid.tsx | React.memo + useMemo | Low | High | ✅ Complete |
-| components/common/charts/BaseChart.tsx | React.memo + useMemo | Low | High | ✅ Complete |
-| components/ui/Toggle.tsx | React.memo + 5 useMemo + 1 useCallback | Medium | High | ✅ Complete |
-| components/ThemedView.tsx | React.memo + 3 useMemo | Medium | High | ✅ Complete |
-| components/EnhancedImage.tsx | React.memo + custom compare + 3 useMemo | Medium | High | ✅ Complete |
-| components/article/WordTooltip.tsx | React.memo + custom compare + 7 useMemo + 2 useCallback | Medium | High | ✅ Complete |
-| components/library/ArticleList.tsx | React.memo + 2 useMemo + 4 useCallback | Medium | High | ✅ Complete |
-| components/review/WordDisplay.tsx | React.memo + custom compare + 7 useMemo | Medium | High | ✅ Complete |
-| components/article/WordDetailsBottomSheet.tsx | React.memo + custom compare + 1 useMemo + 2 useCallback | Medium | High | ✅ Complete |
-| components/library/ArticleCard.tsx | React.memo + custom compare + 4 useMemo + 1 useCallback | High | High | ✅ Complete |
-| components/review/ReviewCard.tsx | React.memo + custom compare + 6 useMemo + 1 useCallback | High | High | ✅ Complete |
-| components/article/ArticleSentence.tsx | React.memo + custom compare + 3 useMemo | High | Medium | ✅ Complete |
-| components/ThemedButton.tsx | React.memo + 5 useMemo + 1 useCallback | Medium | High | ✅ Complete |
-| components/ThemedText.tsx | React.memo + 1 useMemo | Medium | High | ✅ Complete |
-| components/bookmarks/ListenListItemCard.tsx | React.memo + custom compare + 2 useMemo | Medium | High | ✅ Complete |
-| components/article/ArabicWord.tsx | React.memo + custom compare + 3 useCallback + 6 useMemo | High | High | ✅ Complete |
-| components/library/FilteredArticleView.tsx | React.memo + custom compare + 5 useCallback + 4 useMemo | High | High | ✅ Complete |
-| components/common/BaseCard.tsx | React.memo + 4 useMemo | Medium | High | ✅ Complete |
+| Component/File                                   | Optimization Type                                       | Complexity | Priority | Status          |
+| ------------------------------------------------ | ------------------------------------------------------- | ---------- | -------- | --------------- |
+| components/ui/Toggle.tsx                         | React.memo + 5 useMemo + 1 useCallback                  | Medium     | High     | ✅ Complete     |
+| components/ui/Pill.tsx                           | React.memo + useMemo/useCallback                        | Low        | High     | ✅ Complete     |
+| components/ui/IconButton.tsx                     | No React.memo                                           | Low        | -        | ✅ Already Good |
+| components/ui/DoneButton.tsx                     | React.memo + useCallback                                | Low        | High     | ✅ Complete     |
+| components/ui/DictionaryButton.tsx               | React.memo + useCallback                                | Low        | High     | ✅ Complete     |
+| components/common/ListSeparator.tsx              | React.memo                                              | Low        | High     | ✅ Complete     |
+| components/common/EmptyState.tsx                 | React.memo                                              | Low        | High     | ✅ Complete     |
+| components/common/ErrorState.tsx                 | React.memo                                              | Low        | High     | ✅ Complete     |
+| components/Toast.tsx                             | React.memo + useMemo                                    | Low        | High     | ✅ Complete     |
+| components/library/HijriDateFooter.tsx           | React.memo + useMemo                                    | Low        | High     | ✅ Complete     |
+| components/account/SocialMediaIcons.tsx          | React.memo + useCallback                                | Low        | High     | ✅ Complete     |
+| components/review/ReviewHeader.tsx               | React.memo + custom compare                             | Low        | High     | ✅ Complete     |
+| components/review/ReviewBottomActions.tsx        | React.memo + useless compare                            | Low        | High     | ✅ Complete     |
+| components/bookmarks/SleepTimer.tsx              | React.memo + custom compare + useCallback               | Low        | High     | ✅ Complete     |
+| components/study/VocabularyStatCards.tsx         | React.memo + nested memo + useMemo                      | Low        | High     | ✅ Complete     |
+| components/library/FilterSection.tsx             | React.memo + nested memos + useCallback                 | Low        | High     | ✅ Complete     |
+| components/ui/TimePicker.tsx                     | React.memo + useMemo + useCallback                      | Low        | High     | ✅ Complete     |
+| components/account/ArabicFontSelector.tsx        | React.memo (nested) + useCallback + useMemo             | Low        | High     | ✅ Complete     |
+| components/study/GenericChartBottomSheet.tsx     | React.memo + useMemo                                    | Low        | High     | ✅ Complete     |
+| components/library/HorizontalFeaturedSection.tsx | React.memo + custom compare + useMemo                   | Low        | High     | ✅ Complete     |
+| components/library/IntelligentArticleSection.tsx | React.memo + custom compare                             | Low        | High     | ✅ Complete     |
+| components/common/charts/ChartGrid.tsx           | React.memo + useMemo                                    | Low        | High     | ✅ Complete     |
+| components/common/charts/BaseChart.tsx           | React.memo + useMemo                                    | Low        | High     | ✅ Complete     |
+| components/ui/Toggle.tsx                         | React.memo + 5 useMemo + 1 useCallback                  | Medium     | High     | ✅ Complete     |
+| components/ThemedView.tsx                        | React.memo + 3 useMemo                                  | Medium     | High     | ✅ Complete     |
+| components/EnhancedImage.tsx                     | React.memo + custom compare + 3 useMemo                 | Medium     | High     | ✅ Complete     |
+| components/article/WordTooltip.tsx               | React.memo + custom compare + 7 useMemo + 2 useCallback | Medium     | High     | ✅ Complete     |
+| components/library/ArticleList.tsx               | React.memo + 2 useMemo + 4 useCallback                  | Medium     | High     | ✅ Complete     |
+| components/review/WordDisplay.tsx                | React.memo + custom compare + 7 useMemo                 | Medium     | High     | ✅ Complete     |
+| components/article/WordDetailsBottomSheet.tsx    | React.memo + custom compare + 1 useMemo + 2 useCallback | Medium     | High     | ✅ Complete     |
+| components/library/ArticleCard.tsx               | React.memo + custom compare + 4 useMemo + 1 useCallback | High       | High     | ✅ Complete     |
+| components/review/ReviewCard.tsx                 | React.memo + custom compare + 6 useMemo + 1 useCallback | High       | High     | ✅ Complete     |
+| components/article/ArticleSentence.tsx           | React.memo + custom compare + 3 useMemo                 | High       | Medium   | ✅ Complete     |
+| components/ThemedButton.tsx                      | React.memo + 5 useMemo + 1 useCallback                  | Medium     | High     | ✅ Complete     |
+| components/ThemedText.tsx                        | React.memo + 1 useMemo                                  | Medium     | High     | ✅ Complete     |
+| components/bookmarks/ListenListItemCard.tsx      | React.memo + custom compare + 2 useMemo                 | Medium     | High     | ✅ Complete     |
+| components/article/ArabicWord.tsx                | React.memo + custom compare + 3 useCallback + 6 useMemo | High       | High     | ✅ Complete     |
+| components/library/FilteredArticleView.tsx       | React.memo + custom compare + 5 useCallback + 4 useMemo | High       | High     | ✅ Complete     |
+| components/common/BaseCard.tsx                   | React.memo + 4 useMemo                                  | Medium     | High     | ✅ Complete     |
 
 ### ⚠️ Keep Manual Optimization (Protected Reanimated Files)
 
 **React.memo components that must be kept** (3 files with `'use no memo'` directive):
+
 - `components/common/charts/ChartCanvas.tsx` - Chart interactivity with .value mutations
 - `components/common/ProgressBar.tsx` - Progress animations with .value
 - `components/account/AccountBadge.tsx` - Profile photo animations with .value
 
-| File Category | Optimization | Reason | Migrateable? |
-|------|--------------|--------|--------------|
+| File Category           | Optimization    | Reason          | Migrateable?             |
+| ----------------------- | --------------- | --------------- | ------------------------ |
 | All 14 Reanimated files | `'use no memo'` | Uses .value API | 🔮 Future: .get()/.set() |
 
 ---
@@ -318,6 +345,7 @@ function Component() {
 Files with `'use no memo'` directive **(14 total)**:
 
 ### Animation Hooks (5 files)
+
 1. ✅ `hooks/animations/useOpacityAnimation.ts` - Uses .value mutations for opacity
 2. ✅ `hooks/animations/useTransformAnimation.ts` - Uses .value mutations for transforms
 3. ✅ `hooks/animations/usePressAnimation.ts` - Uses .value mutations for press animations
@@ -325,21 +353,26 @@ Files with `'use no memo'` directive **(14 total)**:
 5. ✅ `hooks/gestures/useSwipeGesture.ts` - Uses .value mutations for swipe gestures
 
 ### Gesture Hooks (1 file)
+
 6. ✅ `hooks/gestures/usePanGesture.ts` - Uses .value mutations for pan gestures
 
 ### Review Logic (1 file)
+
 7. ✅ `hooks/review/useReview.tsx` - Complex Reanimated state management
 
 ### Article Components (2 files)
+
 8. ✅ `components/article/ArticleContent.tsx` - Scroll animations with .value
 9. ✅ `components/article/SentenceScrubber.tsx` - Scrubber gestures with .value
 
 ### UI Components (3 files)
+
 10. ✅ `components/account/AccountBadge.tsx` - Profile photo animations
 11. ✅ `components/common/ProgressBar.tsx` - Progress animations
 12. ✅ `components/ui/PulsatingLoader.tsx` - Pulsating animation
 
 ### Chart Components (2 files)
+
 13. ✅ `components/study/charts/MemoryRetentionGauge.tsx` - Gauge animations
 14. ✅ `components/common/charts/ChartCanvas.tsx` - Chart interactivity
 
@@ -370,16 +403,19 @@ grep -r "const.*STATIC\|const.*EMPTY" components/ --include="*.tsx"
 ### Step 2: Categorize Findings
 
 **Safe to Remove Immediately**:
+
 - React.memo on components with only primitive props
 - useMemo/useCallback with simple dependencies
 - Static arrays/objects that are tiny
 
 **Needs Testing Before Removal**:
+
 - React.memo with custom comparison logic
 - useMemo/useCallback in performance-critical paths
 - Components used in hot paths (lists, animations)
 
 **Keep (Document Reason)**:
+
 - All `'use no memo'` files
 - Verified performance optimizations
 - Cross-file constants
@@ -387,6 +423,7 @@ grep -r "const.*STATIC\|const.*EMPTY" components/ --include="*.tsx"
 ### Step 3: Remove Incrementally
 
 **Process**:
+
 1. Select 1-2 simple components
 2. Remove React.memo/useMemo/useCallback
 3. Run full test suite
@@ -396,6 +433,7 @@ grep -r "const.*STATIC\|const.*EMPTY" components/ --include="*.tsx"
 7. If issues, document and keep optimization
 
 **Commit Message Format**:
+
 ```
 refactor: remove redundant memoization from ComponentName
 
@@ -411,6 +449,7 @@ Verified no performance regression via React DevTools Profiler.
 ### Step 4: Measure Impact
 
 **Metrics to Track**:
+
 - ✅ Bundle size reduction
 - ✅ Lines of code removed
 - ✅ Test suite still passing
@@ -418,6 +457,7 @@ Verified no performance regression via React DevTools Profiler.
 - ✅ Developer experience improved
 
 **Tools**:
+
 - `yarn build` - Check bundle size
 - React DevTools Profiler - Measure re-renders
 - Lighthouse - Overall performance score
@@ -438,6 +478,7 @@ Verified no performance regression via React DevTools Profiler.
 - [ ] ✅ List scrolling performant (if applicable)
 
 **Full Regression Test**:
+
 - [ ] Dev server starts without errors
 - [ ] Navigate through all major screens
 - [ ] Test audio playback
@@ -492,18 +533,17 @@ const handleClick = () => onClick(id);
 import { useSharedValue } from 'react-native-reanimated';
 
 // ✅ Complex custom comparison logic
-const ComplexComponent = React.memo(
-  Component,
-  (prev, next) => complexBusinessLogic(prev, next)
-);
+const ComplexComponent = React.memo(Component, (prev, next) => complexBusinessLogic(prev, next));
 
 // ✅ StyleSheet.create (React Native optimization)
 const styles = StyleSheet.create({
-  container: { padding: 10 }
+  container: { padding: 10 },
 });
 
 // ✅ Large constants used across files
-export const LONG_DATA_ARRAY = [ /* 100+ items */ ];
+export const LONG_DATA_ARRAY = [
+  /* 100+ items */
+];
 ```
 
 ---
@@ -512,30 +552,30 @@ export const LONG_DATA_ARRAY = [ /* 100+ items */ ];
 
 ### Cleanup Stats (Updated: January 17, 2025 - Phase 2 Batch 11 COMPLETE ✅)
 
-| Metric | Current | Target | Progress |
-|--------|---------|--------|----------|
-| React.memo removed | **40** | ~15 | **267%** ✅ |
-| useMemo removed | **92** | ~100 | **92%** ✅ |
-| useCallback removed | **40** | ~263 | **15.2%** |
-| Total lines removed | **~1,240** | ~500 | **248%** ✅ |
-| Files simplified | **45** | ~50 | **90%** ✅ |
+| Metric              | Current    | Target | Progress    |
+| ------------------- | ---------- | ------ | ----------- |
+| React.memo removed  | **40**     | ~15    | **267%** ✅ |
+| useMemo removed     | **92**     | ~100   | **92%** ✅  |
+| useCallback removed | **40**     | ~263   | **15.2%**   |
+| Total lines removed | **~1,240** | ~500   | **248%** ✅ |
+| Files simplified    | **45**     | ~50    | **90%** ✅  |
 
 **🎉 React.memo cleanup COMPLETE!** All non-Reanimated components simplified (40/40 cleaned, 3 protected Reanimated files kept).
 
 ### Bundle Size Impact
 
-| Build Type | Before | After | Change |
-|------------|--------|-------|--------|
-| Development | TBD | TBD | TBD |
-| Production | TBD | TBD | TBD |
+| Build Type  | Before | After | Change |
+| ----------- | ------ | ----- | ------ |
+| Development | TBD    | TBD   | TBD    |
+| Production  | TBD    | TBD   | TBD    |
 
 ### Performance Metrics
 
-| Screen/Component | Before (re-renders) | After | Change |
-|------------------|---------------------|-------|--------|
-| Article Reader | TBD | TBD | TBD |
-| Vocabulary Review | TBD | TBD | TBD |
-| Library List | TBD | TBD | TBD |
+| Screen/Component  | Before (re-renders) | After | Change |
+| ----------------- | ------------------- | ----- | ------ |
+| Article Reader    | TBD                 | TBD   | TBD    |
+| Vocabulary Review | TBD                 | TBD   | TBD    |
+| Library List      | TBD                 | TBD   | TBD    |
 
 ---
 
@@ -546,6 +586,7 @@ export const LONG_DATA_ARRAY = [ /* 100+ items */ ];
 Once fully confident with React Compiler, consider migrating Reanimated code to the new Compiler-compatible API:
 
 **Current Pattern** (requires `'use no memo'`):
+
 ```typescript
 const opacity = useSharedValue(0);
 opacity.value = withTiming(1);
@@ -553,6 +594,7 @@ const current = opacity.value;
 ```
 
 **Future Pattern** (Compiler-compatible):
+
 ```typescript
 const opacity = useSharedValue(0);
 opacity.set(withTiming(1));
@@ -560,6 +602,7 @@ const current = opacity.get();
 ```
 
 **Benefits**:
+
 - ✅ Remove all 14 `'use no memo'` directives
 - ✅ Full React Compiler coverage
 - ✅ Better integration with React's rendering model
@@ -589,6 +632,7 @@ _To be documented during Phase 2 cleanup_
 ## Weekly Review Checklist
 
 **Every Monday**:
+
 - [ ] Check for new Reanimated files needing `'use no memo'`
 - [ ] Evaluate 5-10 new components for cleanup
 - [ ] Monitor React DevTools for unexpected behaviors
@@ -596,6 +640,7 @@ _To be documented during Phase 2 cleanup_
 - [ ] Review any performance regressions
 
 **Every Sprint**:
+
 - [ ] Measure bundle size impact
 - [ ] Update coding guidelines if patterns emerge
 - [ ] Share learnings with team
@@ -615,6 +660,7 @@ _To be documented during Phase 2 cleanup_
 ## Changelog
 
 ### 2025-01-17 - Phase 1 Complete & Phase 2 In Progress
+
 - ✅ Created adoption tracking document
 - ✅ Enabled React Compiler in app.json
 - ✅ Removed forwardRef from 2 components
@@ -684,6 +730,7 @@ _To be documented during Phase 2 cleanup_
 - ✅ Dev environment verified working
 
 ### Phase 2 Complete Summary
+
 ✅ **All React.memo components cleaned** (40 removed, 3 protected Reanimated files kept with `'use no memo'`)
 ✅ **92% of useMemo removed** (92 removed)
 ✅ **15.2% of useCallback removed** (40 removed)

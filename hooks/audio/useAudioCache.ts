@@ -12,7 +12,7 @@ export function useAudioCache() {
     withErrorHandling(() => audioCache.clearCache(), {
       toastMessage: STRINGS.FAILED_TO_CLEAR_AUDIO_CACHE,
     }),
-    []
+    [],
   );
 
   const getCacheSize = useCallback(
@@ -23,9 +23,9 @@ export function useAudioCache() {
         return typeof size === 'number' && !isNaN(size) && size >= 0 ? size : 0;
       },
       0,
-      { toastMessage: STRINGS.FAILED_TO_GET_CACHE_SIZE }
+      { toastMessage: STRINGS.FAILED_TO_GET_CACHE_SIZE },
     ),
-    []
+    [],
   );
 
   const cacheAPI = useMemo(() => ({ clearCache, getCacheSize }), [clearCache, getCacheSize]);

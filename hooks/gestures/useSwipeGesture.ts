@@ -59,7 +59,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
     translateX.set(
       withSpring(0, springConfig, () => {
         isAnimatingRef.set(false);
-      })
+      }),
     );
   }, [translateX, isAnimatingRef, springConfig]);
 
@@ -86,7 +86,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
         resetPosition();
       }, GESTURE_CONSTANTS.RESET_DELAY);
     },
-    [onSwipeLeft, onSwipeRight, onSwipeComplete, resetPosition]
+    [onSwipeLeft, onSwipeRight, onSwipeComplete, resetPosition],
   );
 
   // Optimized gesture handler with v2 best practices
@@ -115,14 +115,18 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
             const maxTranslation = SCREEN_WIDTH * maxTranslationRatio;
             const clampedTranslation = Math.max(
               -maxTranslation,
-              Math.min(maxTranslation, event.translationX)
+              Math.min(maxTranslation, event.translationX),
             );
             translateX.set(clampedTranslation);
           }
         })
         .onEnd(event => {
           'worklet';
-          if (!isAnimatingRef.get() && event.translationX !== undefined && event.velocityX !== undefined) {
+          if (
+            !isAnimatingRef.get() &&
+            event.translationX !== undefined &&
+            event.velocityX !== undefined
+          ) {
             const translationX = event.translationX;
             const velocityX = event.velocityX;
 
@@ -133,7 +137,8 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
 
             // Inline swipe action logic
             const swipeThreshold = SCREEN_WIDTH * swipeThresholdRatio;
-            const hasSignificantVelocity = Math.abs(velocityX) > GESTURE_CONSTANTS.VELOCITY_THRESHOLD;
+            const hasSignificantVelocity =
+              Math.abs(velocityX) > GESTURE_CONSTANTS.VELOCITY_THRESHOLD;
 
             if (Math.abs(translationX) > swipeThreshold || hasSignificantVelocity) {
               const isRight = translationX > 0;
@@ -145,7 +150,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
               translateX.set(
                 withSpring(0, springConfig, () => {
                   isAnimatingRef.set(false);
-                })
+                }),
               );
             }
           }
@@ -163,7 +168,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
       onGestureBegin,
       onGestureStart,
       onGestureEnd,
-    ]
+    ],
   );
 
   return {

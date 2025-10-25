@@ -122,4 +122,3 @@ const styles = StyleSheet.create({
 export const DictionarySortingHeader = memo(DictionarySortingHeaderComponent);
 
 DictionarySortingHeader.displayName = 'DictionarySortingHeader';
-

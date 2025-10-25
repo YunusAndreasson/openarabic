@@ -221,7 +221,7 @@ describe('useArticleData', () => {
       () => {
         expect(result.current.isLoadingArticle).toBe(false);
       },
-      { timeout: 5000 }
+      { timeout: 5000 },
     ); // Increased timeout for async query settling
 
     // Article should be undefined on error

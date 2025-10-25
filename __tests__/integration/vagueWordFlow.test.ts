@@ -66,9 +66,12 @@ describe('Vague Word Flow - Integration Test', () => {
         error: '#F44336',
       };
 
-      const backgroundColor = swipeDirection === 'right'
-        ? (isHesitating ? COLORS.warning : COLORS.success)
-        : COLORS.error;
+      const backgroundColor =
+        swipeDirection === 'right'
+          ? isHesitating
+            ? COLORS.warning
+            : COLORS.success
+          : COLORS.error;
 
       expect(confidence).toBe('vague');
       expect(backgroundColor).toBe(COLORS.warning); // Orange

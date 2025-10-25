@@ -45,7 +45,7 @@ export const bookmarkService = {
       {
         ...errorConfig.readingList.add,
         analyticsProperties: { articleId },
-      }
+      },
     );
   },
 
@@ -55,11 +55,12 @@ export const bookmarkService = {
   async removeFromReadingList(userId: string, articleId: number): Promise<void> {
     await executeAuthenticatedQuery(
       userId,
-      () => supabase.from('reading_list').delete().eq('user_id', userId).eq('article_id', articleId),
+      () =>
+        supabase.from('reading_list').delete().eq('user_id', userId).eq('article_id', articleId),
       {
         ...errorConfig.readingList.remove,
         analyticsProperties: { articleId },
-      }
+      },
     );
   },
 
@@ -80,7 +81,7 @@ export const bookmarkService = {
         {
           ...errorConfig.readingList.check,
           analyticsProperties: { articleId },
-        }
+        },
       );
       return !!data;
     } catch (error) {
@@ -121,11 +122,11 @@ export const bookmarkService = {
           category:categories(id, name),
           author:authors(id, name)
         )
-      `
+      `,
           )
           .eq('user_id', userId)
           .order('added_at', { ascending: false }),
-      errorConfig.readingList.load
+      errorConfig.readingList.load,
     );
 
     return (data ?? []) as BookmarkItem[];
@@ -135,7 +136,7 @@ export const bookmarkService = {
     const data = await executeAuthenticatedQuery(
       userId,
       () => supabase.from('reading_list').select('article_id').eq('user_id', userId),
-      errorConfig.readingList.load
+      errorConfig.readingList.load,
     );
 
     return (data ?? []).map(item => item.article_id);

@@ -36,7 +36,7 @@ export const ChartReferenceLine = memo<ChartReferenceLineProps>(
         style="stroke"
       />
     );
-  }
+  },
 );
 
 ChartReferenceLine.displayName = 'ChartReferenceLine';

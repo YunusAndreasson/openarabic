@@ -151,7 +151,7 @@ export const articlesService = {
       {
         toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
         analyticsEventName: 'Articles_With_Stats_Load_Error',
-      }
+      },
     );
 
     return mapToArticles(data ?? []);
@@ -170,7 +170,7 @@ export const articlesService = {
         toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
         analyticsEventName: 'Article_Load_Error',
         analyticsProperties: { id },
-      }
+      },
     );
 
     if (!data) {
@@ -194,7 +194,7 @@ export const articlesService = {
         toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
         analyticsEventName: 'Article_Card_Load_Error',
         analyticsProperties: { id },
-      }
+      },
     );
 
     if (!data) {

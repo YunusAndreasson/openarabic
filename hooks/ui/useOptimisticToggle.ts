@@ -24,7 +24,7 @@ import { useCallback, useEffect, useState } from 'react';
  */
 export function useOptimisticToggle(
   actualValue: boolean,
-  onToggle: () => Promise<void>
+  onToggle: () => Promise<void>,
 ): {
   value: boolean;
   toggle: () => Promise<void>;

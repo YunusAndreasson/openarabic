@@ -17,7 +17,11 @@ function getIconName(isPlaying: boolean): 'pause' | 'play' {
   return isPlaying ? 'pause' : 'play';
 }
 
-export const PlayButton: FC<PlayButtonProps> = ({ onPress, isPlaying = false, disabled = false }) => {
+export const PlayButton: FC<PlayButtonProps> = ({
+  onPress,
+  isPlaying = false,
+  disabled = false,
+}) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const currentTheme = useCurrentTheme();
@@ -28,9 +32,9 @@ export const PlayButton: FC<PlayButtonProps> = ({ onPress, isPlaying = false, di
       currentTheme === Theme.Sepia
         ? colors.white // Use white icon for sepia theme for better contrast on amber background
         : isDarkMode
-        ? colors.black
-        : colors.text,
-    [currentTheme, isDarkMode, colors.white, colors.black, colors.text]
+          ? colors.black
+          : colors.text,
+    [currentTheme, isDarkMode, colors.white, colors.black, colors.text],
   );
 
   return (
@@ -46,4 +50,3 @@ export const PlayButton: FC<PlayButtonProps> = ({ onPress, isPlaying = false, di
     />
   );
 };
-

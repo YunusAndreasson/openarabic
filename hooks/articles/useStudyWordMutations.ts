@@ -62,7 +62,7 @@ const RELATED_QUERY_KEYS = (userId: string, audioPreference?: 'arabic' | 'biling
  * @returns Object with study word mutation functions
  */
 export const useStudyWordMutations = (
-  refetchStudyWords?: () => Promise<void>
+  refetchStudyWords?: () => Promise<void>,
 ): StudyWordMutationsResult => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -75,7 +75,7 @@ export const useStudyWordMutations = (
     (userId: string | undefined): boolean => {
       if (!userId) return false;
       const all = queryClient.getQueryData<unknown>(
-        FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
+        FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
       );
       if (Array.isArray(all)) {
         const words = all as {
@@ -93,7 +93,8 @@ export const useStudyWordMutations = (
         const valid = words.filter(w => w.fsrs_stability != null && w.fsrs_difficulty != null);
         let capacityScore: number;
         if (valid.length >= Math.max(1, Math.floor(words.length * 0.5))) {
-          const avgStability = valid.reduce((s, w) => s + (w.fsrs_stability ?? 0), 0) / valid.length;
+          const avgStability =
+            valid.reduce((s, w) => s + (w.fsrs_stability ?? 0), 0) / valid.length;
           const avgDifficulty =
             valid.reduce((s, w) => s + (w.fsrs_difficulty ?? 5), 0) / valid.length;
           const avgReps = valid.reduce((s, w) => s + (w.fsrs_reps ?? 0), 0) / valid.length;
@@ -102,7 +103,7 @@ export const useStudyWordMutations = (
           const difficultyFactor = Math.max(0, (10 - avgDifficulty) / 10) * 25;
           capacityScore = Math.max(
             15,
-            Math.min(100, Math.round(stabilityFactor + repsFactor + difficultyFactor))
+            Math.min(100, Math.round(stabilityFactor + repsFactor + difficultyFactor)),
           );
         } else {
           // Fallback heuristic based on due words ratio with cooldown
@@ -126,7 +127,7 @@ export const useStudyWordMutations = (
       }
       return false;
     },
-    [queryClient]
+    [queryClient],
   );
 
   // Shared mutation options factory for toggling study words/roots
@@ -158,7 +159,7 @@ export const useStudyWordMutations = (
           queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
         });
         const previousStudyWords = queryClient.getQueryData(
-          FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
+          FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
         ) as {
           root_id: number;
         }[];
@@ -169,7 +170,7 @@ export const useStudyWordMutations = (
           (old: { root_id: number }[] = []) => {
             const exists = old.some(sw => sw.root_id === id);
             return exists ? old.filter(sw => sw.root_id !== id) : [...old, { root_id: id }];
-          }
+          },
         );
 
         return { previousStudyWords };
@@ -178,7 +179,7 @@ export const useStudyWordMutations = (
         if (context?.previousStudyWords) {
           queryClient.setQueryData(
             FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
-            context.previousStudyWords
+            context.previousStudyWords,
           );
         }
         handleError(error);
@@ -196,14 +197,11 @@ export const useStudyWordMutations = (
         await refetchStudyWords?.();
       },
     }),
-    [queryClient, refetchStudyWords, showToast, audioPreference]
+    [queryClient, refetchStudyWords, showToast, audioPreference],
   );
 
   // Memoize shared toggle options (used by both word and root mutations)
-  const toggleStudyOptions = useMemo(
-    () => createToggleStudyOptions(),
-    [createToggleStudyOptions]
-  );
+  const toggleStudyOptions = useMemo(() => createToggleStudyOptions(), [createToggleStudyOptions]);
 
   // Initialize mutations with memoized options
   const toggleWordMutation = useMutation<
@@ -282,7 +280,7 @@ export const useStudyWordMutations = (
         handleError(error as Error);
       }
     },
-    [toggleWordMutation, showToast, canAddWord, incrementDailyWordCount, isCapacityLow]
+    [toggleWordMutation, showToast, canAddWord, incrementDailyWordCount, isCapacityLow],
   );
 
   // Handle root press with validation
@@ -313,7 +311,7 @@ export const useStudyWordMutations = (
 
         // Check if word already exists (remove operation should be allowed even if limit reached)
         const existingWords = queryClient.getQueryData<StudyWord[]>(
-          FSRS_QUERY_KEYS.allWithCooldown(currentUserId, DEFAULT_SESSION_COOLDOWN_HOURS)
+          FSRS_QUERY_KEYS.allWithCooldown(currentUserId, DEFAULT_SESSION_COOLDOWN_HOURS),
         );
 
         const wordExists =
@@ -372,7 +370,7 @@ export const useStudyWordMutations = (
       dailyWordLimit,
       queryClient,
       isCapacityLow,
-    ]
+    ],
   );
 
   return {

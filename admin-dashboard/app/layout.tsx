@@ -24,10 +24,7 @@ export default function RootLayout({
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">OpenArabic Admin</h1>
                 <nav className="flex gap-4">
-                  <Link
-                    href="/"
-                    className="text-sm font-medium hover:underline underline-offset-4"
-                  >
+                  <Link href="/" className="text-sm font-medium hover:underline underline-offset-4">
                     Articles
                   </Link>
                   <Link

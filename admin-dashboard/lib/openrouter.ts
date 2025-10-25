@@ -59,10 +59,7 @@ export interface OpenRouterOptions {
  * console.log(response);
  * ```
  */
-export async function sendPrompt(
-  prompt: string,
-  options: OpenRouterOptions = {}
-): Promise<string> {
+export async function sendPrompt(prompt: string, options: OpenRouterOptions = {}): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
@@ -102,7 +99,7 @@ export async function sendPrompt(
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://openarabic.io', // Optional: for OpenRouter analytics
         'X-Title': 'OpenArabic Admin Dashboard', // Optional: for OpenRouter analytics
@@ -167,24 +164,18 @@ export async function exampleUsage() {
     console.log('Response 1:', response1);
 
     // With custom model and temperature
-    const response2 = await sendPrompt(
-      'Explain quantum computing in simple terms',
-      {
-        model: MODELS.CLAUDE_3_HAIKU,
-        temperature: 0.5,
-        maxTokens: 500,
-      }
-    );
+    const response2 = await sendPrompt('Explain quantum computing in simple terms', {
+      model: MODELS.CLAUDE_3_HAIKU,
+      temperature: 0.5,
+      maxTokens: 500,
+    });
     console.log('Response 2:', response2);
 
     // With system prompt
-    const response3 = await sendPrompt(
-      'What are the key principles?',
-      {
-        systemPrompt: 'You are an expert Arabic language teacher. Be concise and helpful.',
-        temperature: 0.8,
-      }
-    );
+    const response3 = await sendPrompt('What are the key principles?', {
+      systemPrompt: 'You are an expert Arabic language teacher. Be concise and helpful.',
+      temperature: 0.8,
+    });
     console.log('Response 3:', response3);
 
     return { response1, response2, response3 };

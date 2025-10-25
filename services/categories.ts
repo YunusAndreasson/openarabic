@@ -10,7 +10,7 @@ export const categoriesService = {
       {
         toastMessage: STRINGS.FAILED_TO_LOAD_FILTER_OPTIONS,
         analyticsEventName: 'Categories_Load_Error',
-      }
+      },
     );
 
     return data ?? [];

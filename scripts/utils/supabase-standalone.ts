@@ -23,7 +23,7 @@ export const supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON
  * Helper to execute a query with error handling
  */
 export async function executeQuery<T>(
-  queryFn: () => Promise<{ data: T | null; error: Error | null }>
+  queryFn: () => Promise<{ data: T | null; error: Error | null }>,
 ): Promise<T> {
   const { data, error } = await queryFn();
 

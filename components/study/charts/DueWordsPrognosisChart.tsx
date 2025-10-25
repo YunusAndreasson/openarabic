@@ -38,8 +38,8 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         trend === 'increasing'
           ? '↗️ Increasing'
           : trend === 'decreasing'
-          ? '↘️ Decreasing'
-          : '→ Stable';
+            ? '↘️ Decreasing'
+            : '→ Stable';
 
       return `${currentDue} due today, peak ${peakDue} • ${trendText}`;
     }, [chartData.insights, studyWords.length]);
@@ -95,7 +95,7 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         yLabelFormatter={(value: number) => `${value}`}
       />
     );
-  }
+  },
 );
 
 DueWordsPrognosisChart.displayName = 'DueWordsPrognosisChart';

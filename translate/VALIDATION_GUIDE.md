@@ -5,6 +5,7 @@ This guide explains how to use the word translation validation system that check
 ## Overview
 
 The validation system:
+
 - ✅ Checks morphological accuracy (prefixes/suffixes correctly rendered)
 - ✅ Verifies English word count matches Arabic morpheme count EXACTLY
 - ✅ **Enforces NO EXTRA WORDS rule** - prevents adding prepositions/articles not in Arabic
@@ -34,6 +35,7 @@ uv sync
 ```
 
 The validation system requires:
+
 - `requests` - HTTP client for OpenRouter API
 - `tqdm` - Progress bars
 - `pydantic` - Data validation
@@ -96,6 +98,7 @@ ORDER BY asent.position, sw.position
 **Educational Purpose**: The system enforces strict one-to-one correspondence between Arabic morphemes and English words. This helps students learn Arabic morphology by seeing exactly how each component translates.
 
 **Examples of validation rules**:
+
 - ✅ باب (baab) → "door" (correct: 1 morpheme = 1 word)
 - ❌ باب (baab) → "door of" (WRONG: added "of" with no Arabic source)
 - ✅ وَكِتَابٌ (wa-kitaabun) → "and book" (correct: 2 morphemes = 2 words)
@@ -106,6 +109,7 @@ ORDER BY asent.position, sw.position
 ### 3. Parse Response
 
 The system expects JSON response:
+
 ```json
 {
   "validations": [
@@ -132,6 +136,7 @@ The system expects JSON response:
 ### 4. Filter and Save to Database
 
 **CRITICAL**: Only words with actual improvements are saved:
+
 - Compare `suggested_english` with current translation
 - Compare `suggested_grammar_note` with current note
 - **Skip saving if both match** (word is correct)
@@ -139,17 +144,18 @@ The system expects JSON response:
 
 Results are saved to `translation_improvements` table:
 
-| Field | Description |
-|-------|-------------|
-| `sentence_word_id` | Foreign key to `sentence_words` (current values accessed via JOIN) |
-| `suggested_english` | AI-suggested improved translation |
-| `suggested_grammar_note` | AI-suggested improved grammar note |
-| `status` | `pending` (default, can be marked `approved`/`rejected` later) |
-| `reviewer_notes` | AI reasoning for the suggestion |
+| Field                    | Description                                                        |
+| ------------------------ | ------------------------------------------------------------------ |
+| `sentence_word_id`       | Foreign key to `sentence_words` (current values accessed via JOIN) |
+| `suggested_english`      | AI-suggested improved translation                                  |
+| `suggested_grammar_note` | AI-suggested improved grammar note                                 |
+| `status`                 | `pending` (default, can be marked `approved`/`rejected` later)     |
+| `reviewer_notes`         | AI reasoning for the suggestion                                    |
 
 ### 5. Retry Logic
 
 If JSON parsing fails:
+
 1. Retry with stricter prompt (emphasizes JSON-only output)
 2. Up to 3 attempts total
 3. Log error and continue to next article if all fail
@@ -222,6 +228,7 @@ WHERE asent.article_id = 123;
 ### Issue: "No words found for article X"
 
 **Solution:** Article may not exist or has no sentence_words. Check:
+
 ```sql
 SELECT COUNT(*) FROM article_sentences WHERE article_id = X;
 SELECT COUNT(*) FROM sentence_words sw
@@ -276,6 +283,7 @@ translate/
 ## Cost Estimate
 
 Using OpenRouter's DeepSeek-v3:
+
 - **Model:** `deepseek/deepseek-chat-v3` (free tier available)
 - **Avg tokens per article:** ~2000 input + 1000 output = 3000 total
 - **150 articles:** ~450K tokens

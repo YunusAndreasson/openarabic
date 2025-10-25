@@ -214,7 +214,10 @@ export function useFSRS({
   const convertToFSRSCard = useCallback((word: StudyWord): Card => {
     // Phase 1.3: Use explicit null checks instead of truthy checks
     // fsrs_reps: 0 and fsrs_stability: 0 are valid but falsy
-    if (word.fsrs_state === State.New || (word.fsrs_reps == null && word.fsrs_stability == null && !word.fsrs_last_review)) {
+    if (
+      word.fsrs_state === State.New ||
+      (word.fsrs_reps == null && word.fsrs_stability == null && !word.fsrs_last_review)
+    ) {
       const emptyCard = createEmptyCard(new Date());
       return {
         ...emptyCard,
@@ -259,7 +262,11 @@ export function useFSRS({
         const now = new Date();
 
         const rating =
-          confidence === 'known' ? Rating.Good : confidence === 'vague' ? Rating.Hard : Rating.Again;
+          confidence === 'known'
+            ? Rating.Good
+            : confidence === 'vague'
+              ? Rating.Hard
+              : Rating.Again;
 
         const result = fsrsInstance.next(card, now, rating);
         newCard = result.card;
@@ -272,17 +279,14 @@ export function useFSRS({
         });
 
         // Track analytics
-        handleError(
-          error instanceof Error ? error : new Error(String(error)),
-          {
-            toastType: ToastType.ERROR,
-            analyticsEventName: 'FSRS_Algorithm_Error',
-            analyticsProperties: {
-              rootId: currentWord.root_id,
-              confidence,
-            },
-          }
-        );
+        handleError(error instanceof Error ? error : new Error(String(error)), {
+          toastType: ToastType.ERROR,
+          analyticsEventName: 'FSRS_Algorithm_Error',
+          analyticsProperties: {
+            rootId: currentWord.root_id,
+            confidence,
+          },
+        });
 
         // Graceful fallback: Simple increment without FSRS
         const fallbackCard: Card = {
@@ -356,7 +360,7 @@ export function useFSRS({
       // If the next item matches the just-processed root, keep popping
       // until we find a different word or the queue is exhausted.
       let guardIterations = 0;
-      while (nextItem && nextItem.root_id === rootId && guardIterations < 5) {
+      while (nextItem?.root_id === rootId && guardIterations < 5) {
         nextItem = getNextWordWithSpacing();
         guardIterations += 1;
       }
@@ -386,7 +390,7 @@ export function useFSRS({
       if (!nextItem) {
         // First, move any fully ready spaced words
         const readySpacedWords = spacingQueueRef.current.spacedWords.filter(
-          item => item.remainingSpacing <= 0
+          item => item.remainingSpacing <= 0,
         );
 
         if (readySpacedWords.length > 0) {
@@ -396,7 +400,7 @@ export function useFSRS({
           });
 
           spacingQueueRef.current.spacedWords = spacingQueueRef.current.spacedWords.filter(
-            item => item.remainingSpacing > 0
+            item => item.remainingSpacing > 0,
           );
 
           nextItem = getNextWordWithSpacing();
@@ -410,17 +414,17 @@ export function useFSRS({
           if (!allKnown && spacingQueueRef.current.spacedWords.length > 0) {
             const candidate = spacingQueueRef.current.spacedWords.reduce(
               (min, curr) => (!min || curr.remainingSpacing < min.remainingSpacing ? curr : min),
-              undefined as (typeof spacingQueueRef.current.spacedWords)[number] | undefined
+              undefined as (typeof spacingQueueRef.current.spacedWords)[number] | undefined,
             );
 
             if (candidate) {
               // FORCE OVERRIDE: allow immediate repeat of the smallest-spacing candidate
               // Remove from spaced list and from recent guard to avoid skip
               spacingQueueRef.current.spacedWords = spacingQueueRef.current.spacedWords.filter(
-                w => w.word.root_id !== candidate.word.root_id
+                w => w.word.root_id !== candidate.word.root_id,
               );
               spacingQueueRef.current.recentWords = spacingQueueRef.current.recentWords.filter(
-                id => id !== candidate.word.root_id
+                id => id !== candidate.word.root_id,
               );
               nextItem = candidate.word;
             }
@@ -452,7 +456,7 @@ export function useFSRS({
           rootId,
           wordUpdateData,
           rating,
-          newCard.learning_steps
+          newCard.learning_steps,
         );
       } catch (error) {
         const errObj =
@@ -474,7 +478,7 @@ export function useFSRS({
       getNextWordWithSpacing,
       updateSpacingCounters,
       _sessionCooldownHours,
-    ]
+    ],
   );
 
   const resetQueue = useCallback(() => {

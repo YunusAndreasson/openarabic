@@ -165,4 +165,3 @@ const styles = StyleSheet.create({
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
   },
 });
-

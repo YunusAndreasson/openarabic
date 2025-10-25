@@ -86,7 +86,7 @@ export const generateChartSubtitle = {
   mastery: (
     currentRate: number,
     trend: 'declining' | 'improving' | 'stable',
-    weeklyChange: number
+    weeklyChange: number,
   ): string => {
     if (currentRate === 0) {
       return STRINGS.START_REVIEWING_TO_BUILD_STRENGTH;
@@ -122,7 +122,7 @@ export const generateChartSubtitle = {
   retrievability: (
     _currentRetention: number,
     criticalWords: number,
-    totalWords: number
+    totalWords: number,
   ): string => {
     if (totalWords === 0) {
       return STRINGS.STUDY_TO_MONITOR_REVIEW_TIMING;

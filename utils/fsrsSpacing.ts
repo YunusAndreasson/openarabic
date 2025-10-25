@@ -38,7 +38,7 @@ export function calculateWordPriority(word: StudyWord): number {
 export function getNextWordWithSpacing(
   queue: PriorityQueue<StudyWord>,
   spacingState: SpacingState,
-  minSpacing: number = MIN_WORD_SPACING
+  minSpacing: number = MIN_WORD_SPACING,
 ): StudyWord | null {
   const readySpaced = spacingState.spacedWords.filter(item => item.remainingSpacing <= 0);
   if (readySpaced.length > 0) {
@@ -67,7 +67,7 @@ export function getNextWordWithSpacing(
 export function updateSpacingCounters(
   spacingState: SpacingState,
   processedWordId: number,
-  minSpacing: number = MIN_WORD_SPACING
+  minSpacing: number = MIN_WORD_SPACING,
 ) {
   spacingState.recentWords.push(processedWordId);
   if (spacingState.recentWords.length > minSpacing) {

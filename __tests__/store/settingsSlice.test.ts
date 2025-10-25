@@ -109,25 +109,19 @@ describe('settingsSlice reducers', () => {
 
   describe('setDisplayLanguagePreference', () => {
     it('sets to ARABIC', () => {
-      const state = reducer(
-        initialState,
-        setDisplayLanguagePreference(DisplayLanguage.ARABIC)
-      );
+      const state = reducer(initialState, setDisplayLanguagePreference(DisplayLanguage.ARABIC));
       expect(state.displayLanguagePreference).toBe(DisplayLanguage.ARABIC);
     });
 
     it('sets to ENGLISH', () => {
-      const state = reducer(
-        initialState,
-        setDisplayLanguagePreference(DisplayLanguage.ENGLISH)
-      );
+      const state = reducer(initialState, setDisplayLanguagePreference(DisplayLanguage.ENGLISH));
       expect(state.displayLanguagePreference).toBe(DisplayLanguage.ENGLISH);
     });
 
     it('sets to ARABIC_ENGLISH', () => {
       const state = reducer(
         initialState,
-        setDisplayLanguagePreference(DisplayLanguage.ARABIC_ENGLISH)
+        setDisplayLanguagePreference(DisplayLanguage.ARABIC_ENGLISH),
       );
       expect(state.displayLanguagePreference).toBe(DisplayLanguage.ARABIC_ENGLISH);
     });

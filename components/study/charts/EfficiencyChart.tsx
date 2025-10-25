@@ -45,7 +45,7 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
     // Stabilize x labels and positions to maximize memoization effectiveness
     const xLabels = useMemo(
       () => efficiencyData.map(d => formatWeekdayUTC(d.date)),
-      [efficiencyData]
+      [efficiencyData],
     );
 
     const xLabelPositions = useMemo(() => {
@@ -77,7 +77,7 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
         yLabelFormatter={(v: number) => `${Math.round(v)}`}
       />
     );
-  }
+  },
 );
 
 EfficiencyChart.displayName = 'EfficiencyChart';

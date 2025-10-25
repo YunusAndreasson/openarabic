@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (!articleId || !currentSummary || !title) {
       return NextResponse.json(
         { error: 'Missing required fields: articleId, currentSummary, title' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,17 +48,11 @@ export async function POST(request: NextRequest) {
 
     if (sentencesError) {
       console.error('Error fetching sentences:', sentencesError);
-      return NextResponse.json(
-        { error: 'Failed to fetch article content' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch article content' }, { status: 500 });
     }
 
     if (!sentences || sentences.length === 0) {
-      return NextResponse.json(
-        { error: 'No article content found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'No article content found' }, { status: 404 });
     }
 
     // Combine sentences into full article text
@@ -137,7 +131,7 @@ New summary:`;
         success: false,
         error: errorMessage,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

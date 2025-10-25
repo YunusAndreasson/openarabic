@@ -189,7 +189,8 @@ export const STRINGS = {
     'Daily vocabulary advancement, tracking new words mastered over time.',
 
   // Practice bottom sheet subtitles (condensed for subtitle format)
-  MEMORY_STRENGTH_SUBTITLE: 'Percentage of words you are expected to recall at a given time. Target at least 75% before adding new words',
+  MEMORY_STRENGTH_SUBTITLE:
+    'Percentage of words you are expected to recall at a given time. Target at least 75% before adding new words',
   WORD_MASTERY_SUBTITLE: 'Words with strong, stable memories requiring minimal review',
   LEARNED_WORDS_SUBTITLE: 'Words you have successfully learned that are building toward mastery',
   LEARNING_RATE_SUBTITLE: 'Learning efficiency and speed trends over recent days',
@@ -237,7 +238,8 @@ export const STRINGS = {
   // Reading progress management
   RESET_READING_PROGRESS: 'Reading progress',
   RESET_READING_PROGRESS_CONFIRMATION: 'Are you sure you want to reset all reading progress?',
-  THIS_WILL_DELETE_ALL_READING_PROGRESS: 'This will delete reading positions and progress percentages for all articles. This cannot be undone.',
+  THIS_WILL_DELETE_ALL_READING_PROGRESS:
+    'This will delete reading positions and progress percentages for all articles. This cannot be undone.',
   READING_PROGRESS_RESET_SUCCESSFULLY: 'Reading progress reset successfully',
   FAILED_TO_RESET_READING_PROGRESS: "Couldn't reset reading progress. " + tryAgain,
 
@@ -375,8 +377,8 @@ export const STRINGS = {
   FAILED_TO_STOP_AUDIO_ON_CLOSE: "Couldn't stop audio on close. " + tryAgain,
   FAILED_TO_LOAD_AUDIO: "Couldn't load audio. " + tryAgain,
   FAILED_TO_SKIP_TO_NEXT_TRACK: "Couldn't skip track. " + tryAgain,
-  AUDIO_PLAYBACK_FAILED: "Audio playback failed. " + tryAgain,
-  AUDIO_GENERATION_FAILED: "Audio generation failed. " + tryAgain,
+  AUDIO_PLAYBACK_FAILED: 'Audio playback failed. ' + tryAgain,
+  AUDIO_GENERATION_FAILED: 'Audio generation failed. ' + tryAgain,
 
   // Reading list errors
   FAILED_TO_LOAD_BOOKMARKS: "Couldn't load bookmarks. " + tryAgain,

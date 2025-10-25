@@ -135,7 +135,7 @@ describe('buildSmoothChartPath', () => {
         y,
         value: item.value + index,
         label: item.label,
-      })
+      }),
     );
 
     buildSmoothChartPath<TestDataItem, TestPoint>({

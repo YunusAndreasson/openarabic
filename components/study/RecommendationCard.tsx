@@ -64,7 +64,7 @@ export const RecommendationCard = memo<RecommendationCardProps>(
         </View>
       </BaseCard>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({
@@ -82,11 +82,9 @@ const styles = StyleSheet.create({
   },
   message: {
     flex: 1,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
 });
 
 RecommendationCard.displayName = 'RecommendationCard';
-

@@ -59,9 +59,13 @@ DEFAULT_VOICE_SETTINGS = {
     "speed": 0.8,  # Optimal speed for Arabic pronunciation
 }
 
-# English voice settings for bilingual audio
+# English voice settings for bilingual audio - Optimized for quality and stability
 ENGLISH_VOICE_SETTINGS = {
-    "use_speaker_boost": True,  # Enhanced speaker clarity
+    "stability": 0.95,           # Maximum stability for consistent output
+    "similarity_boost": 1.0,     # Maximum similarity to original voice
+    "style": 0.0,                # No exaggeration, pure neutral
+    "use_speaker_boost": True,   # Enhanced speaker clarity
+    "speed": 0.85,               # Slower for better clarity
 }
 
 # Audio pause configuration for bilingual audio

@@ -19,7 +19,7 @@ export interface EncouragingMetric {
  */
 export const useEncouragingMetrics = (
   sessionMetrics: SessionMetrics | undefined,
-  colors: ThemeColors | undefined
+  colors: ThemeColors | undefined,
 ): EncouragingMetric[] | null => {
   return useMemo(() => {
     if (!sessionMetrics || !colors || sessionMetrics.wordsReviewed === 0) {

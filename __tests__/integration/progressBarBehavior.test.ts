@@ -15,9 +15,7 @@ describe('Progress Bar Behavior - Integration Test', () => {
   }
 
   function calculateProgress(counters: SessionCounters, totalWords: number): number {
-    return totalWords > 0
-      ? Math.min(Math.round((counters.knownWords / totalWords) * 100), 100)
-      : 0;
+    return totalWords > 0 ? Math.min(Math.round((counters.knownWords / totalWords) * 100), 100) : 0;
   }
 
   describe('Progress calculation with vague words', () => {
@@ -90,11 +88,11 @@ describe('Progress Bar Behavior - Integration Test', () => {
       };
 
       const responses: Array<{ id: number; confidence: 'known' | 'vague' | 'unknown' }> = [
-        { id: 1, confidence: 'known' },   // Progress: 20%
-        { id: 2, confidence: 'vague' },   // Progress: 20% (no change)
-        { id: 3, confidence: 'known' },   // Progress: 40%
-        { id: 4, confidence: 'vague' },   // Progress: 40% (no change)
-        { id: 5, confidence: 'known' },   // Progress: 60%
+        { id: 1, confidence: 'known' }, // Progress: 20%
+        { id: 2, confidence: 'vague' }, // Progress: 20% (no change)
+        { id: 3, confidence: 'known' }, // Progress: 40%
+        { id: 4, confidence: 'vague' }, // Progress: 40% (no change)
+        { id: 5, confidence: 'known' }, // Progress: 60%
       ];
 
       const expectedProgress = [20, 20, 40, 40, 60];

@@ -22,7 +22,7 @@ describe('arabicWordAnalysis', () => {
 
     // 2. Check that the reconstructed word has two colored parts
     const coloredSegments = formatted.reconstructedArabic?.segments.filter(
-      s => s.colorName !== 'text'
+      s => s.colorName !== 'text',
     );
     expect(coloredSegments).toHaveLength(2);
 
@@ -199,7 +199,7 @@ describe('arabicWordAnalysis', () => {
       // Test cases where remaining word after ي has sufficient length (>=3 chars)
       const validTests = [
         { arabic: 'يُكتب', english: 'he was writing', expectedPrefix: 'ي' }, // Remaining: كتب (3 chars) ✓
-        { arabic: 'يُقرأ', english: 'it was read', expectedPrefix: 'ي' },     // Remaining: قرأ (3 chars) ✓
+        { arabic: 'يُقرأ', english: 'it was read', expectedPrefix: 'ي' }, // Remaining: قرأ (3 chars) ✓
         { arabic: 'يُفهم', english: 'he was understood', expectedPrefix: 'ي' }, // Remaining: فهم (3 chars) ✓
       ];
 
@@ -397,7 +397,7 @@ describe('arabicWordAnalysis', () => {
 
         // Check that infix appears in the sections
         const infixSection = formatted.sections.find(
-          s => s.type === 'components' && s.colorName === 'violet'
+          s => s.type === 'components' && s.colorName === 'violet',
         );
         expect(infixSection).toBeDefined();
         expect(infixSection?.arabicPart).toBe('ت');
@@ -490,7 +490,7 @@ describe('arabicWordAnalysis', () => {
       const formatted = formatWordAnalysis(analysis);
 
       const diacriticSection = formatted.sections.find(
-        s => s.type === 'components' && s.arabicPart === 'َ'
+        s => s.type === 'components' && s.arabicPart === 'َ',
       );
       expect(diacriticSection).toBeDefined();
       expect(diacriticSection?.englishPart).toContain('he');
@@ -509,442 +509,444 @@ describe('arabicWordAnalysis', () => {
       }
       expect(analysis.diacritic?.arabicMatch).toBe('َ');
       // At least 2 components (prefix + diacritic) or more if multiple prefixes detected
-      expect(formatted.sections.filter(s => s.type === 'components').length).toBeGreaterThanOrEqual(2);
-    });
-    });
-
-    it('should detect final fatha on a verb as "he"', () => {
-      const analysis = analyzeArabicWord('كَتَبَ', 'he wrote');
-      expect(analysis.diacritic).toBeDefined();
-      expect(analysis.diacritic?.arabicMatch).toBe('َ');
-      expect(analysis.diacritic?.englishMatches).toContain('he');
+      expect(formatted.sections.filter(s => s.type === 'components').length).toBeGreaterThanOrEqual(
+        2,
+      );
     });
   });
 
-  describe('Diacritic Double-Matching Prevention', () => {
-    it('should keep definite article and case ending separate (no merging)', () => {
-      // الثَّنَاءِ → "[the] praise" (bracket injection adds "the")
-      // Prefix "ال" matches "the", kasra "ِ" has patterns "in/of/with" (not "the")
-      // They serve different grammatical functions (definiteness vs. case)
-      // Expected: Prefix detected, diacritic not detected (no English correspondence)
-      const analysis = analyzeArabicWord('الثَّنَاءِ', '[the] praise');
+  it('should detect final fatha on a verb as "he"', () => {
+    const analysis = analyzeArabicWord('كَتَبَ', 'he wrote');
+    expect(analysis.diacritic).toBeDefined();
+    expect(analysis.diacritic?.arabicMatch).toBe('َ');
+    expect(analysis.diacritic?.englishMatches).toContain('he');
+  });
+});
 
-      expect(analysis.prefixes[0]).toBeDefined();
-      expect(analysis.prefixes[0]?.arabicMatch).toBe('ال');
-      expect(analysis.prefixes[0]?.englishMatches).toContain('the');
+describe('Diacritic Double-Matching Prevention', () => {
+  it('should keep definite article and case ending separate (no merging)', () => {
+    // الثَّنَاءِ → "[the] praise" (bracket injection adds "the")
+    // Prefix "ال" matches "the", kasra "ِ" has patterns "in/of/with" (not "the")
+    // They serve different grammatical functions (definiteness vs. case)
+    // Expected: Prefix detected, diacritic not detected (no English correspondence)
+    const analysis = analyzeArabicWord('الثَّنَاءِ', '[the] praise');
 
-      // Diacritic should NOT be detected (kasra has "in/of/with", not "the")
-      expect(analysis.diacritic).toBeUndefined();
+    expect(analysis.prefixes[0]).toBeDefined();
+    expect(analysis.prefixes[0]?.arabicMatch).toBe('ال');
+    expect(analysis.prefixes[0]?.englishMatches).toContain('the');
+
+    // Diacritic should NOT be detected (kasra has "in/of/with", not "the")
+    expect(analysis.diacritic).toBeUndefined();
+    expect(analysis.hasComponents).toBe(true);
+  });
+
+  it('should merge diacritic color with suffix when both match pronoun', () => {
+    // أَضَافَهُ → "attributed it"
+    // Suffix "ه" matches "it", damma "ُ" also has pattern "it"
+    // Both are grammatically related (pronoun system)
+    // Expected: Diacritic kept but inherits orange color from suffix
+    const analysis = analyzeArabicWord('أَضَافَهُ', 'attributed it');
+
+    expect(analysis.suffix).toBeDefined();
+    expect(analysis.suffix?.arabicMatch).toBe('ه');
+    expect(analysis.suffix?.englishMatches).toContain('it');
+
+    // Diacritic should be kept with color inheritance
+    expect(analysis.diacritic).toBeDefined();
+    expect(analysis.diacritic?.arabicMatch).toBe('ُ');
+    expect(analysis.diacritic?.inheritColorFrom).toBe(ComponentType.SUFFIX);
+    expect(analysis.hasComponents).toBe(true);
+  });
+
+  it('should keep diacritic when it has unique English match', () => {
+    // قَالَ → "he says"
+    // Fatha "َ" matches "he", which is unique (no other component claims it)
+    // Expected: Diacritic should be kept
+    const analysis = analyzeArabicWord('قَالَ', 'he says');
+
+    expect(analysis.diacritic).toBeDefined();
+    expect(analysis.diacritic?.arabicMatch).toBe('َ');
+    expect(analysis.diacritic?.englishMatches).toContain('he');
+    expect(analysis.hasComponents).toBe(true);
+  });
+
+  it('should keep diacritic when multiple patterns exist and at least one is unique', () => {
+    // Word with diacritic that has multiple patterns, some overlap with other components
+    // Use a simpler example: والكتابُ → "and he the book"
+    // Prefix "و" matches "and", damma "ُ" has patterns ["he", "it", "they", "of"]
+    // "he" is in the text and unique (not claimed by prefix), so diacritic should be kept
+    const analysis = analyzeArabicWord('والكتابُ', 'and he reads the book');
+
+    // Prefix should be found
+    expect(analysis.prefixes[0]).toBeDefined();
+
+    // Diacritic "ُ" should be kept because "he" is unique
+    expect(analysis.diacritic).toBeDefined();
+    expect(analysis.diacritic?.arabicMatch).toBe('ُ');
+    expect(analysis.diacritic?.englishMatches).toContain('he');
+  });
+
+  it('should filter diacritic when all its patterns are claimed by other components', () => {
+    // Complex case: multiple components all matching different words
+    // Diacritic patterns all overlap with existing components
+    // Example constructed for testing: و prefix matches "and", suffix matches "in"
+    // Kasra "ِ" has patterns ["in", "of", "with", "the"] - "in" already taken
+    const analysis = analyzeArabicWord('وفيهِ', 'and in it');
+
+    // Should have prefix and compound "وفي" or separate components
+    expect(analysis.hasComponents).toBe(true);
+
+    // If kasra's only unique match is already claimed, it should be filtered
+    // This is a more complex case - the exact behavior depends on which components are found
+    // The key test is that diacritic is only present if it has a unique contribution
+    if (analysis.diacritic) {
+      // If diacritic is present, it MUST have at least one unique English match
+      const otherMatches = [
+        ...(analysis.prefixes[0]?.englishMatches || []),
+        ...(analysis.suffix?.englishMatches || []),
+        ...(analysis.infix?.englishMatches || []),
+      ].map(m => m.toLowerCase());
+
+      const uniqueMatches = analysis.diacritic.englishMatches.filter(
+        m => !otherMatches.includes(m.toLowerCase()),
+      );
+
+      expect(uniqueMatches.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('Edge cases and error handling', () => {
+  it('should handle new programmatically generated combinations', () => {
+    // Test that new إلى combinations are now available (since we added it to PREPOSITIONS)
+    const analysis1 = analyzeArabicWord('وإلىالمدرسة', 'and to the school');
+    expect(analysis1.hasComponents).toBe(true);
+    // Should find at least the 'و' prefix, even if not the full combination yet
+    expect(analysis1.prefixes[0]?.arabicMatch).toBeTruthy();
+
+    // Test that the new suffixes work correctly
+    const analysis2 = analyzeArabicWord('كتبوا', 'they wrote');
+    expect(analysis2.suffix?.arabicMatch).toBe('وا');
+    expect(analysis2.hasComponents).toBe(true);
+  });
+
+  it('should handle new common plural suffixes', () => {
+    const tests = [
+      { arabic: 'ذهبوا', english: 'they went', expectedSuffix: 'وا' },
+      { arabic: 'رأيتكم', english: 'I saw you all', expectedSuffix: 'كم' }, // Fixed: word ends with كم
+      { arabic: 'كتبتم', english: 'you all wrote', expectedSuffix: 'تم' }, // Better example for تم
+      { arabic: 'أنتكن', english: 'you all were', expectedSuffix: 'كن' },
+      { arabic: 'كتبتن', english: 'you all wrote', expectedSuffix: 'تن' }, // Better example for تن
+    ];
+
+    tests.forEach(({ arabic, english, expectedSuffix }) => {
+      const analysis = analyzeArabicWord(arabic, english);
+      expect(analysis.suffix?.arabicMatch).toBe(expectedSuffix);
       expect(analysis.hasComponents).toBe(true);
     });
+  });
+});
 
-    it('should merge diacritic color with suffix when both match pronoun', () => {
-      // أَضَافَهُ → "attributed it"
-      // Suffix "ه" matches "it", damma "ُ" also has pattern "it"
-      // Both are grammatically related (pronoun system)
-      // Expected: Diacritic kept but inherits orange color from suffix
-      const analysis = analyzeArabicWord('أَضَافَهُ', 'attributed it');
+describe('New suffix coverage', () => {
+  it('should match object pronoun ني (me)', () => {
+    const analysis = analyzeArabicWord('أعطني', 'give me');
+    expect(analysis.suffix?.arabicMatch).toBe('ني');
+    expect(analysis.suffix?.englishMatches).toContain('me');
+    expect(analysis.hasComponents).toBe(true);
+  });
 
-      expect(analysis.suffix).toBeDefined();
-      expect(analysis.suffix?.arabicMatch).toBe('ه');
-      expect(analysis.suffix?.englishMatches).toContain('it');
+  it('should match dual you كما', () => {
+    const analysis = analyzeArabicWord('كتابكما', 'your (dual) book');
+    expect(analysis.suffix?.arabicMatch).toBe('كما');
+    expect(analysis.hasComponents).toBe(true);
+  });
 
-      // Diacritic should be kept with color inheritance
-      expect(analysis.diacritic).toBeDefined();
-      expect(analysis.diacritic?.arabicMatch).toBe('ُ');
-      expect(analysis.diacritic?.inheritColorFrom).toBe(ComponentType.SUFFIX);
-      expect(analysis.hasComponents).toBe(true);
+  it('should match dual them هما', () => {
+    const analysis = analyzeArabicWord('كتابهما', 'their (dual) book');
+    expect(analysis.suffix?.arabicMatch).toBe('هما');
+    expect(analysis.hasComponents).toBe(true);
+  });
+});
+
+describe('Single Word Color-Coding Rule', () => {
+  it('should never apply color-coding to single English words', () => {
+    // Test cases where Arabic analysis might suggest components but English is single word
+    const testCases = [
+      { arabic: 'والبيت', english: 'house' }, // "wa" prefix but single English word
+      { arabic: 'كتابه', english: 'book' }, // possessive suffix but single English word
+      { arabic: 'المدرسة', english: 'school' }, // definite article but single English word
+      { arabic: 'يكتب', english: 'writes' }, // verbal prefix but single English word
+      { arabic: 'من', english: 'from' }, // preposition prefix but single English word
+    ];
+
+    testCases.forEach(({ arabic, english }) => {
+      const result = analyzeArabicWord(arabic, english);
+
+      // The key rule: single words should not be color-coded regardless of Arabic analysis
+      // This is enforced in the WordTooltip component by checking word count
+      const wordCount = english.trim().split(/\s+/).length;
+      expect(wordCount).toBe(1);
+
+      // The analysis might exist but should be ignored for single words
+      // This test documents the expected behavior - single words = no color-coding
     });
+  });
 
-    it('should keep diacritic when it has unique English match', () => {
-      // قَالَ → "he says"
-      // Fatha "َ" matches "he", which is unique (no other component claims it)
-      // Expected: Diacritic should be kept
-      const analysis = analyzeArabicWord('قَالَ', 'he says');
+  it('should apply color-coding to multi-word English phrases', () => {
+    // Test cases where color-coding should be applied
+    const testCases = [
+      { arabic: 'والبيت', english: 'and house' }, // Two words, should be color-coded
+      { arabic: 'كتابه', english: 'his book' }, // Two words, should be color-coded
+      { arabic: 'في البيت', english: 'in the house' }, // Three words, should be color-coded
+    ];
 
-      expect(analysis.diacritic).toBeDefined();
-      expect(analysis.diacritic?.arabicMatch).toBe('َ');
-      expect(analysis.diacritic?.englishMatches).toContain('he');
-      expect(analysis.hasComponents).toBe(true);
+    testCases.forEach(({ arabic, english }) => {
+      const result = analyzeArabicWord(arabic, english);
+
+      // Word count check - should be multiple words
+      const wordCount = english.trim().split(/\s+/).length;
+      expect(wordCount).toBeGreaterThan(1);
+
+      // These should receive color-coding in the tooltip when components are found
+      if (result.hasComponents) {
+        expect(
+          result.prefixes[0] || result.suffix || result.infix || result.diacritic,
+        ).toBeDefined();
+      }
     });
+  });
+});
 
-    it('should keep diacritic when multiple patterns exist and at least one is unique', () => {
-      // Word with diacritic that has multiple patterns, some overlap with other components
-      // Use a simpler example: والكتابُ → "and he the book"
-      // Prefix "و" matches "and", damma "ُ" has patterns ["he", "it", "they", "of"]
-      // "he" is in the text and unique (not claimed by prefix), so diacritic should be kept
-      const analysis = analyzeArabicWord('والكتابُ', 'and he reads the book');
+describe('Bracket Injection', () => {
+  it('should detect bracket injection for definite articles', () => {
+    const analysis = analyzeArabicWord('الكتاب', 'book');
+    expect(analysis).not.toBeNull();
+    expect(analysis?.hasBracketInjection).toBe(true);
+  });
 
-      // Prefix should be found
-      expect(analysis.prefixes[0]).toBeDefined();
+  it('should not detect bracket injection when the is already present', () => {
+    const analysis = analyzeArabicWord('الكتاب', 'the book');
+    expect(analysis).not.toBeNull();
+    expect(analysis?.hasBracketInjection).toBe(false);
+  });
 
-      // Diacritic "ُ" should be kept because "he" is unique
-      expect(analysis.diacritic).toBeDefined();
-      expect(analysis.diacritic?.arabicMatch).toBe('ُ');
-      expect(analysis.diacritic?.englishMatches).toContain('he');
-    });
+  it('should not detect bracket injection for divine names', () => {
+    const analysis = analyzeArabicWord('الله', 'Allah');
+    expect(analysis).not.toBeNull();
+    expect(analysis?.hasBracketInjection).toBe(false);
+  });
+});
 
-    it('should filter diacritic when all its patterns are claimed by other components', () => {
-      // Complex case: multiple components all matching different words
-      // Diacritic patterns all overlap with existing components
-      // Example constructed for testing: و prefix matches "and", suffix matches "in"
-      // Kasra "ِ" has patterns ["in", "of", "with", "the"] - "in" already taken
-      const analysis = analyzeArabicWord('وفيهِ', 'and in it');
+describe('Whole Translation Matching Rejection', () => {
+  it('should NOT match patterns that equal the entire English translation', () => {
+    // CRITICAL: If a component pattern matches the ENTIRE translation,
+    // it defeats the educational purpose of showing component breakdown.
+    // Both words would be colored the same, which is incorrect.
+    //
+    // The fix: When a component has multi-word patterns (like 'they said'),
+    // and the English translation is exactly that phrase ('they said'),
+    // we reject that specific pattern. However, single-word patterns from
+    // the same component (like 'they') can still match.
 
-      // Should have prefix and compound "وفي" or separate components
-      expect(analysis.hasComponents).toBe(true);
+    const testCases = [
+      {
+        arabic: 'قَالَا',
+        english: 'they said',
+        rejectedPattern: 'they said',
+        allowedPattern: 'they',
+      }, // Dual marker suffix has ['they', 'both', 'they said', 'they two']
+      {
+        arabic: 'كُنَّا',
+        english: 'we were',
+        rejectedPattern: 'we were',
+        allowedPattern: 'we',
+      }, // Suffix has ['we', 'we were', 'we did']
+    ];
 
-      // If kasra's only unique match is already claimed, it should be filtered
-      // This is a more complex case - the exact behavior depends on which components are found
-      // The key test is that diacritic is only present if it has a unique contribution
-      if (analysis.diacritic) {
-        // If diacritic is present, it MUST have at least one unique English match
-        const otherMatches = [
-          ...(analysis.prefixes[0]?.englishMatches || []),
-          ...(analysis.suffix?.englishMatches || []),
-          ...(analysis.infix?.englishMatches || []),
-        ].map(m => m.toLowerCase());
+    testCases.forEach(({ arabic, english, rejectedPattern, allowedPattern }) => {
+      const analysis = analyzeArabicWord(arabic, english);
 
-        const uniqueMatches = analysis.diacritic.englishMatches.filter(
-          m => !otherMatches.includes(m.toLowerCase())
-        );
-
-        expect(uniqueMatches.length).toBeGreaterThan(0);
+      // Components CAN be found, but not with the whole-translation pattern
+      if (analysis.suffix) {
+        // The multi-word pattern should NOT be in the matches
+        expect(analysis.suffix.englishMatches).not.toContain(rejectedPattern);
+        // But single-word patterns CAN still match
+        // (this is okay - only one word will be colored, not both)
       }
     });
   });
 
-  describe('Edge cases and error handling', () => {
-    it('should handle new programmatically generated combinations', () => {
-      // Test that new إلى combinations are now available (since we added it to PREPOSITIONS)
-      const analysis1 = analyzeArabicWord('وإلىالمدرسة', 'and to the school');
-      expect(analysis1.hasComponents).toBe(true);
-      // Should find at least the 'و' prefix, even if not the full combination yet
-      expect(analysis1.prefixes[0]?.arabicMatch).toBeTruthy();
+  it('should STILL match partial patterns within translations', () => {
+    // These should work because the pattern matches PART of the translation
+    // (not the entire translation)
 
-      // Test that the new suffixes work correctly
-      const analysis2 = analyzeArabicWord('كتبوا', 'they wrote');
-      expect(analysis2.suffix?.arabicMatch).toBe('وا');
-      expect(analysis2.hasComponents).toBe(true);
-    });
+    const testCases = [
+      {
+        arabic: 'وكتابهم',
+        english: 'and their book',
+        expectedPrefix: 'و',
+        expectedSuffix: 'هم',
+      },
+      {
+        arabic: 'كتابنا',
+        english: 'our book',
+        expectedSuffix: 'نا',
+      },
+    ];
 
-    it('should handle new common plural suffixes', () => {
-      const tests = [
-        { arabic: 'ذهبوا', english: 'they went', expectedSuffix: 'وا' },
-        { arabic: 'رأيتكم', english: 'I saw you all', expectedSuffix: 'كم' }, // Fixed: word ends with كم
-        { arabic: 'كتبتم', english: 'you all wrote', expectedSuffix: 'تم' }, // Better example for تم
-        { arabic: 'أنتكن', english: 'you all were', expectedSuffix: 'كن' },
-        { arabic: 'كتبتن', english: 'you all wrote', expectedSuffix: 'تن' }, // Better example for تن
-      ];
+    testCases.forEach(({ arabic, english, expectedPrefix, expectedSuffix }) => {
+      const analysis = analyzeArabicWord(arabic, english);
 
-      tests.forEach(({ arabic, english, expectedSuffix }) => {
-        const analysis = analyzeArabicWord(arabic, english);
+      // Should find components because they match PARTS of the translation
+      expect(analysis.hasComponents).toBe(true);
+
+      if (expectedPrefix) {
+        expect(analysis.prefixes[0]?.arabicMatch).toBe(expectedPrefix);
+      }
+      if (expectedSuffix) {
         expect(analysis.suffix?.arabicMatch).toBe(expectedSuffix);
-        expect(analysis.hasComponents).toBe(true);
-      });
+      }
     });
   });
 
-  describe('New suffix coverage', () => {
-    it('should match object pronoun ني (me)', () => {
-      const analysis = analyzeArabicWord('أعطني', 'give me');
-      expect(analysis.suffix?.arabicMatch).toBe('ني');
-      expect(analysis.suffix?.englishMatches).toContain('me');
+  it('should allow single-word patterns in multi-word translations', () => {
+    // Single-word patterns like "they" or "said" should still work
+    // Only multi-word patterns that match the ENTIRE translation are rejected
+
+    const analysis = analyzeArabicWord('قَالُوا', 'they said');
+
+    // Should find 'وا' suffix matching "they" (not the whole translation)
+    expect(analysis.hasComponents).toBe(true);
+    expect(analysis.suffix?.arabicMatch).toBe('وا');
+    expect(analysis.suffix?.englishMatches).toContain('they');
+  });
+
+  it('should ensure different components in 2-word translations', () => {
+    // The goal: 2-word translations should show component breakdown
+    // Not both words colored the same
+
+    const testCases = [
+      { arabic: 'والبيت', english: 'and house' }, // Should find prefix 'و' → "and"
+      { arabic: 'كتابه', english: 'his book' }, // Should find suffix 'ه' → "his"
+      { arabic: 'منها', english: 'from her' }, // Should find prefix 'من' + suffix 'ها'
+    ];
+
+    testCases.forEach(({ arabic, english }) => {
+      const analysis = analyzeArabicWord(arabic, english);
+
+      // Should have at least one component that matches part of the translation
+      expect(analysis.hasComponents).toBe(true);
+
+      // Count how many English words each component covers
+      const wordCount = english.trim().split(/\s+/).length;
+      expect(wordCount).toBe(2);
+
+      // At least one component should be found
+      const componentCount = [
+        analysis.prefixes[0],
+        analysis.suffix,
+        analysis.infix,
+        analysis.diacritic,
+      ].filter(Boolean).length;
+      expect(componentCount).toBeGreaterThan(0);
+    });
+  });
+});
+
+describe('2025 Pattern Enhancements', () => {
+  describe('Fixed: Diacritic Pattern Bug', () => {
+    it('should detect من (who/whoever) without diacritics', () => {
+      const analysis = analyzeArabicWord('من', 'he who');
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('من');
+      expect(analysis.prefixes[0]?.englishMatches).toContain('he who');
+    });
+
+    it('should detect من in standalone interrogative', () => {
+      const analysis = analyzeArabicWord('من', 'who is');
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('من');
+      expect(analysis.prefixes[0]?.englishMatches).toContain('who');
+    });
+  });
+
+  describe('Enhanced: Shadda-Aware Possessive Suffixes', () => {
+    it('should detect shadda suffix patterns ىّ and يّ in suffix list', () => {
+      // Verify the patterns exist in our suffix definitions
+      const { ARABIC_SUFFIXES } = require('../../constants/arabicWordComponents');
+      const shaddaSuffixes = ARABIC_SUFFIXES.filter(s => s.arabic === 'ىّ' || s.arabic === 'يّ');
+      expect(shaddaSuffixes.length).toBe(2);
+      expect(shaddaSuffixes.some(s => s.english.includes('me'))).toBe(true);
+    });
+
+    it('should detect لِي (to me) with possessive suffix', () => {
+      const analysis = analyzeArabicWord('لي', 'to me');
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ل');
+      expect(analysis.prefixes[0]?.englishMatches).toContain('to');
+      // Suffix ي should be detected
+      if (analysis.suffix) {
+        expect(analysis.suffix.arabicMatch).toBe('ي');
+        expect(analysis.suffix.englishMatches).toContain('me');
+      }
+    });
+
+    it('should detect preposition + possessive in في (in me)', () => {
+      const analysis = analyzeArabicWord('في', 'in me');
+      // Note: This may not detect both components due to overlap
+      // but verifies the possessive suffix logic is working
       expect(analysis.hasComponents).toBe(true);
     });
+  });
 
-    it('should match dual you كما', () => {
-      const analysis = analyzeArabicWord('كتابكما', 'your (dual) book');
-      expect(analysis.suffix?.arabicMatch).toBe('كما');
+  describe('Enhanced: Verbal Prefix ت for Inanimate Subjects', () => {
+    it('should detect ت prefix with "it" in present tense verb', () => {
+      const analysis = analyzeArabicWord('تَدْعُو', 'it calls');
       expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ت');
+      expect(analysis.prefixes[0]?.englishMatches).toContain('it');
     });
 
-    it('should match dual them هما', () => {
-      const analysis = analyzeArabicWord('كتابهما', 'their (dual) book');
-      expect(analysis.suffix?.arabicMatch).toBe('هما');
+    it('should detect ت prefix with "it desires"', () => {
+      const analysis = analyzeArabicWord('تَشْتَهِي', 'it desires');
       expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ت');
+      expect(analysis.prefixes[0]?.englishMatches).toContain('it');
+    });
+
+    it('should still detect ت prefix with traditional "you/she" subjects', () => {
+      const analysis1 = analyzeArabicWord('تَكْتُبُ', 'you write');
+      expect(analysis1.hasComponents).toBe(true);
+      expect(analysis1.prefixes[0]?.arabicMatch).toBe('ت');
+      expect(analysis1.prefixes[0]?.englishMatches).toContain('you');
+
+      const analysis2 = analyzeArabicWord('تَكْتُبُ', 'she writes');
+      expect(analysis2.hasComponents).toBe(true);
+      expect(analysis2.prefixes[0]?.arabicMatch).toBe('ت');
+      expect(analysis2.prefixes[0]?.englishMatches).toContain('she');
     });
   });
 
-  describe('Single Word Color-Coding Rule', () => {
-    it('should never apply color-coding to single English words', () => {
-      // Test cases where Arabic analysis might suggest components but English is single word
-      const testCases = [
-        { arabic: 'والبيت', english: 'house' }, // "wa" prefix but single English word
-        { arabic: 'كتابه', english: 'book' }, // possessive suffix but single English word
-        { arabic: 'المدرسة', english: 'school' }, // definite article but single English word
-        { arabic: 'يكتب', english: 'writes' }, // verbal prefix but single English word
-        { arabic: 'من', english: 'from' }, // preposition prefix but single English word
-      ];
-
-      testCases.forEach(({ arabic, english }) => {
-        const result = analyzeArabicWord(arabic, english);
-
-        // The key rule: single words should not be color-coded regardless of Arabic analysis
-        // This is enforced in the WordTooltip component by checking word count
-        const wordCount = english.trim().split(/\s+/).length;
-        expect(wordCount).toBe(1);
-
-        // The analysis might exist but should be ignored for single words
-        // This test documents the expected behavior - single words = no color-coding
-      });
-    });
-
-    it('should apply color-coding to multi-word English phrases', () => {
-      // Test cases where color-coding should be applied
-      const testCases = [
-        { arabic: 'والبيت', english: 'and house' }, // Two words, should be color-coded
-        { arabic: 'كتابه', english: 'his book' }, // Two words, should be color-coded
-        { arabic: 'في البيت', english: 'in the house' }, // Three words, should be color-coded
-      ];
-
-      testCases.forEach(({ arabic, english }) => {
-        const result = analyzeArabicWord(arabic, english);
-
-        // Word count check - should be multiple words
-        const wordCount = english.trim().split(/\s+/).length;
-        expect(wordCount).toBeGreaterThan(1);
-
-        // These should receive color-coding in the tooltip when components are found
-        if (result.hasComponents) {
-          expect(result.prefixes[0] || result.suffix || result.infix || result.diacritic).toBeDefined();
-        }
-      });
-    });
-  });
-
-  describe('Bracket Injection', () => {
-    it('should detect bracket injection for definite articles', () => {
-      const analysis = analyzeArabicWord('الكتاب', 'book');
-      expect(analysis).not.toBeNull();
-      expect(analysis?.hasBracketInjection).toBe(true);
-    });
-
-    it('should not detect bracket injection when the is already present', () => {
-      const analysis = analyzeArabicWord('الكتاب', 'the book');
-      expect(analysis).not.toBeNull();
-      expect(analysis?.hasBracketInjection).toBe(false);
-    });
-
-    it('should not detect bracket injection for divine names', () => {
-      const analysis = analyzeArabicWord('الله', 'Allah');
-      expect(analysis).not.toBeNull();
-      expect(analysis?.hasBracketInjection).toBe(false);
-    });
-  });
-
-  describe('Whole Translation Matching Rejection', () => {
-    it('should NOT match patterns that equal the entire English translation', () => {
-      // CRITICAL: If a component pattern matches the ENTIRE translation,
-      // it defeats the educational purpose of showing component breakdown.
-      // Both words would be colored the same, which is incorrect.
-      //
-      // The fix: When a component has multi-word patterns (like 'they said'),
-      // and the English translation is exactly that phrase ('they said'),
-      // we reject that specific pattern. However, single-word patterns from
-      // the same component (like 'they') can still match.
-
-      const testCases = [
-        {
-          arabic: 'قَالَا',
-          english: 'they said',
-          rejectedPattern: 'they said',
-          allowedPattern: 'they'
-        }, // Dual marker suffix has ['they', 'both', 'they said', 'they two']
-        {
-          arabic: 'كُنَّا',
-          english: 'we were',
-          rejectedPattern: 'we were',
-          allowedPattern: 'we'
-        }, // Suffix has ['we', 'we were', 'we did']
-      ];
-
-      testCases.forEach(({ arabic, english, rejectedPattern, allowedPattern }) => {
-        const analysis = analyzeArabicWord(arabic, english);
-
-        // Components CAN be found, but not with the whole-translation pattern
-        if (analysis.suffix) {
-          // The multi-word pattern should NOT be in the matches
-          expect(analysis.suffix.englishMatches).not.toContain(rejectedPattern);
-          // But single-word patterns CAN still match
-          // (this is okay - only one word will be colored, not both)
-        }
-      });
-    });
-
-    it('should STILL match partial patterns within translations', () => {
-      // These should work because the pattern matches PART of the translation
-      // (not the entire translation)
-
-      const testCases = [
-        {
-          arabic: 'وكتابهم',
-          english: 'and their book',
-          expectedPrefix: 'و',
-          expectedSuffix: 'هم'
-        },
-        {
-          arabic: 'كتابنا',
-          english: 'our book',
-          expectedSuffix: 'نا'
-        },
-      ];
-
-      testCases.forEach(({ arabic, english, expectedPrefix, expectedSuffix }) => {
-        const analysis = analyzeArabicWord(arabic, english);
-
-        // Should find components because they match PARTS of the translation
-        expect(analysis.hasComponents).toBe(true);
-
-        if (expectedPrefix) {
-          expect(analysis.prefixes[0]?.arabicMatch).toBe(expectedPrefix);
-        }
-        if (expectedSuffix) {
-          expect(analysis.suffix?.arabicMatch).toBe(expectedSuffix);
-        }
-      });
-    });
-
-    it('should allow single-word patterns in multi-word translations', () => {
-      // Single-word patterns like "they" or "said" should still work
-      // Only multi-word patterns that match the ENTIRE translation are rejected
-
-      const analysis = analyzeArabicWord('قَالُوا', 'they said');
-
-      // Should find 'وا' suffix matching "they" (not the whole translation)
+  describe('Enhanced: First-Person Plural نا Suffix', () => {
+    it('should detect نا suffix with "we" in past-tense verb', () => {
+      const analysis = analyzeArabicWord('كُنَّا', 'we were');
       expect(analysis.hasComponents).toBe(true);
-      expect(analysis.suffix?.arabicMatch).toBe('وا');
-      expect(analysis.suffix?.englishMatches).toContain('they');
+      expect(analysis.suffix?.arabicMatch).toBe('نا');
+      expect(analysis.suffix?.englishMatches).toContain('we');
     });
 
-    it('should ensure different components in 2-word translations', () => {
-      // The goal: 2-word translations should show component breakdown
-      // Not both words colored the same
+    it('should detect نا suffix with "we" as subject pronoun', () => {
+      const analysis = analyzeArabicWord('ذَهَبْنَا', 'we went');
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.suffix?.arabicMatch).toBe('نا');
+      expect(analysis.suffix?.englishMatches).toContain('we');
+    });
 
-      const testCases = [
-        { arabic: 'والبيت', english: 'and house' }, // Should find prefix 'و' → "and"
-        { arabic: 'كتابه', english: 'his book' }, // Should find suffix 'ه' → "his"
-        { arabic: 'منها', english: 'from her' }, // Should find prefix 'من' + suffix 'ها'
-      ];
-
-      testCases.forEach(({ arabic, english }) => {
-        const analysis = analyzeArabicWord(arabic, english);
-
-        // Should have at least one component that matches part of the translation
-        expect(analysis.hasComponents).toBe(true);
-
-        // Count how many English words each component covers
-        const wordCount = english.trim().split(/\s+/).length;
-        expect(wordCount).toBe(2);
-
-        // At least one component should be found
-        const componentCount = [
-          analysis.prefixes[0],
-          analysis.suffix,
-          analysis.infix,
-          analysis.diacritic,
-        ].filter(Boolean).length;
-        expect(componentCount).toBeGreaterThan(0);
-      });
+    it('should still detect نا suffix with traditional possessive meanings', () => {
+      const analysis = analyzeArabicWord('كتابنا', 'our book');
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.suffix?.arabicMatch).toBe('نا');
+      expect(analysis.suffix?.englishMatches).toContain('our');
     });
   });
-
-  describe('2025 Pattern Enhancements', () => {
-    describe('Fixed: Diacritic Pattern Bug', () => {
-      it('should detect من (who/whoever) without diacritics', () => {
-        const analysis = analyzeArabicWord('من', 'he who');
-        expect(analysis.hasComponents).toBe(true);
-        expect(analysis.prefixes[0]?.arabicMatch).toBe('من');
-        expect(analysis.prefixes[0]?.englishMatches).toContain('he who');
-      });
-
-      it('should detect من in standalone interrogative', () => {
-        const analysis = analyzeArabicWord('من', 'who is');
-        expect(analysis.hasComponents).toBe(true);
-        expect(analysis.prefixes[0]?.arabicMatch).toBe('من');
-        expect(analysis.prefixes[0]?.englishMatches).toContain('who');
-      });
-    });
-
-    describe('Enhanced: Shadda-Aware Possessive Suffixes', () => {
-      it('should detect shadda suffix patterns ىّ and يّ in suffix list', () => {
-        // Verify the patterns exist in our suffix definitions
-        const { ARABIC_SUFFIXES } = require('../../constants/arabicWordComponents');
-        const shaddaSuffixes = ARABIC_SUFFIXES.filter(
-          s => s.arabic === 'ىّ' || s.arabic === 'يّ'
-        );
-        expect(shaddaSuffixes.length).toBe(2);
-        expect(shaddaSuffixes.some(s => s.english.includes('me'))).toBe(true);
-      });
-
-      it('should detect لِي (to me) with possessive suffix', () => {
-        const analysis = analyzeArabicWord('لي', 'to me');
-        expect(analysis.hasComponents).toBe(true);
-        expect(analysis.prefixes[0]?.arabicMatch).toBe('ل');
-        expect(analysis.prefixes[0]?.englishMatches).toContain('to');
-        // Suffix ي should be detected
-        if (analysis.suffix) {
-          expect(analysis.suffix.arabicMatch).toBe('ي');
-          expect(analysis.suffix.englishMatches).toContain('me');
-        }
-      });
-
-      it('should detect preposition + possessive in في (in me)', () => {
-        const analysis = analyzeArabicWord('في', 'in me');
-        // Note: This may not detect both components due to overlap
-        // but verifies the possessive suffix logic is working
-        expect(analysis.hasComponents).toBe(true);
-      });
-    });
-
-    describe('Enhanced: Verbal Prefix ت for Inanimate Subjects', () => {
-      it('should detect ت prefix with "it" in present tense verb', () => {
-        const analysis = analyzeArabicWord('تَدْعُو', 'it calls');
-        expect(analysis.hasComponents).toBe(true);
-        expect(analysis.prefixes[0]?.arabicMatch).toBe('ت');
-        expect(analysis.prefixes[0]?.englishMatches).toContain('it');
-      });
-
-      it('should detect ت prefix with "it desires"', () => {
-        const analysis = analyzeArabicWord('تَشْتَهِي', 'it desires');
-        expect(analysis.hasComponents).toBe(true);
-        expect(analysis.prefixes[0]?.arabicMatch).toBe('ت');
-        expect(analysis.prefixes[0]?.englishMatches).toContain('it');
-      });
-
-      it('should still detect ت prefix with traditional "you/she" subjects', () => {
-        const analysis1 = analyzeArabicWord('تَكْتُبُ', 'you write');
-        expect(analysis1.hasComponents).toBe(true);
-        expect(analysis1.prefixes[0]?.arabicMatch).toBe('ت');
-        expect(analysis1.prefixes[0]?.englishMatches).toContain('you');
-
-        const analysis2 = analyzeArabicWord('تَكْتُبُ', 'she writes');
-        expect(analysis2.hasComponents).toBe(true);
-        expect(analysis2.prefixes[0]?.arabicMatch).toBe('ت');
-        expect(analysis2.prefixes[0]?.englishMatches).toContain('she');
-      });
-    });
-
-    describe('Enhanced: First-Person Plural نا Suffix', () => {
-      it('should detect نا suffix with "we" in past-tense verb', () => {
-        const analysis = analyzeArabicWord('كُنَّا', 'we were');
-        expect(analysis.hasComponents).toBe(true);
-        expect(analysis.suffix?.arabicMatch).toBe('نا');
-        expect(analysis.suffix?.englishMatches).toContain('we');
-      });
-
-      it('should detect نا suffix with "we" as subject pronoun', () => {
-        const analysis = analyzeArabicWord('ذَهَبْنَا', 'we went');
-        expect(analysis.hasComponents).toBe(true);
-        expect(analysis.suffix?.arabicMatch).toBe('نا');
-        expect(analysis.suffix?.englishMatches).toContain('we');
-      });
-
-      it('should still detect نا suffix with traditional possessive meanings', () => {
-        const analysis = analyzeArabicWord('كتابنا', 'our book');
-        expect(analysis.hasComponents).toBe(true);
-        expect(analysis.suffix?.arabicMatch).toBe('نا');
-        expect(analysis.suffix?.englishMatches).toContain('our');
-      });
-    });
-  });
+});

@@ -8,7 +8,7 @@ import { useCallback, useRef, useState } from 'react';
  */
 export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
-  delay: number = 300
+  delay: number = 300,
 ): [T, boolean] {
   const [isDebouncing, setIsDebouncing] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,7 +36,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
 
       return result;
     }) as T,
-    [callback, delay, isDebouncing]
+    [callback, delay, isDebouncing],
   );
 
   return [debouncedCallback, isDebouncing];

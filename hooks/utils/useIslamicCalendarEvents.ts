@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { HIJRI_MONTHS } from '@/constants/hijri';
 import { STRINGS } from '@/constants/strings';
 
-
 interface IslamicEvent {
   name: string;
   arabicName: string;
@@ -123,21 +122,12 @@ export const formatDaysUntil = (days: number): string => {
     return STRINGS.IN_DAYS_TEMPLATE.replace('{days}', days.toString());
   }
   if (days <= 30) {
-    return STRINGS.IN_WEEKS_TEMPLATE.replace(
-      '{weeks}',
-      Math.ceil(days / 7).toString(),
-    );
+    return STRINGS.IN_WEEKS_TEMPLATE.replace('{weeks}', Math.ceil(days / 7).toString());
   }
   if (days <= 365) {
-    return STRINGS.IN_MONTHS_TEMPLATE.replace(
-      '{months}',
-      Math.ceil(days / 30).toString(),
-    );
+    return STRINGS.IN_MONTHS_TEMPLATE.replace('{months}', Math.ceil(days / 30).toString());
   }
-  return STRINGS.IN_YEARS_TEMPLATE.replace(
-    '{years}',
-    Math.ceil(days / 365).toString(),
-  );
+  return STRINGS.IN_YEARS_TEMPLATE.replace('{years}', Math.ceil(days / 365).toString());
 };
 
 export function useIslamicCalendarEvents() {

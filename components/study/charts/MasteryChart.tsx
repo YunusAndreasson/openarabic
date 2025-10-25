@@ -57,7 +57,7 @@ export const MasteryChart = memo<MasteryChartProps>(
         emptyStateText={EMPTY_STATE_MESSAGES.mastery}
       />
     );
-  }
+  },
 );
 
 MasteryChart.displayName = 'MasteryChart';

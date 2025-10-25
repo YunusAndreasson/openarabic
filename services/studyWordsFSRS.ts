@@ -68,7 +68,7 @@ export const studyWordsFSRSService = {
           fsrs_state,
           fsrs_last_review,
           root_id,
-          created_at`
+          created_at`,
       );
     } else {
       // Get full data with relationships - root is the only relation we need
@@ -112,7 +112,7 @@ export const studyWordsFSRSService = {
     if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
       const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
       filteredQuery = filteredQuery.or(
-        `fsrs_state.eq.0,fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`
+        `fsrs_state.eq.0,fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`,
       );
     }
 
@@ -123,7 +123,7 @@ export const studyWordsFSRSService = {
       // State 0 (New) words are due for first review, not learning
       // Only states 1, 3, or state 2 with low stability are learning
       filteredQuery = filteredQuery.or(
-        'fsrs_state.in.(1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
+        'fsrs_state.in.(1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)',
       );
     }
 
@@ -169,11 +169,8 @@ export const studyWordsFSRSService = {
         fsrs_state: row.fsrs_state,
         fsrs_last_review: row.fsrs_last_review, // Always exists per database schema
         created_at: row.created_at,
-        root:
-          'root' in row && row.root
-            ? { ...(row.root as any), id: row.root_id }
-            : undefined, // Add missing id field
-      })
+        root: 'root' in row && row.root ? { ...(row.root as any), id: row.root_id } : undefined, // Add missing id field
+      }),
     );
   },
 
@@ -183,7 +180,7 @@ export const studyWordsFSRSService = {
     rootId: number,
     update: FSRSWordUpdate,
     rating: Rating,
-    learningSteps: number
+    learningSteps: number,
   ): Promise<boolean> {
     // Use RPC function for atomic update and review recording
     const data = await executeAuthenticatedQuery(
@@ -210,7 +207,7 @@ export const studyWordsFSRSService = {
         analyticsEventName: 'Update_Word_And_Review_Error',
         analyticsProperties: { rootId, rating },
         showToast: false,
-      }
+      },
     );
 
     return Boolean(data);
@@ -236,7 +233,7 @@ export const studyWordsFSRSService = {
           analyticsEventName: 'Toggle_Study_Word_Check_Error',
           analyticsProperties: { rootId },
           showToast: false,
-        }
+        },
       );
     } catch (error) {
       // PGRST116 = "not found" - this is expected, word doesn't exist yet
@@ -251,14 +248,13 @@ export const studyWordsFSRSService = {
       // Remove existing root study entry
       await executeAuthenticatedQuery(
         userId,
-        () =>
-          supabase.from('study_words').delete().eq('user_id', userId).eq('root_id', rootId),
+        () => supabase.from('study_words').delete().eq('user_id', userId).eq('root_id', rootId),
         {
           toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
           analyticsEventName: 'Toggle_Study_Word_Delete_Error',
           analyticsProperties: { rootId },
           showToast: false,
-        }
+        },
       );
       return false;
     }
@@ -288,16 +284,12 @@ export const studyWordsFSRSService = {
       fsrs_last_review: now.toISOString(), // Explicitly set to ensure database constraint compliance
     };
 
-    await executeAuthenticatedQuery(
-      userId,
-      () => supabase.from('study_words').insert(newEntry),
-      {
-        toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
-        analyticsEventName: 'Toggle_Study_Word_Insert_Error',
-        analyticsProperties: { rootId },
-        showToast: false,
-      }
-    );
+    await executeAuthenticatedQuery(userId, () => supabase.from('study_words').insert(newEntry), {
+      toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
+      analyticsEventName: 'Toggle_Study_Word_Insert_Error',
+      analyticsProperties: { rootId },
+      showToast: false,
+    });
 
     return true;
   },

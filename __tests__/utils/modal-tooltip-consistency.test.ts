@@ -21,13 +21,6 @@ describe('Modal-Tooltip Consistency Bug', () => {
     it('should have components detected', () => {
       const analysis = analyzeArabicWord(arabic, english);
 
-      console.log('\n===== ANALYSIS =====');
-      console.log('Arabic:', arabic);
-      console.log('English:', english);
-      console.log('hasComponents:', analysis.hasComponents);
-      console.log('prefix:', analysis.prefixes[0]?.arabicMatch);
-      console.log('remaining:', analysis.remainingArabic);
-
       expect(analysis.hasComponents).toBe(true);
       // Now detects as multi-prefix: و (and) + من (from)
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
@@ -41,17 +34,11 @@ describe('Modal-Tooltip Consistency Bug', () => {
       const analysis = analyzeArabicWord(arabic, english);
       const formatted = formatWordAnalysis(analysis);
 
-      console.log('\n===== ARABIC COLORING (MODAL) =====');
-      console.log('reconstructedArabic:', formatted.reconstructedArabic);
-
       expect(formatted.reconstructedArabic).toBeDefined();
       expect(formatted.reconstructedArabic?.segments).toBeDefined();
 
       const segments = formatted.reconstructedArabic?.segments || [];
-      console.log('Segments:', segments.length);
-      segments.forEach((seg, i) => {
-        console.log(`  [${i}] "${seg.text}" type=${seg.type} color=${seg.colorName}`);
-      });
+      segments.forEach((seg, i) => {});
 
       // CRITICAL: Arabic should be colored, not white
       // Now renders as multiple segments for multi-prefix: و (conjunction=secondary) + من (preposition)
@@ -67,8 +54,6 @@ describe('Modal-Tooltip Consistency Bug', () => {
       const analysis = analyzeArabicWord(arabic, english);
       const formatted = formatWordAnalysis(analysis);
 
-      console.log('\n===== ENGLISH COLORING (TOOLTIP) =====');
-
       const coloredSegments = generateColorCodedSegments({
         text: english,
         formattedAnalysis: formatted,
@@ -77,10 +62,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
         defaultColor: COLORS.text,
       });
 
-      console.log('English segments:', coloredSegments.length);
-      coloredSegments.forEach((seg, i) => {
-        console.log(`  [${i}] "${seg.text}" color=${seg.color}`);
-      });
+      coloredSegments.forEach((seg, i) => {});
 
       // English should be colored
       const hasColoredSegment = coloredSegments.some(seg => seg.color !== COLORS.text);
@@ -104,11 +86,6 @@ describe('Modal-Tooltip Consistency Bug', () => {
         defaultColor: COLORS.text,
       });
       const englishIsColored = englishSegments.some(seg => seg.color !== COLORS.text);
-
-      console.log('\n===== CONSISTENCY CHECK =====');
-      console.log('Arabic colored:', arabicIsColored);
-      console.log('English colored:', englishIsColored);
-      console.log('Match:', arabicIsColored === englishIsColored);
 
       // BUG: If English is colored, Arabic MUST also be colored
       if (englishIsColored) {
@@ -136,10 +113,6 @@ describe('Modal-Tooltip Consistency Bug', () => {
         defaultColor: COLORS.text,
       });
       const englishIsColored = englishSegments.some(seg => seg.color !== COLORS.text);
-
-      console.log('\nفإِذَا Consistency:');
-      console.log('  Arabic colored:', arabicIsColored);
-      console.log('  English colored:', englishIsColored);
 
       if (englishIsColored) {
         expect(arabicIsColored).toBe(true);

@@ -23,7 +23,7 @@ export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, 
 
   // Filter study words for chart (needs all words for forecast calculation)
   const filteredStudyWords = useMemo(() => {
-    return allWords?.filter(word => word != null && word.root_id != null) ?? [];
+    return allWords?.filter(word => word?.root_id != null) ?? [];
   }, [allWords]);
 
   return (

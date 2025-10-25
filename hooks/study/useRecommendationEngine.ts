@@ -148,7 +148,7 @@ function getReviewState(
   totalWords: number,
   dueWordsCount: number,
   upcomingDueWords: number,
-  trend: 'improving' | 'declining' | 'stable'
+  trend: 'improving' | 'declining' | 'stable',
 ): ReviewState {
   const hasDueWords = dueWordsCount > 0;
   const hasManyDueWords =
@@ -163,7 +163,7 @@ function getReviewState(
 function getLearningState(
   totalWords: number,
   learningWords: number,
-  masteredWords: number
+  masteredWords: number,
 ): LearningState {
   const learningRatio = totalWords > 0 ? learningWords / totalWords : 0;
   const learningProgressRatio = masteredWords / Math.max(1, totalWords);
@@ -297,7 +297,7 @@ export function useRecommendationEngine({
       totalWords,
       dueWordsCount,
       upcomingDueWords,
-      trend
+      trend,
     );
     const learningState: LearningState = getLearningState(totalWords, learningWords, masteredWords);
 

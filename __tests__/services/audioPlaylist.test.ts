@@ -170,7 +170,7 @@ describe('enhancedAudioService', () => {
 
       const result = await enhancedAudioService.getReadingListEnhancedTracks(
         'user123',
-        'bilingual'
+        'bilingual',
       );
 
       expect(result).toEqual([

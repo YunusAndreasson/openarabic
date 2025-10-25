@@ -8,7 +8,7 @@ export const generateDateRange = (days: number) => {
   const today = new Date();
   // Create UTC date for today at 23:59:59.999
   const utcToday = new Date(
-    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 23, 59, 59, 999)
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 23, 59, 59, 999),
   );
 
   const dates: Date[] = [];
@@ -24,7 +24,7 @@ export const generateDateRange = (days: number) => {
 // Get UTC date string (YYYY-MM-DD) for consistent timezone handling
 export const getUTCDateString = (date: Date): string => {
   const dateString = new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
   )
     .toISOString()
     .split('T')[0];
@@ -45,11 +45,11 @@ export { calculateRetrievability } from '@/utils/fsrsUtils';
 // Calculate learning efficiency score
 export const calculateEfficiencyScore = (word: StudyWord): number => {
   // Handle NaN and invalid values
-  const difficulty = isNaN(word.fsrs_difficulty ?? 6.5) ? 6.5 : word.fsrs_difficulty ?? 6.5;
-  const lapses = isNaN(word.fsrs_lapses ?? 0) ? 0 : word.fsrs_lapses ?? 0;
-  const stability = isNaN(word.fsrs_stability ?? 0) ? 0 : word.fsrs_stability ?? 0;
-  const state = isNaN(word.fsrs_state ?? 0) ? 0 : word.fsrs_state ?? 0;
-  const reps = isNaN(word.fsrs_reps ?? 0) ? 0 : word.fsrs_reps ?? 0;
+  const difficulty = isNaN(word.fsrs_difficulty ?? 6.5) ? 6.5 : (word.fsrs_difficulty ?? 6.5);
+  const lapses = isNaN(word.fsrs_lapses ?? 0) ? 0 : (word.fsrs_lapses ?? 0);
+  const stability = isNaN(word.fsrs_stability ?? 0) ? 0 : (word.fsrs_stability ?? 0);
+  const state = isNaN(word.fsrs_state ?? 0) ? 0 : (word.fsrs_state ?? 0);
+  const reps = isNaN(word.fsrs_reps ?? 0) ? 0 : (word.fsrs_reps ?? 0);
 
   let score = 0;
 
@@ -87,9 +87,12 @@ export const calculateEfficiencyScore = (word: StudyWord): number => {
   // No points for 5+ lapses
 
   // Difficulty balance (10% weight) - FSRS difficulty ranges 5-10, optimal around 6.5-8.0
-  if (difficulty >= 6.0 && difficulty <= 8.5) score += 10; // Optimal learning zone
-  else if (difficulty >= 5.5 && difficulty <= 9.0) score += 7; // Good range
-  else if (difficulty >= 5.0 && difficulty <= 9.5) score += 5; // Acceptable range
+  if (difficulty >= 6.0 && difficulty <= 8.5)
+    score += 10; // Optimal learning zone
+  else if (difficulty >= 5.5 && difficulty <= 9.0)
+    score += 7; // Good range
+  else if (difficulty >= 5.0 && difficulty <= 9.5)
+    score += 5; // Acceptable range
   else if (difficulty >= 4.5 && difficulty <= 10.0) score += 2; // Edge cases
 
   return Math.min(100, score); // Cap at 100
@@ -106,7 +109,7 @@ export const calculateEfficiencyScore = (word: StudyWord): number => {
 export const createStandardizedPerformanceZones = (
   chartHeight: number,
   topPadding: number = 0,
-  chartColors: ChartColors
+  chartColors: ChartColors,
 ) => {
   const availableHeight = chartHeight - topPadding;
 
@@ -159,7 +162,7 @@ export const createAreaFillPath = (
   smoothPath: string,
   graphHeight: number,
   firstX?: number,
-  lastX?: number
+  lastX?: number,
 ): string => {
   // Use provided coordinates or fall back to defaults
   const startX = firstX ?? 0;

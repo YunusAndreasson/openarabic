@@ -28,7 +28,7 @@ export interface DueWordsForecast {
 export function calculateRetrievability(
   word: StudyWord,
   targetDate: Date,
-  lastReviewDate?: Date
+  lastReviewDate?: Date,
 ): number {
   const stability = word.fsrs_stability ?? 0;
   const lastReview = lastReviewDate ?? new Date(word.fsrs_last_review);
@@ -70,7 +70,7 @@ function generateForecastDates(days: number = 7): Date[] {
  */
 export function calculateRetrievabilityForecast(
   studyWords: StudyWord[],
-  days: number = 7
+  days: number = 7,
 ): RetrievabilityForecast[] {
   // Filter to only include words that have been reviewed
   const validWords = studyWords
@@ -118,7 +118,7 @@ export function calculateRetrievabilityForecast(
  * Calculate trend based on retrievability forecast
  */
 export function calculateRetrievabilityTrend(
-  retrievabilityData: RetrievabilityForecast[]
+  retrievabilityData: RetrievabilityForecast[],
 ): 'improving' | 'declining' | 'stable' {
   if (retrievabilityData.length < 2) return 'stable';
 
@@ -136,8 +136,8 @@ export function calculateRetrievabilityTrend(
   return change > TREND_CHANGE_THRESHOLD
     ? 'improving' // Unlikely for memory decay, but possible with reviews
     : change < -TREND_CHANGE_THRESHOLD
-    ? 'declining' // Expected for memory decay
-    : 'stable';
+      ? 'declining' // Expected for memory decay
+      : 'stable';
 }
 
 /**
@@ -166,7 +166,7 @@ function isWordDueOnDate(word: StudyWord, targetDate: Date): boolean {
  */
 export function calculateDueWordsForecast(
   studyWords: StudyWord[],
-  days: number = 7
+  days: number = 7,
 ): DueWordsForecast[] {
   // Filter to only include words that have FSRS data
   const validWords = studyWords.filter(w => w.fsrs_due != null);
@@ -199,7 +199,7 @@ export function calculateDueWordsForecast(
  * Calculate trend for due words forecast
  */
 export function calculateDueWordsTrend(
-  dueWordsData: DueWordsForecast[]
+  dueWordsData: DueWordsForecast[],
 ): 'increasing' | 'decreasing' | 'stable' {
   if (dueWordsData.length < 2) return 'stable';
 

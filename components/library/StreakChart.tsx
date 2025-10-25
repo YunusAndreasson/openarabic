@@ -46,7 +46,7 @@ export const StreakChart = memo<StreakChartProps>(
       const chartWidth = SCREEN_WIDTH - LAYOUT.SPACING.XLARGE * 2;
       const barWidth = Math.max(
         8,
-        (chartWidth - (dailyActivity.length - 1) * 2) / dailyActivity.length
+        (chartWidth - (dailyActivity.length - 1) * 2) / dailyActivity.length,
       );
 
       // Create streak map
@@ -95,7 +95,7 @@ export const StreakChart = memo<StreakChartProps>(
       () => ({
         barsContainer: { width: chartData.chartWidth },
       }),
-      [chartData.chartWidth]
+      [chartData.chartWidth],
     );
 
     return (
@@ -121,7 +121,7 @@ export const StreakChart = memo<StreakChartProps>(
         </View>
       </View>
     );
-  }
+  },
 );
 
 StreakChart.displayName = 'StreakChart';

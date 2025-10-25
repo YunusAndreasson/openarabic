@@ -4,7 +4,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useMemo } from 'react';
 
-
 import { ThemedView } from '@/components/ThemedView';
 import { FilteredArticleView } from '@/components/library/FilteredArticleView';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';

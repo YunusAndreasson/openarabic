@@ -59,14 +59,14 @@ export const useSessionMetrics = () => {
           confidence === 'known'
             ? currentStability * 0.3
             : confidence === 'vague'
-            ? currentStability * 0.1
-            : 0;
+              ? currentStability * 0.1
+              : 0;
         const totalIncrease =
           metrics.averageStabilityIncrease * (metrics.wordsReviewed - 1) + estimatedIncrease;
         metrics.averageStabilityIncrease = totalIncrease / metrics.wordsReviewed;
       }
     },
-    []
+    [],
   );
 
   /**

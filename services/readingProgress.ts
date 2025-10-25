@@ -28,7 +28,7 @@ export interface SafeReadingProgress {
  * Safely converts nullable ReadingProgress to SafeReadingProgress with defaults
  */
 export function toSafeReadingProgress(
-  progress: ReadingProgress | null
+  progress: ReadingProgress | null,
 ): SafeReadingProgress | null {
   if (!progress) return null;
 
@@ -86,7 +86,7 @@ export class ReadingProgressService {
         analyticsEventName: 'Reading_Progress_Get_Error',
         analyticsProperties: { userId, articleId },
         showToast: false, // Silent error for reading progress
-      }
+      },
     );
 
     return data as ReadingProgress | null;
@@ -97,7 +97,7 @@ export class ReadingProgressService {
    */
   static async getSafeProgress(
     userId: string,
-    articleId: number
+    articleId: number,
   ): Promise<SafeReadingProgress | null> {
     const progress = await this.getProgress(userId, articleId);
     return toSafeReadingProgress(progress);
@@ -110,7 +110,7 @@ export class ReadingProgressService {
    */
   static async getBulkProgress(
     userId: string,
-    articleIds: number[]
+    articleIds: number[],
   ): Promise<Map<number, ReadingProgress>> {
     // Build query
     let query = supabase.from('reading_progress').select('*').eq('user_id', userId);
@@ -141,7 +141,7 @@ export class ReadingProgressService {
    */
   static async getBulkSafeProgress(
     userId: string,
-    articleIds: number[]
+    articleIds: number[],
   ): Promise<Map<number, SafeReadingProgress>> {
     const progressMap = await this.getBulkProgress(userId, articleIds);
     const safeProgressMap = new Map<number, SafeReadingProgress>();
@@ -161,7 +161,7 @@ export class ReadingProgressService {
    */
   static async getArticlesByProgress(
     userId: string,
-    sortOrder: 'asc' | 'desc' = 'asc'
+    sortOrder: 'asc' | 'desc' = 'asc',
   ): Promise<ReadingProgress[]> {
     const data = await executeQuery(
       () =>
@@ -175,7 +175,7 @@ export class ReadingProgressService {
         analyticsEventName: 'Reading_Progress_By_Progress_Get_Error',
         analyticsProperties: { userId, sortOrder },
         showToast: false,
-      }
+      },
     );
 
     return (data as Tables<'reading_progress'>[]).map(row => row as ReadingProgress);
@@ -186,7 +186,7 @@ export class ReadingProgressService {
    */
   static async getArticlesBySafeProgress(
     userId: string,
-    sortOrder: 'asc' | 'desc' = 'asc'
+    sortOrder: 'asc' | 'desc' = 'asc',
   ): Promise<SafeReadingProgress[]> {
     const progressData = await this.getArticlesByProgress(userId, sortOrder);
     return progressData
@@ -213,7 +213,7 @@ export class ReadingProgressService {
         analyticsEventName: 'Last_Read_Article_Get_Error',
         analyticsProperties: { userId },
         showToast: false,
-      }
+      },
     );
 
     return data as ReadingProgress | null;
@@ -224,19 +224,12 @@ export class ReadingProgressService {
    * This removes all reading positions and progress percentages
    */
   static async deleteAllProgress(userId: string): Promise<void> {
-    await executeQuery(
-      () =>
-        supabase
-          .from('reading_progress')
-          .delete()
-          .eq('user_id', userId),
-      {
-        toastMessage: STRINGS.FAILED_TO_RESET_READING_PROGRESS,
-        analyticsEventName: 'Reading_Progress_Delete_All_Error',
-        analyticsProperties: { userId },
-        showToast: false, // Silent error - caller will handle alert
-      }
-    );
+    await executeQuery(() => supabase.from('reading_progress').delete().eq('user_id', userId), {
+      toastMessage: STRINGS.FAILED_TO_RESET_READING_PROGRESS,
+      analyticsEventName: 'Reading_Progress_Delete_All_Error',
+      analyticsProperties: { userId },
+      showToast: false, // Silent error - caller will handle alert
+    });
   }
 }
 

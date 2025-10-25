@@ -22,7 +22,8 @@ import { ImagePicker } from '@/components/image-picker';
 import { SentenceAudioVerifier } from '@/components/sentence-audio-verifier';
 import { SummaryPreviewDialog } from '@/components/summary-preview-dialog';
 
-const SUPABASE_STORAGE_URL = 'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
+const SUPABASE_STORAGE_URL =
+  'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
 
 function normalizeImageUrl(imageUrl: string): string {
   if (!imageUrl) return '';
@@ -296,7 +297,7 @@ export default function EditArticlePage() {
           <Input
             id="title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={e => setTitle(e.target.value)}
             required
             placeholder="Article title"
           />
@@ -320,7 +321,7 @@ export default function EditArticlePage() {
           <Textarea
             id="summary"
             value={summary}
-            onChange={(e) => setSummary(e.target.value)}
+            onChange={e => setSummary(e.target.value)}
             required
             placeholder="Article summary"
             rows={4}
@@ -338,7 +339,7 @@ export default function EditArticlePage() {
                 <SelectValue placeholder="Select author" />
               </SelectTrigger>
               <SelectContent>
-                {authors.map((author) => (
+                {authors.map(author => (
                   <SelectItem key={author.id} value={author.id.toString()}>
                     {author.name}
                   </SelectItem>
@@ -354,7 +355,7 @@ export default function EditArticlePage() {
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((category) => (
+                {categories.map(category => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
                   </SelectItem>
@@ -365,11 +366,7 @@ export default function EditArticlePage() {
         </div>
 
         <div className="flex gap-4 pt-4">
-          <Button
-            type="submit"
-            disabled={saving || uploading}
-            className="flex-1 cursor-pointer"
-          >
+          <Button type="submit" disabled={saving || uploading} className="flex-1 cursor-pointer">
             {saving || uploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -398,7 +395,7 @@ export default function EditArticlePage() {
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 768px"
-                    onError={(e) => {
+                    onError={e => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                     }}
@@ -425,9 +422,7 @@ export default function EditArticlePage() {
             </div>
 
             {imageFile && (
-              <p className="text-sm text-muted-foreground">
-                New file selected: {imageFile.name}
-              </p>
+              <p className="text-sm text-muted-foreground">New file selected: {imageFile.name}</p>
             )}
 
             <p className="text-xs text-muted-foreground">

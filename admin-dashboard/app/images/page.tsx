@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const SUPABASE_STORAGE_URL = 'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
+const SUPABASE_STORAGE_URL =
+  'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
 const IMAGES_PER_PAGE = 24;
 
 export default function ImagesPage() {
@@ -25,9 +26,7 @@ export default function ImagesPage() {
   useEffect(() => {
     setCurrentPage(1);
     if (searchTerm) {
-      setFilteredImages(
-        images.filter((img) => img.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+      setFilteredImages(images.filter(img => img.toLowerCase().includes(searchTerm.toLowerCase())));
     } else {
       setFilteredImages(images);
     }
@@ -49,11 +48,11 @@ export default function ImagesPage() {
       if (error) throw error;
 
       const imageFiles = (data || [])
-        .filter((file) => {
+        .filter(file => {
           const ext = file.name.split('.').pop()?.toLowerCase();
           return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
         })
-        .map((file) => file.name);
+        .map(file => file.name);
 
       setImages(imageFiles);
       setFilteredImages(imageFiles);
@@ -69,20 +68,20 @@ export default function ImagesPage() {
       return;
     }
 
-    setDeletingImages((prev) => new Set(prev).add(imageName));
+    setDeletingImages(prev => new Set(prev).add(imageName));
     try {
       const { error } = await supabase.storage.from('images').remove([imageName]);
 
       if (error) throw error;
 
       // Remove from local state
-      setImages((prev) => prev.filter((img) => img !== imageName));
-      setFilteredImages((prev) => prev.filter((img) => img !== imageName));
+      setImages(prev => prev.filter(img => img !== imageName));
+      setFilteredImages(prev => prev.filter(img => img !== imageName));
     } catch (error) {
       console.error('Error deleting image:', error);
       alert('Failed to delete image. It may be in use by an article.');
     } finally {
-      setDeletingImages((prev) => {
+      setDeletingImages(prev => {
         const newSet = new Set(prev);
         newSet.delete(imageName);
         return newSet;
@@ -117,7 +116,7 @@ export default function ImagesPage() {
             type="search"
             placeholder="Search images..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -130,7 +129,7 @@ export default function ImagesPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {currentImages.map((imageName) => {
+            {currentImages.map(imageName => {
               const imageUrl = SUPABASE_STORAGE_URL + imageName;
               const isDeleting = deletingImages.has(imageName);
 

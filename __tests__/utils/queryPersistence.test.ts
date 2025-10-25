@@ -127,7 +127,11 @@ describe('Query Persistence', () => {
       });
 
       it('should NOT persist fsrs-words stats query with userId', () => {
-        const query = createMockQuery(['fsrs-words', 'f6020b4d-9c1d-4002-afd6-33eee6ce4c25', 'stats']);
+        const query = createMockQuery([
+          'fsrs-words',
+          'f6020b4d-9c1d-4002-afd6-33eee6ce4c25',
+          'stats',
+        ]);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
     });

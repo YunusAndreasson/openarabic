@@ -24,7 +24,13 @@ export interface TimePickerProps {
 
 const SNAP_POINTS = [500];
 
-export function TimePicker({ isVisible, onClose, onTimeSet, initialHour = 12, initialMinute = 0 }: TimePickerProps) {
+export function TimePicker({
+  isVisible,
+  onClose,
+  onTimeSet,
+  initialHour = 12,
+  initialMinute = 0,
+}: TimePickerProps) {
   const colors = useColors();
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -38,17 +44,17 @@ export function TimePicker({ isVisible, onClose, onTimeSet, initialHour = 12, in
   // Snap point is static so define outside component
   const snapPoints = SNAP_POINTS;
 
-    // Show/hide modal based on isVisible prop
-    useEffect(() => {
-      if (isVisible) {
-        setShowPicker(Platform.OS === 'android');
-        if (Platform.OS === 'ios') {
-          bottomSheetRef.current?.expand();
-        }
-      } else {
-        bottomSheetRef.current?.close();
+  // Show/hide modal based on isVisible prop
+  useEffect(() => {
+    if (isVisible) {
+      setShowPicker(Platform.OS === 'android');
+      if (Platform.OS === 'ios') {
+        bottomSheetRef.current?.expand();
       }
-    }, [isVisible]);
+    } else {
+      bottomSheetRef.current?.close();
+    }
+  }, [isVisible]);
 
   // Handle sheet position changes - sync parent state when dismissed via gesture
   const handleChange = useCallback(
@@ -57,7 +63,7 @@ export function TimePicker({ isVisible, onClose, onTimeSet, initialHour = 12, in
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   const extractTimeAndSet = (date: Date) => {

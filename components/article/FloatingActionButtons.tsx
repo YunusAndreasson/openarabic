@@ -61,7 +61,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         justifyContent: 'center' as const,
         ...LAYOUT.ELEVATION.SUBTLE,
       }),
-      [colors.elevation1]
+      [colors.elevation1],
     );
 
     const activeButtonStyle = useMemo(
@@ -70,7 +70,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         backgroundColor: colors.elevation2,
         opacity: LAYOUT.OPACITY.ACTIVE,
       }),
-      [buttonStyle, colors.elevation2]
+      [buttonStyle, colors.elevation2],
     );
 
     // Memoize button positions with safe area insets
@@ -81,7 +81,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         left: LAYOUT.SPACING.SMALL,
         zIndex: LAYOUT.Z_INDEX.OVERLAY,
       }),
-      [insets.top]
+      [insets.top],
     );
 
     const actionButtonsStyle = useMemo(
@@ -93,7 +93,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         flexDirection: 'row' as const,
         gap: LAYOUT.SPACING.TINY,
       }),
-      [insets.top]
+      [insets.top],
     );
 
     return (
@@ -185,7 +185,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         </View>
       </>
     );
-  }
+  },
 );
 
 FloatingActionButtons.displayName = 'FloatingActionButtons';

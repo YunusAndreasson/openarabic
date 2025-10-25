@@ -5,7 +5,6 @@ import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { Pill } from '@/components/ui/Pill';

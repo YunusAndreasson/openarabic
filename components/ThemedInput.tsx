@@ -62,7 +62,18 @@ const RightInputIcon = ({
   </TouchableOpacity>
 );
 
-export function ThemedInput({ icon, rightIcon, onRightIconPress, style, onFocus, onBlur, error, hint, ref, ...props }: ThemedInputProps) {
+export function ThemedInput({
+  icon,
+  rightIcon,
+  onRightIconPress,
+  style,
+  onFocus,
+  onBlur,
+  error,
+  hint,
+  ref,
+  ...props
+}: ThemedInputProps) {
   const colors = useColors();
   const [isFocused, setIsFocused] = useState(false);
   const [prevError, setPrevError] = useState(error);
@@ -83,12 +94,12 @@ export function ThemedInput({ icon, rightIcon, onRightIconPress, style, onFocus,
       },
       isFocused && styles.containerFocused,
     ],
-    [colors.elevation1, colors.icon, colors.tabIconSelected, colors.tint, error, isFocused]
+    [colors.elevation1, colors.icon, colors.tabIconSelected, colors.tint, error, isFocused],
   );
 
   const inputStyle = useMemo(
     () => [styles.input, { color: colors.text }, style],
-    [colors.text, style]
+    [colors.text, style],
   );
 
   const handleFocus = useCallback(
@@ -96,7 +107,7 @@ export function ThemedInput({ icon, rightIcon, onRightIconPress, style, onFocus,
       setIsFocused(true);
       onFocus?.(e);
     },
-    [onFocus]
+    [onFocus],
   );
 
   const handleBlur = useCallback(
@@ -104,7 +115,7 @@ export function ThemedInput({ icon, rightIcon, onRightIconPress, style, onFocus,
       setIsFocused(false);
       onBlur?.(e);
     },
-    [onBlur]
+    [onBlur],
   );
 
   return (

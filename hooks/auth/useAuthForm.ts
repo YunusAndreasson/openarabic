@@ -64,7 +64,7 @@ export function useAuthForm(): UseAuthFormReturn {
       if (isMountedRef.current) setEmailError('');
       return true;
     },
-    [isMountedRef]
+    [isMountedRef],
   );
 
   const validatePassword = useCallback(
@@ -78,8 +78,8 @@ export function useAuthForm(): UseAuthFormReturn {
           setPasswordError(
             STRINGS.PASSWORD_USE_AT_LEAST_TEMPLATE.replace(
               '{minLength}',
-              PASSWORD_REQUIREMENTS.minLength.toString()
-            )
+              PASSWORD_REQUIREMENTS.minLength.toString(),
+            ),
           );
         return false;
       }
@@ -94,7 +94,7 @@ export function useAuthForm(): UseAuthFormReturn {
       if (isMountedRef.current) setPasswordError('');
       return true;
     },
-    [isMountedRef]
+    [isMountedRef],
   );
 
   const signInWithEmail = useCallback(async () => {

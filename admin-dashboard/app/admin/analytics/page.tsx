@@ -4,12 +4,35 @@ import { useHardWordsAnalytics } from '@/hooks/useHardWordsAnalytics';
 import { useContentCompletenessAnalytics } from '@/hooks/useContentCompletenessAnalytics';
 import { useUserStudyAnalytics } from '@/hooks/useUserStudyAnalytics';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, Database, TrendingUp, AlertTriangle, CheckCircle2, Users } from 'lucide-react';
+import {
+  Loader2,
+  RefreshCw,
+  Database,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle2,
+  Users,
+} from 'lucide-react';
 
 export default function AnalyticsPage() {
-  const { isLoading: hardWordsLoading, hardWords, error: hardWordsError, refresh: refreshHardWords } = useHardWordsAnalytics();
-  const { isLoading: completenessLoading, stats: completenessStats, error: completenessError, refresh: refreshCompleteness } = useContentCompletenessAnalytics();
-  const { isLoading: userStatsLoading, stats: userStats, error: userStatsError, refresh: refreshUserStats } = useUserStudyAnalytics();
+  const {
+    isLoading: hardWordsLoading,
+    hardWords,
+    error: hardWordsError,
+    refresh: refreshHardWords,
+  } = useHardWordsAnalytics();
+  const {
+    isLoading: completenessLoading,
+    stats: completenessStats,
+    error: completenessError,
+    refresh: refreshCompleteness,
+  } = useContentCompletenessAnalytics();
+  const {
+    isLoading: userStatsLoading,
+    stats: userStats,
+    error: userStatsError,
+    refresh: refreshUserStats,
+  } = useUserStudyAnalytics();
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -57,8 +80,8 @@ export default function AnalyticsPage() {
             <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-lg font-medium mb-2">No Study Data Available</p>
             <p className="text-sm text-muted-foreground text-center max-w-md">
-              The study_words and reviews tables require authentication to access user data.
-              These analytics need a service role key or authenticated session to display.
+              The study_words and reviews tables require authentication to access user data. These
+              analytics need a service role key or authenticated session to display.
             </p>
           </div>
         ) : (
@@ -82,16 +105,23 @@ export default function AnalyticsPage() {
                 </thead>
                 <tbody>
                   {hardWords.slice(0, 20).map((word, index) => (
-                    <tr key={word.root_letters} className="border-b last:border-0 hover:bg-muted/50">
+                    <tr
+                      key={word.root_letters}
+                      className="border-b last:border-0 hover:bg-muted/50"
+                    >
                       <td className="p-2 text-sm">{index + 1}</td>
                       <td className="p-2 text-right text-lg font-medium">{word.root_letters}</td>
                       <td className="p-2 text-sm">{word.root_meaning}</td>
                       <td className="p-2 text-center">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          word.avg_difficulty > 8 ? 'bg-red-100 text-red-800' :
-                          word.avg_difficulty > 6 ? 'bg-orange-100 text-orange-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            word.avg_difficulty > 8
+                              ? 'bg-red-100 text-red-800'
+                              : word.avg_difficulty > 6
+                                ? 'bg-orange-100 text-orange-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                        >
                           {word.avg_difficulty.toFixed(2)}
                         </span>
                       </td>
@@ -145,14 +175,18 @@ export default function AnalyticsPage() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Overall Completeness</span>
-                <span className="text-2xl font-bold">{completenessStats.completenessPercentage}%</span>
+                <span className="text-2xl font-bold">
+                  {completenessStats.completenessPercentage}%
+                </span>
               </div>
               <div className="w-full bg-muted rounded-full h-3">
                 <div
                   className={`h-3 rounded-full transition-all ${
-                    completenessStats.completenessPercentage >= 90 ? 'bg-green-500' :
-                    completenessStats.completenessPercentage >= 70 ? 'bg-yellow-500' :
-                    'bg-orange-500'
+                    completenessStats.completenessPercentage >= 90
+                      ? 'bg-green-500'
+                      : completenessStats.completenessPercentage >= 70
+                        ? 'bg-yellow-500'
+                        : 'bg-orange-500'
                   }`}
                   style={{ width: `${completenessStats.completenessPercentage}%` }}
                 />
@@ -163,21 +197,27 @@ export default function AnalyticsPage() {
               <div className="p-4 border rounded-lg bg-background">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Total Sentences</span>
-                  <span className="text-xl font-bold">{completenessStats.totalSentences.toLocaleString()}</span>
+                  <span className="text-xl font-bold">
+                    {completenessStats.totalSentences.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
               <div className="p-4 border rounded-lg bg-background">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Total Words</span>
-                  <span className="text-xl font-bold">{completenessStats.totalWords.toLocaleString()}</span>
+                  <span className="text-xl font-bold">
+                    {completenessStats.totalWords.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
               <div className="p-4 border rounded-lg bg-orange-50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Missing English Audio</span>
-                  <span className="text-xl font-bold text-orange-600">{completenessStats.missingEnglishAudio}</span>
+                  <span className="text-xl font-bold text-orange-600">
+                    {completenessStats.missingEnglishAudio}
+                  </span>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {completenessStats.totalSentences > 0
@@ -189,7 +229,9 @@ export default function AnalyticsPage() {
               <div className="p-4 border rounded-lg bg-orange-50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Missing Arabic Audio</span>
-                  <span className="text-xl font-bold text-orange-600">{completenessStats.missingArabicAudio}</span>
+                  <span className="text-xl font-bold text-orange-600">
+                    {completenessStats.missingArabicAudio}
+                  </span>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {completenessStats.totalSentences > 0
@@ -201,7 +243,9 @@ export default function AnalyticsPage() {
               <div className="p-4 border rounded-lg bg-red-50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Missing Both Audios</span>
-                  <span className="text-xl font-bold text-red-600">{completenessStats.missingBothAudio}</span>
+                  <span className="text-xl font-bold text-red-600">
+                    {completenessStats.missingBothAudio}
+                  </span>
                 </div>
                 <div className="text-xs text-muted-foreground">Critical: No audio available</div>
               </div>
@@ -209,7 +253,9 @@ export default function AnalyticsPage() {
               <div className="p-4 border rounded-lg bg-yellow-50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Missing Grammar Notes</span>
-                  <span className="text-xl font-bold text-yellow-600">{completenessStats.missingGrammarNotes}</span>
+                  <span className="text-xl font-bold text-yellow-600">
+                    {completenessStats.missingGrammarNotes}
+                  </span>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {completenessStats.totalWords > 0
@@ -221,7 +267,9 @@ export default function AnalyticsPage() {
               <div className="p-4 border rounded-lg bg-yellow-50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Missing Difficulty Level</span>
-                  <span className="text-xl font-bold text-yellow-600">{completenessStats.missingDifficultyLevel}</span>
+                  <span className="text-xl font-bold text-yellow-600">
+                    {completenessStats.missingDifficultyLevel}
+                  </span>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {completenessStats.totalWords > 0
@@ -296,35 +344,45 @@ export default function AnalyticsPage() {
               <div className="p-4 border rounded-lg bg-orange-50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Due Words</span>
-                  <span className="text-xl font-bold text-orange-600">{userStats.dueWords.toLocaleString()}</span>
+                  <span className="text-xl font-bold text-orange-600">
+                    {userStats.dueWords.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
               <div className="p-4 border rounded-lg bg-blue-50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Learning Words</span>
-                  <span className="text-xl font-bold text-blue-600">{userStats.learningWords.toLocaleString()}</span>
+                  <span className="text-xl font-bold text-blue-600">
+                    {userStats.learningWords.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
               <div className="p-4 border rounded-lg bg-blue-50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Avg Words/User</span>
-                  <span className="text-xl font-bold text-blue-600">{userStats.avgWordsPerUser}</span>
+                  <span className="text-xl font-bold text-blue-600">
+                    {userStats.avgWordsPerUser}
+                  </span>
                 </div>
               </div>
 
               <div className="p-4 border rounded-lg bg-purple-50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Avg Difficulty</span>
-                  <span className="text-xl font-bold text-purple-600">{userStats.avgDifficulty.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-purple-600">
+                    {userStats.avgDifficulty.toFixed(2)}
+                  </span>
                 </div>
               </div>
 
               <div className="p-4 border rounded-lg bg-green-50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">Avg Stability</span>
-                  <span className="text-xl font-bold text-green-600">{userStats.avgStability.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-green-600">
+                    {userStats.avgStability.toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -349,15 +407,21 @@ export default function AnalyticsPage() {
                         <tr key={user.user_id} className="border-b last:border-0 hover:bg-muted/50">
                           <td className="p-2 text-sm">{index + 1}</td>
                           <td className="p-2 text-sm font-mono">{user.user_id.slice(0, 8)}...</td>
-                          <td className="p-2 text-center text-sm font-medium">{user.total_words}</td>
+                          <td className="p-2 text-center text-sm font-medium">
+                            {user.total_words}
+                          </td>
                           <td className="p-2 text-center text-sm">{user.due_words}</td>
                           <td className="p-2 text-center text-sm">{user.mastered_words}</td>
                           <td className="p-2 text-center">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              user.avg_difficulty > 8 ? 'bg-red-100 text-red-800' :
-                              user.avg_difficulty > 6 ? 'bg-orange-100 text-orange-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${
+                                user.avg_difficulty > 8
+                                  ? 'bg-red-100 text-red-800'
+                                  : user.avg_difficulty > 6
+                                    ? 'bg-orange-100 text-orange-800'
+                                    : 'bg-green-100 text-green-800'
+                              }`}
+                            >
                               {user.avg_difficulty.toFixed(2)}
                             </span>
                           </td>

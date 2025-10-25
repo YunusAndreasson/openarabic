@@ -20,9 +20,7 @@ export type ButtonTextWeight = 'bold' | 'normal';
 /**
  * Base button props shared across all button variants
  */
-export interface BaseButtonProps
-  extends Omit<PressableProps, 'style'>,
-    BaseAnimatedStyleProps {
+export interface BaseButtonProps extends Omit<PressableProps, 'style'>, BaseAnimatedStyleProps {
   /** Text displayed on the button */
   title: string;
   /** Whether the button is in a loading state */

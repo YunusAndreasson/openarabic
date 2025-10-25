@@ -26,7 +26,7 @@ import { useEffect, useState } from 'react';
  */
 export function useOptimisticState<T>(
   actualValue: T,
-  supportsOptimistic: boolean = false
+  supportsOptimistic: boolean = false,
 ): [T, (value: T) => void] {
   const [optimisticValue, setOptimisticValue] = useState<T>(actualValue);
 

@@ -29,7 +29,7 @@ export const WordsMasteredBottomSheet = memo<WordsMasteredBottomSheetProps>(
         chartComponent={<MasteryChart studyWords={studyWords ?? []} hideTitle={true} />}
       />
     );
-  }
+  },
 );
 
 WordsMasteredBottomSheet.displayName = 'WordsMasteredBottomSheet';

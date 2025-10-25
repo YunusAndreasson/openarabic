@@ -21,7 +21,11 @@ export default function AdminPage() {
   };
 
   const handleClear = () => {
-    if (confirm('Are you sure you want to clear the translation cache? You will need to refresh to rebuild it.')) {
+    if (
+      confirm(
+        'Are you sure you want to clear the translation cache? You will need to refresh to rebuild it.',
+      )
+    ) {
       clear();
     }
   };
@@ -124,14 +128,10 @@ export default function AdminPage() {
           <div className="p-4 border rounded-lg bg-muted/50">
             <h3 className="font-medium mb-2">Refresh Cache</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              Fetch the latest translation data from the database. Use this after making changes to word
-              translations.
+              Fetch the latest translation data from the database. Use this after making changes to
+              word translations.
             </p>
-            <Button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="cursor-pointer"
-            >
+            <Button onClick={handleRefresh} disabled={refreshing} className="cursor-pointer">
               {refreshing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -149,14 +149,10 @@ export default function AdminPage() {
           <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/5">
             <h3 className="font-medium mb-2 text-destructive">Clear Cache</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              Remove all cached translation data from localStorage. You'll need to refresh the cache to
-              rebuild it.
+              Remove all cached translation data from localStorage. You'll need to refresh the cache
+              to rebuild it.
             </p>
-            <Button
-              onClick={handleClear}
-              variant="destructive"
-              className="cursor-pointer"
-            >
+            <Button onClick={handleClear} variant="destructive" className="cursor-pointer">
               <Trash2 className="mr-2 h-4 w-4" />
               Clear Cache
             </Button>
@@ -171,26 +167,21 @@ export default function AdminPage() {
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
             <span>
-              The translation cache stores all word translations locally for fast access across all articles
+              The translation cache stores all word translations locally for fast access across all
+              articles
             </span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            <span>
-              Cache persists in your browser's localStorage, so it survives page reloads
-            </span>
+            <span>Cache persists in your browser's localStorage, so it survives page reloads</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            <span>
-              Refresh the cache after updating word translations to see the changes
-            </span>
+            <span>Refresh the cache after updating word translations to see the changes</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            <span>
-              Alternative translations are detected automatically based on cached data
-            </span>
+            <span>Alternative translations are detected automatically based on cached data</span>
           </li>
         </ul>
       </div>

@@ -3,7 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -73,7 +72,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
       if (streak >= 7) return colors.primary;
       return colors.tint;
     },
-    [colors.textTertiary, colors.success, colors.tint, colors.warning, colors.primary]
+    [colors.textTertiary, colors.success, colors.tint, colors.warning, colors.primary],
   );
 
   // Memoize metric data to prevent recalculation
@@ -109,7 +108,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
       colors.warning,
       colors.tint,
       colors.primary,
-    ]
+    ],
   );
 
   return (

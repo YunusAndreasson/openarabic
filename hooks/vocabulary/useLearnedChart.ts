@@ -77,7 +77,7 @@ export function useLearnedChart(studyWords: StudyWord[] = []): UseLearnedChartRe
         lastReview: parseSupabaseTimestamp(word.fsrs_last_review),
         state: word.fsrs_state,
       })),
-    [studyWords]
+    [studyWords],
   );
 
   const learnedData = useMemo(() => {
@@ -126,7 +126,8 @@ export function useLearnedChart(studyWords: StudyWord[] = []): UseLearnedChartRe
     const { path: learnedPath, points } = buildSmoothChartPath({
       data: learnedData,
       dataPointPositions,
-      calculateY: data => TOP_PADDING + (chartHeight - (data.learnedCount / maxCount) * chartHeight),
+      calculateY: data =>
+        TOP_PADDING + (chartHeight - (data.learnedCount / maxCount) * chartHeight),
       buildPoint: (x, y, data) => ({ x, y, count: data.learnedCount, date: data.date }),
     });
 
@@ -150,7 +151,9 @@ export function useLearnedChart(studyWords: StudyWord[] = []): UseLearnedChartRe
 
     const currentCount = recent[recent.length - 1]?.learnedCount || 0;
     const recentAvg =
-      recent.length > 0 ? recent.reduce((sum, day) => sum + day.learnedCount, 0) / recent.length : 0;
+      recent.length > 0
+        ? recent.reduce((sum, day) => sum + day.learnedCount, 0) / recent.length
+        : 0;
     const olderAvg =
       older.length > 0 ? older.reduce((sum, day) => sum + day.learnedCount, 0) / older.length : 0;
 
@@ -159,8 +162,8 @@ export function useLearnedChart(studyWords: StudyWord[] = []): UseLearnedChartRe
       change > MASTERY_TREND_THRESHOLD
         ? 'improving'
         : change < -MASTERY_TREND_THRESHOLD
-        ? 'declining'
-        : 'stable';
+          ? 'declining'
+          : 'stable';
     const totalLearned = recent[recent.length - 1]?.learnedCount || 0;
 
     return {
@@ -206,16 +209,16 @@ export function useLearnedChart(studyWords: StudyWord[] = []): UseLearnedChartRe
       })
       .filter(
         (point): point is DataPoint<LearnedRecord> =>
-          point !== null && !!point.label && !!point.value
+          point !== null && !!point.label && !!point.value,
       );
   }, [chartData.points, learnedData]);
 
   const xLabels = useMemo(
     () =>
       learnedData.map(d =>
-        d.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
+        d.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
       ),
-    [learnedData]
+    [learnedData],
   );
   const xLabelPositions = useMemo(() => chartData.points.map(p => p.x), [chartData.points]);
 

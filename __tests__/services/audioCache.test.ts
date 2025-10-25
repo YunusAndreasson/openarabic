@@ -15,7 +15,7 @@ jest.mock('expo-file-system', () => ({
     })),
     {
       downloadFileAsync: mockDownloadFileAsync,
-    }
+    },
   ),
   Directory: mockDirectoryConstructor.mockImplementation(path => ({
     uri: path,

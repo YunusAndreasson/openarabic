@@ -83,7 +83,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       // Button should show "ADD TO STUDY" initially (uppercase in rendered output)
@@ -98,7 +98,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       expect(getByText('ADD TO STUDY')).toBeTruthy();
@@ -111,7 +111,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={true}
-        />
+        />,
       );
 
       // Button should update to "REMOVE FROM STUDY"
@@ -130,7 +130,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       const addButton = getByText('ADD TO STUDY');
@@ -162,7 +162,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       // First press: Add
@@ -177,7 +177,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={true}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -210,7 +210,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       const addButton = getByText('ADD TO STUDY');
@@ -239,7 +239,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={null}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       // Component should not render when word is null
@@ -254,7 +254,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       // Update to null word
@@ -265,7 +265,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={null}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       expect(queryByText('ADD TO STUDY')).toBeNull();
@@ -282,7 +282,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       // Press add button
@@ -307,7 +307,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={differentWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={true} // Parent says it's in study list
-        />
+        />,
       );
 
       // Should show "REMOVE FROM STUDY" based on prop
@@ -328,7 +328,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       // User clicks "ADD TO STUDY"
@@ -347,7 +347,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={true} // Parent confirms word is in study list
-        />
+        />,
       );
 
       // State should remain consistent
@@ -367,7 +367,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false}
-        />
+        />,
       );
 
       // User clicks "ADD TO STUDY"
@@ -386,7 +386,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
           isInStudyList={false} // Parent state is stale
-        />
+        />,
       );
 
       // 🐛 BUG: This may cause the button to flicker or show wrong state
@@ -397,7 +397,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         () => {
           expect(mockOnAddToStudy).toHaveBeenCalled();
         },
-        { timeout: 300 }
+        { timeout: 300 },
       );
     });
   });

@@ -110,7 +110,8 @@ function categorizeGap(arabic: string, english: string): MissingRule['category']
   // Check if it looks like a compound prefix (و/ف + preposition)
   const startsWithConjunction = arabic.startsWith('و') || arabic.startsWith('ف');
   const englishStartsWithAnd = english.toLowerCase().startsWith('and ');
-  const englishStartsWithSo = english.toLowerCase().startsWith('so ') || english.toLowerCase().startsWith('then ');
+  const englishStartsWithSo =
+    english.toLowerCase().startsWith('so ') || english.toLowerCase().startsWith('then ');
 
   if (startsWithConjunction && (englishStartsWithAnd || englishStartsWithSo)) {
     return 'compound_prefix';
@@ -125,10 +126,19 @@ function categorizeGap(arabic: string, english: string): MissingRule['category']
   }
 
   // Check if it's a multi-component word (has both prefix and suffix patterns)
-  const hasPossibleSuffix = arabic.endsWith('ه') || arabic.endsWith('ها') || arabic.endsWith('هم') ||
-    arabic.endsWith('ك') || arabic.endsWith('ي') || arabic.endsWith('نا');
-  const hasPossiblePrefix = arabic.startsWith('ال') || arabic.startsWith('و') || arabic.startsWith('ف') ||
-    arabic.startsWith('ب') || arabic.startsWith('ل');
+  const hasPossibleSuffix =
+    arabic.endsWith('ه') ||
+    arabic.endsWith('ها') ||
+    arabic.endsWith('هم') ||
+    arabic.endsWith('ك') ||
+    arabic.endsWith('ي') ||
+    arabic.endsWith('نا');
+  const hasPossiblePrefix =
+    arabic.startsWith('ال') ||
+    arabic.startsWith('و') ||
+    arabic.startsWith('ف') ||
+    arabic.startsWith('ب') ||
+    arabic.startsWith('ل');
 
   if (hasPossiblePrefix && hasPossibleSuffix) {
     return 'multi_component';
@@ -141,7 +151,11 @@ function categorizeGap(arabic: string, english: string): MissingRule['category']
 /**
  * Get suggested action for a missing rule
  */
-function getSuggestedAction(category: MissingRule['category'], arabic: string, english: string): string {
+function getSuggestedAction(
+  category: MissingRule['category'],
+  arabic: string,
+  english: string,
+): string {
   switch (category) {
     case 'compound_prefix':
       return `Add compound prefix rule: ^${arabic} → ${english}`;
@@ -302,7 +316,12 @@ function formatConsoleOutput(result: AnalysisResult): void {
   console.log('━'.repeat(80) + '\n');
 
   // Group by category
-  const categories: MissingRule['category'][] = ['compound_prefix', 'missing_preposition', 'multi_component', 'novel_pattern'];
+  const categories: MissingRule['category'][] = [
+    'compound_prefix',
+    'missing_preposition',
+    'multi_component',
+    'novel_pattern',
+  ];
 
   for (const category of categories) {
     const rules = result.missingRules.filter(r => r.category === category);
@@ -328,7 +347,7 @@ function formatConsoleOutput(result: AnalysisResult): void {
         English: r.english,
         Frequency: r.frequency,
         Action: r.suggestedAction.slice(0, 60) + (r.suggestedAction.length > 60 ? '...' : ''),
-      }))
+      })),
     );
 
     if (rules.length > 10) {

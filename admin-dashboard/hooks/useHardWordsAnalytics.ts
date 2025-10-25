@@ -77,13 +77,13 @@ export function useHardWordsAnalytics(): UseHardWordsAnalyticsReturn {
 
       // Create a map of root_id to root info
       const rootsMap = new Map<number, { letters: string; meaning: string }>();
-      roots?.forEach((root) => {
+      roots?.forEach(root => {
         rootsMap.set(root.id, { letters: root.letters, meaning: root.meaning });
       });
 
       // Create a map of root_id to review grades
       const reviewGradesMap = new Map<number, number[]>();
-      reviews?.forEach((review) => {
+      reviews?.forEach(review => {
         if (!reviewGradesMap.has(review.root_id)) {
           reviewGradesMap.set(review.root_id, []);
         }
@@ -91,13 +91,16 @@ export function useHardWordsAnalytics(): UseHardWordsAnalyticsReturn {
       });
 
       // Aggregate data by root_id (only for words with difficulty data)
-      const rootStatsMap = new Map<number, {
-        difficulties: number[];
-        lapses: number[];
-        userIds: Set<string>;
-      }>();
+      const rootStatsMap = new Map<
+        number,
+        {
+          difficulties: number[];
+          lapses: number[];
+          userIds: Set<string>;
+        }
+      >();
 
-      studyWords?.forEach((word) => {
+      studyWords?.forEach(word => {
         // Skip words without difficulty data
         if (word.fsrs_difficulty === null) return;
 
@@ -125,15 +128,16 @@ export function useHardWordsAnalytics(): UseHardWordsAnalyticsReturn {
         if (!rootInfo) return;
 
         const grades = reviewGradesMap.get(root_id) || [];
-        const avgDifficulty = stats.difficulties.length > 0
-          ? stats.difficulties.reduce((sum, d) => sum + d, 0) / stats.difficulties.length
-          : 0;
-        const avgLapses = stats.lapses.length > 0
-          ? stats.lapses.reduce((sum, l) => sum + l, 0) / stats.lapses.length
-          : 0;
-        const avgGrade = grades.length > 0
-          ? grades.reduce((sum, g) => sum + g, 0) / grades.length
-          : 0;
+        const avgDifficulty =
+          stats.difficulties.length > 0
+            ? stats.difficulties.reduce((sum, d) => sum + d, 0) / stats.difficulties.length
+            : 0;
+        const avgLapses =
+          stats.lapses.length > 0
+            ? stats.lapses.reduce((sum, l) => sum + l, 0) / stats.lapses.length
+            : 0;
+        const avgGrade =
+          grades.length > 0 ? grades.reduce((sum, g) => sum + g, 0) / grades.length : 0;
 
         hardWordsArray.push({
           root_letters: rootInfo.letters,

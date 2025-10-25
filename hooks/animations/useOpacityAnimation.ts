@@ -142,7 +142,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     customTimingConfig ?? {
       duration,
       easing: TIMING_CONFIG.MEDIUM.easing,
-    }
+    },
   ).current;
 
   // Create optimized entering and exiting animations using Reanimated 3 built-ins
@@ -169,34 +169,36 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
         runOnJS(callback)();
       }
     },
-    [isMounted]
+    [isMounted],
   );
 
   // Common animation function to reduce code duplication - memoized with useCallback
   const animateOpacityTo = useCallback(
     (targetValue: number, onComplete?: () => void) => {
       'worklet';
-      opacity.set(withTiming(targetValue, timingConfig, finished => {
-        if (finished) {
-          safeRunCallback(onComplete);
-        }
-      }));
+      opacity.set(
+        withTiming(targetValue, timingConfig, finished => {
+          if (finished) {
+            safeRunCallback(onComplete);
+          }
+        }),
+      );
     },
-    [opacity, timingConfig, safeRunCallback]
+    [opacity, timingConfig, safeRunCallback],
   );
 
   const fadeIn = useCallback(
     (onComplete?: () => void) => {
       animateOpacityTo(1, onComplete);
     },
-    [animateOpacityTo]
+    [animateOpacityTo],
   );
 
   const fadeOut = useCallback(
     (onComplete?: () => void) => {
       animateOpacityTo(0, onComplete);
     },
-    [animateOpacityTo]
+    [animateOpacityTo],
   );
 
   const setOpacity = useCallback(
@@ -204,7 +206,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
       const safeValue = Math.max(0, Math.min(1, value));
       animateOpacityTo(safeValue, onComplete);
     },
-    [animateOpacityTo]
+    [animateOpacityTo],
   );
 
   const reset = useCallback(() => {
@@ -224,11 +226,11 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
             if (finished) {
               safeRunCallback(onComplete);
             }
-          })
-        )
+          }),
+        ),
       );
     },
-    [opacity, delay, timingConfig, safeRunCallback]
+    [opacity, delay, timingConfig, safeRunCallback],
   );
 
   const reverseAnimation = useCallback(
@@ -242,11 +244,11 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
             if (finished) {
               safeRunCallback(onComplete);
             }
-          })
-        )
+          }),
+        ),
       );
     },
-    [opacity, validInitialOpacity, delay, timingConfig, safeRunCallback]
+    [opacity, validInitialOpacity, delay, timingConfig, safeRunCallback],
   );
 
   // Create animated style based on the opacity shared value

@@ -37,8 +37,8 @@ export function Pill({ id, label, isSelected = false, onSelect, variant = 'filte
         backgroundColor: isSelected
           ? `${colors.tint}CC` // 80% opacity
           : isDarkMode
-          ? `${colors.elevation2}99` // 60% opacity
-          : `${colors.elevation1}B3`, // 70% opacity
+            ? `${colors.elevation2}99` // 60% opacity
+            : `${colors.elevation1}B3`, // 70% opacity
         paddingHorizontal: LAYOUT.SPACING.MEDIUM,
         paddingVertical: 0,
         ...LAYOUT.ELEVATION.SMALL,
@@ -51,8 +51,8 @@ export function Pill({ id, label, isSelected = false, onSelect, variant = 'filte
       backgroundColor: isSelected
         ? colors.tint
         : isDarkMode
-        ? colors.elevation2
-        : colors.elevation1,
+          ? colors.elevation2
+          : colors.elevation1,
       borderWidth: LAYOUT.BORDER.WIDTH.THIN,
       borderColor: isSelected ? colors.tint : colors.borderOverlay,
       paddingHorizontal: LAYOUT.SPACING.LARGE,
@@ -97,17 +97,8 @@ export function Pill({ id, label, isSelected = false, onSelect, variant = 'filte
 
   // Interactive pill
   return (
-    <Pressable
-      disabled={!onSelect}
-      style={getPressableStyle}
-      onPress={handlePress}
-    >
-      <ThemedText
-        colorName={textColorName}
-        ellipsizeMode="tail"
-        numberOfLines={1}
-        type={textType}
-      >
+    <Pressable disabled={!onSelect} style={getPressableStyle} onPress={handlePress}>
+      <ThemedText colorName={textColorName} ellipsizeMode="tail" numberOfLines={1} type={textType}>
         {label}
       </ThemedText>
     </Pressable>

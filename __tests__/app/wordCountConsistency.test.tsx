@@ -150,7 +150,7 @@ describe('Word Count Consistency Validation', () => {
         word =>
           word.fsrs_last_review == null &&
           (word.fsrs_difficulty ?? 0) >= 8.0 &&
-          (word.fsrs_lapses ?? 0) >= 1
+          (word.fsrs_lapses ?? 0) >= 1,
       ).length;
       expect(strugglingButUnreviewed).toBe(1); // Word 3 exists
 
@@ -161,7 +161,7 @@ describe('Word Count Consistency Validation', () => {
       // The key point: struggling words count should only include reviewed words
       // Even though both Word 2 and Word 3 meet struggling criteria, only Word 2 is reviewed
       const totalStrugglingWords = mockStudyWords.filter(
-        word => (word.fsrs_difficulty ?? 0) >= 8.0 && (word.fsrs_lapses ?? 0) >= 1
+        word => (word.fsrs_difficulty ?? 0) >= 8.0 && (word.fsrs_lapses ?? 0) >= 1,
       ).length;
 
       // Total struggling words (including unreviewed) should be more than reviewed struggling words
@@ -181,7 +181,7 @@ describe('Word Count Consistency Validation', () => {
       const recentlyReviewedWords = mockStudyWords.filter(
         word =>
           word.fsrs_last_review &&
-          new Date(word.fsrs_last_review) > new Date(Date.now() - 12 * 60 * 60 * 1000)
+          new Date(word.fsrs_last_review) > new Date(Date.now() - 12 * 60 * 60 * 1000),
       ).length;
 
       // Word 6 should NOT be in recently reviewed (it's 13 hours ago)
@@ -190,7 +190,7 @@ describe('Word Count Consistency Validation', () => {
       // But due words count should include it since it's outside cooldown
       expect(dueWordsWithCooldown).toBeGreaterThan(
         mockStudyWords.filter(word => word.fsrs_due && new Date(word.fsrs_due) <= new Date())
-          .length - 1
+          .length - 1,
       );
     });
   });
@@ -346,7 +346,7 @@ describe('Word Count Consistency Validation', () => {
       const simulateBuggyProgress = (
         processedWords: number,
         totalWords: number,
-        uniqueWords: number
+        uniqueWords: number,
       ) => {
         // BUGGY calculation (what's currently in the code)
         const buggyProgress = uniqueWords
@@ -369,7 +369,7 @@ describe('Word Count Consistency Validation', () => {
       const { buggyProgress, correctProgress } = simulateBuggyProgress(
         processedWords,
         totalWords,
-        uniqueWords
+        uniqueWords,
       );
 
       // The buggy calculation shows 100% (3/3) instead of 50% (3/6)

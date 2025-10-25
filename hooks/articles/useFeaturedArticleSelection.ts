@@ -35,7 +35,7 @@ const createCacheKey = (
   articlesLength: number,
   refreshKey: number,
   userId: string | undefined,
-  scope: string
+  scope: string,
 ): string => {
   return `${scope}_${articlesLength}_${refreshKey}_${userId || 'anonymous'}`;
 };
@@ -46,7 +46,7 @@ const createCacheKey = (
 const getAvailableArticles = (
   articlesData: Article[],
   excludeId: number,
-  scope: string
+  scope: string,
 ): Article[] => {
   const cacheKey = `exclude_${scope}_${excludeId}_${articlesData.length}`;
 
@@ -78,14 +78,14 @@ const getAvailableArticles = (
 export function useFeaturedArticleSelection(
   articlesData: Article[],
   refreshKey: number,
-  scope: string = 'global'
+  scope: string = 'global',
 ): FeaturedArticleResult {
   const { user } = useAuth();
 
   // Use the existing hooks for due and difficult words (they work globally)
   const { hasEnoughArticles: hasDueWordArticles, dueWordRootIds } = useArticlesByDueWords(
     user?.id,
-    10
+    10,
   );
 
   const { hasEnoughArticles: hasDifficultWordArticles, difficultWordRootIds } =
@@ -118,7 +118,7 @@ export function useFeaturedArticleSelection(
   // Memoize the cache key for better performance
   const cacheKey = useMemo(
     () => createCacheKey(articlesLength, refreshKey, userId || 'anonymous', scope),
-    [articlesLength, refreshKey, userId, scope]
+    [articlesLength, refreshKey, userId, scope],
   );
 
   // Memoize random selection function
@@ -142,8 +142,7 @@ export function useFeaturedArticleSelection(
     // For initial load (refreshKey === 0), cache and reuse the first intelligent selection
     if (refreshKey === 0) {
       if (
-        !initialSelectionRef.current ||
-        initialSelectionRef.current.refreshKey !== 0 ||
+        initialSelectionRef.current?.refreshKey !== 0 ||
         initialSelectionRef.current.scope !== scope
       ) {
         // First time or scope change - perform intelligent selection
@@ -154,9 +153,9 @@ export function useFeaturedArticleSelection(
           const dueWordArticles = articlesData.filter(article =>
             article.article_sentences?.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
-                dueWordRootIds.has(word.root_id)
-              )
-            )
+                dueWordRootIds.has(word.root_id),
+              ),
+            ),
           );
 
           if (dueWordArticles.length > 0) {
@@ -181,9 +180,9 @@ export function useFeaturedArticleSelection(
           const difficultWordArticles = articlesData.filter(article =>
             article.article_sentences?.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
-                difficultWordRootIds.has(word.root_id)
-              )
-            )
+                difficultWordRootIds.has(word.root_id),
+              ),
+            ),
           );
 
           if (difficultWordArticles.length > 0) {
@@ -283,7 +282,7 @@ export function useFeaturedArticleSelection(
         user?.id &&
         hasDueWordArticles &&
         article.article_sentences?.some(sentence =>
-          sentence.sentence_words?.some((word: SentenceWord) => dueWordRootIds.has(word.root_id))
+          sentence.sentence_words?.some((word: SentenceWord) => dueWordRootIds.has(word.root_id)),
         )
       ) {
         return STRINGS.SELECTED_TO_HELP_PRACTICE_DUE;
@@ -295,8 +294,8 @@ export function useFeaturedArticleSelection(
         hasAnyStudyWords &&
         article.article_sentences?.some(sentence =>
           sentence.sentence_words?.some((word: SentenceWord) =>
-            difficultWordRootIds.has(word.root_id)
-          )
+            difficultWordRootIds.has(word.root_id),
+          ),
         )
       ) {
         return STRINGS.CHOSEN_TO_REINFORCE_CHALLENGING;
@@ -313,14 +312,14 @@ export function useFeaturedArticleSelection(
     }
 
     function getTypeForArticle(
-      article: Article
+      article: Article,
     ): 'due-words' | 'difficult-words' | 'beginner' | 'random' {
       // Determine type based on article content and user state
       if (
         user?.id &&
         hasDueWordArticles &&
         article.article_sentences?.some(sentence =>
-          sentence.sentence_words?.some((word: SentenceWord) => dueWordRootIds.has(word.root_id))
+          sentence.sentence_words?.some((word: SentenceWord) => dueWordRootIds.has(word.root_id)),
         )
       ) {
         return 'due-words';
@@ -332,8 +331,8 @@ export function useFeaturedArticleSelection(
         hasAnyStudyWords &&
         article.article_sentences?.some(sentence =>
           sentence.sentence_words?.some((word: SentenceWord) =>
-            difficultWordRootIds.has(word.root_id)
-          )
+            difficultWordRootIds.has(word.root_id),
+          ),
         )
       ) {
         return 'difficult-words';

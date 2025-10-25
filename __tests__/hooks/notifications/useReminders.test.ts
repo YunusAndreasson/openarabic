@@ -29,7 +29,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   (useAppDispatch as jest.Mock).mockReturnValue(mockDispatch);
   (useAppSelector as jest.Mock).mockImplementation(selector =>
-    selector({ settings: { reminderTime: mockReminder } })
+    selector({ settings: { reminderTime: mockReminder } }),
   );
 });
 

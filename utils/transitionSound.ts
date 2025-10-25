@@ -30,7 +30,7 @@ export async function playTransitionSound(): Promise<void> {
     transitionPlayer.play();
 
     // Wait for the sound to finish playing using native event subscription
-    await new Promise<void>((resolve) => {
+    await new Promise<void>(resolve => {
       let resolved = false;
       let eventSubscription: { remove: () => void } | null = null;
 
@@ -55,24 +55,21 @@ export async function playTransitionSound(): Promise<void> {
       };
 
       // Subscribe to playback status updates
-      eventSubscription = transitionPlayer.addListener(
-        PLAYBACK_STATUS_UPDATE,
-        (status: any) => {
-          try {
-            const isPlaying = status.playing ?? false;
-            const currentTime = status.currentTime ?? 0;
-            const duration = status.duration ?? 0;
+      eventSubscription = transitionPlayer.addListener(PLAYBACK_STATUS_UPDATE, (status: any) => {
+        try {
+          const isPlaying = status.playing ?? false;
+          const currentTime = status.currentTime ?? 0;
+          const duration = status.duration ?? 0;
 
-            // Check if playback has completed
-            if (!isPlaying || (duration > 0 && currentTime >= duration - 0.05)) {
-              cleanup();
-            }
-          } catch {
-            // If event handling fails, cleanup anyway to prevent blocking
+          // Check if playback has completed
+          if (!isPlaying || (duration > 0 && currentTime >= duration - 0.05)) {
             cleanup();
           }
+        } catch {
+          // If event handling fails, cleanup anyway to prevent blocking
+          cleanup();
         }
-      );
+      });
 
       // Fallback timeout in case duration detection fails
       // Most UI sounds are < 1 second, so 2 seconds is a safe maximum

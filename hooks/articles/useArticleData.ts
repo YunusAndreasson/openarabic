@@ -30,7 +30,7 @@ interface ArticleDataResult {
  */
 export const useArticleData = (
   articleId: number | undefined,
-  userId: string | undefined
+  userId: string | undefined,
 ): ArticleDataResult => {
   // Get theme colors for pre-computing word color analysis
   const colors = useColors();
@@ -105,22 +105,18 @@ export const useArticleData = (
           .sort((a, b) => a.position - b.position)
           .map(word => ({
             ...word,
-            coloredSegments: computeColoredSegments(
-              word.word_form,
-              word.english || '',
-              {
-                tint: colors.tint,
-                primary: colors.primary,
-                secondary: colors.secondary,
-                secondaryText: colors.secondaryText,
-                warning: colors.warning,
-                accent: colors.accent,
-                violet: colors.violet,
-                error: colors.error,
-                text: colors.text,
-                arabicText: colors.arabicText,
-              }
-            ),
+            coloredSegments: computeColoredSegments(word.word_form, word.english || '', {
+              tint: colors.tint,
+              primary: colors.primary,
+              secondary: colors.secondary,
+              secondaryText: colors.secondaryText,
+              warning: colors.warning,
+              accent: colors.accent,
+              violet: colors.violet,
+              error: colors.error,
+              text: colors.text,
+              arabicText: colors.arabicText,
+            }),
           }));
         acc.set(sentence.id, wordsWithColors);
       }

@@ -230,7 +230,7 @@ jest.mock('react-native-reanimated', () => {
       View: React.forwardRef((props, ref) => React.createElement('View', { ...props, ref })),
       Text: React.forwardRef((props, ref) => React.createElement('Text', { ...props, ref })),
       ScrollView: React.forwardRef((props, ref) =>
-        React.createElement('ScrollView', { ...props, ref })
+        React.createElement('ScrollView', { ...props, ref }),
       ),
       Image: React.forwardRef((props, ref) => React.createElement('Image', { ...props, ref })),
       createAnimatedComponent: component =>
@@ -753,7 +753,7 @@ jest.mock('react-native/Libraries/Image/resolveAssetSource', () =>
       height: 100,
       scale: 1,
     };
-  })
+  }),
 );
 
 // Global error handler for unhandled promise rejections

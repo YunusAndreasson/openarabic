@@ -24,11 +24,11 @@ import { oklchToHex, withAlpha } from '@/utils/colorUtils';
  * Hue range: 157-168° (blue-green)
  */
 const forestOKLCH = {
-  darkest:  { l: 0.2711, c: 0.0272, h: 163.6 },  // #1A2B23
-  dark:     { l: 0.3389, c: 0.0253, h: 167.6 },  // #2B3C35
-  medium:   { l: 0.4539, c: 0.0255, h: 162.1 },  // #4A5B52
-  light:    { l: 0.5756, c: 0.0315, h: 158.1 },  // #6A7F72
-  lighter:  { l: 0.7478, c: 0.0382, h: 157.7 },  // #9AB5A4
+  darkest: { l: 0.2711, c: 0.0272, h: 163.6 }, // #1A2B23
+  dark: { l: 0.3389, c: 0.0253, h: 167.6 }, // #2B3C35
+  medium: { l: 0.4539, c: 0.0255, h: 162.1 }, // #4A5B52
+  light: { l: 0.5756, c: 0.0315, h: 158.1 }, // #6A7F72
+  lighter: { l: 0.7478, c: 0.0382, h: 157.7 }, // #9AB5A4
 } as const;
 
 /**
@@ -37,13 +37,13 @@ const forestOKLCH = {
  * Hue range: 151-167° (subtle green tint)
  */
 const sageOKLCH = {
-  darkest:    { l: 0.19, c: 0.012, h: 160.0 },      // Polished: even elevation base
-  dark:       { l: 0.235, c: 0.014, h: 158.0 },     // Polished: +4.5% L step
-  mediumDark: { l: 0.28, c: 0.016, h: 156.0 },      // Polished: +4.5% L step
-  medium:     { l: 0.325, c: 0.018, h: 155.0 },     // Polished: +4.5% L step
-  light:      { l: 0.9500, c: 0.0116, h: 162.0 },   // #E8F1EC (unchanged)
-  lighter:    { l: 0.9715, c: 0.0066, h: 160.1 },   // #F2F7F4 (unchanged)
-  lightest:   { l: 0.9833, c: 0.0025, h: 165.1 },   // #F8FAF9 (unchanged)
+  darkest: { l: 0.19, c: 0.012, h: 160.0 }, // Polished: even elevation base
+  dark: { l: 0.235, c: 0.014, h: 158.0 }, // Polished: +4.5% L step
+  mediumDark: { l: 0.28, c: 0.016, h: 156.0 }, // Polished: +4.5% L step
+  medium: { l: 0.325, c: 0.018, h: 155.0 }, // Polished: +4.5% L step
+  light: { l: 0.95, c: 0.0116, h: 162.0 }, // #E8F1EC (unchanged)
+  lighter: { l: 0.9715, c: 0.0066, h: 160.1 }, // #F2F7F4 (unchanged)
+  lightest: { l: 0.9833, c: 0.0025, h: 165.1 }, // #F8FAF9 (unchanged)
 } as const;
 
 /**
@@ -51,20 +51,20 @@ const sageOKLCH = {
  * Hue range: 151-156° (sage green)
  */
 const tintOKLCH = {
-  primary:     { l: 0.5624, c: 0.0541, h: 156.2 },  // #5B7F68
-  primaryDark: { l: 0.7323, c: 0.0560, h: 151.5 },  // #8FB397
+  primary: { l: 0.5624, c: 0.0541, h: 156.2 }, // #5B7F68
+  primaryDark: { l: 0.7323, c: 0.056, h: 151.5 }, // #8FB397
 } as const;
 
 /**
  * Semantic Colors - Status indicators
  */
 const semanticOKLCH = {
-  error:       { l: 0.5680, c: 0.2002, h: 26.4 },   // #D32F2F
-  errorDark:   { l: 0.6427, c: 0.2153, h: 28.8 },   // #F44336
-  success:     { l: 0.5498, c: 0.0799, h: 151.8 },  // #4C7F5A
-  successDark: { l: 0.6728, c: 0.0764, h: 152.1 },  // #72A47F
-  warning:     { l: 0.6870, c: 0.1017, h: 84.2 },   // #B8954B
-  warningDark: { l: 0.7820, c: 0.0949, h: 88.4 },   // #D1B56F
+  error: { l: 0.568, c: 0.2002, h: 26.4 }, // #D32F2F
+  errorDark: { l: 0.6427, c: 0.2153, h: 28.8 }, // #F44336
+  success: { l: 0.5498, c: 0.0799, h: 151.8 }, // #4C7F5A
+  successDark: { l: 0.6728, c: 0.0764, h: 152.1 }, // #72A47F
+  warning: { l: 0.687, c: 0.1017, h: 84.2 }, // #B8954B
+  warningDark: { l: 0.782, c: 0.0949, h: 88.4 }, // #D1B56F
 } as const;
 
 /**
@@ -73,9 +73,9 @@ const semanticOKLCH = {
  * Complements sage green (tint) and golden orange (warning)
  */
 const azureOKLCH = {
-  light:      { l: 0.55, c: 0.10, h: 230 },         // Medium azure for light mode
-  dark:       { l: 0.70, c: 0.12, h: 230 },         // Lighter azure for dark mode
-  sepia:      { l: 0.50, c: 0.08, h: 210 },         // Muted blue-gray for sepia
+  light: { l: 0.55, c: 0.1, h: 230 }, // Medium azure for light mode
+  dark: { l: 0.7, c: 0.12, h: 230 }, // Lighter azure for dark mode
+  sepia: { l: 0.5, c: 0.08, h: 210 }, // Muted blue-gray for sepia
 } as const;
 
 /**
@@ -84,25 +84,25 @@ const azureOKLCH = {
  * Represents transformation - the role of infixes in verb forms VII, VIII, X
  */
 const violetOKLCH = {
-  light:      { l: 0.55, c: 0.12, h: 300 },         // Medium purple for light mode
-  dark:       { l: 0.72, c: 0.14, h: 300 },         // Light purple for dark mode visibility
-  sepia:      { l: 0.50, c: 0.10, h: 320 },         // Muted purple-pink for sepia
+  light: { l: 0.55, c: 0.12, h: 300 }, // Medium purple for light mode
+  dark: { l: 0.72, c: 0.14, h: 300 }, // Light purple for dark mode visibility
+  sepia: { l: 0.5, c: 0.1, h: 320 }, // Muted purple-pink for sepia
 } as const;
 
 /**
  * Pure Values - Green-tinted neutrals
  */
 const pureOKLCH = {
-  white: { l: 0.9965, c: 0.004, h: 157.0 },         // Sage-green brand tint
-  black: { l: 0.1613, c: 0.0115, h: 150.9 },        // #0A0F0B
+  white: { l: 0.9965, c: 0.004, h: 157.0 }, // Sage-green brand tint
+  black: { l: 0.1613, c: 0.0115, h: 150.9 }, // #0A0F0B
 } as const;
 
 /**
  * Sepia Pure Values
  */
 const sepiaPureOKLCH = {
-  white: { l: 0.9912, c: 0.0069, h: 88.6 },         // #FEFCF7
-  black: { l: 0.1544, c: 0.0073, h: 34.3 },         // #0F0B0A
+  white: { l: 0.9912, c: 0.0069, h: 88.6 }, // #FEFCF7
+  black: { l: 0.1544, c: 0.0073, h: 34.3 }, // #0F0B0A
 } as const;
 
 /**
@@ -110,11 +110,11 @@ const sepiaPureOKLCH = {
  * Hue range: 44-68° (orange-brown)
  */
 const autumnOKLCH = {
-  darkest:  { l: 0.2308, c: 0.0327, h: 44.7 },      // #2A1810
-  dark:     { l: 0.2918, c: 0.0414, h: 45.3 },      // #3D251A
-  medium:   { l: 0.3839, c: 0.0570, h: 49.6 },      // #5C3A27
-  light:    { l: 0.5335, c: 0.0702, h: 60.0 },      // #8B6342
-  lighter:  { l: 0.6858, c: 0.0713, h: 67.6 },      // #B8926A
+  darkest: { l: 0.2308, c: 0.0327, h: 44.7 }, // #2A1810
+  dark: { l: 0.2918, c: 0.0414, h: 45.3 }, // #3D251A
+  medium: { l: 0.3839, c: 0.057, h: 49.6 }, // #5C3A27
+  light: { l: 0.5335, c: 0.0702, h: 60.0 }, // #8B6342
+  lighter: { l: 0.6858, c: 0.0713, h: 67.6 }, // #B8926A
 } as const;
 
 /**
@@ -122,13 +122,13 @@ const autumnOKLCH = {
  * Hue range: 40-74° (warm sepia)
  */
 const autumnPaperOKLCH = {
-  darkest:    { l: 0.2098, c: 0.0176, h: 50.5 },    // #1F1611
-  dark:       { l: 0.2516, c: 0.0227, h: 51.6 },    // #2B1F18
-  mediumDark: { l: 0.2794, c: 0.0233, h: 40.5 },    // #332520
-  medium:     { l: 0.3183, c: 0.0287, h: 46.4 },    // #3F2E26
-  light:      { l: 0.9319, c: 0.0301, h: 73.9 },    // #F5E6D3
-  lighter:    { l: 0.9406, c: 0.0273, h: 72.8 },    // #F7E9D8
-  lightest:   { l: 0.9602, c: 0.0171, h: 67.6 },    // #FAF0E6
+  darkest: { l: 0.2098, c: 0.0176, h: 50.5 }, // #1F1611
+  dark: { l: 0.2516, c: 0.0227, h: 51.6 }, // #2B1F18
+  mediumDark: { l: 0.2794, c: 0.0233, h: 40.5 }, // #332520
+  medium: { l: 0.3183, c: 0.0287, h: 46.4 }, // #3F2E26
+  light: { l: 0.9319, c: 0.0301, h: 73.9 }, // #F5E6D3
+  lighter: { l: 0.9406, c: 0.0273, h: 72.8 }, // #F7E9D8
+  lightest: { l: 0.9602, c: 0.0171, h: 67.6 }, // #FAF0E6
 } as const;
 
 /**
@@ -136,20 +136,20 @@ const autumnPaperOKLCH = {
  * Hue range: 60-62° (rich amber)
  */
 const autumnAccentOKLCH = {
-  primary:     { l: 0.5627, c: 0.1025, h: 61.5 },   // #A0662F
-  primaryDark: { l: 0.6652, c: 0.0990, h: 60.7 },   // #C08552
+  primary: { l: 0.5627, c: 0.1025, h: 61.5 }, // #A0662F
+  primaryDark: { l: 0.6652, c: 0.099, h: 60.7 }, // #C08552
 } as const;
 
 /**
  * Autumn Semantic Colors
  */
 const autumnSemanticOKLCH = {
-  error:       { l: 0.6019, c: 0.1438, h: 30.2 },   // #C85A4A
-  errorDark:   { l: 0.6900, c: 0.1295, h: 29.5 },   // #E07A6B
-  success:     { l: 0.6054, c: 0.1085, h: 119.7 },  // #7A8B3A
-  successDark: { l: 0.7082, c: 0.1065, h: 117.9 },  // #9BAA5A
-  warning:     { l: 0.7119, c: 0.1432, h: 76.5 },   // #D4941A
-  warningDark: { l: 0.7961, c: 0.1366, h: 82.0 },   // #E8B347
+  error: { l: 0.6019, c: 0.1438, h: 30.2 }, // #C85A4A
+  errorDark: { l: 0.69, c: 0.1295, h: 29.5 }, // #E07A6B
+  success: { l: 0.6054, c: 0.1085, h: 119.7 }, // #7A8B3A
+  successDark: { l: 0.7082, c: 0.1065, h: 117.9 }, // #9BAA5A
+  warning: { l: 0.7119, c: 0.1432, h: 76.5 }, // #D4941A
+  warningDark: { l: 0.7961, c: 0.1366, h: 82.0 }, // #E8B347
 } as const;
 
 /**
@@ -158,22 +158,22 @@ const autumnSemanticOKLCH = {
  */
 const textHierarchyOKLCH = {
   light: {
-    subtitle:          { l: 0.3767, c: 0.0256, h: 164.7 },  // #35463E (unchanged)
-    metadata:          { l: 0.5229, c: 0.0276, h: 162.4 },  // #5C6F65 (unchanged)
-    secondaryMetadata: { l: 0.6295, c: 0.0309, h: 158.2 },  // #7A8F82 (unchanged)
-    caption:           { l: 0.5326, c: 0.0284, h: 163.7 },  // #5E7268 (unchanged)
+    subtitle: { l: 0.3767, c: 0.0256, h: 164.7 }, // #35463E (unchanged)
+    metadata: { l: 0.5229, c: 0.0276, h: 162.4 }, // #5C6F65 (unchanged)
+    secondaryMetadata: { l: 0.6295, c: 0.0309, h: 158.2 }, // #7A8F82 (unchanged)
+    caption: { l: 0.5326, c: 0.0284, h: 163.7 }, // #5E7268 (unchanged)
   },
   dark: {
-    subtitle:          { l: 0.93, c: 0.012, h: 157.0 },     // Polished: brightest, uniform chroma
-    metadata:          { l: 0.87, c: 0.012, h: 157.0 },     // Polished: -6% L step
-    caption:           { l: 0.81, c: 0.012, h: 157.0 },     // Polished: -6% L step
-    secondaryMetadata: { l: 0.75, c: 0.012, h: 157.0 },     // Polished: -6% L step, most subtle
+    subtitle: { l: 0.93, c: 0.012, h: 157.0 }, // Polished: brightest, uniform chroma
+    metadata: { l: 0.87, c: 0.012, h: 157.0 }, // Polished: -6% L step
+    caption: { l: 0.81, c: 0.012, h: 157.0 }, // Polished: -6% L step
+    secondaryMetadata: { l: 0.75, c: 0.012, h: 157.0 }, // Polished: -6% L step, most subtle
   },
   sepia: {
-    subtitle:          { l: 0.3337, c: 0.0476, h: 51.1 },   // #4A2F1F
-    metadata:          { l: 0.4287, c: 0.0619, h: 49.4 },   // #6B4530
-    secondaryMetadata: { l: 0.5495, c: 0.0624, h: 65.0 },   // #8B6A4A
-    caption:           { l: 0.4742, c: 0.0668, h: 51.9 },   // #7A5138
+    subtitle: { l: 0.3337, c: 0.0476, h: 51.1 }, // #4A2F1F
+    metadata: { l: 0.4287, c: 0.0619, h: 49.4 }, // #6B4530
+    secondaryMetadata: { l: 0.5495, c: 0.0624, h: 65.0 }, // #8B6A4A
+    caption: { l: 0.4742, c: 0.0668, h: 51.9 }, // #7A5138
   },
 } as const;
 
@@ -183,45 +183,61 @@ const textHierarchyOKLCH = {
 
 const forest = {
   darkest: oklchToHex(forestOKLCH.darkest.l, forestOKLCH.darkest.c, forestOKLCH.darkest.h),
-  dark:    oklchToHex(forestOKLCH.dark.l, forestOKLCH.dark.c, forestOKLCH.dark.h),
-  medium:  oklchToHex(forestOKLCH.medium.l, forestOKLCH.medium.c, forestOKLCH.medium.h),
-  light:   oklchToHex(forestOKLCH.light.l, forestOKLCH.light.c, forestOKLCH.light.h),
+  dark: oklchToHex(forestOKLCH.dark.l, forestOKLCH.dark.c, forestOKLCH.dark.h),
+  medium: oklchToHex(forestOKLCH.medium.l, forestOKLCH.medium.c, forestOKLCH.medium.h),
+  light: oklchToHex(forestOKLCH.light.l, forestOKLCH.light.c, forestOKLCH.light.h),
   lighter: oklchToHex(forestOKLCH.lighter.l, forestOKLCH.lighter.c, forestOKLCH.lighter.h),
 } as const;
 
 const sage = {
-  darkest:    oklchToHex(sageOKLCH.darkest.l, sageOKLCH.darkest.c, sageOKLCH.darkest.h),
-  dark:       oklchToHex(sageOKLCH.dark.l, sageOKLCH.dark.c, sageOKLCH.dark.h),
+  darkest: oklchToHex(sageOKLCH.darkest.l, sageOKLCH.darkest.c, sageOKLCH.darkest.h),
+  dark: oklchToHex(sageOKLCH.dark.l, sageOKLCH.dark.c, sageOKLCH.dark.h),
   mediumDark: oklchToHex(sageOKLCH.mediumDark.l, sageOKLCH.mediumDark.c, sageOKLCH.mediumDark.h),
-  medium:     oklchToHex(sageOKLCH.medium.l, sageOKLCH.medium.c, sageOKLCH.medium.h),
-  light:      oklchToHex(sageOKLCH.light.l, sageOKLCH.light.c, sageOKLCH.light.h),
-  lighter:    oklchToHex(sageOKLCH.lighter.l, sageOKLCH.lighter.c, sageOKLCH.lighter.h),
-  lightest:   oklchToHex(sageOKLCH.lightest.l, sageOKLCH.lightest.c, sageOKLCH.lightest.h),
+  medium: oklchToHex(sageOKLCH.medium.l, sageOKLCH.medium.c, sageOKLCH.medium.h),
+  light: oklchToHex(sageOKLCH.light.l, sageOKLCH.light.c, sageOKLCH.light.h),
+  lighter: oklchToHex(sageOKLCH.lighter.l, sageOKLCH.lighter.c, sageOKLCH.lighter.h),
+  lightest: oklchToHex(sageOKLCH.lightest.l, sageOKLCH.lightest.c, sageOKLCH.lightest.h),
 } as const;
 
 const tint = {
-  primary:     oklchToHex(tintOKLCH.primary.l, tintOKLCH.primary.c, tintOKLCH.primary.h),
-  primaryDark: oklchToHex(tintOKLCH.primaryDark.l, tintOKLCH.primaryDark.c, tintOKLCH.primaryDark.h),
+  primary: oklchToHex(tintOKLCH.primary.l, tintOKLCH.primary.c, tintOKLCH.primary.h),
+  primaryDark: oklchToHex(
+    tintOKLCH.primaryDark.l,
+    tintOKLCH.primaryDark.c,
+    tintOKLCH.primaryDark.h,
+  ),
 } as const;
 
 const semantic = {
-  error:       oklchToHex(semanticOKLCH.error.l, semanticOKLCH.error.c, semanticOKLCH.error.h),
-  errorDark:   oklchToHex(semanticOKLCH.errorDark.l, semanticOKLCH.errorDark.c, semanticOKLCH.errorDark.h),
-  success:     oklchToHex(semanticOKLCH.success.l, semanticOKLCH.success.c, semanticOKLCH.success.h),
-  successDark: oklchToHex(semanticOKLCH.successDark.l, semanticOKLCH.successDark.c, semanticOKLCH.successDark.h),
-  warning:     oklchToHex(semanticOKLCH.warning.l, semanticOKLCH.warning.c, semanticOKLCH.warning.h),
-  warningDark: oklchToHex(semanticOKLCH.warningDark.l, semanticOKLCH.warningDark.c, semanticOKLCH.warningDark.h),
+  error: oklchToHex(semanticOKLCH.error.l, semanticOKLCH.error.c, semanticOKLCH.error.h),
+  errorDark: oklchToHex(
+    semanticOKLCH.errorDark.l,
+    semanticOKLCH.errorDark.c,
+    semanticOKLCH.errorDark.h,
+  ),
+  success: oklchToHex(semanticOKLCH.success.l, semanticOKLCH.success.c, semanticOKLCH.success.h),
+  successDark: oklchToHex(
+    semanticOKLCH.successDark.l,
+    semanticOKLCH.successDark.c,
+    semanticOKLCH.successDark.h,
+  ),
+  warning: oklchToHex(semanticOKLCH.warning.l, semanticOKLCH.warning.c, semanticOKLCH.warning.h),
+  warningDark: oklchToHex(
+    semanticOKLCH.warningDark.l,
+    semanticOKLCH.warningDark.c,
+    semanticOKLCH.warningDark.h,
+  ),
 } as const;
 
 const azure = {
   light: oklchToHex(azureOKLCH.light.l, azureOKLCH.light.c, azureOKLCH.light.h),
-  dark:  oklchToHex(azureOKLCH.dark.l, azureOKLCH.dark.c, azureOKLCH.dark.h),
+  dark: oklchToHex(azureOKLCH.dark.l, azureOKLCH.dark.c, azureOKLCH.dark.h),
   sepia: oklchToHex(azureOKLCH.sepia.l, azureOKLCH.sepia.c, azureOKLCH.sepia.h),
 } as const;
 
 const violet = {
   light: oklchToHex(violetOKLCH.light.l, violetOKLCH.light.c, violetOKLCH.light.h),
-  dark:  oklchToHex(violetOKLCH.dark.l, violetOKLCH.dark.c, violetOKLCH.dark.h),
+  dark: oklchToHex(violetOKLCH.dark.l, violetOKLCH.dark.c, violetOKLCH.dark.h),
   sepia: oklchToHex(violetOKLCH.sepia.l, violetOKLCH.sepia.c, violetOKLCH.sepia.h),
 } as const;
 
@@ -238,51 +254,151 @@ const sepiaPure = {
 
 const autumn = {
   darkest: oklchToHex(autumnOKLCH.darkest.l, autumnOKLCH.darkest.c, autumnOKLCH.darkest.h),
-  dark:    oklchToHex(autumnOKLCH.dark.l, autumnOKLCH.dark.c, autumnOKLCH.dark.h),
-  medium:  oklchToHex(autumnOKLCH.medium.l, autumnOKLCH.medium.c, autumnOKLCH.medium.h),
-  light:   oklchToHex(autumnOKLCH.light.l, autumnOKLCH.light.c, autumnOKLCH.light.h),
+  dark: oklchToHex(autumnOKLCH.dark.l, autumnOKLCH.dark.c, autumnOKLCH.dark.h),
+  medium: oklchToHex(autumnOKLCH.medium.l, autumnOKLCH.medium.c, autumnOKLCH.medium.h),
+  light: oklchToHex(autumnOKLCH.light.l, autumnOKLCH.light.c, autumnOKLCH.light.h),
   lighter: oklchToHex(autumnOKLCH.lighter.l, autumnOKLCH.lighter.c, autumnOKLCH.lighter.h),
   paper: {
-    darkest:    oklchToHex(autumnPaperOKLCH.darkest.l, autumnPaperOKLCH.darkest.c, autumnPaperOKLCH.darkest.h),
-    dark:       oklchToHex(autumnPaperOKLCH.dark.l, autumnPaperOKLCH.dark.c, autumnPaperOKLCH.dark.h),
-    mediumDark: oklchToHex(autumnPaperOKLCH.mediumDark.l, autumnPaperOKLCH.mediumDark.c, autumnPaperOKLCH.mediumDark.h),
-    medium:     oklchToHex(autumnPaperOKLCH.medium.l, autumnPaperOKLCH.medium.c, autumnPaperOKLCH.medium.h),
-    light:      oklchToHex(autumnPaperOKLCH.light.l, autumnPaperOKLCH.light.c, autumnPaperOKLCH.light.h),
-    lighter:    oklchToHex(autumnPaperOKLCH.lighter.l, autumnPaperOKLCH.lighter.c, autumnPaperOKLCH.lighter.h),
-    lightest:   oklchToHex(autumnPaperOKLCH.lightest.l, autumnPaperOKLCH.lightest.c, autumnPaperOKLCH.lightest.h),
+    darkest: oklchToHex(
+      autumnPaperOKLCH.darkest.l,
+      autumnPaperOKLCH.darkest.c,
+      autumnPaperOKLCH.darkest.h,
+    ),
+    dark: oklchToHex(autumnPaperOKLCH.dark.l, autumnPaperOKLCH.dark.c, autumnPaperOKLCH.dark.h),
+    mediumDark: oklchToHex(
+      autumnPaperOKLCH.mediumDark.l,
+      autumnPaperOKLCH.mediumDark.c,
+      autumnPaperOKLCH.mediumDark.h,
+    ),
+    medium: oklchToHex(
+      autumnPaperOKLCH.medium.l,
+      autumnPaperOKLCH.medium.c,
+      autumnPaperOKLCH.medium.h,
+    ),
+    light: oklchToHex(autumnPaperOKLCH.light.l, autumnPaperOKLCH.light.c, autumnPaperOKLCH.light.h),
+    lighter: oklchToHex(
+      autumnPaperOKLCH.lighter.l,
+      autumnPaperOKLCH.lighter.c,
+      autumnPaperOKLCH.lighter.h,
+    ),
+    lightest: oklchToHex(
+      autumnPaperOKLCH.lightest.l,
+      autumnPaperOKLCH.lightest.c,
+      autumnPaperOKLCH.lightest.h,
+    ),
   },
   accent: {
-    primary:     oklchToHex(autumnAccentOKLCH.primary.l, autumnAccentOKLCH.primary.c, autumnAccentOKLCH.primary.h),
-    primaryDark: oklchToHex(autumnAccentOKLCH.primaryDark.l, autumnAccentOKLCH.primaryDark.c, autumnAccentOKLCH.primaryDark.h),
+    primary: oklchToHex(
+      autumnAccentOKLCH.primary.l,
+      autumnAccentOKLCH.primary.c,
+      autumnAccentOKLCH.primary.h,
+    ),
+    primaryDark: oklchToHex(
+      autumnAccentOKLCH.primaryDark.l,
+      autumnAccentOKLCH.primaryDark.c,
+      autumnAccentOKLCH.primaryDark.h,
+    ),
   },
   semantic: {
-    error:       oklchToHex(autumnSemanticOKLCH.error.l, autumnSemanticOKLCH.error.c, autumnSemanticOKLCH.error.h),
-    errorDark:   oklchToHex(autumnSemanticOKLCH.errorDark.l, autumnSemanticOKLCH.errorDark.c, autumnSemanticOKLCH.errorDark.h),
-    success:     oklchToHex(autumnSemanticOKLCH.success.l, autumnSemanticOKLCH.success.c, autumnSemanticOKLCH.success.h),
-    successDark: oklchToHex(autumnSemanticOKLCH.successDark.l, autumnSemanticOKLCH.successDark.c, autumnSemanticOKLCH.successDark.h),
-    warning:     oklchToHex(autumnSemanticOKLCH.warning.l, autumnSemanticOKLCH.warning.c, autumnSemanticOKLCH.warning.h),
-    warningDark: oklchToHex(autumnSemanticOKLCH.warningDark.l, autumnSemanticOKLCH.warningDark.c, autumnSemanticOKLCH.warningDark.h),
+    error: oklchToHex(
+      autumnSemanticOKLCH.error.l,
+      autumnSemanticOKLCH.error.c,
+      autumnSemanticOKLCH.error.h,
+    ),
+    errorDark: oklchToHex(
+      autumnSemanticOKLCH.errorDark.l,
+      autumnSemanticOKLCH.errorDark.c,
+      autumnSemanticOKLCH.errorDark.h,
+    ),
+    success: oklchToHex(
+      autumnSemanticOKLCH.success.l,
+      autumnSemanticOKLCH.success.c,
+      autumnSemanticOKLCH.success.h,
+    ),
+    successDark: oklchToHex(
+      autumnSemanticOKLCH.successDark.l,
+      autumnSemanticOKLCH.successDark.c,
+      autumnSemanticOKLCH.successDark.h,
+    ),
+    warning: oklchToHex(
+      autumnSemanticOKLCH.warning.l,
+      autumnSemanticOKLCH.warning.c,
+      autumnSemanticOKLCH.warning.h,
+    ),
+    warningDark: oklchToHex(
+      autumnSemanticOKLCH.warningDark.l,
+      autumnSemanticOKLCH.warningDark.c,
+      autumnSemanticOKLCH.warningDark.h,
+    ),
   },
 } as const;
 
 const textHierarchy = {
   light: {
-    subtitle:          oklchToHex(textHierarchyOKLCH.light.subtitle.l, textHierarchyOKLCH.light.subtitle.c, textHierarchyOKLCH.light.subtitle.h),
-    metadata:          oklchToHex(textHierarchyOKLCH.light.metadata.l, textHierarchyOKLCH.light.metadata.c, textHierarchyOKLCH.light.metadata.h),
-    secondaryMetadata: oklchToHex(textHierarchyOKLCH.light.secondaryMetadata.l, textHierarchyOKLCH.light.secondaryMetadata.c, textHierarchyOKLCH.light.secondaryMetadata.h),
-    caption:           oklchToHex(textHierarchyOKLCH.light.caption.l, textHierarchyOKLCH.light.caption.c, textHierarchyOKLCH.light.caption.h),
+    subtitle: oklchToHex(
+      textHierarchyOKLCH.light.subtitle.l,
+      textHierarchyOKLCH.light.subtitle.c,
+      textHierarchyOKLCH.light.subtitle.h,
+    ),
+    metadata: oklchToHex(
+      textHierarchyOKLCH.light.metadata.l,
+      textHierarchyOKLCH.light.metadata.c,
+      textHierarchyOKLCH.light.metadata.h,
+    ),
+    secondaryMetadata: oklchToHex(
+      textHierarchyOKLCH.light.secondaryMetadata.l,
+      textHierarchyOKLCH.light.secondaryMetadata.c,
+      textHierarchyOKLCH.light.secondaryMetadata.h,
+    ),
+    caption: oklchToHex(
+      textHierarchyOKLCH.light.caption.l,
+      textHierarchyOKLCH.light.caption.c,
+      textHierarchyOKLCH.light.caption.h,
+    ),
   },
   dark: {
-    subtitle:          oklchToHex(textHierarchyOKLCH.dark.subtitle.l, textHierarchyOKLCH.dark.subtitle.c, textHierarchyOKLCH.dark.subtitle.h),
-    metadata:          oklchToHex(textHierarchyOKLCH.dark.metadata.l, textHierarchyOKLCH.dark.metadata.c, textHierarchyOKLCH.dark.metadata.h),
-    secondaryMetadata: oklchToHex(textHierarchyOKLCH.dark.secondaryMetadata.l, textHierarchyOKLCH.dark.secondaryMetadata.c, textHierarchyOKLCH.dark.secondaryMetadata.h),
-    caption:           oklchToHex(textHierarchyOKLCH.dark.caption.l, textHierarchyOKLCH.dark.caption.c, textHierarchyOKLCH.dark.caption.h),
+    subtitle: oklchToHex(
+      textHierarchyOKLCH.dark.subtitle.l,
+      textHierarchyOKLCH.dark.subtitle.c,
+      textHierarchyOKLCH.dark.subtitle.h,
+    ),
+    metadata: oklchToHex(
+      textHierarchyOKLCH.dark.metadata.l,
+      textHierarchyOKLCH.dark.metadata.c,
+      textHierarchyOKLCH.dark.metadata.h,
+    ),
+    secondaryMetadata: oklchToHex(
+      textHierarchyOKLCH.dark.secondaryMetadata.l,
+      textHierarchyOKLCH.dark.secondaryMetadata.c,
+      textHierarchyOKLCH.dark.secondaryMetadata.h,
+    ),
+    caption: oklchToHex(
+      textHierarchyOKLCH.dark.caption.l,
+      textHierarchyOKLCH.dark.caption.c,
+      textHierarchyOKLCH.dark.caption.h,
+    ),
   },
   sepia: {
-    subtitle:          oklchToHex(textHierarchyOKLCH.sepia.subtitle.l, textHierarchyOKLCH.sepia.subtitle.c, textHierarchyOKLCH.sepia.subtitle.h),
-    metadata:          oklchToHex(textHierarchyOKLCH.sepia.metadata.l, textHierarchyOKLCH.sepia.metadata.c, textHierarchyOKLCH.sepia.metadata.h),
-    secondaryMetadata: oklchToHex(textHierarchyOKLCH.sepia.secondaryMetadata.l, textHierarchyOKLCH.sepia.secondaryMetadata.c, textHierarchyOKLCH.sepia.secondaryMetadata.h),
-    caption:           oklchToHex(textHierarchyOKLCH.sepia.caption.l, textHierarchyOKLCH.sepia.caption.c, textHierarchyOKLCH.sepia.caption.h),
+    subtitle: oklchToHex(
+      textHierarchyOKLCH.sepia.subtitle.l,
+      textHierarchyOKLCH.sepia.subtitle.c,
+      textHierarchyOKLCH.sepia.subtitle.h,
+    ),
+    metadata: oklchToHex(
+      textHierarchyOKLCH.sepia.metadata.l,
+      textHierarchyOKLCH.sepia.metadata.c,
+      textHierarchyOKLCH.sepia.metadata.h,
+    ),
+    secondaryMetadata: oklchToHex(
+      textHierarchyOKLCH.sepia.secondaryMetadata.l,
+      textHierarchyOKLCH.sepia.secondaryMetadata.c,
+      textHierarchyOKLCH.sepia.secondaryMetadata.h,
+    ),
+    caption: oklchToHex(
+      textHierarchyOKLCH.sepia.caption.l,
+      textHierarchyOKLCH.sepia.caption.c,
+      textHierarchyOKLCH.sepia.caption.h,
+    ),
   },
 } as const;
 

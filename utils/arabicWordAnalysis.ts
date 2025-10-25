@@ -32,7 +32,7 @@ export interface WordAnalysis {
     arabic: string;
     english: string;
   };
-  prefixes: AnalyzedComponent[];  // Changed from prefix?: AnalyzedComponent to support multiple prefixes
+  prefixes: AnalyzedComponent[]; // Changed from prefix?: AnalyzedComponent to support multiple prefixes
   infix?: AnalyzedComponent;
   suffix?: AnalyzedComponent;
   diacritic?: AnalyzedComponent;
@@ -96,7 +96,7 @@ function cacheWithLRUEviction<K, V>(
   cache: Map<K, V>,
   key: K,
   value: V,
-  limit: number = CACHE_SIZE_LIMIT
+  limit: number = CACHE_SIZE_LIMIT,
 ): void {
   if (cache.size >= limit) {
     const firstKey = cache.keys().next().value;
@@ -146,7 +146,9 @@ const VALIDATION_CONFIG = {
  * Check if a character is a weak letter (often used as vowel in Arabic)
  */
 function isWeakLetter(char: string): boolean {
-  return VALIDATION_CONFIG.WEAK_LETTERS.includes(char as (typeof VALIDATION_CONFIG.WEAK_LETTERS)[number]);
+  return VALIDATION_CONFIG.WEAK_LETTERS.includes(
+    char as (typeof VALIDATION_CONFIG.WEAK_LETTERS)[number],
+  );
 }
 
 /**
@@ -160,11 +162,7 @@ function countConsonants(text: string): number {
  * Check if text has substantial structure (minimum length and consonants)
  * Used to distinguish roots from affixes
  */
-function hasSubstantialStructure(
-  text: string,
-  minLength: number,
-  minConsonants: number
-): boolean {
+function hasSubstantialStructure(text: string, minLength: number, minConsonants: number): boolean {
   return text.length >= minLength && countConsonants(text) >= minConsonants;
 }
 
@@ -172,14 +170,18 @@ function hasSubstantialStructure(
  * Check if a pattern is a subject marker prefix (ي، ت، ن، أ)
  */
 function isSubjectMarker(pattern: string): boolean {
-  return VALIDATION_CONFIG.SUBJECT_MARKERS.includes(pattern as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number]);
+  return VALIDATION_CONFIG.SUBJECT_MARKERS.includes(
+    pattern as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number],
+  );
 }
 
 /**
  * Check if a pattern is a high-risk suffix requiring validation
  */
 function isHighRiskSuffix(pattern: string): boolean {
-  return VALIDATION_CONFIG.HIGH_RISK_SUFFIXES.includes(pattern as (typeof VALIDATION_CONFIG.HIGH_RISK_SUFFIXES)[number]);
+  return VALIDATION_CONFIG.HIGH_RISK_SUFFIXES.includes(
+    pattern as (typeof VALIDATION_CONFIG.HIGH_RISK_SUFFIXES)[number],
+  );
 }
 
 // Comprehensive contraction map hoisted and lowercased once for reuse
@@ -262,10 +264,7 @@ function normalizeArabic(text: string): string {
 
   // Remove Unicode formatting characters (RTL marks, zero-width characters, etc.)
   // then remove diacritics, then trim
-  const normalized = text
-    .replace(UNICODE_FORMAT_REGEX, '')
-    .replace(DIACRITIC_REGEX, '')
-    .trim();
+  const normalized = text.replace(UNICODE_FORMAT_REGEX, '').replace(DIACRITIC_REGEX, '').trim();
 
   cacheWithLRUEviction(ARABIC_NORMALIZATION_CACHE, text, normalized);
 
@@ -328,7 +327,7 @@ function shouldRejectWholeTranslationMatch(
   normalizedEnglish: string,
   tokenCount: number,
   arabicWord?: string,
-  componentPattern?: string
+  componentPattern?: string,
 ): boolean {
   // Rule 1: Single-word translations always allowed
   if (tokenCount === 1) {
@@ -361,7 +360,7 @@ function hasEnglishMatch(
   english: string,
   patterns: string[],
   arabicWord?: string,
-  componentPattern?: string
+  componentPattern?: string,
 ): string[] {
   // Expand contractions BEFORE normalization to preserve apostrophes for lookup
   const expandedEnglish = expandContractions(english);
@@ -379,7 +378,15 @@ function hasEnglishMatch(
     const candidate = normalizeEnglish(raw);
 
     // Check if we should reject this whole-translation match
-    if (shouldRejectWholeTranslationMatch(candidate, norm, tokens.length, arabicWord, componentPattern)) {
+    if (
+      shouldRejectWholeTranslationMatch(
+        candidate,
+        norm,
+        tokens.length,
+        arabicWord,
+        componentPattern,
+      )
+    ) {
       continue;
     }
 
@@ -389,14 +396,14 @@ function hasEnglishMatch(
         bigrams = new Set(
           tokens
             .map((_, i) => (i + 1 < tokens.length ? `${tokens[i]} ${tokens[i + 1]}` : ''))
-            .filter(Boolean)
+            .filter(Boolean),
         );
         trigrams = new Set(
           tokens
             .map((_, i) =>
-              i + 2 < tokens.length ? `${tokens[i]} ${tokens[i + 1]} ${tokens[i + 2]}` : ''
+              i + 2 < tokens.length ? `${tokens[i]} ${tokens[i + 1]} ${tokens[i + 2]}` : '',
             )
-            .filter(Boolean)
+            .filter(Boolean),
         );
       }
       // Explicit null checks for TypeScript
@@ -422,7 +429,7 @@ function findComponent(
   arabic: string,
   english: string,
   components: WordComponent[],
-  type: ComponentType
+  type: ComponentType,
 ): AnalyzedComponent | undefined {
   let best: AnalyzedComponent | undefined;
 
@@ -466,11 +473,13 @@ function findComponent(
     if (matches && type === ComponentType.PREFIX) {
       if (isSubjectMarker(pattern)) {
         const remaining = arabic.slice(pattern.length);
-        if (!hasSubstantialStructure(
-          remaining,
-          VALIDATION_CONFIG.PREFIX_VALIDATION.MIN_REMAINING_LENGTH,
-          VALIDATION_CONFIG.PREFIX_VALIDATION.MIN_CONSONANTS
-        )) {
+        if (
+          !hasSubstantialStructure(
+            remaining,
+            VALIDATION_CONFIG.PREFIX_VALIDATION.MIN_REMAINING_LENGTH,
+            VALIDATION_CONFIG.PREFIX_VALIDATION.MIN_CONSONANTS,
+          )
+        ) {
           matches = false;
         }
       }
@@ -530,17 +539,19 @@ function findComponent(
             : VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_REMAINING_LENGTH;
 
           const minLengthSatisfied = remaining.length >= minLengthRequired;
-          const hasTwoConsonants = countConsonants(remaining) >= VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS;
+          const hasTwoConsonants =
+            countConsonants(remaining) >= VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS;
 
           // فعيل pattern detection: words like سفيه، كريه (root ends in ه with ي before it)
           // Pattern: C¹ C² ي ه → likely فعيل adjectival form where ه is root letter
           // Exception: Don't apply to known prepositions that take suffixes (على، لدى، إلى)
-          const potentialFa3eelPattern = pattern === 'ه' &&
-                                         remaining.length === 3 &&
-                                         remaining.charAt(2) === 'ي';
+          const potentialFa3eelPattern =
+            pattern === 'ه' && remaining.length === 3 && remaining.charAt(2) === 'ي';
 
           // Check if remaining is a known preposition ending in ى that takes suffixes
-          const isKnownPreposition = (VALIDATION_CONFIG.PREPOSITIONS_WITH_SUFFIXES as readonly string[]).includes(remaining);
+          const isKnownPreposition = (
+            VALIDATION_CONFIG.PREPOSITIONS_WITH_SUFFIXES as readonly string[]
+          ).includes(remaining);
 
           // Only reject as فعيل if it's not a known preposition
           const isFa3eelPattern = potentialFa3eelPattern && !isKnownPreposition;
@@ -577,7 +588,7 @@ function findComponent(
 function resolveOverlap(
   normalized: string,
   prefix: AnalyzedComponent | undefined,
-  suffix: AnalyzedComponent | undefined
+  suffix: AnalyzedComponent | undefined,
 ): {
   resolvedPrefix: AnalyzedComponent | undefined;
   resolvedSuffix: AnalyzedComponent | undefined;
@@ -607,7 +618,7 @@ function findInfix(
   remainingArabic: string,
   english: string,
   prefixes: AnalyzedComponent[],
-  suffix?: AnalyzedComponent
+  suffix?: AnalyzedComponent,
 ): AnalyzedComponent | undefined {
   const result = findComponent(remainingArabic, english, ARABIC_INFIXES, ComponentType.INFIX);
 
@@ -618,20 +629,29 @@ function findInfix(
     // Collect all English words claimed by all prefixes
     prefixes.forEach(prefix => {
       prefix.englishMatches.forEach(match => {
-        match.toLowerCase().split(/\s+/).forEach(word => claimedWords.add(word));
+        match
+          .toLowerCase()
+          .split(/\s+/)
+          .forEach(word => claimedWords.add(word));
       });
     });
 
     // Collect all English words claimed by suffix
     if (suffix) {
       suffix.englishMatches.forEach(match => {
-        match.toLowerCase().split(/\s+/).forEach(word => claimedWords.add(word));
+        match
+          .toLowerCase()
+          .split(/\s+/)
+          .forEach(word => claimedWords.add(word));
       });
     }
 
     // Check if ALL infix English matches are already claimed
     const allClaimed = result.englishMatches.every(match =>
-      match.toLowerCase().split(/\s+/).every(word => claimedWords.has(word))
+      match
+        .toLowerCase()
+        .split(/\s+/)
+        .every(word => claimedWords.has(word)),
     );
 
     if (allClaimed) {
@@ -654,10 +674,7 @@ function findDiacritic(arabic: string, english: string): AnalyzedComponent | und
  * Determines if bracket injection ([the]) should be applied for definite article
  * Shared logic to avoid duplication between analysis and hook
  */
-export function shouldInjectBracket(
-  normalizedArabic: string,
-  englishTranslation: string
-): boolean {
+export function shouldInjectBracket(normalizedArabic: string, englishTranslation: string): boolean {
   // Check if word has definite article prefix patterns
   // Note: Use startsWith (not includes) to match definite article at word beginning
   const hasDefiniteArticle =
@@ -697,7 +714,7 @@ export function shouldInjectBracket(
  */
 function analyzeDiacriticMatches(
   diacriticMatches: string[],
-  otherComponents: Array<AnalyzedComponent | undefined>
+  otherComponents: Array<AnalyzedComponent | undefined>,
 ): {
   hasUnique: boolean;
   overlappingComponent: AnalyzedComponent | undefined;
@@ -754,7 +771,7 @@ function analyzeDiacriticMatches(
 function areGrammaticallyRelated(
   diacritic: AnalyzedComponent,
   overlappingComponent: AnalyzedComponent,
-  overlappingMatches: string[]
+  overlappingMatches: string[],
 ): boolean {
   const diacriticArabic = diacritic.arabicMatch;
   const componentType = overlappingComponent.component.type;
@@ -829,7 +846,7 @@ function areGrammaticallyRelated(
  */
 function detectPrefixes(
   normalizedArabic: string,
-  english: string
+  english: string,
 ): { prefixes: AnalyzedComponent[]; remainingArabic: string } {
   const detectedPrefixes: AnalyzedComponent[] = [];
   let remaining = normalizedArabic;
@@ -903,7 +920,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     // If bracket injection is needed, callers will add "[the]" making it multi-word
     const singleWordResult: WordAnalysis = {
       original: { arabic, english },
-      prefixes: [],  // No prefixes for single words
+      prefixes: [], // No prefixes for single words
       hasComponents: false,
       remainingArabic: normalized,
       remainingEnglish: normalizeEnglish(english),
@@ -916,7 +933,10 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   }
 
   // Detect multiple prefixes sequentially
-  const { prefixes: detectedPrefixes, remainingArabic: remainingAfterPrefixes } = detectPrefixes(normalized, english);
+  const { prefixes: detectedPrefixes, remainingArabic: remainingAfterPrefixes } = detectPrefixes(
+    normalized,
+    english,
+  );
 
   const suffix = findComponent(normalized, english, ARABIC_SUFFIXES, ComponentType.SUFFIX);
 
@@ -924,7 +944,8 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   const diacritic = findDiacritic(arabic, english);
 
   // Resolve overlaps between the last prefix and suffix (only last prefix can overlap with suffix)
-  const lastPrefix = detectedPrefixes.length > 0 ? detectedPrefixes[detectedPrefixes.length - 1] : undefined;
+  const lastPrefix =
+    detectedPrefixes.length > 0 ? detectedPrefixes[detectedPrefixes.length - 1] : undefined;
   const { resolvedPrefix, resolvedSuffix } = resolveOverlap(normalized, lastPrefix, suffix);
 
   // If last prefix was removed due to overlap, remove it from the detected prefixes array
@@ -934,19 +955,20 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   }
 
   // Calculate remaining Arabic text after removing all prefixes and suffix
-  let remaining = remainingAfterPrefixes;  // Already has prefixes removed
+  let remaining = remainingAfterPrefixes; // Already has prefixes removed
   if (resolvedSuffix)
     remaining = remaining.substring(0, remaining.length - resolvedSuffix.arabicMatch.length);
 
   // Look for infixes in the remaining text (pass all prefixes/suffix to filter false positives)
-  const infix = remaining.length > 2 ? findInfix(remaining, english, finalPrefixes, resolvedSuffix) : undefined;
+  const infix =
+    remaining.length > 2 ? findInfix(remaining, english, finalPrefixes, resolvedSuffix) : undefined;
 
   // Smart diacritic resolution: filter, keep, or merge colors based on grammatical relationships
   let resolvedDiacritic: AnalyzedComponent | undefined;
 
   if (diacritic) {
     const matchAnalysis = analyzeDiacriticMatches(diacritic.englishMatches, [
-      ...finalPrefixes,  // Include all prefixes
+      ...finalPrefixes, // Include all prefixes
       infix,
       resolvedSuffix,
     ]);
@@ -970,7 +992,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
       const isRelated = areGrammaticallyRelated(
         diacritic,
         matchAnalysis.overlappingComponent,
-        matchAnalysis.overlappingMatches
+        matchAnalysis.overlappingMatches,
       );
 
       if (isRelated) {
@@ -991,7 +1013,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
 
   const result: WordAnalysis = {
     original: { arabic, english },
-    prefixes: finalPrefixes,  // Array of prefixes
+    prefixes: finalPrefixes, // Array of prefixes
     infix,
     suffix: resolvedSuffix,
     diacritic: resolvedDiacritic,
@@ -1012,7 +1034,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
 function mapToOriginalPosition(
   original: string,
   normalizedLength: number,
-  fromEnd = false
+  fromEnd = false,
 ): number {
   let position = fromEnd ? original.length : 0;
   let count = 0;
@@ -1055,7 +1077,10 @@ function mapToOriginalPosition(
  * Get the appropriate color name for a diacritic based on color inheritance
  * Must match the exact color logic used by the component it inherits from (including role-based colors)
  */
-function getDiacriticColorName(diacritic: AnalyzedComponent | undefined, analysis?: WordAnalysis): string {
+function getDiacriticColorName(
+  diacritic: AnalyzedComponent | undefined,
+  analysis?: WordAnalysis,
+): string {
   if (!diacritic) return 'text';
 
   // If diacritic inherits color from a related component, use that component's color logic
@@ -1066,7 +1091,7 @@ function getDiacriticColorName(diacritic: AnalyzedComponent | undefined, analysi
 
   if (diacritic.inheritColorFrom === ComponentType.PREFIX && analysis?.prefixes) {
     // Match prefix color logic: also uses role-based colors
-    const prefix = analysis.prefixes[0];  // Get first prefix (most relevant for diacritic)
+    const prefix = analysis.prefixes[0]; // Get first prefix (most relevant for diacritic)
     return getComponentColorName(prefix, ComponentType.PREFIX);
   }
 
@@ -1085,7 +1110,7 @@ function getDiacriticColorName(diacritic: AnalyzedComponent | undefined, analysi
  */
 function getComponentColorName(
   component: AnalyzedComponent | undefined,
-  defaultType: ComponentType
+  defaultType: ComponentType,
 ): string {
   if (!component) {
     return COMPONENT_TYPE_CONFIG[defaultType].colorName;
@@ -1119,7 +1144,8 @@ function reconstructWithColors(analysis: WordAnalysis) {
       if (isLastPrefix && !analysis.remainingArabic && !analysis.suffix) {
         originalEnd = arabic.length;
       } else {
-        const mappedEnd = mapToOriginalPosition(arabic.substring(processed), prefixLength) + processed;
+        const mappedEnd =
+          mapToOriginalPosition(arabic.substring(processed), prefixLength) + processed;
         // Ensure we don't exceed the original string length
         originalEnd = Math.min(mappedEnd, arabic.length);
       }
@@ -1142,7 +1168,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
     const suffixOriginalStart = mapToOriginalPosition(
       arabic,
       analysis.suffix.arabicMatch.length,
-      true
+      true,
     );
     const remainingText = arabic.substring(processed, suffixOriginalStart);
 
@@ -1164,12 +1190,12 @@ function reconstructWithColors(analysis: WordAnalysis) {
     // Add infix segment
     const infixEnd = mapToOriginalPosition(
       remainingText,
-      infixIndex + analysis.infix.arabicMatch.length
+      infixIndex + analysis.infix.arabicMatch.length,
     );
     segments.push({
       text: remainingText.substring(
         infixIndex > 0 ? mapToOriginalPosition(remainingText, infixIndex) : 0,
-        infixEnd
+        infixEnd,
       ),
       colorName: COMPONENT_TYPE_CONFIG[ComponentType.INFIX].colorName,
       type: 'infix',
@@ -1195,7 +1221,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
       // Split suffix to separate the diacritic
       const suffixWithoutDiacritic = suffixText.substring(
         0,
-        suffixText.length - analysis.diacritic.arabicMatch.length
+        suffixText.length - analysis.diacritic.arabicMatch.length,
       );
       if (suffixWithoutDiacritic) {
         segments.push({
@@ -1236,7 +1262,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
     const infixStart = infixIndex > 0 ? mapToOriginalPosition(remainingText, infixIndex) : 0;
     const infixEnd = mapToOriginalPosition(
       remainingText,
-      infixIndex + analysis.infix.arabicMatch.length
+      infixIndex + analysis.infix.arabicMatch.length,
     );
     segments.push({
       text: remainingText.substring(infixStart, infixEnd),
@@ -1251,7 +1277,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
       if (analysis.diacritic && postInfixText.endsWith(analysis.diacritic.arabicMatch)) {
         const rootWithoutDiacritic = postInfixText.substring(
           0,
-          postInfixText.length - analysis.diacritic.arabicMatch.length
+          postInfixText.length - analysis.diacritic.arabicMatch.length,
         );
         if (rootWithoutDiacritic) {
           segments.push({
@@ -1292,7 +1318,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
       // Split suffix to separate the diacritic
       const suffixWithoutDiacritic = suffixText.substring(
         0,
-        suffixText.length - analysis.diacritic.arabicMatch.length
+        suffixText.length - analysis.diacritic.arabicMatch.length,
       );
       if (suffixWithoutDiacritic) {
         segments.push({
@@ -1320,7 +1346,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
     if (analysis.diacritic && remainingText.endsWith(analysis.diacritic.arabicMatch)) {
       const rootWithoutDiacritic = remainingText.substring(
         0,
-        remainingText.length - analysis.diacritic.arabicMatch.length
+        remainingText.length - analysis.diacritic.arabicMatch.length,
       );
       if (rootWithoutDiacritic) {
         segments.push({
@@ -1347,7 +1373,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
   if (analysis.diacritic && segments.length === 0) {
     const rootWithoutDiacritic = arabic.substring(
       0,
-      arabic.length - analysis.diacritic.arabicMatch.length
+      arabic.length - analysis.diacritic.arabicMatch.length,
     );
     if (rootWithoutDiacritic) {
       segments.push({
@@ -1378,7 +1404,18 @@ function reconstructWithColors(analysis: WordAnalysis) {
 export function computeColoredSegments(
   arabicWord: string,
   englishTranslation: string,
-  colors: { tint: string; primary: string; secondary: string; secondaryText: string; warning: string; accent: string; violet: string; error: string; text: string; arabicText: string }
+  colors: {
+    tint: string;
+    primary: string;
+    secondary: string;
+    secondaryText: string;
+    warning: string;
+    accent: string;
+    violet: string;
+    error: string;
+    text: string;
+    arabicText: string;
+  },
 ): ColoredSegment[] {
   // Apply bracket injection if needed
   const normalizedArabic = normalizeArabic(arabicWord);
@@ -1440,7 +1477,7 @@ export function formatWordAnalysis(analysis: WordAnalysis) {
 
   // Add all prefixes with role-based colors
   if (analysis.prefixes) {
-    analysis.prefixes.forEach((prefix) => {
+    analysis.prefixes.forEach(prefix => {
       // Use role-based color if role is defined, otherwise fall back to type-based color
       const colorName = getComponentColorName(prefix, ComponentType.PREFIX);
 
