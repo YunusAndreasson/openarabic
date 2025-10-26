@@ -288,13 +288,13 @@ const styles = StyleSheet.create({
   title: {
     // Typography handled by type="heading3" (17px LARGE)
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-    marginBottom: 0, // Removed spacing below title
+    marginBottom: LAYOUT.SPACING.SMALL, // 8px spacing to match ArticleCard
   },
 
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 0, // Removed spacing below meta row
+    marginBottom: LAYOUT.SPACING.SMALL, // 8px spacing to match ArticleCard
   },
 
   artist: {
