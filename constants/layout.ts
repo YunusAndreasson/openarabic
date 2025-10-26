@@ -455,9 +455,9 @@ export const LAYOUT = {
   FLOATING_CONTROLS: {
     /**
      * Distance from bottom of screen to floating button
-     * Tab bar handles its own safe area, so just add comfortable gap
+     * SMALLER value = button LOWER (closer to tab bar)
      */
-    BOTTOM_POSITION: SPACING_SCALE.XLARGE, // 24px above tab bar
+    BOTTOM_POSITION: SPACING_SCALE.TINY, // 4px above tab bar (moved down)
   },
 };
 
