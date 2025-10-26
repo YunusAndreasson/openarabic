@@ -238,7 +238,7 @@ export default function ListenScreen(): JSX.Element {
       position: 'absolute' as const,
       left: 0,
       right: 0,
-      top: -120, // Extend 120px above
+      top: -200, // Extend 200px above for full coverage
       bottom: 0,
     }),
     [],
@@ -248,11 +248,13 @@ export default function ListenScreen(): JSX.Element {
   const gradientColors = useMemo(
     () => [
       `${colors.elevation0}00`, // Fully transparent at top
-      `${colors.elevation0}66`, // 40% opacity
+      `${colors.elevation0}40`, // 25% opacity
+      `${colors.elevation0}80`, // 50% opacity
       `${colors.elevation0}B3`, // 70% opacity
       `${colors.elevation0}E6`, // 90% opacity
       colors.elevation0, // Fully opaque
       colors.elevation0, // Fully opaque
+      colors.elevation0, // Fully opaque (extra stops for solid coverage)
     ],
     [colors.elevation0],
   );
