@@ -1,6 +1,6 @@
 # OpenArabic - Claude Code Development Guide
 
-**Version**: `1447.4.7+139` (Islamic Calendar Versioning)
+**Version**: `1447.4.19+151` (Islamic Calendar Versioning)
 
 This guide provides comprehensive development rules and patterns for Claude Code when working with the OpenArabic React Native app - a sophisticated Arabic language learning platform with spaced repetition, audio features, and intelligent article filtering.
 
@@ -53,6 +53,16 @@ When running validation or test commands:
 - `yarn lint:fix` or `npx eslint` - Linting with auto-fix (only at end)
 - `yarn test` - Run tests (only when testing features)
 - `yarn check-unused` - Check for unused exports (only at end)
+
+**Performance Note:**
+
+The validation workflow has been optimized for AI agent efficiency:
+- `yarn validate` uses smart script (`scripts/validate-changed.js`) that checks only changed files
+- **TypeScript**: Only changed .ts/.tsx files (via tsc-files) - ~0.4s
+- **Prettier/ESLint**: All files with aggressive caching - ~3.4s and ~1.7s respectively
+- **Parallel execution**: All three tools run simultaneously
+- **80% faster**: Reduced from 28.29s → 5.66s for typical changes
+- For comprehensive validation: Use `yarn validate:full` (all files, no optimization)
 
 ## Technical Stack
 
@@ -485,10 +495,12 @@ dispatch(setAudioLanguagePreference('bilingual'));
 - State changes infrequently
 - You want to avoid prop drilling
 
-**Current contexts:**
+**Current providers** (in `components/providers/`):
 
-- `StreaksContext` - Streak modal visibility (feature-scoped to reading streaks)
-- `AuthContext` - Authentication state (provided by AuthProvider)
+- `StreaksProvider` - Streak modal visibility (feature-scoped to reading streaks)
+- `AuthProvider` - Authentication state
+- `ToastProvider` - Toast notifications
+- `FSRSDataProvider` - FSRS vocabulary data
 
 **Pattern:**
 
@@ -703,15 +715,18 @@ During development:
 
 Always run these commands before completing longer sessions:
 
-1. `yarn validate` - Check types, linting, and dependencies
-2. Only run it at the very end
+1. `yarn validate` - Fast validation (only changed files, 5-6s)
+2. `yarn validate:full` - Full validation (all files, use before commits/PRs)
+3. Only run validation at the very end
 
 ### Test Commands
 
-- `yarn test` - Run all tests
-- `yarn test:watch` - Watch mode
-- `yarn test:coverage` - Coverage report
-- `yarn validate` - TypeScript + ESLint + Knip
+- `yarn test` - Run tests on changed files (~2.2s with --onlyChanged)
+- `yarn test:all` - Run all tests (~7.7s)
+- `yarn test:watch` - Watch mode for development
+- `yarn test:coverage` - Generate coverage report
+- `yarn validate` - Fast validation (changed files only, TypeScript + Prettier + ESLint)
+- `yarn validate:full` - Full validation (all files, TypeScript + Prettier + ESLint + Knip)
 
 ## Important Implementation Notes
 
