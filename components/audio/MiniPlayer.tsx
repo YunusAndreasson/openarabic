@@ -212,7 +212,7 @@ const MiniPlayerComponent = ({
               onPress={onTimerPress}
               backgroundColor={timerButtonColor}
               iconColor={timerIconColor}
-              iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
               hapticType="none"
             />
 
@@ -222,7 +222,7 @@ const MiniPlayerComponent = ({
               onPress={onPlayPause}
               backgroundColor={colors.tint}
               iconColor={colors.black}
-              iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
             />
           </View>
         </View>
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   artworkContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     overflow: 'hidden',
-    marginRight: LAYOUT.SPACING.SMALL,
+    marginRight: LAYOUT.SPACING.TINY, // Reduced from SMALL (8px) to TINY (4px)
   },
 
   artwork: {
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     minWidth: 0,
-    marginRight: LAYOUT.SPACING.TINY,
+    // No marginRight - maximizes horizontal space for text
   },
 
   textContent: {
@@ -286,9 +286,8 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + LAYOUT.SPACING.TINY,
+    // Typography handled by type="heading3" (17px LARGE)
+    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
     marginBottom: 0, // Removed spacing below title
   },
 
@@ -324,7 +323,6 @@ const styles = StyleSheet.create({
   timeAndQueueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.HALF_TINY,
     gap: LAYOUT.SPACING.SMALL,
   },
 
