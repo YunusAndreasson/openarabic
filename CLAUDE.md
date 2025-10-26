@@ -234,6 +234,7 @@ article.article_sentences?.forEach(sentence => {
 - **Print width**: 80 characters
 
 **CRITICAL - Automatic Formatting:**
+
 - **ALWAYS use `yarn prettier:fix`** when prettier check fails
 - **NEVER manually fix formatting** - Prettier handles all formatting automatically
 - This prevents wasting time trying to figure out formatting rules
