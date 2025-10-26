@@ -443,9 +443,9 @@ export const LAYOUT = {
 
     /**
      * Bottom padding for screens with persistent bottom controls (floating buttons)
-     * Adds extra space for floating action buttons above tab bar
+     * No padding needed since button is positioned low
      */
-    bottomWithControls: SPACING_SCALE.XXXLARGE * 2, // 96px for comfortable spacing
+    bottomWithControls: 0, // No extra padding
   },
 
   /**
