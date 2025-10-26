@@ -1,6 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -192,31 +191,19 @@ export default function VocabularyScreen(): JSX.Element {
   // Bottom padding for content with floating buttons above tab bar
   const contentPaddingBottom = LAYOUT.SCREEN_PADDING.bottomWithControls;
 
-  // Gradient colors to obscure content behind floating controls
-  const gradientColors = useMemo(
-    () => [
-      `${colors.elevation0}00`, // Fully transparent at top
-      `${colors.elevation0}40`, // 25% opacity
-      `${colors.elevation0}80`, // 50% opacity
-      `${colors.elevation0}B3`, // 70% opacity
-      `${colors.elevation0}E6`, // 90% opacity
-      colors.elevation0, // Fully opaque
-      colors.elevation0, // Fully opaque
-      colors.elevation0, // Fully opaque (extra stops for solid coverage)
-    ],
-    [colors.elevation0],
-  );
-
-  // Gradient style to extend above the bottom controls
-  const gradientStyle = useMemo(
+  // Solid background to fill ONLY the gap between button and tab bar
+  const gapFillerStyle = useMemo(
     () => ({
       position: 'absolute' as const,
       left: 0,
       right: 0,
-      top: -200, // Extend 200px above for full coverage
-      bottom: 0,
+      bottom: 0, // Start at screen bottom
+      height: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION, // 8px gap
+      pointerEvents: 'none' as const,
+      zIndex: 1, // Behind the button controls
+      backgroundColor: colors.elevation0, // Solid background to cover content
     }),
-    [],
+    [colors.elevation0],
   );
 
   // Calculate loading and content states (needed for animations before any early returns)
@@ -337,6 +324,9 @@ export default function VocabularyScreen(): JSX.Element {
         )}
       </ThemedView>
 
+      {/* Solid filler for gap between button and tab bar */}
+      {hasAnyStudyWords && <View style={gapFillerStyle} />}
+
       {/* Bottom fixed action button, hidden when there are no study words */}
       {hasAnyStudyWords && (
         <View
@@ -345,11 +335,9 @@ export default function VocabularyScreen(): JSX.Element {
             bottom: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION,
             left: 0,
             right: 0,
-            overflow: 'visible',
+            zIndex: 2, // Above the gap filler
           }}
         >
-          {/* Gradient overlay to obscure content scrolling underneath */}
-          <LinearGradient colors={gradientColors} style={gradientStyle} pointerEvents="none" />
           <BottomControls
             primaryLabel={ReviewAction.STUDY_DUE_WORDS}
             onPrimaryPress={handleStartReview}

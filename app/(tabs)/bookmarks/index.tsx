@@ -2,7 +2,6 @@ import { EmptyState } from '@common/EmptyState';
 import { ListSeparator } from '@common/ListSeparator';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -228,35 +227,25 @@ export default function ListenScreen(): JSX.Element {
       // STABILIZATION: Use stable hasArticles state and prevent rapid opacity changes
       opacity: stableHasArticles ? 1 : 0,
       pointerEvents: stableHasArticles ? ('auto' as const) : ('none' as const),
+      zIndex: 2, // Above the gradient
     }),
     [stableHasArticles],
   );
 
-  // Gradient style to extend above the bottom controls
-  const gradientStyle = useMemo(
+  // Solid background to fill ONLY the gap between button and tab bar (no gradient needed for 8px gap)
+  const gapFillerStyle = useMemo(
     () => ({
       position: 'absolute' as const,
       left: 0,
       right: 0,
-      top: -200, // Extend 200px above for full coverage
-      bottom: 0,
+      bottom: 0, // Start at screen bottom
+      height: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION, // 8px gap
+      opacity: stableHasArticles ? 1 : 0,
+      pointerEvents: 'none' as const,
+      zIndex: 1, // Behind the button controls
+      backgroundColor: colors.elevation0, // Solid background to cover content
     }),
-    [],
-  );
-
-  // Gradient colors to obscure content behind floating controls
-  const gradientColors = useMemo(
-    () => [
-      `${colors.elevation0}00`, // Fully transparent at top
-      `${colors.elevation0}40`, // 25% opacity
-      `${colors.elevation0}80`, // 50% opacity
-      `${colors.elevation0}B3`, // 70% opacity
-      `${colors.elevation0}E6`, // 90% opacity
-      colors.elevation0, // Fully opaque
-      colors.elevation0, // Fully opaque
-      colors.elevation0, // Fully opaque (extra stops for solid coverage)
-    ],
-    [colors.elevation0],
+    [stableHasArticles, colors.elevation0],
   );
 
   // Memoize shared components to prevent recreation
@@ -368,10 +357,11 @@ export default function ListenScreen(): JSX.Element {
         )}
       </ThemedView>
 
+      {/* Solid filler for gap between button and tab bar */}
+      <View style={gapFillerStyle} />
+
       {/* STABILIZATION: Bottom controls with stable state and loading indicator */}
       <View style={bottomControlsStyle}>
-        {/* Gradient overlay to obscure content scrolling underneath */}
-        <LinearGradient colors={gradientColors} style={gradientStyle} pointerEvents="none" />
         <BottomControls
           primaryDisabled={isPlayAllLoading}
           primaryLoading={isPlayAllLoading}

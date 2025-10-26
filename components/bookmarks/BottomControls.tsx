@@ -42,7 +42,7 @@ export const BottomControls = memo<BottomControlsProps>(
         style={[
           styles.container,
           {
-            backgroundColor: colors.transparent,
+            backgroundColor: colors.elevation0,
           },
         ]}
       >
