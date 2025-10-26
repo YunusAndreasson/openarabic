@@ -180,12 +180,22 @@ const MiniPlayerComponent = ({
               <View style={styles.textColumn}>
                 {/* Text Content */}
                 <View style={styles.textContent}>
-                  <ThemedText style={styles.title} type="heading3" numberOfLines={2} ellipsizeMode="tail">
+                  <ThemedText
+                    style={styles.title}
+                    type="heading3"
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                  >
                     {article.title}
                   </ThemedText>
 
                   <View style={styles.metaRow}>
-                    <ThemedText style={styles.artist} type="caption" numberOfLines={1} ellipsizeMode="tail">
+                    <ThemedText
+                      style={styles.artist}
+                      type="caption"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
                       {article.author || 'Unknown Author'}
                     </ThemedText>
                   </View>
