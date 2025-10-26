@@ -16,20 +16,10 @@ interface HorizontalArticleSliderProps {
 // Calculate card width based on screen width and spacing
 const CARD_SPACING = LAYOUT.SPACING.MEDIUM;
 const CARD_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width for better visibility
-// Calculate height based on content needs while reducing excessive bottom padding
-// Analysis: ArticleCard contains image (~40% of height) + title (2 lines) + author (1 line) + summary + padding
+// Fixed height now that summary is limited to 5 lines
+// Analysis: ArticleCard contains image (~40% of height) + title (2 lines) + author (1 line) + summary (5 lines) + padding
 const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 7;
-const BASE_CARD_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + BASE_CONTENT_HEIGHT;
-
-/**
- * Helper function to estimate if content might need extra height (could be enhanced in future)
- */
-const getContentAwareHeight = (summary: string): number => {
-  // For very long summaries (>200 chars), add a bit more space
-  const isLongSummary = summary.length > 200;
-  const extraHeight = isLongSummary ? LAYOUT.SPACING.MEDIUM : 0;
-  return BASE_CARD_HEIGHT + extraHeight;
-};
+const CARD_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + BASE_CONTENT_HEIGHT;
 
 /**
  * Horizontal slider displaying multiple articles in a swipeable ScrollView
@@ -54,7 +44,7 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
       const containerStyle = [
         styles.cardContainer,
         {
-          height: getContentAwareHeight(String(info.item.summary)),
+          height: CARD_HEIGHT,
           marginLeft: info.index === 0 ? 0 : CARD_SPACING,
         },
       ];
@@ -128,7 +118,7 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     width: CARD_WIDTH,
-    // height is set dynamically based on content
+    // height is set to constant CARD_HEIGHT in containerStyle
   },
   card: {
     width: '100%',
