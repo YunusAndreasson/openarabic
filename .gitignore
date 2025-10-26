@@ -56,7 +56,9 @@ translate/reports/
 translate/article/
 translate/core/__pycache__/
 translate/core/set_keys.py
-translate/core/temp_audio/# Reassure output directory
+translate/core/temp_audio/
+
+# Reassure output directory
 .reassure
 .jest-cache/
 
