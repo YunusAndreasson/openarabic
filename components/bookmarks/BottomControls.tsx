@@ -1,6 +1,5 @@
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { LAYOUT } from '@/constants/layout';
@@ -28,7 +27,6 @@ export const BottomControls = memo<BottomControlsProps>(
     secondaryDisabled = false,
   }) => {
     const colors = useColors();
-    const insets = useSafeAreaInsets();
 
     const hasSecondaryButton = Boolean(secondaryLabel && onSecondaryPress);
 
@@ -44,7 +42,6 @@ export const BottomControls = memo<BottomControlsProps>(
         style={[
           styles.container,
           {
-            paddingBottom: insets.bottom || LAYOUT.SPACING.SMALL,
             backgroundColor: colors.transparent,
           },
         ]}
@@ -121,6 +118,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.SMALL, // Fixed padding - parent handles safe area positioning
   },
   fullWidthButtonContainer: {
     width: '100%',

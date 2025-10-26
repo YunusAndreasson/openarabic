@@ -5,7 +5,6 @@ import React, { type FC, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
@@ -104,8 +103,6 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   HeaderComponent = null,
   filterType,
 }) => {
-  const insets = useSafeAreaInsets();
-
   // Apply global filters/sorting state to incoming articles
   // useFilteredArticles now returns BOTH articles AND their progress (single source of truth)
   const {
@@ -118,14 +115,14 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   const hasArticles = visibleArticles.length > 0;
   const shouldShowEmpty = !loading && !hasArticles;
 
-  // Dynamic list content style with safe area insets
+  // Dynamic list content style
   const listContentStyle = useMemo(
     () => ({
       paddingTop: LAYOUT.SPACING.MEDIUM, // Add spacing between header and first card
-      paddingBottom: LAYOUT.SCREEN_PADDING.bottomDefault(insets.bottom),
+      paddingBottom: LAYOUT.SCREEN_PADDING.bottomDefault,
       paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     }),
-    [insets.bottom],
+    [],
   );
 
   // Handle drag end for reordering

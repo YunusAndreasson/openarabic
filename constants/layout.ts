@@ -1,7 +1,7 @@
 import type { TextStyle } from 'react-native';
-import { Dimensions, Platform } from 'react-native';
+import { Dimensions } from 'react-native';
 
-const IS_IOS = Platform.OS === 'ios';
+// Removed platform-specific constants - using unified values for simplicity
 
 // For mobile-only apps, screen width doesn't change during runtime
 // Use static width instead of dynamic useWindowDimensions
@@ -37,22 +37,15 @@ const TOUCH_TARGETS = {
   ICON_PADDING: BASE_UNIT * 3, // 12
 } as const;
 
-// Unified shadow/elevation system
+// Unified shadow/elevation system - uses iOS-style shadows on both platforms
 const createShadow = (elevation: number, opacity: number, radius: number) => ({
-  ...Platform.select({
-    ios: {
-      shadowOffset: { width: 0, height: Math.ceil(elevation / 2) },
-      shadowOpacity: opacity,
-      shadowRadius: radius,
-    },
-    android: {
-      elevation,
-    },
-  }),
+  shadowOffset: { width: 0, height: Math.ceil(elevation / 2) },
+  shadowOpacity: opacity,
+  shadowRadius: radius,
+  shadowColor: '#000', // Explicit shadow color for consistency
 });
 
 const createElevation = (level: number, opacity: number, radius: number) => ({
-  level,
   ...createShadow(level, opacity, radius),
 });
 
@@ -202,7 +195,7 @@ export const LAYOUT = {
   },
 
   BOTTOM_BAR: {
-    HEIGHT: IS_IOS ? 73 : 58, // Compact tab bar height - reduced from standard heights
+    HEIGHT: 50, // Native tab bar height (Expo Router default) - SafeAreaInsets handles device-specific spacing
   },
 
   BORDER_RADIUS: {
@@ -350,10 +343,8 @@ export const LAYOUT = {
       EXPANDED: TOUCH_TARGETS.LARGE * 8, // ~384 - restored for proper article and calendar display
       COLLAPSED: 0,
     },
-    NAV_HEIGHT: IS_IOS ? TOUCH_TARGETS.MEDIUM : TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // Platform-specific responsive heights
-    NAV_HEADER_HEIGHT: IS_IOS
-      ? TOUCH_TARGETS.MEDIUM + SPACING_SCALE.TINY
-      : TOUCH_TARGETS.MEDIUM + SPACING_SCALE.SMALL, // Accommodate multi-line titles
+    NAV_HEIGHT: TOUCH_TARGETS.LARGE, // 48 - Unified navigation height for both platforms
+    NAV_HEADER_HEIGHT: TOUCH_TARGETS.LARGE + SPACING_SCALE.TINY, // 52 - Accommodate multi-line titles
 
     TITLE: {
       MAIN: {
@@ -441,26 +432,32 @@ export const LAYOUT = {
 
   /**
    * Standardized screen padding utilities for consistent spacing
-   * DRY approach to bottom padding calculations across all screens
+   * Tab bar now handles its own safe area, so screens just need simple padding
    */
   SCREEN_PADDING: {
     /**
-     * Standard bottom padding for screens without persistent bottom controls
-     * Accounts for tab bar + safe area + small buffer
-     * @param safeAreaBottom - Bottom safe area inset from useSafeAreaInsets()
+     * Standard bottom padding for tab screens
+     * Tab bar auto-adjusts for safe area, so just add small buffer
      */
-    bottomDefault: (safeAreaBottom: number): number =>
-      safeAreaBottom + (IS_IOS ? 73 : 58) + SPACING_SCALE.SMALL,
-    // = safeAreaBottom + BOTTOM_BAR.HEIGHT + 8px buffer
+    bottomDefault: SPACING_SCALE.SMALL, // 8px buffer above tab bar
 
     /**
      * Bottom padding for screens with persistent bottom controls (floating buttons)
      * Adds extra space for floating action buttons above tab bar
-     * @param safeAreaBottom - Bottom safe area inset from useSafeAreaInsets()
      */
-    bottomWithControls: (safeAreaBottom: number): number =>
-      safeAreaBottom + (IS_IOS ? 73 : 58) + SPACING_SCALE.XLARGE + SPACING_SCALE.SMALL,
-    // = safeAreaBottom + BOTTOM_BAR.HEIGHT + 24px controls + 8px buffer
+    bottomWithControls: SPACING_SCALE.XLARGE + SPACING_SCALE.SMALL, // 24px controls + 8px buffer
+  },
+
+  /**
+   * Floating controls positioning (PLAY ALL, REVIEW DUE WORDS buttons)
+   * Positions floating buttons above tab bar consistently
+   */
+  FLOATING_CONTROLS: {
+    /**
+     * Distance from bottom of screen to floating button
+     * Tab bar handles its own safe area, so just add small gap
+     */
+    BOTTOM_POSITION: SPACING_SCALE.SMALL, // 8px above tab bar
   },
 };
 

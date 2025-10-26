@@ -187,9 +187,9 @@ export function WordTooltip({
     height: effectiveTooltipHeight,
     backgroundColor: colors.elevation1,
     borderColor: colors.border,
-    shadowColor: colors.shadow,
     zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
     ...LAYOUT.ELEVATION.LARGE,
+    shadowColor: colors.shadow, // Override elevation shadowColor with theme color
   };
 
   const arrowStyle = {

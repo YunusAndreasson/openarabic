@@ -109,11 +109,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   shadow: {
-    // Extract only shadow properties, excluding 'level' which is not valid for ViewStyle
-    ...(function () {
-      const { level, ...shadowProps } = LAYOUT.ELEVATION.SUBTLE;
-      return shadowProps;
-    })(),
+    ...LAYOUT.ELEVATION.SUBTLE,
   },
   toggleTrack: {
     alignItems: 'flex-start',

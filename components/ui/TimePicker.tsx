@@ -6,7 +6,7 @@ import BottomSheet, {
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -39,18 +39,11 @@ export function TimePicker({
   initialDate.setHours(initialHour, initialMinute, 0, 0);
 
   const [selectedDate, setSelectedDate] = useState(initialDate);
-  const [showPicker, setShowPicker] = useState(false);
 
-  // Snap point is static so define outside component
-  const snapPoints = SNAP_POINTS;
-
-  // Show/hide modal based on isVisible prop
+  // Show/hide modal based on isVisible prop - unified for both platforms
   useEffect(() => {
     if (isVisible) {
-      setShowPicker(Platform.OS === 'android');
-      if (Platform.OS === 'ios') {
-        bottomSheetRef.current?.expand();
-      }
+      bottomSheetRef.current?.expand();
     } else {
       bottomSheetRef.current?.close();
     }
@@ -72,16 +65,8 @@ export function TimePicker({
     onTimeSet(hour, minute);
   };
 
-  const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowPicker(false);
-
-      if (event.type === 'set' && date) {
-        setSelectedDate(date);
-        extractTimeAndSet(date);
-      }
-      onClose();
-    } else if (date) {
+  const handleDateChange = (_event: DateTimePickerEvent, date?: Date) => {
+    if (date) {
       setSelectedDate(date);
     }
   };
@@ -114,32 +99,12 @@ export function TimePicker({
     indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
   };
 
-  // Android: Show native picker directly
-  if (Platform.OS === 'android' && showPicker) {
-    return (
-      <DateTimePicker
-        value={selectedDate}
-        mode="time"
-        is24Hour={true}
-        display="default"
-        onChange={handleDateChange}
-        textColor={colors.text}
-        accentColor={colors.tint}
-      />
-    );
-  }
-
-  // Only render on iOS
-  if (Platform.OS !== 'ios') {
-    return null;
-  }
-
-  // iOS: Show bottom sheet with native picker
+  // Unified bottom sheet with native picker for both platforms
   return (
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
-      snapPoints={snapPoints}
+      snapPoints={SNAP_POINTS}
       enablePanDownToClose
       enableOverDrag={false}
       enableDynamicSizing={false}

@@ -8,7 +8,6 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InteractionManager, StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { BottomControls } from '@/components/bookmarks/BottomControls';
@@ -155,8 +154,6 @@ export default function ListenScreen(): JSX.Element {
   );
   const { data: progressMap } = useSafeBulkReadingProgress(articleIds);
 
-  const insets = useSafeAreaInsets();
-
   // STABILIZATION: Add local loading state for PLAY ALL button
   const [isPlayAllLoading, setIsPlayAllLoading] = useState(false);
   const playAllTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -209,24 +206,19 @@ export default function ListenScreen(): JSX.Element {
     () => ({
       ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
       // No paddingTop needed - content should be directly under header
-      // Account for BottomControls height + tab bar + safe area when controls are visible
+      // Account for BottomControls height + tab bar when controls are visible
       paddingBottom: stableHasArticles
-        ? LAYOUT.SCREEN_PADDING.bottomWithControls(insets.bottom)
+        ? LAYOUT.SCREEN_PADDING.bottomWithControls
         : LAYOUT.SPACING.MEDIUM,
     }),
-    [stableHasArticles, insets.bottom],
+    [stableHasArticles],
   );
 
-  // STABILIZATION: Memoize bottom controls style with stable conditions
+  // Bottom controls positioned above tab bar
   const bottomControlsStyle = useMemo(
     () => ({
       position: 'absolute' as const,
-      // Compensate for BottomControls internal padding (MEDIUM=12px + SMALL=8px = 20px)
-      bottom:
-        LAYOUT.BOTTOM_BAR.HEIGHT +
-        LAYOUT.SPACING.TINY -
-        LAYOUT.SPACING.MEDIUM -
-        LAYOUT.SPACING.SMALL, // 4px - 12px - 8px = -16px above tab bar
+      bottom: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION,
       left: 0,
       right: 0,
       // STABILIZATION: Use stable hasArticles state and prevent rapid opacity changes

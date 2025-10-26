@@ -2,7 +2,7 @@ import type { FlashListRef } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import React, { memo, useCallback, useMemo } from 'react';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ArticleSentence, WordDetailsBottomSheet, WordTooltip } from '@/components/article';
@@ -184,15 +184,9 @@ export default function ArticleScreen(): JSX.Element {
 
   return (
     <ToastProvider>
-      {Platform.OS === 'android' ? (
-        <SafeAreaView style={containerStyle} edges={['top']}>
-          <ArticleScreenContent id={id ?? ''} />
-        </SafeAreaView>
-      ) : (
-        <View style={containerStyle}>
-          <ArticleScreenContent id={id ?? ''} />
-        </View>
-      )}
+      <SafeAreaView style={containerStyle} edges={['top']}>
+        <ArticleScreenContent id={id ?? ''} />
+      </SafeAreaView>
     </ToastProvider>
   );
 }

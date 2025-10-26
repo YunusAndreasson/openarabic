@@ -5,7 +5,6 @@ import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InteractionManager, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { BottomControls } from '@/components/bookmarks/BottomControls';
@@ -36,7 +35,6 @@ export default function VocabularyScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { prefetchVocabularyData } = useAppPreloader();
-  const insets = useSafeAreaInsets();
 
   // Single coordinated state for bottom sheet visibility
   const [activeBottomSheet, setActiveBottomSheet] = useState<
@@ -188,11 +186,8 @@ export default function VocabularyScreen(): JSX.Element {
     return { learnedWords, masteredWords, learningPhaseWords };
   }, [filteredStudyWords]);
 
-  // Memoize bottom padding calculation with minimal dependencies
-  const contentPaddingBottom = useMemo(
-    () => LAYOUT.SCREEN_PADDING.bottomWithControls(insets.bottom),
-    [insets.bottom],
-  );
+  // Bottom padding for content with floating buttons above tab bar
+  const contentPaddingBottom = LAYOUT.SCREEN_PADDING.bottomWithControls;
 
   // Calculate loading and content states (needed for animations before any early returns)
   const isLoadingState = isDataLoading || isFetching;
@@ -317,11 +312,7 @@ export default function VocabularyScreen(): JSX.Element {
         <View
           style={{
             position: 'absolute',
-            bottom:
-              LAYOUT.BOTTOM_BAR.HEIGHT +
-              LAYOUT.SPACING.TINY -
-              LAYOUT.SPACING.MEDIUM -
-              LAYOUT.SPACING.SMALL,
+            bottom: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION,
             left: 0,
             right: 0,
           }}

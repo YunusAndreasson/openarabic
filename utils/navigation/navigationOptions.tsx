@@ -1,5 +1,5 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 
@@ -121,13 +121,9 @@ export function createNavigationOptions(
     return baseOptions;
   }
 
-  // Native modal behavior (minimal customization)
+  // Native modal behavior (minimal customization) - unified across platforms
   return {
-    presentation: Platform.select({
-      ios: 'modal',
-      android: 'fullScreenModal',
-      default: 'modal',
-    }),
+    presentation: 'modal',
     gestureEnabled: true,
     contentStyle: {
       backgroundColor: colors.background,

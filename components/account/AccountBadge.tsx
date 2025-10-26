@@ -203,8 +203,8 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   const dynamicStyles = {
     profileCard: {
       backgroundColor: colors.elevation1,
-      shadowColor: colors.shadow,
       ...LAYOUT.ELEVATION.SMALL,
+      shadowColor: colors.shadow, // Override elevation shadowColor with theme color
     },
     photoRing: {
       width: PROFILE_PHOTO_SIZE + 4,

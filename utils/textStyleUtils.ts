@@ -1,5 +1,4 @@
 import type { TextStyle, ViewStyle } from 'react-native';
-import { Platform } from 'react-native';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY, getArabicTextStyle } from '@/constants/layout';
 
@@ -213,32 +212,12 @@ export const createButtonTextStyle = (size: 'small' | 'medium' | 'large' = 'medi
 
 /**
  * Creates consistent card content container styling
- * @param options - Optional configuration for the container
  * @returns ViewStyle object for card content
  */
-export const createCardContentStyle = (
-  options: {
-    includeAndroidMinHeight?: boolean;
-  } = {},
-): ViewStyle => {
-  const { includeAndroidMinHeight = true } = options;
-
-  const baseStyle: ViewStyle = {
+export const createCardContentStyle = (): ViewStyle => {
+  return {
     overflow: 'hidden',
     position: 'relative',
     zIndex: LAYOUT.Z_INDEX.BASE,
   };
-
-  if (includeAndroidMinHeight) {
-    return {
-      ...baseStyle,
-      ...Platform.select({
-        android: {
-          minHeight: LAYOUT.BORDER.WIDTH.NORMAL,
-        },
-      }),
-    };
-  }
-
-  return baseStyle;
 };

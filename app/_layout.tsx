@@ -202,15 +202,13 @@ function AppContent() {
   // Optimized navigation theme - memoize with stable colors reference
   const navigationTheme = useMemo(() => {
     const baseTheme = isDark ? DarkTheme : DefaultTheme;
-    return Platform.OS === 'ios'
-      ? {
-          ...baseTheme,
-          colors: {
-            ...baseTheme.colors,
-            primary: colors.tint,
-          },
-        }
-      : baseTheme;
+    return {
+      ...baseTheme,
+      colors: {
+        ...baseTheme.colors,
+        primary: colors.tint,
+      },
+    };
   }, [isDark, colors.tint]);
 
   // Set default theme based on system preference if none is set yet

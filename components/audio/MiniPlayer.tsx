@@ -1,6 +1,6 @@
 import { ProgressBar } from '@common/ProgressBar';
 import { memo, useMemo } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
@@ -314,8 +314,9 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     opacity: LAYOUT.OPACITY.HIGH,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + LAYOUT.SPACING.HALF_TINY,
-    // Use monospace font to prevent jumping when numbers change
-    fontFamily: Platform.select({ ios: 'Courier', default: 'monospace' }),
+    // Use Courier New (system monospace font available on both iOS and Android)
+    // Prevents jumping when numbers change in time display
+    fontFamily: 'Courier New',
     // Align with text content - no right alignment needed since it's in column
     textAlign: 'left',
   },

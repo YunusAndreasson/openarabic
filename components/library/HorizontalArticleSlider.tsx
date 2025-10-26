@@ -52,7 +52,7 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
       const cardStyle = [
         styles.card,
         { backgroundColor: colors.card },
-        { shadowColor: colors.shadow, ...LAYOUT.ELEVATION.SUBTLE },
+        { ...LAYOUT.ELEVATION.SUBTLE, shadowColor: colors.shadow },
       ];
 
       return (

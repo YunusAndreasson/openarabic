@@ -90,9 +90,6 @@ IconWithBadge.displayName = 'IconWithBadge';
 
 // Static styles for better performance
 const styles = StyleSheet.create({
-  tabBarIcon: {
-    marginTop: LAYOUT.SPACING.HALF_TINY, // Minimal margin for compact tab bar
-  },
   focusedIcon: {
     opacity: 1,
   },
@@ -100,7 +97,7 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.HIGH,
   },
   iconContainer: {
-    margin: LAYOUT.SPACING.MICRO, // Minimal margin for compact layout
+    // No margin needed - icons center naturally in tab bar
   },
   badgeContainer: {
     position: 'absolute',
@@ -118,6 +115,7 @@ const styles = StyleSheet.create({
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
+
   // Get due words count using the same hook as the practice screen
   const { dueWords } = useFSRSQueries({ userId: session?.user?.id });
   const dueWordsCount = dueWords?.length ?? 0;
@@ -128,15 +126,11 @@ export default function TabLayout(): JSX.Element {
     }
   }, [session, isLoading]);
 
-  // Unified tab bar style for both platforms with native background
+  // Tab bar style - simple styling only, safe area handled by safeAreaInsets prop
   const tabBarStyle = useMemo(
     () => ({
-      position: 'absolute' as const,
       borderTopWidth: 0,
-      height: LAYOUT.BOTTOM_BAR.HEIGHT,
       backgroundColor: colors.elevation0,
-      paddingTop: 0,
-      paddingBottom: 0,
     }),
     [colors.elevation0],
   );
@@ -157,11 +151,6 @@ export default function TabLayout(): JSX.Element {
           tabBarActiveTintColor: colors.tint,
           tabBarInactiveTintColor: colors.tabIconDefault,
           tabBarShowLabel: false,
-          tabBarIconStyle: styles.tabBarIcon,
-          tabBarItemStyle: {
-            paddingTop: LAYOUT.SPACING.TINY,
-            paddingBottom: LAYOUT.SPACING.HALF_TINY,
-          },
           tabBarStyle: tabBarStyle,
           tabBarButton: props => <TabBarButton {...props} />,
         }}
