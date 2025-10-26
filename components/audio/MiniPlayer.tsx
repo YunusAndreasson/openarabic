@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   },
 
   controlsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
   },
