@@ -1,5 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -191,18 +192,30 @@ export default function VocabularyScreen(): JSX.Element {
   // Bottom padding for content with floating buttons above tab bar
   const contentPaddingBottom = LAYOUT.SCREEN_PADDING.bottomWithControls;
 
-  // Solid background to fill ONLY the gap between button and tab bar
-  const gapFillerStyle = useMemo(
+  // Gradient fade effect from above button to screen bottom
+  const fadeGradientStyle = useMemo(
     () => ({
       position: 'absolute' as const,
       left: 0,
       right: 0,
-      bottom: 0, // Start at screen bottom
-      height: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION, // 8px gap
+      bottom: 0,
+      height: 150, // Extend 150px up from bottom to create fade
       pointerEvents: 'none' as const,
       zIndex: 1, // Behind the button controls
-      backgroundColor: colors.elevation0, // Solid background to cover content
     }),
+    [],
+  );
+
+  // Gradient colors: transparent at top, opaque at bottom
+  const fadeGradientColors = useMemo(
+    () => [
+      `${colors.elevation0}00`, // Fully transparent at top
+      `${colors.elevation0}33`, // 20% opacity
+      `${colors.elevation0}66`, // 40% opacity
+      `${colors.elevation0}99`, // 60% opacity
+      `${colors.elevation0}CC`, // 80% opacity
+      colors.elevation0, // Fully opaque at bottom
+    ],
     [colors.elevation0],
   );
 
@@ -324,8 +337,8 @@ export default function VocabularyScreen(): JSX.Element {
         )}
       </ThemedView>
 
-      {/* Solid filler for gap between button and tab bar */}
-      {hasAnyStudyWords && <View style={gapFillerStyle} />}
+      {/* Gradient fade effect below button */}
+      {hasAnyStudyWords && <LinearGradient colors={fadeGradientColors} style={fadeGradientStyle} />}
 
       {/* Bottom fixed action button, hidden when there are no study words */}
       {hasAnyStudyWords && (
