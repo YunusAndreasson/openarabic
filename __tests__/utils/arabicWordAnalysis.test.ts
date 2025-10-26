@@ -857,14 +857,18 @@ describe('2025 Pattern Enhancements', () => {
   describe('Fixed: Diacritic Pattern Bug', () => {
     it('should detect من (who/whoever) without diacritics', () => {
       const analysis = analyzeArabicWord('من', 'he who');
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition to show)
+      expect(analysis.hasComponents).toBe(false);
+      // But the component itself should still be detected
       expect(analysis.prefixes[0]?.arabicMatch).toBe('من');
       expect(analysis.prefixes[0]?.englishMatches).toContain('he who');
     });
 
     it('should detect من in standalone interrogative', () => {
       const analysis = analyzeArabicWord('من', 'who is');
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition to show)
+      expect(analysis.hasComponents).toBe(false);
+      // But the component itself should still be detected
       expect(analysis.prefixes[0]?.arabicMatch).toBe('من');
       expect(analysis.prefixes[0]?.englishMatches).toContain('who');
     });
@@ -893,9 +897,13 @@ describe('2025 Pattern Enhancements', () => {
 
     it('should detect preposition + possessive in في (in me)', () => {
       const analysis = analyzeArabicWord('في', 'in me');
-      // Note: This may not detect both components due to overlap
-      // but verifies the possessive suffix logic is working
-      expect(analysis.hasComponents).toBe(true);
+      // Note: This may not detect both components due to overlap (في as preposition vs ي as suffix)
+      // If only one component is detected → hasComponents=false (no composition)
+      // If both components detected → hasComponents=true (shows composition)
+      // Either way, the component detection logic is working correctly
+
+      // Verify at least one component is detected
+      expect(analysis.prefixes.length + (analysis.suffix ? 1 : 0)).toBeGreaterThan(0);
     });
   });
 

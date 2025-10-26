@@ -51,7 +51,8 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     it('should detect لئلا as full compound prefix', () => {
       const analysis = analyzeArabicWord('لئلا', 'to not');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لئلا');
       expect(analysis.remainingArabic).toBe(''); // Full word is the compound
     });
@@ -59,14 +60,15 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     it('should apply single-word rule to "lest" translation', () => {
       const analysis = analyzeArabicWord('لئلا', 'lest');
 
-      // Single-word rule: 'lest' is one word, so no color-coding
+      // Single component → hasComponents=false (no composition)
       expect(analysis.hasComponents).toBe(false);
     });
 
     it('should match "so that not" translation', () => {
       const analysis = analyzeArabicWord('لئلا', 'so that not');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لئلا');
     });
   });
@@ -153,7 +155,8 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     it('should detect أما with "do you not"', () => {
       const analysis = analyzeArabicWord('أما', 'do you not');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
       expect(analysis.remainingArabic).toBe(''); // Full word is the compound
     });
@@ -161,21 +164,24 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     it('should match "are you not" translation', () => {
       const analysis = analyzeArabicWord('أما', 'are you not');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
     });
 
     it('should match "have you not" translation', () => {
       const analysis = analyzeArabicWord('أما', 'have you not');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
     });
 
     it('should match "as for" translation', () => {
       const analysis = analyzeArabicWord('أما', 'as for');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
     });
   });

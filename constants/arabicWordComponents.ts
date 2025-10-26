@@ -327,7 +327,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   {
     arabic: 'ي',
     role: GrammaticalRole.POSSESSIVE,
-    english: ['my', 'mine', 'of me'],
+    english: ['my', 'mine', 'me', 'of me'], // Added standalone "me" for patterns like "on me"
     type: ComponentType.SUFFIX,
   },
   // Shadda-aware possessive suffixes (when attached to prepositions ending in ى)

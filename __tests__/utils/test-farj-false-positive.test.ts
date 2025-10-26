@@ -65,13 +65,13 @@ describe('False positive ف detection in فرج', () => {
     expect(segments[2]?.text).toMatch(/ه/);
   });
 
-  it('should detect ف as particle in actual particle contexts', () => {
-    // ف should still work as a particle when it's actually a particle
+  it('should detect ف as conjunction in actual conjunction contexts', () => {
+    // ف should still work as a conjunction when it's actually a conjunction
     const analysis = analyzeArabicWord('فقال', 'so he said');
 
-    // Should detect ف as prefix with particle role
+    // Should detect ف as prefix with conjunction role
     expect(analysis.prefixes).toHaveLength(1);
     expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
-    expect(analysis.prefixes[0]?.role).toBe('particle');
+    expect(analysis.prefixes[0]?.role).toBe('conjunction');
   });
 });

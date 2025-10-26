@@ -76,7 +76,8 @@ describe('Recent Grammar Pattern Additions', () => {
     it('should detect "for" in reason/purpose expressions', () => {
       const analysis = analyzeArabicWord('ف', 'for this');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "for" as one of the ف alternatives
@@ -202,7 +203,8 @@ describe('Recent Grammar Pattern Additions', () => {
     it('should detect "none" in "none but"', () => {
       const analysis = analyzeArabicWord('إلا', 'none but');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "none" as one of the إلا alternatives
@@ -217,7 +219,8 @@ describe('Recent Grammar Pattern Additions', () => {
     it('should detect "does not" for لم', () => {
       const analysis = analyzeArabicWord('لم', 'does not');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "does not" as one of the لم alternatives
@@ -243,7 +246,8 @@ describe('Recent Grammar Pattern Additions', () => {
     it('should detect "how much" for كم', () => {
       const analysis = analyzeArabicWord('كم', 'how much');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "how much" as one of the كم alternatives
@@ -256,7 +260,8 @@ describe('Recent Grammar Pattern Additions', () => {
     it('should detect "how many" for كم', () => {
       const analysis = analyzeArabicWord('كم', 'how many');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false (no composition)
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "how many" as one of the كم alternatives

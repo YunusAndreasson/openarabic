@@ -127,6 +127,11 @@ const VALIDATION_CONFIG = {
   // while still allowing valid cases (نفسه where ن+ف+س = 3 chars)
   SUBJECT_MARKERS: ['ي', 'ت', 'ن', 'أ'] as const,
 
+  /** High-risk single-letter prepositions that often appear in morphological patterns */
+  // م appears in مَفْعَل nouns (مذهب، مسجد، مطبخ) and should rarely be split
+  // Only valid in grammatical contractions like مِمَّن (من + من)
+  HIGH_RISK_PREPOSITIONS: ['م'] as const,
+
   /** High-risk suffix patterns that require validation (common as root letters) */
   HIGH_RISK_SUFFIXES: ['ه', 'ها', 'ي', 'ك'] as const,
 
@@ -193,6 +198,74 @@ function isHighRiskSuffix(pattern: string): boolean {
   return VALIDATION_CONFIG.HIGH_RISK_SUFFIXES.includes(
     pattern as (typeof VALIDATION_CONFIG.HIGH_RISK_SUFFIXES)[number],
   );
+}
+
+/**
+ * Check if a pattern is a high-risk preposition requiring validation
+ */
+function isHighRiskPreposition(pattern: string): boolean {
+  return VALIDATION_CONFIG.HIGH_RISK_PREPOSITIONS.includes(
+    pattern as (typeof VALIDATION_CONFIG.HIGH_RISK_PREPOSITIONS)[number],
+  );
+}
+
+/**
+ * Check if analysis result represents a single standalone component with no compositional structure
+ *
+ * Core principle: Color-coding is educational when it shows how Arabic words are COMPOSED
+ * from multiple grammatical components. Single-component words show no composition.
+ *
+ * Examples that SHOULD be skipped (hasComponents=false):
+ *   - "لا → that does not" - single component, no composition to show
+ *   - "بل → but rather" - single component, no composition to show
+ *   - "ثم → then" - single component, no composition to show
+ *   - "من → who" - single component, no composition to show
+ *
+ * Examples that SHOULD be colored (hasComponents=true):
+ *   - "فإذا → so when" - 2 prefixes (ف + إذا), shows composition ✓
+ *   - "والله → and by Allah" - prefix + remaining root, shows composition ✓
+ *   - "كتابه → his book" - root + suffix, shows composition ✓
+ *   - "كِتَابٌ → book" - has diacritic, shows case marking ✓
+ *   - "ولا → and not" - 2 prefixes, shows composition ✓
+ *
+ * What matters: Arabic composition (multiple components), not English complexity or grammatical roles.
+ *
+ * @param analysis - The completed word analysis
+ * @param normalizedArabic - The normalized Arabic word (for comparison)
+ * @returns true if this is a single standalone component with no composition to show
+ */
+function isSingleStandaloneComponent(
+  analysis: {
+    prefixes: AnalyzedComponent[];
+    suffix?: AnalyzedComponent;
+    infix?: AnalyzedComponent;
+    diacritic?: AnalyzedComponent;
+  },
+  normalizedArabic: string,
+): boolean {
+  // Must have exactly 1 component (prefix, suffix, infix, or diacritic) and nothing else
+  const componentCount =
+    analysis.prefixes.length +
+    (analysis.suffix ? 1 : 0) +
+    (analysis.infix ? 1 : 0) +
+    (analysis.diacritic ? 1 : 0);
+
+  if (componentCount !== 1) {
+    return false; // Multiple components → shows composition → keep coloring
+  }
+
+  // If we have exactly 1 prefix, it must consume the entire word (no remaining root)
+  if (analysis.prefixes.length === 1) {
+    const prefix = analysis.prefixes[0];
+    if (prefix?.arabicMatch === normalizedArabic) {
+      // Single prefix consuming entire word → no composition to show → skip coloring
+      return true;
+    }
+  }
+
+  // If we have a suffix/infix/diacritic as the only component, this means there's an implied root
+  // (e.g., "كتاب" + suffix "ه" = composition) → keep coloring
+  return false;
 }
 
 // Comprehensive contraction map hoisted and lowercased once for reuse
@@ -500,6 +573,54 @@ function findComponent(
           )
         ) {
           matches = false;
+        }
+      }
+
+      /**
+       * Validation for high-risk single-letter prepositions (م) to prevent morphological false positives
+       *
+       * Problem: "م" appears in:
+       *   1. Grammatical contractions: مِمَّا (من + ما) = "from what" ✓ VALID (rare)
+       *   2. Morphological patterns: مَذْهَب، مَسْجِد، مَطْبَخ ✗ INVALID to split (common)
+       *
+       * The "م" in morphological patterns is structural (part of noun formation via مَفْعَل/مَفْعُول patterns),
+       * not grammatical (separate function word). These should NEVER be split.
+       *
+       * Solution: Apply strict validation with exception for known particle combinations:
+       *   - ALLOW: If remaining is a known particle (ما، من، etc.) - legitimate contraction
+       *   - OTHERWISE: Remaining must be >= 3 characters + >= 2 consonants
+       *   - This catches morphological patterns while allowing rare legitimate contractions
+       *
+       * Examples:
+       *   - "مما" → remaining "ما" (2 chars) → "ما" is a particle → ALLOW (contraction)
+       *   - "مذهب" → remaining "ذهب" (3 chars) → "ذهب" is a root, not particle → check further
+       *     → "school of thought" has "of" mid-phrase → REJECT in detectPrefixes()
+       *   - "مسجد" → remaining "سجد" (3 chars) → "سجد" is a root → check further
+       *     → "mosque" has no "of" → REJECT (no English match)
+       *
+       * Note: Additional English validation (mid-phrase "of" detection) happens in detectPrefixes()
+       * after this function returns, to filter out idioms like "school of thought".
+       */
+      if (isHighRiskPreposition(pattern)) {
+        const remaining = arabic.slice(pattern.length);
+
+        // Exception: Allow م before known particles (مما = من + ما, etc.)
+        // These are legitimate grammatical contractions, not morphological patterns
+        const knownParticles = ['ما', 'من', 'ن']; // Particles that can follow م in contractions
+        const isParticleCombination = knownParticles.includes(remaining);
+
+        if (!isParticleCombination) {
+          // Not a known particle combination - require substantial remaining structure
+          // Most morphological م patterns will pass this but fail English validation later
+          if (
+            !hasSubstantialStructure(
+              remaining,
+              VALIDATION_CONFIG.PREFIX_VALIDATION.MIN_REMAINING_LENGTH,
+              VALIDATION_CONFIG.PREFIX_VALIDATION.MIN_CONSONANTS,
+            )
+          ) {
+            matches = false;
+          }
         }
       }
     }
@@ -876,6 +997,33 @@ function areGrammaticallyRelated(
 }
 
 /**
+ * Check if a prefix is a "form with suffix" pattern that should prefer shorter form when suffix exists
+ * These are prepositions ending in ى (alef maksura) that change to ي before pronoun suffixes
+ * - على → عليه (upon him) uses علي form
+ * - على → عليّ (upon me) should use عل form
+ */
+function isFormWithSuffixPattern(arabicMatch: string): boolean {
+  const formsWithSuffix = ['علي', 'لدي', 'إلي'];
+  return formsWithSuffix.includes(arabicMatch);
+}
+
+/**
+ * Get the shortened preposition form for suffix attachment
+ * على/علي → عل, لدى/لدي → لد, إلى/إلي → إل
+ */
+function getShortenedPrepositionForm(fullForm: string): string | undefined {
+  const shortenedForms: Record<string, string> = {
+    علي: 'عل',
+    على: 'عل',
+    لدي: 'لد',
+    لدى: 'لد',
+    إلي: 'إل',
+    إلى: 'إل',
+  };
+  return shortenedForms[fullForm];
+}
+
+/**
  * Detect multiple prefixes sequentially from an Arabic word
  * Returns array of detected prefixes with their grammatical roles and the remaining Arabic text
  *
@@ -884,10 +1032,12 @@ function areGrammaticallyRelated(
  * 2. Must leave minimum 2-char root after all prefixes (structural validation)
  * 3. Track seen roles to prevent grammatically impossible combinations
  * 4. Prevent double-lam detection (لل = ل + ال assimilation, not two ل prefixes)
+ * 5. Prefer shortened preposition forms when valid shadda suffix would match
  */
 function detectPrefixes(
   normalizedArabic: string,
   english: string,
+  originalArabic?: string,
 ): { prefixes: AnalyzedComponent[]; remainingArabic: string } {
   const detectedPrefixes: AnalyzedComponent[] = [];
   let remaining = normalizedArabic;
@@ -907,9 +1057,54 @@ function detectPrefixes(
 
     if (prefixMatch) {
       // Extract role from the matched component
-      const role = prefixMatch.component.role || GrammaticalRole.GENERIC;
+      let role = prefixMatch.component.role || GrammaticalRole.GENERIC;
 
-      const remainingAfterPrefix = remaining.substring(prefixMatch.arabicMatch.length);
+      let remainingAfterPrefix = remaining.substring(prefixMatch.arabicMatch.length);
+
+      // VALIDATION 0: Prefer shortened preposition form when shadda suffix would match
+      // Problem: على/علي (3 chars) matches greedily over عل (2 chars), preventing suffix detection
+      // Example: عَلَيَّ (upon me) → should be عل + يّ, not علي + (nothing)
+      // Solution: If prefix is a "form with suffix" pattern (علي، لدي، إلي) and:
+      //   1. No remaining text after prefix (consumed entire word)
+      //   2. English has possessive pronouns
+      //   3. Original Arabic ends with shadda (ّ) indicating possessive suffix
+      // Then use the shortened form to allow suffix detection
+      if (isFormWithSuffixPattern(prefixMatch.arabicMatch) && remainingAfterPrefix === '') {
+        // Check if English has possessive pronouns that would match the suffix
+        const possessiveIndicators = ['my', 'me', 'of me'];
+        const lowerEnglish = english.toLowerCase();
+        const hasPossessivePronoun = possessiveIndicators.some(p => lowerEnglish.includes(p));
+
+        // Check if original Arabic ends with shadda (indicating possessive suffix like يّ)
+        const hasShadda = originalArabic?.includes('ّ') ?? false;
+
+        if (hasPossessivePronoun && hasShadda) {
+          // Try using shortened form to allow suffix detection
+          const shortenedForm = getShortenedPrepositionForm(prefixMatch.arabicMatch);
+          if (shortenedForm && remaining.startsWith(shortenedForm)) {
+            // Find the shortened component pattern
+            const shortenedComponent = ARABIC_PREFIXES.find(p => p.arabic === shortenedForm);
+            if (shortenedComponent) {
+              // Create new match with shortened form
+              const shortenedEnglishMatches = hasEnglishMatch(
+                english,
+                shortenedComponent.english,
+                remaining,
+                shortenedForm,
+              );
+              if (shortenedEnglishMatches.length > 0) {
+                // Replace the match with shortened form
+                prefixMatch.component = shortenedComponent;
+                prefixMatch.arabicMatch = shortenedForm;
+                prefixMatch.englishMatches = shortenedEnglishMatches;
+                // Recalculate remaining and role after using shortened form
+                remainingAfterPrefix = remaining.substring(shortenedForm.length);
+                role = shortenedComponent.role || GrammaticalRole.GENERIC;
+              }
+            }
+          }
+        }
+      }
 
       // VALIDATION 1: Prevent duplicate definite article (ال)
       // Arabic grammar: only ONE definite article per word
@@ -996,6 +1191,36 @@ function detectPrefixes(
         // Stop detection to preserve the root
         continueDetection = false;
         continue;
+      }
+
+      // VALIDATION 5: Reject high-risk prepositions when "of" appears mid-phrase
+      // Problem: "م" matches "of" in idioms like "school of thought" where "of" isn't a grammatical preposition
+      // Solution: Check if "of" appears between two content words (not at phrase boundaries)
+      //
+      // Examples:
+      //   - "school of thought" → "of" at index 1 (between school and thought) → REJECT
+      //   - "of the people" → "of" at index 0 (start of phrase) → ALLOW (if structural validation passed)
+      //   - "because of" → "of" at index 1 (end of phrase) → ALLOW (if structural validation passed)
+      if (isHighRiskPreposition(prefixMatch.arabicMatch)) {
+        const normalizedEnglish = normalizeEnglish(english);
+        const words = normalizedEnglish.split(/\s+/).filter(Boolean);
+
+        // Check if any of the matched English patterns is "of" appearing mid-phrase
+        const hasEmbeddedOf = prefixMatch.englishMatches.some(match => {
+          const normalizedMatch = normalizeEnglish(match);
+          if (normalizedMatch === 'of') {
+            const matchIndex = words.indexOf('of');
+            // Embedded = not at start (0) and not at end (length-1)
+            return matchIndex > 0 && matchIndex < words.length - 1;
+          }
+          return false;
+        });
+
+        if (hasEmbeddedOf) {
+          // "of" is embedded mid-phrase - likely part of an idiom, not a grammatical preposition
+          continueDetection = false;
+          continue;
+        }
       }
 
       // All validations passed - accept this prefix
@@ -1135,6 +1360,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   const { prefixes: detectedPrefixes, remainingArabic: remainingAfterPrefixes } = detectPrefixes(
     normalized,
     english,
+    arabic, // Pass original Arabic for shadda detection
   );
 
   // CRITICAL: Detect suffix from remaining text AFTER prefixes to avoid false "hidden prefix" detection
@@ -1288,13 +1514,40 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     diacritic: resolvedDiacritic,
   });
 
+  // PERFORMANCE OPTIMIZATION: Skip color-coding for single standalone components
+  // Educational principle: Standalone particles provide no compositional insight
+  //
+  // Examples that WILL be skipped:
+  //   - "بل → but rather" - single conjunction, entire word consumed, no composition
+  //   - "ثم → then" - single particle, entire word consumed, no composition
+  //
+  // Examples that will NOT be skipped (still colored):
+  //   - "فإذا → so when" - 2 prefixes (ف + إذا), shows composition ✓
+  //   - "والله → and by Allah" - prefix + remaining root, shows composition ✓
+  //   - "كِتَابٌ → book" - has diacritic, educational value ✓
+  //
+  // Performance benefit: Saves expensive color segment generation and rendering
+  // for words that provide no educational value when colored.
+  const isStandalone = isSingleStandaloneComponent(
+    {
+      prefixes: finalPrefixes,
+      suffix: resolvedSuffix,
+      infix,
+      diacritic: resolvedDiacritic,
+    },
+    normalized,
+  );
+
   const result: WordAnalysis = {
     original: { arabic, english },
     prefixes: finalPrefixes, // Array of prefixes
     infix,
     suffix: resolvedSuffix,
     diacritic: resolvedDiacritic,
-    hasComponents: !!(finalPrefixes.length > 0 || infix || resolvedSuffix || resolvedDiacritic),
+    // Override hasComponents to false if this is a standalone component
+    hasComponents: isStandalone
+      ? false
+      : !!(finalPrefixes.length > 0 || infix || resolvedSuffix || resolvedDiacritic),
     remainingArabic: remaining.trim(),
     remainingEnglish,
     hasBracketInjection,

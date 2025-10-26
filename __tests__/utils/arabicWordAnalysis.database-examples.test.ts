@@ -239,7 +239,8 @@ describe('Database Example Grammar Rules', () => {
     it('should detect لم in negation phrase', () => {
       const analysis = analyzeArabicWord('لم', 'does not');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]).toBeDefined();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لم');
 
@@ -267,7 +268,8 @@ describe('Database Example Grammar Rules', () => {
     it('should detect كم (how much)', () => {
       const analysis = analyzeArabicWord('كم', 'how much');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]).toBeDefined();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('كم');
 

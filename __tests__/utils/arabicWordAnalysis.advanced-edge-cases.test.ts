@@ -34,7 +34,8 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // "don't go" (2 words) → "do not go" (3 words)
       const analysis = analyzeArabicWord('لا', "don't go");
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لا');
       // Should still match "not" even though token count changed
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
@@ -44,7 +45,8 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // "I don't know" (3 words) → "I do not know" (4 words)
       const analysis = analyzeArabicWord('لا', "I don't know");
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
 
@@ -52,7 +54,8 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // Standalone particle لم with contracted translation
       const analysis = analyzeArabicWord('لم', "didn't");
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لم');
     });
 
@@ -70,7 +73,8 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // "won't don't" → "will not do not"
       const analysis = analyzeArabicWord('لا', "won't don't");
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       // Should match "not" from either contraction
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
@@ -86,7 +90,8 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // "he's won't" → "he is will not"
       const analysis = analyzeArabicWord('لا', "he's won't go");
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
 
@@ -94,14 +99,16 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // "don't can't" → "do not cannot"
       const analysis = analyzeArabicWord('لا', "don't can't");
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
 
     it('should handle contraction followed by regular word', () => {
       const analysis = analyzeArabicWord('و', "I'm and you");
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
       expect(analysis.prefixes[0]?.englishMatches).toContain('and');
     });
@@ -109,14 +116,16 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
     it('should handle mixed contractions with conjunctions', () => {
       const analysis = analyzeArabicWord('و', "don't and won't");
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
     it('should handle three contractions in sequence', () => {
       const analysis = analyzeArabicWord('لا', "I've don't won't");
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
   });
@@ -351,14 +360,16 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
     it('should handle tabs in English translation', () => {
       const analysis = analyzeArabicWord('و', 'and\tthe');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
     it('should handle newlines in English translation', () => {
       const analysis = analyzeArabicWord('و', 'and\nthe');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
@@ -395,7 +406,8 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
     it('should handle mIxEd CaSe in English', () => {
       const analysis = analyzeArabicWord('و', 'AnD the');
 
-      expect(analysis.hasComponents).toBe(true);
+      // Single component → hasComponents=false
+      expect(analysis.hasComponents).toBe(false);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
   });
