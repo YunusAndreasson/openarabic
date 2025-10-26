@@ -199,7 +199,12 @@ export function ArticleCard({
               {authorDisplayText}
             </ThemedText>
 
-            <ThemedText colorName="captionText" type="caption" style={SUMMARY_STYLE}>
+            <ThemedText
+              colorName="captionText"
+              type="caption"
+              style={SUMMARY_STYLE}
+              numberOfLines={5}
+            >
               {summary}
             </ThemedText>
           </View>
