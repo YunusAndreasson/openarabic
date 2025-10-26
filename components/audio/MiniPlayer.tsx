@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   artworkContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     overflow: 'hidden',
-    marginRight: LAYOUT.SPACING.TINY, // Reduced from SMALL (8px) to TINY (4px)
+    marginRight: LAYOUT.SPACING.SMALL, // 8px spacing for proper breathing room
   },
 
   artwork: {
