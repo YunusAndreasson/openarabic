@@ -7,5 +7,5 @@ export { ThemedView } from './ThemedView';
 // UI components
 export { EnhancedImage } from './EnhancedImage';
 export { HeaderProfile } from './HeaderProfile';
-export { ThemePicker } from './ThemePicker';
+export { THEME_OPTIONS } from './ThemePicker';
 export { Toast } from './Toast';
