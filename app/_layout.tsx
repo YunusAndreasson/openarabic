@@ -30,7 +30,13 @@ import { ThemedText } from '@/components/ThemedText';
 import { MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/bookmarks';
 import { StreaksBottomSheet } from '@/components/library/StreaksBottomSheet';
-import { AuthProvider, StreaksProvider, ToastProvider, useStreaks } from '@/components/providers';
+import {
+  AuthProvider,
+  FSRSDataProvider,
+  StreaksProvider,
+  ToastProvider,
+  useStreaks,
+} from '@/components/providers';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { QUERY_DEFAULTS } from '@/constants/queryKeys';
@@ -43,7 +49,6 @@ import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
-import { FSRSDataProvider } from '@/components/providers/FSRSDataProvider';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
 import { analytics } from '@/services/analytics';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';

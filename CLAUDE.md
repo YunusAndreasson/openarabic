@@ -768,6 +768,26 @@ app/
 
 hooks/                          # Custom React hooks for shared logic
 components/                     # Reusable UI components
+├── index.ts                    # Barrel export for root-level components
+├── ThemedButton.tsx            # Themed components at root
+├── ThemedInput.tsx
+├── ThemedText.tsx
+├── ThemedView.tsx
+├── EnhancedImage.tsx           # UI utilities at root
+├── HeaderProfile.tsx
+├── ThemePicker.tsx
+├── Toast.tsx
+├── providers/                  # Context providers (AuthProvider, ToastProvider, etc.)
+├── ui/                         # Shared UI components
+├── audio/                      # Audio playback components
+├── article/                    # Article-specific components
+├── library/                    # Library/reading list components
+├── study/                      # Vocabulary practice components
+├── bookmarks/                  # Bookmarks/listening components
+├── account/                    # Account/settings components
+├── auth/                       # Authentication components
+├── review/                     # Review screen components
+└── common/                     # Common/shared components
 constants/                      # App constants, theme values, configuration
 services/                       # External API communication (Supabase)
 store/                          # Redux state management with persistence
