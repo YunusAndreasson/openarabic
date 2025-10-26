@@ -98,10 +98,10 @@ describe('Recent Grammar Pattern Additions', () => {
         defaultColor: mockColors.text,
       });
 
-      // "for" should be colored with particle color (ف = particle role for distinction from و)
+      // "for" should be colored with conjunction color (ف = conjunction role)
       const forSegment = result.find(s => s.text.toLowerCase() === 'for');
       expect(forSegment).toBeDefined();
-      expect(forSegment?.color).toBe(mockColors.grammar.particle);
+      expect(forSegment?.color).toBe(mockColors.grammar.conjunction);
     });
   });
 

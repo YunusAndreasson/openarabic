@@ -17,12 +17,12 @@ describe('Multiple Prefix Detection', () => {
     expect(result.prefixes[1]?.role).toBe(GrammaticalRole.DEFINITE_ARTICLE);
   });
 
-  it('should detect ف (particle) + ال (article) separately', () => {
+  it('should detect ف (conjunction) + ال (article) separately', () => {
     const result = analyzeArabicWord('فالكتاب', 'so the book');
 
     expect(result.prefixes).toHaveLength(2);
     expect(result.prefixes[0]?.arabicMatch).toBe('ف');
-    expect(result.prefixes[0]?.role).toBe(GrammaticalRole.PARTICLE);
+    expect(result.prefixes[0]?.role).toBe(GrammaticalRole.CONJUNCTION);
     expect(result.prefixes[1]?.arabicMatch).toBe('ال');
     expect(result.prefixes[1]?.role).toBe(GrammaticalRole.DEFINITE_ARTICLE);
   });
@@ -58,5 +58,15 @@ describe('Multiple Prefix Detection', () => {
 
     expect(result.prefixes[0]?.position).toBe(0);
     expect(result.prefixes[1]?.position).toBe(1);
+  });
+
+  it('should detect ف (conjunction) + إذا (particle) with different roles and colors', () => {
+    const result = analyzeArabicWord('فإذا', 'so when');
+
+    expect(result.prefixes).toHaveLength(2);
+    expect(result.prefixes[0]?.arabicMatch).toBe('ف');
+    expect(result.prefixes[0]?.role).toBe(GrammaticalRole.CONJUNCTION);
+    expect(result.prefixes[1]?.arabicMatch).toBe('إذا');
+    expect(result.prefixes[1]?.role).toBe(GrammaticalRole.PARTICLE);
   });
 });

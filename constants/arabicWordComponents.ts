@@ -68,8 +68,8 @@ const BASE_CONJUNCTIONS = [
   {
     arabic: 'ف',
     english: ['so', 'then', 'thus', 'therefore', 'consequently', 'for', 'about', 'but'],
-    role: GrammaticalRole.PARTICLE,
-  }, // Changed to PARTICLE for visual distinction from simple conjunction و - consequential/sequential meaning
+    role: GrammaticalRole.CONJUNCTION,
+  }, // Conjunction with consequential/sequential meaning (different color from simple conjunction و)
   // Note: "and" removed from ف to prevent false positives when و already matches "and"
 ];
 

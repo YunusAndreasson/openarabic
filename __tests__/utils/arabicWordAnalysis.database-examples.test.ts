@@ -58,10 +58,10 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.hasComponents).toBe(true);
       expect(analysis.prefixes).toHaveLength(2);
 
-      // First prefix: ف (particle) - "so" - Changed from conjunction to particle for distinct coloring from و
+      // First prefix: ف (conjunction) - "so" - Conjunction with consequential meaning
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
       expect(analysis.prefixes[0]?.englishMatches).toContain('so');
-      expect(analysis.prefixes[0]?.role).toBe('particle');
+      expect(analysis.prefixes[0]?.role).toBe('conjunction');
 
       // Second prefix: إن (particle) - "indeed"
       expect(analysis.prefixes[1]?.arabicMatch).toBe('إن');

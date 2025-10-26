@@ -62,4 +62,30 @@ describe('Multi-Prefix Detection (formerly compounds)', () => {
     expect(analysis.prefixes[2]?.arabicMatch).toBe('ال');
     expect(analysis.prefixes[2]?.role).toBe(GrammaticalRole.DEFINITE_ARTICLE);
   });
+
+  it('should color-code ف (conjunction) and إذا (particle) with different colors', () => {
+    const analysis = analyzeArabicWord('فإذا', 'so when');
+    const formatted = formatWordAnalysis(analysis);
+
+    // Verify both prefixes detected
+    expect(analysis.prefixes).toHaveLength(2);
+    expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
+    expect(analysis.prefixes[0]?.role).toBe(GrammaticalRole.CONJUNCTION);
+    expect(analysis.prefixes[1]?.arabicMatch).toBe('إذا');
+    expect(analysis.prefixes[1]?.role).toBe(GrammaticalRole.PARTICLE);
+
+    // Verify different colors assigned
+    const segments = formatted.reconstructedArabic?.segments ?? [];
+    expect(segments.length).toBe(2); // Should have 2 prefix segments
+    const firstPrefix = segments[0];
+    const secondPrefix = segments[1];
+
+    expect(firstPrefix?.type).toBe('prefix');
+    expect(firstPrefix?.colorName).toBe('grammar.conjunction');
+    expect(secondPrefix?.type).toBe('prefix');
+    expect(secondPrefix?.colorName).toBe('grammar.particle');
+
+    // Critical: colors must be different
+    expect(firstPrefix?.colorName).not.toBe(secondPrefix?.colorName);
+  });
 });
