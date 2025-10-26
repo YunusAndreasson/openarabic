@@ -2,7 +2,7 @@ module.exports = {
   preset: 'jest-expo',
 
   // Performance optimizations for AI agent workflows
-  maxWorkers: process.env.CI ? '100%' : '50%', // Full cores in CI, half locally
+  // maxWorkers moved to CLI for flexibility
   cache: true, // Enable caching for faster subsequent runs
   cacheDirectory: '<rootDir>/.jest-cache',
 
@@ -117,18 +117,37 @@ module.exports = {
 
   // Enhanced reporting for AI analysis
   reporters: [
-    'default',
+    [
+      'default',
+      {
+        // Optimize output for AI agent parsing
+        summaryThreshold: 0, // Always show detailed summary for AI analysis
+      },
+    ],
     // Note: jest-junit can be added when needed: yarn add --dev jest-junit
   ],
+
+  // Optimize test result processor for AI actionability
+  testResultsProcessor: undefined, // Can be customized for AI-specific output
 
   // Coverage reporting optimized for AI parsing
   coverageReporters: ['text', 'text-summary', 'lcov', 'json', 'json-summary'],
 
-  // Verbose output for AI debugging
+  // Verbose output for AI debugging - show individual test results
   verbose: true,
 
   // Error handling optimized for AI analysis
   errorOnDeprecated: true,
+
+  // Display test names and paths for AI agent navigation
+  displayName: undefined,
+
+  // Show full diff on assertion failures for AI analysis
+  expand: false, // Set to true in CI for full diffs
+
+  // Notify mode disabled for automated workflows
+  notify: false,
+  notifyMode: 'failure-change',
 
   // Module file extensions in priority order
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
