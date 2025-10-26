@@ -6,9 +6,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { useStreaks } from '@/components/providers';
 import { ICON_CONTAINER, LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
-import { useStreaks } from '@/contexts/StreaksContext';
 import { usePressAnimation } from '@/hooks/animations';
 import { useReadingStreak } from '@/hooks/articles/useReadingStreak';
 import { useAuth } from '@/hooks/auth/useAuth';
