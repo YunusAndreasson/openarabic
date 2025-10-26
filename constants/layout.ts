@@ -445,7 +445,7 @@ export const LAYOUT = {
      * Bottom padding for screens with persistent bottom controls (floating buttons)
      * Adds extra space for floating action buttons above tab bar
      */
-    bottomWithControls: SPACING_SCALE.XLARGE + SPACING_SCALE.SMALL, // 24px controls + 8px buffer
+    bottomWithControls: SPACING_SCALE.XXLARGE + SPACING_SCALE.MEDIUM, // 32px controls + 12px buffer = 44px
   },
 
   /**
@@ -455,9 +455,9 @@ export const LAYOUT = {
   FLOATING_CONTROLS: {
     /**
      * Distance from bottom of screen to floating button
-     * Tab bar handles its own safe area, so just add small gap
+     * Tab bar handles its own safe area, so just add comfortable gap
      */
-    BOTTOM_POSITION: SPACING_SCALE.SMALL, // 8px above tab bar
+    BOTTOM_POSITION: SPACING_SCALE.MEDIUM, // 12px above tab bar
   },
 };
 
