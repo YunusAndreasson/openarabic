@@ -49,7 +49,9 @@ When running validation or test commands:
 **Examples of approved commands** (run these directly):
 
 - `yarn validate` - Full validation suite (typecheck + lint + unused exports) - **RUN ONLY ONCE AT END**
+- `yarn validate:full` - Comprehensive validation (all files, no optimization)
 - `npx tsc --noEmit` - TypeScript type checking (only if uncertain about types)
+- `yarn prettier:fix` - **AUTOMATIC FORMATTING FIX** - Always use this when prettier check fails (never manually fix formatting)
 - `yarn lint:fix` or `npx eslint` - Linting with auto-fix (only at end)
 - `yarn test` - Run tests (only when testing features)
 - `yarn check-unused` - Check for unused exports (only at end)
@@ -57,6 +59,7 @@ When running validation or test commands:
 **Performance Note:**
 
 The validation workflow has been optimized for AI agent efficiency:
+
 - `yarn validate` uses smart script (`scripts/validate-changed.js`) that checks only changed files
 - **TypeScript**: Only changed .ts/.tsx files (via tsc-files) - ~0.4s
 - **Prettier/ESLint**: All files with aggressive caching - ~3.4s and ~1.7s respectively
@@ -229,6 +232,12 @@ article.article_sentences?.forEach(sentence => {
 - **Trailing commas**: Always add for multi-line structures
 - **Tab width**: 2 spaces
 - **Print width**: 80 characters
+
+**CRITICAL - Automatic Formatting:**
+- **ALWAYS use `yarn prettier:fix`** when prettier check fails
+- **NEVER manually fix formatting** - Prettier handles all formatting automatically
+- This prevents wasting time trying to figure out formatting rules
+- Command automatically formats all files correctly
 
 ## Performance Optimization
 
