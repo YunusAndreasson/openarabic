@@ -443,9 +443,9 @@ export const LAYOUT = {
 
     /**
      * Bottom padding for screens with persistent bottom controls (floating buttons)
-     * No padding needed since button is positioned low
+     * Needs space so bottom card isn't hidden behind button
      */
-    bottomWithControls: 0, // No extra padding
+    bottomWithControls: SPACING_SCALE.XXXLARGE + SPACING_SCALE.MEDIUM, // 48px + 12px = 60px
   },
 
   /**
