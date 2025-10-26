@@ -1,6 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -192,30 +191,18 @@ export default function VocabularyScreen(): JSX.Element {
   // Bottom padding for content with floating buttons above tab bar
   const contentPaddingBottom = LAYOUT.SCREEN_PADDING.bottomWithControls;
 
-  // Gradient fade effect from above button to screen bottom
-  const fadeGradientStyle = useMemo(
+  // Solid overlay below button to cover gap to tab bar
+  const bottomOverlayStyle = useMemo(
     () => ({
       position: 'absolute' as const,
       left: 0,
       right: 0,
       bottom: 0,
-      height: 150, // Extend 150px up from bottom to create fade
+      height: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION, // Just cover the gap (4px)
       pointerEvents: 'none' as const,
       zIndex: 1, // Behind the button controls
+      backgroundColor: colors.elevation0,
     }),
-    [],
-  );
-
-  // Gradient colors: transparent at top, opaque at bottom
-  const fadeGradientColors = useMemo(
-    () => [
-      `${colors.elevation0}00`, // Fully transparent at top
-      `${colors.elevation0}33`, // 20% opacity
-      `${colors.elevation0}66`, // 40% opacity
-      `${colors.elevation0}99`, // 60% opacity
-      `${colors.elevation0}CC`, // 80% opacity
-      colors.elevation0, // Fully opaque at bottom
-    ],
     [colors.elevation0],
   );
 
@@ -337,8 +324,8 @@ export default function VocabularyScreen(): JSX.Element {
         )}
       </ThemedView>
 
-      {/* Gradient fade effect below button */}
-      {hasAnyStudyWords && <LinearGradient colors={fadeGradientColors} style={fadeGradientStyle} />}
+      {/* Solid overlay below button */}
+      {hasAnyStudyWords && <View style={bottomOverlayStyle} />}
 
       {/* Bottom fixed action button, hidden when there are no study words */}
       {hasAnyStudyWords && (

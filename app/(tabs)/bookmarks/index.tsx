@@ -2,7 +2,6 @@ import { EmptyState } from '@common/EmptyState';
 import { ListSeparator } from '@common/ListSeparator';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -233,32 +232,20 @@ export default function ListenScreen(): JSX.Element {
     [stableHasArticles],
   );
 
-  // Gradient fade effect from above button to screen bottom
-  const fadeGradientStyle = useMemo(
+  // Solid overlay below button to cover gap to tab bar
+  const bottomOverlayStyle = useMemo(
     () => ({
       position: 'absolute' as const,
       left: 0,
       right: 0,
       bottom: 0,
-      height: 150, // Extend 150px up from bottom to create fade
+      height: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION, // Just cover the gap (4px)
       opacity: stableHasArticles ? 1 : 0,
       pointerEvents: 'none' as const,
       zIndex: 1, // Behind the button controls
+      backgroundColor: colors.elevation0,
     }),
-    [stableHasArticles],
-  );
-
-  // Gradient colors: transparent at top, opaque at bottom
-  const fadeGradientColors = useMemo(
-    () => [
-      `${colors.elevation0}00`, // Fully transparent at top
-      `${colors.elevation0}33`, // 20% opacity
-      `${colors.elevation0}66`, // 40% opacity
-      `${colors.elevation0}99`, // 60% opacity
-      `${colors.elevation0}CC`, // 80% opacity
-      colors.elevation0, // Fully opaque at bottom
-    ],
-    [colors.elevation0],
+    [stableHasArticles, colors.elevation0],
   );
 
   // Memoize shared components to prevent recreation
@@ -370,8 +357,8 @@ export default function ListenScreen(): JSX.Element {
         )}
       </ThemedView>
 
-      {/* Gradient fade effect below button */}
-      <LinearGradient colors={fadeGradientColors} style={fadeGradientStyle} />
+      {/* Solid overlay below button */}
+      <View style={bottomOverlayStyle} />
 
       {/* STABILIZATION: Bottom controls with stable state and loading indicator */}
       <View style={bottomControlsStyle}>
