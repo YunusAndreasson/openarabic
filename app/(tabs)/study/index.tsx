@@ -1,5 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -25,6 +26,7 @@ import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { ReviewAction } from '@/types/enums';
@@ -35,6 +37,7 @@ export default function VocabularyScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { prefetchVocabularyData } = useAppPreloader();
+  const colors = useColors();
 
   // Single coordinated state for bottom sheet visibility
   const [activeBottomSheet, setActiveBottomSheet] = useState<
@@ -189,6 +192,31 @@ export default function VocabularyScreen(): JSX.Element {
   // Bottom padding for content with floating buttons above tab bar
   const contentPaddingBottom = LAYOUT.SCREEN_PADDING.bottomWithControls;
 
+  // Gradient colors to obscure content behind floating controls
+  const gradientColors = useMemo(
+    () => [
+      `${colors.elevation0}00`, // Fully transparent at top
+      `${colors.elevation0}66`, // 40% opacity
+      `${colors.elevation0}B3`, // 70% opacity
+      `${colors.elevation0}E6`, // 90% opacity
+      colors.elevation0, // Fully opaque
+      colors.elevation0, // Fully opaque
+    ],
+    [colors.elevation0],
+  );
+
+  // Gradient style to extend above the bottom controls
+  const gradientStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      left: 0,
+      right: 0,
+      top: -120, // Extend 120px above
+      bottom: 0,
+    }),
+    [],
+  );
+
   // Calculate loading and content states (needed for animations before any early returns)
   const isLoadingState = isDataLoading || isFetching;
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
@@ -315,8 +343,11 @@ export default function VocabularyScreen(): JSX.Element {
             bottom: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION,
             left: 0,
             right: 0,
+            overflow: 'visible',
           }}
         >
+          {/* Gradient overlay to obscure content scrolling underneath */}
+          <LinearGradient colors={gradientColors} style={gradientStyle} pointerEvents="none" />
           <BottomControls
             primaryLabel={ReviewAction.STUDY_DUE_WORDS}
             onPrimaryPress={handleStartReview}

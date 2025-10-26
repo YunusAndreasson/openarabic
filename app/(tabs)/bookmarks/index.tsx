@@ -2,6 +2,7 @@ import { EmptyState } from '@common/EmptyState';
 import { ListSeparator } from '@common/ListSeparator';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,6 +20,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useBookmarksScreen, useListenUI } from '@/hooks/bookmarks';
+import { useColors } from '@/hooks/theme';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
 import type { BookmarkItem } from '@/types/bookmark.types';
@@ -120,6 +122,7 @@ export default function ListenScreen(): JSX.Element {
   const { editMode, reset } = useEditMode('listen');
   const { showToast } = useToast();
   const { prefetchArticle } = useAppPreloader();
+  const colors = useColors();
 
   // Reset edit mode when screen loses focus
   useFocusEffect(
@@ -221,11 +224,37 @@ export default function ListenScreen(): JSX.Element {
       bottom: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION,
       left: 0,
       right: 0,
+      overflow: 'visible' as const,
       // STABILIZATION: Use stable hasArticles state and prevent rapid opacity changes
       opacity: stableHasArticles ? 1 : 0,
       pointerEvents: stableHasArticles ? ('auto' as const) : ('none' as const),
     }),
     [stableHasArticles],
+  );
+
+  // Gradient style to extend above the bottom controls
+  const gradientStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      left: 0,
+      right: 0,
+      top: -120, // Extend 120px above
+      bottom: 0,
+    }),
+    [],
+  );
+
+  // Gradient colors to obscure content behind floating controls
+  const gradientColors = useMemo(
+    () => [
+      `${colors.elevation0}00`, // Fully transparent at top
+      `${colors.elevation0}66`, // 40% opacity
+      `${colors.elevation0}B3`, // 70% opacity
+      `${colors.elevation0}E6`, // 90% opacity
+      colors.elevation0, // Fully opaque
+      colors.elevation0, // Fully opaque
+    ],
+    [colors.elevation0],
   );
 
   // Memoize shared components to prevent recreation
@@ -339,6 +368,8 @@ export default function ListenScreen(): JSX.Element {
 
       {/* STABILIZATION: Bottom controls with stable state and loading indicator */}
       <View style={bottomControlsStyle}>
+        {/* Gradient overlay to obscure content scrolling underneath */}
+        <LinearGradient colors={gradientColors} style={gradientStyle} pointerEvents="none" />
         <BottomControls
           primaryDisabled={isPlayAllLoading}
           primaryLoading={isPlayAllLoading}
