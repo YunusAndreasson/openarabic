@@ -5,6 +5,7 @@ import React, { Fragment, memo, useEffect, useMemo } from 'react';
 import type { PressableProps } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
@@ -115,6 +116,7 @@ const styles = StyleSheet.create({
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
+  const insets = useSafeAreaInsets();
 
   // Get due words count using the same hook as the practice screen
   const { dueWords } = useFSRSQueries({ userId: session?.user?.id });
@@ -126,13 +128,15 @@ export default function TabLayout(): JSX.Element {
     }
   }, [session, isLoading]);
 
-  // Tab bar style - simple styling only, safe area handled by safeAreaInsets prop
+  // Tab bar style with padding for proper icon spacing
   const tabBarStyle = useMemo(
     () => ({
       borderTopWidth: 0,
       backgroundColor: colors.elevation0,
+      paddingTop: LAYOUT.SPACING.SMALL, // 8px padding above icons
+      paddingBottom: insets.bottom, // Safe area only
     }),
-    [colors.elevation0],
+    [colors.elevation0, insets.bottom],
   );
 
   if (!colors) {
