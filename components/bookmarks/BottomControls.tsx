@@ -117,7 +117,6 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.SMALL, // Fixed padding - parent handles safe area positioning
   },
   fullWidthButtonContainer: {
