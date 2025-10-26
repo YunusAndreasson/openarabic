@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: MINI_PLAYER_HEIGHT - PROGRESS_HEIGHT,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY, // Reduced from SMALL (8px) to TINY (4px)
   },
 
   artworkContainer: {
@@ -289,13 +289,13 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.HALF_TINY,
+    marginBottom: 0, // Removed spacing below title
   },
 
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.HALF_TINY,
+    marginBottom: 0, // Removed spacing below meta row
   },
 
   artist: {
