@@ -1,16 +1,17 @@
 import { ProgressBar } from '@common/ProgressBar';
+import { LinearGradient } from 'expo-linear-gradient';
 import { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ImageBackground, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
-import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui/IconButton';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { generateImageUrl } from '@/utils/imageUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
+import { createStrongDarkOverlayGradient } from '@/utils/gradientUtils';
+import { generateImageUrl } from '@/utils/imageUtils';
 
 export interface MiniPlayerProps {
   /** Current article being played */
@@ -39,7 +40,6 @@ export interface MiniPlayerProps {
 
 // Layout constants using proper LAYOUT system from layout.ts
 const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 112px (taller for 2-line title)
-const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 56px
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px
 
 // Static container style - positioned to cover tab bar and floating buttons
@@ -102,6 +102,12 @@ const MiniPlayerComponent = ({
   // Memoize image URL to prevent duplicate generation on every render
   const imageUrl = useMemo(() => generateImageUrl(article.image_url), [article.image_url]);
 
+  // Memoize gradient overlay colors for readability - strong dark overlay ensures text is always readable
+  const gradientColors = useMemo(
+    () => createStrongDarkOverlayGradient(colors.black),
+    [colors.black],
+  );
+
   // Memoize dynamic styles for better performance
   const cardStyle = useMemo(
     () => [
@@ -150,93 +156,90 @@ const MiniPlayerComponent = ({
       style={CONTAINER_STYLE}
     >
       <View style={cardStyle}>
-        {/* Main Content Row */}
-        <View style={styles.contentRow}>
-          {/* Artwork */}
-          <View style={styles.artworkContainer}>
-            <EnhancedImage
-              source={imageUrl}
-              style={styles.artwork}
-              priority="high"
-              transition={0}
-              recyclingKey={imageUrl}
-            />
-          </View>
+        {/* Background: Blurred artwork as immersive backdrop */}
+        <ImageBackground
+          source={{ uri: imageUrl }}
+          style={styles.backgroundImage}
+          imageStyle={styles.backgroundImageInner}
+          blurRadius={20}
+          resizeMode="cover"
+        >
+          {/* Gradient Overlay: Strong dark overlay for text readability */}
+          <LinearGradient
+            colors={gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.gradientOverlay}
+          />
 
-          {/* Text Content and Time Display Column */}
-          <View style={styles.textColumn}>
-            {/* Text Content */}
-            <View style={styles.textContent}>
-              <ThemedText
-                colorName="headingText"
-                style={styles.title}
-                type="heading3"
-                numberOfLines={2}
-                ellipsizeMode="tail"
-              >
-                {article.title}
-              </ThemedText>
+          {/* Content Wrapper: Positioned above background and gradient */}
+          <View style={styles.contentWrapper}>
+            {/* Main Content Row */}
+            <View style={styles.contentRow}>
+              {/* Text Content and Time Display Column - now uses full width */}
+              <View style={styles.textColumn}>
+                {/* Text Content */}
+                <View style={styles.textContent}>
+                  <ThemedText style={styles.title} type="heading3" numberOfLines={2} ellipsizeMode="tail">
+                    {article.title}
+                  </ThemedText>
 
-              <View style={styles.metaRow}>
-                <ThemedText
-                  colorName="secondaryText"
-                  style={styles.artist}
-                  type="caption"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {article.author || 'Unknown Author'}
-                </ThemedText>
+                  <View style={styles.metaRow}>
+                    <ThemedText style={styles.artist} type="caption" numberOfLines={1} ellipsizeMode="tail">
+                      {article.author || 'Unknown Author'}
+                    </ThemedText>
+                  </View>
+                </View>
+
+                {/* Time display and queue position */}
+                <View style={styles.timeAndQueueRow}>
+                  <ThemedText style={styles.timeDisplay} type="caption">
+                    {timeDisplay}
+                  </ThemedText>
+                  {/* Queue position indicator - placed after duration */}
+                  {queueDisplay && (
+                    <ThemedText style={styles.queuePosition} type="caption">
+                      {queueDisplay}
+                    </ThemedText>
+                  )}
+                </View>
+              </View>
+
+              {/* Controls */}
+              <View style={styles.controlsContainer}>
+                {/* Timer button - always visible with state indication */}
+                <IconButton
+                  icon="timer"
+                  onPress={onTimerPress}
+                  backgroundColor={timerButtonColor}
+                  iconColor={timerIconColor}
+                  iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                  hapticType="none"
+                />
+
+                {/* Stop button - playback is only started via PLAY ALL */}
+                <IconButton
+                  icon="stop"
+                  onPress={onPlayPause}
+                  backgroundColor={colors.tint}
+                  iconColor={colors.black}
+                  iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
             </View>
 
-            {/* Time display and queue position - aligned with text content left margin */}
-            <View style={styles.timeAndQueueRow}>
-              <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
-                {timeDisplay}
-              </ThemedText>
-              {/* Queue position indicator - placed after duration */}
-              {queueDisplay && (
-                <ThemedText colorName="tint" style={styles.queuePosition} type="caption">
-                  {queueDisplay}
-                </ThemedText>
-              )}
+            {/* Progress Bar - at bottom like Apple Music */}
+            <View style={styles.progressContainer} pointerEvents="none">
+              <ProgressBar
+                progress={progressPercentage}
+                height={PROGRESS_HEIGHT}
+                style={styles.progressBar}
+                fillColor={colors.tint}
+                backgroundColor={colors.border}
+              />
             </View>
           </View>
-
-          {/* Controls */}
-          <View style={styles.controlsContainer}>
-            {/* Timer button - always visible with state indication */}
-            <IconButton
-              icon="timer"
-              onPress={onTimerPress}
-              backgroundColor={timerButtonColor}
-              iconColor={timerIconColor}
-              iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              hapticType="none"
-            />
-
-            {/* Stop button - playback is only started via PLAY ALL */}
-            <IconButton
-              icon="stop"
-              onPress={onPlayPause}
-              backgroundColor={colors.tint}
-              iconColor={colors.black}
-              iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            />
-          </View>
-        </View>
-
-        {/* Progress Bar - at bottom like Apple Music */}
-        <View style={styles.progressContainer} pointerEvents="none">
-          <ProgressBar
-            progress={progressPercentage}
-            height={PROGRESS_HEIGHT}
-            style={styles.progressBar}
-            fillColor={colors.tint}
-            backgroundColor={colors.border}
-          />
-        </View>
+        </ImageBackground>
       </View>
     </Animated.View>
   );
@@ -254,6 +257,37 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
+  // Background artwork layer - full width blurred image
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+
+  backgroundImageInner: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+
+  // Gradient overlay for text readability
+  gradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+
+  // Content wrapper positioned above background and gradient
+  contentWrapper: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
+
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -262,22 +296,11 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.TINY, // Reduced from SMALL (8px) to TINY (4px)
   },
 
-  artworkContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    overflow: 'hidden',
-    marginRight: LAYOUT.SPACING.SMALL, // 8px spacing for proper breathing room
-  },
-
-  artwork: {
-    width: ARTWORK_SIZE,
-    height: ARTWORK_SIZE,
-  },
-
   textColumn: {
     flex: 1,
     justifyContent: 'center',
     minWidth: 0,
-    // No marginRight - maximizes horizontal space for text
+    // Full width available - no artwork to make space for
   },
 
   textContent: {
@@ -289,6 +312,11 @@ const styles = StyleSheet.create({
     // Typography handled by type="heading3" (17px LARGE)
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
     marginBottom: LAYOUT.SPACING.SMALL, // 8px spacing to match ArticleCard
+    // White text with shadow for readability on any artwork color
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
   metaRow: {
@@ -301,12 +329,22 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + LAYOUT.SPACING.HALF_TINY,
+    // White text with shadow for readability on any artwork color
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
   queuePosition: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     opacity: LAYOUT.OPACITY.HIGH,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + LAYOUT.SPACING.HALF_TINY,
+    // White text with shadow for readability on any artwork color
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
   timeDisplay: {
@@ -318,6 +356,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Courier New',
     // Align with text content - no right alignment needed since it's in column
     textAlign: 'left',
+    // White text with shadow for readability on any artwork color
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
   timeAndQueueRow: {
