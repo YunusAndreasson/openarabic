@@ -42,7 +42,7 @@ const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 112px (taller for 
 const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 56px
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px
 
-// Static container style - positioned above bottom bar
+// Static container style - positioned to cover tab bar buttons
 const CONTAINER_STYLE = [
   StyleSheet.create({
     container: {
@@ -52,7 +52,7 @@ const CONTAINER_STYLE = [
       zIndex: LAYOUT.Z_INDEX.OVERLAY,
     },
   }).container,
-  { bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY },
+  { bottom: LAYOUT.SPACING.SMALL }, // 8px from bottom - covers tab bar buttons
 ];
 
 // Custom comparison function for React.memo
