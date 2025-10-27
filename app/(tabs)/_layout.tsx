@@ -3,11 +3,10 @@ import { Tabs } from 'expo-router';
 import type { JSX } from 'react';
 import React, { Fragment, memo, useEffect, useMemo } from 'react';
 import type { PressableProps } from 'react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
@@ -15,7 +14,6 @@ import { usePressAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import type { ThemeColors } from '@/types/ui/theme.types';
 import { router } from 'expo-router';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -41,54 +39,6 @@ const TabBarButton = memo((props: PressableProps) => {
 });
 TabBarButton.displayName = 'TabBarButton';
 
-// Custom IconWithBadge component for better badge positioning and consistent shape
-const IconWithBadge = memo(
-  ({
-    name,
-    badgeCount,
-    color,
-    size,
-    focused,
-    colors,
-  }: {
-    name: 'book' | 'bookmark' | 'school';
-    badgeCount: number;
-    color: string;
-    size: number;
-    focused: boolean;
-    colors: ThemeColors;
-  }) => {
-    const containerStyle = useMemo(
-      () => [styles.iconContainer, { width: size, height: size }],
-      [size],
-    );
-
-    const badgeContainerStyle = useMemo(
-      () => [styles.badgeContainer, { backgroundColor: colors.error }],
-      [colors.error],
-    );
-
-    return (
-      <View style={containerStyle}>
-        <Ionicons
-          name={name}
-          size={size}
-          color={color}
-          style={focused ? styles.focusedIcon : styles.unfocusedIcon}
-        />
-        {badgeCount > 0 && (
-          <View style={badgeContainerStyle}>
-            <ThemedText colorName="white" weight="bold" type="caption">
-              {badgeCount > 99 ? '99+' : badgeCount}
-            </ThemedText>
-          </View>
-        )}
-      </View>
-    );
-  },
-);
-IconWithBadge.displayName = 'IconWithBadge';
-
 // Static styles for better performance
 const styles = StyleSheet.create({
   focusedIcon: {
@@ -96,21 +46,6 @@ const styles = StyleSheet.create({
   },
   unfocusedIcon: {
     opacity: LAYOUT.OPACITY.HIGH,
-  },
-  iconContainer: {
-    // No margin needed - icons center naturally in tab bar
-  },
-  badgeContainer: {
-    position: 'absolute',
-    right: -LAYOUT.SPACING.LARGE, // -16px to move badge further right
-    top: -LAYOUT.SPACING.TINY, // -4px to move badge upwards
-    width: LAYOUT.SPACING.XLARGE, // 24px fixed for perfect circle
-    height: LAYOUT.SPACING.XLARGE, // 24px fixed for perfect circle
-    aspectRatio: 1, // Ensure perfect circle
-    borderRadius: LAYOUT.BORDER_RADIUS.PILL, // Perfect circle
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
   },
 });
 
@@ -140,6 +75,15 @@ export default function TabLayout(): JSX.Element {
     [colors.elevation0, insets.bottom],
   );
 
+  // Badge style for perfect circle - static object, no memoization needed
+  const badgeStyle = {
+    minWidth: LAYOUT.SPACING.XLARGE, // 24px minimum for circle
+    minHeight: LAYOUT.SPACING.XLARGE, // 24px minimum for circle
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL, // Perfect circle
+    fontSize: 12, // Smaller font for badge
+    lineHeight: LAYOUT.SPACING.XLARGE, // Same as height for vertical centering
+  };
+
   if (!colors) {
     return <Fragment />;
   }
@@ -166,14 +110,15 @@ export default function TabLayout(): JSX.Element {
             name={screen.name}
             options={{
               title: screen.title,
+              tabBarBadge: screen.name === 'study' && dueWordsCount > 0 ? dueWordsCount : undefined,
+              tabBarBadgeStyle:
+                screen.name === 'study' && dueWordsCount > 0 ? badgeStyle : undefined,
               tabBarIcon: ({ focused, color }) => (
-                <IconWithBadge
+                <Ionicons
                   name={screen.iconFilled}
-                  badgeCount={screen.name === 'study' ? dueWordsCount : 0}
-                  color={color}
                   size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
-                  focused={focused}
-                  colors={colors}
+                  color={color}
+                  style={focused ? styles.focusedIcon : styles.unfocusedIcon}
                 />
               ),
             }}
