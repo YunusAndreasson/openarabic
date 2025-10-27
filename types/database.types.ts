@@ -200,41 +200,6 @@ export type Database = {
           },
         ];
       };
-      reviews: {
-        Row: {
-          grade: number;
-          id: number;
-          learning_steps: number | null;
-          reviewed_at: string;
-          root_id: number;
-          user_id: string;
-        };
-        Insert: {
-          grade: number;
-          id?: number;
-          learning_steps?: number | null;
-          reviewed_at?: string;
-          root_id: number;
-          user_id: string;
-        };
-        Update: {
-          grade?: number;
-          id?: number;
-          learning_steps?: number | null;
-          reviewed_at?: string;
-          root_id?: number;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'reviews_root_id_fkey';
-            columns: ['root_id'];
-            isOneToOne: false;
-            referencedRelation: 'roots';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       roots: {
         Row: {
           audio_url: string;
@@ -457,21 +422,8 @@ export type Database = {
         Args: { column_name: string; column_type: string; table_name: string };
         Returns: undefined;
       };
-      get_bookmark_categories_with_counts: {
-        Args: { user_id_param: string };
-        Returns: {
-          article_count: number;
-          color: string;
-          created_at: string;
-          due_word_count: number;
-          icon: string;
-          id: number;
-          name: string;
-          position: number;
-          updated_at: string;
-          user_id: string;
-        }[];
-      };
+      // Note: get_bookmark_categories_with_counts was removed - function is broken
+      // (references non-existent bookmark_categories table) and not used in codebase
       update_word_and_review: {
         Args: {
           p_fsrs_difficulty: number;
@@ -484,8 +436,6 @@ export type Database = {
           p_fsrs_scheduled_days: number;
           p_fsrs_stability: number;
           p_fsrs_state: number;
-          p_learning_steps: number;
-          p_rating: number;
           p_root_id: number;
           p_user_id: string;
         };

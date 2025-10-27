@@ -96,6 +96,8 @@ module.exports = {
   ],
 
   // Enhanced transform configuration
+  // NOTE: babel-jest automatically uses babel.config.js
+  // Only specify test-specific transforms here
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': [
       'babel-jest',

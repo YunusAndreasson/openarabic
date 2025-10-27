@@ -15,8 +15,6 @@
  * 8. System invalidates queries to refresh data
  */
 
-import { Rating } from 'ts-fsrs';
-
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -100,8 +98,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_state: 2,
           fsrs_last_review: new Date().toISOString(),
         },
-        Rating.Good,
-        5000, // 5 seconds to answer
       );
 
       expect(word1Review).toBe(true);
@@ -112,8 +108,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_reps: 3,
           fsrs_stability: 7,
         }),
-        Rating.Good,
-        5000,
       );
 
       // ====== STEP 3: Review second word (VAGUE - slight left swipe) ======
@@ -133,8 +127,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_state: 1, // Learning state
           fsrs_last_review: new Date().toISOString(),
         },
-        Rating.Hard,
-        8000,
       );
 
       expect(word2Review).toBe(true);
@@ -155,8 +147,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_state: 2,
           fsrs_last_review: new Date().toISOString(),
         },
-        Rating.Good,
-        3000,
       );
 
       expect(word3Review).toBe(true);
@@ -179,8 +169,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_state: 2,
           fsrs_last_review: new Date().toISOString(),
         },
-        Rating.Good,
-        4000,
       );
 
       expect(word2SecondReview).toBe(true);
@@ -211,12 +199,9 @@ describe('Complete Practice Session Flow - Integration Test', () => {
       // ====== STEP 8: Verify all words updated ======
       expect(mockService.updateWordAndReview).toHaveBeenCalledTimes(4);
 
-      // Verify each word was updated with correct rating
+      // Verify each word was updated correctly
       const calls = mockService.updateWordAndReview.mock.calls;
-      expect(calls[0][3]).toBe(Rating.Good); // Word 1: Known
-      expect(calls[1][3]).toBe(Rating.Hard); // Word 2: Vague
-      expect(calls[2][3]).toBe(Rating.Good); // Word 3: Known
-      expect(calls[3][3]).toBe(Rating.Good); // Word 2 second review: Known
+      expect(calls).toHaveLength(4);
     });
   });
 
@@ -256,48 +241,35 @@ describe('Complete Practice Session Flow - Integration Test', () => {
       });
 
       // Review both words as UNKNOWN (Rating.Again)
-      await studyWordsFSRSService.updateWordAndReview(
-        userId,
-        loadedWords[0].root_id,
-        {
-          fsrs_due: new Date(Date.now() + 600000).toISOString(), // 10 min
-          fsrs_stability: 1,
-          fsrs_difficulty: 7.5,
-          fsrs_elapsed_days: 0,
-          fsrs_scheduled_days: 0,
-          fsrs_learning_steps: 1,
-          fsrs_reps: 2,
-          fsrs_lapses: 1, // Lapse recorded
-          fsrs_state: 3, // Relearning
-          fsrs_last_review: new Date().toISOString(),
-        },
-        Rating.Again,
-        10000,
-      );
+      await studyWordsFSRSService.updateWordAndReview(userId, loadedWords[0].root_id, {
+        fsrs_due: new Date(Date.now() + 600000).toISOString(), // 10 min
+        fsrs_stability: 1,
+        fsrs_difficulty: 7.5,
+        fsrs_elapsed_days: 0,
+        fsrs_scheduled_days: 0,
+        fsrs_learning_steps: 1,
+        fsrs_reps: 2,
+        fsrs_lapses: 1, // Lapse recorded
+        fsrs_state: 3, // Relearning
+        fsrs_last_review: new Date().toISOString(),
+      });
 
-      await studyWordsFSRSService.updateWordAndReview(
-        userId,
-        loadedWords[1].root_id,
-        {
-          fsrs_due: new Date(Date.now() + 600000).toISOString(),
-          fsrs_stability: 0.8,
-          fsrs_difficulty: 8.5,
-          fsrs_elapsed_days: 0,
-          fsrs_scheduled_days: 0,
-          fsrs_learning_steps: 1,
-          fsrs_reps: 2,
-          fsrs_lapses: 1,
-          fsrs_state: 3,
-          fsrs_last_review: new Date().toISOString(),
-        },
-        Rating.Again,
-        12000,
-      );
+      await studyWordsFSRSService.updateWordAndReview(userId, loadedWords[1].root_id, {
+        fsrs_due: new Date(Date.now() + 600000).toISOString(),
+        fsrs_stability: 0.8,
+        fsrs_difficulty: 8.5,
+        fsrs_elapsed_days: 0,
+        fsrs_scheduled_days: 0,
+        fsrs_learning_steps: 1,
+        fsrs_reps: 2,
+        fsrs_lapses: 1,
+        fsrs_state: 3,
+        fsrs_last_review: new Date().toISOString(),
+      });
 
       // Both words should be rescheduled soon
       const calls = mockService.updateWordAndReview.mock.calls;
-      expect(calls[0][3]).toBe(Rating.Again);
-      expect(calls[1][3]).toBe(Rating.Again);
+      expect(calls).toHaveLength(2);
 
       // Verify lapses were recorded
       expect(calls[0][1]).toBe(101);
@@ -334,8 +306,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
         userId,
         loadedWords[0].root_id,
         expect.any(Object),
-        Rating.Good,
-        5000,
       );
 
       // ====== INTERRUPTION: App backgrounded, then resumed ======
@@ -354,8 +324,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
         userId,
         remainingWords[0].root_id,
         expect.any(Object),
-        Rating.Good,
-        6000,
       );
 
       // Session should complete
@@ -396,13 +364,7 @@ describe('Complete Practice Session Flow - Integration Test', () => {
 
       // Review all words
       for (const word of loadedWords) {
-        await studyWordsFSRSService.updateWordAndReview(
-          userId,
-          word.root_id,
-          expect.any(Object),
-          Rating.Good,
-          3000,
-        );
+        await studyWordsFSRSService.updateWordAndReview(userId, word.root_id, expect.any(Object));
       }
 
       const elapsed = Date.now() - start;
@@ -433,24 +395,18 @@ describe('Complete Practice Session Flow - Integration Test', () => {
       await studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true });
 
       // Review as Good - stability should increase
-      await studyWordsFSRSService.updateWordAndReview(
-        userId,
-        word.root_id,
-        {
-          fsrs_due: new Date(Date.now() + 172800000).toISOString(), // 2 days
-          fsrs_stability: 10, // Increased from 5
-          fsrs_difficulty: 4.5, // Decreased from 5
-          fsrs_elapsed_days: 0,
-          fsrs_scheduled_days: 2,
-          fsrs_learning_steps: 0,
-          fsrs_reps: 3, // Incremented
-          fsrs_lapses: 0, // No change (Good rating)
-          fsrs_state: 2,
-          fsrs_last_review: new Date().toISOString(),
-        },
-        Rating.Good,
-        4000,
-      );
+      await studyWordsFSRSService.updateWordAndReview(userId, word.root_id, {
+        fsrs_due: new Date(Date.now() + 172800000).toISOString(), // 2 days
+        fsrs_stability: 10, // Increased from 5
+        fsrs_difficulty: 4.5, // Decreased from 5
+        fsrs_elapsed_days: 0,
+        fsrs_scheduled_days: 2,
+        fsrs_learning_steps: 0,
+        fsrs_reps: 3, // Incremented
+        fsrs_lapses: 0, // No change (Good rating)
+        fsrs_state: 2,
+        fsrs_last_review: new Date().toISOString(),
+      });
 
       const updateCall = mockService.updateWordAndReview.mock.calls[0];
       const updatedFSRS = updateCall[2];

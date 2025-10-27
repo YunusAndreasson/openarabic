@@ -1,20 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
+import { supabaseAdmin } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
 
 type Root = Database['public']['Tables']['roots']['Row'];
 type StudyWord = Database['public']['Tables']['study_words']['Row'];
-type Review = Database['public']['Tables']['reviews']['Row'];
 
 interface HardWord {
   root_letters: string;
   root_meaning: string;
-  total_reviews: number;
   avg_difficulty: number;
   avg_lapses: number;
-  avg_grade: number;
   user_count: number;
 }
 
@@ -63,31 +60,10 @@ export function useHardWordsAnalytics(): UseHardWordsAnalyticsReturn {
       const wordsWithDifficulty = studyWords?.filter(w => w.fsrs_difficulty !== null) || [];
       console.log(`Words with difficulty: ${wordsWithDifficulty.length}`);
 
-      // Fetch reviews data to calculate average grades (by root_id)
-      console.log('Fetching reviews...');
-      const { data: reviews, error: reviewsError } = await supabaseAdmin
-        .from('reviews')
-        .select('root_id, grade');
-
-      if (reviewsError) {
-        console.error('Error fetching reviews:', reviewsError);
-        throw new Error(`Failed to fetch reviews: ${reviewsError.message}`);
-      }
-      console.log(`Fetched ${reviews?.length || 0} reviews`);
-
       // Create a map of root_id to root info
       const rootsMap = new Map<number, { letters: string; meaning: string }>();
       roots?.forEach(root => {
         rootsMap.set(root.id, { letters: root.letters, meaning: root.meaning });
-      });
-
-      // Create a map of root_id to review grades
-      const reviewGradesMap = new Map<number, number[]>();
-      reviews?.forEach(review => {
-        if (!reviewGradesMap.has(review.root_id)) {
-          reviewGradesMap.set(review.root_id, []);
-        }
-        reviewGradesMap.get(review.root_id)!.push(review.grade);
       });
 
       // Aggregate data by root_id (only for words with difficulty data)
@@ -127,7 +103,6 @@ export function useHardWordsAnalytics(): UseHardWordsAnalyticsReturn {
         const rootInfo = rootsMap.get(root_id);
         if (!rootInfo) return;
 
-        const grades = reviewGradesMap.get(root_id) || [];
         const avgDifficulty =
           stats.difficulties.length > 0
             ? stats.difficulties.reduce((sum, d) => sum + d, 0) / stats.difficulties.length
@@ -136,29 +111,22 @@ export function useHardWordsAnalytics(): UseHardWordsAnalyticsReturn {
           stats.lapses.length > 0
             ? stats.lapses.reduce((sum, l) => sum + l, 0) / stats.lapses.length
             : 0;
-        const avgGrade =
-          grades.length > 0 ? grades.reduce((sum, g) => sum + g, 0) / grades.length : 0;
 
         hardWordsArray.push({
           root_letters: rootInfo.letters,
           root_meaning: rootInfo.meaning,
-          total_reviews: grades.length,
           avg_difficulty: Math.round(avgDifficulty * 100) / 100,
           avg_lapses: Math.round(avgLapses * 100) / 100,
-          avg_grade: Math.round(avgGrade * 100) / 100,
           user_count: stats.userIds.size,
         });
       });
 
-      // Sort by difficulty (desc), then lapses (desc), then grade (asc)
+      // Sort by difficulty (desc), then lapses (desc)
       hardWordsArray.sort((a, b) => {
         if (b.avg_difficulty !== a.avg_difficulty) {
           return b.avg_difficulty - a.avg_difficulty;
         }
-        if (b.avg_lapses !== a.avg_lapses) {
-          return b.avg_lapses - a.avg_lapses;
-        }
-        return a.avg_grade - b.avg_grade;
+        return b.avg_lapses - a.avg_lapses;
       });
 
       console.log(`Total hard words found: ${hardWordsArray.length}`);

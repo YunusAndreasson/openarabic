@@ -35,6 +35,7 @@ export function createNavigationOptions(
     },
     headerTintColor: colors.headingText,
     headerTransparent: false,
+    headerBackVisible: false, // Prevent default back button on Android when using custom headerLeft
     ...overrides,
   };
 
@@ -124,6 +125,7 @@ export function createNavigationOptions(
   // Native modal behavior (minimal customization) - unified across platforms
   return {
     presentation: 'modal',
+    animation: 'slide_from_bottom', // Android: Slide up from bottom like iOS
     gestureEnabled: true,
     fullScreenGestureEnabled: true, // iOS: Allow full-screen swipe to dismiss
     contentStyle: {

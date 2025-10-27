@@ -1,4 +1,3 @@
-import { Rating } from 'ts-fsrs';
 import { studyWordsFSRSService } from '../../services/studyWordsFSRS';
 
 jest.mock('../../services/supabase', () => ({
@@ -96,11 +95,11 @@ describe('updateWordAndReview', () => {
   it('calls RPC to update and record review', async () => {
     (supabase.rpc as jest.Mock).mockResolvedValue({ data: true, error: null });
 
-    const result = await studyWordsFSRSService.updateWordAndReview('u1', 5, update, Rating.Good, 3);
+    const result = await studyWordsFSRSService.updateWordAndReview('u1', 5, update);
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'update_word_and_review',
-      expect.objectContaining({ p_user_id: 'u1', p_root_id: 5, p_rating: Rating.Good }),
+      expect.objectContaining({ p_user_id: 'u1', p_root_id: 5 }),
     );
     expect(result).toBe(true);
   });

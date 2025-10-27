@@ -444,20 +444,10 @@ export function useFSRS({
       setCurrentWord(nextItem || null);
       setWordQueue(remaining);
 
-      // Phase 1.1: ALWAYS persist ALL ratings to database for FSRS to learn properly
-      // FSRS algorithm needs all rating data (Good, Hard, Again) to calculate optimal difficulty/stability
-      // Non-"known" words still stay in session queue (lines 338-358) until marked as "known"
-      const rating =
-        confidence === 'known' ? Rating.Good : confidence === 'vague' ? Rating.Hard : Rating.Again;
-
+      // Phase 1.1: ALWAYS persist word updates to database for FSRS algorithm
+      // Note: Rating is now calculated in wordUpdateData by convertToFSRSCard
       try {
-        await studyWordsFSRSService.updateWordAndReview(
-          userId,
-          rootId,
-          wordUpdateData,
-          rating,
-          newCard.learning_steps,
-        );
+        await studyWordsFSRSService.updateWordAndReview(userId, rootId, wordUpdateData);
       } catch (error) {
         const errObj =
           error instanceof Error

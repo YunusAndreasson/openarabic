@@ -1,5 +1,3 @@
-import type { Rating } from 'ts-fsrs';
-
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { RootId, UserId } from '@/types/branded.types';
@@ -175,15 +173,13 @@ export const studyWordsFSRSService = {
     );
   },
 
-  // Batch update FSRS parameters and record a review in a single atomic operation
+  // Update FSRS parameters for a study word
   async updateWordAndReview(
     userId: string,
     rootId: number,
     update: FSRSWordUpdate,
-    rating: Rating,
-    learningSteps: number,
   ): Promise<boolean> {
-    // Use RPC function for atomic update and review recording
+    // Use RPC function for atomic update
     const data = await executeAuthenticatedQuery(
       userId,
       () =>
@@ -200,13 +196,11 @@ export const studyWordsFSRSService = {
           p_fsrs_lapses: update.fsrs_lapses,
           p_fsrs_state: update.fsrs_state,
           p_fsrs_last_review: update.fsrs_last_review,
-          p_rating: rating,
-          p_learning_steps: learningSteps,
         }),
       {
         toastMessage: STRINGS.FAILED_TO_UPDATE_WORD_AND_REVIEW,
         analyticsEventName: 'Update_Word_And_Review_Error',
-        analyticsProperties: { rootId, rating },
+        analyticsProperties: { rootId },
         showToast: false,
       },
     );

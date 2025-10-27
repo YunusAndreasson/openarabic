@@ -1,17 +1,17 @@
 'use client';
 
-import { useHardWordsAnalytics } from '@/hooks/useHardWordsAnalytics';
-import { useContentCompletenessAnalytics } from '@/hooks/useContentCompletenessAnalytics';
-import { useUserStudyAnalytics } from '@/hooks/useUserStudyAnalytics';
 import { Button } from '@/components/ui/button';
+import { useContentCompletenessAnalytics } from '@/hooks/useContentCompletenessAnalytics';
+import { useHardWordsAnalytics } from '@/hooks/useHardWordsAnalytics';
+import { useUserStudyAnalytics } from '@/hooks/useUserStudyAnalytics';
 import {
-  Loader2,
-  RefreshCw,
-  Database,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle2,
-  Users,
+    AlertTriangle,
+    CheckCircle2,
+    Database,
+    Loader2,
+    RefreshCw,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
 
 export default function AnalyticsPage() {
@@ -80,14 +80,14 @@ export default function AnalyticsPage() {
             <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-lg font-medium mb-2">No Study Data Available</p>
             <p className="text-sm text-muted-foreground text-center max-w-md">
-              The study_words and reviews tables require authentication to access user data. These
+              The study_words table requires authentication to access user data. These
               analytics need a service role key or authenticated session to display.
             </p>
           </div>
         ) : (
           <>
             <p className="text-sm text-muted-foreground mb-4">
-              Top 50 most difficult words based on FSRS difficulty, lapses, and review grades
+              Top 50 most difficult words based on FSRS difficulty and lapses
             </p>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -98,8 +98,6 @@ export default function AnalyticsPage() {
                     <th className="text-left p-2 text-sm font-medium">Meaning</th>
                     <th className="text-center p-2 text-sm font-medium">Difficulty</th>
                     <th className="text-center p-2 text-sm font-medium">Lapses</th>
-                    <th className="text-center p-2 text-sm font-medium">Avg Grade</th>
-                    <th className="text-center p-2 text-sm font-medium">Reviews</th>
                     <th className="text-center p-2 text-sm font-medium">Users</th>
                   </tr>
                 </thead>
@@ -126,8 +124,6 @@ export default function AnalyticsPage() {
                         </span>
                       </td>
                       <td className="p-2 text-center text-sm">{word.avg_lapses.toFixed(1)}</td>
-                      <td className="p-2 text-center text-sm">{word.avg_grade.toFixed(1)}</td>
-                      <td className="p-2 text-center text-sm">{word.total_reviews}</td>
                       <td className="p-2 text-center text-sm">{word.user_count}</td>
                     </tr>
                   ))}
