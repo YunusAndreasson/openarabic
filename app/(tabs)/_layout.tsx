@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import type { JSX } from 'react';
 import React, { Fragment, useEffect, useMemo } from 'react';
-import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
@@ -12,16 +11,6 @@ import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { router } from 'expo-router';
-
-// Static styles for better performance
-const styles = StyleSheet.create({
-  focusedIcon: {
-    opacity: 1,
-  },
-  unfocusedIcon: {
-    opacity: LAYOUT.OPACITY.HIGH,
-  },
-});
 
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
@@ -49,13 +38,13 @@ export default function TabLayout(): JSX.Element {
     [colors.elevation0, insets.bottom],
   );
 
-  // Badge style for perfect circle - static object, no memoization needed
+  // Badge style for perfect circle
   const badgeStyle = {
     minWidth: LAYOUT.SPACING.XLARGE, // 24px minimum for circle
     minHeight: LAYOUT.SPACING.XLARGE, // 24px minimum for circle
     borderRadius: LAYOUT.BORDER_RADIUS.PILL, // Perfect circle
     fontSize: 13, // Slightly larger font for better readability
-    lineHeight: LAYOUT.SPACING.XLARGE, // Same as height for vertical centering
+    lineHeight: LAYOUT.SPACING.XLARGE, // Center text vertically
   };
 
   if (!colors) {
@@ -86,12 +75,11 @@ export default function TabLayout(): JSX.Element {
               tabBarBadge: screen.name === 'study' && dueWordsCount > 0 ? dueWordsCount : undefined,
               tabBarBadgeStyle:
                 screen.name === 'study' && dueWordsCount > 0 ? badgeStyle : undefined,
-              tabBarIcon: ({ focused, color }) => (
+              tabBarIcon: ({ color }) => (
                 <Ionicons
                   name={screen.iconFilled}
                   size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
                   color={color}
-                  style={focused ? styles.focusedIcon : styles.unfocusedIcon}
                 />
               ),
             }}
