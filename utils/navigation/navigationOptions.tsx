@@ -125,6 +125,7 @@ export function createNavigationOptions(
   return {
     presentation: 'modal',
     gestureEnabled: true,
+    fullScreenGestureEnabled: true, // iOS: Allow full-screen swipe to dismiss
     contentStyle: {
       backgroundColor: colors.background,
     },

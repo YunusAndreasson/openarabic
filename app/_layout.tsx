@@ -340,12 +340,13 @@ function AppContent() {
     <NavigationThemeProvider value={navigationTheme}>
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <FSRSDataProvider userId={session?.user?.id}>
-          <Stack screenOptions={{ headerShown: false }}>
+          <Stack screenOptions={{ headerShown: false, freezeOnBlur: true }}>
             <Stack.Screen
               name="(tabs)"
               options={{
                 headerShown: false,
                 animation: 'none', // FIXED: Disable animation to prevent black screen
+                freezeOnBlur: false, // Keep tabs active
               }}
             />
             <Stack.Screen
@@ -353,12 +354,14 @@ function AppContent() {
               options={{
                 headerShown: false,
                 animation: 'fade',
+                freezeOnBlur: false, // Keep auth screen active
               }}
             />
             <Stack.Screen
               name="article/[id]"
               options={createNavigationOptions(colors, {
                 headerShown: false,
+                freezeOnBlur: true, // Optimize article screen when backgrounded
               })}
             />
 
