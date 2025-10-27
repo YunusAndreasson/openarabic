@@ -11,8 +11,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
-import { useAuth } from '@/hooks/auth';
 import { usePressAnimation } from '@/hooks/animations';
+import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -102,11 +102,12 @@ const styles = StyleSheet.create({
   },
   badgeContainer: {
     position: 'absolute',
-    right: -LAYOUT.SPACING.MEDIUM, // -6px to move badge further right
-    top: -LAYOUT.SPACING.MICRO, // -2px for compact positioning
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    width: LAYOUT.SPACING.XLARGE,
-    height: LAYOUT.SPACING.XLARGE,
+    right: -LAYOUT.SPACING.LARGE, // -16px to move badge further right
+    top: -LAYOUT.SPACING.TINY, // -4px to move badge upwards
+    width: LAYOUT.SPACING.XLARGE, // 24px fixed for perfect circle
+    height: LAYOUT.SPACING.XLARGE, // 24px fixed for perfect circle
+    aspectRatio: 1, // Ensure perfect circle
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL, // Perfect circle
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
