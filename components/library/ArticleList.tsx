@@ -8,7 +8,6 @@ import {
   type Ref,
 } from 'react';
 import { RefreshControl, ScrollView, type StyleProp, type ViewStyle } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -40,20 +39,15 @@ export function ArticleList({
 }: ArticleListProps) {
   const colors = useColors();
   const scrollViewRef = useRef<ScrollView | null>(null);
-  const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const [, startTransition] = useTransition();
 
-  // Use refs to store stable values and only update when significantly changed
+  // Use ref to store stable header height and only update when significantly changed
   const stableHeaderHeightRef = useRef(headerHeight);
-  const stableInsetsBottomRef = useRef(insets.bottom);
 
-  // Update refs only when values change significantly (reduce noise from small changes)
+  // Update ref only when value changes significantly (reduce noise from small changes)
   if (Math.abs(stableHeaderHeightRef.current - headerHeight) > 5) {
     stableHeaderHeightRef.current = headerHeight;
-  }
-  if (Math.abs(stableInsetsBottomRef.current - insets.bottom) > 5) {
-    stableInsetsBottomRef.current = insets.bottom;
   }
 
   useImperativeHandle(ref, () => scrollViewRef.current as ScrollView, []);
@@ -85,14 +79,11 @@ export function ArticleList({
     />
   );
 
-  // Content container style
-  const safeContentContainerStyle: ViewStyle = {
-    ...(typeof contentContainerStyle === 'object' && !Array.isArray(contentContainerStyle)
+  // Content container style - respect padding passed from parent
+  const safeContentContainerStyle: ViewStyle =
+    typeof contentContainerStyle === 'object' && !Array.isArray(contentContainerStyle)
       ? contentContainerStyle
-      : {}),
-    paddingBottom:
-      stableInsetsBottomRef.current + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-  };
+      : {};
 
   // Render header component if provided
   const renderHeader = () => {

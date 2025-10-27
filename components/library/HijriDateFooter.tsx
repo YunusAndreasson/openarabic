@@ -44,7 +44,6 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   pressable: {

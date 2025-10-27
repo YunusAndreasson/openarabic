@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleList } from '@/components/library/ArticleList';
@@ -33,6 +34,7 @@ export default function ReadScreen(): JSX.Element {
   const colors = useColors();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery(
     articleQueryOptions.categories(),
@@ -233,9 +235,9 @@ export default function ReadScreen(): JSX.Element {
       ...styles.listContentContainer,
       backgroundColor: colors.background,
       paddingTop: 0,
-      paddingBottom: LAYOUT.SCREEN_PADDING.bottomDefault,
+      paddingBottom: insets.bottom,
     }),
-    [colors],
+    [colors, insets.bottom],
   );
 
   const isLoading = isArticlesLoading || isCategoriesLoading || isAuthorsLoading;

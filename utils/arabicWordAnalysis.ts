@@ -1223,6 +1223,82 @@ function detectPrefixes(
         }
       }
 
+      // VALIDATION 6: Prevent splitting يت (Form VI verb pattern: يَتَفَاعَلُ)
+      // Arabic verb morphology: يَتَ together indicates Form VI (mutual/reciprocal action)
+      // Example: يَتَدَارَسُ (ya-ta-dārasu) = "studying together" (Form VI from root د-ر-س)
+      // Correct: و + يتدارس (conjunction + Form VI verb)
+      // Incorrect: و + ي + ت + دارس (conjunction + subject prefix + subject prefix + root)
+      //
+      // Form VI characteristics:
+      //   - Present tense: يَتَفَاعَلُ (ya-ta-fāʿalu) - 3rd person masculine singular
+      //   - Past tense: تَفَاعَلَ (ta-fāʿala)
+      //   - The تَ in Form VI is part of the verb form pattern, not a separate subject marker
+      //
+      // Examples where this applies:
+      //   - يَتَعَاوَنُ (ya-taʿāwanu) = "he cooperates" (Form VI from ع-و-ن)
+      //   - يَتَبَادَلُ (ya-tabādalu) = "he exchanges" (Form VI from ب-د-ل)
+      //   - يَتَشَارَكُ (ya-tashāraku) = "he shares" (Form VI from ش-ر-ك)
+      //
+      // Strategy: Look ahead when matching ي to see if ت follows immediately
+      // If ي is followed by ت, reject ي to keep يت together
+      const isYaMatch = prefixMatch.arabicMatch === 'ي';
+      const isTaMatch = prefixMatch.arabicMatch === 'ت';
+
+      if (isYaMatch && remainingAfterPrefix.startsWith('ت')) {
+        // Matched ي and next char is ت - this is Form VI pattern
+        // Reject ي to keep يت together as part of the verb form
+        continueDetection = false;
+        continue;
+      }
+
+      if (isTaMatch) {
+        // Check if ي was previously detected - if so, this is the ت that should have been kept with ي
+        const hasYaPrefix = detectedPrefixes.some(p => p.arabicMatch === 'ي');
+        if (hasYaPrefix) {
+          // Already detected ي, now seeing ت - this is Form VI pattern (fallback check)
+          // This shouldn't happen if the ي check above worked, but added for safety
+          continueDetection = false;
+          continue;
+        }
+      }
+
+      // VALIDATION 7: Prevent conjunctions/prepositions after subject markers with insufficient root
+      // Problem: Form V/Form II verbs have root radicals (و، ي) that match conjunction/preposition patterns
+      // Example: تَوَدَّدَ (ta-waddada) = Form V verb from root و-د-د (to show affection)
+      // Incorrect: و + ت + و + دد (3 prefixes, treating و as conjunction twice)
+      // Correct: و + تودد (1 prefix + Form V verb, where second و is first radical)
+      //
+      // Form V characteristics:
+      //   - Pattern: تَفَعَّلَ (ta-faʿʿala) - reflexive/intensive form
+      //   - First radical can be و or ي, which match conjunction patterns
+      //   - After subject marker ت, the following و/ي is part of the root, not a prefix
+      //
+      // Examples where this applies:
+      //   - وَتَوَدَّدْ = و (and) + تودد (Form V: you show affection)
+      //   - وَيَوَدُّ = و (and) + يود (he loves) - و is root radical, not conjunction
+      //   - فَتَبَيَّنَ = ف (so) + تبين (Form V: it became clear) - ي is root radical
+      //
+      // Strategy: After detecting subject marker (ت، ي، ن، أ), don't allow single-letter
+      // conjunctions/prepositions (و، ف، ب، ل) if they would leave < 3 chars remaining.
+      // This prevents splitting root radicals that happen to match prefix patterns.
+      const hasSubjectMarker = detectedPrefixes.some(p =>
+        ['ي', 'ت', 'ن', 'أ'].includes(p.arabicMatch),
+      );
+      const isSingleLetterConjunctionOrPreposition = ['و', 'ف', 'ب', 'ل'].includes(
+        prefixMatch.arabicMatch,
+      );
+
+      if (hasSubjectMarker && isSingleLetterConjunctionOrPreposition) {
+        // Check if accepting this prefix would leave insufficient root structure
+        if (remainingAfterPrefix.length < 3) {
+          // Would leave < 3 chars - this "prefix" is likely a root radical
+          // Example: After detecting و + ت, seeing another و with "دد" remaining
+          // The second و is part of root و-د-د, not a conjunction
+          continueDetection = false;
+          continue;
+        }
+      }
+
       // All validations passed - accept this prefix
       seenRoles.add(role);
 
