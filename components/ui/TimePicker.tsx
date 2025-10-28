@@ -40,6 +40,9 @@ export function TimePicker({
 
   const [selectedDate, setSelectedDate] = useState(initialDate);
 
+  // Track if bottom sheet is visible to prevent native picker from showing before sheet
+  const [isSheetVisible, setIsSheetVisible] = useState(false);
+
   // Show/hide modal based on isVisible prop - unified for both platforms
   useEffect(() => {
     if (isVisible) {
@@ -49,9 +52,12 @@ export function TimePicker({
     }
   }, [isVisible]);
 
-  // Handle sheet position changes - sync parent state when dismissed via gesture
+  // Track bottom sheet visibility to delay native picker render on Android
   const handleChange = useCallback(
     (index: number) => {
+      // 0 means sheet is expanded (visible)
+      setIsSheetVisible(index === 0);
+
       if (index === -1) {
         onClose();
       }
@@ -129,19 +135,21 @@ export function TimePicker({
           </ThemedText>
         </View>
 
-        {/* Native Time Picker */}
-        <View style={styles.pickerContainer}>
-          <DateTimePicker
-            value={selectedDate}
-            mode="time"
-            is24Hour={true}
-            display="spinner"
-            onChange={handleDateChange}
-            style={styles.picker}
-            textColor={colors.text}
-            accentColor={colors.tint}
-          />
-        </View>
+        {/* Native Time Picker - Only render when sheet is visible to prevent Android popup */}
+        {isSheetVisible && (
+          <View style={styles.pickerContainer}>
+            <DateTimePicker
+              value={selectedDate}
+              mode="time"
+              is24Hour={true}
+              display="spinner"
+              onChange={handleDateChange}
+              style={styles.picker}
+              textColor={colors.text}
+              accentColor={colors.tint}
+            />
+          </View>
+        )}
 
         {/* Actions */}
         <View style={styles.actions}>
