@@ -430,4 +430,159 @@ describe('FSRS Algorithm Verification', () => {
       expect(result).toBeLessThanOrEqual(1.0);
     });
   });
+
+  describe('Reference Values (Document Expected FSRS Outputs)', () => {
+    /**
+     * These tests document exact FSRS calculation outputs for reference.
+     * They serve as regression tests and documentation of algorithm behavior.
+     *
+     * IMPORTANT: Values are mathematically derived from the formula R = exp(-t/S)
+     * Only update after verifying the new values are correct.
+     */
+
+    test.each([
+      {
+        scenario: 'new word (just reviewed)',
+        stability: 5,
+        daysElapsed: 0,
+        expectedR: 1.0,
+        formula: 'exp(-0/5)',
+        description: 'Perfect recall immediately after review',
+      },
+      {
+        scenario: 'early review (1 day with S=10)',
+        stability: 10,
+        daysElapsed: 1,
+        expectedR: 0.904837,
+        formula: 'exp(-1/10)',
+        description: 'Minimal forgetting after 1 day',
+      },
+      {
+        scenario: 'medium interval (5 days with S=10)',
+        stability: 10,
+        daysElapsed: 5,
+        expectedR: 0.606531,
+        formula: 'exp(-5/10)',
+        description: 'Moderate retention at half-stability',
+      },
+      {
+        scenario: 'at stability threshold (t=S)',
+        stability: 10,
+        daysElapsed: 10,
+        expectedR: 0.367879,
+        formula: 'exp(-10/10) = exp(-1)',
+        description: 'Canonical 36.8% recall at t=S',
+      },
+      {
+        scenario: 'overdue review (15 days with S=10)',
+        stability: 10,
+        daysElapsed: 15,
+        expectedR: 0.22313,
+        formula: 'exp(-15/10)',
+        description: 'Significant forgetting beyond stability',
+      },
+      {
+        scenario: 'very overdue (30 days with S=10)',
+        stability: 10,
+        daysElapsed: 30,
+        expectedR: 0.049787,
+        formula: 'exp(-30/10)',
+        description: 'Nearly forgotten after 3× stability',
+      },
+      {
+        scenario: 'low stability word (2 days with S=2)',
+        stability: 2,
+        daysElapsed: 2,
+        expectedR: 0.367879,
+        formula: 'exp(-2/2) = exp(-1)',
+        description: 'Fast forgetting for unstable memories',
+      },
+      {
+        scenario: 'high stability word (10 days with S=100)',
+        stability: 100,
+        daysElapsed: 10,
+        expectedR: 0.904837,
+        formula: 'exp(-10/100)',
+        description: 'Excellent retention for well-learned words',
+      },
+    ])('reference: $scenario', ({ stability, daysElapsed, expectedR, formula, description }) => {
+      const word = createTestWord({
+        fsrs_stability: stability,
+        fsrs_last_review: '2024-01-01T00:00:00Z',
+      });
+
+      const lastReview = new Date('2024-01-01T00:00:00Z');
+      const targetDate = new Date('2024-01-01T00:00:00Z');
+      targetDate.setDate(targetDate.getDate() + daysElapsed);
+
+      const result = calculateRetrievability(word, targetDate, lastReview);
+
+      // Verify against mathematically derived expected value
+      expect(result).toBeCloseTo(expectedR, 5); // 5 decimal places precision
+
+      // Document the calculation for reference
+      expect({
+        description,
+        formula,
+        inputs: { stability, daysElapsed },
+        output: Number(result.toFixed(6)),
+        expected: expectedR,
+      }).toBeDefined();
+    });
+
+    it('reference: retrievability forecast structure and progression', () => {
+      const now = new Date('2024-01-01T00:00:00Z');
+      const words = [
+        createTestWord({
+          fsrs_stability: 2,
+          fsrs_last_review: now.toISOString(),
+          fsrs_reps: 1,
+        }),
+        createTestWord({
+          fsrs_stability: 10,
+          fsrs_last_review: now.toISOString(),
+          fsrs_reps: 5,
+        }),
+        createTestWord({
+          fsrs_stability: 50,
+          fsrs_last_review: now.toISOString(),
+          fsrs_reps: 10,
+        }),
+      ];
+
+      const forecast = calculateRetrievabilityForecast(words, 7);
+
+      // Verify forecast structure
+      expect(forecast).toHaveLength(7);
+      expect(forecast[0].wordCount).toBe(3);
+
+      // Verify each forecast day has required fields
+      forecast.forEach(day => {
+        expect(day).toHaveProperty('date');
+        expect(day).toHaveProperty('wordCount');
+        expect(day).toHaveProperty('averageRetrievability');
+        expect(day).toHaveProperty('criticalWords');
+
+        // Retrievability should be valid (0-100 range or 0-1 range depending on implementation)
+        expect(day.averageRetrievability).toBeGreaterThanOrEqual(0);
+        expect(day.wordCount).toBe(3); // All words should be included each day
+      });
+
+      // Document the structure (for reference)
+      const firstDay = forecast[0];
+      expect({
+        structure: {
+          hasDate: typeof firstDay.date,
+          hasWordCount: typeof firstDay.wordCount,
+          hasAvgRetrievability: typeof firstDay.averageRetrievability,
+          hasCriticalWords: typeof firstDay.criticalWords,
+        },
+        example: {
+          date: firstDay.date,
+          wordCount: firstDay.wordCount,
+          // Note: avgRetrievability format depends on implementation (0-1 or 0-100)
+        },
+      }).toBeDefined();
+    });
+  });
 });

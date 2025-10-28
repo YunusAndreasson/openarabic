@@ -341,240 +341,196 @@ describe('useReview Hook', () => {
     });
   });
 
-  describe('Swipe Gestures - Known Words', () => {
-    it('should handle swipe right for known word', async () => {
-      const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
-      });
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useReview(), { wrapper });
-
-      // Swipe right without hesitation = known
-      act(() => {
-        result.current.handleSwipeRight();
-      });
-
-      await waitFor(() => {
-        expect(mockUpdateWord).toHaveBeenCalledWith(101, 'known');
-        expect(mockUpdateMetrics).toHaveBeenCalledWith('known', 5);
-      });
-    });
-
-    it('should fade out and fade in for known word transition', async () => {
-      const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
-      });
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useReview(), { wrapper });
-
-      act(() => {
-        result.current.handleSwipeRight();
-      });
-
-      await waitFor(() => {
-        expect(mockFadeOut).toHaveBeenCalled();
-      });
-    });
-
-    it('should not show translation for known words', async () => {
-      const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
-      });
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useReview(), { wrapper });
-
-      act(() => {
-        result.current.handleSwipeRight();
-      });
-
-      // Wait for async operations
-      await waitFor(() => {
-        expect(mockUpdateWord).toHaveBeenCalled();
-      });
-
-      // Translation should remain hidden for known words
-      expect(result.current.showTranslation).toBe(false);
-    });
-  });
-
-  describe('Swipe Gestures - Vague Words', () => {
-    it('should handle swipe right after hesitation for vague word', async () => {
-      const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
-      });
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useReview(), { wrapper });
-
-      // Start hesitation
-      act(() => {
-        result.current.handleHesitationStart();
-      });
-
-      // Verify hesitation state
-      expect(result.current.isHesitating.value).toBe(true);
-
-      // Swipe right during hesitation = vague
-      act(() => {
-        result.current.handleSwipeRight();
-      });
-
-      await waitFor(() => {
-        expect(mockUpdateWord).toHaveBeenCalledWith(101, 'vague');
-        expect(mockUpdateMetrics).toHaveBeenCalledWith('vague', 5);
-      });
-    });
-
-    it('should handle long press for vague word', async () => {
-      const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
-      });
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useReview(), { wrapper });
-
-      act(() => {
-        result.current.handleLongPress();
-      });
-
-      await waitFor(() => {
-        expect(mockUpdateWord).toHaveBeenCalledWith(101, 'vague');
-      });
-    });
-
-    it('should reset hesitation after swipe', async () => {
-      const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
-      });
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useReview(), { wrapper });
-
-      // Start hesitation
-      act(() => {
-        result.current.handleHesitationStart();
-      });
-
-      // Swipe
-      act(() => {
-        result.current.handleSwipeRight();
-      });
-
-      await waitFor(() => {
-        expect(result.current.isHesitating.value).toBe(false);
-      });
-    });
-  });
-
-  describe('Swipe Gestures - Unknown Words', () => {
-    it('should handle swipe left for unknown word', async () => {
-      const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
-      });
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useReview(), { wrapper });
-
-      act(() => {
-        result.current.handleSwipeLeft();
-      });
-
-      await waitFor(() => {
-        expect(mockUpdateWord).toHaveBeenCalledWith(101, 'unknown');
-        expect(mockUpdateMetrics).toHaveBeenCalledWith('unknown', 5);
-      });
-    });
-
-    // REMOVED: Test was checking internal state transition timing which is difficult to mock
-    // Core unknown word functionality is validated by "should handle swipe left for unknown word" test
-
-    it('should play English audio for unknown words', async () => {
-      const word = createMockWord({
-        root: {
-          id: 101,
-          letters: 'كتاب',
-          meaning: 'book',
-          audio_url: 'audio/kitab.mp3',
-          audio_url_en: 'audio/book.mp3',
+  describe('Swipe Gestures', () => {
+    // Parameterized test for basic swipe handling across all gesture types
+    test.each([
+      {
+        gesture: 'swipe right (no hesitation)',
+        action: (result: any) => result.current.handleSwipeRight(),
+        expectedConfidence: 'known',
+        expectedStability: 5,
+        setupHesitation: false,
+      },
+      {
+        gesture: 'swipe left',
+        action: (result: any) => result.current.handleSwipeLeft(),
+        expectedConfidence: 'unknown',
+        expectedStability: 5,
+        setupHesitation: false,
+      },
+      {
+        gesture: 'swipe right with hesitation',
+        action: (result: any) => {
+          result.current.handleHesitationStart();
+          result.current.handleSwipeRight();
         },
+        expectedConfidence: 'vague',
+        expectedStability: 5,
+        setupHesitation: true,
+      },
+      {
+        gesture: 'long press',
+        action: (result: any) => result.current.handleLongPress(),
+        expectedConfidence: 'vague',
+        expectedStability: 5,
+        setupHesitation: false,
+      },
+    ])(
+      'should handle $gesture → $expectedConfidence',
+      async ({ action, expectedConfidence, expectedStability }) => {
+        const word = createMockWord();
+        useFSRS.mockReturnValue({
+          currentWord: word,
+          wordQueue: [word],
+          isLoading: false,
+          isComplete: false,
+          progress: 0,
+          updateWord: mockUpdateWord,
+          invalidateQueries: mockInvalidateQueries,
+        });
+
+        const wrapper = createWrapper();
+        const { result } = renderHook(() => useReview(), { wrapper });
+
+        // Execute gesture action
+        act(() => {
+          action(result);
+        });
+
+        // Verify correct FSRS update and metrics
+        await waitFor(() => {
+          expect(mockUpdateWord).toHaveBeenCalledWith(101, expectedConfidence);
+          expect(mockUpdateMetrics).toHaveBeenCalledWith(expectedConfidence, expectedStability);
+        });
+      },
+    );
+
+    // Unique behavior tests for known words
+    describe('Known Word Specific Behavior', () => {
+      it('should fade out and fade in for known word transition', async () => {
+        const word = createMockWord();
+        useFSRS.mockReturnValue({
+          currentWord: word,
+          wordQueue: [word],
+          isLoading: false,
+          isComplete: false,
+          progress: 0,
+          updateWord: mockUpdateWord,
+          invalidateQueries: mockInvalidateQueries,
+        });
+
+        const wrapper = createWrapper();
+        const { result } = renderHook(() => useReview(), { wrapper });
+
+        act(() => {
+          result.current.handleSwipeRight();
+        });
+
+        await waitFor(() => {
+          expect(mockFadeOut).toHaveBeenCalled();
+        });
       });
 
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+      it('should not show translation for known words', async () => {
+        const word = createMockWord();
+        useFSRS.mockReturnValue({
+          currentWord: word,
+          wordQueue: [word],
+          isLoading: false,
+          isComplete: false,
+          progress: 0,
+          updateWord: mockUpdateWord,
+          invalidateQueries: mockInvalidateQueries,
+        });
+
+        const wrapper = createWrapper();
+        const { result } = renderHook(() => useReview(), { wrapper });
+
+        act(() => {
+          result.current.handleSwipeRight();
+        });
+
+        // Wait for async operations
+        await waitFor(() => {
+          expect(mockUpdateWord).toHaveBeenCalled();
+        });
+
+        // Translation should remain hidden for known words
+        expect(result.current.showTranslation).toBe(false);
       });
+    });
 
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useReview(), { wrapper });
+    // Unique behavior tests for vague/hesitation
+    describe('Vague Word Specific Behavior', () => {
+      it('should reset hesitation after swipe', async () => {
+        const word = createMockWord();
+        useFSRS.mockReturnValue({
+          currentWord: word,
+          wordQueue: [word],
+          isLoading: false,
+          isComplete: false,
+          progress: 0,
+          updateWord: mockUpdateWord,
+          invalidateQueries: mockInvalidateQueries,
+        });
 
-      act(() => {
-        result.current.handleSwipeLeft();
+        const wrapper = createWrapper();
+        const { result } = renderHook(() => useReview(), { wrapper });
+
+        // Start hesitation
+        act(() => {
+          result.current.handleHesitationStart();
+        });
+
+        // Swipe
+        act(() => {
+          result.current.handleSwipeRight();
+        });
+
+        await waitFor(() => {
+          expect(result.current.isHesitating.value).toBe(false);
+        });
       });
+    });
 
-      await waitFor(() => {
-        // Should call play for English audio
-        expect(mockAudioPlayer.play).toHaveBeenCalledWith(
-          expect.objectContaining({
-            audioUrl: expect.stringContaining('book.mp3'),
-          }),
-        );
+    // Unique behavior tests for unknown words
+    describe('Unknown Word Specific Behavior', () => {
+      it('should play English audio for unknown words', async () => {
+        const word = createMockWord({
+          root: {
+            id: 101,
+            letters: 'كتاب',
+            meaning: 'book',
+            audio_url: 'audio/kitab.mp3',
+            audio_url_en: 'audio/book.mp3',
+          },
+        });
+
+        useFSRS.mockReturnValue({
+          currentWord: word,
+          wordQueue: [word],
+          isLoading: false,
+          isComplete: false,
+          progress: 0,
+          updateWord: mockUpdateWord,
+          invalidateQueries: mockInvalidateQueries,
+        });
+
+        const wrapper = createWrapper();
+        const { result } = renderHook(() => useReview(), { wrapper });
+
+        act(() => {
+          result.current.handleSwipeLeft();
+        });
+
+        await waitFor(() => {
+          // Should call play for English audio
+          expect(mockAudioPlayer.play).toHaveBeenCalledWith(
+            expect.objectContaining({
+              audioUrl: expect.stringContaining('book.mp3'),
+            }),
+          );
+        });
       });
     });
   });

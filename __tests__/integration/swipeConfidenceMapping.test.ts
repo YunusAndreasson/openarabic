@@ -14,40 +14,51 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
   type Confidence = 'known' | 'vague' | 'unknown';
 
   describe('Right swipe confidence mapping', () => {
-    it('should map right swipe without hesitation to "known"', () => {
-      const isHesitating = false;
-      const swipeDirection = 'right';
+    // Parameterized test for right swipe scenarios
+    test.each([
+      {
+        isHesitating: false,
+        expectedConfidence: 'known' as Confidence,
+        description: 'without hesitation',
+      },
+      {
+        isHesitating: true,
+        expectedConfidence: 'vague' as Confidence,
+        description: 'with hesitation',
+      },
+    ])(
+      'should map right swipe $description to "$expectedConfidence"',
+      ({ isHesitating, expectedConfidence }) => {
+        const swipeDirection = 'right';
 
-      // useReview.tsx line 813: const confidence = isHesitating ? 'vague' : 'known';
-      const confidence: Confidence = isHesitating ? 'vague' : 'known';
+        // useReview.tsx line 813: const confidence = isHesitating ? 'vague' : 'known';
+        const confidence: Confidence = isHesitating ? 'vague' : 'known';
 
-      expect(confidence).toBe('known');
-    });
+        expect(confidence).toBe(expectedConfidence);
+      },
+    );
 
-    it('should map right swipe with hesitation to "vague"', () => {
-      const isHesitating = true;
-      const swipeDirection = 'right';
-
-      // useReview.tsx line 813
-      const confidence: Confidence = isHesitating ? 'vague' : 'known';
-
-      expect(confidence).toBe('vague');
-    });
-
-    it('should only mark word as known when swiped right WITHOUT hint', () => {
-      // Requirement: "a word is only known when swiping right without a hint"
-      const scenarios = [
-        { isHesitating: false, expectedKnown: true, description: 'no hint shown' },
-        { isHesitating: true, expectedKnown: false, description: 'hint shown' },
-      ];
-
-      scenarios.forEach(({ isHesitating, expectedKnown, description }) => {
+    test.each([
+      {
+        isHesitating: false,
+        expectedKnown: true,
+        description: 'no hint shown',
+      },
+      {
+        isHesitating: true,
+        expectedKnown: false,
+        description: 'hint shown',
+      },
+    ])(
+      'should only mark word as known when $description (isKnown=$expectedKnown)',
+      ({ isHesitating, expectedKnown }) => {
+        // Requirement: "a word is only known when swiping right without a hint"
         const confidence: Confidence = isHesitating ? 'vague' : 'known';
         const isKnown = confidence === 'known';
 
         expect(isKnown).toBe(expectedKnown);
-      });
-    });
+      },
+    );
   });
 
   describe('Left swipe confidence mapping', () => {
@@ -73,8 +84,23 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
   });
 
   describe('Confidence to progress mapping', () => {
-    it('should NOT increase progress for vague confidence', () => {
-      const confidence: Confidence = 'vague';
+    test.each([
+      {
+        confidence: 'vague' as Confidence,
+        expectedKnownWords: 0,
+        description: 'NOT increase progress for vague',
+      },
+      {
+        confidence: 'known' as Confidence,
+        expectedKnownWords: 1,
+        description: 'increase progress for known',
+      },
+      {
+        confidence: 'unknown' as Confidence,
+        expectedKnownWords: 0,
+        description: 'NOT increase progress for unknown',
+      },
+    ])('should $description confidence', ({ confidence, expectedKnownWords }) => {
       let knownWords = 0;
 
       // useFSRS.ts line 295-296: only increment for 'known'
@@ -82,30 +108,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
         knownWords += 1;
       }
 
-      expect(knownWords).toBe(0); // No progress for vague
-    });
-
-    it('should increase progress for known confidence', () => {
-      const confidence: Confidence = 'known';
-      let knownWords = 0;
-
-      // useFSRS.ts line 295-296
-      if (confidence === 'known') {
-        knownWords += 1;
-      }
-
-      expect(knownWords).toBe(1); // Progress increases
-    });
-
-    it('should NOT increase progress for unknown confidence', () => {
-      const confidence: Confidence = 'unknown';
-      let knownWords = 0;
-
-      if (confidence === 'known') {
-        knownWords += 1;
-      }
-
-      expect(knownWords).toBe(0); // No progress for unknown
+      expect(knownWords).toBe(expectedKnownWords);
     });
   });
 
@@ -188,81 +191,62 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
   });
 
   describe('Complete swipe flows', () => {
-    it('should handle complete flow: hesitate → swipe right → vague', () => {
-      const flow = {
-        isHesitating: false,
-        confidence: null as Confidence | null,
-      };
+    test.each([
+      {
+        flowName: 'hesitate → swipe right → vague',
+        initialHesitating: false,
+        triggerHesitation: true,
+        swipeDirection: 'right' as const,
+        expectedConfidence: 'vague' as Confidence,
+      },
+      {
+        flowName: 'quick swipe right → known',
+        initialHesitating: false,
+        triggerHesitation: false,
+        swipeDirection: 'right' as const,
+        expectedConfidence: 'known' as Confidence,
+      },
+      {
+        flowName: 'swipe left → unknown',
+        initialHesitating: false,
+        triggerHesitation: false,
+        swipeDirection: 'left' as const,
+        expectedConfidence: 'unknown' as Confidence,
+      },
+      {
+        flowName: 'hesitate → swipe left → unknown',
+        initialHesitating: false,
+        triggerHesitation: true,
+        swipeDirection: 'left' as const,
+        expectedConfidence: 'unknown' as Confidence,
+      },
+    ])(
+      'should handle complete flow: $flowName',
+      ({ initialHesitating, triggerHesitation, swipeDirection, expectedConfidence }) => {
+        const flow = {
+          isHesitating: initialHesitating,
+          confidence: null as Confidence | null,
+        };
 
-      // 1. Word appears, timer starts
-      // 2. 3 seconds pass, hesitation triggered
-      flow.isHesitating = true;
+        // Simulate hesitation if needed
+        if (triggerHesitation) {
+          flow.isHesitating = true;
+        }
 
-      // 3. User swipes right
-      const swipeDirection = 'right';
+        // Determine confidence based on swipe direction
+        if (swipeDirection === 'right') {
+          flow.confidence = flow.isHesitating ? 'vague' : 'known';
+        } else {
+          // Left swipe always unknown
+          flow.confidence = 'unknown';
+        }
 
-      // 4. Determine confidence BEFORE resetting hesitation
-      flow.confidence = flow.isHesitating ? 'vague' : 'known';
+        // Reset hesitation after swipe completes
+        flow.isHesitating = false;
 
-      // 5. Reset hesitation after swipe completes
-      flow.isHesitating = false;
-
-      expect(flow.confidence).toBe('vague');
-    });
-
-    it('should handle complete flow: quick swipe right → known', () => {
-      const flow = {
-        isHesitating: false,
-        confidence: null as Confidence | null,
-      };
-
-      // 1. Word appears
-      // 2. User swipes right immediately (before 3 seconds)
-      const swipeDirection = 'right';
-
-      // 3. Determine confidence
-      flow.confidence = flow.isHesitating ? 'vague' : 'known';
-
-      expect(flow.confidence).toBe('known');
-    });
-
-    it('should handle complete flow: swipe left → unknown', () => {
-      const flow = {
-        isHesitating: false, // Doesn't matter
-        confidence: null as Confidence | null,
-      };
-
-      // 1. Word appears
-      // 2. User swipes left
-      const swipeDirection = 'left';
-
-      // 3. Left swipe always unknown
-      flow.confidence = 'unknown';
-
-      expect(flow.confidence).toBe('unknown');
-    });
-
-    it('should handle complete flow: hesitate → swipe left → unknown', () => {
-      const flow = {
-        isHesitating: false,
-        confidence: null as Confidence | null,
-      };
-
-      // 1. Word appears, timer starts
-      // 2. 3 seconds pass, hesitation triggered
-      flow.isHesitating = true;
-
-      // 3. User swipes left anyway
-      const swipeDirection = 'left';
-
-      // 4. Left swipe overrides hesitation → unknown
-      flow.confidence = 'unknown';
-
-      // 5. Reset hesitation
-      flow.isHesitating = false;
-
-      expect(flow.confidence).toBe('unknown');
-    });
+        expect(flow.confidence).toBe(expectedConfidence);
+      },
+    );
   });
 
   describe('Edge cases', () => {

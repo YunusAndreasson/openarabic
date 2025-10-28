@@ -81,7 +81,9 @@ export function ArticleList({
 
   // Content container style - respect padding passed from parent
   const safeContentContainerStyle: ViewStyle =
-    typeof contentContainerStyle === 'object' && !Array.isArray(contentContainerStyle)
+    typeof contentContainerStyle === 'object' &&
+    !Array.isArray(contentContainerStyle) &&
+    contentContainerStyle !== null
       ? contentContainerStyle
       : {};
 

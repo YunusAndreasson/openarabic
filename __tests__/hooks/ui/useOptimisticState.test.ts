@@ -136,9 +136,7 @@ describe('useOptimisticState', () => {
 
     // Use stable object reference to avoid infinite loop
     const initialObject = { id: 1 };
-    const { result: objectResult } = renderHook(() =>
-      useOptimisticState(initialObject, true),
-    );
+    const { result: objectResult } = renderHook(() => useOptimisticState(initialObject, true));
 
     act(() => {
       const [, setOptimistic] = objectResult.current;
