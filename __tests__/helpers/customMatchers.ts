@@ -9,7 +9,7 @@
  * Usage:
  *   expect(word).toBeDueWord();
  *   expect(word).toHaveValidFSRSState();
- *   expect('C*'(').toBeValidArabicText();
+ *   expect('كتاب').toBeValidArabicText();
  */
 
 import type { StudyWord } from '@/types/vocabulary.types';

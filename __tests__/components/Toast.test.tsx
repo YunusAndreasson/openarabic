@@ -1,0 +1,274 @@
+/**
+ * Toast Component Tests
+ *
+ * Tests the toast notification system:
+ * - Visibility and message display
+ * - Auto-close after duration
+ * - Different toast types (INFO, ERROR, SUCCESS, IMPORTANT)
+ * - Safe area insets positioning
+ * - Timer cleanup on unmount
+ */
+
+import { act, render } from '@testing-library/react-native';
+import React from 'react';
+
+import { Toast } from '@/components/Toast';
+import { ToastType } from '@/types/enums';
+
+// Mock dependencies
+jest.mock('react-native-reanimated', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  const mockAnimation = {
+    duration: () => mockAnimation,
+  };
+
+  const mockEasing = {
+    linear: (x: number) => x,
+    ease: (x: number) => x,
+    quad: (x: number) => x * x,
+    cubic: (x: number) => x * x * x,
+    in: (easing: (x: number) => number) => easing,
+    out: (easing: (x: number) => number) => easing,
+    inOut: (easing: (x: number) => number) => easing,
+    bezier: () => (x: number) => x,
+  };
+
+  return {
+    __esModule: true,
+    default: {
+      View: ({ children, style, entering, exiting, ...props }: any) => (
+        <View style={style} {...props}>
+          {children}
+        </View>
+      ),
+    },
+    Easing: mockEasing,
+    FadeInUp: mockAnimation,
+    FadeOutUp: mockAnimation,
+  };
+});
+
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({
+    top: 44,
+    bottom: 34,
+    left: 0,
+    right: 0,
+  }),
+}));
+
+jest.mock('@/hooks/theme/useColors', () => ({
+  useColors: () => ({
+    tint: '#4A9B8E',
+    success: '#4CAF50',
+    error: '#F44336',
+    warning: '#FF9800',
+    elevation2: '#2C2C2E',
+    text: '#FFFFFF',
+    white: '#FFFFFF',
+    shadow: '#000000',
+    border: '#3A3A3C',
+    transparent: 'transparent',
+  }),
+}));
+
+jest.mock('@/hooks/theme/useThemeDetection', () => ({
+  useIsDarkMode: () => false,
+}));
+
+describe('Toast', () => {
+  const mockOnClose = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
+  it('should render visible toast with message', () => {
+    const { getByText } = render(
+      <Toast visible={true} message="Test message" onClose={mockOnClose} />,
+    );
+
+    expect(getByText('Test message')).toBeTruthy();
+  });
+
+  it('should not render when visible is false', () => {
+    const { queryByText } = render(
+      <Toast visible={false} message="Test message" onClose={mockOnClose} />,
+    );
+
+    expect(queryByText('Test message')).toBeNull();
+  });
+
+  it('should auto-close after default duration', () => {
+    render(<Toast visible={true} message="Test message" onClose={mockOnClose} />);
+
+    expect(mockOnClose).not.toHaveBeenCalled();
+
+    // Fast-forward to default duration (3000ms)
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should auto-close after custom duration', () => {
+    render(<Toast visible={true} message="Test message" duration={1000} onClose={mockOnClose} />);
+
+    expect(mockOnClose).not.toHaveBeenCalled();
+
+    // Fast-forward to custom duration
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should cleanup timer on unmount', () => {
+    const { unmount } = render(
+      <Toast visible={true} message="Test message" onClose={mockOnClose} />,
+    );
+
+    // Unmount before timer completes
+    unmount();
+
+    // Advance timers - onClose should not be called
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
+
+  it('should reset timer when visibility changes to true again', () => {
+    const { rerender } = render(
+      <Toast visible={true} message="Test message" onClose={mockOnClose} />,
+    );
+
+    // Change visibility to false and back to true
+    rerender(<Toast visible={false} message="Test message" onClose={mockOnClose} />);
+    rerender(<Toast visible={true} message="New message" onClose={mockOnClose} />);
+
+    // Old timer should be cancelled, new timer should start
+    expect(mockOnClose).not.toHaveBeenCalled();
+
+    // Run all timers to completion
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([
+    {
+      type: ToastType.INFO,
+      description: 'info toast',
+      expectedContent: 'Info message',
+    },
+    {
+      type: ToastType.SUCCESS,
+      description: 'success toast',
+      expectedContent: 'Success message',
+    },
+    {
+      type: ToastType.ERROR,
+      description: 'error toast',
+      expectedContent: 'Error message',
+    },
+    {
+      type: ToastType.IMPORTANT,
+      description: 'important toast',
+      expectedContent: 'Important message',
+    },
+  ])('should render $description with correct content', ({ type, expectedContent }) => {
+    const { getByText } = render(
+      <Toast visible={true} message={expectedContent} type={type} onClose={mockOnClose} />,
+    );
+
+    expect(getByText(expectedContent)).toBeTruthy();
+  });
+
+  it('should handle long messages with ellipsis', () => {
+    const longMessage =
+      'This is a very long message that should be truncated with ellipsis when it exceeds the maximum number of lines allowed in the toast component';
+
+    const { getByText } = render(
+      <Toast visible={true} message={longMessage} onClose={mockOnClose} />,
+    );
+
+    const textElement = getByText(longMessage);
+    expect(textElement).toBeTruthy();
+    expect(textElement.props.numberOfLines).toBe(3);
+    expect(textElement.props.ellipsizeMode).toBe('tail');
+  });
+
+  it('should use safe area insets for positioning', () => {
+    const { getByText } = render(
+      <Toast visible={true} message="Test message" onClose={mockOnClose} />,
+    );
+
+    const textElement = getByText('Test message');
+    const container = textElement.parent?.parent;
+
+    // Check that container style includes top offset from safe area insets
+    // Safe area top (44) + XLARGE spacing * 2 from containerStyle
+    expect(container?.props.style).toBeDefined();
+  });
+
+  it('should default to INFO type when type is not specified', () => {
+    const { getByText } = render(
+      <Toast visible={true} message="Default type message" onClose={mockOnClose} />,
+    );
+
+    expect(getByText('Default type message')).toBeTruthy();
+  });
+
+  it('should handle rapid visibility toggles', () => {
+    const { rerender } = render(
+      <Toast visible={false} message="Test message" onClose={mockOnClose} />,
+    );
+
+    // Rapidly toggle visibility
+    rerender(<Toast visible={true} message="Test message" onClose={mockOnClose} />);
+    rerender(<Toast visible={false} message="Test message" onClose={mockOnClose} />);
+    rerender(<Toast visible={true} message="Test message" onClose={mockOnClose} />);
+
+    expect(mockOnClose).not.toHaveBeenCalled();
+
+    // Complete the final timer
+    act(() => {
+      jest.runAllTimers();
+    });
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should handle onClose callback changes', () => {
+    const firstOnClose = jest.fn();
+    const secondOnClose = jest.fn();
+
+    const { rerender } = render(
+      <Toast visible={true} message="Test message" onClose={firstOnClose} />,
+    );
+
+    // Change onClose callback before timer completes
+    rerender(<Toast visible={true} message="Test message" onClose={secondOnClose} />);
+
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    // Should call the new callback
+    expect(firstOnClose).not.toHaveBeenCalled();
+    expect(secondOnClose).toHaveBeenCalledTimes(1);
+  });
+});

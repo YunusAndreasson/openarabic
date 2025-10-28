@@ -84,21 +84,20 @@ describe('arabicWordAnalysis', () => {
       expect(withDiacritics.hasComponents).toBe(withoutDiacritics.hasComponents);
     });
 
-    it('should match possessive pronouns correctly', () => {
-      const tests = [
-        { arabic: 'كتابه', english: 'his book', expectedSuffix: 'ه' },
-        { arabic: 'كتابها', english: 'her book', expectedSuffix: 'ها' },
-        { arabic: 'كتابنا', english: 'our book', expectedSuffix: 'نا' },
-        { arabic: 'كتابكم', english: 'your book', expectedSuffix: 'كم' },
-        { arabic: 'كتابهم', english: 'their book', expectedSuffix: 'هم' },
-      ];
-
-      tests.forEach(({ arabic, english, expectedSuffix }) => {
+    test.each([
+      { arabic: 'كتابه', english: 'his book', expectedSuffix: 'ه', pronoun: 'his' },
+      { arabic: 'كتابها', english: 'her book', expectedSuffix: 'ها', pronoun: 'her' },
+      { arabic: 'كتابنا', english: 'our book', expectedSuffix: 'نا', pronoun: 'our' },
+      { arabic: 'كتابكم', english: 'your book', expectedSuffix: 'كم', pronoun: 'your' },
+      { arabic: 'كتابهم', english: 'their book', expectedSuffix: 'هم', pronoun: 'their' },
+    ])(
+      'should match possessive pronoun $pronoun ($expectedSuffix)',
+      ({ arabic, english, expectedSuffix }) => {
         const analysis = analyzeArabicWord(arabic, english);
         expect(analysis.suffix?.arabicMatch).toBe(expectedSuffix);
         expect(analysis.hasComponents).toBe(true);
-      });
-    });
+      },
+    );
 
     it('should match common prefixes correctly', () => {
       const tests = [
@@ -125,20 +124,15 @@ describe('arabicWordAnalysis', () => {
       });
     });
 
-    it('should match مع preposition (with)', () => {
-      // Test مع prefix detection
-      const tests = [
-        { arabic: 'معه', english: 'with him', expectedPrefix: 'مع' },
-        { arabic: 'معك', english: 'with you', expectedPrefix: 'مع' },
-        { arabic: 'معنا', english: 'with us', expectedPrefix: 'مع' },
-        { arabic: 'معهم', english: 'with them', expectedPrefix: 'مع' },
-      ];
-
-      tests.forEach(({ arabic, english, expectedPrefix }) => {
-        const analysis = analyzeArabicWord(arabic, english);
-        expect(analysis.hasComponents).toBe(true);
-        expect(analysis.prefixes.some(p => p.arabicMatch === expectedPrefix)).toBe(true);
-      });
+    test.each([
+      { arabic: 'معه', english: 'with him', expectedPrefix: 'مع', pronoun: 'him' },
+      { arabic: 'معك', english: 'with you', expectedPrefix: 'مع', pronoun: 'you' },
+      { arabic: 'معنا', english: 'with us', expectedPrefix: 'مع', pronoun: 'us' },
+      { arabic: 'معهم', english: 'with them', expectedPrefix: 'مع', pronoun: 'them' },
+    ])('should match مع preposition with $pronoun', ({ arabic, english, expectedPrefix }) => {
+      const analysis = analyzeArabicWord(arabic, english);
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes.some(p => p.arabicMatch === expectedPrefix)).toBe(true);
     });
 
     it('should require English correspondence to avoid false positives', () => {
@@ -680,7 +674,7 @@ describe('Single Word Color-Coding Rule', () => {
     ];
 
     testCases.forEach(({ arabic, english }) => {
-      const result = analyzeArabicWord(arabic, english);
+      const _result = analyzeArabicWord(arabic, english);
 
       // The key rule: single words should not be color-coded regardless of Arabic analysis
       // This is enforced in the WordTooltip component by checking word count
@@ -763,7 +757,7 @@ describe('Whole Translation Matching Rejection', () => {
       }, // Suffix has ['we', 'we were', 'we did']
     ];
 
-    testCases.forEach(({ arabic, english, rejectedPattern, allowedPattern }) => {
+    testCases.forEach(({ arabic, english, rejectedPattern, _allowedPattern }) => {
       const analysis = analyzeArabicWord(arabic, english);
 
       // Components CAN be found, but not with the whole-translation pattern
@@ -878,9 +872,11 @@ describe('2025 Pattern Enhancements', () => {
     it('should detect shadda suffix patterns ىّ and يّ in suffix list', () => {
       // Verify the patterns exist in our suffix definitions
       const { ARABIC_SUFFIXES } = require('../../constants/arabicWordComponents');
-      const shaddaSuffixes = ARABIC_SUFFIXES.filter(s => s.arabic === 'ىّ' || s.arabic === 'يّ');
+      const shaddaSuffixes = ARABIC_SUFFIXES.filter(
+        (s: any) => s.arabic === 'ىّ' || s.arabic === 'يّ',
+      );
       expect(shaddaSuffixes.length).toBe(2);
-      expect(shaddaSuffixes.some(s => s.english.includes('me'))).toBe(true);
+      expect(shaddaSuffixes.some((s: any) => s.english.includes('me'))).toBe(true);
     });
 
     it('should detect لِي (to me) with possessive suffix', () => {
@@ -1036,7 +1032,7 @@ describe('2025 Pattern Enhancements', () => {
     it('should allow و/ف/ب/ل prefixes after subject markers with sufficient remaining', () => {
       // Valid case: و + ت + ب + root (5+ chars)
       // "and you begin" - ب is a real prefix here, not part of root
-      const analysis1 = analyzeArabicWord('وتبدأ', 'and you begin');
+      const _analysis1 = analyzeArabicWord('وتبدأ', 'and you begin');
       // After و + ت + ب, remaining should be "دأ" (2 chars, but with أ it's acceptable)
       // Actually, let me use a better example with 3+ chars remaining
 

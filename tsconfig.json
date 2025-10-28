@@ -44,10 +44,6 @@
     "translate",
     "assets",
     ".venv",
-    "__mocks__",
-    "__tests__",
-    "**/*.test.*",
-    "**/*.spec.*",
     "admin-dashboard"
   ]
 }

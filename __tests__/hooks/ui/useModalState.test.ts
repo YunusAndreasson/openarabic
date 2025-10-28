@@ -60,33 +60,38 @@ describe('useModalState', () => {
     expect(result.current.data).toBeNull();
   });
 
-  it('should toggle modal from closed to open', () => {
+  test.each([
+    {
+      description: 'closed to open',
+      setup: () => {},
+      expectedBefore: false,
+      expectedAfter: true,
+    },
+    {
+      description: 'open to closed',
+      setup: (result: any) => {
+        act(() => {
+          result.current.open();
+        });
+      },
+      expectedBefore: true,
+      expectedAfter: false,
+    },
+  ])('should toggle modal from $description', ({ setup, expectedBefore, expectedAfter }) => {
     const { result } = renderHook(() => useModalState<TestData>());
 
-    expect(result.current.isVisible).toBe(false);
+    setup(result);
+
+    expect(result.current.isVisible).toBe(expectedBefore);
 
     act(() => {
       result.current.toggle();
     });
 
-    expect(result.current.isVisible).toBe(true);
-  });
-
-  it('should toggle modal from open to closed', () => {
-    const { result } = renderHook(() => useModalState<TestData>());
-
-    act(() => {
-      result.current.open();
-    });
-
-    expect(result.current.isVisible).toBe(true);
-
-    act(() => {
-      result.current.toggle();
-    });
-
-    expect(result.current.isVisible).toBe(false);
-    expect(result.current.data).toBeNull();
+    expect(result.current.isVisible).toBe(expectedAfter);
+    if (!expectedAfter) {
+      expect(result.current.data).toBeNull();
+    }
   });
 
   it('should toggle with data payload when opening', () => {
@@ -126,33 +131,45 @@ describe('useModalState', () => {
   });
 
   it('should maintain stable function references', () => {
-    const { result, rerender } = renderHook(() => useModalState<TestData>());
+    const { result } = renderHook(() => useModalState<TestData>());
 
     const { open, close, toggle } = result.current;
 
-    rerender();
+    // Open and close to trigger state changes
+    act(() => {
+      open();
+    });
+    act(() => {
+      close();
+    });
 
+    // Function references should remain stable
     expect(result.current.open).toBe(open);
     expect(result.current.close).toBe(close);
     expect(result.current.toggle).toBe(toggle);
   });
 
-  it('should work with different data types', () => {
-    const { result: stringResult } = renderHook(() => useModalState<string>());
+  test.each([
+    {
+      type: 'string',
+      value: 'test string',
+    },
+    {
+      type: 'number',
+      value: 42,
+    },
+    {
+      type: 'object',
+      value: { id: 1, name: 'Test' },
+    },
+  ])('should work with $type data type', ({ value }) => {
+    const { result } = renderHook(() => useModalState<typeof value>());
 
     act(() => {
-      stringResult.current.open('test string');
+      result.current.open(value);
     });
 
-    expect(stringResult.current.data).toBe('test string');
-
-    const { result: numberResult } = renderHook(() => useModalState<number>());
-
-    act(() => {
-      numberResult.current.open(42);
-    });
-
-    expect(numberResult.current.data).toBe(42);
+    expect(result.current.data).toEqual(value);
   });
 
   it('should handle undefined payload gracefully', () => {
