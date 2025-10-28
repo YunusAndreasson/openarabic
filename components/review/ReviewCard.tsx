@@ -18,8 +18,8 @@ import { SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
 import { useColors } from '@/hooks/theme/useColors';
-import type { StudyWord } from '@/types/vocabulary.types';
 import type { AnimatedStyleProp as AppAnimatedStyleProp } from '@/types/ui/base.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { withOpacity } from '@/utils/colorUtils';
 
 // ===== GESTURE CONSTANTS =====
