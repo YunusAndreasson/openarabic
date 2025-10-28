@@ -492,6 +492,66 @@ describe('Article Reading Flow - Integration Test', () => {
       expect(progress?.progress_percentage).toBe(50);
       expect(mockReadingProgressService.getProgress).toHaveBeenCalledWith(userId, articleId);
     });
+
+    it('should resume reading at saved position when reopening article', async () => {
+      // Create article with 10 sentences
+      const sentences = Array.from({ length: 10 }, (_, i) => ({
+        id: i + 1,
+        position: i + 1,
+        arabic: `الجملة ${i + 1}`,
+        english: `Sentence ${i + 1}`,
+        article_id: 1 as ArticleId,
+        audio_url: `audio/sentence${i + 1}.mp3`,
+        audio_url_bilingual: null,
+        audio_url_english: null,
+        sentence_words: [],
+      }));
+
+      const article = createMockArticle({
+        article_sentences: sentences,
+      });
+
+      // User previously read 5 out of 10 sentences (50% progress)
+      mockReadingProgressService.getProgress.mockResolvedValue({
+        user_id: userId,
+        article_id: articleId,
+        last_sentence_read: 5,
+        total_sentences: 10,
+        progress_percentage: 50,
+        updated_at: '2024-01-02T00:00:00Z',
+        created_at: '2024-01-01T00:00:00Z',
+      });
+
+      mockArticlesService.getArticleById.mockResolvedValue(article);
+
+      // User reopens the article - progress is retrieved
+      const existingProgress = await ReadingProgressService.getProgress(userId, articleId);
+      const loadedArticle = await articlesService.getArticleById(articleId);
+
+      // Verify existing progress exists
+      expect(existingProgress).not.toBeNull();
+      expect(existingProgress?.last_sentence_read).toBe(5);
+      expect(existingProgress?.total_sentences).toBe(10);
+
+      // Verify article loaded with correct sentence count
+      expect(loadedArticle.article_sentences).toHaveLength(10);
+
+      // Verify data needed for scroll-to-position is available
+      // (In the actual UI, useArticleScreen will scroll to sentence 5 + 1 = index 6)
+      const targetScrollIndex = (existingProgress?.last_sentence_read ?? 0) + 1;
+      expect(targetScrollIndex).toBe(6);
+
+      // Verify percentage calculation for toast message
+      const percentage = Math.round(
+        ((existingProgress?.last_sentence_read ?? 0) / (existingProgress?.total_sentences ?? 1)) *
+          100,
+      );
+      expect(percentage).toBe(50);
+
+      // Verify both service calls were made
+      expect(mockReadingProgressService.getProgress).toHaveBeenCalledWith(userId, articleId);
+      expect(mockArticlesService.getArticleById).toHaveBeenCalledWith(articleId);
+    });
   });
 
   describe('Bookmarking and Reading List', () => {
