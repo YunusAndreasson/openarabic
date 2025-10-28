@@ -60,7 +60,8 @@ export const useArticleData = (
   const studyWordsQuery = useQuery({
     ...fsrsQueryOptions.allWithCooldown(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
     enabled: !!userId,
-    refetchOnMount: true, // Previously 'always', now true to respect staleTime
+    refetchOnMount: false, // Only refetch via cache invalidation or pull-to-refresh
+    refetchOnReconnect: false, // Only refetch via pull-to-refresh
     placeholderData: old => old,
   });
 

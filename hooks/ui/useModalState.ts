@@ -46,16 +46,19 @@ export function useModalState<T>() {
    * If closing, data is cleared. If opening, optional payload can be provided.
    * @param payload - Data to associate when opening (optional)
    */
-  const toggle = useCallback(
-    (payload?: T) => {
-      if (isVisible) {
-        close();
+  const toggle = useCallback((payload?: T) => {
+    setIsVisible(prev => {
+      if (prev) {
+        setData(null);
+        return false;
       } else {
-        open(payload);
+        if (payload !== undefined) {
+          setData(payload);
+        }
+        return true;
       }
-    },
-    [isVisible, open, close],
-  );
+    });
+  }, []);
 
   // Memoize the return object to prevent unnecessary re-renders in dependent components
   return useMemo(

@@ -26,6 +26,48 @@ export function getBeginnerArticles(articles: Article[], limit = 20): Article[] 
 }
 
 /**
+ * Generic function to filter articles by a set of word root IDs
+ * @param articles - The articles to filter and sort
+ * @param wordRootIds - Set of root IDs to match against
+ * @param limit - The maximum number of articles to return
+ * @returns Articles sorted by matching word count (highest first)
+ */
+function filterArticlesByWordSet(
+  articles: Article[],
+  wordRootIds: Set<RootId>,
+  limit: number,
+): Article[] {
+  // Count unique matching words in each article
+  const articlesWithWordCount = articles.map(article => {
+    // Use a set to track unique root IDs in this article
+    const uniqueMatchingRootIds = new Set<RootId>();
+
+    // Check each sentence in the article
+    article.article_sentences?.forEach(sentence => {
+      // Iterate through all sentence words
+      sentence.sentence_words?.forEach(word => {
+        const rootId: RootId | undefined = word?.root_id;
+        if (rootId && wordRootIds.has(rootId)) {
+          uniqueMatchingRootIds.add(rootId);
+        }
+      });
+    });
+
+    // Return the count of unique root IDs
+    return { article, wordCount: uniqueMatchingRootIds.size };
+  });
+
+  // Filter articles that actually have matching words
+  const articlesWithWords = articlesWithWordCount.filter(item => item.wordCount > 0);
+
+  // Sort by word count (highest first) and limit results
+  return articlesWithWords
+    .sort((a, b) => b.wordCount - a.wordCount)
+    .map(item => item.article)
+    .slice(0, limit);
+}
+
+/**
  * Gets articles sorted by due words count - articles with more due words are prioritized
  * @param articles - The articles to sort
  * @param dueWords - The user's due words (from studyWordsFSRSService)
@@ -42,34 +84,7 @@ export function getArticlesByDueWords(
   // Get the root IDs of due words
   const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
 
-  // Count unique due words in each article
-  const articlesWithDueWordCount = articles.map(article => {
-    // Use a set to track unique root IDs in this article
-    const uniqueDueRootIds = new Set<RootId>();
-
-    // Check each sentence in the article
-    article.article_sentences?.forEach(sentence => {
-      // Iterate through all sentence words
-      sentence.sentence_words?.forEach(word => {
-        const rootId: RootId | undefined = word?.root_id;
-        if (rootId && dueWordRootIds.has(rootId)) {
-          uniqueDueRootIds.add(rootId);
-        }
-      });
-    });
-
-    // Return the count of unique root IDs
-    return { article, dueWordCount: uniqueDueRootIds.size };
-  });
-
-  // Filter articles that actually have due words
-  const articlesWithDueWords = articlesWithDueWordCount.filter(item => item.dueWordCount > 0);
-
-  // Sort by due word count (highest first)
-  return articlesWithDueWords
-    .sort((a, b) => b.dueWordCount - a.dueWordCount)
-    .map(item => item.article)
-    .slice(0, limit);
+  return filterArticlesByWordSet(articles, dueWordRootIds, limit);
 }
 
 /**
@@ -89,36 +104,7 @@ export function getArticlesByDifficultWords(
   // Get the root IDs of difficult words
   const difficultWordRootIds = new Set(difficultWords.map(word => word.root_id));
 
-  // Count unique difficult words in each article
-  const articlesWithDifficultWordCount = articles.map(article => {
-    // Use a set to track unique root IDs in this article
-    const uniqueDifficultRootIds = new Set<RootId>();
-
-    // Check each sentence in the article
-    article.article_sentences?.forEach(sentence => {
-      // Iterate through all sentence words
-      sentence.sentence_words?.forEach(word => {
-        const rootId: RootId | undefined = word?.root_id;
-        if (rootId && difficultWordRootIds.has(rootId)) {
-          uniqueDifficultRootIds.add(rootId);
-        }
-      });
-    });
-
-    // Return the count of unique root IDs
-    return { article, difficultWordCount: uniqueDifficultRootIds.size };
-  });
-
-  // Filter articles that actually have difficult words
-  const articlesWithDifficultWords = articlesWithDifficultWordCount.filter(
-    item => item.difficultWordCount > 0,
-  );
-
-  // Sort by difficult word count (highest first)
-  return articlesWithDifficultWords
-    .sort((a, b) => b.difficultWordCount - a.difficultWordCount)
-    .map(item => item.article)
-    .slice(0, limit);
+  return filterArticlesByWordSet(articles, difficultWordRootIds, limit);
 }
 
 /**

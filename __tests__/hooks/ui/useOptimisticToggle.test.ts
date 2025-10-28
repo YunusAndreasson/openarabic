@@ -5,20 +5,20 @@ import { useOptimisticToggle } from '@/hooks/ui/useOptimisticToggle';
 
 describe('useOptimisticToggle', () => {
   it('should initialize with actual value', () => {
-    const mockOnToggle = jest.fn().mockResolvedValue(undefined);
+    const mockOnToggle = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
     const { result } = renderHook(() => useOptimisticToggle(false, mockOnToggle));
 
     expect(result.current.value).toBe(false);
   });
 
   it('should sync optimistic value with actual value changes', () => {
-    const mockOnToggle = jest.fn().mockResolvedValue(undefined);
-    const { result, rerender } = renderHook(
-      ({ actualValue, onToggle }) => useOptimisticToggle(actualValue, onToggle),
-      {
-        initialProps: { actualValue: false, onToggle: mockOnToggle },
-      },
-    );
+    const mockOnToggle = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const { result, rerender } = renderHook<
+      { value: boolean; toggle: () => Promise<void> },
+      { actualValue: boolean; onToggle: () => Promise<void> }
+    >(({ actualValue, onToggle }) => useOptimisticToggle(actualValue, onToggle), {
+      initialProps: { actualValue: false, onToggle: mockOnToggle },
+    });
 
     expect(result.current.value).toBe(false);
 
@@ -28,7 +28,7 @@ describe('useOptimisticToggle', () => {
   });
 
   it('should optimistically toggle from false to true', async () => {
-    const mockOnToggle = jest.fn().mockResolvedValue(undefined);
+    const mockOnToggle = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
     const { result } = renderHook(() => useOptimisticToggle(false, mockOnToggle));
 
     expect(result.current.value).toBe(false);
@@ -42,7 +42,7 @@ describe('useOptimisticToggle', () => {
   });
 
   it('should optimistically toggle from true to false', async () => {
-    const mockOnToggle = jest.fn().mockResolvedValue(undefined);
+    const mockOnToggle = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
     const { result } = renderHook(() => useOptimisticToggle(true, mockOnToggle));
 
     expect(result.current.value).toBe(true);
@@ -56,7 +56,9 @@ describe('useOptimisticToggle', () => {
   });
 
   it('should revert optimistic value on error', async () => {
-    const mockOnToggle = jest.fn().mockRejectedValue(new Error('Toggle failed'));
+    const mockOnToggle = jest
+      .fn<() => Promise<void>>()
+      .mockRejectedValue(new Error('Toggle failed'));
     const { result } = renderHook(() => useOptimisticToggle(false, mockOnToggle));
 
     expect(result.current.value).toBe(false);
@@ -71,13 +73,13 @@ describe('useOptimisticToggle', () => {
   });
 
   it('should handle multiple successful toggles', async () => {
-    const mockOnToggle = jest.fn().mockResolvedValue(undefined);
-    const { result, rerender } = renderHook(
-      ({ actualValue, onToggle }) => useOptimisticToggle(actualValue, onToggle),
-      {
-        initialProps: { actualValue: false, onToggle: mockOnToggle },
-      },
-    );
+    const mockOnToggle = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const { result, rerender } = renderHook<
+      { value: boolean; toggle: () => Promise<void> },
+      { actualValue: boolean; onToggle: () => Promise<void> }
+    >(({ actualValue, onToggle }) => useOptimisticToggle(actualValue, onToggle), {
+      initialProps: { actualValue: false, onToggle: mockOnToggle },
+    });
 
     // First toggle: false -> true
     await act(async () => {
@@ -99,7 +101,7 @@ describe('useOptimisticToggle', () => {
 
   it('should handle error then success sequence', async () => {
     const mockOnToggle = jest
-      .fn()
+      .fn<() => Promise<void>>()
       .mockRejectedValueOnce(new Error('First failed'))
       .mockResolvedValueOnce(undefined);
 
@@ -121,15 +123,15 @@ describe('useOptimisticToggle', () => {
   });
 
   it('should not call onToggle if callback changes', async () => {
-    const mockOnToggle1 = jest.fn().mockResolvedValue(undefined);
-    const mockOnToggle2 = jest.fn().mockResolvedValue(undefined);
+    const mockOnToggle1 = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const mockOnToggle2 = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
 
-    const { result, rerender } = renderHook(
-      ({ actualValue, onToggle }) => useOptimisticToggle(actualValue, onToggle),
-      {
-        initialProps: { actualValue: false, onToggle: mockOnToggle1 },
-      },
-    );
+    const { result, rerender } = renderHook<
+      { value: boolean; toggle: () => Promise<void> },
+      { actualValue: boolean; onToggle: () => Promise<void> }
+    >(({ actualValue, onToggle }) => useOptimisticToggle(actualValue, onToggle), {
+      initialProps: { actualValue: false, onToggle: mockOnToggle1 },
+    });
 
     // Toggle with first callback
     await act(async () => {
@@ -157,7 +159,7 @@ describe('useOptimisticToggle', () => {
       resolveToggle = resolve;
     });
 
-    const mockOnToggle = jest.fn().mockReturnValue(togglePromise);
+    const mockOnToggle = jest.fn<() => Promise<void>>().mockReturnValue(togglePromise);
     const { result } = renderHook(() => useOptimisticToggle(false, mockOnToggle));
 
     // Start toggle (doesn't await)
@@ -184,7 +186,7 @@ describe('useOptimisticToggle', () => {
       rejectToggle = reject;
     });
 
-    const mockOnToggle = jest.fn().mockReturnValue(togglePromise);
+    const mockOnToggle = jest.fn<() => Promise<void>>().mockReturnValue(togglePromise);
     const { result } = renderHook(() => useOptimisticToggle(false, mockOnToggle));
 
     // Start toggle
@@ -206,7 +208,7 @@ describe('useOptimisticToggle', () => {
   });
 
   it('should handle rapid toggles correctly', async () => {
-    const mockOnToggle = jest.fn().mockResolvedValue(undefined);
+    const mockOnToggle = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
     const { result } = renderHook(() => useOptimisticToggle(false, mockOnToggle));
 
     await act(async () => {
@@ -231,7 +233,9 @@ describe('useOptimisticToggle', () => {
   });
 
   it('should silently catch errors (no re-throw)', async () => {
-    const mockOnToggle = jest.fn().mockRejectedValue(new Error('Toggle failed'));
+    const mockOnToggle = jest
+      .fn<() => Promise<void>>()
+      .mockRejectedValue(new Error('Toggle failed'));
     const { result } = renderHook(() => useOptimisticToggle(false, mockOnToggle));
 
     // Should not throw error

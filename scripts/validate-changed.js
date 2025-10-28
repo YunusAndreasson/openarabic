@@ -44,6 +44,14 @@ function filterFilesByExtension(files, extensions) {
   return files.filter(file => extensions.some(ext => file.endsWith(ext)));
 }
 
+function isTestFile(file) {
+  return (
+    file.includes('/__tests__/') ||
+    file.includes('/__tests__') ||
+    file.match(/\.test\.(ts|tsx|js|jsx)$/)
+  );
+}
+
 function runCommand(command, args, label) {
   const { execSync } = require('child_process');
   const startTime = Date.now();
@@ -247,20 +255,37 @@ async function main() {
 
   const tasks = [];
 
-  // TypeScript type checking (only if code files changed)
-  if (codeFiles.length > 0) {
+  // TypeScript type checking (only if code files changed, excluding tests)
+  const nonTestFiles = codeFiles.filter(file => !isTestFile(file));
+  if (nonTestFiles.length > 0) {
     tasks.push(
       Promise.resolve().then(() =>
-        runCommand('npx', ['tsc-files', '--noEmit', ...codeFiles], 'TypeScript'),
+        runCommand('npx', ['tsc-files', '--noEmit', ...nonTestFiles], 'TypeScript'),
       ),
     );
   }
 
-  // Prettier check - use yarn script (fast with cache, checks all files)
-  tasks.push(Promise.resolve().then(() => runCommand('yarn', ['prettier:check'], 'Prettier')));
+  // Prettier check - only non-test code files
+  const filesToCheck = allChangedFiles.filter(file => !isTestFile(file));
+  if (filesToCheck.length > 0) {
+    tasks.push(
+      Promise.resolve().then(() =>
+        runCommand('npx', ['prettier', '--check', '--cache', ...filesToCheck], 'Prettier'),
+      ),
+    );
 
-  // ESLint - use yarn script (fast with cache, checks all files)
-  tasks.push(Promise.resolve().then(() => runCommand('yarn', ['lint'], 'ESLint')));
+    // ESLint - only non-test code files
+    const codeFilesToLint = filesToCheck.filter(file =>
+      ['.ts', '.tsx', '.js', '.jsx'].some(ext => file.endsWith(ext)),
+    );
+    if (codeFilesToLint.length > 0) {
+      tasks.push(
+        Promise.resolve().then(() =>
+          runCommand('npx', ['eslint', '--cache', ...codeFilesToLint], 'ESLint'),
+        ),
+      );
+    }
+  }
 
   if (tasks.length === 0) {
     console.log(`${colors.green}( No validation needed for changed files.${colors.reset}\n`);

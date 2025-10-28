@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+
+import { useSyncedState } from './useSyncedState';
 
 /**
  * Hook for managing optimistic UI updates for toggle operations
@@ -29,12 +31,7 @@ export function useOptimisticToggle(
   value: boolean;
   toggle: () => Promise<void>;
 } {
-  const [optimisticValue, setOptimisticValue] = useState(actualValue);
-
-  // Sync optimistic state with actual value when it changes (from external updates)
-  useEffect(() => {
-    setOptimisticValue(actualValue);
-  }, [actualValue]);
+  const [optimisticValue, setOptimisticValue] = useSyncedState(actualValue);
 
   /**
    * Toggle handler with optimistic update and error rollback
@@ -55,7 +52,7 @@ export function useOptimisticToggle(
       setOptimisticValue(optimisticValue);
       // Error handling completed silently (onToggle should handle error toasts/logging)
     }
-  }, [onToggle, optimisticValue]);
+  }, [onToggle, optimisticValue, setOptimisticValue]);
 
   return {
     value: optimisticValue,

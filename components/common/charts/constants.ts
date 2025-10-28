@@ -47,6 +47,14 @@ export const CHART_VISUAL = {
   CHART_BOTTOM_PADDING: 8, // Bottom padding to prevent dots from clipping at bottom edge
 } as const;
 
+/**
+ * Calculate effective chart height accounting for padding
+ * @returns Effective height for chart data rendering
+ */
+export const getEffectiveChartHeight = (): number => {
+  return GRAPH_HEIGHT_LARGE - CHART_VISUAL.CHART_TOP_PADDING - CHART_VISUAL.CHART_BOTTOM_PADDING;
+};
+
 // Time periods - optimized for mobile clarity and user comprehension
 export const DAYS_7 = 7; // Weekly view for better mobile experience and cognitive load
 

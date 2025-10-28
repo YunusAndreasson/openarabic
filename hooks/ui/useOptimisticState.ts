@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useSyncedState } from './useSyncedState';
 
 /**
  * Hook for managing optimistic UI updates
@@ -28,14 +28,7 @@ export function useOptimisticState<T>(
   actualValue: T,
   supportsOptimistic: boolean = false,
 ): [T, (value: T) => void] {
-  const [optimisticValue, setOptimisticValue] = useState<T>(actualValue);
-
-  // Sync optimistic value with actual value when actual value changes
-  // This ensures the display value is correct when the component mounts
-  // or when the actual value changes from an external source
-  useEffect(() => {
-    setOptimisticValue(actualValue);
-  }, [actualValue]);
+  const [optimisticValue, setOptimisticValue] = useSyncedState<T>(actualValue);
 
   // Return optimistic value if enabled, otherwise actual value
   const displayValue = supportsOptimistic ? optimisticValue : actualValue;

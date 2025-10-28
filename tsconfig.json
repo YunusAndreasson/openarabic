@@ -44,6 +44,7 @@
     "translate",
     "assets",
     ".venv",
-    "admin-dashboard"
+    "admin-dashboard",
+    "__tests__"
   ]
 }

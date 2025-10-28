@@ -3,8 +3,8 @@ import {
   calculateDataPointPositions,
   CHART_VISUAL,
   DAYS_7,
+  getEffectiveChartHeight,
   GRAPH_HEIGHT_LARGE,
-  useGraphWidth,
 } from '@charts/constants';
 import { buildSmoothChartPath } from '@charts/pathBuilder';
 import { createStandardizedPerformanceZones } from '@charts/utils';
@@ -39,7 +39,6 @@ export interface UseRetrievabilityChartResult {
  */
 export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabilityChartResult {
   const chartColors = useChartColors();
-  const graphWidth = useGraphWidth();
 
   const retrievabilityData = useMemo<RetrievabilityForecast[]>(() => {
     return calculateRetrievabilityForecast(studyWords, DAYS_7);
@@ -63,17 +62,14 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
     );
 
     // Create smooth curve using shared path builder utility
-    const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
-    const BOTTOM_PADDING = CHART_VISUAL.CHART_BOTTOM_PADDING;
-    // Effective chart height accounts for both top and bottom padding
-    const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING - BOTTOM_PADDING;
+    const chartHeight = getEffectiveChartHeight();
     const dataPointPositions = calculateDataPointPositions(retrievabilityData.length);
 
     const { path: retrievabilityPath, points } = buildSmoothChartPath({
       data: retrievabilityData,
       dataPointPositions,
       calculateY: data =>
-        TOP_PADDING +
+        CHART_VISUAL.CHART_TOP_PADDING +
         (chartHeight - (data.averageRetrievability / maxRetrievability) * chartHeight),
       buildPoint: (x, y, data) => ({
         x,
@@ -105,7 +101,7 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
         criticalWords,
       },
     };
-  }, [retrievabilityData, chartColors, graphWidth, studyWords?.length]);
+  }, [retrievabilityData, chartColors, studyWords?.length]);
 
   return { retrievabilityData, chartData };
 }

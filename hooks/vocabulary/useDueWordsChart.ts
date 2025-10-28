@@ -1,10 +1,8 @@
-import { useChartColors } from '@charts/ChartColors';
 import {
   calculateDataPointPositions,
   CHART_VISUAL,
   DAYS_7,
-  GRAPH_HEIGHT_LARGE,
-  useGraphWidth,
+  getEffectiveChartHeight,
 } from '@charts/constants';
 import { buildSmoothChartPath } from '@charts/pathBuilder';
 import { useMemo } from 'react';
@@ -36,9 +34,6 @@ export interface UseDueWordsChartResult {
  * Calculate due words forecast and chart metrics for vocabulary words.
  */
 export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResult {
-  const chartColors = useChartColors();
-  const graphWidth = useGraphWidth();
-
   const dueWordsData = useMemo<DueWordsForecast[]>(() => {
     return calculateDueWordsForecast(studyWords, DAYS_7);
   }, [studyWords]);
@@ -60,16 +55,15 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
     );
 
     // Create smooth curve using shared path builder utility
-    const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
-    const BOTTOM_PADDING = CHART_VISUAL.CHART_BOTTOM_PADDING;
-    // Effective chart height accounts for both top and bottom padding
-    const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING - BOTTOM_PADDING;
+    const chartHeight = getEffectiveChartHeight();
     const dataPointPositions = calculateDataPointPositions(dueWordsData.length);
 
     const { path: dueWordsPath, points } = buildSmoothChartPath({
       data: dueWordsData,
       dataPointPositions,
-      calculateY: data => TOP_PADDING + (chartHeight - (data.dueWords / maxDueWords) * chartHeight),
+      calculateY: data =>
+        CHART_VISUAL.CHART_TOP_PADDING +
+        (chartHeight - (data.dueWords / maxDueWords) * chartHeight),
       buildPoint: (x, y, data) => ({ x, y, dueWords: data.dueWords, date: data.date }),
     });
 
@@ -92,7 +86,7 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
         trend,
       },
     };
-  }, [dueWordsData, chartColors, graphWidth, studyWords?.length]);
+  }, [dueWordsData, studyWords?.length]);
 
   return { dueWordsData, chartData };
 }

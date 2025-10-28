@@ -393,9 +393,9 @@ export function useBulkReadingProgress(articleIds: number[]) {
     // Use placeholderData to prevent undefined while query is disabled or fetching
     placeholderData: new Map(),
     // Don't set staleTime/retry here - let QueryClient defaults control for testability
-    refetchOnMount: true, // Refetch if data is stale or invalidated
+    refetchOnMount: false, // Only refetch via cache invalidation or pull-to-refresh
     gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
-    refetchOnReconnect: true, // Refetch when network reconnects
+    refetchOnReconnect: false, // Only refetch via pull-to-refresh
   });
 
   // Filter the full Map to only include requested articleIds for this component

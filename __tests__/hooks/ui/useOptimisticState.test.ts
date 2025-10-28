@@ -44,7 +44,10 @@ describe('useOptimisticState', () => {
   });
 
   it('should sync optimistic value with actual value changes', () => {
-    const { result, rerender } = renderHook(
+    const { result, rerender } = renderHook<
+      [string, (value: string) => void],
+      { actualValue: string; supportsOptimistic: boolean }
+    >(
       ({ actualValue, supportsOptimistic }) => useOptimisticState(actualValue, supportsOptimistic),
       {
         initialProps: { actualValue: 'initial', supportsOptimistic: true },
@@ -62,7 +65,10 @@ describe('useOptimisticState', () => {
   });
 
   it('should override optimistic value when actual value changes', () => {
-    const { result, rerender } = renderHook(
+    const { result, rerender } = renderHook<
+      [string, (value: string) => void],
+      { actualValue: string; supportsOptimistic: boolean }
+    >(
       ({ actualValue, supportsOptimistic }) => useOptimisticState(actualValue, supportsOptimistic),
       {
         initialProps: { actualValue: 'initial', supportsOptimistic: true },
@@ -148,7 +154,10 @@ describe('useOptimisticState', () => {
   });
 
   it('should toggle between optimistic and non-optimistic modes', () => {
-    const { result, rerender } = renderHook(
+    const { result, rerender } = renderHook<
+      [string, (value: string) => void],
+      { actualValue: string; supportsOptimistic: boolean }
+    >(
       ({ actualValue, supportsOptimistic }) => useOptimisticState(actualValue, supportsOptimistic),
       {
         initialProps: { actualValue: 'actual', supportsOptimistic: false },
@@ -207,12 +216,12 @@ describe('useOptimisticState', () => {
   });
 
   it('should sync immediately when actual value changes', () => {
-    const { result, rerender } = renderHook(
-      ({ actualValue }) => useOptimisticState(actualValue, true),
-      {
-        initialProps: { actualValue: 'v1' },
-      },
-    );
+    const { result, rerender } = renderHook<
+      [string, (value: string) => void],
+      { actualValue: string }
+    >(({ actualValue }) => useOptimisticState(actualValue, true), {
+      initialProps: { actualValue: 'v1' },
+    });
 
     expect(result.current[0]).toBe('v1');
 
