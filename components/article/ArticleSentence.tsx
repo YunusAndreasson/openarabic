@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { type AnimatedStyle } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ArabicWord } from '@/components/article/ArabicWord';
+import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
 import { FONTS, LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';

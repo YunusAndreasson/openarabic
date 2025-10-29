@@ -1,8 +1,9 @@
 /**
- * ArabicWord Component Tests
+ * SkiaArabicWord Component Tests
  *
- * Tests the core Arabic word rendering component with:
- * - Color-coded grammar segments
+ * Tests the Skia-based Arabic word rendering component with:
+ * - GPU-accelerated text rendering via Skia Canvas
+ * - Color-coded grammar segments using Skia Paragraph API
  * - Selection and highlighting states
  * - Tooltip interaction
  * - Single-word rule (no color-coding for single English words)
@@ -13,7 +14,7 @@ import type { ComponentRef } from 'react';
 import React, { createRef } from 'react';
 import { Pressable } from 'react-native';
 
-import { ArabicWord } from '@/components/article/ArabicWord';
+import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
 // Mock hooks
@@ -33,11 +34,32 @@ jest.mock('@/hooks/theme/useColors', () => ({
   }),
 }));
 
+jest.mock('@/hooks/theme/useSkiaFonts', () => ({
+  useSkiaFonts: jest.fn(() => ({
+    arabicFont: {
+      getSize: () => 17,
+      getTypeface: () => ({
+        getFamilyName: () => 'Noto Sans Arabic',
+      }),
+    },
+    getArabicFont: jest.fn(() => ({
+      getSize: () => 17,
+      getTypeface: () => ({
+        getFamilyName: () => 'Noto Sans Arabic',
+      }),
+    })),
+    isReady: true,
+    fontSize: 17,
+    fontFamily: 'Noto Sans Arabic',
+  })),
+}));
+
 jest.mock('@/hooks/vocabulary', () => ({
   useArabicWord: jest.fn(() => ({ isSelected: false })),
 }));
 
 const { useArabicWord } = require('@/hooks/vocabulary');
+const { useSkiaFonts } = require('@/hooks/theme/useSkiaFonts');
 
 describe('ArabicWord Component', () => {
   const createMockWord = (overrides: Partial<SentenceWord> = {}): SentenceWord => ({
@@ -57,14 +79,31 @@ describe('ArabicWord Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useArabicWord as jest.Mock).mockReturnValue({ isSelected: false });
+    (useSkiaFonts as jest.Mock).mockReturnValue({
+      arabicFont: {
+        getSize: () => 17,
+        getTypeface: () => ({
+          getFamilyName: () => 'Noto Sans Arabic',
+        }),
+      },
+      getArabicFont: jest.fn(() => ({
+        getSize: () => 17,
+        getTypeface: () => ({
+          getFamilyName: () => 'Noto Sans Arabic',
+        }),
+      })),
+      isReady: true,
+      fontSize: 17,
+      fontFamily: 'Noto Sans Arabic',
+    });
   });
 
   describe('Basic Rendering', () => {
-    it('renders Arabic text correctly', () => {
+    it('renders Skia Canvas for Arabic text', () => {
       const word = createMockWord({ word_form: 'كتاب' });
-      const { getByText } = render(<ArabicWord word={word} />);
+      const { getByTestId } = render(<ArabicWord word={word} testID="arabic-word-1" />);
 
-      expect(getByText('كتاب')).toBeTruthy();
+      expect(getByTestId('arabic-word-1')).toBeTruthy();
     });
 
     it('renders with testID for testing', () => {
@@ -80,10 +119,10 @@ describe('ArabicWord Component', () => {
         coloredSegments: [],
       });
 
-      const { getByText } = render(<ArabicWord word={word} />);
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
 
-      // Should render as single text element
-      expect(getByText('كتاب')).toBeTruthy();
+      // Should render successfully (text is in Canvas, not React tree)
+      expect(getByTestId('word')).toBeTruthy();
     });
   });
 
@@ -99,12 +138,10 @@ describe('ArabicWord Component', () => {
         ],
       });
 
-      const { getByText } = render(<ArabicWord word={word} />);
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
 
-      // Each segment should be rendered
-      expect(getByText('و')).toBeTruthy();
-      expect(getByText('ال')).toBeTruthy();
-      expect(getByText('كتاب')).toBeTruthy();
+      // Skia Canvas renders all segments (text is graphics, not React elements)
+      expect(getByTestId('word')).toBeTruthy();
     });
 
     it('applies single-word rule (no color-coding for single English words)', () => {
@@ -114,11 +151,10 @@ describe('ArabicWord Component', () => {
         coloredSegments: [], // Should be empty due to single-word rule
       });
 
-      const { getByText } = render(<ArabicWord word={word} />);
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
 
-      // Should render as single uncolored text
-      const textElement = getByText('كتاب');
-      expect(textElement).toBeTruthy();
+      // Should render successfully without color-coding
+      expect(getByTestId('word')).toBeTruthy();
     });
 
     it('allows color-coding for multi-word English translations', () => {
@@ -132,12 +168,10 @@ describe('ArabicWord Component', () => {
         ],
       });
 
-      const { getByText } = render(<ArabicWord word={word} />);
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
 
-      // All segments should be rendered with colors
-      expect(getByText('و')).toBeTruthy();
-      expect(getByText('ال')).toBeTruthy();
-      expect(getByText('كتاب')).toBeTruthy();
+      // Should render successfully with color-coded segments
+      expect(getByTestId('word')).toBeTruthy();
     });
 
     it('handles diacritics in colored segments', () => {
@@ -151,11 +185,10 @@ describe('ArabicWord Component', () => {
         ],
       });
 
-      const { getByText } = render(<ArabicWord word={word} />);
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
 
-      expect(getByText('وَ')).toBeTruthy();
-      expect(getByText('الْ')).toBeTruthy();
-      expect(getByText('كِتَابِ')).toBeTruthy();
+      // Should render successfully with diacritics
+      expect(getByTestId('word')).toBeTruthy();
     });
   });
 
@@ -293,8 +326,8 @@ describe('ArabicWord Component', () => {
       const longText = 'والكتاب'.repeat(20);
       const word = createMockWord({ word_form: longText });
 
-      const { getByText } = render(<ArabicWord word={word} />);
-      expect(getByText(longText)).toBeTruthy();
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      expect(getByTestId('word')).toBeTruthy();
     });
 
     it('handles word with only diacritics', () => {
@@ -306,8 +339,8 @@ describe('ArabicWord Component', () => {
     it('handles mixed Arabic and non-Arabic text', () => {
       const word = createMockWord({ word_form: 'كتابbook123' });
 
-      const { getByText } = render(<ArabicWord word={word} />);
-      expect(getByText('كتابbook123')).toBeTruthy();
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      expect(getByTestId('word')).toBeTruthy();
     });
 
     it('handles empty coloredSegments array', () => {
@@ -316,8 +349,8 @@ describe('ArabicWord Component', () => {
         coloredSegments: [],
       });
 
-      const { getByText } = render(<ArabicWord word={word} />);
-      expect(getByText('كتاب')).toBeTruthy();
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      expect(getByTestId('word')).toBeTruthy();
     });
   });
 
@@ -361,8 +394,8 @@ describe('ArabicWord Component', () => {
           coloredSegments: [], // Single words should have no colored segments
         });
 
-        const { getByText } = render(<ArabicWord word={word} />);
-        expect(getByText(word_form)).toBeTruthy();
+        const { getByTestId } = render(<ArabicWord word={word} testID={`word-${word_form}`} />);
+        expect(getByTestId(`word-${word_form}`)).toBeTruthy();
       });
     });
 
@@ -378,12 +411,10 @@ describe('ArabicWord Component', () => {
         ],
       });
 
-      const { getByText } = render(<ArabicWord word={word} />);
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
 
-      // All segments should be present
-      expect(getByText('و')).toBeTruthy();
-      expect(getByText('ال')).toBeTruthy();
-      expect(getByText('كتاب')).toBeTruthy();
+      // Should render successfully with colored segments
+      expect(getByTestId('word')).toBeTruthy();
 
       // Segments should combine to form original word
       const segments = word.coloredSegments.map(s => s.text).join('');

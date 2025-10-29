@@ -154,6 +154,7 @@ export function WordDetailsBottomSheet({
             style={styles.arabicTitle}
             defaultColor={colors.arabicText}
             isArabic={true}
+            precomputedSegments={word.coloredSegments}
           />
           {word.english && (
             <ColorCodedText

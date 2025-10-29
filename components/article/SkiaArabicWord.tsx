@@ -1,18 +1,20 @@
-import { memo, useEffect, useRef, type ComponentRef, type RefObject } from 'react';
-import type { LayoutRectangle, TextStyle } from 'react-native';
+import { memo, useEffect, useMemo, useRef, type ComponentRef, type RefObject } from 'react';
+import type { LayoutRectangle } from 'react-native';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
+
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';
 import { useArabicWord } from '@/hooks/vocabulary';
-import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
+import { buildColoredParagraph, buildSimpleParagraph } from '@/utils/skiaParagraphBuilder';
 import { getSelectedStyle } from '@/utils/textStyleUtils';
 
-interface ArabicWordProps {
+interface SkiaArabicWordProps {
   word: SentenceWord;
   onTooltipOpen?: (word: SentenceWord, layout: LayoutRectangle) => void;
   position?: number;
@@ -21,15 +23,16 @@ interface ArabicWordProps {
   testID?: string;
 }
 
-const ArabicWordInternal = function ArabicWord({
+const SkiaArabicWordInternal = function SkiaArabicWord({
   word,
   onTooltipOpen,
   position,
   wordRef,
   isHighlighted = false,
   testID,
-}: ArabicWordProps) {
+}: SkiaArabicWordProps) {
   const colors = useColors();
+  const { arabicFont, getArabicFont, isReady, fontFamily } = useSkiaFonts();
 
   // Prevent memory leaks from async callbacks on unmounted components
   const isMountedRef = useRef(true);
@@ -44,7 +47,6 @@ const ArabicWordInternal = function ArabicWord({
   const coloredSegments = word.coloredSegments || [];
 
   // Check if word has colored components (not just multiple segments)
-  // A word can have components even with only 1 segment if that segment is colored
   const hasComponents =
     coloredSegments.length > 0 &&
     coloredSegments.some(seg => seg.color !== colors.text && seg.color !== colors.arabicText);
@@ -56,13 +58,67 @@ const ArabicWordInternal = function ArabicWord({
     };
   }, []);
 
-  // Base text props for Arabic text
-  const baseTextProps = {
-    type: 'arabic' as const,
-    arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    weight: (isSelected ? 'semibold' : 'normal') as TextWeight,
-    style: styles.textStyle as TextStyle,
-  };
+  // Build Skia paragraph based on whether word has colored components
+  const paragraph = useMemo(() => {
+    if (!arabicFont || !isReady) {
+      return null;
+    }
+
+    // Get font with appropriate weight for selection state
+    const font = getArabicFont(undefined, isSelected ? 'semibold' : 'normal');
+    if (!font) {
+      return null;
+    }
+
+    if (hasComponents && coloredSegments.length > 0) {
+      // Build multi-colored paragraph from segments
+      return buildColoredParagraph({
+        segments: coloredSegments,
+        font,
+        fontFamily,
+        textDirection: TextDirection.RTL,
+        maxWidth: 2000, // Large width to prevent wrapping of single words
+        letterSpacing: 0,
+      });
+    } else {
+      // Build simple single-color paragraph
+      return buildSimpleParagraph(
+        word.word_form,
+        font,
+        colors.arabicText,
+        fontFamily,
+        TextDirection.RTL,
+        2000,
+      );
+    }
+  }, [
+    arabicFont,
+    isReady,
+    getArabicFont,
+    isSelected,
+    hasComponents,
+    coloredSegments,
+    word.word_form,
+    colors.arabicText,
+    fontFamily,
+  ]);
+
+  // Calculate canvas dimensions from paragraph
+  const canvasDimensions = useMemo(() => {
+    if (!paragraph) {
+      // Default dimensions for loading state
+      return { width: 60, height: 40, yOffset: 0 };
+    }
+
+    const fontSize = arabicFont?.getSize() || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
+
+    // Simple, robust sizing with minimal buffers for Arabic text + diacritics
+    const width = Math.ceil(paragraph.getMaxIntrinsicWidth() * 1.05); // 5% extra for safety
+    const height = Math.ceil(fontSize * 2.4); // 2.4x font size for diacritics above/below
+    const yOffset = fontSize * 0.5; // Offset to create space for top diacritics
+
+    return { width, height, yOffset };
+  }, [paragraph, arabicFont]);
 
   // Show tooltip on press - always measure fresh for 100% reliability
   const handlePress = () => {
@@ -83,7 +139,7 @@ const ArabicWordInternal = function ArabicWord({
   // Debug logging: Long press any word to see detailed analysis in console
   const handleLongPress = () => {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🐛 WORD DEBUG (Long Press)');
+    console.log('🐛 WORD DEBUG (Long Press) - SKIA RENDERING');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('📝 Word:', word.word_form, '→', word.english);
     console.log('🆔 IDs:', `word=${word.id} root=${word.root_id} pos=${position}`);
@@ -92,6 +148,11 @@ const ArabicWordInternal = function ArabicWord({
       `hasComponents=${hasComponents} segments=${coloredSegments.length}`,
     );
     console.log('📊 Arabic Segments:', JSON.stringify(coloredSegments, null, 2));
+    console.log(
+      '🎯 Skia:',
+      `font=${isReady ? 'ready' : 'loading'} paragraph=${paragraph ? 'built' : 'null'}`,
+    );
+    console.log('📐 Canvas:', `width=${canvasDimensions.width} height=${canvasDimensions.height}`);
 
     // Compute English colored segments for debugging
     try {
@@ -110,37 +171,6 @@ const ArabicWordInternal = function ArabicWord({
         '📝 English Segments:',
         JSON.stringify(
           englishSegments.map(s => ({ text: s.text, color: s.color })),
-          null,
-          2,
-        ),
-      );
-
-      console.log(
-        '🔍 Analysis Details:',
-        JSON.stringify(
-          {
-            hasComponents: analysis.hasComponents,
-            prefixes: analysis.prefixes.map(p => ({
-              arabic: p.arabicMatch,
-              english: p.englishMatches,
-              role: p.role,
-            })),
-            suffix: analysis.suffix
-              ? {
-                  arabic: analysis.suffix.arabicMatch,
-                  english: analysis.suffix.englishMatches,
-                  role: analysis.suffix.role,
-                }
-              : null,
-            infix: analysis.infix
-              ? {
-                  arabic: analysis.infix.arabicMatch,
-                  english: analysis.infix.englishMatches,
-                }
-              : null,
-            remainingArabic: analysis.remainingArabic,
-            remainingEnglish: analysis.remainingEnglish,
-          },
           null,
           2,
         ),
@@ -168,32 +198,19 @@ const ArabicWordInternal = function ArabicWord({
     highlightStyle,
   ];
 
-  // Render word with colored segments or default color
-  let renderWordContent;
-  if (!hasComponents) {
-    renderWordContent = (
-      <ThemedText {...baseTextProps} colorName="arabicText">
-        {word.word_form}
-      </ThemedText>
-    );
-  } else {
-    // Render segments with grammar colors (handles single or multiple segments)
-    renderWordContent = (
-      <ThemedText {...baseTextProps} skipDefaultColor>
-        {/* Index required: segments can have duplicate type-text (e.g., multiple "prefix-وَ") */}
-        {/* coloredSegments are computed once and stable, so index is safe */}
-        {coloredSegments.map((segment, index) => (
-          <ThemedText
-            // eslint-disable-next-line react/no-array-index-key
-            key={`${index}-${segment.type}-${segment.text}`}
-            {...baseTextProps}
-            skipDefaultColor
-            style={[baseTextProps.style, { color: segment.color }]}
-          >
-            {segment.text}
-          </ThemedText>
-        ))}
-      </ThemedText>
+  // Show loading placeholder if fonts aren't ready or paragraph failed to build
+  if (!isReady || !paragraph) {
+    return (
+      <Pressable
+        ref={wordRef}
+        style={containerStyle}
+        testID={testID}
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+      >
+        {/* Render empty space to prevent layout shift */}
+        <Canvas style={{ width: canvasDimensions.width, height: canvasDimensions.height }} />
+      </Pressable>
     );
   }
 
@@ -205,17 +222,22 @@ const ArabicWordInternal = function ArabicWord({
       onPress={handlePress}
       onLongPress={handleLongPress}
     >
-      {renderWordContent}
+      <Canvas
+        style={{ width: canvasDimensions.width, height: canvasDimensions.height }}
+        pointerEvents="none"
+      >
+        <SkiaParagraph
+          paragraph={paragraph}
+          x={0}
+          y={canvasDimensions.yOffset}
+          width={canvasDimensions.width}
+        />
+      </Canvas>
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  textStyle: {
-    textAlign: 'center',
-    paddingBottom: LAYOUT.SPACING.MICRO,
-    marginBottom: -LAYOUT.SPACING.MICRO,
-  },
   wordContainer: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -224,6 +246,6 @@ const styles = StyleSheet.create({
   },
 });
 
-ArabicWordInternal.displayName = 'ArabicWord';
+SkiaArabicWordInternal.displayName = 'SkiaArabicWord';
 
-export const ArabicWord = memo(ArabicWordInternal);
+export const SkiaArabicWord = memo(SkiaArabicWordInternal);

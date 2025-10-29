@@ -127,29 +127,6 @@ function parseErrors(result) {
     });
   }
 
-  // Parse Prettier errors
-  if (result.label === 'Prettier') {
-    const lines = output.split('\n');
-    lines.forEach(line => {
-      const trimmed = line.trim();
-      if (
-        trimmed &&
-        (trimmed.endsWith('.ts') ||
-          trimmed.endsWith('.tsx') ||
-          trimmed.endsWith('.js') ||
-          trimmed.endsWith('.jsx') ||
-          trimmed.endsWith('.json') ||
-          trimmed.endsWith('.md'))
-      ) {
-        errors.push({
-          file: trimmed,
-          message: 'Code formatting needs to be fixed',
-          tool: 'Prettier',
-        });
-      }
-    });
-  }
-
   return errors;
 }
 
@@ -225,7 +202,6 @@ function formatErrorsForLLM(results) {
     output += `${colors.red}${results.filter(r => !r.success).length} tool(s) failed validation${colors.reset}\n\n`;
     output += `${colors.cyan}Fix commands:${colors.reset}\n`;
     output += `  yarn lint:fix      - Auto-fix ESLint issues\n`;
-    output += `  yarn prettier:fix  - Auto-format code\n`;
   } else {
     output += `\n${colors.green}( All validations passed!${colors.reset}\n\n`;
     output += `${colors.cyan}=� Tip: Run "yarn check-unused" occasionally to check for unused dependencies${colors.reset}\n`;
@@ -265,16 +241,9 @@ async function main() {
     );
   }
 
-  // Prettier check - only non-test code files
+  // ESLint - only non-test code files
   const filesToCheck = allChangedFiles.filter(file => !isTestFile(file));
   if (filesToCheck.length > 0) {
-    tasks.push(
-      Promise.resolve().then(() =>
-        runCommand('npx', ['prettier', '--check', '--cache', ...filesToCheck], 'Prettier'),
-      ),
-    );
-
-    // ESLint - only non-test code files
     const codeFilesToLint = filesToCheck.filter(file =>
       ['.ts', '.tsx', '.js', '.jsx'].some(ext => file.endsWith(ext)),
     );

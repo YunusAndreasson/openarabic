@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import React from 'react';
 
 import { Text, TouchableOpacity, View } from 'react-native';
-import { ArabicWord } from '../../components/article/ArabicWord';
+import { SkiaArabicWord as ArabicWord } from '../../components/article/SkiaArabicWord';
 import { ArticleCard } from '../../components/library/ArticleCard';
 import { CompletionScreen } from '../../components/review/CompletionScreen';
 import { VocabularyStatCards } from '../../components/study/VocabularyStatCards';
@@ -51,12 +51,12 @@ jest.mock('../../components/library/ArticleCard', () => {
   };
 });
 
-jest.mock('../../components/article/ArabicWord', () => {
+jest.mock('../../components/article/SkiaArabicWord', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    ArabicWord: ({ onPress, testID, word }: any) => (
+    SkiaArabicWord: ({ onPress, testID, word }: any) => (
       <TouchableOpacity testID={testID} onPress={() => onPress(word)} />
     ),
   };

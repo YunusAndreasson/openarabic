@@ -1,4 +1,4 @@
-export { ArabicWord } from './ArabicWord';
+export { SkiaArabicWord as ArabicWord } from './SkiaArabicWord';
 export { ArticleContent } from './ArticleContent';
 export { ArticleSentence } from './ArticleSentence';
 export { IslamicCalendarHeader } from './IslamicCalendarHeader';
