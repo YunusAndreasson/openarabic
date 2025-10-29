@@ -1,5 +1,5 @@
 import { BaseCard } from '@common/BaseCard';
-import { ProgressCircle } from '@common/ProgressCircle';
+import { ProgressBar } from '@common/ProgressBar';
 import { useEffect, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -114,46 +114,49 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = ({
               </View>
             )}
 
-            <View style={styles.textContent}>
-              <ThemedText
-                colorName="headingText"
-                style={titleTextStyle}
-                type="heading3"
-                numberOfLines={2}
-                ellipsizeMode="tail"
-              >
-                {title}
-              </ThemedText>
-              <View style={styles.secondaryRow}>
+            <View style={styles.contentWrapper}>
+              <View style={styles.textContent}>
                 <ThemedText
-                  skipDefaultColor
-                  colorName="authorText"
-                  numberOfLines={1}
+                  colorName="headingText"
+                  style={titleTextStyle}
+                  type="heading3"
+                  numberOfLines={2}
                   ellipsizeMode="tail"
-                  style={secondaryTextStyle}
-                  type="label"
                 >
-                  {secondaryText}
+                  {title}
                 </ThemedText>
+                <View style={styles.secondaryRow}>
+                  <ThemedText
+                    skipDefaultColor
+                    colorName="authorText"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={secondaryTextStyle}
+                    type="label"
+                  >
+                    {secondaryText}
+                  </ThemedText>
+                </View>
               </View>
-            </View>
 
-            {/* Right side content: play button (if available) and progress status */}
-            <View style={styles.rightSideContainer}>
-              {!editMode && onPlayPress && (
-                <View style={styles.playButtonContainer}>
-                  <PlayButton onPress={onPlayPress} />
+              {/* Reading Progress Indicator - horizontal line below content */}
+              {progressPercentage !== undefined && progressPercentage > 0 && (
+                <View style={styles.progressContainer}>
+                  <ProgressBar
+                    progress={progressPercentage}
+                    height={LAYOUT.SPACING.TINY}
+                    style={styles.progressBar}
+                  />
                 </View>
               )}
-              <View style={styles.progressRightContainer}>
-                <ProgressCircle
-                  percentage={progressPercentage ?? 0}
-                  size={28}
-                  strokeWidth={4}
-                  style={styles.progressCircle}
-                />
-              </View>
             </View>
+
+            {/* Right side content: play button (if available) */}
+            {!editMode && onPlayPress && (
+              <View style={styles.playButtonContainer}>
+                <PlayButton onPress={onPlayPress} />
+              </View>
+            )}
           </View>
         </BaseCard>
       </View>
@@ -185,8 +188,11 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.MEDIUM,
     alignItems: 'center',
   },
-  textContent: {
+  contentWrapper: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  textContent: {
     justifyContent: 'center',
   },
   titleText: {
@@ -206,13 +212,11 @@ const styles = StyleSheet.create({
   playButtonContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
-  rightSideContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: LAYOUT.SPACING.SMALL,
+  progressContainer: {
+    marginTop: LAYOUT.SPACING.SMALL,
   },
-  progressRightContainer: {
-    marginLeft: LAYOUT.SPACING.SMALL,
+  progressBar: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   dragHandleContainer: {
     alignItems: 'center',
@@ -231,9 +235,5 @@ const styles = StyleSheet.create({
     height: BOOKMARKS_IMAGE_SIZE,
     width: BOOKMARKS_IMAGE_SIZE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  progressCircle: {
-    // Ensure perfect vertical centering with text using flexbox
-    alignSelf: 'center',
   },
 });

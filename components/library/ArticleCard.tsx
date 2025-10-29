@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.SMALL,
   },
   progressBar: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
 });
 
@@ -221,7 +221,11 @@ export function ArticleCard({
           {/* Reading Progress Indicator - only show if progress exists */}
           {progressPercentage !== undefined && progressPercentage > 0 && (
             <View style={styles.progressContainer}>
-              <ProgressBar progress={progressPercentage} height={3} style={styles.progressBar} />
+              <ProgressBar
+                progress={progressPercentage}
+                height={LAYOUT.SPACING.TINY}
+                style={styles.progressBar}
+              />
             </View>
           )}
         </View>
