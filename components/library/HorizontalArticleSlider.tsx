@@ -1,9 +1,8 @@
 import { FlashList } from '@shopify/flash-list';
-import { memo, useCallback, useMemo, useRef, type FC } from 'react';
+import { memo, useCallback, useRef, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ArticleCard } from '@/components/library/ArticleCard';
-import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -32,11 +31,8 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
   // Limit to 5 articles for the slider
   const displayArticles = articles.slice(0, 5);
 
-  // Fetch reading progress for all displayed articles (bulk query for performance)
-  const articleIds = useMemo(() => displayArticles.map(article => article.id), [displayArticles]);
-  const { data: progressMap } = useSafeBulkReadingProgress(articleIds);
-
   // Note: Navigation is now handled by Link component in ArticleCard
+  // Note: No progress indicators in main library carousel - only in list views
 
   // Memoize the article cards to prevent unnecessary re-renders
 
@@ -60,10 +56,6 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
         { ...LAYOUT.ELEVATION.SUBTLE, shadowColor: colors.shadow },
       ];
 
-      // Get reading progress for this article (0-100 percentage)
-      const progress = progressMap.get(info.item.id);
-      const progressPercentage = progress?.progress_percentage ?? undefined;
-
       return (
         <View style={containerStyle}>
           <ArticleCard
@@ -75,12 +67,11 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
             summary={String(info.item.summary)}
             title={info.item.title}
             testID={`slider-article-${info.item.id}`}
-            progressPercentage={progressPercentage}
           />
         </View>
       );
     },
-    [colors.card, colors.shadow, progressMap],
+    [colors.card, colors.shadow],
   );
 
   // Skip rendering if no articles
