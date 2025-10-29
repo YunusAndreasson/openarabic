@@ -138,17 +138,6 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = ({
                   </ThemedText>
                 </View>
               </View>
-
-              {/* Reading Progress Indicator - horizontal line below content */}
-              {progressPercentage !== undefined && progressPercentage > 0 && (
-                <View style={styles.progressContainer}>
-                  <ProgressBar
-                    progress={progressPercentage}
-                    height={LAYOUT.SPACING.TINY}
-                    style={styles.progressBar}
-                  />
-                </View>
-              )}
             </View>
 
             {/* Right side content: play button (if available) */}
@@ -158,6 +147,15 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = ({
               </View>
             )}
           </View>
+
+          {/* Reading Progress Indicator - at bottom edge (media app style) */}
+          {progressPercentage !== undefined && progressPercentage > 0 && (
+            <ProgressBar
+              progress={progressPercentage}
+              height={LAYOUT.SPACING.TINY}
+              style={styles.progressBar}
+            />
+          )}
         </BaseCard>
       </View>
 
@@ -212,11 +210,11 @@ const styles = StyleSheet.create({
   playButtonContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
-  progressContainer: {
-    marginTop: LAYOUT.SPACING.SMALL,
-  },
   progressBar: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderBottomRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   dragHandleContainer: {
     alignItems: 'center',
