@@ -1,4 +1,5 @@
 import { BaseCard } from '@common/BaseCard';
+import { ProgressBar } from '@common/ProgressBar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
@@ -61,6 +62,7 @@ type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
   article: Article; // Full article object for navigation
   prefetch?: boolean; // Enable prefetching for better performance
   isRelatedArticle?: boolean; // For related articles navigation
+  progressPercentage?: number; // Reading progress (0-100) - displays progress line when > 0
 };
 
 // Static styles object to prevent recreation
@@ -80,6 +82,12 @@ const styles = StyleSheet.create({
     maxWidth: PILL_MAX_WIDTH_PERCENTAGE,
     position: 'absolute' as const,
     top: LAYOUT.SPACING.SMALL,
+  },
+  progressContainer: {
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+  progressBar: {
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
 });
 
@@ -112,6 +120,7 @@ export function ArticleCard({
   article,
   prefetch: _prefetch = true,
   isRelatedArticle: _isRelatedArticle = false,
+  progressPercentage,
 }: ArticleCardProps): JSX.Element {
   const colors = useColors();
   // For mobile-only apps, use constant screen width
@@ -208,6 +217,13 @@ export function ArticleCard({
               {summary}
             </ThemedText>
           </View>
+
+          {/* Reading Progress Indicator - only show if progress exists */}
+          {progressPercentage !== undefined && progressPercentage > 0 && (
+            <View style={styles.progressContainer}>
+              <ProgressBar progress={progressPercentage} height={3} style={styles.progressBar} />
+            </View>
+          )}
         </View>
       </BaseCard>
     </Animated.View>
