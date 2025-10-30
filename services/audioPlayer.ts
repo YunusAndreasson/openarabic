@@ -27,7 +27,11 @@ class SimpleAudioService {
 
   // Player cache to avoid recreation for frequently played audio
   private playerCache: Map<string, AudioPlayer> = new Map();
-  private readonly MAX_CACHE_SIZE = 5; // Reduced for simplicity
+  private readonly MAX_CACHE_SIZE = 10; // Increased for practice sessions with more words
+
+  // Time-based activation throttling to avoid redundant iOS audio session calls
+  private lastActivationTime = 0;
+  private readonly ACTIVATION_THROTTLE = 5000; // 5 seconds
 
   // STABILIZATION: Minimal throttling since native updateInterval already limits updates
   private lastStatusUpdate = 0;
@@ -293,16 +297,23 @@ class SimpleAudioService {
     } = {},
   ): Promise<boolean> {
     try {
-      // CRITICAL: Ensure audio session is active before EVERY play attempt
-      // This fixes issues where iOS deactivates the session between plays
-      try {
-        await setIsAudioActiveAsync(true);
-      } catch {
-        // Try to continue anyway
+      // Throttled session activation: Only activate if not recently activated (5s window)
+      // Reduces redundant calls during practice sessions while maintaining iOS reliability
+      const now = Date.now();
+      if (now - this.lastActivationTime > this.ACTIVATION_THROTTLE) {
+        try {
+          await setIsAudioActiveAsync(true);
+          this.lastActivationTime = now;
+        } catch {
+          // Try to continue anyway
+        }
       }
 
       // Configure audio session first (should be pre-configured for faster playback)
       await this.configureAudioSession();
+
+      // Track previous player to determine if we're reusing or creating new
+      const previousPlayer = this.currentPlayer;
 
       // Create or reuse player
       this.currentPlayer = await this.createOrReusePlayer(track.audioUrl);
@@ -327,9 +338,10 @@ class SimpleAudioService {
         });
       }
 
-      // Always seek to beginning to ensure fresh playback state
-      // This ensures PLAY ALL always starts from position 0
-      if (this.currentPlayer) {
+      // Only seek if reusing same player (new players start at position 0)
+      // This eliminates 8ms of overhead for new players during practice sessions
+      const isReusingSamePlayer = previousPlayer === this.currentPlayer;
+      if (isReusingSamePlayer && this.currentPlayer) {
         try {
           await this.currentPlayer.seekTo(0);
         } catch {
