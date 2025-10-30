@@ -52,8 +52,8 @@ export function useWordAudioPlayback(options: UseWordAudioPlaybackOptions = {}) 
       }
 
       try {
-        // Generate audio track using shared utility
-        const track = generateWordAudioTrack(word);
+        // Generate audio track using shared utility (now async to use cached paths)
+        const track = await generateWordAudioTrack(word);
 
         if (!track) {
           return;

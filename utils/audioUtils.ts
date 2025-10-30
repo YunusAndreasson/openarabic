@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 
 import { articlesService } from '@/services/articles';
+import { audioCache } from '@/services/audioCache';
 import { simpleAudioService } from '@/services/audioPlayer';
 import type { Article } from '@/types/articles.types';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
@@ -101,10 +102,10 @@ export interface WordAudioData {
  * @param trackIdPrefix - Optional prefix for the track ID (default: 'word')
  * @returns Audio track or null if no audio URL available
  */
-export function generateWordAudioTrack(
+export async function generateWordAudioTrack(
   word: WordAudioData,
   trackIdPrefix: string = 'word',
-): EnhancedAudioTrack | null {
+): Promise<EnhancedAudioTrack | null> {
   // Prefer Arabic audio, fallback to English audio if available
   const audioUrl = generateAudioUrl(word.audio_url) || generateAudioUrl(word.audio_url_en);
 
@@ -112,13 +113,16 @@ export function generateWordAudioTrack(
     return null;
   }
 
+  // Get cached local path to eliminate network latency
+  const cachedAudioUrl = await audioCache.getAudio(audioUrl);
+
   // Generate track with appropriate title
   const trackTitle =
     word.letters || word.meaning || word.english || word.word_form || 'Arabic Pronunciation';
 
   const track: EnhancedAudioTrack = {
     id: `${trackIdPrefix}-${word.id || word.root_id}-${word.audio_url ? 'ar' : 'en'}`,
-    audioUrl,
+    audioUrl: cachedAudioUrl,
     title: trackTitle,
   };
 

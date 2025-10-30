@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useAudioSubscription } from '@/hooks/audio/useAudioSubscription';
 import { useColors } from '@/hooks/theme/useColors';
+import { audioCache } from '@/services/audioCache';
 import { simpleAudioService } from '@/services/audioPlayer';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
@@ -68,9 +69,12 @@ export function WordDetailsBottomSheet({
       const fullAudioUrl = generateAudioUrl(word.audio_url);
       if (!fullAudioUrl) return;
 
+      // Get cached local path to eliminate network latency
+      const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl);
+
       const track = {
         id: `word-details-${word.id}`,
-        audioUrl: fullAudioUrl,
+        audioUrl: cachedAudioUrl,
         title: word.english || word.word_form || 'Word Audio',
       };
 

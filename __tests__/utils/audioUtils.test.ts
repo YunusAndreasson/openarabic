@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
+import { audioCache } from '@/services/audioCache';
 import { simpleAudioService } from '@/services/audioPlayer';
 import {
   generateWordAudioTrack,
@@ -19,6 +20,12 @@ jest.mock('@/services/audioPlayer', () => ({
   },
 }));
 
+jest.mock('@/services/audioCache', () => ({
+  audioCache: {
+    getAudio: jest.fn(),
+  },
+}));
+
 jest.mock('@/utils/imageUtils', () => ({
   generateAudioUrl: jest.fn(),
   generateImageUrl: jest.fn(),
@@ -31,6 +38,7 @@ jest.mock('expo-image', () => ({
 }));
 
 const simpleAudioServiceMock = simpleAudioService as jest.Mocked<typeof simpleAudioService>;
+const audioCacheMock = audioCache as jest.Mocked<typeof audioCache>;
 const generateAudioUrlMock = generateAudioUrl as jest.MockedFunction<typeof generateAudioUrl>;
 const generateImageUrlMock = generateImageUrl as jest.MockedFunction<typeof generateImageUrl>;
 
@@ -182,7 +190,7 @@ describe('audioUtils', () => {
   });
 
   describe('generateWordAudioTrack', () => {
-    it('should generate track with Arabic audio URL', () => {
+    it('should generate track with Arabic audio URL and use cache', async () => {
       const word: WordAudioData = {
         id: 1,
         audio_url: 'arabic.mp3',
@@ -191,18 +199,23 @@ describe('audioUtils', () => {
         meaning: 'book',
       };
 
-      generateAudioUrlMock.mockReturnValueOnce('https://example.com/arabic.mp3');
+      const remoteUrl = 'https://example.com/arabic.mp3';
+      const cachedUrl = 'file:///cache/arabic.mp3';
 
-      const result = generateWordAudioTrack(word);
+      generateAudioUrlMock.mockReturnValueOnce(remoteUrl);
+      audioCacheMock.getAudio.mockResolvedValueOnce(cachedUrl);
 
+      const result = await generateWordAudioTrack(word);
+
+      expect(audioCacheMock.getAudio).toHaveBeenCalledWith(remoteUrl);
       expect(result).toEqual({
         id: 'word-1-ar',
-        audioUrl: 'https://example.com/arabic.mp3',
+        audioUrl: cachedUrl,
         title: 'كتاب',
       });
     });
 
-    it('should fallback to English audio when Arabic is not available', () => {
+    it('should fallback to English audio when Arabic is not available', async () => {
       const word: WordAudioData = {
         id: 2,
         audio_url: null,
@@ -210,48 +223,58 @@ describe('audioUtils', () => {
         meaning: 'house',
       };
 
+      const remoteUrl = 'https://example.com/english.mp3';
+      const cachedUrl = 'file:///cache/english.mp3';
+
       generateAudioUrlMock
-        .mockReturnValueOnce(null)
-        .mockReturnValueOnce('https://example.com/english.mp3');
+        .mockReturnValueOnce(undefined)
+        .mockReturnValueOnce(remoteUrl);
+      audioCacheMock.getAudio.mockResolvedValueOnce(cachedUrl);
 
-      const result = generateWordAudioTrack(word);
+      const result = await generateWordAudioTrack(word);
 
+      expect(audioCacheMock.getAudio).toHaveBeenCalledWith(remoteUrl);
       expect(result).toEqual({
         id: 'word-2-en',
-        audioUrl: 'https://example.com/english.mp3',
+        audioUrl: cachedUrl,
         title: 'house',
       });
     });
 
-    it('should return null when no audio URL is available', () => {
+    it('should return null when no audio URL is available', async () => {
       const word: WordAudioData = {
         id: 3,
         audio_url: null,
         audio_url_en: null,
       };
 
-      generateAudioUrlMock.mockReturnValue(null);
+      generateAudioUrlMock.mockReturnValue(undefined);
 
-      const result = generateWordAudioTrack(word);
+      const result = await generateWordAudioTrack(word);
 
       expect(result).toBeNull();
+      expect(audioCacheMock.getAudio).not.toHaveBeenCalled();
     });
 
-    it('should use custom track ID prefix', () => {
+    it('should use custom track ID prefix', async () => {
       const word: WordAudioData = {
         id: 4,
         audio_url: 'test.mp3',
         letters: 'test',
       };
 
-      generateAudioUrlMock.mockReturnValue('https://example.com/test.mp3');
+      const remoteUrl = 'https://example.com/test.mp3';
+      const cachedUrl = 'file:///cache/test.mp3';
 
-      const result = generateWordAudioTrack(word, 'custom');
+      generateAudioUrlMock.mockReturnValue(remoteUrl);
+      audioCacheMock.getAudio.mockResolvedValueOnce(cachedUrl);
+
+      const result = await generateWordAudioTrack(word, 'custom');
 
       expect(result?.id).toBe('custom-4-ar');
     });
 
-    it('should prioritize title fields: letters > meaning > english > word_form', () => {
+    it('should prioritize title fields: letters > meaning > english > word_form', async () => {
       const word1: WordAudioData = {
         id: 1,
         audio_url: 'a.mp3',
@@ -263,23 +286,30 @@ describe('audioUtils', () => {
       const word3: WordAudioData = { id: 3, audio_url: 'a.mp3', english: 'C', word_form: 'D' };
       const word4: WordAudioData = { id: 4, audio_url: 'a.mp3', word_form: 'D' };
 
-      generateAudioUrlMock.mockReturnValue('https://example.com/test.mp3');
+      const cachedUrl = 'file:///cache/test.mp3';
 
-      expect(generateWordAudioTrack(word1)?.title).toBe('A');
-      expect(generateWordAudioTrack(word2)?.title).toBe('B');
-      expect(generateWordAudioTrack(word3)?.title).toBe('C');
-      expect(generateWordAudioTrack(word4)?.title).toBe('D');
+      generateAudioUrlMock.mockReturnValue('https://example.com/test.mp3');
+      audioCacheMock.getAudio.mockResolvedValue(cachedUrl);
+
+      expect((await generateWordAudioTrack(word1))?.title).toBe('A');
+      expect((await generateWordAudioTrack(word2))?.title).toBe('B');
+      expect((await generateWordAudioTrack(word3))?.title).toBe('C');
+      expect((await generateWordAudioTrack(word4))?.title).toBe('D');
     });
 
-    it('should use fallback title when no title fields exist', () => {
+    it('should use fallback title when no title fields exist', async () => {
       const word: WordAudioData = {
         id: 5,
         audio_url: 'test.mp3',
       };
 
-      generateAudioUrlMock.mockReturnValue('https://example.com/test.mp3');
+      const remoteUrl = 'https://example.com/test.mp3';
+      const cachedUrl = 'file:///cache/test.mp3';
 
-      const result = generateWordAudioTrack(word);
+      generateAudioUrlMock.mockReturnValue(remoteUrl);
+      audioCacheMock.getAudio.mockResolvedValueOnce(cachedUrl);
+
+      const result = await generateWordAudioTrack(word);
 
       expect(result?.title).toBe('Arabic Pronunciation');
     });
