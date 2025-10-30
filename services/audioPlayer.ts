@@ -43,6 +43,9 @@ class SimpleAudioService {
   // SLEEP TIMER SUPPORT: Track when sleep timer has expired
   private sleepTimerExpired = false;
 
+  // RACE CONDITION GUARD: Prevent duplicate track advancement from rapid-fire events
+  private isAdvancingTrack = false;
+
   // APP STATE SUPPORT: Track app state for background audio handling
   private appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
@@ -674,6 +677,11 @@ class SimpleAudioService {
 
           // PLAYLIST SUPPORT: Use native didJustFinish for track completion
           if (this.isPlaylistMode && didJustFinish) {
+            // RACE CONDITION GUARD: Prevent duplicate advancement from rapid-fire events
+            if (this.isAdvancingTrack) {
+              return; // Already advancing, ignore duplicate event
+            }
+
             // Don't advance if sleep timer has expired
             if (this.sleepTimerExpired) {
               // Sleep timer expired - stop playlist instead of advancing
@@ -689,10 +697,17 @@ class SimpleAudioService {
               return;
             }
 
+            // Mark as advancing before async operation
+            this.isAdvancingTrack = true;
+
             // Track just finished, advance to next track
-            this.advanceToNextTrack().catch(() => {
-              // Track advancement failed - continue with current track
-            });
+            this.advanceToNextTrack()
+              .catch(() => {
+                // Track advancement failed - continue with current track
+              })
+              .finally(() => {
+                this.isAdvancingTrack = false; // Reset guard
+              });
             return;
           }
 

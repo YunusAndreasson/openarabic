@@ -338,12 +338,15 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
         next.set(word.root_id, isNowInStudy);
         return next;
       });
-      await queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
-      await queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
-      await queryClient.invalidateQueries({
-        queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-      });
-      await refetchStudyWords?.();
+      // Invalidate queries in parallel for better performance
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) }),
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) }),
+        queryClient.invalidateQueries({
+          queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+        }),
+        refetchStudyWords?.(),
+      ]);
     },
     [user?.id, handleRootPress, queryClient, refetchStudyWords],
   );
