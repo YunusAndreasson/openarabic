@@ -75,9 +75,9 @@ export default function TabLayout(): JSX.Element {
               tabBarBadge: screen.name === 'study' && dueWordsCount > 0 ? dueWordsCount : undefined,
               tabBarBadgeStyle:
                 screen.name === 'study' && dueWordsCount > 0 ? badgeStyle : undefined,
-              tabBarIcon: ({ color }) => (
+              tabBarIcon: ({ color, focused }) => (
                 <Ionicons
-                  name={screen.iconFilled}
+                  name={focused ? screen.icon.filled : screen.icon.outline}
                   size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
                   color={color}
                 />

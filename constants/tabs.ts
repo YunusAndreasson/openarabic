@@ -2,15 +2,15 @@ import type { AppTab } from '@/types/enums';
 
 /**
  * Tab icon mapping for consistent icons across the app
- * Uses Ionicons icon names
+ * Uses Ionicons icon names with filled/outline variants
  */
 export const TAB_ICONS = {
-  LIBRARY: 'book',
-  BOOKMARKS: 'bookmark',
-  STUDY: 'school',
+  LIBRARY: { filled: 'book', outline: 'book-outline' },
+  BOOKMARKS: { filled: 'bookmark', outline: 'bookmark-outline' },
+  STUDY: { filled: 'school', outline: 'school-outline' },
 } as const;
 
-export type TabIconName = (typeof TAB_ICONS)[keyof typeof TAB_ICONS];
+export type TabIconConfig = (typeof TAB_ICONS)[keyof typeof TAB_ICONS];
 
 /**
  * Tab screen configuration for the main tab navigator
@@ -19,7 +19,7 @@ export type TabIconName = (typeof TAB_ICONS)[keyof typeof TAB_ICONS];
 export interface TabScreenConfig {
   readonly name: 'library' | 'bookmarks' | 'study';
   readonly title: AppTab;
-  readonly iconFilled: TabIconName;
+  readonly icon: TabIconConfig;
 }
 
 /**
@@ -30,16 +30,16 @@ export const TAB_SCREENS: readonly TabScreenConfig[] = [
   {
     name: 'library',
     title: 'Library' as AppTab,
-    iconFilled: TAB_ICONS.LIBRARY,
+    icon: TAB_ICONS.LIBRARY,
   },
   {
     name: 'bookmarks',
     title: 'Bookmarks' as AppTab,
-    iconFilled: TAB_ICONS.BOOKMARKS,
+    icon: TAB_ICONS.BOOKMARKS,
   },
   {
     name: 'study',
     title: 'Study' as AppTab,
-    iconFilled: TAB_ICONS.STUDY,
+    icon: TAB_ICONS.STUDY,
   },
 ] as const;
