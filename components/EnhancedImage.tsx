@@ -24,6 +24,12 @@ const styles = StyleSheet.create({
 /**
  * High-performance image component optimized for loading and caching
  * Uses Expo Image v3 with modern features and smart defaults
+ *
+ * Cache Policy: Uses 'disk' by default for optimal memory usage. Most images
+ * only need disk caching. Use 'memory-disk' only for frequently accessed images
+ * (e.g., profile pictures, currently playing content).
+ *
+ * Downscaling: Explicitly enabled to match container size and reduce memory usage.
  */
 export function EnhancedImage({
   source,
@@ -32,14 +38,14 @@ export function EnhancedImage({
   contentPosition = 'center', // Most common value - hardcoded
   onLoad,
   onError,
-  cachePolicy = 'memory-disk', // Most common value - hardcoded
+  cachePolicy = 'disk', // Optimized: disk-only for most images, saves memory
   priority = 'normal', // Most common value - hardcoded
-  transition = 300, // Smooth cross-fade by default
+  transition = 200, // Balanced: fast enough for UX, smooth enough for quality
   recyclingKey,
   testID,
   placeholder,
   placeholderContentFit = 'cover',
-  allowDownscaling,
+  allowDownscaling = true, // Explicit: always downscale to container size for performance
 }: EnhancedImageProps) {
   const colors = useColors();
 
@@ -54,10 +60,10 @@ export function EnhancedImage({
     recyclingKey,
     source,
     style: styles.image,
+    allowDownscaling, // Always set explicitly (default true for performance)
     ...(placeholder ? { placeholder } : {}),
     ...(placeholder ? { placeholderContentFit } : {}),
     ...(testID ? { testID } : {}),
-    ...(allowDownscaling !== undefined ? { allowDownscaling } : {}),
   };
 
   const eventHandlers = {

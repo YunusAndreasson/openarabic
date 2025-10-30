@@ -171,6 +171,7 @@ export function ArticleCard({
             style={styles.image}
             source={imageUrl}
             recyclingKey={`article-${article.id}`}
+            transition={150} // Fast transition for snappy list scrolling
           />
           <LinearGradient {...gradientProps} />
         </View>
