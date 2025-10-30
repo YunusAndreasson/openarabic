@@ -1,85 +1,51 @@
-import { createAudioPlayer, type AudioPlayer, type AudioPlayerOptions } from 'expo-audio';
+import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import { Asset } from 'expo-asset';
-
-// Event constant for playback status updates
-const PLAYBACK_STATUS_UPDATE = 'playbackStatusUpdate';
 
 /**
  * Plays the transition sound between playlist tracks
  * Returns a promise that resolves when the sound finishes playing
  */
 export async function playTransitionSound(): Promise<void> {
+  let player: AudioPlayer | null = null;
+
   try {
-    // Load the transition sound asset
-    const assets = await Asset.loadAsync(require('@/assets/sounds/switch.wav'));
-    const asset = assets[0];
+    // Load and validate asset
+    const [asset] = await Asset.loadAsync(require('@/assets/sounds/switch.mp3'));
+    if (!asset?.localUri) return;
 
-    if (!asset?.localUri) {
-      console.warn('Transition sound asset not loaded');
-      return;
-    }
+    // Create and start player
+    player = createAudioPlayer(asset.localUri, {
+      updateInterval: 100,
+      keepAudioSessionActive: true,
+    });
+    player.play();
 
-    // Create a dedicated audio player for the transition sound with optimized options
-    const playerOptions: AudioPlayerOptions = {
-      updateInterval: 100, // More frequent updates for short sound effects
-      keepAudioSessionActive: true, // Don't deactivate session after this short sound
-    };
-    const transitionPlayer: AudioPlayer = createAudioPlayer(asset.localUri, playerOptions);
-
-    // Play the sound
-    transitionPlayer.play();
-
-    // Wait for the sound to finish playing using native event subscription
+    // Wait for completion with timeout fallback
     await new Promise<void>(resolve => {
-      let resolved = false;
-      let eventSubscription: { remove: () => void } | null = null;
+      let completed = false;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let subscription: any = null;
 
-      const cleanup = () => {
-        if (resolved) return;
-        resolved = true;
-
-        // Remove event subscription
-        if (eventSubscription) {
-          eventSubscription.remove();
-          eventSubscription = null;
-        }
-
-        // Cleanup the transition player
-        try {
-          transitionPlayer.remove();
-        } catch {
-          // Ignore cleanup errors
-        }
-
+      const complete = () => {
+        if (completed) return;
+        completed = true;
+        subscription?.remove();
         resolve();
       };
 
-      // Subscribe to playback status updates
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      eventSubscription = transitionPlayer.addListener(PLAYBACK_STATUS_UPDATE, (status: any) => {
-        try {
-          const isPlaying = status.playing ?? false;
-          const currentTime = status.currentTime ?? 0;
-          const duration = status.duration ?? 0;
-
-          // Check if playback has completed
-          if (!isPlaying || (duration > 0 && currentTime >= duration - 0.05)) {
-            cleanup();
-          }
-        } catch {
-          // If event handling fails, cleanup anyway to prevent blocking
-          cleanup();
-        }
+      // Listen for playback completion
+      subscription = player!.addListener('playbackStatusUpdate', (status: any) => {
+        if (!status.playing) complete();
       });
 
-      // Fallback timeout in case duration detection fails
-      // Most UI sounds are < 1 second, so 2 seconds is a safe maximum
-      setTimeout(() => {
-        cleanup();
-      }, 2000);
+      // Fallback timeout for short UI sounds
+      setTimeout(complete, 2000);
     });
   } catch (error) {
     // Silently fail - transition sound is non-critical
     console.warn('Failed to play transition sound:', error);
+  } finally {
+    // Always cleanup player
+    player?.remove();
   }
 }
