@@ -219,6 +219,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
   const prefetchFeaturedArticles = useCallback(async () => {
     if (!user?.id) return false;
 
+    // CHECK: If featured articles already cached, don't recalculate
+    // This prevents featured articles from changing every time the app opens
+    const existingFeatured = queryClient.getQueryData(['featured-articles', 'global', 0]);
+    if (existingFeatured) {
+      return true; // Already have featured articles, use cached selection
+    }
+
     try {
       // Use ensureQueryData to prioritize cache for immutable articles
       const allArticles = await queryClient.ensureQueryData(articleQueryOptions.all());
