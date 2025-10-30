@@ -8,7 +8,6 @@ import type {
 } from 'react-native-reanimated';
 import {
   cancelAnimation,
-  runOnJS,
   SlideInLeft,
   SlideInRight,
   SlideOutLeft,
@@ -21,6 +20,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { SCREEN_WIDTH } from '@/constants/layout';
@@ -212,7 +212,7 @@ export const useTransformAnimation = (
     (finished: boolean | undefined, onComplete?: () => void) => {
       'worklet';
       if (finished && onComplete) {
-        runOnJS(onComplete)();
+        scheduleOnRN(onComplete);
       }
     },
     [],
@@ -246,7 +246,7 @@ export const useTransformAnimation = (
       } catch (error) {
         handleError(error instanceof Error ? error : String(error));
         if (onComplete) {
-          runOnJS(onComplete)();
+          scheduleOnRN(onComplete);
         }
       }
     },
@@ -279,7 +279,7 @@ export const useTransformAnimation = (
       } catch (error) {
         handleError(error instanceof Error ? error : String(error));
         if (onComplete) {
-          runOnJS(onComplete)();
+          scheduleOnRN(onComplete);
         }
       }
     },
@@ -317,7 +317,7 @@ export const useTransformAnimation = (
       } catch (error) {
         handleError(error instanceof Error ? error : String(error));
         if (onComplete) {
-          runOnJS(onComplete)();
+          scheduleOnRN(onComplete);
         }
       }
     },

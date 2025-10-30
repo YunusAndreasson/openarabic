@@ -6,11 +6,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import {
   cancelAnimation,
-  runOnJS,
   useAnimatedReaction,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
@@ -119,7 +119,7 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
     () => Math.round(retentionShared.get()),
     (rounded, prev) => {
       if (rounded !== prev) {
-        runOnJS(setAnimatedRetention)(rounded);
+        scheduleOnRN(setAnimatedRetention, rounded);
       }
     },
   );

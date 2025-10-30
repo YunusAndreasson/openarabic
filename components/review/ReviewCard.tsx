@@ -8,10 +8,10 @@ import type {
 } from 'react-native-reanimated';
 import Animated, {
   interpolateColor,
-  runOnJS,
   useAnimatedReaction,
   useAnimatedStyle,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { WordDisplay as WordDisplayComponent } from '@/components/review/WordDisplay';
 import { SPRING_CONFIG } from '@/constants/animation';
@@ -87,7 +87,7 @@ export function ReviewCard({
     () => (isHesitating ? isHesitating.value : false),
     (currentValue, previousValue) => {
       if (currentValue !== previousValue) {
-        runOnJS(setShowHint)(currentValue);
+        scheduleOnRN(setShowHint, currentValue);
       }
     },
     [isHesitating],

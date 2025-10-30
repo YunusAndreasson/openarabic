@@ -5,12 +5,12 @@ import {
   cancelAnimation,
   FadeIn,
   FadeOut,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { MIN_MOUNT_DELAY, MIN_OPACITY_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
@@ -166,7 +166,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     (callback?: () => void) => {
       'worklet';
       if (callback && isMounted.get()) {
-        runOnJS(callback)();
+        scheduleOnRN(callback);
       }
     },
     [isMounted],

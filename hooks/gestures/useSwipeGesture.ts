@@ -2,7 +2,8 @@ import { useCallback, useMemo, useRef } from 'react';
 import type { PanGesture } from 'react-native-gesture-handler';
 import { Gesture } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
-import { runOnJS, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useSharedValue, withSpring } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { SPRING_CONFIG } from '@/constants/animation';
 import { SCREEN_WIDTH } from '@/constants/layout';
@@ -101,13 +102,13 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
         .onBegin(() => {
           'worklet';
           if (onGestureBegin) {
-            runOnJS(onGestureBegin)();
+            scheduleOnRN(onGestureBegin);
           }
         })
         .onStart(() => {
           'worklet';
           if (onGestureStart) {
-            runOnJS(onGestureStart)();
+            scheduleOnRN(onGestureStart);
           }
         })
         .onUpdate(event => {
@@ -134,7 +135,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
 
             // Call end callback before processing swipe
             if (onGestureEnd) {
-              runOnJS(onGestureEnd)();
+              scheduleOnRN(onGestureEnd);
             }
 
             // Inline swipe action logic
@@ -145,7 +146,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
             if (Math.abs(translationX) > swipeThreshold || hasSignificantVelocity) {
               const isRight = translationX > 0;
               // Trigger swipe completion immediately for snappy response
-              runOnJS(handleSwipeComplete)(isRight);
+              scheduleOnRN(handleSwipeComplete, isRight);
             } else {
               // Simple reset on UI thread with spring animation
               isAnimatingRef.set(true);

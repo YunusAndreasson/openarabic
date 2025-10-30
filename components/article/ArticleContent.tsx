@@ -5,10 +5,10 @@ import React, { memo, useCallback, type ReactElement } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
-  runOnJS,
   useAnimatedScrollHandler,
   useSharedValue,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -178,7 +178,7 @@ const ArticleContentInternal = function ArticleContent({
       const dy = Math.abs(y - lastEmittedY.get());
       if (dy >= 8 || y === 0) {
         lastEmittedY.set(y);
-        runOnJS(handleScrollJS)(y);
+        scheduleOnRN(handleScrollJS, y);
       }
     },
   });
