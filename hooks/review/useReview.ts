@@ -17,6 +17,7 @@ import { useAudioPreloader } from './useAudioPreloader';
 import { useSessionMetrics } from './useSessionMetrics';
 import { useTimerCleanup } from '@/hooks/utils';
 import { useFSRS, useWordSizing } from '@/hooks/vocabulary';
+import { audioCache } from '@/services/audioCache';
 import type { SessionMetrics } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -296,15 +297,19 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const playAudio = useCallback(async (url: string) => {
     if (!url) return Promise.resolve();
 
+    // CRITICAL FIX: Get cached local path instead of using remote URL
+    // Eliminates ~1000ms network latency by using preloaded local files
+    const localPath = await audioCache.getAudio(url);
+
     const track = {
       id: `review-${Date.now()}`,
-      audioUrl: url,
+      audioUrl: localPath,
       title: 'Review Audio', // Assuming a default title for now
       duration: 0,
     };
 
     try {
-      // Play audio immediately since it's preloaded
+      // Play audio immediately from local cache (preloaded)
       const success = await audioPlayerRef.current.play(track);
       return success;
     } catch (error) {
