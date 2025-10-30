@@ -3,7 +3,6 @@ import type { ViewStyle } from 'react-native';
 import type { WithSpringConfig } from 'react-native-reanimated';
 import {
   interpolate,
-  runOnUI,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -111,28 +110,20 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     finalIncludeOpacity,
   ]) as AnimatedStyleProp<ViewStyle>;
 
-  // Press handlers - optimized to run on UI thread
-  const animatePressIn = useCallback(() => {
-    'worklet';
-    pressed.set(withSpring(1, finalSpringConfig));
-  }, [pressed, finalSpringConfig]);
-
-  const animatePressOut = useCallback(() => {
-    'worklet';
-    pressed.set(withSpring(0, finalSpringConfig));
-  }, [pressed, finalSpringConfig]);
-
+  // Press handlers - direct worklets for optimal UI thread performance
   const handlePressIn = useCallback(() => {
+    'worklet';
     if (isMountedRef.current) {
-      runOnUI(animatePressIn)();
+      pressed.value = withSpring(1, finalSpringConfig);
     }
-  }, [animatePressIn, isMountedRef]);
+  }, [pressed, finalSpringConfig, isMountedRef]);
 
   const handlePressOut = useCallback(() => {
+    'worklet';
     if (isMountedRef.current) {
-      runOnUI(animatePressOut)();
+      pressed.value = withSpring(0, finalSpringConfig);
     }
-  }, [animatePressOut, isMountedRef]);
+  }, [pressed, finalSpringConfig, isMountedRef]);
 
   return {
     animatedStyle,
