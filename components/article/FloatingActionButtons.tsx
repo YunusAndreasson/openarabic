@@ -176,7 +176,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
               ]}
             >
               <Ionicons
-                name="bookmark"
+                name={optimisticIsInReadingList ? 'bookmark' : 'bookmark-outline'}
                 size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                 color={optimisticIsInReadingList ? colors.tint : colors.secondaryText}
               />
