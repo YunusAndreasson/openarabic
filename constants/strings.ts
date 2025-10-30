@@ -47,7 +47,7 @@ export const STRINGS = {
   LOADING_ARTICLES: 'Loading articles',
   LOADING_CHART: 'Loading chart',
   PREPARING_AUDIO: 'Preparing audio',
-  LOADING_AUDIO_ELLIPSIS: 'Loading audio...',
+  LOADING_AUDIO_ELLIPSIS: 'Loading session...',
   AUDIO_READY: 'Audio ready',
   PREPARING_PRACTICE_SESSION: 'Preparing practice session...',
 
@@ -164,14 +164,13 @@ export const STRINGS = {
   MEMORY_STRENGTH_TIP: 'Add new words when strength is high',
   STRENGTH_SCORE: 'Memory strength',
   DUE_WORDS: 'Due',
-  STRUGGLING_WORDS: 'Struggling',
 
   INSIGHTS_UNAVAILABLE: 'Insights unavailable',
   INFO: 'Info',
   MEMORY_STRENGTH_INFO: 'About memory strength',
 
-  WORD_MASTERY: 'Mastery Journey',
-  LEARNED_WORDS: 'Learned Words',
+  WORD_MASTERY: 'Words Mastered',
+  LEARNED_WORDS: 'Words Learning',
   LEARNING_PROGRESS: 'Learning Progress',
   REVIEW_TIMING: 'Memory strength',
   REVIEW_TIMING_EXPLANATION:
@@ -192,7 +191,7 @@ export const STRINGS = {
   MEMORY_STRENGTH_SUBTITLE:
     'Percentage of words you are expected to recall at a given time. Target at least 75% before adding new words',
   WORD_MASTERY_SUBTITLE: 'Words with strong, stable memories requiring minimal review',
-  LEARNED_WORDS_SUBTITLE: 'Words you have successfully learned that are building toward mastery',
+  LEARNED_WORDS_SUBTITLE: 'Words you are learning that are building toward mastery',
   LEARNING_RATE_SUBTITLE: 'Learning efficiency and speed trends over recent days',
   DUE_WORDS_FORECAST_SUBTITLE: 'Upcoming reviews for the next 7 days',
   MEMORY_RETENTION_OPTIMAL_TIMING:

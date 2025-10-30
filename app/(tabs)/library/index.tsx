@@ -12,7 +12,7 @@ import { FilterSection } from '@/components/library/FilterSection';
 import { HijriDateFooter } from '@/components/library/HijriDateFooter';
 import { IntelligentArticleSection } from '@/components/library/IntelligentArticleSection';
 import { LAYOUT } from '@/constants/layout';
-import { articleQueryOptions } from '@/constants/queryOptions';
+import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import { getAuthorFilterRoute, getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -37,16 +37,16 @@ export default function ReadScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
 
   const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery(
-    articleQueryOptions.categories(),
+    articleQueries.categories(),
   );
 
   const { data: authorsData = [], isLoading: isAuthorsLoading } = useQuery(
-    articleQueryOptions.authors(),
+    articleQueries.authors(),
   );
 
   // Get articles for display and filtering
   const { data: articlesData = [], isLoading: isArticlesLoading } = useQuery({
-    ...articleQueryOptions.all(),
+    ...articleQueries.all(),
     refetchOnMount: false, // Don't refetch on mount if we have data
   });
 
@@ -110,25 +110,16 @@ export default function ReadScreen(): JSX.Element {
     mediumFeedback();
 
     try {
-      // Force complete cache invalidation for immediate data update
-      const baseQueries = [
-        queryClient.invalidateQueries({ queryKey: ['articles'] }),
-        queryClient.invalidateQueries({ queryKey: ['categories'] }),
-        queryClient.invalidateQueries({ queryKey: ['authors'] }),
-      ];
+      // Force complete cache invalidation for immediate data update using helpers
+      const baseQueries = articleQueries.invalidateAll(queryClient);
 
       // Add user-specific queries if authenticated
       const userQueries = user?.id
-        ? [
-            queryClient.invalidateQueries({ queryKey: ['reading-streak', user.id] }),
-            queryClient.invalidateQueries({ queryKey: ['reading-list', user.id] }),
-            queryClient.invalidateQueries({ queryKey: ['reading-progress-bulk', user.id] }),
-          ]
-        : [];
+        ? readingProgressQueries.invalidateAll(queryClient, user.id)
+        : Promise.resolve();
 
       // Execute all invalidations with error handling for individual failures
-      const allQueries = [...baseQueries, ...userQueries];
-      await Promise.allSettled(allQueries);
+      await Promise.allSettled([baseQueries, userQueries]);
 
       // Force new article selection only if refresh was successful
       setRefreshKey(prev => prev + 1);

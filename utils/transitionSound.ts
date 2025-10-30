@@ -34,9 +34,14 @@ export async function playTransitionSound(): Promise<void> {
       };
 
       // Listen for playback completion
-      subscription = player!.addListener('playbackStatusUpdate', (status: any) => {
-        if (!status.playing) complete();
-      });
+      if (player) {
+        subscription = player.addListener(
+          'playbackStatusUpdate',
+          (status: { playing?: boolean }) => {
+            if (!status.playing) complete();
+          },
+        );
+      }
 
       // Fallback timeout for short UI sounds
       setTimeout(complete, 2000);

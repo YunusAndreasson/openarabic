@@ -39,7 +39,7 @@ import {
 } from '@/components/providers';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
-import { QUERY_DEFAULTS } from '@/constants/queryKeys';
+import { QUERY_DEFAULTS } from '@/constants/queries';
 import { createNavigationOptions } from '@/utils/navigation';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';

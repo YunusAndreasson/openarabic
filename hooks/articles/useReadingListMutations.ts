@@ -2,7 +2,7 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
-import { AUDIO_QUERY_KEYS, READING_LIST_QUERY_KEYS } from '@/constants/queryKeys';
+import { audioQueries, readingProgressQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { bookmarkService } from '@/services/bookmark';
 import { supabase } from '@/services/supabase';
@@ -47,13 +47,18 @@ export const useReadingListMutations = (
         bookmarkService.addToReadingList(userId, articleId),
       onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
         // Immediately update cache to reflect the bookmark was added
-        queryClient.setQueryData(READING_LIST_QUERY_KEYS.detail(userId, articleId), true);
+        queryClient.setQueryData(
+          readingProgressQueries.keys.readingListDetail(userId, articleId),
+          true,
+        );
 
         // Then refetch to ensure consistency
         refetchReadingListStatus();
-        queryClient.invalidateQueries({ queryKey: READING_LIST_QUERY_KEYS.all(userId) });
         queryClient.invalidateQueries({
-          queryKey: AUDIO_QUERY_KEYS.tracks(userId, audioPreference),
+          queryKey: readingProgressQueries.keys.readingList(userId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: audioQueries.keys.tracks(userId, audioPreference),
         });
       },
       onError: (error: Error) => {
@@ -81,13 +86,18 @@ export const useReadingListMutations = (
         bookmarkService.removeFromReadingList(userId, articleId),
       onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
         // Immediately update cache to reflect the bookmark was removed
-        queryClient.setQueryData(READING_LIST_QUERY_KEYS.detail(userId, articleId), false);
+        queryClient.setQueryData(
+          readingProgressQueries.keys.readingListDetail(userId, articleId),
+          false,
+        );
 
         // Then refetch to ensure consistency
         refetchReadingListStatus();
-        queryClient.invalidateQueries({ queryKey: READING_LIST_QUERY_KEYS.all(userId) });
         queryClient.invalidateQueries({
-          queryKey: AUDIO_QUERY_KEYS.tracks(userId, audioPreference),
+          queryKey: readingProgressQueries.keys.readingList(userId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: audioQueries.keys.tracks(userId, audioPreference),
         });
       },
       onError: (error: Error) => {

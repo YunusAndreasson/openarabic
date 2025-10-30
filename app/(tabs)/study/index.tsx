@@ -18,8 +18,8 @@ import { VocabularyStatCards } from '@/components/study/VocabularyStatCards';
 import { WordsMasteredBottomSheet } from '@/components/study/WordsMasteredBottomSheet';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
+import { fsrsQueries } from '@/constants/queries';
 import { getStudyReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
@@ -68,8 +68,10 @@ export default function VocabularyScreen(): JSX.Element {
       // Prevent multiple prefetch calls
       if (hasPrefetchedRef.current) return;
 
-      const hasStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.allWithCooldown(user.id, 1));
-      const hasDueWords = queryClient.getQueryData(FSRS_QUERY_KEYS.due(user.id));
+      const hasStudyWords = queryClient.getQueryData(
+        fsrsQueries.allWithCooldown(user.id, 1).queryKey,
+      );
+      const hasDueWords = queryClient.getQueryData(fsrsQueries.due(user.id).queryKey);
 
       // Only fetch if we're missing either data set
       if (!hasStudyWords || !hasDueWords) {
@@ -77,13 +79,13 @@ export default function VocabularyScreen(): JSX.Element {
         InteractionManager.runAfterInteractions(() => {
           prefetchVocabularyData();
           // Ensure due words are fresh when screen gains focus
-          queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
+          queryClient.refetchQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
         });
       } else {
         // Mark as prefetched even if data exists to prevent future calls
         hasPrefetchedRef.current = true;
         // Still force a lightweight refresh of due counts to avoid stale UI after app restarts
-        queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
+        queryClient.refetchQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
       }
     }, [user?.id, prefetchVocabularyData, queryClient]),
   );
@@ -208,7 +210,7 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Calculate loading and content states (needed for animations before any early returns)
   const isLoadingState = isDataLoading || isFetching;
-  const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
+  const isDataCached = !!(user?.id && queryClient.getQueryData(fsrsQueries.all(user.id).queryKey));
   const shouldShowMainContent = !isLoadingState || (isLoadingState && isDataCached);
 
   // Track animation states to prevent restarts
@@ -237,8 +239,8 @@ export default function VocabularyScreen(): JSX.Element {
   if (shouldShowError) {
     const handleRetry = () => {
       if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
+        // Use helper to invalidate all FSRS queries
+        fsrsQueries.invalidateAll(queryClient, user.id);
       }
     };
 

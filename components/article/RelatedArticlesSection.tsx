@@ -115,8 +115,8 @@ RelatedArticlesSection.displayName = 'RelatedArticlesSection';
 const styles = StyleSheet.create({
   container: {
     paddingTop: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    // paddingBottom removed - FlashList contentContainerStyle handles bottom spacing
   },
   articleSpacing: {
     marginTop: LAYOUT.SPACING.SMALL,

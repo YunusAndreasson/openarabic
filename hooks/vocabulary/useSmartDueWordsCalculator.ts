@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { AppStateStatus } from 'react-native';
 import { AppState } from 'react-native';
 
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { handleError } from '@/utils/errorHandling';
@@ -55,7 +55,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
       const refreshPromises = [
         // Refresh due words with fresh data
         queryClient.fetchQuery({
-          queryKey: FSRS_QUERY_KEYS.due(user.id),
+          queryKey: fsrsQueries.due(user.id).queryKey,
           queryFn: () =>
             studyWordsFSRSService.getFSRSWords(user.id, {
               onlyDue: true,
@@ -68,7 +68,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
 
         // Refresh all words for accurate memory strength calculation
         queryClient.fetchQuery({
-          queryKey: FSRS_QUERY_KEYS.all(user.id),
+          queryKey: fsrsQueries.all(user.id).queryKey,
           queryFn: () =>
             studyWordsFSRSService.getFSRSWords(user.id, {
               forStats: false,
@@ -80,7 +80,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
 
         // Refresh stats for accurate counts
         queryClient.fetchQuery({
-          queryKey: FSRS_QUERY_KEYS.stats(user.id),
+          queryKey: fsrsQueries.stats(user.id).queryKey,
           queryFn: () =>
             studyWordsFSRSService.getFSRSWords(user.id, {
               forStats: true,

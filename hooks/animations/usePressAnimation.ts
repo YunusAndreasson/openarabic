@@ -1,12 +1,7 @@
 import { useCallback, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { WithSpringConfig } from 'react-native-reanimated';
-import {
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { CARD_PRESS_OPACITY, PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
 import { useMountSafety } from '@/hooks/common/useMountSafety';

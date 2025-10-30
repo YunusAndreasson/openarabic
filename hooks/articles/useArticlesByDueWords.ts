@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { ARTICLE_QUERY_KEYS } from '@/constants/queryKeys';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { fsrsQueries, articleQueries } from '@/constants/queries';
 import { articlesService } from '@/services/articles';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
 import { getArticlesByDueWords } from '@/utils/articleUtils';
 
@@ -30,41 +29,14 @@ export function useArticlesByDueWords(
 ): UseArticlesByDueWordsResult {
   // Fetch due words for the current user with optimized query
   const { data: dueWords = [], isLoading: isLoadingDueWords } = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : FSRS_QUERY_KEYS.FALLBACK.due,
-    queryFn: () => {
-      if (!userId) return Promise.resolve([]);
-      return studyWordsFSRSService.getFSRSWords(userId, {
-        onlyDue: true,
-        limit: 200, // Increased from 100 to support larger vocabularies
-        forStats: false, // We need root data for matching
-        // Align due words with practice cooldown so freshly reviewed words
-        // do not appear in recommendations immediately after a session
-        sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
-      });
-    },
+    ...fsrsQueries.due(userId || ''),
     enabled: !!userId,
-    staleTime: 60000, // 1 minute - due words change frequently
-    gcTime: 300000, // 5 minutes
-    retry: 2,
   });
 
   // Fallback: fetch all study words if no due words (for better recommendations)
   const { data: allStudyWords = [], isLoading: isLoadingAllWords } = useQuery({
-    queryKey: userId
-      ? FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
-      : FSRS_QUERY_KEYS.FALLBACK.allWithCooldown(DEFAULT_SESSION_COOLDOWN_HOURS),
-    queryFn: () => {
-      if (!userId) return Promise.resolve([]);
-      return studyWordsFSRSService.getFSRSWords(userId, {
-        forStats: false, // We need root data for matching
-        sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
-        limit: 100, // Reasonable limit for fallback
-      });
-    },
+    ...fsrsQueries.allWithCooldown(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
     enabled: !!userId && dueWords.length === 0, // Only fetch if no due words
-    staleTime: 180000, // 3 minutes - all words change less frequently
-    gcTime: 600000, // 10 minutes
-    retry: 2,
   });
 
   // Use due words if available, otherwise fallback to all study words
@@ -79,15 +51,12 @@ export function useArticlesByDueWords(
 
   // Use optimized articles query with word stats (shared cache with other hooks)
   const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
-    queryKey: ARTICLE_QUERY_KEYS.withStats(),
+    ...articleQueries.withStats(),
     queryFn: () => {
       if (!wordsToUse.length || limit <= 0) return Promise.resolve([]);
       return articlesService.getArticlesWithWordStats();
     },
     enabled: !!userId && wordsToUse.length > 0 && limit > 0,
-    staleTime: 3600000, // 1 hour - articles update max once a day
-    gcTime: 7200000, // 2 hours
-    retry: 2,
   });
 
   // Process and sort articles by words count

@@ -7,7 +7,7 @@ import React, { useMemo } from 'react';
 import { ThemedView } from '@/components/ThemedView';
 import { FilteredArticleView } from '@/components/library/FilteredArticleView';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
-import { articleQueryOptions } from '@/constants/queryOptions';
+import { articleQueries } from '@/constants/queries';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
@@ -25,7 +25,7 @@ export default function FilterScreen(): JSX.Element {
     error,
     refetch,
   } = useQuery({
-    ...articleQueryOptions.all(),
+    ...articleQueries.all(),
     refetchOnMount: false, // Don't refetch if data is fresh (2025 best practice)
     refetchOnReconnect: true, // Only refetch on network reconnection
   });

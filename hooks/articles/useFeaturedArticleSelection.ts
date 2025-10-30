@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef } from 'react';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { getBeginnerArticles } from '@/utils/articleUtils';
@@ -92,17 +92,8 @@ export function useFeaturedArticleSelection(
     useArticlesByDifficultWords(user?.id, 10);
 
   const { data: allStudyWords = [] } = useQuery({
-    queryKey: FSRS_QUERY_KEYS.allWithCooldown(user?.id || '', DEFAULT_SESSION_COOLDOWN_HOURS),
-    queryFn: () => {
-      if (!user?.id) return Promise.resolve([]);
-      return studyWordsFSRSService.getFSRSWords(user.id, {
-        forStats: true,
-        limit: 1,
-      });
-    },
+    ...fsrsQueries.allWithCooldown(user?.id || '', DEFAULT_SESSION_COOLDOWN_HOURS),
     enabled: !!user?.id,
-    staleTime: 180000,
-    gcTime: 600000,
   });
 
   const hasAnyStudyWords = allStudyWords.length > 0;

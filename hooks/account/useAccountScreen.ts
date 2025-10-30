@@ -6,7 +6,7 @@ import * as StoreReview from 'expo-store-review';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
-import { READING_PROGRESS_QUERY_KEYS } from '@/constants/queryKeys';
+import { readingProgressQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAudioCache } from '@/hooks/audio/useAudioCache';
@@ -184,10 +184,10 @@ export const useAccountScreen = () => {
 
               // Invalidate all reading progress related queries
               await queryClient.invalidateQueries({
-                queryKey: READING_PROGRESS_QUERY_KEYS.bulk(user.id),
+                queryKey: readingProgressQueries.keys.bulk(user.id),
               });
               await queryClient.invalidateQueries({
-                queryKey: READING_PROGRESS_QUERY_KEYS.streak(user.id),
+                queryKey: readingProgressQueries.keys.streak(user.id),
               });
 
               lightFeedback();

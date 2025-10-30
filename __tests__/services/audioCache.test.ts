@@ -1,3 +1,6 @@
+// Unmock audioCache since this test file tests the real implementation
+jest.unmock('@/services/audioCache');
+
 const mockDownloadFileAsync = jest.fn();
 const mockFileConstructor = jest.fn();
 const mockDirectoryConstructor = jest.fn();

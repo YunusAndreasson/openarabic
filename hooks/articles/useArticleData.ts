@@ -2,8 +2,7 @@ import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
-import { CACHE_TIMES, READING_LIST_QUERY_KEYS } from '@/constants/queryKeys';
-import { articleQueryOptions, fsrsQueryOptions } from '@/constants/queryOptions';
+import { articleQueries, fsrsQueries, CACHE_TIMES } from '@/constants/queries';
 import { useColors } from '@/hooks/theme/useColors';
 import { bookmarkService } from '@/services/bookmark';
 import type { Article } from '@/types/articles.types';
@@ -37,7 +36,7 @@ export const useArticleData = (
 
   // Fetch article data with optimized caching
   const { data: article, isLoading: isLoadingArticle } = useQuery({
-    ...articleQueryOptions.detail(articleId || 0),
+    ...articleQueries.detail(articleId || 0),
     refetchOnMount: false, // Don't refetch on mount if we have data
   });
 
@@ -45,8 +44,8 @@ export const useArticleData = (
   const { data: isInReadingList = false, refetch: refetchReadingListStatus } = useQuery({
     queryKey:
       userId && articleId
-        ? READING_LIST_QUERY_KEYS.detail(userId, articleId)
-        : ['readingList', 'none'],
+        ? (['readingList', userId, articleId] as const)
+        : (['readingList', 'none'] as const),
     queryFn: () => {
       if (!userId || !articleId) throw new Error('User ID and Article ID are required');
       return bookmarkService.isInReadingList(userId, articleId as ArticleId);
@@ -58,7 +57,7 @@ export const useArticleData = (
 
   // Fetch study words with optimized caching
   const studyWordsQuery = useQuery({
-    ...fsrsQueryOptions.allWithCooldown(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
+    ...fsrsQueries.allWithCooldown(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
     enabled: !!userId,
     refetchOnMount: false, // Only refetch via cache invalidation or pull-to-refresh
     refetchOnReconnect: false, // Only refetch via pull-to-refresh

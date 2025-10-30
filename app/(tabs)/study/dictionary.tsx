@@ -12,7 +12,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { DictionarySortingHeader } from '@/components/study/DictionarySortingHeader';
 import { DictionaryWordCard } from '@/components/study/DictionaryWordCard';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
@@ -83,13 +83,13 @@ export default function DictionaryScreen(): JSX.Element {
       if (user?.id) {
         // Invalidate all FSRS-related queries to ensure UI updates
         queryClient.invalidateQueries({
-          queryKey: FSRS_QUERY_KEYS.all(user.id),
+          queryKey: fsrsQueries.all(user.id).queryKey,
         });
         queryClient.invalidateQueries({
-          queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, 0),
+          queryKey: fsrsQueries.allWithCooldown(user.id, 0).queryKey,
         });
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
+        queryClient.invalidateQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
+        queryClient.invalidateQueries({ queryKey: fsrsQueries.stats(user.id).queryKey });
       }
     },
   );

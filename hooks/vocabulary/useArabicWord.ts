@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
 
 export interface UseArabicWordProps {
   word: SentenceWord;
@@ -34,22 +33,7 @@ export function useArabicWord({
 
   // Fetch the user's study words using unified FSRS query keys so mutations invalidate consistently
   const { data: studyWords = [] } = useQuery({
-    queryKey: user?.id
-      ? FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS)
-      : FSRS_QUERY_KEYS.FALLBACK.allWithCooldown(DEFAULT_SESSION_COOLDOWN_HOURS),
-    queryFn: async () => {
-      if (!user?.id) return [];
-      try {
-        return studyWordsFSRSService.getFSRSWords(user.id, { forStats: false });
-      } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Error fetching study words'), {
-          analyticsEventName: 'Study_Word_Fetch_Error',
-          showToast: false,
-          sentrySeverity: 'warning',
-        });
-        return [];
-      }
-    },
+    ...fsrsQueries.allWithCooldown(user?.id || '', DEFAULT_SESSION_COOLDOWN_HOURS),
     enabled: !!user?.id,
   });
 

@@ -4,10 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { memo, useCallback, type ReactElement } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedScrollHandler,
-  useSharedValue,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -45,7 +42,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   titleContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     marginTop: -LAYOUT.SPACING.XXXLARGE,
     paddingBottom: LAYOUT.SPACING.TINY,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
@@ -57,13 +54,13 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   authorContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   summaryContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   summaryText: {
@@ -207,7 +204,7 @@ const ArticleContentInternal = function ArticleContent({
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
     opacity: 0.4,
-    marginHorizontal: LAYOUT.SPACING.MEDIUM,
+    marginHorizontal: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   } as const;
 

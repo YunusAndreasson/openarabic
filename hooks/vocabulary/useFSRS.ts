@@ -6,10 +6,10 @@ import { createEmptyCard, fsrs, generatorParameters, Rating, State } from 'ts-fs
 import {
   DEFAULT_SESSION_COOLDOWN_HOURS,
   FSRS_BASE_KEY,
-  FSRS_QUERY_KEYS,
   MIN_WORD_SPACING,
   OPTIMIZED_FSRS_CONFIG,
 } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
@@ -90,7 +90,8 @@ export function useFSRS({
   const fsrsInstance = useMemo(() => fsrs(fsrsParams), [fsrsParams]);
 
   const { data: dueWords, isLoading } = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : FSRS_QUERY_KEYS.FALLBACK.due,
+    ...fsrsQueries.due(userId || ''),
+    enabled: !!userId,
     queryFn: async () => {
       if (!userId) return [];
 
@@ -112,7 +113,6 @@ export function useFSRS({
 
       return words;
     },
-    enabled: !!userId,
     refetchOnMount: true,
     refetchOnWindowFocus: false, // Mobile-only: no window focus concept
     refetchOnReconnect: true,
@@ -507,9 +507,7 @@ export function useFSRS({
     if (!userId) return;
 
     // Invalidate all FSRS-related queries to ensure cache consistency
-    queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
-    queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(userId) });
-    queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(userId) });
+    fsrsQueries.invalidateAll(queryClient, userId);
 
     stateTrackingRef.current.queueInitialized = false;
     queueRef.current = new PriorityQueue<StudyWord>();

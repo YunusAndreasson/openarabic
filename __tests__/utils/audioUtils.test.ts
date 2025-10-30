@@ -226,9 +226,7 @@ describe('audioUtils', () => {
       const remoteUrl = 'https://example.com/english.mp3';
       const cachedUrl = 'file:///cache/english.mp3';
 
-      generateAudioUrlMock
-        .mockReturnValueOnce(undefined)
-        .mockReturnValueOnce(remoteUrl);
+      generateAudioUrlMock.mockReturnValueOnce(undefined).mockReturnValueOnce(remoteUrl);
       audioCacheMock.getAudio.mockResolvedValueOnce(cachedUrl);
 
       const result = await generateWordAudioTrack(word);

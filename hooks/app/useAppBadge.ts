@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppStateStatus } from 'react-native';
 import { AppState } from 'react-native';
 
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { canUseBadge, clearAppBadge, setAppBadgeCount } from '@/services/notificationService';
@@ -114,7 +114,7 @@ export function useAppBadge(): void {
   useEffect(() => {
     if (!user?.id || !isAuthenticated) return;
 
-    const queryKey = FSRS_QUERY_KEYS.due(user.id);
+    const queryKey = fsrsQueries.due(user.id);
 
     // Use query invalidation instead of cache subscription for better performance
     const unsubscribe = queryClient.getQueryCache().subscribe(event => {

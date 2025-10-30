@@ -6,7 +6,7 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import { act } from 'react';
 
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
-import { READING_PROGRESS_QUERY_KEYS } from '@/constants/queryKeys';
+import { readingProgressQueries } from '@/constants/queries';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { readingProgressService } from '@/services/readingProgress';
 import type { ReadingProgress } from '@/services/readingProgress';
@@ -98,7 +98,7 @@ describe('useReadingProgress', () => {
       // Get the query from the cache to inspect its configuration
       const queries = queryClient
         .getQueryCache()
-        .findAll({ queryKey: READING_PROGRESS_QUERY_KEYS.bulk(testUserId) });
+        .findAll({ queryKey: readingProgressQueries.keys.bulk(testUserId) });
 
       expect(queries).toHaveLength(1);
       const query = queries[0];
@@ -136,7 +136,7 @@ describe('useReadingProgress', () => {
       // Get the query from the cache to inspect its configuration
       const queries = queryClient
         .getQueryCache()
-        .findAll({ queryKey: READING_PROGRESS_QUERY_KEYS.bulk(testUserId) });
+        .findAll({ queryKey: readingProgressQueries.keys.bulk(testUserId) });
 
       expect(queries).toHaveLength(1);
       const query = queries[0];
@@ -191,11 +191,11 @@ describe('useReadingProgress', () => {
 
       // Verify cache invalidation happened with correct query keys
       expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-        queryKey: READING_PROGRESS_QUERY_KEYS.bulk(testUserId),
+        queryKey: readingProgressQueries.keys.bulk(testUserId),
       });
 
       expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-        queryKey: READING_PROGRESS_QUERY_KEYS.streak(testUserId),
+        queryKey: readingProgressQueries.keys.streak(testUserId),
       });
 
       // Should have been called exactly twice (once for bulk, once for streak)

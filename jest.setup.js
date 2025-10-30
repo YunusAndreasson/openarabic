@@ -75,6 +75,82 @@ jest.mock('expo-system-ui', () => ({
   getBackgroundColorAsync: jest.fn().mockResolvedValue('#000000'),
 }));
 
+// Mock expo-file-system for file operations
+jest.mock('expo-file-system', () => ({
+  Paths: {
+    cache: {
+      uri: 'file:///mock/cache/',
+    },
+    document: {
+      uri: 'file:///mock/document/',
+    },
+  },
+  Directory: {
+    create: jest.fn().mockResolvedValue(undefined),
+    delete: jest.fn().mockResolvedValue(undefined),
+    exists: jest.fn().mockResolvedValue(true),
+  },
+  File: {
+    create: jest.fn().mockResolvedValue(undefined),
+    delete: jest.fn().mockResolvedValue(undefined),
+    exists: jest.fn().mockResolvedValue(true),
+    write: jest.fn().mockResolvedValue(undefined),
+    read: jest.fn().mockResolvedValue(''),
+    copy: jest.fn().mockResolvedValue(undefined),
+  },
+  downloadAsync: jest.fn().mockResolvedValue({ uri: 'file:///mock/downloaded.mp3' }),
+  getInfoAsync: jest.fn().mockResolvedValue({ exists: true, size: 1024, isDirectory: false }),
+  makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
+  deleteAsync: jest.fn().mockResolvedValue(undefined),
+  readAsStringAsync: jest.fn().mockResolvedValue(''),
+  writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
+// Mock audio cache service
+jest.mock('@/services/audioCache', () => ({
+  audioCache: {
+    getAudio: jest.fn().mockImplementation(url => {
+      // Return a mock local path that preserves the filename for test assertions
+      const filename = url.split('/').pop() || 'audio.mp3';
+      return Promise.resolve(`file:///mock/cache/${filename}`);
+    }),
+    cacheAudio: jest.fn().mockResolvedValue(undefined),
+    clearCache: jest.fn().mockResolvedValue(undefined),
+    getCacheSize: jest.fn().mockResolvedValue(0),
+  },
+  AudioCacheManager: {
+    getInstance: jest.fn(() => ({
+      getAudio: jest.fn().mockImplementation(url => {
+        const filename = url.split('/').pop() || 'audio.mp3';
+        return Promise.resolve(`file:///mock/cache/${filename}`);
+      }),
+      cacheAudio: jest.fn().mockResolvedValue(undefined),
+      clearCache: jest.fn().mockResolvedValue(undefined),
+      getCacheSize: jest.fn().mockResolvedValue(0),
+    })),
+  },
+}));
+
+// Mock react-native-worklets for thread scheduling
+jest.mock('react-native-worklets', () => ({
+  scheduleOnRN: jest.fn(callback => {
+    // Execute callback immediately in test environment (no threading)
+    if (typeof callback === 'function') {
+      return (...args) => callback(...args);
+    }
+    return callback;
+  }),
+  runOnUI: jest.fn(callback => {
+    // Execute callback immediately in test environment
+    if (typeof callback === 'function') {
+      return (...args) => callback(...args);
+    }
+    return callback;
+  }),
+  createWorklet: jest.fn(callback => callback),
+  isWorklet: jest.fn(() => false),
+}));
+
 // Comprehensive react-native-reanimated mock for AI predictability
 jest.mock('react-native-reanimated', () => {
   const React = require('react');

@@ -3,12 +3,8 @@ import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
 import { useToast } from '@/components/providers/ToastProvider';
-import {
-  DEFAULT_SESSION_COOLDOWN_HOURS,
-  FSRS_QUERY_KEYS,
-  MEMORY_CAPACITY_THRESHOLDS,
-} from '@/constants/fsrs';
-import { AUDIO_QUERY_KEYS } from '@/constants/queryKeys';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
+import { audioQueries, fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
@@ -22,7 +18,7 @@ import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
 
 type StudyWordContext = {
-  previousStudyWords: { root_id: number }[];
+  previousStudyWords: StudyWord[];
 };
 
 interface StudyWordMutationsResult {
@@ -41,18 +37,6 @@ interface StudyWordMutationsResult {
     StudyWordContext
   >;
 }
-
-// Shared query keys used across mutation success handlers
-const RELATED_QUERY_KEYS = (userId: string, audioPreference?: 'arabic' | 'bilingual') =>
-  [
-    FSRS_QUERY_KEYS.all(userId),
-    FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
-    FSRS_QUERY_KEYS.due(userId),
-    audioPreference
-      ? AUDIO_QUERY_KEYS.tracks(userId, audioPreference)
-      : (['enhancedAudioTracks', userId] as const),
-    FSRS_QUERY_KEYS.stats(userId),
-  ] as const;
 
 /**
  * Hook for study word mutations
@@ -75,7 +59,7 @@ export const useStudyWordMutations = (
     (userId: string | undefined): boolean => {
       if (!userId) return false;
       const all = queryClient.getQueryData<unknown>(
-        FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+        fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
       );
       if (Array.isArray(all)) {
         const words = all as {
@@ -156,20 +140,24 @@ export const useStudyWordMutations = (
         rootId?: number;
       }): Promise<StudyWordContext> => {
         await queryClient.cancelQueries({
-          queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+          queryKey: fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
         });
-        const previousStudyWords = queryClient.getQueryData(
-          FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
-        ) as {
-          root_id: number;
-        }[];
+        const previousStudyWords =
+          (queryClient.getQueryData(
+            fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
+          ) as StudyWord[]) || [];
 
         const id = (wordId ?? rootId) as number;
-        queryClient.setQueryData(
-          FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
-          (old: { root_id: number }[] = []) => {
+        queryClient.setQueryData<StudyWord[]>(
+          fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
+          (old = []) => {
             const exists = old.some(sw => sw.root_id === id);
-            return exists ? old.filter(sw => sw.root_id !== id) : [...old, { root_id: id }];
+            if (exists) {
+              return old.filter(sw => sw.root_id !== id);
+            }
+            // For optimistic add, create a minimal StudyWord-like object
+            // The actual full object will be fetched on success
+            return [...old, { root_id: id } as StudyWord];
           },
         );
 
@@ -178,21 +166,22 @@ export const useStudyWordMutations = (
       onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
         if (context?.previousStudyWords) {
           queryClient.setQueryData(
-            FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+            fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
             context.previousStudyWords,
           );
         }
         handleError(error);
         showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, ToastType.ERROR);
         queryClient.invalidateQueries({
-          queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+          queryKey: fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
         });
       },
       onSuccess: async (_: boolean, { userId }: { userId: string }) => {
-        // Batch invalidate related queries
-        RELATED_QUERY_KEYS(userId, audioPreference).forEach(queryKey => {
-          queryClient.invalidateQueries({ queryKey });
-        });
+        // Batch invalidate related queries using helpers
+        await Promise.all([
+          fsrsQueries.invalidateCommon(queryClient, userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+          audioPreference ? audioQueries.invalidateAll(queryClient, userId) : Promise.resolve(),
+        ]);
 
         await refetchStudyWords?.();
       },
@@ -311,7 +300,7 @@ export const useStudyWordMutations = (
 
         // Check if word already exists (remove operation should be allowed even if limit reached)
         const existingWords = queryClient.getQueryData<StudyWord[]>(
-          FSRS_QUERY_KEYS.allWithCooldown(currentUserId, DEFAULT_SESSION_COOLDOWN_HOURS),
+          fsrsQueries.allWithCooldown(currentUserId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
         );
 
         const wordExists =

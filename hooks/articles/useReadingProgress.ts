@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { READING_PROGRESS_QUERY_KEYS } from '@/constants/queryKeys';
+import { readingProgressQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { readingProgressService } from '@/services/readingProgress';
 import { handleError } from '@/utils/errorHandling';
@@ -133,11 +133,11 @@ export function useReadingProgress({
       if (user?.id) {
         // Invalidate bulk progress query (single source of truth)
         queryClient.invalidateQueries({
-          queryKey: READING_PROGRESS_QUERY_KEYS.bulk(user.id),
+          queryKey: readingProgressQueries.keys.bulk(user.id),
         });
         // Invalidate streak query to update streak immediately after reading
         queryClient.invalidateQueries({
-          queryKey: READING_PROGRESS_QUERY_KEYS.streak(user.id),
+          queryKey: readingProgressQueries.keys.streak(user.id),
         });
       }
     },
@@ -227,10 +227,10 @@ export function useReadingProgress({
 
         // Invalidate bulk query and streak query since article open counts as reading activity
         queryClient.invalidateQueries({
-          queryKey: READING_PROGRESS_QUERY_KEYS.bulk(user.id),
+          queryKey: readingProgressQueries.keys.bulk(user.id),
         });
         queryClient.invalidateQueries({
-          queryKey: READING_PROGRESS_QUERY_KEYS.streak(user.id),
+          queryKey: readingProgressQueries.keys.streak(user.id),
         });
       } catch (error) {
         // Silent error - article open tracking failed but shouldn't break reading
@@ -275,10 +275,10 @@ export function useReadingProgress({
 
           // Invalidate queries to refresh
           queryClient.invalidateQueries({
-            queryKey: READING_PROGRESS_QUERY_KEYS.bulk(user.id),
+            queryKey: readingProgressQueries.keys.bulk(user.id),
           });
           queryClient.invalidateQueries({
-            queryKey: READING_PROGRESS_QUERY_KEYS.streak(user.id),
+            queryKey: readingProgressQueries.keys.streak(user.id),
           });
         }
       } catch {
@@ -376,7 +376,7 @@ export function useBulkReadingProgress(articleIds: number[]) {
 
   const query = useQuery({
     queryKey: user?.id
-      ? READING_PROGRESS_QUERY_KEYS.bulk(user.id)
+      ? readingProgressQueries.keys.bulk(user.id)
       : (['reading-progress-bulk', undefined] as const),
     queryFn: async () => {
       // TypeScript guard - should never happen due to enabled check

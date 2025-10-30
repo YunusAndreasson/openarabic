@@ -51,7 +51,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
           {/* Header */}
           <View style={styles.header}>
             <ThemedText type="heading3" weight="bold" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
-              Your reading streak
+              Reading streak
             </ThemedText>
             <ThemedText
               type="body"

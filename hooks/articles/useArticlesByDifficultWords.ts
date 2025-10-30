@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { ARTICLE_QUERY_KEYS } from '@/constants/queryKeys';
+import { articleQueries } from '@/constants/queries';
 import { articlesService } from '@/services/articles';
 import { strugglingWordsService } from '@/services/strugglingWords';
 import type { Article } from '@/types/articles.types';
@@ -29,7 +28,7 @@ export function useArticlesByDifficultWords(
 ): UseArticlesByDifficultWordsResult {
   // Fetch difficult words for the current user with optimized query
   const { data: difficultWords = [], isLoading: isLoadingDifficultWords } = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.struggling(userId, 50) : ['struggling-words'],
+    queryKey: ['struggling-words', userId, 50] as const,
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
       return strugglingWordsService.getStrugglingWords(userId, 50);
@@ -47,15 +46,12 @@ export function useArticlesByDifficultWords(
 
   // Use optimized articles query with word stats (shared cache with due words hook)
   const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
-    queryKey: ARTICLE_QUERY_KEYS.withStats(),
+    ...articleQueries.withStats(),
     queryFn: () => {
       if (!difficultWords.length) return Promise.resolve([]);
       return articlesService.getArticlesWithWordStats();
     },
     enabled: !!userId && difficultWords.length > 0,
-    staleTime: 3600000, // 1 hour - articles update max once a day
-    gcTime: 7200000, // 2 hours
-    retry: 2,
   });
 
   // Process and sort articles by difficult words count

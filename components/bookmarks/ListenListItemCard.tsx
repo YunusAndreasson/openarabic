@@ -15,8 +15,9 @@ import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-// Bookmarks thumbnail size for elegant music app aesthetic
-const BOOKMARKS_IMAGE_SIZE = 48;
+// Bookmarks thumbnail size with golden ratio for visual consistency with featured cards
+const BOOKMARKS_IMAGE_WIDTH = 72;
+const BOOKMARKS_IMAGE_HEIGHT = 44;
 
 interface ListenListItemCardProps {
   title: string;
@@ -234,8 +235,8 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   thumbnailImage: {
-    height: BOOKMARKS_IMAGE_SIZE,
-    width: BOOKMARKS_IMAGE_SIZE,
+    height: BOOKMARKS_IMAGE_HEIGHT,
+    width: BOOKMARKS_IMAGE_WIDTH,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
 });

@@ -6,11 +6,11 @@ import { InteractionManager } from 'react-native';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import {
+  articleQueries,
   CACHE_TIMES,
-  READING_LIST_QUERY_KEYS,
-  READING_PROGRESS_QUERY_KEYS,
-} from '@/constants/queryKeys';
-import { articleQueryOptions, fsrsQueryOptions } from '@/constants/queryOptions';
+  fsrsQueries,
+  readingProgressQueries,
+} from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { bookmarkService } from '@/services/bookmark';
@@ -50,15 +50,15 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // Load static data first (categories, basic articles list)
       // Use ensureQueryData to prioritize cache over network (TanStack Query v5 best practice)
       const criticalPromises = [
-        queryClient.ensureQueryData(articleQueryOptions.categories()),
-        queryClient.ensureQueryData(articleQueryOptions.all()),
+        queryClient.ensureQueryData(articleQueries.categories()),
+        queryClient.ensureQueryData(articleQueries.all()),
       ];
 
       // CRITICAL FIX: Load reading progress synchronously with articles
       // This prevents race condition where filtered view renders before progress data is available
       const readingProgressPromise = user?.id
         ? queryClient.prefetchQuery({
-            queryKey: READING_PROGRESS_QUERY_KEYS.bulk(user.id),
+            queryKey: readingProgressQueries.keys.bulk(user.id),
             queryFn: () => readingProgressService.getBulkProgress(user.id, []),
             staleTime: 0, // CRITICAL: Always fetch fresh data on app startup to prevent stale cache from blocking updates
             gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
@@ -94,7 +94,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
               .filter(Boolean)
               .map(url => Image.prefetch(url, { cachePolicy: 'disk' }).catch(() => null)); // Silently handle prefetch failures
             const detailPrefetches = featured.map(a =>
-              queryClient.prefetchQuery(articleQueryOptions.detail(a.id)),
+              queryClient.prefetchQuery(articleQueries.detail(a.id)),
             );
             // Fire-and-forget; do not block loader
             Promise.allSettled([...imagePrefetches, ...detailPrefetches]).catch(() => {});
@@ -109,13 +109,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
         try {
           // CRITICAL: Force refresh due words on app open to get latest calculations
           await queryClient.fetchQuery({
-            ...fsrsQueryOptions.due(user.id, 1),
+            ...fsrsQueries.due(user.id, 1),
             staleTime: 0, // Always fetch fresh data on app open
           });
 
           // Also refresh all words for accurate memory strength calculation
           await queryClient.fetchQuery({
-            ...fsrsQueryOptions.all(user.id),
+            ...fsrsQueries.all(user.id),
             staleTime: 0, // Always fetch fresh data on app open
           });
 
@@ -137,9 +137,9 @@ export const useAppPreloader = (): AppPreloaderResult => {
         // Use setTimeout to defer background loading slightly, allowing UI to become responsive first
         setTimeout(() => {
           const backgroundPromises = [
-            queryClient.ensureQueryData(articleQueryOptions.authors()),
+            queryClient.ensureQueryData(articleQueries.authors()),
             queryClient.prefetchQuery({
-              queryKey: READING_LIST_QUERY_KEYS.all(user.id),
+              queryKey: readingProgressQueries.keys.readingList(user.id),
               queryFn: () => bookmarkService.getReadingList(user.id),
               ...CACHE_TIMES.MEDIUM,
               retry: 2,
@@ -191,7 +191,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
   const prefetchArticle = useCallback(
     async (articleId: number) => {
       try {
-        await queryClient.prefetchQuery(articleQueryOptions.detail(articleId));
+        await queryClient.prefetchQuery(articleQueries.detail(articleId));
         return true;
       } catch {
         return false;
@@ -205,8 +205,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
     try {
       await Promise.allSettled([
-        queryClient.prefetchQuery(fsrsQueryOptions.allWithCooldown(user.id, 1)),
-        queryClient.prefetchQuery(fsrsQueryOptions.due(user.id, 1)),
+        queryClient.prefetchQuery(fsrsQueries.allWithCooldown(user.id, 1)),
+        queryClient.prefetchQuery(fsrsQueries.due(user.id, 1)),
       ]);
       return true;
     } catch (error) {
@@ -228,13 +228,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
     try {
       // Use ensureQueryData to prioritize cache for immutable articles
-      const allArticles = await queryClient.ensureQueryData(articleQueryOptions.all());
+      const allArticles = await queryClient.ensureQueryData(articleQueries.all());
 
       if (!allArticles || allArticles.length === 0) return false;
 
       // Get user's study words to determine selection strategy
       const allStudyWords = await queryClient.fetchQuery({
-        ...fsrsQueryOptions.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+        ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
         staleTime: 180000,
       });
 
@@ -242,7 +242,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
       // Get due words for intelligent selection
       const dueWords = await queryClient.fetchQuery({
-        ...fsrsQueryOptions.due(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+        ...fsrsQueries.due(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
         staleTime: 60000, // 1 minute for due words
       });
 

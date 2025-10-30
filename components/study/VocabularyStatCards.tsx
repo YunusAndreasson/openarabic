@@ -88,7 +88,7 @@ export function VocabularyStatCards({
       formatAsDecimal: false,
     },
     {
-      label: VocabularyStatCategory.LEARNED,
+      label: VocabularyStatCategory.LEARNING,
       value: learnedWords,
       color: colors.warning,
       icon: 'school' as const,

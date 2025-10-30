@@ -12,7 +12,8 @@ import {
 
 import type { FlashListRef } from '@shopify/flash-list';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
@@ -273,6 +274,11 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
       const percentage = Math.round((initialLastSentenceRead / totalSentences) * 100);
       const message = STRINGS.RESUMED_READING_TEMPLATE.replace('{percent}', percentage.toString());
       showToast(message, 3000, ToastType.INFO);
+
+      // Light haptic feedback when scroll animation completes
+      setTimeout(() => {
+        selectionFeedback();
+      }, 450);
     }
   }, [
     isFlashListReady,
@@ -340,10 +346,10 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
       });
       // Invalidate queries in parallel for better performance
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) }),
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) }),
+        queryClient.invalidateQueries({ queryKey: fsrsQueries.due(user.id).queryKey }),
+        queryClient.invalidateQueries({ queryKey: fsrsQueries.all(user.id).queryKey }),
         queryClient.invalidateQueries({
-          queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+          queryKey: fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
         }),
         refetchStudyWords?.(),
       ]);
@@ -357,7 +363,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     const localState = localStudyStates.get(wordDetailsModal.data.root_id);
     if (localState !== undefined) return localState;
     if (!user?.id) return false;
-    const allWords = queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(user.id)) ?? [];
+    const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(user.id).queryKey) ?? [];
     return allWords.some(word => word.root_id === wordDetailsModal.data?.root_id);
   }, [wordDetailsModal.data?.root_id, localStudyStates, user?.id, queryClient]);
 

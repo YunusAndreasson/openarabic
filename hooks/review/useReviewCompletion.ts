@@ -4,7 +4,8 @@ import { InteractionManager } from 'react-native';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import type { SessionMetrics } from '@/types/review.types';
@@ -44,10 +45,10 @@ export const useReviewCompletion = (
 
     // Specifically invalidate the queries used by the study tab
     const queriesToInvalidate = [
-      FSRS_QUERY_KEYS.all(user.id),
-      FSRS_QUERY_KEYS.due(user.id),
-      FSRS_QUERY_KEYS.stats(user.id),
-      FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+      fsrsQueries.all(user.id).queryKey,
+      fsrsQueries.due(user.id).queryKey,
+      fsrsQueries.stats(user.id).queryKey,
+      fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
     ];
 
     queriesToInvalidate.forEach(queryKey => {

@@ -7,7 +7,8 @@ import type { SharedValue } from 'react-native-reanimated';
 import { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -600,14 +601,14 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         // Invalidate and refetch commonly used FSRS queries
         // Note: Don't invalidate/refetch allWithCooldown - it's session-specific
         // and will be fetched fresh when needed by components that use it
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
+        queryClient.invalidateQueries({ queryKey: fsrsQueries.all(user.id).queryKey });
+        queryClient.invalidateQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
+        queryClient.invalidateQueries({ queryKey: fsrsQueries.stats(user.id).queryKey });
 
         // Eagerly refetch to update counts immediately
-        queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
-        queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
-        queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
+        queryClient.refetchQueries({ queryKey: fsrsQueries.all(user.id).queryKey });
+        queryClient.refetchQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
+        queryClient.refetchQueries({ queryKey: fsrsQueries.stats(user.id).queryKey });
       }
     });
 

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { READING_PROGRESS_QUERY_KEYS } from '@/constants/queryKeys';
+import { readingProgressQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { studyStreakService, type ReadingStreak } from '@/services/studyStreak';
 import { handleError } from '@/utils/errorHandling';
@@ -24,7 +24,7 @@ export function useReadingStreak(): UseReadingStreakResult {
     error,
     refetch,
   } = useQuery({
-    queryKey: user?.id ? READING_PROGRESS_QUERY_KEYS.streak(user.id) : ['reading-streak', 'none'],
+    queryKey: user?.id ? readingProgressQueries.keys.streak(user.id) : ['reading-streak', 'none'],
     queryFn: async () => {
       if (!user?.id) return null;
       try {

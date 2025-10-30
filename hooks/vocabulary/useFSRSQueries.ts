@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY, FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { fsrsQueryOptions } from '@/constants/queryOptions';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY } from '@/constants/fsrs';
+import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -26,17 +26,17 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
   const queryClient = useQueryClient();
 
   const allWordsQuery = useQuery({
-    ...fsrsQueryOptions.all(userId || ''),
+    ...fsrsQueries.all(userId || ''),
     enabled: !!userId,
     initialData: () => {
       if (!userId) return undefined;
-      return queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId));
+      return queryClient.getQueryData(fsrsQueries.all(userId).queryKey);
     },
   });
 
   // Query for due words - uses shorter stale time since it's more time-sensitive
   const dueWordsQuery = useQuery({
-    ...fsrsQueryOptions.due(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
+    ...fsrsQueries.due(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
     enabled: !!userId,
     // Override queryFn to check for recent session completion
     queryFn: () => {
@@ -59,7 +59,7 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     // Use data from allWordsQuery if available and filter client-side
     initialData: () => {
       if (!userId) return undefined;
-      const allWords = queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(userId));
+      const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey);
       if (allWords) {
         const nowMs = Date.now();
         // Apply cooldown only if session was recently completed
@@ -102,17 +102,8 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
 
   // Query for stats - can use longer cache times since stats update less frequently
   const statsQuery = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.stats(userId) : ['no-user', 'stats'],
-    queryFn: async () => {
-      if (!userId) throw new Error('User ID is required');
-      return studyWordsFSRSService.getFSRSWords(userId, { forStats: true });
-    },
+    ...fsrsQueries.stats(userId || ''),
     enabled: !!userId, // Only enable when we have userId
-    staleTime: 600000, // 10 minutes - stats update less frequently
-    gcTime: 1800000, // 30 minutes
-    retry: (failureCount, _error) => {
-      return failureCount < 3; // Retry up to 3 times
-    },
   });
 
   return {
