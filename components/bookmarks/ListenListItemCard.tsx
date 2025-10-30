@@ -12,6 +12,7 @@ import { PlayButton } from '@/components/bookmarks/PlayButton';
 import { CARD_DRAG_SCALE, SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
 import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 // Bookmarks thumbnail size for elegant music app aesthetic
@@ -52,6 +53,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = ({
   shouldAnimateOnMount = true,
 }) => {
   const isDarkMode = useIsDarkMode();
+  const colors = useColors();
 
   const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
     type: 'scale',
@@ -153,6 +155,8 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = ({
             <ProgressBar
               progress={progressPercentage}
               height={LAYOUT.SPACING.TINY}
+              fillColor={colors.readingProgressIndicator}
+              backgroundColor={colors.readingProgressBackground}
               style={styles.progressBar}
             />
           )}

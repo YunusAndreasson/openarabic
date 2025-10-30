@@ -62,6 +62,8 @@ export interface ThemeColors {
 
   progressIndicator: string;
   progressBackground: string;
+  readingProgressIndicator: string;
+  readingProgressBackground: string;
   interactiveSecondary: string;
   completionSuccess: string;
 

@@ -849,6 +849,8 @@ const lightColors: ThemeColors = {
   // UI semantics
   progressIndicator: basePalette.tint.primary,
   progressBackground: withAlpha(basePalette.tint.primary, opacity.border),
+  readingProgressIndicator: basePalette.forest.lighter,
+  readingProgressBackground: withAlpha(basePalette.forest.lighter, opacity.border),
   interactiveSecondary: basePalette.forest.light,
   completionSuccess: basePalette.semantic.success,
 
@@ -959,6 +961,8 @@ const darkColors: ThemeColors = {
   // UI semantics
   progressIndicator: basePalette.tint.primaryDark,
   progressBackground: withAlpha(basePalette.tint.primaryDark, opacity.border),
+  readingProgressIndicator: basePalette.sage.medium,
+  readingProgressBackground: withAlpha(basePalette.sage.medium, opacity.border),
   interactiveSecondary: textHierarchy.dark.metadata,
   completionSuccess: basePalette.semantic.successDark,
 
@@ -1069,6 +1073,8 @@ const sepiaColors: ThemeColors = {
   // UI semantics
   progressIndicator: basePalette.autumn.accent.primary,
   progressBackground: withAlpha(basePalette.autumn.accent.primary, opacity.border),
+  readingProgressIndicator: basePalette.autumn.lighter,
+  readingProgressBackground: withAlpha(basePalette.autumn.lighter, opacity.border),
   interactiveSecondary: basePalette.autumn.light,
   completionSuccess: basePalette.autumn.semantic.success,
 
