@@ -1,6 +1,6 @@
 import type { ImageContentPosition } from 'expo-image';
 
-import type { BaseOptionalPressableProps, BaseStyleProps } from './base.types';
+import type { BaseStyleProps } from './base.types';
 
 /**
  * Image configuration options - simplified since most values are hardcoded defaults
@@ -15,10 +15,16 @@ export interface ImageConfig {
 /**
  * Props for the EnhancedImage component
  * Optimized for Expo Image v3 with modern features and smart defaults
+ *
+ * Note: EnhancedImage is not pressable. If press handling is needed,
+ * wrap the component in a Pressable or BaseCard.
  */
-export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressableProps {
+export interface EnhancedImageProps extends BaseStyleProps {
   /** Source URL of the image - required and must be non-null */
   source: string;
+
+  /** Optional test identifier for testing */
+  testID?: string;
 
   /** Content fit mode */
   contentFit?: ImageConfig['contentFit'];
