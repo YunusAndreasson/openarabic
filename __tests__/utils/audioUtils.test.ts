@@ -331,7 +331,7 @@ describe('audioUtils', () => {
 
       expect(mockQueryClient.prefetchQuery).toHaveBeenCalled();
       expect(Image.prefetch).toHaveBeenCalledWith('https://example.com/test.jpg', {
-        cachePolicy: 'disk',
+        cachePolicy: 'memory-disk',
       });
     });
 

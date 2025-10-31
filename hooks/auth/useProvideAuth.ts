@@ -19,7 +19,6 @@ export function useProvideAuth(): AuthResult {
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
   const refreshAttemptsRef = useRef(0);
-  const [authInitialized, setAuthInitialized] = useState(false);
 
   // Refresh session function with exponential backoff retry logic
   const refreshSession = useCallback(async (): Promise<UserSession | null> => {
@@ -46,15 +45,7 @@ export function useProvideAuth(): AuthResult {
         return null;
       }
 
-      // Initialize auth if needed
-      if (!authInitialized) {
-        await supabase.auth.initialize();
-        setAuthInitialized(true);
-      }
-
-      // Ensure auto-refresh is active
-      supabase.auth.startAutoRefresh();
-
+      // Modern supabase-js v2 auto-initializes and auto-refreshes with autoRefreshToken: true
       // Let Supabase handle the refresh
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
@@ -105,7 +96,7 @@ export function useProvideAuth(): AuthResult {
       setIsLoading(false);
       return null;
     }
-  }, [authInitialized]);
+  }, []);
 
   // Perform initial auth setup
   const initAuth = useCallback(async () => {
@@ -116,13 +107,8 @@ export function useProvideAuth(): AuthResult {
         level: 'info',
       });
 
-      await supabase.auth.initialize();
-      setAuthInitialized(true);
-
-      // Ensure auto-refresh is active
-      supabase.auth.startAutoRefresh();
-
-      // Fetch session after initialization
+      // Modern supabase-js v2 auto-initializes on first use
+      // Auto-refresh is enabled with autoRefreshToken: true in client config
       const { data, error } = await supabase.auth.getSession();
 
       if (error) {
@@ -191,32 +177,37 @@ export function useProvideAuth(): AuthResult {
     });
 
     // Listen for auth state changes
+    // CRITICAL: Callback must NOT be async and should defer all operations to prevent deadlocks
+    // See: https://supabase.com/docs/reference/javascript/auth-onauthstatechange
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!isMounted) return;
 
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: `Auth state change: ${event}`,
-        level: 'info',
-      });
+      // Defer all operations (including Sentry) to avoid deadlock
+      setTimeout(() => {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: `Auth state change: ${event}`,
+          level: 'info',
+        });
 
-      if (event === 'SIGNED_OUT') {
-        setSession(null);
-        setIsLoading(false);
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (newSession) {
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'New session received, updating state',
-            level: 'info',
-          });
-          setSession(newSession);
-          setAuthError(null);
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setIsLoading(false);
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (newSession) {
+            Sentry.addBreadcrumb({
+              category: 'auth',
+              message: 'New session received, updating state',
+              level: 'info',
+            });
+            setSession(newSession);
+            setAuthError(null);
+          }
+          setIsLoading(false);
         }
-        setIsLoading(false);
-      }
+      }, 0);
     });
 
     // Store the unsubscribe function

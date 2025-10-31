@@ -23,24 +23,29 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   },
 });
 
-// Module-level flag to ensure authentication is only initialized once
-let isAuthInitialized = false;
-
 /**
  * Registers an AppState listener to keep the auth session active.
+ * Modern supabase-js v2 auto-initializes on first use and auto-refreshes tokens when autoRefreshToken: true.
  *
  * @returns A cleanup function that removes the listener.
  */
 export function setupSupabaseAppStateListener(): () => void {
   const subscription = AppState.addEventListener('change', async state => {
-    if (state === 'active' && !isAuthInitialized) {
+    if (state === 'active') {
       try {
-        await supabase.auth.initialize();
-        isAuthInitialized = true;
-        supabase.auth.startAutoRefresh();
+        // Just verify session is active - no manual initialization needed
+        const { error } = await supabase.auth.getSession();
+
+        if (error) {
+          await handleError(error, {
+            analyticsEventName: 'Auth_Session_Check_Error',
+            sentrySeverity: 'warning',
+            showToast: false,
+          });
+        }
       } catch (err) {
         await handleError(err instanceof Error ? err : new Error(String(err)), {
-          analyticsEventName: 'Auth_Init_Error',
+          analyticsEventName: 'Auth_Session_Check_Error',
           sentrySeverity: 'error',
           showToast: false,
         });
@@ -62,11 +67,7 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
   user: User;
 }> {
   try {
-    if (!isAuthInitialized) {
-      await supabase.auth.initialize();
-      isAuthInitialized = true;
-    }
-
+    // Modern supabase-js v2 auto-initializes on first use
     const { data, error } = await supabase.auth.getSession();
 
     if (error) {

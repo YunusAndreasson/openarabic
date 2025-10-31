@@ -92,7 +92,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             const imagePrefetches = featured
               .map(a => String(a.image_url))
               .filter(Boolean)
-              .map(url => Image.prefetch(url, { cachePolicy: 'disk' }).catch(() => null)); // Silently handle prefetch failures
+              .map(url => Image.prefetch(url, { cachePolicy: 'memory-disk' }).catch(() => null)); // Silently handle prefetch failures
             const detailPrefetches = featured.map(a =>
               queryClient.prefetchQuery(articleQueries.detail(a.id)),
             );
@@ -115,7 +115,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
               const imagePrefetches = readingList
                 .map(item => String(item.articles?.image_url))
                 .filter(Boolean)
-                .map(url => Image.prefetch(url, { cachePolicy: 'disk' }).catch(() => null));
+                .map(url => Image.prefetch(url, { cachePolicy: 'memory-disk' }).catch(() => null));
 
               // Fire-and-forget; do not block loader
               Promise.allSettled(imagePrefetches).catch(() => {

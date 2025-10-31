@@ -25,9 +25,9 @@ const styles = StyleSheet.create({
  * High-performance image component optimized for loading and caching
  * Uses Expo Image v3 with modern features and smart defaults
  *
- * Cache Policy: Uses 'disk' by default for optimal memory usage. Most images
- * only need disk caching. Use 'memory-disk' only for frequently accessed images
- * (e.g., profile pictures, currently playing content).
+ * Cache Policy: Uses 'memory-disk' by default for instant access with minimal memory footprint.
+ * With allowDownscaling enabled, memory cache stores downscaled decoded bitmaps (~20KB per 72px image),
+ * while disk cache stores original compressed data for persistence across app restarts.
  *
  * Downscaling: Explicitly enabled to match container size and reduce memory usage.
  */
@@ -38,7 +38,7 @@ export function EnhancedImage({
   contentPosition = 'center', // Most common value - hardcoded
   onLoad,
   onError,
-  cachePolicy = 'disk', // Optimized: disk-only for most images, saves memory
+  cachePolicy = 'memory-disk', // Optimized: memory-disk for instant access with minimal memory (~20KB per downscaled image)
   priority = 'normal', // Most common value - hardcoded
   transition = 200, // Balanced: fast enough for UX, smooth enough for quality
   recyclingKey,
