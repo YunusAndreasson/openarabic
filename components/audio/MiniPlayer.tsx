@@ -101,22 +101,22 @@ const MiniPlayerComponent = ({
   // Memoize image URL to prevent duplicate generation on every render
   const imageUrl = useMemo(() => generateImageUrl(article.image_url), [article.image_url]);
 
-  // Memoize dynamic styles for better performance
+  // Memoize dynamic styles for better performance - use standard card background
   const cardStyle = useMemo(
     () => [
       styles.card,
       {
-        backgroundColor: colors.elevation2,
+        backgroundColor: colors.card,
         ...LAYOUT.ELEVATION.MEDIUM,
       },
     ],
-    [colors.elevation2],
+    [colors.card],
   );
 
-  // Memoize button colors - transparent buttons like FloatingActionButtons
+  // Memoize button colors - use elevation3 (lightest) to be LIGHTER than card background
   const timerButtonColor = useMemo(
-    () => (isTimerActive ? colors.warning : colors.elevation1),
-    [isTimerActive, colors.warning, colors.elevation1],
+    () => (isTimerActive ? colors.warning : colors.elevation3),
+    [isTimerActive, colors.warning, colors.elevation3],
   );
 
   const timerIconColor = useMemo(
@@ -124,8 +124,8 @@ const MiniPlayerComponent = ({
     [isTimerActive, colors.white, colors.secondaryText],
   );
 
-  // Pause button uses slightly more prominent elevation for primary action
-  const pauseButtonColor = useMemo(() => colors.elevation2, [colors.elevation2]);
+  // Pause button uses elevation3 for visibility (lighter than card)
+  const pauseButtonColor = useMemo(() => colors.elevation3, [colors.elevation3]);
 
   // Calculate progress percentage
   const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
