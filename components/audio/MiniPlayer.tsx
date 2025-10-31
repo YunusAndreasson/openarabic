@@ -22,8 +22,6 @@ export interface MiniPlayerProps {
     category: string;
     image_url: string;
   };
-  /** Audio playback state */
-  isPlaying: boolean;
   /** Sleep timer active state */
   isTimerActive: boolean;
   /** Audio progress information */
@@ -63,8 +61,7 @@ const MiniPlayerComparison = (prev: MiniPlayerProps, next: MiniPlayerProps): boo
   // Re-render if different article
   if (prev.article.id !== next.article.id) return false;
 
-  // Re-render if play/pause state changes
-  if (prev.isPlaying !== next.isPlaying) return false;
+  // Re-render if timer state changes
   if (prev.isTimerActive !== next.isTimerActive) return false;
 
   // Re-render if duration changes (new track)
@@ -90,7 +87,6 @@ const MiniPlayerComparison = (prev: MiniPlayerProps, next: MiniPlayerProps): boo
 
 const MiniPlayerComponent = ({
   article,
-  isPlaying: _isPlaying,
   isTimerActive,
   position,
   duration,

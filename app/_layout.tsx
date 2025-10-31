@@ -449,7 +449,6 @@ const AudioOverlays = memo(function AudioOverlays() {
       {shouldShowMiniPlayer && globalAudioState.currentArticle && (
         <MiniPlayer
           article={globalAudioState.currentArticle}
-          isPlaying={globalAudioState.isPlaying}
           isTimerActive={globalAudioState.isTimerActive}
           position={globalAudioState.position}
           duration={globalAudioState.duration}
