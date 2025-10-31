@@ -11,6 +11,7 @@ import { useArabicWord } from '@/hooks/vocabulary';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
+import { handleError } from '@/utils/errorHandling';
 import { buildColoredParagraph, buildSimpleParagraph } from '@/utils/skiaParagraphBuilder';
 import { getSelectedStyle } from '@/utils/textStyleUtils';
 
@@ -154,7 +155,10 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
         '🎯 Skia:',
         `font=${isReady ? 'ready' : 'loading'} paragraph=${paragraph ? 'built' : 'null'}`,
       );
-      console.log('📐 Canvas:', `width=${canvasDimensions.width} height=${canvasDimensions.height}`);
+      console.log(
+        '📐 Canvas:',
+        `width=${canvasDimensions.width} height=${canvasDimensions.height}`,
+      );
 
       // Compute English colored segments for debugging
       try {
@@ -178,7 +182,11 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
           ),
         );
       } catch (error) {
-        console.log('⚠️ English coloring analysis failed:', error);
+        // Log error in dev mode for debugging, but don't send to Sentry
+        handleError(error as Error, {
+          showToast: false,
+          captureSentry: false,
+        });
       }
 
       console.log('🎯 State:', `selected=${isSelected} highlighted=${isHighlighted}`);

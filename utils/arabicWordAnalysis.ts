@@ -1623,7 +1623,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     // Override hasComponents to false if this is a standalone component
     hasComponents: isStandalone
       ? false
-      : !!(finalPrefixes.length > 0 || infix || resolvedSuffix || resolvedDiacritic),
+      : Boolean(finalPrefixes.length > 0 || infix || resolvedSuffix || resolvedDiacritic),
     remainingArabic: remaining.trim(),
     remainingEnglish,
     hasBracketInjection,

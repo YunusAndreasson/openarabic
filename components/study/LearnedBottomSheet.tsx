@@ -25,7 +25,7 @@ export const LearnedBottomSheet = memo<LearnedBottomSheetProps>(({ isVisible, on
       title={STRINGS.LEARNED_WORDS}
       subtitle={STRINGS.LEARNED_WORDS_SUBTITLE}
     >
-      <LearnedChart studyWords={studyWords ?? []} hideTitle={true} />
+      <LearnedChart studyWords={studyWords ?? []} />
     </GenericBottomSheet>
   );
 });

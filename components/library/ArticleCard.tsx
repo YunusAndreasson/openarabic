@@ -15,6 +15,7 @@ import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
+import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter, formatAuthorCategory } from '@/utils/stringUtils';
 
 // Extract constants outside component for better performance
@@ -159,7 +160,10 @@ export function ArticleCard({
     try {
       router.push(articleHref);
     } catch (error) {
-      console.error('[ArticleCard] Navigation error:', error);
+      handleError(error as Error, {
+        showToast: false,
+        analyticsProperties: { articleId: article.id, href: articleHref },
+      });
     }
   };
 

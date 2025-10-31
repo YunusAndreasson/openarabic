@@ -36,7 +36,6 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, color, icon, onPress, formatAsDecimal = false }: StatCardProps) {
-  const colors = useColors();
   const displayValue = formatAsDecimal ? value.toFixed(1) : Math.round(value).toString();
 
   return (
@@ -51,14 +50,6 @@ function StatCard({ label, value, color, icon, onPress, formatAsDecimal = false 
         <ThemedText type="caption" colorName="textTertiary" style={styles.statLabel}>
           {label}
         </ThemedText>
-        {/* Chevron indicator in top-right corner */}
-        <View style={styles.chevronContainer}>
-          <Ionicons
-            name="chevron-forward"
-            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            color={colors.disabled}
-          />
-        </View>
       </View>
     </BaseCard>
   );
@@ -167,10 +158,5 @@ const styles = StyleSheet.create({
   statLabel: {
     textAlign: 'center',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-  },
-  chevronContainer: {
-    position: 'absolute',
-    top: LAYOUT.SPACING.SMALL,
-    right: LAYOUT.SPACING.SMALL,
   },
 });

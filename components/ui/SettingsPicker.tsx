@@ -82,8 +82,8 @@ export const SettingsPicker = <T,>({
   const dispatch = useAppDispatch();
 
   // Determine if we're in Redux mode or controlled mode
-  const isReduxMode = !!currentValueSelector && !!onValueChange;
-  const isControlledMode = !!onSelect;
+  const isReduxMode = Boolean(currentValueSelector && onValueChange);
+  const isControlledMode = Boolean(onSelect);
 
   // Get current value from Redux (always call hook, but provide fallback)
   const reduxValue = useAppSelectorShallow(currentValueSelector || (() => undefined as T));

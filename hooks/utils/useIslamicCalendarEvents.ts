@@ -1,5 +1,4 @@
 import moment from 'moment-hijri';
-import { useMemo } from 'react';
 
 import { HIJRI_MONTHS } from '@/constants/hijri';
 import { STRINGS } from '@/constants/strings';
@@ -131,8 +130,8 @@ export const formatDaysUntil = (days: number): string => {
 };
 
 export function useIslamicCalendarEvents() {
-  const events = useMemo(calculateUpcomingEvents, []);
-  const currentHijriDate = useMemo(getCurrentHijriDate, []);
+  const events = calculateUpcomingEvents();
+  const currentHijriDate = getCurrentHijriDate();
 
   return { events, currentHijriDate };
 }

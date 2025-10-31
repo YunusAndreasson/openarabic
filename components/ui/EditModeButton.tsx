@@ -43,7 +43,7 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
   onEditModeChange,
   style,
   itemCount,
-  hideWhenEmpty,
+  hideWhenEmpty = true,
 }) => {
   const colors = useColors();
   const { editMode, toggle } = useEditMode(type);

@@ -15,7 +15,7 @@ export default function BookmarksLayout(): JSX.Element {
         name="index"
         options={createTabHeaderOptions({
           title: AppTab.LISTEN,
-          rightComponent: () => <EditModeButton type="listen" hideWhenEmpty={true} />,
+          rightComponent: () => <EditModeButton type="listen" />,
           colors,
         })}
       />

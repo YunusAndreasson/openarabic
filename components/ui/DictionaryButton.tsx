@@ -17,7 +17,7 @@ interface DictionaryButtonProps {
 }
 
 export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | null {
-  const { hideWhenEmpty, itemCount } = props;
+  const { hideWhenEmpty = true, itemCount } = props;
   const colors = useColors();
   const { session } = useAuth();
 

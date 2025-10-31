@@ -21,6 +21,9 @@ const CARD_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width for better visibil
 const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 7.5;
 const CARD_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + BASE_CONTENT_HEIGHT;
 
+// Pure function for FlashList key extraction
+const keyExtractor = (item: Article) => `featured-${item.id}`;
+
 /**
  * Horizontal slider displaying multiple articles in a swipeable ScrollView
  */
@@ -35,8 +38,6 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
   // Note: No progress indicators in main library carousel - only in list views
 
   // Memoize the article cards to prevent unnecessary re-renders
-
-  const keyExtractor = useCallback((item: Article) => `featured-${item.id}`, []);
 
   // v2 handles layout automatically - no size estimates needed
 

@@ -32,7 +32,7 @@ export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, 
       title={STRINGS.DUE_WORDS_FORECAST}
       subtitle={STRINGS.DUE_WORDS_FORECAST_SUBTITLE}
     >
-      <DueWordsPrognosisChart studyWords={filteredStudyWords} hideTitle={true} />
+      <DueWordsPrognosisChart studyWords={filteredStudyWords} />
     </GenericBottomSheet>
   );
 });

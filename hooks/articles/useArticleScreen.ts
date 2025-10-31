@@ -95,17 +95,14 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   }, [activeTooltip]);
 
   // Handle scroll to close tooltip
-  const handleScroll = useCallback(
-    (_event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      // Close tooltip when scrolling starts (deferred to avoid blocking scroll)
-      if (activeTooltipRef.current) {
-        InteractionManager.runAfterInteractions(() => {
-          setActiveTooltip(null);
-        });
-      }
-    },
-    [],
-  );
+  const handleScroll = useCallback((_event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    // Close tooltip when scrolling starts (deferred to avoid blocking scroll)
+    if (activeTooltipRef.current) {
+      InteractionManager.runAfterInteractions(() => {
+        setActiveTooltip(null);
+      });
+    }
+  }, []);
 
   // Article mutations
   const { handleToggleReadingList, handleRootPress } = useArticleMutations(
@@ -150,7 +147,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
 
   // Check audio availability
   const hasAudio = useMemo(() => {
-    return !!(article?.audio_url || article?.audio_url_bilingual);
+    return Boolean(article?.audio_url || article?.audio_url_bilingual);
   }, [article?.audio_url, article?.audio_url_bilingual]);
 
   // Handle audio playback
@@ -184,7 +181,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   }, [articleId, article, isPlaying, showToast]);
 
   // Reading progress
-  const isActive = !!article && !isLoadingArticle;
+  const isActive = Boolean(article) && !isLoadingArticle;
   const { updateProgress, initialLastSentenceRead, hadExistingProgressOnMount } =
     useReadingProgress({
       articleId: articleId ?? 0,

@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
@@ -38,7 +37,6 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     onClose,
   }) => {
     const colors = useColors();
-    const insets = useSafeAreaInsets();
 
     // Press animations for all buttons
     const closePressAnimation = usePressAnimation({ type: 'button' });
@@ -73,7 +71,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
       [buttonStyle, colors.elevation2],
     );
 
-    // Memoize button positions with safe area insets
+    // Memoize static button positions
     const closeButtonStyle = useMemo(
       () => ({
         position: 'absolute' as const,
@@ -81,7 +79,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         left: LAYOUT.SPACING.SMALL,
         zIndex: LAYOUT.Z_INDEX.OVERLAY,
       }),
-      [insets.top],
+      [],
     );
 
     const actionButtonsStyle = useMemo(
@@ -93,7 +91,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         flexDirection: 'row' as const,
         gap: LAYOUT.SPACING.TINY,
       }),
-      [insets.top],
+      [],
     );
 
     return (

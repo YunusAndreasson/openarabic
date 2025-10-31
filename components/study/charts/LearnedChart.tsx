@@ -13,7 +13,7 @@ interface LearnedChartProps {
 }
 
 export const LearnedChart = memo<LearnedChartProps>(
-  ({ studyWords = [], onInfoPress, hideTitle = false }: LearnedChartProps) => {
+  ({ studyWords = [], onInfoPress, hideTitle = true }: LearnedChartProps) => {
     const graphWidth = useGraphWidth();
 
     // Add top padding to prevent dots from being cut off

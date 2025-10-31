@@ -83,7 +83,7 @@ export const bookmarkService = {
           analyticsProperties: { articleId },
         },
       );
-      return !!data;
+      return Boolean(data);
     } catch (error) {
       // PGRST116 = "not found" error from Supabase, which is expected behavior
       if (error && typeof error === 'object' && 'code' in error && error.code === 'PGRST116') {

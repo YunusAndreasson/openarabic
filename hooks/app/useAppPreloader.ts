@@ -97,7 +97,9 @@ export const useAppPreloader = (): AppPreloaderResult => {
               queryClient.prefetchQuery(articleQueries.detail(a.id)),
             );
             // Fire-and-forget; do not block loader
-            Promise.allSettled([...imagePrefetches, ...detailPrefetches]).catch(() => {});
+            Promise.allSettled([...imagePrefetches, ...detailPrefetches]).catch(error => {
+              console.warn('[useAppPreloader] Featured articles prefetch failed:', error);
+            });
           } catch {
             // ignore prefetch errors
           }
@@ -147,7 +149,9 @@ export const useAppPreloader = (): AppPreloaderResult => {
           ];
 
           // Don't await - let these load in background
-          Promise.allSettled(backgroundPromises).catch(() => {});
+          Promise.allSettled(backgroundPromises).catch(error => {
+            console.warn('[useAppPreloader] Background data loading failed:', error);
+          });
         }, 500); // Delay background loading by 500ms to prioritize initial UI responsiveness
       }
 

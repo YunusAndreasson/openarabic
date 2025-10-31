@@ -56,7 +56,7 @@ export const StreakChart = memo<StreakChartProps>(
       const bars = dailyActivity.map(activity => {
         const hasActivity = activity.hasActivity;
         const streakPeriod = streakMap.get(activity.date);
-        const isInStreak = !!streakPeriod;
+        const isInStreak = Boolean(streakPeriod);
         const isActiveStreak = streakPeriod?.isActive || false;
 
         // Determine bar color and opacity

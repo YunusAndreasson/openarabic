@@ -1,6 +1,8 @@
 import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import { Asset } from 'expo-asset';
 
+import { handleError } from '@/utils/errorHandling';
+
 /**
  * Plays the transition sound between playlist tracks
  * Returns a promise that resolves when the sound finishes playing
@@ -47,8 +49,11 @@ export async function playTransitionSound(): Promise<void> {
       setTimeout(complete, 2000);
     });
   } catch (error) {
-    // Silently fail - transition sound is non-critical
-    console.warn('Failed to play transition sound:', error);
+    // Transition sound is non-critical - don't send to Sentry but log for debugging
+    handleError(error as Error, {
+      showToast: false,
+      captureSentry: false,
+    });
   } finally {
     // Always cleanup player
     player?.remove();

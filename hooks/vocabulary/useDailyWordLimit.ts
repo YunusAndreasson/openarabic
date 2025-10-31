@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { useAppSelectorShallow } from '@/store/hooks';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
@@ -7,7 +7,7 @@ const DAILY_WORD_COUNT_KEY = 'daily_word_count';
 const DAILY_WORD_RESET_KEY = 'daily_word_reset_date';
 
 export const useDailyWordLimit = () => {
-  const storage = useMemo(() => getSafeStorage(), []);
+  const storage = getSafeStorage();
   const dailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
 
   const getCurrentDateString = useCallback(() => {

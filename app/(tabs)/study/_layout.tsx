@@ -18,7 +18,7 @@ export default function StudyLayout(): JSX.Element {
         name="index"
         options={createTabHeaderOptions({
           title: AppTab.PRACTICE,
-          rightComponent: () => <DictionaryButton hideWhenEmpty={true} />,
+          rightComponent: () => <DictionaryButton />,
           colors,
         })}
       />

@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { memo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -7,7 +6,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { BaseCard } from '@/components/common/BaseCard';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
-import { useColors } from '@/hooks/theme/useColors';
 import { useRecommendationEngine } from '@/hooks/study/useRecommendationEngine';
 import { selectionFeedback } from '@/utils/haptics';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -24,7 +22,6 @@ interface RecommendationCardProps {
 export const RecommendationCard = memo<RecommendationCardProps>(
   ({ studyWords, dueWordsCount, currentRetention, learningWords, masteredWords, trend }) => {
     const router = useRouter();
-    const colors = useColors();
     const recommendation = useRecommendationEngine({
       studyWords,
       dueWordsCount,
@@ -55,11 +52,6 @@ export const RecommendationCard = memo<RecommendationCardProps>(
             >
               {recommendation.message}
             </ThemedText>
-            <Ionicons
-              name="chevron-forward"
-              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-              color={colors.disabled}
-            />
           </View>
         </View>
       </BaseCard>
@@ -78,10 +70,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: LAYOUT.SPACING.SMALL,
   },
   message: {
-    flex: 1,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },

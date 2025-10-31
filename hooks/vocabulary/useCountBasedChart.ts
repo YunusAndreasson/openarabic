@@ -249,7 +249,10 @@ export function useCountBasedChart<T extends DailyData>(
           data,
         } as DataPoint<T>;
       })
-      .filter((point): point is DataPoint<T> => point !== null && !!point.label && !!point.value);
+      .filter(
+        (point): point is DataPoint<T> =>
+          point !== null && Boolean(point.label) && Boolean(point.value),
+      );
   }, [chartData.points, dailyData, config]);
 
   // Generate x-axis labels (day names)

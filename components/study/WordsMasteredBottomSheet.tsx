@@ -26,7 +26,7 @@ export const WordsMasteredBottomSheet = memo<WordsMasteredBottomSheetProps>(
         title={STRINGS.WORD_MASTERY}
         subtitle={STRINGS.WORD_MASTERY_SUBTITLE}
       >
-        <MasteryChart studyWords={studyWords ?? []} hideTitle={true} />
+        <MasteryChart studyWords={studyWords ?? []} />
       </GenericBottomSheet>
     );
   },

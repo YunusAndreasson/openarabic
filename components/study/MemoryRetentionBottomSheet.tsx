@@ -26,7 +26,7 @@ export const MemoryRetentionBottomSheet = memo<MemoryRetentionBottomSheetProps>(
         title={STRINGS.MEMORY_STRENGTH}
         subtitle={STRINGS.MEMORY_STRENGTH_SUBTITLE}
       >
-        <RetrievabilityChart studyWords={studyWords ?? []} hideTitle={true} />
+        <RetrievabilityChart studyWords={studyWords ?? []} />
       </GenericBottomSheet>
     );
   },

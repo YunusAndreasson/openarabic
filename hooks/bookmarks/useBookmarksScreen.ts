@@ -113,7 +113,7 @@ export const useBookmarksScreen = () => {
   }, [dedupedReadingList, customOrder]);
 
   const isDataCached = useMemo(() => {
-    return !!(user?.id && queryClient.getQueryData(['readingList', user.id]));
+    return Boolean(user?.id && queryClient.getQueryData(['readingList', user.id]));
   }, [user?.id, queryClient]);
 
   const enhancedTracksQuery = useQuery({

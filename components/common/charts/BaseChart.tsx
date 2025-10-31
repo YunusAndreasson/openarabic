@@ -32,7 +32,7 @@ interface BaseChartProps {
 export function BaseChart({
   title = '',
   subtitle = '',
-  hideTitle = false,
+  hideTitle = true,
   onCardPress,
   children,
   hasData,

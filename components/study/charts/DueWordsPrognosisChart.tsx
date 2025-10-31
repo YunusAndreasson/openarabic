@@ -21,7 +21,7 @@ interface DueWordsRecord {
 }
 
 export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
-  ({ studyWords = [], onInfoPress, hideTitle = false }: DueWordsPrognosisChartProps) => {
+  ({ studyWords = [], onInfoPress, hideTitle = true }: DueWordsPrognosisChartProps) => {
     const graphWidth = useGraphWidth();
     const { dueWordsData, chartData } = useDueWordsChart(studyWords);
 

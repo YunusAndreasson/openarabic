@@ -13,7 +13,7 @@ interface MasteryChartProps {
 }
 
 export const MasteryChart = memo<MasteryChartProps>(
-  ({ studyWords = [], onInfoPress, hideTitle = false }: MasteryChartProps) => {
+  ({ studyWords = [], onInfoPress, hideTitle = true }: MasteryChartProps) => {
     const graphWidth = useGraphWidth();
 
     // Add top padding to prevent dots from being cut off

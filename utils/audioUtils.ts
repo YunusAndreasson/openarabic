@@ -65,7 +65,9 @@ export async function prefetchArticleWithImage(
       queryKey: ['article', articleId],
       queryFn: () => articlesService.getArticleById(articleId as ArticleId),
     })
-    .catch(() => {});
+    .catch(error => {
+      console.warn('[audioUtils] Article prefetch failed:', articleId, error);
+    });
 
   // Get cached article for image URL
   const cachedArticle = queryClient.getQueryData<Article>(['article', articleId]);
@@ -76,7 +78,9 @@ export async function prefetchArticleWithImage(
     Image.prefetch(imageUrl, { cachePolicy: 'disk' }).catch(() => null);
   } else if (prefetchArticle) {
     // Fallback to full article prefetch if no cached image
-    prefetchArticle(articleId).catch(() => {});
+    prefetchArticle(articleId).catch(error => {
+      console.warn('[audioUtils] Full article prefetch failed:', articleId, error);
+    });
   }
 }
 

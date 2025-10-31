@@ -24,7 +24,7 @@ interface RetrievabilityRecord {
 }
 
 export const RetrievabilityChart = memo<RetrievabilityChartProps>(
-  ({ studyWords = [], onInfoPress, hideTitle = false }: RetrievabilityChartProps) => {
+  ({ studyWords = [], onInfoPress, hideTitle = true }: RetrievabilityChartProps) => {
     const graphWidth = useGraphWidth();
     const { retrievabilityData, chartData } = useRetrievabilityChart(studyWords);
 
