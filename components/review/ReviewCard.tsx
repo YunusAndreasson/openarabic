@@ -186,11 +186,11 @@ export function ReviewCard({
   useEffect(() => {
     // CRITICAL FIX: Don't start timer if translation is showing (prevents timer restart during feedback)
     // This prevents the bug where onHesitationEnd → isHesitating=false triggers new timer while showing translation
-    const isCurrentlyHesitating = isHesitating?.value ?? false;
+    // Use synced JS state (showHint) to avoid blocking SharedValue read
     if (
       word &&
       englishTranslation &&
-      !isCurrentlyHesitating &&
+      !showHint &&
       !hesitationTimeoutRef.current &&
       !showTranslation
     ) {
@@ -211,7 +211,7 @@ export function ReviewCard({
       // CRITICAL FIX: Reset gesture active flag on word change to prevent stale state
       isGestureActiveRef.current = false;
     };
-  }, [word, englishTranslation, isHesitating, onHesitationStart, showTranslation]);
+  }, [word, englishTranslation, showHint, onHesitationStart, showTranslation]);
 
   // Word display props
   const wordDisplayProps = {

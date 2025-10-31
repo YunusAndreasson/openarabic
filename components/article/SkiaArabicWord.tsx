@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, type ComponentRef, type RefObject } from 'react';
 import type { LayoutRectangle } from 'react-native';
-import { Pressable, StyleSheet } from 'react-native';
+import { Platform, Pressable, StyleSheet } from 'react-native';
 
 import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
 
@@ -137,50 +137,53 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   };
 
   // Debug logging: Long press any word to see detailed analysis in console
+  // Only enabled in development on iOS to avoid production performance impact
   const handleLongPress = () => {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🐛 WORD DEBUG (Long Press) - SKIA RENDERING');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📝 Word:', word.word_form, '→', word.english);
-    console.log('🆔 IDs:', `word=${word.id} root=${word.root_id} pos=${position}`);
-    console.log(
-      '🎨 Components:',
-      `hasComponents=${hasComponents} segments=${coloredSegments.length}`,
-    );
-    console.log('📊 Arabic Segments:', JSON.stringify(coloredSegments, null, 2));
-    console.log(
-      '🎯 Skia:',
-      `font=${isReady ? 'ready' : 'loading'} paragraph=${paragraph ? 'built' : 'null'}`,
-    );
-    console.log('📐 Canvas:', `width=${canvasDimensions.width} height=${canvasDimensions.height}`);
-
-    // Compute English colored segments for debugging
-    try {
-      const analysis = analyzeArabicWord(word.word_form, word.english || '');
-      const formatted = formatWordAnalysis(analysis);
-
-      const englishSegments = generateColorCodedSegments({
-        text: word.english || '',
-        formattedAnalysis: formatted,
-        analysis,
-        colors,
-        defaultColor: colors.text,
-      });
-
+    if (__DEV__ && Platform.OS === 'ios') {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🐛 WORD DEBUG (Long Press) - SKIA RENDERING');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📝 Word:', word.word_form, '→', word.english);
+      console.log('🆔 IDs:', `word=${word.id} root=${word.root_id} pos=${position}`);
       console.log(
-        '📝 English Segments:',
-        JSON.stringify(
-          englishSegments.map(s => ({ text: s.text, color: s.color })),
-          null,
-          2,
-        ),
+        '🎨 Components:',
+        `hasComponents=${hasComponents} segments=${coloredSegments.length}`,
       );
-    } catch (error) {
-      console.log('⚠️ English coloring analysis failed:', error);
-    }
+      console.log('📊 Arabic Segments:', JSON.stringify(coloredSegments, null, 2));
+      console.log(
+        '🎯 Skia:',
+        `font=${isReady ? 'ready' : 'loading'} paragraph=${paragraph ? 'built' : 'null'}`,
+      );
+      console.log('📐 Canvas:', `width=${canvasDimensions.width} height=${canvasDimensions.height}`);
 
-    console.log('🎯 State:', `selected=${isSelected} highlighted=${isHighlighted}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      // Compute English colored segments for debugging
+      try {
+        const analysis = analyzeArabicWord(word.word_form, word.english || '');
+        const formatted = formatWordAnalysis(analysis);
+
+        const englishSegments = generateColorCodedSegments({
+          text: word.english || '',
+          formattedAnalysis: formatted,
+          analysis,
+          colors,
+          defaultColor: colors.text,
+        });
+
+        console.log(
+          '📝 English Segments:',
+          JSON.stringify(
+            englishSegments.map(s => ({ text: s.text, color: s.color })),
+            null,
+            2,
+          ),
+        );
+      } catch (error) {
+        console.log('⚠️ English coloring analysis failed:', error);
+      }
+
+      console.log('🎯 State:', `selected=${isSelected} highlighted=${isHighlighted}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }
   };
 
   // Word container styles - transparent underline reserves space to prevent layout jumps

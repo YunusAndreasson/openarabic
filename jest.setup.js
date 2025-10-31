@@ -159,10 +159,12 @@ jest.mock('react-native-reanimated', () => {
     // Cancellation
     cancelAnimation: jest.fn(() => undefined),
     // Core animation values
-    useSharedValue: (initialValue = 0) => ({
-      value: initialValue,
-      modify: jest.fn(),
-    }),
+    useSharedValue: (initialValue = 0) => {
+      // Use React's useRef to maintain a stable reference across re-renders
+      const React = require('react');
+      const ref = React.useRef({ value: initialValue, modify: jest.fn() });
+      return ref.current;
+    },
     useAnimatedStyle: styleCallback => {
       try {
         return styleCallback() || {};

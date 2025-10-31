@@ -4,8 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { memo, useCallback, type ReactElement } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -15,6 +14,7 @@ import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSect
 import { SCROLL_EVENT_THROTTLE, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
+import { useArticleScrollHandler } from '@/hooks/articles/useArticleScrollHandler';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -137,10 +137,8 @@ const ArticleContentInternal = function ArticleContent({
   // React Compiler auto-memoizes
   const headerHeight = calculateHeaderHeight(insets.top);
 
-  // Shared scroll value for parallax header
-  const scrollY = useSharedValue(0);
-  // Reduce cross-thread calls by emitting JS updates only when change is meaningful
-  const lastEmittedY = useSharedValue(0);
+  // High-performance scroll handler - runs on UI thread (no cross-thread calls)
+  const { scrollY, onScrollAnimated } = useArticleScrollHandler();
 
   // Optimized fade-in animation for snappy article appearance
   const { animatedStyle, startAnimation } = useOpacityAnimation({
@@ -155,30 +153,15 @@ const ArticleContentInternal = function ArticleContent({
     }
   }, [sortedSentences, startAnimation]);
 
-  // Forward JS scroll needs from UI thread
-  const handleScrollJS = useCallback(
-    (y: number) => {
-      const evt = {
-        nativeEvent: { contentOffset: { y } },
-      } as NativeSyntheticEvent<NativeScrollEvent>;
-      handleScroll(evt);
+  // Tooltip closure handler - only triggers when scroll begins, not during continuous scrolling
+  // This prevents blocking scroll performance while still closing tooltip on user interaction
+  const handleScrollBegin = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      // Call parent's handler for tooltip closure (minimal performance impact)
+      handleScroll(event);
     },
     [handleScroll],
   );
-
-  // UI-thread scroll handler for smoothness
-  const onScrollAnimated = useAnimatedScrollHandler({
-    onScroll: event => {
-      const y = event.contentOffset.y;
-      scrollY.set(y);
-      // Emit to JS only if scrolled enough to matter to header/tooltip logic
-      const dy = Math.abs(y - lastEmittedY.get());
-      if (dy >= 8 || y === 0) {
-        lastEmittedY.set(y);
-        scheduleOnRN(handleScrollJS, y);
-      }
-    },
-  });
 
   // Reserve right-side space so text never sits under floating action buttons
   // Updated to account for only one button now (bookmarks button)
@@ -299,6 +282,7 @@ const ArticleContentInternal = function ArticleContent({
                 event: NativeSyntheticEvent<NativeScrollEvent>,
               ) => void
             }
+            onScrollBeginDrag={handleScrollBegin}
             onViewableItemsChanged={handleViewableItemsChanged}
             viewabilityConfig={viewabilityConfig}
             scrollEventThrottle={SCROLL_THROTTLE}

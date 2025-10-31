@@ -76,7 +76,7 @@ The validation workflow has been optimized for AI agent efficiency:
 - **Navigation**: Expo Router v5.1.5 with typed routes and modal presentation
 - **State Management**: Redux Toolkit v2.8.2 with Redux Persist
 - **Data Fetching**: TanStack Query v5.85.5 (React Query) with persistence
-- **UI Performance**: @shopify/flash-list v1.7.6 for optimized lists
+- **UI Performance**: @shopify/flash-list v2.0.2 for optimized lists (New Architecture)
 - **Animation**: react-native-reanimated v4.1.3 and @shopify/react-native-skia v2.0.0
 - **Bottom Sheets**: @gorhom/bottom-sheet v5.2.6 for native bottom sheet modals
 - **Audio**: expo-audio v0.4.9 for playback with ElevenLabs API
@@ -685,6 +685,7 @@ export const COMMON_BOTTOM_SHEET_MODAL_PROPS = {
 
 - Causes "Maximum call stack size exceeded" errors with 100+ items
 - FlashList requires `enableDynamicSizing: false` with explicit `snapPoints`
+- FlashList v2 automatically handles item sizing - no `estimatedItemSize` needed (deprecated in v2)
 
 ```typescript
 // ✅ GOOD - FlashList configuration
@@ -697,7 +698,7 @@ import { BottomSheetFlashList } from '@gorhom/bottom-sheet';
   <BottomSheetFlashList
     data={items}
     renderItem={renderItem}
-    estimatedItemSize={70} // Required for performance
+    // Note: estimatedItemSize deprecated in v2 - automatic layout handling
   />
 </BottomSheetModal>
 ```

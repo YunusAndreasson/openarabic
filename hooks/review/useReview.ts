@@ -131,6 +131,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
   // Hesitation state as SharedValue for UI thread performance
   const isHesitating = useSharedValue(false);
+  // Ref for immediate synchronous reads (avoids blocking .value reads on JS thread)
+  const isHesitatingRef = useRef(false);
 
   // Consolidated time tracking refs
   const timeRefs = useRef<ReviewTimeRefs>({
@@ -256,6 +258,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // This prevents hint from showing on the next word during transition
       // Must happen BEFORE updateWord changes currentWord to prevent timing issues
       isHesitating.value = false;
+      // Sync ref immediately for synchronous reads
+      isHesitatingRef.current = false;
       hesitationWordKeyRef.current = '';
 
       try {
@@ -270,8 +274,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           triggerCompletionTransition();
           // Word process complete immediately
         } else {
-          // Continue with normal flow
-          setTimer('fadeInDelay', () => fadeIn(), TIMING_CONFIG.FAST.duration);
+          // Continue with normal flow - fade in immediately (no delay)
+          // This ensures audio and visual appearance are synchronized
+          fadeIn();
         }
       } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
@@ -562,9 +567,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const handleSwipeRight = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
     // Gesture swipe right - after hesitation: vague, otherwise: known
-    const confidence = isHesitating.value ? 'vague' : 'known';
+    // Use ref for immediate synchronous read (avoids both blocking and async state issues)
+    const confidence = isHesitatingRef.current ? 'vague' : 'known';
     handleKnowledgeResponse(confidence);
-  }, [handleKnowledgeResponse, isComplete, isHesitating]);
+  }, [handleKnowledgeResponse, isComplete]);
 
   const handleLongPress = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
@@ -574,14 +580,18 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // Hesitation callbacks - stable with refs
   const handleHesitationStart = useCallback(() => {
     isHesitating.value = true;
+    // Sync ref immediately for synchronous reads
+    isHesitatingRef.current = true;
     // Track which word this hesitation is for using ref for stability
     hesitationWordKeyRef.current = currentWordKeyRef.current;
-  }, [isHesitating]);
+  }, []); // Empty deps - all values are stable (SharedValue, ref)
 
   const handleHesitationEnd = useCallback(() => {
     isHesitating.value = false;
+    // Sync ref immediately for synchronous reads
+    isHesitatingRef.current = false;
     hesitationWordKeyRef.current = '';
-  }, [isHesitating]);
+  }, []); // Empty deps - all values are stable (SharedValue, ref)
 
   const handleClose = useCallback(() => {
     const mounted = { current: true };

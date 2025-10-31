@@ -22,7 +22,6 @@ import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
 import { useModalState } from '@/hooks/ui/useModalState';
 import { enhancedAudioService } from '@/services/audioPlaylist';
 import { simpleAudioService } from '@/services/audioPlayer';
@@ -49,7 +48,6 @@ export interface UseArticleScreenOptions {
 export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { handleScroll: handleHeaderScroll } = useHeaderVisibility();
 
   // Parse article ID
   const articleId = useMemo(() => {
@@ -98,9 +96,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
 
   // Handle scroll to close tooltip
   const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      handleHeaderScroll(event);
-
+    (_event: NativeSyntheticEvent<NativeScrollEvent>) => {
       // Close tooltip when scrolling starts (deferred to avoid blocking scroll)
       if (activeTooltipRef.current) {
         InteractionManager.runAfterInteractions(() => {
@@ -108,7 +104,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
         });
       }
     },
-    [handleHeaderScroll],
+    [],
   );
 
   // Article mutations
