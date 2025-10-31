@@ -168,45 +168,42 @@ const MiniPlayerComponent = ({
               />
             </View>
 
-            {/* Text Content and Time Display Column */}
+            {/* Text Content Column */}
             <View style={styles.textColumn}>
-              {/* Text Content */}
-              <View style={styles.textContent}>
-                <ThemedText
-                  colorName="headingText"
-                  style={styles.title}
-                  type="heading3"
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  {article.title}
-                </ThemedText>
+              <ThemedText
+                colorName="headingText"
+                style={styles.title}
+                type="heading3"
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {article.title}
+              </ThemedText>
 
-                <View style={styles.metaRow}>
-                  <ThemedText
-                    colorName="secondaryText"
-                    style={styles.artist}
-                    type="caption"
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {formatAuthorCategory(article.author, article.category)}
-                  </ThemedText>
-                </View>
-              </View>
+              <ThemedText
+                colorName="secondaryText"
+                style={styles.artist}
+                type="caption"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {formatAuthorCategory(article.author, article.category)}
+              </ThemedText>
+            </View>
+          </View>
 
-              {/* Time display and queue position */}
-              <View style={styles.timeAndQueueRow}>
-                <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
-                  {timeDisplay}
+          {/* Bottom row: Time + Queue + Controls */}
+          <View style={styles.bottomRow}>
+            {/* Time and queue position */}
+            <View style={styles.timeAndQueueRow}>
+              <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
+                {timeDisplay}
+              </ThemedText>
+              {queueDisplay && (
+                <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
+                  {queueDisplay}
                 </ThemedText>
-                {/* Queue position indicator - placed after duration */}
-                {queueDisplay && (
-                  <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
-                    {queueDisplay}
-                  </ThemedText>
-                )}
-              </View>
+              )}
             </View>
 
             {/* Controls */}
@@ -279,30 +276,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     minWidth: 0,
-    // Full width available - no artwork to make space for
-  },
-
-  textContent: {
-    justifyContent: 'center',
-    minWidth: 0,
   },
 
   title: {
     // Typography handled by type="heading3" (17px LARGE)
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-    marginBottom: LAYOUT.SPACING.SMALL, // 8px spacing to match ArticleCard
-  },
-
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL, // 8px spacing to match ArticleCard
+    marginBottom: LAYOUT.SPACING.TINY, // Reduced spacing since artist follows directly
   },
 
   artist: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + LAYOUT.SPACING.HALF_TINY,
+  },
+
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.TINY,
+    gap: LAYOUT.SPACING.SMALL,
   },
 
   queuePosition: {
@@ -327,7 +321,7 @@ const styles = StyleSheet.create({
   },
 
   controlsContainer: {
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
   },
