@@ -72,6 +72,12 @@ interface IconButtonProps {
    * Additional icon style offset (e.g., for play icon alignment)
    */
   iconStyle?: TextStyle;
+
+  /**
+   * Whether to use flat design (no shadow/elevation)
+   * @default false
+   */
+  flat?: boolean;
 }
 
 export const IconButton: FC<IconButtonProps> = ({
@@ -86,6 +92,7 @@ export const IconButton: FC<IconButtonProps> = ({
   debounceDuration = 300,
   hapticType = 'selection',
   iconStyle,
+  flat = false,
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -133,6 +140,7 @@ export const IconButton: FC<IconButtonProps> = ({
       <Animated.View
         style={[
           styles.button,
+          !flat && LAYOUT.ELEVATION.SUBTLE,
           animatedStyle as ViewStyle,
           {
             backgroundColor: resolvedBackgroundColor,
@@ -148,7 +156,6 @@ export const IconButton: FC<IconButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    ...LAYOUT.ELEVATION.SUBTLE,
     alignItems: 'center',
     borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
     height: MIN_TOUCH_TARGET.MEDIUM,
