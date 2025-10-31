@@ -122,8 +122,8 @@ const MiniPlayerComponent = ({
   );
 
   const timerIconColor = useMemo(
-    () => (isTimerActive ? colors.white : colors.secondaryText),
-    [isTimerActive, colors.white, colors.secondaryText],
+    () => (isTimerActive ? colors.white : colors.tint),
+    [isTimerActive, colors.white, colors.tint],
   );
 
   // Pause button uses elevation3 for visibility (lighter than card)
