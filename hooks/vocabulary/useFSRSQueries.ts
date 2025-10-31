@@ -4,6 +4,7 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY } from '@/constants/fsrs'
 import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 
 interface UseFSRSQueriesOptions {
   userId: string | undefined;
@@ -75,20 +76,17 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
           ? nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000
           : -Infinity;
 
-        const normalizeTs = (ts: string | null | undefined) =>
-          ts ? ts.replace(' ', 'T') : undefined;
-
         const filtered = allWords.filter(word => {
           // New words (state 0) are always due for their first review
           if (word.fsrs_state === 0) {
             return true;
           }
 
-          const dueStr = normalizeTs(word.fsrs_due);
+          const dueStr = normalizeTimestamp(word.fsrs_due);
           const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
           const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
 
-          const lastStr = normalizeTs(word.fsrs_last_review);
+          const lastStr = normalizeTimestamp(word.fsrs_last_review);
           const lastMs = lastStr ? Date.parse(lastStr) : 0;
           const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
           return isDue && !isRecentlyReviewed;

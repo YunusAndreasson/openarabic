@@ -264,8 +264,8 @@ export enum WordManagementAction {
  * Using const object for zero runtime overhead
  */
 export const ReviewAction = {
-  DONT_KNOW: "Don't know",
-  KNOW: 'Know',
+  DONT_KNOW: 'Unknown',
+  KNOW: 'Known',
   STUDY_DUE_WORDS: 'Review Due Words',
 } as const;
 

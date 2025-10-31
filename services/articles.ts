@@ -106,6 +106,23 @@ export const articlesService = {
       sortOrder = 'desc',
     } = options;
 
+    // ADDED: Validate API parameters to prevent invalid queries
+    if (limit < 0 || limit > 10000) {
+      throw new Error(`Invalid limit: ${limit}. Must be between 0 and 10000`);
+    }
+    if (offset < 0) {
+      throw new Error(`Invalid offset: ${offset}. Must be non-negative`);
+    }
+    if (minDifficulty !== undefined && (minDifficulty < 1 || minDifficulty > 5)) {
+      throw new Error(`Invalid minDifficulty: ${minDifficulty}. Must be between 1 and 5`);
+    }
+    if (maxDifficulty !== undefined && (maxDifficulty < 1 || maxDifficulty > 5)) {
+      throw new Error(`Invalid maxDifficulty: ${maxDifficulty}. Must be between 1 and 5`);
+    }
+    if (minDifficulty !== undefined && maxDifficulty !== undefined && minDifficulty > maxDifficulty) {
+      throw new Error(`Invalid difficulty range: min (${minDifficulty}) > max (${maxDifficulty})`);
+    }
+
     const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : LIST_VIEW_COLUMNS;
     let query = supabase.from('articles').select(columns);
 

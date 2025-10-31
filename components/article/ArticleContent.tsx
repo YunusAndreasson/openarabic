@@ -268,7 +268,21 @@ const ArticleContentInternal = function ArticleContent({
           {/* Sticky Parallax Header behind content */}
           <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
           <AnimatedFlashList
-            // @ts-expect-error - AnimatedFlashList ref type mismatch with Reanimated
+            /**
+             * TypeScript limitation with Reanimated's createAnimatedComponent:
+             * When FlashList is wrapped with Animated.createAnimatedComponent, the ref type
+             * becomes AnimatedRef<FlashListRef> instead of FlashListRef. However, at runtime,
+             * the ref works correctly and exposes all FlashList methods (scrollToOffset, etc.).
+             *
+             * This is a known issue: https://github.com/software-mansion/react-native-reanimated/issues/4995
+             * The workaround is to use @ts-expect-error since the runtime behavior is correct.
+             *
+             * Alternative solutions considered but rejected:
+             * - Using 'any' type for ref: Loses all type safety
+             * - Separate ref types: Requires maintaining two ref definitions
+             * - Not using Animated component: Loses UI-thread scroll performance
+             */
+            // @ts-expect-error - AnimatedFlashList ref type incompatible with FlashListRef (runtime behavior is correct)
             ref={scrollViewRef}
             key={`article-${id}`}
             data={sortedSentences}

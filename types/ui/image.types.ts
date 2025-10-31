@@ -58,4 +58,13 @@ export interface EnhancedImageProps extends BaseStyleProps {
 
   /** Allow image downscaling to match container size (defaults to true) */
   allowDownscaling?: boolean;
+
+  /** Accessibility label for screen readers (describes what the image shows) */
+  accessibilityLabel?: string;
+
+  /** Whether the image is an important accessibility element (defaults to true when accessibilityLabel is provided) */
+  accessible?: boolean;
+
+  /** Accessibility hint (provides guidance on what will happen when the element is activated) */
+  accessibilityHint?: string;
 }

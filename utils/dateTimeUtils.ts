@@ -4,6 +4,29 @@
  */
 
 /**
+ * Normalize Supabase timestamp string format for Date.parse()
+ * Converts space-separated timestamp to ISO 8601 T-separator format
+ *
+ * This is a minimal normalization used throughout the FSRS system for
+ * quick timestamp parsing. For more robust parsing, use parseSupabaseTimestamp().
+ *
+ * @param ts - Timestamp string from Supabase (e.g., "2024-01-15 12:00:00")
+ * @returns Normalized timestamp string with T-separator, or undefined if null
+ *
+ * @example
+ * ```ts
+ * const normalized = normalizeTimestamp("2024-01-15 12:00:00");
+ * // Returns: "2024-01-15T12:00:00"
+ *
+ * const ms = Date.parse(normalizeTimestamp(timestamp) ?? '');
+ * ```
+ */
+export function normalizeTimestamp(ts: string | null | undefined): string | undefined {
+  if (typeof ts === 'string') return ts.replace(' ', 'T');
+  return undefined;
+}
+
+/**
  * Parse Supabase timestamp strings into Date objects
  *
  * Supabase returns timestamps in various formats that need normalization

@@ -7,6 +7,7 @@ import {
   UNSTABLE_STABILITY_THRESHOLD,
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 
 /**
  * Determines if a word needs attention (is struggling/hard) based on FSRS metrics
@@ -41,22 +42,17 @@ export function calculateDueWords(studyWords: StudyWord[]): number {
   const nowMs = Date.now();
   const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
 
-  const normalizeTs = (ts: string | null) => {
-    if (typeof ts === 'string') return ts.replace(' ', 'T');
-    return undefined;
-  };
-
   return studyWords.filter(word => {
     // New words (state 0) are always due for their first review
     if (word.fsrs_state === 0) {
       return true;
     }
 
-    const dueStr = normalizeTs(word.fsrs_due);
+    const dueStr = normalizeTimestamp(word.fsrs_due);
     const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
     const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
 
-    const lastStr = normalizeTs(word.fsrs_last_review);
+    const lastStr = normalizeTimestamp(word.fsrs_last_review);
     const lastMs = lastStr ? Date.parse(lastStr) : 0;
     const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
 
@@ -97,16 +93,12 @@ export function calculateMasteredWords(studyWords: StudyWord[]): number {
 export function calculateStrugglingWords(studyWords: StudyWord[]): number {
   const nowMs = Date.now();
   const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-  const normalizeTs = (ts: string | null) => {
-    if (typeof ts === 'string') return ts.replace(' ', 'T');
-    return undefined;
-  };
 
   return studyWords.filter(word => {
     const hasBeenReviewed = (word.fsrs_reps ?? 0) > 0;
     if (!hasBeenReviewed) return false;
 
-    const lastStr = normalizeTs(word.fsrs_last_review);
+    const lastStr = normalizeTimestamp(word.fsrs_last_review);
     const lastMs = lastStr ? Date.parse(lastStr) : 0;
     const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
     if (isRecentlyReviewed) return false;
@@ -162,16 +154,12 @@ export const getStrugglingWordsCount = (studyWords: StudyWord[]): number => {
 
   const nowMs = Date.now();
   const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-  const normalizeTs = (ts: string | null) => {
-    if (typeof ts === 'string') return ts.replace(' ', 'T');
-    return undefined;
-  };
 
   return studyWords.filter(word => {
     if (word?.root_id == null) return false;
     const hasBeenReviewed = (word.fsrs_reps ?? 0) > 0;
     if (!hasBeenReviewed) return false;
-    const lastStr = normalizeTs(word.fsrs_last_review);
+    const lastStr = normalizeTimestamp(word.fsrs_last_review);
     const lastMs = lastStr ? Date.parse(lastStr) : 0;
     const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
     if (isRecentlyReviewed) return false;
@@ -189,21 +177,16 @@ export function isDueWord(word: StudyWord): boolean {
   const nowMs = Date.now();
   const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
 
-  const normalizeTs = (ts: string | null) => {
-    if (typeof ts === 'string') return ts.replace(' ', 'T');
-    return undefined;
-  };
-
   // New words (state 0) are always due for their first review
   if (word.fsrs_state === 0) {
     return true;
   }
 
-  const dueStr = normalizeTs(word.fsrs_due);
+  const dueStr = normalizeTimestamp(word.fsrs_due);
   const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
   const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
 
-  const lastStr = normalizeTs(word.fsrs_last_review);
+  const lastStr = normalizeTimestamp(word.fsrs_last_review);
   const lastMs = lastStr ? Date.parse(lastStr) : 0;
   const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
 

@@ -186,6 +186,9 @@ export function useProvideAuth(): AuthResult {
 
       // Defer all operations (including Sentry) to avoid deadlock
       setTimeout(() => {
+        // FIXED: Guard against race condition where component unmounts between setTimeout queue and execution
+        if (!isMounted) return;
+
         Sentry.addBreadcrumb({
           category: 'auth',
           message: `Auth state change: ${event}`,

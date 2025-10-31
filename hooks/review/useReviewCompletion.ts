@@ -38,8 +38,9 @@ export const useReviewCompletion = (
     // Invalidate all FSRS word queries
     queryClient.invalidateQueries({
       predicate: query => {
-        const key = query.queryKey[0];
-        return key === 'fsrs-words' || key === 'struggling-words';
+        // FIXED: Add null check for robustness
+        const key = query.queryKey?.[0];
+        return typeof key === 'string' && (key === 'fsrs-words' || key === 'struggling-words');
       },
     });
 
@@ -83,19 +84,28 @@ export const useReviewCompletion = (
   useEffect(() => {
     if (!shouldExecute) return;
 
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     InteractionManager.runAfterInteractions(() => {
       invalidateReviewQueries();
       trackCompletion();
 
-      // Trigger haptic feedback
-      setTimeout(
+      // Trigger haptic feedback after animations
+      timeoutId = setTimeout(
         () => {
           successFeedback();
         },
         TIMING_CONFIG.FAST.duration + TIMING_CONFIG.ENTRANCE.duration / 2,
       );
     });
-  }, [shouldExecute]); // Only run once on mount with correct shouldExecute
+
+    // FIXED: Cleanup timeout on unmount to prevent haptic feedback on wrong screen
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [shouldExecute, invalidateReviewQueries, trackCompletion]);
 
   return {
     invalidateReviewQueries,

@@ -143,8 +143,9 @@ export function ArticleCard({
   const authorDisplayText = formatAuthorCategory(author, category);
 
   // Gradient props
+  // OPTIMIZED: Use type assertion instead of spread operator to avoid array allocation
   const gradientProps = {
-    colors: [...gradientColors] as [string, string, ...string[]], // Convert readonly array to gradient tuple type
+    colors: gradientColors as unknown as [string, string, ...string[]],
     start: GRADIENT_START_POINT,
     end: GRADIENT_END_POINT,
     style: styles.gradient,

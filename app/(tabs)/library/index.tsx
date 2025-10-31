@@ -55,51 +55,54 @@ export default function ReadScreen(): JSX.Element {
 
   // Note: Categories are prioritized over authors since IDs overlap and categories are primary navigation
 
-  // Optimized derivedData - use stable references when possible
-  const categoriesWithArticles = useMemo(() => {
-    const counts = articlesData.reduce<Record<number, number>>((acc, article) => {
-      const id = article?.category?.id;
-      if (id) {
-        acc[id] = (acc[id] || 0) + 1;
-      }
-      return acc;
-    }, {});
+  // OPTIMIZED: Single-pass count calculation for both categories and authors (O(n) instead of O(2n))
+  const { categoryCounts, authorCounts } = useMemo(() => {
+    return articlesData.reduce<{
+      categoryCounts: Record<number, number>;
+      authorCounts: Record<number, number>;
+    }>(
+      (acc, article) => {
+        const categoryId = article?.category?.id;
+        const authorId = article?.author?.id;
 
-    const result = categoriesData.reduce<(Category & { count: number })[]>((acc, category) => {
+        if (categoryId) {
+          acc.categoryCounts[categoryId] = (acc.categoryCounts[categoryId] || 0) + 1;
+        }
+        if (authorId) {
+          acc.authorCounts[authorId] = (acc.authorCounts[authorId] || 0) + 1;
+        }
+
+        return acc;
+      },
+      { categoryCounts: {}, authorCounts: {} },
+    );
+  }, [articlesData]);
+
+  // Build categories list with counts
+  const categoriesWithArticles = useMemo(() => {
+    return categoriesData.reduce<(Category & { count: number })[]>((acc, category) => {
       if (category?.id && category.id > 0 && category.name) {
-        const count = counts[category.id] || 0;
+        const count = categoryCounts[category.id] || 0;
         if (count > 0) {
           acc.push({ ...category, count });
         }
       }
       return acc;
     }, []);
+  }, [categoriesData, categoryCounts]);
 
-    return result;
-  }, [articlesData, categoriesData]);
-
-  // Create authors with article counts
+  // Build authors list with counts
   const authorsWithArticles = useMemo(() => {
-    const counts = articlesData.reduce<Record<number, number>>((acc, article) => {
-      const id = article?.author?.id;
-      if (id) {
-        acc[id] = (acc[id] || 0) + 1;
-      }
-      return acc;
-    }, {});
-
-    const result = authorsData.reduce<(Author & { count: number })[]>((acc, author) => {
+    return authorsData.reduce<(Author & { count: number })[]>((acc, author) => {
       if (author?.id && author.id > 0 && author.name) {
-        const count = counts[author.id] || 0;
+        const count = authorCounts[author.id] || 0;
         if (count > 0) {
           acc.push({ ...author, count });
         }
       }
       return acc;
     }, []);
-
-    return result;
-  }, [articlesData, authorsData]);
+  }, [authorsData, authorCounts]);
 
   // Note: We're now rendering regular categories and Continue Reading category separately
 

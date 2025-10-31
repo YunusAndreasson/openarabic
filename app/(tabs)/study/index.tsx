@@ -30,6 +30,7 @@ import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { ReviewAction } from '@/types/enums';
 import { mediumFeedback } from '@/utils/haptics';
+import { calculateWordCategories } from '@/utils/wordClassification';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -160,25 +161,18 @@ export default function VocabularyScreen(): JSX.Element {
   // - dueWords reflects immediate availability for study
   const hasAnyStudyWords = (allWords?.length ?? 0) > 0 || (dueWords?.length ?? 0) > 0;
 
-  // FIXED: Calculate learned, mastered, and learning phase words from actual data
-  // This ensures consistency between display and session logic for all word types
+  // FIXED: Calculate all word stats in single pass using optimized utility
+  // Uses calculateWordCategories for efficiency (1 pass vs 3 separate filter passes)
   const calculatedStats = useMemo(() => {
     if (!filteredStudyWords.length) {
       return { learnedWords: 0, masteredWords: 0, learningPhaseWords: 0 };
     }
 
-    // Learned words = all State 2 words (graduated to review phase) - FOR DISPLAY
-    const learnedWords = filteredStudyWords.filter(word => {
-      const state = word.fsrs_state;
-      return state === 2;
-    }).length;
-
-    // Mastered words = State 2 + high stability (subset of learned)
-    const masteredWords = filteredStudyWords.filter(word => {
-      const state = word.fsrs_state;
-      const stability = word.fsrs_stability ?? 0;
-      return state === 2 && stability >= 5;
-    }).length;
+    // Get all stats efficiently with single-pass calculation
+    const { learnedWords, masteredWords } = calculateWordCategories(
+      filteredStudyWords,
+      dueWordsCount,
+    );
 
     // Learning phase words = States 1, 3, or State 2 with low stability - FOR RECOMMENDATION ENGINE
     const learningPhaseWords = filteredStudyWords.filter(word => {
@@ -188,7 +182,7 @@ export default function VocabularyScreen(): JSX.Element {
     }).length;
 
     return { learnedWords, masteredWords, learningPhaseWords };
-  }, [filteredStudyWords]);
+  }, [filteredStudyWords, dueWordsCount]);
 
   // Bottom padding for content with floating buttons above tab bar
   const contentPaddingBottom = LAYOUT.SCREEN_PADDING.bottomWithControls;

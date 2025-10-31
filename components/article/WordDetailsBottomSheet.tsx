@@ -45,9 +45,16 @@ export function WordDetailsBottomSheet({
   // Optimistic state for instant UI feedback
   const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useState(isInStudyList);
 
-  // Sync optimistic state with prop changes
+  // OPTIMIZED: Sync optimistic state with prop changes only when value actually changes
+  // This prevents unnecessary re-renders when prop object changes but value is the same
   useEffect(() => {
-    setOptimisticIsInStudyList(isInStudyList);
+    setOptimisticIsInStudyList(prev => {
+      // Only update if value actually changed - prevents extra render
+      if (prev !== isInStudyList) {
+        return isInStudyList;
+      }
+      return prev;
+    });
   }, [isInStudyList]);
 
   // Check if this word's audio is currently playing or loading (only when visible)

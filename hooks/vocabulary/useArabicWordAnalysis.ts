@@ -26,6 +26,29 @@ interface UseArabicWordAnalysisResult {
 }
 
 /**
+ * Valid color names for Arabic word analysis segments
+ * These must match the keys in the colorMap
+ */
+type ValidColorName = 'tint' | 'primary' | 'secondary' | 'warning' | 'accent' | 'error' | 'text';
+
+/**
+ * Type guard to validate color names
+ * CRITICAL: This function throws an error if the color name is invalid
+ * NO DEFAULT FALLBACK - we want to catch invalid color names immediately
+ */
+function assertValidColorName(colorName: string): asserts colorName is ValidColorName {
+  const validColors: ValidColorName[] = ['tint', 'primary', 'secondary', 'warning', 'accent', 'error', 'text'];
+
+  if (!validColors.includes(colorName as ValidColorName)) {
+    throw new Error(
+      `Invalid color name "${colorName}" in Arabic word analysis. ` +
+      `Valid colors are: ${validColors.join(', ')}. ` +
+      `This indicates a bug in the word analysis logic that must be fixed.`
+    );
+  }
+}
+
+/**
  * Hook for analyzing Arabic words and providing color-coded segments
  * Memoizes results for performance and provides theme-aware colors
  */
@@ -67,27 +90,23 @@ export function useArabicWordAnalysis(
     return formatWordAnalysis(analysis);
   }, [analysis]);
 
-  // Create color mapping
+  // Create color mapping - only includes colors that are actually used by word analysis
   const colorMap = useMemo(
     () => ({
       tint: colors.tint,
       primary: colors.primary,
-      secondary: colors.secondary, // Add 'secondary' for conjunctions/subject prefixes
-      secondaryText: colors.secondaryText,
+      secondary: colors.secondary,
       warning: colors.warning,
       accent: colors.accent,
-      violet: colors.violet,
-      error: colors.error, // Add 'error' for negation
+      error: colors.error,
       text: colors.text,
     }),
     [
       colors.tint,
       colors.primary,
       colors.secondary,
-      colors.secondaryText,
       colors.warning,
       colors.accent,
-      colors.violet,
       colors.error,
       colors.text,
     ],
@@ -109,20 +128,13 @@ export function useArabicWordAnalysis(
     const { segments } = formattedAnalysis.reconstructedArabic;
 
     return segments.map(segment => {
-      // Map color names to valid keys
-      const colorName = segment.colorName as
-        | 'tint'
-        | 'primary'
-        | 'secondary'
-        | 'secondaryText'
-        | 'warning'
-        | 'accent'
-        | 'violet'
-        | 'error'
-        | 'text';
+      // CRITICAL: Validate color name with strict type guard
+      // This will throw an error if colorName is invalid - NO FALLBACK
+      assertValidColorName(segment.colorName);
+
       return {
         text: segment.text,
-        color: colorMap[colorName] || colors.text,
+        color: colorMap[segment.colorName],
         type: segment.type as ColoredSegment['type'],
       };
     });

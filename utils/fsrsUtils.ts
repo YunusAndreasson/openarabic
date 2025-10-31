@@ -5,6 +5,7 @@ import {
   URGENT_RETRIEVABILITY_THRESHOLD,
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 
 export interface RetrievabilityForecast {
   date: Date;
@@ -144,16 +145,11 @@ export function calculateRetrievabilityTrend(
  * Check if a word is due on a specific date
  */
 function isWordDueOnDate(word: StudyWord, targetDate: Date): boolean {
-  const normalizeTs = (ts: string | null) => {
-    if (typeof ts === 'string') return ts.replace(' ', 'T');
-    return undefined;
-  };
-
-  const dueStr = normalizeTs(word.fsrs_due);
+  const dueStr = normalizeTimestamp(word.fsrs_due);
   const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
   const isDue = Number.isFinite(dueMs) && dueMs <= targetDate.getTime();
 
-  const lastStr = normalizeTs(word.fsrs_last_review);
+  const lastStr = normalizeTimestamp(word.fsrs_last_review);
   const lastMs = lastStr ? Date.parse(lastStr) : 0;
   const cooldownMs = targetDate.getTime() - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
   const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cooldownMs;

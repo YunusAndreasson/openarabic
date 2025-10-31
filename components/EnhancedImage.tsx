@@ -46,6 +46,9 @@ export function EnhancedImage({
   placeholder,
   placeholderContentFit = 'cover',
   allowDownscaling = true, // Explicit: always downscale to container size for performance
+  accessibilityLabel,
+  accessible,
+  accessibilityHint,
 }: EnhancedImageProps) {
   const colors = useColors();
 
@@ -71,9 +74,16 @@ export function EnhancedImage({
     ...(onError ? { onError } : {}),
   };
 
+  // Accessibility props - only set if provided
+  const accessibilityProps = {
+    ...(accessibilityLabel ? { accessibilityLabel } : {}),
+    ...(typeof accessible === 'boolean' ? { accessible } : {}),
+    ...(accessibilityHint ? { accessibilityHint } : {}),
+  };
+
   return (
     <View style={containerStyle}>
-      <Image {...imageProps} {...eventHandlers} />
+      <Image {...imageProps} {...eventHandlers} {...accessibilityProps} />
     </View>
   );
 }

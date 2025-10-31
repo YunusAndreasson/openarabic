@@ -14,6 +14,7 @@ import { useAppSelector } from '@/store/hooks';
 import type { RootId } from '@/types/branded.types';
 import { DailyWordLimitStatus, ToastType } from '@/types/enums';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
 
@@ -93,13 +94,11 @@ export const useStudyWordMutations = (
           // Fallback heuristic based on due words ratio with cooldown
           const nowMs = Date.now();
           const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-          const normalizeTs = (ts: string | null | undefined) =>
-            ts ? ts.replace(' ', 'T') : undefined;
           const dueCount = words.reduce((count, w) => {
-            const dueStr = normalizeTs(w.fsrs_due);
+            const dueStr = normalizeTimestamp(w.fsrs_due);
             const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
             const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
-            const lastStr = normalizeTs(w.fsrs_last_review);
+            const lastStr = normalizeTimestamp(w.fsrs_last_review);
             const lastMs = lastStr ? Date.parse(lastStr) : 0;
             const recentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
             return count + (isDue && !recentlyReviewed ? 1 : 0);
