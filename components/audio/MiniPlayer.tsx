@@ -349,8 +349,8 @@ const styles = StyleSheet.create({
   },
 
   artwork: {
-    width: 56,
-    height: 56,
+    width: 72,
+    height: 44,
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
 });
