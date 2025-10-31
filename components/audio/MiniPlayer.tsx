@@ -4,6 +4,8 @@ import { memo, useMemo } from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
+import { EnhancedImage } from '@/components/EnhancedImage';
+
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui/IconButton';
 import { TIMING_CONFIG } from '@/constants/animation';
@@ -149,6 +151,17 @@ const MiniPlayerComponent = ({
     return null;
   }, [queuePosition]);
 
+  // Memoize text styles with theme-aware white color and shadows for readability
+  const overlayTextStyle = useMemo(
+    () => ({
+      color: colors.white,
+      textShadowColor: 'rgba(0, 0, 0, 0.5)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 3,
+    }),
+    [colors.white],
+  );
+
   return (
     <Animated.View
       entering={FadeInUp.delay(150).duration(TIMING_CONFIG.GENTLE.duration)}
@@ -176,12 +189,22 @@ const MiniPlayerComponent = ({
           <View style={styles.contentWrapper}>
             {/* Main Content Row */}
             <View style={styles.contentRow}>
-              {/* Text Content and Time Display Column - now uses full width */}
+              {/* Artwork Thumbnail */}
+              <View style={styles.artworkContainer}>
+                <EnhancedImage
+                  source={imageUrl}
+                  style={styles.artwork}
+                  transition={150}
+                  recyclingKey={`miniplayer-${article.id}`}
+                />
+              </View>
+
+              {/* Text Content and Time Display Column */}
               <View style={styles.textColumn}>
                 {/* Text Content */}
                 <View style={styles.textContent}>
                   <ThemedText
-                    style={styles.title}
+                    style={[styles.title, overlayTextStyle]}
                     type="heading3"
                     numberOfLines={2}
                     ellipsizeMode="tail"
@@ -191,7 +214,7 @@ const MiniPlayerComponent = ({
 
                   <View style={styles.metaRow}>
                     <ThemedText
-                      style={styles.artist}
+                      style={[styles.artist, overlayTextStyle]}
                       type="caption"
                       numberOfLines={1}
                       ellipsizeMode="tail"
@@ -203,12 +226,12 @@ const MiniPlayerComponent = ({
 
                 {/* Time display and queue position */}
                 <View style={styles.timeAndQueueRow}>
-                  <ThemedText style={styles.timeDisplay} type="caption">
+                  <ThemedText style={[styles.timeDisplay, overlayTextStyle]} type="caption">
                     {timeDisplay}
                   </ThemedText>
                   {/* Queue position indicator - placed after duration */}
                   {queueDisplay && (
-                    <ThemedText style={styles.queuePosition} type="caption">
+                    <ThemedText style={[styles.queuePosition, overlayTextStyle]} type="caption">
                       {queueDisplay}
                     </ThemedText>
                   )}
@@ -227,9 +250,9 @@ const MiniPlayerComponent = ({
                   hapticType="none"
                 />
 
-                {/* Stop button - playback is only started via PLAY ALL */}
+                {/* Pause button - stops playback and hides player */}
                 <IconButton
-                  icon="stop"
+                  icon="pause"
                   onPress={onPlayPause}
                   backgroundColor={colors.tint}
                   iconColor={colors.black}
@@ -322,11 +345,6 @@ const styles = StyleSheet.create({
     // Typography handled by type="heading3" (17px LARGE)
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
     marginBottom: LAYOUT.SPACING.SMALL, // 8px spacing to match ArticleCard
-    // White text with shadow for readability on any artwork color
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
 
   metaRow: {
@@ -339,38 +357,21 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + LAYOUT.SPACING.HALF_TINY,
-    // White text with shadow for readability on any artwork color
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
 
   queuePosition: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     opacity: LAYOUT.OPACITY.HIGH,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + LAYOUT.SPACING.HALF_TINY,
-    // White text with shadow for readability on any artwork color
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
 
   timeDisplay: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     opacity: LAYOUT.OPACITY.HIGH,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + LAYOUT.SPACING.HALF_TINY,
-    // Use Courier New (system monospace font available on both iOS and Android)
-    // Prevents jumping when numbers change in time display
-    fontFamily: 'Courier New',
-    // Align with text content - no right alignment needed since it's in column
+    // Use tabular numbers for consistent width (prevents jumping when time changes)
+    fontVariant: ['tabular-nums'],
     textAlign: 'left',
-    // White text with shadow for readability on any artwork color
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
 
   timeAndQueueRow: {
@@ -395,5 +396,15 @@ const styles = StyleSheet.create({
 
   progressBar: {
     borderRadius: 0,
+  },
+
+  artworkContainer: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+
+  artwork: {
+    width: 56,
+    height: 56,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
 });
