@@ -106,6 +106,28 @@ export const useAppPreloader = (): AppPreloaderResult => {
         });
       }
 
+      // Prefetch bookmark images for instant loading when user opens bookmarks
+      if (user?.id) {
+        InteractionManager.runAfterInteractions(async () => {
+          try {
+            const readingList = await bookmarkService.getReadingList(user.id);
+            if (readingList.length > 0) {
+              const imagePrefetches = readingList
+                .map(item => String(item.articles?.image_url))
+                .filter(Boolean)
+                .map(url => Image.prefetch(url, { cachePolicy: 'disk' }).catch(() => null));
+
+              // Fire-and-forget; do not block loader
+              Promise.allSettled(imagePrefetches).catch(() => {
+                // Silently handle prefetch failures
+              });
+            }
+          } catch {
+            // Ignore bookmark prefetch errors
+          }
+        });
+      }
+
       // Preload user's FSRS data if available
       if (user?.id) {
         try {
