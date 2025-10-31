@@ -189,21 +189,18 @@ const MiniPlayerComponent = ({
               >
                 {formatAuthorCategory(article.author, article.category)}
               </ThemedText>
-            </View>
-          </View>
 
-          {/* Bottom row: Time + Queue + Controls */}
-          <View style={styles.bottomRow}>
-            {/* Time and queue position */}
-            <View style={styles.timeAndQueueRow}>
-              <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
-                {timeDisplay}
-              </ThemedText>
-              {queueDisplay && (
-                <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
-                  {queueDisplay}
+              {/* Time and queue position */}
+              <View style={styles.timeAndQueueRow}>
+                <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
+                  {timeDisplay}
                 </ThemedText>
-              )}
+                {queueDisplay && (
+                  <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
+                    {queueDisplay}
+                  </ThemedText>
+                )}
+              </View>
             </View>
 
             {/* Controls */}
@@ -268,7 +265,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
 
   textColumn: {
@@ -280,23 +277,14 @@ const styles = StyleSheet.create({
   title: {
     // Typography handled by type="heading3" (17px LARGE)
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-    marginBottom: LAYOUT.SPACING.TINY, // Reduced spacing since artist follows directly
+    marginBottom: LAYOUT.SPACING.TINY,
   },
 
   artist: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + LAYOUT.SPACING.HALF_TINY,
-  },
-
-  bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-    paddingTop: LAYOUT.SPACING.TINY,
-    gap: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
 
   queuePosition: {
@@ -321,7 +309,7 @@ const styles = StyleSheet.create({
   },
 
   controlsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
   },
