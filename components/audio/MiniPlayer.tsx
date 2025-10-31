@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
 
   artwork: {
     width: 72,
-    height: 44,
+    height: 72,
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
 });
