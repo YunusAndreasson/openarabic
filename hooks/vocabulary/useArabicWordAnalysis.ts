@@ -4,6 +4,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import {
   analyzeArabicWord,
   formatWordAnalysis,
+  normalizeArabic,
   shouldInjectBracket,
 } from '@/utils/arabicWordAnalysis';
 
@@ -41,11 +42,11 @@ export function useArabicWordAnalysis(
       return null;
     }
 
-    // Normalize Arabic for bracket injection check (remove diacritics)
-    const normalizedArabic = arabicWord.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
+    // Normalize Arabic for bracket injection check (uses shared normalizeArabic with caching)
+    const normalizedArabicWord = normalizeArabic(arabicWord);
 
     // Use shared bracket injection logic
-    const hasBracketInjection = shouldInjectBracket(normalizedArabic, englishTranslation);
+    const hasBracketInjection = shouldInjectBracket(normalizedArabicWord, englishTranslation);
 
     // Inject "[the]" for Arabic words with definite article when appropriate
     // This helps users learn that "ال" = "the" even when not explicitly translated

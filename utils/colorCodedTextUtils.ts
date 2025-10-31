@@ -1,3 +1,7 @@
+import {
+  CONTRACTION_EXPANSIONS,
+  EXPANSION_TO_CONTRACTION,
+} from '@/constants/contractions';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import type { WordAnalysis } from '@/utils/arabicWordAnalysis';
@@ -6,86 +10,11 @@ import type { WordAnalysis } from '@/utils/arabicWordAnalysis';
 type FormattedAnalysis = ReturnType<typeof formatWordAnalysis>;
 
 /**
- * Centralized color mapping for grammar component coloring
- * Used across WordTooltip, WordDetailsBottomSheet, and other components
- */
-export const GRAMMAR_COLOR_MAP = {
-  tint: 'tint',
-  primary: 'primary',
-  warning: 'warning',
-  secondaryText: 'secondaryText',
-  accent: 'accent',
-  violet: 'violet',
-  text: 'text',
-} as const;
-
-/**
  * Pre-compiled regex for word boundary detection
  * Matches lowercase ASCII letters a-z
  * Note: Intentionally limited to ASCII for English text matching (Arabic text handled separately)
  */
 const LETTER_REGEX = /[a-z]/;
-
-/**
- * Comprehensive English contractions mapped to their expanded forms
- * Used to match contracted text against expanded component patterns
- */
-const CONTRACTION_MAP: Record<string, string> = {
-  // Negation contractions
-  "won't": 'will not',
-  "can't": 'cannot',
-  "don't": 'do not',
-  "doesn't": 'does not',
-  "didn't": 'did not',
-  "isn't": 'is not',
-  "aren't": 'are not',
-  "wasn't": 'was not',
-  "weren't": 'were not',
-  "hasn't": 'has not',
-  "haven't": 'have not',
-  "hadn't": 'had not',
-  "wouldn't": 'would not',
-  "shouldn't": 'should not',
-  "couldn't": 'could not',
-  "mustn't": 'must not',
-  "mightn't": 'might not',
-  "shan't": 'shall not',
-
-  // "Have" contractions
-  "i've": 'i have',
-  "you've": 'you have',
-  "we've": 'we have',
-  "they've": 'they have',
-
-  // "Would/Had" contractions
-  "i'd": 'i would',
-  "you'd": 'you would',
-  "he'd": 'he would',
-  "she'd": 'she would',
-  "we'd": 'we would',
-  "they'd": 'they would',
-
-  // "Will" contractions (already covered above)
-  // "i'll", "you'll", etc. are in arabicWordAnalysis.ts CONTRACTION_MAP
-
-  // "Let" contractions
-  "let's": 'let us',
-
-  // "That/What/Where/etc" contractions
-  "that's": 'that is',
-  "there's": 'there is',
-  "here's": 'here is',
-  "what's": 'what is',
-  "who's": 'who is',
-  "where's": 'where is',
-  "when's": 'when is',
-  "why's": 'why is',
-  "how's": 'how is',
-
-  // "It" contractions (already in arabicWordAnalysis.ts)
-  // Adding here for completeness
-  "it'll": 'it will',
-};
 
 /**
  * Check if a character is a non-letter (word boundary)
@@ -291,7 +220,8 @@ export const generateColorCodedSegments = ({
         // BUT keep compound intact if it's a potential contraction target (e.g., "do not")
         if (trimmed.includes(' ')) {
           // Check if this compound is a contraction expansion (e.g., "do not" from "don't")
-          const isContractionExpansion = Object.values(CONTRACTION_MAP).includes(trimmed);
+          // O(1) lookup using pre-computed Set
+          const isContractionExpansion = CONTRACTION_EXPANSIONS.has(trimmed);
 
           if (isContractionExpansion) {
             // Keep compound for contraction matching (e.g., "do not" → matches "don't")
@@ -311,9 +241,8 @@ export const generateColorCodedSegments = ({
     for (const candidate of baseCandidates) {
       candidates.push(candidate);
       // Check if this candidate has a contracted form
-      const contractedForm = Object.keys(CONTRACTION_MAP).find(
-        key => CONTRACTION_MAP[key] === candidate,
-      );
+      // O(1) lookup using pre-computed reverse Map
+      const contractedForm = EXPANSION_TO_CONTRACTION.get(candidate);
       if (contractedForm) {
         candidates.push(contractedForm);
       }
@@ -436,17 +365,3 @@ export const generateColorCodedSegments = ({
 
   return parts;
 };
-
-/**
- * Create color mapping object from theme colors
- * Memoization helper for components
- */
-export const createColorMapping = (colors: ThemeColors) => ({
-  tint: colors.tint,
-  primary: colors.primary,
-  warning: colors.warning,
-  secondaryText: colors.secondaryText,
-  accent: colors.accent,
-  violet: colors.violet,
-  text: colors.text,
-});

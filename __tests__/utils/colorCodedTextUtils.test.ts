@@ -1,11 +1,8 @@
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
+import { GRAMMAR_COLOR_MAP } from '@/__tests__/utils/grammarColorMap';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis, WordAnalysis } from '@/utils/arabicWordAnalysis';
-import {
-  generateColorCodedSegments,
-  GRAMMAR_COLOR_MAP,
-  shouldApplyColorCoding,
-} from '@/utils/colorCodedTextUtils';
+import { generateColorCodedSegments, shouldApplyColorCoding } from '@/utils/colorCodedTextUtils';
 
 // Type for formatted analysis result
 type FormattedAnalysis = ReturnType<typeof formatWordAnalysis>;

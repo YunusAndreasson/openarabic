@@ -9,6 +9,7 @@ import {
   GrammaticalRole,
   type WordComponent,
 } from '@/constants/arabicWordComponents';
+import { CONTRACTION_MAP } from '@/constants/contractions';
 import type { ColoredSegment } from '@/types/vocabulary.types';
 
 // React Native global for development mode detection
@@ -268,79 +269,22 @@ function isSingleStandaloneComponent(
   return false;
 }
 
-// Comprehensive contraction map hoisted and lowercased once for reuse
-const CONTRACTION_MAP: Record<string, string> = {
-  // Negation contractions
-  "won't": 'will not',
-  "can't": 'cannot',
-  "don't": 'do not',
-  "doesn't": 'does not',
-  "didn't": 'did not',
-  "isn't": 'is not',
-  "aren't": 'are not',
-  "wasn't": 'was not',
-  "weren't": 'were not',
-  "hasn't": 'has not',
-  "haven't": 'have not',
-  "hadn't": 'had not',
-  "wouldn't": 'would not',
-  "shouldn't": 'should not',
-  "couldn't": 'could not',
-  "mustn't": 'must not',
-  "mightn't": 'might not',
-  "shan't": 'shall not',
-
-  // "Will" contractions
-  "i'll": 'i will',
-  "you'll": 'you will',
-  "he'll": 'he will',
-  "she'll": 'she will',
-  "it'll": 'it will',
-  "we'll": 'we will',
-  "they'll": 'they will',
-
-  // "Be" verb contractions
-  "i'm": 'i am',
-  "you're": 'you are',
-  "he's": 'he is',
-  "she's": 'she is',
-  "it's": 'it is',
-  "we're": 'we are',
-  "they're": 'they are',
-
-  // "Have" contractions
-  "i've": 'i have',
-  "you've": 'you have',
-  "we've": 'we have',
-  "they've": 'they have',
-
-  // "Would/Had" contractions
-  "i'd": 'i would',
-  "you'd": 'you would',
-  "he'd": 'he would',
-  "she'd": 'she would',
-  "we'd": 'we would',
-  "they'd": 'they would',
-
-  // "Let" contractions
-  "let's": 'let us',
-
-  // "That/What/Where/etc" contractions
-  "that's": 'that is',
-  "there's": 'there is',
-  "here's": 'here is',
-  "what's": 'what is',
-  "who's": 'who is',
-  "where's": 'where is',
-  "when's": 'when is',
-  "why's": 'why is',
-  "how's": 'how is',
-};
-
 /**
  * Normalizes Arabic text by removing diacritics and Unicode formatting characters (with caching)
+ *
+ * Performs the following transformations:
+ * 1. Converts alef wasla (ٱ) to regular alef (ا)
+ * 2. Removes Unicode formatting characters (RTL marks, zero-width spaces, etc.)
+ * 3. Removes all Arabic diacritical marks
+ * 4. Trims whitespace
+ *
+ * Results are cached for performance.
+ *
+ * @param text - Arabic text to normalize
+ * @returns Normalized Arabic text without diacritics or formatting characters
+ * @example normalizeArabic("ٱلْكِتَابُ") → "الكتاب"
  */
-function normalizeArabic(text: string): string {
+export function normalizeArabic(text: string): string {
   const cached = ARABIC_NORMALIZATION_CACHE.get(text);
   if (cached !== undefined) {
     return cached;
