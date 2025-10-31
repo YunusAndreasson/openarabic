@@ -267,9 +267,8 @@ const styles = StyleSheet.create({
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: MINI_PLAYER_HEIGHT - PROGRESS_HEIGHT,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY, // Reduced from SMALL (8px) to TINY (4px)
+    paddingTop: LAYOUT.SPACING.SMALL,
   },
 
   textColumn: {
@@ -295,7 +294,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.TINY,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+    paddingTop: LAYOUT.SPACING.TINY,
     gap: LAYOUT.SPACING.SMALL,
   },
 
