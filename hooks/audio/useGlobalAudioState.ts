@@ -16,6 +16,7 @@ interface MiniPlayerArticle {
   id: number;
   title: string;
   author: string;
+  category: string;
   image_url: string;
 }
 
@@ -157,6 +158,7 @@ export function useGlobalAudioState(): GlobalAudioState {
 
     const title = cachedArticle?.title || audioPlayer.currentTrack?.title || '';
     const author = cachedArticle?.author?.name || readingListArticle?.author?.name || '';
+    const category = cachedArticle?.category?.name || readingListArticle?.category?.name || '';
     const imageUrl = String(
       cachedArticle?.image_url ||
         readingListArticle?.image_url ||
@@ -168,6 +170,7 @@ export function useGlobalAudioState(): GlobalAudioState {
         id: currentArticleId,
         title,
         author,
+        category,
         image_url: imageUrl,
       };
       lastValidArticleRef.current = article;
@@ -180,6 +183,7 @@ export function useGlobalAudioState(): GlobalAudioState {
         id: currentArticleId,
         title: audioPlayer.currentTrack.title,
         author: 'Loading',
+        category: '',
         image_url: '',
       };
       lastValidArticleRef.current = article;

@@ -11,6 +11,7 @@ import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
 import { generateImageUrl } from '@/utils/imageUtils';
+import { formatAuthorCategory } from '@/utils/stringUtils';
 
 export interface MiniPlayerProps {
   /** Current article being played */
@@ -18,6 +19,7 @@ export interface MiniPlayerProps {
     id: number;
     title: string;
     author: string;
+    category: string;
     image_url: string;
   };
   /** Audio playback state */
@@ -101,16 +103,16 @@ const MiniPlayerComponent = ({
   // Memoize image URL to prevent duplicate generation on every render
   const imageUrl = useMemo(() => generateImageUrl(article.image_url), [article.image_url]);
 
-  // Memoize dynamic styles for better performance - use standard card background
+  // Memoize dynamic styles for better performance - use elevation2 for prominence
   const cardStyle = useMemo(
     () => [
       styles.card,
       {
-        backgroundColor: colors.card,
+        backgroundColor: colors.elevation2,
         ...LAYOUT.ELEVATION.MEDIUM,
       },
     ],
-    [colors.card],
+    [colors.elevation2],
   );
 
   // Memoize button colors - use elevation3 (lightest) to be LIGHTER than card background
@@ -188,7 +190,7 @@ const MiniPlayerComponent = ({
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
-                    {article.author || 'Unknown Author'}
+                    {formatAuthorCategory(article.author, article.category)}
                   </ThemedText>
                 </View>
               </View>
