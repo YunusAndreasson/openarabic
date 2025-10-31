@@ -4,7 +4,7 @@
  * Tests the Skia-based Arabic word rendering component with:
  * - GPU-accelerated text rendering via Skia Canvas
  * - Color-coded grammar segments using Skia Paragraph API
- * - Selection and highlighting states
+ * - Selection states
  * - Tooltip interaction
  * - Single-word rule (no color-coding for single English words)
  */
@@ -122,21 +122,6 @@ describe('SkiaArabicWord Component', () => {
       expect(getByTestId('word')).toBeTruthy();
     });
 
-    it('handles font loading state gracefully', () => {
-      // Mock fonts not ready
-      (useSkiaFonts as jest.Mock).mockReturnValue({
-        arabicFont: null,
-        getArabicFont: jest.fn(() => null),
-        isReady: false,
-        fontSize: 17,
-      });
-
-      const word = createMockWord({ word_form: 'كتاب' });
-      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
-
-      // Should render placeholder without crashing
-      expect(getByTestId('word')).toBeTruthy();
-    });
   });
 
   describe('Color-Coded Grammar Segments', () => {
@@ -260,26 +245,6 @@ describe('SkiaArabicWord Component', () => {
     });
   });
 
-  describe('Highlighting State', () => {
-    it('applies highlight style when isHighlighted is true', () => {
-      const word = createMockWord();
-      const { getByTestId } = render(
-        <SkiaArabicWord word={word} isHighlighted={true} testID="word" />,
-      );
-
-      const wordElement = getByTestId('word');
-      expect(wordElement).toBeTruthy();
-    });
-
-    it('does not apply highlight by default', () => {
-      const word = createMockWord();
-      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
-
-      const wordElement = getByTestId('word');
-      expect(wordElement).toBeTruthy();
-    });
-  });
-
   describe('Tooltip Interaction', () => {
     it('does not crash when onTooltipOpen is not provided', () => {
       const word = createMockWord();
@@ -383,14 +348,14 @@ describe('SkiaArabicWord Component', () => {
           }),
         },
         getArabicFont: jest.fn(() => null),
-        isReady: true,
         fontSize: 17,
+        fontFamily: 'Noto Sans Arabic',
       });
 
       const word = createMockWord({ word_form: 'كتاب' });
       const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
-      // Should render placeholder without crashing
+      // Should render empty canvas without crashing
       expect(getByTestId('word')).toBeTruthy();
     });
   });

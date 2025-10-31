@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { IslamicCalendarHeader } from '@/components/article';
+import { IslamicCalendarHeader } from '@/components/library';
 import { FONTS, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { formatDaysUntil, useIslamicCalendarEvents } from '@/hooks';

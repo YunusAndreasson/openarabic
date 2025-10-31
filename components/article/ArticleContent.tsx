@@ -18,7 +18,6 @@ import { useArticleScrollHandler } from '@/hooks/articles/useArticleScrollHandle
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
@@ -78,7 +77,6 @@ const styles = StyleSheet.create({
 });
 
 // Static constants for better performance
-const SENTENCE_ITEM_HEIGHT = LAYOUT.SENTENCE_ITEM.HEIGHT;
 const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
 
 // Static key extractor for better performance
@@ -100,7 +98,6 @@ interface ArticleContentProps {
   hasAudio?: boolean;
   isPlaying?: boolean;
   onPlayPress?: () => void;
-  currentHighlightedWord?: SentenceWord | null;
   // Language preference functionality
   showEnglish: boolean;
   onToggleLanguage: () => void;
@@ -125,7 +122,6 @@ const ArticleContentInternal = function ArticleContent({
   hasAudio = false,
   isPlaying = false,
   onPlayPress,
-  currentHighlightedWord = null,
   showEnglish,
   onToggleLanguage,
   isLanguageOverridden,
@@ -306,24 +302,8 @@ const ArticleContentInternal = function ArticleContent({
             bounces={true}
             overScrollMode="always"
             extraData={{
-              currentHighlightedWord,
               showEnglish, // Track English visibility for proper recycling
               themeMode: colors.text, // Track theme changes via stable color value
-            }}
-            onScrollToIndexFailed={({ index }: { index: number }) => {
-              // Fallback: estimate offset using fixed item height and account for header
-              const estimatedOffset = Math.max(
-                0,
-                (index - 1) * SENTENCE_ITEM_HEIGHT + headerHeight,
-              );
-              try {
-                scrollViewRef.current?.scrollToOffset({
-                  offset: estimatedOffset,
-                  animated: true,
-                });
-              } catch {
-                // noop
-              }
             }}
             onLoad={onFlashListLoad}
           />

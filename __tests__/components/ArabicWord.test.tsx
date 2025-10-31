@@ -4,7 +4,7 @@
  * Tests the Skia-based Arabic word rendering component with:
  * - GPU-accelerated text rendering via Skia Canvas
  * - Color-coded grammar segments using Skia Paragraph API
- * - Selection and highlighting states
+ * - Selection states
  * - Tooltip interaction
  * - Single-word rule (no color-coding for single English words)
  */
@@ -209,27 +209,6 @@ describe('ArabicWord Component', () => {
     it('does not apply selected style by default', () => {
       (useArabicWord as jest.Mock).mockReturnValue({ isSelected: false });
 
-      const word = createMockWord();
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
-
-      const wordElement = getByTestId('word');
-      expect(wordElement).toBeTruthy();
-    });
-  });
-
-  describe('Highlighting State', () => {
-    it('applies highlight style when isHighlighted is true', () => {
-      const word = createMockWord();
-      const { getByTestId } = render(<ArabicWord word={word} isHighlighted={true} testID="word" />);
-
-      const wordElement = getByTestId('word');
-      expect(wordElement).toBeTruthy();
-
-      // isHighlighted adds background color
-      // Exact verification depends on test setup
-    });
-
-    it('does not apply highlight by default', () => {
       const word = createMockWord();
       const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
 

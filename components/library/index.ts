@@ -1,6 +1,7 @@
 export { ArticleList } from '@/components/library/ArticleList';
 export { FeaturedSection } from '@/components/library/FeaturedSection';
 export { FilteredArticleView } from '@/components/library/FilteredArticleView';
+export { IslamicCalendarHeader } from './IslamicCalendarHeader';
 export { StreakMetrics } from '@/components/library/StreakMetrics';
 export { FilterSection } from './FilterSection';
 export { HijriDateFooter } from './HijriDateFooter';
