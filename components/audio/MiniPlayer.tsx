@@ -126,8 +126,8 @@ const MiniPlayerComponent = ({
     [isTimerActive, colors.white, colors.tint],
   );
 
-  // Pause button uses elevation3 for visibility (lighter than card)
-  const pauseButtonColor = useMemo(() => colors.elevation3, [colors.elevation3]);
+  // Stop button uses elevation3 for visibility (lighter than card)
+  const stopButtonColor = useMemo(() => colors.elevation3, [colors.elevation3]);
 
   // Calculate progress percentage
   const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
@@ -216,11 +216,11 @@ const MiniPlayerComponent = ({
                 flat
               />
 
-              {/* Pause button - stops playback and hides player */}
+              {/* Stop button - fully stops playback and clears player state */}
               <IconButton
-                icon="pause"
+                icon="stop"
                 onPress={onPlayPause}
-                backgroundColor={pauseButtonColor}
+                backgroundColor={stopButtonColor}
                 iconColor={colors.tint}
                 iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                 hapticType="light"
