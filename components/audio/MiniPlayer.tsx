@@ -1,18 +1,15 @@
 import { ProgressBar } from '@common/ProgressBar';
-import { LinearGradient } from 'expo-linear-gradient';
 import { memo, useMemo } from 'react';
-import { ImageBackground, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
-
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui/IconButton';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
-import { createStrongDarkOverlayGradient } from '@/utils/gradientUtils';
 import { generateImageUrl } from '@/utils/imageUtils';
 
 export interface MiniPlayerProps {
@@ -104,12 +101,6 @@ const MiniPlayerComponent = ({
   // Memoize image URL to prevent duplicate generation on every render
   const imageUrl = useMemo(() => generateImageUrl(article.image_url), [article.image_url]);
 
-  // Memoize gradient overlay colors for readability - strong dark overlay ensures text is always readable
-  const gradientColors = useMemo(
-    () => createStrongDarkOverlayGradient(colors.black),
-    [colors.black],
-  );
-
   // Memoize dynamic styles for better performance
   const cardStyle = useMemo(
     () => [
@@ -122,16 +113,19 @@ const MiniPlayerComponent = ({
     [colors.elevation2],
   );
 
-  // Memoize button colors
+  // Memoize button colors - transparent buttons like FloatingActionButtons
   const timerButtonColor = useMemo(
-    () => (isTimerActive ? colors.warning : colors.elevation3),
-    [isTimerActive, colors.warning, colors.elevation3],
+    () => (isTimerActive ? colors.warning : colors.elevation1),
+    [isTimerActive, colors.warning, colors.elevation1],
   );
 
   const timerIconColor = useMemo(
-    () => (isTimerActive ? colors.background : colors.secondaryText),
-    [isTimerActive, colors.background, colors.secondaryText],
+    () => (isTimerActive ? colors.white : colors.secondaryText),
+    [isTimerActive, colors.white, colors.secondaryText],
   );
+
+  // Pause button uses slightly more prominent elevation for primary action
+  const pauseButtonColor = useMemo(() => colors.elevation2, [colors.elevation2]);
 
   // Calculate progress percentage
   const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
@@ -151,17 +145,6 @@ const MiniPlayerComponent = ({
     return null;
   }, [queuePosition]);
 
-  // Memoize text styles with theme-aware white color and shadows for readability
-  const overlayTextStyle = useMemo(
-    () => ({
-      color: colors.white,
-      textShadowColor: 'rgba(0, 0, 0, 0.5)',
-      textShadowOffset: { width: 0, height: 1 },
-      textShadowRadius: 3,
-    }),
-    [colors.white],
-  );
-
   return (
     <Animated.View
       entering={FadeInUp.delay(150).duration(TIMING_CONFIG.GENTLE.duration)}
@@ -169,110 +152,95 @@ const MiniPlayerComponent = ({
       style={CONTAINER_STYLE}
     >
       <View style={cardStyle}>
-        {/* Background: Blurred artwork as immersive backdrop */}
-        <ImageBackground
-          source={{ uri: imageUrl }}
-          style={styles.backgroundImage}
-          imageStyle={styles.backgroundImageInner}
-          blurRadius={20}
-          resizeMode="cover"
-        >
-          {/* Gradient Overlay: Strong dark overlay for text readability */}
-          <LinearGradient
-            colors={gradientColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={styles.gradientOverlay}
-          />
+        {/* Clean elevated card content */}
+        <View style={styles.contentWrapper}>
+          {/* Main Content Row */}
+          <View style={styles.contentRow}>
+            {/* Artwork Thumbnail */}
+            <View style={styles.artworkContainer}>
+              <EnhancedImage
+                source={imageUrl}
+                style={styles.artwork}
+                transition={150}
+                recyclingKey={`miniplayer-${article.id}`}
+              />
+            </View>
 
-          {/* Content Wrapper: Positioned above background and gradient */}
-          <View style={styles.contentWrapper}>
-            {/* Main Content Row */}
-            <View style={styles.contentRow}>
-              {/* Artwork Thumbnail */}
-              <View style={styles.artworkContainer}>
-                <EnhancedImage
-                  source={imageUrl}
-                  style={styles.artwork}
-                  transition={150}
-                  recyclingKey={`miniplayer-${article.id}`}
-                />
-              </View>
+            {/* Text Content and Time Display Column */}
+            <View style={styles.textColumn}>
+              {/* Text Content */}
+              <View style={styles.textContent}>
+                <ThemedText
+                  colorName="headingText"
+                  style={styles.title}
+                  type="heading3"
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {article.title}
+                </ThemedText>
 
-              {/* Text Content and Time Display Column */}
-              <View style={styles.textColumn}>
-                {/* Text Content */}
-                <View style={styles.textContent}>
+                <View style={styles.metaRow}>
                   <ThemedText
-                    style={[styles.title, overlayTextStyle]}
-                    type="heading3"
-                    numberOfLines={2}
+                    colorName="secondaryText"
+                    style={styles.artist}
+                    type="caption"
+                    numberOfLines={1}
                     ellipsizeMode="tail"
                   >
-                    {article.title}
+                    {article.author || 'Unknown Author'}
                   </ThemedText>
-
-                  <View style={styles.metaRow}>
-                    <ThemedText
-                      style={[styles.artist, overlayTextStyle]}
-                      type="caption"
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {article.author || 'Unknown Author'}
-                    </ThemedText>
-                  </View>
-                </View>
-
-                {/* Time display and queue position */}
-                <View style={styles.timeAndQueueRow}>
-                  <ThemedText style={[styles.timeDisplay, overlayTextStyle]} type="caption">
-                    {timeDisplay}
-                  </ThemedText>
-                  {/* Queue position indicator - placed after duration */}
-                  {queueDisplay && (
-                    <ThemedText style={[styles.queuePosition, overlayTextStyle]} type="caption">
-                      {queueDisplay}
-                    </ThemedText>
-                  )}
                 </View>
               </View>
 
-              {/* Controls */}
-              <View style={styles.controlsContainer}>
-                {/* Timer button - always visible with state indication */}
-                <IconButton
-                  icon="timer"
-                  onPress={onTimerPress}
-                  backgroundColor={timerButtonColor}
-                  iconColor={timerIconColor}
-                  iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                  hapticType="none"
-                />
-
-                {/* Pause button - stops playback and hides player */}
-                <IconButton
-                  icon="pause"
-                  onPress={onPlayPause}
-                  backgroundColor={colors.tint}
-                  iconColor={colors.black}
-                  iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                />
+              {/* Time display and queue position */}
+              <View style={styles.timeAndQueueRow}>
+                <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
+                  {timeDisplay}
+                </ThemedText>
+                {/* Queue position indicator - placed after duration */}
+                {queueDisplay && (
+                  <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
+                    {queueDisplay}
+                  </ThemedText>
+                )}
               </View>
             </View>
 
-            {/* Progress Bar - at bottom like Apple Music */}
-            <View style={styles.progressContainer} pointerEvents="none">
-              <ProgressBar
-                progress={progressPercentage}
-                height={PROGRESS_HEIGHT}
-                style={styles.progressBar}
-                fillColor={colors.tint}
-                backgroundColor={colors.border}
+            {/* Controls */}
+            <View style={styles.controlsContainer}>
+              {/* Timer button - always visible with state indication */}
+              <IconButton
+                icon="timer"
+                onPress={onTimerPress}
+                backgroundColor={timerButtonColor}
+                iconColor={timerIconColor}
+                iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                hapticType="none"
+              />
+
+              {/* Pause button - stops playback and hides player */}
+              <IconButton
+                icon="pause"
+                onPress={onPlayPause}
+                backgroundColor={pauseButtonColor}
+                iconColor={colors.tint}
+                iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               />
             </View>
           </View>
-        </ImageBackground>
+
+          {/* Progress Bar - at bottom */}
+          <View style={styles.progressContainer} pointerEvents="none">
+            <ProgressBar
+              progress={progressPercentage}
+              height={PROGRESS_HEIGHT}
+              style={styles.progressBar}
+              fillColor={colors.tint}
+              backgroundColor={colors.border}
+            />
+          </View>
+        </View>
       </View>
     </Animated.View>
   );
@@ -290,31 +258,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Background artwork layer - full width blurred image
-  backgroundImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-  },
-
-  backgroundImageInner: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-
-  // Gradient overlay for text readability
-  gradientOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-
-  // Content wrapper positioned above background and gradient
+  // Content wrapper for clean elevated card
   contentWrapper: {
     position: 'relative',
     width: '100%',
