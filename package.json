@@ -86,7 +86,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.28.5",
-    "@eslint/js": "^9.38.0",
+    "@eslint/js": "^9.39.0",
     "@jest/globals": "^30.2.0",
     "@testing-library/react-native": "^13.3.3",
     "@types/culori": "^4.0.1",
@@ -95,7 +95,7 @@
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
     "babel-preset-expo": "^54.0.6",
-    "eslint": "9.38.0",
+    "eslint": "9.39.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",

@@ -130,7 +130,7 @@ export class AudioCacheManager {
       return await this.cacheAudio(url);
     } catch (error) {
       await handleError(error as Error, {
-        showToast: true,
+        showToast: false,
         toastMessage: 'Audio caching failed. The app may experience slower audio loading.',
       });
       // Return original URL on failed download as fallback

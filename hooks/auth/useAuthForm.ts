@@ -16,9 +16,6 @@ import { successFeedback } from '@/utils/haptics';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PASSWORD_REQUIREMENTS = {
   minLength: 8,
-  hasUpperCase: /[A-Z]/,
-  hasLowerCase: /[a-z]/,
-  hasNumber: /\d/,
 } as const;
 
 export interface UseAuthFormReturn {
@@ -83,14 +80,6 @@ export function useAuthForm(): UseAuthFormReturn {
           );
         return false;
       }
-      if (
-        !PASSWORD_REQUIREMENTS.hasUpperCase.test(value) ||
-        !PASSWORD_REQUIREMENTS.hasLowerCase.test(value) ||
-        !PASSWORD_REQUIREMENTS.hasNumber.test(value)
-      ) {
-        if (isMountedRef.current) setPasswordError(STRINGS.PASSWORD_ADD_CHARACTER_TYPES);
-        return false;
-      }
       if (isMountedRef.current) setPasswordError('');
       return true;
     },
@@ -110,6 +99,7 @@ export function useAuthForm(): UseAuthFormReturn {
         email,
         password,
       });
+
       if (error) {
         if (!isMountedRef.current) return;
         Sentry.captureMessage('Sign in error', {
@@ -201,6 +191,13 @@ export function useAuthForm(): UseAuthFormReturn {
   const resetPassword = useCallback(async (): Promise<void> => {
     const isEmailValid = validateEmail(email);
     if (!isEmailValid) {
+      // Show error message if email is invalid
+      handleError(new Error('Invalid email'), {
+        toastMessage: email ? STRINGS.ENTER_VALID_EMAIL : STRINGS.ERROR_EMPTY_EMAIL,
+        analyticsEventName: 'Password_Reset_Invalid_Email',
+        sentrySeverity: 'info',
+        showToast: true,
+      });
       return;
     }
 
@@ -209,7 +206,7 @@ export function useAuthForm(): UseAuthFormReturn {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'openarabic://reset-password',
+        redirectTo: 'open-arabic://reset-password',
       });
 
       if (error) {

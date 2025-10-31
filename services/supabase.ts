@@ -17,7 +17,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     storage: getSafeStorage(),
     autoRefreshToken: true,
     persistSession: isAsyncStorageAvailable(),
-    detectSessionInUrl: false, // Mobile-only: no URL session detection needed
+    detectSessionInUrl: false, // Mobile apps don't need URL session detection
     flowType: 'implicit', // Mobile-only: implicit flow for native apps
     debug: false,
   },

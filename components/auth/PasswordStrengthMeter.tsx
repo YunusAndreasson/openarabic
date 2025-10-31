@@ -18,15 +18,17 @@ interface PasswordRequirement {
 }
 
 /**
- * Calculate password strength score (0-4)
+ * Calculate password strength score based on length (0-3)
+ * 0: Empty or too short
+ * 1: Minimum length met (8-11 chars)
+ * 2: Good length (12-15 chars)
+ * 3: Strong length (16+ chars)
  */
 function calculateStrength(password: string): number {
-  let score = 0;
-  if (password.length >= PASSWORD_REQUIREMENTS.minLength) score++;
-  if (PASSWORD_REQUIREMENTS.hasUpperCase.test(password)) score++;
-  if (PASSWORD_REQUIREMENTS.hasLowerCase.test(password)) score++;
-  if (PASSWORD_REQUIREMENTS.hasNumber.test(password)) score++;
-  return score;
+  if (password.length < PASSWORD_REQUIREMENTS.minLength) return 0;
+  if (password.length < 12) return 1;
+  if (password.length < 16) return 2;
+  return 3;
 }
 
 /**
@@ -34,9 +36,8 @@ function calculateStrength(password: string): number {
  */
 function getStrengthLabel(score: number): string {
   if (score === 0) return '';
-  if (score === 1) return STRINGS.PASSWORD_STRENGTH_WEAK;
-  if (score === 2) return STRINGS.PASSWORD_STRENGTH_FAIR;
-  if (score === 3) return STRINGS.PASSWORD_STRENGTH_GOOD;
+  if (score === 1) return STRINGS.PASSWORD_STRENGTH_GOOD;
+  if (score === 2) return STRINGS.PASSWORD_STRENGTH_GOOD;
   return STRINGS.PASSWORD_STRENGTH_STRONG;
 }
 
@@ -55,18 +56,6 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
         ),
         met: password.length >= PASSWORD_REQUIREMENTS.minLength,
       },
-      {
-        label: STRINGS.PASSWORD_REQUIREMENT_UPPERCASE,
-        met: PASSWORD_REQUIREMENTS.hasUpperCase.test(password),
-      },
-      {
-        label: STRINGS.PASSWORD_REQUIREMENT_LOWERCASE,
-        met: PASSWORD_REQUIREMENTS.hasLowerCase.test(password),
-      },
-      {
-        label: STRINGS.PASSWORD_REQUIREMENT_NUMBER,
-        met: PASSWORD_REQUIREMENTS.hasNumber.test(password),
-      },
     ];
   }, [password]);
 
@@ -76,8 +65,8 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
   // Determine strength color
   const strengthColor = useMemo(() => {
     if (strength === 0) return colors.textTertiary;
-    if (strength <= 2) return colors.error;
-    if (strength === 3) return colors.warning;
+    if (strength === 1) return colors.success;
+    if (strength === 2) return colors.success;
     return colors.success;
   }, [strength, colors]);
 
@@ -100,7 +89,7 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
             style={[
               styles.strengthBarFill,
               {
-                width: `${(strength / 4) * 100}%`,
+                width: `${(strength / 3) * 100}%`,
                 backgroundColor: strengthColor,
               },
             ]}
