@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   englishText: {
     fontFamily: FONTS.ENGLISH,
     paddingTop: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   wordsContainer: {
     alignItems: 'center',
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
     justifyContent: 'flex-start',
     minHeight: LAYOUT.SPACING.XLARGE * 1.5,
-    ...createPadding({ horizontal: 'SMALL', vertical: 'SMALL' }),
+    ...createPadding({ horizontal: 'MEDIUM', vertical: 'SMALL' }),
     width: '100%',
   },
 });

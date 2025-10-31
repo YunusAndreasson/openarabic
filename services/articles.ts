@@ -119,7 +119,11 @@ export const articlesService = {
     if (maxDifficulty !== undefined && (maxDifficulty < 1 || maxDifficulty > 5)) {
       throw new Error(`Invalid maxDifficulty: ${maxDifficulty}. Must be between 1 and 5`);
     }
-    if (minDifficulty !== undefined && maxDifficulty !== undefined && minDifficulty > maxDifficulty) {
+    if (
+      minDifficulty !== undefined &&
+      maxDifficulty !== undefined &&
+      minDifficulty > maxDifficulty
+    ) {
       throw new Error(`Invalid difficulty range: min (${minDifficulty}) > max (${maxDifficulty})`);
     }
 

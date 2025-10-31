@@ -26,10 +26,31 @@ interface UseArabicWordAnalysisResult {
 }
 
 /**
- * Valid color names for Arabic word analysis segments
- * These must match the keys in the colorMap
+ * Valid flat color names used by Arabic word analysis
  */
-type ValidColorName = 'tint' | 'primary' | 'secondary' | 'warning' | 'accent' | 'error' | 'text';
+type FlatColorName = 'tint' | 'warning' | 'accent' | 'violet' | 'arabicText' | 'text';
+
+/**
+ * Valid grammar color names used for grammatical roles
+ */
+type GrammarColorName =
+  | 'grammar.preposition'
+  | 'grammar.possessive'
+  | 'grammar.particle'
+  | 'grammar.interrogative'
+  | 'grammar.verbConjugation'
+  | 'grammar.negation'
+  | 'grammar.subjectPrefix'
+  | 'grammar.plural'
+  | 'grammar.demonstrative'
+  | 'grammar.conjunction'
+  | 'grammar.futureTense'
+  | 'grammar.definiteArticle';
+
+/**
+ * All valid color names for Arabic word analysis
+ */
+type ValidColorName = FlatColorName | GrammarColorName;
 
 /**
  * Type guard to validate color names
@@ -37,13 +58,39 @@ type ValidColorName = 'tint' | 'primary' | 'secondary' | 'warning' | 'accent' | 
  * NO DEFAULT FALLBACK - we want to catch invalid color names immediately
  */
 function assertValidColorName(colorName: string): asserts colorName is ValidColorName {
-  const validColors: ValidColorName[] = ['tint', 'primary', 'secondary', 'warning', 'accent', 'error', 'text'];
+  const validFlatColors: FlatColorName[] = [
+    'tint',
+    'warning',
+    'accent',
+    'violet',
+    'arabicText',
+    'text',
+  ];
+  const validGrammarColors: GrammarColorName[] = [
+    'grammar.preposition',
+    'grammar.possessive',
+    'grammar.particle',
+    'grammar.interrogative',
+    'grammar.verbConjugation',
+    'grammar.negation',
+    'grammar.subjectPrefix',
+    'grammar.plural',
+    'grammar.demonstrative',
+    'grammar.conjunction',
+    'grammar.futureTense',
+    'grammar.definiteArticle',
+  ];
 
-  if (!validColors.includes(colorName as ValidColorName)) {
+  const isValid =
+    validFlatColors.includes(colorName as FlatColorName) ||
+    validGrammarColors.includes(colorName as GrammarColorName);
+
+  if (!isValid) {
     throw new Error(
       `Invalid color name "${colorName}" in Arabic word analysis. ` +
-      `Valid colors are: ${validColors.join(', ')}. ` +
-      `This indicates a bug in the word analysis logic that must be fixed.`
+        `Valid flat colors: ${validFlatColors.join(', ')}. ` +
+        `Valid grammar colors: ${validGrammarColors.join(', ')}. ` +
+        `This indicates a bug in the word analysis logic that must be fixed.`,
     );
   }
 }
@@ -90,28 +137,6 @@ export function useArabicWordAnalysis(
     return formatWordAnalysis(analysis);
   }, [analysis]);
 
-  // Create color mapping - only includes colors that are actually used by word analysis
-  const colorMap = useMemo(
-    () => ({
-      tint: colors.tint,
-      primary: colors.primary,
-      secondary: colors.secondary,
-      warning: colors.warning,
-      accent: colors.accent,
-      error: colors.error,
-      text: colors.text,
-    }),
-    [
-      colors.tint,
-      colors.primary,
-      colors.secondary,
-      colors.warning,
-      colors.accent,
-      colors.error,
-      colors.text,
-    ],
-  );
-
   // Convert analysis to colored segments
   const coloredSegments = useMemo((): ColoredSegment[] => {
     if (!analysis?.hasComponents || !formattedAnalysis?.reconstructedArabic) {
@@ -132,13 +157,47 @@ export function useArabicWordAnalysis(
       // This will throw an error if colorName is invalid - NO FALLBACK
       assertValidColorName(segment.colorName);
 
+      // Resolve color from color name
+      let color: string;
+      if (segment.colorName.startsWith('grammar.')) {
+        // Handle grammar colors (nested path like 'grammar.preposition')
+        const grammarKey = segment.colorName.split('.')[1] as keyof typeof colors.grammar;
+        color = colors.grammar[grammarKey];
+      } else {
+        // Handle flat colors - explicit property access for type safety
+        const flatColorName = segment.colorName as FlatColorName;
+        switch (flatColorName) {
+          case 'tint':
+            color = colors.tint;
+            break;
+          case 'warning':
+            color = colors.warning;
+            break;
+          case 'accent':
+            color = colors.accent;
+            break;
+          case 'violet':
+            color = colors.violet;
+            break;
+          case 'arabicText':
+            color = colors.arabicText;
+            break;
+          case 'text':
+            color = colors.text;
+            break;
+          default:
+            // This should never happen due to assertValidColorName
+            color = colors.text;
+        }
+      }
+
       return {
         text: segment.text,
-        color: colorMap[segment.colorName],
+        color,
         type: segment.type as ColoredSegment['type'],
       };
     });
-  }, [analysis, formattedAnalysis, arabicWord, colors.text, colorMap]);
+  }, [analysis, formattedAnalysis, arabicWord, colors]);
 
   return {
     hasComponents: analysis?.hasComponents ?? false,

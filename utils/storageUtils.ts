@@ -42,7 +42,10 @@ export const isValidStoragePath = (path: unknown): path is string => {
  * // → '' (invalid input)
  * ```
  */
-export const generateStorageUrl = (bucket: StorageBucket, path: string | null | undefined): string => {
+export const generateStorageUrl = (
+  bucket: StorageBucket,
+  path: string | null | undefined,
+): string => {
   // Handle invalid inputs consistently - return empty string
   if (!isValidStoragePath(path)) {
     return '';

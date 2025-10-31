@@ -14,6 +14,19 @@ export const setGlobalToastHandler = (
   globalToastHandler = handler;
 };
 
+/**
+ * Show a success toast message
+ * Used for positive feedback like "Email sent", "Account created", etc.
+ */
+export const showSuccessToast = (
+  message: string,
+  duration: number = 5000, // Default 5 seconds for success messages
+): void => {
+  if (globalToastHandler) {
+    globalToastHandler(message, duration, ToastType.SUCCESS);
+  }
+};
+
 interface ErrorOptions {
   // Whether to show a toast message to the user
   showToast?: boolean;

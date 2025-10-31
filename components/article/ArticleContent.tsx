@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   titleContainer: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     marginTop: -LAYOUT.SPACING.XXXLARGE,
     paddingBottom: LAYOUT.SPACING.TINY,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
@@ -54,12 +54,12 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   authorContainer: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   summaryContainer: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
@@ -187,7 +187,7 @@ const ArticleContentInternal = function ArticleContent({
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
     opacity: 0.4,
-    marginHorizontal: LAYOUT.SPACING.SMALL,
+    marginHorizontal: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   } as const;
 

@@ -58,6 +58,7 @@ export const STRINGS = {
   // Welcome & onboarding
   WELCOME_TITLE: 'Welcome to OpenArabic',
   WELCOME_SUBTITLE: 'Sign in to continue learning Arabic',
+  WELCOME_SUBTITLE_CREATE: 'Create an account to start learning Arabic',
 
   // Navigation & controls - now imported directly from enums in components
   AUTHORS: 'Authors',
@@ -135,8 +136,8 @@ export const STRINGS = {
   CREATE_ACCOUNT: 'Create account',
   SIGN_IN: 'Sign in',
   SIGN_OUT: 'Sign out',
-  HAVE_ACCOUNT_SIGN_IN: 'Have an account? Sign in',
-  NEED_ACCOUNT_CREATE_ONE: 'Need an account? Create one',
+  ALREADY_HAVE_ACCOUNT: 'Already have an account?',
+  DONT_HAVE_ACCOUNT: "Don't have an account?",
   YOUR_EMAIL: 'Email',
   YOUR_PASSWORD: 'Password',
   PASSWORD_REQUIREMENTS_HINT:
@@ -146,6 +147,23 @@ export const STRINGS = {
   ENTER_PASSWORD: 'Enter your password',
   PASSWORD_ADD_CHARACTER_TYPES: 'Add uppercase, lowercase, and a number',
   PASSWORD_USE_AT_LEAST_TEMPLATE: 'Use at least {minLength} characters',
+  FORGOT_PASSWORD: 'Forgot password?',
+  RESET_PASSWORD: 'Reset password',
+  RESET_PASSWORD_EMAIL_SENT: 'Check your email for a password reset link',
+  RESET_PASSWORD_ERROR: 'Failed to send reset email',
+  EMAIL_CONFIRMATION_REQUIRED: "We'll send you a confirmation email",
+  PASSWORD_STRENGTH_WEAK: 'Weak',
+  PASSWORD_STRENGTH_FAIR: 'Fair',
+  PASSWORD_STRENGTH_GOOD: 'Good',
+  PASSWORD_STRENGTH_STRONG: 'Strong',
+  PASSWORD_REQUIREMENT_LENGTH: 'At least {minLength} characters',
+  PASSWORD_REQUIREMENT_UPPERCASE: 'One uppercase letter',
+  PASSWORD_REQUIREMENT_LOWERCASE: 'One lowercase letter',
+  PASSWORD_REQUIREMENT_NUMBER: 'One number',
+  TERMS_OF_SERVICE: 'Terms of Service',
+  PRIVACY_POLICY: 'Privacy Policy',
+  BY_CONTINUING_YOU_AGREE: 'By continuing, you agree to our',
+  AND: 'and',
 
   RESET_PROGRESS: 'Reset progress',
 

@@ -1,14 +1,13 @@
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
-import { handleError } from '@/utils/errorHandling';
+import { handleError, showSuccessToast } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 
 /**
@@ -36,6 +35,7 @@ export interface UseAuthFormReturn {
   signInWithEmail: () => Promise<void>;
   signUpWithEmail: () => Promise<void>;
   toggleMode: () => void;
+  resetPassword: () => Promise<void>;
 }
 
 /**
@@ -46,7 +46,7 @@ export function useAuthForm(): UseAuthFormReturn {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(true);
+  const [isRegistering, setIsRegistering] = useState(true); // Default to Create Account for new user acquisition
 
   // Validation state
   const [emailError, setEmailError] = useState('');
@@ -117,7 +117,11 @@ export function useAuthForm(): UseAuthFormReturn {
           tags: { location: 'auth_component' },
           extra: { error: error.message },
         });
-        Alert.alert(STRINGS.SIGN_IN_FAILED, error.message);
+        handleError(error, {
+          toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${error.message}`,
+          analyticsEventName: 'Sign_In_Error',
+          sentrySeverity: 'error',
+        });
       } else {
         await analytics.identify(data.user.id, {
           email: data.user.email,
@@ -134,13 +138,12 @@ export function useAuthForm(): UseAuthFormReturn {
         analyticsEventName: 'Sign_In_Error',
         sentrySeverity: 'error',
       });
-      Alert.alert(STRINGS.SIGN_IN_FAILED, STRINGS.PLEASE_TRY_AGAIN);
     } finally {
       if (isMountedRef.current) {
         setLoading(false);
       }
     }
-  }, [email, password, validateEmail, validatePassword]);
+  }, [email, password, validateEmail, validatePassword, isMountedRef]);
 
   const signUpWithEmail = useCallback(async () => {
     const isEmailValid = validateEmail(email);
@@ -157,7 +160,11 @@ export function useAuthForm(): UseAuthFormReturn {
       });
       if (error) {
         if (!isMountedRef.current) return;
-        Alert.alert(STRINGS.ACCOUNT_CREATION_FAILED, error.message);
+        handleError(error, {
+          toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${error.message}`,
+          analyticsEventName: 'Sign_Up_Error',
+          sentrySeverity: 'error',
+        });
       } else {
         if (data?.user) {
           await analytics.identify(data.user.id, {
@@ -168,24 +175,72 @@ export function useAuthForm(): UseAuthFormReturn {
         await analytics.trackSignUp('email');
         successFeedback();
         if (!isMountedRef.current) return;
-        Alert.alert(STRINGS.ACCOUNT_CREATED, STRINGS.CHECK_EMAIL_CONFIRMATION);
+        // Show long-lasting success toast (5 seconds)
+        showSuccessToast(STRINGS.CHECK_EMAIL_CONFIRMATION, 5000);
       }
     } catch (err) {
       if (!isMountedRef.current) return;
-      Alert.alert(STRINGS.ACCOUNT_CREATION_FAILED, STRINGS.PLEASE_TRY_AGAIN);
-      handleError(err as Error);
+      handleError(err instanceof Error ? err : new Error('Sign up error'), {
+        toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
+        analyticsEventName: 'Sign_Up_Error',
+        sentrySeverity: 'error',
+      });
     } finally {
       if (isMountedRef.current) {
         setLoading(false);
       }
     }
-  }, [email, password, validateEmail, validatePassword]);
+  }, [email, password, validateEmail, validatePassword, isMountedRef]);
 
   const toggleMode = useCallback(() => {
     setIsRegistering(!isRegistering);
     setEmailError('');
     setPasswordError('');
   }, [isRegistering]);
+
+  const resetPassword = useCallback(async (): Promise<void> => {
+    const isEmailValid = validateEmail(email);
+    if (!isEmailValid) {
+      return;
+    }
+
+    if (!isMountedRef.current) return;
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'openarabic://reset-password',
+      });
+
+      if (error) {
+        if (!isMountedRef.current) return;
+        Sentry.captureException(error, {
+          tags: { location: 'password_reset' },
+          level: 'warning',
+        });
+        handleError(error, {
+          toastMessage: STRINGS.RESET_PASSWORD_ERROR,
+          analyticsEventName: 'Password_Reset_Error',
+          sentrySeverity: 'error',
+        });
+      } else {
+        if (!isMountedRef.current) return;
+        // Show long-lasting success toast (5 seconds)
+        showSuccessToast(STRINGS.RESET_PASSWORD_EMAIL_SENT, 5000);
+      }
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      handleError(err instanceof Error ? err : new Error('Password reset error'), {
+        toastMessage: STRINGS.RESET_PASSWORD_ERROR,
+        analyticsEventName: 'Password_Reset_Error',
+        sentrySeverity: 'error',
+      });
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [email, validateEmail, isMountedRef]);
 
   return {
     email,
@@ -201,5 +256,6 @@ export function useAuthForm(): UseAuthFormReturn {
     signInWithEmail,
     signUpWithEmail,
     toggleMode,
+    resetPassword,
   };
 }

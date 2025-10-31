@@ -1,7 +1,4 @@
-import {
-  CONTRACTION_EXPANSIONS,
-  EXPANSION_TO_CONTRACTION,
-} from '@/constants/contractions';
+import { CONTRACTION_EXPANSIONS, EXPANSION_TO_CONTRACTION } from '@/constants/contractions';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import type { WordAnalysis } from '@/utils/arabicWordAnalysis';

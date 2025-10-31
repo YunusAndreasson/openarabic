@@ -5,9 +5,11 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
+import { LegalLinks } from '@/components/auth/LegalLinks';
+import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { PASSWORD_REQUIREMENTS, useAuthForm } from '@/hooks/auth/useAuthForm';
+import { useAuthForm } from '@/hooks/auth/useAuthForm';
 
 /**
  * Authentication component that handles both sign in and sign up
@@ -32,7 +34,12 @@ export function Auth(): JSX.Element {
     signInWithEmail,
     signUpWithEmail,
     toggleMode,
+    resetPassword,
   } = useAuthForm();
+
+  const handleForgotPassword = useCallback(async () => {
+    await resetPassword();
+  }, [resetPassword]);
 
   // Input handlers
   const handleEmailChange = useCallback(
@@ -59,10 +66,18 @@ export function Auth(): JSX.Element {
     if (password) validatePassword(password);
   }, [password, validatePassword]);
 
-  // Authentication handlers are provided by useAuthForm
-
   return (
     <View style={styles.container}>
+      {/* Header with dynamic subtitle based on mode */}
+      <View style={styles.headerContainer}>
+        <ThemedText align="center" type="heading1" colorName="headingText">
+          {STRINGS.WELCOME_TITLE}
+        </ThemedText>
+        <ThemedText align="center" type="body" variant="secondary" style={styles.subtitle}>
+          {isRegistering ? STRINGS.WELCOME_SUBTITLE_CREATE : STRINGS.WELCOME_SUBTITLE}
+        </ThemedText>
+      </View>
+
       <View style={styles.inputsButtonGroup}>
         <View style={styles.inputWrapper}>
           <ThemedInput
@@ -78,6 +93,8 @@ export function Auth(): JSX.Element {
             textContentType="emailAddress"
             value={email}
             testID="email-input"
+            accessibilityLabel="Email address"
+            accessibilityHint="Enter your email address"
             onBlur={handleEmailBlur}
             onChangeText={handleEmailChange}
           />
@@ -98,18 +115,17 @@ export function Auth(): JSX.Element {
             textContentType={isRegistering ? 'newPassword' : 'password'}
             value={password}
             testID="password-input"
-            hint={
-              isRegistering
-                ? STRINGS.PASSWORD_REQUIREMENTS_HINT.replace(
-                    '{minLength}',
-                    PASSWORD_REQUIREMENTS.minLength.toString(),
-                  )
-                : undefined
+            accessibilityLabel="Password"
+            accessibilityHint={
+              isRegistering ? 'Enter a password with at least 8 characters' : 'Enter your password'
             }
             onBlur={handlePasswordBlur}
             onChangeText={handlePasswordChange}
             onRightIconPress={handleTogglePassword}
           />
+
+          {/* Password Strength Meter - only during registration */}
+          {isRegistering ? <PasswordStrengthMeter password={password} /> : null}
         </View>
 
         <ThemedButton
@@ -118,20 +134,48 @@ export function Auth(): JSX.Element {
           style={styles.button}
           title={isRegistering ? STRINGS.CREATE_ACCOUNT : STRINGS.SIGN_IN}
           testID={isRegistering ? 'create-account-button' : 'sign-in-button'}
+          accessibilityLabel={isRegistering ? 'Create account' : 'Sign in'}
           onPress={isRegistering ? signUpWithEmail : signInWithEmail}
         />
+
+        {/* Forgot Password Link - always rendered to prevent layout shift, but hidden during signup */}
+        <View style={styles.forgotPasswordContainer}>
+          {!isRegistering ? (
+            <TouchableOpacity
+              activeOpacity={LAYOUT.OPACITY.HIGH}
+              testID="forgot-password-button"
+              accessibilityRole="button"
+              accessibilityLabel="Forgot password"
+              onPress={handleForgotPassword}
+            >
+              <ThemedText type="body" colorName="tint">
+                {STRINGS.FORGOT_PASSWORD}
+              </ThemedText>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {/* Mode Toggle - Secondary action at bottom */}
+        <View style={styles.modeToggleContainer}>
+          <ThemedText type="body" variant="secondary">
+            {isRegistering ? STRINGS.ALREADY_HAVE_ACCOUNT : STRINGS.DONT_HAVE_ACCOUNT}{' '}
+          </ThemedText>
+          <TouchableOpacity
+            activeOpacity={LAYOUT.OPACITY.HIGH}
+            testID="toggle-auth-mode-button"
+            accessibilityRole="button"
+            accessibilityLabel={isRegistering ? 'Switch to sign in' : 'Switch to create account'}
+            onPress={toggleMode}
+          >
+            <ThemedText type="body" colorName="tint" weight="semibold">
+              {isRegistering ? STRINGS.SIGN_IN : STRINGS.CREATE_ACCOUNT}
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <TouchableOpacity
-        activeOpacity={LAYOUT.OPACITY.HIGH}
-        style={styles.toggleContainer}
-        testID="toggle-mode-button"
-        onPress={toggleMode}
-      >
-        <ThemedText align="center" type="body" variant="secondary">
-          {isRegistering ? STRINGS.HAVE_ACCOUNT_SIGN_IN : STRINGS.NEED_ACCOUNT_CREATE_ONE}
-        </ThemedText>
-      </TouchableOpacity>
+      {/* Legal Links */}
+      <LegalLinks />
     </View>
   );
 }
@@ -145,17 +189,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
+  forgotPasswordContainer: {
+    alignItems: 'center',
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    minHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE + LAYOUT.SPACING.MEDIUM, // Reserve space for text + margin
+    width: '100%',
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    width: '100%',
+  },
   inputWrapper: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
   inputsButtonGroup: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-    maxWidth: SCREEN_WIDTH * 0.9, // Responsive max width (90% of screen)
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    maxWidth: SCREEN_WIDTH * 0.9,
     width: '100%',
   },
-  toggleContainer: {
-    maxWidth: SCREEN_WIDTH * 0.9, // Responsive max width (90% of screen)
+  modeToggleContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: LAYOUT.SPACING.LARGE,
     width: '100%',
+  },
+  subtitle: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });
