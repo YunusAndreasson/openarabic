@@ -53,35 +53,48 @@ function isTestFile(file) {
 }
 
 function runCommand(command, args, label) {
-  const { execSync } = require('child_process');
+  const { spawnSync } = require('child_process');
   const startTime = Date.now();
-  const fullCommand = `${command} ${args.join(' ')}`;
 
   try {
-    const output = execSync(fullCommand, {
+    const result = spawnSync(command, args, {
       encoding: 'utf8',
       maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+      shell: false, // Don't use shell to avoid issues with special characters
+      stdio: ['ignore', 'pipe', 'pipe'], // stdin: ignore, stdout: pipe, stderr: pipe
     });
+
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+    if (result.error) {
+      return {
+        label,
+        success: false,
+        stdout: '',
+        stderr: result.error.message || 'Command execution failed',
+        duration,
+        exitCode: 1,
+      };
+    }
+
+    const success = result.status === 0;
     return {
       label,
-      success: true,
-      stdout: output,
-      stderr: '',
+      success,
+      stdout: result.stdout || '',
+      stderr: result.stderr || '',
       duration,
-      exitCode: 0,
+      exitCode: result.status !== null ? result.status : 1,
     };
   } catch (error) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-    const stdout = error.stdout ? error.stdout.toString() : '';
-    const stderr = error.stderr ? error.stderr.toString() : error.message || '';
     return {
       label,
       success: false,
-      stdout,
-      stderr,
+      stdout: '',
+      stderr: error.message || 'Command execution failed',
       duration,
-      exitCode: error.status || 1,
+      exitCode: 1,
     };
   }
 }
@@ -178,8 +191,8 @@ function formatErrorsForLLM(results) {
             });
         } else {
           // No structured errors parsed - show raw output
-          const rawOutput = result.stdout || result.stderr;
-          if (rawOutput) {
+          const rawOutput = (result.stdout || '') + (result.stderr || '');
+          if (rawOutput && rawOutput.trim()) {
             // Remove ANSI codes and show relevant lines
             // eslint-disable-next-line no-control-regex
             const cleaned = rawOutput.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
@@ -192,6 +205,12 @@ function formatErrorsForLLM(results) {
           } else {
             output += `  ${colors.yellow}(Tool failed but produced no parseable output)${colors.reset}\n`;
             output += `  Exit code: ${result.exitCode}\n`;
+            if (result.stderr) {
+              output += `  Stderr: ${result.stderr}\n`;
+            }
+            if (result.stdout) {
+              output += `  Stdout: ${result.stdout}\n`;
+            }
           }
         }
         output += '\n';
@@ -231,12 +250,20 @@ async function main() {
 
   const tasks = [];
 
-  // TypeScript type checking (only if code files changed, excluding tests)
-  const nonTestFiles = codeFiles.filter(file => !isTestFile(file));
-  if (nonTestFiles.length > 0) {
+  // TypeScript type checking (only .ts/.tsx files changed, excluding tests)
+  const tsFiles = codeFiles.filter(
+    file => !isTestFile(file) && (file.endsWith('.ts') || file.endsWith('.tsx')),
+  );
+  if (tsFiles.length > 0) {
+    if (process.env.DEBUG_VALIDATE) {
+      console.log(
+        `${colors.cyan}DEBUG: Running tsc-files on ${tsFiles.length} files${colors.reset}`,
+      );
+      console.log(`${colors.cyan}Files: ${tsFiles.join(', ')}${colors.reset}`);
+    }
     tasks.push(
       Promise.resolve().then(() =>
-        runCommand('npx', ['tsc-files', '--noEmit', ...nonTestFiles], 'TypeScript'),
+        runCommand('npx', ['tsc-files', '--noEmit', ...tsFiles], 'TypeScript'),
       ),
     );
   }
