@@ -33,17 +33,17 @@ class GoogleTTSService:
     def generate_arabic_word_audio(self, word: str) -> dict[str, Any] | None:
         """Generate audio for an Arabic word using Google Cloud TTS."""
         try:
-            # Configure Arabic voice (Modern Standard Arabic) - Premium Wavenet quality
+            # Configure Arabic voice (Modern Standard Arabic) - Chirp 3: HD quality
             voice = texttospeech.VoiceSelectionParams(
                 language_code="ar-XA",
-                name="ar-XA-Wavenet-B",  # Premium Wavenet voice for best Arabic quality
+                name="ar-XA-Chirp3-HD-Charon",  # Chirp 3: HD male voice for best Arabic quality
                 ssml_gender=texttospeech.SsmlVoiceGender.MALE,
             )
 
             # Configure premium audio output with high quality settings
             audio_config = texttospeech.AudioConfig(
                 audio_encoding=texttospeech.AudioEncoding.MP3,
-                speaking_rate=0.85,  # Slightly slower for clarity
+                speaking_rate=0.8,  # 20% slower for clarity (Chirp 3: HD supports 0.25-2.0)
             )
 
             # Create enhanced SSML for better Arabic pronunciation
@@ -64,7 +64,7 @@ class GoogleTTSService:
                 "audio": response.audio_content,
                 "format": "mp3",
                 "language": "ar-XA",
-                "voice": "ar-XA-Wavenet-B",  # Updated to verified Wavenet voice
+                "voice": "ar-XA-Chirp3-HD-Charon",  # Chirp 3: HD male voice
                 "text": word,
             }
 
@@ -75,17 +75,17 @@ class GoogleTTSService:
     def generate_english_word_audio(self, word: str) -> dict[str, Any] | None:
         """Generate audio for an English word using Google Cloud TTS."""
         try:
-            # Configure English voice (US English) - Premium Wavenet quality
+            # Configure English voice (US English) - Chirp 3: HD quality
             voice = texttospeech.VoiceSelectionParams(
                 language_code="en-US",
-                name="en-US-Wavenet-A",  # Premium Wavenet voice for best English quality
+                name="en-US-Chirp3-HD-Charon",  # Chirp 3: HD male voice for best English quality
                 ssml_gender=texttospeech.SsmlVoiceGender.MALE,
             )
 
             # Configure premium audio output with high quality settings
             audio_config = texttospeech.AudioConfig(
                 audio_encoding=texttospeech.AudioEncoding.MP3,
-                speaking_rate=0.85,  # Slightly slower for clarity
+                speaking_rate=0.8,  # 20% slower for clarity (Chirp 3: HD supports 0.25-2.0)
             )
 
             # Create enhanced SSML for better English pronunciation
@@ -106,7 +106,7 @@ class GoogleTTSService:
                 "audio": response.audio_content,
                 "format": "mp3",
                 "language": "en-US",
-                "voice": "en-US-Wavenet-A",  # Updated to verified Wavenet voice
+                "voice": "en-US-Chirp3-HD-Charon",  # Chirp 3: HD male voice
                 "text": word,
             }
 
