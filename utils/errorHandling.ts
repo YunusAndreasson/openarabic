@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 
+import { DEFAULT_TOAST_DURATION } from '@/constants/animation';
 import { analytics } from '@/services/analytics';
 import { ToastType } from '@/types/enums';
 
@@ -20,7 +21,7 @@ export const setGlobalToastHandler = (
  */
 export const showSuccessToast = (
   message: string,
-  duration: number = 5000, // Default 5 seconds for success messages
+  duration: number = DEFAULT_TOAST_DURATION,
 ): void => {
   if (globalToastHandler) {
     globalToastHandler(message, duration, ToastType.SUCCESS);

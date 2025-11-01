@@ -58,6 +58,12 @@ export function Toast({
   const insets = useSafeAreaInsets();
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  // Update the ref when onClose changes
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (timerRef.current) {
@@ -67,7 +73,7 @@ export function Toast({
 
     if (visible) {
       timerRef.current = setTimeout(() => {
-        onClose();
+        onCloseRef.current();
       }, duration);
     }
 
@@ -77,7 +83,7 @@ export function Toast({
         timerRef.current = null;
       }
     };
-  }, [visible, duration, onClose]);
+  }, [visible, duration]);
 
   // Determine toast colors based on type
   let backgroundColor: string;
