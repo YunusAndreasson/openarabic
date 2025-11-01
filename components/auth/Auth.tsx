@@ -7,6 +7,7 @@ import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
 import { LegalLinks } from '@/components/auth/LegalLinks';
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
+import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAuthForm } from '@/hooks/auth/useAuthForm';
@@ -77,6 +78,9 @@ export function Auth(): JSX.Element {
           {isRegistering ? STRINGS.WELCOME_SUBTITLE_CREATE : STRINGS.WELCOME_SUBTITLE}
         </ThemedText>
       </View>
+
+      {/* Social Authentication Buttons */}
+      <SocialAuthButtons />
 
       <View style={styles.inputsButtonGroup}>
         <View style={styles.inputWrapper}>

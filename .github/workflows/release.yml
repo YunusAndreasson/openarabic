@@ -2,6 +2,16 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build (all, ios, or android)'
+        required: false
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+        default: all
   push:
     branches: [root]
     paths: ['package.json']
@@ -81,6 +91,11 @@ jobs:
 
       # === Build Android First (for early testing) ===
       - name: Build for Android
+        if: |
+          github.event_name == 'push' ||
+          !github.event.inputs.platform ||
+          github.event.inputs.platform == 'all' ||
+          github.event.inputs.platform == 'android'
         run: eas build --platform android --profile production --non-interactive
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
@@ -94,6 +109,11 @@ jobs:
 
       # === Submit Android to Google Play Store (Internal Testing) ===
       - name: Submit Android to Google Play (Internal)
+        if: |
+          github.event_name == 'push' ||
+          !github.event.inputs.platform ||
+          github.event.inputs.platform == 'all' ||
+          github.event.inputs.platform == 'android'
         run: eas submit --platform android --profile production --non-interactive --latest
         env:
           GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
@@ -107,6 +127,11 @@ jobs:
           SENTRY_DISABLE_AUTO_UPLOAD: false
 
       - name: Build for iOS
+        if: |
+          github.event_name == 'push' ||
+          !github.event.inputs.platform ||
+          github.event.inputs.platform == 'all' ||
+          github.event.inputs.platform == 'ios'
         run: eas build --platform ios --profile production --non-interactive
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
@@ -117,6 +142,11 @@ jobs:
 
       # === Submit iOS to TestFlight ===
       - name: Submit iOS to TestFlight
+        if: |
+          github.event_name == 'push' ||
+          !github.event.inputs.platform ||
+          github.event.inputs.platform == 'all' ||
+          github.event.inputs.platform == 'ios'
         run: |
           # Submit the most recent iOS build produced by this workflow to TestFlight
           eas submit --platform ios --profile production --non-interactive --latest

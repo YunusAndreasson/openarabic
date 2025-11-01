@@ -165,6 +165,15 @@ export const STRINGS = {
   BY_CONTINUING_YOU_AGREE: 'By continuing, you agree to our',
   AND: 'and',
 
+  // Social auth
+  SIGN_IN_WITH_APPLE: 'Sign in with Apple',
+  SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
+  CONTINUE_WITH: 'Or continue with',
+  SOCIAL_AUTH_FAILED: 'Sign in failed',
+  SOCIAL_AUTH_CANCELLED: 'Sign in cancelled',
+  SOCIAL_AUTH_NETWORK_ERROR: 'Network error. Check connection and try again',
+  ACCOUNT_ALREADY_EXISTS: 'Account with this email already exists',
+
   RESET_PROGRESS: 'Reset progress',
 
   // Practice session labels - concise and scientifically grounded
