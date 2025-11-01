@@ -805,7 +805,7 @@ const lightColors: ThemeColors = {
   // Text hierarchy
   englishText: basePalette.forest.medium,
   arabicText: basePalette.forest.darkest,
-  authorText: basePalette.forest.light,
+  authorText: textHierarchy.light.subtitle,
   headingText: basePalette.forest.darkest,
   subtitleText: textHierarchy.light.subtitle,
   metadataText: textHierarchy.light.metadata,
@@ -1029,7 +1029,7 @@ const sepiaColors: ThemeColors = {
   // Text hierarchy
   englishText: basePalette.autumn.medium,
   arabicText: basePalette.autumn.darkest,
-  authorText: basePalette.autumn.light,
+  authorText: textHierarchy.sepia.subtitle,
   headingText: basePalette.autumn.darkest,
   subtitleText: textHierarchy.sepia.subtitle,
   metadataText: textHierarchy.sepia.metadata,
