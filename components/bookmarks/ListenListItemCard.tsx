@@ -233,6 +233,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
+    alignSelf: 'flex-start', // Align to top edge, matching 12px padding
   },
   thumbnailImage: {
     height: BOOKMARKS_IMAGE_HEIGHT,
