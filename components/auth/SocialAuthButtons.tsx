@@ -40,7 +40,7 @@ export function SocialAuthButtons(): JSX.Element | null {
     <View style={styles.container}>
       {/* Apple Sign In Button */}
       <ThemedButton
-        variant="outline"
+        variant="outlined"
         title={STRINGS.SIGN_IN_WITH_APPLE}
         icon="logo-apple"
         loading={appleLoading}
@@ -54,7 +54,7 @@ export function SocialAuthButtons(): JSX.Element | null {
 
       {/* Google Sign In Button */}
       <ThemedButton
-        variant="outline"
+        variant="outlined"
         title={STRINGS.SIGN_IN_WITH_GOOGLE}
         icon="logo-google"
         loading={googleLoading}
