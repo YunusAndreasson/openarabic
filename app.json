@@ -115,6 +115,12 @@
           "cameraPermission": "This app needs access to your camera to let you take a profile photo for your account.",
           "microphonePermission": "This app needs access to your microphone for audio recording features."
         }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.989500653316-f244cgfpisfpmhpgedcs3sdof3sirgdv"
+        }
       ]
     ],
     "experiments": {

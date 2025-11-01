@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import type { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -46,10 +46,10 @@ export function SocialAuthButtons(): JSX.Element {
         level: 'error',
       });
       console.log('[TEST] Sentry error sent');
-      alert('Test error sent to Sentry. Check dashboard.');
+      Alert.alert('Test Complete', 'Test error sent to Sentry. Check dashboard.');
     } catch (error) {
       console.error('[TEST] Failed to send Sentry error:', error);
-      alert('Failed to send to Sentry: ' + error);
+      Alert.alert('Test Failed', 'Failed to send to Sentry: ' + error);
     }
   };
 
@@ -57,7 +57,7 @@ export function SocialAuthButtons(): JSX.Element {
     <View style={styles.container}>
       {/* DIAGNOSTIC: Test Sentry Button - REMOVE AFTER DEBUGGING */}
       <ThemedButton
-        variant="primary"
+        variant="filled"
         title="🔍 Test Sentry Error"
         uppercase={false}
         style={[styles.button, { opacity: 0.7 }]}

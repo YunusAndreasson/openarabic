@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { ROUTE_PATHS } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
@@ -412,12 +411,20 @@ export function useAppleAuth(): UseAppleAuthReturn {
         extra: errorDetails,
       });
 
+      // DIAGNOSTIC: Show full error details in toast for debugging (production too)
+      // TODO: Remove after debugging - revert to generic error message once issue is fixed
+      const debugErrorMessage = `Apple Sign In Failed\n\nError: ${errorDetails.errorMessage}\n\nCode: ${errorDetails.errorCode}\nType: ${errorDetails.errorType}`;
+
       handleError(error instanceof Error ? error : new Error('Apple Sign In failed'), {
-        toastMessage: `${STRINGS.SOCIAL_AUTH_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
+        toastMessage: debugErrorMessage, // Always show detailed error for debugging
         analyticsEventName: 'Apple_Sign_In_Error',
         sentrySeverity: 'error',
         sentryExtra: errorDetails,
+        toastDuration: 10000, // Show for 10 seconds to read the full error
       });
+
+      // Also log to console for debugging
+      console.error('[Apple Auth] Full error details:', JSON.stringify(errorDetails, null, 2));
     } finally {
       if (isMountedRef.current) {
         setLoading(false);

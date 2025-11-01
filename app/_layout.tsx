@@ -123,13 +123,7 @@ console.log('[ENV] Google iOS Client ID present:', !!process.env['EXPO_PUBLIC_GO
 // Initialize Sentry with production config
 Sentry.init({
   dsn: sentryDsn,
-  integrations: [
-    navigationIntegration,
-    // Enable native crash reporting
-    new Sentry.ReactNativeTracing({
-      enableNativeFramesTracking: true,
-    }),
-  ],
+  integrations: [navigationIntegration],
   enabled: !!sentryDsn, // Only enable if DSN is available
   tracesSampleRate: 1.0, // Sample everything (100%)
   attachScreenshot: true, // Helps debug UI crashes
