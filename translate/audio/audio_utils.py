@@ -313,7 +313,7 @@ def generate_speech(
 
 
 def generate_arabic_word_audio(
-    word: str, filename: str, voice_name: str = "Rasalgethi", force: bool = False
+    word: str, filename: str, voice_name: str = "Enceladus", force: bool = False
 ) -> dict | None:
     """
     Generate audio for an Arabic word using Google Cloud TTS.
@@ -321,7 +321,7 @@ def generate_arabic_word_audio(
     Args:
         word: The Arabic word to generate audio for
         filename: The filename to save the audio as
-        voice_name: The Chirp 3: HD voice name (default: 'Rasalgethi' - Arabic star name for Islamic/Classical Arabic)
+        voice_name: The Chirp 3: HD voice name (default: 'Enceladus')
         force: If True, skip cache check and regenerate audio
 
     Returns:
@@ -344,7 +344,7 @@ def generate_arabic_word_audio(
         # Initialize Google TTS service with same credentials as translation service
         tts_service = GoogleTTSService(credentials_path=GOOGLE_CLOUD_CREDENTIALS_PATH)
 
-        # Generate new audio using Google TTS
+        # Generate new audio using Google TTS (Enceladus voice by default)
         result = tts_service.generate_arabic_word_audio(word, voice_name)
 
         if not result or not result.get("audio"):
@@ -393,7 +393,7 @@ def generate_arabic_word_audio(
 
 
 def generate_english_word_audio(
-    word: str, filename: str, voice_name: str = "Charon", force: bool = False
+    word: str, filename: str, voice_name: str = "Enceladus", force: bool = False
 ) -> dict | None:
     """
     Generate audio for an English word using Google Cloud TTS.
@@ -401,7 +401,7 @@ def generate_english_word_audio(
     Args:
         word: The English word to generate audio for
         filename: The filename to save the audio as
-        voice_name: The Chirp 3: HD voice name (default: 'Charon' - clear, authoritative US English)
+        voice_name: The Chirp 3: HD voice name (default: 'Enceladus')
         force: If True, skip cache check and regenerate audio
 
     Returns:
@@ -424,7 +424,7 @@ def generate_english_word_audio(
         # Initialize Google TTS service with same credentials as translation service
         tts_service = GoogleTTSService(credentials_path=GOOGLE_CLOUD_CREDENTIALS_PATH)
 
-        # Generate new audio using Google TTS
+        # Generate new audio using Google TTS (Enceladus voice by default)
         result = tts_service.generate_english_word_audio(word, voice_name)
 
         if not result or not result.get("audio"):
