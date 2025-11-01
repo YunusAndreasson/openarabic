@@ -60,6 +60,18 @@ export const STRINGS = {
   WELCOME_SUBTITLE: 'Sign in to continue learning Arabic',
   WELCOME_SUBTITLE_CREATE: 'Create an account to start learning Arabic',
 
+  // Sign In screen
+  SIGN_IN_TITLE: 'Sign in to OpenArabic',
+  SIGN_IN_SUBTITLE: 'Welcome back! Continue your Arabic learning journey.',
+
+  // Sign Up screen
+  CREATE_ACCOUNT_TITLE: 'Create your account',
+  CREATE_ACCOUNT_SUBTITLE: 'Start your journey to mastering Arabic.',
+
+  // Landing screen
+  CONTINUE_WITH_EMAIL_OPTION: 'Continue with email',
+  HIDE_EMAIL_OPTIONS: 'Hide email options',
+
   // Navigation & controls - now imported directly from enums in components
   AUTHORS: 'Authors',
   AUTHOR_ARTICLES: 'Author Articles',
