@@ -8,6 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAppleAuth } from '@/hooks/auth/useAppleAuth';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
+import { useColors } from '@/hooks/theme/useColors';
 
 /**
  * Social Authentication Buttons Component
@@ -30,6 +31,7 @@ export function SocialAuthButtons(): JSX.Element | null {
   // Call hooks unconditionally (React Rules of Hooks)
   const { signInWithApple, loading: appleLoading } = useAppleAuth();
   const { signInWithGoogle, loading: googleLoading } = useGoogleAuth();
+  const colors = useColors();
 
   // Hide social auth in Expo Go (native modules not supported)
   const isExpoGo = Constants.appOwnership === 'expo';
@@ -69,7 +71,7 @@ export function SocialAuthButtons(): JSX.Element | null {
 
       {/* Divider with "or" text */}
       <View style={styles.dividerContainer}>
-        <View style={styles.dividerLine} />
+        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
         <ThemedText
           type="caption"
           variant="secondary"
@@ -78,7 +80,7 @@ export function SocialAuthButtons(): JSX.Element | null {
         >
           {STRINGS.CONTINUE_WITH}
         </ThemedText>
-        <View style={styles.dividerLine} />
+        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
       </View>
     </View>
   );
@@ -100,9 +102,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   dividerLine: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)', // Will be themed in dark mode automatically
     flex: 1,
-    height: 1,
+    height: LAYOUT.BORDER.WIDTH.THIN,
   },
   dividerText: {
     marginHorizontal: LAYOUT.SPACING.MEDIUM,

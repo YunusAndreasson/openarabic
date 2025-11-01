@@ -864,4 +864,5 @@ A successful implementation meets these criteria:
 ---
 
 _This guide serves as the comprehensive reference for Claude Code when developing the OpenArabic Arabic language learning application. Always prioritize investigation-first development, strict type safety, and consistent use of the established design system._
+
 - only run tests before i instruct you to commit to speed up development

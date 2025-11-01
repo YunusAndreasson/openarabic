@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StreakHistoryData } from '@/services/studyStreak';
+import { withAlpha } from '@/utils/colorUtils';
 
 interface StreakMetricsProps {
   metrics: StreakHistoryData['metrics'];
@@ -31,7 +32,7 @@ const MetricCard = memo<MetricCardProps>(({ icon, value, label, color }) => {
         shadowColor: colors.shadow,
       },
       iconContainer: {
-        backgroundColor: color + '14',
+        backgroundColor: withAlpha(color, LAYOUT.OPACITY.FAINT), // 0.15 opacity for subtle badge background
       },
       metricValue: {
         color,

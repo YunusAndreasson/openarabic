@@ -16,6 +16,9 @@ export const FONTS = {
 // Base scale for systematic sizing
 const BASE_UNIT = 4;
 
+// Golden ratio for aesthetically pleasing proportions (φ = 1.618)
+export const GOLDEN_RATIO = 1.618;
+
 // Systematic spacing scale based on base unit
 const SPACING_SCALE = {
   MICRO: BASE_UNIT * 0.25, // 1
@@ -218,6 +221,7 @@ export const LAYOUT = {
     },
     IMAGE: {
       MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // 48 + 8 = 56 (increased from 40 for better balance)
+      MINI_PLAYER_ARTWORK: BASE_UNIT * 18, // 72 - MiniPlayer album artwork dimensions
     },
     WIDTH: {
       DICTIONARY_LEFT_SECTION: BASE_UNIT * 32, // 128 - more space for English text with badges
@@ -271,6 +275,7 @@ export const LAYOUT = {
     OVERLAY: 4,
     TOOLTIP: 5,
     POPUP: 6,
+    TOP_OVERLAY: 9999, // Maximum z-index for critical overlays that must be above everything
   },
 
   WIDTH_RATIOS: {
@@ -283,6 +288,8 @@ export const LAYOUT = {
     CURSOR_WIDTH: 2, // Chart interaction cursor width
     BADGE_PADDING: SPACING_SCALE.SMALL, // 8 - Chart badge padding
     BADGE_DOT_MARGIN: BASE_UNIT * 1.5, // 6 - Margin for badge dots
+    HEIGHT: BASE_UNIT * 15, // 60 - Standard chart height for streak visualization
+    BAR_GAP: BASE_UNIT * 0.5, // 2 - Space between bars in charts
   },
 
   /** Brand assets standardized dimensions */
@@ -399,6 +406,12 @@ export const LAYOUT = {
       bottom: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
       left: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
       right: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
+    },
+    LARGE: {
+      top: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
+      bottom: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
+      left: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
+      right: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
     },
   },
 

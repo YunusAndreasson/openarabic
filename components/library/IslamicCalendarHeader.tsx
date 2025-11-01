@@ -5,7 +5,7 @@ import { Image, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { HIJRI_MONTHS } from '@/constants/hijri';
-import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { GOLDEN_RATIO, LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import {
@@ -13,7 +13,6 @@ import {
   createThemeBackgroundGradient,
 } from '@/utils/gradientUtils';
 
-const GOLDEN_RATIO = 1.618;
 const HEADER_HEIGHT = LAYOUT.HEADER.HEIGHT.EXPANDED; // use standardized header height
 const ADJUSTED_HEADER_HEIGHT = HEADER_HEIGHT / GOLDEN_RATIO;
 

@@ -178,7 +178,9 @@ export default function ResetPasswordScreen(): JSX.Element {
         });
       } else {
         successFeedback();
-        showSuccessToast('Password reset successfully! You can now sign in with your new password.');
+        showSuccessToast(
+          'Password reset successfully! You can now sign in with your new password.',
+        );
         router.replace(ROUTE_PATHS.LIBRARY_TAB);
       }
     } catch (err) {

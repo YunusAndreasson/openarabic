@@ -121,7 +121,6 @@ describe('SkiaArabicWord Component', () => {
 
       expect(getByTestId('word')).toBeTruthy();
     });
-
   });
 
   describe('Color-Coded Grammar Segments', () => {

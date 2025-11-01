@@ -84,7 +84,15 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
         2000,
       );
     }
-  }, [getArabicFont, isSelected, hasComponents, coloredSegments, word.word_form, colors.arabicText, fontFamily]);
+  }, [
+    getArabicFont,
+    isSelected,
+    hasComponents,
+    coloredSegments,
+    word.word_form,
+    colors.arabicText,
+    fontFamily,
+  ]);
 
   // Calculate canvas dimensions from paragraph
   const canvasDimensions = useMemo(() => {

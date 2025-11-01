@@ -11,12 +11,14 @@ export interface DragHandleProps {
   onLongPress: () => void;
   delayLongPress: number;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
 export const DragHandle: FC<DragHandleProps> = ({
   onLongPress,
   delayLongPress = TIMING_CONFIG.FAST.duration,
   style,
+  testID,
 }) => {
   const colors = useColors();
 
@@ -26,6 +28,7 @@ export const DragHandle: FC<DragHandleProps> = ({
       onLongPress={onLongPress}
       delayLongPress={delayLongPress}
       android_ripple={createAndroidRipple(colors)}
+      testID={testID}
     >
       <Ionicons
         name="reorder-three"

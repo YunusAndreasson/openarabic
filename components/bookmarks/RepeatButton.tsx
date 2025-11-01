@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useMemo, type ComponentProps, type FC } from 'react';
+import { memo, useCallback, useEffect, useMemo, type ComponentProps, type FC } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -19,7 +19,7 @@ interface RepeatButtonProps
   onToggle: () => void;
 }
 
-export const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => {
+export const RepeatButton: FC<RepeatButtonProps> = memo(({ enabled, onToggle, ...rest }) => {
   const colors = useColors();
 
   // Simple icon rotation animation
@@ -79,7 +79,9 @@ export const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest
       </ThemedText>
     </Pressable>
   );
-};
+});
+
+RepeatButton.displayName = 'RepeatButton';
 
 const styles = StyleSheet.create({
   container: {

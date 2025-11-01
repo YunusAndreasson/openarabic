@@ -28,7 +28,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     if (isStreakLoading) {
       return (
         <View style={styles.loadingContainer}>
-          <ThemedText type="body" colorName="textTertiary">
+          <ThemedText type="body" colorName="text">
             Loading your streak
           </ThemedText>
         </View>

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { UiAction } from '@/types/enums';
@@ -19,6 +20,9 @@ interface DoneButtonProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+// Small delay to let press animation complete before navigation
+const NAVIGATION_DELAY = TIMING_CONFIG.FAST.duration / 2; // 60ms
+
 export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
@@ -32,7 +36,7 @@ export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
       // Default behavior: navigate back with slight delay for better UX
       setTimeout(() => {
         router.back();
-      }, 50); // Small delay to let the press animation complete
+      }, NAVIGATION_DELAY);
     }
   };
 

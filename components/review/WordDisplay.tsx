@@ -49,7 +49,7 @@ const STATIC_STYLES = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.LARGE, // Extra top padding to ensure no overlap
-    zIndex: 9999, // Extremely high z-index to ensure it's above everything
+    zIndex: LAYOUT.Z_INDEX.TOP_OVERLAY, // Maximum z-index to ensure it's above everything
     minHeight: LAYOUT.SPACING.XXXLARGE * 2, // Ensure container has enough height for text
   } as ViewStyle,
 });

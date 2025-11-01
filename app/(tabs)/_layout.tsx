@@ -43,7 +43,7 @@ export default function TabLayout(): JSX.Element {
     minWidth: LAYOUT.SPACING.XLARGE, // 24px minimum for circle
     minHeight: LAYOUT.SPACING.XLARGE, // 24px minimum for circle
     borderRadius: LAYOUT.BORDER_RADIUS.PILL, // Perfect circle
-    fontSize: 13, // Slightly larger font for better readability
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px for better readability
     lineHeight: LAYOUT.SPACING.XLARGE, // Center text vertically
   };
 

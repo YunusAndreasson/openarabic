@@ -6,4 +6,6 @@ export interface ToggleProps {
   value: boolean;
   /** Callback function when the toggle state changes */
   onValueChange: (value: boolean) => void;
+  /** Test ID for testing */
+  testID?: string;
 }

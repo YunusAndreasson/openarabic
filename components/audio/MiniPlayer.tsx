@@ -330,8 +330,8 @@ const styles = StyleSheet.create({
   },
 
   artwork: {
-    width: 72,
-    height: 72,
+    width: LAYOUT.CARD.IMAGE.MINI_PLAYER_ARTWORK,
+    height: LAYOUT.CARD.IMAGE.MINI_PLAYER_ARTWORK,
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
 });

@@ -69,4 +69,6 @@ export interface BaseIconButtonProps<TIcon = string> {
   style?: ViewStyle;
   /** Press handler */
   onPress: () => void;
+  /** Test ID for testing */
+  testID?: string;
 }

@@ -32,9 +32,16 @@ export const BottomControls = memo<BottomControlsProps>(
 
     const dynamicStyles = useMemo(
       () => ({
-        secondaryButton: { shadowColor: colors.shadow },
+        secondaryButton: {
+          shadowColor: colors.shadow,
+          borderColor: colors.tint,
+          backgroundColor: colors.elevation1,
+        },
+        primaryButton: {
+          shadowColor: colors.shadow,
+        },
       }),
-      [colors.shadow],
+      [colors.shadow, colors.tint, colors.elevation1],
     );
 
     return (
@@ -57,16 +64,8 @@ export const BottomControls = memo<BottomControlsProps>(
                 style={[
                   styles.button,
                   styles.secondaryButton,
+                  LAYOUT.ELEVATION.MEDIUM,
                   dynamicStyles.secondaryButton,
-                  {
-                    borderColor: colors.tint,
-                    backgroundColor: colors.elevation1,
-                    shadowColor: colors.shadow,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 4,
-                    elevation: 5,
-                  },
                 ]}
                 onPress={onSecondaryPress}
               />
@@ -78,16 +77,7 @@ export const BottomControls = memo<BottomControlsProps>(
             <ThemedButton
               disabled={primaryDisabled}
               loading={primaryLoading}
-              style={[
-                styles.button,
-                {
-                  shadowColor: colors.shadow,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 4,
-                  elevation: 5,
-                },
-              ]}
+              style={[styles.button, LAYOUT.ELEVATION.MEDIUM, dynamicStyles.primaryButton]}
               title={primaryLabel}
               onPress={onPrimaryPress}
               enableOptimisticLoading={primaryLabel === 'PLAY ALL'}

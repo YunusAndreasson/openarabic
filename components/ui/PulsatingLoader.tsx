@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface PulsatingLoaderProps {
@@ -27,12 +28,19 @@ interface PulsatingLoaderProps {
   duration?: number;
 }
 
+// Default loader size aligned with touch target system
+const DEFAULT_LOADER_SIZE = MIN_TOUCH_TARGET.LARGE; // 48px
+
+// Loader border width calculation constants
+const MIN_BORDER_WIDTH = 3; // Minimum border width in pixels
+const BORDER_WIDTH_SCALE = 0.06; // Border width as percentage of loader size
+
 /**
  * A pulsating circle loader component for smooth loading states
  * Uses the brand sage color by default and follows Material Design principles
  */
 export function PulsatingLoader({
-  size = 48,
+  size = DEFAULT_LOADER_SIZE,
   colorName = 'tint',
   duration = 1500,
 }: PulsatingLoaderProps) {
@@ -73,8 +81,9 @@ export function PulsatingLoader({
             width: size,
             height: size,
             borderRadius: size / 2,
-            borderWidth: Math.max(3, size * 0.06), // Minimum 3px, scales with size
+            borderWidth: Math.max(MIN_BORDER_WIDTH, size * BORDER_WIDTH_SCALE), // Scales with size, 3px minimum
             borderColor: loaderColor,
+            shadowColor: colors.shadow, // Theme-aware shadow color
           },
         ]}
       />
@@ -91,13 +100,6 @@ const styles = StyleSheet.create({
   },
   loader: {
     // Shadow for depth (Material Design elevation)
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    ...LAYOUT.ELEVATION.SUBTLE,
   },
 });

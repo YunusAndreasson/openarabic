@@ -9,7 +9,7 @@ import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { Pill } from '@/components/ui/Pill';
 import { SPRING_CONFIG } from '@/constants/animation';
-import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { GOLDEN_RATIO, LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -19,7 +19,6 @@ import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter, formatAuthorCategory } from '@/utils/stringUtils';
 
 // Extract constants outside component for better performance
-const GOLDEN_RATIO = 1.618; // Golden ratio for aesthetically pleasing proportions
 const MAX_TITLE_LINES = 2;
 const MAX_AUTHOR_LINES = 1;
 const PILL_MAX_WIDTH_PERCENTAGE = '70%';

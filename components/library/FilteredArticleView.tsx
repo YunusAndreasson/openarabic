@@ -10,7 +10,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
-import { LIST_DRAW_DISTANCE_MULTIPLIER, SCROLL_EVENT_THROTTLE } from '@/constants/animation';
+import {
+  LIST_DRAW_DISTANCE_MULTIPLIER,
+  SCROLL_EVENT_THROTTLE,
+  TIMING_CONFIG,
+} from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
@@ -140,7 +144,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   // Drag handle props creator
   const createDragHandleProps = (drag: () => void) => ({
     onLongPress: drag,
-    delayLongPress: 100,
+    delayLongPress: TIMING_CONFIG.FAST.duration,
   });
 
   // Header component

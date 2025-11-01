@@ -13,6 +13,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { BottomControls } from '@/components/bookmarks/BottomControls';
 import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
 import { useToast } from '@/components/providers/ToastProvider';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -80,7 +81,7 @@ const ListenListItem = memo(
       if (!drag) return undefined;
       return {
         onLongPress: drag,
-        delayLongPress: 100,
+        delayLongPress: TIMING_CONFIG.FAST.duration,
       };
     }, [drag]);
 

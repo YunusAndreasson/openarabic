@@ -49,14 +49,14 @@ const SIZE_CONFIG = {
     dimension: MIN_TOUCH_TARGET.LARGE,
     iconSize: LAYOUT.BUTTON.ICON_SIZE.LARGE,
     borderRadius: MIN_TOUCH_TARGET.LARGE / 2,
-    hitSlop: LAYOUT.HIT_SLOP.MEDIUM, // Use MEDIUM as fallback since LARGE doesn't exist
+    hitSlop: LAYOUT.HIT_SLOP.LARGE,
   },
 } as const;
 
 const HIT_SLOP_MAP = {
   small: LAYOUT.HIT_SLOP.SMALL,
   medium: LAYOUT.HIT_SLOP.MEDIUM,
-  large: LAYOUT.HIT_SLOP.MEDIUM, // Use MEDIUM as fallback since LARGE doesn't exist
+  large: LAYOUT.HIT_SLOP.LARGE,
 } as const;
 
 /**

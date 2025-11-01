@@ -12,11 +12,11 @@ interface StreakChartProps {
   height?: number;
 }
 
-const CHART_HEIGHT = 60;
+const CHART_HEIGHT = LAYOUT.CHART.HEIGHT; // 60 via constants
 const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
-const BAR_RADIUS = LAYOUT.BORDER_RADIUS.SMALL; // ~8
+const BAR_RADIUS = LAYOUT.BORDER_RADIUS.SMALL; // ~8 via constants
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const BAR_GAP = 2; // Space between bars
+const BAR_GAP = LAYOUT.CHART.BAR_GAP; // 2 via constants
 
 /**
  * Convert hex color and opacity to RGBA string for Skia

@@ -69,6 +69,22 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
     [hasStreak, colors.warning, colors.textTertiary, colors.elevation1],
   );
 
+  // Memoized pressable padding style
+  const pressablePaddingStyle = useMemo(() => ({ padding: LAYOUT.SPACING.TINY }), []);
+
+  // Memoized streak text style
+  const streakTextStyle = useMemo(
+    () => [
+      styles.streakText,
+      styles.streakBadgeIndicator,
+      {
+        color: hasStreak ? colors.warning : colors.textTertiary,
+        backgroundColor: colors.background,
+      },
+    ],
+    [hasStreak, colors.warning, colors.textTertiary, colors.background],
+  );
+
   // Load saved profile photo
   useEffect(() => {
     if (!user?.id) return;
@@ -101,7 +117,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
         onPressIn={streakPressAnimation.handlePressIn}
         onPressOut={streakPressAnimation.handlePressOut}
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-        style={{ padding: LAYOUT.SPACING.TINY }} // Standard padding for touch targets
+        style={pressablePaddingStyle}
       >
         <Animated.View style={[streakBadgeStyle, streakPressAnimation.animatedStyle]}>
           <Ionicons
@@ -109,29 +125,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
             size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
             color={hasStreak ? colors.warning : colors.textTertiary}
           />
-          <ThemedText
-            type="caption"
-            weight="bold"
-            style={[
-              styles.streakText,
-              {
-                color: hasStreak ? colors.warning : colors.textTertiary,
-                position: 'absolute',
-                bottom: 0,
-                right: 0,
-                backgroundColor: colors.background,
-                borderRadius: LAYOUT.BORDER_RADIUS.SMALL_CIRCLE,
-                paddingHorizontal: LAYOUT.SPACING.MICRO / 2,
-                paddingVertical: 0,
-                fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                minWidth: 10,
-                height: 10,
-                textAlign: 'center',
-                lineHeight: 10,
-              },
-            ]}
-            numberOfLines={1}
-          >
+          <ThemedText type="caption" weight="bold" style={streakTextStyle} numberOfLines={1}>
             {currentStreak}
           </ThemedText>
         </Animated.View>
@@ -195,6 +189,19 @@ const styles = StyleSheet.create({
   },
   streakText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+  },
+  streakBadgeIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL_CIRCLE,
+    paddingHorizontal: LAYOUT.SPACING.MICRO / 2,
+    paddingVertical: 0,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    minWidth: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY, // 10px
+    height: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY, // 10px
+    textAlign: 'center',
+    lineHeight: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY, // 10px
   },
   profileButton: {
     alignItems: 'center',

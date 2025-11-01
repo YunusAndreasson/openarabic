@@ -30,7 +30,7 @@ function getToggleDimensions() {
   };
 }
 
-export function Toggle({ value, onValueChange }: ToggleProps) {
+export function Toggle({ value, onValueChange, testID }: ToggleProps) {
   const colors = useColors();
   const isMounted = useRef(false);
 
@@ -88,7 +88,7 @@ export function Toggle({ value, onValueChange }: ToggleProps) {
   ];
 
   return (
-    <Pressable style={TOUCHABLE_WRAPPER_STYLE} onPress={handlePress}>
+    <Pressable style={TOUCHABLE_WRAPPER_STYLE} onPress={handlePress} testID={testID}>
       <Animated.View style={[containerStyle, combinedContainerStyle]}>
         <View style={styles.toggleTrack}>
           <Animated.View style={[handleStyle, handleAnimatedStyle]} />

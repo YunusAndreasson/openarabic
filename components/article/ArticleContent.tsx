@@ -12,7 +12,7 @@ import { FloatingActionButtons } from '@/components/article/FloatingActionButton
 import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import { SCROLL_EVENT_THROTTLE, TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleScrollHandler } from '@/hooks/articles/useArticleScrollHandler';
 import type { Article } from '@/types/articles.types';
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: 0.2,
-    lineHeight: LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL * LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   playIconOffset: {
     marginLeft: LAYOUT.SPACING.TINY,
