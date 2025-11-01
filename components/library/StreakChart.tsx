@@ -1,3 +1,4 @@
+import { Canvas, RoundedRect } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 
@@ -15,6 +16,22 @@ const CHART_HEIGHT = 60;
 const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
 const BAR_RADIUS = LAYOUT.BORDER_RADIUS.SMALL; // ~8
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const BAR_GAP = 2; // Space between bars
+
+/**
+ * Convert hex color and opacity to RGBA string for Skia
+ */
+const hexToRGBA = (hex: string, opacity: number): string => {
+  // Remove # if present
+  const cleanHex = hex.replace('#', '');
+
+  // Parse RGB values
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
 
 // Extract expensive calculations outside component
 const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPeriod> => {
@@ -46,14 +63,14 @@ export const StreakChart = memo<StreakChartProps>(
       const chartWidth = SCREEN_WIDTH - LAYOUT.SPACING.XLARGE * 2;
       const barWidth = Math.max(
         8,
-        (chartWidth - (dailyActivity.length - 1) * 2) / dailyActivity.length,
+        (chartWidth - (dailyActivity.length - 1) * BAR_GAP) / dailyActivity.length,
       );
 
       // Create streak map
       const streakMap = createStreakMap(streakPeriods);
 
-      // Generate bars for each day
-      const bars = dailyActivity.map(activity => {
+      // Generate bars for each day with X positions
+      const bars = dailyActivity.map((activity, index) => {
         const hasActivity = activity.hasActivity;
         const streakPeriod = streakMap.get(activity.date);
         const isInStreak = Boolean(streakPeriod);
@@ -76,10 +93,16 @@ export const StreakChart = memo<StreakChartProps>(
           }
         }
 
+        // Calculate X position for this bar
+        const x = index * (barWidth + BAR_GAP);
+
+        // Convert to RGBA color for Skia
+        const color = hexToRGBA(barColor, barOpacity);
+
         return {
           key: activity.date,
-          barColor,
-          barOpacity,
+          x,
+          color,
         };
       });
 
@@ -90,34 +113,28 @@ export const StreakChart = memo<StreakChartProps>(
       };
     }, [dailyActivity, streakPeriods, colors.warning, colors.tint, colors.textTertiary]);
 
-    // Memoize static styles
-    const staticStyles = useMemo(
-      () => ({
-        barsContainer: { width: chartData.chartWidth },
-      }),
-      [chartData.chartWidth],
-    );
-
     return (
       <View style={[styles.container, { height }]}>
         {/* Chart area */}
         <View style={styles.chartArea}>
-          <View style={[styles.barsContainer, staticStyles.barsContainer]}>
+          <Canvas
+            style={{
+              width: chartData.chartWidth,
+              height: BAR_HEIGHT,
+            }}
+          >
             {chartData.bars.map(bar => (
-              <View
+              <RoundedRect
                 key={bar.key}
-                style={[
-                  styles.bar,
-                  {
-                    width: chartData.barWidth,
-                    height: BAR_HEIGHT,
-                    backgroundColor: bar.barColor,
-                    opacity: bar.barOpacity,
-                  },
-                ]}
+                x={bar.x}
+                y={0}
+                width={chartData.barWidth}
+                height={BAR_HEIGHT}
+                r={BAR_RADIUS}
+                color={bar.color}
               />
             ))}
-          </View>
+          </Canvas>
         </View>
       </View>
     );
@@ -135,14 +152,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  barsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: BAR_HEIGHT,
-  },
-  bar: {
-    borderRadius: BAR_RADIUS,
   },
 });
