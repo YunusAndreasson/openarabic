@@ -139,7 +139,7 @@ export function ThemedButton({
 
   return (
     <AnimatedPressable
-      style={[buttonStyle, animatedStyle]}
+      style={[buttonStyle, animatedStyle, style]}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled || isActuallyLoading}
