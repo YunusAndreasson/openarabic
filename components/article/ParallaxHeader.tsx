@@ -123,8 +123,6 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
   }, [colors, isDarkMode]);
 
   // Animated parallax and pull-to-stretch effect
-  // CRITICAL: Don't include headerHeight in dependency array - causes Android crashes
-  // The value is captured in closure and used correctly by worklet
   const animatedImageStyle = useAnimatedStyle(() => {
     const y = scrollY.value;
     const translateY = y > 0 ? -y * 0.6 : 0; // slower upward movement for parallax
@@ -133,7 +131,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
     return {
       transform: [{ translateY }, { scale }],
     };
-  });
+  }, [headerHeight]);
 
   // Memoize EnhancedImage props to prevent unnecessary re-renders
   const imageProps = useMemo(

@@ -262,7 +262,8 @@ const ArticleContentInternal = function ArticleContent({
       {sortedSentences && sortedSentences.length > 0 ? (
         <View style={listContainerStyle}>
           {/* Sticky Parallax Header behind content */}
-          <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
+          {/* DISABLED FOR DEBUGGING */}
+          {/* <ParallaxHeader article={article} colors={colors} scrollY={scrollY} /> */}
           <AnimatedFlashList
             /**
              * TypeScript limitation with Reanimated's createAnimatedComponent:

@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
-  InteractionManager,
   type LayoutRectangle,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -96,11 +95,9 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
 
   // Handle scroll to close tooltip
   const handleScroll = useCallback((_event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    // Close tooltip when scrolling starts (deferred to avoid blocking scroll)
+    // Close tooltip when scrolling starts
     if (activeTooltipRef.current) {
-      InteractionManager.runAfterInteractions(() => {
-        setActiveTooltip(null);
-      });
+      setActiveTooltip(null);
     }
   }, []);
 
@@ -229,11 +226,8 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
           const newSentenceIndex = firstVisibleSentence.index;
 
           // Only update if the sentence actually changed to prevent unnecessary re-renders
-          // Defer state update to avoid blocking scroll performance on Android
           if (newSentenceIndex !== currentSentenceIndex) {
-            InteractionManager.runAfterInteractions(() => {
-              setCurrentSentenceIndex(newSentenceIndex);
-            });
+            setCurrentSentenceIndex(newSentenceIndex);
           }
         }
       }

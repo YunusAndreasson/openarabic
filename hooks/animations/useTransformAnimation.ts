@@ -332,8 +332,6 @@ export const useTransformAnimation = (
   }, [value, startPosition]);
 
   // Create animated style directly (no intermediate derived value needed)
-  // CRITICAL: Don't include JS values (type) in dependency array - causes Android crashes
-  // The value is captured in closure and used correctly by worklet
   const animatedStyle = useAnimatedStyle(() => {
     switch (type) {
       case 'scale':
@@ -348,7 +346,7 @@ export const useTransformAnimation = (
       default:
         return { transform: [{ scale: value.get() }] };
     }
-  });
+  }, [type, value]);
 
   // Cleanup animations on unmount
   useEffect(() => {
