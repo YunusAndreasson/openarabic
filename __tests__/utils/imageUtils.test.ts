@@ -32,14 +32,14 @@ describe('imageUtils', () => {
   });
 
   describe('generateAudioUrl', () => {
-    it('should return undefined for null/undefined input', () => {
-      expect(generateAudioUrl(null)).toBeUndefined();
-      expect(generateAudioUrl(undefined)).toBeUndefined();
+    it('should return empty string for null/undefined input', () => {
+      expect(generateAudioUrl(null)).toBe('');
+      expect(generateAudioUrl(undefined)).toBe('');
     });
 
-    it('should return undefined for non-string input', () => {
-      expect(generateAudioUrl(123 as any)).toBeUndefined();
-      expect(generateAudioUrl({} as any)).toBeUndefined();
+    it('should return empty string for non-string input', () => {
+      expect(generateAudioUrl(123 as any)).toBe('');
+      expect(generateAudioUrl({} as any)).toBe('');
     });
 
     it('should return full URLs as-is', () => {

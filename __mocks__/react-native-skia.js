@@ -42,6 +42,15 @@ export const Paragraph = jest.fn(() => null);
 // Mock Text component
 export const Text = jest.fn(() => null);
 
+// Mock Rect component (for gradient rectangles)
+export const Rect = jest.fn(() => null);
+
+// Mock LinearGradient component
+export const LinearGradient = jest.fn(() => null);
+
+// Mock vec helper function (for gradient coordinates)
+export const vec = jest.fn((x, y) => ({ x, y }));
+
 // Mock matchFont API
 export const matchFont = jest.fn(config => ({
   getSize: jest.fn(() => config.fontSize || 17),
@@ -76,6 +85,9 @@ export default {
   Canvas,
   Paragraph,
   Text,
+  Rect,
+  LinearGradient,
+  vec,
   Skia,
   matchFont,
   TextAlign,

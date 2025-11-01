@@ -27,14 +27,15 @@ import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
  * - Accessibility support
  */
 export function SocialAuthButtons(): JSX.Element | null {
+  // Call hooks unconditionally (React Rules of Hooks)
+  const { signInWithApple, loading: appleLoading } = useAppleAuth();
+  const { signInWithGoogle, loading: googleLoading } = useGoogleAuth();
+
   // Hide social auth in Expo Go (native modules not supported)
   const isExpoGo = Constants.appOwnership === 'expo';
   if (isExpoGo) {
     return null;
   }
-
-  const { signInWithApple, loading: appleLoading } = useAppleAuth();
-  const { signInWithGoogle, loading: googleLoading } = useGoogleAuth();
 
   return (
     <View style={styles.container}>

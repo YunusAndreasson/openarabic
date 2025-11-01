@@ -15,12 +15,8 @@ jest.mock('expo-router', () => {
   return { router, useRouter: () => router };
 });
 
-jest.mock('expo-linear-gradient', () => {
-  const React = require('react');
-  return {
-    LinearGradient: ({ children }: { children: ReactNode }) => <>{children}</>,
-  };
-});
+// LinearGradient is now from @shopify/react-native-skia, not expo-linear-gradient
+// The mock is handled in jest.config.js transformIgnorePatterns
 
 jest.mock('expo-image', () => {
   const React = require('react');

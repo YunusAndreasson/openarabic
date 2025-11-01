@@ -105,7 +105,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       try {
         GoogleSignin =
           require('@react-native-google-signin/google-signin').GoogleSignin;
-      } catch (moduleError) {
+      } catch {
         throw new Error(
           'Google Sign In is not available. Please rebuild the app with: npx expo prebuild',
         );

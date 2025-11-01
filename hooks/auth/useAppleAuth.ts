@@ -43,7 +43,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
       let appleAuth;
       try {
         appleAuth = require('@invertase/react-native-apple-authentication');
-      } catch (moduleError) {
+      } catch {
         throw new Error(
           'Apple Sign In is not available. Please rebuild the app with: npx expo prebuild',
         );
