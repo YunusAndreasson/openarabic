@@ -4415,10 +4415,10 @@ expo-audio@~1.0.14:
   resolved "https://registry.yarnpkg.com/expo-audio/-/expo-audio-1.0.14.tgz#c30108005c452291ed36295f0247ce880ff979b2"
   integrity sha512-UU8n1mIDPfO9zFQbPnIpnzhHeqC8c8WQUoOOFvlgI5CeOJMUrQ6UXDpX+LBcHxw/amSBhF5HP6VMr58foPKwbA==
 
-expo-background-task@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/expo-background-task/-/expo-background-task-1.0.8.tgz#d1d1a3788d0055b780343cdbd0fb3563c4bebb2f"
-  integrity sha512-G6WnljBhO0K9j0ntmytF5rZLtYUpwh8n2+hcgmxM1ISPAVVZSPHZhkF9YjBOKpdPWZxmukBgEwejfcGckb8TQQ==
+expo-background-fetch@^14.0.7:
+  version "14.0.7"
+  resolved "https://registry.yarnpkg.com/expo-background-fetch/-/expo-background-fetch-14.0.7.tgz#20888ae997ce9d62896370b8a01a4f28d1dd625c"
+  integrity sha512-vq/2w/I9OYkYbKn2YmMTzWEZm+Ddl8ObRtKR8s5kpfyGEIHz4rsIuHF1kpqHXuxI/DNZEhAN8fIO2nh+jNW5uQ==
   dependencies:
     expo-task-manager "~14.0.7"
 

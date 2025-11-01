@@ -2,7 +2,9 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { Colors } from '@/constants/colors';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { analytics } from '@/services/analytics';
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
 
@@ -34,6 +36,18 @@ Notifications.setNotificationHandler({
 let isInitialized = false;
 let notificationSubscription: Notifications.Subscription | null = null;
 let responseSubscription: Notifications.Subscription | null = null;
+let droppedSubscription: Notifications.Subscription | null = null;
+let navigationCallback: ((path: string) => void) | null = null;
+
+// Set navigation callback from app layout
+export function setNotificationNavigationCallback(callback: (path: string) => void): void {
+  navigationCallback = callback;
+}
+
+// Clear navigation callback
+export function clearNotificationNavigationCallback(): void {
+  navigationCallback = null;
+}
 
 // Initialize notifications during app startup (Expo best practice)
 export async function initializeNotifications(): Promise<boolean> {
@@ -96,6 +110,9 @@ function setupNotificationListeners(): void {
   if (responseSubscription) {
     responseSubscription.remove();
   }
+  if (droppedSubscription) {
+    droppedSubscription.remove();
+  }
 
   // Listen for notification received events
   notificationSubscription = Notifications.addNotificationReceivedListener(() => {
@@ -105,11 +122,40 @@ function setupNotificationListeners(): void {
   // Listen for notification response events (when user interacts with notification)
   responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
     const { actionIdentifier } = response;
+    const { type } = response.notification.request.content.data || {};
 
+    // If user tapped "Complete" action button, do nothing (already acknowledged)
     if (actionIdentifier === 'complete') {
-      // Handle mark as complete action
-      // User marked reminder as complete
+      return;
     }
+
+    // For default tap action, navigate to Study tab if it's a study reminder
+    if (actionIdentifier === 'DEFAULT' && type === 'study-reminder') {
+      if (navigationCallback) {
+        navigationCallback(ROUTE_PATHS.STUDY_TAB);
+      }
+    }
+  });
+
+  // Listen for dropped notifications (Android FCM only)
+  // This occurs when the notification queue overflows
+  droppedSubscription = Notifications.addNotificationsDroppedListener(() => {
+    // Track dropped notifications for monitoring
+    analytics.track('Notifications_Dropped', {
+      platform: Platform.OS,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Also log to Sentry as a warning
+    handleError(new Error('Notifications were dropped due to queue overflow'), {
+      showToast: false,
+      analyticsEventName: 'Notifications_Dropped',
+      sentrySeverity: 'warning',
+      sentryTags: {
+        location: 'notifications',
+        platform: Platform.OS,
+      },
+    });
   });
 }
 
@@ -122,6 +168,10 @@ export function cleanupNotifications(): void {
   if (responseSubscription) {
     responseSubscription.remove();
     responseSubscription = null;
+  }
+  if (droppedSubscription) {
+    droppedSubscription.remove();
+    droppedSubscription = null;
   }
 }
 
@@ -296,6 +346,35 @@ export async function ensurePermissions(): Promise<boolean> {
       return true;
     }
 
+    // Check iOS-specific authorization status
+    if (Platform.OS === 'ios' && existing.ios) {
+      const iosStatus = existing.ios.status;
+
+      // Handle iOS-specific statuses
+      switch (iosStatus) {
+        case Notifications.IosAuthorizationStatus.PROVISIONAL:
+          // User has provisional authorization - quiet notifications in notification center
+          // This is acceptable for our use case
+          return true;
+
+        case Notifications.IosAuthorizationStatus.EPHEMERAL:
+          // App Clips only - very limited, treat as not granted
+          return false;
+
+        case Notifications.IosAuthorizationStatus.DENIED:
+          // Explicitly denied - don't request again
+          return false;
+
+        case Notifications.IosAuthorizationStatus.AUTHORIZED:
+          // Fully authorized
+          return true;
+
+        case Notifications.IosAuthorizationStatus.NOT_DETERMINED:
+          // Fall through to request permissions
+          break;
+      }
+    }
+
     // Only request if not already granted (Expo best practice)
     const request = await Notifications.requestPermissionsAsync({
       ios: {
@@ -324,6 +403,13 @@ export async function ensurePermissions(): Promise<boolean> {
         // User dismissed dialog - don't keep asking
         return false;
       default:
+        // Check iOS status again after request
+        if (Platform.OS === 'ios' && request.ios) {
+          return (
+            request.ios.status === Notifications.IosAuthorizationStatus.AUTHORIZED ||
+            request.ios.status === Notifications.IosAuthorizationStatus.PROVISIONAL
+          );
+        }
         return false;
     }
   } catch (error) {

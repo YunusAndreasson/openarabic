@@ -52,10 +52,13 @@ import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
 import { analytics } from '@/services/analytics';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
+import * as Notifications from 'expo-notifications';
 import {
   cleanupNotifications,
   clearAppBadge,
+  clearNotificationNavigationCallback,
   initializeNotifications,
+  setNotificationNavigationCallback,
 } from '@/services/notificationService';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
@@ -313,6 +316,51 @@ function AppContent() {
       initializeAppServices();
     }
   }, [appReady]);
+
+  // Set up notification navigation callback
+  useEffect(() => {
+    if (!appReady) return;
+
+    // Set navigation callback for when user taps notifications
+    setNotificationNavigationCallback((path: string) => {
+      router.push(path);
+    });
+
+    return () => {
+      clearNotificationNavigationCallback();
+    };
+  }, [appReady, router]);
+
+  // Handle cold start notifications (when app launches from notification)
+  useEffect(() => {
+    if (!appReady) return;
+
+    const handleColdStartNotification = async () => {
+      try {
+        const response = await Notifications.getLastNotificationResponseAsync();
+
+        if (response) {
+          const { type } = response.notification.request.content.data || {};
+
+          // Navigate to Study tab if it's a study reminder
+          if (type === 'study-reminder') {
+            router.push(ROUTE_PATHS.STUDY_TAB);
+          }
+
+          // Clear the last notification response to prevent re-handling on next launch
+          await Notifications.clearLastNotificationResponseAsync();
+        }
+      } catch (error) {
+        // Silently handle cold start notification errors
+        handleError(error as Error, {
+          showToast: false,
+          analyticsEventName: 'Cold_Start_Notification_Error',
+        });
+      }
+    };
+
+    handleColdStartNotification();
+  }, [appReady, router]);
 
   // Cleanup notifications, background tasks, and app badge on unmount
   useEffect(() => {
