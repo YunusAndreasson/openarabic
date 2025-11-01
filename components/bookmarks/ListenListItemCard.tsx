@@ -15,9 +15,9 @@ import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-// Bookmarks thumbnail size with golden ratio for visual consistency with featured cards
+// Bookmarks thumbnail size with 4:3 ratio for optimal vertical space in portrait mobile
 const BOOKMARKS_IMAGE_WIDTH = 72;
-const BOOKMARKS_IMAGE_HEIGHT = 44;
+const BOOKMARKS_IMAGE_HEIGHT = 54; // 72 / (4/3) = 54px
 
 interface ListenListItemCardProps {
   title: string;

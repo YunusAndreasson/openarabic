@@ -19,7 +19,7 @@ import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter, formatAuthorCategory } from '@/utils/stringUtils';
 
 // Extract constants outside component for better performance
-const GOLDEN_RATIO = 1.618; // True golden ratio for optimal image-to-content proportions
+const ASPECT_RATIO = 4 / 3; // 4:3 ratio for optimal vertical space usage in portrait mobile
 const MAX_TITLE_LINES = 2;
 const MAX_AUTHOR_LINES = 1;
 const PILL_MAX_WIDTH_PERCENTAGE = '70%';
@@ -118,7 +118,7 @@ export function ArticleCard({
   });
 
   // Image height calculation - screenWidth is stable for mobile
-  const imageHeight = Math.round((screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO);
+  const imageHeight = Math.round((screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2) / ASPECT_RATIO);
 
   // Use pre-computed gradient colors from theme for performance
   const gradientColors = colors.cardGradient;
