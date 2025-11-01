@@ -1,5 +1,5 @@
 import { BaseCard } from '@common/BaseCard';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -20,9 +20,6 @@ import { capitalizeFirstLetter, formatAuthorCategory } from '@/utils/stringUtils
 
 // Extract constants outside component for better performance
 const GOLDEN_RATIO = 1.618; // True golden ratio for optimal image-to-content proportions
-const GRADIENT_START_POINT = { x: 0, y: 0.1 };
-const GRADIENT_END_POINT = { x: 0, y: 1.0 };
-const GRADIENT_HEIGHT_PERCENTAGE = '40%';
 const MAX_TITLE_LINES = 2;
 const MAX_AUTHOR_LINES = 1;
 const PILL_MAX_WIDTH_PERCENTAGE = '70%';
@@ -41,14 +38,6 @@ const IMAGE_CONTAINER_STYLE = {
   overflow: 'hidden',
   position: 'relative',
   width: '100%',
-} as const;
-
-const GRADIENT_STYLE = {
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  height: GRADIENT_HEIGHT_PERCENTAGE,
 } as const;
 
 // Enhanced interface for ArticleCard
@@ -73,7 +62,6 @@ const styles = StyleSheet.create({
   textContainer: {
     gap: LAYOUT.SPACING.SMALL,
   },
-  gradient: GRADIENT_STYLE,
   image: IMAGE_STYLE,
   imageContainer: IMAGE_CONTAINER_STYLE,
   pillContainer: {
@@ -134,22 +122,30 @@ export function ArticleCard({
   // Use pre-computed gradient colors from theme for performance
   const gradientColors = colors.cardGradient;
 
+  // Calculate actual card width (accounts for screen padding)
+  const cardWidth = screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2;
+
   // Computed values for child components
   const imageContainerStyle = [styles.imageContainer, { height: imageHeight }];
+
+  // Calculate gradient overlay dimensions (40% of image height for bottom fade)
+  const gradientHeight = Math.round(imageHeight * 0.4);
+
+  // Gradient container style with pixel-perfect dimensions for Skia Canvas
+  const gradientContainerStyle = [
+    {
+      position: 'absolute' as const,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: gradientHeight,
+    },
+  ];
 
   // Use pillLabel if provided, otherwise use category for the pill
   const pillText = pillLabel ?? category;
   const capitalizedPillText = capitalizeFirstLetter(pillText);
   const authorDisplayText = formatAuthorCategory(author, category);
-
-  // Gradient props
-  // OPTIMIZED: Use type assertion instead of spread operator to avoid array allocation
-  const gradientProps = {
-    colors: gradientColors as unknown as [string, string, ...string[]],
-    start: GRADIENT_START_POINT,
-    end: GRADIENT_END_POINT,
-    style: styles.gradient,
-  };
 
   // Generate article route with proper parameters
   const articleHref = getArticleRoute(article.id, article.title);
@@ -178,7 +174,16 @@ export function ArticleCard({
             recyclingKey={`article-${article.id}`}
             transition={150} // Fast transition for snappy list scrolling
           />
-          <LinearGradient {...gradientProps} />
+          {/* Skia gradient for Android stability and consistent rendering */}
+          <Canvas style={gradientContainerStyle} pointerEvents="none">
+            <Rect x={0} y={0} width={cardWidth} height={gradientHeight}>
+              <LinearGradient
+                start={vec(0, 0)}
+                end={vec(0, gradientHeight)}
+                colors={[...gradientColors]}
+              />
+            </Rect>
+          </Canvas>
         </View>
 
         <View style={styles.pillContainer}>

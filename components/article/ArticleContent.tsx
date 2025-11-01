@@ -261,9 +261,8 @@ const ArticleContentInternal = function ArticleContent({
     <Animated.View style={[styles.flexOne, animatedStyle]}>
       {sortedSentences && sortedSentences.length > 0 ? (
         <View style={listContainerStyle}>
-          {/* Sticky Parallax Header behind content */}
-          {/* DISABLED FOR DEBUGGING */}
-          {/* <ParallaxHeader article={article} colors={colors} scrollY={scrollY} /> */}
+          {/* Sticky Parallax Header behind content - using Skia gradients for Android stability */}
+          <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
           <AnimatedFlashList
             /**
              * TypeScript limitation with Reanimated's createAnimatedComponent:

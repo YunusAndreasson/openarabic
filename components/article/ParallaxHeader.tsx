@@ -1,10 +1,11 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { memo, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
+import { SCREEN_WIDTH } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -14,8 +15,6 @@ import {
   createImageGradientColors,
 } from '@/utils/gradientUtils';
 import { generateImageUrl } from '@/utils/imageUtils';
-
-const GRADIENT_HEIGHT_PERCENTAGE = '60%';
 
 // Static styles to prevent recreation
 const STATIC_STYLES = StyleSheet.create({
@@ -39,7 +38,7 @@ const STATIC_STYLES = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: GRADIENT_HEIGHT_PERCENTAGE,
+    height: '60%', // Canvas container height (Rect inside controls actual gradient)
   },
   backgroundGradientOverlay: {
     position: 'absolute',
@@ -150,19 +149,27 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
       <Animated.View style={[imageSectionStyle, animatedImageStyle]}>
         <EnhancedImage {...imageProps} />
 
-        {/* Enhanced image gradient for summary overlay */}
-        <LinearGradient
-          colors={imageGradientColors}
-          style={STATIC_STYLES.imageGradientOverlay}
-          pointerEvents="none"
-        />
+        {/* Enhanced image gradient for summary overlay - Skia for Android stability */}
+        <Canvas style={STATIC_STYLES.imageGradientOverlay} pointerEvents="none">
+          <Rect x={0} y={0} width={SCREEN_WIDTH} height={headerHeight * 0.6}>
+            <LinearGradient
+              start={vec(0, 0)}
+              end={vec(0, headerHeight * 0.6)}
+              colors={[...imageGradientColors]}
+            />
+          </Rect>
+        </Canvas>
 
-        {/* Background transition gradient */}
-        <LinearGradient
-          colors={backgroundGradientColors}
-          style={STATIC_STYLES.backgroundGradientOverlay}
-          pointerEvents="none"
-        />
+        {/* Background transition gradient - Skia for Android stability */}
+        <Canvas style={STATIC_STYLES.backgroundGradientOverlay} pointerEvents="none">
+          <Rect x={0} y={0} width={SCREEN_WIDTH} height={headerHeight}>
+            <LinearGradient
+              start={vec(0, 0)}
+              end={vec(0, headerHeight)}
+              colors={[...backgroundGradientColors]}
+            />
+          </Rect>
+        </Canvas>
       </Animated.View>
     </Animated.View>
   );

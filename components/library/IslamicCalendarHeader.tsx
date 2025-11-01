@@ -1,11 +1,11 @@
-import { LinearGradient } from 'expo-linear-gradient';
+import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 import moment from 'moment-hijri';
 import React, { memo, useMemo } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { HIJRI_MONTHS } from '@/constants/hijri';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import {
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: '85%', // Cover more of the image for excellent text readability
+    height: '85%', // Canvas container height (Rect inside controls actual gradient)
   },
   backgroundGradientOverlay: {
     position: 'absolute',
@@ -134,21 +134,29 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
           <View style={styles.imageContainer}>
             <Image source={require('@/assets/images/moon.jpg')} style={styles.backgroundImage} />
 
-            {/* Image gradient overlay for text readability */}
-            <LinearGradient
-              colors={imageGradientColors}
-              locations={[0, 0.2, 0.4, 0.55, 0.7, 0.85, 1]}
-              style={styles.imageGradientOverlay}
-              pointerEvents="none"
-            />
+            {/* Image gradient overlay for text readability - Skia for Android stability */}
+            <Canvas style={styles.imageGradientOverlay} pointerEvents="none">
+              <Rect x={0} y={0} width={SCREEN_WIDTH} height={ADJUSTED_HEADER_HEIGHT * 0.85}>
+                <LinearGradient
+                  start={vec(0, 0)}
+                  end={vec(0, ADJUSTED_HEADER_HEIGHT * 0.85)}
+                  colors={[...imageGradientColors]}
+                  positions={[0, 0.2, 0.4, 0.55, 0.7, 0.85, 1]}
+                />
+              </Rect>
+            </Canvas>
 
-            {/* Background gradient overlay for smooth transition */}
-            <LinearGradient
-              colors={backgroundGradientColors}
-              locations={[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.85, 1]}
-              style={styles.backgroundGradientOverlay}
-              pointerEvents="none"
-            />
+            {/* Background gradient overlay for smooth transition - Skia for Android stability */}
+            <Canvas style={styles.backgroundGradientOverlay} pointerEvents="none">
+              <Rect x={0} y={0} width={SCREEN_WIDTH} height={ADJUSTED_HEADER_HEIGHT}>
+                <LinearGradient
+                  start={vec(0, 0)}
+                  end={vec(0, ADJUSTED_HEADER_HEIGHT)}
+                  colors={[...backgroundGradientColors]}
+                  positions={[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.85, 1]}
+                />
+              </Rect>
+            </Canvas>
           </View>
 
           {/* Content Container */}

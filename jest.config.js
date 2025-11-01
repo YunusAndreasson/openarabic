@@ -56,7 +56,6 @@ module.exports = {
     '@sentry/react-native': '<rootDir>/__mocks__/sentry-react-native.js',
     'react-redux': '<rootDir>/__mocks__/react-redux.js',
     'expo-image': '<rootDir>/__mocks__/expo-image.js',
-    'expo-linear-gradient': '<rootDir>/__mocks__/expo-linear-gradient.js',
     '@expo/vector-icons': '<rootDir>/__mocks__/@expo/vector-icons.js',
 
     // Enhanced mocks for critical dependencies
