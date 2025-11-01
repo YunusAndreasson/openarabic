@@ -81,13 +81,13 @@ class GoogleTTSService:
             raise AudioGenerationError(f"Arabic TTS generation failed: {e}") from e
 
     def generate_english_word_audio(
-        self, word: str, voice_name: str = "Rasalgethi"
+        self, word: str, voice_name: str = "Charon"
     ) -> dict[str, Any] | None:
         """Generate audio for an English word using Google Cloud TTS.
 
         Args:
             word: The English word to generate audio for
-            voice_name: The Chirp 3: HD voice name (default: 'Rasalgethi' - clear and precise pronunciation)
+            voice_name: The Chirp 3: HD voice name (default: 'Charon' - clear, authoritative US English pronunciation)
         """
         try:
             # Configure English voice (US English) - Chirp 3: HD quality

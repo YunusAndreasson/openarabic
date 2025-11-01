@@ -401,7 +401,7 @@ def generate_english_word_audio(
     Args:
         word: The English word to generate audio for
         filename: The filename to save the audio as
-        voice_name: The Chirp 3: HD voice name (default: 'Charon')
+        voice_name: The Chirp 3: HD voice name (default: 'Charon' - clear, authoritative US English)
         force: If True, skip cache check and regenerate audio
 
     Returns:

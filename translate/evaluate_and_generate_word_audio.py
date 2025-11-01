@@ -19,8 +19,8 @@ Usage:
     # Generate for specific word by ID
     uv run python translate/evaluate_and_generate_word_audio.py --word-id 12345 --table sentence_words
 
-    # Test specific male voice
-    uv run python translate/evaluate_and_generate_word_audio.py --voice Puck --limit 10
+    # Test with Rasalgethi voice (default)
+    uv run python translate/evaluate_and_generate_word_audio.py --voice Rasalgethi --limit 10
 """
 
 import argparse
@@ -122,7 +122,7 @@ def generate_audio_for_sentence_word(
 
     Args:
         word_id: The ID of the sentence word
-        voice: Optional voice name (e.g., 'Puck', 'Charon')
+        voice: Optional voice name (default: 'Rasalgethi')
         force: If True, regenerate audio even if it already exists
 
     Returns:
@@ -186,7 +186,7 @@ def generate_audio_for_root(root_id: int, voice: str | None = None, force: bool 
 
     Args:
         root_id: The ID of the root word
-        voice: Optional voice name (e.g., 'Puck', 'Charon')
+        voice: Optional voice name (default: 'Rasalgethi')
         force: If True, regenerate audio even if it already exists
 
     Returns:
@@ -288,7 +288,7 @@ def generate_audio_batch(
     Args:
         table: Table to process ('sentence_words' or 'roots')
         limit: Optional limit on number of words to process
-        voice: Optional voice name (e.g., 'Puck', 'Charon')
+        voice: Optional voice name (default: 'Rasalgethi')
 
     Returns:
         Dictionary with generation statistics
@@ -391,7 +391,7 @@ def main():
     )
     parser.add_argument(
         "--voice",
-        help="Test specific male voice (e.g., 'Puck', 'Charon', 'Fenrir', 'Orus')",
+        help="Voice name for audio generation (default: 'Rasalgethi')",
     )
     parser.add_argument(
         "--force",
@@ -439,7 +439,7 @@ def main():
     if args.word_id:
         force_msg = " (force regenerate)" if args.force else ""
         logger.info(
-            f"Generating audio for {args.table} ID {args.word_id} with voice {args.voice or 'Charon (default)'}{force_msg}..."
+            f"Generating audio for {args.table} ID {args.word_id} with voice {args.voice or 'Rasalgethi (default)'}{force_msg}..."
         )
 
         if args.table == "sentence_words":
@@ -453,7 +453,7 @@ def main():
         if result.get("success"):
             print("\n=== Generation Successful ===\n")
             print(f"Word ID: {result.get('word_id') or result.get('root_id')}")
-            print(f"Voice: {args.voice or 'Charon (default)'}")
+            print(f"Voice: {args.voice or 'Rasalgethi (default)'}")
             if "word_form" in result:
                 print(f"Word: {result['word_form']}")
                 print(f"Audio URL: {result['audio_url']}")
@@ -480,7 +480,7 @@ def main():
         return 1
 
     logger.info(
-        f"Generating audio for {args.table} with voice {args.voice or 'Charon (default)'}..."
+        f"Generating audio for {args.table} with voice {args.voice or 'Rasalgethi (default)'}..."
     )
     if args.limit:
         logger.info(f"Limited to {args.limit} words")

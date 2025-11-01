@@ -40,9 +40,12 @@ export const AudioShuffleToggle: React.FC<AudioShuffleToggleProps> = ({ style })
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
           />
         </View>
-        <ThemedText style={styles.cardText} weight="medium">
-          {STRINGS.AUDIO_SHUFFLE}
-        </ThemedText>
+        <View style={styles.textContainer}>
+          <ThemedText weight="medium">{STRINGS.AUDIO_SHUFFLE}</ThemedText>
+          <ThemedText colorName="textTertiary" style={styles.subtext} type="caption">
+            {STRINGS.AUDIO_SHUFFLE_DESCRIPTION}
+          </ThemedText>
+        </View>
       </View>
       <Toggle value={audioShuffleEnabled} onValueChange={handleToggleChange} />
     </View>
@@ -66,7 +69,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: LAYOUT.SPACING.SMALL,
   },
-  cardText: {
+  textContainer: {
+    flexDirection: 'column',
     marginLeft: LAYOUT.SPACING.MEDIUM,
+    flex: 1,
+  },
+  subtext: {
+    marginTop: LAYOUT.SPACING.TINY,
   },
 });

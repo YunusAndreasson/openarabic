@@ -227,13 +227,13 @@ const AccountScreen: FC = () => {
           {
             id: DisplayLanguage.ARABIC_ONLY,
             title: STRINGS.DISPLAY_LANGUAGE_ARABIC,
-            subtitle: 'Arabic text only',
+            subtitle: 'Show only Arabic text in the Library tab. English translations are hidden.',
             icon: 'text' as const,
           },
           {
             id: DisplayLanguage.ARABIC_ENGLISH,
             title: STRINGS.DISPLAY_LANGUAGE_BILINGUAL,
-            subtitle: 'Arabic + English shown together',
+            subtitle: 'Show Arabic text with English translations in the Library tab.',
             icon: 'language' as const,
           },
         ],
@@ -246,13 +246,13 @@ const AccountScreen: FC = () => {
           {
             id: AudioLanguage.ARABIC_ONLY,
             title: STRINGS.AUDIO_LANGUAGE_ARABIC,
-            subtitle: 'Arabic audio only',
+            subtitle: 'Play only Arabic audio in the Bookmarks tab. English translations are skipped.',
             icon: 'volume-high' as const,
           },
           {
             id: AudioLanguage.ENGLISH_ARABIC,
             title: STRINGS.AUDIO_LANGUAGE_BILINGUAL,
-            subtitle: 'English + Arabic played together',
+            subtitle: 'Play English translation followed by Arabic audio in the Bookmarks tab.',
             icon: 'language' as const,
           },
         ],
@@ -699,7 +699,7 @@ const AccountScreen: FC = () => {
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
-                      color={colors.interactiveSecondary}
+                      color={colors.error}
                       name="log-out"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />

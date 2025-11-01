@@ -188,6 +188,7 @@ export const UiAction = {
   DICTIONARY: 'Dictionary',
   FILTERS: 'Filters',
   RESET_FILTERS: 'Reset',
+  RESET: 'Reset',
   AUTHORS: 'Authors',
   DIFFICULTY: 'Difficulty',
   CATEGORY: 'Category',

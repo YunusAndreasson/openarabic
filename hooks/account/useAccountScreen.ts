@@ -96,7 +96,7 @@ export const useAccountScreen = () => {
           style: 'cancel',
         },
         {
-          text: STRINGS.CLEAR_CACHE,
+          text: UiAction.CLEAR,
           style: 'destructive',
           onPress: async () => {
             try {
@@ -175,7 +175,7 @@ export const useAccountScreen = () => {
           style: 'cancel',
         },
         {
-          text: STRINGS.RESET_READING_PROGRESS,
+          text: UiAction.RESET,
           style: 'destructive',
           onPress: async () => {
             try {

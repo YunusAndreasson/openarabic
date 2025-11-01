@@ -113,20 +113,38 @@ const queryClient = new QueryClient({
 const navigationIntegration = Sentry.reactNavigationIntegration();
 const sentryDsn = getEnvVar('EXPO_PUBLIC_SENTRY_DSN', undefined, true);
 
+// DIAGNOSTIC: Log environment variable status (will be visible in console during debugging)
+console.log('[ENV] Sentry DSN present:', !!sentryDsn);
+console.log('[ENV] Sentry DSN length:', sentryDsn?.length || 0);
+console.log('[ENV] Mixpanel token present:', !!process.env['EXPO_PUBLIC_MIXPANEL_TOKEN']);
+console.log('[ENV] Google Web Client ID present:', !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID']);
+console.log('[ENV] Google iOS Client ID present:', !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID']);
+
 // Initialize Sentry with production config
 Sentry.init({
   dsn: sentryDsn,
-  integrations: [navigationIntegration],
+  integrations: [
+    navigationIntegration,
+    // Enable native crash reporting
+    new Sentry.ReactNativeTracing({
+      enableNativeFramesTracking: true,
+    }),
+  ],
   enabled: !!sentryDsn, // Only enable if DSN is available
   tracesSampleRate: 1.0, // Sample everything (100%)
   attachScreenshot: true, // Helps debug UI crashes
-  debug: false, // Disable debug logging in production
+  debug: true, // Enable debug logging to catch issues
+  enableNative: true, // CRITICAL: Enable native crash reporting
+  enableNativeCrashHandling: true, // Catch native crashes
+  enableAutoSessionTracking: true, // Track sessions
   beforeSend(event) {
+    console.log('[Sentry] Sending event:', event.event_id, event.message || event.exception);
     // Add environment diagnostic context to all events
     event.contexts = {
       ...event.contexts,
       env_vars: {
         sentry_dsn_present: !!sentryDsn,
+        sentry_dsn_length: sentryDsn?.length || 0,
         mixpanel_token_present: !!process.env['EXPO_PUBLIC_MIXPANEL_TOKEN'],
         google_web_client_id_present: !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'],
         google_ios_client_id_present: !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'],
@@ -136,8 +154,11 @@ Sentry.init({
   },
 });
 
+console.log('[Sentry] Initialization attempted with DSN:', sentryDsn ? 'present' : 'missing');
+
 // Send initialization event to Sentry to verify it's working
 if (sentryDsn) {
+  console.log('[Sentry] Sending initialization event...');
   Sentry.captureMessage('Sentry initialized successfully in build', {
     level: 'info',
     tags: {
@@ -145,6 +166,9 @@ if (sentryDsn) {
       build_type: __DEV__ ? 'development' : 'production',
     },
   });
+  console.log('[Sentry] Initialization event sent');
+} else {
+  console.error('[Sentry] CRITICAL: No DSN found - Sentry is disabled');
 }
 
 function AppContent() {

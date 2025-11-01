@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -33,8 +34,36 @@ export function SocialAuthButtons(): JSX.Element {
   const { signInWithGoogle, loading: googleLoading } = useGoogleAuth();
   const colors = useColors();
 
+  // DIAGNOSTIC: Test Sentry error capture
+  const testSentryError = () => {
+    console.log('[TEST] Triggering test Sentry error...');
+    try {
+      Sentry.captureException(new Error('TEST: Manual Sentry error from auth screen'), {
+        tags: {
+          location: 'auth_test',
+          test: 'manual_error',
+        },
+        level: 'error',
+      });
+      console.log('[TEST] Sentry error sent');
+      alert('Test error sent to Sentry. Check dashboard.');
+    } catch (error) {
+      console.error('[TEST] Failed to send Sentry error:', error);
+      alert('Failed to send to Sentry: ' + error);
+    }
+  };
+
   return (
     <View style={styles.container}>
+      {/* DIAGNOSTIC: Test Sentry Button - REMOVE AFTER DEBUGGING */}
+      <ThemedButton
+        variant="primary"
+        title="🔍 Test Sentry Error"
+        uppercase={false}
+        style={[styles.button, { opacity: 0.7 }]}
+        onPress={testSentryError}
+      />
+
       {/* Apple Sign In Button */}
       <ThemedButton
         variant="outlined"

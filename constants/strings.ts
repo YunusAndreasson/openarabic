@@ -14,6 +14,7 @@ export const STRINGS = {
   AUDIO_LANGUAGE_ARABIC: 'Arabic only',
   AUDIO_LANGUAGE_BILINGUAL: 'English + Arabic',
   AUDIO_SHUFFLE: 'Shuffle audio',
+  AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order in the Bookmarks tab',
   DISPLAY_LANGUAGE: 'Display language',
   DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
   DISPLAY_LANGUAGE_BILINGUAL: 'Arabic + English',
