@@ -1,4 +1,3 @@
-import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -32,14 +31,6 @@ const SignUpScreen = memo(function SignUpScreen(): JSX.Element {
         keyboardDismissMode: 'interactive',
       }}
     >
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: '', // Empty title for clean header
-          animation: 'slide_from_right',
-        }}
-      />
-
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.headerContainer}>
