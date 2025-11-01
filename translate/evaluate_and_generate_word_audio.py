@@ -29,18 +29,17 @@ import os
 import sys
 from typing import Any
 
-from dotenv import load_dotenv
-from supabase import create_client
-
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import set_keys to configure environment variables
+from utils import set_keys  # noqa: F401
 
 from audio.audio_utils import (
     generate_arabic_word_audio,
     generate_english_word_audio,
 )
-from data.config import GOOGLE_CLOUD_CREDENTIALS_PATH
-from utils.google_tts_service import GoogleTTSService
+from utils.storage_utils import get_supabase_client
 
 # Configure logging
 logging.basicConfig(
@@ -48,14 +47,6 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
-
-# Load environment variables
-load_dotenv()
-
-
-def get_supabase_client():
-    """Get Supabase client."""
-    return create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
 
 def evaluate_empty_audio(table: str | None = None) -> dict[str, Any]:
@@ -124,7 +115,7 @@ def evaluate_empty_audio(table: str | None = None) -> dict[str, Any]:
 
 
 def generate_audio_for_sentence_word(
-    word_id: int, voice: str | None = None
+    word_id: int, voice: str | None = None, force: bool = False
 ) -> dict[str, Any]:
     """
     Generate audio for a specific sentence word.
@@ -132,6 +123,7 @@ def generate_audio_for_sentence_word(
     Args:
         word_id: The ID of the sentence word
         voice: Optional voice name (e.g., 'Puck', 'Charon')
+        force: If True, regenerate audio even if it already exists
 
     Returns:
         Dictionary with generation result
@@ -157,9 +149,10 @@ def generate_audio_for_sentence_word(
     # Generate filename
     filename = f"w{sentence_id}_{position:02d}.mp3"
 
-    # Generate audio using existing helper function
+    # Generate audio using existing helper function (pass force flag)
     try:
-        audio_result = generate_arabic_word_audio(word_form, filename)
+        voice_name = voice or "Rasalgethi"
+        audio_result = generate_arabic_word_audio(word_form, filename, voice_name, force)
 
         if audio_result and audio_result.get("url"):
             # Update database
@@ -173,6 +166,7 @@ def generate_audio_for_sentence_word(
                 "word_form": word_form,
                 "audio_url": audio_result["url"],
                 "cached": audio_result.get("cached", False),
+                "voice": voice_name,
             }
         else:
             return {
@@ -186,13 +180,14 @@ def generate_audio_for_sentence_word(
         return {"success": False, "word_id": word_id, "error": str(e)}
 
 
-def generate_audio_for_root(root_id: int, voice: str | None = None) -> dict[str, Any]:
+def generate_audio_for_root(root_id: int, voice: str | None = None, force: bool = False) -> dict[str, Any]:
     """
     Generate audio for a specific root word.
 
     Args:
         root_id: The ID of the root word
         voice: Optional voice name (e.g., 'Puck', 'Charon')
+        force: If True, regenerate audio even if it already exists
 
     Returns:
         Dictionary with generation result
@@ -215,12 +210,14 @@ def generate_audio_for_root(root_id: int, voice: str | None = None) -> dict[str,
     meaning = root_data["meaning"]
 
     results = {"success": True, "root_id": root_id, "generated": []}
+    voice_name = voice or "Rasalgethi"
 
-    # Generate Arabic audio if missing
-    if not root_data["audio_url"]:
+    # Generate Arabic audio if missing or force regeneration
+    if not root_data["audio_url"] or force:
         filename = f"root_{root_id}_ar.mp3"
+
         try:
-            audio_result = generate_arabic_word_audio(letters, filename)
+            audio_result = generate_arabic_word_audio(letters, filename, voice_name, force)
 
             if audio_result and audio_result.get("url"):
                 client.table("roots").update({"audio_url": audio_result["url"]}).eq(
@@ -233,6 +230,7 @@ def generate_audio_for_root(root_id: int, voice: str | None = None) -> dict[str,
                         "text": letters,
                         "audio_url": audio_result["url"],
                         "cached": audio_result.get("cached", False),
+                        "voice": voice_name,
                     }
                 )
             else:
@@ -246,11 +244,12 @@ def generate_audio_for_root(root_id: int, voice: str | None = None) -> dict[str,
             results["success"] = False
             results.setdefault("errors", []).append(f"Arabic generation error: {e}")
 
-    # Generate English audio if missing
-    if not root_data["audio_url_en"]:
+    # Generate English audio if missing or force regeneration
+    if not root_data["audio_url_en"] or force:
         filename = f"root_{root_id}_en.mp3"
+
         try:
-            audio_result = generate_english_word_audio(meaning, filename)
+            audio_result = generate_english_word_audio(meaning, filename, voice_name, force)
 
             if audio_result and audio_result.get("url"):
                 client.table("roots").update({"audio_url_en": audio_result["url"]}).eq(
@@ -263,6 +262,7 @@ def generate_audio_for_root(root_id: int, voice: str | None = None) -> dict[str,
                         "text": meaning,
                         "audio_url": audio_result["url"],
                         "cached": audio_result.get("cached", False),
+                        "voice": voice_name,
                     }
                 )
             else:
@@ -393,6 +393,11 @@ def main():
         "--voice",
         help="Test specific male voice (e.g., 'Puck', 'Charon', 'Fenrir', 'Orus')",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force regenerate audio even if it already exists",
+    )
 
     args = parser.parse_args()
 
@@ -432,14 +437,15 @@ def main():
 
     # Generate audio for specific word ID
     if args.word_id:
+        force_msg = " (force regenerate)" if args.force else ""
         logger.info(
-            f"Generating audio for {args.table} ID {args.word_id} with voice {args.voice or 'Charon (default)'}..."
+            f"Generating audio for {args.table} ID {args.word_id} with voice {args.voice or 'Charon (default)'}{force_msg}..."
         )
 
         if args.table == "sentence_words":
-            result = generate_audio_for_sentence_word(args.word_id, args.voice)
+            result = generate_audio_for_sentence_word(args.word_id, args.voice, args.force)
         elif args.table == "roots":
-            result = generate_audio_for_root(args.word_id, args.voice)
+            result = generate_audio_for_root(args.word_id, args.voice, args.force)
         else:
             logger.error(f"Unknown table: {args.table}")
             return 1
@@ -447,6 +453,7 @@ def main():
         if result.get("success"):
             print("\n=== Generation Successful ===\n")
             print(f"Word ID: {result.get('word_id') or result.get('root_id')}")
+            print(f"Voice: {args.voice or 'Charon (default)'}")
             if "word_form" in result:
                 print(f"Word: {result['word_form']}")
                 print(f"Audio URL: {result['audio_url']}")

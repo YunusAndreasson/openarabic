@@ -312,34 +312,40 @@ def generate_speech(
         return None
 
 
-def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
+def generate_arabic_word_audio(
+    word: str, filename: str, voice_name: str = "Rasalgethi", force: bool = False
+) -> dict | None:
     """
     Generate audio for an Arabic word using Google Cloud TTS.
 
     Args:
         word: The Arabic word to generate audio for
         filename: The filename to save the audio as
+        voice_name: The Chirp 3: HD voice name (default: 'Rasalgethi' - Arabic star name for Islamic/Classical Arabic)
+        force: If True, skip cache check and regenerate audio
 
     Returns:
         Dictionary with audio URL and metadata, or None if failed
     """
     try:
-        # Check if audio already exists in storage using the actual filename
-        if check_file_exists("audio", filename):
-            url = get_storage_url(filename)
-            return {"url": url, "cached": True}
+        # Skip cache check if force regeneration is requested
+        if not force:
+            # Check if audio already exists in storage using the actual filename
+            if check_file_exists("audio", filename):
+                url = get_storage_url(filename)
+                return {"url": url, "cached": True}
 
-        # Check cache first (fallback)
-        cache_key = get_cache_key(word)
-        cached_url = get_cached_audio_url(cache_key, "arabic")
-        if cached_url:
-            return {"url": cached_url, "cached": True}
+            # Check cache first (fallback)
+            cache_key = get_cache_key(word)
+            cached_url = get_cached_audio_url(cache_key, "arabic")
+            if cached_url:
+                return {"url": cached_url, "cached": True}
 
         # Initialize Google TTS service with same credentials as translation service
         tts_service = GoogleTTSService(credentials_path=GOOGLE_CLOUD_CREDENTIALS_PATH)
 
         # Generate new audio using Google TTS
-        result = tts_service.generate_arabic_word_audio(word)
+        result = tts_service.generate_arabic_word_audio(word, voice_name)
 
         if not result or not result.get("audio"):
             logger.error(f"Failed to generate audio for word: {word}")
@@ -350,8 +356,18 @@ def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
         with open(temp_audio_path, "wb") as f:
             f.write(result["audio"])
 
-        # Upload to Supabase storage (double-check existence)
-        if not check_file_exists("audio", filename):
+        # Upload to Supabase storage
+        if force:
+            # Force upload: use upsert to replace existing file
+            with open(temp_audio_path, "rb") as f:
+                get_supabase_client().storage.from_("audio").upload(
+                    filename,
+                    f,
+                    file_options={"content-type": "audio/mpeg", "upsert": "true"},
+                )
+            logger.info(f"Force uploaded new Arabic audio file: {filename}")
+        elif not check_file_exists("audio", filename):
+            # Normal upload: check if file exists first
             with open(temp_audio_path, "rb") as f:
                 get_supabase_client().storage.from_("audio").upload(
                     filename,
@@ -376,34 +392,40 @@ def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
         return None
 
 
-def generate_english_word_audio(word: str, filename: str) -> dict | None:
+def generate_english_word_audio(
+    word: str, filename: str, voice_name: str = "Charon", force: bool = False
+) -> dict | None:
     """
     Generate audio for an English word using Google Cloud TTS.
 
     Args:
         word: The English word to generate audio for
         filename: The filename to save the audio as
+        voice_name: The Chirp 3: HD voice name (default: 'Charon')
+        force: If True, skip cache check and regenerate audio
 
     Returns:
         Dictionary with audio URL and metadata, or None if failed
     """
     try:
-        # Check if audio already exists in storage using the actual filename
-        if check_file_exists("audio", filename):
-            url = get_storage_url(filename)
-            return {"url": url, "cached": True}
+        # Skip cache check if force regeneration is requested
+        if not force:
+            # Check if audio already exists in storage using the actual filename
+            if check_file_exists("audio", filename):
+                url = get_storage_url(filename)
+                return {"url": url, "cached": True}
 
-        # Check cache first (fallback)
-        cache_key = get_cache_key(word)
-        cached_url = get_cached_audio_url(cache_key, "english")
-        if cached_url:
-            return {"url": cached_url, "cached": True}
+            # Check cache first (fallback)
+            cache_key = get_cache_key(word)
+            cached_url = get_cached_audio_url(cache_key, "english")
+            if cached_url:
+                return {"url": cached_url, "cached": True}
 
         # Initialize Google TTS service with same credentials as translation service
         tts_service = GoogleTTSService(credentials_path=GOOGLE_CLOUD_CREDENTIALS_PATH)
 
         # Generate new audio using Google TTS
-        result = tts_service.generate_english_word_audio(word)
+        result = tts_service.generate_english_word_audio(word, voice_name)
 
         if not result or not result.get("audio"):
             logger.error(f"Failed to generate audio for word: {word}")
@@ -414,8 +436,18 @@ def generate_english_word_audio(word: str, filename: str) -> dict | None:
         with open(temp_audio_path, "wb") as f:
             f.write(result["audio"])
 
-        # Upload to Supabase storage (double-check existence)
-        if not check_file_exists("audio", filename):
+        # Upload to Supabase storage
+        if force:
+            # Force upload: use upsert to replace existing file
+            with open(temp_audio_path, "rb") as f:
+                get_supabase_client().storage.from_("audio").upload(
+                    filename,
+                    f,
+                    file_options={"content-type": "audio/mpeg", "upsert": "true"},
+                )
+            logger.info(f"Force uploaded new English audio file: {filename}")
+        elif not check_file_exists("audio", filename):
+            # Normal upload: check if file exists first
             with open(temp_audio_path, "rb") as f:
                 get_supabase_client().storage.from_("audio").upload(
                     filename,

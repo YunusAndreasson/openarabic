@@ -30,13 +30,21 @@ class GoogleTTSService:
                 f"Failed to initialize Google Cloud TTS client: {e}"
             ) from e
 
-    def generate_arabic_word_audio(self, word: str) -> dict[str, Any] | None:
-        """Generate audio for an Arabic word using Google Cloud TTS."""
+    def generate_arabic_word_audio(
+        self, word: str, voice_name: str = "Rasalgethi"
+    ) -> dict[str, Any] | None:
+        """Generate audio for an Arabic word using Google Cloud TTS.
+
+        Args:
+            word: The Arabic word to generate audio for
+            voice_name: The Chirp 3: HD voice name (default: 'Rasalgethi' - Arabic star name for better pronunciation)
+        """
         try:
             # Configure Arabic voice (Modern Standard Arabic) - Chirp 3: HD quality
+            full_voice_name = f"ar-XA-Chirp3-HD-{voice_name}"
             voice = texttospeech.VoiceSelectionParams(
                 language_code="ar-XA",
-                name="ar-XA-Chirp3-HD-Charon",  # Chirp 3: HD male voice for best Arabic quality
+                name=full_voice_name,  # Chirp 3: HD male voice for best Arabic quality
                 ssml_gender=texttospeech.SsmlVoiceGender.MALE,
             )
 
@@ -64,7 +72,7 @@ class GoogleTTSService:
                 "audio": response.audio_content,
                 "format": "mp3",
                 "language": "ar-XA",
-                "voice": "ar-XA-Chirp3-HD-Charon",  # Chirp 3: HD male voice
+                "voice": full_voice_name,  # Chirp 3: HD male voice
                 "text": word,
             }
 
@@ -72,13 +80,21 @@ class GoogleTTSService:
             logger.error(f"Failed to generate Arabic word audio for '{word}': {e}")
             raise AudioGenerationError(f"Arabic TTS generation failed: {e}") from e
 
-    def generate_english_word_audio(self, word: str) -> dict[str, Any] | None:
-        """Generate audio for an English word using Google Cloud TTS."""
+    def generate_english_word_audio(
+        self, word: str, voice_name: str = "Rasalgethi"
+    ) -> dict[str, Any] | None:
+        """Generate audio for an English word using Google Cloud TTS.
+
+        Args:
+            word: The English word to generate audio for
+            voice_name: The Chirp 3: HD voice name (default: 'Rasalgethi' - clear and precise pronunciation)
+        """
         try:
             # Configure English voice (US English) - Chirp 3: HD quality
+            full_voice_name = f"en-US-Chirp3-HD-{voice_name}"
             voice = texttospeech.VoiceSelectionParams(
                 language_code="en-US",
-                name="en-US-Chirp3-HD-Charon",  # Chirp 3: HD male voice for best English quality
+                name=full_voice_name,  # Chirp 3: HD male voice for best English quality
                 ssml_gender=texttospeech.SsmlVoiceGender.MALE,
             )
 
@@ -106,7 +122,7 @@ class GoogleTTSService:
                 "audio": response.audio_content,
                 "format": "mp3",
                 "language": "en-US",
-                "voice": "en-US-Chirp3-HD-Charon",  # Chirp 3: HD male voice
+                "voice": full_voice_name,  # Chirp 3: HD male voice
                 "text": word,
             }
 
