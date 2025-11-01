@@ -63,18 +63,6 @@ MetricCard.displayName = 'MetricCard';
 export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
   const colors = useColors();
 
-  // Memoize color calculation function with enhanced contrast
-  const getStreakColor = useCallback(
-    (streak: number) => {
-      if (streak === 0) return colors.textTertiary;
-      if (streak >= 30) return colors.success || colors.tint;
-      if (streak >= 14) return colors.warning;
-      if (streak >= 7) return colors.primary;
-      return colors.tint;
-    },
-    [colors.textTertiary, colors.success, colors.tint, colors.warning, colors.primary],
-  );
-
   // Memoize metric data to prevent recalculation
   const metricData = useMemo(
     () => [
@@ -83,7 +71,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
         icon: 'flame' as const,
         value: metrics.currentStreak.toString(),
         label: 'Current',
-        color: getStreakColor(metrics.currentStreak),
+        color: metrics.currentStreak === 0 ? colors.textTertiary : colors.success || colors.tint,
       },
       {
         id: 'longest',
@@ -104,9 +92,10 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
       metrics.currentStreak,
       metrics.longestStreak,
       metrics.totalReadingDays,
-      getStreakColor,
-      colors.warning,
+      colors.textTertiary,
+      colors.success,
       colors.tint,
+      colors.warning,
       colors.primary,
     ],
   );
