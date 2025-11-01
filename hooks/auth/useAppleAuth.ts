@@ -390,7 +390,21 @@ export function useAppleAuth(): UseAppleAuthReturn {
         return;
       }
 
-      // Handle other errors with comprehensive logging
+      // Handle other errors with comprehensive logging and native error extraction
+      const errorObj = error && typeof error === 'object' ? error : {};
+
+      // Extract native error properties (iOS specific)
+      const nativeDomain =
+        'domain' in errorObj && typeof errorObj.domain === 'string' ? errorObj.domain : undefined;
+      const localizedDescription =
+        'localizedDescription' in errorObj && typeof errorObj.localizedDescription === 'string'
+          ? errorObj.localizedDescription
+          : undefined;
+      const userInfo =
+        'userInfo' in errorObj && typeof errorObj.userInfo === 'object'
+          ? errorObj.userInfo
+          : undefined;
+
       const errorDetails = {
         errorType: error instanceof Error ? error.constructor.name : typeof error,
         errorMessage: error instanceof Error ? error.message : String(error),
@@ -398,7 +412,27 @@ export function useAppleAuth(): UseAppleAuthReturn {
           typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown',
         errorStack: error instanceof Error ? error.stack : undefined,
         platform: Platform.OS,
+        // Native error details
+        nativeDomain,
+        localizedDescription,
+        userInfo: userInfo ? JSON.stringify(userInfo) : undefined,
       };
+
+      // Map common Apple error codes to short user-friendly messages
+      const errorCode = errorDetails.errorCode;
+      let shortMessage = 'Sign In Failed';
+
+      if (errorCode === '1000') {
+        shortMessage = 'Unknown Error';
+      } else if (errorCode === '1002') {
+        shortMessage = 'Invalid Response';
+      } else if (errorCode === '1003') {
+        shortMessage = 'Not Handled';
+      } else if (errorCode === '1004') {
+        shortMessage = 'Request Failed';
+      } else if (nativeDomain?.includes('AuthenticationServices')) {
+        shortMessage = 'Auth Service Error';
+      }
 
       Sentry.captureException(error, {
         tags: {
@@ -406,14 +440,30 @@ export function useAppleAuth(): UseAppleAuthReturn {
           step: 'unknown',
           platform: Platform.OS,
           errorCode: errorDetails.errorCode,
+          nativeDomain: nativeDomain || 'unknown',
         },
         level: 'error',
         extra: errorDetails,
       });
 
-      // DIAGNOSTIC: Show full error details in toast for debugging (production too)
+      // DIAGNOSTIC: Show FULL error details in toast for debugging (production too)
       // TODO: Remove after debugging - revert to generic error message once issue is fixed
-      const debugErrorMessage = `Apple Sign In Failed\n\nError: ${errorDetails.errorMessage}\n\nCode: ${errorDetails.errorCode}\nType: ${errorDetails.errorType}`;
+      // Show complete error information without truncation
+      const primaryMessage = localizedDescription || errorDetails.errorMessage;
+
+      const debugErrorMessage = [
+        `❌ Apple Sign In Failed`,
+        ``,
+        `Error Code: ${errorDetails.errorCode}`,
+        `Type: ${shortMessage}`,
+        ``,
+        `Message:`,
+        primaryMessage,
+        ``,
+        nativeDomain ? `Domain: ${nativeDomain}` : `Error Type: ${errorDetails.errorType}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
 
       handleError(error instanceof Error ? error : new Error('Apple Sign In failed'), {
         toastMessage: debugErrorMessage, // Always show detailed error for debugging
@@ -423,8 +473,11 @@ export function useAppleAuth(): UseAppleAuthReturn {
         toastDuration: 10000, // Show for 10 seconds to read the full error
       });
 
-      // Also log to console for debugging
+      // Also log to console for debugging (including userInfo)
       console.error('[Apple Auth] Full error details:', JSON.stringify(errorDetails, null, 2));
+      if (userInfo) {
+        console.error('[Apple Auth] User Info:', userInfo);
+      }
     } finally {
       if (isMountedRef.current) {
         setLoading(false);

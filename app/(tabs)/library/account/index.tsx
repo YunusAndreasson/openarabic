@@ -246,7 +246,8 @@ const AccountScreen: FC = () => {
           {
             id: AudioLanguage.ARABIC_ONLY,
             title: STRINGS.AUDIO_LANGUAGE_ARABIC,
-            subtitle: 'Play only Arabic audio in the Bookmarks tab. English translations are skipped.',
+            subtitle:
+              'Play only Arabic audio in the Bookmarks tab. English translations are skipped.',
             icon: 'volume-high' as const,
           },
           {

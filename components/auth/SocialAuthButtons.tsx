@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import type { JSX } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -9,6 +9,9 @@ import { STRINGS } from '@/constants/strings';
 import { useAppleAuth } from '@/hooks/auth/useAppleAuth';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import { ToastType } from '@/types/enums';
+import { handleError } from '@/utils/errorHandling';
+import { showSuccessToast } from '@/utils/errorHandling';
 
 /**
  * Social Authentication Buttons Component
@@ -34,22 +37,81 @@ export function SocialAuthButtons(): JSX.Element {
   const { signInWithGoogle, loading: googleLoading } = useGoogleAuth();
   const colors = useColors();
 
-  // DIAGNOSTIC: Test Sentry error capture
+  // DIAGNOSTIC: Test Sentry error capture with detailed diagnostics
   const testSentryError = () => {
     console.log('[TEST] Triggering test Sentry error...');
+
+    // Get diagnostic information
+    const sentryDsn = process.env['EXPO_PUBLIC_SENTRY_DSN'];
+    const isDsnPresent = !!sentryDsn;
+    const dsnLength = sentryDsn?.length || 0;
+    const isSentryEnabled = isDsnPresent;
+
+    console.log('[TEST] Sentry diagnostics:', {
+      isDsnPresent,
+      dsnLength,
+      isSentryEnabled,
+    });
+
     try {
+      // Attempt to send test error to Sentry
       Sentry.captureException(new Error('TEST: Manual Sentry error from auth screen'), {
         tags: {
           location: 'auth_test',
           test: 'manual_error',
+          build_type: __DEV__ ? 'development' : 'production',
         },
         level: 'error',
+        extra: {
+          testTimestamp: new Date().toISOString(),
+          sentryEnabled: isSentryEnabled,
+          dsnPresent: isDsnPresent,
+          dsnLength,
+        },
       });
-      console.log('[TEST] Sentry error sent');
-      Alert.alert('Test Complete', 'Test error sent to Sentry. Check dashboard.');
+
+      console.log('[TEST] Sentry error capture called');
+
+      // Show concise diagnostic toast (3 lines max)
+      const diagnosticMessage = isSentryEnabled
+        ? [
+            '🔍 Sentry Test: Event Sent ✅',
+            `DSN configured (${dsnLength} chars)`,
+            'Check Sentry dashboard for event',
+          ].join('\n')
+        : [
+            '🔍 Sentry Test: Disabled ❌',
+            'DSN missing - Sentry not enabled',
+            'Add EXPO_PUBLIC_SENTRY_DSN to enable',
+          ].join('\n');
+
+      if (isSentryEnabled) {
+        showSuccessToast(diagnosticMessage, 10000);
+      } else {
+        handleError(new Error('Sentry is disabled'), {
+          toastMessage: diagnosticMessage,
+          toastType: ToastType.INFO,
+          toastDuration: 10000,
+          captureSentry: false, // Don't try to capture this to Sentry
+          trackAnalytics: false,
+        });
+      }
     } catch (error) {
       console.error('[TEST] Failed to send Sentry error:', error);
-      Alert.alert('Test Failed', 'Failed to send to Sentry: ' + error);
+
+      const errorMessage = [
+        '❌ Sentry Test Failed',
+        error instanceof Error ? error.message : String(error),
+        `DSN: ${isDsnPresent ? `${dsnLength} chars` : 'Missing'}`,
+      ].join('\n');
+
+      handleError(error instanceof Error ? error : new Error('Sentry test failed'), {
+        toastMessage: errorMessage,
+        toastType: ToastType.ERROR,
+        toastDuration: 10000,
+        captureSentry: false, // Don't try to capture this to Sentry
+        trackAnalytics: false,
+      });
     }
   };
 
