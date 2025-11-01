@@ -45,8 +45,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         // Check if native module is available
         let GoogleSignin;
         try {
-          GoogleSignin =
-            require('@react-native-google-signin/google-signin').GoogleSignin;
+          GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
         } catch (moduleError) {
           Sentry.captureMessage('Google Sign In module not available', {
             level: 'warning',
@@ -87,8 +86,32 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
   }, []);
 
   const signInWithGoogle = useCallback(async (): Promise<void> => {
+    // Log initial state
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: 'Google Sign In initiated',
+      level: 'info',
+      data: {
+        isConfigured,
+        webClientIdSet: !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'],
+        iosClientIdSet: !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'],
+      },
+    });
+
     if (!isConfigured) {
-      handleError(new Error('Google Sign In not configured'), {
+      const error = new Error('Google Sign In not configured');
+      Sentry.captureException(error, {
+        tags: {
+          location: 'google_auth',
+          step: 'config_check',
+        },
+        level: 'warning',
+        extra: {
+          webClientIdAvailable: !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'],
+          iosClientIdAvailable: !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'],
+        },
+      });
+      handleError(error, {
         toastMessage: 'Google Sign In not available. Please rebuild the app.',
         analyticsEventName: 'Google_Sign_In_Not_Configured',
         sentrySeverity: 'warning',
@@ -100,36 +123,189 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     setLoading(true);
 
     try {
-      // Check if native module is available
+      // STEP 1: Check if native module is available
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Checking Google Sign In native module availability',
+        level: 'info',
+      });
+
       let GoogleSignin;
       try {
-        GoogleSignin =
-          require('@react-native-google-signin/google-signin').GoogleSignin;
-      } catch {
+        GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Google Sign In native module loaded successfully',
+          level: 'info',
+        });
+      } catch (moduleError) {
+        Sentry.captureException(moduleError, {
+          tags: {
+            location: 'google_auth',
+            step: 'module_load',
+          },
+          level: 'error',
+          extra: {
+            errorType: 'module_not_available',
+            errorMessage: String(moduleError),
+          },
+        });
         throw new Error(
           'Google Sign In is not available. Please rebuild the app with: npx expo prebuild',
         );
       }
 
-      // Check if Google Play Services are available (Android)
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-
-      // Sign in and get user info with ID token
-      const userInfo = await GoogleSignin.signIn();
-
-      if (!userInfo.data?.idToken) {
-        throw new Error('No ID token returned from Google Sign In');
-      }
-
-      // Sign in to Supabase with Google ID token
-      const { data, error } = await supabase.auth.signInWithIdToken({
-        provider: 'google',
-        token: userInfo.data.idToken,
+      // STEP 2: Check if Google Play Services are available (Android)
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Checking Google Play Services availability',
+        level: 'info',
       });
 
-      if (error) {
+      try {
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Google Play Services available',
+          level: 'info',
+        });
+      } catch (playServicesError) {
+        Sentry.captureException(playServicesError, {
+          tags: {
+            location: 'google_auth',
+            step: 'play_services_check',
+          },
+          level: 'error',
+          extra: {
+            errorMessage:
+              playServicesError instanceof Error
+                ? playServicesError.message
+                : String(playServicesError),
+            errorCode:
+              typeof playServicesError === 'object' &&
+              playServicesError &&
+              'code' in playServicesError
+                ? playServicesError.code
+                : 'unknown',
+          },
+        });
+        throw playServicesError;
+      }
+
+      // STEP 3: Sign in and get user info with ID token
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Requesting Google Sign In',
+        level: 'info',
+      });
+
+      let userInfo;
+      try {
+        userInfo = await GoogleSignin.signIn();
+      } catch (signInError) {
+        Sentry.captureException(signInError, {
+          tags: {
+            location: 'google_auth',
+            step: 'google_signin',
+          },
+          level: 'error',
+          extra: {
+            errorType:
+              typeof signInError === 'object' ? signInError?.constructor?.name : typeof signInError,
+            errorCode:
+              typeof signInError === 'object' && signInError && 'code' in signInError
+                ? signInError.code
+                : 'unknown',
+            errorMessage: signInError instanceof Error ? signInError.message : String(signInError),
+          },
+        });
+        throw signInError;
+      }
+
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Google Sign In successful',
+        level: 'info',
+        data: {
+          hasUserInfo: !!userInfo,
+          hasData: !!userInfo?.data,
+          hasIdToken: !!userInfo?.data?.idToken,
+          hasEmail: !!userInfo?.data?.user?.email,
+        },
+      });
+
+      if (!userInfo.data?.idToken) {
+        const error = new Error('No ID token returned from Google Sign In');
+        Sentry.captureException(error, {
+          tags: {
+            location: 'google_auth',
+            step: 'token_validation',
+          },
+          level: 'error',
+          extra: {
+            userInfoKeys: userInfo ? Object.keys(userInfo) : [],
+            dataKeys: userInfo?.data ? Object.keys(userInfo.data) : [],
+            hasUser: !!userInfo?.data?.user,
+          },
+        });
         throw error;
       }
+
+      // STEP 4: Sign in to Supabase with Google ID token
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Exchanging Google token with Supabase',
+        level: 'info',
+      });
+
+      let authResponse;
+      try {
+        authResponse = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: userInfo.data.idToken,
+        });
+      } catch (supabaseError) {
+        Sentry.captureException(supabaseError, {
+          tags: {
+            location: 'google_auth',
+            step: 'supabase_signin',
+          },
+          level: 'error',
+          extra: {
+            errorMessage:
+              supabaseError instanceof Error ? supabaseError.message : String(supabaseError),
+          },
+        });
+        throw supabaseError;
+      }
+
+      const { data, error } = authResponse;
+
+      if (error) {
+        Sentry.captureException(error, {
+          tags: {
+            location: 'google_auth',
+            step: 'supabase_response',
+          },
+          level: 'error',
+          extra: {
+            errorMessage: error.message,
+            errorStatus: 'status' in error ? error.status : 'unknown',
+            errorName: error.name,
+          },
+        });
+        throw error;
+      }
+
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Supabase authentication successful',
+        level: 'info',
+        data: {
+          userId: data.user.id,
+          hasSession: !!data.session,
+        },
+      });
 
       // Track analytics
       await analytics.identify(data.user.id, {
@@ -137,6 +313,12 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         last_sign_in: new Date().toISOString(),
       });
       await analytics.trackSignIn('google');
+
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Google Sign In completed successfully',
+        level: 'info',
+      });
 
       successFeedback();
       router.replace(ROUTE_PATHS.LIBRARY_TAB);
@@ -146,8 +328,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       // Handle user cancellation silently
       let statusCodes;
       try {
-        statusCodes =
-          require('@react-native-google-signin/google-signin').statusCodes;
+        statusCodes = require('@react-native-google-signin/google-signin').statusCodes;
       } catch {
         // If we can't get status codes, treat as generic error
         statusCodes = null;
@@ -177,31 +358,56 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         'code' in error &&
         error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE
       ) {
-        handleError(
-          error instanceof Error ? error : new Error('Play Services not available'),
-          {
-            toastMessage: 'Google Play Services not available. Please update.',
-            analyticsEventName: 'Google_Sign_In_Play_Services_Error',
-            sentrySeverity: 'warning',
+        const errorDetails = {
+          errorType: error instanceof Error ? error.constructor.name : typeof error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorCode: String(error.code),
+        };
+
+        Sentry.captureException(error, {
+          tags: {
+            location: 'google_auth',
+            step: 'play_services',
+            errorCode: errorDetails.errorCode,
           },
-        );
+          level: 'warning',
+          extra: errorDetails,
+        });
+
+        handleError(error instanceof Error ? error : new Error('Play Services not available'), {
+          toastMessage: 'Google Play Services not available. Please update.',
+          analyticsEventName: 'Google_Sign_In_Play_Services_Error',
+          sentrySeverity: 'warning',
+        });
         return;
       }
 
-      // Handle other errors
+      // Handle other errors with comprehensive logging
+      const errorDetails = {
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorCode:
+          typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown',
+        errorStack: error instanceof Error ? error.stack : undefined,
+        isConfigured,
+      };
+
       Sentry.captureException(error, {
-        tags: { location: 'google_auth' },
+        tags: {
+          location: 'google_auth',
+          step: 'unknown',
+          errorCode: errorDetails.errorCode,
+        },
         level: 'error',
+        extra: errorDetails,
       });
 
-      handleError(
-        error instanceof Error ? error : new Error('Google Sign In failed'),
-        {
-          toastMessage: `${STRINGS.SOCIAL_AUTH_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
-          analyticsEventName: 'Google_Sign_In_Error',
-          sentrySeverity: 'error',
-        },
-      );
+      handleError(error instanceof Error ? error : new Error('Google Sign In failed'), {
+        toastMessage: `${STRINGS.SOCIAL_AUTH_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
+        analyticsEventName: 'Google_Sign_In_Error',
+        sentrySeverity: 'error',
+        sentryExtra: errorDetails,
+      });
     } finally {
       if (isMountedRef.current) {
         setLoading(false);

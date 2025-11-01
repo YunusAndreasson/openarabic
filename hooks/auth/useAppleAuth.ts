@@ -38,12 +38,46 @@ export function useAppleAuth(): UseAppleAuthReturn {
     if (!isMountedRef.current) return;
     setLoading(true);
 
+    // Log environment context for debugging
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: 'Apple Sign In initiated',
+      level: 'info',
+      data: {
+        platform: Platform.OS,
+        platformVersion: Platform.Version,
+      },
+    });
+
     try {
-      // Check if native module is available
+      // STEP 1: Check if native module is available
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Checking Apple Auth native module availability',
+        level: 'info',
+      });
+
       let appleAuth;
       try {
         appleAuth = require('@invertase/react-native-apple-authentication');
-      } catch {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Apple Auth native module loaded successfully',
+          level: 'info',
+        });
+      } catch (moduleError) {
+        Sentry.captureException(moduleError, {
+          tags: {
+            location: 'apple_auth',
+            step: 'module_load',
+            platform: Platform.OS,
+          },
+          level: 'error',
+          extra: {
+            errorType: 'module_not_available',
+            errorMessage: String(moduleError),
+          },
+        });
         throw new Error(
           'Apple Sign In is not available. Please rebuild the app with: npx expo prebuild',
         );
@@ -52,36 +86,156 @@ export function useAppleAuth(): UseAppleAuthReturn {
       // Platform-specific imports
       if (Platform.OS === 'ios') {
         // iOS: Use native Apple Authentication
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Starting iOS Apple Authentication flow',
+          level: 'info',
+        });
 
-        // Request Apple ID credential
-        const credential = await appleAuth.default.performRequest({
-          requestedOperation: appleAuth.default.Operation.LOGIN,
-          requestedScopes: [
-            appleAuth.default.Scope.EMAIL,
-            appleAuth.default.Scope.FULL_NAME,
-          ],
+        // STEP 2: Request Apple ID credential
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Requesting Apple credential',
+          level: 'info',
+          data: {
+            requestedScopes: ['email', 'fullName'],
+          },
+        });
+
+        let credential;
+        try {
+          credential = await appleAuth.default.performRequest({
+            requestedOperation: appleAuth.default.Operation.LOGIN,
+            requestedScopes: [appleAuth.default.Scope.EMAIL, appleAuth.default.Scope.FULL_NAME],
+          });
+        } catch (credentialError) {
+          Sentry.captureException(credentialError, {
+            tags: {
+              location: 'apple_auth',
+              step: 'credential_request',
+              platform: 'ios',
+            },
+            level: 'error',
+            extra: {
+              errorType:
+                typeof credentialError === 'object'
+                  ? credentialError?.constructor?.name
+                  : typeof credentialError,
+              errorCode:
+                typeof credentialError === 'object' && credentialError && 'code' in credentialError
+                  ? credentialError.code
+                  : 'unknown',
+              errorMessage:
+                credentialError instanceof Error
+                  ? credentialError.message
+                  : String(credentialError),
+            },
+          });
+          throw credentialError;
+        }
+
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Apple credential received',
+          level: 'info',
+          data: {
+            hasIdentityToken: !!credential.identityToken,
+            hasNonce: !!credential.nonce,
+            hasEmail: !!credential.email,
+            hasFullName: !!credential.fullName,
+          },
         });
 
         if (!credential.identityToken) {
-          throw new Error('No identity token returned from Apple');
-        }
-
-        // Sign in to Supabase with Apple ID token
-        const { data, error } = await supabase.auth.signInWithIdToken({
-          provider: 'apple',
-          token: credential.identityToken,
-          nonce: credential.nonce,
-        });
-
-        if (error) {
+          const error = new Error('No identity token returned from Apple');
+          Sentry.captureException(error, {
+            tags: {
+              location: 'apple_auth',
+              step: 'token_validation',
+              platform: 'ios',
+            },
+            level: 'error',
+            extra: {
+              credentialData: {
+                hasUser: !!credential.user,
+                hasEmail: !!credential.email,
+                hasNonce: !!credential.nonce,
+              },
+            },
+          });
           throw error;
         }
 
-        // Save full name if provided (only available on first sign-in)
+        // STEP 3: Sign in to Supabase with Apple ID token
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Exchanging Apple token with Supabase',
+          level: 'info',
+        });
+
+        let authResponse;
+        try {
+          authResponse = await supabase.auth.signInWithIdToken({
+            provider: 'apple',
+            token: credential.identityToken,
+            nonce: credential.nonce,
+          });
+        } catch (supabaseError) {
+          Sentry.captureException(supabaseError, {
+            tags: {
+              location: 'apple_auth',
+              step: 'supabase_signin',
+              platform: 'ios',
+            },
+            level: 'error',
+            extra: {
+              errorMessage:
+                supabaseError instanceof Error ? supabaseError.message : String(supabaseError),
+              hasNonce: !!credential.nonce,
+            },
+          });
+          throw supabaseError;
+        }
+
+        const { data, error } = authResponse;
+
+        if (error) {
+          Sentry.captureException(error, {
+            tags: {
+              location: 'apple_auth',
+              step: 'supabase_response',
+              platform: 'ios',
+            },
+            level: 'error',
+            extra: {
+              errorMessage: error.message,
+              errorStatus: 'status' in error ? error.status : 'unknown',
+              errorName: error.name,
+            },
+          });
+          throw error;
+        }
+
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Supabase authentication successful',
+          level: 'info',
+          data: {
+            userId: data.user.id,
+            hasSession: !!data.session,
+          },
+        });
+
+        // STEP 4: Save full name if provided (only available on first sign-in)
         if (credential.fullName) {
           const fullName =
             `${credential.fullName.givenName ?? ''} ${credential.fullName.familyName ?? ''}`.trim();
           if (fullName && data.user) {
+            Sentry.addBreadcrumb({
+              category: 'auth',
+              message: 'Updating user profile with full name',
+              level: 'info',
+            });
             await supabase.auth.updateUser({
               data: { full_name: fullName },
             });
@@ -95,10 +249,22 @@ export function useAppleAuth(): UseAppleAuthReturn {
         });
         await analytics.trackSignIn('apple');
 
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Apple Sign In completed successfully',
+          level: 'info',
+        });
+
         successFeedback();
         router.replace(ROUTE_PATHS.LIBRARY_TAB);
       } else if (Platform.OS === 'android') {
         // Android: Use web-based OAuth flow
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Starting Android Apple Authentication flow (web-based)',
+          level: 'info',
+        });
+
         const { appleAuthAndroid } = require('@invertase/react-native-apple-authentication');
 
         // Configure the request
@@ -107,6 +273,16 @@ export function useAppleAuth(): UseAppleAuthReturn {
 
         // Note: This requires proper Apple Service ID configuration
         // See: https://github.com/invertase/react-native-apple-authentication#android
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Configuring Apple Auth for Android',
+          level: 'info',
+          data: {
+            hasClientId: true, // Don't log actual client ID
+            hasRedirectUri: true,
+          },
+        });
+
         appleAuthAndroid.configure({
           clientId: 'YOUR_APPLE_SERVICE_ID', // TODO: Add to env vars
           redirectUri: 'https://your-project.supabase.co/auth/v1/callback', // TODO: Configure
@@ -116,13 +292,48 @@ export function useAppleAuth(): UseAppleAuthReturn {
           state,
         });
 
-        const response = await appleAuthAndroid.signIn();
+        let response;
+        try {
+          response = await appleAuthAndroid.signIn();
+        } catch (androidError) {
+          Sentry.captureException(androidError, {
+            tags: {
+              location: 'apple_auth',
+              step: 'android_signin',
+              platform: 'android',
+            },
+            level: 'error',
+            extra: {
+              errorMessage:
+                androidError instanceof Error ? androidError.message : String(androidError),
+            },
+          });
+          throw androidError;
+        }
 
         if (!response.id_token) {
-          throw new Error('No identity token returned from Apple');
+          const error = new Error('No identity token returned from Apple');
+          Sentry.captureException(error, {
+            tags: {
+              location: 'apple_auth',
+              step: 'android_token_validation',
+              platform: 'android',
+            },
+            level: 'error',
+            extra: {
+              responseKeys: Object.keys(response),
+            },
+          });
+          throw error;
         }
 
         // Sign in to Supabase
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Exchanging Android Apple token with Supabase',
+          level: 'info',
+        });
+
         const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
           token: response.id_token,
@@ -130,6 +341,18 @@ export function useAppleAuth(): UseAppleAuthReturn {
         });
 
         if (error) {
+          Sentry.captureException(error, {
+            tags: {
+              location: 'apple_auth',
+              step: 'supabase_signin_android',
+              platform: 'android',
+            },
+            level: 'error',
+            extra: {
+              errorMessage: error.message,
+              errorStatus: 'status' in error ? error.status : 'unknown',
+            },
+          });
           throw error;
         }
 
@@ -143,18 +366,22 @@ export function useAppleAuth(): UseAppleAuthReturn {
         successFeedback();
         router.replace(ROUTE_PATHS.LIBRARY_TAB);
       } else {
-        throw new Error('Apple Sign In not supported on this platform');
+        const error = new Error('Apple Sign In not supported on this platform');
+        Sentry.captureException(error, {
+          tags: {
+            location: 'apple_auth',
+            step: 'platform_check',
+            platform: Platform.OS,
+          },
+          level: 'error',
+        });
+        throw error;
       }
     } catch (error: unknown) {
       if (!isMountedRef.current) return;
 
       // Handle user cancellation silently
-      if (
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        error.code === '1001'
-      ) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === '1001') {
         // User cancelled - no error needed
         Sentry.addBreadcrumb({
           category: 'auth',
@@ -164,20 +391,33 @@ export function useAppleAuth(): UseAppleAuthReturn {
         return;
       }
 
-      // Handle other errors
+      // Handle other errors with comprehensive logging
+      const errorDetails = {
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorCode:
+          typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown',
+        errorStack: error instanceof Error ? error.stack : undefined,
+        platform: Platform.OS,
+      };
+
       Sentry.captureException(error, {
-        tags: { location: 'apple_auth' },
+        tags: {
+          location: 'apple_auth',
+          step: 'unknown',
+          platform: Platform.OS,
+          errorCode: errorDetails.errorCode,
+        },
         level: 'error',
+        extra: errorDetails,
       });
 
-      handleError(
-        error instanceof Error ? error : new Error('Apple Sign In failed'),
-        {
-          toastMessage: `${STRINGS.SOCIAL_AUTH_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
-          analyticsEventName: 'Apple_Sign_In_Error',
-          sentrySeverity: 'error',
-        },
-      );
+      handleError(error instanceof Error ? error : new Error('Apple Sign In failed'), {
+        toastMessage: `${STRINGS.SOCIAL_AUTH_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
+        analyticsEventName: 'Apple_Sign_In_Error',
+        sentrySeverity: 'error',
+        sentryExtra: errorDetails,
+      });
     } finally {
       if (isMountedRef.current) {
         setLoading(false);
