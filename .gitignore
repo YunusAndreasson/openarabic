@@ -33,6 +33,7 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+.tsbuildinfo
 
 # linting and formatting caches
 .eslintcache

@@ -28,7 +28,8 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "lib": ["ESNext"],
-    "incremental": true
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo"
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
   "exclude": [
