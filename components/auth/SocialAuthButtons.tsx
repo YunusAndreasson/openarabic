@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -17,8 +16,9 @@ import { useColors } from '@/hooks/theme/useColors';
  * for consistent design across all platforms.
  *
  * **Expo Go Compatibility:**
- * - Hidden in Expo Go (native modules not available)
- * - Visible in development builds and production builds
+ * - Buttons visible in Expo Go for UI preview
+ * - Buttons will show error messages when pressed (native modules unavailable)
+ * - Fully functional in development builds and production builds
  *
  * Features:
  * - Follows design system (Colors.ts, layout.ts)
@@ -27,17 +27,11 @@ import { useColors } from '@/hooks/theme/useColors';
  * - Error handling via hooks (toast notifications)
  * - Accessibility support
  */
-export function SocialAuthButtons(): JSX.Element | null {
+export function SocialAuthButtons(): JSX.Element {
   // Call hooks unconditionally (React Rules of Hooks)
   const { signInWithApple, loading: appleLoading } = useAppleAuth();
   const { signInWithGoogle, loading: googleLoading } = useGoogleAuth();
   const colors = useColors();
-
-  // Hide social auth in Expo Go (native modules not supported)
-  const isExpoGo = Constants.appOwnership === 'expo';
-  if (isExpoGo) {
-    return null;
-  }
 
   return (
     <View style={styles.container}>
