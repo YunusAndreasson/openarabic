@@ -78,7 +78,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
         icon: 'trophy' as const,
         value: metrics.longestStreak.toString(),
         label: 'Longest',
-        color: colors.warning,
+        color: colors.warning + '99', // 60% opacity to match past streak bars
       },
       {
         id: 'total',
