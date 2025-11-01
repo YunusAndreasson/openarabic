@@ -78,14 +78,14 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
         icon: 'trophy' as const,
         value: metrics.longestStreak.toString(),
         label: 'Longest',
-        color: colors.warning + '99', // 60% opacity to match past streak bars
+        color: colors.success, // Green for achievement (universal trophy semantics)
       },
       {
         id: 'total',
         icon: 'calendar' as const,
         value: metrics.totalReadingDays.toString(),
         label: 'Total',
-        color: colors.primary,
+        color: colors.success, // Green for total progress/growth
       },
     ],
     [
@@ -93,7 +93,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
       metrics.longestStreak,
       metrics.totalReadingDays,
       colors.warning,
-      colors.primary,
+      colors.success,
     ],
   );
 

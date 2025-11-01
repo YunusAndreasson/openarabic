@@ -65,10 +65,10 @@ export const StreakChart = memo<StreakChartProps>(
 
         if (hasActivity) {
           if (isActiveStreak) {
-            barColor = colors.warning; // Orange for active streak
+            barColor = colors.warning; // Orange for active streak (matches Current badge)
             barOpacity = 1;
           } else if (isInStreak) {
-            barColor = colors.warning; // Orange for past streaks
+            barColor = colors.success; // Green for past streaks (matches Longest trophy achievement)
             barOpacity = 0.6;
           } else {
             barColor = colors.tint; // Sage green for isolated active days
@@ -88,7 +88,7 @@ export const StreakChart = memo<StreakChartProps>(
         barWidth,
         bars,
       };
-    }, [dailyActivity, streakPeriods, colors.warning, colors.tint, colors.textTertiary]);
+    }, [dailyActivity, streakPeriods, colors.warning, colors.success, colors.tint, colors.textTertiary]);
 
     // Memoize static styles
     const staticStyles = useMemo(
