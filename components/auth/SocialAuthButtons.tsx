@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAppleAuth } from '@/hooks/auth/useAppleAuth';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
   },
   container: {
     marginBottom: LAYOUT.SPACING.LARGE,
+    maxWidth: SCREEN_WIDTH * 0.9, // Match form input width constraint
     width: '100%',
   },
   dividerContainer: {
