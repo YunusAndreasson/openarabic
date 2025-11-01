@@ -57,7 +57,8 @@ type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
 const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.TINY, // Minimal bottom space (summary capped at 5 lines)
   },
   textContainer: {
     gap: LAYOUT.SPACING.SMALL,
