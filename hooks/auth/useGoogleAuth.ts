@@ -63,6 +63,10 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           Sentry.captureMessage('Google Web Client ID not configured', {
             level: 'warning',
             tags: { location: 'google_auth_config' },
+            extra: {
+              hasWebClientId: !!webClientId,
+              hasIosClientId: !!iosClientId,
+            },
           });
           return;
         }
@@ -74,6 +78,17 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         });
 
         setIsConfigured(true);
+
+        // Log successful configuration to Sentry
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Google Sign In configured successfully',
+          level: 'info',
+          data: {
+            hasWebClientId: true,
+            hasIosClientId: !!iosClientId,
+          },
+        });
       } catch (error) {
         Sentry.captureException(error, {
           tags: { location: 'google_auth_config' },

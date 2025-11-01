@@ -113,14 +113,39 @@ const queryClient = new QueryClient({
 const navigationIntegration = Sentry.reactNavigationIntegration();
 const sentryDsn = getEnvVar('EXPO_PUBLIC_SENTRY_DSN', undefined, true);
 
+// Initialize Sentry with production config
 Sentry.init({
   dsn: sentryDsn,
   integrations: [navigationIntegration],
   enabled: !!sentryDsn, // Only enable if DSN is available
   tracesSampleRate: 1.0, // Sample everything (100%)
   attachScreenshot: true, // Helps debug UI crashes
-  debug: false, // Disable debug logging to reduce console noise
+  debug: false, // Disable debug logging in production
+  beforeSend(event) {
+    // Add environment diagnostic context to all events
+    event.contexts = {
+      ...event.contexts,
+      env_vars: {
+        sentry_dsn_present: !!sentryDsn,
+        mixpanel_token_present: !!process.env['EXPO_PUBLIC_MIXPANEL_TOKEN'],
+        google_web_client_id_present: !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'],
+        google_ios_client_id_present: !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'],
+      },
+    };
+    return event;
+  },
 });
+
+// Send initialization event to Sentry to verify it's working
+if (sentryDsn) {
+  Sentry.captureMessage('Sentry initialized successfully in build', {
+    level: 'info',
+    tags: {
+      location: 'app_init',
+      build_type: __DEV__ ? 'development' : 'production',
+    },
+  });
+}
 
 function AppContent() {
   const dispatch = useAppDispatch();

@@ -103,9 +103,18 @@ jobs:
           EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: 'ON_LOAD'
           EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
           NODE_PATH: '/github/workspace'
+          # Sentry configuration
+          EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.EXPO_PUBLIC_SENTRY_DSN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ALLOW_FAILURE: true
-          SENTRY_DISABLE_AUTO_UPLOAD: false
+          SENTRY_ORG: 'openarabic'
+          SENTRY_PROJECT: 'react-native'
+          SENTRY_DISABLE_AUTO_UPLOAD: 'false'
+          SENTRY_ALLOW_FAILURE: 'true'
+          # Analytics
+          EXPO_PUBLIC_MIXPANEL_TOKEN: ${{ secrets.EXPO_PUBLIC_MIXPANEL_TOKEN }}
+          # Google Sign-In
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
+          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
 
       # === Submit Android to Google Play Store (Internal Testing) ===
       - name: Submit Android to Google Play (Internal)
@@ -139,6 +148,18 @@ jobs:
           EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: 'ON_LOAD'
           EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
           NODE_PATH: '/github/workspace'
+          # Sentry configuration
+          EXPO_PUBLIC_SENTRY_DSN: ${{ secrets.EXPO_PUBLIC_SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: 'openarabic'
+          SENTRY_PROJECT: 'react-native'
+          SENTRY_DISABLE_AUTO_UPLOAD: 'false'
+          SENTRY_ALLOW_FAILURE: 'true'
+          # Analytics
+          EXPO_PUBLIC_MIXPANEL_TOKEN: ${{ secrets.EXPO_PUBLIC_MIXPANEL_TOKEN }}
+          # Google Sign-In
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
+          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
 
       # === Submit iOS to TestFlight ===
       - name: Submit iOS to TestFlight
