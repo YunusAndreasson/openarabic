@@ -46,6 +46,11 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     }
 
     if (streakHistory) {
+      const hasActiveStreak = streakHistory.metrics.currentStreak > 0;
+      const subtitle = hasActiveStreak
+        ? 'Keep up the great momentum'
+        : 'Start building your reading habit';
+
       return (
         <>
           {/* Header */}
@@ -58,7 +63,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
               colorName="textTertiary"
               style={LAYOUT.BOTTOM_SHEET.STYLES.subtitle}
             >
-              Keep up the great momentum
+              {subtitle}
             </ThemedText>
           </View>
 
