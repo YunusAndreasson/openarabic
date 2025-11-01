@@ -120,8 +120,14 @@ const sentryDsn = getEnvVar('EXPO_PUBLIC_SENTRY_DSN', undefined, true);
 console.log('[ENV] Sentry DSN present:', !!sentryDsn);
 console.log('[ENV] Sentry DSN length:', sentryDsn?.length || 0);
 console.log('[ENV] Mixpanel token present:', !!process.env['EXPO_PUBLIC_MIXPANEL_TOKEN']);
-console.log('[ENV] Google Web Client ID present:', !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID']);
-console.log('[ENV] Google iOS Client ID present:', !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID']);
+console.log(
+  '[ENV] Google Web Client ID present:',
+  !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'],
+);
+console.log(
+  '[ENV] Google iOS Client ID present:',
+  !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'],
+);
 
 // Initialize Sentry with production config
 Sentry.init({

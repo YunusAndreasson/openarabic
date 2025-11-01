@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 
 import { ROUTE_PATHS } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
@@ -297,19 +296,31 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       const { data, error } = authResponse;
 
       if (error) {
+        const supabaseErrorDetails = {
+          errorMessage: error.message,
+          errorStatus: 'status' in error ? error.status : 'unknown',
+          errorName: error.name,
+        };
+
         Sentry.captureException(error, {
           tags: {
             location: 'google_auth',
             step: 'supabase_response',
           },
           level: 'error',
-          extra: {
-            errorMessage: error.message,
-            errorStatus: 'status' in error ? error.status : 'unknown',
-            errorName: error.name,
-          },
+          extra: supabaseErrorDetails,
         });
-        throw error;
+
+        // Create enriched error with Supabase details
+        const enrichedError = new Error(
+          `Supabase authentication failed: ${error.message} (Status: ${supabaseErrorDetails.errorStatus})`,
+        );
+        // Preserve original error properties
+        Object.assign(enrichedError, {
+          originalError: error,
+          ...supabaseErrorDetails,
+        });
+        throw enrichedError;
       }
 
       Sentry.addBreadcrumb({
@@ -397,7 +408,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         return;
       }
 
-      // Handle other errors with comprehensive logging
+      // Handle other errors with comprehensive logging and step-specific messages
       const errorDetails = {
         errorType: error instanceof Error ? error.constructor.name : typeof error,
         errorMessage: error instanceof Error ? error.message : String(error),
@@ -407,21 +418,67 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         isConfigured,
       };
 
+      // Determine which step failed based on error message
+      let failedStep = 'unknown';
+      let stepMessage = 'Sign in failed';
+
+      const errorMsg = errorDetails.errorMessage.toLowerCase();
+      if (
+        errorMsg.includes('module') ||
+        errorMsg.includes('not available') ||
+        errorMsg.includes('rebuild')
+      ) {
+        failedStep = 'module_load';
+        stepMessage = 'Google Sign In not available';
+      } else if (errorMsg.includes('play services')) {
+        failedStep = 'play_services';
+        stepMessage = 'Google Play Services issue';
+      } else if (errorMsg.includes('id token') && errorMsg.includes('returned')) {
+        failedStep = 'token_validation';
+        stepMessage = 'Google sign-in succeeded, but no auth token received';
+      } else if (
+        errorMsg.includes('supabase') ||
+        errorMsg.includes('auth') ||
+        errorMsg.includes('server')
+      ) {
+        failedStep = 'supabase_exchange';
+        stepMessage = 'Google sign-in succeeded, but server authentication failed';
+      } else if (errorMsg.includes('sign') || errorMsg.includes('google')) {
+        failedStep = 'google_signin';
+        stepMessage = 'Google sign-in failed';
+      }
+
       Sentry.captureException(error, {
         tags: {
           location: 'google_auth',
-          step: 'unknown',
+          step: failedStep,
           errorCode: errorDetails.errorCode,
         },
         level: 'error',
         extra: errorDetails,
       });
 
+      // Build full error message for toast (no truncation)
+      const detailedErrorMessage = [
+        `❌ Google Sign In Failed`,
+        ``,
+        `Step: ${stepMessage}`,
+        errorDetails.errorCode !== 'unknown' ? `Code: ${errorDetails.errorCode}` : '',
+        ``,
+        `Error Message:`,
+        errorDetails.errorMessage,
+        ``,
+        'Check connection and try again',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
       handleError(error instanceof Error ? error : new Error('Google Sign In failed'), {
-        toastMessage: `${STRINGS.SOCIAL_AUTH_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
+        toastMessage: detailedErrorMessage,
+        toastDuration: 10000, // 10 seconds to read detailed error
         analyticsEventName: 'Google_Sign_In_Error',
         sentrySeverity: 'error',
-        sentryExtra: errorDetails,
+        sentryExtra: { ...errorDetails, failedStep },
       });
     } finally {
       if (isMountedRef.current) {
