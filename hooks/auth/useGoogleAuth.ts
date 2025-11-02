@@ -55,8 +55,8 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         }
 
         // Get Web Client ID from environment
-        const webClientId = process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'];
-        const iosClientId = process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'];
+        const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+        const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
         if (!webClientId) {
           Sentry.captureMessage('Google Web Client ID not configured', {
@@ -107,8 +107,8 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       level: 'info',
       data: {
         isConfigured,
-        webClientIdSet: !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'],
-        iosClientIdSet: !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'],
+        webClientIdSet: !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+        iosClientIdSet: !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
       },
     });
 
@@ -121,8 +121,8 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         },
         level: 'warning',
         extra: {
-          webClientIdAvailable: !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'],
-          iosClientIdAvailable: !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'],
+          webClientIdAvailable: !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+          iosClientIdAvailable: !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
         },
       });
       handleError(error, {

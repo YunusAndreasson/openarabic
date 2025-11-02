@@ -3,10 +3,8 @@
  * Mixpanel configuration and event names
  */
 
-import { getEnvVar } from '@/utils/env';
-
 // Your Mixpanel project token - required for analytics to work
-export const MIXPANEL_TOKEN = getEnvVar('EXPO_PUBLIC_MIXPANEL_TOKEN');
+export const MIXPANEL_TOKEN = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN;
 
 // Analytics token - gracefully handled by analytics service
 

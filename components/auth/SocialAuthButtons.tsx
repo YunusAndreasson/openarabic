@@ -40,10 +40,10 @@ export function SocialAuthButtons(): JSX.Element {
     console.log('[TEST] Showing environment variables on screen...');
 
     // Get ALL environment variables
-    const sentryDsn = process.env['EXPO_PUBLIC_SENTRY_DSN'];
-    const mixpanelToken = process.env['EXPO_PUBLIC_MIXPANEL_TOKEN'];
-    const googleWebClientId = process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'];
-    const googleIosClientId = process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'];
+    const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+    const mixpanelToken = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN;
+    const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+    const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
     // Build on-screen diagnostic message with FULL values
     const diagnosticMessage = [

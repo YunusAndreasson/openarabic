@@ -64,7 +64,6 @@ import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
-import { getEnvVar } from '@/utils/env';
 import { handleError } from '@/utils/errorHandling';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
 
@@ -114,7 +113,7 @@ const queryClient = new QueryClient({
 
 // Memoize navigation integration for Sentry
 const navigationIntegration = Sentry.reactNavigationIntegration();
-const sentryDsn = getEnvVar('EXPO_PUBLIC_SENTRY_DSN', undefined, true);
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
 // DIAGNOSTIC: Log environment variables to Sentry breadcrumbs
 // NOTE: User will see these ON SCREEN via test button in auth screen
@@ -127,9 +126,9 @@ Sentry.addBreadcrumb({
     sentry_dsn_full: sentryDsn || '[not set]',
     sentry_dsn_length: sentryDsn?.length || 0,
     sentry_dsn_format_valid: sentryDsn?.startsWith('https://') || false,
-    mixpanel_token_full: process.env['EXPO_PUBLIC_MIXPANEL_TOKEN'] || '[not set]',
-    google_web_client_id_full: process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'] || '[not set]',
-    google_ios_client_id_full: process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'] || '[not set]',
+    mixpanel_token_full: process.env.EXPO_PUBLIC_MIXPANEL_TOKEN || '[not set]',
+    google_web_client_id_full: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '[not set]',
+    google_ios_client_id_full: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '[not set]',
   },
 });
 
@@ -152,9 +151,9 @@ Sentry.init({
       env_vars: {
         sentry_dsn_present: !!sentryDsn,
         sentry_dsn_length: sentryDsn?.length || 0,
-        mixpanel_token_present: !!process.env['EXPO_PUBLIC_MIXPANEL_TOKEN'],
-        google_web_client_id_present: !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'],
-        google_ios_client_id_present: !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'],
+        mixpanel_token_present: !!process.env.EXPO_PUBLIC_MIXPANEL_TOKEN,
+        google_web_client_id_present: !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+        google_ios_client_id_present: !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
       },
     };
     return event;
