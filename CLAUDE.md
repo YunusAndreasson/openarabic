@@ -847,6 +847,34 @@ Uses Islamic Calendar versioning:
 - Format: `YEAR.MONTH.RELEASE` (e.g., `1447.2.2`)
 - Build numbers maintained per platform in package.json (e.g., `1447.2.2+41`)
 
+## Release & Deployment
+
+### GitHub Actions Workflow Commands
+
+You can trigger release builds directly using the GitHub CLI:
+
+```bash
+# Trigger iOS-only release build
+gh workflow run release.yml -f platform=ios
+
+# Trigger Android-only release build
+gh workflow run release.yml -f platform=android
+
+# Trigger both platforms (default)
+gh workflow run release.yml -f platform=all
+```
+
+**When to use these commands**:
+- After fixing critical bugs that need immediate TestFlight deployment
+- When testing environment variable changes in EAS builds
+- To trigger manual releases outside of the automatic version bump workflow
+
+**Important notes**:
+- The workflow automatically handles version bumping, building, and TestFlight/Play Store submission
+- Builds use `--clear-cache` flag to ensure fresh Metro bundles with updated environment variables
+- All `EXPO_PUBLIC_*` variables are injected from GitHub Secrets during the build process
+- You can check build status with: `gh workflow view release.yml`
+
 ## Success Criteria
 
 A successful implementation meets these criteria:
