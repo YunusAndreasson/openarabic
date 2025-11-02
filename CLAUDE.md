@@ -862,6 +862,9 @@ gh workflow run release.yml -f platform=android
 
 # Trigger both platforms (default)
 gh workflow run release.yml -f platform=all
+
+# Check workflow status
+gh workflow view release.yml
 ```
 
 **When to use these commands**:
@@ -873,7 +876,47 @@ gh workflow run release.yml -f platform=all
 - The workflow automatically handles version bumping, building, and TestFlight/Play Store submission
 - Builds use `--clear-cache` flag to ensure fresh Metro bundles with updated environment variables
 - All `EXPO_PUBLIC_*` variables are injected from GitHub Secrets during the build process
-- You can check build status with: `gh workflow view release.yml`
+
+### EAS CLI Commands
+
+You can run EAS commands directly using either `eas` or `npx eas-cli`:
+
+```bash
+# Build commands
+eas build --platform ios --profile preview --clear-cache
+eas build --platform android --profile production --clear-cache --non-interactive
+eas build --platform all --profile development --clear-cache
+
+# Update commands (OTA updates)
+eas update --branch root --auto --clear-cache
+eas update --branch development --message "Fix critical bug" --clear-cache
+
+# List recent builds
+eas build:list --platform ios --limit 5 --non-interactive
+eas build:list --status in-progress
+
+# Check authentication
+eas whoami
+
+# View project configuration
+eas config
+```
+
+**Available build profiles** (from eas.json):
+- `development` - Development builds with Expo Go
+- `preview` - Internal testing builds (TestFlight/Internal Track)
+- `production` - Production builds for App Store/Play Store
+
+**Critical flags**:
+- `--clear-cache` - **ALWAYS use this** when environment variables change or fixing cache-related issues
+- `--non-interactive` - Required for CI/CD environments (GitHub Actions uses this)
+- `--auto` - Auto-detect branch name and commit message for updates
+
+**When to use EAS CLI directly**:
+- Local testing of builds before pushing to CI/CD
+- Quick OTA updates without full builds
+- Debugging build issues with detailed logs
+- Checking build status and history
 
 ## Success Criteria
 
