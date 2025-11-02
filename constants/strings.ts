@@ -181,7 +181,7 @@ export const STRINGS = {
   // Social auth
   SIGN_IN_WITH_APPLE: 'Sign in with Apple',
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
-  CONTINUE_WITH: 'Or continue with',
+  CONTINUE_WITH: 'or',
   SOCIAL_AUTH_FAILED: 'Sign in failed',
   SOCIAL_AUTH_CANCELLED: 'Sign in cancelled',
   SOCIAL_AUTH_NETWORK_ERROR: 'Network error. Check connection and try again',
