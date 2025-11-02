@@ -471,16 +471,6 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         stepMessage = 'Google sign-in failed';
       }
 
-      Sentry.captureException(error, {
-        tags: {
-          location: 'google_auth',
-          step: failedStep,
-          errorCode: errorDetails.errorCode,
-        },
-        level: 'error',
-        extra: errorDetails,
-      });
-
       // Extract Supabase error details if available
       const supabaseError =
         typeof error === 'object' && error && 'originalError' in error
@@ -515,11 +505,17 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         .filter(Boolean)
         .join('\n');
 
+      // Use handleError to avoid duplicate Sentry captures
       handleError(error instanceof Error ? error : new Error('Google Sign In failed'), {
         toastMessage: detailedErrorMessage,
         toastDuration: 20000, // 20 seconds to read ALL details and screenshot
         analyticsEventName: 'Google_Sign_In_Error',
         sentrySeverity: 'error',
+        sentryTags: {
+          location: 'google_auth',
+          step: failedStep,
+          errorCode: errorDetails.errorCode,
+        },
         sentryExtra: { ...errorDetails, failedStep, supabaseError },
       });
     } finally {

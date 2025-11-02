@@ -1,5 +1,5 @@
-import * as Application from 'expo-application';
 import * as Sentry from '@sentry/react-native';
+import * as Application from 'expo-application';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Platform } from 'react-native';
@@ -143,28 +143,27 @@ export function useAppleAuth(): UseAppleAuthReturn {
             requestedScopes: [appleAuth.default.Scope.EMAIL, appleAuth.default.Scope.FULL_NAME],
           });
         } catch (credentialError) {
-          Sentry.captureException(credentialError, {
-            tags: {
-              location: 'apple_auth',
-              step: 'credential_request',
-              platform: 'ios',
-            },
-            level: 'error',
-            extra: {
-              errorType:
-                typeof credentialError === 'object'
-                  ? credentialError?.constructor?.name
-                  : typeof credentialError,
-              errorCode:
-                typeof credentialError === 'object' && credentialError && 'code' in credentialError
-                  ? credentialError.code
-                  : 'unknown',
-              errorMessage:
-                credentialError instanceof Error
-                  ? credentialError.message
-                  : String(credentialError),
-            },
-          });
+          // Check if user canceled (error 1001) - this is expected and shouldn't be reported as an error
+          const errorCode =
+            typeof credentialError === 'object' && credentialError && 'code' in credentialError
+              ? String(credentialError.code)
+              : 'unknown';
+
+          if (errorCode === '1001') {
+            // User canceled - this is normal behavior, not an error
+            // Silently return without showing error or logging to Sentry
+            Sentry.addBreadcrumb({
+              category: 'auth',
+              message: 'User canceled Apple Sign In',
+              level: 'info',
+            });
+            return;
+          }
+
+          // Mark error with step information for outer catch handler
+          if (credentialError instanceof Error && !('step' in credentialError)) {
+            (credentialError as Error & { step?: string }).step = 'credential_request';
+          }
           throw credentialError;
         }
 
@@ -432,20 +431,67 @@ export function useAppleAuth(): UseAppleAuthReturn {
         return;
       }
 
+      // Capture comprehensive diagnostic data for troubleshooting
+      // Log the full error object structure before processing
+      Sentry.addBreadcrumb({
+        category: 'error',
+        message: 'Apple Sign In error occurred',
+        level: 'error',
+        data: {
+          errorType: error instanceof Error ? error.constructor.name : typeof error,
+          errorStringified: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+          timestamp: new Date().toISOString(),
+        },
+      });
+
       // Handle other errors with comprehensive logging and native error extraction
       const errorObj = error && typeof error === 'object' ? error : {};
 
-      // Extract native error properties (iOS specific)
+      // Extract ALL native error properties (iOS NSError has many useful fields)
       const nativeDomain =
         'domain' in errorObj && typeof errorObj.domain === 'string' ? errorObj.domain : undefined;
       const localizedDescription =
         'localizedDescription' in errorObj && typeof errorObj.localizedDescription === 'string'
           ? errorObj.localizedDescription
           : undefined;
+      const localizedFailureReason =
+        'localizedFailureReason' in errorObj && typeof errorObj.localizedFailureReason === 'string'
+          ? errorObj.localizedFailureReason
+          : undefined;
+      const localizedRecoverySuggestion =
+        'localizedRecoverySuggestion' in errorObj &&
+        typeof errorObj.localizedRecoverySuggestion === 'string'
+          ? errorObj.localizedRecoverySuggestion
+          : undefined;
       const userInfo =
         'userInfo' in errorObj && typeof errorObj.userInfo === 'object'
           ? errorObj.userInfo
           : undefined;
+      // Extract specific keys from userInfo that Apple provides
+      const userInfoDetails: Record<string, unknown> = {};
+      if (userInfo && typeof userInfo === 'object') {
+        // Extract common NSError userInfo keys
+        const keysToExtract = [
+          'NSLocalizedDescription',
+          'NSLocalizedFailureReason',
+          'NSLocalizedRecoverySuggestion',
+          'NSLocalizedRecoveryOptions',
+          'NSRecoveryAttempterErrorKey',
+          'NSUnderlyingError',
+          'NSDebugDescriptionErrorKey',
+        ];
+        keysToExtract.forEach(key => {
+          if (key in userInfo) {
+            userInfoDetails[key] = (userInfo as Record<string, unknown>)[key];
+          }
+        });
+      }
+
+      // Extract underlying error safely
+      const underlyingError =
+        'underlyingError' in errorObj
+          ? (errorObj as { underlyingError?: unknown }).underlyingError
+          : userInfoDetails['NSUnderlyingError'];
 
       const errorDetails = {
         errorType: error instanceof Error ? error.constructor.name : typeof error,
@@ -454,89 +500,206 @@ export function useAppleAuth(): UseAppleAuthReturn {
           typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown',
         errorStack: error instanceof Error ? error.stack : undefined,
         platform: Platform.OS,
-        // Native error details
+        // Native error details - all available properties
         nativeDomain,
-        localizedDescription,
-        userInfo: userInfo ? JSON.stringify(userInfo) : undefined,
+        localizedDescription:
+          localizedDescription || (userInfoDetails['NSLocalizedDescription'] as string | undefined),
+        localizedFailureReason:
+          localizedFailureReason ||
+          (userInfoDetails['NSLocalizedFailureReason'] as string | undefined),
+        localizedRecoverySuggestion:
+          localizedRecoverySuggestion ||
+          (userInfoDetails['NSLocalizedRecoverySuggestion'] as string | undefined),
+        userInfo:
+          Object.keys(userInfoDetails).length > 0 ? JSON.stringify(userInfoDetails) : undefined,
+        underlyingError: underlyingError ? JSON.stringify(underlyingError) : undefined,
+        debugDescription: userInfoDetails['NSDebugDescriptionErrorKey'] as string | undefined,
       };
 
-      // Get device and app diagnostic information
+      // Get comprehensive device and app diagnostic information
       const deviceInfo = {
         ios_version: Platform.Version,
         bundle_id: Application.applicationId,
         app_version: Application.nativeApplicationVersion,
         build_number: Application.nativeBuildVersion,
+        platform: Platform.OS,
+        is_simulator: Platform.OS === 'ios' && Platform.isPad === false, // Basic check
       };
 
-      // Map common Apple error codes to short user-friendly messages
-      const errorCode = errorDetails.errorCode;
-      let shortMessage = 'Sign In Failed';
-      let explanation = '';
-
-      if (errorCode === '1000') {
-        shortMessage = 'Unknown Error (1000)';
-        explanation =
-          'Possible causes:\n• Apple ID not signed in on device\n• Keychain access issues\n• Bundle ID mismatch\n• Provisioning profile problem';
-      } else if (errorCode === '1002') {
-        shortMessage = 'Invalid Response';
-        explanation = 'Apple Sign In response invalid';
-      } else if (errorCode === '1003') {
-        shortMessage = 'Not Handled';
-        explanation = 'Operation not handled';
-      } else if (errorCode === '1004') {
-        shortMessage = 'Request Failed';
-        explanation = 'Apple Sign In request failed';
-      } else if (nativeDomain?.includes('AuthenticationServices')) {
-        shortMessage = 'Auth Service Error';
-        explanation = 'Authentication services error';
+      // Capture full raw error object with all properties for deep debugging
+      let rawErrorObject: Record<string, unknown> = {};
+      try {
+        // Serialize the error object preserving all enumerable and non-enumerable properties
+        if (error && typeof error === 'object') {
+          rawErrorObject = {
+            // Standard Error properties
+            name: error instanceof Error ? error.name : undefined,
+            message: error instanceof Error ? error.message : undefined,
+            stack: error instanceof Error ? error.stack : undefined,
+            // All own properties
+            ...Object.getOwnPropertyNames(error).reduce(
+              (acc, key) => {
+                try {
+                  acc[key] = (error as Record<string, unknown>)[key];
+                } catch {
+                  // Skip if we can't access
+                }
+                return acc;
+              },
+              {} as Record<string, unknown>,
+            ),
+            // Stringified version for full structure
+            stringified: JSON.stringify(error, (key, value) => {
+              // Handle circular references
+              if (key === 'stack' && typeof value === 'string') {
+                return value.substring(0, 1000); // Limit stack size
+              }
+              return value;
+            }),
+          };
+        }
+      } catch (serializationError) {
+        rawErrorObject = { serializationError: String(serializationError) };
       }
 
-      Sentry.captureException(error, {
-        tags: {
+      // Extract Apple's native error messages
+      const appleErrorDescription = errorDetails.localizedDescription;
+      const appleFailureReason = errorDetails.localizedFailureReason;
+      const appleRecoverySuggestion = errorDetails.localizedRecoverySuggestion;
+      const appleDebugDescription = errorDetails.debugDescription;
+
+      // Build error message using Apple's native messages
+      const debugErrorMessage = [
+        `❌ Apple Sign In Error`,
+        ``,
+        appleErrorDescription ? `**Error:**\n${appleErrorDescription}` : '',
+        appleFailureReason ? `**Reason:**\n${appleFailureReason}` : '',
+        appleRecoverySuggestion ? `**Suggestion:**\n${appleRecoverySuggestion}` : '',
+        appleDebugDescription ? `**Debug:**\n${appleDebugDescription}` : '',
+        ``,
+        `**Diagnostic Info:**`,
+        `• Error Code: ${errorDetails.errorCode}`,
+        `• Platform: ${Platform.OS} ${Platform.Version}`,
+        `• Capability: ${capabilityStatus || 'unknown'}`,
+        `• Bundle ID: ${deviceInfo.bundle_id}`,
+        nativeDomain ? `• Domain: ${nativeDomain}` : '',
+        ``,
+        // Show full error object if we have detailed userInfo
+        errorDetails.userInfo && errorDetails.userInfo !== '{}'
+          ? `**Full Error Details:**\n${errorDetails.userInfo}`
+          : '',
+        errorDetails.underlyingError
+          ? `**Underlying Error:**\n${errorDetails.underlyingError}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      // Determine the step where the error occurred
+      const errorStep =
+        (error instanceof Error && 'step' in error
+          ? (error as Error & { step?: string }).step
+          : undefined) || 'unknown';
+
+      // Use handleError to avoid duplicate Sentry captures
+      handleError(error instanceof Error ? error : new Error('Apple Sign In failed'), {
+        toastMessage: debugErrorMessage,
+        analyticsEventName: 'Apple_Sign_In_Error',
+        sentrySeverity: 'error',
+        sentryTags: {
           location: 'apple_auth',
-          step: 'unknown',
+          step: errorStep,
           platform: Platform.OS,
           errorCode: errorDetails.errorCode,
           nativeDomain: nativeDomain || 'unknown',
           ios_version: String(deviceInfo.ios_version),
         },
-        level: 'error',
-        extra: {
-          ...errorDetails,
-          ...deviceInfo,
+        sentryExtra: {
+          // ============================================
+          // APPLE ERROR INFORMATION (Pure native data)
+          // ============================================
+          appleErrorCode: errorDetails.errorCode,
+          appleErrorDomain: nativeDomain,
+          appleLocalizedDescription: appleErrorDescription,
+          appleFailureReason: appleFailureReason,
+          appleRecoverySuggestion: appleRecoverySuggestion,
+          appleDebugDescription: appleDebugDescription,
+          appleUserInfo: errorDetails.userInfo,
+          appleUnderlyingError: errorDetails.underlyingError,
+          appleFullUserInfo: JSON.stringify(userInfoDetails, null, 2),
+
+          // ============================================
+          // RAW ERROR OBJECT (Complete structure)
+          // ============================================
+          rawErrorObject: JSON.stringify(rawErrorObject, null, 2),
+          rawErrorType: errorDetails.errorType,
+          rawErrorMessage: errorDetails.errorMessage,
+          rawErrorStack: errorDetails.errorStack,
+          rawErrorCode: errorDetails.errorCode,
+
+          // ============================================
+          // DEVICE & APP CONTEXT
+          // ============================================
+          device_ios_version: deviceInfo.ios_version,
+          device_platform: deviceInfo.platform,
+          device_is_simulator: deviceInfo.is_simulator,
+          app_bundle_id: deviceInfo.bundle_id,
+          app_version: deviceInfo.app_version,
+          app_build_number: deviceInfo.build_number,
+          build_type: __DEV__ ? 'development' : 'production',
+          app_identifier: Application.applicationId,
+
+          // ============================================
+          // APPLE SIGN-IN CAPABILITY STATE
+          // ============================================
+          capability_status: capabilityStatus,
+          credential_state: credentialState,
+          is_supported: capabilityStatus === 'supported',
+
+          // ============================================
+          // ERROR CONTEXT
+          // ============================================
+          error_step: errorStep,
+          error_timestamp: new Date().toISOString(),
+          error_occurred_at: new Date().toISOString(),
+
+          // ============================================
+          // FULL NATIVE ERROR STRUCTURE
+          // ============================================
+          native_error_domain: nativeDomain,
+          native_error_code: errorDetails.errorCode,
+          native_error_description: appleErrorDescription,
+          native_error_failure_reason: appleFailureReason,
+          native_error_recovery_suggestion: appleRecoverySuggestion,
+          native_error_debug_description: appleDebugDescription,
+          native_error_userinfo: errorDetails.userInfo,
+          native_error_underlying: errorDetails.underlyingError,
+
+          // ============================================
+          // COMPLETE ERROR OBJECT (For debugging)
+          // ============================================
+          complete_error_object: JSON.stringify(
+            {
+              error: error,
+              errorObj: errorObj,
+              errorDetails: errorDetails,
+              deviceInfo: deviceInfo,
+              capabilityStatus,
+              credentialState,
+            },
+            (key, value) => {
+              // Handle circular references and large strings
+              if (typeof value === 'string' && value.length > 5000) {
+                return value.substring(0, 5000) + '... [truncated]';
+              }
+              if (key === 'stack' && typeof value === 'string') {
+                return value.substring(0, 2000); // Limit stack trace
+              }
+              return value;
+            },
+            2,
+          ),
         },
-      });
-
-      // DIAGNOSTIC: Show FULL error details ON SCREEN with debugging info
-      const primaryMessage = localizedDescription || errorDetails.errorMessage;
-
-      const debugErrorMessage = [
-        `❌ Apple Sign In Error ${errorDetails.errorCode}`,
-        ``,
-        shortMessage,
-        ``,
-        explanation,
-        ``,
-        `Full Error Message:`,
-        primaryMessage,
-        ``,
-        `Diagnostic Info:`,
-        `• Platform: ${Platform.OS} ${Platform.Version}`,
-        `• Capability: ${capabilityStatus || 'unknown'}`,
-        `• Credential State: ${credentialState || 'unknown'}`,
-        `• Bundle ID: ${deviceInfo.bundle_id}`,
-        ``,
-        nativeDomain ? `Native Domain: ${nativeDomain}` : '',
-        userInfo ? `UserInfo: ${JSON.stringify(userInfo, null, 2)}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n');
-
-      handleError(error instanceof Error ? error : new Error('Apple Sign In failed'), {
-        toastMessage: debugErrorMessage,
-        analyticsEventName: 'Apple_Sign_In_Error',
-        sentrySeverity: 'error',
-        sentryExtra: { ...errorDetails, ...deviceInfo, capabilityStatus, credentialState },
         toastDuration: 20000, // Show for 20 seconds to read and screenshot
       });
     } finally {
