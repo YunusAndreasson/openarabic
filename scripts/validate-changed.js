@@ -261,9 +261,11 @@ async function main() {
       );
       console.log(`${colors.cyan}Files: ${tsFiles.join(', ')}${colors.reset}`);
     }
+    // Include types/env.d.ts to ensure environment variable type declarations are loaded
+    const filesToCheck = ['types/env.d.ts', ...tsFiles];
     tasks.push(
       Promise.resolve().then(() =>
-        runCommand('npx', ['tsc-files', '--noEmit', ...tsFiles], 'TypeScript'),
+        runCommand('npx', ['tsc-files', '--noEmit', ...filesToCheck], 'TypeScript'),
       ),
     );
   }
