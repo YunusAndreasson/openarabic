@@ -96,7 +96,7 @@ jobs:
           !github.event.inputs.platform ||
           github.event.inputs.platform == 'all' ||
           github.event.inputs.platform == 'android'
-        run: eas build --platform android --profile production --non-interactive
+        run: eas build --platform android --profile production --non-interactive --clear-cache
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           EXPO_PUBLIC_UPDATES_ENABLED: 'true'
@@ -141,7 +141,7 @@ jobs:
           !github.event.inputs.platform ||
           github.event.inputs.platform == 'all' ||
           github.event.inputs.platform == 'ios'
-        run: eas build --platform ios --profile production --non-interactive
+        run: eas build --platform ios --profile production --non-interactive --clear-cache
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           EXPO_PUBLIC_UPDATES_ENABLED: 'true'
