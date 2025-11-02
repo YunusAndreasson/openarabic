@@ -265,11 +265,39 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         throw error;
       }
 
+      // DIAGNOSTIC: Decode JWT token to inspect claims (for debugging)
+      let tokenPayload: {
+        aud?: string;
+        exp?: number;
+        iss?: string;
+        email?: string;
+      } = {};
+      try {
+        const tokenParts = userInfo.data.idToken.split('.');
+        if (tokenParts.length === 3) {
+          const base64Payload = tokenParts[1];
+          // Add padding if needed
+          const paddedPayload = base64Payload + '='.repeat((4 - (base64Payload.length % 4)) % 4);
+          const decodedPayload = atob(paddedPayload.replace(/-/g, '+').replace(/_/g, '/'));
+          tokenPayload = JSON.parse(decodedPayload);
+        }
+      } catch {
+        // Token decode failed - not critical, continue
+      }
+
       // STEP 4: Sign in to Supabase with Google ID token
       Sentry.addBreadcrumb({
         category: 'auth',
         message: 'Exchanging Google token with Supabase',
         level: 'info',
+        data: {
+          tokenAudience: tokenPayload.aud || 'unknown',
+          tokenExpiry: tokenPayload.exp ? new Date(tokenPayload.exp * 1000).toISOString() : 'unknown',
+          tokenIssuer: tokenPayload.iss || 'unknown',
+          hasEmail: !!tokenPayload.email,
+          webClientIdConfigured: !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+          iosClientIdConfigured: !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+        },
       });
 
       let authResponse;
@@ -279,18 +307,52 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           token: userInfo.data.idToken,
         });
       } catch (supabaseError) {
+        // Capture detailed error information
+        const errorDetails = {
+          errorMessage:
+            supabaseError instanceof Error ? supabaseError.message : String(supabaseError),
+          errorType:
+            typeof supabaseError === 'object' && supabaseError
+              ? supabaseError.constructor?.name
+              : typeof supabaseError,
+          errorStatus:
+            typeof supabaseError === 'object' &&
+            supabaseError &&
+            'status' in supabaseError &&
+            typeof supabaseError.status === 'number'
+              ? supabaseError.status
+              : 'unknown',
+          tokenAudience: tokenPayload.aud || 'unknown',
+          tokenExpiry: tokenPayload.exp
+            ? `${new Date(tokenPayload.exp * 1000).toISOString()} (expires in ${Math.round((tokenPayload.exp * 1000 - Date.now()) / 1000 / 60)} min)`
+            : 'unknown',
+          tokenIssuer: tokenPayload.iss || 'unknown',
+          tokenEmail: tokenPayload.email || 'unknown',
+        };
+
         Sentry.captureException(supabaseError, {
           tags: {
             location: 'google_auth',
             step: 'supabase_signin',
           },
           level: 'error',
-          extra: {
-            errorMessage:
-              supabaseError instanceof Error ? supabaseError.message : String(supabaseError),
-          },
+          extra: errorDetails,
         });
-        throw supabaseError;
+
+        // Enrich error with token details for diagnostic display
+        const enrichedError = new Error(
+          `Supabase authentication failed: ${supabaseError instanceof Error ? supabaseError.message : String(supabaseError)}`,
+        );
+        Object.assign(enrichedError, {
+          originalError: supabaseError,
+          tokenAudience: tokenPayload.aud || 'unknown',
+          tokenExpiry: tokenPayload.exp
+            ? `${new Date(tokenPayload.exp * 1000).toISOString()} (${Math.round((tokenPayload.exp * 1000 - Date.now()) / 1000 / 60)} min left)`
+            : 'unknown',
+          tokenIssuer: tokenPayload.iss || 'unknown',
+          tokenEmail: tokenPayload.email || 'unknown',
+        });
+        throw enrichedError;
       }
 
       const { data, error } = authResponse;
@@ -481,6 +543,24 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
               `• Message: ${supabaseError.message || 'none'}`,
               `• Status: ${supabaseError.status || 'unknown'}`,
               `• Name: ${supabaseError.name || 'unknown'}`,
+              ``,
+            ].join('\n')
+          : '',
+        // Include token diagnostics if this is a Supabase exchange error
+        failedStep === 'supabase_exchange' &&
+        error &&
+        typeof error === 'object' &&
+        'tokenAudience' in error
+          ? [
+              `Token Diagnostics:`,
+              `• Audience: ${(error as { tokenAudience?: string }).tokenAudience}`,
+              `• Expiry: ${(error as { tokenExpiry?: string }).tokenExpiry}`,
+              `• Issuer: ${(error as { tokenIssuer?: string }).tokenIssuer}`,
+              `• Email: ${(error as { tokenEmail?: string }).tokenEmail}`,
+              ``,
+              `Expected:`,
+              `• Audience should match Web Client ID`,
+              `• Issuer should be accounts.google.com`,
               ``,
             ].join('\n')
           : '',

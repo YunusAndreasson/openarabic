@@ -205,14 +205,20 @@ export function useAppleAuth(): UseAppleAuthReturn {
           category: 'auth',
           message: 'Exchanging Apple token with Supabase',
           level: 'info',
+          data: {
+            hasNonce: !!credential.nonce,
+            nonceValue: credential.nonce ? 'present' : 'undefined',
+          },
         });
 
         let authResponse;
         try {
+          // Only pass nonce if it exists to avoid Supabase validation error
+          // Error: "Passed nonce and nonce in id_token should either both exist or not"
           authResponse = await supabase.auth.signInWithIdToken({
             provider: 'apple',
             token: credential.identityToken,
-            nonce: credential.nonce,
+            ...(credential.nonce ? { nonce: credential.nonce } : {}),
           });
         } catch (supabaseError) {
           Sentry.captureException(supabaseError, {
@@ -226,6 +232,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
               errorMessage:
                 supabaseError instanceof Error ? supabaseError.message : String(supabaseError),
               hasNonce: !!credential.nonce,
+              nonceWasPassed: !!credential.nonce,
             },
           });
           throw supabaseError;
