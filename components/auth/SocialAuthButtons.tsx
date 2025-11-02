@@ -1,6 +1,8 @@
+import * as Application from 'expo-application';
+import Constants from 'expo-constants';
 import * as Sentry from '@sentry/react-native';
 import type { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -35,68 +37,135 @@ export function SocialAuthButtons(): JSX.Element {
   const { signInWithGoogle, loading: googleLoading } = useGoogleAuth();
   const colors = useColors();
 
-  // DIAGNOSTIC: Show ALL environment variables ON SCREEN for TestFlight debugging
-  const testSentryError = () => {
-    console.log('[TEST] Showing environment variables on screen...');
+  // DIAGNOSTIC: Show ALL diagnostic information ON SCREEN for TestFlight debugging
+  const testSentryError = async () => {
+    console.log('[TEST] Running comprehensive diagnostics...');
 
-    // Get ALL environment variables
+    // Environment Variables
     const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
     const mixpanelToken = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN;
     const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
     const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
-    // Build on-screen diagnostic message with FULL values
-    const diagnosticMessage = [
-      '🔍 Environment Variables (TestFlight)',
-      '',
-      `Sentry DSN:`,
-      sentryDsn || '[NOT SET]',
-      `(${sentryDsn?.length || 0} chars)`,
-      '',
-      `Mixpanel:`,
-      mixpanelToken || '[NOT SET]',
-      `(${mixpanelToken?.length || 0} chars)`,
-      '',
-      `Google Web ID:`,
-      googleWebClientId || '[NOT SET]',
-      `(${googleWebClientId?.length || 0} chars)`,
-      '',
-      `Google iOS ID:`,
-      googleIosClientId || '[NOT SET]',
-      `(${googleIosClientId?.length || 0} chars)`,
-    ].join('\n');
+    // App Information
+    const bundleId = Application.applicationId || 'unknown';
+    const appVersion = Application.nativeApplicationVersion || 'unknown';
+    const buildNumber = Application.nativeBuildVersion || 'unknown';
+    const appName = Application.applicationName || 'unknown';
 
-    // Also send test error to Sentry if DSN is present
+    // Platform Information
+    const isSimulator = Constants['isDevice'] === false;
+    const deviceName = Constants['deviceName'] || 'unknown';
+    const osVersion = Platform.Version;
+
+    // Build Information
+    const buildType = __DEV__ ? 'development' : 'production';
+    const expoVersion = Constants.expoVersion || 'unknown';
+
+    // Apple Sign In Capability Check
+    let appleSignInSupported = 'unknown';
+    let appleSignInError = null;
+    try {
+      const appleAuth = require('@invertase/react-native-apple-authentication');
+      appleSignInSupported = appleAuth.default.isSupported ? 'YES ✅' : 'NO ❌';
+    } catch (error) {
+      appleSignInSupported = 'Module not available';
+      appleSignInError = error instanceof Error ? error.message : String(error);
+    }
+
+    // Build comprehensive diagnostic message
+    const diagnosticMessage = [
+      '🔍 COMPREHENSIVE DIAGNOSTICS',
+      '',
+      '📱 APP INFORMATION',
+      `Bundle ID: ${bundleId}`,
+      `App Name: ${appName}`,
+      `Version: ${appVersion}`,
+      `Build: ${buildNumber}`,
+      `Build Type: ${buildType}`,
+      '',
+      '📲 DEVICE INFORMATION',
+      `Platform: ${Platform.OS}`,
+      `OS Version: ${osVersion}`,
+      `Device: ${deviceName}`,
+      `Is Simulator: ${isSimulator ? 'YES ⚠️' : 'NO ✅'}`,
+      `Expo Version: ${expoVersion}`,
+      '',
+      '🍎 APPLE SIGN IN STATUS',
+      `Supported: ${appleSignInSupported}`,
+      appleSignInError ? `Error: ${appleSignInError}` : '',
+      '',
+      '🔐 ENVIRONMENT VARIABLES',
+      `Sentry DSN: ${sentryDsn ? `${sentryDsn.slice(0, 20)}... (${sentryDsn.length} chars)` : '[NOT SET] ❌'}`,
+      `Mixpanel: ${mixpanelToken ? `${mixpanelToken.slice(0, 15)}... (${mixpanelToken.length} chars)` : '[NOT SET] ❌'}`,
+      `Google Web: ${googleWebClientId ? `${googleWebClientId.slice(0, 20)}... (${googleWebClientId.length} chars)` : '[NOT SET] ❌'}`,
+      `Google iOS: ${googleIosClientId ? `${googleIosClientId.slice(0, 20)}... (${googleIosClientId.length} chars)` : '[NOT SET] ❌'}`,
+      '',
+      '⚠️ CRITICAL CHECKS',
+      `${isSimulator ? '⚠️ SIMULATOR: Apple Sign In will NOT work' : '✅ Physical Device: Apple Sign In should work'}`,
+      `${appleSignInSupported === 'YES ✅' ? '✅ Apple Sign In capability detected' : '❌ Apple Sign In capability NOT detected'}`,
+      `${bundleId === 'openarabic' ? '✅ Bundle ID matches expected' : `❌ Bundle ID mismatch: expected 'openarabic', got '${bundleId}'`}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    // Send comprehensive diagnostic to Sentry
     if (sentryDsn) {
       try {
-        Sentry.captureException(new Error('TEST: Environment variables diagnostic'), {
+        Sentry.captureException(new Error('TEST: Comprehensive diagnostics'), {
           tags: {
             location: 'auth_test',
-            build_type: __DEV__ ? 'development' : 'production',
+            build_type: buildType,
+            platform: Platform.OS,
+            is_simulator: isSimulator.toString(),
+            apple_signin_supported: String(appleSignInSupported),
           },
           level: 'info',
           extra: {
-            sentry_dsn_length: sentryDsn?.length || 0,
-            mixpanel_token_length: mixpanelToken?.length || 0,
-            google_web_client_id_length: googleWebClientId?.length || 0,
-            google_ios_client_id_length: googleIosClientId?.length || 0,
+            app_info: {
+              bundle_id: bundleId,
+              app_version: appVersion,
+              build_number: buildNumber,
+              app_name: appName,
+            },
+            device_info: {
+              platform: Platform.OS,
+              os_version: osVersion,
+              device_name: deviceName,
+              is_simulator: isSimulator,
+              expo_version: expoVersion,
+            },
+            apple_signin: {
+              supported: appleSignInSupported,
+              error: appleSignInError,
+            },
+            env_vars: {
+              sentry_dsn_length: sentryDsn?.length || 0,
+              sentry_dsn_present: !!sentryDsn,
+              mixpanel_token_length: mixpanelToken?.length || 0,
+              mixpanel_token_present: !!mixpanelToken,
+              google_web_client_id_length: googleWebClientId?.length || 0,
+              google_web_client_id_present: !!googleWebClientId,
+              google_ios_client_id_length: googleIosClientId?.length || 0,
+              google_ios_client_id_present: !!googleIosClientId,
+            },
           },
         });
-      } catch {
-        // Ignore Sentry errors
+      } catch (error) {
+        console.error('[TEST] Failed to send to Sentry:', error);
       }
     }
 
-    // Show on screen for 15 seconds so user can read/screenshot
-    showSuccessToast(diagnosticMessage, 15000);
+    // Show on screen for 20 seconds so user can read/screenshot
+    showSuccessToast(diagnosticMessage, 20000);
   };
 
   return (
     <View style={styles.container}>
-      {/* DIAGNOSTIC: Test Sentry Button - REMOVE AFTER DEBUGGING */}
+      {/* DIAGNOSTIC: Comprehensive Diagnostics Button - REMOVE AFTER DEBUGGING */}
       <ThemedButton
         variant="filled"
-        title="🔍 Test Sentry Error"
+        title="🔍 Run Diagnostics"
         uppercase={false}
         style={[styles.button, { opacity: 0.7 }]}
         onPress={testSentryError}
