@@ -432,14 +432,33 @@ export function useAppleAuth(): UseAppleAuthReturn {
       }
 
       // Capture comprehensive diagnostic data for troubleshooting
-      // Log the full error object structure before processing
+      // Log the full error object structure before processing - NO TRUNCATION
+      let fullErrorStringified = '';
+      try {
+        // Capture complete error object with all properties, including arrays
+        fullErrorStringified = JSON.stringify(
+          error,
+          (_key, value) => {
+            // Preserve all values, especially long arrays like nativeStackIOS
+            if (Array.isArray(value)) {
+              return value; // Keep full arrays
+            }
+            return value;
+          },
+          2, // Pretty print with indentation
+        );
+      } catch (stringifyError) {
+        fullErrorStringified = `[Serialization failed: ${String(stringifyError)}]`;
+      }
+
       Sentry.addBreadcrumb({
         category: 'error',
         message: 'Apple Sign In error occurred',
         level: 'error',
         data: {
           errorType: error instanceof Error ? error.constructor.name : typeof error,
-          errorStringified: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+          errorStringified: fullErrorStringified,
+          errorStringifiedLength: fullErrorStringified.length,
           timestamp: new Date().toISOString(),
         },
       });
@@ -517,13 +536,15 @@ export function useAppleAuth(): UseAppleAuthReturn {
       };
 
       // Get comprehensive device and app diagnostic information
+      // Note: Accurate simulator detection requires native module, using Platform.OS as fallback
       const deviceInfo = {
         ios_version: Platform.Version,
         bundle_id: Application.applicationId,
         app_version: Application.nativeApplicationVersion,
         build_number: Application.nativeBuildVersion,
         platform: Platform.OS,
-        is_simulator: Platform.OS === 'ios' && Platform.isPad === false, // Basic check
+        // Platform info - Sentry will provide accurate simulator detection in device context
+        platform_version: Platform.Version,
       };
 
       // Capture full raw error object with all properties for deep debugging
@@ -548,14 +569,19 @@ export function useAppleAuth(): UseAppleAuthReturn {
               },
               {} as Record<string, unknown>,
             ),
-            // Stringified version for full structure
-            stringified: JSON.stringify(error, (key, value) => {
-              // Handle circular references
-              if (key === 'stack' && typeof value === 'string') {
-                return value.substring(0, 1000); // Limit stack size
-              }
-              return value;
-            }),
+            // Stringified version for full structure - NO TRUNCATION
+            stringified: JSON.stringify(
+              error,
+              (_key, value) => {
+                // Preserve everything, especially nativeStackIOS arrays
+                if (Array.isArray(value)) {
+                  return value; // Keep full arrays (like nativeStackIOS)
+                }
+                // Keep all other values as-is
+                return value;
+              },
+              2, // Pretty print
+            ),
           };
         }
       } catch (serializationError) {
@@ -642,7 +668,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
           // ============================================
           device_ios_version: deviceInfo.ios_version,
           device_platform: deviceInfo.platform,
-          device_is_simulator: deviceInfo.is_simulator,
+          device_platform_version: deviceInfo.platform_version,
           app_bundle_id: deviceInfo.bundle_id,
           app_version: deviceInfo.app_version,
           app_build_number: deviceInfo.build_number,
@@ -676,7 +702,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
           native_error_underlying: errorDetails.underlyingError,
 
           // ============================================
-          // COMPLETE ERROR OBJECT (For debugging)
+          // COMPLETE ERROR OBJECT (For debugging - NO TRUNCATION)
           // ============================================
           complete_error_object: JSON.stringify(
             {
@@ -687,18 +713,19 @@ export function useAppleAuth(): UseAppleAuthReturn {
               capabilityStatus,
               credentialState,
             },
-            (key, value) => {
-              // Handle circular references and large strings
-              if (typeof value === 'string' && value.length > 5000) {
-                return value.substring(0, 5000) + '... [truncated]';
+            (_key, value) => {
+              // Preserve everything - especially nativeStackIOS arrays
+              if (Array.isArray(value)) {
+                return value; // Keep full arrays (native stack traces)
               }
-              if (key === 'stack' && typeof value === 'string') {
-                return value.substring(0, 2000); // Limit stack trace
-              }
+              // Keep all other values - no truncation
               return value;
             },
-            2,
+            2, // Pretty print
           ),
+          // Full stringified error (no truncation)
+          full_error_stringified: fullErrorStringified,
+          full_error_stringified_length: fullErrorStringified.length,
         },
         toastDuration: 20000, // Show for 20 seconds to read and screenshot
       });
