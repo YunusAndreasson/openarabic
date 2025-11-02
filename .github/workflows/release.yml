@@ -144,6 +144,7 @@ jobs:
         run: eas build --platform ios --profile production --non-interactive --clear-cache
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+          EXPO_NO_CAPABILITY_SYNC: '1'
           EXPO_PUBLIC_UPDATES_ENABLED: 'true'
           EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY: 'ON_LOAD'
           EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT: '0'
