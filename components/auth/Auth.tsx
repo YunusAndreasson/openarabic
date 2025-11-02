@@ -42,9 +42,6 @@ export function Auth(): JSX.Element {
 
       {/* Content Container */}
       <View style={styles.contentContainer}>
-        {/* Social Authentication Buttons */}
-        <SocialAuthButtons />
-
         {/* Email Options Toggle Button */}
         <ThemedButton
           variant="outlined"
@@ -66,6 +63,9 @@ export function Auth(): JSX.Element {
             <EmailAuthOptions />
           </View>
         ) : null}
+
+        {/* Social Authentication Buttons - Bottom for easy thumb access */}
+        <SocialAuthButtons />
       </View>
 
       {/* Legal Links */}
@@ -89,7 +89,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   emailToggleButton: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
   headerContainer: {

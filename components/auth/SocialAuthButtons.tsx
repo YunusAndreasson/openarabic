@@ -35,6 +35,20 @@ export function SocialAuthButtons(): JSX.Element {
 
   return (
     <View style={styles.container}>
+      {/* Divider with "or" text */}
+      <View style={styles.dividerContainer}>
+        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+        <ThemedText
+          type="caption"
+          variant="secondary"
+          style={styles.dividerText}
+          accessibilityLabel="Or sign in with social"
+        >
+          {STRINGS.CONTINUE_WITH}
+        </ThemedText>
+        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+      </View>
+
       {/* Apple Sign In Button */}
       <ThemedButton
         variant="outlined"
@@ -62,20 +76,6 @@ export function SocialAuthButtons(): JSX.Element {
         accessibilityLabel="Sign in with Google"
         onPress={signInWithGoogle}
       />
-
-      {/* Divider with "or" text */}
-      <View style={styles.dividerContainer}>
-        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-        <ThemedText
-          type="caption"
-          variant="secondary"
-          style={styles.dividerText}
-          accessibilityLabel="Or continue with email"
-        >
-          {STRINGS.CONTINUE_WITH}
-        </ThemedText>
-        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-      </View>
     </View>
   );
 }
@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   container: {
+    marginTop: LAYOUT.SPACING.XLARGE,
     marginBottom: LAYOUT.SPACING.LARGE,
     maxWidth: SCREEN_WIDTH * 0.9, // Match form input width constraint
     width: '100%',
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   dividerContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginVertical: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
   dividerLine: {
