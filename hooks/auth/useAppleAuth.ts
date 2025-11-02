@@ -38,21 +38,6 @@ export function useAppleAuth(): UseAppleAuthReturn {
     if (!isMountedRef.current) return;
     setLoading(true);
 
-    // Diagnostic variables accessible in catch block
-    let capabilityStatus = 'not_checked';
-    let credentialState = 'not_checked';
-
-    // Log environment context for debugging
-    Sentry.addBreadcrumb({
-      category: 'auth',
-      message: 'Apple Sign In initiated',
-      level: 'info',
-      data: {
-        platform: Platform.OS,
-        platformVersion: Platform.Version,
-      },
-    });
-
     try {
       // STEP 1: Check if native module is available
       Sentry.addBreadcrumb({
@@ -86,36 +71,6 @@ export function useAppleAuth(): UseAppleAuthReturn {
           'Apple Sign In is not available. Please rebuild the app with: npx expo prebuild',
         );
       }
-
-      // DIAGNOSTIC: Check Apple Sign In capability status BEFORE attempting sign in
-      try {
-        if (appleAuth.default.isSupported) {
-          capabilityStatus = 'supported';
-        } else {
-          capabilityStatus = 'not_supported';
-        }
-      } catch {
-        capabilityStatus = 'check_failed';
-      }
-
-      // Also check credential state if possible
-      try {
-        // This will only work if we have a user identifier from previous sign-in
-        // For now, just log that we checked
-        credentialState = 'not_checked_no_previous_user';
-      } catch {
-        credentialState = 'check_failed';
-      }
-
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Apple Sign In capability check',
-        level: 'info',
-        data: {
-          capability_status: capabilityStatus,
-          credential_state: credentialState,
-        },
-      });
 
       // Platform-specific imports
       if (Platform.OS === 'ios') {
@@ -606,7 +561,6 @@ export function useAppleAuth(): UseAppleAuthReturn {
         `**Diagnostic Info:**`,
         `• Error Code: ${errorDetails.errorCode}`,
         `• Platform: ${Platform.OS} ${Platform.Version}`,
-        `• Capability: ${capabilityStatus || 'unknown'}`,
         `• Bundle ID: ${deviceInfo.bundle_id}`,
         nativeDomain ? `• Domain: ${nativeDomain}` : '',
         ``,
@@ -676,13 +630,6 @@ export function useAppleAuth(): UseAppleAuthReturn {
           app_identifier: Application.applicationId,
 
           // ============================================
-          // APPLE SIGN-IN CAPABILITY STATE
-          // ============================================
-          capability_status: capabilityStatus,
-          credential_state: credentialState,
-          is_supported: capabilityStatus === 'supported',
-
-          // ============================================
           // ERROR CONTEXT
           // ============================================
           error_step: errorStep,
@@ -710,8 +657,6 @@ export function useAppleAuth(): UseAppleAuthReturn {
               errorObj: errorObj,
               errorDetails: errorDetails,
               deviceInfo: deviceInfo,
-              capabilityStatus,
-              credentialState,
             },
             (_key, value) => {
               // Preserve everything - especially nativeStackIOS arrays
