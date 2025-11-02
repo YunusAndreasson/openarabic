@@ -9,8 +9,6 @@ import { STRINGS } from '@/constants/strings';
 import { useAppleAuth } from '@/hooks/auth/useAppleAuth';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { ToastType } from '@/types/enums';
-import { handleError } from '@/utils/errorHandling';
 import { showSuccessToast } from '@/utils/errorHandling';
 
 /**
@@ -37,82 +35,60 @@ export function SocialAuthButtons(): JSX.Element {
   const { signInWithGoogle, loading: googleLoading } = useGoogleAuth();
   const colors = useColors();
 
-  // DIAGNOSTIC: Test Sentry error capture with detailed diagnostics
+  // DIAGNOSTIC: Show ALL environment variables ON SCREEN for TestFlight debugging
   const testSentryError = () => {
-    console.log('[TEST] Triggering test Sentry error...');
+    console.log('[TEST] Showing environment variables on screen...');
 
-    // Get diagnostic information
+    // Get ALL environment variables
     const sentryDsn = process.env['EXPO_PUBLIC_SENTRY_DSN'];
-    const isDsnPresent = !!sentryDsn;
-    const dsnLength = sentryDsn?.length || 0;
-    const isSentryEnabled = isDsnPresent;
+    const mixpanelToken = process.env['EXPO_PUBLIC_MIXPANEL_TOKEN'];
+    const googleWebClientId = process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'];
+    const googleIosClientId = process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'];
 
-    console.log('[TEST] Sentry diagnostics:', {
-      isDsnPresent,
-      dsnLength,
-      isSentryEnabled,
-    });
+    // Build on-screen diagnostic message with FULL values
+    const diagnosticMessage = [
+      '🔍 Environment Variables (TestFlight)',
+      '',
+      `Sentry DSN:`,
+      sentryDsn || '[NOT SET]',
+      `(${sentryDsn?.length || 0} chars)`,
+      '',
+      `Mixpanel:`,
+      mixpanelToken || '[NOT SET]',
+      `(${mixpanelToken?.length || 0} chars)`,
+      '',
+      `Google Web ID:`,
+      googleWebClientId || '[NOT SET]',
+      `(${googleWebClientId?.length || 0} chars)`,
+      '',
+      `Google iOS ID:`,
+      googleIosClientId || '[NOT SET]',
+      `(${googleIosClientId?.length || 0} chars)`,
+    ].join('\n');
 
-    try {
-      // Attempt to send test error to Sentry
-      Sentry.captureException(new Error('TEST: Manual Sentry error from auth screen'), {
-        tags: {
-          location: 'auth_test',
-          test: 'manual_error',
-          build_type: __DEV__ ? 'development' : 'production',
-        },
-        level: 'error',
-        extra: {
-          testTimestamp: new Date().toISOString(),
-          sentryEnabled: isSentryEnabled,
-          dsnPresent: isDsnPresent,
-          dsnLength,
-        },
-      });
-
-      console.log('[TEST] Sentry error capture called');
-
-      // Show concise diagnostic toast (3 lines max)
-      const diagnosticMessage = isSentryEnabled
-        ? [
-            '🔍 Sentry Test: Event Sent ✅',
-            `DSN configured (${dsnLength} chars)`,
-            'Check Sentry dashboard for event',
-          ].join('\n')
-        : [
-            '🔍 Sentry Test: Disabled ❌',
-            'DSN missing - Sentry not enabled',
-            'Add EXPO_PUBLIC_SENTRY_DSN to enable',
-          ].join('\n');
-
-      if (isSentryEnabled) {
-        showSuccessToast(diagnosticMessage, 10000);
-      } else {
-        handleError(new Error('Sentry is disabled'), {
-          toastMessage: diagnosticMessage,
-          toastType: ToastType.INFO,
-          toastDuration: 10000,
-          captureSentry: false, // Don't try to capture this to Sentry
-          trackAnalytics: false,
+    // Also send test error to Sentry if DSN is present
+    if (sentryDsn) {
+      try {
+        Sentry.captureException(new Error('TEST: Environment variables diagnostic'), {
+          tags: {
+            location: 'auth_test',
+            build_type: __DEV__ ? 'development' : 'production',
+          },
+          level: 'info',
+          extra: {
+            sentry_dsn_length: sentryDsn?.length || 0,
+            mixpanel_token_length: mixpanelToken?.length || 0,
+            google_web_client_id_length: googleWebClientId?.length || 0,
+            google_ios_client_id_length: googleIosClientId?.length || 0,
+          },
         });
+      } catch {
+        // Ignore Sentry errors
       }
-    } catch (error) {
-      console.error('[TEST] Failed to send Sentry error:', error);
-
-      const errorMessage = [
-        '❌ Sentry Test Failed',
-        error instanceof Error ? error.message : String(error),
-        `DSN: ${isDsnPresent ? `${dsnLength} chars` : 'Missing'}`,
-      ].join('\n');
-
-      handleError(error instanceof Error ? error : new Error('Sentry test failed'), {
-        toastMessage: errorMessage,
-        toastType: ToastType.ERROR,
-        toastDuration: 10000,
-        captureSentry: false, // Don't try to capture this to Sentry
-        trackAnalytics: false,
-      });
     }
+
+    // Show on screen for 15 seconds so user can read/screenshot
+    showSuccessToast(diagnosticMessage, 15000);
   };
 
   return (

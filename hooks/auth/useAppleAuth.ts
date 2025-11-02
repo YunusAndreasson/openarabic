@@ -1,3 +1,4 @@
+import * as Application from 'expo-application';
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -36,6 +37,10 @@ export function useAppleAuth(): UseAppleAuthReturn {
   const signInWithApple = useCallback(async (): Promise<void> => {
     if (!isMountedRef.current) return;
     setLoading(true);
+
+    // Diagnostic variables accessible in catch block
+    let capabilityStatus = 'not_checked';
+    let credentialState = 'not_checked';
 
     // Log environment context for debugging
     Sentry.addBreadcrumb({
@@ -81,6 +86,36 @@ export function useAppleAuth(): UseAppleAuthReturn {
           'Apple Sign In is not available. Please rebuild the app with: npx expo prebuild',
         );
       }
+
+      // DIAGNOSTIC: Check Apple Sign In capability status BEFORE attempting sign in
+      try {
+        if (appleAuth.default.isSupported) {
+          capabilityStatus = 'supported';
+        } else {
+          capabilityStatus = 'not_supported';
+        }
+      } catch {
+        capabilityStatus = 'check_failed';
+      }
+
+      // Also check credential state if possible
+      try {
+        // This will only work if we have a user identifier from previous sign-in
+        // For now, just log that we checked
+        credentialState = 'not_checked_no_previous_user';
+      } catch {
+        credentialState = 'check_failed';
+      }
+
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Apple Sign In capability check',
+        level: 'info',
+        data: {
+          capability_status: capabilityStatus,
+          credential_state: credentialState,
+        },
+      });
 
       // Platform-specific imports
       if (Platform.OS === 'ios') {
@@ -418,20 +453,35 @@ export function useAppleAuth(): UseAppleAuthReturn {
         userInfo: userInfo ? JSON.stringify(userInfo) : undefined,
       };
 
+      // Get device and app diagnostic information
+      const deviceInfo = {
+        ios_version: Platform.Version,
+        bundle_id: Application.applicationId,
+        app_version: Application.nativeApplicationVersion,
+        build_number: Application.nativeBuildVersion,
+      };
+
       // Map common Apple error codes to short user-friendly messages
       const errorCode = errorDetails.errorCode;
       let shortMessage = 'Sign In Failed';
+      let explanation = '';
 
       if (errorCode === '1000') {
-        shortMessage = 'Unknown Error';
+        shortMessage = 'Unknown Error (1000)';
+        explanation =
+          'Possible causes:\n• Apple ID not signed in on device\n• Keychain access issues\n• Bundle ID mismatch\n• Provisioning profile problem';
       } else if (errorCode === '1002') {
         shortMessage = 'Invalid Response';
+        explanation = 'Apple Sign In response invalid';
       } else if (errorCode === '1003') {
         shortMessage = 'Not Handled';
+        explanation = 'Operation not handled';
       } else if (errorCode === '1004') {
         shortMessage = 'Request Failed';
+        explanation = 'Apple Sign In request failed';
       } else if (nativeDomain?.includes('AuthenticationServices')) {
         shortMessage = 'Auth Service Error';
+        explanation = 'Authentication services error';
       }
 
       Sentry.captureException(error, {
@@ -441,43 +491,47 @@ export function useAppleAuth(): UseAppleAuthReturn {
           platform: Platform.OS,
           errorCode: errorDetails.errorCode,
           nativeDomain: nativeDomain || 'unknown',
+          ios_version: String(deviceInfo.ios_version),
         },
         level: 'error',
-        extra: errorDetails,
+        extra: {
+          ...errorDetails,
+          ...deviceInfo,
+        },
       });
 
-      // DIAGNOSTIC: Show FULL error details in toast for debugging (production too)
-      // TODO: Remove after debugging - revert to generic error message once issue is fixed
-      // Show complete error information without truncation
+      // DIAGNOSTIC: Show FULL error details ON SCREEN with debugging info
       const primaryMessage = localizedDescription || errorDetails.errorMessage;
 
       const debugErrorMessage = [
-        `❌ Apple Sign In Failed`,
+        `❌ Apple Sign In Error ${errorDetails.errorCode}`,
         ``,
-        `Error Code: ${errorDetails.errorCode}`,
-        `Type: ${shortMessage}`,
+        shortMessage,
         ``,
-        `Message:`,
+        explanation,
+        ``,
+        `Full Error Message:`,
         primaryMessage,
         ``,
-        nativeDomain ? `Domain: ${nativeDomain}` : `Error Type: ${errorDetails.errorType}`,
+        `Diagnostic Info:`,
+        `• Platform: ${Platform.OS} ${Platform.Version}`,
+        `• Capability: ${capabilityStatus || 'unknown'}`,
+        `• Credential State: ${credentialState || 'unknown'}`,
+        `• Bundle ID: ${deviceInfo.bundle_id}`,
+        ``,
+        nativeDomain ? `Native Domain: ${nativeDomain}` : '',
+        userInfo ? `UserInfo: ${JSON.stringify(userInfo, null, 2)}` : '',
       ]
         .filter(Boolean)
         .join('\n');
 
       handleError(error instanceof Error ? error : new Error('Apple Sign In failed'), {
-        toastMessage: debugErrorMessage, // Always show detailed error for debugging
+        toastMessage: debugErrorMessage,
         analyticsEventName: 'Apple_Sign_In_Error',
         sentrySeverity: 'error',
-        sentryExtra: errorDetails,
-        toastDuration: 10000, // Show for 10 seconds to read the full error
+        sentryExtra: { ...errorDetails, ...deviceInfo, capabilityStatus, credentialState },
+        toastDuration: 20000, // Show for 20 seconds to read and screenshot
       });
-
-      // Also log to console for debugging (including userInfo)
-      console.error('[Apple Auth] Full error details:', JSON.stringify(errorDetails, null, 2));
-      if (userInfo) {
-        console.error('[Apple Auth] User Info:', userInfo);
-      }
     } finally {
       if (isMountedRef.current) {
         setLoading(false);

@@ -458,27 +458,46 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         extra: errorDetails,
       });
 
-      // Build full error message for toast (no truncation)
+      // Extract Supabase error details if available
+      const supabaseError =
+        typeof error === 'object' && error && 'originalError' in error
+          ? (error as { originalError: { message?: string; status?: number; name?: string } })
+              .originalError
+          : null;
+
+      // Build full error message for toast with ALL details
       const detailedErrorMessage = [
         `❌ Google Sign In Failed`,
         ``,
         `Step: ${stepMessage}`,
-        errorDetails.errorCode !== 'unknown' ? `Code: ${errorDetails.errorCode}` : '',
+        errorDetails.errorCode !== 'unknown' ? `Error Code: ${errorDetails.errorCode}` : '',
         ``,
         `Error Message:`,
         errorDetails.errorMessage,
         ``,
-        'Check connection and try again',
+        supabaseError
+          ? [
+              `Supabase Details:`,
+              `• Message: ${supabaseError.message || 'none'}`,
+              `• Status: ${supabaseError.status || 'unknown'}`,
+              `• Name: ${supabaseError.name || 'unknown'}`,
+              ``,
+            ].join('\n')
+          : '',
+        `Error Stack (first 200 chars):`,
+        errorDetails.errorStack?.substring(0, 200) || '[no stack]',
+        ``,
+        `Config Status: ${errorDetails.isConfigured ? 'Configured' : 'Not Configured'}`,
       ]
         .filter(Boolean)
         .join('\n');
 
       handleError(error instanceof Error ? error : new Error('Google Sign In failed'), {
         toastMessage: detailedErrorMessage,
-        toastDuration: 10000, // 10 seconds to read detailed error
+        toastDuration: 20000, // 20 seconds to read ALL details and screenshot
         analyticsEventName: 'Google_Sign_In_Error',
         sentrySeverity: 'error',
-        sentryExtra: { ...errorDetails, failedStep },
+        sentryExtra: { ...errorDetails, failedStep, supabaseError },
       });
     } finally {
       if (isMountedRef.current) {

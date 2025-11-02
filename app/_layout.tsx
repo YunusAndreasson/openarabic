@@ -116,18 +116,22 @@ const queryClient = new QueryClient({
 const navigationIntegration = Sentry.reactNavigationIntegration();
 const sentryDsn = getEnvVar('EXPO_PUBLIC_SENTRY_DSN', undefined, true);
 
-// DIAGNOSTIC: Log environment variable status (will be visible in console during debugging)
-console.log('[ENV] Sentry DSN present:', !!sentryDsn);
-console.log('[ENV] Sentry DSN length:', sentryDsn?.length || 0);
-console.log('[ENV] Mixpanel token present:', !!process.env['EXPO_PUBLIC_MIXPANEL_TOKEN']);
-console.log(
-  '[ENV] Google Web Client ID present:',
-  !!process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'],
-);
-console.log(
-  '[ENV] Google iOS Client ID present:',
-  !!process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'],
-);
+// DIAGNOSTIC: Log environment variables to Sentry breadcrumbs
+// NOTE: User will see these ON SCREEN via test button in auth screen
+// This ensures diagnostic data is included in any Sentry error reports
+Sentry.addBreadcrumb({
+  category: 'env_diagnostic',
+  message: 'Environment variables at app startup',
+  level: 'info',
+  data: {
+    sentry_dsn_full: sentryDsn || '[not set]',
+    sentry_dsn_length: sentryDsn?.length || 0,
+    sentry_dsn_format_valid: sentryDsn?.startsWith('https://') || false,
+    mixpanel_token_full: process.env['EXPO_PUBLIC_MIXPANEL_TOKEN'] || '[not set]',
+    google_web_client_id_full: process.env['EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID'] || '[not set]',
+    google_ios_client_id_full: process.env['EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'] || '[not set]',
+  },
+});
 
 // Initialize Sentry with production config
 Sentry.init({
