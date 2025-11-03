@@ -22,6 +22,7 @@ interface CachedMultipleSelection {
   articles: Article[];
   refreshKey: number;
   scope: string;
+  sessionId: number;
 }
 
 // Number of articles to return in the slider
@@ -60,6 +61,7 @@ export function useMultipleFeaturedArticles(
 ): MultipleFeaturedArticlesResult {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const currentSessionId = APP_SESSION_ID;
 
   // Try to get cached featured articles first for immediate display
   // Include APP_SESSION_ID to ensure fresh articles on each app launch
@@ -156,7 +158,8 @@ export function useMultipleFeaturedArticles(
       // For initial load (refreshKey === 0), use intelligent selection
       if (
         initialSelectionRef.current?.refreshKey !== 0 ||
-        initialSelectionRef.current.scope !== scope
+        initialSelectionRef.current.scope !== scope ||
+        initialSelectionRef.current.sessionId !== currentSessionId
       ) {
         // First time or scope change - perform intelligent selection
         let intelligentSelection: MultipleFeaturedArticlesResult;
@@ -247,11 +250,12 @@ export function useMultipleFeaturedArticles(
           };
         }
 
-        // Cache the intelligent selection
+        // Cache the intelligent selection (including session ID for fresh selection on app relaunch)
         initialSelectionRef.current = {
           articles: intelligentSelection.articles,
           refreshKey: 0,
           scope,
+          sessionId: currentSessionId,
         };
 
         result = intelligentSelection;
