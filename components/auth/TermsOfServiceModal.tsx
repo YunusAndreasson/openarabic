@@ -1,12 +1,16 @@
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import type { FC } from 'react';
-import { memo, useMemo } from 'react';
-import { Dimensions, StyleSheet } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Dimensions, StyleSheet, View } from 'react-native';
 
-import { GenericBottomSheet } from '@/components/common/GenericBottomSheet';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { useColors } from '@/hooks/theme/useColors';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -17,15 +21,61 @@ export interface TermsOfServiceModalProps {
 
 export const TermsOfServiceModal: FC<TermsOfServiceModalProps> = memo(
   ({ isVisible, onClose }) => {
+    const colors = useColors();
+    const bottomSheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => [SCREEN_HEIGHT * 0.85], []);
 
+    // Show/hide modal based on isVisible prop
+    useEffect(() => {
+      if (isVisible) {
+        bottomSheetRef.current?.expand();
+      } else {
+        bottomSheetRef.current?.close();
+      }
+    }, [isVisible]);
+
+    // Handle sheet position changes
+    const handleChange = useCallback(
+      (index: number) => {
+        if (index === -1) {
+          onClose();
+        }
+      },
+      [onClose],
+    );
+
+    // Use built-in backdrop component
+    const renderBackdrop = useCallback(
+      (props: BottomSheetBackdropProps) => (
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          pressBehavior="close"
+          onPress={onClose}
+        />
+      ),
+      [onClose],
+    );
+
     return (
-      <GenericBottomSheet
-        isVisible={isVisible}
-        onClose={onClose}
-        title={STRINGS.TERMS_OF_SERVICE}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
         snapPoints={snapPoints}
+        onChange={handleChange}
+        enablePanDownToClose={true}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{ backgroundColor: colors.elevation1 }}
+        handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
       >
+        {/* Header */}
+        <View style={styles.header}>
+          <ThemedText type="heading3" weight="bold">
+            {STRINGS.TERMS_OF_SERVICE}
+          </ThemedText>
+        </View>
+
         <BottomSheetScrollView
           showsVerticalScrollIndicator={true}
           contentContainerStyle={styles.content}
@@ -120,7 +170,7 @@ export const TermsOfServiceModal: FC<TermsOfServiceModalProps> = memo(
             {STRINGS.TERMS_CONTACT}
           </ThemedText>
         </BottomSheetScrollView>
-      </GenericBottomSheet>
+      </BottomSheet>
     );
   },
 );
@@ -128,6 +178,11 @@ export const TermsOfServiceModal: FC<TermsOfServiceModalProps> = memo(
 TermsOfServiceModal.displayName = 'TermsOfServiceModal';
 
 const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+  },
   content: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.XLARGE,
