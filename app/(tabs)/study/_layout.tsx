@@ -28,7 +28,7 @@ export default function StudyLayout(): JSX.Element {
           title: UiAction.DICTIONARY,
           // Only show DoneButton when NOT in edit mode to avoid duplicate "Done" buttons
           headerLeft: editMode ? undefined : () => <DoneButton onPress={() => router.back()} />,
-          headerRight: () => <EditModeButton type="dictionary" />,
+          headerRight: () => <EditModeButton type="dictionary" hideWhenEmpty={false} />,
         })}
       />
       <Stack.Screen
