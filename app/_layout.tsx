@@ -133,17 +133,31 @@ Sentry.addBreadcrumb({
   },
 });
 
-// Initialize Sentry with production config
+// Initialize Sentry with production config + Session Replay
 Sentry.init({
   dsn: sentryDsn,
-  integrations: [navigationIntegration],
+  integrations: [
+    navigationIntegration,
+    Sentry.mobileReplayIntegration({
+      // Privacy-first: Mask all user data by default
+      maskAllText: true,
+      maskAllImages: true,
+      maskAllVectors: true,
+    }),
+  ],
   enabled: !!sentryDsn, // Only enable if DSN is available
   tracesSampleRate: 1.0, // Sample everything (100%)
   attachScreenshot: true, // Helps debug UI crashes
-  debug: true, // Enable debug logging to catch issues
+  debug: __DEV__, // Enable debug logging only in development
   enableNative: true, // CRITICAL: Enable native crash reporting
   enableNativeCrashHandling: true, // Catch native crashes
   enableAutoSessionTracking: true, // Track sessions
+
+  // Session Replay configuration
+  // Conservative rates for mobile (battery/bandwidth concerns)
+  replaysSessionSampleRate: __DEV__ ? 1.0 : 0.05, // 5% in production, 100% in dev
+  replaysOnErrorSampleRate: 1.0, // 100% when errors occur (critical for debugging)
+
   beforeSend(event) {
     console.log('[Sentry] Sending event:', event.event_id, event.message || event.exception);
     // Add environment diagnostic context to all events
