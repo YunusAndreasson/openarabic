@@ -86,15 +86,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   container: {
-    marginTop: LAYOUT.SPACING.XLARGE,
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XXLARGE, // Major section separator email → social (was XLARGE)
     maxWidth: SCREEN_WIDTH * 0.9, // Match form input width constraint
     width: '100%',
   },
   dividerContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE, // More breathing room after divider (was MEDIUM)
     width: '100%',
   },
   dividerLine: {

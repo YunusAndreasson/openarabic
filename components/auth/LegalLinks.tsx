@@ -75,7 +75,8 @@ export function LegalLinks() {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.XXXLARGE, // Major separator actions → legal (was XLARGE)
+    marginBottom: LAYOUT.SPACING.XLARGE, // Bottom breathing room
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },

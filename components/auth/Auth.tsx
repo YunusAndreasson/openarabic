@@ -88,12 +88,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   contentContainer: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
     maxWidth: SCREEN_WIDTH * 0.9,
+    paddingHorizontal: LAYOUT.SPACING.LARGE, // Content padding for alignment
     width: '100%',
   },
   emailOptionsContainer: {
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XLARGE, // Clearer separation when expanded (was LARGE)
     width: '100%',
   },
   emailToggleButton: {
@@ -101,19 +101,19 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.XLARGE,
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.XXXLARGE, // Major section separator (was XLARGE)
+    marginTop: LAYOUT.SPACING.XXXLARGE, // More breathing room at top (was MEDIUM)
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
   },
   logo: {
     width: LAYOUT.BRAND.LOGO_WIDTH * 1.5, // 120px - Larger for auth screen prominence
     height: LAYOUT.BRAND.LOGO_HEIGHT * 1.5, // 60px - Maintains 2:1 ratio
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.LARGE, // Tighter grouping with title - Law of Proximity (was XLARGE)
     backgroundColor: 'transparent',
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
   },
   subtitle: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL, // Subtitle subordinate to title (was MEDIUM)
   },
 });
