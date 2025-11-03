@@ -1,14 +1,12 @@
-import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useMemo } from 'react';
 import { Dimensions, StyleSheet } from 'react-native';
 
-import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
+import { GenericBottomSheet } from '@/components/common/GenericBottomSheet';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
-import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -19,42 +17,15 @@ export interface PrivacyPolicyModalProps {
 
 export const PrivacyPolicyModal: FC<PrivacyPolicyModalProps> = memo(
   ({ isVisible, onClose }) => {
-    const colors = useColors();
-    const bottomSheetRef = useRef<BottomSheetModal>(null);
     const snapPoints = useMemo(() => [SCREEN_HEIGHT * 0.85], []);
 
-    useEffect(() => {
-      if (isVisible) {
-        bottomSheetRef.current?.present();
-      } else {
-        bottomSheetRef.current?.dismiss();
-      }
-    }, [isVisible]);
-
-    const handleChange = useCallback(
-      (index: number) => {
-        if (index === -1) {
-          onClose();
-        }
-      },
-      [onClose],
-    );
-
-    const renderBackdrop = useBottomSheetBackdrop(onClose);
-
     return (
-      <BottomSheetModal
-        ref={bottomSheetRef}
+      <GenericBottomSheet
+        isVisible={isVisible}
+        onClose={onClose}
+        title={STRINGS.PRIVACY_POLICY}
         snapPoints={snapPoints}
-        onChange={handleChange}
-        onDismiss={onClose}
-        backgroundStyle={{ backgroundColor: colors.elevation1 }}
-        handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
-        backdropComponent={renderBackdrop}
-        {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
-        enableDynamicSizing={false}
       >
-        <BottomSheetHeader title={STRINGS.PRIVACY_POLICY} />
         <BottomSheetScrollView
           showsVerticalScrollIndicator={true}
           contentContainerStyle={styles.content}
@@ -175,7 +146,7 @@ export const PrivacyPolicyModal: FC<PrivacyPolicyModalProps> = memo(
             {STRINGS.PRIVACY_CONTACT}
           </ThemedText>
         </BottomSheetScrollView>
-      </BottomSheetModal>
+      </GenericBottomSheet>
     );
   },
 );
