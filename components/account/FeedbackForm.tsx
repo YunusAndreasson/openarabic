@@ -18,7 +18,7 @@ import {
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme';
 import pkg from '@/package.json';
@@ -243,7 +243,10 @@ export const FeedbackForm = memo(() => {
               <Image source={{ uri: screenshotUri }} style={styles.screenshotImage} />
               <Pressable
                 onPress={handleRemoveScreenshot}
-                style={[styles.removeButton, { backgroundColor: colors.error }]}
+                style={[
+                  styles.removeButton,
+                  { backgroundColor: colors.error, shadowColor: colors.shadow },
+                ]}
               >
                 <Ionicons name="close" size={20} color={colors.white} />
               </Pressable>
@@ -355,16 +358,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: LAYOUT.SPACING.SMALL,
     right: LAYOUT.SPACING.SMALL,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: MIN_TOUCH_TARGET.SMALL,
+    height: MIN_TOUCH_TARGET.SMALL,
+    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
+    ...LAYOUT.ELEVATION.SMALL,
   },
   submitButton: {
     marginTop: LAYOUT.SPACING.SMALL,
