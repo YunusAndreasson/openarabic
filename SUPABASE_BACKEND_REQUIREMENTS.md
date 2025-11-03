@@ -1,0 +1,411 @@
+# Supabase Backend Requirements for App Store Compliance
+
+This document outlines the backend changes required in Supabase to complete the app store compliance implementation.
+
+## Overview
+
+The frontend app now has account deletion functionality and FSRS improvements that require backend support. This document provides the SQL code needed to implement these features in Supabase.
+
+---
+
+## 🔴 CRITICAL (Required for App Store Approval)
+
+### 1. Account Deletion RPC Function
+
+**Purpose:** Allow users to delete their accounts and all associated data as required by Apple App Store Guidelines 5.1.1(v) and Google Play Store policy.
+
+**Location in Code:** `services/accountDeletion.ts:47`
+
+**SQL Implementation:**
+
+```sql
+-- Create RPC function to delete user account and all associated data
+CREATE OR REPLACE FUNCTION delete_user_account(user_id UUID)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Verify the requesting user is the account owner
+  IF auth.uid() != user_id THEN
+    RAISE EXCEPTION 'Unauthorized: Cannot delete another user''s account';
+  END IF;
+
+  -- Delete user data (should cascade via foreign keys or RLS)
+  -- Order matters: delete child records first, then parent records
+
+  -- 1. Delete vocabulary/study data
+  DELETE FROM reviews WHERE user_id = user_id;
+  DELETE FROM study_words WHERE user_id = user_id;
+
+  -- 2. Delete reading data
+  DELETE FROM reading_progress WHERE user_id = user_id;
+  DELETE FROM reading_list WHERE user_id = user_id;
+
+  -- 3. Delete any other user-specific data tables you have
+  -- Add more DELETE statements here for any other tables
+
+  -- 4. Delete auth user (this will also remove the user from auth.users)
+  DELETE FROM auth.users WHERE id = user_id;
+
+  -- Log the deletion for audit purposes (optional)
+  -- INSERT INTO user_deletion_log (user_id, deleted_at)
+  -- VALUES (user_id, NOW());
+
+END;
+$$;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION delete_user_account(UUID) TO authenticated;
+
+-- Add helpful comment
+COMMENT ON FUNCTION delete_user_account IS 'Deletes a user account and all associated data. Can only be called by the account owner.';
+```
+
+**Testing:**
+
+```sql
+-- Test the function (replace with a test user ID)
+-- WARNING: This will actually delete the user!
+SELECT delete_user_account('test-user-uuid-here');
+
+-- Verify deletion
+SELECT * FROM auth.users WHERE id = 'test-user-uuid-here'; -- Should return no rows
+SELECT * FROM study_words WHERE user_id = 'test-user-uuid-here'; -- Should return no rows
+SELECT * FROM reading_progress WHERE user_id = 'test-user-uuid-here'; -- Should return no rows
+```
+
+**Security Considerations:**
+
+1. ✅ `SECURITY DEFINER` - Function runs with creator's privileges (can delete from auth.users)
+2. ✅ Authorization check - Verifies `auth.uid()` matches `user_id` parameter
+3. ✅ SET search_path - Prevents search_path injection attacks
+4. ⚠️ Irreversible - No undo, ensure proper confirmation in frontend (already implemented)
+
+**Rollback Plan:**
+
+If you need to reverse this deployment:
+
+```sql
+-- Remove the function
+DROP FUNCTION IF EXISTS delete_user_account(UUID);
+```
+
+---
+
+## 🟡 OPTIONAL (Code Quality Improvement)
+
+### 2. Update FSRS RPC Function (Remove Deprecated Parameter)
+
+**Purpose:** Remove the deprecated `p_fsrs_elapsed_days` parameter from the `update_word_and_review` RPC function. This field is deprecated in ts-fsrs and is no longer needed.
+
+**Location in Code:** `services/studyWordsFSRS.ts:189`
+
+**Current Status:** Frontend sends `p_fsrs_elapsed_days: 0` for backward compatibility. This is harmless but should be cleaned up.
+
+**SQL Implementation:**
+
+```sql
+-- First, check the current function signature
+SELECT
+  routine_name,
+  routine_definition
+FROM information_schema.routines
+WHERE routine_name = 'update_word_and_review'
+  AND routine_schema = 'public';
+
+-- Update the function to remove p_fsrs_elapsed_days parameter
+-- NOTE: You'll need to adjust this based on your actual function implementation
+-- This is a template - modify according to your existing function
+
+CREATE OR REPLACE FUNCTION update_word_and_review(
+  p_user_id UUID,
+  p_root_id INTEGER,
+  p_fsrs_due TIMESTAMP WITH TIME ZONE,
+  p_fsrs_stability DOUBLE PRECISION,
+  p_fsrs_difficulty DOUBLE PRECISION,
+  -- p_fsrs_elapsed_days INTEGER,  -- REMOVE THIS LINE
+  p_fsrs_scheduled_days INTEGER,
+  p_fsrs_learning_steps INTEGER,
+  p_fsrs_reps INTEGER,
+  p_fsrs_lapses INTEGER,
+  p_fsrs_state INTEGER,
+  p_fsrs_last_review TIMESTAMP WITH TIME ZONE
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Your existing function logic here
+  -- Remove any references to p_fsrs_elapsed_days
+
+  UPDATE study_words
+  SET
+    fsrs_due = p_fsrs_due,
+    fsrs_stability = p_fsrs_stability,
+    fsrs_difficulty = p_fsrs_difficulty,
+    -- fsrs_elapsed_days = p_fsrs_elapsed_days,  -- REMOVE THIS LINE
+    fsrs_scheduled_days = p_fsrs_scheduled_days,
+    fsrs_learning_steps = p_fsrs_learning_steps,
+    fsrs_reps = p_fsrs_reps,
+    fsrs_lapses = p_fsrs_lapses,
+    fsrs_state = p_fsrs_state,
+    fsrs_last_review = p_fsrs_last_review,
+    updated_at = NOW()
+  WHERE user_id = p_user_id
+    AND root_id = p_root_id;
+
+  -- Insert review record (your existing logic)
+  -- ...
+
+END;
+$$;
+```
+
+**Database Schema Changes (Optional):**
+
+If you want to also remove the column from the database:
+
+```sql
+-- Check if column exists and has data
+SELECT
+  COUNT(*) as total_rows,
+  COUNT(fsrs_elapsed_days) as non_null_count
+FROM study_words;
+
+-- If safe to remove (after updating the RPC function above):
+ALTER TABLE study_words DROP COLUMN IF EXISTS fsrs_elapsed_days;
+
+-- Or keep it for now and just stop using it (safer approach)
+COMMENT ON COLUMN study_words.fsrs_elapsed_days IS 'DEPRECATED: No longer used as of ts-fsrs v5. Calculate from last_review instead.';
+```
+
+**Frontend Update Required After Backend Changes:**
+
+Once you update the backend RPC function, update the frontend code:
+
+```typescript
+// In services/studyWordsFSRS.ts:183
+const data = await executeAuthenticatedQuery(
+  userId,
+  () =>
+    supabase.rpc('update_word_and_review', {
+      p_user_id: userId,
+      p_root_id: rootId,
+      p_fsrs_due: update.fsrs_due,
+      p_fsrs_stability: update.fsrs_stability,
+      p_fsrs_difficulty: update.fsrs_difficulty,
+      // Remove this line: p_fsrs_elapsed_days: 0,
+      p_fsrs_scheduled_days: update.fsrs_scheduled_days,
+      p_fsrs_learning_steps: update.fsrs_learning_steps,
+      p_fsrs_reps: update.fsrs_reps,
+      p_fsrs_lapses: update.fsrs_lapses,
+      p_fsrs_state: update.fsrs_state,
+      p_fsrs_last_review: update.fsrs_last_review,
+    }),
+  // ...
+);
+```
+
+---
+
+## 📋 Implementation Checklist
+
+### Critical (Do First)
+
+- [ ] Deploy `delete_user_account` RPC function to Supabase
+- [ ] Grant execute permissions to authenticated users
+- [ ] Test account deletion with a test user
+- [ ] Verify all user data is deleted from all tables
+- [ ] Test the frontend account deletion flow end-to-end
+- [ ] Verify user is redirected to auth screen after deletion
+- [ ] Test with different auth methods (Email, Apple, Google)
+
+### Optional (Do Later)
+
+- [ ] Review existing `update_word_and_review` function
+- [ ] Update RPC function to remove `p_fsrs_elapsed_days`
+- [ ] Test FSRS functionality still works
+- [ ] Update frontend to remove `p_fsrs_elapsed_days: 0`
+- [ ] Consider removing `fsrs_elapsed_days` column from database
+- [ ] Update database types with `npx supabase gen types typescript`
+
+---
+
+## 🧪 Testing Guide
+
+### Test Account Deletion
+
+1. **Create a test user:**
+   ```bash
+   # In app, sign up with test email
+   test-delete@example.com
+   ```
+
+2. **Add test data:**
+   - Add some words to study
+   - Read some articles
+   - Bookmark some articles
+   - Create reading progress
+
+3. **Delete account:**
+   - Go to Account screen
+   - Tap "Delete Account"
+   - Enter email for confirmation
+   - Confirm deletion
+
+4. **Verify deletion:**
+   ```sql
+   -- Check auth.users (should be gone)
+   SELECT * FROM auth.users WHERE email = 'test-delete@example.com';
+
+   -- Check study_words (should be empty)
+   SELECT * FROM study_words WHERE user_id = 'test-user-uuid';
+
+   -- Check reading_progress (should be empty)
+   SELECT * FROM reading_progress WHERE user_id = 'test-user-uuid';
+
+   -- Check reading_list (should be empty)
+   SELECT * FROM reading_list WHERE user_id = 'test-user-uuid';
+   ```
+
+5. **Try to sign in again:**
+   - Should fail (user no longer exists)
+
+### Test Different Auth Methods
+
+Repeat the above test with:
+- [ ] Email/Password authentication
+- [ ] Apple Sign In
+- [ ] Google Sign In
+
+---
+
+## 🚨 Common Issues & Solutions
+
+### Issue 1: Permission Denied
+
+**Error:** `permission denied for table auth.users`
+
+**Solution:** The function needs `SECURITY DEFINER` to access `auth.users`:
+```sql
+ALTER FUNCTION delete_user_account(UUID) SECURITY DEFINER;
+```
+
+### Issue 2: Foreign Key Constraints
+
+**Error:** `update or delete on table "users" violates foreign key constraint`
+
+**Solution:** Either:
+1. Delete child records first (in the function, as shown above)
+2. Or add `ON DELETE CASCADE` to foreign keys:
+```sql
+ALTER TABLE study_words
+DROP CONSTRAINT study_words_user_id_fkey,
+ADD CONSTRAINT study_words_user_id_fkey
+  FOREIGN KEY (user_id)
+  REFERENCES auth.users(id)
+  ON DELETE CASCADE;
+```
+
+### Issue 3: RLS Policies Blocking Deletion
+
+**Error:** Rows are not being deleted even though function runs
+
+**Solution:** Use `SECURITY DEFINER` (already included) or temporarily disable RLS:
+```sql
+-- Inside the function, before deletions:
+SET LOCAL role = postgres; -- Bypass RLS
+
+-- Or better: Ensure RLS policies allow deletion by the owner
+CREATE POLICY "Users can delete their own data"
+  ON study_words FOR DELETE
+  USING (auth.uid() = user_id);
+```
+
+---
+
+## 📊 Monitoring & Audit
+
+### Optional: Create Audit Log
+
+```sql
+-- Create audit table (optional)
+CREATE TABLE IF NOT EXISTS user_deletion_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  deleted_by UUID REFERENCES auth.users(id),
+  reason TEXT
+);
+
+-- Add to delete_user_account function:
+INSERT INTO user_deletion_log (user_id, deleted_by, reason)
+VALUES (user_id, auth.uid(), 'User-initiated account deletion');
+```
+
+### Monitor Deletions
+
+```sql
+-- Check recent account deletions
+SELECT
+  user_id,
+  deleted_at,
+  reason
+FROM user_deletion_log
+ORDER BY deleted_at DESC
+LIMIT 10;
+```
+
+---
+
+## 🔐 Security Considerations
+
+1. **Authorization:** Function verifies `auth.uid()` matches the user being deleted
+2. **Audit Trail:** Consider logging deletions for compliance
+3. **Data Retention:** Ensure you're compliant with GDPR/CCPA requirements
+4. **Soft Delete Alternative:** Consider soft deletes if you need to retain data for legal reasons
+
+---
+
+## 📞 Support
+
+If you encounter issues:
+
+1. Check Supabase logs: Dashboard → Logs → Database
+2. Check function errors: Dashboard → Database → Functions
+3. Test with SQL Editor: Dashboard → SQL Editor
+4. Check RLS policies: Dashboard → Authentication → Policies
+
+---
+
+## ✅ Deployment Checklist
+
+Before deploying to production:
+
+- [ ] Test on staging/dev environment first
+- [ ] Backup database before making changes
+- [ ] Deploy during low-traffic period
+- [ ] Monitor error logs after deployment
+- [ ] Test account deletion with test users
+- [ ] Verify no impact on existing users
+- [ ] Update mobile app to latest version
+- [ ] Submit updated app to App Store & Play Store
+
+---
+
+## 📝 Related Documentation
+
+- [Apple App Store Review Guidelines 5.1.1(v)](https://developer.apple.com/app-store/review/guidelines/#data-collection-and-storage)
+- [Google Play Policy on Account Deletion](https://support.google.com/googleplay/android-developer/answer/13316080)
+- [Supabase RPC Functions](https://supabase.com/docs/guides/database/functions)
+- [Supabase Auth Admin API](https://supabase.com/docs/reference/javascript/auth-admin-deleteuser)
+
+---
+
+**Last Updated:** 2025-11-03
+**Author:** Claude Code
+**Status:** Ready for Implementation
