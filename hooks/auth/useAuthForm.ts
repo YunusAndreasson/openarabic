@@ -173,10 +173,26 @@ export function useAuthForm(): UseAuthFormReturn {
       } else {
         console.log('[SignUp] Sign-up successful, user:', data?.user?.id);
 
+        // Check if email confirmation is disabled (session created immediately)
+        const hasImmediateSession = !!data?.session;
+        console.log('[SignUp] Has immediate session:', hasImmediateSession);
+
         // CRITICAL: Show toast immediately before any async operations that might unmount component
         successFeedback();
-        showSuccessToast(STRINGS.CHECK_EMAIL_CONFIRMATION, 5000);
-        console.log('[SignUp] Success feedback and toast triggered');
+
+        // If session exists, user is auto-confirmed and can be logged in
+        if (hasImmediateSession) {
+          console.log('[SignUp] Session created immediately, navigating to library');
+          showSuccessToast(STRINGS.SUCCESS, 3000);
+          // Navigate to library after brief delay to show toast
+          setTimeout(() => {
+            router.replace(ROUTE_PATHS.LIBRARY_TAB);
+          }, 500);
+        } else {
+          // Email confirmation required
+          console.log('[SignUp] Email confirmation required, showing email check message');
+          showSuccessToast(STRINGS.CHECK_EMAIL_CONFIRMATION, 5000);
+        }
 
         // Analytics can happen asynchronously without blocking UX
         if (data?.user) {
