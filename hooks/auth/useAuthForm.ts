@@ -154,7 +154,14 @@ export function useAuthForm(): UseAuthFormReturn {
         email,
         password,
       });
-      console.log('[SignUp] Supabase response', { hasData: !!data, hasError: !!error, errorMessage: error?.message });
+      console.log('[SignUp] Supabase response', {
+        hasData: !!data,
+        hasError: !!error,
+        errorMessage: error?.message,
+        hasSession: !!data?.session,
+        hasUser: !!data?.user,
+        userId: data?.user?.id
+      });
       if (error) {
         if (!isMountedRef.current) return;
         console.log('[SignUp] Sign-up error:', error.message);
@@ -165,18 +172,25 @@ export function useAuthForm(): UseAuthFormReturn {
         });
       } else {
         console.log('[SignUp] Sign-up successful, user:', data?.user?.id);
+
+        // CRITICAL: Show toast immediately before any async operations that might unmount component
+        successFeedback();
+        showSuccessToast(STRINGS.CHECK_EMAIL_CONFIRMATION, 5000);
+        console.log('[SignUp] Success feedback and toast triggered');
+
+        // Analytics can happen asynchronously without blocking UX
         if (data?.user) {
-          await analytics.identify(data.user.id, {
+          analytics.identify(data.user.id, {
             email: data.user.email,
             created_at: new Date().toISOString(),
+          }).catch(err => {
+            console.log('[SignUp] Analytics identify failed:', err);
           });
         }
-        await analytics.trackSignUp('email');
-        successFeedback();
-        if (!isMountedRef.current) return;
-        // Show long-lasting success toast (5 seconds)
-        console.log('[SignUp] Showing success toast');
-        showSuccessToast(STRINGS.CHECK_EMAIL_CONFIRMATION, 5000);
+        analytics.trackSignUp('email').catch(err => {
+          console.log('[SignUp] Analytics track failed:', err);
+        });
+        console.log('[SignUp] Analytics calls dispatched');
       }
     } catch (err) {
       if (!isMountedRef.current) return;
