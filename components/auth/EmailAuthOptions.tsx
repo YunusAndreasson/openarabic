@@ -32,6 +32,7 @@ export function EmailAuthOptions(): JSX.Element {
       <ThemedButton
         variant="filled"
         title={STRINGS.SIGN_IN}
+        uppercase={false}
         testID="navigate-to-sign-in-button"
         accessibilityLabel="Go to sign in screen"
         onPress={handleSignIn}
@@ -40,6 +41,7 @@ export function EmailAuthOptions(): JSX.Element {
       <ThemedButton
         variant="outlined"
         title={STRINGS.CREATE_ACCOUNT}
+        uppercase={false}
         style={styles.createAccountButton}
         testID="navigate-to-sign-up-button"
         accessibilityLabel="Go to create account screen"
