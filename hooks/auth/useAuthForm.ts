@@ -136,26 +136,35 @@ export function useAuthForm(): UseAuthFormReturn {
   }, [email, password, validateEmail, validatePassword, isMountedRef]);
 
   const signUpWithEmail = useCallback(async () => {
+    console.log('[SignUp] Button pressed', { email, password: '***' });
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
-    if (!isEmailValid || !isPasswordValid) return;
+    console.log('[SignUp] Validation results', { isEmailValid, isPasswordValid });
+    if (!isEmailValid || !isPasswordValid) {
+      console.log('[SignUp] Validation failed, returning early');
+      return;
+    }
 
     if (!isMountedRef.current) return;
     setLoading(true);
+    console.log('[SignUp] Starting sign-up process...');
 
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
+      console.log('[SignUp] Supabase response', { hasData: !!data, hasError: !!error, errorMessage: error?.message });
       if (error) {
         if (!isMountedRef.current) return;
+        console.log('[SignUp] Sign-up error:', error.message);
         handleError(error, {
           toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${error.message}`,
           analyticsEventName: 'Sign_Up_Error',
           sentrySeverity: 'error',
         });
       } else {
+        console.log('[SignUp] Sign-up successful, user:', data?.user?.id);
         if (data?.user) {
           await analytics.identify(data.user.id, {
             email: data.user.email,
@@ -166,6 +175,7 @@ export function useAuthForm(): UseAuthFormReturn {
         successFeedback();
         if (!isMountedRef.current) return;
         // Show long-lasting success toast (5 seconds)
+        console.log('[SignUp] Showing success toast');
         showSuccessToast(STRINGS.CHECK_EMAIL_CONFIRMATION, 5000);
       }
     } catch (err) {
