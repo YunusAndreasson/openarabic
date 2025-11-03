@@ -14,11 +14,11 @@ export function LegalLinks() {
   const colors = useColors();
 
   const handleTermsPress = () => {
-    router.push(ROUTE_PATHS.TERMS);
+    router.push(ROUTE_PATHS.AUTH_TERMS);
   };
 
   const handlePrivacyPress = () => {
-    router.push(ROUTE_PATHS.PRIVACY);
+    router.push(ROUTE_PATHS.AUTH_PRIVACY);
   };
 
   return (

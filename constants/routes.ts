@@ -33,6 +33,8 @@ export const getDifficultyFilterRoute = (difficultyId: number, name?: string): s
 
 export const ROUTE_PATHS = {
   AUTH: '/auth',
+  AUTH_TERMS: '/auth/terms',
+  AUTH_PRIVACY: '/auth/privacy',
   TABS: '/(tabs)',
   LIBRARY_TAB: '/(tabs)/library',
   STUDY_TAB: '/(tabs)/study',
