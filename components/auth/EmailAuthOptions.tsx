@@ -30,7 +30,7 @@ export function EmailAuthOptions(): JSX.Element {
   return (
     <View style={styles.container}>
       <ThemedButton
-        variant="filled"
+        variant="outlined"
         title={STRINGS.SIGN_IN}
         uppercase={false}
         testID="navigate-to-sign-in-button"

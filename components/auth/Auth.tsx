@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { EmailAuthOptions } from '@/components/auth/EmailAuthOptions';
@@ -32,6 +33,13 @@ export function Auth(): JSX.Element {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.headerContainer}>
+        {/* Logo */}
+        <EnhancedImage
+          source={require('@/assets/images/oaLogo.png')}
+          style={styles.logo}
+          contentFit="contain"
+        />
+
         <ThemedText align="center" type="heading1" colorName="headingText">
           {STRINGS.WELCOME_TITLE}
         </ThemedText>
@@ -46,7 +54,7 @@ export function Auth(): JSX.Element {
         <ThemedButton
           variant="outlined"
           title={showEmailOptions ? STRINGS.HIDE_EMAIL_OPTIONS : STRINGS.CONTINUE_WITH_EMAIL_OPTION}
-          icon={showEmailOptions ? 'chevron-up' : 'chevron-down'}
+          icon="mail-outline"
           iconSize={20}
           uppercase={false}
           style={styles.emailToggleButton}
@@ -97,6 +105,13 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
+  },
+  logo: {
+    width: LAYOUT.BRAND.LOGO_WIDTH * 1.5, // 120px - Larger for auth screen prominence
+    height: LAYOUT.BRAND.LOGO_HEIGHT * 1.5, // 60px - Maintains 2:1 ratio
+    marginBottom: LAYOUT.SPACING.XLARGE,
+    backgroundColor: 'transparent',
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
   },
   subtitle: {
     marginTop: LAYOUT.SPACING.MEDIUM,
