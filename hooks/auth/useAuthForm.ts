@@ -183,11 +183,11 @@ export function useAuthForm(): UseAuthFormReturn {
         // If session exists, user is auto-confirmed and can be logged in
         if (hasImmediateSession) {
           console.log('[SignUp] Session created immediately, navigating to library');
-          showSuccessToast(STRINGS.SUCCESS, 3000);
+          showSuccessToast(`${STRINGS.WELCOME_TITLE}! Let's start learning.`, 5000);
           // Navigate to library after brief delay to show toast
           setTimeout(() => {
             router.replace(ROUTE_PATHS.LIBRARY_TAB);
-          }, 500);
+          }, 1000);
         } else {
           // Email confirmation required
           console.log('[SignUp] Email confirmation required, showing email check message');
