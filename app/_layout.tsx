@@ -30,6 +30,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/bookmarks';
 import { StreaksBottomSheet } from '@/components/library/StreaksBottomSheet';
+import { DoneButton } from '@/components/ui/DoneButton';
 import {
   AuthProvider,
   FSRSDataProvider,
@@ -462,6 +463,22 @@ function AppContent() {
               options={createNavigationOptions(colors, {
                 headerShown: false,
                 freezeOnBlur: true, // Optimize article screen when backgrounded
+              })}
+            />
+            <Stack.Screen
+              name="terms"
+              options={createNavigationOptions(colors, {
+                title: STRINGS.TERMS_OF_SERVICE,
+                headerShown: true,
+                headerLeft: () => <DoneButton onPress={() => router.back()} />,
+              })}
+            />
+            <Stack.Screen
+              name="privacy"
+              options={createNavigationOptions(colors, {
+                title: STRINGS.PRIVACY_POLICY,
+                headerShown: true,
+                headerLeft: () => <DoneButton onPress={() => router.back()} />,
               })}
             />
 

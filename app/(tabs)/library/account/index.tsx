@@ -6,7 +6,7 @@ import { TimePicker } from '@ui/TimePicker';
 import { Toggle } from '@ui/Toggle';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import React, { Fragment, memo, useCallback, useMemo, useState, type FC } from 'react';
+import React, { Fragment, memo, useCallback, useMemo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,8 +15,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SocialMediaIcons } from '@/components/account';
 import { AudioShuffleToggle } from '@/components/account/AudioShuffleToggle';
-import { PrivacyPolicyModal } from '@/components/auth/PrivacyPolicyModal';
-import { TermsOfServiceModal } from '@/components/auth/TermsOfServiceModal';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
@@ -138,8 +136,6 @@ const AccountScreen: FC = () => {
   const dispatch = useAppDispatch();
 
   const [activePicker, setActivePicker] = React.useState<string | null>(null);
-  const [isTermsVisible, setIsTermsVisible] = useState(false);
-  const [isPrivacyVisible, setIsPrivacyVisible] = useState(false);
 
   // Get daily word limit with validation
   const rawDailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
@@ -632,7 +628,7 @@ const AccountScreen: FC = () => {
             <BaseCard
               shadowSize="none"
               style={styles.interactiveCard}
-              onPress={() => setIsTermsVisible(true)}
+              onPress={() => router.push(ROUTE_PATHS.TERMS)}
             >
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
@@ -656,7 +652,7 @@ const AccountScreen: FC = () => {
             <BaseCard
               shadowSize="none"
               style={styles.interactiveCard}
-              onPress={() => setIsPrivacyVisible(true)}
+              onPress={() => router.push(ROUTE_PATHS.PRIVACY)}
             >
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
@@ -814,16 +810,6 @@ const AccountScreen: FC = () => {
             ? pickerConfigs[activePicker as keyof typeof pickerConfigs].snapPoints
             : [320]
         }
-      />
-
-      {/* Legal Modals */}
-      <TermsOfServiceModal
-        isVisible={isTermsVisible}
-        onClose={() => setIsTermsVisible(false)}
-      />
-      <PrivacyPolicyModal
-        isVisible={isPrivacyVisible}
-        onClose={() => setIsPrivacyVisible(false)}
       />
     </ThemedView>
   );

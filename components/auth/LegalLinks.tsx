@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { router } from 'expo-router';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
-import { PrivacyPolicyModal } from '@/components/auth/PrivacyPolicyModal';
-import { TermsOfServiceModal } from '@/components/auth/TermsOfServiceModal';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -13,79 +12,63 @@ import { useColors } from '@/hooks/theme/useColors';
  */
 export function LegalLinks() {
   const colors = useColors();
-  const [isTermsVisible, setIsTermsVisible] = useState(false);
-  const [isPrivacyVisible, setIsPrivacyVisible] = useState(false);
 
   const handleTermsPress = () => {
-    setIsTermsVisible(true);
+    router.push(ROUTE_PATHS.TERMS);
   };
 
   const handlePrivacyPress = () => {
-    setIsPrivacyVisible(true);
-  };
-
-  const handleTermsClose = () => {
-    setIsTermsVisible(false);
-  };
-
-  const handlePrivacyClose = () => {
-    setIsPrivacyVisible(false);
+    router.push(ROUTE_PATHS.PRIVACY);
   };
 
   return (
-    <>
-      <View style={styles.container}>
-        <ThemedText align="center" type="caption" variant="secondary">
-          {STRINGS.BY_CONTINUING_YOU_AGREE}{' '}
-        </ThemedText>
-        <View style={styles.linksRow}>
-          <TouchableOpacity
-            activeOpacity={LAYOUT.OPACITY.HIGH}
-            accessibilityRole="button"
-            accessibilityLabel={STRINGS.TERMS_OF_SERVICE}
-            onPress={handleTermsPress}
+    <View style={styles.container}>
+      <ThemedText align="center" type="caption" variant="secondary">
+        {STRINGS.BY_CONTINUING_YOU_AGREE}{' '}
+      </ThemedText>
+      <View style={styles.linksRow}>
+        <TouchableOpacity
+          activeOpacity={LAYOUT.OPACITY.HIGH}
+          accessibilityRole="button"
+          accessibilityLabel={STRINGS.TERMS_OF_SERVICE}
+          onPress={handleTermsPress}
+        >
+          <ThemedText
+            type="caption"
+            style={[
+              styles.link,
+              {
+                color: colors.tint,
+              },
+            ]}
           >
-            <ThemedText
-              type="caption"
-              style={[
-                styles.link,
-                {
-                  color: colors.tint,
-                },
-              ]}
-            >
-              {STRINGS.TERMS_OF_SERVICE}
-            </ThemedText>
-          </TouchableOpacity>
-          <ThemedText type="caption" variant="secondary">
-            {' '}
-            {STRINGS.AND}{' '}
+            {STRINGS.TERMS_OF_SERVICE}
           </ThemedText>
-          <TouchableOpacity
-            activeOpacity={LAYOUT.OPACITY.HIGH}
-            accessibilityRole="button"
-            accessibilityLabel={STRINGS.PRIVACY_POLICY}
-            onPress={handlePrivacyPress}
+        </TouchableOpacity>
+        <ThemedText type="caption" variant="secondary">
+          {' '}
+          {STRINGS.AND}{' '}
+        </ThemedText>
+        <TouchableOpacity
+          activeOpacity={LAYOUT.OPACITY.HIGH}
+          accessibilityRole="button"
+          accessibilityLabel={STRINGS.PRIVACY_POLICY}
+          onPress={handlePrivacyPress}
+        >
+          <ThemedText
+            type="caption"
+            style={[
+              styles.link,
+              {
+                color: colors.tint,
+              },
+            ]}
           >
-            <ThemedText
-              type="caption"
-              style={[
-                styles.link,
-                {
-                  color: colors.tint,
-                },
-              ]}
-            >
-              {STRINGS.PRIVACY_POLICY}
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
+            {STRINGS.PRIVACY_POLICY}
+          </ThemedText>
+        </TouchableOpacity>
       </View>
-
-      {/* Modals */}
-      <TermsOfServiceModal isVisible={isTermsVisible} onClose={handleTermsClose} />
-      <PrivacyPolicyModal isVisible={isPrivacyVisible} onClose={handlePrivacyClose} />
-    </>
+    </View>
   );
 }
 
