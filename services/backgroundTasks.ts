@@ -1,4 +1,4 @@
-import * as BackgroundFetch from 'expo-background-fetch';
+import * as BackgroundTask from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
 
@@ -22,7 +22,7 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
     } = await supabase.auth.getSession();
 
     if (!session?.user?.id) {
-      return BackgroundFetch.BackgroundFetchResult.Failed;
+      return BackgroundTask.BackgroundTaskResult.Failed;
     }
 
     // Calculate current due words for the authenticated user
@@ -46,16 +46,16 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
         trigger: null, // Show immediately
       });
 
-      return BackgroundFetch.BackgroundFetchResult.NewData;
+      return BackgroundTask.BackgroundTaskResult.Success;
     }
 
-    return BackgroundFetch.BackgroundFetchResult.NoData;
+    return BackgroundTask.BackgroundTaskResult.Success;
   } catch (error) {
     handleError(error as Error, {
       showToast: false,
       analyticsEventName: 'Background_Task_Error',
     });
-    return BackgroundFetch.BackgroundFetchResult.Failed;
+    return BackgroundTask.BackgroundTaskResult.Failed;
   }
 });
 
@@ -64,15 +64,13 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
  */
 export async function registerBackgroundTasks(): Promise<void> {
   try {
-    // Check if background fetch is available
-    const status = await BackgroundFetch.getStatusAsync();
+    // Check if background task is available
+    const status = await BackgroundTask.getStatusAsync();
 
-    if (status === BackgroundFetch.BackgroundFetchStatus.Available) {
+    if (status === BackgroundTask.BackgroundTaskStatus.Available) {
       // Register the background task with minimum 15-minute interval
-      await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-        minimumInterval: 60 * 15, // 15 minutes in seconds
-        stopOnTerminate: false, // Continue running even after app is terminated
-        startOnBoot: true, // Start task when device boots
+      await BackgroundTask.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+        minimumInterval: 15, // 15 minutes
       });
 
       // Background task registered successfully
@@ -107,7 +105,7 @@ export async function registerBackgroundTasks(): Promise<void> {
  */
 export async function unregisterBackgroundTasks(): Promise<void> {
   try {
-    await BackgroundFetch.unregisterTaskAsync(BACKGROUND_FETCH_TASK);
+    await BackgroundTask.unregisterTaskAsync(BACKGROUND_FETCH_TASK);
     // Background task unregistered
   } catch (error) {
     handleError(error as Error, {
@@ -122,8 +120,8 @@ export async function unregisterBackgroundTasks(): Promise<void> {
  */
 export async function isBackgroundTaskAvailable(): Promise<boolean> {
   try {
-    const status = await BackgroundFetch.getStatusAsync();
-    return status === BackgroundFetch.BackgroundFetchStatus.Available;
+    const status = await BackgroundTask.getStatusAsync();
+    return status === BackgroundTask.BackgroundTaskStatus.Available;
   } catch {
     return false;
   }
