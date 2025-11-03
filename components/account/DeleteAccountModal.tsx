@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { GenericBottomSheet } from '@/components/common/GenericBottomSheet';
 import { ThemedInput } from '@/components/ThemedInput';
@@ -14,41 +14,32 @@ interface DeleteAccountModalProps {
 }
 
 /**
- * Modal for deleting user account with email confirmation
- * Shows warning message and requires email verification before deletion
+ * Modal for deleting user account with DELETE confirmation
+ * Shows warning message and requires typing "DELETE" to confirm
+ * Supports all auth types including private relay emails
  */
 export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ isVisible, onClose }) => {
-  const { email, setEmail, loading, emailError, validateEmail, deleteAccount } =
-    useAccountDeletion();
+  const {
+    userEmail,
+    confirmationText,
+    setConfirmationText,
+    loading,
+    confirmationError,
+    validateConfirmation,
+    deleteAccount,
+  } = useAccountDeletion();
 
-  const handleDeletePress = () => {
-    if (!validateEmail(email)) {
+  const handleDeletePress = async () => {
+    if (!validateConfirmation(confirmationText)) {
       return;
     }
 
-    Alert.alert(
-      STRINGS.DELETE_ACCOUNT_TITLE,
-      STRINGS.DELETE_ACCOUNT_PERMANENT,
-      [
-        {
-          text: STRINGS.CANCEL,
-          style: 'cancel',
-        },
-        {
-          text: STRINGS.DELETE,
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteAccount();
-              onClose();
-            } catch {
-              // Error is handled in the hook
-            }
-          },
-        },
-      ],
-      { cancelable: true },
-    );
+    try {
+      await deleteAccount();
+      onClose();
+    } catch {
+      // Error is handled in the hook
+    }
   };
 
   return (
@@ -81,20 +72,29 @@ export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ isVisible, onC
           </ThemedText>
         </View>
 
-        {/* Email Confirmation */}
+        {/* Show Current Email */}
+        <View style={styles.emailContainer}>
+          <ThemedText type="caption" colorName="textTertiary" style={styles.signedInLabel}>
+            {STRINGS.DELETE_ACCOUNT_SIGNED_IN_AS}
+          </ThemedText>
+          <ThemedText type="body" weight="medium" style={styles.emailText}>
+            {userEmail || 'Loading...'}
+          </ThemedText>
+        </View>
+
+        {/* DELETE Confirmation */}
         <View style={styles.inputContainer}>
           <ThemedText type="body" style={styles.inputLabel}>
-            {STRINGS.DELETE_ACCOUNT_ENTER_EMAIL}
+            {STRINGS.DELETE_ACCOUNT_ENTER_CONFIRMATION}
           </ThemedText>
           <ThemedInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder={STRINGS.DELETE_ACCOUNT_EMAIL_PLACEHOLDER}
-            keyboardType="email-address"
-            autoCapitalize="none"
+            value={confirmationText}
+            onChangeText={setConfirmationText}
+            placeholder={STRINGS.DELETE_ACCOUNT_CONFIRMATION_PLACEHOLDER}
+            autoCapitalize="characters"
             autoCorrect={false}
             editable={!loading}
-            error={emailError}
+            error={confirmationError}
             onSubmitEditing={handleDeletePress}
             returnKeyType="done"
           />
@@ -108,9 +108,9 @@ export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ isVisible, onC
             colorName="error"
             style={[
               styles.deleteButton,
-              (!email || loading) && styles.deleteButtonDisabled,
+              (!confirmationText || loading) && styles.deleteButtonDisabled,
             ]}
-            onPress={!email || loading ? undefined : handleDeletePress}
+            onPress={!confirmationText || loading ? undefined : handleDeletePress}
           >
             {loading ? STRINGS.ACCOUNT_DELETION_IN_PROGRESS : STRINGS.DELETE_ACCOUNT}
           </ThemedText>
@@ -142,6 +142,15 @@ const styles = StyleSheet.create({
   },
   permanentText: {
     marginTop: LAYOUT.SPACING.SMALL,
+  },
+  emailContainer: {
+    gap: LAYOUT.SPACING.TINY,
+  },
+  signedInLabel: {
+    lineHeight: 18,
+  },
+  emailText: {
+    lineHeight: 22,
   },
   inputContainer: {
     gap: LAYOUT.SPACING.SMALL,

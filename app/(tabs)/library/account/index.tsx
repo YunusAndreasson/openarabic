@@ -41,6 +41,7 @@ import {
   DisplayLanguage,
 } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
+import { warningFeedback } from '@/utils/haptics';
 
 // Memoized components
 const Divider = memo(() => {
@@ -177,9 +178,19 @@ const AccountScreen: FC = () => {
   }, [currentDailyWordLimit]);
 
   // Memoize dynamic styles for better performance
-  const signOutTextStyle = useMemo(
+  const dangerZoneCardStyle = useMemo(
     () => ({
-      color: colors.error,
+      overflow: 'hidden' as const,
+      borderWidth: 1,
+      borderColor: colors.error,
+      backgroundColor: `${colors.error}26`,
+    }),
+    [colors.error],
+  );
+
+  const dangerZoneInteractiveCardStyle = useMemo(
+    () => ({
+      backgroundColor: `${colors.error}0D`,
     }),
     [colors.error],
   );
@@ -195,6 +206,7 @@ const AccountScreen: FC = () => {
 
   // Delete Account handlers
   const handleDeleteAccountPress = useCallback(() => {
+    warningFeedback();
     setShowDeleteAccountModal(true);
   }, []);
 
@@ -509,25 +521,27 @@ const AccountScreen: FC = () => {
 
             <Divider />
 
-            <View style={styles.settingRow}>
-              <View style={styles.settingLabelContainer}>
-                <View style={styles.cardIconContainer}>
-                  <Ionicons
-                    color={colors.interactiveSecondary}
-                    name="notifications"
-                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                  />
+            <BaseCard shadowSize="none" style={styles.interactiveCard}>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="notifications"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <View style={styles.settingLabelTextContainer}>
+                    <ThemedText type="body">{STRINGS.STUDY_REMINDERS}</ThemedText>
+                  </View>
                 </View>
-                <View style={styles.settingLabelTextContainer}>
-                  <ThemedText type="body">{STRINGS.STUDY_REMINDERS}</ThemedText>
-                </View>
+                <CardRight
+                  type="toggle"
+                  toggleValue={reminderTime.enabled}
+                  onToggleChange={handleReminderToggle}
+                />
               </View>
-              <CardRight
-                type="toggle"
-                toggleValue={reminderTime.enabled}
-                onToggleChange={handleReminderToggle}
-              />
-            </View>
+            </BaseCard>
             {reminderTime.enabled && (
               <Fragment>
                 <Divider />
@@ -694,7 +708,7 @@ const AccountScreen: FC = () => {
                   <View style={styles.cardIconContainer}>
                     <Ionicons
                       color={colors.interactiveSecondary}
-                      name="book"
+                      name="documents"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
@@ -708,11 +722,11 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
-        {/* Data & Account - Account management and data */}
-        <SectionTitle title={STRINGS.DATA_ACCOUNT_SECTION} textStyle={styles.sectionTitle} />
+        {/* Data - Cache management */}
+        <SectionTitle title={STRINGS.DATA_SECTION} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
-            <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleClearCache}>
+            <BaseCard shadowSize="none" style={styles.interactiveCard}>
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
@@ -743,61 +757,73 @@ const AccountScreen: FC = () => {
                 </ThemedText>
               </View>
             </BaseCard>
+          </View>
+        </BaseCard>
 
-            <Divider />
+        {/* Account - Session management */}
+        <SectionTitle title={STRINGS.DATA_ACCOUNT_SECTION} textStyle={styles.sectionTitle} />
+        <BaseCard shadowSize="small" style={styles.sectionContainer}>
+          <View style={styles.linksContainer}>
+            <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleSignOut}>
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="log-out"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <View style={styles.signOutTextContainer}>
+                    <ThemedText type="body" weight="medium">
+                      {STRINGS.SIGN_OUT}
+                    </ThemedText>
+                    <ThemedText type="caption" colorName="textTertiary" style={styles.userEmailText}>
+                      {user?.email || STRINGS.NO_EMAIL}
+                    </ThemedText>
+                  </View>
+                </View>
+              </View>
+            </BaseCard>
+          </View>
+        </BaseCard>
 
+        {/* Danger Zone - Destructive actions */}
+        <SectionTitle title={STRINGS.DANGER_ZONE_SECTION} textStyle={styles.sectionTitle} />
+        <ThemedText type="caption" colorName="textTertiary" style={styles.dangerZoneDescription}>
+          {STRINGS.DANGER_ZONE_DESCRIPTION}
+        </ThemedText>
+        <BaseCard shadowSize="small" style={[styles.sectionContainer, dangerZoneCardStyle]}>
+          <View style={styles.linksContainer}>
             <BaseCard
               shadowSize="none"
-              style={styles.interactiveCard}
+              style={[styles.interactiveCard, dangerZoneInteractiveCardStyle]}
               onPress={handleResetReadingProgress}
             >
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
-                      color={colors.interactiveSecondary}
+                      color={colors.error}
                       name="refresh"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.RESET_READING_PROGRESS}
-                  </ThemedText>
-                </View>
-                <ThemedText
-                  type="label"
-                  weight="medium"
-                  colorName="tint"
-                  style={styles.clearButton}
-                  onPress={handleResetReadingProgress}
-                >
-                  RESET
-                </ThemedText>
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleSignOut}>
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.error}
-                      name="log-out"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <View style={styles.signOutTextContainer}>
-                    <ThemedText type="body" weight="medium" style={signOutTextStyle}>
-                      {STRINGS.SIGN_OUT}
+                  <View style={styles.textContainer}>
+                    <ThemedText colorName="error" type="body" weight="medium">
+                      {STRINGS.RESET_READING_PROGRESS}
                     </ThemedText>
-                    <ThemedText type="caption" colorName="error" style={styles.userEmailText}>
-                      {user?.email || STRINGS.NO_EMAIL}
+                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                      {STRINGS.RESET_READING_PROGRESS_DESCRIPTION}
                     </ThemedText>
                   </View>
                 </View>
-                <CardRight type="chevron-only" />
+                <Ionicons
+                  color={colors.error}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardRightChevron}
+                />
               </View>
             </BaseCard>
 
@@ -805,7 +831,7 @@ const AccountScreen: FC = () => {
 
             <BaseCard
               shadowSize="none"
-              style={styles.interactiveCard}
+              style={[styles.interactiveCard, dangerZoneInteractiveCardStyle]}
               onPress={handleDeleteAccountPress}
             >
               <View style={styles.cardContent}>
@@ -817,11 +843,21 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <ThemedText type="body" weight="medium" style={signOutTextStyle}>
-                    {STRINGS.DELETE_ACCOUNT}
-                  </ThemedText>
+                  <View style={styles.textContainer}>
+                    <ThemedText colorName="error" type="body" weight="medium">
+                      {STRINGS.DELETE_ACCOUNT}
+                    </ThemedText>
+                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                      {STRINGS.DELETE_ACCOUNT_DESCRIPTION}
+                    </ThemedText>
+                  </View>
                 </View>
-                <CardRight type="chevron-only" />
+                <Ionicons
+                  color={colors.error}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardRightChevron}
+                />
               </View>
             </BaseCard>
           </View>
@@ -888,6 +924,23 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
 
+  // Danger Zone description styling
+  dangerZoneDescription: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+    marginHorizontal: LAYOUT.SPACING.MEDIUM,
+    lineHeight: 18,
+  },
+  dangerZoneSubtext: {
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+
+  // Text container for title + description layout
+  textContainer: {
+    flexDirection: 'column',
+    marginLeft: LAYOUT.SPACING.MEDIUM,
+    flex: 1,
+  },
+
   // Unified Card Style - Used for all interactive cards
   interactiveCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -946,9 +999,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: MIN_TOUCH_TARGET.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   settingLabelContainer: {
     alignItems: 'center',
@@ -1027,5 +1077,7 @@ const styles = StyleSheet.create({
     paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
   },
 });
+
+AccountScreen.displayName = 'AccountScreen';
 
 export default AccountScreen;

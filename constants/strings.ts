@@ -24,7 +24,12 @@ export const STRINGS = {
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
   APPEARANCE_SECTION: 'Appearance',
+  DATA_SECTION: 'Data',
   DATA_ACCOUNT_SECTION: 'Account',
+  DANGER_ZONE_SECTION: 'Danger zone',
+  DANGER_ZONE_DESCRIPTION: 'Destructive actions that permanently delete data',
+  RESET_READING_PROGRESS_DESCRIPTION: 'Clears all reading history, streaks, and progress tracking',
+  DELETE_ACCOUNT_DESCRIPTION: 'Permanently removes your account and all data',
 
   // Social Media
   TWITTER_URL: 'https://x.com/openarabicio',
@@ -548,9 +553,11 @@ export const STRINGS = {
     'App preferences and settings',
   ] as const,
   DELETE_ACCOUNT_PERMANENT: 'This action cannot be undone.',
-  DELETE_ACCOUNT_ENTER_EMAIL: 'To confirm, enter your email address:',
-  DELETE_ACCOUNT_EMAIL_PLACEHOLDER: 'Your email',
-  DELETE_ACCOUNT_EMAIL_MISMATCH: 'Email does not match your account',
+  DELETE_ACCOUNT_SIGNED_IN_AS: 'Signed in as:',
+  DELETE_ACCOUNT_ENTER_CONFIRMATION: 'To confirm, type DELETE below:',
+  DELETE_ACCOUNT_CONFIRMATION_PLACEHOLDER: 'Type DELETE to confirm',
+  DELETE_ACCOUNT_CONFIRMATION_WORD: 'DELETE',
+  DELETE_ACCOUNT_CONFIRMATION_MISMATCH: 'Please type DELETE to confirm',
   DELETE_ACCOUNT_SUCCESS: 'Account deleted successfully',
   FAILED_TO_DELETE_ACCOUNT: "Couldn't delete account. " + tryAgain,
   ACCOUNT_DELETION_IN_PROGRESS: 'Deleting account...',

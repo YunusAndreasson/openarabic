@@ -492,22 +492,6 @@ function AppContent() {
                 freezeOnBlur: true, // Optimize article screen when backgrounded
               })}
             />
-            <Stack.Screen
-              name="terms"
-              options={createNavigationOptions(colors, {
-                title: STRINGS.TERMS_OF_SERVICE,
-                headerShown: true,
-                headerLeft: () => <DoneButton onPress={() => router.back()} />,
-              })}
-            />
-            <Stack.Screen
-              name="privacy"
-              options={createNavigationOptions(colors, {
-                title: STRINGS.PRIVACY_POLICY,
-                headerShown: true,
-                headerLeft: () => <DoneButton onPress={() => router.back()} />,
-              })}
-            />
 
             {/* Audio overlays - mini-player and sleep timer */}
           </Stack>

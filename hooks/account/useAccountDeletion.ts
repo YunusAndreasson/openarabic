@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -9,61 +9,61 @@ import { AccountDeletionService } from '@/services/accountDeletion';
 import { handleError, showSuccessToast } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 
-/**
- * Email validation regex
- */
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export interface UseAccountDeletionReturn {
   // State
-  email: string;
-  setEmail: (value: string) => void;
+  userEmail: string | null;
+  confirmationText: string;
+  setConfirmationText: (value: string) => void;
   loading: boolean;
-  emailError: string;
+  confirmationError: string;
 
   // Methods
-  validateEmail: (email: string) => boolean;
+  validateConfirmation: (text: string) => boolean;
   deleteAccount: () => Promise<void>;
-  getCurrentUserEmail: () => Promise<string | null>;
 }
 
 /**
- * Hook handling account deletion logic with email confirmation
+ * Hook handling account deletion logic with DELETE confirmation
  * Provides validation, loading states, and deletion flow
+ * Supports all auth types including private relay emails
  */
 export function useAccountDeletion(): UseAccountDeletionReturn {
   // Form state
-  const [email, setEmail] = useState('');
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [confirmationText, setConfirmationText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [emailError, setEmailError] = useState('');
+  const [confirmationError, setConfirmationError] = useState('');
 
   const isMountedRef = useMountSafety();
 
+  // Fetch user email on mount
+  useEffect(() => {
+    const fetchEmail = async () => {
+      const email = await AccountDeletionService.getCurrentUserEmail();
+      if (isMountedRef.current) {
+        setUserEmail(email);
+      }
+    };
+    fetchEmail();
+  }, [isMountedRef]);
+
   /**
-   * Validates email format
+   * Validates confirmation text matches "DELETE"
    */
-  const validateEmail = useCallback(
-    (value: string) => {
-      if (!value) {
-        if (isMountedRef.current) setEmailError(STRINGS.ENTER_VALID_EMAIL);
+  const validateConfirmation = useCallback(
+    (text: string) => {
+      const trimmedText = text.trim().toUpperCase();
+      if (trimmedText !== STRINGS.DELETE_ACCOUNT_CONFIRMATION_WORD) {
+        if (isMountedRef.current) {
+          setConfirmationError(STRINGS.DELETE_ACCOUNT_CONFIRMATION_MISMATCH);
+        }
         return false;
       }
-      if (!EMAIL_REGEX.test(value)) {
-        if (isMountedRef.current) setEmailError(STRINGS.ENTER_VALID_EMAIL);
-        return false;
-      }
-      if (isMountedRef.current) setEmailError('');
+      if (isMountedRef.current) setConfirmationError('');
       return true;
     },
     [isMountedRef],
   );
-
-  /**
-   * Gets the current user's email for verification
-   */
-  const getCurrentUserEmail = useCallback(async (): Promise<string | null> => {
-    return AccountDeletionService.getCurrentUserEmail();
-  }, []);
 
   /**
    * Deletes the user's account after validation
@@ -72,16 +72,16 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
   const deleteAccount = useCallback(async (): Promise<void> => {
     if (!isMountedRef.current) return;
 
-    // Validate email
-    if (!validateEmail(email)) {
+    // Validate confirmation text
+    if (!validateConfirmation(confirmationText)) {
       return;
     }
 
     setLoading(true);
 
     try {
-      // Delete account via service
-      await AccountDeletionService.deleteAccount(email);
+      // Delete account via service (no email needed - uses session)
+      await AccountDeletionService.deleteAccount();
 
       // Track successful deletion
       await analytics.track('Account_Deleted', {
@@ -114,18 +114,18 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
         setLoading(false);
       }
     }
-  }, [email, validateEmail, isMountedRef]);
+  }, [confirmationText, validateConfirmation, isMountedRef]);
 
   return {
     // State
-    email,
-    setEmail,
+    userEmail,
+    confirmationText,
+    setConfirmationText,
     loading,
-    emailError,
+    confirmationError,
 
     // Methods
-    validateEmail,
+    validateConfirmation,
     deleteAccount,
-    getCurrentUserEmail,
   };
 }

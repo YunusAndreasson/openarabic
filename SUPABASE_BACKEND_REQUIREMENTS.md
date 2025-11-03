@@ -240,6 +240,7 @@ const data = await executeAuthenticatedQuery(
 ### Test Account Deletion
 
 1. **Create a test user:**
+
    ```bash
    # In app, sign up with test email
    test-delete@example.com
@@ -258,6 +259,7 @@ const data = await executeAuthenticatedQuery(
    - Confirm deletion
 
 4. **Verify deletion:**
+
    ```sql
    -- Check auth.users (should be gone)
    SELECT * FROM auth.users WHERE email = 'test-delete@example.com';
@@ -278,6 +280,7 @@ const data = await executeAuthenticatedQuery(
 ### Test Different Auth Methods
 
 Repeat the above test with:
+
 - [ ] Email/Password authentication
 - [ ] Apple Sign In
 - [ ] Google Sign In
@@ -291,6 +294,7 @@ Repeat the above test with:
 **Error:** `permission denied for table auth.users`
 
 **Solution:** The function needs `SECURITY DEFINER` to access `auth.users`:
+
 ```sql
 ALTER FUNCTION delete_user_account(UUID) SECURITY DEFINER;
 ```
@@ -300,8 +304,10 @@ ALTER FUNCTION delete_user_account(UUID) SECURITY DEFINER;
 **Error:** `update or delete on table "users" violates foreign key constraint`
 
 **Solution:** Either:
+
 1. Delete child records first (in the function, as shown above)
 2. Or add `ON DELETE CASCADE` to foreign keys:
+
 ```sql
 ALTER TABLE study_words
 DROP CONSTRAINT study_words_user_id_fkey,
@@ -316,6 +322,7 @@ ADD CONSTRAINT study_words_user_id_fkey
 **Error:** Rows are not being deleted even though function runs
 
 **Solution:** Use `SECURITY DEFINER` (already included) or temporarily disable RLS:
+
 ```sql
 -- Inside the function, before deletions:
 SET LOCAL role = postgres; -- Bypass RLS

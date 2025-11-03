@@ -42,9 +42,9 @@ export const ROUTE_PATHS = {
   ACCOUNT_FONT_SELECTOR: '/(tabs)/library/account/FontSelector',
   ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/library/account/islamicCalendar',
   ACCOUNT_FEEDBACK: '/(tabs)/library/account/feedback',
-  TERMS: '/terms',
-  PRIVACY: '/privacy',
-  LEGAL: '/legal',
+  TERMS: '/(tabs)/library/account/terms',
+  PRIVACY: '/(tabs)/library/account/privacy',
+  LEGAL: '/(tabs)/library/account/legal',
 
   STUDY_REVIEW: '/study/review',
   STUDY_DICTIONARY: '/(tabs)/study/dictionary',

@@ -16,10 +16,12 @@ export class AccountDeletionService {
    * - Bookmarks (reading list)
    * - All other user-specific data
    *
-   * @param userEmail - The user's email address for verification
-   * @throws Error if deletion fails or email doesn't match
+   * Uses the current session to identify the user to delete.
+   * Supports all auth types including private relay emails.
+   *
+   * @throws Error if deletion fails or user is not authenticated
    */
-  static async deleteAccount(userEmail: string): Promise<void> {
+  static async deleteAccount(): Promise<void> {
     try {
       // Verify user is authenticated
       const {
@@ -29,14 +31,6 @@ export class AccountDeletionService {
 
       if (sessionError || !user) {
         throw new Error('User must be authenticated to delete account');
-      }
-
-      // Verify email matches (case-insensitive)
-      const currentEmail = user.email?.toLowerCase();
-      const providedEmail = userEmail.toLowerCase().trim();
-
-      if (!currentEmail || currentEmail !== providedEmail) {
-        throw new Error(STRINGS.DELETE_ACCOUNT_EMAIL_MISMATCH);
       }
 
       // Delete user account (this will cascade delete all related data via Supabase RLS policies)

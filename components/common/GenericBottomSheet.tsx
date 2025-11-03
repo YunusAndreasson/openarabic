@@ -1,4 +1,4 @@
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import type { FC, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
@@ -6,7 +6,7 @@ import { StyleSheet } from 'react-native';
 import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 export interface GenericBottomSheetProps {
   /** Controls bottom sheet visibility */
@@ -74,14 +74,14 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
   snapPoints,
 }) => {
   const colors = useColors();
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
-  // Show/hide modal based on isVisible prop
+  // Show/hide bottom sheet based on isVisible prop
   useEffect(() => {
     if (isVisible) {
-      bottomSheetRef.current?.present();
+      bottomSheetRef.current?.expand();
     } else {
-      bottomSheetRef.current?.dismiss();
+      bottomSheetRef.current?.close();
     }
   }, [isVisible]);
 
@@ -107,25 +107,26 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
     [colors.elevation1, colors.modalIndicator],
   );
 
-  // When snapPoints are provided, disable dynamic sizing
-  // Otherwise use dynamic sizing from COMMON_BOTTOM_SHEET_MODAL_PROPS
-  const bottomSheetProps = useMemo(
-    () => ({
-      ...COMMON_BOTTOM_SHEET_MODAL_PROPS,
-      ...(snapPoints ? { snapPoints, enableDynamicSizing: false } : { enableDynamicSizing: true }),
-    }),
-    [snapPoints],
-  );
+  // BottomSheet requires snapPoints - use provided or default to content-fitted heights
+  const computedSnapPoints = useMemo(() => {
+    return snapPoints || ['50%', '85%'];
+  }, [snapPoints]);
 
   return (
-    <BottomSheetModal
+    <BottomSheet
       ref={bottomSheetRef}
+      index={-1} // Start closed
+      snapPoints={computedSnapPoints}
+      enablePanDownToClose
+      enableOverDrag={false}
+      enableDynamicSizing={false}
+      animateOnMount={true}
+      activeOffsetY={[-10, 10]}
       onChange={handleChange}
-      onDismiss={onClose}
+      onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={renderBackdrop}
-      {...bottomSheetProps}
     >
       <BottomSheetView style={styles.container}>
         {/* Render custom header OR standard title/subtitle header */}
@@ -138,7 +139,7 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
         {/* Content */}
         {children}
       </BottomSheetView>
-    </BottomSheetModal>
+    </BottomSheet>
   );
 };
 

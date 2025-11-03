@@ -47,6 +47,27 @@ export default function AccountLayout(): JSX.Element {
           headerLeft: () => <DoneButton onPress={() => router.back()} />,
         })}
       />
+      <Stack.Screen
+        name="terms"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.TERMS_OF_SERVICE,
+          headerLeft: () => <DoneButton onPress={() => router.back()} />,
+        })}
+      />
+      <Stack.Screen
+        name="privacy"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.PRIVACY_POLICY,
+          headerLeft: () => <DoneButton onPress={() => router.back()} />,
+        })}
+      />
+      <Stack.Screen
+        name="legal"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.LEGAL_ATTRIBUTIONS,
+          headerLeft: () => <DoneButton onPress={() => router.back()} />,
+        })}
+      />
     </Stack>
   );
 }
