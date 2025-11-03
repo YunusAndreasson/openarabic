@@ -41,6 +41,7 @@ export const ROUTE_PATHS = {
   ACCOUNT_HELP: '/(tabs)/library/account/help',
   ACCOUNT_FONT_SELECTOR: '/(tabs)/library/account/FontSelector',
   ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/library/account/islamicCalendar',
+  ACCOUNT_FEEDBACK: '/(tabs)/library/account/feedback',
   TERMS: '/terms',
   PRIVACY: '/privacy',
 

@@ -33,7 +33,7 @@
           "openarabic.backgroundfetch"
         ],
         "NSUserTrackingUsageDescription": "This app uses tracking to provide personalized learning analytics and improve your Arabic learning experience.",
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to let you select a profile photo for your account.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select screenshots for issue reports or profile photos.",
         "NSCameraUsageDescription": "This app needs access to your camera to let you take a profile photo for your account.",
         "NSMicrophoneUsageDescription": "This app needs access to your microphone for audio recording features.",
         "NSUserNotificationsUsageDescription": "This app sends study reminders to help you practice Arabic vocabulary at your scheduled times."
@@ -52,7 +52,8 @@
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.SCHEDULE_EXACT_ALARM",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "android.permission.READ_MEDIA_IMAGES"
       ],
       "blockedPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },

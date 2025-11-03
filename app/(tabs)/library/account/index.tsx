@@ -587,7 +587,7 @@ const AccountScreen: FC = () => {
                   <View style={styles.cardIconContainer}>
                     <Ionicons
                       color={colors.interactiveSecondary}
-                      name="mail"
+                      name="chatbubbles"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>

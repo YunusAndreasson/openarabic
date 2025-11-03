@@ -1,5 +1,4 @@
 import { useQueryClient } from '@tanstack/react-query';
-import * as MailComposer from 'expo-mail-composer';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
@@ -275,41 +274,10 @@ export const useAccountScreen = () => {
     [reminderTime, updateReminderTime],
   );
 
-  const handleSupportContact = useCallback(async () => {
-    try {
-      // Check if mail composer is available
-      const isAvailable = await MailComposer.isAvailableAsync();
-
-      if (!isAvailable) {
-        // Fallback to mailto link if mail composer is not available
-        Linking.openURL(`mailto:${STRINGS.SUPPORT_EMAIL}`);
-        return;
-      }
-
-      // Compose email with pre-filled information
-      const result = await MailComposer.composeAsync({
-        recipients: [STRINGS.SUPPORT_EMAIL],
-        subject: STRINGS.SUPPORT_EMAIL_SUBJECT,
-        body: STRINGS.SUPPORT_EMAIL_BODY_TEMPLATE.replace('{version}', pkg.version).replace(
-          '{email}',
-          user?.email || STRINGS.NO_EMAIL,
-        ),
-        isHtml: false,
-      });
-
-      // Handle the result if needed
-      if (result.status === MailComposer.MailComposerStatus.SENT) {
-        lightFeedback();
-      }
-    } catch (error) {
-      // Fallback to mailto link if there's an error
-      handleError(error as Error, {
-        showToast: false,
-        analyticsEventName: 'Mail_Composer_Error',
-      });
-      Linking.openURL(`mailto:${STRINGS.SUPPORT_EMAIL}`);
-    }
-  }, [user?.email]);
+  const handleSupportContact = useCallback(() => {
+    router.push(ROUTE_PATHS.ACCOUNT_FEEDBACK);
+    lightFeedback();
+  }, []);
 
   const handleRequestReview = useCallback(async () => {
     try {

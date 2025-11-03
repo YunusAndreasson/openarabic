@@ -40,6 +40,13 @@ export default function AccountLayout(): JSX.Element {
           isRegularScreen: true,
         })}
       />
+      <Stack.Screen
+        name="feedback"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.CONTACT_SUPPORT,
+          headerLeft: () => <DoneButton onPress={() => router.back()} />,
+        })}
+      />
     </Stack>
   );
 }

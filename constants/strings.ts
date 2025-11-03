@@ -329,7 +329,7 @@ export const STRINGS = {
 
   // Account
   HELP: 'Help',
-  CONTACT_SUPPORT: 'Support',
+  CONTACT_SUPPORT: 'Report Issue',
   SUPPORT_EMAIL: 'yunus@edenmind.com',
   SUPPORT_EMAIL_SUBJECT: 'Open Arabic App Support',
   SUPPORT_EMAIL_BODY_TEMPLATE:
