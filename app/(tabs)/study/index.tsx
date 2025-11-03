@@ -310,10 +310,6 @@ export default function VocabularyScreen(): JSX.Element {
                 submessage={STRINGS.STUDY_LIST_EMPTY_SUBMESSAGE}
                 icon="school"
                 iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-                containerStyle={{
-                  paddingTop: LAYOUT.SPACING.XLARGE,
-                  paddingBottom: LAYOUT.SPACING.LARGE,
-                }}
               />
             )}
           </Animated.View>

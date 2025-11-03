@@ -26,9 +26,6 @@ import {
 } from '@/utils/fsrsSpacing';
 import { PriorityQueue } from '@/utils/priorityQueue';
 
-// FIXED: Add constant for completion delay to prevent race conditions
-const COMPLETION_DELAY_MS = 300;
-
 // Consolidated counters and tracking data
 interface FSRSCounters {
   totalWords: number;
@@ -440,13 +437,11 @@ export function useFSRS({
             }
           }
 
-          // If we still have no next item, complete
+          // If we still have no next item, complete immediately
           if (!nextItem && !stateTrackingRef.current.completionTriggered) {
             stateTrackingRef.current.completionTriggered = true;
-            completionTimeoutRef.current = setTimeout(() => {
-              setIsComplete(true);
-              if (onComplete) onComplete();
-            }, COMPLETION_DELAY_MS);
+            setIsComplete(true);
+            if (onComplete) onComplete();
           }
         }
       }

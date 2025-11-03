@@ -56,6 +56,15 @@ const tintOKLCH = {
 } as const;
 
 /**
+ * Disabled State - Universal across themes
+ * Desaturated mid-tone for inactive elements
+ * Follows Material Design 3 and iOS HIG best practices
+ */
+const disabledOKLCH = {
+  universal: { l: 0.6, c: 0.012, h: 160 }, // Desaturated grey-green
+} as const;
+
+/**
  * Semantic Colors - Status indicators
  */
 const semanticOKLCH = {
@@ -298,6 +307,14 @@ const tint = {
     tintOKLCH.primaryDark.l,
     tintOKLCH.primaryDark.c,
     tintOKLCH.primaryDark.h,
+  ),
+} as const;
+
+const disabled = {
+  universal: oklchToHex(
+    disabledOKLCH.universal.l,
+    disabledOKLCH.universal.c,
+    disabledOKLCH.universal.h,
   ),
 } as const;
 
@@ -710,6 +727,7 @@ const basePalette = {
   forest,
   sage,
   tint,
+  disabled,
   semantic,
   azure,
   violet,
@@ -818,7 +836,7 @@ const lightColors: ThemeColors = {
   tabIconDefault: basePalette.forest.lighter,
   tabIconSelected: basePalette.tint.primary,
   icon: basePalette.forest.light,
-  disabled: basePalette.forest.lighter,
+  disabled: basePalette.disabled.universal,
 
   // Overlays
   transparent: basePalette.pure.transparent,
@@ -930,7 +948,7 @@ const darkColors: ThemeColors = {
   tabIconDefault: basePalette.forest.medium,
   tabIconSelected: basePalette.tint.primaryDark,
   icon: textHierarchy.dark.metadata,
-  disabled: basePalette.sage.medium,
+  disabled: basePalette.disabled.universal,
 
   // Overlays
   transparent: basePalette.pure.transparent,
@@ -1042,7 +1060,7 @@ const sepiaColors: ThemeColors = {
   tabIconDefault: basePalette.autumn.lighter,
   tabIconSelected: basePalette.autumn.accent.primary,
   icon: basePalette.autumn.light,
-  disabled: basePalette.autumn.lighter,
+  disabled: basePalette.disabled.universal,
 
   // Overlays
   transparent: basePalette.pure.transparent,

@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
-import { fsrsQueries } from '@/constants/queries';
+import { APP_SESSION_ID, fsrsQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
@@ -62,10 +62,12 @@ export function useMultipleFeaturedArticles(
   const queryClient = useQueryClient();
 
   // Try to get cached featured articles first for immediate display
+  // Include APP_SESSION_ID to ensure fresh articles on each app launch
   const cachedFeatured = queryClient.getQueryData<MultipleFeaturedArticlesResult>([
     'featured-articles',
     scope,
     refreshKey,
+    APP_SESSION_ID,
   ]);
 
   // Use the existing hooks for due and difficult words with cached data

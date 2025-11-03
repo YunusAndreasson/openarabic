@@ -97,7 +97,7 @@ export const ChartAxes = memo<AxisLabelsProps>(
           <View style={[styles.yAxisContainer, { height, width: Y_AXIS_WIDTH }]}>
             {yLabels.map(label => (
               <View
-                key={`y-label-${label.value}`}
+                key={`y-label-${label.value}-${label.y}`}
                 style={[
                   styles.yLabel,
                   {

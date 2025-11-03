@@ -6,6 +6,7 @@ import { InteractionManager } from 'react-native';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import {
+  APP_SESSION_ID,
   articleQueries,
   CACHE_TIMES,
   fsrsQueries,
@@ -82,7 +83,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
             const featured: Article[] = articles.slice(0, 5); // Get first 5 articles as featured
 
             // Cache featured articles immediately with consistent query key
-            queryClient.setQueryData(['featured-articles', 'global', 0], {
+            // Include APP_SESSION_ID to ensure fresh articles on each app launch
+            queryClient.setQueryData(['featured-articles', 'global', 0, APP_SESSION_ID], {
               articles: featured,
               reason: 'Pre-computed during startup',
               type: 'random' as const,
@@ -257,11 +259,16 @@ export const useAppPreloader = (): AppPreloaderResult => {
   const prefetchFeaturedArticles = useCallback(async () => {
     if (!user?.id) return false;
 
-    // CHECK: If featured articles already cached, don't recalculate
-    // This prevents featured articles from changing every time the app opens
-    const existingFeatured = queryClient.getQueryData(['featured-articles', 'global', 0]);
+    // CHECK: If featured articles already cached for this session, don't recalculate
+    // APP_SESSION_ID ensures fresh selection on each app launch
+    const existingFeatured = queryClient.getQueryData([
+      'featured-articles',
+      'global',
+      0,
+      APP_SESSION_ID,
+    ]);
     if (existingFeatured) {
-      return true; // Already have featured articles, use cached selection
+      return true; // Already have featured articles for this session, use cached selection
     }
 
     try {
@@ -333,7 +340,11 @@ export const useAppPreloader = (): AppPreloaderResult => {
       const featuredSelection = performIntelligentSelection();
 
       // Cache the featured articles for immediate use
-      queryClient.setQueryData(['featured-articles', 'global', 0], featuredSelection);
+      // Include APP_SESSION_ID to ensure fresh articles on each app launch
+      queryClient.setQueryData(
+        ['featured-articles', 'global', 0, APP_SESSION_ID],
+        featuredSelection,
+      );
 
       return true;
     } catch {

@@ -1,7 +1,7 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { Text, View } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import type { AppTab } from '@/types/enums';
 
 interface TabHeaderOptions {
@@ -34,6 +34,7 @@ export function createTabHeaderOptions({
       justifyContent: 'space-between' as const,
       paddingHorizontal: LAYOUT.SPACING.LARGE,
       paddingBottom: LAYOUT.SPACING.HALF_TINY, // Reduced bottom padding for tighter spacing
+      minHeight: MIN_TOUCH_TARGET.MEDIUM, // Consistent header height even when right button is hidden
     },
     titleText: {
       fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,

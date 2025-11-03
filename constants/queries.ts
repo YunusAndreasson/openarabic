@@ -16,6 +16,16 @@
 
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 
+/**
+ * Unique session identifier generated once per app launch.
+ * Used to ensure featured articles are different each time the app is opened.
+ * This is efficient because:
+ * - No network calls are made (articles are already cached)
+ * - Only affects client-side random selection from cached data
+ * - Prevents stale featured articles from persisted cache
+ */
+export const APP_SESSION_ID = Date.now();
+
 import { articlesService } from '@/services/articles';
 import { authorsService } from '@/services/authors';
 import { categoriesService } from '@/services/categories';

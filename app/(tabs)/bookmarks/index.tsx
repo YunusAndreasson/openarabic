@@ -259,10 +259,6 @@ export default function ListenScreen(): JSX.Element {
           icon="bookmark"
           iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
           title={STRINGS.BOOKMARKS_EMPTY_TITLE}
-          containerStyle={{
-            paddingTop: LAYOUT.SPACING.XLARGE,
-            paddingBottom: LAYOUT.SPACING.LARGE,
-          }}
         />
       ) : null,
     [shouldShowEmpty],
