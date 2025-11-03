@@ -240,6 +240,9 @@ export const STRINGS = {
   PRIVACY_THIRD_PARTY_MIXPANEL: 'Mixpanel',
   PRIVACY_THIRD_PARTY_MIXPANEL_DESC:
     'We use Mixpanel for analytics to understand app usage patterns and improve the learning experience.',
+  PRIVACY_THIRD_PARTY_SENTRY: 'Sentry',
+  PRIVACY_THIRD_PARTY_SENTRY_DESC:
+    'We use Sentry for error tracking and crash reporting to identify and fix issues that affect app stability and performance.',
   PRIVACY_THIRD_PARTY_AUTH: 'Apple and Google',
   PRIVACY_THIRD_PARTY_AUTH_DESC:
     'If you sign in with Apple or Google, their privacy policies apply to the authentication process.',
@@ -533,6 +536,27 @@ export const STRINGS = {
   // Auth errors
   FAILED_TO_SIGN_OUT: "Couldn't sign out. " + tryAgain,
 
+  // Account deletion
+  DELETE_ACCOUNT: 'Delete account',
+  DELETE_ACCOUNT_TITLE: 'Delete your account?',
+  DELETE_ACCOUNT_WARNING:
+    'This will permanently delete your account and all associated data, including:',
+  DELETE_ACCOUNT_DATA_LIST: [
+    'Reading progress and history',
+    'Vocabulary study lists and progress',
+    'Bookmarked articles',
+    'App preferences and settings',
+  ] as const,
+  DELETE_ACCOUNT_PERMANENT: 'This action cannot be undone.',
+  DELETE_ACCOUNT_ENTER_EMAIL: 'To confirm, enter your email address:',
+  DELETE_ACCOUNT_EMAIL_PLACEHOLDER: 'Your email',
+  DELETE_ACCOUNT_EMAIL_MISMATCH: 'Email does not match your account',
+  DELETE_ACCOUNT_SUCCESS: 'Account deleted successfully',
+  FAILED_TO_DELETE_ACCOUNT: "Couldn't delete account. " + tryAgain,
+  ACCOUNT_DELETION_IN_PROGRESS: 'Deleting account...',
+  CANCEL: 'Cancel',
+  DELETE: 'Delete',
+
   // Sign-in requirements - clearer and shorter
   PLEASE_SIGN_IN_TO_ADD_WORDS: 'Sign in to add words',
   PLEASE_SIGN_IN_TO_ADD_ROOTS: 'Sign in to add roots',
@@ -702,6 +726,43 @@ export const STRINGS = {
 
   // Chart empty states
   CHART_EMPTY_STATE: 'Add your first words to start tracking your progress',
+
+  // Legal & Attributions
+  LEGAL_ATTRIBUTIONS: 'Legal & Attributions',
+  LEGAL_INTRO:
+    'OpenArabic is built with the help of various open source projects and third-party services. We are grateful to the developers and organizations that make their work freely available.',
+  LEGAL_AUDIO_TITLE: 'Audio Generation',
+  LEGAL_AUDIO_ELEVENLABS: 'ElevenLabs',
+  LEGAL_AUDIO_ELEVENLABS_DESC:
+    'Text-to-speech API for generating high-quality Arabic and English audio pronunciations.',
+  LEGAL_AUDIO_ELEVENLABS_URL: 'https://elevenlabs.io',
+  LEGAL_ERROR_TRACKING_TITLE: 'Error Tracking',
+  LEGAL_ERROR_SENTRY: 'Sentry',
+  LEGAL_ERROR_SENTRY_DESC:
+    'Error monitoring and crash reporting to help improve app stability and user experience.',
+  LEGAL_ERROR_SENTRY_URL: 'https://sentry.io',
+  LEGAL_FONTS_TITLE: 'Typefaces',
+  LEGAL_FONTS_ARABIC_TITLE: 'Arabic Fonts',
+  LEGAL_FONTS_ENGLISH_TITLE: 'English Fonts',
+  LEGAL_FONT_SCHEHERAZADE: 'Scheherazade New',
+  LEGAL_FONT_SCHEHERAZADE_DESC: 'SIL Open Font License 1.1',
+  LEGAL_FONT_AMIRI: 'Amiri',
+  LEGAL_FONT_AMIRI_DESC: 'SIL Open Font License 1.1',
+  LEGAL_FONT_MADINA: 'Madina',
+  LEGAL_FONT_MADINA_DESC: 'Custom Arabic font',
+  LEGAL_FONT_NASTALIQ: 'Nastaliq',
+  LEGAL_FONT_NASTALIQ_DESC: 'Traditional calligraphic Arabic script',
+  LEGAL_FONT_INTER: 'Inter',
+  LEGAL_FONT_INTER_DESC: 'SIL Open Font License 1.1 by Rasmus Andersson',
+  LEGAL_FONT_NOTO_SANS: 'Noto Sans',
+  LEGAL_FONT_NOTO_SANS_DESC: 'SIL Open Font License 1.1 by Google',
+  LEGAL_OPEN_SOURCE_TITLE: 'Open Source Libraries',
+  LEGAL_OPEN_SOURCE_DESC:
+    'This app is built with React Native, Expo, and many other open source libraries. Full license details are available in the app repository.',
+  LEGAL_LICENSE_INFO: 'License Information',
+  LEGAL_SIL_OFL_TITLE: 'SIL Open Font License 1.1',
+  LEGAL_SIL_OFL_DESC:
+    'Fonts licensed under SIL OFL are free to use, modify, and distribute. Full license text available at scripts.sil.org/OFL',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

@@ -144,6 +144,19 @@ Sentry.init({
       maskAllImages: true,
       maskAllVectors: true,
     }),
+    Sentry.feedbackIntegration({
+      // User-friendly configuration for issue reporting
+      colorScheme: 'system', // Match app theme (light/dark)
+      enableScreenshot: false, // Disable screenshot for now (troubleshooting)
+      isEmailRequired: false, // Email is optional (we can pre-fill from auth)
+      isNameRequired: false, // Name is optional
+      showEmail: true, // Show email field
+      showName: true, // Show name field
+      formTitle: 'Report an Issue',
+      submitButtonLabel: 'Send Report',
+      messagePlaceholder: 'What happened? How can we help?',
+      // Additional context (user email, app version, etc.) will be added via setContext() when widget opens
+    }),
   ],
   enabled: !!sentryDsn, // Only enable if DSN is available
   tracesSampleRate: 1.0, // Sample everything (100%)

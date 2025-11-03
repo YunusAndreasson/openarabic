@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SocialMediaIcons } from '@/components/account';
 import { AudioShuffleToggle } from '@/components/account/AudioShuffleToggle';
+import { DeleteAccountModal } from '@/components/account/DeleteAccountModal';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
@@ -136,6 +137,7 @@ const AccountScreen: FC = () => {
   const dispatch = useAppDispatch();
 
   const [activePicker, setActivePicker] = React.useState<string | null>(null);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = React.useState(false);
 
   // Get daily word limit with validation
   const rawDailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
@@ -189,6 +191,15 @@ const AccountScreen: FC = () => {
 
   const handlePickerClose = useCallback(() => {
     setActivePicker(null);
+  }, []);
+
+  // Delete Account handlers
+  const handleDeleteAccountPress = useCallback(() => {
+    setShowDeleteAccountModal(true);
+  }, []);
+
+  const handleDeleteAccountClose = useCallback(() => {
+    setShowDeleteAccountModal(false);
   }, []);
 
   const handlePickerSelect = useCallback(
@@ -670,6 +681,30 @@ const AccountScreen: FC = () => {
                 <CardRight type="chevron-only" />
               </View>
             </BaseCard>
+
+            <Divider />
+
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={() => router.push(ROUTE_PATHS.LEGAL)}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="book"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.LEGAL_ATTRIBUTIONS}
+                  </ThemedText>
+                </View>
+                <CardRight type="chevron-only" />
+              </View>
+            </BaseCard>
           </View>
         </BaseCard>
 
@@ -765,6 +800,30 @@ const AccountScreen: FC = () => {
                 <CardRight type="chevron-only" />
               </View>
             </BaseCard>
+
+            <Divider />
+
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleDeleteAccountPress}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.error}
+                      name="trash"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText type="body" weight="medium" style={signOutTextStyle}>
+                    {STRINGS.DELETE_ACCOUNT}
+                  </ThemedText>
+                </View>
+                <CardRight type="chevron-only" />
+              </View>
+            </BaseCard>
           </View>
         </BaseCard>
 
@@ -811,6 +870,9 @@ const AccountScreen: FC = () => {
             : [320]
         }
       />
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal isVisible={showDeleteAccountModal} onClose={handleDeleteAccountClose} />
     </ThemedView>
   );
 };

@@ -10,10 +10,6 @@ interface FSRSWordUpdate {
   fsrs_due: string;
   fsrs_stability: number;
   fsrs_difficulty: number;
-  // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
-  // The elapsed_days field is deprecated in ts-fsrs and will be removed in v6.0.0
-  // See: https://open-spaced-repetition.github.io/ts-fsrs/interfaces/Card.html
-  fsrs_elapsed_days: number;
   fsrs_scheduled_days: number;
   fsrs_reps: number;
   fsrs_learning_steps: number;
@@ -180,6 +176,7 @@ export const studyWordsFSRSService = {
     update: FSRSWordUpdate,
   ): Promise<boolean> {
     // Use RPC function for atomic update
+    // TODO: Backend - Update RPC function to remove p_fsrs_elapsed_days parameter
     const data = await executeAuthenticatedQuery(
       userId,
       () =>
@@ -189,7 +186,7 @@ export const studyWordsFSRSService = {
           p_fsrs_due: update.fsrs_due,
           p_fsrs_stability: update.fsrs_stability,
           p_fsrs_difficulty: update.fsrs_difficulty,
-          p_fsrs_elapsed_days: update.fsrs_elapsed_days,
+          p_fsrs_elapsed_days: 0, // Deprecated but still required by backend
           p_fsrs_scheduled_days: update.fsrs_scheduled_days,
           p_fsrs_learning_steps: update.fsrs_learning_steps,
           p_fsrs_reps: update.fsrs_reps,

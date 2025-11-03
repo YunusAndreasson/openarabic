@@ -44,6 +44,7 @@ export const ROUTE_PATHS = {
   ACCOUNT_FEEDBACK: '/(tabs)/library/account/feedback',
   TERMS: '/terms',
   PRIVACY: '/privacy',
+  LEGAL: '/legal',
 
   STUDY_REVIEW: '/study/review',
   STUDY_DICTIONARY: '/(tabs)/study/dictionary',

@@ -225,17 +225,23 @@ export function useFSRS({
       };
     }
 
+    // Calculate elapsed_days from last_review (required by ts-fsrs Card type)
+    const lastReview = word.fsrs_last_review ? new Date(word.fsrs_last_review) : undefined;
+    const elapsed_days = lastReview
+      ? Math.floor((Date.now() - lastReview.getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+
     return {
       due: word.fsrs_due ? new Date(word.fsrs_due) : new Date(),
       stability: word.fsrs_stability ?? 0,
       difficulty: word.fsrs_difficulty ?? 6.5,
-      elapsed_days: word.fsrs_elapsed_days ?? 0, // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
+      elapsed_days,
       scheduled_days: word.fsrs_scheduled_days ?? 0,
       learning_steps: word.fsrs_learning_steps ?? 0,
       reps: word.fsrs_reps ?? 0,
       lapses: word.fsrs_lapses ?? 0,
       state: word.fsrs_state ?? State.New,
-      last_review: word.fsrs_last_review ? new Date(word.fsrs_last_review) : undefined,
+      last_review: lastReview,
     };
   }, []);
 
@@ -289,11 +295,18 @@ export function useFSRS({
         });
 
         // Graceful fallback: Simple increment without FSRS
+        const lastReviewDate = currentWord.fsrs_last_review
+          ? new Date(currentWord.fsrs_last_review)
+          : undefined;
+        const elapsed_days = lastReviewDate
+          ? Math.floor((Date.now() - lastReviewDate.getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+
         const fallbackCard: Card = {
           due: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
           stability: currentWord.fsrs_stability ?? 0.4,
           difficulty: currentWord.fsrs_difficulty ?? 6.5,
-          elapsed_days: currentWord.fsrs_elapsed_days ?? 0, // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
+          elapsed_days,
           scheduled_days: 0,
           learning_steps: currentWord.fsrs_learning_steps ?? 0,
           reps: (currentWord.fsrs_reps ?? 0) + 1,
@@ -313,8 +326,6 @@ export function useFSRS({
         fsrs_due: newCard.due.toISOString(),
         fsrs_stability: newCard.stability,
         fsrs_difficulty: newCard.difficulty,
-        // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
-        fsrs_elapsed_days: newCard.elapsed_days,
         fsrs_scheduled_days: newCard.scheduled_days,
         fsrs_reps: newCard.reps,
         fsrs_learning_steps: newCard.learning_steps,
@@ -336,7 +347,6 @@ export function useFSRS({
           // Use FSRS-calculated state for next review in this session
           fsrs_stability: newCard.stability,
           fsrs_difficulty: newCard.difficulty,
-          fsrs_elapsed_days: newCard.elapsed_days, // TODO: DEPRECATED - Remove before ts-fsrs v6.0.0
           fsrs_scheduled_days: newCard.scheduled_days,
           fsrs_reps: newCard.reps,
           fsrs_learning_steps: newCard.learning_steps,
