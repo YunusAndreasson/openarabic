@@ -33,17 +33,11 @@ export class AccountDeletionService {
         throw new Error('User must be authenticated to delete account');
       }
 
-      // Delete user account (this will cascade delete all related data via Supabase RLS policies)
-      // Note: Supabase's deleteUser() removes the auth user and triggers RLS policies
-      // to cascade delete all user data in related tables
-      // TODO: Backend - Create RPC function 'delete_user_account(user_id UUID)' in Supabase
-      const { error: deleteError } = await supabase.rpc(
-        // @ts-expect-error - RPC function not yet in database types
-        'delete_user_account',
-        {
-          user_id: user.id,
-        },
-      );
+      // Delete user account via RPC function
+      // This will delete all user data including study words, reading progress, and bookmarks
+      const { error: deleteError } = await supabase.rpc('delete_user_account', {
+        user_id: user.id,
+      });
 
       if (deleteError) {
         throw new Error(`Failed to delete account: ${deleteError.message}`);

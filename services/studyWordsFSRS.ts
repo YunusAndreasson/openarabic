@@ -54,7 +54,6 @@ export const studyWordsFSRSService = {
           fsrs_due,
           fsrs_stability,
           fsrs_difficulty,
-          fsrs_elapsed_days,
           fsrs_scheduled_days,
           fsrs_reps,
           fsrs_learning_steps,
@@ -72,7 +71,6 @@ export const studyWordsFSRSService = {
           fsrs_due,
           fsrs_stability,
           fsrs_difficulty,
-          fsrs_elapsed_days,
           fsrs_scheduled_days,
           fsrs_reps,
           fsrs_learning_steps,
@@ -155,7 +153,6 @@ export const studyWordsFSRSService = {
         fsrs_due: row.fsrs_due,
         fsrs_stability: row.fsrs_stability,
         fsrs_difficulty: row.fsrs_difficulty,
-        fsrs_elapsed_days: row.fsrs_elapsed_days,
         fsrs_scheduled_days: row.fsrs_scheduled_days,
         fsrs_reps: row.fsrs_reps,
         fsrs_learning_steps: row.fsrs_learning_steps,
@@ -176,7 +173,6 @@ export const studyWordsFSRSService = {
     update: FSRSWordUpdate,
   ): Promise<boolean> {
     // Use RPC function for atomic update
-    // TODO: Backend - Update RPC function to remove p_fsrs_elapsed_days parameter
     const data = await executeAuthenticatedQuery(
       userId,
       () =>
@@ -186,7 +182,6 @@ export const studyWordsFSRSService = {
           p_fsrs_due: update.fsrs_due,
           p_fsrs_stability: update.fsrs_stability,
           p_fsrs_difficulty: update.fsrs_difficulty,
-          p_fsrs_elapsed_days: 0, // Deprecated but still required by backend
           p_fsrs_scheduled_days: update.fsrs_scheduled_days,
           p_fsrs_learning_steps: update.fsrs_learning_steps,
           p_fsrs_reps: update.fsrs_reps,
@@ -267,7 +262,6 @@ export const studyWordsFSRSService = {
       fsrs_due: now.toISOString(), // Due immediately for new words
       fsrs_stability: INITIAL_STABILITY,
       fsrs_difficulty: INITIAL_FSRS_DIFFICULTY,
-      fsrs_elapsed_days: 0,
       fsrs_scheduled_days: 0,
       fsrs_learning_steps: 0,
       fsrs_reps: 0,

@@ -77,7 +77,6 @@ const createMockWord = (overrides: Partial<StudyWord> = {}): StudyWord => ({
   fsrs_due: new Date(Date.now() - 1000).toISOString(),
   fsrs_stability: 5,
   fsrs_difficulty: 5,
-  fsrs_elapsed_days: 0,
   fsrs_scheduled_days: 1,
   fsrs_reps: 2,
   fsrs_lapses: 0,

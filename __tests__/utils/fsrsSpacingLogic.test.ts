@@ -18,7 +18,6 @@ const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord => {
     fsrs_due: new Date(now).toISOString(),
     fsrs_stability: 5,
     fsrs_difficulty: 6.5,
-    fsrs_elapsed_days: 0,
     fsrs_scheduled_days: 1,
     fsrs_learning_steps: 0,
     fsrs_reps: 0,

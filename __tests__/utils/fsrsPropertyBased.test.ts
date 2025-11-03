@@ -355,7 +355,6 @@ describe('FSRS Property-Based Tests', () => {
                 noDefaultInfinity: true,
                 noNaN: true,
               }), // Low to moderate difficulty
-              fsrs_elapsed_days: fc.integer({ min: 0, max: 365 }),
               fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
               fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
               fsrs_reps: fc.integer({ min: 0, max: 10 }),

@@ -1,4 +1,5 @@
 import * as fc from 'fast-check';
+import type { RootId, UserId } from '../../types/branded.types';
 import type { StudyWord } from '../../types/vocabulary.types';
 
 /**
@@ -10,13 +11,12 @@ import type { StudyWord } from '../../types/vocabulary.types';
 export const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord => {
   const now = Date.now();
   return {
-    root_id: 1,
-    user_id: 'test-user',
+    root_id: 1 as RootId,
+    user_id: 'test-user' as UserId,
     created_at: new Date(now).toISOString(),
     fsrs_due: new Date(now).toISOString(),
     fsrs_stability: 5,
     fsrs_difficulty: 6.5,
-    fsrs_elapsed_days: 0,
     fsrs_scheduled_days: 1,
     fsrs_learning_steps: 0,
     fsrs_reps: 0,
@@ -82,7 +82,6 @@ export const studyWordArbitrary = fc.record({
   fsrs_due: fsrsArbitraries.dueDate.map(d => d.toISOString()),
   fsrs_stability: fsrsArbitraries.stability,
   fsrs_difficulty: fsrsArbitraries.difficulty,
-  fsrs_elapsed_days: fc.integer({ min: 0, max: 365 }),
   fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
   fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
   fsrs_reps: fsrsArbitraries.reps,
@@ -122,7 +121,6 @@ export const strugglingWordArbitrary = fc.record({
     noDefaultInfinity: true,
     noNaN: true,
   }), // High difficulty
-  fsrs_elapsed_days: fc.integer({ min: 0, max: 365 }),
   fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
   fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
   fsrs_reps: fsrsArbitraries.reps,
@@ -156,7 +154,6 @@ export const dueWordArbitrary = fc.record({
     .map(d => d.toISOString()), // Past due date
   fsrs_stability: fsrsArbitraries.stability,
   fsrs_difficulty: fsrsArbitraries.difficulty,
-  fsrs_elapsed_days: fc.integer({ min: 0, max: 365 }),
   fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
   fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
   fsrs_reps: fsrsArbitraries.reps,
@@ -185,7 +182,6 @@ export const propertyTestUtils = {
   // Test that a function preserves ordering
   testOrdering: <T>(fn: (input: T) => number, arbitrary: fc.Arbitrary<T>) => {
     return fc.property(fc.array(arbitrary, { minLength: 2, maxLength: 10 }), inputs => {
-      const sorted = [...inputs].sort((a, b) => fn(a) - fn(b));
       const mapped = inputs.map(fn);
       const sortedMapped = [...mapped].sort((a, b) => a - b);
       expect(mapped).toEqual(sortedMapped);
@@ -251,7 +247,7 @@ export const advancedTestScenarios = {
       })
       .map(({ scenario, wordId }) => ({
         ...scenario,
-        word: createTestWord({ root_id: wordId, ...scenario.overrides }),
+        word: createTestWord({ root_id: wordId as RootId, ...scenario.overrides }),
       }));
   },
 
@@ -268,9 +264,9 @@ export const advancedTestScenarios = {
     return fc
       .array(fc.constantFrom(...validTransitions), { minLength: 3, maxLength: 10 })
       .map(transitions => {
-        const words = transitions.map(([fromState, toState], index) =>
+        const words = transitions.map(([fromState], index) =>
           createTestWord({
-            root_id: index + 1,
+            root_id: (index + 1) as RootId,
             fsrs_state: fromState,
             fsrs_reps: index,
             fsrs_last_review: new Date(Date.now() - index * 86400000).toISOString(),
@@ -289,7 +285,7 @@ export const advancedTestScenarios = {
       })
       .map(({ wordCount, complexity }) => {
         const words = Array.from({ length: wordCount }, (_, i) => {
-          const baseWord = createTestWord({ root_id: i + 1 });
+          const baseWord = createTestWord({ root_id: (i + 1) as RootId });
           switch (complexity) {
             case 'low':
               return { ...baseWord, fsrs_stability: 5, fsrs_difficulty: 6.5 };
@@ -329,12 +325,12 @@ export const createWordSet = (
 ) => {
   const now = Date.now();
   return scenarios.map(
-    ({ id, hoursOverdue = 0, stability = 5, difficulty = 6.5, state = 0, reps = 0, lapses = 0 }) =>
+    ({ id, hoursOverdue = 0, stability = 5, state = 0, reps = 0, lapses = 0 }) =>
       createTestWord({
-        root_id: id,
+        root_id: id as RootId,
         fsrs_due: new Date(now - hoursOverdue * 3600 * 1000).toISOString(),
         fsrs_stability: stability,
-        fsrs_difficulty: difficulty,
+        fsrs_difficulty: 6.5,
         fsrs_state: state,
         fsrs_reps: reps,
         fsrs_lapses: lapses,
@@ -345,28 +341,28 @@ export const createWordSet = (
 // Create words with different FSRS states for testing state transitions
 export const createWordsWithStates = () => ({
   newWord: createTestWord({
-    root_id: 1,
+    root_id: 1 as RootId,
     fsrs_state: 0, // New
     fsrs_reps: 0,
     fsrs_stability: 0,
     fsrs_difficulty: 6.5,
   }),
   learningWord: createTestWord({
-    root_id: 2,
+    root_id: 2 as RootId,
     fsrs_state: 1, // Learning
     fsrs_reps: 1,
     fsrs_stability: 1.5,
     fsrs_difficulty: 6.8,
   }),
   reviewWord: createTestWord({
-    root_id: 3,
+    root_id: 3 as RootId,
     fsrs_state: 2, // Review
     fsrs_reps: 5,
     fsrs_stability: 10,
     fsrs_difficulty: 6.2,
   }),
   relearningWord: createTestWord({
-    root_id: 4,
+    root_id: 4 as RootId,
     fsrs_state: 3, // Relearning
     fsrs_reps: 3,
     fsrs_stability: 2,
@@ -379,7 +375,7 @@ export const createWordsWithStates = () => ({
 export const createLargeWordSet = (count: number) => {
   return Array.from({ length: count }, (_, i) =>
     createTestWord({
-      root_id: i + 1,
+      root_id: (i + 1) as RootId,
       fsrs_due: new Date(Date.now() - Math.random() * 86400000).toISOString(), // Random overdue
       fsrs_stability: Math.random() * 10 + 1,
       fsrs_difficulty: Math.random() * 5 + 5,
@@ -393,32 +389,32 @@ export const createLargeWordSet = (count: number) => {
 // Create words with edge case data
 export const createEdgeCaseWords = () => ({
   corruptedDates: createTestWord({
-    root_id: 1,
+    root_id: 1 as RootId,
     fsrs_due: 'invalid-date',
     fsrs_last_review: 'also-invalid',
   }),
   nullFSRSData: createTestWord({
-    root_id: 2,
-    fsrs_stability: null,
-    fsrs_difficulty: null,
-    fsrs_reps: null,
-    fsrs_state: null,
-    fsrs_last_review: null,
+    root_id: 2 as RootId,
+    fsrs_stability: null as any,
+    fsrs_difficulty: null as any,
+    fsrs_reps: null as any,
+    fsrs_state: null as any,
+    fsrs_last_review: null as any,
   }),
   extremeValues: createTestWord({
-    root_id: 3,
+    root_id: 3 as RootId,
     fsrs_stability: 999,
     fsrs_difficulty: 15, // Beyond normal range
     fsrs_reps: 1000,
     fsrs_lapses: 50,
   }),
   partialData: createTestWord({
-    root_id: 4,
+    root_id: 4 as RootId,
     fsrs_stability: 5,
-    fsrs_difficulty: null,
+    fsrs_difficulty: null as any,
     fsrs_reps: 2,
     fsrs_state: 1,
-    fsrs_last_review: null,
+    fsrs_last_review: null as any,
   }),
 });
 
@@ -547,8 +543,8 @@ describe('fsrsTestHelpers factories', () => {
     const words = createLargeWordSet(5);
 
     expect(words).toHaveLength(5);
-    expect(words[0].root_id).toBe(1);
-    expect(words[4].root_id).toBe(5);
+    expect(words[0]?.root_id).toBe(1);
+    expect(words[4]?.root_id).toBe(5);
 
     const uniqueStability = new Set(words.map(w => w.fsrs_stability)).size;
     const uniqueDifficulty = new Set(words.map(w => w.fsrs_difficulty)).size;

@@ -90,7 +90,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_due: new Date(Date.now() + 86400000).toISOString(), // Due in 1 day
           fsrs_stability: 7, // Increased
           fsrs_difficulty: 4.8, // Decreased slightly
-          fsrs_elapsed_days: 0,
           fsrs_scheduled_days: 1,
           fsrs_learning_steps: 0,
           fsrs_reps: 3, // Incremented
@@ -119,7 +118,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_due: new Date(Date.now() + 3600000).toISOString(), // Due in 1 hour
           fsrs_stability: 3.5,
           fsrs_difficulty: 6.2,
-          fsrs_elapsed_days: 0,
           fsrs_scheduled_days: 0,
           fsrs_learning_steps: 1,
           fsrs_reps: 2,
@@ -139,7 +137,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_due: new Date(Date.now() + 86400000).toISOString(),
           fsrs_stability: 6,
           fsrs_difficulty: 4.5,
-          fsrs_elapsed_days: 0,
           fsrs_scheduled_days: 1,
           fsrs_learning_steps: 0,
           fsrs_reps: 4,
@@ -161,7 +158,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_due: new Date(Date.now() + 86400000).toISOString(),
           fsrs_stability: 5,
           fsrs_difficulty: 5.8,
-          fsrs_elapsed_days: 0,
           fsrs_scheduled_days: 1,
           fsrs_learning_steps: 0,
           fsrs_reps: 3,
@@ -245,7 +241,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
         fsrs_due: new Date(Date.now() + 600000).toISOString(), // 10 min
         fsrs_stability: 1,
         fsrs_difficulty: 7.5,
-        fsrs_elapsed_days: 0,
         fsrs_scheduled_days: 0,
         fsrs_learning_steps: 1,
         fsrs_reps: 2,
@@ -258,7 +253,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
         fsrs_due: new Date(Date.now() + 600000).toISOString(),
         fsrs_stability: 0.8,
         fsrs_difficulty: 8.5,
-        fsrs_elapsed_days: 0,
         fsrs_scheduled_days: 0,
         fsrs_learning_steps: 1,
         fsrs_reps: 2,
@@ -399,7 +393,6 @@ describe('Complete Practice Session Flow - Integration Test', () => {
         fsrs_due: new Date(Date.now() + 172800000).toISOString(), // 2 days
         fsrs_stability: 10, // Increased from 5
         fsrs_difficulty: 4.5, // Decreased from 5
-        fsrs_elapsed_days: 0,
         fsrs_scheduled_days: 2,
         fsrs_learning_steps: 0,
         fsrs_reps: 3, // Incremented
