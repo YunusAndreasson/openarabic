@@ -105,11 +105,9 @@ export function ThemedButton({
   const textColor = disabled
     ? colors.disabled
     : variant === 'filled'
-      ? currentTheme === Theme.Sepia
-        ? colors.white // Use white text for sepia theme filled buttons for better contrast
-        : isDarkMode
-          ? colors.black
-          : colors.text
+      ? isDarkMode
+        ? colors.black
+        : colors.white // Use white text for all light themes filled buttons for better contrast
       : colors.tint;
   const iconSize = getIconSize(size, customIconSize);
 

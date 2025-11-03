@@ -9,6 +9,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { withAlpha } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { formatAuthorCategory } from '@/utils/stringUtils';
@@ -111,10 +112,10 @@ const MiniPlayerComponent = ({
     [colors.elevation2],
   );
 
-  // Memoize button colors - use elevation3 (lightest) to be LIGHTER than card background
+  // Memoize button colors - use subtle tinted background for visibility
   const timerButtonColor = useMemo(
-    () => (isTimerActive ? colors.warning : colors.elevation3),
-    [isTimerActive, colors.warning, colors.elevation3],
+    () => (isTimerActive ? colors.warning : withAlpha(colors.tint, 0.12)),
+    [isTimerActive, colors.warning, colors.tint],
   );
 
   const timerIconColor = useMemo(
@@ -122,8 +123,8 @@ const MiniPlayerComponent = ({
     [isTimerActive, colors.white, colors.tint],
   );
 
-  // Stop button uses elevation3 for visibility (lighter than card)
-  const stopButtonColor = useMemo(() => colors.elevation3, [colors.elevation3]);
+  // Stop button uses subtle tinted background for visibility
+  const stopButtonColor = useMemo(() => withAlpha(colors.tint, 0.12), [colors.tint]);
 
   // Calculate progress percentage
   const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
