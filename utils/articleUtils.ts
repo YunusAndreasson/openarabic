@@ -3,12 +3,27 @@ import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
- * Filters articles by author or category ID
- * @param articles - The articles to filter
- * @param authorId - The author ID to filter by
- * @param categoryId - The category ID to filter by
- * @returns Filtered articles by author or category ID
+ * Helper function to shuffle array and return first N items using Fisher-Yates algorithm
+ * @param items - The array to shuffle
+ * @param count - The number of items to return
+ * @returns Randomly selected items from the array
  */
+export function getRandomItems<T>(items: T[], count: number): T[] {
+  if (items.length <= count) return [...items];
+
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = shuffled[i];
+    const other = shuffled[j];
+    if (temp !== undefined && other !== undefined) {
+      shuffled[i] = other;
+      shuffled[j] = temp;
+    }
+  }
+
+  return shuffled.slice(0, count);
+}
 
 /**
  * Gets beginner-friendly articles (difficulty level 1-3)

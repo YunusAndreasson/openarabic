@@ -18,28 +18,8 @@ import { articlesService } from '@/services/articles';
 import { bookmarkService } from '@/services/bookmark';
 import { readingProgressService } from '@/services/readingProgress';
 import type { Article } from '@/types/articles.types';
-import { getBeginnerArticles } from '@/utils/articleUtils';
+import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
-
-/**
- * Helper function to shuffle array and return first N items
- */
-const getRandomArticles = <T>(articles: T[], count: number): T[] => {
-  if (articles.length <= count) return [...articles];
-
-  const shuffled = [...articles];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const temp = shuffled[i];
-    const other = shuffled[j];
-    if (temp !== undefined && other !== undefined) {
-      shuffled[i] = other;
-      shuffled[j] = temp;
-    }
-  }
-
-  return shuffled.slice(0, count);
-};
 
 interface AppPreloaderResult {
   isPreloading: boolean;
@@ -100,7 +80,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         InteractionManager.runAfterInteractions(() => {
           try {
             const articles = _articles as Article[];
-            const featured: Article[] = getRandomArticles(articles, 5); // Get random 5 articles
+            const featured: Article[] = getRandomItems(articles, 5); // Get random 5 articles
 
             // Cache featured articles immediately with consistent query key
             // Include APP_SESSION_ID to ensure fresh articles on each app launch
@@ -323,7 +303,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
           );
 
           if (dueWordArticles.length > 0) {
-            const selected = getRandomArticles(dueWordArticles, 5);
+            const selected = getRandomItems(dueWordArticles, 5);
             return {
               articles: selected,
               reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
@@ -337,7 +317,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         if (!user?.id || !hasAnyStudyWords) {
           const beginnerArticles = getBeginnerArticles(allArticles);
           if (beginnerArticles.length > 0) {
-            const selected = getRandomArticles(beginnerArticles, 5);
+            const selected = getRandomItems(beginnerArticles, 5);
             return {
               articles: selected,
               reason: STRINGS.RECOMMENDED,
@@ -349,7 +329,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
         // Final fallback: random selection
         return {
-          articles: getRandomArticles(allArticles, 5),
+          articles: getRandomItems(allArticles, 5),
           reason: STRINGS.RECOMMENDED,
           type: 'random' as const,
           dueWordRootIds: new Set(),

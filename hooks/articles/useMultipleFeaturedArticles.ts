@@ -9,7 +9,7 @@ import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { getBeginnerArticles } from '@/utils/articleUtils';
+import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
 
 interface MultipleFeaturedArticlesResult {
   articles: Article[];
@@ -27,26 +27,6 @@ interface CachedMultipleSelection {
 
 // Number of articles to return in the slider
 const MAX_FEATURED_ARTICLES = 5;
-
-/**
- * Helper function to shuffle array and return first N items
- */
-const getRandomArticles = (articles: Article[], count: number): Article[] => {
-  if (articles.length <= count) return [...articles];
-
-  const shuffled = [...articles];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const temp = shuffled[i];
-    const other = shuffled[j];
-    if (temp !== undefined && other !== undefined) {
-      shuffled[i] = other;
-      shuffled[j] = temp;
-    }
-  }
-
-  return shuffled.slice(0, count);
-};
 
 /**
  * Generic hook for multiple featured articles selection
@@ -176,14 +156,14 @@ export function useMultipleFeaturedArticles(
 
           if (dueWordArticles.length > 0) {
             intelligentSelection = {
-              articles: getRandomArticles(dueWordArticles, MAX_FEATURED_ARTICLES),
+              articles: getRandomItems(dueWordArticles, MAX_FEATURED_ARTICLES),
               reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
               type: 'due-words',
               dueWordRootIds: stableDueWordSet,
             };
           } else {
             intelligentSelection = {
-              articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+              articles: getRandomItems(articlesData, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'random' as const,
               dueWordRootIds: stableDueWordSet,
@@ -207,14 +187,14 @@ export function useMultipleFeaturedArticles(
 
           if (difficultWordArticles.length > 0) {
             intelligentSelection = {
-              articles: getRandomArticles(difficultWordArticles, MAX_FEATURED_ARTICLES),
+              articles: getRandomItems(difficultWordArticles, MAX_FEATURED_ARTICLES),
               reason: STRINGS.CHOSEN_TO_REINFORCE_CHALLENGING,
               type: 'difficult-words',
               dueWordRootIds: stableDueWordSet,
             };
           } else {
             intelligentSelection = {
-              articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+              articles: getRandomItems(articlesData, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'random' as const,
               dueWordRootIds: stableDueWordSet,
@@ -226,14 +206,14 @@ export function useMultipleFeaturedArticles(
           const beginnerArticles = getBeginnerArticles(articlesData);
           if (beginnerArticles.length > 0) {
             intelligentSelection = {
-              articles: getRandomArticles(beginnerArticles, MAX_FEATURED_ARTICLES),
+              articles: getRandomItems(beginnerArticles, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'beginner',
               dueWordRootIds: stableDueWordSet,
             };
           } else {
             intelligentSelection = {
-              articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+              articles: getRandomItems(articlesData, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'random' as const,
               dueWordRootIds: stableDueWordSet,
@@ -243,7 +223,7 @@ export function useMultipleFeaturedArticles(
         // Strategy 4: Fallback to random selection
         else {
           intelligentSelection = {
-            articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+            articles: getRandomItems(articlesData, MAX_FEATURED_ARTICLES),
             reason: STRINGS.RECOMMENDED,
             type: 'random' as const,
             dueWordRootIds: stableDueWordSet,
@@ -271,7 +251,7 @@ export function useMultipleFeaturedArticles(
     } else {
       // For refreshes, always perform new selection for variety
       result = {
-        articles: getRandomArticles(articlesData, MAX_FEATURED_ARTICLES),
+        articles: getRandomItems(articlesData, MAX_FEATURED_ARTICLES),
         reason: STRINGS.RECOMMENDED,
         type: 'random' as const,
         dueWordRootIds: stableDueWordSet,
