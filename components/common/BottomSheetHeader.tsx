@@ -5,7 +5,7 @@ import { LAYOUT } from '@/constants/layout';
 
 interface BottomSheetHeaderProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
 }
 
 export const BottomSheetHeader = ({ title, subtitle }: BottomSheetHeaderProps) => {
@@ -14,9 +14,11 @@ export const BottomSheetHeader = ({ title, subtitle }: BottomSheetHeaderProps) =
       <ThemedText type="heading3" weight="bold" style={styles.title}>
         {title}
       </ThemedText>
-      <ThemedText type="body" colorName="textTertiary" style={styles.subtitle}>
-        {subtitle}
-      </ThemedText>
+      {subtitle && (
+        <ThemedText type="body" colorName="textTertiary" style={styles.subtitle}>
+          {subtitle}
+        </ThemedText>
+      )}
     </View>
   );
 };

@@ -178,6 +178,83 @@ export const STRINGS = {
   BY_CONTINUING_YOU_AGREE: 'By continuing, you agree to our',
   AND: 'and',
 
+  // Terms of Service - Full text
+  TERMS_EFFECTIVE_DATE: 'Effective Date: January 1, 2025',
+  TERMS_INTRO:
+    'Welcome to OpenArabic. By using our app, you agree to these terms. Please read them carefully.',
+  TERMS_SERVICE_DESCRIPTION_TITLE: '1. Our Service',
+  TERMS_SERVICE_DESCRIPTION:
+    'OpenArabic is an Arabic language learning platform. We provide articles, audio content, vocabulary tools, and spaced repetition learning features to help you learn Arabic.',
+  TERMS_ACCOUNT_TITLE: '2. Your Account',
+  TERMS_ACCOUNT:
+    'You can create an account using email and password, Apple Sign In, or Google Sign In. You are responsible for maintaining the security of your account. Provide accurate information and keep your password confidential.',
+  TERMS_ACCEPTABLE_USE_TITLE: '3. Acceptable Use',
+  TERMS_ACCEPTABLE_USE:
+    'Use OpenArabic for personal learning only. Do not attempt to harm the service, access it through unauthorized means, or use it for any unlawful purpose.',
+  TERMS_CONTENT_TITLE: '4. Content and Rights',
+  TERMS_CONTENT:
+    'All content on OpenArabic, including articles, translations, audio, and educational materials, is owned by OpenArabic or licensed to us. You may use it for personal learning but may not redistribute, republish, or use it commercially.',
+  TERMS_USER_DATA_TITLE: '5. Your Data',
+  TERMS_USER_DATA:
+    'You own your learning data (reading progress, vocabulary lists, study history). We collect and use this data as described in our Privacy Policy to provide and improve the service.',
+  TERMS_DISCLAIMER_TITLE: '6. Disclaimers',
+  TERMS_DISCLAIMER:
+    'OpenArabic is provided "as is" without warranties of any kind. We strive for accuracy but cannot guarantee that all content is error-free. Your use of the app is at your own risk.',
+  TERMS_LIABILITY_TITLE: '7. Limitation of Liability',
+  TERMS_LIABILITY:
+    'OpenArabic and its developers are not liable for any indirect, incidental, or consequential damages arising from your use of the service.',
+  TERMS_CHANGES_TITLE: '8. Changes to Terms',
+  TERMS_CHANGES:
+    'We may update these terms from time to time. Continued use of OpenArabic after changes means you accept the updated terms.',
+  TERMS_TERMINATION_TITLE: '9. Termination',
+  TERMS_TERMINATION:
+    'We may suspend or terminate your access if you violate these terms. You may stop using OpenArabic at any time.',
+  TERMS_CONTACT_TITLE: '10. Contact',
+  TERMS_CONTACT: 'Questions about these terms? Contact us at yunus@edenmind.com',
+
+  // Privacy Policy - Full text
+  PRIVACY_EFFECTIVE_DATE: 'Effective Date: January 1, 2025',
+  PRIVACY_INTRO:
+    'Your privacy is important to us. This policy explains what information we collect, how we use it, and your rights.',
+  PRIVACY_COLLECTION_TITLE: '1. Information We Collect',
+  PRIVACY_COLLECTION_ACCOUNT: 'Account Information',
+  PRIVACY_COLLECTION_ACCOUNT_DESC:
+    'When you create an account, we collect your email address. If you use Apple or Google Sign In, we receive basic profile information from those services.',
+  PRIVACY_COLLECTION_LEARNING: 'Learning Data',
+  PRIVACY_COLLECTION_LEARNING_DESC:
+    'We store your reading progress, vocabulary lists, study session history, review performance, and app preferences (theme, audio settings, notifications).',
+  PRIVACY_COLLECTION_ANALYTICS: 'Usage Analytics',
+  PRIVACY_COLLECTION_ANALYTICS_DESC:
+    'We use Mixpanel to track basic events like sign in, sign up, and practice sessions. This helps us understand how the app is used and improve it.',
+  PRIVACY_USE_TITLE: '2. How We Use Your Information',
+  PRIVACY_USE:
+    'We use your data to: provide the learning service, sync your progress across devices, personalize your learning experience, send study reminders (if enabled), and improve the app.',
+  PRIVACY_THIRD_PARTY_TITLE: '3. Third-Party Services',
+  PRIVACY_THIRD_PARTY_SUPABASE: 'Supabase',
+  PRIVACY_THIRD_PARTY_SUPABASE_DESC:
+    'We use Supabase for authentication, database, and file storage. Your data is stored securely on their servers.',
+  PRIVACY_THIRD_PARTY_MIXPANEL: 'Mixpanel',
+  PRIVACY_THIRD_PARTY_MIXPANEL_DESC:
+    'We use Mixpanel for analytics to understand app usage patterns and improve the learning experience.',
+  PRIVACY_THIRD_PARTY_AUTH: 'Apple and Google',
+  PRIVACY_THIRD_PARTY_AUTH_DESC:
+    'If you sign in with Apple or Google, their privacy policies apply to the authentication process.',
+  PRIVACY_SECURITY_TITLE: '4. Data Security',
+  PRIVACY_SECURITY:
+    'We take reasonable measures to protect your data, including encrypted connections and secure authentication. However, no internet service is 100% secure.',
+  PRIVACY_RIGHTS_TITLE: '5. Your Rights',
+  PRIVACY_RIGHTS:
+    'You can access, update, or delete your account data at any time. To delete your account and all associated data, contact us at yunus@edenmind.com',
+  PRIVACY_CHILDREN_TITLE: '6. Children\'s Privacy',
+  PRIVACY_CHILDREN:
+    'OpenArabic is not intended for children under 13. We do not knowingly collect information from children under 13.',
+  PRIVACY_CHANGES_TITLE: '7. Changes to This Policy',
+  PRIVACY_CHANGES:
+    'We may update this privacy policy from time to time. We will notify you of significant changes through the app or by email.',
+  PRIVACY_CONTACT_TITLE: '8. Contact Us',
+  PRIVACY_CONTACT:
+    'Questions about privacy? Contact us at yunus@edenmind.com. We will respond to your inquiry as soon as possible.',
+
   // Social auth
   SIGN_IN_WITH_APPLE: 'Sign in with Apple',
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',

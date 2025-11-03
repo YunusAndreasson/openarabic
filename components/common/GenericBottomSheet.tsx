@@ -107,16 +107,27 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
     [colors.elevation1, colors.modalIndicator],
   );
 
+  // When snapPoints are provided, disable dynamic sizing
+  // Otherwise use dynamic sizing from COMMON_BOTTOM_SHEET_MODAL_PROPS
+  const bottomSheetProps = useMemo(
+    () => ({
+      ...COMMON_BOTTOM_SHEET_MODAL_PROPS,
+      ...(snapPoints
+        ? { snapPoints, enableDynamicSizing: false }
+        : { enableDynamicSizing: true }),
+    }),
+    [snapPoints],
+  );
+
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
-      snapPoints={snapPoints}
       onChange={handleChange}
       onDismiss={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={renderBackdrop}
-      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
+      {...bottomSheetProps}
     >
       <BottomSheetView style={styles.container}>
         {/* Render custom header OR standard title/subtitle header */}
