@@ -15,7 +15,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge } from '@/components/account';
 import { AudioShuffleToggle } from '@/components/account/AudioShuffleToggle';
-import { DeleteAccountModal } from '@/components/account/DeleteAccountModal';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
@@ -138,7 +137,6 @@ const AccountScreen: FC = () => {
   const dispatch = useAppDispatch();
 
   const [activePicker, setActivePicker] = React.useState<string | null>(null);
-  const [showDeleteAccountModal, setShowDeleteAccountModal] = React.useState(false);
 
   // Get daily word limit with validation
   const rawDailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
@@ -204,14 +202,10 @@ const AccountScreen: FC = () => {
     setActivePicker(null);
   }, []);
 
-  // Delete Account handlers
+  // Delete Account handler
   const handleDeleteAccountPress = useCallback(() => {
     errorFeedback();
-    setShowDeleteAccountModal(true);
-  }, []);
-
-  const handleDeleteAccountClose = useCallback(() => {
-    setShowDeleteAccountModal(false);
+    router.push(ROUTE_PATHS.ACCOUNT_DELETE_ACCOUNT);
   }, []);
 
   // Social Media handlers
@@ -1000,9 +994,6 @@ const AccountScreen: FC = () => {
             : [320]
         }
       />
-
-      {/* Delete Account Modal */}
-      <DeleteAccountModal isVisible={showDeleteAccountModal} onClose={handleDeleteAccountClose} />
     </ThemedView>
   );
 };

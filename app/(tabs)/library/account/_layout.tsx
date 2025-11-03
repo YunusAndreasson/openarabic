@@ -27,6 +27,14 @@ export default function AccountLayout(): JSX.Element {
       />
 
       <Stack.Screen
+        name="DeleteAccount"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.DELETE_ACCOUNT,
+          headerLeft: () => <DoneButton onPress={() => router.back()} />,
+        })}
+      />
+
+      <Stack.Screen
         name="help"
         options={createNavigationOptions(colors, {
           title: STRINGS.HELP,

@@ -40,6 +40,7 @@ export const ROUTE_PATHS = {
   ACCOUNT: '/(tabs)/library/account',
   ACCOUNT_HELP: '/(tabs)/library/account/help',
   ACCOUNT_FONT_SELECTOR: '/(tabs)/library/account/FontSelector',
+  ACCOUNT_DELETE_ACCOUNT: '/(tabs)/library/account/DeleteAccount',
   ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/library/account/islamicCalendar',
   ACCOUNT_FEEDBACK: '/(tabs)/library/account/feedback',
   TERMS: '/(tabs)/library/account/terms',
