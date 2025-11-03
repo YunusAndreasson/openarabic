@@ -20,6 +20,29 @@ export interface UseAppleAuthReturn {
 }
 
 /**
+ * Helper to detect if error is a user cancellation (not an actual error)
+ * Checks both error codes and error messages for cancellation patterns
+ */
+function isCancellationError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+
+  // Check error code
+  const errorCode = 'code' in error ? String(error.code) : '';
+  if (errorCode === '1001') return true; // Apple iOS cancellation
+
+  // Check error message for cancellation keywords
+  const errorMessage =
+    error instanceof Error
+      ? error.message.toLowerCase()
+      : 'message' in error && typeof error.message === 'string'
+        ? error.message.toLowerCase()
+        : '';
+
+  const cancellationKeywords = ['cancel', 'cancelled', 'canceled', 'dismiss', 'dismissed'];
+  return cancellationKeywords.some(keyword => errorMessage.includes(keyword));
+}
+
+/**
  * Hook for Apple Sign In authentication using native Apple Authentication
  * Uses @invertase/react-native-apple-authentication for both iOS and Android
  *
@@ -98,15 +121,9 @@ export function useAppleAuth(): UseAppleAuthReturn {
             requestedScopes: [appleAuth.default.Scope.EMAIL, appleAuth.default.Scope.FULL_NAME],
           });
         } catch (credentialError) {
-          // Check if user canceled (error 1001) - this is expected and shouldn't be reported as an error
-          const errorCode =
-            typeof credentialError === 'object' && credentialError && 'code' in credentialError
-              ? String(credentialError.code)
-              : 'unknown';
-
-          if (errorCode === '1001') {
+          // Check if user canceled - this is expected and shouldn't be reported as an error
+          if (isCancellationError(credentialError)) {
             // User canceled - this is normal behavior, not an error
-            // Silently return without showing error or logging to Sentry
             Sentry.addBreadcrumb({
               category: 'auth',
               message: 'User canceled Apple Sign In',
@@ -291,6 +308,16 @@ export function useAppleAuth(): UseAppleAuthReturn {
         try {
           response = await appleAuthAndroid.signIn();
         } catch (androidError) {
+          // Check if user cancelled - this is normal behavior, not an error
+          if (isCancellationError(androidError)) {
+            Sentry.addBreadcrumb({
+              category: 'auth',
+              message: 'User canceled Apple Sign In (Android)',
+              level: 'info',
+            });
+            return;
+          }
+
           Sentry.captureException(androidError, {
             tags: {
               location: 'apple_auth',
@@ -376,7 +403,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
       if (!isMountedRef.current) return;
 
       // Handle user cancellation silently
-      if (error && typeof error === 'object' && 'code' in error && error.code === '1001') {
+      if (isCancellationError(error)) {
         // User cancelled - no error needed
         Sentry.addBreadcrumb({
           category: 'auth',

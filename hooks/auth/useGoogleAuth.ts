@@ -18,6 +18,30 @@ export interface UseGoogleAuthReturn {
 }
 
 /**
+ * Helper to detect if error is a user cancellation (not an actual error)
+ * Checks both error codes and error messages for cancellation patterns
+ */
+function isCancellationError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+
+  // Check error code (common Google cancellation codes)
+  const errorCode = 'code' in error ? String(error.code) : '';
+  if (errorCode === '12501') return true; // Android user cancelled
+  if (errorCode === '-5') return true; // iOS user cancelled
+
+  // Check error message for cancellation keywords
+  const errorMessage =
+    error instanceof Error
+      ? error.message.toLowerCase()
+      : 'message' in error && typeof error.message === 'string'
+        ? error.message.toLowerCase()
+        : '';
+
+  const cancellationKeywords = ['cancel', 'cancelled', 'canceled', 'dismiss', 'dismissed'];
+  return cancellationKeywords.some(keyword => errorMessage.includes(keyword));
+}
+
+/**
  * Hook for Google Sign In authentication
  * Uses @react-native-google-signin/google-signin library
  *
@@ -375,21 +399,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       if (!isMountedRef.current) return;
 
       // Handle user cancellation silently
-      let statusCodes;
-      try {
-        statusCodes = require('@react-native-google-signin/google-signin').statusCodes;
-      } catch {
-        // If we can't get status codes, treat as generic error
-        statusCodes = null;
-      }
-
-      if (
-        statusCodes &&
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        error.code === statusCodes.SIGN_IN_CANCELLED
-      ) {
+      if (isCancellationError(error)) {
         // User cancelled - no error needed
         Sentry.addBreadcrumb({
           category: 'auth',
@@ -397,6 +407,14 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           level: 'info',
         });
         return;
+      }
+
+      // Check Play Services not available (Android) - needs statusCodes
+      let statusCodes;
+      try {
+        statusCodes = require('@react-native-google-signin/google-signin').statusCodes;
+      } catch {
+        statusCodes = null;
       }
 
       // Handle Play Services not available (Android)
