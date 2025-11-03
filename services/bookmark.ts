@@ -77,7 +77,7 @@ export const bookmarkService = {
             .select('article_id')
             .eq('user_id', userId)
             .eq('article_id', articleId)
-            .single(),
+            .maybeSingle(),
         {
           ...errorConfig.readingList.check,
           analyticsProperties: { articleId },
@@ -85,7 +85,7 @@ export const bookmarkService = {
       );
       return Boolean(data);
     } catch (error) {
-      // PGRST116 = "not found" error from Supabase, which is expected behavior
+      // PGRST116 = "not found" error from Supabase (shouldn't happen with maybeSingle, but kept for safety)
       if (error && typeof error === 'object' && 'code' in error && error.code === 'PGRST116') {
         return false;
       }

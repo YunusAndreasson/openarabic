@@ -18,7 +18,7 @@ import { supabase } from '@/services/supabase';
 import { UiAction } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback, warningFeedback } from '@/utils/haptics';
+import { lightFeedback, errorFeedback } from '@/utils/haptics';
 import { clearPersistedQueryCache } from '@/utils/queryPersistence';
 
 const useUserWithCreationDate = () => {
@@ -165,7 +165,7 @@ export const useAccountScreen = () => {
       return;
     }
 
-    warningFeedback();
+    errorFeedback();
     Alert.alert(
       STRINGS.RESET_READING_PROGRESS,
       STRINGS.THIS_WILL_DELETE_ALL_READING_PROGRESS,

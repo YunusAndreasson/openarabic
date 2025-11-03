@@ -78,11 +78,26 @@ export async function registerBackgroundTasks(): Promise<void> {
       // Background task registered successfully
     } else {
       // Background task is not available on this device
+      // Silently skip - this is expected when Background Fetch is not configured
     }
   } catch (error) {
+    // Handle specific error about Background Fetch not being configured
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isNotConfiguredError =
+      errorMessage.includes('Background Fetch has not been configured') ||
+      errorMessage.includes('UIBackgroundModes') ||
+      errorMessage.includes('registerTaskAsync');
+
+    if (isNotConfiguredError) {
+      // Silently ignore - Background Fetch is optional and not configured
+      return;
+    }
+
+    // Log other errors to Sentry with warning severity (not critical)
     handleError(error as Error, {
       showToast: false,
       analyticsEventName: 'Background_Task_Registration_Error',
+      sentrySeverity: 'warning', // Not critical - background fetch is optional
     });
   }
 }

@@ -7,13 +7,13 @@ import { Toggle } from '@ui/Toggle';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { Fragment, memo, useCallback, useMemo, type FC } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { THEME_OPTIONS } from '@/components/ThemePicker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { AccountBadge, SocialMediaIcons } from '@/components/account';
+import { AccountBadge } from '@/components/account';
 import { AudioShuffleToggle } from '@/components/account/AudioShuffleToggle';
 import { DeleteAccountModal } from '@/components/account/DeleteAccountModal';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';
@@ -41,7 +41,7 @@ import {
   DisplayLanguage,
 } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
-import { warningFeedback } from '@/utils/haptics';
+import { errorFeedback } from '@/utils/haptics';
 
 // Memoized components
 const Divider = memo(() => {
@@ -206,12 +206,22 @@ const AccountScreen: FC = () => {
 
   // Delete Account handlers
   const handleDeleteAccountPress = useCallback(() => {
-    warningFeedback();
+    errorFeedback();
     setShowDeleteAccountModal(true);
   }, []);
 
   const handleDeleteAccountClose = useCallback(() => {
     setShowDeleteAccountModal(false);
+  }, []);
+
+  // Social Media handlers
+  const handleSocialMediaPress = useCallback(async (url: string) => {
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      // Silent failure for social media links
+      console.error('Failed to open social media link:', error);
+    }
   }, []);
 
   const handlePickerSelect = useCallback(
@@ -722,6 +732,82 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
+        {/* Follow Us - Social media links */}
+        <SectionTitle title={STRINGS.FOLLOW_US} textStyle={styles.sectionTitle} />
+        <BaseCard shadowSize="small" style={styles.sectionContainer}>
+          <View style={styles.linksContainer}>
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={() => handleSocialMediaPress(STRINGS.TWITTER_URL)}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="logo-twitter"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.TWITTER}
+                  </ThemedText>
+                </View>
+                <CardRight type="chevron-only" />
+              </View>
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={() => handleSocialMediaPress(STRINGS.INSTAGRAM_URL)}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="logo-instagram"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.INSTAGRAM}
+                  </ThemedText>
+                </View>
+                <CardRight type="chevron-only" />
+              </View>
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={() => handleSocialMediaPress(STRINGS.FACEBOOK_URL)}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="logo-facebook"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.FACEBOOK}
+                  </ThemedText>
+                </View>
+                <CardRight type="chevron-only" />
+              </View>
+            </BaseCard>
+          </View>
+        </BaseCard>
+
         {/* Data - Cache management */}
         <SectionTitle title={STRINGS.DATA_SECTION} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
@@ -778,7 +864,11 @@ const AccountScreen: FC = () => {
                     <ThemedText type="body" weight="medium">
                       {STRINGS.SIGN_OUT}
                     </ThemedText>
-                    <ThemedText type="caption" colorName="textTertiary" style={styles.userEmailText}>
+                    <ThemedText
+                      type="caption"
+                      colorName="textTertiary"
+                      style={styles.userEmailText}
+                    >
                       {user?.email || STRINGS.NO_EMAIL}
                     </ThemedText>
                   </View>
@@ -790,9 +880,6 @@ const AccountScreen: FC = () => {
 
         {/* Danger Zone - Destructive actions */}
         <SectionTitle title={STRINGS.DANGER_ZONE_SECTION} textStyle={styles.sectionTitle} />
-        <ThemedText type="caption" colorName="textTertiary" style={styles.dangerZoneDescription}>
-          {STRINGS.DANGER_ZONE_DESCRIPTION}
-        </ThemedText>
         <BaseCard shadowSize="small" style={[styles.sectionContainer, dangerZoneCardStyle]}>
           <View style={styles.linksContainer}>
             <BaseCard
@@ -813,7 +900,11 @@ const AccountScreen: FC = () => {
                     <ThemedText colorName="error" type="body" weight="medium">
                       {STRINGS.RESET_READING_PROGRESS}
                     </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.dangerZoneSubtext}
+                      type="caption"
+                    >
                       {STRINGS.RESET_READING_PROGRESS_DESCRIPTION}
                     </ThemedText>
                   </View>
@@ -847,7 +938,11 @@ const AccountScreen: FC = () => {
                     <ThemedText colorName="error" type="body" weight="medium">
                       {STRINGS.DELETE_ACCOUNT}
                     </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.dangerZoneSubtext}
+                      type="caption"
+                    >
                       {STRINGS.DELETE_ACCOUNT_DESCRIPTION}
                     </ThemedText>
                   </View>
@@ -872,7 +967,6 @@ const AccountScreen: FC = () => {
             <ThemedText colorName="captionText" style={styles.copyrightText} type="caption">
               {STRINGS.COPYRIGHT_SYMBOL} {currentYear} {pkg.name}
             </ThemedText>
-            <SocialMediaIcons />
           </View>
         </View>
       </ThemedView>

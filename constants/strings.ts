@@ -32,6 +32,10 @@ export const STRINGS = {
   DELETE_ACCOUNT_DESCRIPTION: 'Permanently removes your account and all data',
 
   // Social Media
+  FOLLOW_US: 'Follow us',
+  TWITTER: 'Twitter',
+  INSTAGRAM: 'Instagram',
+  FACEBOOK: 'Facebook',
   TWITTER_URL: 'https://x.com/openarabicio',
   INSTAGRAM_URL: 'https://www.instagram.com/openarabic.io/',
   FACEBOOK_URL: 'https://www.facebook.com/OpenArabic.io/',

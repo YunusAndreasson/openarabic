@@ -30,7 +30,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/bookmarks';
 import { StreaksBottomSheet } from '@/components/library/StreaksBottomSheet';
-import { DoneButton } from '@/components/ui/DoneButton';
 import {
   AuthProvider,
   FSRSDataProvider,

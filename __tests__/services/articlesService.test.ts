@@ -38,6 +38,7 @@ const createFinalBuilder = (response: any) => {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     single: jest.fn().mockReturnThis(),
+    maybeSingle: jest.fn().mockReturnThis(),
     returns: jest.fn().mockResolvedValue(response),
   };
   return builder;

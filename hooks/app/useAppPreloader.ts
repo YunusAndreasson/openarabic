@@ -13,6 +13,7 @@ import {
 } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { articlesService } from '@/services/articles';
 import { bookmarkService } from '@/services/bookmark';
 import { readingProgressService } from '@/services/readingProgress';
 import type { Article } from '@/types/articles.types';
@@ -93,11 +94,22 @@ export const useAppPreloader = (): AppPreloaderResult => {
               .map(a => String(a.image_url))
               .filter(Boolean)
               .map(url => Image.prefetch(url, { cachePolicy: 'memory-disk' }).catch(() => null)); // Silently handle prefetch failures
-            const detailPrefetches = featured.map(a =>
-              queryClient.prefetchQuery(articleQueries.detail(a.id)),
-            );
+
+            // OPTIMIZED: Bulk fetch article details to prevent N+1 queries
+            // Fetch all featured articles in a single query, then populate individual query caches
+            const featuredIds = featured.map(a => a.id);
+            const bulkPrefetchPromise = articlesService
+              .getArticlesByIds(featuredIds)
+              .then(fetchedArticles => {
+                // Populate individual query caches to maintain compatibility with existing code
+                fetchedArticles.forEach(article => {
+                  queryClient.setQueryData(articleQueries.detail(article.id).queryKey, article);
+                });
+              })
+              .catch(() => null); // Silently handle prefetch failures
+
             // Fire-and-forget; do not block loader
-            Promise.allSettled([...imagePrefetches, ...detailPrefetches]).catch(error => {
+            Promise.allSettled([...imagePrefetches, bulkPrefetchPromise]).catch(error => {
               console.warn('[useAppPreloader] Featured articles prefetch failed:', error);
             });
           } catch {

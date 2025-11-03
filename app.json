@@ -26,7 +26,7 @@
         ]
       },
       "infoPlist": {
-        "UIBackgroundModes": ["audio", "processing"],
+        "UIBackgroundModes": ["audio", "processing", "fetch"],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",

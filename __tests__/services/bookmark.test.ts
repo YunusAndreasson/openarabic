@@ -9,6 +9,7 @@ type FromReturn = {
   eq?: jest.Mock & { error?: any; data?: any };
   order?: jest.Mock;
   single?: jest.Mock;
+  maybeSingle?: jest.Mock;
   error?: any;
   data?: any;
 };
@@ -108,7 +109,7 @@ describe('bookmarkService', () => {
       const query: FromReturn = {} as FromReturn;
       query.select = jest.fn(() => query);
       query.eq = jest.fn(() => query) as any;
-      query.single = jest.fn(() => ({ data: { article_id: 1 }, error: null }));
+      query.maybeSingle = jest.fn(() => ({ data: { article_id: 1 }, error: null }));
       fromMock.mockReturnValue(query);
 
       const result = await bookmarkService.isInReadingList('u1', 1);
@@ -120,7 +121,7 @@ describe('bookmarkService', () => {
       const query: FromReturn = {} as FromReturn;
       query.select = jest.fn(() => query);
       query.eq = jest.fn(() => query) as any;
-      query.single = jest.fn(() => ({ data: null, error: { code: 'PGRST116' } }));
+      query.maybeSingle = jest.fn(() => ({ data: null, error: null }));
       fromMock.mockReturnValue(query);
 
       const result = await bookmarkService.isInReadingList('u1', 2);

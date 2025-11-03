@@ -185,7 +185,7 @@ export const articlesService = {
           .from('articles')
           .select(DETAIL_VIEW_COLUMNS)
           .eq('id', id)
-          .single()
+          .maybeSingle()
           .returns<ArticleRow>(),
       {
         toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
@@ -195,10 +195,33 @@ export const articlesService = {
     );
 
     if (!data) {
-      throw new Error('Article not found');
+      throw new Error(`Article not found: ${id}`);
     }
 
     return mapToArticle(data);
+  },
+
+  // Optimized bulk fetch method to prevent N+1 queries
+  async getArticlesByIds(ids: ArticleId[]): Promise<Article[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const data = await executeQuery(
+      () =>
+        supabase
+          .from('articles')
+          .select(DETAIL_VIEW_COLUMNS)
+          .in('id', ids as number[]) // Cast branded type to number[] for Supabase query
+          .returns<ArticleRow[]>(),
+      {
+        toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
+        analyticsEventName: 'Articles_Bulk_Load_Error',
+        analyticsProperties: { count: ids.length },
+      },
+    );
+
+    return mapToArticles(data ?? []);
   },
 
   // Optimized method for getting article metadata only (for cards, lists)
@@ -209,7 +232,7 @@ export const articlesService = {
           .from('articles')
           .select(CARD_VIEW_COLUMNS)
           .eq('id', id)
-          .single()
+          .maybeSingle()
           .returns<ArticleRow>(),
       {
         toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
@@ -219,7 +242,7 @@ export const articlesService = {
     );
 
     if (!data) {
-      throw new Error('Article not found');
+      throw new Error(`Article not found: ${id}`);
     }
 
     return mapToArticle(data);

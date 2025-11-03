@@ -6,7 +6,7 @@ import { StyleSheet } from 'react-native';
 import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 export interface GenericBottomSheetProps {
   /** Controls bottom sheet visibility */
