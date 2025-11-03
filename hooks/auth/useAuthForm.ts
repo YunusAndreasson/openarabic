@@ -160,7 +160,7 @@ export function useAuthForm(): UseAuthFormReturn {
         errorMessage: error?.message,
         hasSession: !!data?.session,
         hasUser: !!data?.user,
-        userId: data?.user?.id
+        userId: data?.user?.id,
       });
       if (error) {
         if (!isMountedRef.current) return;
@@ -196,12 +196,14 @@ export function useAuthForm(): UseAuthFormReturn {
 
         // Analytics can happen asynchronously without blocking UX
         if (data?.user) {
-          analytics.identify(data.user.id, {
-            email: data.user.email,
-            created_at: new Date().toISOString(),
-          }).catch(err => {
-            console.log('[SignUp] Analytics identify failed:', err);
-          });
+          analytics
+            .identify(data.user.id, {
+              email: data.user.email,
+              created_at: new Date().toISOString(),
+            })
+            .catch(err => {
+              console.log('[SignUp] Analytics identify failed:', err);
+            });
         }
         analytics.trackSignUp('email').catch(err => {
           console.log('[SignUp] Analytics track failed:', err);

@@ -112,9 +112,7 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
   const bottomSheetProps = useMemo(
     () => ({
       ...COMMON_BOTTOM_SHEET_MODAL_PROPS,
-      ...(snapPoints
-        ? { snapPoints, enableDynamicSizing: false }
-        : { enableDynamicSizing: true }),
+      ...(snapPoints ? { snapPoints, enableDynamicSizing: false } : { enableDynamicSizing: true }),
     }),
     [snapPoints],
   );

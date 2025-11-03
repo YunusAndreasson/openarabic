@@ -868,11 +868,13 @@ gh workflow view release.yml
 ```
 
 **When to use these commands**:
+
 - After fixing critical bugs that need immediate TestFlight deployment
 - When testing environment variable changes in EAS builds
 - To trigger manual releases outside of the automatic version bump workflow
 
 **Important notes**:
+
 - The workflow automatically handles version bumping, building, and TestFlight/Play Store submission
 - Builds use `--clear-cache` flag to ensure fresh Metro bundles with updated environment variables
 - All `EXPO_PUBLIC_*` variables are injected from GitHub Secrets during the build process
@@ -903,16 +905,19 @@ eas config
 ```
 
 **Available build profiles** (from eas.json):
+
 - `development` - Development builds with Expo Go
 - `preview` - Internal testing builds (TestFlight/Internal Track)
 - `production` - Production builds for App Store/Play Store
 
 **Critical flags**:
+
 - `--clear-cache` - **ALWAYS use this** when environment variables change or fixing cache-related issues
 - `--non-interactive` - Required for CI/CD environments (GitHub Actions uses this)
 - `--auto` - Auto-detect branch name and commit message for updates
 
 **When to use EAS CLI directly**:
+
 - Local testing of builds before pushing to CI/CD
 - Quick OTA updates without full builds
 - Debugging build issues with detailed logs
