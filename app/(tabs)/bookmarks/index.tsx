@@ -255,7 +255,7 @@ export default function ListenScreen(): JSX.Element {
       shouldShowEmpty ? (
         <EmptyState
           description={STRINGS.BOOKMARKS_EMPTY_DESCRIPTION}
-          hideArticlesButton={true}
+          submessage={STRINGS.BOOKMARKS_EMPTY_SUBMESSAGE}
           icon="bookmark"
           iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
           title={STRINGS.BOOKMARKS_EMPTY_TITLE}

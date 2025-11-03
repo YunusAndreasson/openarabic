@@ -307,9 +307,9 @@ export default function VocabularyScreen(): JSX.Element {
               <EmptyState
                 title={STRINGS.STUDY_LIST_EMPTY_TITLE}
                 description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
+                submessage={STRINGS.STUDY_LIST_EMPTY_SUBMESSAGE}
                 icon="school"
                 iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-                hideArticlesButton={true}
                 containerStyle={{
                   paddingTop: LAYOUT.SPACING.XLARGE,
                   paddingBottom: LAYOUT.SPACING.LARGE,

@@ -110,12 +110,16 @@ export const STRINGS = {
   LISTENING_BOOKMARKS_EMPTY: 'Add articles to build your bookmarks',
 
   // Listen tab empty state - user-centric and bookmarks-focused
-  BOOKMARKS_EMPTY_TITLE: 'Your bookmarks are empty',
-  BOOKMARKS_EMPTY_DESCRIPTION: 'Save content from Library to start listening',
+  BOOKMARKS_EMPTY_TITLE: 'Build your audio library',
+  BOOKMARKS_EMPTY_DESCRIPTION:
+    'Bookmark articles while reading to listen anytime. Tap the bookmark icon in any article.',
+  BOOKMARKS_EMPTY_SUBMESSAGE: 'Audio reinforces learning through listening',
 
   // Practice tab empty state - user-centric and study-focused
-  STUDY_LIST_EMPTY_TITLE: 'Ready to start learning?',
-  STUDY_LIST_EMPTY_DESCRIPTION: 'Add words from articles to start studying',
+  STUDY_LIST_EMPTY_TITLE: 'Master Arabic vocabulary',
+  STUDY_LIST_EMPTY_DESCRIPTION:
+    'Tap any word while reading to add it to your study list. Review on a schedule that helps you remember.',
+  STUDY_LIST_EMPTY_SUBMESSAGE: 'Start with articles at your level',
 
   // Dictionary
   NO_STUDY_WORDS: 'No words to study',
@@ -245,7 +249,7 @@ export const STRINGS = {
   PRIVACY_RIGHTS_TITLE: '5. Your Rights',
   PRIVACY_RIGHTS:
     'You can access, update, or delete your account data at any time. To delete your account and all associated data, contact us at yunus@edenmind.com',
-  PRIVACY_CHILDREN_TITLE: '6. Children\'s Privacy',
+  PRIVACY_CHILDREN_TITLE: "6. Children's Privacy",
   PRIVACY_CHILDREN:
     'OpenArabic is not intended for children under 13. We do not knowingly collect information from children under 13.',
   PRIVACY_CHANGES_TITLE: '7. Changes to This Policy',
