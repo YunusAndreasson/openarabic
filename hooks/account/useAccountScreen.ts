@@ -276,7 +276,6 @@ export const useAccountScreen = () => {
 
   const handleSupportContact = useCallback(() => {
     router.push(ROUTE_PATHS.ACCOUNT_FEEDBACK);
-    lightFeedback();
   }, []);
 
   const handleRequestReview = useCallback(async () => {
