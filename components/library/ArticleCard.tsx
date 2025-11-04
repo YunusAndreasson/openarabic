@@ -16,7 +16,8 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
 import { handleError } from '@/utils/errorHandling';
-import { capitalizeFirstLetter, formatAuthorCategory } from '@/utils/stringUtils';
+import { capitalizeFirstLetter, formatArticleMetadata } from '@/utils/stringUtils';
+import { calculateReadingTime } from '@/utils/textUtils';
 
 // Extract constants outside component for better performance
 const MAX_TITLE_LINES = 2;
@@ -145,7 +146,10 @@ export function ArticleCard({
   // Use pillLabel if provided, otherwise use category for the pill
   const pillText = pillLabel ?? category;
   const capitalizedPillText = capitalizeFirstLetter(pillText);
-  const authorDisplayText = formatAuthorCategory(author, category);
+
+  // Calculate reading time from article sentences
+  const readingTime = calculateReadingTime(article.article_sentences?.length ?? 0);
+  const authorDisplayText = formatArticleMetadata(author, category, readingTime);
 
   // Generate article route with proper parameters
   const articleHref = getArticleRoute(article.id, article.title);

@@ -19,6 +19,8 @@ import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
+import { formatArticleMetadata } from '@/utils/stringUtils';
+import { calculateReadingTime } from '@/utils/textUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -175,6 +177,14 @@ const ArticleContentInternal = function ArticleContent({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   } as const;
 
+  // Calculate reading time from sentence count
+  const readingTime = calculateReadingTime(sortedSentences?.length ?? 0);
+  const articleMetadata = formatArticleMetadata(
+    article.author.name,
+    article.category.name,
+    readingTime,
+  );
+
   // Render title/author below the hero image but above content
   // React Compiler auto-memoizes
   const headerComponent = (
@@ -191,11 +201,7 @@ const ArticleContentInternal = function ArticleContent({
 
       <View style={authorContainerStyle}>
         <ThemedText type="body" weight="medium" colorName="authorText" style={styles.authorText}>
-          {article.author.name}
-          {' \u00B7 '}
-          {article.category.name
-            ? article.category.name.charAt(0).toUpperCase() + article.category.name.slice(1)
-            : ''}
+          {articleMetadata}
         </ThemedText>
       </View>
 

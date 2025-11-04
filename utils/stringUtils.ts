@@ -35,6 +35,36 @@ export function formatAuthorCategory(author: string, category: string): string {
 }
 
 /**
+ * Formats article metadata (author, category, and optionally reading time) for display
+ * @param author - Author name
+ * @param category - Category name (will be capitalized)
+ * @param readingTime - Optional reading time (e.g., "3m", "< 1m")
+ * @returns Formatted string like "Author Name · Category Name · 3m"
+ * @example
+ * formatArticleMetadata('Ibn Kathir', 'tafsir', '4m')
+ * // Returns: 'Ibn Kathir · Tafsir · 4m'
+ * @example
+ * formatArticleMetadata('Ibn Kathir', 'tafsir')
+ * // Returns: 'Ibn Kathir · Tafsir'
+ */
+export function formatArticleMetadata(
+  author: string,
+  category: string,
+  readingTime?: string,
+): string {
+  if (!author || !category) return author || category || '';
+
+  const capitalizedCategory = capitalizeFirstLetter(category);
+  const base = `${author} ${METADATA_SEPARATOR} ${capitalizedCategory}`;
+
+  if (readingTime) {
+    return `${base} ${METADATA_SEPARATOR} ${readingTime}`;
+  }
+
+  return base;
+}
+
+/**
  * Extracts and formats the first name from an email address
  * @param email - The email address to extract the name from
  * @returns The formatted first name or 'User' as fallback
