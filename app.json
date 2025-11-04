@@ -5,7 +5,7 @@
     "version": "1447.5.22",
     "description": "Learn Arabic through immersive reading, listening, and spaced repetition practice. Master vocabulary with authentic articles and audio content.",
     "orientation": "portrait",
-    "icon": "./assets/images/oaLogo.png",
+    "icon": "./assets/images/oaIcon.png",
     "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#1A211C",
@@ -47,7 +47,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#1A211C",
-        "foregroundImage": "./assets/images/oaLogo.png"
+        "foregroundImage": "./assets/images/oaIcon.png"
       },
       "package": "com.edenmind.OpenArabic",
       "versionCode": 173,
@@ -66,7 +66,7 @@
       ]
     },
     "notification": {
-      "icon": "./assets/images/oaLogo.png",
+      "icon": "./assets/images/oaIcon.png",
       "color": "#5B7F68",
       "iosDisplayInForeground": true,
       "androidMode": "default"
@@ -78,7 +78,7 @@
         {
           "backgroundColor": "#1A211C",
           "resizeMode": "contain",
-          "image": "./assets/images/oaLogo.png"
+          "image": "./assets/images/oaIcon.png"
         }
       ],
       [
@@ -105,7 +105,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/oaLogo.png",
+          "icon": "./assets/images/oaIcon.png",
           "color": "#5B7F68",
           "defaultChannel": "reminders",
           "sounds": [],
