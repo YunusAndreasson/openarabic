@@ -12,37 +12,19 @@ import { createAndroidRipple } from '@/utils/layoutUtils';
 export interface FloatingActionButtonsProps {
   isInReadingList: boolean;
   onToggleReadingList: () => Promise<void>;
-  hasAudio?: boolean;
-  isPlaying?: boolean;
-  onPlayPress?: () => void;
-  showEnglish: boolean;
-  onToggleLanguage: () => void;
-  isLanguageOverridden: boolean;
   onClose: () => void;
 }
 
 /**
  * Floating action buttons component positioned over parallax header
- * Provides controls for bookmarking, audio playback, language toggle, and close
+ * Provides controls for bookmarking and closing the article
  */
 export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
-  ({
-    isInReadingList,
-    onToggleReadingList,
-    hasAudio = false,
-    isPlaying = false,
-    onPlayPress,
-    showEnglish,
-    onToggleLanguage,
-    isLanguageOverridden,
-    onClose,
-  }) => {
+  ({ isInReadingList, onToggleReadingList, onClose }) => {
     const colors = useColors();
 
-    // Press animations for all buttons
+    // Press animations for buttons
     const closePressAnimation = usePressAnimation({ type: 'button' });
-    const languagePressAnimation = usePressAnimation({ type: 'button' });
-    const playPressAnimation = usePressAnimation({ type: 'button' });
     const bookmarkPressAnimation = usePressAnimation({ type: 'button' });
 
     // Use optimistic toggle hook for immediate UI feedback
@@ -117,51 +99,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
 
         {/* Action buttons - top right */}
         <View style={actionButtonsStyle}>
-          {/* Language toggle button - show/hide English text */}
-          <Pressable
-            onPress={onToggleLanguage}
-            onPressIn={languagePressAnimation.handlePressIn}
-            onPressOut={languagePressAnimation.handlePressOut}
-            android_ripple={createAndroidRipple(colors)}
-          >
-            <Animated.View
-              style={[
-                isLanguageOverridden ? activeButtonStyle : buttonStyle,
-                languagePressAnimation.animatedStyle,
-              ]}
-            >
-              <Ionicons
-                name={showEnglish ? 'eye' : 'eye-off'}
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                color={isLanguageOverridden ? colors.tint : colors.secondaryText}
-              />
-            </Animated.View>
-          </Pressable>
-
-          {/* Play button - only show if article has audio */}
-          {hasAudio && onPlayPress && (
-            <Pressable
-              onPress={onPlayPress}
-              onPressIn={playPressAnimation.handlePressIn}
-              onPressOut={playPressAnimation.handlePressOut}
-              android_ripple={createAndroidRipple(colors)}
-            >
-              <Animated.View
-                style={[
-                  isPlaying ? activeButtonStyle : buttonStyle,
-                  playPressAnimation.animatedStyle,
-                ]}
-              >
-                <Ionicons
-                  name={isPlaying ? 'pause' : 'play'}
-                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                  color={isPlaying ? colors.tint : colors.secondaryText}
-                />
-              </Animated.View>
-            </Pressable>
-          )}
-
-          {/* Playlist button */}
+          {/* Bookmark button */}
           <Pressable
             onPress={handleOptimisticToggle}
             onPressIn={bookmarkPressAnimation.handlePressIn}

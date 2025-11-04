@@ -94,18 +94,12 @@ interface ArticleContentProps {
   // Reading list (bookmarks/listening) functionality
   isInReadingList: boolean;
   onToggleReadingList: () => Promise<void>;
-  // Audio playback functionality
-  hasAudio?: boolean;
-  isPlaying?: boolean;
-  onPlayPress?: () => void;
-  // Language preference functionality
-  showEnglish: boolean;
-  onToggleLanguage: () => void;
-  isLanguageOverridden: boolean;
   // Close functionality
   onClose: () => void;
   // FlashList ready callback for scroll-to-position
   onFlashListLoad: () => void;
+  // Show English alongside Arabic
+  showEnglish: boolean;
 }
 
 const ArticleContentInternal = function ArticleContent({
@@ -119,12 +113,7 @@ const ArticleContentInternal = function ArticleContent({
   scrollViewRef,
   isInReadingList,
   onToggleReadingList,
-  hasAudio = false,
-  isPlaying = false,
-  onPlayPress,
   showEnglish,
-  onToggleLanguage,
-  isLanguageOverridden,
   onClose,
   onFlashListLoad,
 }: ArticleContentProps) {
@@ -160,7 +149,6 @@ const ArticleContentInternal = function ArticleContent({
   );
 
   // Reserve right-side space so text never sits under floating action buttons
-  // Updated to account for only one button now (bookmarks button)
   // React Compiler auto-memoizes
   const rightOverlayPadding = MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE;
 
@@ -312,12 +300,6 @@ const ArticleContentInternal = function ArticleContent({
           <FloatingActionButtons
             isInReadingList={isInReadingList}
             onToggleReadingList={onToggleReadingList}
-            hasAudio={hasAudio}
-            isPlaying={isPlaying}
-            onPlayPress={onPlayPress}
-            showEnglish={showEnglish}
-            onToggleLanguage={onToggleLanguage}
-            isLanguageOverridden={isLanguageOverridden}
             onClose={onClose}
           />
         </View>

@@ -42,11 +42,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     article,
     sortedSentences,
     sentenceWordsMap,
-    showEnglish,
-    isOverridden,
     isInReadingList,
-    hasAudio,
-    isPlaying,
     currentSentenceIndex: _currentSentenceIndex,
     scrollViewRef,
     activeTooltip,
@@ -55,8 +51,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleScroll,
     handleViewableItemsChanged,
     handleToggleReadingListWithFeedback,
-    handleToggleLanguageWithFeedback,
-    handlePlayPress,
     handleClose,
     handleWordPress,
     handleCloseTooltip,
@@ -66,7 +60,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   } = useArticleScreen({ id, showToast });
 
   // Memoize settings object to prevent recreation on every sentence
-  const settings = useMemo(() => ({ showEnglish }), [showEnglish]);
+  // Always show English alongside Arabic
+  const settings = useMemo(() => ({ showEnglish: true }), []);
 
   // Memoize renderSentenceItem to prevent unnecessary recreations
   const renderSentenceItem = useCallback(
@@ -118,12 +113,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       scrollViewRef: scrollViewRef as React.RefObject<FlashListRef<Tables<'article_sentences'>>>,
       isInReadingList,
       onToggleReadingList: handleToggleReadingListWithFeedback,
-      hasAudio,
-      isPlaying,
-      onPlayPress: handlePlayPress,
-      showEnglish,
-      onToggleLanguage: handleToggleLanguageWithFeedback,
-      isLanguageOverridden: isOverridden,
+      showEnglish: true,
       onClose: handleClose,
       onFlashListLoad: handleFlashListLoad,
     };
@@ -138,12 +128,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     scrollViewRef,
     isInReadingList,
     handleToggleReadingListWithFeedback,
-    hasAudio,
-    isPlaying,
-    handlePlayPress,
-    showEnglish,
-    handleToggleLanguageWithFeedback,
-    isOverridden,
     handleClose,
     handleFlashListLoad,
   ]);
