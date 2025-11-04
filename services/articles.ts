@@ -127,7 +127,7 @@ export const articlesService = {
       throw new Error(`Invalid difficulty range: min (${minDifficulty}) > max (${maxDifficulty})`);
     }
 
-    const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : LIST_VIEW_COLUMNS;
+    const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : CARD_VIEW_COLUMNS;
     let query = supabase.from('articles').select(columns);
 
     // Apply filters
