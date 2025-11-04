@@ -31,7 +31,8 @@ import type { ArticleId } from '@/types/branded.types';
 import { AudioAction, ToastType } from '@/types/enums';
 import { getBeginnerArticles } from '@/utils/articleUtils';
 import { generateImageUrl } from '@/utils/imageUtils';
-import { formatAuthorCategory } from '@/utils/stringUtils';
+import { formatArticleMetadata } from '@/utils/stringUtils';
+import { calculateReadingTime } from '@/utils/textUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
 
 const styles = StyleSheet.create({
@@ -89,9 +90,11 @@ const ListenListItem = memo(
       };
     }, [drag]);
 
-    const authorCategoryText = formatAuthorCategory(
+    const readingTime = calculateReadingTime(item.articles.article_sentences?.length ?? 0);
+    const authorCategoryText = formatArticleMetadata(
       item.articles.author.name,
       item.articles.category.name,
+      readingTime,
     );
 
     return (
