@@ -6,18 +6,21 @@ import { EmailLink } from '@/components/common/EmailLink';
 const EMAIL_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
 
 /**
- * Average sentences per minute for bilingual Arabic-English reading
- * Conservative estimate accounting for:
- * - Arabic script reading speed (typically slower than Latin for learners)
+ * Average sentences per minute for interactive bilingual Arabic learning
+ * Very conservative estimate accounting for:
+ * - Arabic script reading speed (significantly slower for learners)
  * - English translation reading (shown side-by-side)
+ * - Interactive word tooltips (clicking words, reading definitions)
+ * - Grammar analysis (color-coded components, grammar notes)
+ * - Word details exploration (root meanings, word types)
  * - Mental processing to connect Arabic and English
- * - Diacritics and word analysis
- * - Vocabulary lookup time
+ * - Diacritics and morphological analysis
+ * - Re-reading sentences for comprehension
  *
- * Note: Bilingual reading takes significantly longer than single-language reading
- * as users read both Arabic and English text for each sentence.
+ * Note: Interactive language learning with word-level analysis takes significantly
+ * longer than passive reading. This estimate accounts for the full learning workflow.
  */
-const SENTENCES_PER_MINUTE = 9;
+const SENTENCES_PER_MINUTE = 6;
 
 /**
  * Parse text and render email addresses as EmailLink components
@@ -80,15 +83,15 @@ export const parseTextWithEmails = (
 
 /**
  * Calculates estimated reading time based on sentence count
- * Optimized for bilingual Arabic-English reading
+ * Optimized for interactive bilingual Arabic-English learning
  *
  * @param sentenceCount - Number of sentences in the article
  * @returns Formatted reading time string (e.g., "1m", "3m", "15m")
  *
  * @example
- * calculateReadingTime(9) // "1m"
- * calculateReadingTime(18) // "2m"
- * calculateReadingTime(90) // "10m"
+ * calculateReadingTime(6) // "1m"
+ * calculateReadingTime(12) // "2m"
+ * calculateReadingTime(60) // "10m"
  */
 export function calculateReadingTime(sentenceCount: number): string {
   if (sentenceCount <= 0) {
