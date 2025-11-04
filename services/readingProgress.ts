@@ -50,6 +50,7 @@ interface UpdateReadingProgressParams {
 export class ReadingProgressService {
   /**
    * Update reading progress for a user and article
+   * Note: progress_percentage is a GENERATED ALWAYS column calculated by the database
    */
   static async updateProgress({
     userId,
@@ -57,16 +58,29 @@ export class ReadingProgressService {
     lastSentenceRead,
     totalSentences,
   }: UpdateReadingProgressParams): Promise<void> {
-    const { error } = await supabase.rpc('upsert_reading_progress', {
-      p_user_id: userId,
-      p_article_id: articleId,
-      p_last_sentence_read: lastSentenceRead,
-      p_total_sentences: totalSentences,
-    });
+    // Note: progress_percentage is GENERATED ALWAYS in the database
+    // It's automatically calculated based on last_sentence_read and total_sentences
+    // We cannot and should not include it in the insert/update
+    const progressData = {
+      user_id: userId,
+      article_id: articleId,
+      last_sentence_read: lastSentenceRead,
+      total_sentences: totalSentences,
+      updated_at: new Date().toISOString(),
+    };
 
-    if (error) {
-      throw new Error(`Failed to update reading progress: ${error.message}`);
-    }
+    await executeQuery(
+      () =>
+        supabase.from('reading_progress').upsert(progressData, {
+          onConflict: 'user_id,article_id',
+        }),
+      {
+        toastMessage: STRINGS.ERROR_LOADING_DATA,
+        analyticsEventName: 'Reading_Progress_Update_Error',
+        analyticsProperties: { userId, articleId },
+        showToast: false, // Silent error for reading progress
+      },
+    );
   }
 
   /**

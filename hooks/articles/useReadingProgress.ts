@@ -84,7 +84,7 @@ export function useReadingProgress({
 
     if (lastSentenceNeedsFix || progressPercentageNeedsFix) {
       // Update the database with the corrected value (silent failure)
-      // Database function will recalculate progress_percentage
+      // Database will automatically recalculate progress_percentage (GENERATED ALWAYS column)
       readingProgressService
         .updateProgress({
           userId: user.id,

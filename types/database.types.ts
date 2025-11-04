@@ -467,21 +467,6 @@ export type Database = {
         Returns: undefined;
       };
       delete_user_account: { Args: { user_id: string }; Returns: undefined };
-      get_bookmark_categories_with_counts: {
-        Args: { user_id_param: string };
-        Returns: {
-          article_count: number;
-          color: string;
-          created_at: string;
-          due_word_count: number;
-          icon: string;
-          id: number;
-          name: string;
-          position: number;
-          updated_at: string;
-          user_id: string;
-        }[];
-      };
       update_word_and_review: {
         Args: {
           p_fsrs_difficulty: number;
@@ -497,15 +482,6 @@ export type Database = {
           p_user_id: string;
         };
         Returns: boolean;
-      };
-      upsert_reading_progress: {
-        Args: {
-          p_article_id: number;
-          p_last_sentence_read: number;
-          p_total_sentences: number;
-          p_user_id: string;
-        };
-        Returns: undefined;
       };
     };
     Enums: {

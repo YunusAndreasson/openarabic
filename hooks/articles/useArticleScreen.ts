@@ -152,6 +152,9 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length === 0) return;
 
+      const totalSentences = sortedSentences?.length ?? 0;
+      if (totalSentences === 0) return;
+
       // Find all visible sentences (excluding header at index 0)
       const visibleSentences = viewableItems
         .filter(
@@ -164,26 +167,55 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
           index: (item.index as number) - 1, // Convert to sentence index
           item: item,
         }))
-        .filter(({ index }) => index >= 0 && index < (sortedSentences?.length ?? 0));
+        .filter(({ index }) => index >= 0 && index < totalSentences);
 
       if (visibleSentences.length > 0) {
-        // Sort by index to ensure we pick the topmost visible sentence
+        // Sort by index
         visibleSentences.sort((a, b) => a.index - b.index);
 
-        // Use the first visible sentence (top of viewport)
         const firstVisibleSentence = visibleSentences[0];
-        if (firstVisibleSentence) {
-          const newSentenceIndex = firstVisibleSentence.index;
+        const lastVisibleSentence = visibleSentences[visibleSentences.length - 1];
 
-          // Only update if the sentence actually changed to prevent unnecessary re-renders
-          if (newSentenceIndex !== currentSentenceIndex) {
-            setCurrentSentenceIndex(newSentenceIndex);
-          }
+        // Determine which sentence index to use
+        let newSentenceIndex: number;
+
+        // Use the maximum visible sentence index (highest sentence seen)
+        // This ensures progress advances as you scroll down and reaches 100% at the end
+        const maxVisibleIndex = lastVisibleSentence?.index ?? 0;
+
+        // If the last sentence of the article is visible, ensure we use it
+        const isLastSentenceVisible = maxVisibleIndex === totalSentences - 1;
+
+        if (isLastSentenceVisible) {
+          // At the end - use the last sentence to ensure 100% completion
+          newSentenceIndex = totalSentences - 1;
+        } else {
+          // Use the maximum visible sentence index (furthest sentence seen)
+          // This provides better progress tracking as you scroll
+          newSentenceIndex = Math.max(maxVisibleIndex, firstVisibleSentence?.index ?? 0);
+        }
+
+        // Only update if the sentence actually changed to prevent unnecessary re-renders
+        if (newSentenceIndex !== undefined && newSentenceIndex !== currentSentenceIndex) {
+          setCurrentSentenceIndex(newSentenceIndex);
         }
       }
     },
     [currentSentenceIndex, sortedSentences?.length],
   );
+
+  // Handle scroll end to catch when user reaches the bottom
+  // This ensures the last sentence is tracked even if viewable items callback doesn't fire
+  const handleScrollEnd = useCallback(() => {
+    const totalSentences = sortedSentences?.length ?? 0;
+    if (totalSentences > 0) {
+      const lastSentenceIndex = totalSentences - 1;
+      // Only update if we're not already at the last sentence
+      if (currentSentenceIndex < lastSentenceIndex) {
+        setCurrentSentenceIndex(lastSentenceIndex);
+      }
+    }
+  }, [currentSentenceIndex, sortedSentences?.length]);
 
   // Sync sentence index
   useEffect(() => {
@@ -315,6 +347,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     activeTooltip,
     wordDetailsModal,
     isInStudyList,
+    handleScrollEnd,
     // Handlers
     handleScroll,
     handleViewableItemsChanged,

@@ -460,8 +460,9 @@ describe('Article Reading Flow - Integration Test', () => {
       // Service should still be called (service doesn't prevent it, app logic does)
       expect(mockReadingProgressService.updateProgress).toHaveBeenCalledTimes(2);
 
-      // In production, the DB function `upsert_reading_progress` handles max() logic
-      // This test confirms the service layer doesn't prevent the call
+      // Note: The service accepts the call regardless of regression. The hook prevents
+      // regression by not calling updateProgress for lower sentence indices.
+      // This test confirms the service layer accepts any valid input.
     });
   });
 });

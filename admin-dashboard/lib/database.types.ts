@@ -441,15 +441,6 @@ export type Database = {
         };
         Returns: boolean;
       };
-      upsert_reading_progress: {
-        Args: {
-          p_article_id: number;
-          p_last_sentence_read: number;
-          p_total_sentences: number;
-          p_user_id: string;
-        };
-        Returns: undefined;
-      };
     };
     Enums: {
       [_ in never]: never;
