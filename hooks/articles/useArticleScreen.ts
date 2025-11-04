@@ -16,19 +16,15 @@ import { fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
-import { useArticleLanguagePreference } from '@/hooks/articles/useArticleLanguagePreference';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
-import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useModalState } from '@/hooks/ui/useModalState';
-import { enhancedAudioService } from '@/services/audioPlaylist';
-import { simpleAudioService } from '@/services/audioPlayer';
 import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
-import { getCurrentArticleId, isAudioBusy, stopAudioSafely } from '@/utils/audioUtils';
+import { stopAudioSafely } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -55,9 +51,6 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     return isNaN(parsed) ? undefined : (parsed as ArticleId);
   }, [id]);
 
-  // Article language preference
-  const { showEnglish, toggleLanguage, isOverridden } = useArticleLanguagePreference(articleId);
-
   // Article data
   const {
     article,
@@ -68,9 +61,6 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     isInReadingList,
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
-
-  // Audio state
-  const { isPlaying, currentArticle } = useGlobalAudioState();
 
   // Tooltip state
   const [activeTooltip, setActiveTooltip] = useState<{
@@ -122,11 +112,6 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     );
   }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
 
-  const handleToggleLanguageWithFeedback = useCallback(() => {
-    selectionFeedback();
-    toggleLanguage();
-  }, [toggleLanguage]);
-
   const handleClose = useCallback(async () => {
     try {
       await stopAudioSafely(true);
@@ -141,41 +126,6 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
       router.push(ROUTE_PATHS.EXPLORE_TAB);
     }
   }, []);
-
-  // Check audio availability
-  const hasAudio = useMemo(() => {
-    return Boolean(article?.audio_url || article?.audio_url_bilingual);
-  }, [article?.audio_url, article?.audio_url_bilingual]);
-
-  // Handle audio playback
-  const handlePlayPress = useCallback(async () => {
-    if (!articleId || !article) return;
-    try {
-      if (isAudioBusy()) return;
-      const currentArticleId = getCurrentArticleId();
-      if (isPlaying && currentArticleId === articleId) {
-        selectionFeedback();
-        await simpleAudioService.stop();
-        return;
-      }
-      selectionFeedback();
-      const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId, 'arabic');
-      if (track) {
-        const success = await simpleAudioService.play(track);
-        if (!success) {
-          handleError(new Error('Failed to start audio playback'), {
-            toastMessage: STRINGS.AUDIO_PLAYBACK_FAILED,
-          });
-        }
-      } else {
-        handleError(new Error('Failed to generate audio track'), {
-          toastMessage: STRINGS.AUDIO_GENERATION_FAILED,
-        });
-      }
-    } catch (error) {
-      handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_START_AUDIO_PLAYBACK });
-    }
-  }, [articleId, article, isPlaying, showToast]);
 
   // Reading progress
   const isActive = Boolean(article) && !isLoadingArticle;
@@ -359,11 +309,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     article,
     sortedSentences,
     sentenceWordsMap,
-    showEnglish,
-    isOverridden,
     isInReadingList,
-    hasAudio,
-    isPlaying: isPlaying && currentArticle?.id === articleId,
     currentSentenceIndex,
     scrollViewRef,
     activeTooltip,
@@ -373,8 +319,6 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     handleScroll,
     handleViewableItemsChanged,
     handleToggleReadingListWithFeedback,
-    handleToggleLanguageWithFeedback,
-    handlePlayPress,
     handleClose,
     handleWordPress,
     handleCloseTooltip,
