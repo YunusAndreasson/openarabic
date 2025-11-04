@@ -1,4 +1,5 @@
 import { BaseCard } from '@common/BaseCard';
+import { ProgressBar } from '@common/ProgressBar';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -6,12 +7,15 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from '@/components/bookmarks/DeleteButton';
 import { SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
-import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { isDueWord, isLearnedWord, isMasteredWord } from '@/utils/wordClassification';
+import {
+  calculateStabilityProgress,
+  getStabilityProgressColor,
+} from '@/utils/urgencyScore';
 
 interface DictionaryWordCardProps {
   word: StudyWord;
@@ -75,67 +79,28 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const arabicText = word.root?.letters || 'Unknown Arabic';
     const englishText = word.root?.meaning || 'Unknown English';
 
-    // Determine word status for badges (memoized to prevent recalculations)
-    const wordStatus = useMemo(
-      () => ({
-        isDue: isDueWord(word),
-        isLearned: isLearnedWord(word),
-        isMastered: isMasteredWord(word),
-      }),
-      [word],
+    // Calculate stability progress for progress bar (0-100%)
+    const stabilityProgress = useMemo(
+      () => calculateStabilityProgress(word.fsrs_stability),
+      [word.fsrs_stability],
     );
 
-    // Determine status colors for dots and background (memoized for performance)
-    const statusColors = useMemo(() => {
-      const dotColors: string[] = [];
-
-      // Add Due status color (red - urgent attention)
-      if (wordStatus.isDue) {
-        dotColors.push(colors.error);
-      }
-
-      // Add Mastered or Learned status color
-      if (wordStatus.isMastered) {
-        dotColors.push(colors.success); // Green - completed achievement
-      } else if (wordStatus.isLearned) {
-        dotColors.push(colors.warning); // Yellow/amber - in progress
-      }
-
-      return dotColors;
-    }, [
-      wordStatus.isDue,
-      wordStatus.isLearned,
-      wordStatus.isMastered,
-      colors.error,
-      colors.success,
-      colors.warning,
-    ]);
-
-    // Subtle background tint for ambient status awareness (5% opacity)
-    const cardBackgroundTint = useMemo(() => {
-      if (statusColors.length === 0) return undefined;
-      return statusColors[0] + '0D'; // Append 0D for ~5% opacity
-    }, [statusColors]);
+    // Get progress bar color based on stability level
+    const progressColor = useMemo(
+      () => getStabilityProgressColor(word.fsrs_stability),
+      [word.fsrs_stability],
+    );
 
     return (
       <Animated.View style={[styles.cardContainer, animatedStyle]}>
         <View style={styles.cardWrapper}>
           <BaseCard
-            style={[styles.card, cardBackgroundTint && { backgroundColor: cardBackgroundTint }]}
+            style={styles.card}
             onPress={editMode ? undefined : handleCardPress}
             shadowSize="small"
             contentStyle={styles.cardContent}
           >
             <View style={styles.content}>
-              {/* Status dots - left indicator for visual hierarchy */}
-              {statusColors.length > 0 && (
-                <View style={styles.dotsContainer}>
-                  {statusColors.map(color => (
-                    <View key={color} style={[styles.statusDot, { backgroundColor: color }]} />
-                  ))}
-                </View>
-              )}
-
               {/* English text (vertically centered) */}
               <View style={styles.leftSection}>
                 <ThemedText
@@ -162,6 +127,16 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
                 </ThemedText>
               </View>
             </View>
+
+            {/* Memory strength progress bar */}
+            <View style={styles.progressBarContainer}>
+              <ProgressBar
+                progress={stabilityProgress}
+                height={5}
+                fillColor={colors[progressColor]}
+                backgroundColor={colors.elevation1}
+              />
+            </View>
           </BaseCard>
         </View>
 
@@ -180,6 +155,8 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
       prevProps.word.root_id === nextProps.word.root_id &&
       prevProps.word.fsrs_state === nextProps.word.fsrs_state &&
       prevProps.word.fsrs_stability === nextProps.word.fsrs_stability &&
+      prevProps.word.fsrs_difficulty === nextProps.word.fsrs_difficulty &&
+      prevProps.word.fsrs_lapses === nextProps.word.fsrs_lapses &&
       prevProps.word.fsrs_due === nextProps.word.fsrs_due &&
       prevProps.word.fsrs_last_review === nextProps.word.fsrs_last_review &&
       prevProps.word.root?.letters === nextProps.word.root?.letters &&
@@ -216,9 +193,8 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   leftSection: {
-    width: LAYOUT.CARD.WIDTH.DICTIONARY_LEFT_SECTION,
-    flexShrink: 0,
-    paddingRight: LAYOUT.SPACING.SMALL,
+    flex: 1, // Take available space
+    paddingRight: LAYOUT.SPACING.MEDIUM,
     justifyContent: 'center', // Vertically center English text
     alignItems: 'flex-start', // Keep left-aligned horizontally
   },
@@ -228,18 +204,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     includeFontPadding: false,
     lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1),
-  },
-  dotsContainer: {
-    flexDirection: 'column', // Vertical stack of dots
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: LAYOUT.SPACING.TINY, // 4px gap between dots
-    marginRight: LAYOUT.SPACING.SMALL, // 8px gap before English text
-  },
-  statusDot: {
-    width: STATUS_INDICATOR.DOT_SIZE,
-    height: STATUS_INDICATOR.DOT_SIZE,
-    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
   },
   rightSection: {
     flex: 1,
@@ -255,5 +219,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingLeft: LAYOUT.SPACING.SMALL,
+  },
+  progressBarContainer: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Match card content padding
+    paddingTop: LAYOUT.SPACING.SMALL, // 8px spacing above progress bar
+    paddingBottom: LAYOUT.SPACING.TINY, // 4px spacing below to card edge
   },
 });

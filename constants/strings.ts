@@ -137,7 +137,7 @@ export const STRINGS = {
   SEARCH_WORDS_PLACEHOLDER: 'Search words...',
   DUE_WORDS_TITLE: 'Due Words',
   MASTERED_WORDS_TITLE: 'Mastered Words',
-  DICTIONARY_TITLE: 'Dictionary',
+  DICTIONARY_TITLE: 'All Words',
 
   PROGRESS_NOT_AVAILABLE: 'Progress unavailable',
   ERROR_LOADING_DATA: "Couldn't load data",

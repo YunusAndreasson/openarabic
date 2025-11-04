@@ -58,7 +58,7 @@ export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | nu
         ]}
         numberOfLines={1}
       >
-        {UiAction.DICTIONARY}
+        {UiAction.ALL_WORDS}
       </ThemedText>
     </Pressable>
   );

@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';
-import { isDueWord, isLearnedWord, isMasteredWord } from '@/utils/wordClassification';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -18,31 +17,23 @@ interface UseDictionaryModalReturn {
 export const useDictionaryModal = ({
   studyWords,
 }: UseDictionaryModalProps): UseDictionaryModalReturn => {
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  // Toggle sort direction (always sorts by phase)
+  // Toggle sort direction (always sorts by memory strength/stability)
   const setSorting = useCallback(() => {
     setSortDirection(prev => (prev === 'desc' ? 'asc' : 'desc'));
   }, []);
 
-  // Sort words by phase (Due > Learned > Mastered)
+  // Sort words by memory strength (stability) - matches progress bar visual
   const sortedWords = useMemo(() => {
     if (!studyWords?.length) return [];
 
-    // Helper function to determine word phase priority
-    // Due (0) > Learned (1) > Mastered (2) > Other (3)
-    const getPhaseValue = (word: StudyWord): number => {
-      if (isDueWord(word)) return 0; // Highest priority - needs review now
-      if (isLearnedWord(word) && !isMasteredWord(word)) return 1; // Consolidating
-      if (isMasteredWord(word)) return 2; // Well-established
-      return 3; // New words not yet in system
-    };
-
     const sorted = [...studyWords].sort((a, b) => {
-      const phaseA = getPhaseValue(a);
-      const phaseB = getPhaseValue(b);
-      const compareValue = phaseA - phaseB;
+      const stabilityA = a.fsrs_stability ?? 0;
+      const stabilityB = b.fsrs_stability ?? 0;
+      const compareValue = stabilityA - stabilityB;
 
+      // asc = weakest first (0 → 10), desc = strongest first (10 → 0)
       return sortDirection === 'asc' ? compareValue : -compareValue;
     });
 

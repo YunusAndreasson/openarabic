@@ -7,7 +7,7 @@ import type { AppTab } from '@/types/enums';
 export const TAB_ICONS = {
   EXPLORE: { filled: 'compass', outline: 'compass-outline' },
   SAVED: { filled: 'bookmark', outline: 'bookmark-outline' },
-  PRACTICE: { filled: 'repeat', outline: 'repeat-outline' },
+  PRACTICE: { filled: 'school', outline: 'school-outline' },
 } as const;
 
 export type TabIconConfig = (typeof TAB_ICONS)[keyof typeof TAB_ICONS];

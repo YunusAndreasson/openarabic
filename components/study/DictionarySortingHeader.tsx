@@ -1,9 +1,9 @@
 import { memo, type FC } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { ThemedText } from '@/components/ThemedText';
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SortDirection } from '@/hooks/vocabulary/useDictionaryModal';
 
@@ -13,8 +13,8 @@ interface DictionarySortingHeaderProps {
 }
 
 /**
- * Header component that displays status legend and sort direction toggle
- * Legend explains the colored left borders on dictionary cards
+ * Simple sort button following modern app patterns (Gmail, Spotify, etc.)
+ * Shows what you're sorting by + direction indicator
  */
 const DictionarySortingHeaderComponent: FC<DictionarySortingHeaderProps> = ({
   sortDirection,
@@ -24,42 +24,23 @@ const DictionarySortingHeaderComponent: FC<DictionarySortingHeaderProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.contentWrapper}>
-        {/* Status legend on the left */}
-        <View style={styles.legendContainer}>
-          <View style={styles.legendItem}>
-            <View style={[styles.colorDot, { backgroundColor: colors.error }]} />
-            <ThemedText type="caption" colorName="textTertiary">
-              Due
-            </ThemedText>
-          </View>
-
-          <View style={styles.legendItem}>
-            <View style={[styles.colorDot, { backgroundColor: colors.warning }]} />
-            <ThemedText type="caption" colorName="textTertiary">
-              Learned
-            </ThemedText>
-          </View>
-
-          <View style={styles.legendItem}>
-            <View style={[styles.colorDot, { backgroundColor: colors.success }]} />
-            <ThemedText type="caption" colorName="textTertiary">
-              Mastered
-            </ThemedText>
-          </View>
-        </View>
-
-        {/* Sort direction toggle on the right */}
-        <HeaderIconButton
-          iconName={sortDirection === 'asc' ? 'chevron-up' : 'chevron-down'}
-          onPress={onToggleDirection}
-          size="small"
-          iconColor={colors.text}
-          backgroundColor={colors.elevation1}
-          withBorder
-          borderColor={colors.border}
+      <Pressable
+        style={({ pressed }) => [
+          styles.sortButton,
+          { backgroundColor: colors.elevation1, borderColor: colors.border },
+          pressed && { opacity: 0.7 },
+        ]}
+        onPress={onToggleDirection}
+      >
+        <ThemedText type="caption" style={styles.sortText}>
+          Memory strength
+        </ThemedText>
+        <Ionicons
+          name={sortDirection === 'desc' ? 'chevron-down' : 'chevron-up'}
+          size={14}
+          color={colors.text}
         />
-      </View>
+      </Pressable>
     </View>
   );
 };
@@ -69,28 +50,20 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL, // 8px top/bottom
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING, // 12px left/right
     marginBottom: LAYOUT.SPACING.TINY, // 4px bottom margin
+    alignItems: 'flex-end', // Right-align sort button
   },
-  contentWrapper: {
+  sortButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between', // Legend left, toggle right
+    gap: LAYOUT.SPACING.TINY, // 4px between text and icon
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // 12px horizontal padding
+    paddingVertical: LAYOUT.SPACING.SMALL, // 8px vertical padding
+    borderRadius: LAYOUT.SPACING.MEDIUM, // 12px rounded corners
+    borderWidth: 1,
   },
-  legendContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.MEDIUM, // 12px gap between legend items
-    flex: 1, // Take up available space
-    marginLeft: LAYOUT.SPACING.MEDIUM, // 12px - aligns with card content padding
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL, // 8px gap between dot and text (matches card dot marginRight)
-  },
-  colorDot: {
-    width: STATUS_INDICATOR.DOT_SIZE,
-    height: STATUS_INDICATOR.DOT_SIZE,
-    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
+  sortText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '500',
   },
 });
 

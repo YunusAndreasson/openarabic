@@ -186,7 +186,7 @@ export type AppTab = (typeof AppTab)[keyof typeof AppTab];
  */
 export const UiAction = {
   SORT_BY: 'Sort',
-  DICTIONARY: 'Dictionary',
+  ALL_WORDS: 'All Words',
   FILTERS: 'Filters',
   RESET_FILTERS: 'Reset',
   RESET: 'Reset',
