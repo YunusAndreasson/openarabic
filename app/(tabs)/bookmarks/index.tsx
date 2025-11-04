@@ -2,6 +2,7 @@ import { EmptyState } from '@common/EmptyState';
 import { ListSeparator } from '@common/ListSeparator';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -15,6 +16,7 @@ import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
 import { useToast } from '@/components/providers/ToastProvider';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
+import { articleQueries } from '@/constants/queries';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -23,9 +25,11 @@ import { useBookmarksScreen, useListenUI } from '@/hooks/bookmarks';
 import { useColors } from '@/hooks/theme';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
+import type { Article } from '@/types/articles.types';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
 import { AudioAction, ToastType } from '@/types/enums';
+import { getBeginnerArticles } from '@/utils/articleUtils';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { formatAuthorCategory } from '@/utils/stringUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
@@ -124,6 +128,15 @@ export default function ListenScreen(): JSX.Element {
   const { prefetchArticle } = useAppPreloader();
   const colors = useColors();
 
+  // Fetch all articles (same query as library) and extract beginner articles
+  const { data: allArticles = [] } = useQuery(articleQueries.all());
+
+  // Get 3 beginner articles for empty state recommendations
+  const recommendedArticles = useMemo(() => {
+    const beginnerArticles = getBeginnerArticles(allArticles);
+    return beginnerArticles.slice(0, 3);
+  }, [allArticles]);
+
   // Reset edit mode when screen loses focus
   useFocusEffect(
     useCallback(() => {
@@ -213,8 +226,10 @@ export default function ListenScreen(): JSX.Element {
       paddingBottom: stableHasArticles
         ? LAYOUT.SCREEN_PADDING.bottomWithControls
         : LAYOUT.SPACING.MEDIUM,
+      // Enable vertical centering when empty
+      ...(shouldShowEmpty ? { flexGrow: 1 } : {}),
     }),
-    [stableHasArticles],
+    [stableHasArticles, shouldShowEmpty],
   );
 
   // Bottom controls positioned above tab bar
@@ -249,19 +264,30 @@ export default function ListenScreen(): JSX.Element {
     [stableHasArticles, colors.elevation0],
   );
 
+  // Handle article press from recommendations
+  const handleRecommendedArticlePress = useCallback(
+    (article: Article) => {
+      // Prefetch article data after navigation animation completes
+      InteractionManager.runAfterInteractions(() => {
+        prefetchArticle(article.id);
+      });
+      router.push(getArticleRoute(article.id as ArticleId, article.title));
+    },
+    [prefetchArticle],
+  );
+
   // Memoize shared components to prevent recreation
   const EmptyStateComponent = useMemo(
     () =>
       shouldShowEmpty ? (
         <EmptyState
-          description={STRINGS.BOOKMARKS_EMPTY_DESCRIPTION}
-          submessage={STRINGS.BOOKMARKS_EMPTY_SUBMESSAGE}
-          icon="bookmark"
-          iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
           title={STRINGS.BOOKMARKS_EMPTY_TITLE}
+          description={STRINGS.BOOKMARKS_EMPTY_DESCRIPTION}
+          recommendedArticles={recommendedArticles}
+          onArticlePress={handleRecommendedArticlePress}
         />
       ) : null,
-    [shouldShowEmpty],
+    [shouldShowEmpty, recommendedArticles, handleRecommendedArticlePress],
   );
 
   // Create the article press handler

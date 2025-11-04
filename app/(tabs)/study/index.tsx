@@ -1,5 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,8 +19,8 @@ import { WordsMasteredBottomSheet } from '@/components/study/WordsMasteredBottom
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { fsrsQueries } from '@/constants/queries';
-import { getStudyReviewRoute } from '@/constants/routes';
+import { articleQueries, fsrsQueries } from '@/constants/queries';
+import { getArticleRoute, getStudyReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -28,7 +28,10 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+import type { Article } from '@/types/articles.types';
+import type { ArticleId } from '@/types/branded.types';
 import { ReviewAction } from '@/types/enums';
+import { getBeginnerArticles } from '@/utils/articleUtils';
 import { mediumFeedback } from '@/utils/haptics';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
@@ -36,8 +39,17 @@ export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { prefetchVocabularyData } = useAppPreloader();
+  const { prefetchVocabularyData, prefetchArticle } = useAppPreloader();
   const colors = useColors();
+
+  // Fetch all articles (same query as library) and extract beginner articles
+  const { data: allArticles = [] } = useQuery(articleQueries.all());
+
+  // Get 3 beginner articles for empty state recommendations
+  const recommendedArticles = useMemo(() => {
+    const beginnerArticles = getBeginnerArticles(allArticles);
+    return beginnerArticles.slice(0, 3);
+  }, [allArticles]);
 
   // Single coordinated state for bottom sheet visibility
   const [activeBottomSheet, setActiveBottomSheet] = useState<
@@ -152,6 +164,18 @@ export default function VocabularyScreen(): JSX.Element {
     handleBottomSheetChange('mastered');
   }, [handleBottomSheetChange]);
 
+  // Handle article press from recommendations
+  const handleRecommendedArticlePress = useCallback(
+    (article: Article) => {
+      // Prefetch article data after navigation animation completes
+      InteractionManager.runAfterInteractions(() => {
+        prefetchArticle(article.id);
+      });
+      router.push(getArticleRoute(article.id as ArticleId, article.title));
+    },
+    [prefetchArticle, router],
+  );
+
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
   const dueWordsCount = dueWords?.length ?? 0;
@@ -185,7 +209,9 @@ export default function VocabularyScreen(): JSX.Element {
   }, [filteredStudyWords, dueWordsCount]);
 
   // Bottom padding for content with floating buttons above tab bar
-  const contentPaddingBottom = LAYOUT.SCREEN_PADDING.bottomWithControls;
+  const contentPaddingBottom = hasAnyStudyWords
+    ? LAYOUT.SCREEN_PADDING.bottomWithControls
+    : LAYOUT.SPACING.MEDIUM;
 
   // Solid overlay below button to cover gap to tab bar
   const bottomOverlayStyle = useMemo(
@@ -263,6 +289,8 @@ export default function VocabularyScreen(): JSX.Element {
           styles.contentContainer,
           {
             paddingBottom: contentPaddingBottom,
+            // Enable vertical centering when empty
+            ...(hasAnyStudyWords ? {} : { flexGrow: 1 }),
           },
         ]}
         scrollViewProps={{
@@ -279,7 +307,14 @@ export default function VocabularyScreen(): JSX.Element {
 
         {/* PRIMARY SECTION: Learning Overview with smooth animation */}
         {shouldShowMainContent && (
-          <Animated.View style={[styles.vocabularySection, contentAnimatedStyle]}>
+          <Animated.View
+            style={[
+              styles.vocabularySection,
+              contentAnimatedStyle,
+              // Required for empty state centering due to wrapper hierarchy
+              !hasAnyStudyWords && { flex: 1 },
+            ]}
+          >
             {hasAnyStudyWords ? (
               <>
                 <VocabularyStatCards
@@ -307,9 +342,8 @@ export default function VocabularyScreen(): JSX.Element {
               <EmptyState
                 title={STRINGS.STUDY_LIST_EMPTY_TITLE}
                 description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
-                submessage={STRINGS.STUDY_LIST_EMPTY_SUBMESSAGE}
-                icon="school"
-                iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
+                recommendedArticles={recommendedArticles}
+                onArticlePress={handleRecommendedArticlePress}
               />
             )}
           </Animated.View>

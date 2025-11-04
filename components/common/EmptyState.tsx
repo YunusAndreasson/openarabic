@@ -6,10 +6,15 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
+import { ListSeparator } from '@/components/common/ListSeparator';
+import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import type { Article } from '@/types/articles.types';
+import { generateImageUrl } from '@/utils/imageUtils';
+import { formatAuthorCategory } from '@/utils/stringUtils';
 
 // Define EmptyStateProps inline
 interface EmptyStateProps {
@@ -23,6 +28,9 @@ interface EmptyStateProps {
   customActionButton?: ReactNode;
   iconSize?: number;
   hideArticlesButton?: boolean;
+  // Recommended articles - 2025 best practice: show content, not just buttons
+  recommendedArticles?: Article[];
+  onArticlePress?: (article: Article) => void;
 }
 
 const DEFAULT_ICON_SIZE = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE;
@@ -33,26 +41,38 @@ function handleBrowseArticles(): void {
 
 /**
  * EmptyState component following Gestalt principles and visual hierarchy
- * - Proximity: Related elements are grouped together
- * - Similarity: Consistent styling for related elements
- * - Figure-Ground: Clear distinction between content and background
- * - Continuation: Natural flow from icon to title to description
+ *
+ * Typography Hierarchy:
+ * - Title: heading3 (17px, semibold) - Primary message
+ * - Description: body (15px, regular) - Supporting explanation
+ *
+ * Gestalt Principles:
+ * - Proximity: Title+description closer (8px), larger gap before content (24px)
+ * - Similarity: Consistent card styling for recommended articles
+ * - Figure-Ground: Centered content, clear separation between sections
+ * - Continuation: Natural flow from icon → title → description → article cards
+ * - Simplicity: Content speaks for itself without unnecessary labels
  */
 export function EmptyState({
   title,
   description,
   actionText,
-  icon = 'book',
+  icon,
   onAction,
   containerStyle,
   submessage,
   customActionButton,
   iconSize = DEFAULT_ICON_SIZE,
   hideArticlesButton = false,
+  recommendedArticles,
+  onArticlePress,
 }: EmptyStateProps) {
   const colors = useColors(); // Source colors internally
 
-  const defaultActionButton = !hideArticlesButton && (
+  // 2025 best practice: Show recommended articles if available
+  const hasRecommendations = recommendedArticles && recommendedArticles.length > 0;
+
+  const defaultActionButton = !hideArticlesButton && !hasRecommendations && (
     <ThemedButton
       style={styles.customActionButton}
       title={STRINGS.BROWSE_ARTICLES}
@@ -75,18 +95,12 @@ export function EmptyState({
         )}
 
         <View style={styles.textContent}>
-          <ThemedText align="center" style={styles.title} type="body" weight="bold">
+          <ThemedText align="center" style={styles.title} type="heading3">
             {title}
           </ThemedText>
 
           {description && (
-            <ThemedText
-              align="center"
-              style={styles.description}
-              type="body"
-              variant="secondary"
-              weight="bold"
-            >
+            <ThemedText align="center" style={styles.description} type="body" variant="secondary">
               {description}
             </ThemedText>
           )}
@@ -100,16 +114,38 @@ export function EmptyState({
       </View>
 
       <View style={styles.actionArea}>
-        {customActionButton ||
-          defaultActionButton ||
-          (actionText && onAction && (
-            <ThemedButton
-              icon={icon}
-              style={styles.customActionButton}
-              title={actionText}
-              onPress={onAction}
-            />
-          ))}
+        {hasRecommendations ? (
+          <View style={styles.recommendationsContainer}>
+            {recommendedArticles.map((article, index) => (
+              <View key={article.id}>
+                <ListenListItemCard
+                  title={article.title}
+                  secondaryText={formatAuthorCategory(article.author.name, article.category.name)}
+                  imageUrl={generateImageUrl(article.image_url)}
+                  articleId={article.id}
+                  onPress={() => onArticlePress?.(article)}
+                  shouldAnimateOnMount={false}
+                />
+                {index < recommendedArticles.length - 1 && (
+                  <ListSeparator height={LAYOUT.SPACING.SMALL} />
+                )}
+              </View>
+            ))}
+          </View>
+        ) : (
+          <>
+            {customActionButton ||
+              defaultActionButton ||
+              (actionText && onAction && (
+                <ThemedButton
+                  icon={icon}
+                  style={styles.customActionButton}
+                  title={actionText}
+                  onPress={onAction}
+                />
+              ))}
+          </>
+        )}
       </View>
     </View>
   );
@@ -117,17 +153,8 @@ export function EmptyState({
 
 const styles = StyleSheet.create({
   actionArea: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.XLARGE, // Increased from MEDIUM to create clear separation
     width: '100%',
-  },
-  actionButton: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.SMALL,
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   container: {
     alignItems: 'center',
@@ -144,7 +171,7 @@ const styles = StyleSheet.create({
     minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 4 - LAYOUT.SPACING.MEDIUM,
   },
   description: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL, // Reduced from MEDIUM - title+description are one unit
   },
   icon: {},
   iconContainer: {
@@ -154,6 +181,9 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
     width: LAYOUT.BUTTON.HEIGHT.LARGE * 2,
   },
+  recommendationsContainer: {
+    width: '100%',
+  },
   submessage: {
     marginTop: LAYOUT.SPACING.SMALL,
   },
@@ -162,6 +192,6 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.SMALL,
   },
   title: {
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
+    // No custom letterSpacing needed - heading3 has proper spacing
   },
 });

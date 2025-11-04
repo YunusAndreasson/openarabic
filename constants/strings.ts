@@ -123,15 +123,11 @@ export const STRINGS = {
 
   // Listen tab empty state - user-centric and bookmarks-focused
   BOOKMARKS_EMPTY_TITLE: 'Build your audio library',
-  BOOKMARKS_EMPTY_DESCRIPTION:
-    'Bookmark articles while reading to listen anytime. Tap the bookmark icon in any article.',
-  BOOKMARKS_EMPTY_SUBMESSAGE: 'Audio reinforces learning through listening',
+  BOOKMARKS_EMPTY_DESCRIPTION: 'Bookmark articles to read or listen anytime',
 
   // Practice tab empty state - user-centric and study-focused
-  STUDY_LIST_EMPTY_TITLE: 'Master Arabic vocabulary',
-  STUDY_LIST_EMPTY_DESCRIPTION:
-    'Tap any word while reading to add it to your study list. Review on a schedule that helps you remember.',
-  STUDY_LIST_EMPTY_SUBMESSAGE: 'Start with articles at your level',
+  STUDY_LIST_EMPTY_TITLE: 'Build your vocabulary',
+  STUDY_LIST_EMPTY_DESCRIPTION: 'Tap words in articles to study them',
 
   // Dictionary
   NO_STUDY_WORDS: 'No words to study',
