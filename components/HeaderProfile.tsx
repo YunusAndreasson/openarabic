@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -6,11 +5,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { useStreaks } from '@/components/providers';
-import { ICON_CONTAINER, LAYOUT } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { usePressAnimation } from '@/hooks/animations';
-import { useReadingStreak } from '@/hooks/articles/useReadingStreak';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
@@ -33,56 +30,18 @@ const getInitials = (name: string): string => {
 export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   const colors = useColors();
   const { user } = useAuth();
-  const { streak: streakData } = useReadingStreak();
-  const { openStreaks } = useStreaks();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
-  // Press animations for both buttons
-  const streakPressAnimation = usePressAnimation({ type: 'button' });
+  // Press animation for profile button
   const profilePressAnimation = usePressAnimation({ type: 'button' });
-
-  const currentStreak = streakData?.currentStreak ?? 0;
-  const hasStreak = currentStreak > 0;
 
   const handlePress = useCallback(() => {
     router.push(ROUTE_PATHS.ACCOUNT);
   }, []);
 
-  const handleStreakPress = useCallback(() => {
-    openStreaks();
-  }, [openStreaks]);
-
   const profilePhotoStyle = useMemo(
     () => [styles.baseProfilePhoto, { width: size, height: size, borderRadius: size / 2 }],
     [size],
-  );
-
-  // Dynamic styles for streak badge circle - prominent for better visibility
-  const streakBadgeStyle = useMemo(
-    () => [
-      styles.baseStreakBadge,
-      {
-        borderColor: hasStreak ? colors.warning : colors.textTertiary,
-        backgroundColor: hasStreak ? colors.warning + '20' : colors.elevation1,
-      },
-    ],
-    [hasStreak, colors.warning, colors.textTertiary, colors.elevation1],
-  );
-
-  // Memoized pressable padding style
-  const pressablePaddingStyle = useMemo(() => ({ padding: LAYOUT.SPACING.TINY }), []);
-
-  // Memoized streak text style
-  const streakTextStyle = useMemo(
-    () => [
-      styles.streakText,
-      styles.streakBadgeIndicator,
-      {
-        color: hasStreak ? colors.warning : colors.textTertiary,
-        backgroundColor: colors.background,
-      },
-    ],
-    [hasStreak, colors.warning, colors.textTertiary, colors.background],
   );
 
   // Load saved profile photo
@@ -111,26 +70,6 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
 
   return (
     <View style={styles.container}>
-      {/* Streak Counter - Circular Badge Design */}
-      <Pressable
-        onPress={handleStreakPress}
-        onPressIn={streakPressAnimation.handlePressIn}
-        onPressOut={streakPressAnimation.handlePressOut}
-        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-        style={pressablePaddingStyle}
-      >
-        <Animated.View style={[streakBadgeStyle, streakPressAnimation.animatedStyle]}>
-          <Ionicons
-            name="flame"
-            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            color={hasStreak ? colors.warning : colors.textTertiary}
-          />
-          <ThemedText type="caption" weight="bold" style={streakTextStyle} numberOfLines={1}>
-            {currentStreak}
-          </ThemedText>
-        </Animated.View>
-      </Pressable>
-
       {/* Profile Button */}
       <Pressable
         onPress={handlePress}
@@ -185,37 +124,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
-  streakText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-  },
-  streakBadgeIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL_CIRCLE,
-    paddingHorizontal: LAYOUT.SPACING.MICRO / 2,
-    paddingVertical: 0,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    minWidth: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY, // 10px
-    height: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY, // 10px
-    textAlign: 'center',
-    lineHeight: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY, // 10px
   },
   profileButton: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: LAYOUT.SPACING.TINY,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  baseStreakBadge: {
-    width: ICON_CONTAINER.SMALL_SIZE,
-    height: ICON_CONTAINER.SMALL_SIZE,
-    borderRadius: ICON_CONTAINER.SMALL_RADIUS,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   profilePhoto: {
     // Base style - dynamic properties applied inline

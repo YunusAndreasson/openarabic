@@ -11,9 +11,9 @@ import { BottomControls } from '@/components/bookmarks/BottomControls';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { DueWordsBottomSheet } from '@/components/study/DueWordsBottomSheet';
-import { LearnedBottomSheet } from '@/components/study/LearnedBottomSheet';
 import { MemoryRetentionBottomSheet } from '@/components/study/MemoryRetentionBottomSheet';
 import { RecommendationCard } from '@/components/study/RecommendationCard';
+import { StudyStreakBottomSheet } from '@/components/study/StudyStreakBottomSheet';
 import { VocabularyStatCards } from '@/components/study/VocabularyStatCards';
 import { WordsMasteredBottomSheet } from '@/components/study/WordsMasteredBottomSheet';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
@@ -25,6 +25,7 @@ import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useStudyStreak } from '@/hooks/study/useStudyStreak';
 import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
@@ -53,8 +54,12 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Single coordinated state for bottom sheet visibility
   const [activeBottomSheet, setActiveBottomSheet] = useState<
-    'memory' | 'due' | 'learned' | 'mastered' | null
+    'memory' | 'due' | 'streak' | 'mastered' | null
   >(null);
+
+  // Fetch study streak data
+  const { streak } = useStudyStreak();
+  const currentStreak = streak?.currentStreak ?? 0;
 
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
@@ -135,7 +140,7 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Bottom sheet handler
   const handleBottomSheetChange = useCallback(
-    (sheet: 'memory' | 'due' | 'learned' | 'mastered' | null) => {
+    (sheet: 'memory' | 'due' | 'streak' | 'mastered' | null) => {
       setActiveBottomSheet(sheet);
     },
     [],
@@ -156,8 +161,8 @@ export default function VocabularyScreen(): JSX.Element {
     handleBottomSheetChange('due');
   }, [handleBottomSheetChange]);
 
-  const handleLearnedPress = useCallback(() => {
-    handleBottomSheetChange('learned');
+  const handleStreakPress = useCallback(() => {
+    handleBottomSheetChange('streak');
   }, [handleBottomSheetChange]);
 
   const handleMasteredPress = useCallback(() => {
@@ -189,14 +194,11 @@ export default function VocabularyScreen(): JSX.Element {
   // Uses calculateWordCategories for efficiency (1 pass vs 3 separate filter passes)
   const calculatedStats = useMemo(() => {
     if (!filteredStudyWords.length) {
-      return { learnedWords: 0, masteredWords: 0, learningPhaseWords: 0 };
+      return { masteredWords: 0, learningPhaseWords: 0 };
     }
 
-    // Get all stats efficiently with single-pass calculation
-    const { learnedWords, masteredWords } = calculateWordCategories(
-      filteredStudyWords,
-      dueWordsCount,
-    );
+    // Get mastered words count efficiently
+    const { masteredWords } = calculateWordCategories(filteredStudyWords, dueWordsCount);
 
     // Learning phase words = States 1, 3, or State 2 with low stability - FOR RECOMMENDATION ENGINE
     const learningPhaseWords = filteredStudyWords.filter(word => {
@@ -205,7 +207,7 @@ export default function VocabularyScreen(): JSX.Element {
       return state === 1 || state === 3 || (state === 2 && stability < 5);
     }).length;
 
-    return { learnedWords, masteredWords, learningPhaseWords };
+    return { masteredWords, learningPhaseWords };
   }, [filteredStudyWords, dueWordsCount]);
 
   // Bottom padding for content with floating buttons above tab bar
@@ -319,12 +321,12 @@ export default function VocabularyScreen(): JSX.Element {
               <>
                 <VocabularyStatCards
                   dueWords={dueWordsCount}
-                  learnedWords={calculatedStats.learnedWords}
+                  currentStreak={currentStreak}
                   masteredWords={calculatedStats.masteredWords}
                   studyWords={filteredStudyWords}
                   onInfoPress={handleMemoryStrengthInfo}
                   onDuePress={handleDuePress}
-                  onLearnedPress={handleLearnedPress}
+                  onStreakPress={handleStreakPress}
                   onMasteredPress={handleMasteredPress}
                 />
 
@@ -383,8 +385,8 @@ export default function VocabularyScreen(): JSX.Element {
         onClose={handleCloseBottomSheet}
       />
 
-      <LearnedBottomSheet
-        isVisible={activeBottomSheet === 'learned'}
+      <StudyStreakBottomSheet
+        isVisible={activeBottomSheet === 'streak'}
         onClose={handleCloseBottomSheet}
       />
 

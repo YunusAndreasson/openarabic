@@ -8,6 +8,7 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY } from '@/constants/fsrs'
 import { fsrsQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
+import { studySessionStreakService } from '@/services/studyStreak';
 import type { SessionMetrics } from '@/types/review.types';
 import { successFeedback } from '@/utils/haptics';
 
@@ -28,12 +29,24 @@ export const useReviewCompletion = (
   /**
    * Invalidate all FSRS queries after review completion
    * This ensures the study tab and coach messages update immediately
+   * Also records study session for streak tracking
    */
-  const invalidateReviewQueries = useCallback(() => {
+  const invalidateReviewQueries = useCallback(async () => {
     if (!user?.id) return;
 
     // Mark session completion time to enable temporary cooldown
     queryClient.setQueryData([FSRS_BASE_KEY, user.id, 'lastCompletedAt'], Date.now());
+
+    // Record study session for streak tracking (silent - don't block on failure)
+    try {
+      await studySessionStreakService.recordStudySession(user.id);
+      // Invalidate study streak queries to update UI immediately
+      queryClient.invalidateQueries({ queryKey: ['study-streak', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['study-streak-history', user.id] });
+    } catch (error) {
+      // Silently fail - don't block review completion on streak recording failure
+      console.warn('Failed to record study session streak:', error);
+    }
 
     // Invalidate all FSRS word queries
     queryClient.invalidateQueries({

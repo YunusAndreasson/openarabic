@@ -298,4 +298,154 @@ export class ReadingStreakService {
   }
 }
 
+/**
+ * Study Session Streak Service
+ * Tracks daily study session completion for motivating consistent practice
+ */
+export class StudySessionStreakService {
+  /**
+   * Record a study session for today
+   * No-op: Study sessions are automatically tracked via study_words.fsrs_last_review
+   * Kept for API compatibility
+   */
+  static async recordStudySession(_userId: string): Promise<void> {
+    // Study sessions are automatically recorded via study_words.fsrs_last_review
+    // This timestamp is updated whenever a user reviews words
+    // No explicit recording needed
+  }
+
+  /**
+   * Get daily study session activity for a user over a specified period
+   * Uses study_words table fsrs_last_review timestamps to track study sessions
+   */
+  static async getDailyStudySessionActivity(
+    userId: string,
+    days: number = 30,
+  ): Promise<DailyReadingActivity[]> {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Get all study_words reviews for the user (fsrs_last_review tracks when they studied)
+    const data = await executeQuery(
+      () => supabase.from('study_words').select('fsrs_last_review').eq('user_id', userId),
+      {
+        toastMessage: STRINGS.ERROR_LOADING_DATA,
+        analyticsEventName: 'Study_Session_Activity_Load_Error',
+        analyticsProperties: { userId, days },
+        showToast: false, // Silent for streak calculation
+      },
+    );
+
+    // Initialize all dates with no activity
+    const activityMap = new Map<string, boolean>();
+
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      if (dateStr) {
+        activityMap.set(dateStr, false);
+      }
+    }
+
+    // Ensure today's date is included
+    const todayStr = endDate.toISOString().split('T')[0];
+    if (todayStr && !activityMap.has(todayStr)) {
+      activityMap.set(todayStr, false);
+    }
+
+    // Mark dates with study session activity (any word review = session that day)
+    (data || []).forEach(record => {
+      const lastReview = record?.fsrs_last_review;
+      if (lastReview) {
+        const date = new Date(lastReview);
+        const dateKey = date.toISOString().split('T')[0];
+
+        // Only count activity within our specified date range
+        if (date >= startDate && date <= endDate) {
+          if (dateKey && activityMap.has(dateKey)) {
+            activityMap.set(dateKey, true);
+          }
+        }
+      }
+    });
+
+    return Array.from(activityMap.entries())
+      .map(([date, hasActivity]) => ({ date, hasActivity }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  /**
+   * Get study session streak info
+   * Reuses existing calculateStreak logic from ReadingStreakService
+   */
+  static async getStudySessionStreak(userId: string): Promise<ReadingStreak> {
+    try {
+      const activities = await this.getDailyStudySessionActivity(userId, 30);
+      return ReadingStreakService.calculateStreak(activities);
+    } catch (error) {
+      // If query fails (e.g., no study_words yet), return empty streak
+      console.warn('Failed to fetch study session streak, returning empty:', error);
+      return {
+        currentStreak: 0,
+        longestStreak: 0,
+        lastReadingDate: null,
+        totalReadingDays: 0,
+      };
+    }
+  }
+
+  /**
+   * Get complete study session streak history data for visualization
+   * Reuses existing calculation logic from ReadingStreakService
+   */
+  static async getStudySessionHistory(
+    userId: string,
+    days: number = 30,
+  ): Promise<StreakHistoryData> {
+    try {
+      const dailyActivity = await this.getDailyStudySessionActivity(userId, days);
+      const streakPeriods = ReadingStreakService.calculateStreakPeriods(dailyActivity);
+      const streak = ReadingStreakService.calculateStreak(dailyActivity);
+
+      return {
+        dailyActivity,
+        streakPeriods,
+        metrics: {
+          currentStreak: streak.currentStreak,
+          longestStreak: streak.longestStreak,
+          totalReadingDays: streak.totalReadingDays,
+        },
+      };
+    } catch (error) {
+      // If query fails, return empty history
+      console.warn('Failed to fetch study session history, returning empty:', error);
+      const emptyActivity: DailyReadingActivity[] = [];
+      for (let i = 0; i < days; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - (days - 1 - i));
+        emptyActivity.push({
+          date: date.toISOString().split('T')[0] || '',
+          hasActivity: false,
+        });
+      }
+      return {
+        dailyActivity: emptyActivity,
+        streakPeriods: [],
+        metrics: {
+          currentStreak: 0,
+          longestStreak: 0,
+          totalReadingDays: 0,
+        },
+      };
+    }
+  }
+}
+
+// Export type aliases for study streaks (same structure as reading streaks)
+export type StudyStreak = ReadingStreak;
+export type DailyStudyActivity = DailyReadingActivity;
+
 export const studyStreakService = ReadingStreakService;
+export const studySessionStreakService = StudySessionStreakService;

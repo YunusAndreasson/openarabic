@@ -29,14 +29,7 @@ import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import { ThemedText } from '@/components/ThemedText';
 import { MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/bookmarks';
-import { StreaksBottomSheet } from '@/components/library/StreaksBottomSheet';
-import {
-  AuthProvider,
-  FSRSDataProvider,
-  StreaksProvider,
-  ToastProvider,
-  useStreaks,
-} from '@/components/providers';
+import { AuthProvider, FSRSDataProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { QUERY_DEFAULTS } from '@/constants/queries';
@@ -214,9 +207,6 @@ function AppContent() {
   const navigationRef = useNavigationContainerRef();
   const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   const router = useRouter();
-
-  // Use streaks context
-  const { isStreaksVisible, closeStreaks } = useStreaks();
 
   // Load fonts at runtime for Expo Go compatibility
   // PostScript names are used for cross-platform consistency (especially iOS)
@@ -498,9 +488,6 @@ function AppContent() {
           {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
           <AudioOverlays />
 
-          {/* Streaks Bottom Sheet - rendered at root level for proper z-index */}
-          <StreaksBottomSheet isVisible={isStreaksVisible} onClose={closeStreaks} />
-
           <StatusBar style={isDark ? 'light' : 'dark'} />
         </FSRSDataProvider>
       </SafeAreaView>
@@ -625,13 +612,9 @@ export default Sentry.wrap(function RootLayout() {
               <SafeAreaProvider>
                 <BottomSheetModalProvider>
                   <ToastProvider>
-                    <StreaksProvider>
-                      <Sentry.ErrorBoundary
-                        fallback={({ error }) => <ErrorFallback error={error} />}
-                      >
-                        <AppContent />
-                      </Sentry.ErrorBoundary>
-                    </StreaksProvider>
+                    <Sentry.ErrorBoundary fallback={({ error }) => <ErrorFallback error={error} />}>
+                      <AppContent />
+                    </Sentry.ErrorBoundary>
                   </ToastProvider>
                 </BottomSheetModalProvider>
               </SafeAreaProvider>

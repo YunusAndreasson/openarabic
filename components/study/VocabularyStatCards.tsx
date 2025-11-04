@@ -17,11 +17,11 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 interface VocabularyStatCardsProps {
   masteredWords?: number;
-  learnedWords?: number;
   dueWords?: number;
+  currentStreak?: number;
   onInfoPress?: () => void;
   onDuePress?: () => void;
-  onLearnedPress?: () => void;
+  onStreakPress?: () => void;
   onMasteredPress?: () => void;
   studyWords?: StudyWord[];
 }
@@ -30,7 +30,7 @@ interface StatCardProps {
   label: string;
   value: number;
   color: string;
-  icon: 'time' | 'school' | 'trophy';
+  icon: 'time' | 'flame' | 'trophy';
   onPress?: () => void;
   formatAsDecimal?: boolean;
 }
@@ -59,11 +59,11 @@ StatCard.displayName = 'StatCard';
 
 export function VocabularyStatCards({
   masteredWords = 0,
-  learnedWords = 0,
   dueWords = 0,
+  currentStreak = 0,
   onInfoPress,
   onDuePress,
-  onLearnedPress,
+  onStreakPress,
   onMasteredPress,
   studyWords = [],
 }: VocabularyStatCardsProps) {
@@ -79,11 +79,11 @@ export function VocabularyStatCards({
       formatAsDecimal: false,
     },
     {
-      label: VocabularyStatCategory.LEARNING,
-      value: learnedWords,
+      label: 'Streak',
+      value: currentStreak,
       color: colors.warning,
-      icon: 'school' as const,
-      onPress: onLearnedPress,
+      icon: 'flame' as const,
+      onPress: onStreakPress,
       formatAsDecimal: false,
     },
     {
