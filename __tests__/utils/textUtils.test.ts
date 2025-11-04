@@ -2,8 +2,8 @@ import { calculateReadingTime } from '@/utils/textUtils';
 
 describe('textUtils', () => {
   describe('calculateReadingTime', () => {
-    it('should return "< 1m" for 0 sentences', () => {
-      expect(calculateReadingTime(0)).toBe('< 1m');
+    it('should return "1m" minimum for 0 sentences', () => {
+      expect(calculateReadingTime(0)).toBe('1m');
     });
 
     it('should return "1m" for 1-13 sentences (rounds up)', () => {
@@ -47,7 +47,7 @@ describe('textUtils', () => {
     });
 
     it('should handle negative numbers gracefully', () => {
-      expect(calculateReadingTime(-5)).toBe('< 1m');
+      expect(calculateReadingTime(-5)).toBe('1m');
     });
   });
 });

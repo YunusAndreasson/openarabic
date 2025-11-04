@@ -83,9 +83,7 @@ describe('stringUtils', () => {
 
     it('should format author, category, and reading time', () => {
       expect(formatArticleMetadata('Ibn Kathir', 'tafsir', '4m')).toBe('Ibn Kathir · Tafsir · 4m');
-      expect(formatArticleMetadata('Al-Ghazali', 'hadith', '< 1m')).toBe(
-        'Al-Ghazali · Hadith · < 1m',
-      );
+      expect(formatArticleMetadata('Al-Ghazali', 'hadith', '1m')).toBe('Al-Ghazali · Hadith · 1m');
       expect(formatArticleMetadata('Imam Nawawi', 'fiqh', '15m')).toBe('Imam Nawawi · Fiqh · 15m');
     });
 

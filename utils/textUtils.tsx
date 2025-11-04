@@ -78,23 +78,24 @@ export const parseTextWithEmails = (
  * Optimized for Arabic language learners
  *
  * @param sentenceCount - Number of sentences in the article
- * @returns Formatted reading time string (e.g., "< 1m", "3m", "15m")
+ * @returns Formatted reading time string (e.g., "1m", "3m", "15m")
  *
  * @example
- * calculateReadingTime(10) // "< 1m"
+ * calculateReadingTime(10) // "1m"
  * calculateReadingTime(26) // "2m"
  * calculateReadingTime(130) // "10m"
  */
 export function calculateReadingTime(sentenceCount: number): string {
   if (sentenceCount <= 0) {
-    return '< 1m';
+    return '1m';
   }
 
   // Calculate minutes and round up (better to overestimate than underestimate)
   const minutes = Math.ceil(sentenceCount / SENTENCES_PER_MINUTE);
 
+  // Minimum 1 minute for readability on small cards
   if (minutes < 1) {
-    return '< 1m';
+    return '1m';
   }
 
   return `${minutes}m`;
