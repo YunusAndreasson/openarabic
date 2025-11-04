@@ -1,11 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps, FC } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { ReviewAction } from '@/types/enums';
+import { selectionFeedback } from '@/utils/haptics';
 
 const BOTTOM_ACTIONS_CONSTANTS = {
   ICON_SIZE: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
@@ -55,8 +58,22 @@ const createIconProps = (name: ComponentProps<typeof Ionicons>['name'], color: s
   color,
 });
 
-export const ReviewBottomActions: FC = () => {
+interface ReviewBottomActionsProps {
+  onKnownPress?: () => void;
+  onUnknownPress?: () => void;
+  disabled?: boolean;
+}
+
+export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
+  onKnownPress,
+  onUnknownPress,
+  disabled = false,
+}) => {
   const colors = useColors();
+
+  // Press animations for both buttons
+  const unknownPressAnimation = usePressAnimation({ type: 'button' });
+  const knownPressAnimation = usePressAnimation({ type: 'button' });
 
   const tintError = colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
   const tintSuccess = colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
@@ -64,26 +81,62 @@ export const ReviewBottomActions: FC = () => {
   const leftIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintError }];
   const rightIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintSuccess }];
 
-  const leftTextStyle = [STATIC_STYLES.indicatorText, { color: colors.error }];
-  const rightTextStyle = [STATIC_STYLES.indicatorText, { color: colors.success }];
+  const leftTextStyle = [
+    STATIC_STYLES.indicatorText,
+    { color: colors.error },
+    disabled && { opacity: LAYOUT.OPACITY.SUBTLE },
+  ];
+  const rightTextStyle = [
+    STATIC_STYLES.indicatorText,
+    { color: colors.success },
+    disabled && { opacity: LAYOUT.OPACITY.SUBTLE },
+  ];
+
+  const handleUnknownPress = () => {
+    if (!disabled && onUnknownPress) {
+      selectionFeedback();
+      onUnknownPress();
+    }
+  };
+
+  const handleKnownPress = () => {
+    if (!disabled && onKnownPress) {
+      selectionFeedback();
+      onKnownPress();
+    }
+  };
 
   return (
     <View style={STATIC_STYLES.container}>
-      {/* Left indicator */}
-      <View style={STATIC_STYLES.indicatorContainer}>
-        <View style={leftIndicatorStyle}>
+      {/* Left indicator - Unknown */}
+      <Pressable
+        style={STATIC_STYLES.indicatorContainer}
+        onPress={handleUnknownPress}
+        onPressIn={unknownPressAnimation.handlePressIn}
+        onPressOut={unknownPressAnimation.handlePressOut}
+        disabled={disabled}
+        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      >
+        <Animated.View style={[leftIndicatorStyle, unknownPressAnimation.animatedStyle]}>
           <Ionicons {...createIconProps('chevron-back', colors.error)} />
-        </View>
+        </Animated.View>
         <ThemedText style={leftTextStyle}>{ReviewAction.DONT_KNOW}</ThemedText>
-      </View>
+      </Pressable>
 
-      {/* Right indicator */}
-      <View style={STATIC_STYLES.indicatorContainer}>
-        <View style={rightIndicatorStyle}>
+      {/* Right indicator - Known */}
+      <Pressable
+        style={STATIC_STYLES.indicatorContainer}
+        onPress={handleKnownPress}
+        onPressIn={knownPressAnimation.handlePressIn}
+        onPressOut={knownPressAnimation.handlePressOut}
+        disabled={disabled}
+        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      >
+        <Animated.View style={[rightIndicatorStyle, knownPressAnimation.animatedStyle]}>
           <Ionicons {...createIconProps('chevron-forward', colors.success)} />
-        </View>
+        </Animated.View>
         <ThemedText style={rightTextStyle}>{ReviewAction.KNOW}</ThemedText>
-      </View>
+      </Pressable>
     </View>
   );
 };

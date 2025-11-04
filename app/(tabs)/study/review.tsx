@@ -195,7 +195,11 @@ export default function ReviewScreen(): JSX.Element {
           />
         </View>
 
-        <ReviewBottomActions />
+        <ReviewBottomActions
+          onKnownPress={handleSwipeRight}
+          onUnknownPress={handleSwipeLeft}
+          disabled={isUpdating}
+        />
       </View>
     </View>
   );
