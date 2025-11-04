@@ -33,7 +33,7 @@ export const getChartColors = (colors: ThemeColors): ChartColors => {
     // Performance levels - using unified sage green system for visual cohesion
     performance: {
       excellent: colors.success, // Green - universally positive
-      good: colors.info, // Blue - calm, stable
+      good: colors.info, // Blue (not sage) - calm, stable, distinct from green
       moderate: colors.warning, // Orange/Gold - caution
       poor: colors.error, // Red - attention needed
     },

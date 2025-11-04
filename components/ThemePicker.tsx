@@ -19,7 +19,7 @@ export const THEME_OPTIONS: ThemeOption[] = [
   {
     id: Theme.Dark,
     title: STRINGS.THEME_MIDNIGHT,
-    subtitle: 'Gentle on the eyes with warm tones for comfortable evening study',
+    subtitle: 'Gentle on the eyes with cool, calming tones for comfortable evening study',
     icon: 'moon',
   },
   {

@@ -72,8 +72,8 @@ const semanticOKLCH = {
   errorDark: { l: 0.6427, c: 0.2153, h: 28.8 }, // #F44336
   success: { l: 0.5498, c: 0.0799, h: 151.8 }, // #4C7F5A
   successDark: { l: 0.6728, c: 0.0764, h: 152.1 }, // #72A47F
-  warning: { l: 0.687, c: 0.1017, h: 84.2 }, // #B8954B
-  warningDark: { l: 0.782, c: 0.0949, h: 88.4 }, // #D1B56F
+  warning: { l: 0.65, c: 0.12, h: 84.2 }, // Darker, more saturated for better contrast (~6.8:1)
+  warningDark: { l: 0.76, c: 0.11, h: 88.4 }, // Adjusted to maintain dark mode hierarchy
 } as const;
 
 /**
@@ -250,8 +250,8 @@ const autumnSemanticOKLCH = {
   errorDark: { l: 0.69, c: 0.1295, h: 29.5 }, // #E07A6B
   success: { l: 0.6054, c: 0.1085, h: 119.7 }, // #7A8B3A
   successDark: { l: 0.7082, c: 0.1065, h: 117.9 }, // #9BAA5A
-  warning: { l: 0.7119, c: 0.1432, h: 76.5 }, // #D4941A
-  warningDark: { l: 0.7961, c: 0.1366, h: 82.0 }, // #E8B347
+  warning: { l: 0.68, c: 0.15, h: 76.5 }, // Slightly darker for consistency with main theme
+  warningDark: { l: 0.77, c: 0.14, h: 82.0 }, // Adjusted for sepia mode hierarchy
 } as const;
 
 /**
@@ -814,7 +814,7 @@ const lightColors: ThemeColors = {
   error: basePalette.semantic.error,
   success: basePalette.semantic.success,
   warning: basePalette.semantic.warning,
-  info: basePalette.forest.lighter, // Lighter sage for info - distinct from conjunctions
+  info: basePalette.azure.light, // Blue for stable/good state - distinct from Mastered green
   accent: basePalette.azure.light,
   violet: basePalette.violet.light,
   indigo: basePalette.indigo.light,
@@ -926,7 +926,7 @@ const darkColors: ThemeColors = {
   error: basePalette.semantic.errorDark,
   success: basePalette.semantic.successDark,
   warning: basePalette.semantic.warningDark,
-  info: basePalette.tint.primaryDark, // Lighter sage for info - distinct from conjunctions (dark mode)
+  info: basePalette.azure.dark, // Blue for stable/good state - distinct from Mastered green (dark mode)
   accent: basePalette.azure.dark,
   violet: basePalette.violet.dark,
   indigo: basePalette.indigo.dark,
@@ -1038,7 +1038,7 @@ const sepiaColors: ThemeColors = {
   error: basePalette.autumn.semantic.error,
   success: basePalette.autumn.semantic.success,
   warning: basePalette.autumn.semantic.warning,
-  info: basePalette.autumn.lighter, // Lighter warm tone for info - distinct from conjunctions (sepia mode)
+  info: basePalette.azure.sepia, // Blue-gray for stable/good state - distinct from Mastered (sepia mode)
   accent: basePalette.azure.sepia,
   violet: basePalette.violet.sepia,
   indigo: basePalette.indigo.sepia,
