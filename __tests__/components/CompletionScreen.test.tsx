@@ -114,6 +114,20 @@ jest.mock('@/hooks/theme/useColors', () => ({
     subtitleText: '#4a4a4a',
     black: '#000000',
     tint: '#4a7c59',
+    error: '#ef4444',
+    warning: '#f59e0b',
+    success: '#10b981',
+    progressIndicator: '#3b82f6',
+    info: '#06b6d4',
+  }),
+}));
+
+jest.mock('@/hooks/study', () => ({
+  useStudyStreak: () => ({
+    streak: { currentStreak: 0, longestStreak: 0, lastReadingDate: null, totalReadingDays: 0 },
+    isLoading: false,
+    error: null,
+    refetch: jest.fn(),
   }),
 }));
 
@@ -286,7 +300,7 @@ describe('CompletionScreen Component', () => {
       expect(useReviewCompletion).toHaveBeenCalledWith(metrics, true);
     });
 
-    it('calls useEncouragingMetrics with metrics and colors', () => {
+    it('calls useEncouragingMetrics with metrics, colors, and dailyStreak', () => {
       const metrics = createMockMetrics();
 
       render(<CompletionScreen sessionMetrics={metrics} />);
@@ -296,6 +310,7 @@ describe('CompletionScreen Component', () => {
         expect.objectContaining({
           completionSuccess: '#10b981',
         }),
+        0, // dailyStreak from useStudyStreak mock
       );
     });
 

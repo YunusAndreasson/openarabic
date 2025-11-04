@@ -12,6 +12,7 @@ import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useEncouragingMetrics, useReviewCompletion } from '@/hooks/review';
+import { useStudyStreak } from '@/hooks/study';
 import { useColors } from '@/hooks/theme/useColors';
 import { UiAction } from '@/types/enums';
 import type { SessionMetrics } from '@/types/review.types';
@@ -45,11 +46,15 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
 }) => {
   const colors = useColors();
 
+  // Fetch current daily study streak
+  const { streak } = useStudyStreak();
+  const currentDailyStreak = streak?.currentStreak ?? 0;
+
   // Handle review completion logic (query invalidation, analytics, haptics)
   // Only execute for review flow (not for generic completion screens)
   useReviewCompletion(sessionMetrics, !useThemedView);
 
-  const encouragingMetrics = useEncouragingMetrics(sessionMetrics, colors);
+  const encouragingMetrics = useEncouragingMetrics(sessionMetrics, colors, currentDailyStreak);
 
   const Content = (
     <View style={[styles.contentContainer, contentStyle || {}]}>
