@@ -81,7 +81,8 @@ describe('articlesService', () => {
         audio_url,
         audio_url_bilingual,
         category:categories!inner(id,name),
-        author:authors!inner(id,name)
+        author:authors!inner(id,name),
+        article_sentences(id)
       `.replace(/\s/g, '');
       expect(calledColumns).toBe(expected);
       expect(builder.eq).toHaveBeenCalledWith('category_id', 2);
