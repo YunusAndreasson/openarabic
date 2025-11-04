@@ -6,13 +6,18 @@ import { EmailLink } from '@/components/common/EmailLink';
 const EMAIL_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
 
 /**
- * Average sentences per minute for Arabic language learners
+ * Average sentences per minute for bilingual Arabic-English reading
  * Conservative estimate accounting for:
  * - Arabic script reading speed (typically slower than Latin for learners)
+ * - English translation reading (shown side-by-side)
+ * - Mental processing to connect Arabic and English
  * - Diacritics and word analysis
  * - Vocabulary lookup time
+ *
+ * Note: Bilingual reading takes significantly longer than single-language reading
+ * as users read both Arabic and English text for each sentence.
  */
-const SENTENCES_PER_MINUTE = 13;
+const SENTENCES_PER_MINUTE = 9;
 
 /**
  * Parse text and render email addresses as EmailLink components
@@ -75,15 +80,15 @@ export const parseTextWithEmails = (
 
 /**
  * Calculates estimated reading time based on sentence count
- * Optimized for Arabic language learners
+ * Optimized for bilingual Arabic-English reading
  *
  * @param sentenceCount - Number of sentences in the article
  * @returns Formatted reading time string (e.g., "1m", "3m", "15m")
  *
  * @example
- * calculateReadingTime(10) // "1m"
- * calculateReadingTime(26) // "2m"
- * calculateReadingTime(130) // "10m"
+ * calculateReadingTime(9) // "1m"
+ * calculateReadingTime(18) // "2m"
+ * calculateReadingTime(90) // "10m"
  */
 export function calculateReadingTime(sentenceCount: number): string {
   if (sentenceCount <= 0) {
