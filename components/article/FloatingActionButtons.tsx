@@ -32,6 +32,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     hasAudio = false,
     isPlaying = false,
     onPlayPress,
+    showEnglish,
     onToggleLanguage,
     isLanguageOverridden,
     onClose,
@@ -130,7 +131,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
               ]}
             >
               <Ionicons
-                name="language"
+                name={showEnglish ? 'eye' : 'eye-off'}
                 size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                 color={isLanguageOverridden ? colors.tint : colors.secondaryText}
               />

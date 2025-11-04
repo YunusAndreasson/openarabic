@@ -21,6 +21,9 @@ export const STRINGS = {
   DAILY_WORD_LIMIT: 'Daily word limit',
   DAILY_WORD_LIMIT_DESCRIPTION: 'Maximum number of words per day',
 
+  // Contact email - single source of truth
+  CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',
+
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
   APPEARANCE_SECTION: 'Appearance',
@@ -223,7 +226,7 @@ export const STRINGS = {
   TERMS_TERMINATION:
     'We may suspend or terminate your access if you violate these terms. You may stop using OpenArabic at any time.',
   TERMS_CONTACT_TITLE: '10. Contact',
-  TERMS_CONTACT: 'Questions about these terms? Contact us at yunus@edenmind.com',
+  TERMS_CONTACT: 'Questions about these terms? Contact us at ',
 
   // Privacy Policy - Full text
   PRIVACY_EFFECTIVE_DATE: 'Effective Date: January 1, 2025',
@@ -260,7 +263,7 @@ export const STRINGS = {
     'We take reasonable measures to protect your data, including encrypted connections and secure authentication. However, no internet service is 100% secure.',
   PRIVACY_RIGHTS_TITLE: '5. Your Rights',
   PRIVACY_RIGHTS:
-    'You can access, update, or delete your account data at any time. To delete your account and all associated data, contact us at yunus@edenmind.com',
+    'You can access, update, or delete your account data at any time. To delete your account and all associated data, contact us at ',
   PRIVACY_CHILDREN_TITLE: "6. Children's Privacy",
   PRIVACY_CHILDREN:
     'OpenArabic is not intended for children under 13. We do not knowingly collect information from children under 13.',
@@ -268,8 +271,8 @@ export const STRINGS = {
   PRIVACY_CHANGES:
     'We may update this privacy policy from time to time. We will notify you of significant changes through the app or by email.',
   PRIVACY_CONTACT_TITLE: '8. Contact Us',
-  PRIVACY_CONTACT:
-    'Questions about privacy? Contact us at yunus@edenmind.com. We will respond to your inquiry as soon as possible.',
+  PRIVACY_CONTACT: 'Questions about privacy? Contact us at ',
+  PRIVACY_CONTACT_SUFFIX: '. We will respond to your inquiry as soon as possible.',
 
   // Social auth
   SIGN_IN_WITH_APPLE: 'Sign in with Apple',
@@ -339,10 +342,19 @@ export const STRINGS = {
   MEMORY_RETENTION_TIP:
     'Stay above the {threshold}% threshold line. Practice existing words before adding new ones.',
 
-  // Account
-  HELP: 'Help',
-  CONTACT_SUPPORT: 'Report Issue',
-  SUPPORT_EMAIL: 'yunus@edenmind.com',
+  // Account - Support section
+  HELP_CENTER: 'Help Center',
+  HELP_CENTER_DESCRIPTION: 'Browse frequently asked questions',
+  CONTACT_SUPPORT: 'Contact Support',
+  CONTACT_SUPPORT_DESCRIPTION: 'Get help via email',
+  RATE_APP_DESCRIPTION: 'Share your feedback on the App Store',
+
+  // Account - About section
+  ABOUT_SECTION: 'About',
+  TERMS_DESCRIPTION: 'User agreement and terms',
+  PRIVACY_DESCRIPTION: 'How we handle your data',
+  LEGAL_DESCRIPTION: 'Open source licenses and credits',
+
   SUPPORT_EMAIL_SUBJECT: 'Open Arabic App Support',
   SUPPORT_EMAIL_BODY_TEMPLATE:
     'Hi there,\n\nI need help with the Open Arabic app.\n\nApp Version: {version}\nUser Email: {email}\n\nPlease describe your issue below:\n',
@@ -361,6 +373,7 @@ export const STRINGS = {
 
   // Cache management - clearer and more actionable
   CLEAR_CACHE: 'App cache',
+  CLEAR_CACHE_BUTTON: 'CLEAR',
   NO_CACHE: 'No cache',
   NO_CACHED_FILES: 'No cached files to clear',
   THIS_WILL_DELETE: 'This deletes',
@@ -701,6 +714,14 @@ export const STRINGS = {
   HELP_GETTING_STARTED: 'Getting Started',
   HELP_ACCOUNT_SETTINGS: 'Account',
   HELP_TROUBLESHOOTING: 'Troubleshooting',
+  HELP_SEARCH_PLACEHOLDER: 'Search help articles...',
+  HELP_SEARCH_RESULTS_SINGULAR: 'result',
+  HELP_SEARCH_RESULTS_PLURAL: 'results',
+  HELP_NO_RESULTS_TITLE: 'No results found',
+  HELP_NO_RESULTS_DESCRIPTION: 'Try different keywords or browse categories below',
+  HELP_POPULAR_QUESTIONS: 'Popular Questions',
+  HELP_STILL_NEED_HELP_TITLE: 'Still need help?',
+  HELP_STILL_NEED_HELP_DESCRIPTION: "Can't find what you're looking for? Contact the developer directly.",
 
   // FAQ Questions and Answers
   FAQ_HOW_TO_ADD_WORDS_Q: 'How do I add words to study?',

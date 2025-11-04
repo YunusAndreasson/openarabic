@@ -1,12 +1,11 @@
 import { Stack, router } from 'expo-router';
-import type { JSX } from 'react';
 
 import { DoneButton } from '@/components/ui/DoneButton';
 import { STRINGS } from '@/constants/strings';
 import { createNavigationOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
 
-export default function AccountLayout(): JSX.Element {
+export default function AccountLayout() {
   const colors = useColors();
 
   return (
@@ -37,7 +36,7 @@ export default function AccountLayout(): JSX.Element {
       <Stack.Screen
         name="help"
         options={createNavigationOptions(colors, {
-          title: STRINGS.HELP,
+          title: STRINGS.HELP_CENTER,
           headerLeft: () => <DoneButton onPress={() => router.back()} />,
         })}
       />

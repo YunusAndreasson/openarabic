@@ -102,7 +102,8 @@ export enum AccountSection {
   READING_EXPERIENCE = 'Reading experience',
   AUDIO_PLAYBACK = 'Audio',
   LEARNING = 'Learning',
-  HELP_SUPPORT = 'Support',
+  SUPPORT = 'Support',
+  ABOUT = 'About',
   DATA_ACCOUNT = 'Account',
 }
 

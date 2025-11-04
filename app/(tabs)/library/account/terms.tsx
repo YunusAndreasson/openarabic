@@ -4,7 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT } from '@/constants/layout';
+import { EmailLink } from '@/components/common/EmailLink';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 
 const TermsOfServiceScreen: FC = () => {
@@ -112,8 +113,9 @@ const TermsOfServiceScreen: FC = () => {
         <ThemedText type="heading3" weight="semibold" style={styles.sectionTitle}>
           {STRINGS.TERMS_CONTACT_TITLE}
         </ThemedText>
-        <ThemedText type="body" style={styles.lastParagraph}>
+        <ThemedText type="body" style={[styles.paragraph, { marginBottom: 0 }]}>
           {STRINGS.TERMS_CONTACT}
+          <EmailLink email={STRINGS.CONTACT_EMAIL} />
         </ThemedText>
       </ThemedView>
     </ThemedView>
@@ -140,10 +142,9 @@ const styles = StyleSheet.create({
   },
   paragraph: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    lineHeight: 22,
-  },
-  lastParagraph: {
-    lineHeight: 22,
+    lineHeight: Math.round(
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
+    ),
   },
 });
 

@@ -1,4 +1,33 @@
+import { LayoutAnimation } from 'react-native';
 import { Easing } from 'react-native-reanimated';
+
+/**
+ * LayoutAnimation configurations
+ * Returns animation config or undefined if LayoutAnimation is not available (e.g., in tests)
+ */
+export const getFAQExpandAnimation = () => {
+  if (!LayoutAnimation?.Types || !LayoutAnimation?.Properties) {
+    return undefined;
+  }
+
+  return {
+    duration: 300,
+    create: {
+      type: LayoutAnimation.Types.spring,
+      property: LayoutAnimation.Properties.opacity,
+      springDamping: 0.8,
+    },
+    update: {
+      type: LayoutAnimation.Types.spring,
+      springDamping: 0.8,
+    },
+    delete: {
+      type: LayoutAnimation.Types.spring,
+      property: LayoutAnimation.Properties.opacity,
+      springDamping: 0.8,
+    },
+  } as const;
+};
 
 /**
  * Timing configuration presets for animations
@@ -150,4 +179,8 @@ export const TIMING_CONSTANTS = {
   /** Network request timeouts */
   NETWORK_TIMEOUT: 10000,
   RETRY_DELAY_BASE: 1000,
+
+  /** Help/FAQ animation delays */
+  FAQ_EXPAND_DURATION: 300,
+  FAQ_SCROLL_DELAY: 350,
 } as const;

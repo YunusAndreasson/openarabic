@@ -21,7 +21,7 @@ export const FAQ_DATA: FAQCategoryData[] = [
         id: 'what-is-app',
         question: 'What is OpenArabic?',
         answer:
-          'A free Arabic learning app based on classical Islamic texts. You read bilingual sentence pairs (an Arabic sentence followed by an English sentence), tap words you don’t understand, and add them to a spaced repetition system (FSRS) to learn over time.',
+          `A free Arabic learning app based on classical Islamic texts. You read bilingual sentence pairs (an Arabic sentence followed by an English sentence), tap words you don't understand, and add them to a spaced repetition system (FSRS) to learn over time.\n\nDeveloped by Yunus Andréasson. Contact: yunus+openarabic@edenmind.com`,
         category: FAQCategoryEnum.GETTING_STARTED,
       },
       {

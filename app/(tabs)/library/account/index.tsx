@@ -40,7 +40,13 @@ import {
   DisplayLanguage,
 } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
+import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
+
+// Helper function for enum validation
+function validateEnumValue<T>(value: unknown, validValues: readonly T[], defaultValue: T): T {
+  return validValues.includes(value as T) ? (value as T) : defaultValue;
+}
 
 // Memoized components
 const Divider = memo(() => {
@@ -49,51 +55,48 @@ const Divider = memo(() => {
 });
 Divider.displayName = 'Divider';
 
+// Type-safe discriminated union for CardRight component
+type CardRightProps =
+  | { type: 'chevron-only' }
+  | { type: 'text-chevron'; text: string }
+  | { type: 'toggle'; toggleValue: boolean; onToggleChange: (value: boolean) => void };
+
+// Type-safe picker state
+type ActivePicker = 'theme' | 'language' | 'audioLanguage' | 'dailyWordLimit' | null;
+
 // DRY CardRight component for consistent right-side alignment
-const CardRight = memo(
-  ({
-    type,
-    text,
-    toggleValue,
-    onToggleChange,
-  }: {
-    type: 'chevron-only' | 'text-chevron' | 'toggle';
-    text?: string;
-    toggleValue?: boolean;
-    onToggleChange?: (value: boolean) => void;
-  }) => {
-    const colors = useColors();
+const CardRight = memo((props: CardRightProps) => {
+  const colors = useColors();
 
-    if (type === 'toggle' && onToggleChange) {
-      return <Toggle value={toggleValue || false} onValueChange={onToggleChange} />;
-    }
+  if (props.type === 'toggle') {
+    return <Toggle value={props.toggleValue} onValueChange={props.onToggleChange} />;
+  }
 
-    if (type === 'text-chevron') {
-      return (
-        <View style={styles.cardRightValue}>
-          <ThemedText type="body" colorName="secondaryMetadataText">
-            {text}
-          </ThemedText>
-          <Ionicons
-            color={colors.secondaryMetadataText}
-            name="chevron-forward"
-            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-          />
-        </View>
-      );
-    }
-
-    // Default: chevron-only
+  if (props.type === 'text-chevron') {
     return (
-      <Ionicons
-        color={colors.secondaryMetadataText}
-        name="chevron-forward"
-        size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-        style={styles.cardRightChevron}
-      />
+      <View style={styles.cardRightValue}>
+        <ThemedText type="body" colorName="secondaryMetadataText">
+          {props.text}
+        </ThemedText>
+        <Ionicons
+          color={colors.secondaryMetadataText}
+          name="chevron-forward"
+          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+        />
+      </View>
     );
-  },
-);
+  }
+
+  // Default: chevron-only
+  return (
+    <Ionicons
+      color={colors.secondaryMetadataText}
+      name="chevron-forward"
+      size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+      style={styles.cardRightChevron}
+    />
+  );
+});
 CardRight.displayName = 'CardRight';
 
 const AccountScreen: FC = () => {
@@ -113,30 +116,30 @@ const AccountScreen: FC = () => {
   );
 
   // Validate and provide defaults - ensure values are valid enum values
-  const currentLanguage = useMemo(() => {
-    if (
-      rawLanguagePreference === DisplayLanguage.ARABIC_ONLY ||
-      rawLanguagePreference === DisplayLanguage.ARABIC_ENGLISH
-    ) {
-      return rawLanguagePreference;
-    }
-    return DisplayLanguage.ARABIC_ENGLISH; // Default
-  }, [rawLanguagePreference]);
+  const currentLanguage = useMemo(
+    () =>
+      validateEnumValue(
+        rawLanguagePreference,
+        [DisplayLanguage.ARABIC_ONLY, DisplayLanguage.ARABIC_ENGLISH] as const,
+        DisplayLanguage.ARABIC_ENGLISH,
+      ),
+    [rawLanguagePreference],
+  );
 
-  const currentAudioLanguage = useMemo(() => {
-    if (
-      rawAudioLanguagePreference === AudioLanguage.ARABIC_ONLY ||
-      rawAudioLanguagePreference === AudioLanguage.ENGLISH_ARABIC
-    ) {
-      return rawAudioLanguagePreference;
-    }
-    return AudioLanguage.ENGLISH_ARABIC; // Default
-  }, [rawAudioLanguagePreference]);
+  const currentAudioLanguage = useMemo(
+    () =>
+      validateEnumValue(
+        rawAudioLanguagePreference,
+        [AudioLanguage.ARABIC_ONLY, AudioLanguage.ENGLISH_ARABIC] as const,
+        AudioLanguage.ENGLISH_ARABIC,
+      ),
+    [rawAudioLanguagePreference],
+  );
 
   const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
   const dispatch = useAppDispatch();
 
-  const [activePicker, setActivePicker] = React.useState<string | null>(null);
+  const [activePicker, setActivePicker] = React.useState<ActivePicker>(null);
 
   // Get daily word limit with validation
   const rawDailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
@@ -175,26 +178,8 @@ const AccountScreen: FC = () => {
     return `${currentDailyWordLimit} words`;
   }, [currentDailyWordLimit]);
 
-  // Memoize dynamic styles for better performance
-  const dangerZoneCardStyle = useMemo(
-    () => ({
-      overflow: 'hidden' as const,
-      borderWidth: 1,
-      borderColor: colors.error,
-      backgroundColor: `${colors.error}26`,
-    }),
-    [colors.error],
-  );
-
-  const dangerZoneInteractiveCardStyle = useMemo(
-    () => ({
-      backgroundColor: `${colors.error}0D`,
-    }),
-    [colors.error],
-  );
-
   // Unified picker handlers
-  const handlePickerOpen = useCallback((pickerType: string) => {
+  const handlePickerOpen = useCallback((pickerType: Exclude<ActivePicker, null>) => {
     setActivePicker(pickerType);
   }, []);
 
@@ -213,8 +198,13 @@ const AccountScreen: FC = () => {
     try {
       await Linking.openURL(url);
     } catch (error) {
-      // Silent failure for social media links
-      console.error('Failed to open social media link:', error);
+      handleError(error as Error, {
+        analyticsEventName: 'Social_Media_Link_Failed',
+        sentryTags: { location: 'account_screen', action: 'social_media' },
+        sentryExtra: { url },
+        showToast: false, // Silent failure for social media links
+        sentrySeverity: 'info', // Not critical, just informational
+      });
     }
   }, []);
 
@@ -381,7 +371,7 @@ const AccountScreen: FC = () => {
         {/* Account Badge - Premium header section */}
         {user && (
           <AccountBadge
-            userEmail={user.email || 'user@example.com'}
+            userEmail={user.email || STRINGS.NO_EMAIL}
             userId={user.id}
             createdAt={user.created_at}
           />
@@ -579,7 +569,7 @@ const AccountScreen: FC = () => {
         </BaseCard>
 
         {/* Support - Help and assistance */}
-        <SectionTitle title={AccountSection.HELP_SUPPORT} textStyle={styles.sectionTitle} />
+        <SectionTitle title={AccountSection.SUPPORT} textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard
@@ -596,11 +586,21 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.HELP}
-                  </ThemedText>
+                  <View style={styles.textContainer}>
+                    <ThemedText type="body" weight="medium">
+                      {STRINGS.HELP_CENTER}
+                    </ThemedText>
+                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                      {STRINGS.HELP_CENTER_DESCRIPTION}
+                    </ThemedText>
+                  </View>
                 </View>
-                <CardRight type="chevron-only" />
+                <Ionicons
+                  color={colors.secondaryMetadataText}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardRightChevron}
+                />
               </View>
             </BaseCard>
 
@@ -616,15 +616,25 @@ const AccountScreen: FC = () => {
                   <View style={styles.cardIconContainer}>
                     <Ionicons
                       color={colors.interactiveSecondary}
-                      name="chatbubbles"
+                      name="mail"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.CONTACT_SUPPORT}
-                  </ThemedText>
+                  <View style={styles.textContainer}>
+                    <ThemedText type="body" weight="medium">
+                      {STRINGS.CONTACT_SUPPORT}
+                    </ThemedText>
+                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                      {STRINGS.CONTACT_SUPPORT_DESCRIPTION}
+                    </ThemedText>
+                  </View>
                 </View>
-                <CardRight type="chevron-only" />
+                <Ionicons
+                  color={colors.secondaryMetadataText}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardRightChevron}
+                />
               </View>
             </BaseCard>
 
@@ -644,16 +654,30 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.RATE_APP}
-                  </ThemedText>
+                  <View style={styles.textContainer}>
+                    <ThemedText type="body" weight="medium">
+                      {STRINGS.RATE_APP}
+                    </ThemedText>
+                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                      {STRINGS.RATE_APP_DESCRIPTION}
+                    </ThemedText>
+                  </View>
                 </View>
-                <CardRight type="chevron-only" />
+                <Ionicons
+                  color={colors.secondaryMetadataText}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardRightChevron}
+                />
               </View>
             </BaseCard>
+          </View>
+        </BaseCard>
 
-            <Divider />
-
+        {/* About - Legal and informational */}
+        <SectionTitle title={STRINGS.ABOUT_SECTION} textStyle={styles.sectionTitle} />
+        <BaseCard shadowSize="small" style={styles.sectionContainer}>
+          <View style={styles.linksContainer}>
             <BaseCard
               shadowSize="none"
               style={styles.interactiveCard}
@@ -668,11 +692,21 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.TERMS_OF_SERVICE}
-                  </ThemedText>
+                  <View style={styles.textContainer}>
+                    <ThemedText type="body" weight="medium">
+                      {STRINGS.TERMS_OF_SERVICE}
+                    </ThemedText>
+                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                      {STRINGS.TERMS_DESCRIPTION}
+                    </ThemedText>
+                  </View>
                 </View>
-                <CardRight type="chevron-only" />
+                <Ionicons
+                  color={colors.secondaryMetadataText}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardRightChevron}
+                />
               </View>
             </BaseCard>
 
@@ -692,11 +726,21 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.PRIVACY_POLICY}
-                  </ThemedText>
+                  <View style={styles.textContainer}>
+                    <ThemedText type="body" weight="medium">
+                      {STRINGS.PRIVACY_POLICY}
+                    </ThemedText>
+                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                      {STRINGS.PRIVACY_DESCRIPTION}
+                    </ThemedText>
+                  </View>
                 </View>
-                <CardRight type="chevron-only" />
+                <Ionicons
+                  color={colors.secondaryMetadataText}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardRightChevron}
+                />
               </View>
             </BaseCard>
 
@@ -716,11 +760,21 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.LEGAL_ATTRIBUTIONS}
-                  </ThemedText>
+                  <View style={styles.textContainer}>
+                    <ThemedText type="body" weight="medium">
+                      {STRINGS.LEGAL_ATTRIBUTIONS}
+                    </ThemedText>
+                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                      {STRINGS.LEGAL_DESCRIPTION}
+                    </ThemedText>
+                  </View>
                 </View>
-                <CardRight type="chevron-only" />
+                <Ionicons
+                  color={colors.secondaryMetadataText}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardRightChevron}
+                />
               </View>
             </BaseCard>
           </View>
@@ -833,7 +887,7 @@ const AccountScreen: FC = () => {
                   onPress={cacheSize > 0 ? handleClearCache : undefined}
                   disabled={cacheSize === 0}
                 >
-                  CLEAR
+                  {STRINGS.CLEAR_CACHE_BUTTON}
                 </ThemedText>
               </View>
             </BaseCard>
@@ -874,11 +928,22 @@ const AccountScreen: FC = () => {
 
         {/* Danger Zone - Destructive actions */}
         <SectionTitle title={STRINGS.DANGER_ZONE_SECTION} textStyle={styles.sectionTitle} />
-        <BaseCard shadowSize="small" style={[styles.sectionContainer, dangerZoneCardStyle]}>
+        <BaseCard
+          shadowSize="small"
+          style={[
+            styles.sectionContainer,
+            {
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: colors.error,
+              backgroundColor: `${colors.error}26`,
+            },
+          ]}
+        >
           <View style={styles.linksContainer}>
             <BaseCard
               shadowSize="none"
-              style={[styles.interactiveCard, dangerZoneInteractiveCardStyle]}
+              style={[styles.interactiveCard, { backgroundColor: `${colors.error}0D` }]}
               onPress={handleResetReadingProgress}
             >
               <View style={styles.cardContent}>
@@ -916,7 +981,7 @@ const AccountScreen: FC = () => {
 
             <BaseCard
               shadowSize="none"
-              style={[styles.interactiveCard, dangerZoneInteractiveCardStyle]}
+              style={[styles.interactiveCard, { backgroundColor: `${colors.error}0D` }]}
               onPress={handleDeleteAccountPress}
             >
               <View style={styles.cardContent}>
