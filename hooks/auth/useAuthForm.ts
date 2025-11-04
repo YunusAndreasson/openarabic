@@ -119,7 +119,7 @@ export function useAuthForm(): UseAuthFormReturn {
         });
         await analytics.trackSignIn('email');
         successFeedback();
-        router.replace(ROUTE_PATHS.LIBRARY_TAB);
+        router.replace(ROUTE_PATHS.EXPLORE_TAB);
       }
     } catch (err) {
       if (!isMountedRef.current) return;
@@ -186,7 +186,7 @@ export function useAuthForm(): UseAuthFormReturn {
           showSuccessToast(`${STRINGS.WELCOME_TITLE}! Let's start learning.`, 5000);
           // Navigate to library after brief delay to show toast
           setTimeout(() => {
-            router.replace(ROUTE_PATHS.LIBRARY_TAB);
+            router.replace(ROUTE_PATHS.EXPLORE_TAB);
           }, 1000);
         } else {
           // Email confirmation required

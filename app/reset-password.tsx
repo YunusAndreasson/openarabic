@@ -181,7 +181,7 @@ export default function ResetPasswordScreen(): JSX.Element {
         showSuccessToast(
           'Password reset successfully! You can now sign in with your new password.',
         );
-        router.replace(ROUTE_PATHS.LIBRARY_TAB);
+        router.replace(ROUTE_PATHS.EXPLORE_TAB);
       }
     } catch (err) {
       handleError(err instanceof Error ? err : new Error('Password reset error'), {

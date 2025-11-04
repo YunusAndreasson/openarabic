@@ -224,7 +224,7 @@ describe('useAuthForm', () => {
         });
 
         // Now navigation should have occurred
-        expect(mockRouterReplace).toHaveBeenCalledWith(ROUTE_PATHS.LIBRARY_TAB);
+        expect(mockRouterReplace).toHaveBeenCalledWith(ROUTE_PATHS.EXPLORE_TAB);
       });
 
       it('tracks analytics identify with user data', async () => {
@@ -430,7 +430,7 @@ describe('useAuthForm', () => {
         await result.current.signInWithEmail();
       });
 
-      expect(mockRouterReplace).toHaveBeenCalledWith(ROUTE_PATHS.LIBRARY_TAB);
+      expect(mockRouterReplace).toHaveBeenCalledWith(ROUTE_PATHS.EXPLORE_TAB);
     });
 
     it('tracks analytics on successful sign in', async () => {

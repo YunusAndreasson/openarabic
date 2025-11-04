@@ -394,7 +394,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       });
 
       successFeedback();
-      router.replace(ROUTE_PATHS.LIBRARY_TAB);
+      router.replace(ROUTE_PATHS.EXPLORE_TAB);
     } catch (error: unknown) {
       if (!isMountedRef.current) return;
 

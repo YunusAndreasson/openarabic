@@ -138,7 +138,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.push(ROUTE_PATHS.LIBRARY_TAB);
+      router.push(ROUTE_PATHS.EXPLORE_TAB);
     }
   }, []);
 

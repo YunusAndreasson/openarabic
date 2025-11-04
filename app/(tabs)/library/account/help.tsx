@@ -2,7 +2,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
-import { LayoutAnimation, Pressable, type ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import {
+  LayoutAnimation,
+  Pressable,
+  type ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -28,11 +35,7 @@ const CATEGORY_ICONS: Record<FAQCategory, keyof typeof Ionicons.glyphMap> = {
 };
 
 // Popular questions (most common user queries)
-const POPULAR_QUESTION_IDS = [
-  'what-is-app',
-  'spaced-repetition',
-  'learning-speed',
-] as const;
+const POPULAR_QUESTION_IDS = ['what-is-app', 'spaced-repetition', 'learning-speed'] as const;
 
 // FAQ item component props
 interface FAQItemComponentProps {
@@ -191,8 +194,7 @@ const HelpScreen: FC = () => {
       ...category,
       items: category.items.filter(
         item =>
-          item.question.toLowerCase().includes(query) ||
-          item.answer.toLowerCase().includes(query),
+          item.question.toLowerCase().includes(query) || item.answer.toLowerCase().includes(query),
       ),
     })).filter(category => category.items.length > 0);
   }, [searchQuery]);
@@ -227,7 +229,12 @@ const HelpScreen: FC = () => {
     >
       {/* Search Bar */}
       <View style={[styles.searchContainer, { backgroundColor: colors.background }]}>
-        <View style={[styles.searchInputContainer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+        <View
+          style={[
+            styles.searchInputContainer,
+            { backgroundColor: colors.card, borderColor: colors.cardBorder },
+          ]}
+        >
           <Ionicons name="search" size={20} color={colors.textTertiary} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
@@ -334,7 +341,11 @@ const HelpScreen: FC = () => {
                     <ThemedText type="heading3" weight="semibold" style={styles.categoryTitle}>
                       {category.name}
                     </ThemedText>
-                    <ThemedText type="caption" colorName="textTertiary" style={styles.categoryCount}>
+                    <ThemedText
+                      type="caption"
+                      colorName="textTertiary"
+                      style={styles.categoryCount}
+                    >
                       ({itemCount})
                     </ThemedText>
                   </View>
@@ -359,7 +370,11 @@ const HelpScreen: FC = () => {
                 <ThemedText type="body" weight="semibold" style={styles.helpFooterTitle}>
                   {STRINGS.HELP_STILL_NEED_HELP_TITLE}
                 </ThemedText>
-                <ThemedText type="body" colorName="textTertiary" style={styles.helpFooterDescription}>
+                <ThemedText
+                  type="body"
+                  colorName="textTertiary"
+                  style={styles.helpFooterDescription}
+                >
                   {STRINGS.HELP_STILL_NEED_HELP_DESCRIPTION}
                 </ThemedText>
                 <ThemedButton

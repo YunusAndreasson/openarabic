@@ -57,7 +57,7 @@ export default function LibraryLayout(): JSX.Element {
       <Stack.Screen
         name="index"
         options={createTabHeaderOptions({
-          title: AppTab.READ,
+          title: AppTab.EXPLORE,
           rightComponent: () => <HeaderProfile size={32} />,
           colors,
         })}

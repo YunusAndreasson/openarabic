@@ -5,7 +5,7 @@ const cleared = (item: string) => `${item} cleared`;
 
 export const STRINGS = {
   // Settings & preferences
-  STUDY_REMINDERS: 'Study reminders',
+  STUDY_REMINDERS: 'Practice reminders',
   TIME: 'Time',
   THEME: 'Theme',
   DARK_MODE: 'Dark mode',
@@ -14,7 +14,7 @@ export const STRINGS = {
   AUDIO_LANGUAGE_ARABIC: 'Arabic only',
   AUDIO_LANGUAGE_BILINGUAL: 'English + Arabic',
   AUDIO_SHUFFLE: 'Shuffle audio',
-  AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order in the Bookmarks tab',
+  AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order in the Saved tab',
   DISPLAY_LANGUAGE: 'Display language',
   DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
   DISPLAY_LANGUAGE_BILINGUAL: 'Arabic + English',
@@ -98,7 +98,7 @@ export const STRINGS = {
   NO_TRANSLATION_AVAILABLE: 'No translation available',
 
   // Article & content actions - shortened and action-oriented
-  BROWSE_ARTICLES: 'Browse articles',
+  BROWSE_ARTICLES: 'Explore articles',
   ARTICLES_SELECTED_FOR_YOU: 'Articles selected for you',
   SUMMARY: 'Summary',
   LATEST_READ: 'Latest Read',
@@ -121,13 +121,15 @@ export const STRINGS = {
   NO_ARTICLES_SAVED: 'No saved articles',
   LISTENING_BOOKMARKS_EMPTY: 'Add articles to build your bookmarks',
 
-  // Listen tab empty state - user-centric and bookmarks-focused
-  BOOKMARKS_EMPTY_TITLE: 'Build your audio library',
-  BOOKMARKS_EMPTY_DESCRIPTION: 'Bookmark articles to read or listen anytime',
+  // Saved tab empty state - emphasizes on-the-go bilingual learning
+  BOOKMARKS_EMPTY_TITLE: 'Build your listening routine',
+  BOOKMARKS_EMPTY_DESCRIPTION:
+    'Bookmark articles to listen with bilingual audio on the go—while commuting, exercising, or unwinding',
 
-  // Practice tab empty state - user-centric and study-focused
-  STUDY_LIST_EMPTY_TITLE: 'Build your vocabulary',
-  STUDY_LIST_EMPTY_DESCRIPTION: 'Tap words in articles to study them',
+  // Practice tab empty state - benefit-first with spaced repetition explanation
+  STUDY_LIST_EMPTY_TITLE: 'Remember what you learn',
+  STUDY_LIST_EMPTY_DESCRIPTION:
+    'Tap words while reading articles, then practice at optimal intervals with spaced repetition',
 
   // Dictionary
   NO_STUDY_WORDS: 'No words to study',
@@ -240,7 +242,7 @@ export const STRINGS = {
     'We use Mixpanel to track basic events like sign in, sign up, and practice sessions. This helps us understand how the app is used and improve it.',
   PRIVACY_USE_TITLE: '2. How We Use Your Information',
   PRIVACY_USE:
-    'We use your data to: provide the learning service, sync your progress across devices, personalize your learning experience, send study reminders (if enabled), and improve the app.',
+    'We use your data to: provide the learning service, sync your progress across devices, personalize your learning experience, send practice reminders (if enabled), and improve the app.',
   PRIVACY_THIRD_PARTY_TITLE: '3. Third-Party Services',
   PRIVACY_THIRD_PARTY_SUPABASE: 'Supabase',
   PRIVACY_THIRD_PARTY_SUPABASE_DESC:
@@ -386,7 +388,7 @@ export const STRINGS = {
 
   // Notifications
   ENABLE_NOTIFICATIONS: 'Enable notifications',
-  TURN_ON_NOTIFICATIONS: 'Get daily study reminders',
+  TURN_ON_NOTIFICATIONS: 'Get daily practice reminders',
   OPEN_SETTINGS: 'Open Settings',
   NOTIFICATIONS_DISABLED: 'Notifications disabled',
   NOTIFICATION_REMINDER_TITLE: 'Time to study Arabic!',
@@ -415,21 +417,21 @@ export const STRINGS = {
   DAY_OF_TEMPLATE: 'Day {day} of {duration}',
 
   // Learning capacity & guidance - more actionable
-  ADD_WORDS_TO_SEE_CAPACITY: 'Browse articles in the Library tab to add words',
+  ADD_WORDS_TO_SEE_CAPACITY: 'Explore articles in the Explore tab to add words',
 
-  STUDY_WORDS_TO_SEE_PROGRESS: 'Study words to track progress',
-  REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH: 'Study to strengthen memory',
-  PRACTICE_TO_SEE_LEARNING_SPEED: 'Study to see learning speed',
-  START_REVIEWING_TO_BUILD_STRENGTH: 'Study some words to see memory strength',
-  START_PRACTICING_TO_SEE_SPEED: 'Study some words to see your learning speed',
-  REVIEW_WORDS_TO_TRACK_RETENTION: 'Study to improve retention',
-  STUDY_TO_MONITOR_REVIEW_TIMING: 'Study some words to see review schedule',
-  REVIEW_WORDS_TO_TRACK_MEMORY_STRENGTH: 'Study to build memory',
-  PRACTICE_TO_SEE_YOUR_LEARNING_SPEED: 'Study to see your speed',
-  STUDY_WORDS_TO_MONITOR_RETENTION: 'Study to monitor retention',
-  START_STUDYING_TO_SEE_PROGRESS: 'Start studying to see progress',
-  PRACTICE_TO_TRACK_LEARNING_SPEED: 'Study to track speed',
-  STUDY_WORDS_TO_TRACK_MEMORY_RETENTION: 'Study to track retention',
+  STUDY_WORDS_TO_SEE_PROGRESS: 'Practice vocabulary to track progress',
+  REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH: 'Practice to strengthen memory',
+  PRACTICE_TO_SEE_LEARNING_SPEED: 'Practice to see learning speed',
+  START_REVIEWING_TO_BUILD_STRENGTH: 'Practice some vocabulary to see memory strength',
+  START_PRACTICING_TO_SEE_SPEED: 'Practice some vocabulary to see your learning speed',
+  REVIEW_WORDS_TO_TRACK_RETENTION: 'Practice to improve retention',
+  STUDY_TO_MONITOR_REVIEW_TIMING: 'Practice some vocabulary to see review schedule',
+  REVIEW_WORDS_TO_TRACK_MEMORY_STRENGTH: 'Practice to build memory',
+  PRACTICE_TO_SEE_YOUR_LEARNING_SPEED: 'Practice to see your speed',
+  STUDY_WORDS_TO_MONITOR_RETENTION: 'Practice to monitor retention',
+  START_STUDYING_TO_SEE_PROGRESS: 'Start practicing to see progress',
+  PRACTICE_TO_TRACK_LEARNING_SPEED: 'Practice to track speed',
+  STUDY_WORDS_TO_TRACK_MEMORY_RETENTION: 'Practice to track retention',
 
   // Filter options
   ALL_DIFFICULTIES: 'All difficulties',
@@ -610,8 +612,8 @@ export const STRINGS = {
   COMPLETE_DUE_FIRST: 'Review due words first',
   FOCUS_ON_STRUGGLING_FIRST: 'Strengthen struggling words first',
   NO_PRACTICE_NEEDED: 'All caught up. Add new words to continue learning',
-  GET_STARTED_MESSAGE: 'Browse articles in the Library tab to add words you want to learn',
-  PRACTICE_OPTIONS: 'Study options',
+  GET_STARTED_MESSAGE: 'Explore articles in the Explore tab to add words you want to learn',
+  PRACTICE_OPTIONS: 'Practice options',
 
   // Learning method content
   LEARNING_METHOD_INTRO:
@@ -717,24 +719,25 @@ export const STRINGS = {
   HELP_NO_RESULTS_DESCRIPTION: 'Try different keywords or browse categories below',
   HELP_POPULAR_QUESTIONS: 'Popular Questions',
   HELP_STILL_NEED_HELP_TITLE: 'Still need help?',
-  HELP_STILL_NEED_HELP_DESCRIPTION: "Can't find what you're looking for? Contact the developer directly.",
+  HELP_STILL_NEED_HELP_DESCRIPTION:
+    "Can't find what you're looking for? Contact the developer directly.",
 
   // FAQ Questions and Answers
   FAQ_HOW_TO_ADD_WORDS_Q: 'How do I add words to study?',
   FAQ_HOW_TO_ADD_WORDS_A:
-    'Browse articles in the Library tab and tap on any Arabic word to add it to your vocabulary list. The app uses spaced repetition to help you learn effectively.',
+    'Explore articles in the Explore tab and tap on any Arabic word to add it to your vocabulary list. The app uses spaced repetition to help you learn effectively.',
 
   FAQ_HOW_SPACED_REPETITION_WORKS_Q: 'How does spaced repetition work?',
   FAQ_HOW_SPACED_REPETITION_WORKS_A:
     "The app shows you words just before you're likely to forget them. Words you find easy appear less often, while challenging words appear more frequently until you master them.",
 
-  FAQ_READ_VS_LISTEN_Q: "What's the difference between Library and Bookmarks?",
-  FAQ_READ_VS_LISTEN_A:
-    'Library lets you browse articles and add vocabulary. Bookmarks lets you listen to saved articles while multitasking.',
+  FAQ_EXPLORE_VS_SAVED_Q: "What's the difference between Explore and Saved?",
+  FAQ_EXPLORE_VS_SAVED_A:
+    'Explore lets you discover articles and add vocabulary. Saved lets you listen to bookmarked articles with bilingual audio while multitasking.',
 
-  FAQ_CHANGE_STUDY_REMINDERS_Q: 'How do I change my study reminders?',
+  FAQ_CHANGE_STUDY_REMINDERS_Q: 'How do I change my practice reminders?',
   FAQ_CHANGE_STUDY_REMINDERS_A:
-    "Go to Account, toggle study reminders on, then tap Time to set when you'd like to be reminded to practice.",
+    "Go to Account, toggle practice reminders on, then tap Time to set when you'd like to be reminded to practice.",
 
   FAQ_CHANGE_THEMES_Q: 'How do I change themes?',
   FAQ_CHANGE_THEMES_A:

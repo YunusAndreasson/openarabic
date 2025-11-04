@@ -378,9 +378,9 @@ function AppContent() {
         if (response) {
           const { type } = response.notification.request.content.data || {};
 
-          // Navigate to Study tab if it's a study reminder
+          // Navigate to Practice tab if it's a study reminder
           if (type === 'study-reminder') {
-            router.push(ROUTE_PATHS.STUDY_TAB);
+            router.push(ROUTE_PATHS.PRACTICE_TAB);
           }
 
           // Clear the last notification response to prevent re-handling on next launch
@@ -442,7 +442,7 @@ function AppContent() {
 
       try {
         if (session) {
-          router.replace(ROUTE_PATHS.LIBRARY_TAB);
+          router.replace(ROUTE_PATHS.EXPLORE_TAB);
         } else {
           router.replace(ROUTE_PATHS.AUTH);
         }

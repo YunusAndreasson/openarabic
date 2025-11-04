@@ -132,7 +132,7 @@ function setupNotificationListeners(): void {
     // For default tap action, navigate to Study tab if it's a study reminder
     if (actionIdentifier === 'DEFAULT' && type === 'study-reminder') {
       if (navigationCallback) {
-        navigationCallback(ROUTE_PATHS.STUDY_TAB);
+        navigationCallback(ROUTE_PATHS.PRACTICE_TAB);
       }
     }
   });

@@ -268,7 +268,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
         });
 
         successFeedback();
-        router.replace(ROUTE_PATHS.LIBRARY_TAB);
+        router.replace(ROUTE_PATHS.EXPLORE_TAB);
       } else if (Platform.OS === 'android') {
         // Android: Use web-based OAuth flow
         Sentry.addBreadcrumb({
@@ -386,7 +386,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
         await analytics.trackSignIn('apple');
 
         successFeedback();
-        router.replace(ROUTE_PATHS.LIBRARY_TAB);
+        router.replace(ROUTE_PATHS.EXPLORE_TAB);
       } else {
         const error = new Error('Apple Sign In not supported on this platform');
         Sentry.captureException(error, {

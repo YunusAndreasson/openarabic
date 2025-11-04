@@ -4,6 +4,6 @@ import type { JSX } from 'react';
 import { ROUTE_PATHS } from '@/constants/routes';
 
 export default function Index(): JSX.Element {
-  // Simply redirect to the read tab - the _layout will handle auth checks
-  return <Redirect href={ROUTE_PATHS.LIBRARY_TAB} />;
+  // Simply redirect to the explore tab - the _layout will handle auth checks
+  return <Redirect href={ROUTE_PATHS.EXPLORE_TAB} />;
 }

@@ -324,17 +324,16 @@ export const createWordSet = (
   }>,
 ) => {
   const now = Date.now();
-  return scenarios.map(
-    ({ id, hoursOverdue = 0, stability = 5, state = 0, reps = 0, lapses = 0 }) =>
-      createTestWord({
-        root_id: id as RootId,
-        fsrs_due: new Date(now - hoursOverdue * 3600 * 1000).toISOString(),
-        fsrs_stability: stability,
-        fsrs_difficulty: 6.5,
-        fsrs_state: state,
-        fsrs_reps: reps,
-        fsrs_lapses: lapses,
-      }),
+  return scenarios.map(({ id, hoursOverdue = 0, stability = 5, state = 0, reps = 0, lapses = 0 }) =>
+    createTestWord({
+      root_id: id as RootId,
+      fsrs_due: new Date(now - hoursOverdue * 3600 * 1000).toISOString(),
+      fsrs_stability: stability,
+      fsrs_difficulty: 6.5,
+      fsrs_state: state,
+      fsrs_reps: reps,
+      fsrs_lapses: lapses,
+    }),
   );
 };
 

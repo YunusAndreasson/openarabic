@@ -632,7 +632,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           if (onClose) {
             onClose();
           } else if (fromRemember) {
-            router.replace(ROUTE_PATHS.STUDY_TAB);
+            router.replace(ROUTE_PATHS.PRACTICE_TAB);
           } else {
             router.back();
           }

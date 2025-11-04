@@ -3,9 +3,9 @@ import { ROUTE_PATHS, getArticleRoute, getStudyReviewRoute } from '@/constants/r
 describe('ROUTE_PATHS - /(tabs) prefix', () => {
   it('ensures tab routes include /(tabs) prefix', () => {
     expect(ROUTE_PATHS.TABS.startsWith('/(tabs)')).toBe(true);
-    expect(ROUTE_PATHS.LIBRARY_TAB.startsWith('/(tabs)/')).toBe(true);
-    expect(ROUTE_PATHS.STUDY_TAB.startsWith('/(tabs)/')).toBe(true);
-    expect(ROUTE_PATHS.BOOKMARKS_TAB.startsWith('/(tabs)/')).toBe(true);
+    expect(ROUTE_PATHS.EXPLORE_TAB.startsWith('/(tabs)/')).toBe(true);
+    expect(ROUTE_PATHS.PRACTICE_TAB.startsWith('/(tabs)/')).toBe(true);
+    expect(ROUTE_PATHS.SAVED_TAB.startsWith('/(tabs)/')).toBe(true);
     expect(ROUTE_PATHS.ACCOUNT.startsWith('/(tabs)/')).toBe(true);
     expect(ROUTE_PATHS.STUDY_DICTIONARY.startsWith('/(tabs)/')).toBe(true);
   });

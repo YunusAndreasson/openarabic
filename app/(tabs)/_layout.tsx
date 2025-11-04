@@ -62,7 +62,7 @@ export default function TabLayout(): JSX.Element {
           headerShown: false,
           tabBarActiveTintColor: colors.tint,
           tabBarInactiveTintColor: colors.tabIconDefault,
-          tabBarShowLabel: false,
+          tabBarShowLabel: true,
           tabBarStyle: tabBarStyle,
         }}
       >

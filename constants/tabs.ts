@@ -5,9 +5,9 @@ import type { AppTab } from '@/types/enums';
  * Uses Ionicons icon names with filled/outline variants
  */
 export const TAB_ICONS = {
-  LIBRARY: { filled: 'book', outline: 'book-outline' },
-  BOOKMARKS: { filled: 'bookmark', outline: 'bookmark-outline' },
-  STUDY: { filled: 'school', outline: 'school-outline' },
+  EXPLORE: { filled: 'compass', outline: 'compass-outline' },
+  SAVED: { filled: 'bookmark', outline: 'bookmark-outline' },
+  PRACTICE: { filled: 'repeat', outline: 'repeat-outline' },
 } as const;
 
 export type TabIconConfig = (typeof TAB_ICONS)[keyof typeof TAB_ICONS];
@@ -29,17 +29,17 @@ export interface TabScreenConfig {
 export const TAB_SCREENS: readonly TabScreenConfig[] = [
   {
     name: 'library',
-    title: 'Library' as AppTab,
-    icon: TAB_ICONS.LIBRARY,
+    title: 'Explore' as AppTab,
+    icon: TAB_ICONS.EXPLORE,
   },
   {
     name: 'bookmarks',
-    title: 'Bookmarks' as AppTab,
-    icon: TAB_ICONS.BOOKMARKS,
+    title: 'Saved' as AppTab,
+    icon: TAB_ICONS.SAVED,
   },
   {
     name: 'study',
-    title: 'Study' as AppTab,
-    icon: TAB_ICONS.STUDY,
+    title: 'Practice' as AppTab,
+    icon: TAB_ICONS.PRACTICE,
   },
 ] as const;

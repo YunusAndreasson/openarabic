@@ -173,9 +173,9 @@ export type ContentDifficulty = (typeof ContentDifficulty)[keyof typeof ContentD
  * Using const object for zero runtime overhead
  */
 export const AppTab = {
-  READ: 'Library',
-  LISTEN: 'Bookmarks',
-  PRACTICE: 'Study',
+  EXPLORE: 'Explore',
+  SAVED: 'Saved',
+  PRACTICE: 'Practice',
 } as const;
 
 export type AppTab = (typeof AppTab)[keyof typeof AppTab];
@@ -244,7 +244,7 @@ export enum WordDifficultyAction {
   SHOW_MORE_OFTEN = 'Show more',
   MARK_HARD = 'Mark hard',
   SHOW_LESS_OFTEN = 'Show less',
-  NEEDS_PRACTICE = 'Needs study',
+  NEEDS_PRACTICE = 'Needs practice',
 }
 
 /**
@@ -255,20 +255,20 @@ export enum WordManagementAction {
   HIDE_FROM_SESSION = 'Hide this session',
   RESET_PROGRESS = 'Reset progress',
   START_OVER = 'Start over',
-  STOP_STUDYING = 'Stop studying',
+  STOP_STUDYING = 'Stop practicing',
   REMOVE_FROM_LIST = 'Remove from list',
 }
 
 // ===== REVIEW ACTIONS =====
 
 /**
- * Review confidence actions
+ * Practice confidence actions
  * Using const object for zero runtime overhead
  */
 export const ReviewAction = {
   DONT_KNOW: 'Unknown',
   KNOW: 'Known',
-  STUDY_DUE_WORDS: 'Review Due Words',
+  STUDY_DUE_WORDS: 'Practice Due Words',
 } as const;
 
 export type ReviewAction = (typeof ReviewAction)[keyof typeof ReviewAction];

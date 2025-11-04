@@ -590,7 +590,11 @@ const AccountScreen: FC = () => {
                     <ThemedText type="body" weight="medium">
                       {STRINGS.HELP_CENTER}
                     </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.dangerZoneSubtext}
+                      type="caption"
+                    >
                       {STRINGS.HELP_CENTER_DESCRIPTION}
                     </ThemedText>
                   </View>
@@ -624,7 +628,11 @@ const AccountScreen: FC = () => {
                     <ThemedText type="body" weight="medium">
                       {STRINGS.CONTACT_SUPPORT}
                     </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.dangerZoneSubtext}
+                      type="caption"
+                    >
                       {STRINGS.CONTACT_SUPPORT_DESCRIPTION}
                     </ThemedText>
                   </View>
@@ -658,7 +666,11 @@ const AccountScreen: FC = () => {
                     <ThemedText type="body" weight="medium">
                       {STRINGS.RATE_APP}
                     </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.dangerZoneSubtext}
+                      type="caption"
+                    >
                       {STRINGS.RATE_APP_DESCRIPTION}
                     </ThemedText>
                   </View>
@@ -696,7 +708,11 @@ const AccountScreen: FC = () => {
                     <ThemedText type="body" weight="medium">
                       {STRINGS.TERMS_OF_SERVICE}
                     </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.dangerZoneSubtext}
+                      type="caption"
+                    >
                       {STRINGS.TERMS_DESCRIPTION}
                     </ThemedText>
                   </View>
@@ -730,7 +746,11 @@ const AccountScreen: FC = () => {
                     <ThemedText type="body" weight="medium">
                       {STRINGS.PRIVACY_POLICY}
                     </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.dangerZoneSubtext}
+                      type="caption"
+                    >
                       {STRINGS.PRIVACY_DESCRIPTION}
                     </ThemedText>
                   </View>
@@ -764,7 +784,11 @@ const AccountScreen: FC = () => {
                     <ThemedText type="body" weight="medium">
                       {STRINGS.LEGAL_ATTRIBUTIONS}
                     </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.dangerZoneSubtext} type="caption">
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.dangerZoneSubtext}
+                      type="caption"
+                    >
                       {STRINGS.LEGAL_DESCRIPTION}
                     </ThemedText>
                   </View>
