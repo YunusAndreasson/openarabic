@@ -274,13 +274,6 @@ export function useFSRS({
         const result = fsrsInstance.next(card, now, rating);
         newCard = result.card;
       } catch (error) {
-        // Log error for debugging
-        console.error('FSRS algorithm error:', error, {
-          wordId: currentWord.root_id,
-          currentState: currentWord.fsrs_state,
-          reps: currentWord.fsrs_reps,
-        });
-
         // Track analytics
         handleError(error instanceof Error ? error : new Error(String(error)), {
           toastType: ToastType.ERROR,

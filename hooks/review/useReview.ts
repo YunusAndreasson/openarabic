@@ -154,8 +154,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Utility to stop audio safely
   const stopAudioSafely = useCallback(() => {
-    audioPlayerRef.current.stop().catch(error => {
-      console.warn('[useReview] Audio stop failed:', error);
+    audioPlayerRef.current.stop().catch(() => {
+      // Silent failure
     });
   }, []);
 

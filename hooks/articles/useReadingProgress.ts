@@ -225,13 +225,16 @@ export function useReadingProgress({
         // Mark as recorded to prevent re-running
         hasRecordedOpenRef.current = true;
 
-        // Invalidate bulk query and streak query since article open counts as reading activity
-        queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.keys.bulk(user.id),
-        });
-        queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.keys.streak(user.id),
-        });
+        // Delay query invalidation to avoid race conditions with scroll-to-position
+        // The 2-second delay gives FlashList time to complete the resume scroll animation
+        setTimeout(() => {
+          queryClient.invalidateQueries({
+            queryKey: readingProgressQueries.keys.bulk(user.id),
+          });
+          queryClient.invalidateQueries({
+            queryKey: readingProgressQueries.keys.streak(user.id),
+          });
+        }, 2000);
       } catch (error) {
         // Silent error - article open tracking failed but shouldn't break reading
         handleError(error as Error, {
@@ -273,13 +276,15 @@ export function useReadingProgress({
           // Mark as recorded
           hasRecordedActiveRef.current = true;
 
-          // Invalidate queries to refresh
-          queryClient.invalidateQueries({
-            queryKey: readingProgressQueries.keys.bulk(user.id),
-          });
-          queryClient.invalidateQueries({
-            queryKey: readingProgressQueries.keys.streak(user.id),
-          });
+          // Delay query invalidation to avoid disrupting scroll-to-position
+          setTimeout(() => {
+            queryClient.invalidateQueries({
+              queryKey: readingProgressQueries.keys.bulk(user.id),
+            });
+            queryClient.invalidateQueries({
+              queryKey: readingProgressQueries.keys.streak(user.id),
+            });
+          }, 2000);
         }
       } catch {
         // Silent error - additional tracking failed

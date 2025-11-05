@@ -108,34 +108,11 @@ const queryClient = new QueryClient({
 const navigationIntegration = Sentry.reactNavigationIntegration();
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
-// DIAGNOSTIC: Log environment variables to Sentry breadcrumbs
-// NOTE: User will see these ON SCREEN via test button in auth screen
-// This ensures diagnostic data is included in any Sentry error reports
-Sentry.addBreadcrumb({
-  category: 'env_diagnostic',
-  message: 'Environment variables at app startup',
-  level: 'info',
-  data: {
-    sentry_dsn_full: sentryDsn || '[not set]',
-    sentry_dsn_length: sentryDsn?.length || 0,
-    sentry_dsn_format_valid: sentryDsn?.startsWith('https://') || false,
-    mixpanel_token_full: process.env.EXPO_PUBLIC_MIXPANEL_TOKEN || '[not set]',
-    google_web_client_id_full: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '[not set]',
-    google_ios_client_id_full: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '[not set]',
-  },
-});
-
-// Initialize Sentry with production config + Session Replay
+// Initialize Sentry with production config
 Sentry.init({
   dsn: sentryDsn,
   integrations: [
     navigationIntegration,
-    Sentry.mobileReplayIntegration({
-      // Privacy-first: Mask all user data by default
-      maskAllText: true,
-      maskAllImages: true,
-      maskAllVectors: true,
-    }),
     Sentry.feedbackIntegration({
       // User-friendly configuration for issue reporting
       colorScheme: 'system', // Match app theme (light/dark)
@@ -153,18 +130,12 @@ Sentry.init({
   enabled: !!sentryDsn, // Only enable if DSN is available
   tracesSampleRate: 1.0, // Sample everything (100%)
   attachScreenshot: true, // Helps debug UI crashes
-  debug: __DEV__, // Enable debug logging only in development
+  debug: false, // Disable Sentry debug logging for performance
   enableNative: true, // CRITICAL: Enable native crash reporting
   enableNativeCrashHandling: true, // Catch native crashes
   enableAutoSessionTracking: true, // Track sessions
 
-  // Session Replay configuration
-  // Conservative rates for mobile (battery/bandwidth concerns)
-  replaysSessionSampleRate: __DEV__ ? 1.0 : 0.05, // 5% in production, 100% in dev
-  replaysOnErrorSampleRate: 1.0, // 100% when errors occur (critical for debugging)
-
   beforeSend(event) {
-    console.log('[Sentry] Sending event:', event.event_id, event.message || event.exception);
     // Add environment diagnostic context to all events
     event.contexts = {
       ...event.contexts,
@@ -179,23 +150,6 @@ Sentry.init({
     return event;
   },
 });
-
-console.log('[Sentry] Initialization attempted with DSN:', sentryDsn ? 'present' : 'missing');
-
-// Send initialization event to Sentry to verify it's working
-if (sentryDsn) {
-  console.log('[Sentry] Sending initialization event...');
-  Sentry.captureMessage('Sentry initialized successfully in build', {
-    level: 'info',
-    tags: {
-      location: 'app_init',
-      build_type: __DEV__ ? 'development' : 'production',
-    },
-  });
-  console.log('[Sentry] Initialization event sent');
-} else {
-  console.error('[Sentry] CRITICAL: No DSN found - Sentry is disabled');
-}
 
 function AppContent() {
   const dispatch = useAppDispatch();

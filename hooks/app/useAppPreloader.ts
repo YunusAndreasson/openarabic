@@ -111,8 +111,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
               .catch(() => null); // Silently handle prefetch failures
 
             // Fire-and-forget; do not block loader
-            Promise.allSettled([...imagePrefetches, bulkPrefetchPromise]).catch(error => {
-              console.warn('[useAppPreloader] Featured articles prefetch failed:', error);
+            Promise.allSettled([...imagePrefetches, bulkPrefetchPromise]).catch(() => {
+              // Silent failure
             });
           } catch {
             // ignore prefetch errors
@@ -185,8 +185,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
           ];
 
           // Don't await - let these load in background
-          Promise.allSettled(backgroundPromises).catch(error => {
-            console.warn('[useAppPreloader] Background data loading failed:', error);
+          Promise.allSettled(backgroundPromises).catch(() => {
+            // Silent failure
           });
         }, 500); // Delay background loading by 500ms to prioritize initial UI responsiveness
       }

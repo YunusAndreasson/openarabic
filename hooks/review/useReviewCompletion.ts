@@ -43,9 +43,8 @@ export const useReviewCompletion = (
       // Invalidate study streak queries to update UI immediately
       queryClient.invalidateQueries({ queryKey: ['study-streak', user.id] });
       queryClient.invalidateQueries({ queryKey: ['study-streak-history', user.id] });
-    } catch (error) {
+    } catch {
       // Silently fail - don't block review completion on streak recording failure
-      console.warn('Failed to record study session streak:', error);
     }
 
     // Invalidate all FSRS word queries

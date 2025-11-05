@@ -85,10 +85,8 @@ const captureInSentry = (
       }
       Sentry.captureException(errorObj);
     });
-  } catch (sentryError) {
-    // If Sentry itself fails, log to console as last resort
-    console.error('Failed to capture error in Sentry:', sentryError);
-    console.error('Original error:', errorObj);
+  } catch {
+    // If Sentry itself fails, silently continue
   }
 };
 
@@ -150,18 +148,12 @@ export const handleError = async (
     }
   } catch (errorHandlingError) {
     // Error handling failed - this is a critical meta-failure
-    // Log the original error and the error handling failure
-    console.error('CRITICAL: Error handling failed:', errorHandlingError);
-    console.error('Original error that failed to be handled:', errorObj);
-
     // In development, throw the error to make it visible
     if (__DEV__) {
       throw new Error(
         `Error handling failed: ${errorHandlingError}. Original error: ${errorObj.message}`,
       );
     }
-
-    // In production, at least log to console as a last resort
-    console.error('Error handling system failed - application may be in an inconsistent state');
+    // In production, silently continue
   }
 };

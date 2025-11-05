@@ -147,6 +147,29 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     setIsFlashListReady(true);
   }, []);
 
+  // Capture initial progress values in refs for stable scroll-to-position
+  // These values should never change once captured to avoid race conditions
+  const stableInitialProgressRef = useRef<{
+    lastSentenceRead: number;
+    hadProgress: boolean;
+    captured: boolean;
+  }>({
+    lastSentenceRead: 0,
+    hadProgress: false,
+    captured: false,
+  });
+
+  // Capture initial values once when they first become available
+  useEffect(() => {
+    if (!stableInitialProgressRef.current.captured && !isLoadingArticle) {
+      stableInitialProgressRef.current = {
+        lastSentenceRead: initialLastSentenceRead,
+        hadProgress: hadExistingProgressOnMount,
+        captured: true,
+      };
+    }
+  }, [initialLastSentenceRead, hadExistingProgressOnMount, isLoadingArticle]);
+
   // Handle viewable items changed to track current sentence
   const handleViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -230,32 +253,40 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   }, [currentSentenceIndex, article, isLoadingArticle, updateProgress]);
 
   // Scroll to last read position when FlashList is ready
+  // Using stable ref values to avoid race conditions from query invalidations
   useEffect(() => {
-    if (isFlashListReady && hadExistingProgressOnMount && initialLastSentenceRead > 0) {
-      scrollViewRef.current?.scrollToIndex({
-        index: initialLastSentenceRead + 1,
-        animated: true,
-        viewPosition: 0.1,
+    const stableProgress = stableInitialProgressRef.current;
+
+    if (
+      isFlashListReady &&
+      stableProgress.captured &&
+      stableProgress.hadProgress &&
+      stableProgress.lastSentenceRead > 0
+    ) {
+      // Use requestAnimationFrame for guaranteed timing (FlashList best practice)
+      requestAnimationFrame(() => {
+        scrollViewRef.current?.scrollToIndex({
+          index: stableProgress.lastSentenceRead + 1,
+          animated: true,
+          viewPosition: 0.1,
+        });
+
+        // Show toast notification
+        const totalSentences = sortedSentences?.length ?? 1;
+        const percentage = Math.round((stableProgress.lastSentenceRead / totalSentences) * 100);
+        const message = STRINGS.RESUMED_READING_TEMPLATE.replace(
+          '{percent}',
+          percentage.toString(),
+        );
+        showToast(message, 3000, ToastType.INFO);
+
+        // Light haptic feedback when scroll animation completes
+        setTimeout(() => {
+          selectionFeedback();
+        }, 450);
       });
-
-      // Show toast notification
-      const totalSentences = sortedSentences?.length ?? 1;
-      const percentage = Math.round((initialLastSentenceRead / totalSentences) * 100);
-      const message = STRINGS.RESUMED_READING_TEMPLATE.replace('{percent}', percentage.toString());
-      showToast(message, 3000, ToastType.INFO);
-
-      // Light haptic feedback when scroll animation completes
-      setTimeout(() => {
-        selectionFeedback();
-      }, 450);
     }
-  }, [
-    isFlashListReady,
-    hadExistingProgressOnMount,
-    initialLastSentenceRead,
-    sortedSentences?.length,
-    showToast,
-  ]);
+  }, [isFlashListReady, sortedSentences?.length, showToast]);
 
   // Refetch on app state change
   useEffect(() => {

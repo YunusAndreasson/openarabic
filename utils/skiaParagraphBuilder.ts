@@ -98,8 +98,7 @@ export const buildColoredParagraph = (config: ParagraphConfig): SkParagraph | nu
     paragraph.layout(maxWidth);
 
     return paragraph;
-  } catch (error) {
-    console.warn('Failed to build Skia paragraph:', error);
+  } catch {
     return null;
   }
 };

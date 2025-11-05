@@ -25,7 +25,6 @@ import { useAuthForm } from '@/hooks/auth/useAuthForm';
  * - Error handling
  */
 export function SignUpForm(): JSX.Element {
-  console.log('[SignUpForm] Component rendered');
   const [showPassword, setShowPassword] = useState(false);
   const handleTogglePassword = useCallback(() => {
     setShowPassword(prev => !prev);
@@ -74,7 +73,6 @@ export function SignUpForm(): JSX.Element {
   }, []);
 
   const handleCreateAccount = useCallback(() => {
-    console.log('[SignUpForm] CREATE ACCOUNT button pressed');
     signUpWithEmail();
   }, [signUpWithEmail]);
 

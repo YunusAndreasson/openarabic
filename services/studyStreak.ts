@@ -384,9 +384,8 @@ export class StudySessionStreakService {
     try {
       const activities = await this.getDailyStudySessionActivity(userId, 30);
       return ReadingStreakService.calculateStreak(activities);
-    } catch (error) {
+    } catch {
       // If query fails (e.g., no study_words yet), return empty streak
-      console.warn('Failed to fetch study session streak, returning empty:', error);
       return {
         currentStreak: 0,
         longestStreak: 0,
@@ -418,9 +417,8 @@ export class StudySessionStreakService {
           totalReadingDays: streak.totalReadingDays,
         },
       };
-    } catch (error) {
+    } catch {
       // If query fails, return empty history
-      console.warn('Failed to fetch study session history, returning empty:', error);
       const emptyActivity: DailyReadingActivity[] = [];
       for (let i = 0; i < days; i++) {
         const date = new Date();

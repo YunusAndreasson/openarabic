@@ -75,8 +75,7 @@ export const useSkiaFonts = (): UseSkiaFontsResult => {
         fontStyle: 'normal',
         fontWeight: '400',
       });
-    } catch (error) {
-      console.warn(`Failed to load Skia font ${fontFamily}:`, error);
+    } catch {
       // Fallback to system font
       try {
         return matchFont({
@@ -85,8 +84,7 @@ export const useSkiaFonts = (): UseSkiaFontsResult => {
           fontStyle: 'normal',
           fontWeight: '400',
         });
-      } catch (fallbackError) {
-        console.error('Failed to load fallback font:', fallbackError);
+      } catch {
         return null;
       }
     }
@@ -103,8 +101,7 @@ export const useSkiaFonts = (): UseSkiaFontsResult => {
             fontStyle: 'normal',
             fontWeight: String(FONT_WEIGHT_MAP[weight]) as '400' | '500' | '600' | '700',
           });
-        } catch (error) {
-          console.warn(`Failed to create custom Skia font:`, error);
+        } catch {
           return null;
         }
       },

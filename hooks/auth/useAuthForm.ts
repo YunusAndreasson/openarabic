@@ -136,53 +136,36 @@ export function useAuthForm(): UseAuthFormReturn {
   }, [email, password, validateEmail, validatePassword, isMountedRef]);
 
   const signUpWithEmail = useCallback(async () => {
-    console.log('[SignUp] Button pressed', { email, password: '***' });
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
-    console.log('[SignUp] Validation results', { isEmailValid, isPasswordValid });
     if (!isEmailValid || !isPasswordValid) {
-      console.log('[SignUp] Validation failed, returning early');
       return;
     }
 
     if (!isMountedRef.current) return;
     setLoading(true);
-    console.log('[SignUp] Starting sign-up process...');
 
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
-      console.log('[SignUp] Supabase response', {
-        hasData: !!data,
-        hasError: !!error,
-        errorMessage: error?.message,
-        hasSession: !!data?.session,
-        hasUser: !!data?.user,
-        userId: data?.user?.id,
-      });
       if (error) {
         if (!isMountedRef.current) return;
-        console.log('[SignUp] Sign-up error:', error.message);
         handleError(error, {
           toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${error.message}`,
           analyticsEventName: 'Sign_Up_Error',
           sentrySeverity: 'error',
         });
       } else {
-        console.log('[SignUp] Sign-up successful, user:', data?.user?.id);
-
         // Check if email confirmation is disabled (session created immediately)
         const hasImmediateSession = !!data?.session;
-        console.log('[SignUp] Has immediate session:', hasImmediateSession);
 
         // CRITICAL: Show toast immediately before any async operations that might unmount component
         successFeedback();
 
         // If session exists, user is auto-confirmed and can be logged in
         if (hasImmediateSession) {
-          console.log('[SignUp] Session created immediately, navigating to library');
           showSuccessToast(`${STRINGS.WELCOME_TITLE}! Let's start learning.`, 5000);
           // Navigate to library after brief delay to show toast
           setTimeout(() => {
@@ -190,7 +173,6 @@ export function useAuthForm(): UseAuthFormReturn {
           }, 1000);
         } else {
           // Email confirmation required
-          console.log('[SignUp] Email confirmation required, showing email check message');
           showSuccessToast(STRINGS.CHECK_EMAIL_CONFIRMATION, 5000);
         }
 
@@ -201,14 +183,13 @@ export function useAuthForm(): UseAuthFormReturn {
               email: data.user.email,
               created_at: new Date().toISOString(),
             })
-            .catch(err => {
-              console.log('[SignUp] Analytics identify failed:', err);
+            .catch(() => {
+              // Silent failure for analytics
             });
         }
-        analytics.trackSignUp('email').catch(err => {
-          console.log('[SignUp] Analytics track failed:', err);
+        analytics.trackSignUp('email').catch(() => {
+          // Silent failure for analytics
         });
-        console.log('[SignUp] Analytics calls dispatched');
       }
     } catch (err) {
       if (!isMountedRef.current) return;

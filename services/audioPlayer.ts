@@ -145,9 +145,8 @@ class SimpleAudioService {
             await setIsAudioActiveAsync(true);
           }
         }
-      } catch (error) {
+      } catch {
         // Don't throw errors from AppState listener as it can cause crashes
-        console.warn('AppState audio handling error:', error);
       }
     });
   }
@@ -764,7 +763,7 @@ class SimpleAudioService {
               didJustFinish,
             });
           }
-        } catch (eventError) {
+        } catch {
           // Stop subscription on error
           this.stopEventSubscription();
           // RESET: Clear progress on event error
@@ -780,8 +779,6 @@ class SimpleAudioService {
             reasonForWaitingToPlay: '',
             didJustFinish: false,
           });
-          // Log error for debugging
-          console.error('Audio event subscription failed:', eventError);
         }
       },
     );
@@ -808,9 +805,8 @@ class SimpleAudioService {
         // Just pause - keep player in cache for reuse
         // seekTo(0) on next play will reset position
         this.currentPlayer.pause();
-      } catch (cleanupError) {
-        // Log error instead of throwing (callers don't always catch)
-        console.error('Audio cleanup failed:', cleanupError);
+      } catch {
+        // Silent failure - callers don't always catch
       }
       this.currentPlayer = null;
     }
@@ -848,11 +844,9 @@ class SimpleAudioService {
     listenersCopy.forEach(listener => {
       try {
         listener(this.status);
-      } catch (listenerError) {
+      } catch {
         // Remove problematic listeners
         this.listeners.delete(listener);
-        // Log error instead of throwing (can't throw from forEach)
-        console.error('Audio status listener failed:', listenerError);
       }
     });
   }
