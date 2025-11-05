@@ -1,5 +1,7 @@
 import * as Haptics from 'expo-haptics';
 
+import { store } from '@/store/store';
+
 /**
  * Standardized haptic feedback patterns for consistent user experience
  * Based on semantic meaning rather than technical implementation
@@ -11,9 +13,15 @@ const HAPTIC_DEBOUNCE_MS = 50; // Minimum time between haptic feedback calls
 
 /**
  * Internal function to check if haptic feedback should be triggered
- * based on debounce timing
+ * based on debounce timing and user preferences
  */
 const shouldTriggerHaptic = (): boolean => {
+  // Check if haptics are enabled in settings
+  const state = store.getState();
+  if (!state.settings.hapticsEnabled) {
+    return false;
+  }
+
   if (isHapticBlocked) {
     return false;
   }

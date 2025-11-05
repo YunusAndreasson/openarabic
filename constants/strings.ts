@@ -15,6 +15,8 @@ export const STRINGS = {
   AUDIO_LANGUAGE_BILINGUAL: 'English + Arabic',
   AUDIO_SHUFFLE: 'Shuffle audio',
   AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order in the Saved tab',
+  HAPTICS: 'Haptic feedback',
+  HAPTICS_DESCRIPTION: 'Vibration for button presses and interactions',
   DISPLAY_LANGUAGE: 'Display language',
   DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
   DISPLAY_LANGUAGE_BILINGUAL: 'Arabic + English',
@@ -169,7 +171,7 @@ export const STRINGS = {
   SIGN_IN: 'Sign in',
   SIGN_OUT: 'Sign out',
   ALREADY_HAVE_ACCOUNT: 'Already have an account?',
-  DONT_HAVE_ACCOUNT: "Don't have an account?",
+  DONT_HAVE_ACCOUNT: 'New to OpenArabic?',
   YOUR_EMAIL: 'Email',
   YOUR_PASSWORD: 'Password',
   PASSWORD_REQUIREMENTS_HINT:
@@ -305,7 +307,7 @@ export const STRINGS = {
   DUE_WORDS: 'Due',
 
   INSIGHTS_UNAVAILABLE: 'Insights unavailable',
-  INFO: 'Info',
+  INFO: 'About',
   MEMORY_STRENGTH_INFO: 'About memory strength',
 
   WORD_MASTERY: 'Words Mastered',
@@ -369,9 +371,9 @@ export const STRINGS = {
   COPYRIGHT_SYMBOL: '\u00A9',
   NO_EMAIL: 'No email',
   BYTE_UNITS: ['Bytes', 'KB', 'MB', 'GB'] as const,
-  ERROR_ASYNC_STORAGE_UNAVAILABLE: 'AsyncStorage unavailable, persistence disabled',
-  ERROR_ASYNC_STORAGE_CANNOT_CLEAR: 'AsyncStorage unavailable, cannot clear cache',
-  ERROR_ASYNC_STORAGE_CANNOT_READ: 'AsyncStorage unavailable, cannot read cache',
+  ERROR_ASYNC_STORAGE_UNAVAILABLE: "Couldn't save settings",
+  ERROR_ASYNC_STORAGE_CANNOT_CLEAR: "Couldn't clear cache",
+  ERROR_ASYNC_STORAGE_CANNOT_READ: "Couldn't load settings",
   ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',
 
   // Cache management - clearer and more actionable
@@ -380,8 +382,8 @@ export const STRINGS = {
   NO_CACHE: 'No cache',
   NO_CACHED_FILES: 'No cached files to clear',
   THIS_WILL_DELETE: 'This deletes',
-  AUDIO_REDOWNLOAD_REQUIRED: 'Audio will re-download when needed',
-  DATA_RELOAD_REQUIRED: 'Data will reload when needed',
+  AUDIO_REDOWNLOAD_REQUIRED: 'Audio downloads when you play it',
+  DATA_RELOAD_REQUIRED: 'Data loads when you open the app',
 
   // Reading progress management
   RESET_READING_PROGRESS: 'Reading progress',
@@ -532,7 +534,7 @@ export const STRINGS = {
   FAILED_TO_LOAD_BOOKMARKS: "Couldn't load bookmarks. " + tryAgain,
   FAILED_TO_ADD_TO_READING_LIST: "Couldn't save article. " + tryAgain,
   FAILED_TO_REMOVE_FROM_READING_LIST: "Couldn't remove article. " + tryAgain,
-  FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check save status",
+  FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check save status. " + tryAgain,
 
   // Word management errors
   FAILED_TO_REMOVE_WORD_FROM_STUDY: "Couldn't remove word. " + tryAgain,
@@ -556,7 +558,7 @@ export const STRINGS = {
   // Cache errors
   FAILED_TO_CLEAR_AUDIO_CACHE: "Couldn't clear audio cache. " + tryAgain,
   FAILED_TO_CLEAR_OFFLINE_CACHE: "Couldn't clear cache. " + tryAgain,
-  FAILED_TO_GET_CACHE_SIZE: "Couldn't check cache size",
+  FAILED_TO_GET_CACHE_SIZE: "Couldn't check cache size. " + tryAgain,
 
   // Auth errors
   FAILED_TO_SIGN_OUT: "Couldn't sign out. " + tryAgain,
@@ -592,9 +594,9 @@ export const STRINGS = {
   CACHE_CLEARED_SUCCESSFULLY: cleared('Cache'),
 
   // Filter validation errors
-  INVALID_FILTER_PARAMETERS: 'Invalid filter: type="{type}", id="{id}"',
-  INVALID_FILTER_ID: 'Invalid ID: {id}',
-  INVALID_FILTER_TYPE: 'Invalid type: "{type}"',
+  INVALID_FILTER_PARAMETERS: 'Filter unavailable',
+  INVALID_FILTER_ID: 'Filter unavailable',
+  INVALID_FILTER_TYPE: 'Filter unavailable',
 
   ERROR_EMPTY_USERNAME: 'Username cannot be empty',
   ERROR_EMPTY_EMAIL: 'Email cannot be empty',
@@ -677,9 +679,9 @@ export const STRINGS = {
     'This approach has successfully taught Arabic for centuries. Modern SLA research validates combining authentic texts with translation support for optimal comprehensible input.',
 
   // Audio player errors
-  ERROR_SELECTED_TRACK_NO_URL: 'Selected track has no audio URL',
-  ERROR_SELECTED_TRACK_NOT_FOUND: 'Selected track not found',
-  ERROR_FAILED_PROCESS_FIRST_TRACK: 'Failed to process first track',
+  ERROR_SELECTED_TRACK_NO_URL: "Couldn't start audio. " + tryAgain,
+  ERROR_SELECTED_TRACK_NOT_FOUND: "Couldn't find audio track. " + tryAgain,
+  ERROR_FAILED_PROCESS_FIRST_TRACK: "Couldn't start audio. " + tryAgain,
 
   // Encouraging metrics templates
   ACCURACY_EXCELLENT_TEMPLATE: '{percent}% accuracy',

@@ -23,6 +23,7 @@ export interface SettingsState {
   audioShuffleEnabled: boolean;
   displayLanguagePreference: DisplayLanguagePreference;
   dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
+  hapticsEnabled: boolean; // Vibration for button presses and interactions
 }
 
 const initialState: SettingsState = {
@@ -37,6 +38,7 @@ const initialState: SettingsState = {
   audioShuffleEnabled: false, // Default to sequential playback
   displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH, // Default to Arabic + English
   dailyWordLimit: 10, // Default to 10 words per day for getting started
+  hapticsEnabled: true, // Default to enabled for haptic feedback
 };
 
 const settingsSlice = createSlice({
@@ -64,6 +66,9 @@ const settingsSlice = createSlice({
     setDailyWordLimit: (state, action: PayloadAction<number>) => {
       state.dailyWordLimit = action.payload;
     },
+    setHapticsEnabled: (state, action: PayloadAction<boolean>) => {
+      state.hapticsEnabled = action.payload;
+    },
   },
 });
 
@@ -75,5 +80,6 @@ export const {
   setAudioShuffleEnabled,
   setDisplayLanguagePreference,
   setDailyWordLimit,
+  setHapticsEnabled,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

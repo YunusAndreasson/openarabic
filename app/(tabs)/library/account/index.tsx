@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge } from '@/components/account';
 import { AudioShuffleToggle } from '@/components/account/AudioShuffleToggle';
+import { HapticsToggle } from '@/components/account/HapticsToggle';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
@@ -483,6 +484,12 @@ const AccountScreen: FC = () => {
 
             <BaseCard shadowSize="none" style={styles.interactiveCard}>
               <AudioShuffleToggle />
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard shadowSize="none" style={styles.interactiveCard}>
+              <HapticsToggle />
             </BaseCard>
           </View>
         </BaseCard>
