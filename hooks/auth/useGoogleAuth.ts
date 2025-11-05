@@ -6,6 +6,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
+import { waitForAuthEvent } from '@/utils/authEventWaiter';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 
@@ -389,9 +390,26 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
 
       Sentry.addBreadcrumb({
         category: 'auth',
-        message: 'Google Sign In completed successfully',
+        message: 'Google Sign In completed, waiting for auth state change',
         level: 'info',
       });
+
+      // Wait for auth state change event to ensure session is fully established
+      // This prevents race condition where we navigate before session state updates
+      try {
+        await waitForAuthEvent('SIGNED_IN', 3000);
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Auth state confirmed, navigating to app',
+          level: 'info',
+        });
+      } catch (waitError) {
+        // If timeout, log but continue anyway (session might be ready)
+        Sentry.captureException(waitError, {
+          tags: { location: 'google_auth', step: 'wait_for_event' },
+          level: 'warning',
+        });
+      }
 
       successFeedback();
       router.replace(ROUTE_PATHS.EXPLORE_TAB);
