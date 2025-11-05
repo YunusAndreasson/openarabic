@@ -1,17 +1,20 @@
 import type { FlashListRef } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
+import type { LayoutRectangle } from 'react-native';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ArticleSentence, WordDetailsBottomSheet, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
-import { ToastProvider, useToast } from '@/components/providers';
+import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
+import { TutorialId } from '@/constants/tutorials';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Tables } from '@/types/database.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
 
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
@@ -60,18 +63,52 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleFlashListLoad,
   } = useArticleScreen({ id, showToast });
 
+  // Tutorial management
+  const { shouldShowTutorial, completeTutorial } = useTutorialContext();
+
+  // Freeze tutorial state on mount - keep showing card even after completing
+  const showWordTapTutorialRef = useRef(shouldShowTutorial(TutorialId.WORD_TAP));
+  const showWordTapTutorial = showWordTapTutorialRef.current;
+
+  // Track if user manually dismissed the tutorial card
+  const [isTutorialCardDismissed, setIsTutorialCardDismissed] = useState(false);
+
+  // Handle tutorial card dismissal
+  const handleDismissTutorial = useCallback(() => {
+    setIsTutorialCardDismissed(true);
+    completeTutorial(TutorialId.WORD_TAP);
+  }, [completeTutorial]);
+
+  // Wrap word press handler to complete tutorial when ANY word is tapped
+  const handleWordPressWithTutorial = useCallback(
+    (word: SentenceWord, layout?: LayoutRectangle) => {
+      // Call original handler
+      handleWordPress(word, layout);
+
+      // Complete tutorial (marks as done for next time, but keeps showing this time)
+      if (showWordTapTutorial) {
+        completeTutorial(TutorialId.WORD_TAP);
+      }
+    },
+    [showWordTapTutorial, completeTutorial, handleWordPress],
+  );
+
   // Memoize settings object to prevent recreation on every sentence
   // Always show English alongside Arabic
   const settings = useMemo(() => ({ showEnglish: true }), []);
 
   // Memoize renderSentenceItem to prevent unnecessary recreations
   const renderSentenceItem = useCallback(
-    ({ item }: { item: Tables<'article_sentences'> }) => {
+    ({ item, index }: { item: Tables<'article_sentences'>; index: number }) => {
       const words = sentenceWordsMap.get(item.id) ?? [];
 
       if (!words || words.length === 0) {
         return null;
       }
+
+      // Show tutorial card only on first sentence (unless manually dismissed)
+      const isFirstSentence = index === 0;
+      const showTutorialCard = isFirstSentence && showWordTapTutorial && !isTutorialCardDismissed;
 
       return (
         <ArticleSentence
@@ -80,11 +117,21 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           words={words}
           settings={settings}
           colors={colors}
-          onWordPress={handleWordPress}
+          onWordPress={handleWordPressWithTutorial}
+          showTutorialCard={showTutorialCard}
+          onDismissTutorial={handleDismissTutorial}
         />
       );
     },
-    [sentenceWordsMap, colors, handleWordPress, settings],
+    [
+      sentenceWordsMap,
+      colors,
+      handleWordPressWithTutorial,
+      settings,
+      showWordTapTutorial,
+      isTutorialCardDismissed,
+      handleDismissTutorial,
+    ],
   );
 
   const tooltipProps = useMemo(
@@ -147,8 +194,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   return (
     <>
       {articleContentProps ? <ArticleContent {...articleContentProps} /> : null}
-
-      {/* Removed mini-player for article modal */}
 
       <WordTooltip {...tooltipProps} />
 

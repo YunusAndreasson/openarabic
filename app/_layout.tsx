@@ -29,7 +29,12 @@ import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import { ThemedText } from '@/components/ThemedText';
 import { MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/bookmarks';
-import { AuthProvider, FSRSDataProvider, ToastProvider } from '@/components/providers';
+import {
+  AuthProvider,
+  FSRSDataProvider,
+  ToastProvider,
+  TutorialProvider,
+} from '@/components/providers';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { QUERY_DEFAULTS } from '@/constants/queries';
@@ -564,13 +569,17 @@ export default Sentry.wrap(function RootLayout() {
           <PersistQueryClientProvider client={queryClient} persistOptions={PERSISTENCE_OPTIONS}>
             <AuthProvider>
               <SafeAreaProvider>
-                <BottomSheetModalProvider>
-                  <ToastProvider>
-                    <Sentry.ErrorBoundary fallback={({ error }) => <ErrorFallback error={error} />}>
-                      <AppContent />
-                    </Sentry.ErrorBoundary>
-                  </ToastProvider>
-                </BottomSheetModalProvider>
+                <TutorialProvider>
+                  <BottomSheetModalProvider>
+                    <ToastProvider>
+                      <Sentry.ErrorBoundary
+                        fallback={({ error }) => <ErrorFallback error={error} />}
+                      >
+                        <AppContent />
+                      </Sentry.ErrorBoundary>
+                    </ToastProvider>
+                  </BottomSheetModalProvider>
+                </TutorialProvider>
               </SafeAreaProvider>
             </AuthProvider>
           </PersistQueryClientProvider>

@@ -7,7 +7,7 @@ import { Toggle } from '@ui/Toggle';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { Fragment, memo, useCallback, useMemo, type FC } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Alert, Linking, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { THEME_OPTIONS } from '@/components/ThemePicker';
@@ -21,6 +21,7 @@ import type { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useTutorialContext } from '@/components/providers';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
@@ -42,7 +43,7 @@ import {
 } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
-import { errorFeedback } from '@/utils/haptics';
+import { errorFeedback, successFeedback } from '@/utils/haptics';
 
 // Helper function for enum validation
 function validateEnumValue<T>(value: unknown, validValues: readonly T[], defaultValue: T): T {
@@ -171,6 +172,9 @@ const AccountScreen: FC = () => {
     cacheSize,
   } = useAccountScreen();
 
+  // Tutorial management
+  const { resetAllTutorials } = useTutorialContext();
+
   const currentDailyWordLimitText = useMemo(() => {
     if (currentDailyWordLimit === undefined || currentDailyWordLimit === null) {
       return '10 words'; // Default fallback
@@ -193,6 +197,32 @@ const AccountScreen: FC = () => {
     errorFeedback();
     router.push(ROUTE_PATHS.ACCOUNT_DELETE_ACCOUNT);
   }, []);
+
+  // Reset tutorials handler
+  const handleResetTutorials = useCallback(async () => {
+    Alert.alert(
+      'Reset Tutorials',
+      'This will show first-time help overlays again when you use features.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          onPress: async () => {
+            try {
+              await resetAllTutorials();
+              successFeedback();
+            } catch (error) {
+              errorFeedback();
+              handleError(error as Error, {
+                toastMessage: 'Failed to reset tutorials',
+                analyticsEventName: 'Reset_Tutorials_Failed',
+              });
+            }
+          },
+        },
+      ],
+    );
+  }, [resetAllTutorials]);
 
   // Social Media handlers
   const handleSocialMediaPress = useCallback(async (url: string) => {
@@ -567,6 +597,35 @@ const AccountScreen: FC = () => {
                 </BaseCard>
               </Fragment>
             )}
+
+            <Divider />
+
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleResetTutorials}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="help-circle"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    Show tutorials again
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  color={colors.secondaryMetadataText}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardRightChevron}
+                />
+              </View>
+            </BaseCard>
           </View>
         </BaseCard>
 

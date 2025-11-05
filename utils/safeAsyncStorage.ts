@@ -26,3 +26,6 @@ export const getSafeStorage = (): StorageLike => {
 
   return nullStorage;
 };
+
+// Export a singleton instance for convenience
+export const storage = getSafeStorage();

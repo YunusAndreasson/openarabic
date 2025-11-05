@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,11 +12,15 @@ import {
   ReviewCard,
   ReviewHeader,
 } from '@/components/review';
+import { useTutorialContext } from '@/components/providers';
+import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutorial';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { TutorialId } from '@/constants/tutorials';
 import { useReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
+import { useTutorial } from '@/hooks/tutorials/useTutorial';
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -41,9 +45,8 @@ const baseStyles = StyleSheet.create({
   } as ViewStyle,
 });
 
-export default function ReviewScreen(): JSX.Element {
-  const params = useLocalSearchParams();
-  const fromRemember = params['fromRemember'] === 'true';
+// Main review content component (only rendered after tutorial is dismissed)
+function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element {
   const insets = useSafeAreaInsets();
   const colors = useColors();
 
@@ -203,4 +206,56 @@ export default function ReviewScreen(): JSX.Element {
       </View>
     </View>
   );
+}
+
+export default function ReviewScreen(): JSX.Element {
+  const params = useLocalSearchParams();
+  const fromRemember = params['fromRemember'] === 'true';
+  const colors = useColors();
+
+  // Check if tutorial needs to be shown before starting session
+  const { shouldShowTutorial } = useTutorialContext();
+  const [tutorialDismissed, setTutorialDismissed] = useState(
+    !shouldShowTutorial(TutorialId.SWIPE_GESTURE),
+  );
+
+  // Tutorial management
+  const swipeTutorial = useTutorial(TutorialId.SWIPE_GESTURE);
+
+  // Handle tutorial dismissal
+  const handleTutorialDismiss = () => {
+    setTutorialDismissed(true);
+    swipeTutorial.dismiss();
+  };
+
+  // Show tutorial immediately if needed
+  useEffect(() => {
+    if (shouldShowTutorial(TutorialId.SWIPE_GESTURE)) {
+      swipeTutorial.trigger();
+    }
+  }, []); // Only trigger once on mount
+
+  // Show tutorial with simple background if needed (before session starts)
+  if (!tutorialDismissed) {
+    return (
+      <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
+        <View style={[baseStyles.contentContainer, { justifyContent: 'center' }]}>
+          <PulsatingLoader size={64} />
+          <ThemedText
+            style={{
+              marginTop: LAYOUT.SPACING.MEDIUM,
+              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+              textAlign: 'center',
+            }}
+          >
+            {STRINGS.PREPARING_PRACTICE_SESSION}
+          </ThemedText>
+        </View>
+        <SwipeGestureTutorial visible={swipeTutorial.isVisible} onDismiss={handleTutorialDismiss} />
+      </View>
+    );
+  }
+
+  // After tutorial is dismissed, render the actual review session
+  return <ReviewContent fromRemember={fromRemember} />;
 }

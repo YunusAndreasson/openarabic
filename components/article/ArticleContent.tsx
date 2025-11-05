@@ -88,7 +88,13 @@ interface ArticleContentProps {
   id: string;
   article: Article;
   sortedSentences: Tables<'article_sentences'>[];
-  renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => ReactElement | null;
+  renderSentenceItem: ({
+    item,
+    index,
+  }: {
+    item: Tables<'article_sentences'>;
+    index: number;
+  }) => ReactElement | null;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   handleScrollEnd: () => void;
