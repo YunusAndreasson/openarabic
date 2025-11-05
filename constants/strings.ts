@@ -103,6 +103,11 @@ export const STRINGS = {
   SUMMARY: 'Summary',
   LATEST_READ: 'Latest Read',
 
+  // Article section headings (for progress-based sorting)
+  CONTINUE_READING: 'Continue Reading',
+  UNREAD: 'Unread',
+  COMPLETED: 'Completed',
+
   // Audio controls - shortened button text
   STOP: 'Stop',
   REMOVE: 'Remove',
