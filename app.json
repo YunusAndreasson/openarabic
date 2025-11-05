@@ -2,7 +2,7 @@
   "expo": {
     "name": "Open Arabic",
     "slug": "open-arabic",
-    "version": "1447.5.23",
+    "version": "1447.5.24",
     "description": "Learn Arabic through immersive reading, listening, and spaced repetition practice. Master vocabulary with authentic articles and audio content.",
     "orientation": "portrait",
     "icon": "./assets/images/oaIcon.png",
@@ -12,11 +12,14 @@
     "primaryColor": "#5B7F68",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
-      "buildNumber": "174",
+      "buildNumber": "175",
       "appStoreUrl": "https://apps.apple.com/app/openarabic/id1594031029",
       "newArchEnabled": true,
       "usesAppleSignIn": true,
@@ -26,7 +29,11 @@
         ]
       },
       "infoPlist": {
-        "UIBackgroundModes": ["audio", "processing", "fetch"],
+        "UIBackgroundModes": [
+          "audio",
+          "processing",
+          "fetch"
+        ],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",
@@ -45,7 +52,7 @@
         "foregroundImage": "./assets/images/oaIcon.png"
       },
       "package": "com.edenmind.OpenArabic",
-      "versionCode": 174,
+      "versionCode": 175,
       "permissions": [
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.WAKE_LOCK",
@@ -55,7 +62,10 @@
         "android.permission.VIBRATE",
         "android.permission.READ_MEDIA_IMAGES"
       ],
-      "blockedPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "notification": {
       "icon": "./assets/images/oaIcon.png",
