@@ -29,7 +29,7 @@ export const STRINGS = {
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
   APPEARANCE_SECTION: 'Appearance',
-  DATA_SECTION: 'Data',
+  DATA_SECTION: 'Storage',
   DATA_ACCOUNT_SECTION: 'Account',
   DANGER_ZONE_SECTION: 'Danger zone',
   DANGER_ZONE_DESCRIPTION: 'Destructive actions that permanently delete data',
@@ -141,7 +141,7 @@ export const STRINGS = {
   // Dictionary
   NO_STUDY_WORDS: 'No words to study',
   ADD_WORDS_TO_STUDY_LIST: 'Add words from articles to study',
-  SEARCH_WORDS_PLACEHOLDER: 'Search words...',
+  SEARCH_WORDS_PLACEHOLDER: 'Search words',
   DUE_WORDS_TITLE: 'Due Words',
   MASTERED_WORDS_TITLE: 'Mastered Words',
   DICTIONARY_TITLE: 'All Words',
@@ -176,7 +176,7 @@ export const STRINGS = {
   YOUR_PASSWORD: 'Password',
   PASSWORD_REQUIREMENTS_HINT:
     'At least {minLength} characters with uppercase, lowercase, and a number',
-  ARE_YOU_SURE_SIGN_OUT: 'Are you sure you want to sign out of your account?',
+  ARE_YOU_SURE_SIGN_OUT: 'Sign out of your account?',
   ENTER_VALID_EMAIL: 'Enter a valid email',
   ENTER_PASSWORD: 'Enter your password',
   PASSWORD_ADD_CHARACTER_TYPES: 'Add uppercase, lowercase, and a number',
@@ -184,7 +184,7 @@ export const STRINGS = {
   FORGOT_PASSWORD: 'Forgot password?',
   RESET_PASSWORD: 'Reset password',
   RESET_PASSWORD_EMAIL_SENT: 'Check your email for a password reset link',
-  RESET_PASSWORD_ERROR: 'Failed to send reset email',
+  RESET_PASSWORD_ERROR: "Couldn't send reset email. " + tryAgain,
   EMAIL_CONFIRMATION_REQUIRED: "We'll send you a confirmation email",
   PASSWORD_STRENGTH_WEAK: 'Weak',
   PASSWORD_STRENGTH_FAIR: 'Fair',
@@ -202,7 +202,7 @@ export const STRINGS = {
   // Terms of Service - Full text
   TERMS_EFFECTIVE_DATE: 'Effective Date: January 1, 2025',
   TERMS_INTRO:
-    'Welcome to OpenArabic. By using our app, you agree to these terms. Please read them carefully.',
+    'Welcome to OpenArabic. By using our app, you agree to these terms.',
   TERMS_SERVICE_DESCRIPTION_TITLE: '1. Our Service',
   TERMS_SERVICE_DESCRIPTION:
     'OpenArabic is an Arabic language learning platform. We provide articles, audio content, vocabulary tools, and spaced repetition learning features to help you learn Arabic.',
@@ -362,7 +362,7 @@ export const STRINGS = {
 
   SUPPORT_EMAIL_SUBJECT: 'Open Arabic App Support',
   SUPPORT_EMAIL_BODY_TEMPLATE:
-    'Hi there,\n\nI need help with the Open Arabic app.\n\nApp Version: {version}\nUser Email: {email}\n\nPlease describe your issue below:\n',
+    'Hi there,\n\nI need help with the Open Arabic app.\n\nApp Version: {version}\nUser Email: {email}\n\nDescribe your issue:\n',
   LANGUAGE_LEARNING_SCIENCE: 'Learning science',
   WHY_CLASSICAL_TEXTS: 'Why classical texts',
   CLASSICAL_TEXTS: 'Classical texts',
@@ -378,7 +378,7 @@ export const STRINGS = {
 
   // Cache management - clearer and more actionable
   CLEAR_CACHE: 'App cache',
-  CLEAR_CACHE_BUTTON: 'CLEAR',
+  CLEAR_CACHE_BUTTON: 'Clear',
   NO_CACHE: 'No cache',
   NO_CACHED_FILES: 'No cached files to clear',
   THIS_WILL_DELETE: 'This deletes',
@@ -387,10 +387,10 @@ export const STRINGS = {
 
   // Reading progress management
   RESET_READING_PROGRESS: 'Reading progress',
-  RESET_READING_PROGRESS_CONFIRMATION: 'Are you sure you want to reset all reading progress?',
+  RESET_READING_PROGRESS_CONFIRMATION: 'Reset all reading progress?',
   THIS_WILL_DELETE_ALL_READING_PROGRESS:
     'This will delete reading positions and progress percentages for all articles. This cannot be undone.',
-  READING_PROGRESS_RESET_SUCCESSFULLY: 'Reading progress reset successfully',
+  READING_PROGRESS_RESET_SUCCESSFULLY: 'Reading progress reset',
   FAILED_TO_RESET_READING_PROGRESS: "Couldn't reset reading progress. " + tryAgain,
 
   // Notifications
@@ -579,8 +579,8 @@ export const STRINGS = {
   DELETE_ACCOUNT_ENTER_CONFIRMATION: 'To confirm, type DELETE below:',
   DELETE_ACCOUNT_CONFIRMATION_PLACEHOLDER: 'Type DELETE to confirm',
   DELETE_ACCOUNT_CONFIRMATION_WORD: 'DELETE',
-  DELETE_ACCOUNT_CONFIRMATION_MISMATCH: 'Please type DELETE to confirm',
-  DELETE_ACCOUNT_SUCCESS: 'Account deleted successfully',
+  DELETE_ACCOUNT_CONFIRMATION_MISMATCH: 'Type DELETE to confirm',
+  DELETE_ACCOUNT_SUCCESS: 'Account deleted',
   FAILED_TO_DELETE_ACCOUNT: "Couldn't delete account. " + tryAgain,
   ACCOUNT_DELETION_IN_PROGRESS: 'Deleting account...',
   CANCEL: 'Cancel',
@@ -611,7 +611,7 @@ export const STRINGS = {
   INSTRUCTIONS_TAP_TO_SEE_MEANING: 'Tap to see meaning',
 
   // Delete confirmation modals
-  CONFIRM_DELETE_WORD: 'Are you sure you want to delete this word?',
+  CONFIRM_DELETE_WORD: 'Delete this word?',
   CONFIRM_DELETE_SELECTED: 'Delete selected words?',
   DELETE_FOREVER_WARNING: 'This action cannot be undone.',
 
@@ -719,7 +719,7 @@ export const STRINGS = {
   HELP_GETTING_STARTED: 'Getting Started',
   HELP_ACCOUNT_SETTINGS: 'Account',
   HELP_TROUBLESHOOTING: 'Troubleshooting',
-  HELP_SEARCH_PLACEHOLDER: 'Search help articles...',
+  HELP_SEARCH_PLACEHOLDER: 'Search help articles',
   HELP_SEARCH_RESULTS_SINGULAR: 'result',
   HELP_SEARCH_RESULTS_PLURAL: 'results',
   HELP_NO_RESULTS_TITLE: 'No results found',
