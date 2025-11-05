@@ -245,13 +245,13 @@ const AccountScreen: FC = () => {
           {
             id: DisplayLanguage.ARABIC_ONLY,
             title: STRINGS.DISPLAY_LANGUAGE_ARABIC,
-            subtitle: 'Show only Arabic text in the Library tab. English translations are hidden.',
+            subtitle: STRINGS.DISPLAY_LANGUAGE_ARABIC_SUBTITLE,
             icon: 'text' as const,
           },
           {
             id: DisplayLanguage.ARABIC_ENGLISH,
-            title: STRINGS.DISPLAY_LANGUAGE_BILINGUAL,
-            subtitle: 'Show Arabic text with English translations in the Library tab.',
+            title: STRINGS.BILINGUAL_LABEL,
+            subtitle: STRINGS.DISPLAY_LANGUAGE_BILINGUAL_SUBTITLE,
             icon: 'language' as const,
           },
         ],
@@ -264,14 +264,13 @@ const AccountScreen: FC = () => {
           {
             id: AudioLanguage.ARABIC_ONLY,
             title: STRINGS.AUDIO_LANGUAGE_ARABIC,
-            subtitle:
-              'Play only Arabic audio in the Bookmarks tab. English translations are skipped.',
+            subtitle: STRINGS.AUDIO_LANGUAGE_ARABIC_SUBTITLE,
             icon: 'volume-high' as const,
           },
           {
             id: AudioLanguage.ENGLISH_ARABIC,
-            title: STRINGS.AUDIO_LANGUAGE_BILINGUAL,
-            subtitle: 'Play English translation followed by Arabic audio in the Bookmarks tab.',
+            title: STRINGS.BILINGUAL_LABEL,
+            subtitle: STRINGS.AUDIO_LANGUAGE_BILINGUAL_SUBTITLE,
             icon: 'language' as const,
           },
         ],
@@ -321,15 +320,11 @@ const AccountScreen: FC = () => {
 
   // Get current language display text
   const currentLanguageText =
-    currentLanguage === 'arabic'
-      ? STRINGS.DISPLAY_LANGUAGE_ARABIC
-      : STRINGS.DISPLAY_LANGUAGE_BILINGUAL;
+    currentLanguage === 'arabic' ? STRINGS.DISPLAY_LANGUAGE_ARABIC : STRINGS.BILINGUAL_LABEL;
 
   // Get current audio language display text
   const currentAudioLanguageText =
-    currentAudioLanguage === 'arabic'
-      ? STRINGS.AUDIO_LANGUAGE_ARABIC
-      : STRINGS.AUDIO_LANGUAGE_BILINGUAL;
+    currentAudioLanguage === 'arabic' ? STRINGS.AUDIO_LANGUAGE_ARABIC : STRINGS.BILINGUAL_LABEL;
 
   // Get current Arabic font display text
   const currentArabicFontText = useMemo(() => {
@@ -593,18 +588,9 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <View style={styles.textContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.HELP_CENTER}
-                    </ThemedText>
-                    <ThemedText
-                      colorName="textTertiary"
-                      style={styles.dangerZoneSubtext}
-                      type="caption"
-                    >
-                      {STRINGS.HELP_CENTER_DESCRIPTION}
-                    </ThemedText>
-                  </View>
+                  <ThemedText type="body" weight="medium">
+                    {STRINGS.HELP_CENTER}
+                  </ThemedText>
                 </View>
                 <Ionicons
                   color={colors.secondaryMetadataText}
@@ -631,18 +617,9 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <View style={styles.textContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.CONTACT_SUPPORT}
-                    </ThemedText>
-                    <ThemedText
-                      colorName="textTertiary"
-                      style={styles.dangerZoneSubtext}
-                      type="caption"
-                    >
-                      {STRINGS.CONTACT_SUPPORT_DESCRIPTION}
-                    </ThemedText>
-                  </View>
+                  <ThemedText type="body" weight="medium">
+                    {STRINGS.CONTACT_SUPPORT}
+                  </ThemedText>
                 </View>
                 <Ionicons
                   color={colors.secondaryMetadataText}
@@ -669,18 +646,9 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <View style={styles.textContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.RATE_APP}
-                    </ThemedText>
-                    <ThemedText
-                      colorName="textTertiary"
-                      style={styles.dangerZoneSubtext}
-                      type="caption"
-                    >
-                      {STRINGS.RATE_APP_DESCRIPTION}
-                    </ThemedText>
-                  </View>
+                  <ThemedText type="body" weight="medium">
+                    {STRINGS.RATE_APP}
+                  </ThemedText>
                 </View>
                 <Ionicons
                   color={colors.secondaryMetadataText}
@@ -711,18 +679,9 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <View style={styles.textContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.TERMS_OF_SERVICE}
-                    </ThemedText>
-                    <ThemedText
-                      colorName="textTertiary"
-                      style={styles.dangerZoneSubtext}
-                      type="caption"
-                    >
-                      {STRINGS.TERMS_DESCRIPTION}
-                    </ThemedText>
-                  </View>
+                  <ThemedText type="body" weight="medium">
+                    {STRINGS.TERMS_OF_SERVICE}
+                  </ThemedText>
                 </View>
                 <Ionicons
                   color={colors.secondaryMetadataText}
@@ -749,18 +708,9 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <View style={styles.textContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.PRIVACY_POLICY}
-                    </ThemedText>
-                    <ThemedText
-                      colorName="textTertiary"
-                      style={styles.dangerZoneSubtext}
-                      type="caption"
-                    >
-                      {STRINGS.PRIVACY_DESCRIPTION}
-                    </ThemedText>
-                  </View>
+                  <ThemedText type="body" weight="medium">
+                    {STRINGS.PRIVACY_POLICY}
+                  </ThemedText>
                 </View>
                 <Ionicons
                   color={colors.secondaryMetadataText}
@@ -787,18 +737,9 @@ const AccountScreen: FC = () => {
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
-                  <View style={styles.textContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.LEGAL_ATTRIBUTIONS}
-                    </ThemedText>
-                    <ThemedText
-                      colorName="textTertiary"
-                      style={styles.dangerZoneSubtext}
-                      type="caption"
-                    >
-                      {STRINGS.LEGAL_DESCRIPTION}
-                    </ThemedText>
-                  </View>
+                  <ThemedText type="body" weight="medium">
+                    {STRINGS.LEGAL_ATTRIBUTIONS}
+                  </ThemedText>
                 </View>
                 <Ionicons
                   color={colors.secondaryMetadataText}

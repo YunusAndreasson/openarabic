@@ -13,19 +13,19 @@ export const THEME_OPTIONS: ThemeOption[] = [
   {
     id: Theme.Light,
     title: STRINGS.THEME_BIRCHES,
-    subtitle: 'Clean, bright interface with crisp contrast for daytime reading',
+    subtitle: 'Light theme',
     icon: 'sunny',
   },
   {
     id: Theme.Dark,
     title: STRINGS.THEME_MIDNIGHT,
-    subtitle: 'Gentle on the eyes with cool, calming tones for comfortable evening study',
+    subtitle: 'Dark theme',
     icon: 'moon',
   },
   {
     id: Theme.Sepia,
     title: STRINGS.THEME_AUTUMN,
-    subtitle: 'Warm, nostalgic tones reminiscent of aged parchment for cozy reading',
+    subtitle: 'Sepia theme',
     icon: 'leaf',
   },
 ];

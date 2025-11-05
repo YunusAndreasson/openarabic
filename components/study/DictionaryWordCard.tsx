@@ -12,10 +12,7 @@ import { useTransformAnimation } from '@/hooks/animations';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import {
-  calculateStabilityProgress,
-  getStabilityProgressColor,
-} from '@/utils/urgencyScore';
+import { calculateStabilityProgress, getStabilityProgressColor } from '@/utils/urgencyScore';
 
 interface DictionaryWordCardProps {
   word: StudyWord;

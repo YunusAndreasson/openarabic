@@ -22,7 +22,7 @@ const DEFAULT_SNAP_POINTS = [320];
 export interface SettingsPickerOption<T> {
   id: T;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   icon: keyof typeof Ionicons.glyphMap;
 }
 
@@ -228,9 +228,15 @@ export const SettingsPicker = <T,>({
                       >
                         {option.title}
                       </ThemedText>
-                      <ThemedText type="caption" variant="secondary" style={styles.optionSubtitle}>
-                        {option.subtitle}
-                      </ThemedText>
+                      {option.subtitle && (
+                        <ThemedText
+                          type="caption"
+                          variant="secondary"
+                          style={styles.optionSubtitle}
+                        >
+                          {option.subtitle}
+                        </ThemedText>
+                      )}
                     </View>
                   </View>
                 </View>

@@ -7,6 +7,7 @@ import { ColorCodedText } from '@/components/common/ColorCodedText';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useAudioSubscription } from '@/hooks/audio/useAudioSubscription';
 import { useColors } from '@/hooks/theme/useColors';
 import { audioCache } from '@/services/audioCache';
@@ -200,7 +201,9 @@ export function WordDetailsBottomSheet({
               style={styles.actionButton}
             />
             <ThemedButton
-              title={optimisticIsInStudyList ? 'Remove from Study' : 'Add to Study'}
+              title={
+                optimisticIsInStudyList ? STRINGS.REMOVE_FROM_PRACTICE : STRINGS.ADD_TO_PRACTICE
+              }
               variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
               onPress={handleAddToStudy}
               style={styles.actionButton}

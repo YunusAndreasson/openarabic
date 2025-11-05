@@ -183,12 +183,11 @@ describe('waitForAuthEvent', () => {
     jest.advanceTimersByTime(4999);
 
     // Promise should not be rejected yet
-    await Promise.race([
-      promise.then(() => 'resolved'),
-      Promise.resolve('not-yet'),
-    ]).then(result => {
-      expect(result).toBe('not-yet');
-    });
+    await Promise.race([promise.then(() => 'resolved'), Promise.resolve('not-yet')]).then(
+      result => {
+        expect(result).toBe('not-yet');
+      },
+    );
 
     // Advance past default timeout
     jest.advanceTimersByTime(1);

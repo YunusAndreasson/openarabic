@@ -46,24 +46,12 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     }
 
     if (streakHistory) {
-      const hasActiveStreak = streakHistory.metrics.currentStreak > 0;
-      const subtitle = hasActiveStreak
-        ? 'Keep up the great momentum'
-        : 'Start building your reading habit';
-
       return (
         <>
           {/* Header */}
           <View style={styles.header}>
             <ThemedText type="heading3" weight="bold" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
               Reading streak
-            </ThemedText>
-            <ThemedText
-              type="body"
-              colorName="textTertiary"
-              style={LAYOUT.BOTTOM_SHEET.STYLES.subtitle}
-            >
-              {subtitle}
             </ThemedText>
           </View>
 
@@ -76,13 +64,6 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
           <View style={styles.chartContainer}>
             <ThemedText type="heading3" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
               Last 30 days
-            </ThemedText>
-            <ThemedText
-              type="body"
-              colorName="textTertiary"
-              style={[LAYOUT.BOTTOM_SHEET.STYLES.subtitle, styles.chartSubtitle]}
-            >
-              Each bar shows a reading day
             </ThemedText>
             <StreakChart
               dailyActivity={streakHistory.dailyActivity}

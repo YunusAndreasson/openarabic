@@ -10,16 +10,22 @@ export const STRINGS = {
   THEME: 'Theme',
   DARK_MODE: 'Dark mode',
   ARABIC_FONT: 'Arabic font',
+
+  // Shared bilingual label
+  BILINGUAL_LABEL: 'English + Arabic',
+
   AUDIO_LANGUAGE: 'Audio language',
   AUDIO_LANGUAGE_ARABIC: 'Arabic only',
-  AUDIO_LANGUAGE_BILINGUAL: 'English + Arabic',
+  AUDIO_LANGUAGE_ARABIC_SUBTITLE: 'Play only Arabic audio',
+  AUDIO_LANGUAGE_BILINGUAL_SUBTITLE: 'Play bilingual audio (English then Arabic)',
   AUDIO_SHUFFLE: 'Shuffle audio',
   AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order in the Saved tab',
   HAPTICS: 'Haptic feedback',
   HAPTICS_DESCRIPTION: 'Vibration for button presses and interactions',
   DISPLAY_LANGUAGE: 'Display language',
   DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
-  DISPLAY_LANGUAGE_BILINGUAL: 'Arabic + English',
+  DISPLAY_LANGUAGE_ARABIC_SUBTITLE: 'Show only Arabic text',
+  DISPLAY_LANGUAGE_BILINGUAL_SUBTITLE: 'Show Arabic with English translations',
   DAILY_WORD_LIMIT: 'Daily word limit',
   DAILY_WORD_LIMIT_DESCRIPTION: 'Maximum number of words per day',
 
@@ -139,8 +145,8 @@ export const STRINGS = {
     'Tap words while reading articles, then practice at optimal intervals with spaced repetition',
 
   // Dictionary
-  NO_STUDY_WORDS: 'No words to study',
-  ADD_WORDS_TO_STUDY_LIST: 'Add words from articles to study',
+  NO_STUDY_WORDS: 'No words to practice',
+  ADD_WORDS_TO_STUDY_LIST: 'Add words from articles to practice',
   SEARCH_WORDS_PLACEHOLDER: 'Search words',
   DUE_WORDS_TITLE: 'Due Words',
   MASTERED_WORDS_TITLE: 'Mastered Words',
@@ -154,8 +160,12 @@ export const STRINGS = {
 
   ADDED_TO_BOOKMARKS: 'Saved to bookmarks',
   REMOVED_FROM_BOOKMARKS: 'Removed from bookmarks',
-  ADDED_TO_STUDY_LIST: 'Added to study list',
-  REMOVED_FROM_STUDY_LIST: 'Removed from study list',
+  ADDED_TO_STUDY_LIST: 'Added to practice list',
+  REMOVED_FROM_STUDY_LIST: 'Removed from practice list',
+
+  // Word action buttons
+  ADD_TO_PRACTICE: 'Add to Practice',
+  REMOVE_FROM_PRACTICE: 'Remove from Practice',
 
   ACCOUNT_CREATED: 'Account created',
   CHECK_EMAIL_CONFIRMATION: 'Check your email for confirmation',
@@ -201,8 +211,7 @@ export const STRINGS = {
 
   // Terms of Service - Full text
   TERMS_EFFECTIVE_DATE: 'Effective Date: January 1, 2025',
-  TERMS_INTRO:
-    'Welcome to OpenArabic. By using our app, you agree to these terms.',
+  TERMS_INTRO: 'Welcome to OpenArabic. By using our app, you agree to these terms.',
   TERMS_SERVICE_DESCRIPTION_TITLE: '1. Our Service',
   TERMS_SERVICE_DESCRIPTION:
     'OpenArabic is an Arabic language learning platform. We provide articles, audio content, vocabulary tools, and spaced repetition learning features to help you learn Arabic.',
@@ -333,7 +342,6 @@ export const STRINGS = {
     'Percentage of words you are expected to recall at a given time. Target at least 75% before adding new words',
   WORD_MASTERY_SUBTITLE: 'Words with strong, stable memories requiring minimal review',
   LEARNED_WORDS_SUBTITLE: 'Words you are learning that are building toward mastery',
-  LEARNING_RATE_SUBTITLE: 'Learning efficiency and speed trends over recent days',
   DUE_WORDS_FORECAST_SUBTITLE: 'Upcoming reviews for the next 7 days',
   MEMORY_RETENTION_OPTIMAL_TIMING:
     'Optimal review scheduling, indicating daily recall to guide retention.',
@@ -349,16 +357,10 @@ export const STRINGS = {
 
   // Account - Support section
   HELP_CENTER: 'Help Center',
-  HELP_CENTER_DESCRIPTION: 'Browse frequently asked questions',
   CONTACT_SUPPORT: 'Contact Support',
-  CONTACT_SUPPORT_DESCRIPTION: 'Get help via email',
-  RATE_APP_DESCRIPTION: 'Share your feedback on the App Store',
 
   // Account - About section
   ABOUT_SECTION: 'About',
-  TERMS_DESCRIPTION: 'User agreement and terms',
-  PRIVACY_DESCRIPTION: 'How we handle your data',
-  LEGAL_DESCRIPTION: 'Open source licenses and credits',
 
   SUPPORT_EMAIL_SUBJECT: 'Open Arabic App Support',
   SUPPORT_EMAIL_BODY_TEMPLATE:
@@ -542,8 +544,8 @@ export const STRINGS = {
   FAILED_TO_SKIP_WORD_FOR_TODAY: "Couldn't skip word. " + tryAgain,
   FAILED_TO_MARK_WORD_AS_EASY: "Couldn't mark easy. " + tryAgain,
   FAILED_TO_MARK_WORD_AS_HARD: "Couldn't mark hard. " + tryAgain,
-  ERROR_UPDATING_STUDY_LIST: "Couldn't update study list. " + tryAgain,
-  FAILED_TO_LOAD_STUDY_WORDS: "Couldn't load study words. " + tryAgain,
+  ERROR_UPDATING_STUDY_LIST: "Couldn't update practice list. " + tryAgain,
+  FAILED_TO_LOAD_STUDY_WORDS: "Couldn't load practice words. " + tryAgain,
   FAILED_TO_UPDATE_WORD: "Couldn't update word. " + tryAgain,
   FAILED_TO_RECORD_REVIEW: "Couldn't record review. " + tryAgain,
   FAILED_TO_UPDATE_WORD_AND_REVIEW: "Couldn't update word and record review. " + tryAgain,
@@ -730,7 +732,7 @@ export const STRINGS = {
     "Can't find what you're looking for? Contact the developer directly.",
 
   // FAQ Questions and Answers
-  FAQ_HOW_TO_ADD_WORDS_Q: 'How do I add words to study?',
+  FAQ_HOW_TO_ADD_WORDS_Q: 'How do I add words to practice?',
   FAQ_HOW_TO_ADD_WORDS_A:
     'Explore articles in the Explore tab and tap on any Arabic word to add it to your vocabulary list. The app uses spaced repetition to help you learn effectively.',
 
@@ -760,7 +762,7 @@ export const STRINGS = {
 
   FAQ_PRACTICE_OFFLINE_Q: 'Can I practice without internet?',
   FAQ_PRACTICE_OFFLINE_A:
-    "Yes! Once you've added words and they've synced, you can study vocabulary anywhere. Audio requires internet for first-time downloads.",
+    "Yes! Once you've added words and they've synced, you can practice vocabulary anywhere. Audio requires internet for first-time downloads.",
 
   // Chart empty states
   CHART_EMPTY_STATE: 'Add your first words to start tracking your progress',

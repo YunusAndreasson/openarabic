@@ -88,8 +88,8 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         />,
       );
 
-      // Button should show "ADD TO STUDY" initially (uppercase in rendered output)
-      expect(getByText('ADD TO STUDY')).toBeTruthy();
+      // Button should show "ADD TO PRACTICE" initially (uppercase in rendered output)
+      expect(getByText('ADD TO PRACTICE')).toBeTruthy();
     });
 
     it('should sync optimistic state when isInStudyList prop changes', async () => {
@@ -103,7 +103,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         />,
       );
 
-      expect(getByText('ADD TO STUDY')).toBeTruthy();
+      expect(getByText('ADD TO PRACTICE')).toBeTruthy();
 
       // Change prop to true
       rerender(
@@ -116,9 +116,9 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         />,
       );
 
-      // Button should update to "REMOVE FROM STUDY"
+      // Button should update to "REMOVE FROM PRACTICE"
       await waitFor(() => {
-        expect(getByText('REMOVE FROM STUDY')).toBeTruthy();
+        expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
       });
     });
 
@@ -135,12 +135,12 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         />,
       );
 
-      const addButton = getByText('ADD TO STUDY');
+      const addButton = getByText('ADD TO PRACTICE');
       fireEvent.press(addButton);
 
       // Optimistic update should happen immediately
       await waitFor(() => {
-        expect(getByText('REMOVE FROM STUDY')).toBeTruthy();
+        expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
       });
 
       expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord);
@@ -168,7 +168,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       );
 
       // First press: Add
-      const addButton = getByText('ADD TO STUDY');
+      const addButton = getByText('ADD TO PRACTICE');
       fireEvent.press(addButton);
 
       // Immediately update prop to simulate parent state change
@@ -183,19 +183,19 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       );
 
       await waitFor(() => {
-        expect(getByText('REMOVE FROM STUDY')).toBeTruthy();
+        expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
       });
 
       // Second press: Remove (while first operation still pending)
-      const removeButton = getByText('REMOVE FROM STUDY');
+      const removeButton = getByText('REMOVE FROM PRACTICE');
       fireEvent.press(removeButton);
 
       // 🐛 BUG: Optimistic state may desync here
-      // Expected: Button shows "ADD TO STUDY"
-      // Actual (with bug): Button may still show "REMOVE FROM STUDY"
+      // Expected: Button shows "ADD TO PRACTICE"
+      // Actual (with bug): Button may still show "REMOVE FROM PRACTICE"
 
       await waitFor(() => {
-        expect(getByText('ADD TO STUDY')).toBeTruthy();
+        expect(getByText('ADD TO PRACTICE')).toBeTruthy();
       });
 
       expect(callCount).toBe(2);
@@ -215,17 +215,17 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         />,
       );
 
-      const addButton = getByText('ADD TO STUDY');
+      const addButton = getByText('ADD TO PRACTICE');
       fireEvent.press(addButton);
 
       // Optimistic update happens immediately
       await waitFor(() => {
-        expect(getByText('REMOVE FROM STUDY')).toBeTruthy();
+        expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
       });
 
       // Wait for error and rollback
       await waitFor(() => {
-        expect(getByText('ADD TO STUDY')).toBeTruthy();
+        expect(getByText('ADD TO PRACTICE')).toBeTruthy();
       });
 
       expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord);
@@ -245,7 +245,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       );
 
       // Component should not render when word is null
-      expect(queryByText('ADD TO STUDY')).toBeNull();
+      expect(queryByText('ADD TO PRACTICE')).toBeNull();
     });
 
     it('should not call onAddToStudy if word is null', async () => {
@@ -270,7 +270,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         />,
       );
 
-      expect(queryByText('ADD TO STUDY')).toBeNull();
+      expect(queryByText('ADD TO PRACTICE')).toBeNull();
       expect(mockOnAddToStudy).not.toHaveBeenCalled();
     });
 
@@ -288,10 +288,10 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       );
 
       // Press add button
-      fireEvent.press(getByText('ADD TO STUDY'));
+      fireEvent.press(getByText('ADD TO PRACTICE'));
 
       await waitFor(() => {
-        expect(getByText('REMOVE FROM STUDY')).toBeTruthy();
+        expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
       });
 
       // Change to different word with same root_id
@@ -308,13 +308,13 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           onClose={mockOnClose}
           word={differentWord}
           onAddToStudy={mockOnAddToStudy}
-          isInStudyList={true} // Parent says it's in study list
+          isInStudyList={true} // Parent says it's in practice list
         />,
       );
 
-      // Should show "REMOVE FROM STUDY" based on prop
+      // Should show "REMOVE FROM PRACTICE" based on prop
       await waitFor(() => {
-        expect(getByText('REMOVE FROM STUDY')).toBeTruthy();
+        expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
       });
     });
   });
@@ -333,12 +333,12 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         />,
       );
 
-      // User clicks "ADD TO STUDY"
-      fireEvent.press(getByText('ADD TO STUDY'));
+      // User clicks "ADD TO PRACTICE"
+      fireEvent.press(getByText('ADD TO PRACTICE'));
 
       // Optimistic update
       await waitFor(() => {
-        expect(getByText('REMOVE FROM STUDY')).toBeTruthy();
+        expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
       });
 
       // Parent updates prop after mutation completes
@@ -348,12 +348,12 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
           onClose={mockOnClose}
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
-          isInStudyList={true} // Parent confirms word is in study list
+          isInStudyList={true} // Parent confirms word is in practice list
         />,
       );
 
       // State should remain consistent
-      expect(getByText('REMOVE FROM STUDY')).toBeTruthy();
+      expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
     });
 
     it('should handle parent state lagging behind optimistic update', async () => {
@@ -372,12 +372,12 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         />,
       );
 
-      // User clicks "ADD TO STUDY"
-      fireEvent.press(getByText('ADD TO STUDY'));
+      // User clicks "ADD TO PRACTICE"
+      fireEvent.press(getByText('ADD TO PRACTICE'));
 
       // Optimistic update happens immediately
       await waitFor(() => {
-        expect(getByText('REMOVE FROM STUDY')).toBeTruthy();
+        expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
       });
 
       // Parent hasn't updated yet (still false)

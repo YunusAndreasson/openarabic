@@ -149,8 +149,8 @@ export const buildSimpleParagraph = (
     paragraph.layout(maxWidth);
 
     return paragraph;
-  } catch (error) {
-    console.warn('Failed to build simple Skia paragraph:', error);
+  } catch {
+    // Failed to build paragraph - return null for graceful degradation
     return null;
   }
 };

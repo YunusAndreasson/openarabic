@@ -132,15 +132,14 @@ export const FeedbackForm = memo(() => {
             });
 
           if (uploadError) {
-            console.warn('[Feedback] Screenshot upload failed:', uploadError);
+            // Screenshot upload failed - continue without screenshot
           } else if (data) {
             const {
               data: { publicUrl },
             } = supabase.storage.from('feedback-screenshots').getPublicUrl(filename);
             screenshotUrl = publicUrl;
           }
-        } catch (uploadError) {
-          console.warn('[Feedback] Screenshot upload error:', uploadError);
+        } catch {
           // Continue with feedback submission even if screenshot fails
         }
       }
@@ -165,13 +164,11 @@ export const FeedbackForm = memo(() => {
         ? `${message.trim()}\n\nScreenshot: ${screenshotUrl}`
         : message.trim();
 
-      const feedbackId = Sentry.captureFeedback({
+      Sentry.captureFeedback({
         name: user?.email?.split('@')[0] || 'Anonymous',
         email: user?.email || 'no-email@example.com',
         message: feedbackMessage,
       });
-
-      console.log('[Feedback] Feedback captured with ID:', feedbackId);
 
       lightFeedback();
       router.back();
@@ -184,7 +181,6 @@ export const FeedbackForm = memo(() => {
         );
       }, 300);
     } catch (error) {
-      console.error('[Feedback] Error capturing feedback:', error);
       handleError(error as Error, {
         showToast: false,
         analyticsEventName: 'Feedback_Capture_Error',
