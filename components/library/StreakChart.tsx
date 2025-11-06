@@ -106,6 +106,13 @@ export const StreakChart = memo<StreakChartProps>(
         // Convert to RGBA color for Skia
         const color = hexToRGBA(barColor, barOpacity);
 
+        // DEBUG: Log rendering details for active bars
+        if (hasActivity && index >= dailyActivity.length - 5) {
+          console.log(
+            `  → Rendering: x=${x.toFixed(1)}, width=${barWidth.toFixed(1)}, color=${color}`,
+          );
+        }
+
         return {
           key: activity.date,
           x,
