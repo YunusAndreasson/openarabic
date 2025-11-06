@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { BottomControls } from '@/components/bookmarks/BottomControls';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
+import { useToast } from '@/components/providers/ToastProvider';
 import { DueWordsBottomSheet } from '@/components/study/DueWordsBottomSheet';
 import { MemoryRetentionBottomSheet } from '@/components/study/MemoryRetentionBottomSheet';
 import { RecommendationCard } from '@/components/study/RecommendationCard';
@@ -31,9 +32,9 @@ import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
-import { ReviewAction } from '@/types/enums';
+import { ReviewAction, ToastType } from '@/types/enums';
 import { getBeginnerArticles } from '@/utils/articleUtils';
-import { mediumFeedback } from '@/utils/haptics';
+import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
 export default function VocabularyScreen(): JSX.Element {
@@ -42,6 +43,7 @@ export default function VocabularyScreen(): JSX.Element {
   const router = useRouter();
   const { prefetchVocabularyData, prefetchArticle } = useAppPreloader();
   const colors = useColors();
+  const { showToast } = useToast();
 
   // Fetch all articles (same query as library) and extract beginner articles
   const { data: allArticles = [] } = useQuery(articleQueries.all());
@@ -137,6 +139,12 @@ export default function VocabularyScreen(): JSX.Element {
     mediumFeedback();
     router.push(getStudyReviewRoute());
   }, [user, router]);
+
+  // Handle disabled button press - educate user about SRS timing
+  const handleDisabledReviewPress = useCallback(() => {
+    selectionFeedback();
+    showToast(STRINGS.WORDS_STABILIZING, undefined, ToastType.INFO);
+  }, [showToast]);
 
   // Bottom sheet handler
   const handleBottomSheetChange = useCallback(
@@ -370,6 +378,7 @@ export default function VocabularyScreen(): JSX.Element {
             primaryLabel={ReviewAction.STUDY_DUE_WORDS}
             onPrimaryPress={handleStartReview}
             primaryDisabled={dueWordsCount === 0}
+            onPrimaryDisabledPress={handleDisabledReviewPress}
           />
         </View>
       )}

@@ -10,6 +10,7 @@ export type BottomControlsProps = {
   onPrimaryPress: () => void;
   primaryDisabled?: boolean;
   primaryLoading?: boolean;
+  onPrimaryDisabledPress?: () => void;
 
   secondaryLabel?: string;
   onSecondaryPress?: () => void;
@@ -22,6 +23,7 @@ export const BottomControls = memo<BottomControlsProps>(
     onPrimaryPress,
     primaryDisabled = false,
     primaryLoading = false,
+    onPrimaryDisabledPress,
     secondaryLabel,
     onSecondaryPress,
     secondaryDisabled = false,
@@ -80,6 +82,7 @@ export const BottomControls = memo<BottomControlsProps>(
               style={[styles.button, LAYOUT.ELEVATION.MEDIUM, dynamicStyles.primaryButton]}
               title={primaryLabel}
               onPress={onPrimaryPress}
+              onDisabledPress={onPrimaryDisabledPress}
               enableOptimisticLoading={primaryLabel === 'PLAY ALL'}
               testID="primary-action-button"
             />

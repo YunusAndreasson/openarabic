@@ -35,6 +35,8 @@ export interface BaseButtonProps extends Omit<PressableProps, 'style'>, BaseAnim
   enableOptimisticLoading?: boolean;
   /** Whether to transform text to uppercase (default: true) */
   uppercase?: boolean;
+  /** Handler called when the button is pressed while disabled */
+  onDisabledPress?: () => void;
 }
 
 /**

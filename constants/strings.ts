@@ -623,6 +623,8 @@ export const STRINGS = {
   NO_PRACTICE_NEEDED: 'All caught up. Add new words to continue learning',
   GET_STARTED_MESSAGE: 'Explore articles in the Explore tab to add words you want to learn',
   PRACTICE_OPTIONS: 'Practice options',
+  WORDS_STABILIZING:
+    'Words are stabilizing in memory. Review them at the optimal time for better retention',
 
   // Learning method content
   LEARNING_METHOD_INTRO:
