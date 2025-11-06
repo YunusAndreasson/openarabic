@@ -8,10 +8,9 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useAudioSubscription } from '@/hooks/audio/useAudioSubscription';
+import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 import { audioCache } from '@/services/audioCache';
-import { simpleAudioService } from '@/services/audioPlayer';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
@@ -39,9 +38,11 @@ export function WordDetailsBottomSheet({
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
-  // Only subscribe to audio when sheet is visible - prevents performance issues
-  const { status: audioStatus } = useAudioSubscription();
-  const shouldUseAudioStatus = !!(isVisible && word);
+  // Use consolidated word audio playback hook
+  const playWordAudio = useWordAudioPlayback({
+    showErrorToast: true,
+    errorMessage: 'Word audio playback failed',
+  });
 
   // Optimistic state for instant UI feedback
   const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useState(isInStudyList);
@@ -79,40 +80,11 @@ export function WordDetailsBottomSheet({
     prefetchAudio();
   }, [isVisible, word?.audio_url, word?.id]);
 
-  // Check if this word's audio is currently playing or loading (only when visible)
-  const isThisTrack =
-    shouldUseAudioStatus && audioStatus.currentTrack?.id === `word-details-${word?.id}`;
-  const wordAudioState = {
-    isPlaying: shouldUseAudioStatus && audioStatus.isPlaying && isThisTrack,
-    isLoading: shouldUseAudioStatus && audioStatus.isLoading && isThisTrack,
-  };
-
-  // Handle play audio
-  const handlePlayAudio = async () => {
-    if (!word?.audio_url) return;
-
-    // Haptic feedback with debouncing
-    lightFeedback();
-
-    try {
-      const fullAudioUrl = generateAudioUrl(word.audio_url);
-      if (!fullAudioUrl) return;
-
-      // Get cached local path to eliminate network latency
-      const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl);
-
-      const track = {
-        id: `word-details-${word.id}`,
-        audioUrl: cachedAudioUrl,
-        title: word.english || word.word_form || 'Word Audio',
-      };
-
-      // Play word audio with immediate feedback - polling starts with delay to prevent glitches
-      await simpleAudioService.play(track, { immediateStatus: true });
-    } catch (error) {
-      handleError(error as Error, { toastMessage: 'Word audio playback failed' });
-    }
-  };
+  // Handle play audio using consolidated hook
+  const handlePlayAudio = useCallback(async () => {
+    if (!word) return;
+    await playWordAudio(word);
+  }, [word, playWordAudio]);
 
   // Handle add to study with optimistic update for instant feedback
   const handleAddToStudy = async () => {
@@ -214,11 +186,10 @@ export function WordDetailsBottomSheet({
         <View style={buttonSectionStyle}>
           <View style={styles.buttonContainer}>
             <ThemedButton
-              title={wordAudioState.isPlaying ? 'Playing...' : 'Play Audio'}
+              title="Play Audio"
               variant="outlined"
               onPress={handlePlayAudio}
-              disabled={!word.audio_url || wordAudioState.isLoading}
-              loading={wordAudioState.isLoading}
+              disabled={!word.audio_url}
               style={styles.actionButton}
             />
             <ThemedButton
