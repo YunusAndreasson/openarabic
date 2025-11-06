@@ -2,13 +2,16 @@ import { useCallback, useRef } from 'react';
 
 import type { SessionMetrics } from '@/types/review.types';
 
+// FSRS mastery threshold - words are considered "mastered" when stability >= 5 days
+const MASTERY_THRESHOLD = 5.0;
+
 /**
  * Hook to manage practice session metrics tracking
  * Handles all session statistics including streaks, accuracy, and stability improvements
  *
  * @example
  * const { metrics, updateMetrics, resetMetrics } = useSessionMetrics();
- * updateMetrics('known', 5.2);
+ * updateMetrics('known', { rootId: 123, oldStability: 4.5, newStability: 6.2 });
  * console.log(metrics.wordsKnown, metrics.currentStreak);
  */
 export const useSessionMetrics = () => {
@@ -24,27 +27,37 @@ export const useSessionMetrics = () => {
     startTime: Date.now(),
   });
 
+  // Track unique words reviewed in this session
+  const reviewedWordsSet = useRef<Set<number>>(new Set());
+
   /**
    * Update metrics based on user confidence response
    * @param confidence - User's confidence level for the word
-   * @param currentStability - Optional current FSRS stability value
+   * @param wordData - Optional word data containing rootId and stability values
    */
   const updateMetrics = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown', currentStability?: number) => {
+    (
+      confidence: 'known' | 'vague' | 'unknown',
+      wordData?: { rootId: number; oldStability?: number; newStability?: number },
+    ) => {
       const metrics = metricsRef.current;
-      metrics.wordsReviewed++;
+
+      // Track unique words reviewed (count each word only once per session)
+      if (wordData?.rootId) {
+        if (!reviewedWordsSet.current.has(wordData.rootId)) {
+          reviewedWordsSet.current.add(wordData.rootId);
+          metrics.wordsReviewed++;
+        }
+      } else {
+        // Fallback for backwards compatibility if no rootId provided
+        metrics.wordsReviewed++;
+      }
 
       // Track response types and streaks
       if (confidence === 'known') {
         metrics.wordsKnown++;
         metrics.currentStreak++;
         metrics.longestStreak = Math.max(metrics.longestStreak, metrics.currentStreak);
-
-        // Check if word is now mastered (stability >= 5 days after this review)
-        if (currentStability && currentStability >= 4) {
-          // Likely to reach 5+ after this review
-          metrics.masteredWords++;
-        }
       } else if (confidence === 'vague') {
         metrics.wordsVague++;
         metrics.currentStreak = 0; // Reset streak on vague
@@ -53,16 +66,26 @@ export const useSessionMetrics = () => {
         metrics.currentStreak = 0; // Reset streak on unknown
       }
 
-      // Calculate average stability increase (simplified estimation)
-      if (currentStability) {
-        const estimatedIncrease =
-          confidence === 'known'
-            ? currentStability * 0.3
-            : confidence === 'vague'
-              ? currentStability * 0.1
-              : 0;
+      // Check if word became mastered during THIS session
+      // Only count if: (1) marked as "known", (2) old < 5.0, (3) new >= 5.0
+      if (
+        confidence === 'known' &&
+        wordData?.oldStability !== undefined &&
+        wordData?.newStability !== undefined
+      ) {
+        const wasNotMastered = wordData.oldStability < MASTERY_THRESHOLD;
+        const isNowMastered = wordData.newStability >= MASTERY_THRESHOLD;
+
+        if (wasNotMastered && isNowMastered) {
+          metrics.masteredWords++;
+        }
+      }
+
+      // Calculate actual stability increase (for all confidence levels)
+      if (wordData?.oldStability !== undefined && wordData?.newStability !== undefined) {
+        const stabilityIncrease = wordData.newStability - wordData.oldStability;
         const totalIncrease =
-          metrics.averageStabilityIncrease * (metrics.wordsReviewed - 1) + estimatedIncrease;
+          metrics.averageStabilityIncrease * (metrics.wordsReviewed - 1) + stabilityIncrease;
         metrics.averageStabilityIncrease = totalIncrease / metrics.wordsReviewed;
       }
     },
@@ -84,6 +107,9 @@ export const useSessionMetrics = () => {
     metrics.currentStreak = 0;
     metrics.masteredWords = 0;
     metrics.startTime = Date.now();
+
+    // Clear unique words tracking
+    reviewedWordsSet.current.clear();
   }, []);
 
   return {

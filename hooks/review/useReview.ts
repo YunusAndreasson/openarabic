@@ -256,6 +256,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         return;
       }
 
+      // Store old stability before update for metrics tracking
+      const oldStability = currentWord.fsrs_stability ?? undefined;
+      const rootId = currentWord.root_id;
+
       // CRITICAL FIX: Reset hesitation immediately before processing feedback
       // This prevents hint from showing on the next word during transition
       // Must happen BEFORE updateWord changes currentWord to prevent timing issues
@@ -265,7 +269,15 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       hesitationWordKeyRef.current = '';
 
       try {
-        await updateWord(currentWord.root_id, confidence);
+        // Call updateWord and capture the new stability value
+        const newStability = await updateWord(rootId, confidence);
+
+        // Update session metrics with old and new stability for accurate tracking
+        updateMetrics(confidence, {
+          rootId,
+          oldStability,
+          newStability,
+        });
 
         if (!stateRefs.current.isUpdatingWord) return;
 
@@ -292,7 +304,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     },
     [
       currentWord?.root_id,
+      currentWord?.fsrs_stability,
       updateWord,
+      updateMetrics,
       fadeIn,
       isComplete,
       triggerCompletionTransition,
@@ -344,8 +358,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      // Update session metrics using hook
-      updateMetrics(confidence, currentWord?.fsrs_stability ?? undefined);
+      // Note: Session metrics are updated in processFeedback after FSRS calculation
+      // This ensures we have both old and new stability values for accurate tracking
 
       // Start transition animation
       setTimer(
@@ -428,7 +442,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       currentWord,
       setTimer,
       stopAudioSafely,
-      updateMetrics,
     ],
   );
 

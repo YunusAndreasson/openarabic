@@ -455,6 +455,9 @@ export function useFSRS({
       }
 
       stateTrackingRef.current.isProcessingUpdate = false;
+
+      // Return the new stability value for metrics tracking
+      return newCard.stability;
     },
     [
       userId,
