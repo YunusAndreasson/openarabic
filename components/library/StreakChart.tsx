@@ -76,6 +76,13 @@ export const StreakChart = memo<StreakChartProps>(
         const isInStreak = Boolean(streakPeriod);
         const isActiveStreak = streakPeriod?.isActive || false;
 
+        // DEBUG: Log last 5 bars
+        if (index >= dailyActivity.length - 5) {
+          console.log(
+            `Bar ${index} (${activity.date}): hasActivity=${hasActivity}, inMap=${streakMap.has(activity.date)}, isActiveStreak=${isActiveStreak}`,
+          );
+        }
+
         // Determine bar color and opacity
         let barColor = colors.textTertiary;
         let barOpacity = 0.2;
