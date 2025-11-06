@@ -1,12 +1,9 @@
-import { useRouter } from 'expo-router';
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BaseCard } from '@/components/common/BaseCard';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { ROUTE_PATHS } from '@/constants/routes';
 import { useRecommendationEngine } from '@/hooks/study/useRecommendationEngine';
-import { selectionFeedback } from '@/utils/haptics';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 interface RecommendationCardProps {
@@ -20,7 +17,6 @@ interface RecommendationCardProps {
 
 export const RecommendationCard = memo<RecommendationCardProps>(
   ({ studyWords, dueWordsCount, currentRetention, learningWords, masteredWords, trend }) => {
-    const router = useRouter();
     const recommendation = useRecommendationEngine({
       studyWords,
       dueWordsCount,
@@ -30,17 +26,12 @@ export const RecommendationCard = memo<RecommendationCardProps>(
       trend,
     });
 
-    const handleInfoPress = useCallback(() => {
-      selectionFeedback();
-      router.push(`${ROUTE_PATHS.ACCOUNT_HELP}?expandItem=why-review-before-adding`);
-    }, [router]);
-
     if (!recommendation) {
       return null;
     }
 
     return (
-      <BaseCard shadowSize="small" style={styles.card} onPress={handleInfoPress}>
+      <BaseCard shadowSize="small" style={styles.card}>
         <View style={styles.container}>
           <View style={styles.header}>{recommendation.message}</View>
         </View>
