@@ -211,3 +211,66 @@ export function calculateDueWordsTrend(
 
   return change > threshold ? 'increasing' : change < -threshold ? 'decreasing' : 'stable';
 }
+
+/**
+ * Calculate the date when the next word becomes due
+ * Returns null if no words are scheduled or all words are currently due
+ */
+export function calculateNextDueDate(studyWords: StudyWord[]): Date | null {
+  if (studyWords.length === 0) return null;
+
+  const now = new Date();
+  const validDueDates = studyWords
+    .filter(word => word.fsrs_due != null)
+    .map(word => {
+      const dueStr = normalizeTimestamp(word.fsrs_due);
+      return dueStr ? new Date(dueStr) : null;
+    })
+    .filter((date): date is Date => date !== null && date.getTime() > now.getTime());
+
+  if (validDueDates.length === 0) return null;
+
+  // Find the earliest due date
+  return new Date(Math.min(...validDueDates.map(d => d.getTime())));
+}
+
+/**
+ * Get 7-day forecast summary statistics for coaching messages
+ */
+export function getForecastSummary(studyWords: StudyWord[]): {
+  totalDueNext7Days: number;
+  averageRetentionNext7Days: number;
+  criticalWordsNext3Days: number;
+} {
+  if (studyWords.length === 0) {
+    return {
+      totalDueNext7Days: 0,
+      averageRetentionNext7Days: 0,
+      criticalWordsNext3Days: 0,
+    };
+  }
+
+  // Calculate due words forecast for next 7 days
+  const dueWordsForecast = calculateDueWordsForecast(studyWords, 7);
+  const totalDueNext7Days = Math.max(...dueWordsForecast.map(d => d.dueWords));
+
+  // Calculate retention forecast for next 7 days
+  const retentionForecast = calculateRetrievabilityForecast(studyWords, 7);
+  const averageRetentionNext7Days =
+    retentionForecast.length > 0
+      ? Math.round(
+          retentionForecast.reduce((sum, d) => sum + d.averageRetrievability, 0) /
+            retentionForecast.length,
+        )
+      : 0;
+
+  // Get critical words count for next 3 days (use day 2 index 0-based)
+  const day3Data = retentionForecast[2]; // Day 3 (index 2)
+  const criticalWordsNext3Days = day3Data?.criticalWords || 0;
+
+  return {
+    totalDueNext7Days,
+    averageRetentionNext7Days,
+    criticalWordsNext3Days,
+  };
+}

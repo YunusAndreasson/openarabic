@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { memo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
 import { BaseCard } from '@/components/common/BaseCard';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -43,16 +42,7 @@ export const RecommendationCard = memo<RecommendationCardProps>(
     return (
       <BaseCard shadowSize="small" style={styles.card} onPress={handleInfoPress}>
         <View style={styles.container}>
-          <View style={styles.header}>
-            <ThemedText
-              type="caption"
-              weight="normal"
-              colorName="secondaryText"
-              style={styles.message}
-            >
-              {recommendation.message}
-            </ThemedText>
-          </View>
+          <View style={styles.header}>{recommendation.message}</View>
         </View>
       </BaseCard>
     );
