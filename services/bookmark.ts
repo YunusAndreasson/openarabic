@@ -120,7 +120,8 @@ export const bookmarkService = {
           difficulty_level,
           created_at,
           category:categories(id, name),
-          author:authors(id, name)
+          author:authors(id, name),
+          article_sentences(id)
         )
       `,
           )

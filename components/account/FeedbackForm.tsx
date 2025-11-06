@@ -132,7 +132,15 @@ export const FeedbackForm = memo(() => {
             });
 
           if (uploadError) {
-            // Screenshot upload failed - continue without screenshot
+            // Screenshot upload failed - log error details but continue without screenshot
+            Sentry.captureException(uploadError, {
+              tags: { location: 'feedback_screenshot_upload' },
+              level: 'warning',
+              extra: {
+                filename,
+                uploadErrorMessage: uploadError.message,
+              },
+            });
           } else if (data) {
             const {
               data: { publicUrl },

@@ -207,33 +207,23 @@ export const studyWordsFSRSService = {
   // Toggle FSRS study for roots
   async toggleFSRSStudyRoot(userId: string, rootId: number): Promise<boolean> {
     // Check if a study entry already exists for this root
-    // Note: PGRST116 is "not found" error which is expected behavior here
-    let existing;
-    try {
-      existing = await executeAuthenticatedQuery(
-        userId,
-        () =>
-          supabase
-            .from('study_words')
-            .select('root_id')
-            .eq('user_id', userId)
-            .eq('root_id', rootId)
-            .single(),
-        {
-          toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
-          analyticsEventName: 'Toggle_Study_Word_Check_Error',
-          analyticsProperties: { rootId },
-          showToast: false,
-        },
-      );
-    } catch (error) {
-      // PGRST116 = "not found" - this is expected, word doesn't exist yet
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'PGRST116') {
-        existing = null;
-      } else {
-        throw error;
-      }
-    }
+    // Using maybeSingle() returns null instead of throwing PGRST116 error
+    const existing = await executeAuthenticatedQuery(
+      userId,
+      () =>
+        supabase
+          .from('study_words')
+          .select('root_id')
+          .eq('user_id', userId)
+          .eq('root_id', rootId)
+          .maybeSingle(),
+      {
+        toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
+        analyticsEventName: 'Toggle_Study_Word_Check_Error',
+        analyticsProperties: { rootId },
+        showToast: false,
+      },
+    );
 
     if (existing) {
       // Remove existing root study entry

@@ -91,7 +91,7 @@ describe('Study List Button State - Bug Reproduction', () => {
     jest.clearAllMocks();
     queryClient = createTestQueryClient();
 
-    // Mock successful auth session
+    // Mock successful auth session (legacy)
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({
       data: {
         session: {
@@ -99,6 +99,13 @@ describe('Study List Button State - Bug Reproduction', () => {
         },
       },
       error: null,
+    });
+
+    // Mock checkAuthentication (new centralized auth)
+    const { checkAuthentication } = require('@/services/supabase');
+    (checkAuthentication as jest.Mock).mockResolvedValue({
+      session: { user: { id: mockUserId } },
+      user: { id: mockUserId },
     });
   });
 

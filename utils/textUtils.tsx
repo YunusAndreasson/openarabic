@@ -9,18 +9,20 @@ const EMAIL_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
  * Average sentences per minute for interactive bilingual Arabic learning
  * Very conservative estimate accounting for:
  * - Arabic script reading speed (significantly slower for learners)
- * - English translation reading (shown side-by-side)
+ * - English translation reading (shown side-by-side for EVERY sentence)
  * - Interactive word tooltips (clicking words, reading definitions)
  * - Grammar analysis (color-coded components, grammar notes)
  * - Word details exploration (root meanings, word types)
  * - Mental processing to connect Arabic and English
  * - Diacritics and morphological analysis
  * - Re-reading sentences for comprehension
+ * - Bilingual cognitive load (processing two languages simultaneously)
  *
- * Note: Interactive language learning with word-level analysis takes significantly
- * longer than passive reading. This estimate accounts for the full learning workflow.
+ * Note: Interactive bilingual language learning with word-level analysis takes
+ * significantly longer than passive monolingual reading. This estimate accounts
+ * for the full dual-language learning workflow.
  */
-const SENTENCES_PER_MINUTE = 6;
+const SENTENCES_PER_MINUTE = 4;
 
 /**
  * Parse text and render email addresses as EmailLink components

@@ -157,7 +157,8 @@ describe('bookmarkService', () => {
           difficulty_level,
           created_at,
           category:categories(id, name),
-          author:authors(id, name)
+          author:authors(id, name),
+          article_sentences(id)
         )
       `.replace(/\s/g, '');
       expect(called).toBe(expected);

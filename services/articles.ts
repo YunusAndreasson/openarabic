@@ -27,7 +27,16 @@ const CARD_VIEW_COLUMNS = `
 `;
 
 const DETAIL_VIEW_COLUMNS = `
-  *,
+  id,
+  title,
+  image_url,
+  created_at,
+  difficulty_level,
+  category_id,
+  author_id,
+  summary,
+  audio_url,
+  audio_url_bilingual,
   category:categories!inner(id, name),
   author:authors!inner(id, name),
   article_sentences(

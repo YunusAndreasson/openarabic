@@ -36,7 +36,7 @@ describe('toggleFSRSStudyRoot', () => {
     const selectObj = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
     };
     const insertMock = jest.fn().mockResolvedValue({ error: null });
     const insertObj = { insert: insertMock };
@@ -55,7 +55,7 @@ describe('toggleFSRSStudyRoot', () => {
     const selectObj = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: { root_id: 1 }, error: null }),
+      maybeSingle: jest.fn().mockResolvedValue({ data: { root_id: 1 }, error: null }),
     };
     const deleteFinal = jest.fn().mockResolvedValue({ error: null });
     const deleteObj = {

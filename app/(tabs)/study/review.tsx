@@ -80,7 +80,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     return isLoading || (wordQueue.length === 0 && !isComplete && currentWord === null);
   }, [isLoading, wordQueue.length, isComplete, currentWord]);
 
-  if (isComplete) {
+  if (isComplete && !isUpdating) {
     return (
       <CompletionScreen
         sessionMetrics={sessionMetrics}

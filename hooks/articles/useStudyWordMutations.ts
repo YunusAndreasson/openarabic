@@ -9,7 +9,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import { supabase } from '@/services/supabase';
+import { checkAuthentication } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
 import type { RootId } from '@/types/branded.types';
 import { DailyWordLimitStatus, ToastType } from '@/types/enums';
@@ -216,41 +216,19 @@ export const useStudyWordMutations = (
           return;
         }
 
-        // Always get fresh session from Supabase
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!session?.user) {
-          // Try to refresh the session first
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-
-          if (refreshError || !refreshData.session) {
-            showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_WORDS, undefined, ToastType.INFO);
-            router.replace(ROUTE_PATHS.AUTH);
-            return;
-          }
-
-          // Capacity guard
-          if (isCapacityLow(refreshData.session.user.id)) {
-            showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, ToastType.INFO);
-            return;
-          }
-
-          // Increment daily word count and proceed
-          const incrementSuccess = await incrementDailyWordCount();
-          if (!incrementSuccess) {
-            showToast(DailyWordLimitStatus.REACHED, 3000, ToastType.IMPORTANT);
-            return;
-          }
-
-          // Use the refreshed session
-          toggleWordMutation.mutate({ userId: refreshData.session.user.id, wordId });
+        // Use centralized auth check (handles getSession automatically)
+        let userId: string;
+        try {
+          const { user } = await checkAuthentication();
+          userId = user.id;
+        } catch {
+          showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_WORDS, undefined, ToastType.INFO);
+          router.replace(ROUTE_PATHS.AUTH);
           return;
         }
 
         // Capacity guard
-        if (isCapacityLow(session.user.id)) {
+        if (isCapacityLow(userId)) {
           showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, ToastType.INFO);
           return;
         }
@@ -262,8 +240,8 @@ export const useStudyWordMutations = (
           return;
         }
 
-        // Always use the user ID from the session directly
-        toggleWordMutation.mutate({ userId: session.user.id, wordId });
+        // Use the authenticated user ID
+        toggleWordMutation.mutate({ userId, wordId });
       } catch (error) {
         handleError(error as Error);
       }
@@ -275,26 +253,15 @@ export const useStudyWordMutations = (
   const handleRootPress = useCallback(
     async (rootId: RootId): Promise<boolean | undefined> => {
       try {
-        // Always get fresh session from Supabase first
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
+        // Use centralized auth check (handles getSession automatically)
         let currentUserId: string;
-
-        if (!session?.user) {
-          // Try to refresh the session first
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-
-          if (refreshError || !refreshData.session) {
-            showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_ROOTS, undefined, ToastType.INFO);
-            router.replace(ROUTE_PATHS.AUTH);
-            return undefined;
-          }
-
-          currentUserId = refreshData.session.user.id;
-        } else {
-          currentUserId = session.user.id;
+        try {
+          const { user } = await checkAuthentication();
+          currentUserId = user.id;
+        } catch {
+          showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_ROOTS, undefined, ToastType.INFO);
+          router.replace(ROUTE_PATHS.AUTH);
+          return undefined;
         }
 
         // Check if word already exists (remove operation should be allowed even if limit reached)

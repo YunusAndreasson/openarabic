@@ -52,7 +52,7 @@ const CONTAINER_STYLE = [
       zIndex: LAYOUT.Z_INDEX.OVERLAY,
     },
   }).container,
-  { bottom: LAYOUT.BOTTOM_BAR.HEIGHT - LAYOUT.SPACING.MEDIUM }, // Covers tab bar + PLAY ALL button
+  { bottom: LAYOUT.BOTTOM_BAR.HEIGHT - LAYOUT.SPACING.LARGE - LAYOUT.SPACING.TINY }, // Sits lower to cover tab bar icons
 ];
 
 // Custom comparison function for React.memo

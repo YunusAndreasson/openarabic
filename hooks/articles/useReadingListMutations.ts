@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react';
 import { audioQueries, readingProgressQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { bookmarkService } from '@/services/bookmark';
-import { supabase } from '@/services/supabase';
+import { checkAuthentication } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
 import type { ArticleId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
@@ -126,42 +126,18 @@ export const useReadingListMutations = (
       if (!articleId) return;
 
       try {
-        // Get the current session directly from Supabase
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+        // Use centralized auth check (handles getSession automatically)
+        const { user } = await checkAuthentication();
 
-        if (sessionError || !session?.user) {
-          // Try to refresh the session
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-
-          if (refreshError || !refreshData.session) {
-            // Silently redirect to auth - no toast for bookmarks actions
-            router.replace(ROUTE_PATHS.AUTH);
-            return;
-          }
-
-          // Use the refreshed user ID
-          if (isInReadingList) {
-            removeFromReadingListMutation.mutate({
-              userId: refreshData.session.user.id,
-              articleId,
-            });
-          } else {
-            addToReadingListMutation.mutate({ userId: refreshData.session.user.id, articleId });
-          }
-          return;
-        }
-
-        // Use the session user ID directly, not the potentially stale userId from props
+        // Use the authenticated user ID
         if (isInReadingList) {
-          removeFromReadingListMutation.mutate({ userId: session.user.id, articleId });
+          removeFromReadingListMutation.mutate({ userId: user.id, articleId });
         } else {
-          addToReadingListMutation.mutate({ userId: session.user.id, articleId });
+          addToReadingListMutation.mutate({ userId: user.id, articleId });
         }
-      } catch (error) {
-        handleError(error as Error);
+      } catch {
+        // Auth check failed - silently redirect to auth (no toast for bookmarks)
+        router.replace(ROUTE_PATHS.AUTH);
       }
     },
     [addToReadingListMutation, removeFromReadingListMutation],

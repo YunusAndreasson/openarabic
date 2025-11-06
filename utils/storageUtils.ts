@@ -1,8 +1,8 @@
-import { SUPABASE_URL } from '@/constants/supabase';
+import { supabase } from '@/services/supabase';
 
 /**
  * Centralized Supabase storage URL generation
- * Consolidates duplicate logic from generateImageUrl and generateAudioUrl
+ * Uses official Supabase Storage SDK for reliable URL generation
  */
 
 /**
@@ -21,9 +21,13 @@ export const isValidStoragePath = (path: unknown): path is string => {
 /**
  * Generate the full URL for a Supabase storage object
  *
+ * Uses the official Supabase Storage SDK `getPublicUrl` method for reliable,
+ * future-proof URL generation. This ensures compatibility with any URL structure
+ * changes Supabase may make (CDN changes, path format updates, etc.).
+ *
  * Handles three cases:
  * 1. Already a full URL (http:// or https://) - returns as-is
- * 2. Storage filename - reconstructs full Supabase storage URL
+ * 2. Storage filename - uses official SDK to generate full Supabase storage URL
  * 3. Invalid input (null/undefined/empty) - returns empty string
  *
  * @param bucket - Supabase storage bucket ('images' or 'audio')
@@ -56,8 +60,12 @@ export const generateStorageUrl = (
     return path;
   }
 
-  // Reconstruct the full Supabase storage URL
-  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+  // Use official Supabase Storage SDK for reliable URL generation
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(bucket).getPublicUrl(path);
+
+  return publicUrl;
 };
 
 /**
