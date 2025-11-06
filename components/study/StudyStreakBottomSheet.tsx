@@ -71,14 +71,14 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
             </View>
 
             {/* Streak Chart */}
-            <View style={styles.chartContainer}>
+            <>
               <ThemedText type="heading3" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
                 Last 40 days
               </ThemedText>
               <ThemedText
                 type="body"
                 colorName="textTertiary"
-                style={[LAYOUT.BOTTOM_SHEET.STYLES.subtitle, styles.chartSubtitle]}
+                style={LAYOUT.BOTTOM_SHEET.STYLES.subtitle}
               >
                 Each bar shows a study session day
               </ThemedText>
@@ -86,7 +86,7 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
                 dailyActivity={streakHistory.dailyActivity}
                 streakPeriods={streakHistory.streakPeriods}
               />
-            </View>
+            </>
           </>
         );
       }
@@ -119,13 +119,6 @@ const styles = StyleSheet.create({
   // Section 2: Streak Metrics (secondary hierarchy)
   streakMetricsContainer: {
     marginBottom: LAYOUT.SPACING.XLARGE, // 24px - clear section separation
-  },
-  // Section 3: Chart (tertiary hierarchy)
-  chartContainer: {
-    // No bottom margin - last section
-  },
-  chartSubtitle: {
-    marginBottom: 0, // Tight coupling with chart below
   },
   // State containers
   loadingContainer: {
