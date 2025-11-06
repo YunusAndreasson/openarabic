@@ -67,7 +67,6 @@ export function ThemedButton({
   disabled = false, // Always false when not specified
   iconSize: customIconSize = LAYOUT.BUTTON.ICON_SIZE.LARGE, // Most common value - hardcoded
   onPress,
-  onDisabledPress,
   size = 'medium', // Most common value - hardcoded
   textWeight = 'bold', // Most common value - hardcoded
   enableOptimisticLoading = false, // Only enable when explicitly requested
@@ -87,12 +86,6 @@ export function ThemedButton({
 
   // Create the press handler with optional optimistic loading
   const pressHandler = (event: GestureResponderEvent) => {
-    // Handle disabled press
-    if (disabled && onDisabledPress) {
-      onDisabledPress();
-      return;
-    }
-
     if (onPress && !disabled && !isActuallyLoading) {
       if (enableOptimisticLoading) {
         setOptimisticLoading(true); // Immediately show loading
