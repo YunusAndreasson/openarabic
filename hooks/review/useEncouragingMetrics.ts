@@ -70,7 +70,7 @@ export const useEncouragingMetrics = (
       });
     }
 
-    // 🟢 GREEN - Mastered words
+    // 🟢 GREEN - Mastered words (only NEW words mastered in THIS session)
     if (metrics.masteredWords > 0) {
       const masteredText = metrics.masteredWords === 1 ? 'word' : 'words';
       trafficLightMetrics.push({
@@ -80,9 +80,9 @@ export const useEncouragingMetrics = (
         type: 'mastery',
       });
     } else {
-      // Show 0 mastered for encouragement
+      // Clearer: this is about NEW mastery in this session, not total mastery
       trafficLightMetrics.push({
-        text: '0 words mastered yet',
+        text: 'No new words mastered',
         icon: 'trophy',
         color: colors.success,
         type: 'mastery',
