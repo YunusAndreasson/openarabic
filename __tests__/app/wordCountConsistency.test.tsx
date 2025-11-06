@@ -3,7 +3,6 @@ import { createTestWord } from '../helpers/fsrsTestHelpers';
 import type { StudyWord } from '../../types/vocabulary.types';
 import {
   calculateDueWords,
-  calculateLearnedWords,
   calculateMasteredWords,
   calculateStrugglingWords,
   calculateWordCategories,
@@ -292,36 +291,19 @@ describe('Word Count Consistency Validation', () => {
       // Validate individual calculations
       expect(categories.dueWords).toBe(2); // Word 1 and Word 6 (both past due, outside cooldown)
       expect(categories.strugglingWords).toBe(1); // Word 2 (reviewed + struggling)
-      expect(categories.learnedWords).toBe(5); // Word 1, 2, 3, 5, 6 (all State 2 - graduated to review phase)
       expect(categories.masteredWords).toBe(1); // Word 5 (State 2 + stability >= 5)
-
-      // Total should equal study words (excluding cooldown)
-      const totalEligible =
-        categories.dueWords +
-        categories.strugglingWords +
-        categories.learnedWords +
-        categories.masteredWords;
-      expect(totalEligible).toBe(9); // Words can be in multiple categories
 
       // Validate that the counts make sense
       expect(categories.dueWords).toBe(2); // Word 1 and Word 6
       expect(categories.strugglingWords).toBe(1); // Word 2
-      expect(categories.learnedWords).toBe(5); // Word 1, 2, 3, 5, 6 (all State 2)
       expect(categories.masteredWords).toBe(1); // Word 5
     });
 
-    it('should use same logic for learned/mastered words as server-side filters', () => {
-      // This validates the fix for learned/mastered word consistency
-      const learnedWords = calculateLearnedWords(mockStudyWords);
+    it('should use same logic for mastered words as server-side filters', () => {
+      // This validates mastered word consistency with server-side logic
       const masteredWords = calculateMasteredWords(mockStudyWords);
 
-      // Learned: all State 2 words (graduated to review phase)
-      const expectedLearned = mockStudyWords.filter(word => {
-        const state = word.fsrs_state;
-        return state === 2;
-      }).length;
-
-      // Mastered: state=2 AND stability>=5 (subset of learned)
+      // Mastered: state=2 AND stability>=5
       const expectedMastered = mockStudyWords.filter(word => {
         const state = word.fsrs_state;
         const stability = word.fsrs_stability ?? 0;
@@ -329,11 +311,7 @@ describe('Word Count Consistency Validation', () => {
       }).length;
 
       // These should match exactly
-      expect(learnedWords).toBe(expectedLearned);
       expect(masteredWords).toBe(expectedMastered);
-
-      // Mastered should be subset of learned
-      expect(masteredWords).toBeLessThanOrEqual(learnedWords);
     });
   });
 

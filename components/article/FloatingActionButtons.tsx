@@ -1,12 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useMemo } from 'react';
+import { memo, startTransition, useOptimistic, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useOptimisticToggle } from '@/hooks/ui/useOptimisticToggle';
 import { createAndroidRipple } from '@/utils/layoutUtils';
 
 export interface FloatingActionButtonsProps {
@@ -27,9 +26,20 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     const closePressAnimation = usePressAnimation({ type: 'button' });
     const bookmarkPressAnimation = usePressAnimation({ type: 'button' });
 
-    // Use optimistic toggle hook for immediate UI feedback
-    const { value: optimisticIsInReadingList, toggle: handleOptimisticToggle } =
-      useOptimisticToggle(isInReadingList, onToggleReadingList);
+    // React 19: Use native useOptimistic for immediate UI feedback
+    const [optimisticIsInReadingList, setOptimisticBookmark] = useOptimistic(
+      isInReadingList,
+      (_currentState, newValue: boolean) => newValue,
+    );
+
+    const handleOptimisticToggle = () => {
+      // React 19: Optimistic update in transition for immediate UI feedback
+      startTransition(() => {
+        setOptimisticBookmark(!optimisticIsInReadingList);
+      });
+      // Fire async operation independently (don't await in transition)
+      onToggleReadingList();
+    };
 
     const buttonStyle = useMemo(
       () => ({

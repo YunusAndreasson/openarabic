@@ -1,4 +1,4 @@
-import { memo, useCallback, type FC } from 'react';
+import { memo, startTransition, useCallback, useOptimistic, type FC } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -8,7 +8,6 @@ import { usePressAnimation } from '@/hooks/animations';
 import { useBookmarksScreen } from '@/hooks/bookmarks/useBookmarksScreen';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
-import { useOptimisticState } from '@/hooks/ui/useOptimisticState';
 import type { EditModeType } from '@/store/editModeSlice';
 import { UiAction } from '@/types/enums';
 import { HEADER_BUTTON_STYLE, HEADER_BUTTON_TEXT_STYLE } from '@/utils/buttonStyleUtils';
@@ -48,8 +47,11 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
   const colors = useColors();
   const { editMode, toggle } = useEditMode(type);
 
-  // Use optimistic state for immediate visual feedback (always enabled for edit mode)
-  const [optimisticEditMode, setOptimisticEditMode] = useOptimisticState(editMode, true);
+  // React 19: Use native useOptimistic for immediate visual feedback
+  const [optimisticEditMode, setOptimisticEditMode] = useOptimistic(
+    editMode,
+    (_currentState, newValue: boolean) => newValue,
+  );
   // Derive count internally for listen type when not provided
   const { sortedReadingList } = useBookmarksScreen();
   const derivedCount = type === 'listen' ? sortedReadingList.length : undefined;
@@ -61,14 +63,18 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
   });
 
   const handlePress = useCallback((): void => {
-    // Optimistic update - immediately show the new state
     const newEditMode = !optimisticEditMode;
-    setOptimisticEditMode(newEditMode);
 
+    // React 19: Optimistic update in transition for immediate UI feedback
+    startTransition(() => {
+      setOptimisticEditMode(newEditMode);
+    });
+
+    // Execute other operations immediately (not in transition)
     selectionFeedback();
     toggle();
     onEditModeChange?.(newEditMode);
-  }, [toggle, optimisticEditMode, onEditModeChange]);
+  }, [toggle, optimisticEditMode, onEditModeChange, setOptimisticEditMode]);
 
   // Guard early return only after all hooks and callbacks above have been created
   if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {

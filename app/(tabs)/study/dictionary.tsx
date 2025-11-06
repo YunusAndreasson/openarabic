@@ -2,9 +2,8 @@ import { EmptyState } from '@common/EmptyState';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,28 +20,12 @@ import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useDictionaryModal, useFSRSQueries } from '@/hooks/vocabulary';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-import { isLearnedWord, isMasteredWord } from '@/utils/wordClassification';
 
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
   const { editMode, reset } = useEditMode('dictionary');
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const navigation = useNavigation();
-  const { filter } = useLocalSearchParams<{ filter?: 'due' | 'learned' | 'mastered' }>();
-
-  // Update screen title based on filter
-  useEffect(() => {
-    const title =
-      filter === 'due'
-        ? STRINGS.DUE_WORDS_TITLE
-        : filter === 'learned'
-          ? STRINGS.LEARNED_WORDS
-          : filter === 'mastered'
-            ? STRINGS.MASTERED_WORDS_TITLE
-            : STRINGS.DICTIONARY_TITLE;
-    navigation.setOptions({ title });
-  }, [filter, navigation]);
 
   useFocusEffect(
     useCallback(() => {
@@ -54,27 +37,8 @@ export default function DictionaryScreen(): JSX.Element {
     }, [editMode, reset]),
   );
 
-  // Get all study words and due words
-  const { allWords: studyWords, dueWords, isLoading } = useFSRSQueries({ userId: user?.id });
-
-  // Filter by category when requested (due/learned/mastered)
-  const filteredByCategory = useMemo<StudyWord[] | undefined>(() => {
-    if (!studyWords) return studyWords;
-    if (!filter) return studyWords;
-
-    if (filter === 'due') {
-      // Use the dueWords from the hook directly to ensure consistency with practice screen
-      return dueWords;
-    }
-
-    if (filter === 'learned') {
-      // Learned = all State 2 words (graduated to review phase)
-      return studyWords.filter(word => isLearnedWord(word));
-    }
-
-    // Mastered = State 2 + stability >= 5
-    return studyWords.filter(word => isMasteredWord(word));
-  }, [studyWords, dueWords, filter]);
+  // Get all study words for dictionary display (shows all words, sorted by memory strength)
+  const { allWords: studyWords, isLoading } = useFSRSQueries({ userId: user?.id });
 
   const { toggleRootMutation } = useArticleMutations(
     user?.id,
@@ -95,7 +59,7 @@ export default function DictionaryScreen(): JSX.Element {
   );
 
   const { sortedWords, sortDirection, setSorting } = useDictionaryModal({
-    studyWords: filteredByCategory || [],
+    studyWords: studyWords || [],
   });
 
   const hasWords = sortedWords.length > 0;

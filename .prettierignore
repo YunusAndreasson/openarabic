@@ -5,3 +5,4 @@ dist
 admin-dashboard
 translate
 publish
+.venv_diagnostic/

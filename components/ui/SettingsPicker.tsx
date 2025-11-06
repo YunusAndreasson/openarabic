@@ -5,13 +5,12 @@ import BottomSheet, {
   BottomSheetView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useOptimistic, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { useOptimisticState } from '@/hooks/ui/useOptimisticState';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { lightFeedback } from '@/utils/haptics';
@@ -101,11 +100,13 @@ export const SettingsPicker = <T,>({
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  // Use optimistic state hook for immediate visual feedback
-  const [displayValue, setOptimisticValue] = useOptimisticState(
+  // React 19: Use native useOptimistic for immediate visual feedback
+  const [optimisticValue, setOptimisticValue] = useOptimistic(
     currentValue,
-    supportsOptimisticUpdates,
+    (_currentState, newValue: T) => newValue,
   );
+  // Conditional optimistic behavior - only show optimistic value when enabled
+  const displayValue = supportsOptimisticUpdates ? optimisticValue : currentValue;
 
   // Show/hide modal based on isVisible prop
   useEffect(() => {
@@ -128,10 +129,12 @@ export const SettingsPicker = <T,>({
 
   const handleValueSelect = useCallback(
     (value: T) => {
-      // Set optimistic value for immediate visual feedback
-      setOptimisticValue(value);
+      // React 19: Optimistic update in transition for immediate UI feedback
+      startTransition(() => {
+        setOptimisticValue(value);
+      });
 
-      // Call appropriate handler based on mode
+      // Execute other operations immediately (not in transition)
       if (isReduxMode && onValueChange) {
         dispatch(onValueChange(value));
       } else if (isControlledMode && onSelect) {

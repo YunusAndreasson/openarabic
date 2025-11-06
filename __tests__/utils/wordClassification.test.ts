@@ -2,7 +2,6 @@ import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   calculateDueWords,
-  calculateLearnedWords,
   calculateMasteredWords,
   calculateStrugglingWords,
   calculateWordCategories,
@@ -59,22 +58,6 @@ describe('wordClassification', () => {
       ];
 
       expect(calculateDueWords(words)).toBe(1); // Only new word (state 0) is due
-    });
-  });
-
-  describe('calculateLearnedWords', () => {
-    it('should count learned words correctly', () => {
-      const words = [
-        createStudyWord({ fsrs_state: 0 }), // New - not learned yet
-        createStudyWord({ fsrs_state: 1 }), // Learning - not learned yet
-        createStudyWord({ fsrs_state: 2, fsrs_stability: 3 }), // Learned (State 2)
-        createStudyWord({ fsrs_state: 3 }), // Relearning - not learned yet
-        createStudyWord({ fsrs_state: 2, fsrs_stability: 10 }), // Learned (State 2, also mastered)
-      ];
-
-      // Learned words = all State 2 words (graduated to review phase)
-      // Includes both consolidating and mastered words
-      expect(calculateLearnedWords(words)).toBe(2);
     });
   });
 
@@ -141,7 +124,6 @@ describe('wordClassification', () => {
       const result = calculateWordCategories(words);
 
       expect(result.dueWords).toBe(2); // Past due + new word (state 0)
-      expect(result.learnedWords).toBe(1); // Only the State 2 mastered word
       expect(result.masteredWords).toBe(1);
       expect(result.strugglingWords).toBe(1);
     });

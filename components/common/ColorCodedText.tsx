@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useDeferredValue, useMemo } from 'react';
 import type { TextStyle } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -40,6 +40,10 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
   }) => {
     const colors = useColors();
 
+    // React 19: Defer text analysis to keep tooltips responsive
+    // Tooltip opens instantly, color-coding appears smoothly in background
+    const deferredText = useDeferredValue(text);
+
     // Only run analysis if no precomputed segments and we have required data
     const shouldRunAnalysis =
       !precomputedSegments && !!(arabicWord && (englishTranslation || !isArabic));
@@ -49,7 +53,7 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
       analysis,
     } = useArabicWordAnalysis(
       arabicWord,
-      isArabic ? englishTranslation || '' : text,
+      isArabic ? englishTranslation || '' : deferredText,
       shouldRunAnalysis,
     );
 
@@ -66,7 +70,7 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
       }
       // For English text, use generateColorCodedSegments (includes [the] if appropriate)
       return generateColorCodedSegments({
-        text,
+        text: deferredText,
         formattedAnalysis,
         analysis,
         colors,
@@ -76,7 +80,7 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
       isArabic,
       precomputedSegments,
       dynamicSegments,
-      text,
+      deferredText,
       formattedAnalysis,
       analysis,
       colors,

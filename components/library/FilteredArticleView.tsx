@@ -1,7 +1,7 @@
 import { EmptyState } from '@common/EmptyState';
 import { ListSeparator } from '@common/ListSeparator';
 import { FlashList } from '@shopify/flash-list';
-import React, { type FC, useMemo } from 'react';
+import React, { type FC, useDeferredValue, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
@@ -204,10 +204,14 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     isProgressLoading,
   } = useFilteredArticles(articles);
 
+  // React 19: Defer article grouping to keep scrolling smooth during re-sorts
+  // Scroll remains responsive, sections reorganize smoothly in background
+  const deferredVisibleArticles = useDeferredValue(visibleArticles);
+
   // Group articles with section headers
   const listData = useMemo(
-    () => groupArticlesWithHeaders(visibleArticles, progressMap),
-    [visibleArticles, progressMap],
+    () => groupArticlesWithHeaders(deferredVisibleArticles, progressMap),
+    [deferredVisibleArticles, progressMap],
   );
 
   // Simple derived state (no need for useMemo on primitives)
