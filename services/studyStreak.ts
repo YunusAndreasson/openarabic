@@ -382,7 +382,7 @@ export class StudySessionStreakService {
    */
   static async getStudySessionStreak(userId: string): Promise<ReadingStreak> {
     try {
-      const activities = await this.getDailyStudySessionActivity(userId, 40);
+      const activities = await this.getDailyStudySessionActivity(userId, 30);
       return ReadingStreakService.calculateStreak(activities);
     } catch {
       // If query fails (e.g., no study_words yet), return empty streak

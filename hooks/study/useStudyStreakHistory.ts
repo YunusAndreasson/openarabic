@@ -30,7 +30,9 @@ export function useStudyStreakHistory(): UseStudyStreakHistoryResult {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: user?.id ? ['study-streak-history', user.id] : ['study-streak-history', 'none'],
+    queryKey: user?.id
+      ? ['study-streak-history', user.id, 40]
+      : ['study-streak-history', 'none', 40],
     queryFn: async () => {
       if (!user?.id) return null;
       try {
