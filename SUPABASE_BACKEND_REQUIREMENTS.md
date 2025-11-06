@@ -94,121 +94,75 @@ DROP FUNCTION IF EXISTS delete_user_account(UUID);
 
 ---
 
-## 🟡 OPTIONAL (Code Quality Improvement)
+## 🟢 COMPLETED (Code Quality Improvement)
 
-### 2. Update FSRS RPC Function (Remove Deprecated Parameter)
+### 2. ~~Update FSRS RPC Function~~ → Replaced with Direct UPDATE
 
-**Purpose:** Remove the deprecated `p_fsrs_elapsed_days` parameter from the `update_word_and_review` RPC function. This field is deprecated in ts-fsrs and is no longer needed.
+**Decision:** **NO RPC function needed** - Implemented direct Supabase UPDATE instead.
 
-**Location in Code:** `services/studyWordsFSRS.ts:189`
+**Rationale:**
 
-**Current Status:** Frontend sends `p_fsrs_elapsed_days: 0` for backward compatibility. This is harmless but should be cleaned up.
+- Single-table UPDATE doesn't require RPC complexity
+- Simpler architecture - no database migration needed
+- Faster to deploy - just code changes
+- Better developer experience - full TypeScript type safety
+- RLS policies already handle authorization
+- Sufficient performance for single UPDATE operations
 
-**SQL Implementation:**
+**Location:** `services/studyWordsFSRS.ts:170`
 
-```sql
--- First, check the current function signature
-SELECT
-  routine_name,
-  routine_definition
-FROM information_schema.routines
-WHERE routine_name = 'update_word_and_review'
-  AND routine_schema = 'public';
+**Implementation Date:** 2025-11-06
 
--- Update the function to remove p_fsrs_elapsed_days parameter
--- NOTE: You'll need to adjust this based on your actual function implementation
--- This is a template - modify according to your existing function
-
-CREATE OR REPLACE FUNCTION update_word_and_review(
-  p_user_id UUID,
-  p_root_id INTEGER,
-  p_fsrs_due TIMESTAMP WITH TIME ZONE,
-  p_fsrs_stability DOUBLE PRECISION,
-  p_fsrs_difficulty DOUBLE PRECISION,
-  -- p_fsrs_elapsed_days INTEGER,  -- REMOVE THIS LINE
-  p_fsrs_scheduled_days INTEGER,
-  p_fsrs_learning_steps INTEGER,
-  p_fsrs_reps INTEGER,
-  p_fsrs_lapses INTEGER,
-  p_fsrs_state INTEGER,
-  p_fsrs_last_review TIMESTAMP WITH TIME ZONE
-)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  -- Your existing function logic here
-  -- Remove any references to p_fsrs_elapsed_days
-
-  UPDATE study_words
-  SET
-    fsrs_due = p_fsrs_due,
-    fsrs_stability = p_fsrs_stability,
-    fsrs_difficulty = p_fsrs_difficulty,
-    -- fsrs_elapsed_days = p_fsrs_elapsed_days,  -- REMOVE THIS LINE
-    fsrs_scheduled_days = p_fsrs_scheduled_days,
-    fsrs_learning_steps = p_fsrs_learning_steps,
-    fsrs_reps = p_fsrs_reps,
-    fsrs_lapses = p_fsrs_lapses,
-    fsrs_state = p_fsrs_state,
-    fsrs_last_review = p_fsrs_last_review,
-    updated_at = NOW()
-  WHERE user_id = p_user_id
-    AND root_id = p_root_id;
-
-  -- Insert review record (your existing logic)
-  -- ...
-
-END;
-$$;
-```
-
-**Database Schema Changes (Optional):**
-
-If you want to also remove the column from the database:
-
-```sql
--- Check if column exists and has data
-SELECT
-  COUNT(*) as total_rows,
-  COUNT(fsrs_elapsed_days) as non_null_count
-FROM study_words;
-
--- If safe to remove (after updating the RPC function above):
-ALTER TABLE study_words DROP COLUMN IF EXISTS fsrs_elapsed_days;
-
--- Or keep it for now and just stop using it (safer approach)
-COMMENT ON COLUMN study_words.fsrs_elapsed_days IS 'DEPRECATED: No longer used as of ts-fsrs v5. Calculate from last_review instead.';
-```
-
-**Frontend Update Required After Backend Changes:**
-
-Once you update the backend RPC function, update the frontend code:
+**TypeScript Implementation (Direct UPDATE):**
 
 ```typescript
-// In services/studyWordsFSRS.ts:183
-const data = await executeAuthenticatedQuery(
-  userId,
-  () =>
-    supabase.rpc('update_word_and_review', {
-      p_user_id: userId,
-      p_root_id: rootId,
-      p_fsrs_due: update.fsrs_due,
-      p_fsrs_stability: update.fsrs_stability,
-      p_fsrs_difficulty: update.fsrs_difficulty,
-      // Remove this line: p_fsrs_elapsed_days: 0,
-      p_fsrs_scheduled_days: update.fsrs_scheduled_days,
-      p_fsrs_learning_steps: update.fsrs_learning_steps,
-      p_fsrs_reps: update.fsrs_reps,
-      p_fsrs_lapses: update.fsrs_lapses,
-      p_fsrs_state: update.fsrs_state,
-      p_fsrs_last_review: update.fsrs_last_review,
-    }),
-  // ...
-);
+// services/studyWordsFSRS.ts:170-205
+async updateWordAndReview(
+  userId: string,
+  rootId: number,
+  update: FSRSWordUpdate,
+): Promise<boolean> {
+  // Direct UPDATE - simpler than RPC, no database migration needed
+  // RLS policies ensure user can only update their own words
+  const data = await executeAuthenticatedQuery(
+    userId,
+    () =>
+      supabase
+        .from('study_words')
+        .update({
+          fsrs_due: update.fsrs_due,
+          fsrs_stability: update.fsrs_stability,
+          fsrs_difficulty: update.fsrs_difficulty,
+          fsrs_scheduled_days: update.fsrs_scheduled_days,
+          fsrs_learning_steps: update.fsrs_learning_steps,
+          fsrs_reps: update.fsrs_reps,
+          fsrs_lapses: update.fsrs_lapses,
+          fsrs_state: update.fsrs_state,
+          fsrs_last_review: update.fsrs_last_review,
+        })
+        .eq('user_id', userId)
+        .eq('root_id', rootId)
+        .select(),
+    {
+      toastMessage: STRINGS.FAILED_TO_UPDATE_WORD_AND_REVIEW,
+      analyticsEventName: 'Update_Word_And_Review_Error',
+      analyticsProperties: { rootId },
+      showToast: false,
+    },
+  );
+
+  return Boolean(data && data.length > 0);
+}
 ```
+
+**Benefits of Direct UPDATE:**
+
+- ✅ No database migration required
+- ✅ Full TypeScript type safety
+- ✅ Simpler debugging (all code in TypeScript)
+- ✅ Faster deployment (just code changes)
+- ✅ RLS policies handle authorization
+- ✅ Single UPDATE is atomic by default
 
 ---
 

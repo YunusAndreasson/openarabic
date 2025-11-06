@@ -91,15 +91,28 @@ describe('updateWordAndReview', () => {
     fsrs_last_review: '2024-01-01T00:00:00.000Z',
   };
 
-  it('calls RPC to update and record review', async () => {
-    (supabase.rpc as jest.Mock).mockResolvedValue({ data: true, error: null });
+  it('calls direct UPDATE to update word FSRS parameters', async () => {
+    const selectMock = jest.fn().mockResolvedValue({ data: [{ root_id: 5 }], error: null });
+    const updateObj = {
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      select: selectMock,
+    };
+
+    (supabase.from as jest.Mock).mockReturnValue(updateObj);
 
     const result = await studyWordsFSRSService.updateWordAndReview('u1', 5, update);
 
-    expect(supabase.rpc).toHaveBeenCalledWith(
-      'update_word_and_review',
-      expect.objectContaining({ p_user_id: 'u1', p_root_id: 5 }),
+    expect(supabase.from).toHaveBeenCalledWith('study_words');
+    expect(updateObj.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fsrs_due: update.fsrs_due,
+        fsrs_stability: update.fsrs_stability,
+        fsrs_last_review: update.fsrs_last_review,
+      }),
     );
+    expect(updateObj.eq).toHaveBeenCalledWith('user_id', 'u1');
+    expect(updateObj.eq).toHaveBeenCalledWith('root_id', 5);
     expect(result).toBe(true);
   });
 });

@@ -462,27 +462,28 @@ export type Database = {
       };
     };
     Functions: {
-      create_column_if_not_exists: {
-        Args: { column_name: string; column_type: string; table_name: string };
-        Returns: undefined;
-      };
+      // RPC Functions - Callable from application code via supabase.rpc()
+      // ---
+      // delete_user_account: Multi-table deletion requiring SECURITY DEFINER
+      //   - Used in: services/accountDeletion.ts
+      //   - Purpose: App Store compliance (5.1.1v) - user account deletion
+      //   - Cannot be local code: Requires access to auth.users schema
       delete_user_account: { Args: { user_id: string }; Returns: undefined };
-      update_word_and_review: {
-        Args: {
-          p_fsrs_difficulty: number;
-          p_fsrs_due: string;
-          p_fsrs_lapses: number;
-          p_fsrs_last_review: string;
-          p_fsrs_learning_steps: number;
-          p_fsrs_reps: number;
-          p_fsrs_scheduled_days: number;
-          p_fsrs_stability: number;
-          p_fsrs_state: number;
-          p_root_id: number;
-          p_user_id: string;
-        };
-        Returns: boolean;
-      };
+
+      // Database Trigger Functions - NOT callable from app, automatic database operations
+      // ---
+      // sync_difficulty_scales: Trigger function for automatic difficulty syncing
+      //   - Type: TRIGGER (fires on INSERT/UPDATE/DELETE)
+      //   - Purpose: Maintains data consistency across related tables
+      //   - Do NOT call via supabase.rpc() - handled automatically by database
+      //
+      // update_bookmark_categories_updated_at: Trigger function for timestamp updates
+      //   - Type: TRIGGER (fires on UPDATE)
+      //   - Purpose: Automatically updates updated_at timestamps
+      //   - Do NOT call via supabase.rpc() - handled automatically by database
+      //
+      // Note: Trigger functions appear in this list but are NOT exposed via .rpc()
+      // They are internal database functions attached to table triggers
     };
     Enums: {
       [_ in never]: never;

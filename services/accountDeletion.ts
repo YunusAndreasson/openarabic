@@ -34,7 +34,12 @@ export class AccountDeletionService {
       }
 
       // Delete user account via RPC function
-      // This will delete all user data including study words, reading progress, and bookmarks
+      // WHY RPC?: Multi-table deletion requiring SECURITY DEFINER to access auth.users schema
+      // - Deletes from: study_words, reading_progress, reading_list, auth.users
+      // - Cannot be done with client-side queries (auth schema requires elevated privileges)
+      // - RPC runs with database privileges to delete from all schemas
+      // - Implements App Store requirement (5.1.1v) for account deletion
+      // See: SUPABASE_BACKEND_REQUIREMENTS.md and types/database.types.ts for details
       const { error: deleteError } = await supabase.rpc('delete_user_account', {
         user_id: user.id,
       });

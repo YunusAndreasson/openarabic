@@ -172,23 +172,27 @@ export const studyWordsFSRSService = {
     rootId: number,
     update: FSRSWordUpdate,
   ): Promise<boolean> {
-    // Use RPC function for atomic update
+    // Direct UPDATE - simpler than RPC, no database migration needed
+    // RLS policies ensure user can only update their own words
     const data = await executeAuthenticatedQuery(
       userId,
       () =>
-        supabase.rpc('update_word_and_review', {
-          p_user_id: userId,
-          p_root_id: rootId,
-          p_fsrs_due: update.fsrs_due,
-          p_fsrs_stability: update.fsrs_stability,
-          p_fsrs_difficulty: update.fsrs_difficulty,
-          p_fsrs_scheduled_days: update.fsrs_scheduled_days,
-          p_fsrs_learning_steps: update.fsrs_learning_steps,
-          p_fsrs_reps: update.fsrs_reps,
-          p_fsrs_lapses: update.fsrs_lapses,
-          p_fsrs_state: update.fsrs_state,
-          p_fsrs_last_review: update.fsrs_last_review,
-        }),
+        supabase
+          .from('study_words')
+          .update({
+            fsrs_due: update.fsrs_due,
+            fsrs_stability: update.fsrs_stability,
+            fsrs_difficulty: update.fsrs_difficulty,
+            fsrs_scheduled_days: update.fsrs_scheduled_days,
+            fsrs_learning_steps: update.fsrs_learning_steps,
+            fsrs_reps: update.fsrs_reps,
+            fsrs_lapses: update.fsrs_lapses,
+            fsrs_state: update.fsrs_state,
+            fsrs_last_review: update.fsrs_last_review,
+          })
+          .eq('user_id', userId)
+          .eq('root_id', rootId)
+          .select(),
       {
         toastMessage: STRINGS.FAILED_TO_UPDATE_WORD_AND_REVIEW,
         analyticsEventName: 'Update_Word_And_Review_Error',
@@ -197,7 +201,7 @@ export const studyWordsFSRSService = {
       },
     );
 
-    return Boolean(data);
+    return Boolean(data && data.length > 0);
   },
 
   // Toggle FSRS study for roots
