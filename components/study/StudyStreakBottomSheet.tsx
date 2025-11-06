@@ -49,25 +49,6 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
           ? 'Keep up the great momentum'
           : 'Start building your study habit';
 
-        // DEBUG: Log streak data
-        console.log('=== STREAK DEBUG ===');
-        console.log('Current Streak:', streakHistory.metrics.currentStreak);
-        console.log('Total Days:', streakHistory.dailyActivity.length);
-        console.log(
-          'Active Days:',
-          streakHistory.dailyActivity.filter(d => d.hasActivity).length,
-        );
-        console.log('Streak Periods:', streakHistory.streakPeriods.length);
-        streakHistory.streakPeriods.forEach((period, i) => {
-          console.log(
-            `Period ${i + 1}: ${period.startDate} to ${period.endDate} (${period.length} days, active: ${period.isActive})`,
-          );
-        });
-        console.log(
-          'Recent Activity:',
-          streakHistory.dailyActivity.slice(-5).map(d => `${d.date}: ${d.hasActivity}`),
-        );
-
         return (
           <>
             {/* Header */}

@@ -59,12 +59,20 @@ export const StreakChart = memo<StreakChartProps>(
 
     // Memoize expensive calculations
     const chartData = useMemo(() => {
-      // Calculate bar width based on available space
-      const chartWidth = SCREEN_WIDTH - LAYOUT.SPACING.XLARGE * 2;
-      const barWidth = Math.max(
-        8,
-        (chartWidth - (dailyActivity.length - 1) * BAR_GAP) / dailyActivity.length,
-      );
+      // Calculate available width (screen width minus padding)
+      const availableWidth = SCREEN_WIDTH - LAYOUT.SPACING.XLARGE * 2;
+
+      // Calculate bar width to fit all bars without scrolling
+      // Total width = (barCount * barWidth) + ((barCount - 1) * gap)
+      // Solving for barWidth: barWidth = (availableWidth - (barCount - 1) * gap) / barCount
+      const calculatedBarWidth =
+        (availableWidth - (dailyActivity.length - 1) * BAR_GAP) / dailyActivity.length;
+
+      // Use calculated width, with a minimum of 6px for visibility
+      const barWidth = Math.max(6, calculatedBarWidth);
+
+      // Calculate actual chart width used
+      const chartWidth = dailyActivity.length * barWidth + (dailyActivity.length - 1) * BAR_GAP;
 
       // Create streak map
       const streakMap = createStreakMap(streakPeriods);
@@ -75,13 +83,6 @@ export const StreakChart = memo<StreakChartProps>(
         const streakPeriod = streakMap.get(activity.date);
         const isInStreak = Boolean(streakPeriod);
         const isActiveStreak = streakPeriod?.isActive || false;
-
-        // DEBUG: Log last 5 bars
-        if (index >= dailyActivity.length - 5) {
-          console.log(
-            `Bar ${index} (${activity.date}): hasActivity=${hasActivity}, inMap=${streakMap.has(activity.date)}, isActiveStreak=${isActiveStreak}`,
-          );
-        }
 
         // Determine bar color and opacity
         let barColor = colors.textTertiary;
@@ -106,13 +107,6 @@ export const StreakChart = memo<StreakChartProps>(
         // Convert to RGBA color for Skia
         const color = hexToRGBA(barColor, barOpacity);
 
-        // DEBUG: Log rendering details for active bars
-        if (hasActivity && index >= dailyActivity.length - 5) {
-          console.log(
-            `  → Rendering: x=${x.toFixed(1)}, width=${barWidth.toFixed(1)}, color=${color}`,
-          );
-        }
-
         return {
           key: activity.date,
           x,
@@ -129,7 +123,6 @@ export const StreakChart = memo<StreakChartProps>(
 
     return (
       <View style={[styles.container, { height }]}>
-        {/* Chart area */}
         <View style={styles.chartArea}>
           <Canvas
             style={{
@@ -159,12 +152,11 @@ StreakChart.displayName = 'StreakChart';
 
 const styles = StyleSheet.create({
   container: {
-    // Remove paddingHorizontal since it's handled by parent chartContainer
-    paddingVertical: LAYOUT.SPACING.TINY, // Minimal vertical padding for tight layout
+    paddingVertical: LAYOUT.SPACING.TINY,
+    justifyContent: 'center',
   },
   chartArea: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
 });
