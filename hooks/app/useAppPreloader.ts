@@ -76,9 +76,24 @@ export const useAppPreloader = (): AppPreloaderResult => {
       setPreloadProgress(25);
 
       // Pre-compute and cache featured articles for immediate availability
+      // CRITICAL: Only generate new featured articles if none exist for this session
+      // This prevents articles from changing on app resume (backgrounding/foregrounding)
       if (Array.isArray(_articles) && _articles.length > 0) {
         InteractionManager.runAfterInteractions(() => {
           try {
+            // Check if featured articles already exist for this session
+            const existingFeatured = queryClient.getQueryData([
+              'featured-articles',
+              'global',
+              0,
+              APP_SESSION_ID,
+            ]);
+
+            // Skip generation if featured articles already cached for this session
+            if (existingFeatured) {
+              return; // Use existing cached selection
+            }
+
             const articles = _articles as Article[];
             const featured: Article[] = getRandomItems(articles, 5); // Get random 5 articles
 
