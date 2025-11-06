@@ -58,6 +58,27 @@ export function WordDetailsBottomSheet({
     });
   }, [isInStudyList]);
 
+  // Prefetch and cache audio when sheet opens for instant playback
+  useEffect(() => {
+    if (!isVisible || !word?.audio_url) return;
+
+    const prefetchAudio = async () => {
+      try {
+        const fullAudioUrl = generateAudioUrl(word.audio_url);
+        if (!fullAudioUrl) return;
+
+        // Prefetch and cache audio in background - no await to avoid blocking
+        audioCache.getAudio(fullAudioUrl).catch(() => {
+          // Silent fail for background prefetch - user can still manually play
+        });
+      } catch {
+        // Silent fail for background prefetch
+      }
+    };
+
+    prefetchAudio();
+  }, [isVisible, word?.audio_url, word?.id]);
+
   // Check if this word's audio is currently playing or loading (only when visible)
   const isThisTrack =
     shouldUseAudioStatus && audioStatus.currentTrack?.id === `word-details-${word?.id}`;
