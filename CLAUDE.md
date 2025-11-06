@@ -71,8 +71,8 @@ The validation workflow has been optimized for AI agent efficiency:
 
 ### Core Technologies
 
-- **React Native**: 0.79.5 with React 19.0.0
-- **Expo SDK**: 53 with New Architecture enabled
+- **React Native**: 0.81.5 with React 19.1.0
+- **Expo SDK**: 54 with New Architecture enabled
 - **Navigation**: Expo Router v5.1.5 with typed routes and modal presentation
 - **State Management**: Redux Toolkit v2.8.2 with Redux Persist
 - **Data Fetching**: TanStack Query v5.85.5 (React Query) with persistence
@@ -523,7 +523,7 @@ export function FeatureProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({ state, setState }), [state]);
 
-  return <FeatureContext.Provider value={value}>{children}</FeatureContext.Provider>;
+  return <FeatureContext value={value}>{children}</FeatureContext>;
 }
 
 // Consume with custom hook

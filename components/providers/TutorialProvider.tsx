@@ -28,7 +28,7 @@ interface TutorialProviderProps {
 export function TutorialProvider({ children }: TutorialProviderProps) {
   const tutorialManager = useTutorialManager();
 
-  return <TutorialContext.Provider value={tutorialManager}>{children}</TutorialContext.Provider>;
+  return <TutorialContext value={tutorialManager}>{children}</TutorialContext>;
 }
 
 TutorialProvider.displayName = 'TutorialProvider';

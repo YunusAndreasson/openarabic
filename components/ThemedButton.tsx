@@ -116,10 +116,13 @@ export function ThemedButton({
     size === 'small' && styles.buttonSmall,
     variant === 'filled' && {
       backgroundColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint,
+      borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+      borderColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint, // Transparent border matching background
     },
     variant === 'outlined' && {
       borderWidth: LAYOUT.BORDER.WIDTH.THIN,
       borderColor: isActuallyLoading || disabled ? colors.border : colors.tint,
+      backgroundColor: 'transparent', // Explicit transparent background
     },
   ];
 
