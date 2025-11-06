@@ -233,8 +233,8 @@ const styles = StyleSheet.create({
   arabicTitle: {
     marginBottom: LAYOUT.SPACING.SMALL,
     textAlign: 'center',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE, // 34 - larger than heading1 (28)
     lineHeight: 60, // Adequate line height for Arabic text with diacritics
-    // Font size handled by ThemedText type="heading1"
   },
   englishTranslation: {
     textAlign: 'center',
