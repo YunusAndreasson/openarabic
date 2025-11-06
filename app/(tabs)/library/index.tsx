@@ -2,8 +2,9 @@ import type { NativeStackNavigationOptions } from '@react-navigation/native-stac
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import type { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -36,6 +37,11 @@ export default function ReadScreen(): JSX.Element {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
+  // Scroll position preservation refs
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollPositionRef = useRef<number>(0);
+  const isRestoringScrollRef = useRef<boolean>(false);
+
   const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery(
     articleQueries.categories(),
   );
@@ -52,6 +58,32 @@ export default function ReadScreen(): JSX.Element {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Track scroll position to preserve it across data updates
+  const handleScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
+    // Don't track scroll position while restoring
+    if (!isRestoringScrollRef.current) {
+      scrollPositionRef.current = event.nativeEvent.contentOffset.y;
+    }
+  }, []);
+
+  // Restore scroll position when articles data changes (re-sorts after completion)
+  useEffect(() => {
+    if (articlesData.length > 0 && scrollPositionRef.current > 0) {
+      // Use setTimeout to ensure DOM has updated after re-render
+      setTimeout(() => {
+        isRestoringScrollRef.current = true;
+        scrollViewRef.current?.scrollTo({
+          y: scrollPositionRef.current,
+          animated: false,
+        });
+        // Reset flag after scroll completes
+        setTimeout(() => {
+          isRestoringScrollRef.current = false;
+        }, 100);
+      }, 50);
+    }
+  }, [articlesData]);
 
   // Note: Categories are prioritized over authors since IDs overlap and categories are primary navigation
 
@@ -247,12 +279,14 @@ export default function ReadScreen(): JSX.Element {
       style={styles.container}
     >
       <ArticleList
+        ref={scrollViewRef}
         contentContainerStyle={contentContainerStyle}
         isRefreshing={isRefreshing}
         ListHeaderComponent={ListHeaderComponent}
         ListFooterComponent={ListFooterComponent}
         progressViewOffset={LAYOUT.SPACING.XLARGE}
         onRefresh={handleRefresh}
+        onScroll={handleScroll}
       />
     </ThemedView>
   );

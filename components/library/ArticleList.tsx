@@ -21,6 +21,7 @@ interface ArticleListProps {
   progressViewOffset?: number;
   isRefreshing?: boolean;
   ref?: Ref<ScrollView>;
+  onScroll?: (event: { nativeEvent: { contentOffset: { y: number } } }) => void;
 }
 
 /**
@@ -36,6 +37,7 @@ export function ArticleList({
   progressViewOffset,
   isRefreshing = false,
   ref,
+  onScroll,
 }: ArticleListProps) {
   const colors = useColors();
   const scrollViewRef = useRef<ScrollView | null>(null);
@@ -115,6 +117,7 @@ export function ArticleList({
       refreshControl={refreshControl}
       scrollEventThrottle={16}
       keyboardShouldPersistTaps="handled"
+      onScroll={onScroll}
     >
       {renderHeader()}
       {renderFooter()}
