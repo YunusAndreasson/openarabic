@@ -73,7 +73,7 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
             {/* Streak Chart */}
             <View style={styles.chartContainer}>
               <ThemedText type="heading3" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
-                Last 30 days
+                Last 40 days
               </ThemedText>
               <ThemedText
                 type="body"

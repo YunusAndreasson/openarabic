@@ -1,22 +1,15 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
-import {
-  LayoutAnimation,
-  Pressable,
-  type ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import React, { memo, useCallback, useEffect, useMemo, useState, type FC } from 'react';
+import { LayoutAnimation, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { BaseCard } from '@/components/common/BaseCard';
-import { getFAQExpandAnimation, TIMING_CONSTANTS } from '@/constants/animation';
+import { getFAQExpandAnimation } from '@/constants/animation';
 import { FAQ_DATA, type FAQCategoryData, type FAQItem } from '@/constants/faq';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -141,15 +134,8 @@ const HelpScreen: FC = () => {
   const params = useLocalSearchParams<{ expandItem?: string }>();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const scrollViewRef = useRef<ScrollView>(null);
-  const itemPositionsRef = useRef<Map<string, number>>(new Map());
 
-  // Track item positions for scroll-to functionality
-  const handleItemLayout = useCallback((id: string, y: number) => {
-    itemPositionsRef.current.set(id, y);
-  }, []);
-
-  // Auto-expand item from URL params and scroll to it
+  // Auto-expand item from URL params
   useEffect(() => {
     const itemToExpand = params.expandItem;
     if (!itemToExpand) return;
@@ -159,18 +145,6 @@ const HelpScreen: FC = () => {
       newSet.add(itemToExpand);
       return newSet;
     });
-
-    // Scroll to the expanded item after a short delay to allow for layout
-    const scrollTimeout = setTimeout(() => {
-      const itemY = itemPositionsRef.current.get(itemToExpand);
-      if (itemY !== undefined && scrollViewRef.current) {
-        // Scroll with offset to show the item near the top, accounting for header
-        const scrollOffset = Math.max(0, itemY - LAYOUT.SPACING.LARGE);
-        scrollViewRef.current.scrollTo({ y: scrollOffset, animated: true });
-      }
-    }, TIMING_CONSTANTS.FAQ_SCROLL_DELAY);
-
-    return () => clearTimeout(scrollTimeout);
   }, [params.expandItem]);
 
   const handleToggleItem = useCallback((id: string) => {
@@ -267,7 +241,6 @@ const HelpScreen: FC = () => {
         scrollable={true}
         style={styles.flexOne}
         useSafeArea={false}
-        scrollViewRef={scrollViewRef}
         contentContainerStyle={[
           styles.scrollContentDynamic,
           {
@@ -316,7 +289,6 @@ const HelpScreen: FC = () => {
                       isExpanded={expandedItems.has(item.id)}
                       item={item}
                       onToggle={handleToggleItem}
-                      onLayout={handleItemLayout}
                     />
                   ))}
                 </View>
@@ -356,7 +328,6 @@ const HelpScreen: FC = () => {
                         isExpanded={expandedItems.has(item.id)}
                         item={item}
                         onToggle={handleToggleItem}
-                        onLayout={handleItemLayout}
                       />
                     ))}
                   </View>

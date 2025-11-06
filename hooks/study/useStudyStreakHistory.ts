@@ -12,7 +12,7 @@ interface UseStudyStreakHistoryResult {
 
 /**
  * Hook to fetch complete study session streak history with visualization data
- * Used by StudyStreakBottomSheet to display 30-day chart and metrics
+ * Used by StudyStreakBottomSheet to display 40-day chart and metrics
  *
  * @returns Streak history with daily activity, streak periods, and metrics
  *
@@ -34,7 +34,7 @@ export function useStudyStreakHistory(): UseStudyStreakHistoryResult {
     queryFn: async () => {
       if (!user?.id) return null;
       try {
-        return await studySessionStreakService.getStudySessionHistory(user.id, 30);
+        return await studySessionStreakService.getStudySessionHistory(user.id, 40);
       } catch (error) {
         handleError(error as Error, {
           showToast: false,
