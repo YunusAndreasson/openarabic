@@ -42,7 +42,8 @@ export class ReadingStreakService {
   ): Promise<DailyReadingActivity[]> {
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    // Go back (days - 1) to include today as the last day
+    startDate.setDate(startDate.getDate() - (days - 1));
 
     // Check if user has any article activity on each date
     // Get all reading progress records and consider both created_at and updated_at dates
@@ -60,7 +61,7 @@ export class ReadingStreakService {
     // Group by date - any activity on a date counts as reading
     const activityMap = new Map<string, boolean>();
 
-    // Initialize all dates with no activity
+    // Initialize exactly `days` dates including today
     for (let i = 0; i < days; i++) {
       const date = new Date(startDate);
       date.setDate(date.getDate() + i);
@@ -68,12 +69,6 @@ export class ReadingStreakService {
       if (dateStr) {
         activityMap.set(dateStr, false);
       }
-    }
-
-    // Ensure today's date is included (in case the loop didn't reach it)
-    const todayStr = endDate.toISOString().split('T')[0];
-    if (todayStr && !activityMap.has(todayStr)) {
-      activityMap.set(todayStr, false);
     }
 
     // Mark dates with any activity (user opened/updated articles)
@@ -324,7 +319,8 @@ export class StudySessionStreakService {
   ): Promise<DailyReadingActivity[]> {
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    // Go back (days - 1) to include today as the last day
+    startDate.setDate(startDate.getDate() - (days - 1));
 
     // Get all study_words reviews for the user (fsrs_last_review tracks when they studied)
     const data = await executeQuery(
@@ -337,7 +333,7 @@ export class StudySessionStreakService {
       },
     );
 
-    // Initialize all dates with no activity
+    // Initialize exactly `days` dates including today
     const activityMap = new Map<string, boolean>();
 
     for (let i = 0; i < days; i++) {
@@ -347,12 +343,6 @@ export class StudySessionStreakService {
       if (dateStr) {
         activityMap.set(dateStr, false);
       }
-    }
-
-    // Ensure today's date is included
-    const todayStr = endDate.toISOString().split('T')[0];
-    if (todayStr && !activityMap.has(todayStr)) {
-      activityMap.set(todayStr, false);
     }
 
     // Mark dates with study session activity (any word review = session that day)
