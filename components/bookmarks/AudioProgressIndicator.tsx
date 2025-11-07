@@ -1,4 +1,4 @@
-import { ProgressBar } from '@common/ProgressBar';
+import { ProgressBar } from '@/components/common';
 import { useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';

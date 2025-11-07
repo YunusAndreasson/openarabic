@@ -1,4 +1,4 @@
-import { ErrorState } from '@common/ErrorState';
+import { ErrorState } from '@/components/common';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';

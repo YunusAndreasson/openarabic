@@ -1,4 +1,4 @@
-import { EmptyState } from '@common/EmptyState';
+import { EmptyState } from '@/components/common';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';

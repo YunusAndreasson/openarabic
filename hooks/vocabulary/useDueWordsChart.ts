@@ -3,8 +3,8 @@ import {
   CHART_VISUAL,
   DAYS_7,
   getEffectiveChartHeight,
-} from '@charts/constants';
-import { buildSmoothChartPath } from '@charts/pathBuilder';
+} from '@/components/common/charts/constants';
+import { buildSmoothChartPath } from '@/components/common/charts/pathBuilder';
 import { useMemo } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';

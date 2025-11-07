@@ -1,5 +1,5 @@
-import { BaseChart } from '@charts/BaseChart';
-import { useChartColors } from '@charts/ChartColors';
+import { BaseChart } from '@/components/common/charts/BaseChart';
+import { useChartColors } from '@/components/common/charts/ChartColors';
 import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';

@@ -1,5 +1,5 @@
-import { BaseCard } from '@common/BaseCard';
-import { ProgressBar } from '@common/ProgressBar';
+import { BaseCard } from '@/components/common';
+import { ProgressBar } from '@/components/common';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';

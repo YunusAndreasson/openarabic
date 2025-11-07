@@ -1,4 +1,4 @@
-import { BaseCard } from '@common/BaseCard';
+import { BaseCard } from '@/components/common';
 import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';

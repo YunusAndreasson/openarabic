@@ -1,5 +1,5 @@
-import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
-import { createAreaFillPath } from '@charts/utils';
+import { GRAPH_HEIGHT_LARGE } from './constants';
+import { createAreaFillPath } from './utils';
 import { Mask, Path, Rect } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 

@@ -1,9 +1,9 @@
 // External Libraries
-import { BaseCard } from '@common/BaseCard';
-import { SectionTitle } from '@common/SectionTitle';
+import { BaseCard } from '@/components/common';
+import { SectionTitle } from '@/components/common';
 import { Ionicons } from '@expo/vector-icons';
-import { TimePicker } from '@ui/TimePicker';
-import { Toggle } from '@ui/Toggle';
+import { TimePicker } from '@/components/ui';
+import { Toggle } from '@/components/ui';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { Fragment, memo, useCallback, useMemo, type FC } from 'react';

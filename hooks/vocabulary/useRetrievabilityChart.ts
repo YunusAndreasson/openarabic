@@ -1,13 +1,13 @@
-import { useChartColors } from '@charts/ChartColors';
+import { useChartColors } from '@/components/common/charts/ChartColors';
 import {
   calculateDataPointPositions,
   CHART_VISUAL,
   DAYS_7,
   getEffectiveChartHeight,
   GRAPH_HEIGHT_LARGE,
-} from '@charts/constants';
-import { buildSmoothChartPath } from '@charts/pathBuilder';
-import { createStandardizedPerformanceZones } from '@charts/utils';
+} from '@/components/common/charts/constants';
+import { buildSmoothChartPath } from '@/components/common/charts/pathBuilder';
+import { createStandardizedPerformanceZones } from '@/components/common/charts/utils';
 import { useMemo } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';

@@ -1,4 +1,4 @@
-import { BaseCard } from '@common/BaseCard';
+import { BaseCard } from '@/components/common';
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';

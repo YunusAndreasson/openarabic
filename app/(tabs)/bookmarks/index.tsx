@@ -1,5 +1,5 @@
-import { EmptyState } from '@common/EmptyState';
-import { ListSeparator } from '@common/ListSeparator';
+import { EmptyState } from '@/components/common';
+import { ListSeparator } from '@/components/common';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { useQuery } from '@tanstack/react-query';

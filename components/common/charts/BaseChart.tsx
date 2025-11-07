@@ -1,5 +1,5 @@
-import { Y_AXIS_WIDTH } from '@charts/ChartAxes';
-import { BaseCard } from '@common/BaseCard';
+import { Y_AXIS_WIDTH } from './ChartAxes';
+import { BaseCard } from '@/components/common';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 

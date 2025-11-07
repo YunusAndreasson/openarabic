@@ -3,9 +3,9 @@ import {
   CHART_VISUAL,
   DAYS_7,
   getEffectiveChartHeight,
-} from '@charts/constants';
-import { buildSmoothChartPath } from '@charts/pathBuilder';
-import { calculateEfficiencyScore, generateDateRange, isSameDay } from '@charts/utils';
+} from '@/components/common/charts/constants';
+import { buildSmoothChartPath } from '@/components/common/charts/pathBuilder';
+import { calculateEfficiencyScore, generateDateRange, isSameDay } from '@/components/common/charts/utils';
 import { useMemo } from 'react';
 
 import { TREND_CHANGE_THRESHOLD } from '@/constants/fsrs';

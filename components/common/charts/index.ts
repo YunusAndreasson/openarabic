@@ -18,4 +18,36 @@ export { VocabularyChart } from './VocabularyChart';
 // Types
 export type { DataPoint } from './ChartCanvas';
 
+// Constants and utilities
+export {
+  GRAPH_WIDTH,
+  GRAPH_HEIGHT_LARGE,
+  CHART_VISUAL,
+  CHART_LAYOUT,
+  PERFORMANCE_THRESHOLDS,
+  DAYS_7,
+  calculateDataPointPositions,
+  getEffectiveChartHeight,
+  useGraphWidth,
+} from './constants';
+
+export {
+  generateDateRange,
+  getUTCDateString,
+  isSameDay,
+  calculateEfficiencyScore,
+  createStandardizedPerformanceZones,
+  createAreaFillPath,
+  formatWeekdayUTC,
+  formatMonthDayUTC,
+  calculateSevenDayAverage,
+} from './utils';
+
+export { buildSmoothChartPath } from './pathBuilder';
+export type { BuildPathOptions, BuildPathResult } from './pathBuilder';
+
+export { CHART_OPACITY, getChartColors, useChartColors } from './ChartColors';
+
+export { CHART_LABELS, EMPTY_STATE_MESSAGES, generateChartSubtitle } from './ChartMessages';
+
 // Other shared components (keep existing exports)

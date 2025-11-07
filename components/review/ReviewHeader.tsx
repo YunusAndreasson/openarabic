@@ -1,4 +1,4 @@
-import { ProgressBar } from '@common/ProgressBar';
+import { ProgressBar } from '@/components/common';
 import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
