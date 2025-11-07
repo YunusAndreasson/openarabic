@@ -5,4 +5,3 @@
 
 export { AccountBadge } from './AccountBadge';
 export { FeedbackForm } from './FeedbackForm';
-export { SocialMediaIcons } from './SocialMediaIcons';

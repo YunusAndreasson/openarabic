@@ -10,5 +10,4 @@ export { DragHandle } from './DragHandle';
 export { ListenHeader } from './ListenHeader';
 export { ListenListItemCard } from './ListenListItemCard';
 export { PlayButton } from './PlayButton';
-export { RepeatButton } from './RepeatButton';
 export { SleepTimer } from './SleepTimer';
