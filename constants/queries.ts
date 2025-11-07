@@ -325,6 +325,31 @@ export const audioQueries = {
 } as const;
 
 /**
+ * Study streak query keys
+ * Used for vocabulary practice streak tracking
+ */
+export const studyStreakQueries = {
+  /**
+   * Query keys for study streak data
+   */
+  keys: {
+    streak: (userId: string) => ['study-streak', userId] as const,
+    history: (userId: string, days: number = 365) => ['study-streak-history', userId, days] as const,
+  },
+
+  /**
+   * Invalidate all study streak queries for a user
+   * Use after: completing practice session, manual streak updates
+   */
+  invalidateAll: (queryClient: QueryClient, userId: string) => {
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['study-streak', userId] }),
+      queryClient.invalidateQueries({ queryKey: ['study-streak-history', userId] }),
+    ]);
+  },
+} as const;
+
+/**
  * Combined export for backward compatibility
  * Use domain-specific exports (fsrsQueries, articleQueries, etc.) instead
  * @deprecated Use domain-specific exports

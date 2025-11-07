@@ -74,23 +74,21 @@ export const useBookmarksScreen = () => {
   });
   const { data: readingList = [], isLoading: isReadingListLoading } = readingListQuery;
 
-  const dedupedReadingList = useMemo(() => {
+  const sortedReadingList = useMemo(() => {
     if (!readingList?.length) return [];
 
+    // Deduplicate while preserving order
     const seen = new Set<number>();
-    return readingList.filter(item => {
+    const deduped = readingList.filter(item => {
       if (seen.has(item.article_id)) return false;
       seen.add(item.article_id);
       return true;
     });
-  }, [readingList]);
 
-  const sortedReadingList = useMemo(() => {
-    if (!dedupedReadingList.length) return [];
-
+    // Sort the already-deduped array (no spread needed since filter returns new array)
     if (customOrder.length > 0) {
       const customOrderMap = new Map(customOrder.map((id, index) => [id, index]));
-      return [...dedupedReadingList].sort((a, b) => {
+      return deduped.sort((a, b) => {
         const posA = customOrderMap.get(a.article_id) ?? 999;
         const posB = customOrderMap.get(b.article_id) ?? 999;
 
@@ -105,12 +103,12 @@ export const useBookmarksScreen = () => {
       });
     }
 
-    return [...dedupedReadingList].sort((a, b) => {
+    return deduped.sort((a, b) => {
       const dateA = new Date(a.added_at).getTime();
       const dateB = new Date(b.added_at).getTime();
       return dateB - dateA;
     });
-  }, [dedupedReadingList, customOrder]);
+  }, [readingList, customOrder]);
 
   const isDataCached = useMemo(() => {
     return Boolean(user?.id && queryClient.getQueryData(['readingList', user.id]));

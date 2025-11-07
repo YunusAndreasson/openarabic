@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { studySessionStreakService, type StudyStreak } from '@/services/studyStreak';
 import { handleError } from '@/utils/errorHandling';
@@ -30,7 +31,7 @@ export function useStudyStreak(): UseStudyStreakResult {
     error,
     refetch,
   } = useQuery({
-    queryKey: user?.id ? ['study-streak', user.id] : ['study-streak', 'none'],
+    queryKey: user?.id ? studyStreakQueries.keys.streak(user.id) : ['study-streak', 'none'],
     queryFn: async () => {
       if (!user?.id) return null;
       try {

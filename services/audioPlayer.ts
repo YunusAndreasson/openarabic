@@ -81,7 +81,11 @@ class SimpleAudioService {
       // Ensure audio is active at the OS level
       try {
         await setIsAudioActiveAsync(true);
-      } catch {
+      } catch (error) {
+        await handleError(error as Error, {
+          showToast: false,
+          sentryExtra: { operation: 'setIsAudioActiveAsync', location: 'initializeAudioMode' },
+        });
         // Continue with audio mode setup even if this fails
       }
 
@@ -145,7 +149,11 @@ class SimpleAudioService {
             await setIsAudioActiveAsync(true);
           }
         }
-      } catch {
+      } catch (error) {
+        await handleError(error as Error, {
+          showToast: false,
+          sentryExtra: { operation: 'AppState.addEventListener', appState: nextAppState },
+        });
         // Don't throw errors from AppState listener as it can cause crashes
       }
     });
@@ -242,7 +250,11 @@ class SimpleAudioService {
       // Pause previous player to prevent audio overlap
       try {
         previousPlayer.pause();
-      } catch {
+      } catch (error) {
+        await handleError(error as Error, {
+          showToast: false,
+          sentryExtra: { operation: 'previousPlayer.pause', location: 'loadAndPlayTrack' },
+        });
         // Ignore pause errors
       }
 

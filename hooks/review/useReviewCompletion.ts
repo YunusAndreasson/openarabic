@@ -5,7 +5,7 @@ import { InteractionManager } from 'react-native';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY } from '@/constants/fsrs';
-import { fsrsQueries } from '@/constants/queries';
+import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { studySessionStreakService } from '@/services/studyStreak';
@@ -41,8 +41,7 @@ export const useReviewCompletion = (
     try {
       await studySessionStreakService.recordStudySession(user.id);
       // Invalidate study streak queries to update UI immediately
-      queryClient.invalidateQueries({ queryKey: ['study-streak', user.id] });
-      queryClient.invalidateQueries({ queryKey: ['study-streak-history', user.id] });
+      await studyStreakQueries.invalidateAll(queryClient, user.id);
     } catch {
       // Silently fail - don't block review completion on streak recording failure
     }

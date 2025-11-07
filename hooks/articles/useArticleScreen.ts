@@ -344,15 +344,16 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
         next.set(word.root_id, isNowInStudy);
         return next;
       });
-      // Invalidate queries in parallel for better performance
+      // Invalidate queries in parallel, then refetch
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: fsrsQueries.due(user.id).queryKey }),
         queryClient.invalidateQueries({ queryKey: fsrsQueries.all(user.id).queryKey }),
         queryClient.invalidateQueries({
           queryKey: fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
         }),
-        refetchStudyWords?.(),
       ]);
+      // Refetch after invalidations complete to ensure fresh data
+      await refetchStudyWords?.();
     },
     [user?.id, handleRootPress, queryClient, refetchStudyWords],
   );
