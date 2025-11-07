@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { HorizontalArticleSlider } from '@/components/library/HorizontalArticleSlider';
+import { HorizontalArticleSlider } from '@/components/library';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
 import type { Article } from '@/types/articles.types';
 

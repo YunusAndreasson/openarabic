@@ -5,9 +5,9 @@ import { StyleSheet, View } from 'react-native';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
-import { EmailAuthOptions } from '@/components/auth/EmailAuthOptions';
-import { LegalLinks } from '@/components/auth/LegalLinks';
-import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
+import { EmailAuthOptions } from '@/components/auth';
+import { LegalLinks } from '@/components/auth';
+import { SocialAuthButtons } from '@/components/auth';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 

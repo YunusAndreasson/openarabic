@@ -2,7 +2,7 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
-import { useToast } from '@/components/providers/ToastProvider';
+import { useToast } from '@/components/providers';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { audioQueries, fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';

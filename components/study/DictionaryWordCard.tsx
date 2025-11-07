@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { DeleteButton } from '@/components/bookmarks/DeleteButton';
+import { DeleteButton } from '@/components/bookmarks';
 import { SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';

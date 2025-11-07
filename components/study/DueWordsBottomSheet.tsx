@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 
 import { GenericBottomSheet } from '@/components/common';
-import { DueWordsPrognosisChart } from '@/components/study/charts/DueWordsPrognosisChart';
+import { DueWordsPrognosisChart } from '@/components/study';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';

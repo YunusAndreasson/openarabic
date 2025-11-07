@@ -2,7 +2,7 @@ import { Link } from 'expo-router';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
+import { ListenListItemCard } from '@/components/bookmarks';
 import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';

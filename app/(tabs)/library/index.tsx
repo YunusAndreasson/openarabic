@@ -8,10 +8,10 @@ import type { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
-import { ArticleList } from '@/components/library/ArticleList';
-import { FilterSection } from '@/components/library/FilterSection';
-import { HijriDateFooter } from '@/components/library/HijriDateFooter';
-import { IntelligentArticleSection } from '@/components/library/IntelligentArticleSection';
+import { ArticleList } from '@/components/library';
+import { FilterSection } from '@/components/library';
+import { HijriDateFooter } from '@/components/library';
+import { IntelligentArticleSection } from '@/components/library';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import { getAuthorFilterRoute, getCategoryFilterRoute } from '@/constants/routes';

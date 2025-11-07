@@ -5,7 +5,7 @@ import type { JSX } from 'react';
 import React, { useMemo } from 'react';
 
 import { ThemedView } from '@/components/ThemedView';
-import { FilteredArticleView } from '@/components/library/FilteredArticleView';
+import { FilteredArticleView } from '@/components/library';
 import { PulsatingLoader } from '@/components/ui';
 import { articleQueries } from '@/constants/queries';
 import { getArticleRoute } from '@/constants/routes';

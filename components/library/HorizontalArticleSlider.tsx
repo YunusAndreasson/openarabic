@@ -2,7 +2,7 @@ import { FlashList } from '@shopify/flash-list';
 import { memo, useCallback, useRef, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ArticleCard } from '@/components/library/ArticleCard';
+import { ArticleCard } from '@/components/library';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';

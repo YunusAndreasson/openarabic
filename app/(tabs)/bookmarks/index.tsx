@@ -11,9 +11,9 @@ import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 
 import { ThemedView } from '@/components/ThemedView';
-import { BottomControls } from '@/components/bookmarks/BottomControls';
-import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
-import { useToast } from '@/components/providers/ToastProvider';
+import { BottomControls } from '@/components/bookmarks';
+import { ListenListItemCard } from '@/components/bookmarks';
+import { useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries } from '@/constants/queries';

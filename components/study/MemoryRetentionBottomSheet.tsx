@@ -1,7 +1,7 @@
 import { memo } from 'react';
 
 import { GenericBottomSheet } from '@/components/common';
-import { RetrievabilityChart } from '@/components/study/charts/RetrievabilityChart';
+import { RetrievabilityChart } from '@/components/study';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';

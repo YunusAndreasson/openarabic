@@ -6,9 +6,9 @@ import Animated from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
-import { DeleteButton } from '@/components/bookmarks/DeleteButton';
-import { DragHandle, type DragHandleProps } from '@/components/bookmarks/DragHandle';
-import { PlayButton } from '@/components/bookmarks/PlayButton';
+import { DeleteButton } from '@/components/bookmarks';
+import { DragHandle, type DragHandleProps } from '@/components/bookmarks';
+import { PlayButton } from '@/components/bookmarks';
 import { CARD_DRAG_SCALE, SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
 import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';

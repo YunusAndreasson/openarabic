@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { FeedbackForm } from '@/components/account/FeedbackForm';
+import { FeedbackForm } from '@/components/account';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 

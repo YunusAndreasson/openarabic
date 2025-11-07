@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { MemoryRetentionGauge } from '@/components/study/charts/MemoryRetentionGauge';
+import { MemoryRetentionGauge } from '@/components/study';
 import { ICON_CONTAINER, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { VocabularyStatCategory } from '@/types/enums';

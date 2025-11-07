@@ -7,7 +7,7 @@ import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ArticleSentence, WordDetailsBottomSheet, WordTooltip } from '@/components/article';
-import { ArticleContent } from '@/components/article/ArticleContent';
+import { ArticleContent } from '@/components/article';
 import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
 import { PulsatingLoader } from '@/components/ui';
 import { TutorialId } from '@/constants/tutorials';

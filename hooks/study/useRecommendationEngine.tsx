@@ -323,9 +323,8 @@ const RECOMMENDATION_MESSAGES = {
     const dueInfo = formatDaysUntilDue(params.nextDueDate);
     return (
       <ThemedText type="caption" colorName="secondaryText">
-        Great work! Your words will become due{' '}
-        {dueInfo ? <BoldText>{dueInfo}</BoldText> : 'soon'}. In the meantime, explore articles to
-        find vocabulary you'd like to add next.
+        Great work! Your words will become due {dueInfo ? <BoldText>{dueInfo}</BoldText> : 'soon'}.
+        In the meantime, explore articles to find vocabulary you'd like to add next.
       </ThemedText>
     );
   },
@@ -345,8 +344,8 @@ const RECOMMENDATION_MESSAGES = {
     return (
       <ThemedText type="caption" colorName="secondaryText">
         You're in a consolidation phase. Your current words will become due{' '}
-        {dueInfo ? <BoldText>{dueInfo}</BoldText> : 'soon'}—stay consistent and explore articles
-        for vocabulary to add next.
+        {dueInfo ? <BoldText>{dueInfo}</BoldText> : 'soon'}—stay consistent and explore articles for
+        vocabulary to add next.
       </ThemedText>
     );
   },
@@ -419,8 +418,8 @@ const RECOMMENDATION_MESSAGES = {
     const forecastSummary = getForecastSummary(params.studyWords);
     return (
       <ThemedText type="caption" colorName="secondaryText">
-        Your retention is strong at <BoldText>{params.currentRetention}%</BoldText>. Stay
-        consistent with practice sessions—up to{' '}
+        Your retention is strong at <BoldText>{params.currentRetention}%</BoldText>. Stay consistent
+        with practice sessions—up to{' '}
         <BoldText>
           {forecastSummary.totalDueNext7Days} {pluralize(forecastSummary.totalDueNext7Days, 'word')}
         </BoldText>{' '}
@@ -480,8 +479,9 @@ const RECOMMENDATION_MESSAGES = {
         <BoldText>
           {params.totalWords} {pluralize(params.totalWords, 'word')}
         </BoldText>
-        ! Continue exploring articles and when words become due {dueInfo && <BoldText>{dueInfo}</BoldText>}
-        , practice them promptly to maintain your progress.
+        ! Continue exploring articles and when words become due{' '}
+        {dueInfo && <BoldText>{dueInfo}</BoldText>}, practice them promptly to maintain your
+        progress.
       </ThemedText>
     );
   },
