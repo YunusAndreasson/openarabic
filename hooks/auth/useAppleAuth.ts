@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { ROUTE_PATHS } from '@/constants/routes';
+import { SUPABASE_URL } from '@/constants/supabase';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
@@ -313,9 +314,17 @@ export function useAppleAuth(): UseAppleAuthReturn {
           },
         });
 
+        const appleServiceId = process.env.EXPO_PUBLIC_APPLE_SERVICE_ID;
+        if (!appleServiceId) {
+          throw new Error(
+            'EXPO_PUBLIC_APPLE_SERVICE_ID environment variable is not configured. ' +
+              'Please add it to your .env file for Apple Sign-In on Android to work.',
+          );
+        }
+
         appleAuthAndroid.configure({
-          clientId: 'YOUR_APPLE_SERVICE_ID', // TODO: Add to env vars
-          redirectUri: 'https://your-project.supabase.co/auth/v1/callback', // TODO: Configure
+          clientId: appleServiceId,
+          redirectUri: `${SUPABASE_URL}/auth/v1/callback`,
           responseType: appleAuthAndroid.ResponseType.ALL,
           scope: appleAuthAndroid.Scope.ALL,
           nonce: rawNonce,
