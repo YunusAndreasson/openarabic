@@ -676,8 +676,18 @@ class SimpleAudioService {
     // Subscribe to native playback status updates
     this.eventSubscription = this.currentPlayer.addListener(
       PLAYBACK_STATUS_UPDATE,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (nativeStatus: any) => {
+      (nativeStatus: {
+        playing?: boolean;
+        currentTime?: number;
+        duration?: number;
+        bufferedPosition?: number;
+        isLoaded?: boolean;
+        isBuffering?: boolean;
+        playbackState?: string;
+        timeControlStatus?: string;
+        reasonForWaitingToPlay?: string;
+        didJustFinish?: boolean;
+      }) => {
         try {
           // Extract all native values from expo-audio playbackStatusUpdate
           const isPlaying = nativeStatus.playing ?? false;

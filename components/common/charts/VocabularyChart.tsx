@@ -111,9 +111,8 @@ const styles = StyleSheet.create({
  * - Optimized Skia rendering with stable references
  */
 // Generic component accepts different types for tooltipDataPoints (e.g., MasteryRecord, EfficiencyData)
-// TypeScript infers the type from usage, but we need to allow `any` in the definition
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export const VocabularyChart = memo<VocabularyChartProps<any>>(
+// Using 'unknown' for type safety while maintaining generic flexibility
+export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
   ({
     path,
     dataPoints,

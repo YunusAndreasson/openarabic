@@ -25,8 +25,7 @@ export async function playTransitionSound(): Promise<void> {
     // Wait for completion with timeout fallback
     await new Promise<void>(resolve => {
       let completed = false;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let subscription: any = null;
+      let subscription: { remove: () => void } | null = null;
 
       const complete = () => {
         if (completed) return;

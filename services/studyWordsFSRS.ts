@@ -1,7 +1,7 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { RootId, UserId } from '@/types/branded.types';
-import type { TablesInsert } from '@/types/database.types';
+import type { Tables, TablesInsert } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { executeAuthenticatedQuery } from '@/utils/supabaseHelpers';
 
@@ -78,7 +78,7 @@ export const studyWordsFSRSService = {
           fsrs_state,
           fsrs_last_review,
           created_at,
-          root:roots (letters, meaning, audio_url, audio_url_en)
+          root:roots (id, letters, meaning, audio_url, audio_url_en)
         `;
       selectQuery = query.select(columns);
     }
@@ -160,8 +160,7 @@ export const studyWordsFSRSService = {
         fsrs_state: row.fsrs_state,
         fsrs_last_review: row.fsrs_last_review, // Always exists per database schema
         created_at: row.created_at,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        root: 'root' in row && row.root ? { ...(row.root as any), id: row.root_id } : undefined, // Add missing id field
+        root: 'root' in row ? (row.root as Tables<'roots'> | null) : undefined,
       }),
     );
   },
