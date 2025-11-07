@@ -50,7 +50,9 @@ const ArticleSentenceInternal = function ArticleSentence({
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
 
-  const wordRefs = useRef<RefObject<ComponentRef<typeof Pressable>>[]>([]);
+  // Use Map to persist refs across re-renders, avoiding memory leaks
+  // Only create new refs when new word IDs appear
+  const wordRefs = useRef<Map<string, RefObject<ComponentRef<typeof Pressable>>>>(new Map());
 
   // Bouncing arrow animation for tutorial card
   const arrowTranslateY = useSharedValue(0);
@@ -70,12 +72,6 @@ const ArticleSentenceInternal = function ArticleSentence({
     transform: [{ translateY: arrowTranslateY.value }],
   }));
 
-  useEffect(() => {
-    wordRefs.current = words.map(() => createRef<ComponentRef<typeof Pressable>>()) as RefObject<
-      ComponentRef<typeof Pressable>
-    >[];
-  }, [words]);
-
   // Memoize English text style to prevent recreation
   const englishTextStyle = useMemo(
     () => ({
@@ -88,21 +84,27 @@ const ArticleSentenceInternal = function ArticleSentence({
   );
 
   // Memoize rendered words to prevent unnecessary recreations
+  // Use stable ref Map to avoid creating new refs on every render
   const renderedWords = useMemo(() => {
     return words.map((word, index) => {
       const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
-      if (!wordRefs.current[index]) {
-        wordRefs.current[index] = createRef<ComponentRef<typeof Pressable>>() as RefObject<
+      const refKey = `word-${wordId}-${word.position}-${sentence.id}`;
+
+      // Get existing ref or create new one only if it doesn't exist
+      let wordRef = wordRefs.current.get(refKey);
+      if (!wordRef) {
+        wordRef = createRef<ComponentRef<typeof Pressable>>() as RefObject<
           ComponentRef<typeof Pressable>
         >;
+        wordRefs.current.set(refKey, wordRef);
       }
 
       return (
         <ArabicWord
-          key={`word-${wordId}-${word.position}-${sentence.id}`}
+          key={refKey}
           word={word}
           onTooltipOpen={onWordPress}
-          wordRef={wordRefs.current[index]}
+          wordRef={wordRef}
           position={index}
         />
       );
