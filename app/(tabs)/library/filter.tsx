@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 
 import { ThemedView } from '@/components/ThemedView';
 import { FilteredArticleView } from '@/components/library/FilteredArticleView';
-import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
+import { PulsatingLoader } from '@/components/ui';
 import { articleQueries } from '@/constants/queries';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';

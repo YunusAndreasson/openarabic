@@ -7,7 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
-import { ListSeparator } from '@/components/common/ListSeparator';
+import { ListSeparator } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';

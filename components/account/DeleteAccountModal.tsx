@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { GenericBottomSheet } from '@/components/common/GenericBottomSheet';
+import { GenericBottomSheet } from '@/components/common';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';

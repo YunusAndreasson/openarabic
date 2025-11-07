@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { GenericBottomSheet } from '@/components/common/GenericBottomSheet';
+import { GenericBottomSheet } from '@/components/common';
 import { StreakChart } from '@/components/library/StreakChart';
 import { StreakMetrics } from '@/components/library/StreakMetrics';
 import { ThemedText } from '@/components/ThemedText';

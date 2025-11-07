@@ -14,7 +14,7 @@ import {
 } from '@/components/review';
 import { useTutorialContext } from '@/components/providers';
 import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutorial';
-import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
+import { PulsatingLoader } from '@/components/ui';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';

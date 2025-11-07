@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import React, { useMemo } from 'react';
 
 import { ThemedText } from '@/components/ThemedText';
-import { BoldText } from '@/components/ui/BoldText';
+import { BoldText } from '@/components/ui';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { calculateNextDueDate, getForecastSummary } from '@/utils/fsrsUtils';

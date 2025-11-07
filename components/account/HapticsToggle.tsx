@@ -4,7 +4,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { Toggle } from '@/components/ui/Toggle';
+import { Toggle } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
+import { BottomSheetHeader } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';

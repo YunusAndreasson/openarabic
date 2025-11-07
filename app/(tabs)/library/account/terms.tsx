@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { EmailLink } from '@/components/common/EmailLink';
+import { EmailLink } from '@/components/common';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 

@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { BaseCard } from '@/components/common/BaseCard';
+import { BaseCard } from '@/components/common';
 import { getFAQExpandAnimation } from '@/constants/animation';
 import { FAQ_DATA, type FAQCategoryData, type FAQItem } from '@/constants/faq';
 import { LAYOUT } from '@/constants/layout';

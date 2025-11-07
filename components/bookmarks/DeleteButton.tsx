@@ -1,7 +1,7 @@
 import type { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps, FC } from 'react';
 
-import { IconButton } from '@/components/ui/IconButton';
+import { IconButton } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';

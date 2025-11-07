@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/bookmarks/ListenListItemCard';
-import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
+import { PulsatingLoader } from '@/components/ui';
 import {
   LIST_DRAW_DISTANCE_MULTIPLIER,
   SCROLL_EVENT_THROTTLE,

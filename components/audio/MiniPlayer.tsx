@@ -5,7 +5,7 @@ import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
-import { IconButton } from '@/components/ui/IconButton';
+import { IconButton } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';

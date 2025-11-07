@@ -2,7 +2,7 @@ import { ProgressBar } from '@common/ProgressBar';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { HeaderIconButton } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 

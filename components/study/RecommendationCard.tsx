@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BaseCard } from '@/components/common/BaseCard';
+import { BaseCard } from '@/components/common';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useRecommendationEngine } from '@/hooks/study/useRecommendationEngine';
 import type { StudyWord } from '@/types/vocabulary.types';

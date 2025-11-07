@@ -8,15 +8,14 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
 import { BottomControls } from '@/components/bookmarks/BottomControls';
-import { EmptyState } from '@/components/common/EmptyState';
-import { ErrorState } from '@/components/common/ErrorState';
+import { EmptyState, ErrorState } from '@/components/common';
 import { DueWordsBottomSheet } from '@/components/study/DueWordsBottomSheet';
 import { MemoryRetentionBottomSheet } from '@/components/study/MemoryRetentionBottomSheet';
 import { RecommendationCard } from '@/components/study/RecommendationCard';
 import { StudyStreakBottomSheet } from '@/components/study/StudyStreakBottomSheet';
 import { VocabularyStatCards } from '@/components/study/VocabularyStatCards';
 import { WordsMasteredBottomSheet } from '@/components/study/WordsMasteredBottomSheet';
-import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
+import { PulsatingLoader } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, fsrsQueries } from '@/constants/queries';

@@ -7,7 +7,7 @@ import Animated from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
-import { Pill } from '@/components/ui/Pill';
+import { Pill } from '@/components/ui';
 import { SPRING_CONFIG } from '@/constants/animation';
 import { GOLDEN_RATIO, LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';

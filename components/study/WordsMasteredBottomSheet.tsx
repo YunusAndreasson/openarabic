@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { GenericBottomSheet } from '@/components/common/GenericBottomSheet';
+import { GenericBottomSheet } from '@/components/common';
 import { MasteryChart } from '@/components/study/charts/MasteryChart';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
