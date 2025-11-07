@@ -192,22 +192,6 @@ jest.mock('../../services/readingProgress', () => ({
   updateReadingProgress: jest.fn().mockResolvedValue(undefined),
 }));
 
-// Mock streak history hook
-jest.mock('../../hooks/articles/useStreakHistory', () => ({
-  useStreakHistory: () => ({
-    streakHistory: {
-      currentStreak: 0,
-      bestStreak: 0,
-      totalReadingDays: 0,
-      dailyActivity: [],
-    },
-    isLoading: false,
-    isError: false,
-    error: null,
-    refetch: jest.fn(),
-  }),
-}));
-
 const createWrapper = () => {
   const queryClient = createTestQueryClient();
   return ({ children }: { children: React.ReactNode }) => (
