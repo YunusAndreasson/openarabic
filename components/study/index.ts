@@ -8,7 +8,7 @@ export { VocabularyStatCards } from './VocabularyStatCards';
 export { WordsMasteredBottomSheet } from './WordsMasteredBottomSheet';
 
 // Chart exports
-export { EfficiencyChart, MasteryChart, RetrievabilityChart } from './charts';
+export { MasteryChart, RetrievabilityChart } from './charts';
 export { DueWordsPrognosisChart } from './charts/DueWordsPrognosisChart';
 export { MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
 

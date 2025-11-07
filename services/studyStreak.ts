@@ -33,70 +33,6 @@ export interface StreakHistoryData {
 
 export class ReadingStreakService {
   /**
-   * Get daily reading activity for a user over a specified period
-   * Considers both created_at and updated_at to capture all reading activity
-   */
-  static async getDailyReadingActivity(
-    userId: string,
-    days: number = 30,
-  ): Promise<DailyReadingActivity[]> {
-    const endDate = new Date();
-    const startDate = new Date();
-    // Go back (days - 1) to include today as the last day
-    startDate.setDate(startDate.getDate() - (days - 1));
-
-    // Check if user has any article activity on each date
-    // Get all reading progress records and consider both created_at and updated_at dates
-    const data = await executeQuery(
-      () =>
-        supabase.from('reading_progress').select('created_at, updated_at').eq('user_id', userId),
-      {
-        toastMessage: STRINGS.ERROR_LOADING_DATA,
-        analyticsEventName: 'Reading_Activity_Load_Error',
-        analyticsProperties: { userId, days },
-        showToast: false, // Silent for streak calculation
-      },
-    );
-
-    // Group by date - any activity on a date counts as reading
-    const activityMap = new Map<string, boolean>();
-
-    // Initialize exactly `days` dates including today
-    for (let i = 0; i < days; i++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
-      if (dateStr) {
-        activityMap.set(dateStr, false);
-      }
-    }
-
-    // Mark dates with any activity (user opened/updated articles)
-    (data || []).forEach(record => {
-      // Check both created_at and updated_at dates for activity within our date range
-      const datesToCheck = [record?.created_at, record?.updated_at].filter(Boolean);
-
-      datesToCheck.forEach(dateStr => {
-        if (dateStr) {
-          const date = new Date(dateStr);
-          const dateKey = date.toISOString().split('T')[0];
-
-          // Only count activity within our specified date range
-          if (date >= startDate && date <= endDate) {
-            if (dateKey && activityMap.has(dateKey)) {
-              activityMap.set(dateKey, true);
-            }
-          }
-        }
-      });
-    });
-
-    return Array.from(activityMap.entries())
-      .map(([date, hasActivity]) => ({ date, hasActivity }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }
-
-  /**
    * Calculate reading streak from daily activity data
    */
   static calculateStreak(activities: DailyReadingActivity[]): ReadingStreak {
@@ -264,33 +200,6 @@ export class ReadingStreakService {
 
     return periods;
   }
-
-  /**
-   * Get complete streak history data
-   */
-  static async getStreakHistory(userId: string, days: number = 30): Promise<StreakHistoryData> {
-    const dailyActivity = await this.getDailyReadingActivity(userId, days);
-    const streakPeriods = this.calculateStreakPeriods(dailyActivity);
-    const streak = this.calculateStreak(dailyActivity);
-
-    return {
-      dailyActivity,
-      streakPeriods,
-      metrics: {
-        currentStreak: streak.currentStreak,
-        longestStreak: streak.longestStreak,
-        totalReadingDays: streak.totalReadingDays,
-      },
-    };
-  }
-
-  /**
-   * Get basic reading streak info
-   */
-  static async getReadingStreak(userId: string): Promise<ReadingStreak> {
-    const activities = await this.getDailyReadingActivity(userId, 30);
-    return this.calculateStreak(activities);
-  }
 }
 
 /**
@@ -435,5 +344,4 @@ export class StudySessionStreakService {
 export type StudyStreak = ReadingStreak;
 export type DailyStudyActivity = DailyReadingActivity;
 
-export const studyStreakService = ReadingStreakService;
 export const studySessionStreakService = StudySessionStreakService;

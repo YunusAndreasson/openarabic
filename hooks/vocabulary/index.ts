@@ -6,8 +6,6 @@ export * from './useFSRS';
 export * from './useFSRSQueries';
 
 export * from './useDueWordsChart';
-export * from './useEfficiencyChart';
 export * from './useMasteryChart';
-
 export * from './useRetrievabilityChart';
 export * from './useWordSizing';

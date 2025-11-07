@@ -10,4 +10,3 @@ export { IntelligentArticleSection } from './IntelligentArticleSection';
 export { IslamicCalendarHeader } from './IslamicCalendarHeader';
 export { StreakChart } from './StreakChart';
 export { StreakMetrics } from './StreakMetrics';
-export { StreaksBottomSheet } from './StreaksBottomSheet';

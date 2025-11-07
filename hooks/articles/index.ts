@@ -9,6 +9,4 @@ export * from './useFilteredArticles';
 export * from './useMultipleFeaturedArticles';
 export * from './useReadingListMutations';
 export * from './useReadingProgress';
-export * from './useReadingStreak';
-export * from './useStreakHistory';
 export * from './useStudyWordMutations';
