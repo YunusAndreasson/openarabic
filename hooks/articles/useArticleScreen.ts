@@ -1,9 +1,7 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
-  type LayoutRectangle,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type ViewToken,
@@ -11,19 +9,16 @@ import {
 
 import type { FlashListRef } from '@shopify/flash-list';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
-import { fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
+import { useArticleWordInteractions } from '@/hooks/articles/useArticleWordInteractions';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useModalState } from '@/hooks/ui/useModalState';
 import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
-import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { stopAudioSafely } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
@@ -42,7 +37,6 @@ export interface UseArticleScreenOptions {
  */
 export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
 
   // Parse article ID
   const articleId = useMemo(() => {
@@ -62,34 +56,8 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
 
-  // Tooltip state
-  const [activeTooltip, setActiveTooltip] = useState<{
-    word: SentenceWord;
-    layout: LayoutRectangle;
-  } | null>(null);
-
-  // Word details modal
-  const wordDetailsModal = useModalState<SentenceWord>();
-
-  // Local study states for immediate UI updates
-  const [localStudyStates, setLocalStudyStates] = useState<Map<number, boolean>>(new Map());
-
   // Current sentence index for reading progress
   const [currentSentenceIndexForProgress, setCurrentSentenceIndexForProgress] = useState(0);
-
-  // Ref to avoid handleScroll identity changes when tooltip toggles
-  const activeTooltipRef = useRef<typeof activeTooltip>(null);
-  useEffect(() => {
-    activeTooltipRef.current = activeTooltip;
-  }, [activeTooltip]);
-
-  // Handle scroll to close tooltip
-  const handleScroll = useCallback((_event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    // Close tooltip when scrolling starts
-    if (activeTooltipRef.current) {
-      setActiveTooltip(null);
-    }
-  }, []);
 
   // Article mutations
   const { handleToggleReadingList, handleRootPress } = useArticleMutations(
@@ -98,6 +66,30 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     async () => {
       await refetchStudyWords();
     },
+  );
+
+  // Word interactions (tooltips, modal, study state)
+  const {
+    activeTooltip,
+    wordDetailsModal,
+    isInStudyList,
+    handleWordPress,
+    handleCloseTooltip,
+    handleOpenWordDetails,
+    handleAddWordToStudy,
+    closeTooltipOnScroll,
+  } = useArticleWordInteractions({
+    handleRootPress,
+    refetchStudyWords,
+  });
+
+  // Handle scroll to close tooltip
+  const handleScroll = useCallback(
+    (_event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      // Close tooltip when scrolling starts
+      closeTooltipOnScroll();
+    },
+    [closeTooltipOnScroll],
   );
 
   // Handlers with feedback
@@ -305,68 +297,6 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
       stopAudioSafely();
     };
   }, []);
-
-  // Word interaction handlers
-  const handleWordPress = useCallback(
-    (word: SentenceWord, layout?: LayoutRectangle) => {
-      if (layout && layout.width > 0) {
-        if (activeTooltipRef.current?.word.id === word.id) {
-          setActiveTooltip(null);
-        } else {
-          setActiveTooltip({ word, layout });
-        }
-      }
-    },
-    [], // No dependencies - uses ref for stable callback identity
-  );
-
-  const handleCloseTooltip = useCallback(() => {
-    setActiveTooltip(null);
-  }, []);
-
-  const handleOpenWordDetails = useCallback(() => {
-    const tooltip = activeTooltipRef.current;
-    if (tooltip?.word) {
-      setActiveTooltip(null);
-      wordDetailsModal.open(tooltip.word);
-    }
-  }, [wordDetailsModal]);
-
-  const handleAddWordToStudy = useCallback(
-    async (word: SentenceWord) => {
-      if (!user?.id || !word.root_id) return;
-      selectionFeedback();
-      const result = await handleRootPress(word.root_id);
-      if (result === undefined) return;
-      const isNowInStudy = result;
-      setLocalStudyStates(prev => {
-        const next = new Map(prev);
-        next.set(word.root_id, isNowInStudy);
-        return next;
-      });
-      // Invalidate queries in parallel, then refetch
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: fsrsQueries.due(user.id).queryKey }),
-        queryClient.invalidateQueries({ queryKey: fsrsQueries.all(user.id).queryKey }),
-        queryClient.invalidateQueries({
-          queryKey: fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
-        }),
-      ]);
-      // Refetch after invalidations complete to ensure fresh data
-      await refetchStudyWords?.();
-    },
-    [user?.id, handleRootPress, queryClient, refetchStudyWords],
-  );
-
-  // Compute isInStudyList for word details bottom sheet
-  const isInStudyList = useMemo(() => {
-    if (!wordDetailsModal.data?.root_id) return false;
-    const localState = localStudyStates.get(wordDetailsModal.data.root_id);
-    if (localState !== undefined) return localState;
-    if (!user?.id) return false;
-    const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(user.id).queryKey) ?? [];
-    return allWords.some(word => word.root_id === wordDetailsModal.data?.root_id);
-  }, [wordDetailsModal.data?.root_id, localStudyStates, user?.id, queryClient]);
 
   return {
     isLoadingArticle,

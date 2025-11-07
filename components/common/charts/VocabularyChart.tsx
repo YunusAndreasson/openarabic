@@ -134,8 +134,8 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
     hasData,
     emptyStateText,
     bottomSummary,
-  }: VocabularyChartProps<any>) => {
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+  }: VocabularyChartProps<unknown>) => {
+ 
     // Get colors outside Canvas (Context available here)
     const colors = useColors();
     const chartColors = useMemo(() => getChartColors(colors), [colors]);
