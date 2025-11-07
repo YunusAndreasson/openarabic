@@ -99,7 +99,7 @@ export function WordDisplay({
   let hesitationHint = null;
   if (showFirstLetterOnly && englishTranslation && englishTranslation.length > 0) {
     const firstLetter = englishTranslation.charAt(0).toUpperCase();
-    hesitationHint = firstLetter + '...';
+    hesitationHint = `${firstLetter}...`;
 
     // Trigger subtle haptic feedback when hint appears (only once)
     selectionFeedback();

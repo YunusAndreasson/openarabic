@@ -6,7 +6,7 @@ import { handleError } from '@/utils/errorHandling';
 
 export class AudioCacheManager {
   private static instance: AudioCacheManager;
-  private cacheDir = Paths.cache.uri + 'audio/';
+  private cacheDir = `${Paths.cache.uri}audio/`;
   // In-memory cache to reduce file system checks
   private memoryCache = new Map<string, { path: string; timestamp: number }>();
   private readonly MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -54,7 +54,7 @@ export class AudioCacheManager {
   private async getCachedFilePath(url: string): Promise<string | null> {
     try {
       const cacheKey = await this.generateCacheKey(url);
-      const cachedFilePath = this.cacheDir + cacheKey;
+      const cachedFilePath = `${this.cacheDir}${cacheKey}`;
 
       // Check memory cache first for better performance
       const memoryEntry = this.memoryCache.get(cacheKey);
@@ -90,7 +90,7 @@ export class AudioCacheManager {
       await this.ensureCacheDirectoryExists();
 
       const cacheKey = await this.generateCacheKey(url);
-      const cachedFilePath = this.cacheDir + cacheKey;
+      const cachedFilePath = `${this.cacheDir}${cacheKey}`;
 
       // Download to cache
       const file = new File(cachedFilePath);

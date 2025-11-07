@@ -41,7 +41,7 @@ function StatCard({ label, value, color, icon, onPress, formatAsDecimal = false 
   return (
     <BaseCard shadowSize="small" style={styles.statCard} onPress={onPress}>
       <View style={styles.cardWrapper}>
-        <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
+        <View style={[styles.iconContainer, { backgroundColor: `${color}14` }]}>
           <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
         </View>
         <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>

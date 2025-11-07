@@ -55,7 +55,7 @@ export function parseSupabaseTimestamp(ts: string | null | undefined): Date | nu
 
   // If no timezone info, assume UTC
   if (!/[Zz]|[-+]\d{2}:?\d{2}$/.test(normalized)) {
-    normalized = normalized + 'Z';
+    normalized = `${normalized}Z`;
   }
 
   const date = new Date(normalized);
