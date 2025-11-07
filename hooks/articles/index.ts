@@ -2,7 +2,6 @@
 export * from './useArticleData';
 export * from './useArticleMutations';
 export * from './useArticleScreen';
-export * from './useArticleScrollTracking';
 export * from './useArticlesByDifficultWords';
 export * from './useArticlesByDueWords';
 export * from './useArticleWordInteractions';
