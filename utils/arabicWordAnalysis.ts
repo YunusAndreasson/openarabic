@@ -636,10 +636,14 @@ function findComponent(
 
           // Smart consonant validation: 2-char roots need only 1 consonant, 3+ need 2
           // This allows both "رب" (2 consonants) and "يد" (1 consonant) as valid roots
+          // EXCEPTION: If English has possessive pronoun, we KNOW it's noun + possessive suffix
+          // So relax consonant requirement to allow weak-letter roots like "يوم" (day) in "يومك" (your day)
           const minConsonantsRequired =
             remaining.length === 2
               ? VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS_2CHAR
-              : VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS_3PLUS;
+              : hasPossessivePronoun
+                ? VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS_2CHAR // Relax to 1 for possessive
+                : VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS_3PLUS;
           const hasEnoughConsonants = countConsonants(remaining) >= minConsonantsRequired;
 
           // فعيل pattern detection: words like سفيه، كريه (root ends in ه with ي before it)
@@ -1400,16 +1404,17 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     const prefixEnglishWords = new Set<string>();
     detectedPrefixes.forEach(prefix => {
       prefix.englishMatches.forEach(match => {
-        match
-          .toLowerCase()
-          .split(/\s+/)
-          .forEach(word => prefixEnglishWords.add(word));
+        // Only check single-word patterns for overlap
+        // Multi-word patterns like "of you" should not be split
+        if (!match.includes(' ')) {
+          prefixEnglishWords.add(match.toLowerCase());
+        }
       });
     });
 
-    const suffixEnglishWords = suffix.englishMatches.flatMap(match =>
-      match.toLowerCase().split(/\s+/),
-    );
+    const suffixEnglishWords = suffix.englishMatches
+      .filter(match => !match.includes(' ')) // Only single-word patterns
+      .map(match => match.toLowerCase());
     const hasOverlap = suffixEnglishWords.some(word => prefixEnglishWords.has(word));
 
     if (hasOverlap) {
@@ -1419,12 +1424,15 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
         remainingAfterPrefixes.length - suffix.arabicMatch.length,
       );
 
-      // If remaining < 3 chars and there's English overlap, this is likely a false positive
+      // If remaining is exactly 2 chars and there's English overlap, likely a false positive
       // Real case: "يكره" → ي(he) + كره, removing ה leaves "كر" (2 chars) - FALSE POSITIVE
-      // Valid case: "يكتبه" → ي + كتبה, removing ה leaves "كتب" (3+ chars) - OK
-      if (remainingAfterSuffix.length < 3) {
+      // Valid case: "يكتبه" → ي + كتبه, removing ה leaves "كتب" (3+ chars) - OK
+      // EXCEPTION: Allow 0-1 chars (prefix+suffix compounds like مِنَّا = من + نا with no root)
+      if (remainingAfterSuffix.length === 2) {
         suffix = undefined; // Reject this suffix as false positive
       }
+      // If length is 0-1, it's a valid prefix+suffix compound (keep suffix)
+      // If length is 3+, it's valid (keep suffix)
     }
   }
 
@@ -1449,8 +1457,21 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
       const hasSubjectPronoun = englishWords.some(word => subjectPronouns.includes(word));
 
       if (hasSubjectPronoun) {
-        // Subject pronoun in English + no prefix + would leave < 3 chars → likely verb conjugation, not suffix
-        suffix = undefined; // Reject this suffix as false positive
+        // NEW FIX: Check if the pronoun is actually claimed by the suffix's English patterns
+        // Example: "رآها" = "he sees it" → "it" is in ها suffix's englishMatches → KEEP
+        // Example: "كره" = "he hates" → "he" is NOT in ه suffix's englishMatches → REJECT
+        const suffixEnglishWords = suffix.englishMatches.flatMap(match =>
+          match.toLowerCase().split(/\s+/),
+        );
+        const pronounMatchesSuffix = englishWords.some(
+          word => subjectPronouns.includes(word) && suffixEnglishWords.includes(word),
+        );
+
+        if (!pronounMatchesSuffix) {
+          // Subject pronoun exists BUT suffix doesn't claim it → likely verb conjugation, not suffix
+          suffix = undefined; // Reject this suffix as false positive
+        }
+        // If pronounMatchesSuffix is true, keep the suffix (it's a valid object/possessive pronoun)
       }
     }
   }

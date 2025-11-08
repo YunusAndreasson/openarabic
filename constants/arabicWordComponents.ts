@@ -84,7 +84,8 @@ const BASE_PREPOSITIONS = [
       'through',
       'using',
       'according to',
-      'of',
+      // NOTE: 'of' removed - it comes from genitive case (إضافة), not from ب prefix
+      // This prevents false positives like بَيْت → "house of" where ب is a root letter
       'for',
       'at',
       'concerning',
@@ -105,7 +106,7 @@ const BASE_PREPOSITIONS = [
   },
   {
     arabic: 'في',
-    english: ['in', 'at', 'inside', 'within', 'upon'],
+    english: ['in', 'at', 'inside', 'within', 'upon', 'about'], // 'about' added for contexts like فيه = "about it"
     role: GrammaticalRole.PREPOSITION,
   },
   { arabic: 'من', english: ['from', 'of', 'than', 'out of'], role: GrammaticalRole.PREPOSITION },
@@ -115,13 +116,14 @@ const BASE_PREPOSITIONS = [
     english: ['on', 'upon', 'over', 'above', 'against', 'to', 'in'],
     role: GrammaticalRole.PREPOSITION,
   }, // 'to' for obligation/direction, 'in' for certain contexts
-  { arabic: 'علي', english: ['on', 'upon', 'in'], role: GrammaticalRole.PREPOSITION }, // Form with suffix (على + ه → عليه, not عليه): alef maksura ى → yeh ي before pronoun suffixes
+  { arabic: 'علي', english: ['on', 'upon', 'in', 'to'], role: GrammaticalRole.PREPOSITION }, // Form with suffix (على + ه → عليه): alef maksura ى → yeh ي before pronoun suffixes. Inherits 'to' from على
   { arabic: 'عل', english: ['on', 'upon', 'to'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (على + ي → عليّ → normalized: عل + ي)
   {
     arabic: 'عن',
     english: ['about', 'from', 'concerning', 'regarding'],
     role: GrammaticalRole.PREPOSITION,
   },
+  { arabic: 'عند', english: ['at', 'with', 'near', 'within'], role: GrammaticalRole.PREPOSITION },
   { arabic: 'إلى', english: ['to', 'towards', 'into', 'until'], role: GrammaticalRole.PREPOSITION },
   { arabic: 'إلي', english: ['to', 'towards'], role: GrammaticalRole.PREPOSITION }, // Form before pronoun suffixes (إلى + ه → إليه)
   { arabic: 'إل', english: ['to', 'towards'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (إلى + ي → إليّ → normalized: إل + ي)
@@ -468,6 +470,39 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
     arabic: 'ين',
     role: GrammaticalRole.PLURAL,
     english: ['two', 'both'],
+    type: ComponentType.SUFFIX,
+  },
+
+  // Compound dual + possessive suffixes (dual marker ين + possessive pronoun)
+  // These appear in words like يَدَيْهِ (his hands = يد + ين + ه)
+  {
+    arabic: 'يه',
+    role: GrammaticalRole.POSSESSIVE,
+    english: ['his', 'its', 'their', 'hands', 'two'], // Dual possessive
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'يها',
+    role: GrammaticalRole.POSSESSIVE,
+    english: ['its', 'their', 'her', 'hands', 'two'], // Dual possessive feminine
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'يك',
+    role: GrammaticalRole.POSSESSIVE,
+    english: ['your', 'yours', 'hands', 'two'], // Dual possessive second person
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'يكم',
+    role: GrammaticalRole.POSSESSIVE,
+    english: ['your', 'yours', 'hands', 'two'], // Dual possessive plural
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'يهم',
+    role: GrammaticalRole.POSSESSIVE,
+    english: ['their', 'theirs', 'hands', 'two'], // Dual possessive plural masculine
     type: ComponentType.SUFFIX,
   },
   {
