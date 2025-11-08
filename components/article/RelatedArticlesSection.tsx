@@ -9,6 +9,7 @@ import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeature
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import { generateImageUrl } from '@/utils/imageUtils';
+import { calculateProgressPercentage } from '@/utils/progressUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 interface RelatedArticlesSectionProps {
@@ -78,7 +79,9 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
     const articleCards = useMemo(() => {
       return relatedArticles.map((article, index) => {
         const progress = progressMap?.get?.(article.id);
-        const progressPercentage = progress?.progress_percentage ?? 0;
+        const progressPercentage = progress
+          ? calculateProgressPercentage(progress.last_sentence_read, progress.total_sentences)
+          : 0;
 
         return (
           <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>

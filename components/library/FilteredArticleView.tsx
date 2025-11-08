@@ -21,6 +21,7 @@ import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
 import { generateImageUrl } from '@/utils/imageUtils';
+import { calculateProgressPercentage } from '@/utils/progressUtils';
 import { capitalizeFirstLetter, formatArticleMetadata } from '@/utils/stringUtils';
 import { calculateReadingTime } from '@/utils/textUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
@@ -89,7 +90,7 @@ const SectionHeader = ({ title }: { title: string }) => (
  */
 function groupArticlesWithHeaders(
   articles: Article[],
-  progressMap: Map<number, { progress_percentage: number | null }>,
+  progressMap: Map<number, { last_sentence_read: number; total_sentences: number }>,
 ): ListItem[] {
   if (articles.length === 0) return [];
 
@@ -99,7 +100,10 @@ function groupArticlesWithHeaders(
   const completed: Article[] = [];
 
   articles.forEach(article => {
-    const progress = progressMap.get(article.id)?.progress_percentage ?? 0;
+    const progressData = progressMap.get(article.id);
+    const progress = progressData
+      ? calculateProgressPercentage(progressData.last_sentence_read, progressData.total_sentences)
+      : 0;
     if (progress > 0 && progress < COMPLETION_THRESHOLD) {
       continueReading.push(article);
     } else if (progress >= COMPLETION_THRESHOLD) {
@@ -271,7 +275,9 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     // Render article item
     const article = item.data;
     const progress = progressMap.get(article.id);
-    const progressPercentage = progress?.progress_percentage ?? 0;
+    const progressPercentage = progress
+      ? calculateProgressPercentage(progress.last_sentence_read, progress.total_sentences)
+      : 0;
 
     // Extract drag props if available (only in DraggableFlatList)
     const drag = 'drag' in params ? params.drag : undefined;

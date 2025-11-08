@@ -31,6 +31,7 @@ import type { ArticleId } from '@/types/branded.types';
 import { AudioAction, ToastType } from '@/types/enums';
 import { getBeginnerArticles } from '@/utils/articleUtils';
 import { generateImageUrl } from '@/utils/imageUtils';
+import { calculateProgressPercentage } from '@/utils/progressUtils';
 import { formatArticleMetadata } from '@/utils/stringUtils';
 import { calculateReadingTime } from '@/utils/textUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
@@ -310,7 +311,9 @@ export default function ListenScreen(): JSX.Element {
     (params: { item: BookmarkItem; index?: number } | RenderItemParams<BookmarkItem>) => {
       const { item } = params;
       const progress = progressMap?.get?.(item.article_id);
-      const progressPercentage = progress?.progress_percentage ?? 0;
+      const progressPercentage = progress
+        ? calculateProgressPercentage(progress.last_sentence_read, progress.total_sentences)
+        : 0;
 
       // Extract drag props if available (only in DraggableFlatList)
       const drag = 'drag' in params ? params.drag : undefined;
