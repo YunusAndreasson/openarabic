@@ -137,7 +137,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   const hasScrolledToPositionRef = useRef(false);
   const [isFlashListReady, setIsFlashListReady] = useState(false);
   // Prevent progress updates immediately after programmatic scroll
-  const ignoreProgressUpdatesRef = useRef(false);
+  const ignoreProgressUpdatesRef = useRef(true);
   // Track current position for UI, but debounce DB updates
   const pendingProgressUpdateRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -310,6 +310,10 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
           selectionFeedback();
         });
       });
+    } else if (!hasScrolledToPositionRef.current && isFlashListReady) {
+      // FlashList is ready but no scroll needed (new article or position 0)
+      hasScrolledToPositionRef.current = true;
+      ignoreProgressUpdatesRef.current = false;
     }
   }, [
     isFlashListReady,
