@@ -178,40 +178,74 @@ _Date: 2025-01-08_
 ---
 
 ### Phase 4: Components & UI
-_Date: TBD_
+_Date: 2025-01-08_
 
 #### `components/` (Root)
 **Removed**:
-- None yet
+- None - all components actively used
+
+**Analysis**:
+- ✅ ThemedButton: 65 occurrences across 30 files
+- ✅ ThemedInput: 20 occurrences across 9 files
+- ✅ ThemedText: 722 occurrences across 80 files (heavily used!)
+- ✅ ThemedView: 128 occurrences across 35 files
+- ✅ EnhancedImage: 28 occurrences across 14 files
+- ✅ HeaderProfile: 22 occurrences across 8 files
 
 #### `components/ui/`
 **Removed**:
-- None yet
+- None - all UI components actively used
+
+**Analysis**:
+- ✅ PulsatingLoader: 18 occurrences across 8 files
+- ✅ HeaderIconButton: 9 occurrences across 3 files
+- ✅ DictionaryButton: 5 occurrences across 3 files
+- ✅ BoldText: 48 occurrences across 3 files
+- ✅ Toggle: 16 occurrences across 13 files
+- ✅ Pill: 9 occurrences across 6 files
+- ✅ EditModeButton: 11 occurrences across 6 files
+- ✅ IconButton: 29 occurrences across 10 files
+- ✅ DoneButton: 24 occurrences across 8 files
+- ✅ SettingsPicker: 23 occurrences across 6 files
+- ✅ TimePicker: 31 occurrences across 6 files
 
 **Consolidation Candidates**:
-- TBD
+- None found - no duplicate components identified
 
 #### `components/article/`
 **Removed**:
-- None yet
+- None - all article components actively used
+
+**Analysis**:
+- ✅ WordTooltip: 28 occurrences across 11 files
+- ✅ SkiaArabicWord: 37 occurrences across 6 files
+- ✅ ParallaxHeader: 15 occurrences across 6 files
+- ✅ FloatingActionButtons: 8 occurrences across 5 files
+- ✅ ArticleSentence: 23 occurrences across 9 files
+- ✅ WordDetailsBottomSheet: 36 occurrences across 9 files
+- ✅ RelatedArticlesSection: 9 occurrences across 5 files
 
 #### `components/study/`
-**Removed**:
-- None yet
+**Analysis**:
+- Not analyzed in detail (knip reported 0 unused exports)
+- All study components verified via knip tool
 
 #### `components/common/`
-**Removed**:
-- None yet
+**Analysis**:
+- Not analyzed in detail (knip reported 0 unused exports)
+- All common components verified via knip tool
 
 #### `components/providers/`
-**Removed**:
-- None yet
+**Analysis**:
+- Not analyzed in detail (knip reported 0 unused exports)
+- All provider components verified via knip tool
 
 **Props Always Default**:
-- None yet
+- ❓ `handleScrollEnd` in ArticleContent - no-op placeholder function (intentional API design)
+- ❌ `useThemedView` in CompletionScreen - only used in tests, never in production
 
 **Duplicate Components Merged**:
-- None yet
+- None found - no duplicate components identified
 
 ---
 
