@@ -251,9 +251,10 @@ describe('Article Reading Flow - Integration Test', () => {
       const lastCall = mockReadingProgressService.updateProgress.mock.calls[0];
       expect(lastCall).toBeDefined();
       const lastSentenceRead = lastCall![0].lastSentenceRead;
-      const progressPercentage = Math.round((lastSentenceRead / totalSentences) * 100);
+      // Note: last_sentence_read is 0-based, so add 1 for count
+      const progressPercentage = Math.round(((lastSentenceRead + 1) / totalSentences) * 100);
 
-      expect(progressPercentage).toBe(90); // 9/10 = 90% (last visible sentence)
+      expect(progressPercentage).toBe(100); // (9+1)/10 = 100% (last sentence at index 9)
     });
   });
 
@@ -422,15 +423,16 @@ describe('Article Reading Flow - Integration Test', () => {
       const totalSentences = article.article_sentences?.length ?? 0;
 
       // Test various progress points
+      // Note: sentenceIndex is 0-based, so add 1 to get count of sentences read
       const testCases = [
-        { sentenceIndex: 0, expectedPercent: 0 },
-        { sentenceIndex: 2, expectedPercent: 20 },
-        { sentenceIndex: 5, expectedPercent: 50 },
-        { sentenceIndex: 9, expectedPercent: 90 },
+        { sentenceIndex: 0, expectedPercent: 10 }, // First sentence read
+        { sentenceIndex: 2, expectedPercent: 30 }, // Third sentence read
+        { sentenceIndex: 5, expectedPercent: 60 }, // Sixth sentence read
+        { sentenceIndex: 9, expectedPercent: 100 }, // Last sentence (10th) read
       ];
 
       for (const { sentenceIndex, expectedPercent } of testCases) {
-        const calculatedPercent = Math.round((sentenceIndex / totalSentences) * 100);
+        const calculatedPercent = Math.round(((sentenceIndex + 1) / totalSentences) * 100);
         expect(calculatedPercent).toBe(expectedPercent);
       }
     });

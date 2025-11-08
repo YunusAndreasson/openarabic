@@ -734,20 +734,22 @@ CRITICAL: ROOT FORMAT IN ARABIC
 
 CRITICAL VALIDATION PRINCIPLES:
 
-1. ROOT FORM vs DERIVED FORM (CRITICAL):
-   - ROOTS should be BASE VERB FORMS (Form I trilateral/quadrilateral verbs)
-   - Example: Correct root = كَتَبَ (kataba - Form I verb "to write")
-   - WRONG: كِتَابٌ (kitaab - derived noun "book")
-   - WRONG: مَكْتَبَةٌ (maktabah - place noun "library")
-   - WRONG: كِتَابَةٌ (kitaabah - verbal noun "writing")
+1. ROOT FORM vs DERIVED FORM (CRITICAL - BE VERY SELECTIVE):
+   - ROOTS can be either BASE VERBS or BASIC NOUNS if the translation is simple and clear
+   - **ONLY flag OBVIOUS derived forms** - when in doubt, ACCEPT IT
 
-   RED FLAGS FOR DERIVED FORMS (these should be FLAGGED):
-   - Words ending in ة (taa marbuta): نَفْرَةٌ, إِضَاعَةٌ → usually derived nouns
-   - Noun patterns with long vowels: فَسَادٌ, خُمُولٌ, خَفَاءٌ → verbal noun patterns
-   - Form II-X patterns: تَفْعِيلٌ, مُفَاعَلَةٌ, إِفْعَالٌ → derived verbal nouns
-   - If it looks like a NOUN PATTERN instead of VERB → FLAG IT
+   **ONLY FLAG THESE CLEAR DERIVED FORMS**:
+   - Words ending in ة (taa marbuta): نَفْرَةٌ, إِضَاعَةٌ, كِتَابَةٌ → CLEAR derived nouns, MUST flag
+   - Form II-X verbal nouns: تَفْعِيلٌ, مُفَاعَلَةٌ, إِفْعَالٌ → CLEAR patterns, MUST flag
 
-   The root should be the SIMPLE BASE VERB, not derived nominal forms
+   **ACCEPT THESE (DO NOT FLAG)**:
+   - Basic nouns with simple translations: وَقْتٌ (time), صَدْرٌ (chest), نَفْسٌ (self), رَبٌّ (Lord)
+   - Simple verbal nouns if translation is clear: ذِكْرٌ (remember), عِلْمٌ (know)
+   - Form I verbs even if you prefer a different form
+   - Anything where the translation is "simple and accurate" for learners
+
+   **CRITICAL RULE**: If the translation is simple, clear, and won't confuse learners → ACCEPT IT
+   Do NOT flag just because you think a different form would be "more accurate"
 
 2. SIMPLICITY FOR LEARNERS (PROVIDE ONLY ONE BEST TRANSLATION):
    - CRITICAL: Suggest only ONE English word - the simplest, most accurate option
@@ -804,22 +806,27 @@ STEP 3: CHECK TASHKEEL
 - Does the vocalization match standard Arabic dictionaries?
 - Is it pronounceable and proper?
 
-STEP 4: SUGGEST IMPROVEMENTS (VERY CONSERVATIVE - FOCUS ON CLEAR ERRORS ONLY)
-- **CRITICAL**: Be EXTREMELY conservative - only flag OBVIOUS, CLEAR errors
+STEP 4: SUGGEST IMPROVEMENTS (EXTREMELY CONSERVATIVE - ALMOST NEVER FLAG)
+- **CRITICAL**: Be EXTREMELY conservative - you should flag less than 20% of roots
+- **DEFAULT**: ACCEPT the translation unless it's OBVIOUSLY wrong
 - **HIGH BAR FOR FLAGGING**: If translation is reasonable and won't confuse learners → ACCEPT IT
-- **WHEN TO FLAG (ONLY THESE)**:
-  1. Translation is completely wrong/opposite meaning (e.g., "good" for a root meaning "bad")
-  2. Tashkeel is completely missing (e.g., فسد with NO vowel marks)
-  3. This is clearly a derived form, not a base verb (e.g., كِتَابَةٌ instead of كَتَبَ)
-  4. Translation is so technical/obscure that learners won't understand (e.g., "comminution" instead of "breaking")
-- **WHEN NOT TO FLAG (ACCEPT THESE)**:
-  1. Minor synonym differences (e.g., "bad" vs "evil", "knowing" vs "knowledge")
-  2. Tashkeel variations that are both valid (e.g., different valid voweling patterns)
-  3. Word choices that are reasonable even if you prefer a different word
-  4. Simple, understandable translations that are "good enough" for learners
-  5. Translations that capture the general meaning even if not perfectly literal
-- **DEFAULT STANCE**: When in doubt → ACCEPT the current translation
-- **REMEMBER**: Perfect is the enemy of good - learners benefit from simple, clear translations
+
+- **WHEN TO FLAG (ONLY THESE 3 TYPES)**:
+  1. **Tashkeel completely missing** (فسد with NO vowel marks at all)
+  2. **Obvious ة ending** (نَفْرَةٌ, إِضَاعَةٌ, كِتَابَةٌ - clear derived nouns)
+  3. **Translation completely wrong** (opposite meaning or totally unrelated)
+
+- **NEVER FLAG THESE (ALWAYS ACCEPT)**:
+  1. Basic nouns: "time", "chest", "self", "Lord", "God", "heart" → ALWAYS ACCEPT
+  2. Simple verbal nouns: "remember", "know", "create" → ALWAYS ACCEPT
+  3. Form I verbs even if you think Form IV would be better → ACCEPT
+  4. Minor synonym differences → ACCEPT
+  5. Tashkeel variations that are both valid → ACCEPT
+  6. ANY translation you describe as "simple and accurate" → YOU MUST ACCEPT IT
+
+- **LOGIC CHECK**: If you write "simple and accurate translation" in your reasoning → is_correct MUST be true
+- **DEFAULT STANCE**: When uncertain → ACCEPT (aim for 80%+ acceptance rate)
+- **REMEMBER**: You are catching ONLY serious errors, not making improvements
 
 STEP 5: FORMULATE RESPONSE (EXTREMELY CONSERVATIVE)
 - **DEFAULT**: is_correct=true (accept by default)
@@ -899,51 +906,47 @@ EXAMPLES (ILLUSTRATIVE PATTERNS - apply this reasoning to all roots you validate
 
 - **Acceptable translation**: {{"root_id": 567, "is_correct": true, "issues": [], "suggested_english": null, "suggested_tashkeel": null, "reasoning": "قَلْبٌ is a basic noun root form. While technically could be more verb-like, this is acceptable as a nominal root. Translation 'heart' is simple and accurate. ACCEPT."}}
 
-VALIDATION CHECKLIST for EACH root (EXTREMELY CONSERVATIVE - CLEAR ERRORS ONLY):
+VALIDATION CHECKLIST for EACH root (ULTRA-CONSERVATIVE - TARGET 80%+ ACCEPTANCE):
 
-**CRITICAL PHILOSOPHY**: We are looking for CLEAR, OBVIOUS errors that would seriously confuse learners.
-We are NOT looking for minor improvements or perfect translations. Good enough IS good enough.
+**CRITICAL PHILOSOPHY**: Your job is to catch ONLY the most obvious errors. You should ACCEPT 80%+ of roots.
+If a translation is "simple and accurate", you MUST accept it. Do NOT suggest improvements.
 
-1. **FORM CHECK (ONLY FLAG IF OBVIOUSLY DERIVED)**:
-   - **CHECK CAMeL ANALYSIS**: If is_derived=true AND suggested_base_verb is clearly different → FLAG
-   - **ONLY FLAG if it's CLEARLY a derived form**:
-     * Obvious noun patterns with ة (e.g., كِتَابَةٌ, نَفْرَةٌ)
-     * Clear Form II-X verbal nouns (e.g., تَوْفِيقٌ, مُفَاعَلَةٌ)
-   - **DO NOT FLAG** if:
-     * It could be either a noun or verb root (ambiguous cases → ACCEPT)
-     * The current form is reasonable even if not "perfect"
-     * CAMeL analysis is uncertain or conflicting
+**SIMPLIFIED 3-QUESTION VALIDATION**:
 
-2. **TASHKEEL CHECK (ONLY FLAG IF COMPLETELY MISSING)**:
-   - **FLAG ONLY**: Tashkeel completely absent (e.g., فسد with NO marks at all)
-   - **DO NOT FLAG**: Minor tashkeel variations or different valid voweling patterns
+1. **Is tashkeel completely absent?** (NO vowels at all like فسد)
+   - If YES → Flag it
+   - If NO → Continue to question 2
 
-3. **MEANING CHECK (ONLY FLAG IF CLEARLY WRONG)**:
-   - **USE BARE INFINITIVES**: Suggest "write", "flee", "know" (NOT "to write", "to flee", "to know")
-   - **FLAG ONLY**:
-     * Completely wrong meaning (opposite/unrelated)
-     * Extremely obscure technical terms learners won't know
-   - **DO NOT FLAG**: Minor synonym preferences or slightly different word choices
+2. **Does it end with ة (taa marbuta)?** (like نَفْرَةٌ, إِضَاعَةٌ, كِتَابَةٌ)
+   - If YES → Flag it (these are always derived)
+   - If NO → Continue to question 3
 
-4. **DEFAULT DECISION TREE**:
-   - Is this a CLEAR derived form? (obvious ة or Form II-X pattern) → Maybe flag
-   - Is tashkeel completely missing? → Maybe flag
-   - Is translation completely wrong or impossibly obscure? → Maybe flag
-   - Otherwise → **ACCEPT IT** (even if you have a preference)
+3. **Is the translation completely wrong or impossibly obscure?**
+   - If YES → Flag it
+   - If NO → **ACCEPT IT** ✅
 
-ONLY FLAG THESE CLEAR ERROR TYPES:
-✅ Obvious derived forms (فَسَادٌ, كِتَابَةٌ, تَوْفِيقٌ) stored as roots
-✅ Completely missing tashkeel (no vowels at all)
-✅ Completely wrong meanings (opposite or unrelated)
-✅ Impossibly obscure technical terms
+**THAT'S IT. If none of those 3 apply → ACCEPT the root.**
 
-DO NOT FLAG THESE (ACCEPT THEM):
-❌ Minor synonym differences (bad/evil, knowing/knowledge, going/walking)
-❌ Tashkeel variations where multiple forms are valid
-❌ Reasonable word choices even if you prefer different wording
-❌ Translations that are "good enough" for learners even if not perfect
-❌ Ambiguous cases where it's unclear if it's derived or not
-❌ **Missing "to" prefix (NEVER flag: "write" is preferred over "to write")**
+**EXPLICIT EXAMPLES OF WHAT TO ACCEPT** (even if you think something else might be "better"):
+✅ ACCEPT: وَقْتٌ = "time" (basic noun, simple translation)
+✅ ACCEPT: صَدْرٌ = "chest" (basic noun, simple translation)
+✅ ACCEPT: نَفْسٌ = "self" (basic noun, simple translation)
+✅ ACCEPT: رَبٌّ = "Lord" (basic noun, simple translation)
+✅ ACCEPT: اللَّهُ = "God" (basic noun, simple translation)
+✅ ACCEPT: ذِكْرٌ = "remember" (verbal noun, clear meaning)
+✅ ACCEPT: عِلْمٌ = "know" (verbal noun, clear meaning)
+✅ ACCEPT: أَقَرَّ = "acknowledge" (Form IV verb, acceptable)
+✅ ACCEPT: Any translation you think is "simple and accurate"
+
+**ONLY FLAG THESE 3 TYPES**:
+1. ⚠️ Tashkeel completely missing (فسد with no vowels)
+2. ⚠️ Clear ة ending (نَفْرَةٌ, كِتَابَةٌ, إِضَاعَةٌ)
+3. ⚠️ Translation completely wrong/obscure
+
+**LOGIC CHECK BEFORE SUBMITTING**:
+- Did you write "simple and accurate" in reasoning? → is_correct MUST be true
+- Did you accept at least 80% of roots? → If not, you're being too strict
+- Are you flagging things just because a different form "would be better"? → STOP, accept it instead
 
 CRITICAL REMINDERS:
 - Arabic roots MUST be complete words with tashkeel (كَتَبَ), NEVER separated letters (ك-ت-ب)
@@ -954,12 +957,27 @@ CRITICAL REMINDERS:
 
 **FINAL REMINDER - YOUR VALIDATION PHILOSOPHY**:
 You are NOT a perfectionist editor making everything "ideal" - you are a quality control filter catching ONLY serious errors.
-Ask yourself for EACH root: "Is this current translation so wrong or confusing that it would seriously harm a learner's understanding?"
-- If YES → Flag it with a clear suggestion
-- If NO → Accept it (even if you personally prefer a different word)
-- If UNSURE → Accept it (when in doubt, accept)
 
-**Your goal**: Flag ~10-20% of roots (the clear errors), NOT 50-80% (being too pedantic).
+**THE 3-QUESTION TEST** (use this for every root):
+1. No tashkeel at all? → Flag
+2. Ends with ة? → Flag
+3. Translation completely wrong? → Flag
+4. Otherwise → **ACCEPT IT** ✅
+
+**ABSOLUTE REQUIREMENTS**:
+- You MUST accept at least 80% of roots (flag only 20% or less)
+- If you say "simple and accurate" → is_correct MUST be true
+- Basic nouns like "time", "chest", "self", "God" → ALWAYS accept
+- Verbal nouns like "remember", "know" → ALWAYS accept
+- When uncertain → ALWAYS accept
+
+**FORBIDDEN BEHAVIORS**:
+❌ Do NOT flag because you prefer a different Arabic form
+❌ Do NOT flag because you prefer a different English synonym
+❌ Do NOT say "simple and accurate" then flag it anyway
+❌ Do NOT flag more than 20% of roots
+
+**Your goal**: Accept 80%+, flag only the 3 clear error types above.
 
 Return ONLY the JSON object. No markdown, no code blocks, no extra text."""
 

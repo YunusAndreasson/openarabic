@@ -316,7 +316,8 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
           }, 500);
 
           // Show toast
-          const percentage = Math.round((initialLastSentenceRead / totalSentences) * 100);
+          // Note: last_sentence_read is 0-based, so add 1 for accurate percentage
+          const percentage = Math.round(((initialLastSentenceRead + 1) / totalSentences) * 100);
           const message = STRINGS.RESUMED_READING_TEMPLATE.replace(
             '{percent}',
             percentage.toString(),
