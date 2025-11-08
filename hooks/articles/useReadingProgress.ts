@@ -5,6 +5,7 @@ import { readingProgressQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { readingProgressService } from '@/services/readingProgress';
 import { handleError } from '@/utils/errorHandling';
+import { calculateProgressPercentage } from '@/utils/progressUtils';
 
 interface UseReadingProgressOptions {
   articleId: number;
@@ -65,12 +66,6 @@ export function useReadingProgress({
       needsSanitization = true;
     }
 
-    // Check if progress_percentage is null (database corruption/error)
-    // This will be recalculated by the database on update
-    if (rawProgress.progress_percentage === null) {
-      needsSanitization = true;
-    }
-
     return needsSanitization ? sanitized : rawProgress;
   }, [rawProgress, totalSentences]);
 
@@ -78,13 +73,11 @@ export function useReadingProgress({
   useEffect(() => {
     if (!rawProgress || !user?.id || !progress || totalSentences <= 0) return;
 
-    // Check if we sanitized the data (last_sentence_read changed OR progress_percentage is null)
+    // Check if we sanitized the data (last_sentence_read changed)
     const lastSentenceNeedsFix = rawProgress.last_sentence_read !== progress.last_sentence_read;
-    const progressPercentageNeedsFix = rawProgress.progress_percentage === null;
 
-    if (lastSentenceNeedsFix || progressPercentageNeedsFix) {
+    if (lastSentenceNeedsFix) {
       // Update the database with the corrected value (silent failure)
-      // Database will automatically recalculate progress_percentage (GENERATED ALWAYS column)
       readingProgressService
         .updateProgress({
           userId: user.id,
@@ -262,7 +255,10 @@ export function useReadingProgress({
           articleId: progress.article_id,
           lastSentenceRead: progress.last_sentence_read,
           totalSentences: progress.total_sentences,
-          progressPercentage: progress.progress_percentage ?? 0,
+          progressPercentage: calculateProgressPercentage(
+            progress.last_sentence_read,
+            progress.total_sentences,
+          ),
           updatedAt: progress.updated_at ?? '',
         }
       : null,

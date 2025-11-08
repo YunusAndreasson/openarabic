@@ -1,6 +1,7 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { Tables } from '@/types/database.types';
+import { calculateProgressPercentage } from '@/utils/progressUtils';
 import { executeQuery } from '@/utils/supabaseHelpers';
 
 export interface ReadingProgress {
@@ -8,24 +9,24 @@ export interface ReadingProgress {
   article_id: number;
   last_sentence_read: number;
   total_sentences: number;
-  progress_percentage: number | null;
   updated_at: string | null;
   created_at: string | null;
 }
 
-// Helper type for safe reading progress data
+// Helper type for safe reading progress data with computed percentage
 export interface SafeReadingProgress {
   user_id: string;
   article_id: number;
   last_sentence_read: number;
   total_sentences: number;
-  progress_percentage: number;
+  progress_percentage: number; // Computed from last_sentence_read and total_sentences
   updated_at: string;
   created_at: string;
 }
 
 /**
  * Safely converts nullable ReadingProgress to SafeReadingProgress with defaults
+ * Computes progress_percentage from last_sentence_read and total_sentences
  */
 export function toSafeReadingProgress(
   progress: ReadingProgress | null,
@@ -34,7 +35,10 @@ export function toSafeReadingProgress(
 
   return {
     ...progress,
-    progress_percentage: progress.progress_percentage ?? 0,
+    progress_percentage: calculateProgressPercentage(
+      progress.last_sentence_read,
+      progress.total_sentences,
+    ),
     updated_at: progress.updated_at ?? progress.created_at ?? new Date().toISOString(),
     created_at: progress.created_at ?? new Date().toISOString(),
   };
@@ -50,7 +54,7 @@ interface UpdateReadingProgressParams {
 export class ReadingProgressService {
   /**
    * Update reading progress for a user and article
-   * Note: progress_percentage is a GENERATED ALWAYS column calculated by the database
+   * Note: progress_percentage is calculated in code, not stored in database
    */
   static async updateProgress({
     userId,
@@ -58,9 +62,6 @@ export class ReadingProgressService {
     lastSentenceRead,
     totalSentences,
   }: UpdateReadingProgressParams): Promise<void> {
-    // Note: progress_percentage is GENERATED ALWAYS in the database
-    // It's automatically calculated based on last_sentence_read and total_sentences
-    // We cannot and should not include it in the insert/update
     const progressData = {
       user_id: userId,
       article_id: articleId,
@@ -172,18 +173,14 @@ export class ReadingProgressService {
 
   /**
    * Get articles sorted by reading progress
+   * Note: Sorting is done in code since progress_percentage is computed, not stored
    */
   static async getArticlesByProgress(
     userId: string,
     sortOrder: 'asc' | 'desc' = 'asc',
   ): Promise<ReadingProgress[]> {
     const data = await executeQuery(
-      () =>
-        supabase
-          .from('reading_progress')
-          .select('*')
-          .eq('user_id', userId)
-          .order('progress_percentage', { ascending: sortOrder === 'asc' }),
+      () => supabase.from('reading_progress').select('*').eq('user_id', userId),
       {
         toastMessage: STRINGS.ERROR_LOADING_DATA,
         analyticsEventName: 'Reading_Progress_By_Progress_Get_Error',
@@ -192,7 +189,14 @@ export class ReadingProgressService {
       },
     );
 
-    return (data as Tables<'reading_progress'>[]).map(row => row as ReadingProgress);
+    const progressList = (data as Tables<'reading_progress'>[]).map(row => row as ReadingProgress);
+
+    // Sort by calculated progress percentage
+    return progressList.sort((a, b) => {
+      const percentA = calculateProgressPercentage(a.last_sentence_read, a.total_sentences);
+      const percentB = calculateProgressPercentage(b.last_sentence_read, b.total_sentences);
+      return sortOrder === 'asc' ? percentA - percentB : percentB - percentA;
+    });
   }
 
   /**

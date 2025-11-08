@@ -128,5 +128,5 @@ DEFAULT_CATEGORY = "aqeedah"
 # OpenRouter configuration for validation
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEEPSEEK_MODEL = "deepseek/deepseek-chat-v3"
+DEEPSEEK_MODEL = "deepseek/deepseek-v3.1-terminus"  # Latest DeepSeek v3.1 Terminus model
 VALIDATION_MAX_RETRIES = 3

@@ -1,6 +1,7 @@
 import type { Article } from '@/types/articles.types';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { calculateProgressPercentage } from '@/utils/progressUtils';
 
 /**
  * Helper function to shuffle array and return first N items using Fisher-Yates algorithm
@@ -189,13 +190,19 @@ const COMPLETION_THRESHOLD = 95;
  */
 export function sortArticlesByProgress(
   articles: Article[],
-  progressMap: Map<number, { progress_percentage: number | null }>,
+  progressMap: Map<number, { last_sentence_read: number; total_sentences: number }>,
 ): Article[] {
   return [...articles].sort((a, b) => {
-    // Handle null explicitly - treat as 0 (no progress)
-    // null indicates database corruption or calculation error, treat same as "not started"
-    const progressA = progressMap.get(a.id)?.progress_percentage ?? 0;
-    const progressB = progressMap.get(b.id)?.progress_percentage ?? 0;
+    // Calculate progress percentages from raw data
+    const dataA = progressMap.get(a.id);
+    const dataB = progressMap.get(b.id);
+
+    const progressA = dataA
+      ? calculateProgressPercentage(dataA.last_sentence_read, dataA.total_sentences)
+      : 0;
+    const progressB = dataB
+      ? calculateProgressPercentage(dataB.last_sentence_read, dataB.total_sentences)
+      : 0;
 
     // Articles with partial progress (1-94%) come first
     const aHasPartialProgress = progressA > 0 && progressA < COMPLETION_THRESHOLD;
