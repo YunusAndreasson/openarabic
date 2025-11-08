@@ -100,6 +100,7 @@ export const STRINGS = {
   CATEGORY: 'Category',
 
   RESUMED_READING_TEMPLATE: 'Resumed at {percent}%',
+  READING_POSITION_RESTORED: 'Reading position restored',
 
   // Practice state labels
   WORD_OPTIONS: 'Word options',
@@ -405,7 +406,6 @@ export const STRINGS = {
 
   // Calendar & dates
   CALENDAR: 'Calendar',
-  ISLAMIC_CALENDAR: 'Islamic calendar',
   DATE_RANGE: 'Date range',
   TODAY: 'Today',
   TOMORROW: 'Tomorrow',
@@ -421,9 +421,6 @@ export const STRINGS = {
   ALL_TIME: 'All time',
   PAST_WEEK: 'Past week',
   PAST_MONTH: 'Past month',
-  DATE_VARIANCE_NOTE: 'Dates may vary by 1-2 days depending on moon sighting',
-  AH: 'AH',
-  DAY_OF_TEMPLATE: 'Day {day} of {duration}',
 
   // Learning capacity & guidance - more actionable
   ADD_WORDS_TO_SEE_CAPACITY: 'Explore articles in the Explore tab to add words',

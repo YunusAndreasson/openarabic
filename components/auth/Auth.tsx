@@ -5,10 +5,11 @@ import { StyleSheet, View } from 'react-native';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
-import { EmailAuthOptions } from '@/components/auth';
-import { LegalLinks } from '@/components/auth';
-import { SocialAuthButtons } from '@/components/auth';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+
+import { EmailAuthOptions } from './EmailAuthOptions';
+import { LegalLinks } from './LegalLinks';
+import { SocialAuthButtons } from './SocialAuthButtons';
 import { STRINGS } from '@/constants/strings';
 
 /**

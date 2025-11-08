@@ -92,19 +92,16 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
     disabled && { opacity: LAYOUT.OPACITY.SUBTLE },
   ];
 
-  const handleUnknownPress = () => {
-    if (!disabled && onUnknownPress) {
+  // Generic press handler to reduce duplication
+  const createPressHandler = (callback?: () => void) => () => {
+    if (!disabled && callback) {
       selectionFeedback();
-      onUnknownPress();
+      callback();
     }
   };
 
-  const handleKnownPress = () => {
-    if (!disabled && onKnownPress) {
-      selectionFeedback();
-      onKnownPress();
-    }
-  };
+  const handleUnknownPress = createPressHandler(onUnknownPress);
+  const handleKnownPress = createPressHandler(onKnownPress);
 
   return (
     <View style={STATIC_STYLES.container}>

@@ -41,13 +41,6 @@ export default function AccountLayout() {
         })}
       />
       <Stack.Screen
-        name="islamicCalendar"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.ISLAMIC_CALENDAR,
-          isRegularScreen: true,
-        })}
-      />
-      <Stack.Screen
         name="feedback"
         options={createNavigationOptions(colors, {
           title: STRINGS.CONTACT_SUPPORT,

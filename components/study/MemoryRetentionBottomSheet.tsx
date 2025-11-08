@@ -1,9 +1,10 @@
 import { memo } from 'react';
 
 import { GenericBottomSheet } from '@/components/common';
-import { RetrievabilityChart } from '@/components/study';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
+
+import { RetrievabilityChart } from './charts';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 
 interface MemoryRetentionBottomSheetProps {

@@ -1,9 +1,10 @@
 import { memo, useMemo } from 'react';
 
 import { GenericBottomSheet } from '@/components/common';
-import { DueWordsPrognosisChart } from '@/components/study';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
+
+import { DueWordsPrognosisChart } from './charts/DueWordsPrognosisChart';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 
 interface DueWordsBottomSheetProps {

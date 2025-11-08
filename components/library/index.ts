@@ -1,12 +1,11 @@
 export { ArticleCard } from './ArticleCard';
 export { ArticleList } from './ArticleList';
+export { BrandFooter } from './BrandFooter';
 export { FeaturedSection } from './FeaturedSection';
 export { FilteredArticleView } from './FilteredArticleView';
 export { FilterSection } from './FilterSection';
-export { HijriDateFooter } from './HijriDateFooter';
 export { HorizontalArticleSlider } from './HorizontalArticleSlider';
 export { HorizontalFeaturedSection } from './HorizontalFeaturedSection';
 export { IntelligentArticleSection } from './IntelligentArticleSection';
-export { IslamicCalendarHeader } from './IslamicCalendarHeader';
 export { StreakChart } from './StreakChart';
 export { StreakMetrics } from './StreakMetrics';

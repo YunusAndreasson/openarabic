@@ -6,8 +6,9 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
-import { PasswordStrengthMeter } from '@/components/auth';
 import { LAYOUT } from '@/constants/layout';
+
+import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { STRINGS } from '@/constants/strings';
 import { useAuthForm } from '@/hooks/auth/useAuthForm';
 

@@ -12,6 +12,34 @@ const generateTrackId = (articleId: ArticleId): string => {
   return `article-${articleId}`;
 };
 
+// Helper function to select audio URL based on preference
+const selectAudioUrl = (
+  article: { audio_url: string; audio_url_bilingual?: string | null },
+  audioPreference: 'arabic' | 'bilingual',
+): string => {
+  return audioPreference === 'bilingual' && article.audio_url_bilingual
+    ? article.audio_url_bilingual
+    : article.audio_url;
+};
+
+// Helper function to create enhanced audio track
+const createEnhancedTrack = async (
+  articleId: number,
+  article: { title: string; image_url: string },
+  audioUrl: string,
+): Promise<EnhancedAudioTrack> => {
+  const fullAudioUrl = generateAudioUrl(audioUrl);
+  const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl || audioUrl);
+
+  return {
+    id: generateTrackId(articleId as ArticleId),
+    articleId,
+    audioUrl: cachedAudioUrl,
+    title: article.title,
+    imageUrl: generateImageUrl(article.image_url),
+  };
+};
+
 export const enhancedAudioService = {
   /**
    * Generates enhanced audio track for an article
@@ -24,23 +52,9 @@ export const enhancedAudioService = {
       // Fetch article details - audio is guaranteed to be available
       const article = await articlesService.getArticleById(articleId);
 
-      // Select the correct audio URL based on preference
-      const selectedAudioUrl =
-        audioPreference === 'bilingual' && article.audio_url_bilingual
-          ? article.audio_url_bilingual
-          : article.audio_url;
-
-      // Use centralized URL generator
-      const fullAudioUrl = generateAudioUrl(selectedAudioUrl);
-      const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl || selectedAudioUrl);
-
-      return {
-        id: generateTrackId(articleId),
-        articleId,
-        audioUrl: cachedAudioUrl,
-        title: article.title,
-        imageUrl: generateImageUrl(article.image_url),
-      };
+      // Select and create track using helpers
+      const selectedAudioUrl = selectAudioUrl(article, audioPreference);
+      return await createEnhancedTrack(articleId, article, selectedAudioUrl);
     } catch (error) {
       await handleError(error instanceof Error ? error : new Error(String(error)), {
         toastMessage: STRINGS.FAILED_TO_GENERATE_AUDIO_TRACK,
@@ -62,29 +76,14 @@ export const enhancedAudioService = {
       // Fetch user's reading list with the correct audio URL selected at database level
       const readingList = await bookmarkService.getReadingList(userId);
 
-      // Build tracks directly from the reading list items
+      // Build tracks using helpers
       const allTracks: EnhancedAudioTrack[] = [];
 
       for (const item of readingList) {
         const article = item.articles;
-
-        // Select the correct audio URL based on preference
-        const selectedAudioUrl =
-          audioPreference === 'bilingual' && article.audio_url_bilingual
-            ? article.audio_url_bilingual
-            : article.audio_url;
-
-        // Use centralized URL generator
-        const fullAudioUrl = generateAudioUrl(selectedAudioUrl);
-        const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl || selectedAudioUrl);
-
-        allTracks.push({
-          id: generateTrackId(item.article_id as ArticleId),
-          articleId: item.article_id,
-          audioUrl: cachedAudioUrl,
-          title: article.title,
-          imageUrl: generateImageUrl(article.image_url),
-        });
+        const selectedAudioUrl = selectAudioUrl(article, audioPreference);
+        const track = await createEnhancedTrack(item.article_id, article, selectedAudioUrl);
+        allTracks.push(track);
       }
 
       return allTracks;

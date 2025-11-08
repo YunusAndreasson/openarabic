@@ -1,8 +1,9 @@
 import { memo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ArticleCard } from '@/components/library';
 import { LAYOUT } from '@/constants/layout';
+
+import { ArticleCard } from './ArticleCard';
 import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
 import { generateImageUrl } from '@/utils/imageUtils';

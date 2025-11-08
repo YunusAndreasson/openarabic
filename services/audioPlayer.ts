@@ -14,6 +14,33 @@ import { playTransitionSound } from '@/utils/transitionSound';
 // Event constant for playback status updates
 const PLAYBACK_STATUS_UPDATE = 'playbackStatusUpdate';
 
+// Audio mode configuration for consistent behavior across iOS and Android
+const AUDIO_MODE_CONFIG = {
+  // Common
+  shouldPlayInBackground: true,
+  // iOS
+  playsInSilentMode: true,
+  allowsRecording: false,
+  interruptionMode: 'duckOthers' as const,
+  // Android
+  interruptionModeAndroid: 'duckOthers' as const,
+  shouldRouteThroughEarpiece: false,
+};
+
+// Reset audio status constant for consistent state clearing
+const RESET_AUDIO_STATUS = {
+  isPlaying: false,
+  isLoading: false,
+  currentTime: 0,
+  duration: 0,
+  isLoaded: false,
+  isBuffering: false,
+  playbackState: 'idle' as const,
+  timeControlStatus: 'paused' as const,
+  reasonForWaitingToPlay: '',
+  didJustFinish: false,
+};
+
 /**
  * Simple audio service - single source of truth for native audio player
  */
@@ -32,10 +59,6 @@ class SimpleAudioService {
   // Time-based activation throttling to avoid redundant iOS audio session calls
   private lastActivationTime = 0;
   private readonly ACTIVATION_THROTTLE = 5000; // 5 seconds
-
-  // STABILIZATION: Minimal throttling since native updateInterval already limits updates
-  private lastStatusUpdate = 0;
-  private statusUpdateThrottle = 50; // 50ms minimal throttle, native updateInterval (500ms) handles most throttling
 
   // PLAYLIST SUPPORT: Add playlist state management
   private playlist: EnhancedAudioTrack[] = [];
@@ -70,6 +93,28 @@ class SimpleAudioService {
   };
 
   /**
+   * Reset all status fields to default values
+   */
+  private resetStatus(): void {
+    this.updateStatus({
+      ...RESET_AUDIO_STATUS,
+      currentTrack: null,
+    });
+  }
+
+  /**
+   * Reset playlist state to default values
+   */
+  private resetPlaylistState(): void {
+    this.isPlaylistMode = false;
+    this.playlist = [];
+    this.currentPlaylistIndex = 0;
+    this.onPlaylistTrackComplete = null;
+    this.initialPlaylistLength = 0;
+    this.resetSleepTimerExpired();
+  }
+
+  /**
    * Configure audio session for proper playback
    */
   private async configureAudioSession(): Promise<void> {
@@ -89,17 +134,7 @@ class SimpleAudioService {
         // Continue with audio mode setup even if this fails
       }
 
-      await setAudioModeAsync({
-        // Common
-        shouldPlayInBackground: true,
-        // iOS
-        playsInSilentMode: true,
-        allowsRecording: false,
-        interruptionMode: 'duckOthers',
-        // Android
-        interruptionModeAndroid: 'duckOthers',
-        shouldRouteThroughEarpiece: false,
-      });
+      await setAudioModeAsync(AUDIO_MODE_CONFIG);
 
       // Set up AppState listener for background audio handling
       this.setupAppStateListener();
@@ -134,14 +169,7 @@ class SimpleAudioService {
           if (this.status.isPlaying || this.isPlaylistMode) {
             await setIsAudioActiveAsync(true);
             // Re-configure audio session to maintain background playback
-            await setAudioModeAsync({
-              shouldPlayInBackground: true,
-              playsInSilentMode: true,
-              allowsRecording: false,
-              interruptionMode: 'duckOthers',
-              interruptionModeAndroid: 'duckOthers',
-              shouldRouteThroughEarpiece: false,
-            });
+            await setAudioModeAsync(AUDIO_MODE_CONFIG);
           }
         } else if (nextAppState === 'active') {
           // App is coming to foreground - ensure audio session is still active
@@ -177,19 +205,7 @@ class SimpleAudioService {
       await this.configureAudioSession();
 
       // Reset status
-      this.updateStatus({
-        isPlaying: false,
-        isLoading: false,
-        currentTrack: null,
-        currentTime: 0,
-        duration: 0,
-        isLoaded: false,
-        isBuffering: false,
-        playbackState: 'idle',
-        timeControlStatus: 'paused',
-        reasonForWaitingToPlay: '',
-        didJustFinish: false,
-      });
+      this.resetStatus();
     } catch (error) {
       // Even if reset fails, clear the configuration flag to force reconfiguration
       this.audioSessionConfigured = false;
@@ -380,18 +396,7 @@ class SimpleAudioService {
       return true;
     } catch (error) {
       // RESET: Clear progress on play error
-      this.updateStatus({
-        isLoading: false,
-        isPlaying: false,
-        currentTime: 0,
-        duration: 0,
-        isLoaded: false,
-        isBuffering: false,
-        playbackState: 'idle',
-        timeControlStatus: 'paused',
-        reasonForWaitingToPlay: '',
-        didJustFinish: false,
-      });
+      this.updateStatus(RESET_AUDIO_STATUS);
 
       if (this.currentPlayer) {
         try {
@@ -473,12 +478,7 @@ class SimpleAudioService {
 
     if (this.currentPlaylistIndex >= this.playlist.length) {
       // Playlist is complete
-      this.isPlaylistMode = false;
-      this.playlist = [];
-      this.currentPlaylistIndex = 0;
-      this.onPlaylistTrackComplete = null;
-      this.initialPlaylistLength = 0;
-      this.resetSleepTimerExpired();
+      this.resetPlaylistState();
 
       // Stop playback and notify completion
       await this.stop();
@@ -522,79 +522,16 @@ class SimpleAudioService {
       this.updateStatus({ isPlaying: false, isLoading: false });
 
       // PLAYLIST SUPPORT: Reset playlist state when stopping
-      this.isPlaylistMode = false;
-      this.playlist = [];
-      this.currentPlaylistIndex = 0;
-      this.onPlaylistTrackComplete = null;
-      this.initialPlaylistLength = 0;
-
-      // SLEEP TIMER SUPPORT: Reset sleep timer expired flag when stopping
-      this.resetSleepTimerExpired();
+      this.resetPlaylistState();
 
       await this.stopInternal();
       // RESET: Clear all progress and track data when stopping
-      this.updateStatus({
-        isPlaying: false,
-        isLoading: false,
-        currentTrack: null,
-        currentTime: 0,
-        duration: 0,
-        isLoaded: false,
-        isBuffering: false,
-        playbackState: 'idle',
-        timeControlStatus: 'paused',
-        reasonForWaitingToPlay: '',
-        didJustFinish: false,
-      });
+      this.resetStatus();
     } catch (stopError) {
       // RESET: Even on error, ensure all progress is cleared
-      this.updateStatus({
-        isPlaying: false,
-        isLoading: false,
-        currentTrack: null,
-        currentTime: 0,
-        duration: 0,
-        isLoaded: false,
-        isBuffering: false,
-        playbackState: 'idle',
-        timeControlStatus: 'paused',
-        reasonForWaitingToPlay: '',
-        didJustFinish: false,
-      });
+      this.resetStatus();
       // Re-throw to make the error visible
       throw new Error(`Failed to stop audio playback: ${stopError}`);
-    }
-  }
-
-  /**
-   * Pause playback
-   */
-  async pause(): Promise<void> {
-    try {
-      if (this.currentPlayer) {
-        this.currentPlayer.pause();
-        this.updateStatus({ isPlaying: false });
-      }
-    } catch (pauseError) {
-      this.updateStatus({ isPlaying: false });
-      // Re-throw to make the error visible
-      throw new Error(`Failed to pause audio playback: ${pauseError}`);
-    }
-  }
-
-  /**
-   * Resume playback
-   */
-  async resume(): Promise<void> {
-    try {
-      if (this.currentPlayer) {
-        this.currentPlayer.play();
-        this.updateStatus({ isPlaying: true });
-      }
-    } catch (resumeError) {
-      this.updateStatus({ isPlaying: false });
-      // Re-throw to make the error visible
-      throw new Error(`Failed to resume audio playback: ${resumeError}`);
     }
   }
 
@@ -718,12 +655,7 @@ class SimpleAudioService {
             // Don't advance if sleep timer has expired
             if (this.sleepTimerExpired) {
               // Sleep timer expired - stop playlist instead of advancing
-              this.isPlaylistMode = false;
-              this.playlist = [];
-              this.currentPlaylistIndex = 0;
-              this.onPlaylistTrackComplete = null;
-              this.initialPlaylistLength = 0;
-              this.resetSleepTimerExpired();
+              this.resetPlaylistState();
               this.stop().catch(() => {
                 // Stop failed - continue with current track
               });
@@ -789,18 +721,7 @@ class SimpleAudioService {
           // Stop subscription on error
           this.stopEventSubscription();
           // RESET: Clear progress on event error
-          this.updateStatus({
-            isPlaying: false,
-            isLoading: false,
-            currentTime: 0,
-            duration: 0,
-            isLoaded: false,
-            isBuffering: false,
-            playbackState: 'unknown',
-            timeControlStatus: 'paused',
-            reasonForWaitingToPlay: '',
-            didJustFinish: false,
-          });
+          this.updateStatus(RESET_AUDIO_STATUS);
         }
       },
     );
@@ -836,27 +757,10 @@ class SimpleAudioService {
   }
 
   /**
-   * STABILIZATION: Enhanced status update with minimal throttling
-   * Native updateInterval (500ms) handles most throttling, this is just a safety net
+   * Update audio status and notify listeners
+   * Native updateInterval (500ms) handles throttling automatically
    */
   private updateStatus(updates: Partial<AudioStatus>): void {
-    const now = Date.now();
-
-    // Minimal throttle to prevent rapid UI changes
-    // Critical updates (playing/loading state changes) bypass throttling
-    if (now - this.lastStatusUpdate < this.statusUpdateThrottle) {
-      const isCriticalUpdate =
-        updates.isPlaying !== undefined ||
-        updates.isLoading !== undefined ||
-        updates.isLoaded !== undefined ||
-        updates.isBuffering !== undefined;
-
-      if (!isCriticalUpdate) {
-        return;
-      }
-    }
-
-    this.lastStatusUpdate = now;
     this.status = { ...this.status, ...updates };
 
     // Create a copy of listeners to avoid modification during iteration
@@ -908,7 +812,6 @@ class SimpleAudioService {
 
     // Reset internal state to prevent stale references
     this.audioSessionConfigured = false;
-    this.lastStatusUpdate = 0;
     this.isPlaylistMode = false;
     this.playlist = [];
     this.currentPlaylistIndex = 0;

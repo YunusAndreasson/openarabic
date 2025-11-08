@@ -105,6 +105,15 @@ export function useReadingProgress({
     }
   }, [progress?.last_sentence_read]);
 
+  // Reset capture when article changes
+  const prevArticleIdRef = useRef<number>(articleId);
+  useEffect(() => {
+    if (prevArticleIdRef.current !== articleId) {
+      initialLastSentenceReadRef.current = null;
+      prevArticleIdRef.current = articleId;
+    }
+  }, [articleId]);
+
   // Capture the initial progress exactly once when the first query result resolves
   // (post-sanitization). If there was no existing progress, this stores 0.
   useEffect(() => {
@@ -176,124 +185,16 @@ export function useReadingProgress({
     ],
   );
 
-  // Auto-save progress with debouncing and improved cleanup
+  // Auto-save progress with debouncing
   useEffect(() => {
-    if (!isActive || !user?.id) return;
+    if (!isActive || !user?.id || currentSentenceIndex < 0) return;
 
     const timeoutId = setTimeout(() => {
       updateProgress(currentSentenceIndex);
     }, DEBOUNCE_DELAY);
 
     return () => clearTimeout(timeoutId);
-  }, [currentSentenceIndex, isActive, updateProgress, user?.id]);
-
-  // Track if we've already recorded the initial article open (once per mount)
-  const hasRecordedOpenRef = useRef(false);
-
-  // IMMEDIATE ARTICLE OPEN TRACKING: Run once when component mounts
-  useEffect(() => {
-    if (!user?.id || articleId <= 0 || hasRecordedOpenRef.current) return;
-
-    // Record article open immediately when component mounts
-    const recordArticleOpen = async () => {
-      try {
-        // Fetch current progress directly to avoid circular dependency
-        // (don't use cached progress since we'll invalidate it anyway)
-        const currentProgress = await readingProgressService.getProgress(user.id, articleId);
-
-        if (currentProgress) {
-          // If progress exists, update it to refresh the updated_at timestamp
-          // This counts as daily activity even if no new sentences were read
-          await readingProgressService.updateProgress({
-            userId: user.id,
-            articleId,
-            lastSentenceRead: currentProgress.last_sentence_read,
-            totalSentences: currentProgress.total_sentences,
-          });
-        } else {
-          // If no progress exists, create initial progress record
-          // Use totalSentences if available, otherwise default to 1 (will be updated later)
-          const sentencesToUse = totalSentences > 0 ? totalSentences : 1;
-          await readingProgressService.updateProgress({
-            userId: user.id,
-            articleId,
-            lastSentenceRead: 0,
-            totalSentences: sentencesToUse,
-          });
-        }
-
-        // Mark as recorded to prevent re-running
-        hasRecordedOpenRef.current = true;
-
-        // Delay query invalidation to avoid race conditions with scroll-to-position
-        // The 2-second delay gives FlashList time to complete the resume scroll animation
-        setTimeout(() => {
-          queryClient.invalidateQueries({
-            queryKey: readingProgressQueries.keys.bulk(user.id),
-          });
-          queryClient.invalidateQueries({
-            queryKey: readingProgressQueries.keys.streak(user.id),
-          });
-        }, 2000);
-      } catch (error) {
-        // Silent error - article open tracking failed but shouldn't break reading
-        handleError(error as Error, {
-          analyticsEventName: 'Article_Open_Tracking_Failed',
-          sentryTags: { location: 'articles', action: 'record_open' },
-          sentryExtra: { articleId, userId: user?.id, totalSentences },
-          showToast: false, // Silent failure for tracking
-          sentrySeverity: 'info', // Not critical, just tracking failure
-        });
-      }
-    };
-
-    // Execute immediately (no timeout) to ensure daily activity is tracked
-    recordArticleOpen();
-  }, [user?.id, articleId, totalSentences, queryClient]); // Removed progress to avoid circular dependency
-
-  // ADDITIONAL: Track when article becomes active (fully loaded) - for additional updates
-  // Use a separate ref to track if we've run the active tracking
-  const hasRecordedActiveRef = useRef(false);
-
-  useEffect(() => {
-    if (!isActive || !user?.id || articleId <= 0 || hasRecordedActiveRef.current) return;
-
-    // Additional update when article becomes fully active
-    const recordActiveArticleOpen = async () => {
-      try {
-        // Fetch current progress directly to avoid circular dependency
-        const currentProgress = await readingProgressService.getProgress(user.id, articleId);
-
-        if (currentProgress && totalSentences > 0) {
-          // Update with correct totalSentences when available
-          await readingProgressService.updateProgress({
-            userId: user.id,
-            articleId,
-            lastSentenceRead: currentProgress.last_sentence_read,
-            totalSentences, // Use actual total sentences now that article is loaded
-          });
-
-          // Mark as recorded
-          hasRecordedActiveRef.current = true;
-
-          // Delay query invalidation to avoid disrupting scroll-to-position
-          setTimeout(() => {
-            queryClient.invalidateQueries({
-              queryKey: readingProgressQueries.keys.bulk(user.id),
-            });
-            queryClient.invalidateQueries({
-              queryKey: readingProgressQueries.keys.streak(user.id),
-            });
-          }, 2000);
-        }
-      } catch {
-        // Silent error - additional tracking failed
-      }
-    };
-
-    const activeTimeoutId = setTimeout(recordActiveArticleOpen, 500);
-    return () => clearTimeout(activeTimeoutId);
-  }, [isActive, user?.id, articleId, totalSentences, queryClient]); // Removed progress to avoid circular dependency
+  }, [currentSentenceIndex, isActive, updateProgress, user?.id, articleId]);
 
   // Refs to capture latest values for unmount cleanup (avoid stale closure)
   const unmountDataRef = useRef({
@@ -397,10 +298,12 @@ export function useBulkReadingProgress(articleIds: number[]) {
     enabled: Boolean(user?.id),
     // Use placeholderData to prevent undefined while query is disabled or fetching
     placeholderData: new Map(),
-    // Don't set staleTime/retry here - let QueryClient defaults control for testability
-    refetchOnMount: false, // Only refetch via cache invalidation or pull-to-refresh
+    // Stale time controls when data needs refetching
+    staleTime: 1000 * 10, // 10 seconds - refetch if older
     gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
-    refetchOnReconnect: false, // Only refetch via pull-to-refresh
+    // Only refresh via pull-to-refresh, not on mount or reconnect
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   // Filter the full Map to only include requested articleIds for this component

@@ -1,0 +1,179 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
+import React, { memo } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { BaseCard } from '@/components/common';
+import { ThemedText } from '@/components/ThemedText';
+import { Toggle } from '@/components/ui';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
+
+interface BaseSettingsCardProps {
+  icon: IconName;
+  label: string;
+  subtitle?: string;
+  iconColor?: string;
+  textColor?: 'default' | 'error';
+  backgroundColor?: string;
+  onPress?: () => void;
+}
+
+interface ChevronCardProps extends BaseSettingsCardProps {
+  rightType: 'chevron';
+}
+
+interface TextChevronCardProps extends BaseSettingsCardProps {
+  rightType: 'text-chevron';
+  rightText: string;
+}
+
+interface ToggleCardProps extends BaseSettingsCardProps {
+  rightType: 'toggle';
+  toggleValue: boolean;
+  onToggleChange: (value: boolean) => void;
+}
+
+interface CustomCardProps extends BaseSettingsCardProps {
+  rightType: 'custom';
+  rightComponent: React.ReactNode;
+}
+
+type SettingsCardProps =
+  | ChevronCardProps
+  | TextChevronCardProps
+  | ToggleCardProps
+  | CustomCardProps;
+
+/**
+ * Reusable settings card component that handles all common patterns
+ * in the Account screen (icon + label + optional subtitle + right side content)
+ */
+export const SettingsCard = memo((props: SettingsCardProps) => {
+  const colors = useColors();
+  const {
+    icon,
+    label,
+    subtitle,
+    iconColor = colors.interactiveSecondary,
+    textColor = 'default',
+    backgroundColor,
+    onPress,
+  } = props;
+
+  const cardStyle = backgroundColor ? [styles.card, { backgroundColor }] : styles.card;
+
+  // Render right side based on type
+  const renderRight = () => {
+    switch (props.rightType) {
+      case 'toggle':
+        return <Toggle value={props.toggleValue} onValueChange={props.onToggleChange} />;
+
+      case 'text-chevron':
+        return (
+          <View style={styles.rightValue}>
+            <ThemedText type="body" colorName="secondaryMetadataText">
+              {props.rightText}
+            </ThemedText>
+            <Ionicons
+              color={colors.secondaryMetadataText}
+              name="chevron-forward"
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            />
+          </View>
+        );
+
+      case 'custom':
+        return props.rightComponent;
+
+      case 'chevron':
+      default:
+        return (
+          <Ionicons
+            color={textColor === 'error' ? colors.error : colors.secondaryMetadataText}
+            name="chevron-forward"
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            style={styles.chevron}
+          />
+        );
+    }
+  };
+
+  return (
+    <BaseCard shadowSize="none" style={cardStyle} onPress={onPress}>
+      <View style={styles.content}>
+        <View style={styles.left}>
+          <View style={styles.iconContainer}>
+            <Ionicons color={iconColor} name={icon} size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM} />
+          </View>
+          <View style={subtitle ? styles.textContainerWithSubtitle : styles.textContainer}>
+            <ThemedText
+              type="body"
+              weight="medium"
+              colorName={textColor === 'error' ? 'error' : 'text'}
+            >
+              {label}
+            </ThemedText>
+            {subtitle && (
+              <ThemedText colorName="textTertiary" style={styles.subtitle} type="caption">
+                {subtitle}
+              </ThemedText>
+            )}
+          </View>
+        </View>
+        {renderRight()}
+      </View>
+    </BaseCard>
+  );
+});
+
+SettingsCard.displayName = 'SettingsCard';
+
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
+    marginBottom: 0,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+  },
+  content: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  left: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flex: 1,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: LAYOUT.SPACING.SMALL,
+  },
+  textContainer: {
+    marginLeft: LAYOUT.SPACING.MEDIUM,
+    flex: 1,
+  },
+  textContainerWithSubtitle: {
+    flexDirection: 'column',
+    marginLeft: LAYOUT.SPACING.MEDIUM,
+    flex: 1,
+  },
+  subtitle: {
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+  rightValue: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.TINY,
+  },
+  chevron: {
+    minWidth: LAYOUT.SPACING.XLARGE,
+    textAlign: 'center',
+  },
+});

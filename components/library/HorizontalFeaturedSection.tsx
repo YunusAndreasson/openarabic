@@ -1,7 +1,8 @@
 import type { JSX } from 'react';
 
-import { HorizontalArticleSlider } from '@/components/library';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
+
+import { HorizontalArticleSlider } from './HorizontalArticleSlider';
 import type { Article } from '@/types/articles.types';
 
 interface HorizontalFeaturedSectionProps {

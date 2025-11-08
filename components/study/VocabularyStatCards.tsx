@@ -9,9 +9,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { MemoryRetentionGauge } from '@/components/study';
 import { ICON_CONTAINER, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+
+import { MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
 import { VocabularyStatCategory } from '@/types/enums';
 import type { StudyWord } from '@/types/vocabulary.types';
 

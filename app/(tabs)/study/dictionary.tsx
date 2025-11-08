@@ -45,15 +45,8 @@ export default function DictionaryScreen(): JSX.Element {
     () => {},
     async () => {
       if (user?.id) {
-        // Invalidate all FSRS-related queries to ensure UI updates
-        queryClient.invalidateQueries({
-          queryKey: fsrsQueries.all(user.id).queryKey,
-        });
-        queryClient.invalidateQueries({
-          queryKey: fsrsQueries.allWithCooldown(user.id, 0).queryKey,
-        });
-        queryClient.invalidateQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
-        queryClient.invalidateQueries({ queryKey: fsrsQueries.stats(user.id).queryKey });
+        // Use helper to invalidate all FSRS-related queries
+        fsrsQueries.invalidateAll(queryClient, user.id);
       }
     },
   );

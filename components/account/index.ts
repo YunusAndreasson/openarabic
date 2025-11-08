@@ -5,7 +5,7 @@
 
 export { AccountBadge } from './AccountBadge';
 export { ArabicFontSelector } from './ArabicFontSelector';
-export { AudioShuffleToggle } from './AudioShuffleToggle';
 export { DeleteAccountModal } from './DeleteAccountModal';
 export { FeedbackForm } from './FeedbackForm';
-export { HapticsToggle } from './HapticsToggle';
+export { SettingsCard } from './SettingsCard';
+export { SettingsSection } from './SettingsSection';

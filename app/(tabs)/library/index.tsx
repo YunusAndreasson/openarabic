@@ -9,16 +9,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleList } from '@/components/library';
+import { BrandFooter } from '@/components/library';
 import { FilterSection } from '@/components/library';
-import { HijriDateFooter } from '@/components/library';
 import { IntelligentArticleSection } from '@/components/library';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import { getAuthorFilterRoute, getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useColors } from '@/hooks/theme/useColors';
-import type { Author, Category } from '@/types/articles.types';
 import type { AuthorId, CategoryId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
@@ -31,8 +29,26 @@ const styles = StyleSheet.create({
   listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
 });
 
+/**
+ * Generic helper to build entities (categories/authors) with article counts
+ * Filters out entities with no articles (count === 0)
+ */
+function buildEntitiesWithCounts<T extends { id: number; name: string }>(
+  entities: T[],
+  counts: Record<number, number>,
+): (T & { count: number })[] {
+  return entities.reduce<(T & { count: number })[]>((acc, entity) => {
+    if (entity?.id && entity.id > 0 && entity.name) {
+      const count = counts[entity.id] || 0;
+      if (count > 0) {
+        acc.push({ ...entity, count });
+      }
+    }
+    return acc;
+  }, []);
+}
+
 export default function ReadScreen(): JSX.Element {
-  const colors = useColors();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -111,30 +127,16 @@ export default function ReadScreen(): JSX.Element {
   }, [articlesData]);
 
   // Build categories list with counts
-  const categoriesWithArticles = useMemo(() => {
-    return categoriesData.reduce<(Category & { count: number })[]>((acc, category) => {
-      if (category?.id && category.id > 0 && category.name) {
-        const count = categoryCounts[category.id] || 0;
-        if (count > 0) {
-          acc.push({ ...category, count });
-        }
-      }
-      return acc;
-    }, []);
-  }, [categoriesData, categoryCounts]);
+  const categoriesWithArticles = useMemo(
+    () => buildEntitiesWithCounts(categoriesData, categoryCounts),
+    [categoriesData, categoryCounts],
+  );
 
   // Build authors list with counts
-  const authorsWithArticles = useMemo(() => {
-    return authorsData.reduce<(Author & { count: number })[]>((acc, author) => {
-      if (author?.id && author.id > 0 && author.name) {
-        const count = authorCounts[author.id] || 0;
-        if (count > 0) {
-          acc.push({ ...author, count });
-        }
-      }
-      return acc;
-    }, []);
-  }, [authorsData, authorCounts]);
+  const authorsWithArticles = useMemo(
+    () => buildEntitiesWithCounts(authorsData, authorCounts),
+    [authorsData, authorCounts],
+  );
 
   // Note: We're now rendering regular categories and Continue Reading category separately
 
@@ -169,41 +171,16 @@ export default function ReadScreen(): JSX.Element {
 
   const handleSelectFilter = useCallback(
     (id: number, _name?: string, filterType?: string) => {
-      // Use explicit filterType if provided, otherwise determine by checking each data source
-      if (filterType) {
-        switch (filterType) {
-          case 'category': {
-            const category = categoriesData.find(c => c.id === id);
-            if (category) {
-              router.push(getCategoryFilterRoute(id as CategoryId, category.name));
-              return;
-            }
-            break;
-          }
-          case 'author': {
-            const author = authorsData.find(a => a.id === id);
-            if (author) {
-              router.push(getAuthorFilterRoute(id as AuthorId, author.name));
-              return;
-            }
-            break;
-          }
+      if (filterType === 'category') {
+        const category = categoriesData.find(c => c.id === id);
+        if (category) {
+          router.push(getCategoryFilterRoute(id as CategoryId, category.name));
         }
-      }
-
-      // Fallback: Check in priority order
-      // Check if it's a category
-      const category = categoriesData.find(c => c.id === id);
-      if (category) {
-        router.push(getCategoryFilterRoute(id as CategoryId, category.name));
-        return;
-      }
-
-      // Finally check if it's an author
-      const author = authorsData.find(a => a.id === id);
-      if (author) {
-        router.push(getAuthorFilterRoute(id as AuthorId, author.name));
-        return;
+      } else if (filterType === 'author') {
+        const author = authorsData.find(a => a.id === id);
+        if (author) {
+          router.push(getAuthorFilterRoute(id as AuthorId, author.name));
+        }
       }
     },
     [categoriesData, authorsData],
@@ -253,17 +230,15 @@ export default function ReadScreen(): JSX.Element {
     [headerSections],
   );
 
-  // Static footer component - no props needed
-  const ListFooterComponent = useMemo(() => <HijriDateFooter />, []);
+  const ListFooterComponent = useMemo(() => <BrandFooter />, []);
 
   const contentContainerStyle = useMemo(
     () => ({
       ...styles.listContentContainer,
-      backgroundColor: colors.background,
       paddingTop: 0,
       paddingBottom: insets.bottom,
     }),
-    [colors, insets.bottom],
+    [insets.bottom],
   );
 
   const isLoading = isArticlesLoading || isCategoriesLoading || isAuthorsLoading;

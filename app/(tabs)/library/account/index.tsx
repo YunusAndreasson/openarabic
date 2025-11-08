@@ -1,12 +1,8 @@
 // External Libraries
-import { BaseCard } from '@/components/common';
-import { SectionTitle } from '@/components/common';
-import { Ionicons } from '@expo/vector-icons';
 import { TimePicker } from '@/components/ui';
-import { Toggle } from '@/components/ui';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import React, { Fragment, memo, useCallback, useMemo, type FC } from 'react';
+import React, { useCallback, useMemo, type FC } from 'react';
 import { Alert, Linking, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,8 +10,8 @@ import { THEME_OPTIONS } from '@/components/ThemePicker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge } from '@/components/account';
-import { AudioShuffleToggle } from '@/components/account';
-import { HapticsToggle } from '@/components/account';
+import { SettingsCard } from '@/components/account';
+import { SettingsSection } from '@/components/account';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
@@ -28,8 +24,10 @@ import pkg from '@/package.json';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
   setAudioLanguagePreference,
+  setAudioShuffleEnabled,
   setDailyWordLimit,
   setDisplayLanguagePreference,
+  setHapticsEnabled,
   type AudioLanguagePreference,
   type DisplayLanguagePreference,
 } from '@/store/settingsSlice';
@@ -43,63 +41,15 @@ import {
 } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
-import { errorFeedback, successFeedback } from '@/utils/haptics';
+import { errorFeedback, selectionFeedback, successFeedback } from '@/utils/haptics';
 
 // Helper function for enum validation
 function validateEnumValue<T>(value: unknown, validValues: readonly T[], defaultValue: T): T {
   return validValues.includes(value as T) ? (value as T) : defaultValue;
 }
 
-// Memoized components
-const Divider = memo(() => {
-  const colors = useColors();
-  return <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />;
-});
-Divider.displayName = 'Divider';
-
-// Type-safe discriminated union for CardRight component
-type CardRightProps =
-  | { type: 'chevron-only' }
-  | { type: 'text-chevron'; text: string }
-  | { type: 'toggle'; toggleValue: boolean; onToggleChange: (value: boolean) => void };
-
 // Type-safe picker state
 type ActivePicker = 'theme' | 'language' | 'audioLanguage' | 'dailyWordLimit' | null;
-
-// DRY CardRight component for consistent right-side alignment
-const CardRight = memo((props: CardRightProps) => {
-  const colors = useColors();
-
-  if (props.type === 'toggle') {
-    return <Toggle value={props.toggleValue} onValueChange={props.onToggleChange} />;
-  }
-
-  if (props.type === 'text-chevron') {
-    return (
-      <View style={styles.cardRightValue}>
-        <ThemedText type="body" colorName="secondaryMetadataText">
-          {props.text}
-        </ThemedText>
-        <Ionicons
-          color={colors.secondaryMetadataText}
-          name="chevron-forward"
-          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-        />
-      </View>
-    );
-  }
-
-  // Default: chevron-only
-  return (
-    <Ionicons
-      color={colors.secondaryMetadataText}
-      name="chevron-forward"
-      size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-      style={styles.cardRightChevron}
-    />
-  );
-});
-CardRight.displayName = 'CardRight';
 
 const AccountScreen: FC = () => {
   const colors = useColors();
@@ -139,6 +89,8 @@ const AccountScreen: FC = () => {
   );
 
   const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
+  const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
+  const hapticsEnabled = useAppSelectorShallow(state => state.settings.hapticsEnabled);
   const dispatch = useAppDispatch();
 
   const [activePicker, setActivePicker] = React.useState<ActivePicker>(null);
@@ -238,6 +190,24 @@ const AccountScreen: FC = () => {
       });
     }
   }, []);
+
+  // Audio Shuffle toggle handler
+  const handleAudioShuffleToggle = useCallback(
+    (enabled: boolean) => {
+      selectionFeedback();
+      dispatch(setAudioShuffleEnabled(enabled));
+    },
+    [dispatch],
+  );
+
+  // Haptics toggle handler
+  const handleHapticsToggle = useCallback(
+    (enabled: boolean) => {
+      selectionFeedback();
+      dispatch(setHapticsEnabled(enabled));
+    },
+    [dispatch],
+  );
 
   const handlePickerSelect = useCallback(
     (value: string | number) => {
@@ -404,649 +374,212 @@ const AccountScreen: FC = () => {
         )}
 
         {/* Appearance - All visual customization together */}
-        <SectionTitle title={STRINGS.APPEARANCE_SECTION} textStyle={styles.sectionTitle} />
-        <BaseCard shadowSize="small" style={styles.sectionContainer}>
-          <View style={styles.linksContainer}>
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => handlePickerOpen('theme')}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="color-palette"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.THEME}
-                  </ThemedText>
-                </View>
-                <CardRight type="text-chevron" text={currentThemeText} />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR)}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="text"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.ARABIC_FONT}
-                  </ThemedText>
-                </View>
-                <CardRight type="text-chevron" text={currentArabicFontText} />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => handlePickerOpen('language')}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="language"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.DISPLAY_LANGUAGE}
-                  </ThemedText>
-                </View>
-                <CardRight type="text-chevron" text={currentLanguageText} />
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
+        <SettingsSection title={STRINGS.APPEARANCE_SECTION}>
+          <SettingsCard
+            icon="color-palette"
+            label={STRINGS.THEME}
+            rightType="text-chevron"
+            rightText={currentThemeText}
+            onPress={() => handlePickerOpen('theme')}
+          />
+          <SettingsCard
+            icon="text"
+            label={STRINGS.ARABIC_FONT}
+            rightType="text-chevron"
+            rightText={currentArabicFontText}
+            onPress={() => router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR)}
+          />
+          <SettingsCard
+            icon="language"
+            label={STRINGS.DISPLAY_LANGUAGE}
+            rightType="text-chevron"
+            rightText={currentLanguageText}
+            onPress={() => handlePickerOpen('language')}
+          />
+        </SettingsSection>
 
         {/* Audio & Playback - Audio settings */}
-        <SectionTitle title={AccountSection.AUDIO_PLAYBACK} textStyle={styles.sectionTitle} />
-        <BaseCard shadowSize="small" style={styles.sectionContainer}>
-          <View style={styles.linksContainer}>
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => handlePickerOpen('audioLanguage')}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="volume-high"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.AUDIO_LANGUAGE}
-                  </ThemedText>
-                </View>
-                <CardRight type="text-chevron" text={currentAudioLanguageText} />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard shadowSize="none" style={styles.interactiveCard}>
-              <AudioShuffleToggle />
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard shadowSize="none" style={styles.interactiveCard}>
-              <HapticsToggle />
-            </BaseCard>
-          </View>
-        </BaseCard>
+        <SettingsSection title={AccountSection.AUDIO_PLAYBACK}>
+          <SettingsCard
+            icon="volume-high"
+            label={STRINGS.AUDIO_LANGUAGE}
+            rightType="text-chevron"
+            rightText={currentAudioLanguageText}
+            onPress={() => handlePickerOpen('audioLanguage')}
+          />
+          <SettingsCard
+            icon="shuffle"
+            label={STRINGS.AUDIO_SHUFFLE}
+            subtitle={STRINGS.AUDIO_SHUFFLE_DESCRIPTION}
+            rightType="toggle"
+            toggleValue={audioShuffleEnabled}
+            onToggleChange={handleAudioShuffleToggle}
+          />
+          <SettingsCard
+            icon="phone-portrait-outline"
+            label={STRINGS.HAPTICS}
+            subtitle={STRINGS.HAPTICS_DESCRIPTION}
+            rightType="toggle"
+            toggleValue={hapticsEnabled}
+            onToggleChange={handleHapticsToggle}
+          />
+        </SettingsSection>
 
         {/* Learning - Study settings */}
-        <SectionTitle title={AccountSection.LEARNING} textStyle={styles.sectionTitle} />
-        <BaseCard shadowSize="small" style={styles.sectionContainer}>
-          <View style={styles.linksContainer}>
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => handlePickerOpen('dailyWordLimit')}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="book"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.DAILY_WORD_LIMIT}
-                  </ThemedText>
-                </View>
-                <CardRight type="text-chevron" text={currentDailyWordLimitText} />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard shadowSize="none" style={styles.interactiveCard}>
-              <View style={styles.settingRow}>
-                <View style={styles.settingLabelContainer}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="notifications"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <View style={styles.settingLabelTextContainer}>
-                    <ThemedText type="body">{STRINGS.STUDY_REMINDERS}</ThemedText>
-                  </View>
-                </View>
-                <CardRight
-                  type="toggle"
-                  toggleValue={reminderTime.enabled}
-                  onToggleChange={handleReminderToggle}
-                />
-              </View>
-            </BaseCard>
-            {reminderTime.enabled && (
-              <Fragment>
-                <Divider />
-                <BaseCard
-                  shadowSize="none"
-                  style={styles.interactiveCard}
-                  onPress={handleTimePickerOpen}
-                >
-                  <View style={styles.cardContent}>
-                    <View style={styles.cardLeft}>
-                      <View style={styles.cardIconContainer}>
-                        <Ionicons
-                          color={colors.interactiveSecondary}
-                          name="time"
-                          size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                        />
-                      </View>
-                      <ThemedText style={styles.cardText} type="body" weight="medium">
-                        {STRINGS.TIME}
-                      </ThemedText>
-                    </View>
-                    <CardRight
-                      type="text-chevron"
-                      text={formatReminderTime(reminderTime.hour, reminderTime.minute)}
-                    />
-                  </View>
-                </BaseCard>
-              </Fragment>
-            )}
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={handleResetTutorials}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="help-circle"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    Show tutorials again
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.secondaryMetadataText}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardRightChevron}
-                />
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
+        <SettingsSection title={AccountSection.LEARNING}>
+          <SettingsCard
+            icon="book"
+            label={STRINGS.DAILY_WORD_LIMIT}
+            rightType="text-chevron"
+            rightText={currentDailyWordLimitText}
+            onPress={() => handlePickerOpen('dailyWordLimit')}
+          />
+          <SettingsCard
+            icon="notifications"
+            label={STRINGS.STUDY_REMINDERS}
+            rightType="toggle"
+            toggleValue={reminderTime.enabled}
+            onToggleChange={handleReminderToggle}
+          />
+          {reminderTime.enabled && (
+            <SettingsCard
+              icon="time"
+              label={STRINGS.TIME}
+              rightType="text-chevron"
+              rightText={formatReminderTime(reminderTime.hour, reminderTime.minute)}
+              onPress={handleTimePickerOpen}
+            />
+          )}
+          <SettingsCard
+            icon="help-circle"
+            label="Show tutorials again"
+            rightType="chevron"
+            onPress={handleResetTutorials}
+          />
+        </SettingsSection>
 
         {/* Support - Help and assistance */}
-        <SectionTitle title={AccountSection.SUPPORT} textStyle={styles.sectionTitle} />
-        <BaseCard shadowSize="small" style={styles.sectionContainer}>
-          <View style={styles.linksContainer}>
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => router.push(ROUTE_PATHS.ACCOUNT_HELP)}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="help-circle"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText type="body" weight="medium">
-                    {STRINGS.HELP_CENTER}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.secondaryMetadataText}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardRightChevron}
-                />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={handleSupportContact}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="mail"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText type="body" weight="medium">
-                    {STRINGS.CONTACT_SUPPORT}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.secondaryMetadataText}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardRightChevron}
-                />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={handleRequestReview}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="star"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText type="body" weight="medium">
-                    {STRINGS.RATE_APP}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.secondaryMetadataText}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardRightChevron}
-                />
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
+        <SettingsSection title={AccountSection.SUPPORT}>
+          <SettingsCard
+            icon="help-circle"
+            label={STRINGS.HELP_CENTER}
+            rightType="chevron"
+            onPress={() => router.push(ROUTE_PATHS.ACCOUNT_HELP)}
+          />
+          <SettingsCard
+            icon="mail"
+            label={STRINGS.CONTACT_SUPPORT}
+            rightType="chevron"
+            onPress={handleSupportContact}
+          />
+          <SettingsCard
+            icon="star"
+            label={STRINGS.RATE_APP}
+            rightType="chevron"
+            onPress={handleRequestReview}
+          />
+        </SettingsSection>
 
         {/* About - Legal and informational */}
-        <SectionTitle title={STRINGS.ABOUT_SECTION} textStyle={styles.sectionTitle} />
-        <BaseCard shadowSize="small" style={styles.sectionContainer}>
-          <View style={styles.linksContainer}>
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => router.push(ROUTE_PATHS.TERMS)}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="document-text"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText type="body" weight="medium">
-                    {STRINGS.TERMS_OF_SERVICE}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.secondaryMetadataText}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardRightChevron}
-                />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => router.push(ROUTE_PATHS.PRIVACY)}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="shield-checkmark"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText type="body" weight="medium">
-                    {STRINGS.PRIVACY_POLICY}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.secondaryMetadataText}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardRightChevron}
-                />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => router.push(ROUTE_PATHS.LEGAL)}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="documents"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText type="body" weight="medium">
-                    {STRINGS.LEGAL_ATTRIBUTIONS}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.secondaryMetadataText}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardRightChevron}
-                />
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
+        <SettingsSection title={STRINGS.ABOUT_SECTION}>
+          <SettingsCard
+            icon="document-text"
+            label={STRINGS.TERMS_OF_SERVICE}
+            rightType="chevron"
+            onPress={() => router.push(ROUTE_PATHS.TERMS)}
+          />
+          <SettingsCard
+            icon="shield-checkmark"
+            label={STRINGS.PRIVACY_POLICY}
+            rightType="chevron"
+            onPress={() => router.push(ROUTE_PATHS.PRIVACY)}
+          />
+          <SettingsCard
+            icon="documents"
+            label={STRINGS.LEGAL_ATTRIBUTIONS}
+            rightType="chevron"
+            onPress={() => router.push(ROUTE_PATHS.LEGAL)}
+          />
+        </SettingsSection>
 
         {/* Follow Us - Social media links */}
-        <SectionTitle title={STRINGS.FOLLOW_US} textStyle={styles.sectionTitle} />
-        <BaseCard shadowSize="small" style={styles.sectionContainer}>
-          <View style={styles.linksContainer}>
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => handleSocialMediaPress(STRINGS.TWITTER_URL)}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="logo-twitter"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.TWITTER}
-                  </ThemedText>
-                </View>
-                <CardRight type="chevron-only" />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => handleSocialMediaPress(STRINGS.INSTAGRAM_URL)}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="logo-instagram"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.INSTAGRAM}
-                  </ThemedText>
-                </View>
-                <CardRight type="chevron-only" />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => handleSocialMediaPress(STRINGS.FACEBOOK_URL)}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="logo-facebook"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.FACEBOOK}
-                  </ThemedText>
-                </View>
-                <CardRight type="chevron-only" />
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
+        <SettingsSection title={STRINGS.FOLLOW_US}>
+          <SettingsCard
+            icon="logo-twitter"
+            label={STRINGS.TWITTER}
+            rightType="chevron"
+            onPress={() => handleSocialMediaPress(STRINGS.TWITTER_URL)}
+          />
+          <SettingsCard
+            icon="logo-instagram"
+            label={STRINGS.INSTAGRAM}
+            rightType="chevron"
+            onPress={() => handleSocialMediaPress(STRINGS.INSTAGRAM_URL)}
+          />
+          <SettingsCard
+            icon="logo-facebook"
+            label={STRINGS.FACEBOOK}
+            rightType="chevron"
+            onPress={() => handleSocialMediaPress(STRINGS.FACEBOOK_URL)}
+          />
+        </SettingsSection>
 
         {/* Data - Cache management */}
-        <SectionTitle title={STRINGS.DATA_SECTION} textStyle={styles.sectionTitle} />
-        <BaseCard shadowSize="small" style={styles.sectionContainer}>
-          <View style={styles.linksContainer}>
-            <BaseCard shadowSize="none" style={styles.interactiveCard}>
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="folder"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <View style={styles.cacheTextContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.CLEAR_CACHE}
-                    </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.cacheSubtext} type="caption">
-                      {formattedCacheSize}
-                    </ThemedText>
-                  </View>
-                </View>
-                <ThemedText
-                  type="label"
-                  weight="medium"
-                  colorName="tint"
-                  style={styles.clearButton}
-                  onPress={cacheSize > 0 ? handleClearCache : undefined}
-                  disabled={cacheSize === 0}
-                >
-                  {STRINGS.CLEAR_CACHE_BUTTON}
-                </ThemedText>
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
+        <SettingsSection title={STRINGS.DATA_SECTION}>
+          <SettingsCard
+            icon="folder"
+            label={STRINGS.CLEAR_CACHE}
+            subtitle={formattedCacheSize}
+            rightType="custom"
+            rightComponent={
+              <ThemedText
+                type="label"
+                weight="medium"
+                colorName="tint"
+                style={styles.clearButton}
+                onPress={cacheSize > 0 ? handleClearCache : undefined}
+                disabled={cacheSize === 0}
+              >
+                {STRINGS.CLEAR_CACHE_BUTTON}
+              </ThemedText>
+            }
+          />
+        </SettingsSection>
 
         {/* Account - Session management */}
-        <SectionTitle title={STRINGS.DATA_ACCOUNT_SECTION} textStyle={styles.sectionTitle} />
-        <BaseCard shadowSize="small" style={styles.sectionContainer}>
-          <View style={styles.linksContainer}>
-            <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleSignOut}>
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="log-out"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <View style={styles.signOutTextContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.SIGN_OUT}
-                    </ThemedText>
-                    <ThemedText
-                      type="caption"
-                      colorName="textTertiary"
-                      style={styles.userEmailText}
-                    >
-                      {user?.email || STRINGS.NO_EMAIL}
-                    </ThemedText>
-                  </View>
-                </View>
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
+        <SettingsSection title={STRINGS.DATA_ACCOUNT_SECTION}>
+          <SettingsCard
+            icon="log-out"
+            label={STRINGS.SIGN_OUT}
+            subtitle={user?.email || STRINGS.NO_EMAIL}
+            rightType="chevron"
+            onPress={handleSignOut}
+          />
+        </SettingsSection>
 
         {/* Danger Zone - Destructive actions */}
-        <SectionTitle title={STRINGS.DANGER_ZONE_SECTION} textStyle={styles.sectionTitle} />
-        <BaseCard
-          shadowSize="small"
-          style={[
-            styles.sectionContainer,
-            {
-              overflow: 'hidden',
-              borderWidth: 1,
-              borderColor: colors.error,
-              backgroundColor: `${colors.error}26`,
-            },
-          ]}
-        >
-          <View style={styles.linksContainer}>
-            <BaseCard
-              shadowSize="none"
-              style={[styles.interactiveCard, { backgroundColor: `${colors.error}0D` }]}
-              onPress={handleResetReadingProgress}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.error}
-                      name="refresh"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <View style={styles.textContainer}>
-                    <ThemedText colorName="error" type="body" weight="medium">
-                      {STRINGS.RESET_READING_PROGRESS}
-                    </ThemedText>
-                    <ThemedText
-                      colorName="textTertiary"
-                      style={styles.dangerZoneSubtext}
-                      type="caption"
-                    >
-                      {STRINGS.RESET_READING_PROGRESS_DESCRIPTION}
-                    </ThemedText>
-                  </View>
-                </View>
-                <Ionicons
-                  color={colors.error}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardRightChevron}
-                />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={[styles.interactiveCard, { backgroundColor: `${colors.error}0D` }]}
-              onPress={handleDeleteAccountPress}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.error}
-                      name="trash"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <View style={styles.textContainer}>
-                    <ThemedText colorName="error" type="body" weight="medium">
-                      {STRINGS.DELETE_ACCOUNT}
-                    </ThemedText>
-                    <ThemedText
-                      colorName="textTertiary"
-                      style={styles.dangerZoneSubtext}
-                      type="caption"
-                    >
-                      {STRINGS.DELETE_ACCOUNT_DESCRIPTION}
-                    </ThemedText>
-                  </View>
-                </View>
-                <Ionicons
-                  color={colors.error}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardRightChevron}
-                />
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
+        <SettingsSection title={STRINGS.DANGER_ZONE_SECTION} dangerZone>
+          <SettingsCard
+            icon="refresh"
+            label={STRINGS.RESET_READING_PROGRESS}
+            subtitle={STRINGS.RESET_READING_PROGRESS_DESCRIPTION}
+            rightType="chevron"
+            iconColor={colors.error}
+            textColor="error"
+            backgroundColor={`${colors.error}0D`}
+            onPress={handleResetReadingProgress}
+          />
+          <SettingsCard
+            icon="trash"
+            label={STRINGS.DELETE_ACCOUNT}
+            subtitle={STRINGS.DELETE_ACCOUNT_DESCRIPTION}
+            rightType="chevron"
+            iconColor={colors.error}
+            textColor="error"
+            backgroundColor={`${colors.error}0D`}
+            onPress={handleDeleteAccountPress}
+          />
+        </SettingsSection>
 
         {/* App Footer */}
         <View style={styles.appFooterWrapper}>
@@ -1095,74 +628,19 @@ const AccountScreen: FC = () => {
 };
 
 const styles = StyleSheet.create({
-  // Common Section Container Styles
-  sectionContainer: {
-    overflow: 'hidden',
-  },
-
-  // Common Links Container Styles - Unified
-  linksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-
-  // Danger Zone description styling
-  dangerZoneDescription: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginHorizontal: LAYOUT.SPACING.MEDIUM,
-    lineHeight: 18,
-  },
-  dangerZoneSubtext: {
-    marginTop: LAYOUT.SPACING.TINY,
-  },
-
-  // Text container for title + description layout
-  textContainer: {
-    flexDirection: 'column',
-    marginLeft: LAYOUT.SPACING.MEDIUM,
+  container: {
     flex: 1,
   },
-
-  // Unified Card Style - Used for all interactive cards
-  interactiveCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    marginBottom: 0,
-    minHeight: MIN_TOUCH_TARGET.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-
-  // Unified Card Content Layout
-  cardContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cardLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
+  flexOne: {
     flex: 1,
   },
-  cardIconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.SMALL,
+  scrollContent: {
+    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
-  cardText: {
-    marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for better visual balance
+  scrollView: {
+    flex: 1,
   },
-
-  cardRightValue: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.TINY,
-  },
-  cardRightChevron: {
-    minWidth: LAYOUT.SPACING.XLARGE,
-    textAlign: 'center',
-  },
-
-  // App Footer Styles
   appFooterWrapper: {
     ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
     alignItems: 'center',
@@ -1174,88 +652,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: LAYOUT.SPACING.TINY,
   },
-
-  // Setting Row Styles
-  settingRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  versionText: {
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
+    opacity: LAYOUT.OPACITY.HIGH,
   },
-  settingLabelContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  settingLabelTextContainer: {
-    marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for consistency with cardText
-  },
-
-  commonDivider: {
-    height: LAYOUT.BORDER.WIDTH.THIN,
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    width: '100%',
-  },
-
-  container: {
-    flex: 1,
-  },
-
   copyrightText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
     opacity: LAYOUT.OPACITY.MEDIUM,
   },
-
-  flexOne: {
-    flex: 1,
-  },
-
-  scrollContent: {
-    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-  },
-
-  signOutTextContainer: {
-    flexDirection: 'column',
-    marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for consistency
-  },
-
-  userEmailText: {
-    marginTop: LAYOUT.SPACING.TINY,
-  },
-
-  versionText: {
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
-    opacity: LAYOUT.OPACITY.HIGH,
-  },
-
-  cacheTextContainer: {
-    flexDirection: 'column',
-    marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for consistency
-  },
-
-  cacheSubtext: {
-    marginTop: LAYOUT.SPACING.TINY,
-  },
-
   clearButton: {
     minWidth: MIN_TOUCH_TARGET.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
     textAlign: 'center',
-  },
-
-  // Section Title Styles
-  sectionTitle: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.TINY,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
-    opacity: LAYOUT.OPACITY.HIGH,
-    paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
   },
 });
 

@@ -13,8 +13,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { WordDisplay as WordDisplayComponent } from '@/components/review';
 import { SPRING_CONFIG } from '@/constants/animation';
+
+import { WordDisplay as WordDisplayComponent } from './WordDisplay';
 import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
 import { useColors } from '@/hooks/theme/useColors';
