@@ -30,6 +30,11 @@ const CATEGORY_ICONS: Record<FAQCategory, keyof typeof Ionicons.glyphMap> = {
 // Popular questions (most common user queries)
 const POPULAR_QUESTION_IDS = ['what-is-app', 'spaced-repetition', 'learning-speed'] as const;
 
+// Helper: Generate unique key for FAQ items
+// Popular questions use prefix to avoid conflicts with category duplicates
+const getFAQItemKey = (itemId: string, prefix?: string): string =>
+  prefix ? `${prefix}-${itemId}` : itemId;
+
 // FAQ item component props
 interface FAQItemComponentProps {
   item: FAQItem;
@@ -127,6 +132,62 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
   },
 );
 FAQItemComponent.displayName = 'FAQItemComponent';
+
+// FAQ Category Section component props
+interface FAQCategorySectionProps {
+  title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  items: FAQItem[];
+  expandedItems: Set<string>;
+  onToggle: (id: string) => void;
+  itemCount?: number;
+  keyPrefix?: string; // Prefix for unique keys (e.g., 'popular' for popular questions)
+  containerStyle?: object;
+}
+
+// Reusable FAQ category section with header and items
+// Handles both "Popular Questions" and regular category sections
+const FAQCategorySection: FC<FAQCategorySectionProps> = memo(
+  ({ title, icon, items, expandedItems, onToggle, itemCount, keyPrefix, containerStyle }) => {
+    const colors = useColors();
+
+    return (
+      <View style={containerStyle}>
+        <View style={styles.categoryHeader}>
+          <Ionicons
+            name={icon}
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            color={colors.tint}
+            style={styles.categoryIcon}
+          />
+          <ThemedText type="heading3" weight="semibold" style={styles.categoryTitle}>
+            {title}
+          </ThemedText>
+          {itemCount !== undefined && (
+            <ThemedText type="caption" colorName="textTertiary" style={styles.categoryCount}>
+              ({itemCount})
+            </ThemedText>
+          )}
+        </View>
+        <View style={styles.categoryContainer}>
+          {items.map(item => {
+            const uniqueKey = getFAQItemKey(item.id, keyPrefix);
+            return (
+              <FAQItemComponent
+                key={uniqueKey}
+                uniqueKey={uniqueKey}
+                isExpanded={expandedItems.has(uniqueKey)}
+                item={item}
+                onToggle={onToggle}
+              />
+            );
+          })}
+        </View>
+      </View>
+    );
+  },
+);
+FAQCategorySection.displayName = 'FAQCategorySection';
 
 // Main Help screen
 const HelpScreen: FC = () => {
@@ -271,73 +332,34 @@ const HelpScreen: FC = () => {
           <>
             {/* Popular Questions Section */}
             {showPopularQuestions && popularQuestions.length > 0 && (
-              <View style={styles.popularQuestionsSection}>
-                <View style={styles.categoryHeader}>
-                  <Ionicons
-                    name="flame"
-                    size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                    color={colors.tint}
-                    style={styles.categoryIcon}
-                  />
-                  <ThemedText type="heading3" weight="semibold" style={styles.categoryTitle}>
-                    {STRINGS.HELP_POPULAR_QUESTIONS}
-                  </ThemedText>
-                </View>
-                <View style={styles.categoryContainer}>
-                  {popularQuestions.map(item => {
-                    const uniqueKey = `popular-${item.id}`;
-                    return (
-                      <FAQItemComponent
-                        key={uniqueKey}
-                        uniqueKey={uniqueKey}
-                        isExpanded={expandedItems.has(uniqueKey)}
-                        item={item}
-                        onToggle={handleToggleItem}
-                      />
-                    );
-                  })}
-                </View>
-              </View>
+              <FAQCategorySection
+                title={STRINGS.HELP_POPULAR_QUESTIONS}
+                icon="flame"
+                items={popularQuestions}
+                expandedItems={expandedItems}
+                onToggle={handleToggleItem}
+                keyPrefix="popular"
+                containerStyle={styles.popularQuestionsSection}
+              />
             )}
 
             {filteredFAQData.map((category: FAQCategoryData) => {
               const iconName = CATEGORY_ICONS[category.name as FAQCategory];
               const itemCount = category.items.length;
 
+              // Skip categories without icons (defensive)
+              if (!iconName) return null;
+
               return (
-                <View key={category.name}>
-                  <View style={styles.categoryHeader}>
-                    {iconName && (
-                      <Ionicons
-                        name={iconName}
-                        size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                        color={colors.tint}
-                        style={styles.categoryIcon}
-                      />
-                    )}
-                    <ThemedText type="heading3" weight="semibold" style={styles.categoryTitle}>
-                      {category.name}
-                    </ThemedText>
-                    <ThemedText
-                      type="caption"
-                      colorName="textTertiary"
-                      style={styles.categoryCount}
-                    >
-                      ({itemCount})
-                    </ThemedText>
-                  </View>
-                  <View style={styles.categoryContainer}>
-                    {category.items.map(item => (
-                      <FAQItemComponent
-                        key={item.id}
-                        uniqueKey={item.id}
-                        isExpanded={expandedItems.has(item.id)}
-                        item={item}
-                        onToggle={handleToggleItem}
-                      />
-                    ))}
-                  </View>
-                </View>
+                <FAQCategorySection
+                  key={category.name}
+                  title={category.name}
+                  icon={iconName}
+                  items={category.items}
+                  expandedItems={expandedItems}
+                  onToggle={handleToggleItem}
+                  itemCount={itemCount}
+                />
               );
             })}
 
