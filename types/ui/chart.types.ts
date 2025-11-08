@@ -14,19 +14,6 @@ export interface PerformanceZone {
 }
 
 /**
- * Opacity values used for chart elements
- */
-export interface ChartOpacity {
-  SOLID: number;
-  HIGH: number;
-  MEDIUM: number;
-  LOW: number;
-  SUBTLE: number;
-  MINIMAL: number;
-  [key: string]: number;
-}
-
-/**
  * Expected structure returned by useChartColors
  */
 export interface ChartColors {
@@ -54,7 +41,15 @@ export interface ChartColors {
     inner: string;
   };
   /** Opacity helper values */
-  opacity: ChartOpacity;
+  opacity: {
+    SOLID: number;
+    HIGH: number;
+    MEDIUM: number;
+    LOW: number;
+    SUBTLE: number;
+    MINIMAL: number;
+    [key: string]: number;
+  };
   /** Helper to apply opacity to a color */
   withOpacity: (color: string, opacity: number) => string;
   /** Get unified gradient colors for area fills */

@@ -6,7 +6,6 @@ import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -25,7 +24,6 @@ interface CompletionScreenProps {
   buttonText?: string;
   iconName?: ComponentProps<typeof Ionicons>['name'];
   iconSize?: number;
-  useThemedView?: boolean;
   contentStyle?: object;
   sessionMetrics?: SessionMetrics;
   testID?: string;
@@ -38,7 +36,6 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   buttonText = UiAction.CONTINUE,
   iconName = 'checkmark-circle',
   iconSize = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE,
-  useThemedView = false,
   contentStyle,
   sessionMetrics,
   testID,
@@ -51,8 +48,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   const currentDailyStreak = streak?.currentStreak ?? 0;
 
   // Handle review completion logic (query invalidation, analytics, haptics)
-  // Only execute for review flow (not for generic completion screens)
-  useReviewCompletion(sessionMetrics, !useThemedView);
+  useReviewCompletion(sessionMetrics, true);
 
   const encouragingMetrics = useEncouragingMetrics(sessionMetrics, colors, currentDailyStreak);
 
@@ -137,14 +133,6 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
       </Animated.View>
     </View>
   );
-
-  if (useThemedView) {
-    return (
-      <ThemedView style={styles.container} useSafeArea={true} testID={testID}>
-        {Content}
-      </ThemedView>
-    );
-  }
 
   return (
     <View

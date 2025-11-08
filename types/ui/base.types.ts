@@ -18,20 +18,14 @@ export interface BaseAnimatedStyleProps {
 }
 
 /**
- * Base props for components with optional press handlers
+ * Comprehensive base props combining style, pressable, and loading functionality
+ * This consolidates the most common UI component patterns to reduce interface extension
  */
-export interface BaseOptionalPressableProps {
+export interface BaseComponentProps extends BaseStyleProps {
   /** Optional callback when the component is pressed */
   onPress?: () => void;
   /** Optional test identifier used for testing */
   testID?: string;
-}
-
-/**
- * Comprehensive base props combining style, pressable, and loading functionality
- * This consolidates the most common UI component patterns to reduce interface extension
- */
-export interface BaseComponentProps extends BaseStyleProps, BaseOptionalPressableProps {
   /** Whether the component is in a loading state */
   loading?: boolean;
   /** Whether the component is disabled */

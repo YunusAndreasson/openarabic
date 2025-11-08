@@ -3,22 +3,6 @@
  * Groups related constants and provides type-safe access patterns
  */
 
-// ===== APP FEATURES & CAPABILITIES =====
-
-/**
- * Core app features that define the OpenArabic learning system
- */
-export enum AppFeature {
-  WORKS_WITH_SCREEN_OFF = 'Works with screen off',
-  COMPLETE_LINGUISTIC_SYSTEM = 'Complete linguistic system',
-  RICH_VOCABULARY_INPUT = 'Rich vocabulary input',
-  AUTHENTIC_LANGUAGE_PATTERNS = 'Authentic language patterns',
-  CULTURAL_FRAMEWORK = 'Cultural and conceptual framework',
-  ACQUISITION_NOT_LEARNING = 'Acquisition, not learning',
-  FOCUS_ON_MEANING = 'Focus on meaning',
-  NATURAL_PROCESS = 'Natural process',
-}
-
 // ===== SETTINGS & PREFERENCES =====
 
 /**
@@ -319,28 +303,6 @@ export enum FAQCategory {
   PRIVACY_DATA = 'Privacy & data',
 }
 
-// ===== ANIMATION & TIMING =====
-
-/**
- * Animation timing presets for consistent motion design
- */
-export enum AnimationTiming {
-  FAST = 'fast',
-  MEDIUM = 'medium',
-  SLOW = 'slow',
-  GENTLE = 'gentle',
-}
-
-/**
- * Animation spring presets for common interactions
- */
-export enum AnimationSpring {
-  BUTTON = 'button',
-  CARD = 'card',
-  TOGGLE = 'toggle',
-  SLIDE = 'slide',
-}
-
 // ===== LAYOUT & SPACING =====
 
 /**
@@ -356,26 +318,6 @@ export enum SpacingScale {
   XLARGE = 'xlarge',
   XXLARGE = 'xxlarge',
   XXXLARGE = 'xxxlarge',
-}
-
-// ===== CALENDAR & DATE TYPES =====
-
-/**
- * Hijri months for Islamic calendar functionality
- */
-export enum HijriMonth {
-  MUHARRAM = 'Muharram',
-  SAFAR = 'Safar',
-  RABI_AL_AWWAL = "Rabi' al-Awwal",
-  RABI_AL_THANI = "Rabi' al-Thani",
-  JUMADA_AL_AWWAL = 'Jumada al-Awwal',
-  JUMADA_AL_THANI = 'Jumada al-Thani',
-  RAJAB = 'Rajab',
-  SHABAN = "Sha'ban",
-  RAMADAN = 'Ramadan',
-  SHAWWAL = 'Shawwal',
-  DHU_AL_QIDAH = "Dhu al-Qi'dah",
-  DHU_AL_HIJJAH = 'Dhu al-Hijjah',
 }
 
 // ===== UTILITY FUNCTIONS =====

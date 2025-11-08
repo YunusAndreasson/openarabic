@@ -22,11 +22,3 @@ export interface WordTooltipProps {
   /** Function to open word details bottom sheet */
   onOpenWordDetails?: () => void;
 }
-
-/**
- * Generic base props for modal components
- */
-export interface BaseModalProps {
-  /** Whether the modal is visible */
-  visible: boolean;
-}
