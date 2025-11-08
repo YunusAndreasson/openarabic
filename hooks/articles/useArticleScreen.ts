@@ -133,34 +133,23 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   const scrollViewRef = useRef<FlashListRef<Tables<'article_sentences'>> | null>(null);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
 
-  // FlashList ready state for scroll-to-position
+  // Track scroll state - one attempt per article
+  const hasScrolledToPositionRef = useRef(false);
   const [isFlashListReady, setIsFlashListReady] = useState(false);
+  // Prevent progress updates immediately after programmatic scroll
+  const ignoreProgressUpdatesRef = useRef(false);
+  // Track current position for UI, but debounce DB updates
+  const pendingProgressUpdateRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset scroll state when article changes
+  useEffect(() => {
+    hasScrolledToPositionRef.current = false;
+    setIsFlashListReady(false);
+  }, [articleId]);
+
   const handleFlashListLoad = useCallback(() => {
     setIsFlashListReady(true);
   }, []);
-
-  // Capture initial progress values in refs for stable scroll-to-position
-  // These values should never change once captured to avoid race conditions
-  const stableInitialProgressRef = useRef<{
-    lastSentenceRead: number;
-    hadProgress: boolean;
-    captured: boolean;
-  }>({
-    lastSentenceRead: 0,
-    hadProgress: false,
-    captured: false,
-  });
-
-  // Capture initial values once when they first become available
-  useEffect(() => {
-    if (!stableInitialProgressRef.current.captured && !isLoadingArticle) {
-      stableInitialProgressRef.current = {
-        lastSentenceRead: initialLastSentenceRead,
-        hadProgress: hadExistingProgressOnMount,
-        captured: true,
-      };
-    }
-  }, [initialLastSentenceRead, hadExistingProgressOnMount, isLoadingArticle]);
 
   // Handle viewable items changed to track current sentence
   const handleViewableItemsChanged = useCallback(
@@ -169,6 +158,11 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
 
       const totalSentences = sortedSentences?.length ?? 0;
       if (totalSentences === 0) return;
+
+      // Skip progress updates if we just did a programmatic scroll
+      if (ignoreProgressUpdatesRef.current) {
+        return;
+      }
 
       // Find all visible sentences (excluding header at index 0)
       const visibleSentences = viewableItems
@@ -189,28 +183,12 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
         visibleSentences.sort((a, b) => a.index - b.index);
 
         const firstVisibleSentence = visibleSentences[0];
-        const lastVisibleSentence = visibleSentences[visibleSentences.length - 1];
 
-        // Determine which sentence index to use
-        let newSentenceIndex: number;
+        // ALWAYS use first visible sentence - this is the reading position
+        // Never automatically jump to 100% unless user explicitly scrolls there
+        const newSentenceIndex = firstVisibleSentence?.index;
 
-        // Use the maximum visible sentence index (highest sentence seen)
-        // This ensures progress advances as you scroll down and reaches 100% at the end
-        const maxVisibleIndex = lastVisibleSentence?.index ?? 0;
-
-        // If the last sentence of the article is visible, ensure we use it
-        const isLastSentenceVisible = maxVisibleIndex === totalSentences - 1;
-
-        if (isLastSentenceVisible) {
-          // At the end - use the last sentence to ensure 100% completion
-          newSentenceIndex = totalSentences - 1;
-        } else {
-          // Use the maximum visible sentence index (furthest sentence seen)
-          // This provides better progress tracking as you scroll
-          newSentenceIndex = Math.max(maxVisibleIndex, firstVisibleSentence?.index ?? 0);
-        }
-
-        // Only update if the sentence actually changed to prevent unnecessary re-renders
+        // Update UI immediately for smooth progress tracking
         if (newSentenceIndex !== undefined && newSentenceIndex !== currentSentenceIndex) {
           setCurrentSentenceIndex(newSentenceIndex);
         }
@@ -219,66 +197,129 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     [currentSentenceIndex, sortedSentences?.length],
   );
 
-  // Handle scroll end to catch when user reaches the bottom
-  // This ensures the last sentence is tracked even if viewable items callback doesn't fire
-  const handleScrollEnd = useCallback(() => {
-    const totalSentences = sortedSentences?.length ?? 0;
-    if (totalSentences > 0) {
-      const lastSentenceIndex = totalSentences - 1;
-      // Only update if we're not already at the last sentence
-      if (currentSentenceIndex < lastSentenceIndex) {
-        setCurrentSentenceIndex(lastSentenceIndex);
-      }
+  // Debounced progress update - only save to DB when user stops scrolling
+  useEffect(() => {
+    // Clear any pending update
+    if (pendingProgressUpdateRef.current) {
+      clearTimeout(pendingProgressUpdateRef.current);
     }
-  }, [currentSentenceIndex, sortedSentences?.length]);
 
-  // Sync sentence index
+    // Don't update if article is still loading or user just did programmatic scroll
+    if (!article || isLoadingArticle || ignoreProgressUpdatesRef.current) {
+      return;
+    }
+
+    // Schedule DB update after 1 second of inactivity
+    pendingProgressUpdateRef.current = setTimeout(() => {
+      if (currentSentenceIndex >= 0) {
+        updateProgress(currentSentenceIndex);
+      }
+    }, 1000);
+
+    return () => {
+      if (pendingProgressUpdateRef.current) {
+        clearTimeout(pendingProgressUpdateRef.current);
+      }
+    };
+  }, [currentSentenceIndex, article, isLoadingArticle, updateProgress]);
+
+  // Handle scroll end - just a placeholder, viewableItems handles all tracking
+  const handleScrollEnd = useCallback(() => {
+    // Viewable items callback handles all position tracking
+    // This is just here for the ArticleContent onMomentumScrollEnd prop
+  }, [currentSentenceIndex]);
+
+  // Sync sentence index (for any other features that might use it)
   useEffect(() => {
     setCurrentSentenceIndexForProgress(currentSentenceIndex);
   }, [currentSentenceIndex]);
 
-  // Update reading progress
+  // Scroll to position effect - triggers when all conditions are met
+  // Uses DIRECT values from useReadingProgress (no capturing)
   useEffect(() => {
-    if (!!article && !isLoadingArticle && currentSentenceIndex >= 0) {
-      updateProgress(currentSentenceIndex);
-    }
-  }, [currentSentenceIndex, article, isLoadingArticle, updateProgress]);
-
-  // Scroll to last read position when FlashList is ready
-  // Using stable ref values to avoid race conditions from query invalidations
-  useEffect(() => {
-    const stableProgress = stableInitialProgressRef.current;
+    const totalSentences = sortedSentences?.length ?? 0;
 
     if (
+      !hasScrolledToPositionRef.current &&
       isFlashListReady &&
-      stableProgress.captured &&
-      stableProgress.hadProgress &&
-      stableProgress.lastSentenceRead > 0
+      !isLoadingArticle &&
+      article &&
+      hadExistingProgressOnMount &&
+      initialLastSentenceRead > 0 &&
+      totalSentences > 0
     ) {
-      // Use requestAnimationFrame for guaranteed timing (FlashList best practice)
+      const targetIndex = initialLastSentenceRead + 1;
+      const maxIndex = totalSentences;
+
+      if (targetIndex > maxIndex) {
+        hasScrolledToPositionRef.current = true;
+        return;
+      }
+
+      if (!scrollViewRef.current) {
+        return;
+      }
+
+      hasScrolledToPositionRef.current = true;
+
+      // Disable progress tracking during programmatic scroll
+      ignoreProgressUpdatesRef.current = true;
+
+      // Double RAF ensures FlashList layout is complete (v2 best practice)
       requestAnimationFrame(() => {
-        scrollViewRef.current?.scrollToIndex({
-          index: stableProgress.lastSentenceRead + 1,
-          animated: true,
-          viewPosition: 0.1,
-        });
+        requestAnimationFrame(() => {
+          // If scrolling to last 2 items, use scrollToEnd (more reliable)
+          const isNearEnd = targetIndex >= maxIndex - 2;
 
-        // Show toast notification
-        const totalSentences = sortedSentences?.length ?? 1;
-        const percentage = Math.round((stableProgress.lastSentenceRead / totalSentences) * 100);
-        const message = STRINGS.RESUMED_READING_TEMPLATE.replace(
-          '{percent}',
-          percentage.toString(),
-        );
-        showToast(message, 3000, ToastType.INFO);
+          if (isNearEnd) {
+            try {
+              scrollViewRef.current?.scrollToEnd({ animated: true });
+            } catch {
+              // Silent error - scroll failed
+            }
+          } else {
+            // For middle positions, use scrollToOffset with smooth animation
+            try {
+              // Estimate offset: use FlashList's estimated item size
+              const estimatedItemSize = 100;
+              const headerHeight = 400;
+              const offset = headerHeight + (targetIndex * estimatedItemSize);
+              scrollViewRef.current?.scrollToOffset({
+                offset,
+                animated: true,
+              });
+            } catch {
+              // Silent error - scroll failed
+            }
+          }
 
-        // Light haptic feedback when scroll animation completes
-        setTimeout(() => {
+          // Re-enable progress tracking after scroll settles
+          setTimeout(() => {
+            ignoreProgressUpdatesRef.current = false;
+          }, 500);
+
+          // Show toast
+          const percentage = Math.round((initialLastSentenceRead / totalSentences) * 100);
+          const message = STRINGS.RESUMED_READING_TEMPLATE.replace(
+            '{percent}',
+            percentage.toString(),
+          );
+          showToast(message, 3000, ToastType.INFO);
+
+          // Haptic feedback
           selectionFeedback();
-        }, 450);
+        });
       });
     }
-  }, [isFlashListReady, sortedSentences?.length, showToast]);
+  }, [
+    isFlashListReady,
+    isLoadingArticle,
+    article,
+    sortedSentences,
+    hadExistingProgressOnMount,
+    initialLastSentenceRead,
+    showToast,
+  ]);
 
   // Refetch on app state change
   useEffect(() => {
