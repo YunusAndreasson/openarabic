@@ -138,12 +138,15 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
   const [isFlashListReady, setIsFlashListReady] = useState(false);
   // Prevent progress updates immediately after programmatic scroll
   const ignoreProgressUpdatesRef = useRef(true);
+  // Track if user has reached the end - locks completion at 100%
+  const hasReachedEndRef = useRef(false);
   // Track current position for UI, but debounce DB updates
   const pendingProgressUpdateRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset scroll state when article changes
   useEffect(() => {
     hasScrolledToPositionRef.current = false;
+    hasReachedEndRef.current = false;
     setIsFlashListReady(false);
   }, [articleId]);
 
@@ -158,6 +161,12 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
 
       const totalSentences = sortedSentences?.length ?? 0;
       if (totalSentences === 0) return;
+
+      // COMPLETION LOCK: Stop tracking if user has already completed the article
+      // This prevents viewability from overwriting 100% completion
+      if (hasReachedEndRef.current) {
+        return;
+      }
 
       // Skip progress updates if we just did a programmatic scroll
       if (ignoreProgressUpdatesRef.current) {
@@ -179,20 +188,10 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
         .filter(({ index }) => index >= 0 && index < totalSentences);
 
       if (visibleSentences.length > 0) {
-        // Sort by index
-        visibleSentences.sort((a, b) => a.index - b.index);
-
-        // Check if we're near the end (last 20% of article)
-        // More lenient threshold to handle short articles and ensure 100% is reachable
-        const lastVisibleSentence = visibleSentences[visibleSentences.length - 1];
-        const nearEndThreshold = Math.floor(totalSentences * 0.8); // Last 20%
-        const isNearEnd =
-          lastVisibleSentence?.index !== undefined &&
-          lastVisibleSentence.index >= nearEndThreshold;
-
-        // Use last visible sentence if near end, otherwise use first (reading position)
-        const sentenceToTrack = isNearEnd ? lastVisibleSentence : visibleSentences[0];
-        const newSentenceIndex = sentenceToTrack?.index;
+        // Simple approach: always track first visible sentence for reading position
+        // onEndReached handler (with aggressive threshold=10) handles 100% completion
+        const firstVisibleSentence = visibleSentences[0];
+        const newSentenceIndex = firstVisibleSentence?.index;
 
         // Update UI immediately for smooth progress tracking
         if (newSentenceIndex !== undefined && newSentenceIndex !== currentSentenceIndex) {
@@ -229,22 +228,49 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     };
   }, [currentSentenceIndex, article, isLoadingArticle, updateProgress]);
 
-  // Handle scroll end - just a placeholder, viewableItems handles all tracking
+  // Handle scroll end - placeholder for ArticleContent onMomentumScrollEnd prop
   const handleScrollEnd = useCallback(() => {
-    // Viewable items callback handles all position tracking
-    // This is just here for the ArticleContent onMomentumScrollEnd prop
-  }, [currentSentenceIndex]);
+    // No-op: viewable items callback handles all position tracking
+  }, []);
 
-  // Handle reaching the end of the article - set to last sentence for 100% completion
+  // Handle reaching the end of the article - immediately set to last sentence for 100% completion
+  // This ensures articles always reach 100% when user scrolls to the bottom
+  // NOTE: This fires VERY aggressively (threshold=10) to catch end scrolling early
   const handleEndReached = useCallback(() => {
     const totalSentences = sortedSentences?.length ?? 0;
-    if (totalSentences === 0 || ignoreProgressUpdatesRef.current) return;
+    if (totalSentences === 0) return;
 
     const lastSentenceIndex = totalSentences - 1;
-    if (lastSentenceIndex >= 0 && lastSentenceIndex !== currentSentenceIndex) {
+    if (lastSentenceIndex >= 0) {
+      // LOCK COMPLETION: Prevent viewability from overwriting this
+      hasReachedEndRef.current = true;
+      // Disable ignore flag to ensure this update goes through
+      ignoreProgressUpdatesRef.current = false;
+      // Update state for UI
       setCurrentSentenceIndex(lastSentenceIndex);
+      // IMMEDIATELY save to DB - don't wait for debounced update
+      updateProgress(lastSentenceIndex);
     }
-  }, [sortedSentences?.length, currentSentenceIndex]);
+  }, [sortedSentences?.length, updateProgress]);
+
+  // Handle related articles becoming visible - reliable heuristic for 100% completion
+  // When user scrolls far enough to see related articles footer, article is complete
+  const handleRelatedArticlesVisible = useCallback(() => {
+    const totalSentences = sortedSentences?.length ?? 0;
+    if (totalSentences === 0) return;
+
+    const lastSentenceIndex = totalSentences - 1;
+    if (lastSentenceIndex >= 0) {
+      // LOCK COMPLETION: Prevent viewability from overwriting this
+      hasReachedEndRef.current = true;
+      // Disable the ignore flag in case it was still set
+      ignoreProgressUpdatesRef.current = false;
+      // Update state for UI
+      setCurrentSentenceIndex(lastSentenceIndex);
+      // IMMEDIATELY save to DB - don't wait for debounced update
+      updateProgress(lastSentenceIndex);
+    }
+  }, [sortedSentences?.length, updateProgress]);
 
   // Sync sentence index (for any other features that might use it)
   useEffect(() => {
@@ -374,6 +400,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     isInStudyList,
     handleScrollEnd,
     handleEndReached,
+    handleRelatedArticlesVisible,
     // Handlers
     handleScroll,
     handleViewableItemsChanged,

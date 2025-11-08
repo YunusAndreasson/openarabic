@@ -99,6 +99,7 @@ interface ArticleContentProps {
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   handleScrollEnd: () => void;
   handleEndReached: () => void;
+  handleRelatedArticlesVisible: () => void;
   colors: ThemeColors;
   scrollViewRef: React.RefObject<FlashListRef<Tables<'article_sentences'>>>;
   // Reading list (bookmarks/listening) functionality
@@ -121,6 +122,7 @@ const ArticleContentInternal = function ArticleContent({
   handleViewableItemsChanged,
   handleScrollEnd,
   handleEndReached,
+  handleRelatedArticlesVisible,
   colors,
   scrollViewRef,
   isInReadingList,
@@ -238,7 +240,11 @@ const ArticleContentInternal = function ArticleContent({
 
   // React Compiler auto-memoizes
   const footerComponent = (
-    <RelatedArticlesSection currentArticleId={article.id} articlesData={articlesData} />
+    <RelatedArticlesSection
+      currentArticleId={article.id}
+      articlesData={articlesData}
+      onVisible={handleRelatedArticlesVisible}
+    />
   );
 
   // React Compiler auto-memoizes
@@ -300,7 +306,7 @@ const ArticleContentInternal = function ArticleContent({
             onViewableItemsChanged={handleViewableItemsChanged}
             onMomentumScrollEnd={handleScrollEnd}
             onEndReached={handleEndReached}
-            onEndReachedThreshold={0.1}
+            onEndReachedThreshold={10}
             viewabilityConfig={viewabilityConfig}
             scrollEventThrottle={SCROLL_THROTTLE}
             showsVerticalScrollIndicator={true}

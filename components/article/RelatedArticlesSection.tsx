@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import React, { memo, useMemo } from 'react';
+import React, { memo, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ListenListItemCard } from '@/components/bookmarks';
@@ -27,6 +27,12 @@ interface RelatedArticlesSectionProps {
    * Maximum number of related articles to show (default: 5)
    */
   maxArticles?: number;
+
+  /**
+   * Callback fired when related articles section becomes visible
+   * Used as heuristic to mark article as 100% complete
+   */
+  onVisible?: () => void;
 }
 
 /**
@@ -36,7 +42,7 @@ interface RelatedArticlesSectionProps {
  * Uses existing article selection logic for consistency and efficiency.
  */
 export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
-  ({ currentArticleId, articlesData, maxArticles = 5 }) => {
+  ({ currentArticleId, articlesData, maxArticles = 5, onVisible }) => {
     // Filter out current article efficiently with memoization
     const filteredArticles = useMemo(() => {
       return articlesData.filter(article => article.id !== currentArticleId);
@@ -104,12 +110,24 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
       });
     }, [relatedArticles, progressMap]);
 
+    // Track if we've already fired the callback
+    const hasCalledOnVisibleRef = useRef(false);
+
+    // Fire callback when related articles section becomes visible on screen
+    // This serves as a heuristic to mark article as 100% complete
+    const handleLayout = useCallback(() => {
+      if (!hasCalledOnVisibleRef.current && onVisible) {
+        hasCalledOnVisibleRef.current = true;
+        onVisible();
+      }
+    }, [onVisible]);
+
     // Early return if no articles to show
     if (relatedArticles.length === 0) {
       return null;
     }
 
-    return <View style={styles.container}>{articleCards}</View>;
+    return <View style={styles.container} onLayout={handleLayout}>{articleCards}</View>;
   },
 );
 
