@@ -135,7 +135,6 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
     emptyStateText,
     bottomSummary,
   }: VocabularyChartProps<unknown>) => {
- 
     // Get colors outside Canvas (Context available here)
     const colors = useColors();
     const chartColors = useMemo(() => getChartColors(colors), [colors]);

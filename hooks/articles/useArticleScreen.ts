@@ -326,7 +326,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
               // Estimate offset: use FlashList's estimated item size
               const estimatedItemSize = 100;
               const headerHeight = 400;
-              const offset = headerHeight + (targetIndex * estimatedItemSize);
+              const offset = headerHeight + targetIndex * estimatedItemSize;
               scrollViewRef.current?.scrollToOffset({
                 offset,
                 animated: true,

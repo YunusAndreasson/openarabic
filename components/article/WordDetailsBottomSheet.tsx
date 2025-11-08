@@ -117,7 +117,6 @@ export function WordDetailsBottomSheet({
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
 
-
   // Don't render without data
   if (!word) {
     return null;

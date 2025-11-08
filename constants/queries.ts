@@ -334,7 +334,8 @@ export const studyStreakQueries = {
    */
   keys: {
     streak: (userId: string) => ['study-streak', userId] as const,
-    history: (userId: string, days: number = 365) => ['study-streak-history', userId, days] as const,
+    history: (userId: string, days: number = 365) =>
+      ['study-streak-history', userId, days] as const,
   },
 
   /**

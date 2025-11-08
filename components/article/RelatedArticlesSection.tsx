@@ -127,7 +127,11 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
       return null;
     }
 
-    return <View style={styles.container} onLayout={handleLayout}>{articleCards}</View>;
+    return (
+      <View style={styles.container} onLayout={handleLayout}>
+        {articleCards}
+      </View>
+    );
   },
 );
 
