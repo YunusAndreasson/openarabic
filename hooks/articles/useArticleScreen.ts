@@ -182,11 +182,17 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
         // Sort by index
         visibleSentences.sort((a, b) => a.index - b.index);
 
-        const firstVisibleSentence = visibleSentences[0];
+        // Check if we're near the end (last 20% of article)
+        // More lenient threshold to handle short articles and ensure 100% is reachable
+        const lastVisibleSentence = visibleSentences[visibleSentences.length - 1];
+        const nearEndThreshold = Math.floor(totalSentences * 0.8); // Last 20%
+        const isNearEnd =
+          lastVisibleSentence?.index !== undefined &&
+          lastVisibleSentence.index >= nearEndThreshold;
 
-        // ALWAYS use first visible sentence - this is the reading position
-        // Never automatically jump to 100% unless user explicitly scrolls there
-        const newSentenceIndex = firstVisibleSentence?.index;
+        // Use last visible sentence if near end, otherwise use first (reading position)
+        const sentenceToTrack = isNearEnd ? lastVisibleSentence : visibleSentences[0];
+        const newSentenceIndex = sentenceToTrack?.index;
 
         // Update UI immediately for smooth progress tracking
         if (newSentenceIndex !== undefined && newSentenceIndex !== currentSentenceIndex) {
