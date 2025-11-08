@@ -1,11 +1,8 @@
 import { memo } from 'react';
 
-import { GenericBottomSheet } from '@/components/common';
-import { STRINGS } from '@/constants/strings';
-import { useAuth } from '@/hooks/auth/useAuth';
-
+import { ChartBottomSheet } from './ChartBottomSheet';
 import { MasteryChart } from './charts';
-import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { STRINGS } from '@/constants/strings';
 
 interface WordsMasteredBottomSheetProps {
   isVisible: boolean;
@@ -13,24 +10,15 @@ interface WordsMasteredBottomSheetProps {
 }
 
 export const WordsMasteredBottomSheet = memo<WordsMasteredBottomSheetProps>(
-  ({ isVisible, onClose }) => {
-    const { user } = useAuth();
-
-    const { allWords: studyWords } = useFSRSQueries({
-      userId: user?.id,
-    });
-
-    return (
-      <GenericBottomSheet
-        isVisible={isVisible}
-        onClose={onClose}
-        title={STRINGS.WORD_MASTERY}
-        subtitle={STRINGS.WORD_MASTERY_SUBTITLE}
-      >
-        <MasteryChart studyWords={studyWords ?? []} />
-      </GenericBottomSheet>
-    );
-  },
+  ({ isVisible, onClose }) => (
+    <ChartBottomSheet
+      isVisible={isVisible}
+      onClose={onClose}
+      title={STRINGS.WORD_MASTERY}
+      subtitle={STRINGS.WORD_MASTERY_SUBTITLE}
+      ChartComponent={MasteryChart}
+    />
+  ),
 );
 
 WordsMasteredBottomSheet.displayName = 'WordsMasteredBottomSheet';
