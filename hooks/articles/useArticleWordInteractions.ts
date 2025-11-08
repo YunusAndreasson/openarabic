@@ -84,7 +84,7 @@ export function useArticleWordInteractions({
       setActiveTooltip(null);
       wordDetailsModal.open(tooltip.word);
     }
-  }, [wordDetailsModal]);
+  }, [wordDetailsModal.open]);
 
   /**
    * Add/remove word from study list

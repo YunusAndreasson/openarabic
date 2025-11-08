@@ -1,5 +1,5 @@
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -37,6 +37,16 @@ export function WordDetailsBottomSheet({
 }: WordDetailsBottomSheetProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+  // Show/hide modal based on isVisible prop using imperative methods
+  useEffect(() => {
+    if (isVisible) {
+      bottomSheetRef.current?.present();
+    } else {
+      bottomSheetRef.current?.dismiss();
+    }
+  }, [isVisible]);
 
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({
@@ -104,16 +114,10 @@ export function WordDetailsBottomSheet({
     }
   };
 
-  // Handle sheet position changes - sync parent state when sheet closes
-  const handleChange = useCallback(
-    (index: number) => {
-      // onChange fires when animation completes and sheet reaches new position
-      if (index === -1 && isVisible) {
-        onClose(); // Update parent state
-      }
-    },
-    [onClose, isVisible],
-  );
+  // Handle sheet dismissal via gesture or backdrop tap
+  const handleDismiss = useCallback(() => {
+    onClose();
+  }, [onClose]);
 
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
@@ -135,15 +139,13 @@ export function WordDetailsBottomSheet({
   }
 
   return (
-    <BottomSheet
-      index={isVisible ? 0 : -1}
+    <BottomSheetModal
+      ref={bottomSheetRef}
       snapPoints={SNAP_POINTS}
       enablePanDownToClose={true}
       enableOverDrag={false}
-      animateOnMount={true}
-      onChange={handleChange}
+      onDismiss={handleDismiss}
       backdropComponent={renderBackdrop}
-      style={styles.modalStyle}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
       handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
     >
@@ -203,7 +205,7 @@ export function WordDetailsBottomSheet({
           </View>
         </View>
       </BottomSheetView>
-    </BottomSheet>
+    </BottomSheetModal>
   );
 }
 
@@ -214,9 +216,6 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-  },
-  modalStyle: {
-    zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   titleSection: {
     alignItems: 'center',
