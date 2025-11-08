@@ -1,9 +1,4 @@
-import {
-  BottomSheetBackdrop,
-  type BottomSheetBackdropProps,
-  BottomSheetModal,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -13,9 +8,9 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { SleepTimerAction } from '@/types/enums';
+import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
 import { formatSecondsToClock } from '@/utils/dateTimeUtils';
-import { COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface SleepTimerProps {
   isVisible: boolean;
@@ -79,22 +74,16 @@ export function SleepTimer({
 
   const handleOptionSelect = (minutes: number) => () => setSelectedMinutes(minutes);
 
-  // Use built-in backdrop component
-  const renderBackdrop = (props: BottomSheetBackdropProps) => (
-    <BottomSheetBackdrop
-      {...props}
-      disappearsOnIndex={-1}
-      appearsOnIndex={0}
-      pressBehavior="close"
-      onPress={onClose}
-    />
-  );
+  // Use common backdrop component
+  const renderBackdrop = useBottomSheetBackdrop(onClose);
 
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
       snapPoints={snapPoints}
-      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
+      enableDynamicSizing={false}
+      enablePanDownToClose={true}
+      enableOverDrag={false}
       onChange={handleChange}
       onDismiss={onClose}
       backdropComponent={renderBackdrop}
@@ -155,17 +144,14 @@ export function SleepTimer({
 
 const styles = StyleSheet.create({
   background: {
+    ...LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
     ...LAYOUT.ELEVATION.LARGE,
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
-  indicator: {
-    // Dynamic styling applied via colors.modalIndicator in component
-  },
+  indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   container: {
+    ...LAYOUT.BOTTOM_SHEET.STYLES.container,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.LARGE,
   },
 
   header: LAYOUT.BOTTOM_SHEET.HEADER,
@@ -212,7 +198,6 @@ const styles = StyleSheet.create({
 
   buttonContainer: {
     width: '100%',
-    paddingBottom: LAYOUT.SPACING.XLARGE,
   },
 });
 

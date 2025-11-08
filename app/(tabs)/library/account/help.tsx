@@ -16,6 +16,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { FAQCategory } from '@/types/enums';
 import { useColors } from '@/hooks/theme/useColors';
+import { lightFeedback } from '@/utils/haptics';
 import { parseTextWithEmails } from '@/utils/textUtils';
 
 // Category icon mapping for visual categorization
@@ -196,6 +197,7 @@ const HelpScreen: FC = () => {
   const params = useLocalSearchParams<{ expandItem?: string }>();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   // Auto-expand item from URL params
   useEffect(() => {
@@ -209,6 +211,15 @@ const HelpScreen: FC = () => {
     });
   }, [params.expandItem]);
 
+  // Debounce search query for performance (150ms delay)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const handleToggleItem = useCallback((id: string) => {
     setExpandedItems(prev => {
       const newSet = new Set(prev);
@@ -221,11 +232,11 @@ const HelpScreen: FC = () => {
     });
   }, []);
 
-  // Filter FAQ based on search query
+  // Filter FAQ based on debounced search query for performance
   const filteredFAQData = useMemo(() => {
-    if (!searchQuery.trim()) return FAQ_DATA;
+    if (!debouncedSearchQuery.trim()) return FAQ_DATA;
 
-    const query = searchQuery.toLowerCase().trim();
+    const query = debouncedSearchQuery.toLowerCase().trim();
     return FAQ_DATA.map(category => ({
       ...category,
       items: category.items.filter(
@@ -233,9 +244,10 @@ const HelpScreen: FC = () => {
           item.question.toLowerCase().includes(query) || item.answer.toLowerCase().includes(query),
       ),
     })).filter(category => category.items.length > 0);
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
   const handleClearSearch = useCallback(() => {
+    lightFeedback();
     setSearchQuery('');
   }, []);
 
@@ -255,7 +267,7 @@ const HelpScreen: FC = () => {
   }, []);
 
   // Only show popular questions when not searching
-  const showPopularQuestions = !searchQuery.trim();
+  const showPopularQuestions = !debouncedSearchQuery.trim();
 
   return (
     <ThemedView
@@ -271,7 +283,12 @@ const HelpScreen: FC = () => {
             { backgroundColor: colors.card, borderColor: colors.cardBorder },
           ]}
         >
-          <Ionicons name="search" size={20} color={colors.textTertiary} style={styles.searchIcon} />
+          <Ionicons
+            name="search"
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            color={colors.textTertiary}
+            style={styles.searchIcon}
+          />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
             placeholder={STRINGS.HELP_SEARCH_PLACEHOLDER}
@@ -283,8 +300,19 @@ const HelpScreen: FC = () => {
             returnKeyType="search"
           />
           {searchQuery.length > 0 && (
-            <Pressable onPress={handleClearSearch} style={styles.clearButton}>
-              <Ionicons name="close-circle" size={20} color={colors.textTertiary} />
+            <Pressable
+              onPress={handleClearSearch}
+              style={styles.clearButton}
+              hitSlop={LAYOUT.SPACING.SMALL}
+            >
+              {({ pressed }) => (
+                <Ionicons
+                  name="close-circle"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                  color={colors.textTertiary}
+                  style={{ opacity: pressed ? 0.6 : 1 }}
+                />
+              )}
             </Pressable>
           )}
         </View>
@@ -315,12 +343,17 @@ const HelpScreen: FC = () => {
           showsVerticalScrollIndicator: true,
           removeClippedSubviews: false,
           keyboardShouldPersistTaps: 'handled',
+          keyboardDismissMode: 'on-drag',
         }}
       >
         {!hasResults && searchQuery.trim() ? (
           // Empty state when no search results
           <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={64} color={colors.textTertiary} />
+            <Ionicons
+              name="search-outline"
+              size={LAYOUT.BUTTON.ICON_SIZE.XXLARGE}
+              color={colors.textTertiary}
+            />
             <ThemedText type="heading3" weight="semibold" style={styles.emptyStateTitle}>
               {STRINGS.HELP_NO_RESULTS_TITLE}
             </ThemedText>
@@ -437,7 +470,7 @@ const styles = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    height: 44,
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
   },
   searchIcon: {
     marginRight: LAYOUT.SPACING.SMALL,

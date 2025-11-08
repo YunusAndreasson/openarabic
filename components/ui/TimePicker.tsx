@@ -1,8 +1,4 @@
-import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetView,
-  type BottomSheetBackdropProps,
-} from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -13,6 +9,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 export interface TimePickerProps {
   isVisible: boolean;
@@ -89,16 +86,8 @@ export function TimePicker({
       hour12: false,
     });
 
-  // Use built-in backdrop component
-  const renderBackdrop = (props: BottomSheetBackdropProps) => (
-    <BottomSheetBackdrop
-      {...props}
-      disappearsOnIndex={-1}
-      appearsOnIndex={0}
-      pressBehavior="close"
-      onPress={onClose}
-    />
-  );
+  // Use common backdrop component
+  const renderBackdrop = useBottomSheetBackdrop(onClose);
 
   const dynamicStyles = {
     bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
@@ -165,9 +154,7 @@ TimePicker.displayName = 'TimePicker';
 const styles = StyleSheet.create({
   bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
   indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
-  container: {
-    paddingBottom: LAYOUT.SPACING.LARGE,
-  },
+  container: LAYOUT.BOTTOM_SHEET.STYLES.container,
 
   actions: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,

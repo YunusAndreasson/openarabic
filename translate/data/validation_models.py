@@ -65,3 +65,55 @@ class ValidationImprovement(BaseModel):
         default="pending",
         description="Review status: pending/approved/rejected",
     )
+
+
+class RootExampleSentence(BaseModel):
+    """Example sentence showing a root in use."""
+
+    word_form: str = Field(description="Derived word form using this root")
+    sentence_arabic: str = Field(description="Arabic sentence containing the word")
+    sentence_english: str = Field(description="English translation of sentence")
+
+
+class RootValidationRequest(BaseModel):
+    """Request data for validating a root translation."""
+
+    root_id: int = Field(description="Database ID of the root record")
+    current_letters: str = Field(description="Current Arabic root letters with tashkeel")
+    current_meaning: str = Field(description="Current English translation/meaning")
+    examples: list[RootExampleSentence] = Field(
+        default_factory=list,
+        description="Example sentences showing this root in context (3-5 examples)",
+    )
+
+
+class RootValidationResponse(BaseModel):
+    """Response data from validating a single root translation."""
+
+    root_id: int = Field(description="Database ID of the root record")
+    is_correct: bool = Field(
+        description="Whether the translation and tashkeel are completely correct"
+    )
+    issues: list[str] = Field(
+        default_factory=list,
+        description="List of specific issues found (empty if no issues)",
+    )
+    suggested_english: str | None = Field(
+        default=None,
+        description="Suggested English translation if issues found (null if correct)",
+    )
+    suggested_tashkeel: str | None = Field(
+        default=None,
+        description="Suggested Arabic tashkeel if issues found (null if correct)",
+    )
+    reasoning: str = Field(
+        description="Detailed explanation of the validation decision"
+    )
+
+
+class RootValidationBatchResponse(BaseModel):
+    """Response containing validation results for a batch of roots."""
+
+    validations: list[RootValidationResponse] = Field(
+        description="List of validation results, one per input root"
+    )

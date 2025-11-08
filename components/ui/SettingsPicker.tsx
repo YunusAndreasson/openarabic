@@ -1,10 +1,6 @@
 import { BaseCard } from '@/components/common';
 import { Ionicons } from '@expo/vector-icons';
-import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetView,
-  type BottomSheetBackdropProps,
-} from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { startTransition, useCallback, useEffect, useMemo, useOptimistic, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -13,6 +9,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
+import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { lightFeedback } from '@/utils/haptics';
 
 // Default snap points for settings pickers
@@ -146,19 +143,8 @@ export const SettingsPicker = <T,>({
     [dispatch, onValueChange, onSelect, setOptimisticValue, isReduxMode, isControlledMode],
   );
 
-  // Use built-in backdrop component
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        pressBehavior="close"
-        onPress={onClose}
-      />
-    ),
-    [onClose],
-  );
+  // Use common backdrop component
+  const renderBackdrop = useBottomSheetBackdrop(onClose);
 
   const dynamicStyles = useMemo(
     () => ({
@@ -255,9 +241,7 @@ export const SettingsPicker = <T,>({
 const styles = StyleSheet.create({
   bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
   indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
-  container: {
-    paddingBottom: LAYOUT.SPACING.SMALL,
-  },
+  container: LAYOUT.BOTTOM_SHEET.STYLES.container,
   header: {
     ...LAYOUT.BOTTOM_SHEET.HEADER,
     marginBottom: LAYOUT.SPACING.MEDIUM,

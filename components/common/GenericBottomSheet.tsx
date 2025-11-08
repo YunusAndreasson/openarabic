@@ -2,7 +2,6 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import type { FC, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
 
@@ -76,7 +75,6 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
   snapPoints,
 }) => {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   // Show/hide modal based on isVisible prop
@@ -101,17 +99,13 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
 
-  // Memoize dynamic styles with safe area insets
+  // Memoize dynamic styles
   const dynamicStyles = useMemo(
     () => ({
       bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
       indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
-      container: [
-        styles.container,
-        { paddingBottom: Math.max(insets.bottom, LAYOUT.SPACING.MEDIUM) },
-      ],
     }),
-    [colors.elevation1, colors.modalIndicator, insets.bottom],
+    [colors.elevation1, colors.modalIndicator],
   );
 
   // When snapPoints are provided, disable dynamic sizing
@@ -134,7 +128,7 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
       backdropComponent={renderBackdrop}
       {...bottomSheetProps}
     >
-      <BottomSheetView style={dynamicStyles.container}>
+      <BottomSheetView style={styles.container}>
         {/* Render custom header OR standard title/subtitle header */}
         {customHeader ? (
           customHeader
@@ -154,9 +148,5 @@ GenericBottomSheet.displayName = 'GenericBottomSheet';
 const styles = StyleSheet.create({
   bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
   indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
-  container: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    // paddingBottom handled dynamically with safe area insets
-  },
+  container: LAYOUT.BOTTOM_SHEET.STYLES.containerWithPadding,
 });

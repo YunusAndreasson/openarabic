@@ -247,6 +247,7 @@ export const LAYOUT = {
       MEDIUM: BASE_UNIT * 5, // 20 - responsive to base unit
       LARGE: SPACING_SCALE.XLARGE, // 24 - responsive to spacing scale
       XLARGE: BASE_UNIT * 7, // 28 - responsive to base unit
+      XXLARGE: BASE_UNIT * 16, // 64 - responsive to base unit (for empty states)
     },
   },
 
@@ -328,6 +329,15 @@ export const LAYOUT = {
       indicator: {
         width: BASE_UNIT * 9, // 36 - consistent indicator width
         height: BASE_UNIT, // 4 - consistent indicator height
+      },
+      // Shared container styles for consistent bottom sheet padding (DRY)
+      container: {
+        paddingBottom: SPACING_SCALE.SMALL, // 8px - minimal consistent bottom spacing
+      },
+      containerWithPadding: {
+        paddingHorizontal: SPACING_SCALE.MEDIUM, // 12px
+        paddingTop: SPACING_SCALE.MEDIUM, // 12px
+        paddingBottom: SPACING_SCALE.SMALL, // 8px - minimal consistent bottom spacing
       },
       // Shared text styles for bottom sheet headers (DRY)
       title: {

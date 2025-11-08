@@ -234,3 +234,212 @@ def get_article_title(article_id: int) -> str | None:
 
     except Exception:
         return None
+
+
+def fetch_roots_for_validation(root_ids: list[int] | None = None) -> list[dict[str, Any]]:
+    """Fetch roots with example sentences for validation.
+
+    Args:
+        root_ids: Optional list of specific root IDs to fetch. If None, fetches all roots.
+
+    Returns:
+        list: List of root dictionaries with example sentences
+
+    Raises:
+        ValueError: If no roots found
+    """
+    try:
+        client = get_supabase_client()
+
+        # Fetch roots
+        query = client.table("roots").select("id, letters, meaning")
+        if root_ids:
+            query = query.in_("id", root_ids)
+
+        roots_response = query.execute()
+
+        if not roots_response.data:
+            raise ValueError("No roots found in database")
+
+        roots_data = []
+        for root in roots_response.data:
+            root_id = root["id"]
+
+            # Fetch 3-5 example sentences showing this root in use
+            examples_response = (
+                client.table("sentence_words")
+                .select("word_form, sentence:article_sentences(arabic, english)")
+                .eq("root_id", root_id)
+                .limit(5)
+                .execute()
+            )
+
+            # Format examples
+            examples = []
+            if examples_response.data:
+                for example in examples_response.data:
+                    if example.get("sentence"):
+                        # Handle both list and single object from Supabase
+                        sentence = (
+                            example["sentence"][0]
+                            if isinstance(example["sentence"], list)
+                            else example["sentence"]
+                        )
+                        examples.append({
+                            "word_form": example["word_form"],
+                            "sentence_arabic": sentence["arabic"],
+                            "sentence_english": sentence["english"],
+                        })
+
+            root_data = {
+                "root_id": root_id,
+                "current_letters": root["letters"],
+                "current_meaning": root["meaning"],
+                "examples": examples,
+            }
+            roots_data.append(root_data)
+
+        logger.info(f"Fetched {len(roots_data)} roots for validation")
+        return roots_data
+
+    except Exception as e:
+        logger.error(f"Failed to fetch roots for validation: {e}")
+        raise
+
+
+def save_root_validation_improvements(
+    validations: list[dict[str, Any]], roots_data: list[dict[str, Any]]
+) -> tuple[int, int]:
+    """Save root validation results to root_translation_improvements table.
+
+    Args:
+        validations: List of validation result dictionaries
+        roots_data: Original roots data with current letters/meaning
+
+    Returns:
+        tuple: (count of saved records, count of skipped records)
+
+    Raises:
+        Exception: If database insertion fails
+    """
+    try:
+        client = get_supabase_client()
+
+        # Create lookup map for current values
+        root_map = {r["root_id"]: r for r in roots_data}
+
+        records_to_insert = []
+        skipped_count = 0
+
+        for validation in validations:
+            root_id = validation["root_id"]
+            current_root = root_map.get(root_id, {})
+
+            # Get suggested values (use current if DeepSeek returns None for correct roots)
+            suggested_english = (
+                validation.get("suggested_english")
+                or current_root.get("current_meaning")
+                or ""
+            )
+            suggested_tashkeel = (
+                validation.get("suggested_tashkeel")
+                or current_root.get("current_letters")
+                or ""
+            )
+
+            # Get current values for comparison
+            current_english = current_root.get("current_meaning", "")
+            current_tashkeel = current_root.get("current_letters", "")
+
+            # Only save if there's a real difference
+            english_differs = suggested_english != current_english
+            tashkeel_differs = suggested_tashkeel != current_tashkeel
+
+            if not english_differs and not tashkeel_differs:
+                # No improvement needed - skip this root
+                skipped_count += 1
+                continue
+
+            # Prepare record for insertion
+            record = {
+                "root_id": root_id,
+                "suggested_english": suggested_english,
+                "suggested_tashkeel": suggested_tashkeel,
+                "status": "pending",
+            }
+
+            # Add validation reasoning to reviewer_notes if available
+            if "reasoning" in validation:
+                record["reviewer_notes"] = validation["reasoning"]
+
+            records_to_insert.append(record)
+
+        if not records_to_insert:
+            logger.info(f"No improvements needed - all {skipped_count} roots are correct")
+            return 0, skipped_count
+
+        # Bulk insert into root_translation_improvements
+        response = client.table("root_translation_improvements").insert(
+            records_to_insert
+        ).execute()
+
+        saved_count = len(response.data) if response.data else 0
+
+        logger.info(
+            f"Saved {saved_count} root improvements ({skipped_count} roots already correct)"
+        )
+        return saved_count, skipped_count
+
+    except Exception as e:
+        logger.error(f"Failed to save root validation improvements: {e}")
+        raise
+
+
+def get_all_root_ids() -> list[int]:
+    """Get list of all root IDs from database.
+
+    Returns:
+        list: List of root IDs
+
+    Raises:
+        Exception: If database query fails
+    """
+    try:
+        client = get_supabase_client()
+
+        # Fetch all roots with pagination (Supabase default limit is 1000)
+        all_roots = []
+        page_size = 1000
+        offset = 0
+
+        while True:
+            response = (
+                client.table("roots")
+                .select("id")
+                .range(offset, offset + page_size - 1)
+                .execute()
+            )
+
+            if not response.data:
+                break
+
+            all_roots.extend(response.data)
+
+            # If we got less than page_size, we're done
+            if len(response.data) < page_size:
+                break
+
+            offset += page_size
+
+        if not all_roots:
+            logger.warning("No roots found in database")
+            return []
+
+        root_ids = [root["id"] for root in all_roots]
+
+        print(f"Found {len(root_ids)} roots in database")
+        return root_ids
+
+    except Exception as e:
+        logger.error(f"Failed to fetch root IDs: {e}")
+        raise

@@ -669,6 +669,302 @@ Return ONLY the JSON object. No markdown, no code blocks, no extra text."""
 
         return prompt
 
+    def validate_roots_batch(
+        self, roots_data: list[dict[str, Any]], retry_count: int = 0
+    ) -> dict[str, Any]:
+        """Validate a batch of root translations.
+
+        Args:
+            roots_data: List of root dictionaries with validation data
+            retry_count: Current retry attempt (used for progressively clearer prompts)
+
+        Returns:
+            dict: Parsed validation results
+
+        Raises:
+            ValueError: If validation fails after retries
+        """
+        # Construct system prompt
+        system_prompt = self._build_root_system_prompt(retry_count)
+
+        # Construct user prompt with roots data
+        user_prompt = self._build_root_user_prompt(roots_data)
+
+        # Call API
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        # Calculate required tokens: ~150 tokens per root for validation response
+        # Add 20% buffer for safety
+        estimated_tokens = int(len(roots_data) * 150 * 1.2)
+        max_tokens = max(4000, min(estimated_tokens, 16000))  # Cap at 16k tokens
+
+        response = self.call_api(messages, max_tokens=max_tokens, temperature=0.1)
+
+        # Parse JSON response
+        return self.parse_json_response(response)
+
+    def _build_root_system_prompt(self, retry_count: int) -> str:
+        """Build system prompt for root validation task.
+
+        Args:
+            retry_count: Current retry attempt (0 = first attempt)
+
+        Returns:
+            str: System prompt
+        """
+        base_prompt = """You are an expert Arabic linguist and Islamic scholar specializing in Classical Arabic (fusha) and Quranic Arabic, with deep expertise in Arabic root morphology and etymology.
+
+Your task is to validate Arabic root translations for accuracy, simplicity, and proper tashkeel (vocalization) according to strict orthodox Sunni Islamic scholarship.
+
+EDUCATIONAL PURPOSE FOR LANGUAGE LEARNERS:
+These root translations are designed to help students learn Arabic vocabulary and understand word families. Each root translation must:
+1. Capture the CORE, LITERAL meaning of the root (not derived word meanings)
+2. Use SIMPLE, COMMON English words that learners can easily understand and remember
+3. Be ACCURATE to Classical Arabic and Quranic usage
+4. Have CORRECT tashkeel (diacritical marks) for proper pronunciation
+
+CRITICAL: ROOT FORMAT IN ARABIC
+- Roots are stored as COMPLETE ARABIC WORDS with tashkeel, NOT separated by dashes
+- Correct format: كَتَبَ (complete word with tashkeel)
+- WRONG format: ك-ت-ب (separated letters)
+- When suggesting tashkeel corrections, provide the COMPLETE Arabic word with proper tashkeel
+
+CRITICAL VALIDATION PRINCIPLES:
+
+1. ROOT FORM vs DERIVED FORM (CRITICAL):
+   - ROOTS should be BASE VERB FORMS (Form I trilateral/quadrilateral verbs)
+   - Example: Correct root = كَتَبَ (kataba - Form I verb "to write")
+   - WRONG: كِتَابٌ (kitaab - derived noun "book")
+   - WRONG: مَكْتَبَةٌ (maktabah - place noun "library")
+   - WRONG: كِتَابَةٌ (kitaabah - verbal noun "writing")
+
+   RED FLAGS FOR DERIVED FORMS (these should be FLAGGED):
+   - Words ending in ة (taa marbuta): نَفْرَةٌ, إِضَاعَةٌ → usually derived nouns
+   - Noun patterns with long vowels: فَسَادٌ, خُمُولٌ, خَفَاءٌ → verbal noun patterns
+   - Form II-X patterns: تَفْعِيلٌ, مُفَاعَلَةٌ, إِفْعَالٌ → derived verbal nouns
+   - If it looks like a NOUN PATTERN instead of VERB → FLAG IT
+
+   The root should be the SIMPLE BASE VERB, not derived nominal forms
+
+2. SIMPLICITY FOR LEARNERS (PROVIDE ONLY ONE BEST TRANSLATION):
+   - CRITICAL: Suggest only ONE English word - the simplest, most accurate option
+   - Do NOT provide multiple alternatives or lists of options
+   - Prefer COMMON, EVERYDAY English words over rare/technical terms
+   - Prefer SHORTER words over longer synonyms (when equally accurate)
+   - Prefer CONCRETE meanings over abstract (when possible)
+   - **USE BARE INFINITIVES for verbs (NO "to" prefix)**:
+     * ✅ CORRECT: "write", "know", "go", "flee", "corrupt"
+     * ❌ WRONG: "to write", "to know", "to go", "to flee", "to corrupt"
+     * Rationale: No Arabic equivalent for "to", matches dictionary convention, shorter and clearer
+   - MAXIMUM ONE ENGLISH WORD OR SHORT PHRASE (no lists, no alternatives)
+   - Examples:
+     ✅ GOOD: "writing" (simple, clear, ONE option)
+     ❌ WRONG: "writing, inscription, or scribing" (multiple options)
+     ✅ GOOD: "knowing" (simple, common, ONE option)
+     ❌ WRONG: "knowing/knowledge/cognizance" (multiple alternatives)
+
+3. ACCURACY TO CLASSICAL ARABIC:
+   - The meaning must be correct for Classical Arabic (fusha) and Quranic Arabic
+   - Check against the example sentences showing derived words
+   - If example sentences don't support the translation, flag it
+   - Verify the core meaning makes sense across all derived forms shown
+
+4. TASHKEEL (VOCALIZATION) VALIDATION:
+   - Arabic root letters MUST have correct diacritical marks (tashkeel)
+   - Common patterns:
+     * Triliteral roots: فَعَلَ (fa'ala pattern most common)
+     * Check voweling matches standard dictionaries
+   - CRITICAL: Tashkeel affects pronunciation and meaning
+   - If tashkeel is incorrect or missing, provide the correct form
+
+5. THEOLOGICAL SOUNDNESS:
+   - NO shirk (associating partners with Allah)
+   - NO bidah (religious innovation)
+   - Proper Islamic honorifics and respect
+   - Meanings must align with orthodox Sunni understanding
+
+VALIDATION WORKFLOW FOR EACH ROOT:
+
+STEP 1: ANALYZE EXAMPLE SENTENCES
+- Look at the derived words shown in the example sentences
+- Identify the COMMON SEMANTIC THREAD across all examples
+- Extract the CORE MEANING that unifies all derived words
+
+STEP 2: EVALUATE CURRENT TRANSLATION
+- Does it capture the core meaning accurately?
+- Is it at the RIGHT LEVEL? (root concept, not specific word meaning)
+- Is it SIMPLE enough for learners? (common, everyday English)
+- Is it ACCURATE to Classical Arabic usage?
+
+STEP 3: CHECK TASHKEEL
+- Are all diacritical marks present and correct?
+- Does the vocalization match standard Arabic dictionaries?
+- Is it pronounceable and proper?
+
+STEP 4: SUGGEST IMPROVEMENTS (VERY CONSERVATIVE - FOCUS ON CLEAR ERRORS ONLY)
+- **CRITICAL**: Be EXTREMELY conservative - only flag OBVIOUS, CLEAR errors
+- **HIGH BAR FOR FLAGGING**: If translation is reasonable and won't confuse learners → ACCEPT IT
+- **WHEN TO FLAG (ONLY THESE)**:
+  1. Translation is completely wrong/opposite meaning (e.g., "good" for a root meaning "bad")
+  2. Tashkeel is completely missing (e.g., فسد with NO vowel marks)
+  3. This is clearly a derived form, not a base verb (e.g., كِتَابَةٌ instead of كَتَبَ)
+  4. Translation is so technical/obscure that learners won't understand (e.g., "comminution" instead of "breaking")
+- **WHEN NOT TO FLAG (ACCEPT THESE)**:
+  1. Minor synonym differences (e.g., "bad" vs "evil", "knowing" vs "knowledge")
+  2. Tashkeel variations that are both valid (e.g., different valid voweling patterns)
+  3. Word choices that are reasonable even if you prefer a different word
+  4. Simple, understandable translations that are "good enough" for learners
+  5. Translations that capture the general meaning even if not perfectly literal
+- **DEFAULT STANCE**: When in doubt → ACCEPT the current translation
+- **REMEMBER**: Perfect is the enemy of good - learners benefit from simple, clear translations
+
+STEP 5: FORMULATE RESPONSE (EXTREMELY CONSERVATIVE)
+- **DEFAULT**: is_correct=true (accept by default)
+- **ONLY** mark is_correct=false if you have a COMPELLING reason (see Step 4)
+- Ask yourself: "Will this current translation seriously confuse or mislead a learner?" If NO → ACCEPT IT
+- Do NOT be pedantic - focus on errors that actually matter for learning
+- Include reasoning showing why you accepted/rejected
+
+RESPONSE FORMAT:
+- Return ONLY valid JSON
+- Match the exact structure provided
+- Include detailed reasoning for EVERY root (even if correct)
+- If root is CORRECT: set is_correct=true, issues=[], suggested_english=null, suggested_tashkeel=null
+- If root has ISSUES: set is_correct=false, list issues, provide specific suggestions
+- CRITICAL: Use null (not the current value) when accepting current translation as correct"""
+
+        if retry_count > 0:
+            base_prompt += f"""
+
+⚠️ RETRY ATTEMPT {retry_count}: Your previous response had JSON parsing errors.
+CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations outside JSON.
+Start with {{ and end with }}. Nothing else."""
+
+        return base_prompt
+
+    def _build_root_user_prompt(self, roots_data: list[dict[str, Any]]) -> str:
+        """Build user prompt with roots data.
+
+        Args:
+            roots_data: List of root dictionaries
+
+        Returns:
+            str: User prompt
+        """
+        # Convert roots data to JSON for the prompt
+        roots_json = json.dumps(roots_data, ensure_ascii=False, indent=2)
+
+        prompt = f"""Validate these Arabic root translations for accuracy, simplicity, and proper tashkeel:
+
+INPUT ROOTS (with CAMeL Tools linguistic analysis):
+{roots_json}
+
+NOTE: Each root includes "camel_analysis" with morphological data from CAMeL Tools:
+- "root": Trilateral root letters (e.g., "ف.س.د")
+- "pattern": Morphological pattern (e.g., "1َ2ا3" for فَعَال)
+- "pos": Part of speech (noun/verb/etc)
+- "is_derived": Boolean indicating if pattern suggests derived form
+- "suggested_base_verb": Suggested Form I base verb (if derived)
+
+USE THIS DATA to inform your validation. If CAMeL identifies a root as derived with a suggested base verb, strongly consider flagging it.
+
+REQUIRED OUTPUT FORMAT (valid JSON only):
+{{
+  "validations": [
+    {{
+      "root_id": <int>,
+      "is_correct": <boolean>,
+      "issues": [],  // Empty array if root is correct
+      "suggested_english": null,  // null if current translation is correct, or "<new translation>" if issues found
+      "suggested_tashkeel": null,  // null if current tashkeel is correct, or "<corrected Arabic>" if issues found
+      "reasoning": "<detailed explanation of validation>"
+    }}
+  ]
+}}
+
+EXAMPLES (ILLUSTRATIVE PATTERNS - apply this reasoning to all roots you validate):
+
+- **Correct base verb root**: {{"root_id": 123, "is_correct": true, "issues": [], "suggested_english": null, "suggested_tashkeel": null, "reasoning": "كَتَبَ is a Form I base verb (past tense 3rd masc. sing.) - correct root form. CAMeL analysis confirms verb POS. Translation 'writing' captures the core meaning. Tashkeel correct. ACCEPT."}}
+
+- **DERIVED FORM - MUST FLAG (using CAMeL data)**: {{"root_id": 456, "is_correct": false, "issues": ["Derived form stored as root"], "suggested_english": "corrupt", "suggested_tashkeel": "فَسَدَ", "reasoning": "فَسَادٌ - CAMeL analysis: root=ف.س.د, pattern=1َ2ا3 (فَعَال), pos=noun, is_derived=true, suggested_base_verb=فَسَدَ. This is a verbal noun 'corruption', NOT a root. Must use base verb فَسَدَ (fasada) - suggest bare infinitive 'corrupt'."}}
+
+- **DERIVED FORM with ة - MUST FLAG (using CAMeL data)**: {{"root_id": 789, "is_correct": false, "issues": ["Derived form with taa marbuta"], "suggested_english": "flee", "suggested_tashkeel": "نَفَرَ", "reasoning": "نَفْرَةٌ - CAMeL analysis: root=ن.ف.ر, pattern=1َ2ْ3َةٌ (with taa marbuta), pos=noun, is_derived=true, suggested_base_verb=نَفَرَ. Derived noun 'aversion/fleeing', must use base verb نَفَرَ (nafara) - suggest bare infinitive 'flee'."}}
+
+- **Form II verbal noun - MUST FLAG**: {{"root_id": 888, "is_correct": false, "issues": ["Form II verbal noun stored as root"], "suggested_english": "agree", "suggested_tashkeel": "وَفَقَ", "reasoning": "تَوْفِيقٌ - CAMeL analysis: root=و.ف.ق, pattern=تَوْ2ِي3 (Form II تَفْعِيل), pos=noun, is_derived=true, suggested_base_verb=وَفَقَ. This is Form II verbal noun 'success/agreement', NOT the root. Must use Form I base verb وَفَقَ (wafaqa) - suggest bare infinitive 'agree'."}}
+
+- **Missing tashkeel**: {{"root_id": 234, "is_correct": false, "issues": ["Tashkeel missing"], "suggested_english": null, "suggested_tashkeel": "ذَهَبَ", "reasoning": "Root ذهب has NO tashkeel. Must provide complete word: ذَهَبَ (dhahaba). Current translation 'going' is accurate."}}
+
+- **Acceptable translation**: {{"root_id": 567, "is_correct": true, "issues": [], "suggested_english": null, "suggested_tashkeel": null, "reasoning": "قَلْبٌ is a basic noun root form. While technically could be more verb-like, this is acceptable as a nominal root. Translation 'heart' is simple and accurate. ACCEPT."}}
+
+VALIDATION CHECKLIST for EACH root (EXTREMELY CONSERVATIVE - CLEAR ERRORS ONLY):
+
+**CRITICAL PHILOSOPHY**: We are looking for CLEAR, OBVIOUS errors that would seriously confuse learners.
+We are NOT looking for minor improvements or perfect translations. Good enough IS good enough.
+
+1. **FORM CHECK (ONLY FLAG IF OBVIOUSLY DERIVED)**:
+   - **CHECK CAMeL ANALYSIS**: If is_derived=true AND suggested_base_verb is clearly different → FLAG
+   - **ONLY FLAG if it's CLEARLY a derived form**:
+     * Obvious noun patterns with ة (e.g., كِتَابَةٌ, نَفْرَةٌ)
+     * Clear Form II-X verbal nouns (e.g., تَوْفِيقٌ, مُفَاعَلَةٌ)
+   - **DO NOT FLAG** if:
+     * It could be either a noun or verb root (ambiguous cases → ACCEPT)
+     * The current form is reasonable even if not "perfect"
+     * CAMeL analysis is uncertain or conflicting
+
+2. **TASHKEEL CHECK (ONLY FLAG IF COMPLETELY MISSING)**:
+   - **FLAG ONLY**: Tashkeel completely absent (e.g., فسد with NO marks at all)
+   - **DO NOT FLAG**: Minor tashkeel variations or different valid voweling patterns
+
+3. **MEANING CHECK (ONLY FLAG IF CLEARLY WRONG)**:
+   - **USE BARE INFINITIVES**: Suggest "write", "flee", "know" (NOT "to write", "to flee", "to know")
+   - **FLAG ONLY**:
+     * Completely wrong meaning (opposite/unrelated)
+     * Extremely obscure technical terms learners won't know
+   - **DO NOT FLAG**: Minor synonym preferences or slightly different word choices
+
+4. **DEFAULT DECISION TREE**:
+   - Is this a CLEAR derived form? (obvious ة or Form II-X pattern) → Maybe flag
+   - Is tashkeel completely missing? → Maybe flag
+   - Is translation completely wrong or impossibly obscure? → Maybe flag
+   - Otherwise → **ACCEPT IT** (even if you have a preference)
+
+ONLY FLAG THESE CLEAR ERROR TYPES:
+✅ Obvious derived forms (فَسَادٌ, كِتَابَةٌ, تَوْفِيقٌ) stored as roots
+✅ Completely missing tashkeel (no vowels at all)
+✅ Completely wrong meanings (opposite or unrelated)
+✅ Impossibly obscure technical terms
+
+DO NOT FLAG THESE (ACCEPT THEM):
+❌ Minor synonym differences (bad/evil, knowing/knowledge, going/walking)
+❌ Tashkeel variations where multiple forms are valid
+❌ Reasonable word choices even if you prefer different wording
+❌ Translations that are "good enough" for learners even if not perfect
+❌ Ambiguous cases where it's unclear if it's derived or not
+❌ **Missing "to" prefix (NEVER flag: "write" is preferred over "to write")**
+
+CRITICAL REMINDERS:
+- Arabic roots MUST be complete words with tashkeel (كَتَبَ), NEVER separated letters (ك-ت-ب)
+- English suggestions MUST be exactly ONE word or short phrase, NEVER multiple alternatives
+- **ALWAYS use BARE INFINITIVES for verbs**: "write" NOT "to write", "flee" NOT "to flee"
+- If suggesting tashkeel correction, provide the COMPLETE Arabic word
+- **BE EXTREMELY CONSERVATIVE**: Only flag CLEAR, OBVIOUS errors that would confuse learners
+
+**FINAL REMINDER - YOUR VALIDATION PHILOSOPHY**:
+You are NOT a perfectionist editor making everything "ideal" - you are a quality control filter catching ONLY serious errors.
+Ask yourself for EACH root: "Is this current translation so wrong or confusing that it would seriously harm a learner's understanding?"
+- If YES → Flag it with a clear suggestion
+- If NO → Accept it (even if you personally prefer a different word)
+- If UNSURE → Accept it (when in doubt, accept)
+
+**Your goal**: Flag ~10-20% of roots (the clear errors), NOT 50-80% (being too pedantic).
+
+Return ONLY the JSON object. No markdown, no code blocks, no extra text."""
+
+        return prompt
+
 
 def create_validation_client() -> OpenRouterClient:
     """Create a configured OpenRouter client for validation.

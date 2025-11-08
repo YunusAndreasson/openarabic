@@ -235,6 +235,17 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     // This is just here for the ArticleContent onMomentumScrollEnd prop
   }, [currentSentenceIndex]);
 
+  // Handle reaching the end of the article - set to last sentence for 100% completion
+  const handleEndReached = useCallback(() => {
+    const totalSentences = sortedSentences?.length ?? 0;
+    if (totalSentences === 0 || ignoreProgressUpdatesRef.current) return;
+
+    const lastSentenceIndex = totalSentences - 1;
+    if (lastSentenceIndex >= 0 && lastSentenceIndex !== currentSentenceIndex) {
+      setCurrentSentenceIndex(lastSentenceIndex);
+    }
+  }, [sortedSentences?.length, currentSentenceIndex]);
+
   // Sync sentence index (for any other features that might use it)
   useEffect(() => {
     setCurrentSentenceIndexForProgress(currentSentenceIndex);
@@ -361,6 +372,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     wordDetailsModal,
     isInStudyList,
     handleScrollEnd,
+    handleEndReached,
     // Handlers
     handleScroll,
     handleViewableItemsChanged,

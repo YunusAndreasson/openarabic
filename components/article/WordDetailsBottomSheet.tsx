@@ -1,7 +1,6 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ColorCodedText } from '@/components/common/ColorCodedText';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -12,7 +11,7 @@ import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 import { generateAudioUrl } from '@/utils/imageUtils';
@@ -25,9 +24,6 @@ export interface WordDetailsBottomSheetProps {
   isInStudyList?: boolean;
 }
 
-// Constant snap points - no need for useMemo
-const SNAP_POINTS = [380];
-
 export function WordDetailsBottomSheet({
   isVisible,
   onClose,
@@ -36,7 +32,6 @@ export function WordDetailsBottomSheet({
   isInStudyList = false,
 }: WordDetailsBottomSheetProps) {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   // Show/hide modal based on isVisible prop using imperative methods
@@ -122,16 +117,6 @@ export function WordDetailsBottomSheet({
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
 
-  // Memoize button section style with safe area inset
-  const buttonSectionStyle = useMemo(
-    () => [
-      styles.buttonSection,
-      {
-        paddingBottom: Math.max(insets.bottom, LAYOUT.SPACING.MEDIUM),
-      },
-    ],
-    [insets.bottom],
-  );
 
   // Don't render without data
   if (!word) {
@@ -141,9 +126,7 @@ export function WordDetailsBottomSheet({
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
-      snapPoints={SNAP_POINTS}
-      enablePanDownToClose={true}
-      enableOverDrag={false}
+      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
       onDismiss={handleDismiss}
       backdropComponent={renderBackdrop}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
@@ -185,7 +168,7 @@ export function WordDetailsBottomSheet({
         )}
 
         {/* Action Buttons */}
-        <View style={buttonSectionStyle}>
+        <View style={styles.buttonSection}>
           <View style={styles.buttonContainer}>
             <ThemedButton
               title="Play Audio"
@@ -214,6 +197,7 @@ WordDetailsBottomSheet.displayName = 'WordDetailsBottomSheet';
 const styles = StyleSheet.create({
   background: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
   container: {
+    ...LAYOUT.BOTTOM_SHEET.STYLES.container,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
   },

@@ -98,6 +98,7 @@ interface ArticleContentProps {
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   handleScrollEnd: () => void;
+  handleEndReached: () => void;
   colors: ThemeColors;
   scrollViewRef: React.RefObject<FlashListRef<Tables<'article_sentences'>>>;
   // Reading list (bookmarks/listening) functionality
@@ -119,6 +120,7 @@ const ArticleContentInternal = function ArticleContent({
   handleScroll,
   handleViewableItemsChanged,
   handleScrollEnd,
+  handleEndReached,
   colors,
   scrollViewRef,
   isInReadingList,
@@ -297,6 +299,8 @@ const ArticleContentInternal = function ArticleContent({
             onScrollBeginDrag={handleScrollBegin}
             onViewableItemsChanged={handleViewableItemsChanged}
             onMomentumScrollEnd={handleScrollEnd}
+            onEndReached={handleEndReached}
+            onEndReachedThreshold={0.1}
             viewabilityConfig={viewabilityConfig}
             scrollEventThrottle={SCROLL_THROTTLE}
             showsVerticalScrollIndicator={true}
