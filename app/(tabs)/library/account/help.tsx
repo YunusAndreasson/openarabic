@@ -36,11 +36,12 @@ interface FAQItemComponentProps {
   isExpanded: boolean;
   onToggle: (id: string) => void;
   onLayout?: (id: string, y: number) => void;
+  uniqueKey: string; // Unique key for expand/collapse state (supports duplicate questions)
 }
 
 // Minimal, robust FAQ item component
 const FAQItemComponent: FC<FAQItemComponentProps> = memo(
-  ({ item, isExpanded, onToggle, onLayout }) => {
+  ({ item, isExpanded, onToggle, onLayout, uniqueKey }) => {
     const colors = useColors();
 
     const handlePress = useCallback(() => {
@@ -53,8 +54,8 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
       ) {
         LayoutAnimation.configureNext(animationConfig);
       }
-      onToggle(item.id);
-    }, [item.id, onToggle]);
+      onToggle(uniqueKey);
+    }, [uniqueKey, onToggle]);
 
     const handleLayout = useCallback(
       (event: { nativeEvent: { layout: { y: number } } }) => {
@@ -283,14 +284,18 @@ const HelpScreen: FC = () => {
                   </ThemedText>
                 </View>
                 <View style={styles.categoryContainer}>
-                  {popularQuestions.map(item => (
-                    <FAQItemComponent
-                      key={item.id}
-                      isExpanded={expandedItems.has(item.id)}
-                      item={item}
-                      onToggle={handleToggleItem}
-                    />
-                  ))}
+                  {popularQuestions.map(item => {
+                    const uniqueKey = `popular-${item.id}`;
+                    return (
+                      <FAQItemComponent
+                        key={uniqueKey}
+                        uniqueKey={uniqueKey}
+                        isExpanded={expandedItems.has(uniqueKey)}
+                        item={item}
+                        onToggle={handleToggleItem}
+                      />
+                    );
+                  })}
                 </View>
               </View>
             )}
@@ -325,6 +330,7 @@ const HelpScreen: FC = () => {
                     {category.items.map(item => (
                       <FAQItemComponent
                         key={item.id}
+                        uniqueKey={item.id}
                         isExpanded={expandedItems.has(item.id)}
                         item={item}
                         onToggle={handleToggleItem}
