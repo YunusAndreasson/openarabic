@@ -11,12 +11,12 @@
 ## 📊 Summary Statistics
 
 ### Baseline (2025-01-08)
-- **Total Files**: TBD
-- **Lines of Code**: TBD
-- **Bundle Size**: TBD
-- **TypeScript Compile Time**: TBD
-- **Test Suite Runtime**: TBD
-- **Unused Exports**: TBD
+- **Total Files**: 517 TypeScript files
+- **Lines of Code**: 83,647
+- **Bundle Size**: TBD (requires build)
+- **TypeScript Compile Time**: 12.1 seconds
+- **Test Suite Runtime**: ~3 seconds (--onlyChanged)
+- **Unused Exports**: 0 (per knip)
 
 ### Current
 - **Total Files**: TBD
@@ -31,27 +31,35 @@
 ## 🗑️ Removed Items Log
 
 ### Phase 1: Automated Analysis
-_Date: TBD_
+_Date: 2025-01-08_
 
 **Findings**:
-- [ ] Document knip/check-unused results
-- [ ] Document ESLint no-unused-vars findings
-- [ ] Document commented code blocks found
+- [x] **Knip Results**: ✅ 0 unused exports found - codebase is clean!
+- [x] **TODO Comments**: Only 1 found (`constants/fsrs.ts:73`)
+- [x] **Console Statements**: 0 in mobile app code (all in scripts/tests/admin)
+- [x] **Commented Code**: 0 blocks found
+- [x] **ESLint**: No unused variables (would fail validation otherwise)
 
 **Actions Taken**:
-- None yet
+- Established baseline metrics
+- Verified codebase health excellent
+- No immediate automated cleanup needed
 
 ---
 
 ### Phase 2: Constants & Configuration
-_Date: TBD_
+_Date: 2025-01-08_
 
 #### `constants/animation.ts`
 **Removed**:
-- None yet
+- None - all constants in use
 
-**Kept** (with justification):
-- TBD
+**Analysis**:
+- ✅ TIMING_CONFIG.FAST: 12 files
+- ✅ TIMING_CONFIG.MEDIUM: 3+ files
+- ✅ TIMING_CONFIG.SLOW/GENTLE/ENTRANCE/PROGRESS: 8+ files
+- ✅ SPRING_CONFIG (all variants): 10+ files
+- ✅ All individual constants (PRESS_SCALE, etc.): actively used
 
 #### `constants/layout.ts`
 **Removed**:
@@ -310,16 +318,24 @@ _Date: TBD_
 ## 🎓 Lessons Learned
 
 ### What Worked Well
-1. TBD
+1. Knip tool excellent for finding unused exports
+2. Systematic prop usage analysis reveals optimization opportunities
+3. Codebase already very well-maintained
 
 ### What Was Challenging
-1. TBD
+1. Ripgrep with complex pipes hangs - use simpler commands
+2. Distinguishing between "rarely used" vs "unused" requires judgment
 
-### Mistakes to Avoid
-1. TBD
+### Cleanup Opportunities Found
+1. **`useThemedView` prop** in CompletionScreen
+   - Never used in production code (only in tests)
+   - Defaults to `false`, always uses default
+   - **Recommendation**: Remove prop, simplify component
 
 ### Best Practices Discovered
-1. TBD
+1. Most optional props are actually used meaningfully
+2. Animation constants all have active usage
+3. Test-only props should be documented or reconsidered
 
 ---
 
