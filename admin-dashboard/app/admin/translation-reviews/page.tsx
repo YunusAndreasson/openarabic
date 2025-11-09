@@ -203,9 +203,9 @@ export default function TranslationReviewsPage() {
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Translation Reviews</h1>
+        <h1 className="text-2xl font-bold">Word Translation Reviews</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Review and approve AI-suggested translation improvements
+          Review and approve AI-suggested word translation improvements for sentences
         </p>
       </div>
 

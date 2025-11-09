@@ -49,7 +49,13 @@ export default function RootLayout({
                     href="/admin/translation-reviews"
                     className="text-sm font-medium hover:underline underline-offset-4"
                   >
-                    Translation Reviews
+                    Word Reviews
+                  </Link>
+                  <Link
+                    href="/admin/root-reviews"
+                    className="text-sm font-medium hover:underline underline-offset-4"
+                  >
+                    Root Reviews
                   </Link>
                 </nav>
               </div>

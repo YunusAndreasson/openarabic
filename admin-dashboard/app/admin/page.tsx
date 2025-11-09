@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useGlobalTranslationCache } from '@/hooks/useGlobalTranslationCache';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, Trash2, Database, Clock, HardDrive, TrendingUp } from 'lucide-react';
+import { Loader2, RefreshCw, Trash2, Database, Clock, HardDrive, TrendingUp, FileText, BookOpen } from 'lucide-react';
 
 export default function AdminPage() {
   const { isLoading, stats, refresh, clear, error } = useGlobalTranslationCache();
@@ -54,6 +55,36 @@ export default function AdminPage() {
         <p className="text-muted-foreground mt-1">
           Manage translation cache and view system statistics
         </p>
+      </div>
+
+      {/* Quick Links */}
+      <div className="border rounded-lg p-6 bg-card">
+        <h2 className="text-xl font-semibold mb-4">Quick Links</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link href="/admin/translation-reviews">
+            <div className="p-4 border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-primary" />
+                <div>
+                  <h3 className="font-medium">Word Translation Reviews</h3>
+                  <p className="text-sm text-muted-foreground">Review sentence word improvements</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/admin/root-reviews">
+            <div className="p-4 border rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-5 w-5 text-primary" />
+                <div>
+                  <h3 className="font-medium">Root Translation Reviews</h3>
+                  <p className="text-sm text-muted-foreground">Review and apply root improvements</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
       </div>
 
       {error && (
