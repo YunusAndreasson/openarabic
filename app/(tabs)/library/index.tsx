@@ -24,7 +24,7 @@ import { mediumFeedback } from '@/utils/haptics';
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
   headerContainer: {
-    // No margin needed - content should be directly under header
+    gap: LAYOUT.SPACING.XXXLARGE, // Generous gap between major sections (48px)
   },
   listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
 });
