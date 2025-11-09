@@ -84,17 +84,24 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
       return unreadOrLowProgressArticles.slice(0, maxArticles);
     }, [unreadOrLowProgressArticles, maxArticles]);
 
-    // Navigation handler using router.replace for native modal transitions
-    // Replaces current article modal with new one, providing smooth native animation
+    // Navigation handler - dismiss current modal then push new one
+    // This ensures clean modal transitions without state synchronization issues
     const handleArticlePress = useCallback(
       (articleId: number, title: string) => {
-        router.replace({
-          pathname: '/article/[id]',
-          params: {
-            id: articleId.toString(),
-            headerTitle: title,
-          },
-        });
+        // Dismiss current article modal
+        router.back();
+
+        // Wait for dismiss animation to start, then push new article
+        // This prevents modal stacking while giving smooth transition
+        setTimeout(() => {
+          router.push({
+            pathname: '/article/[id]',
+            params: {
+              id: articleId.toString(),
+              headerTitle: title,
+            },
+          });
+        }, 100); // Brief delay for dismiss animation to start
       },
       [router],
     );
