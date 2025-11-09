@@ -248,19 +248,28 @@ export function ReviewCard({
           ]}
         />
 
-        {/* Content layer with gesture detector - full screen */}
-        <View style={STATIC_STYLES.swipeContainer}>
-          <GestureDetector gesture={panGesture}>
-            <Animated.View style={[STATIC_STYLES.swipeContainer, { pointerEvents: 'box-none' }]}>
+        {/* Gesture detector - full screen swipeable area */}
+        <GestureDetector gesture={panGesture}>
+          <Animated.View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          >
+            {/* Word content - centered in screen */}
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
               <Animated.View
                 style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
                 testID={testID}
               >
                 <WordDisplayComponent {...wordDisplayProps} />
               </Animated.View>
-            </Animated.View>
-          </GestureDetector>
-        </View>
+            </View>
+          </Animated.View>
+        </GestureDetector>
       </>
     );
   }

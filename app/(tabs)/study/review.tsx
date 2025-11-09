@@ -232,7 +232,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         {/* UI chrome - header and bottom actions, positioned above background */}
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'box-none' }}>
           {/* Progress header at top of screen */}
-          <View style={{ paddingTop: LAYOUT.SPACING.XLARGE, pointerEvents: 'box-none' }}>
+          <View style={{ paddingTop: LAYOUT.SPACING.XLARGE, pointerEvents: 'auto' }}>
             <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
           </View>
 
@@ -243,6 +243,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               bottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
               left: LAYOUT.SCREEN_EDGE_PADDING,
               right: LAYOUT.SCREEN_EDGE_PADDING,
+              pointerEvents: 'auto',
             }}
           >
             <ReviewBottomActions />
