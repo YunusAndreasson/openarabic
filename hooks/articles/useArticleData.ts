@@ -1,7 +1,6 @@
 import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { articleQueries, fsrsQueries, CACHE_TIMES } from '@/constants/queries';
 import { useColors } from '@/hooks/theme/useColors';
 import { bookmarkService } from '@/services/bookmark';
@@ -56,8 +55,9 @@ export const useArticleData = (
   });
 
   // Fetch study words with optimized caching
+  // CRITICAL: Use same query as useArabicWord and useArticleWordInteractions for DRY consistency
   const studyWordsQuery = useQuery({
-    ...fsrsQueries.allWithCooldown(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
+    ...fsrsQueries.all(userId || ''),
     enabled: !!userId,
     refetchOnMount: false, // Only refetch via cache invalidation or pull-to-refresh
     refetchOnReconnect: false, // Only refetch via pull-to-refresh

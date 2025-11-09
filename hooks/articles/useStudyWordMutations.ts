@@ -138,41 +138,37 @@ export const useStudyWordMutations = (
         wordId?: RootId;
         rootId?: number;
       }): Promise<StudyWordContext> => {
+        // CRITICAL: Use fsrsQueries.all() to match what UI components read
+        // This ensures optimistic updates are immediately visible in both underlines and buttons
         await queryClient.cancelQueries({
-          queryKey: fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
+          queryKey: fsrsQueries.all(userId).queryKey,
         });
         const previousStudyWords =
-          (queryClient.getQueryData(
-            fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
-          ) as StudyWord[]) || [];
+          (queryClient.getQueryData(fsrsQueries.all(userId).queryKey) as StudyWord[]) || [];
 
         const id = (wordId ?? rootId) as number;
-        queryClient.setQueryData<StudyWord[]>(
-          fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
-          (old = []) => {
-            const exists = old.some(sw => sw.root_id === id);
-            if (exists) {
-              return old.filter(sw => sw.root_id !== id);
-            }
-            // For optimistic add, create a minimal StudyWord-like object
-            // The actual full object will be fetched on success
-            return [...old, { root_id: id } as StudyWord];
-          },
-        );
+        queryClient.setQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey, (old = []) => {
+          const exists = old.some(sw => sw.root_id === id);
+          if (exists) {
+            return old.filter(sw => sw.root_id !== id);
+          }
+          // For optimistic add, create a minimal StudyWord-like object
+          // The actual full object will be fetched on success
+          return [...old, { root_id: id } as StudyWord];
+        });
 
         return { previousStudyWords };
       },
       onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
+        // Revert optimistic update on error
         if (context?.previousStudyWords) {
-          queryClient.setQueryData(
-            fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
-            context.previousStudyWords,
-          );
+          queryClient.setQueryData(fsrsQueries.all(userId).queryKey, context.previousStudyWords);
         }
         handleError(error);
         showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, ToastType.ERROR);
+        // Invalidate to ensure we have fresh data
         queryClient.invalidateQueries({
-          queryKey: fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
+          queryKey: fsrsQueries.all(userId).queryKey,
         });
       },
       onSuccess: async (_: boolean, { userId }: { userId: string }) => {
@@ -265,8 +261,9 @@ export const useStudyWordMutations = (
         }
 
         // Check if word already exists (remove operation should be allowed even if limit reached)
+        // CRITICAL: Use same query as UI components for DRY consistency
         const existingWords = queryClient.getQueryData<StudyWord[]>(
-          fsrsQueries.allWithCooldown(currentUserId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
+          fsrsQueries.all(currentUserId).queryKey,
         );
 
         const wordExists =

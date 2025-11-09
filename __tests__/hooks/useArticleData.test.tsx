@@ -146,11 +146,9 @@ describe('useArticleData', () => {
     // Verify services were called correctly
     expect(mockArticlesService.getArticleById).toHaveBeenCalledWith(1);
     expect(mockBookmarkService.isInReadingList).toHaveBeenCalledWith('u1', 1);
-    // getFSRSWords is called with userId and options (forStats, sessionCooldownHours, limit)
+    // getFSRSWords is called with userId and forStats option (no cooldown - uses fsrsQueries.all)
     expect(mockStudyWordsFSRSService.getFSRSWords).toHaveBeenCalledWith('u1', {
-      forStats: true,
-      sessionCooldownHours: 2,
-      limit: 1000,
+      forStats: false,
     });
   });
 

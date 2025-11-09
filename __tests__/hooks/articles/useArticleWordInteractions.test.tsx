@@ -408,9 +408,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.isInStudyList).toBe(false);
     });
 
-    it('invalidates FSRS queries after mutation', async () => {
-      const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
-
+    it('refetches study words after mutation', async () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -426,16 +424,9 @@ describe('useArticleWordInteractions', () => {
         await result.current.handleAddWordToStudy(word);
       });
 
-      // Check that invalidations were called
-      expect(invalidateSpy).toHaveBeenCalledTimes(3);
-
-      // Verify specific query keys were invalidated
-      const calls = invalidateSpy.mock.calls;
-      const queryKeys = calls.map(call => call[0].queryKey);
-
-      expect(queryKeys).toContainEqual(fsrsQueries.due('test-user-id').queryKey);
-      expect(queryKeys).toContainEqual(fsrsQueries.all('test-user-id').queryKey);
-      expect(queryKeys).toContainEqual(fsrsQueries.allWithCooldown('test-user-id', 2).queryKey);
+      // Check that refetch was called to update local component state
+      // Note: Mutation handles all query invalidations, component just refetches
+      expect(mockRefetchStudyWords).toHaveBeenCalled();
     });
 
     it('does nothing if user is not authenticated', async () => {

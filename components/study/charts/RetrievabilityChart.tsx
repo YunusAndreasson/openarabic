@@ -81,6 +81,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         topPadding={16}
         graphWidth={graphWidth}
         referenceLine={MEMORY_CAPACITY_THRESHOLDS.GOOD} // 75% target line
+        showAreaFill={false} // No sage overlay - let performance zones show clearly
         title={CHART_LABELS.RETENTION}
         subtitle={subtitle}
         onCardPress={onInfoPress}

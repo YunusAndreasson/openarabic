@@ -1,6 +1,6 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ColorCodedText } from '@/components/common/ColorCodedText';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -15,8 +15,6 @@ import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 import { generateAudioUrl } from '@/utils/imageUtils';
-
-const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export interface WordDetailsBottomSheetProps {
   isVisible: boolean;
@@ -36,8 +34,8 @@ export function WordDetailsBottomSheet({
   const colors = useColors();
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  // Calculate snap points - use larger value to accommodate content
-  const snapPoints = useMemo(() => [SCREEN_HEIGHT * 0.5], []);
+  // Calculate snap points - compact height to fit content without excess space
+  const snapPoints = useMemo(() => [380], []);
 
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({
@@ -141,6 +139,8 @@ export function WordDetailsBottomSheet({
       index={-1}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
+      enableOverDrag={false}
+      enableDynamicSizing={false}
       onChange={handleSheetChange}
       backdropComponent={renderBackdrop}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     ...LAYOUT.BOTTOM_SHEET.STYLES.container,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.XXLARGE, // Extra padding to prevent button cutoff
+    paddingBottom: LAYOUT.SPACING.MEDIUM, // Tighter padding at bottom
   },
   titleSection: {
     alignItems: 'center',

@@ -137,11 +137,11 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
   // Determine color based on retention thresholds
   const getRetentionColor = () => {
     if (animatedRetention < RETENTION_THRESHOLDS.POOR) {
-      return chartColors.performance.poor; // Red
-    } else if (animatedRetention < RETENTION_THRESHOLDS.MODERATE) {
-      return chartColors.performance.moderate; // Orange
+      return chartColors.performance.poor; // Red: <40%
+    } else if (animatedRetention < RETENTION_THRESHOLDS.GOOD) {
+      return chartColors.performance.moderate; // Orange: 40-74%
     } else {
-      return chartColors.performance.excellent; // Green
+      return chartColors.performance.excellent; // Green: 75%+
     }
   };
 

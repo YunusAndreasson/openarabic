@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -18,6 +17,7 @@ export interface UseArabicWordReturn {
 
 /**
  * Hook to manage the state and behavior of an Arabic word in the UI
+ * IMPORTANT: Uses same query as WordDetailsBottomSheet button state for consistency
  */
 export function useArabicWord({
   word,
@@ -31,13 +31,15 @@ export function useArabicWord({
   // Check if this word is due for review
   const isDueWord = word.root_id != null && dueWordRootIds.has(word.root_id);
 
-  // Fetch the user's study words using unified FSRS query keys so mutations invalidate consistently
+  // CRITICAL: Use same query as useArticleWordInteractions for DRY consistency
+  // Both underline state AND button state must use fsrsQueries.all() to stay in sync
   const { data: studyWords = [] } = useQuery({
-    ...fsrsQueries.allWithCooldown(user?.id || '', DEFAULT_SESSION_COOLDOWN_HOURS),
+    ...fsrsQueries.all(user?.id || ''),
     enabled: !!user?.id,
   });
 
   // Check if the word is directly selected (added to study words)
+  // DRY: Uses same comparison logic as useArticleWordInteractions.ts line 145
   const directlySelected = useMemo(() => {
     if (!studyWords?.length || !word.root_id) return false;
     return studyWords.some((sw: StudyWord) => sw.root_id === word.root_id);

@@ -21,4 +21,6 @@ export interface WordTooltipProps {
   zIndex?: number;
   /** Function to open word details bottom sheet */
   onOpenWordDetails?: () => void;
+  /** Whether to show word details chevron (controlled by settings) */
+  showWordDetails?: boolean;
 }

@@ -63,12 +63,13 @@ export const getChartColors = (colors: ThemeColors): ChartColors => {
     withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
 
     // Get unified gradient for all chart types
+    // Nearly transparent to let performance zone colors (red/orange/green) show through clearly
     getAreaFillGradient: () => {
       return [
-        withOpacity(colors.tint, 0.7), // Strong at top
-        withOpacity(colors.tint, 0.4), // Medium in middle
-        withOpacity(colors.tint, 0.15), // Subtle at middle-bottom
-        withOpacity(colors.tint, 0.05), // Very subtle at bottom
+        withOpacity(colors.tint, 0.12), // Very subtle at top - lets zone colors dominate
+        withOpacity(colors.tint, 0.08), // Minimal in middle
+        withOpacity(colors.tint, 0.04), // Nearly invisible at middle-bottom
+        withOpacity(colors.tint, 0.01), // Essentially transparent at bottom
       ];
     },
   };

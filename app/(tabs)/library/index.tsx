@@ -24,7 +24,10 @@ import { mediumFeedback } from '@/utils/haptics';
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
   headerContainer: {
-    gap: LAYOUT.SPACING.SMALL, // Same as Practice screen (8px)
+    // No gap - using manual spacing between sections for better visual hierarchy
+  },
+  sectionSeparator: {
+    marginTop: LAYOUT.SPACING.LARGE, // 16px - larger gap between major sections
   },
   listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
 });
@@ -202,28 +205,30 @@ export default function ReadScreen(): JSX.Element {
 
     if (categoriesWithArticles.length > 0) {
       sections.push(
-        <FilterSection
-          key="categories"
-          items={categoriesWithArticles}
-          onSelect={handleSelectFilter}
-          filterType="category"
-        />,
+        <View key="categories-wrapper" style={styles.sectionSeparator}>
+          <FilterSection
+            items={categoriesWithArticles}
+            onSelect={handleSelectFilter}
+            filterType="category"
+          />
+        </View>,
       );
     }
 
     if (authorsWithArticles.length > 0) {
       sections.push(
-        <FilterSection
-          key="authors"
-          items={authorsWithArticles}
-          onSelect={handleSelectFilter}
-          filterType="author"
-        />,
+        <View key="authors-wrapper" style={styles.sectionSeparator}>
+          <FilterSection
+            items={authorsWithArticles}
+            onSelect={handleSelectFilter}
+            filterType="author"
+          />
+        </View>,
       );
     }
 
     return sections;
-  }, [articlesData, refreshKey, categoriesWithArticles, authorsWithArticles]);
+  }, [articlesData, refreshKey, categoriesWithArticles, authorsWithArticles, handleSelectFilter]);
 
   const ListHeaderComponent = useMemo(
     () => <View style={styles.headerContainer}>{headerSections}</View>,

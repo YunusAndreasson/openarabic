@@ -100,7 +100,11 @@ export const calculateEfficiencyScore = (word: StudyWord): number => {
 
 /**
  * Creates standardized performance zones for charts
- * Simplified: Clean 4-zone system with unified sage green theme
+ * 3-zone system matching the memory gauge for visual consistency:
+ * - Green: 75%+ (excellent retention)
+ * - Orange: 40-74% (moderate retention)
+ * - Red: <40% (poor retention, needs urgent practice)
+ *
  * @param chartHeight - Height of the chart area
  * @param topPadding - Top padding (default 0)
  * @param chartColors - Chart colors object
@@ -116,34 +120,26 @@ export const createStandardizedPerformanceZones = (
   return [
     {
       name: 'Excellent',
-      min: PERFORMANCE_THRESHOLDS.EXCELLENT,
+      min: PERFORMANCE_THRESHOLDS.EXCELLENT, // 75%
       max: 100,
-      color: chartColors.withOpacity(chartColors.performance.excellent, 0.28),
+      color: chartColors.performance.excellent, // Full opacity to match gauge
       y: topPadding,
       height: ((100 - PERFORMANCE_THRESHOLDS.EXCELLENT) / 100) * availableHeight,
     },
     {
-      name: 'Good',
-      min: PERFORMANCE_THRESHOLDS.GOOD,
-      max: PERFORMANCE_THRESHOLDS.EXCELLENT,
-      color: chartColors.withOpacity(chartColors.performance.good, 0.28),
+      name: 'Moderate',
+      min: PERFORMANCE_THRESHOLDS.FAIR, // 40%
+      max: PERFORMANCE_THRESHOLDS.EXCELLENT, // 75%
+      color: chartColors.performance.moderate, // Full opacity to match gauge
       y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.EXCELLENT) / 100) * availableHeight,
       height:
-        ((PERFORMANCE_THRESHOLDS.EXCELLENT - PERFORMANCE_THRESHOLDS.GOOD) / 100) * availableHeight,
-    },
-    {
-      name: 'Fair',
-      min: PERFORMANCE_THRESHOLDS.FAIR,
-      max: PERFORMANCE_THRESHOLDS.GOOD,
-      color: chartColors.withOpacity(chartColors.performance.moderate, 0.28),
-      y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.GOOD) / 100) * availableHeight,
-      height: ((PERFORMANCE_THRESHOLDS.GOOD - PERFORMANCE_THRESHOLDS.FAIR) / 100) * availableHeight,
+        ((PERFORMANCE_THRESHOLDS.EXCELLENT - PERFORMANCE_THRESHOLDS.FAIR) / 100) * availableHeight,
     },
     {
       name: 'Poor',
-      min: PERFORMANCE_THRESHOLDS.POOR,
-      max: PERFORMANCE_THRESHOLDS.FAIR,
-      color: chartColors.withOpacity(chartColors.performance.poor, 0.28),
+      min: PERFORMANCE_THRESHOLDS.POOR, // 0%
+      max: PERFORMANCE_THRESHOLDS.FAIR, // 40%
+      color: chartColors.performance.poor, // Full opacity to match gauge
       y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.FAIR) / 100) * availableHeight,
       height: ((PERFORMANCE_THRESHOLDS.FAIR - PERFORMANCE_THRESHOLDS.POOR) / 100) * availableHeight,
     },

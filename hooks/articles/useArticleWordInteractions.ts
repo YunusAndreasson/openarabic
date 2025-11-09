@@ -2,7 +2,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useModalState } from '@/hooks/ui/useModalState';
@@ -79,21 +78,14 @@ export function useArticleWordInteractions({
   /**
    * Open word details modal from tooltip
    * Closes tooltip and transfers word data to modal
-   * Only opens if wordDetailsEnabled setting is true
    */
   const handleOpenWordDetails = useCallback(() => {
-    if (!wordDetailsEnabled) {
-      // If setting is disabled, just close the tooltip without showing details
-      setActiveTooltip(null);
-      return;
-    }
-
     const tooltip = activeTooltipRef.current;
     if (tooltip?.word) {
       setActiveTooltip(null);
       wordDetailsModal.open(tooltip.word);
     }
-  }, [wordDetailsModal.open, wordDetailsEnabled]);
+  }, [wordDetailsModal.open]);
 
   /**
    * Add/remove word from study list
@@ -118,21 +110,13 @@ export function useArticleWordInteractions({
         return next;
       });
 
-      // Invalidate queries in parallel, then refetch
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: fsrsQueries.due(user.id).queryKey }),
-        queryClient.invalidateQueries({ queryKey: fsrsQueries.all(user.id).queryKey }),
-        queryClient.invalidateQueries({
-          queryKey: fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
-        }),
-      ]);
-
-      // Refetch after invalidations complete to ensure fresh data
+      // Note: handleRootPress mutation already invalidates all FSRS queries via invalidateCommon
+      // We only need to refetch to update local component state
       await refetchStudyWords?.();
 
       return true;
     },
-    [user?.id, handleRootPress, queryClient, refetchStudyWords],
+    [user?.id, handleRootPress, refetchStudyWords],
   );
 
   /**
@@ -167,6 +151,7 @@ export function useArticleWordInteractions({
     activeTooltip,
     wordDetailsModal,
     isInStudyList,
+    wordDetailsEnabled,
 
     // Handlers
     handleWordPress,

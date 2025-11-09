@@ -421,6 +421,14 @@ const AccountScreen: FC = () => {
             rightText={currentLanguageText}
             onPress={() => handlePickerOpen('language')}
           />
+          <SettingsCard
+            icon="remove-circle-outline"
+            label={STRINGS.WORD_DETAILS}
+            subtitle={STRINGS.WORD_DETAILS_DESCRIPTION}
+            rightType="toggle"
+            toggleValue={!wordDetailsEnabled}
+            onToggleChange={enabled => handleWordDetailsToggle(!enabled)}
+          />
         </SettingsSection>
 
         {/* Audio & Playback - Audio settings */}
@@ -463,14 +471,6 @@ const AccountScreen: FC = () => {
             rightType="text-chevron"
             rightText={currentDailyWordLimitText}
             onPress={() => handlePickerOpen('dailyWordLimit')}
-          />
-          <SettingsCard
-            icon="information-circle"
-            label={STRINGS.WORD_DETAILS}
-            subtitle={STRINGS.WORD_DETAILS_DESCRIPTION}
-            rightType="toggle"
-            toggleValue={wordDetailsEnabled}
-            onToggleChange={handleWordDetailsToggle}
           />
           <SettingsCard
             icon="notifications"

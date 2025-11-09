@@ -34,7 +34,7 @@ export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
         {zones.map(zone => (
           <Rect
             key={`performance-zone-${zone.color}-${zone.y}-${zone.height}`}
-            color={withOpacity(zone.color, 0.35)}
+            color={withOpacity(zone.color, 0.5)}
             height={zone.height}
             width={graphWidth}
             x={0}

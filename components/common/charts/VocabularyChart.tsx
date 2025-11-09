@@ -42,6 +42,7 @@ interface VocabularyChartProps<T> {
   yLabelFormatter?: (value: number) => string;
   isFuturePrediction?: boolean; // Whether this chart shows future predictions (today = index 0)
   referenceLine?: number; // Optional reference line percentage (e.g., 75 for 75% target)
+  showAreaFill?: boolean; // Whether to show sage gradient area fill (default: true)
 
   // BaseChart props
   title: string;
@@ -70,7 +71,8 @@ const VocabularyChartComparison = <T,>(
     prevProps.topPadding !== nextProps.topPadding ||
     prevProps.graphWidth !== nextProps.graphWidth ||
     prevProps.onCardPress !== nextProps.onCardPress ||
-    prevProps.referenceLine !== nextProps.referenceLine
+    prevProps.referenceLine !== nextProps.referenceLine ||
+    prevProps.showAreaFill !== nextProps.showAreaFill
   ) {
     return false;
   }
@@ -127,6 +129,7 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
     yLabelFormatter,
     isFuturePrediction = false,
     referenceLine,
+    showAreaFill = true,
     title,
     subtitle,
     onCardPress,
@@ -198,8 +201,8 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
         );
       }
 
-      // Area fill under the line - extends to full chart width
-      if (chartData.hasChartData) {
+      // Area fill under the line - extends to full chart width (optional, controlled by showAreaFill)
+      if (chartData.hasChartData && showAreaFill) {
         components.push(
           <Group key="area-fill">
             <ChartAreaFill

@@ -101,6 +101,7 @@ export function WordTooltip({
   layout,
   zIndex,
   onOpenWordDetails,
+  showWordDetails = true,
 }: WordTooltipProps) {
   const colors = useColors();
 
@@ -218,12 +219,14 @@ export function WordTooltip({
           <View style={arrowStyle} />
           <View style={STATIC_STYLES.contentContainer}>
             {renderColorCodedEnglish}
-            <Ionicons
-              name="chevron-forward"
-              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-              color={colors.secondaryText}
-              style={STATIC_STYLES.chevronIcon}
-            />
+            {showWordDetails && (
+              <Ionicons
+                name="chevron-forward"
+                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                color={colors.secondaryText}
+                style={STATIC_STYLES.chevronIcon}
+              />
+            )}
           </View>
         </Animated.View>
       </Pressable>
