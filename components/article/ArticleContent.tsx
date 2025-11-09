@@ -85,7 +85,6 @@ const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
 const sentenceKeyExtractor = (item: Tables<'article_sentences'>) => item.id.toString();
 
 interface ArticleContentProps {
-  id: string;
   article: Article;
   sortedSentences: Tables<'article_sentences'>[];
   renderSentenceItem: ({
@@ -114,7 +113,6 @@ interface ArticleContentProps {
 }
 
 const ArticleContentInternal = function ArticleContent({
-  id,
   article,
   sortedSentences,
   renderSentenceItem,
@@ -285,7 +283,6 @@ const ArticleContentInternal = function ArticleContent({
              */
             // @ts-expect-error - AnimatedFlashList ref type incompatible with FlashListRef (runtime behavior is correct)
             ref={scrollViewRef}
-            key={`article-${id}`}
             data={sortedSentences}
             renderItem={renderSentenceItem}
             keyExtractor={sentenceKeyExtractor}

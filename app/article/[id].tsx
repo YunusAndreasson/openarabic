@@ -155,7 +155,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     if (!article) return null;
 
     return {
-      id,
       article,
       sortedSentences,
       renderSentenceItem,
@@ -174,7 +173,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     };
   }, [
     article,
-    id,
     sortedSentences,
     renderSentenceItem,
     handleScroll,
