@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { memo, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -8,6 +8,7 @@ import { getArticleRoute } from '@/constants/routes';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
+import type { ArticleId } from '@/types/branded.types';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -44,6 +45,8 @@ interface RelatedArticlesSectionProps {
  */
 export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
   ({ currentArticleId, articlesData, maxArticles = 5, onVisible }) => {
+    const router = useRouter();
+
     // Filter out current article efficiently with memoization
     const filteredArticles = useMemo(() => {
       return articlesData.filter(article => article.id !== currentArticleId);
@@ -83,7 +86,13 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
       return unreadOrLowProgressArticles.slice(0, maxArticles);
     }, [unreadOrLowProgressArticles, maxArticles]);
 
-    // Note: Navigation is now handled by Link component with dangerouslySingular
+    // Navigation handler using router.push (consistent with filter screen and article cards)
+    const handleArticlePress = useCallback(
+      (articleId: number, title: string) => {
+        router.push(getArticleRoute(articleId as ArticleId, title));
+      },
+      [router],
+    );
 
     // Memoize the article cards to prevent unnecessary re-renders
     const articleCards = useMemo(() => {
@@ -95,24 +104,18 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
 
         return (
           <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
-            <Link
-              href={getArticleRoute(article.id, article.title)}
-              replace
-              dangerouslySingular={true}
-              asChild
-            >
-              <ListenListItemCard
-                title={article.title}
-                secondaryText={capitalizeFirstLetter(article.category.name)}
-                imageUrl={generateImageUrl(article.image_url)}
-                articleId={article.id}
-                progressPercentage={progressPercentage}
-              />
-            </Link>
+            <ListenListItemCard
+              title={article.title}
+              secondaryText={capitalizeFirstLetter(article.category.name)}
+              imageUrl={generateImageUrl(article.image_url)}
+              articleId={article.id}
+              progressPercentage={progressPercentage}
+              onPress={() => handleArticlePress(article.id, article.title)}
+            />
           </View>
         );
       });
-    }, [relatedArticles, progressMap]);
+    }, [relatedArticles, progressMap, handleArticlePress]);
 
     // Track if we've already fired the callback
     const hasCalledOnVisibleRef = useRef(false);
