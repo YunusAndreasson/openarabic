@@ -62,61 +62,73 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
         <Ionicons color={colors.completionSuccess} name={iconName} size={iconSize} />
       </Animated.View>
 
-      {/* Text Content - Secondary hierarchy */}
-      <View style={styles.textContainer}>
+      {/* Title Group - Closely grouped for Gestalt proximity */}
+      <View style={styles.titleGroup}>
         <Animated.View entering={FadeInUp.delay(50).duration(TIMING_CONFIG.FAST.duration)}>
-          <ThemedText colorName="headingText" style={styles.titleText} type="heading2">
+          <ThemedText colorName="headingText" style={styles.titleText} type="heading1">
             {title}
           </ThemedText>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(100).duration(TIMING_CONFIG.FAST.duration)}>
-          <ThemedText colorName="subtitleText" style={styles.subtitleText} type="heading3">
-            {subtitle}
+        {subtitle && (
+          <Animated.View entering={FadeInUp.delay(100).duration(TIMING_CONFIG.FAST.duration)}>
+            <ThemedText colorName="subtitleText" style={styles.subtitleText} type="heading3">
+              {subtitle}
+            </ThemedText>
+          </Animated.View>
+        )}
+
+        {/* Educational text - grouped with title for clarity */}
+        <Animated.View entering={FadeInUp.delay(120).duration(TIMING_CONFIG.FAST.duration)}>
+          <ThemedText colorName="secondary" style={styles.educationalText} type="body">
+            {STRINGS.SESSION_COMPLETE_EDUCATIONAL}
           </ThemedText>
         </Animated.View>
-
-        {/* Metrics Section - Tertiary hierarchy with proper grouping */}
-        {encouragingMetrics && encouragingMetrics.length > 0 && (
-          <View style={styles.metricsContainer}>
-            {encouragingMetrics.map((metric, index) => (
-              <Fragment key={metric.type + metric.text}>
-                <Animated.View
-                  entering={FadeInUp.delay(150 + index * 40).duration(TIMING_CONFIG.FAST.duration)}
-                  style={[
-                    styles.metricItem,
-                    {
-                      backgroundColor: withOpacity(colors.black, 0.02),
-                      borderColor: withOpacity(colors.black, 0.05),
-                    },
-                  ]}
-                >
-                  <View style={styles.metricContent}>
-                    <View
-                      style={[styles.metricIconContainer, { backgroundColor: `${metric.color}20` }]}
-                    >
-                      <Ionicons
-                        color={metric.color}
-                        name={metric.icon}
-                        size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                      />
-                    </View>
-                    <View style={styles.metricTextContainer}>
-                      <ThemedText style={styles.metricText} type="body" variant="primary">
-                        {metric.text}
-                      </ThemedText>
-                    </View>
-                  </View>
-                </Animated.View>
-              </Fragment>
-            ))}
-          </View>
-        )}
       </View>
 
-      {/* Action Button - Final hierarchy level with Link navigation */}
+      {/* Metrics Section - Separated group for visual hierarchy */}
+      {encouragingMetrics && encouragingMetrics.length > 0 && (
+        <View style={styles.metricsContainer}>
+          {encouragingMetrics.map((metric, index) => (
+            <Fragment key={metric.type + metric.text}>
+              <Animated.View
+                entering={FadeInUp.delay(180 + index * 40).duration(TIMING_CONFIG.FAST.duration)}
+                style={[
+                  styles.metricItem,
+                  {
+                    backgroundColor: withOpacity(colors.black, 0.02),
+                    borderColor: withOpacity(colors.black, 0.05),
+                  },
+                ]}
+              >
+                <View style={styles.metricContent}>
+                  <View
+                    style={[styles.metricIconContainer, { backgroundColor: `${metric.color}20` }]}
+                  >
+                    <Ionicons
+                      color={metric.color}
+                      name={metric.icon}
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <View style={styles.metricTextContainer}>
+                    <ThemedText style={styles.metricText} type="body" variant="primary">
+                      {metric.text}
+                    </ThemedText>
+                  </View>
+                </View>
+              </Animated.View>
+            </Fragment>
+          ))}
+        </View>
+      )}
+
+      {/* Spacer to push button to bottom */}
+      <View style={styles.spacer} />
+
+      {/* Action Button - Anchored to bottom */}
       <Animated.View
-        entering={FadeIn.delay(encouragingMetrics ? 300 : 200).duration(
+        entering={FadeIn.delay(encouragingMetrics ? 320 : 220).duration(
           TIMING_CONFIG.FAST.duration,
         )}
         style={styles.buttonContainer}
@@ -154,72 +166,98 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.XLARGE, // Increased for better breathing room
+    padding: LAYOUT.SPACING.XLARGE,
   },
   contentContainer: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     maxWidth: LAYOUT.REVIEW.COMPLETION.CONTENT_MAX_WIDTH,
     width: '100%',
+    paddingTop: LAYOUT.SPACING.XXXLARGE,
   },
 
   iconContainer: {
     alignItems: 'center',
-    height: LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE + LAYOUT.SPACING.LARGE, // Reduced height for better proportion
+    height: LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE + LAYOUT.SPACING.LARGE,
     justifyContent: 'center',
-    ...createMargin({ bottom: 'XXLARGE' }), // Increased for stronger visual separation
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
-  metricContent: {
-    ...COMMON_STYLES.row,
-    ...createPadding({ vertical: 'TINY' }),
+
+  // Title group - tightly grouped for Gestalt proximity
+  titleGroup: {
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: LAYOUT.SPACING.XXXLARGE, // Large gap before metrics
   },
-  metricIconContainer: {
-    ...COMMON_STYLES.centeredRow,
-    ...COMMON_STYLES.roundedMedium,
-    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM, // Increased for better proportion
-    ...createMargin({ right: 'MEDIUM' }),
-    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM, // Square container
+
+  titleText: {
+    textAlign: 'center',
+    marginBottom: LAYOUT.SPACING.SMALL, // Tight grouping with subtitle
   },
+
+  subtitleText: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    textAlign: 'center',
+    marginBottom: LAYOUT.SPACING.SMALL, // Tight grouping with educational text
+  },
+
+  educationalText: {
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    textAlign: 'center',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
+  },
+
+  // Metrics section - separated from title group
+  metricsContainer: {
+    gap: LAYOUT.SPACING.SMALL,
+    width: '100%',
+  },
+
   metricItem: {
     ...COMMON_STYLES.roundedMedium,
     ...createPadding({ horizontal: 'LARGE', vertical: 'TINY' }),
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
   },
-  metricText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Proper typography scale instead of spacing
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL, // Proper line height calculation
-    textAlign: 'left',
+
+  metricContent: {
+    ...COMMON_STYLES.row,
+    ...createPadding({ vertical: 'TINY' }),
   },
+
+  metricIconContainer: {
+    ...COMMON_STYLES.centeredRow,
+    ...COMMON_STYLES.roundedMedium,
+    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM,
+    ...createMargin({ right: 'MEDIUM' }),
+    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM,
+  },
+
   metricTextContainer: {
     flex: 1,
-    justifyContent: 'center', // Center text vertically with icon
+    justifyContent: 'center',
   },
-  metricsContainer: {
-    gap: LAYOUT.SPACING.SMALL, // Reduced gap between metric items
-    marginTop: LAYOUT.SPACING.MEDIUM, // Reduced top margin
-    width: '100%',
+
+  metricText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    textAlign: 'left',
   },
-  button: {
-    alignSelf: 'stretch', // Stretch to full width for better alignment
+
+  // Spacer to push button to bottom
+  spacer: {
+    flex: 1,
   },
+
+  // Button anchored to bottom
   buttonContainer: {
-    width: '100%', // Full width container
-    paddingHorizontal: LAYOUT.SPACING.XLARGE, // Generous horizontal padding
-  },
-  subtitleText: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.TINY, // Small margin for text grouping
-  },
-  textContainer: {
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.XXLARGE, // Increased for better visual separation
     width: '100%',
+    paddingBottom: LAYOUT.SPACING.LARGE, // Extra padding at bottom
   },
-  titleText: {
-    marginBottom: LAYOUT.SPACING.MEDIUM, // Consistent spacing scale
-    textAlign: 'center',
+
+  button: {
+    alignSelf: 'stretch',
   },
 });

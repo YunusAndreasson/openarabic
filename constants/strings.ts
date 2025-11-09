@@ -159,6 +159,8 @@ export const STRINGS = {
 
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',
+  SESSION_COMPLETE_EDUCATIONAL:
+    'Your words will return at the perfect moment for lasting retention.',
 
   ADDED_TO_BOOKMARKS: 'Saved to bookmarks',
   REMOVED_FROM_BOOKMARKS: 'Removed from bookmarks',
