@@ -182,13 +182,8 @@ export const useAccountScreen = () => {
               // Delete all reading progress from database
               await ReadingProgressService.deleteAllProgress(user.id);
 
-              // Invalidate all reading progress related queries
-              await queryClient.invalidateQueries({
-                queryKey: readingProgressQueries.keys.bulk(user.id),
-              });
-              await queryClient.invalidateQueries({
-                queryKey: readingProgressQueries.keys.streak(user.id),
-              });
+              // Invalidate all reading progress related queries (including individual articles)
+              await readingProgressQueries.invalidateAll(queryClient, user.id);
 
               lightFeedback();
               Alert.alert(STRINGS.SUCCESS, STRINGS.READING_PROGRESS_RESET_SUCCESSFULLY);
