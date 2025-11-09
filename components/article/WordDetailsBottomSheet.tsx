@@ -1,6 +1,6 @@
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Dimensions, StyleSheet, View } from 'react-native';
 
 import { ColorCodedText } from '@/components/common/ColorCodedText';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -11,10 +11,12 @@ import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 import { generateAudioUrl } from '@/utils/imageUtils';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export interface WordDetailsBottomSheetProps {
   isVisible: boolean;
@@ -32,22 +34,27 @@ export function WordDetailsBottomSheet({
   isInStudyList = false,
 }: WordDetailsBottomSheetProps) {
   const colors = useColors();
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
-  // Show/hide modal based on isVisible prop using imperative methods
-  useEffect(() => {
-    if (isVisible) {
-      bottomSheetRef.current?.present();
-    } else {
-      bottomSheetRef.current?.dismiss();
-    }
-  }, [isVisible]);
+  // Calculate snap points - use larger value to accommodate content
+  const snapPoints = useMemo(() => [SCREEN_HEIGHT * 0.5], []);
 
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({
     showErrorToast: true,
     errorMessage: 'Word audio playback failed',
   });
+
+  // Control sheet visibility using imperative methods with proper lifecycle
+  useEffect(() => {
+    if (isVisible && word) {
+      // Snap to first snap point to show
+      bottomSheetRef.current?.snapToIndex(0);
+    } else {
+      // Close the sheet
+      bottomSheetRef.current?.close();
+    }
+  }, [isVisible, word]);
 
   // Optimistic state for instant UI feedback
   const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useState(isInStudyList);
@@ -110,28 +117,33 @@ export function WordDetailsBottomSheet({
   };
 
   // Handle sheet dismissal via gesture or backdrop tap
-  const handleDismiss = useCallback(() => {
-    onClose();
-  }, [onClose]);
+  // onChange is called when sheet position changes (index becomes -1 when closed)
+  const handleSheetChange = useCallback(
+    (index: number) => {
+      if (index === -1) {
+        onClose();
+      }
+    },
+    [onClose],
+  );
 
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
 
-  // Don't render without data
-  if (!word) {
-    return null;
-  }
-
   return (
-    <BottomSheetModal
+    <BottomSheet
       ref={bottomSheetRef}
-      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
-      onDismiss={handleDismiss}
+      index={-1}
+      snapPoints={snapPoints}
+      enablePanDownToClose={true}
+      onChange={handleSheetChange}
       backdropComponent={renderBackdrop}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
       handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
     >
       <BottomSheetView style={styles.container}>
+        {!word ? null : (
+          <>
         {/* Arabic Word Title */}
         <View style={styles.titleSection}>
           <ColorCodedText
@@ -186,8 +198,10 @@ export function WordDetailsBottomSheet({
             />
           </View>
         </View>
+          </>
+        )}
       </BottomSheetView>
-    </BottomSheetModal>
+    </BottomSheet>
   );
 }
 
