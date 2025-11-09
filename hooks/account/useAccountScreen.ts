@@ -182,8 +182,13 @@ export const useAccountScreen = () => {
               // Delete all reading progress from database
               await ReadingProgressService.deleteAllProgress(user.id);
 
-              // Invalidate all reading progress related queries (including individual articles)
+              // Invalidate and refetch all reading progress queries
+              // Note: Invalidation alone doesn't trigger refetch because queries have refetchOnMount: false
               await readingProgressQueries.invalidateAll(queryClient, user.id);
+              // Explicitly refetch to update UI immediately
+              await queryClient.refetchQueries({
+                queryKey: readingProgressQueries.keys.bulk(user.id),
+              });
 
               lightFeedback();
               Alert.alert(STRINGS.SUCCESS, STRINGS.READING_PROGRESS_RESET_SUCCESSFULLY);
