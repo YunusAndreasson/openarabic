@@ -145,12 +145,13 @@ const ArticleContentInternal = function ArticleContent({
     duration: TIMING_CONFIG.FAST.duration, // 150ms for snappier feel
   });
 
-  // Trigger animation when content becomes available
+  // Trigger animation when content becomes available OR when article ID changes
+  // This ensures smooth fade transition when navigating between related articles
   React.useEffect(() => {
     if (sortedSentences && sortedSentences.length > 0) {
       startAnimation();
     }
-  }, [sortedSentences, startAnimation]);
+  }, [id, sortedSentences, startAnimation]);
 
   // Tooltip closure handler - only triggers when scroll begins, not during continuous scrolling
   // This prevents blocking scroll performance while still closing tooltip on user interaction
@@ -272,7 +273,8 @@ const ArticleContentInternal = function ArticleContent({
       {sortedSentences && sortedSentences.length > 0 ? (
         <View style={listContainerStyle}>
           {/* Sticky Parallax Header behind content - using Skia gradients for Android stability */}
-          <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
+          {/* Key ensures header remounts when navigating between related articles (forces image reload) */}
+          <ParallaxHeader key={`header-${id}`} article={article} colors={colors} scrollY={scrollY} />
           <AnimatedFlashList
             /**
              * TypeScript limitation with Reanimated's createAnimatedComponent:
