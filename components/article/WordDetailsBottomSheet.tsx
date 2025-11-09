@@ -22,7 +22,7 @@ export interface WordDetailsBottomSheetProps {
   isVisible: boolean;
   onClose: () => void;
   word: SentenceWord | null;
-  onAddToStudy: (word: SentenceWord) => Promise<void>;
+  onAddToStudy: (word: SentenceWord) => Promise<boolean>;
   isInStudyList?: boolean;
 }
 
@@ -107,7 +107,12 @@ export function WordDetailsBottomSheet({
     lightFeedback();
 
     try {
-      await onAddToStudy(word);
+      const success = await onAddToStudy(word);
+
+      // If operation failed (e.g., daily limit reached), revert optimistic update
+      if (!success) {
+        setOptimisticIsInStudyList(prev => !prev);
+      }
       // Success - optimistic state should now match actual state
     } catch (error) {
       // Revert optimistic update on error - use functional update

@@ -28,6 +28,7 @@ export const STRINGS = {
   DISPLAY_LANGUAGE_BILINGUAL_SUBTITLE: 'Show Arabic with English translations',
   DAILY_WORD_LIMIT: 'Daily word limit',
   DAILY_WORD_LIMIT_DESCRIPTION: 'Maximum number of words per day',
+  WORDS_REMAINING_TODAY: '{count} words remaining today',
 
   // Contact email - single source of truth
   CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',

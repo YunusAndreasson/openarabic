@@ -212,7 +212,7 @@ export const useStudyWordMutations = (
         // Check daily word limit first
         const canAdd = await canAddWord();
         if (!canAdd) {
-          showToast(DailyWordLimitStatus.REACHED, 3000, ToastType.IMPORTANT);
+          showToast(DailyWordLimitStatus.REACHED, 6000, ToastType.IMPORTANT);
           return;
         }
 
@@ -236,7 +236,7 @@ export const useStudyWordMutations = (
         // Increment daily word count and proceed
         const incrementSuccess = await incrementDailyWordCount();
         if (!incrementSuccess) {
-          showToast(DailyWordLimitStatus.REACHED, 3000, ToastType.IMPORTANT);
+          showToast(DailyWordLimitStatus.REACHED, 6000, ToastType.IMPORTANT);
           return;
         }
 
@@ -279,8 +279,8 @@ export const useStudyWordMutations = (
             const limitMessage =
               dailyWordLimit === 0
                 ? DailyWordLimitStatus.REACHED
-                : `Daily limit of ${dailyWordLimit} words reached`;
-            showToast(limitMessage, 4000, ToastType.IMPORTANT);
+                : `Daily limit of ${dailyWordLimit} words reached. You can increase it in Account settings.`;
+            showToast(limitMessage, 6000, ToastType.IMPORTANT);
             errorFeedback(); // Use error haptic for daily limit reached
             return undefined;
           }
@@ -299,8 +299,8 @@ export const useStudyWordMutations = (
             const limitMessage =
               dailyWordLimit === 0
                 ? DailyWordLimitStatus.REACHED
-                : `Daily limit of ${dailyWordLimit} words reached`;
-            showToast(limitMessage, 4000, ToastType.IMPORTANT);
+                : `Daily limit of ${dailyWordLimit} words reached. You can increase it in Account settings.`;
+            showToast(limitMessage, 6000, ToastType.IMPORTANT);
             errorFeedback(); // Use error haptic for daily limit reached
             return undefined;
           }

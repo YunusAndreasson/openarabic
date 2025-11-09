@@ -123,7 +123,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
     });
 
     it('should update optimistic state immediately on button press', async () => {
-      mockOnAddToStudy.mockResolvedValue(undefined);
+      mockOnAddToStudy.mockResolvedValue(true);
 
       const { getByText } = render(
         <WordDetailsBottomSheet
@@ -230,6 +230,36 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
 
       expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord);
     });
+
+    it('should rollback optimistic update when daily limit is reached', async () => {
+      // Mock daily limit reached (onAddToStudy returns false)
+      mockOnAddToStudy.mockResolvedValueOnce(false);
+
+      const { getByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={false}
+        />,
+      );
+
+      const addButton = getByText('ADD TO PRACTICE');
+      fireEvent.press(addButton);
+
+      // Optimistic update happens immediately
+      await waitFor(() => {
+        expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
+      });
+
+      // Wait for rollback when operation fails
+      await waitFor(() => {
+        expect(getByText('ADD TO PRACTICE')).toBeTruthy();
+      });
+
+      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord);
+    });
   });
 
   describe('Edge Cases', () => {
@@ -275,7 +305,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
     });
 
     it('should preserve optimistic state during word changes', async () => {
-      mockOnAddToStudy.mockResolvedValue(undefined);
+      mockOnAddToStudy.mockResolvedValue(true);
 
       const { getByText, rerender } = render(
         <WordDetailsBottomSheet
@@ -321,7 +351,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
 
   describe('Integration with Parent State', () => {
     it('should reflect parent state changes after successful mutation', async () => {
-      mockOnAddToStudy.mockResolvedValue(undefined);
+      mockOnAddToStudy.mockResolvedValue(true);
 
       const { getByText, rerender } = render(
         <WordDetailsBottomSheet

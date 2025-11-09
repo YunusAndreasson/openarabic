@@ -61,6 +61,8 @@ interface ReviewCardProps {
   onHesitationStart?: () => void;
   onHesitationEnd?: () => void;
   isHesitating?: SharedValue<boolean>;
+  // Audio props
+  onWordPress?: () => void;
 }
 
 export function ReviewCard({
@@ -76,6 +78,7 @@ export function ReviewCard({
   onHesitationStart,
   onHesitationEnd,
   isHesitating,
+  onWordPress,
 }: ReviewCardProps) {
   const colors = useColors();
 
@@ -220,6 +223,7 @@ export function ReviewCard({
     translation: showTranslation ? translation : undefined,
     showFirstLetterOnly: showHint, // Use synced state instead of SharedValue
     englishTranslation: englishTranslation || undefined, // Always pass English translation when available
+    onWordPress,
   };
 
   return (

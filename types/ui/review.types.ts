@@ -16,6 +16,8 @@ export interface WordDisplayProps {
   showFirstLetterOnly?: boolean;
   /** English translation for hint (when showFirstLetterOnly is true) */
   englishTranslation?: string;
+  /** Callback when user taps the word (to replay audio) */
+  onWordPress?: () => void;
 }
 
 /**

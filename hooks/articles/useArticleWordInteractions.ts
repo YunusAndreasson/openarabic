@@ -89,15 +89,16 @@ export function useArticleWordInteractions({
   /**
    * Add/remove word from study list
    * Updates local state optimistically and invalidates queries
+   * @returns true if operation succeeded, false if it failed (e.g., daily limit reached)
    */
   const handleAddWordToStudy = useCallback(
-    async (word: SentenceWord) => {
-      if (!user?.id || !word.root_id) return;
+    async (word: SentenceWord): Promise<boolean> => {
+      if (!user?.id || !word.root_id) return false;
 
       selectionFeedback();
 
       const result = await handleRootPress(word.root_id);
-      if (result === undefined) return;
+      if (result === undefined) return false;
 
       const isNowInStudy = result;
 
@@ -119,6 +120,8 @@ export function useArticleWordInteractions({
 
       // Refetch after invalidations complete to ensure fresh data
       await refetchStudyWords?.();
+
+      return true;
     },
     [user?.id, handleRootPress, queryClient, refetchStudyWords],
   );

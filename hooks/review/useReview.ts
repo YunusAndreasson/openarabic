@@ -66,6 +66,7 @@ interface UseReviewReturn {
   isHesitating: SharedValue<boolean>;
   handleHesitationStart: () => void;
   handleHesitationEnd: () => void;
+  handleReplayAudio: () => Promise<void>;
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
   isAudioPreloadingComplete: boolean;
@@ -608,6 +609,24 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     hesitationWordKeyRef.current = '';
   }, []); // Empty deps - all values are stable (SharedValue, ref)
 
+  // Replay audio for current word (passed to WordDisplay via ReviewCard)
+  // This callback is provided to ReviewContent via context and used in WordDisplay
+  const handleReplayAudio = useCallback(async () => {
+    if (!currentWord?.root?.audio_url) return;
+
+    // Stop any currently playing audio first to avoid race conditions
+    try {
+      await audioPlayerRef.current.stop();
+    } catch {
+      // Ignore stop errors - audio might not be playing
+    }
+
+    const audioUrl = generateAudioUrl(currentWord.root.audio_url);
+    if (audioUrl) {
+      playAudio(audioUrl).catch(handleError);
+    }
+  }, [currentWord, playAudio]);
+
   const handleClose = useCallback(() => {
     const mounted = { current: true };
 
@@ -717,6 +736,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     isHesitating,
     handleHesitationStart,
     handleHesitationEnd,
+    handleReplayAudio,
     isAudioPreloading,
     audioPreloadProgress,
     isAudioPreloadingComplete,

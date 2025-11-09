@@ -1,11 +1,12 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
+import { Toast } from '@/components/Toast';
 import {
   CompletionScreen,
   ReviewBottomActions,
@@ -18,9 +19,25 @@ import { PulsatingLoader } from '@/components/ui';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
+import { ToastType } from '@/types/enums';
 import { useReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
+
+// Context for review screen toast (works inside modal)
+interface ReviewToastContextType {
+  showToast: (message: string, duration?: number, type?: ToastType) => void;
+}
+
+const ReviewToastContext = createContext<ReviewToastContextType | null>(null);
+
+export const useReviewToast = (): ReviewToastContextType => {
+  const context = useContext(ReviewToastContext);
+  if (!context) {
+    throw new Error('useReviewToast must be used within ReviewContent');
+  }
+  return context;
+};
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -50,6 +67,32 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const insets = useSafeAreaInsets();
   const colors = useColors();
 
+  // Local toast state for the review screen (modal)
+  const [toastState, setToastState] = useState<{
+    visible: boolean;
+    message: string;
+    duration: number;
+    type: ToastType;
+  }>({
+    visible: false,
+    message: '',
+    duration: 3000,
+    type: ToastType.INFO,
+  });
+
+  const showLocalToast = useCallback(
+    (message: string, duration: number = 3000, type: ToastType = ToastType.INFO) => {
+      setToastState({ visible: true, message, duration, type });
+    },
+    [],
+  );
+
+  const handleToastClose = useCallback(() => {
+    setToastState(prev => ({ ...prev, visible: false }));
+  }, []);
+
+  const toastContextValue = useMemo(() => ({ showToast: showLocalToast }), [showLocalToast]);
+
   const {
     currentSentence,
     currentMeaning,
@@ -68,6 +111,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     isHesitating,
     handleHesitationStart,
     handleHesitationEnd,
+    handleReplayAudio,
     isAudioPreloading,
     audioPreloadProgress,
     isAudioPreloadingComplete,
@@ -164,47 +208,70 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   }
 
   return (
-    <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
-      {/* Progress header at top of screen */}
-      <View style={{ paddingTop: LAYOUT.SPACING.XLARGE }}>
-        <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
-      </View>
-
-      {/* Main content area */}
-      <View
-        style={[
-          baseStyles.contentContainer,
-          {
-            paddingTop: LAYOUT.SPACING.MEDIUM, // Less padding since header is above
-            paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
-          },
-        ]}
-      >
-        <View style={baseStyles.wordArea}>
-          <ReviewCard
-            key={currentWordKey}
-            word={currentSentence.wordForm}
-            currentWord={currentWord}
-            onSwipeLeft={handleSwipeLeft}
-            onSwipeRight={handleSwipeRight}
-            opacityStyle={transparentStyle}
-            isUpdating={isUpdating}
-            testID="review-card"
-            translation={currentMeaning}
-            showTranslation={showTranslation}
-            onHesitationStart={handleHesitationStart}
-            onHesitationEnd={handleHesitationEnd}
-            isHesitating={isHesitating}
-          />
+    <ReviewToastContext value={toastContextValue}>
+      <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
+        {/* Progress header at top of screen */}
+        <View style={{ paddingTop: LAYOUT.SPACING.XLARGE }}>
+          <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
         </View>
 
-        <ReviewBottomActions
-          onKnownPress={handleSwipeRight}
-          onUnknownPress={handleSwipeLeft}
-          disabled={isUpdating}
-        />
+        {/* Main content area */}
+        <View
+          style={[
+            baseStyles.contentContainer,
+            {
+              paddingTop: LAYOUT.SPACING.MEDIUM, // Less padding since header is above
+              paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
+            },
+          ]}
+        >
+          <View style={baseStyles.wordArea}>
+            <ReviewCard
+              key={currentWordKey}
+              word={currentSentence.wordForm}
+              currentWord={currentWord}
+              onSwipeLeft={handleSwipeLeft}
+              onSwipeRight={handleSwipeRight}
+              opacityStyle={transparentStyle}
+              isUpdating={isUpdating}
+              testID="review-card"
+              translation={currentMeaning}
+              showTranslation={showTranslation}
+              onHesitationStart={handleHesitationStart}
+              onHesitationEnd={handleHesitationEnd}
+              isHesitating={isHesitating}
+              onWordPress={handleReplayAudio}
+            />
+          </View>
+
+          <ReviewBottomActions />
+        </View>
+
       </View>
-    </View>
+
+      {/* Local toast for modal - appears on top with maximum z-index */}
+      {toastState.visible && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: LAYOUT.Z_INDEX.TOP_OVERLAY,
+            pointerEvents: 'box-none',
+          }}
+        >
+          <Toast
+            visible={toastState.visible}
+            message={toastState.message}
+            duration={toastState.duration}
+            type={toastState.type}
+            onClose={handleToastClose}
+          />
+        </View>
+      )}
+    </ReviewToastContext>
   );
 }
 

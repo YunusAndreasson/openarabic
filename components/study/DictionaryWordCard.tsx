@@ -131,7 +131,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
                 progress={stabilityProgress}
                 height={5}
                 fillColor={colors[progressColor]}
-                backgroundColor={colors.elevation1}
+                backgroundColor={colors.progressBackground}
               />
             </View>
           </BaseCard>

@@ -2,7 +2,7 @@
 import { TimePicker } from '@/components/ui';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import React, { useCallback, useMemo, type FC } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { Alert, Linking, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,6 +20,7 @@ import { STRINGS } from '@/constants/strings';
 import { useTutorialContext } from '@/components/providers';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
+import { useDailyWordLimit } from '@/hooks/vocabulary';
 import pkg from '@/package.json';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
@@ -126,6 +127,19 @@ const AccountScreen: FC = () => {
 
   // Tutorial management
   const { resetAllTutorials } = useTutorialContext();
+
+  // Daily word limit tracking
+  const { getRemainingWords } = useDailyWordLimit();
+  const [wordsRemainingToday, setWordsRemainingToday] = useState<number | null>(null);
+
+  // Fetch remaining words on mount
+  useEffect(() => {
+    const fetchRemainingWords = async () => {
+      const remaining = await getRemainingWords();
+      setWordsRemainingToday(remaining === Infinity ? null : remaining);
+    };
+    fetchRemainingWords();
+  }, [getRemainingWords]);
 
   const currentDailyWordLimitText = useMemo(() => {
     if (currentDailyWordLimit === undefined || currentDailyWordLimit === null) {
@@ -430,6 +444,11 @@ const AccountScreen: FC = () => {
           <SettingsCard
             icon="book"
             label={STRINGS.DAILY_WORD_LIMIT}
+            subtitle={
+              wordsRemainingToday !== null
+                ? STRINGS.WORDS_REMAINING_TODAY.replace('{count}', String(wordsRemainingToday))
+                : undefined
+            }
             rightType="text-chevron"
             rightText={currentDailyWordLimitText}
             onPress={() => handlePickerOpen('dailyWordLimit')}

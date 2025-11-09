@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -8,9 +8,11 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { ToastType } from '@/types/enums';
 import type { WordDisplayProps } from '@/types/ui/review.types';
-import { selectionFeedback } from '@/utils/haptics';
+import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 import { createTextStyle, type BatchedTextColors } from '@/utils/textStyleUtils';
+import { useReviewToast } from '@/app/(tabs)/study/review';
 
 const WORD_DISPLAY_CONSTANTS = {
   ARABIC_FONT_SIZE: LAYOUT.SPACING.XXLARGE * 2, // Very large for Arabic (64px)
@@ -63,8 +65,10 @@ export function WordDisplay({
   translation,
   showFirstLetterOnly = false,
   englishTranslation,
+  onWordPress,
 }: WordDisplayProps) {
   const colors = useColors();
+  const { showToast } = useReviewToast();
 
   // Color batching
   const batchedColors: BatchedTextColors = {
@@ -126,20 +130,43 @@ export function WordDisplay({
     children: hesitationHint,
   };
 
+  const handleWordPress = () => {
+    if (onWordPress) {
+      lightFeedback();
+      onWordPress();
+    }
+  };
+
+  const handleHintPress = () => {
+    lightFeedback();
+    showToast(
+      'Swipe right if you knew it after the hint. Swipe left if you still need to see the word.',
+      8000,
+      ToastType.INFO,
+    );
+  };
+
   return (
     <View style={containerStyle}>
-      <View style={STATIC_STYLES.arabicContainer}>
+      <Pressable
+        style={STATIC_STYLES.arabicContainer}
+        onPress={handleWordPress}
+        disabled={!onWordPress}
+      >
         <ThemedText {...arabicTextProps} />
-      </View>
+      </Pressable>
       {translation && (
         <Animated.View style={[STATIC_STYLES.translationContainer, translationAnimatedStyle]}>
           <ThemedText {...translationTextProps} />
         </Animated.View>
       )}
       {hesitationHint && (
-        <View style={[STATIC_STYLES.translationContainer, { marginTop: LAYOUT.SPACING.SMALL }]}>
+        <Pressable
+          style={[STATIC_STYLES.translationContainer, { marginTop: LAYOUT.SPACING.SMALL }]}
+          onPress={handleHintPress}
+        >
           <ThemedText {...hesitationHintProps} />
-        </View>
+        </Pressable>
       )}
     </View>
   );

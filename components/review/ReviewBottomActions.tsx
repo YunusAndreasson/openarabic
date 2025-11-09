@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps, FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations';
+import { ToastType } from '@/types/enums';
 import { useColors } from '@/hooks/theme/useColors';
 import { ReviewAction } from '@/types/enums';
-import { selectionFeedback } from '@/utils/haptics';
+import { lightFeedback } from '@/utils/haptics';
+import { useReviewToast } from '@/app/(tabs)/study/review';
 
 const BOTTOM_ACTIONS_CONSTANTS = {
   ICON_SIZE: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
@@ -59,21 +59,12 @@ const createIconProps = (name: ComponentProps<typeof Ionicons>['name'], color: s
 });
 
 interface ReviewBottomActionsProps {
-  onKnownPress?: () => void;
-  onUnknownPress?: () => void;
-  disabled?: boolean;
+  // No props needed - these are now visual indicators only
 }
 
-export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
-  onKnownPress,
-  onUnknownPress,
-  disabled = false,
-}) => {
+export const ReviewBottomActions: FC<ReviewBottomActionsProps> = () => {
   const colors = useColors();
-
-  // Press animations for both buttons
-  const unknownPressAnimation = usePressAnimation({ type: 'button' });
-  const knownPressAnimation = usePressAnimation({ type: 'button' });
+  const { showToast } = useReviewToast();
 
   const tintError = colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
   const tintSuccess = colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
@@ -84,46 +75,30 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
   const leftTextStyle = [STATIC_STYLES.indicatorText, { color: colors.error }];
   const rightTextStyle = [STATIC_STYLES.indicatorText, { color: colors.success }];
 
-  // Generic press handler to reduce duplication
-  const createPressHandler = (callback?: () => void) => () => {
-    if (!disabled && callback) {
-      selectionFeedback();
-      callback();
-    }
+  const handleIndicatorPress = () => {
+    lightFeedback();
+    showToast(
+      "Swipe right if you know the word. Swipe left if you don't.",
+      8000,
+      ToastType.INFO,
+    );
   };
-
-  const handleUnknownPress = createPressHandler(onUnknownPress);
-  const handleKnownPress = createPressHandler(onKnownPress);
 
   return (
     <View style={STATIC_STYLES.container}>
-      {/* Left indicator - Unknown */}
-      <Pressable
-        style={STATIC_STYLES.indicatorContainer}
-        onPress={handleUnknownPress}
-        onPressIn={unknownPressAnimation.handlePressIn}
-        onPressOut={unknownPressAnimation.handlePressOut}
-        disabled={disabled}
-        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-      >
-        <Animated.View style={[leftIndicatorStyle, unknownPressAnimation.animatedStyle]}>
+      {/* Left indicator - Unknown (tappable for educational toast) */}
+      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleIndicatorPress}>
+        <View style={leftIndicatorStyle}>
           <Ionicons {...createIconProps('chevron-back', colors.error)} />
-        </Animated.View>
+        </View>
         <ThemedText style={leftTextStyle}>{ReviewAction.DONT_KNOW}</ThemedText>
       </Pressable>
 
-      {/* Right indicator - Known */}
-      <Pressable
-        style={STATIC_STYLES.indicatorContainer}
-        onPress={handleKnownPress}
-        onPressIn={knownPressAnimation.handlePressIn}
-        onPressOut={knownPressAnimation.handlePressOut}
-        disabled={disabled}
-        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-      >
-        <Animated.View style={[rightIndicatorStyle, knownPressAnimation.animatedStyle]}>
+      {/* Right indicator - Known (tappable for educational toast) */}
+      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleIndicatorPress}>
+        <View style={rightIndicatorStyle}>
           <Ionicons {...createIconProps('chevron-forward', colors.success)} />
-        </Animated.View>
+        </View>
         <ThemedText style={rightTextStyle}>{ReviewAction.KNOW}</ThemedText>
       </Pressable>
     </View>
