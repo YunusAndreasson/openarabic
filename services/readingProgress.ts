@@ -240,14 +240,43 @@ export class ReadingProgressService {
   /**
    * Delete all reading progress for a user
    * This removes all reading positions and progress percentages
+   * If DELETE is blocked by RLS, falls back to resetting progress to 0
    */
   static async deleteAllProgress(userId: string): Promise<void> {
-    await executeQuery(() => supabase.from('reading_progress').delete().eq('user_id', userId), {
-      toastMessage: STRINGS.FAILED_TO_RESET_READING_PROGRESS,
-      analyticsEventName: 'Reading_Progress_Delete_All_Error',
-      analyticsProperties: { userId },
-      showToast: false, // Silent error - caller will handle alert
-    });
+    // First attempt: DELETE all rows
+    const deleteResult = await executeQuery(
+      () => supabase.from('reading_progress').delete().eq('user_id', userId).select(),
+      {
+        toastMessage: STRINGS.FAILED_TO_RESET_READING_PROGRESS,
+        analyticsEventName: 'Reading_Progress_Delete_All_Error',
+        analyticsProperties: { userId },
+        showToast: false, // Silent error - caller will handle alert
+      },
+    );
+
+    // Verify rows were actually deleted
+    if (!deleteResult || (Array.isArray(deleteResult) && deleteResult.length === 0)) {
+      // No rows deleted - likely RLS policy blocking DELETE
+      // Fallback: UPDATE all progress to 0 (RLS might allow UPDATE but not DELETE)
+      console.warn(
+        '[ReadingProgress] DELETE blocked, attempting UPDATE fallback to reset progress to 0',
+      );
+
+      await executeQuery(
+        () =>
+          supabase
+            .from('reading_progress')
+            .update({ last_sentence_read: 0 })
+            .eq('user_id', userId)
+            .select(),
+        {
+          toastMessage: STRINGS.FAILED_TO_RESET_READING_PROGRESS,
+          analyticsEventName: 'Reading_Progress_Reset_Update_Error',
+          analyticsProperties: { userId },
+          showToast: false,
+        },
+      );
+    }
   }
 }
 
