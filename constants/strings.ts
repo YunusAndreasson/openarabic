@@ -22,6 +22,8 @@ export const STRINGS = {
   AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order in the Saved tab',
   HAPTICS: 'Haptic feedback',
   HAPTICS_DESCRIPTION: 'Vibration for button presses and interactions',
+  WORD_DETAILS: 'Word details',
+  WORD_DETAILS_DESCRIPTION: 'Show detailed information when tapping words',
   DISPLAY_LANGUAGE: 'Display language',
   DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
   DISPLAY_LANGUAGE_ARABIC_SUBTITLE: 'Show only Arabic text',

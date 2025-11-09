@@ -24,6 +24,7 @@ export interface SettingsState {
   displayLanguagePreference: DisplayLanguagePreference;
   dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
   hapticsEnabled: boolean; // Vibration for button presses and interactions
+  wordDetailsEnabled: boolean; // Show word details tooltip when tapping words
 }
 
 const initialState: SettingsState = {
@@ -39,6 +40,7 @@ const initialState: SettingsState = {
   displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH, // Default to Arabic + English
   dailyWordLimit: 10, // Default to 10 words per day for getting started
   hapticsEnabled: true, // Default to enabled for haptic feedback
+  wordDetailsEnabled: true, // Default to showing word details tooltip
 };
 
 const settingsSlice = createSlice({
@@ -69,6 +71,9 @@ const settingsSlice = createSlice({
     setHapticsEnabled: (state, action: PayloadAction<boolean>) => {
       state.hapticsEnabled = action.payload;
     },
+    setWordDetailsEnabled: (state, action: PayloadAction<boolean>) => {
+      state.wordDetailsEnabled = action.payload;
+    },
   },
 });
 
@@ -81,5 +86,6 @@ export const {
   setDisplayLanguagePreference,
   setDailyWordLimit,
   setHapticsEnabled,
+  setWordDetailsEnabled,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

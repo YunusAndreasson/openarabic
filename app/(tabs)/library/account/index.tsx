@@ -29,6 +29,7 @@ import {
   setDailyWordLimit,
   setDisplayLanguagePreference,
   setHapticsEnabled,
+  setWordDetailsEnabled,
   type AudioLanguagePreference,
   type DisplayLanguagePreference,
 } from '@/store/settingsSlice';
@@ -92,6 +93,7 @@ const AccountScreen: FC = () => {
   const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
   const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
   const hapticsEnabled = useAppSelectorShallow(state => state.settings.hapticsEnabled);
+  const wordDetailsEnabled = useAppSelectorShallow(state => state.settings.wordDetailsEnabled);
   const dispatch = useAppDispatch();
 
   const [activePicker, setActivePicker] = React.useState<ActivePicker>(null);
@@ -219,6 +221,15 @@ const AccountScreen: FC = () => {
     (enabled: boolean) => {
       selectionFeedback();
       dispatch(setHapticsEnabled(enabled));
+    },
+    [dispatch],
+  );
+
+  // Word details toggle handler
+  const handleWordDetailsToggle = useCallback(
+    (enabled: boolean) => {
+      selectionFeedback();
+      dispatch(setWordDetailsEnabled(enabled));
     },
     [dispatch],
   );
@@ -452,6 +463,14 @@ const AccountScreen: FC = () => {
             rightType="text-chevron"
             rightText={currentDailyWordLimitText}
             onPress={() => handlePickerOpen('dailyWordLimit')}
+          />
+          <SettingsCard
+            icon="information-circle"
+            label={STRINGS.WORD_DETAILS}
+            subtitle={STRINGS.WORD_DETAILS_DESCRIPTION}
+            rightType="toggle"
+            toggleValue={wordDetailsEnabled}
+            onToggleChange={handleWordDetailsToggle}
           />
           <SettingsCard
             icon="notifications"

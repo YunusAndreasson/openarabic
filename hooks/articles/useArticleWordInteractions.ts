@@ -6,6 +6,7 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useModalState } from '@/hooks/ui/useModalState';
+import { useAppSelectorShallow } from '@/store/hooks';
 import type { RootId } from '@/types/branded.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
@@ -28,6 +29,7 @@ export function useArticleWordInteractions({
   refetchStudyWords,
 }: UseArticleWordInteractionsOptions) {
   const { user } = useAuth();
+  const wordDetailsEnabled = useAppSelectorShallow(state => state.settings.wordDetailsEnabled);
   const queryClient = useQueryClient();
 
   // Tooltip state for word tap preview
@@ -77,14 +79,21 @@ export function useArticleWordInteractions({
   /**
    * Open word details modal from tooltip
    * Closes tooltip and transfers word data to modal
+   * Only opens if wordDetailsEnabled setting is true
    */
   const handleOpenWordDetails = useCallback(() => {
+    if (!wordDetailsEnabled) {
+      // If setting is disabled, just close the tooltip without showing details
+      setActiveTooltip(null);
+      return;
+    }
+
     const tooltip = activeTooltipRef.current;
     if (tooltip?.word) {
       setActiveTooltip(null);
       wordDetailsModal.open(tooltip.word);
     }
-  }, [wordDetailsModal.open]);
+  }, [wordDetailsModal.open, wordDetailsEnabled]);
 
   /**
    * Add/remove word from study list
