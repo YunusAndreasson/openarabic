@@ -1,10 +1,23 @@
 import type { ArticleId, AuthorId, CategoryId, RootId } from '@/types/branded.types';
 
-export const getArticleRoute = (id: ArticleId, headerTitle?: string): string => {
+export const getArticleRoute = (
+  id: ArticleId,
+  headerTitle?: string,
+  disableAutoScroll?: boolean,
+): string => {
   const base = `/article/${id}`;
-  if (!headerTitle) return base;
-  const encodedTitle = encodeURIComponent(headerTitle);
-  return `${base}?headerTitle=${encodedTitle}`;
+  const params: string[] = [];
+
+  if (headerTitle) {
+    params.push(`headerTitle=${encodeURIComponent(headerTitle)}`);
+  }
+
+  if (disableAutoScroll) {
+    params.push('disableAutoScroll=true');
+  }
+
+  if (params.length === 0) return base;
+  return `${base}?${params.join('&')}`;
 };
 
 export const getCategoryFilterRoute = (categoryId: CategoryId, name?: string): string => {

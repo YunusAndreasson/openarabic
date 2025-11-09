@@ -69,6 +69,7 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
             summary={String(info.item.summary)}
             title={info.item.title}
             testID={`slider-article-${info.item.id}`}
+            isFeaturedArticle={true}
           />
         </View>
       );

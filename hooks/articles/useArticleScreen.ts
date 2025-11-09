@@ -26,6 +26,7 @@ import { selectionFeedback } from '@/utils/haptics';
 export interface UseArticleScreenOptions {
   id: string;
   showToast: (message: string, duration: number, type: ToastType) => void;
+  disableAutoScroll?: boolean;
 }
 
 /**
@@ -35,7 +36,11 @@ export interface UseArticleScreenOptions {
  * @param options - Screen configuration
  * @returns All state, handlers, and props needed for rendering
  */
-export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
+export function useArticleScreen({
+  id,
+  showToast,
+  disableAutoScroll = false,
+}: UseArticleScreenOptions) {
   const { user } = useAuth();
 
   // Parse article ID
@@ -287,6 +292,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
       isFlashListReady &&
       !isLoadingArticle &&
       article &&
+      !disableAutoScroll &&
       hadExistingProgressOnMount &&
       initialLastSentenceRead > 0 &&
       totalSentences > 0
@@ -364,6 +370,7 @@ export function useArticleScreen({ id, showToast }: UseArticleScreenOptions) {
     isLoadingArticle,
     article,
     sortedSentences,
+    disableAutoScroll,
     hadExistingProgressOnMount,
     initialLastSentenceRead,
     showToast,

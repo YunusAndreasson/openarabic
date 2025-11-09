@@ -38,6 +38,8 @@ const ArticleScreenContentComparison = (
 const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const colors = useColors();
   const { showToast } = useToast();
+  const params = useLocalSearchParams<{ disableAutoScroll?: string }>();
+  const disableAutoScroll = params.disableAutoScroll === 'true';
 
   // Extract all business logic into hook
   const {
@@ -63,7 +65,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleOpenWordDetails,
     handleAddWordToStudy,
     handleFlashListLoad,
-  } = useArticleScreen({ id, showToast });
+  } = useArticleScreen({ id, showToast, disableAutoScroll });
 
   // Tutorial management
   const { shouldShowTutorial, completeTutorial } = useTutorialContext();

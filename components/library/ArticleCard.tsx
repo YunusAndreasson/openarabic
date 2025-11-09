@@ -51,6 +51,7 @@ type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
   article: Article; // Full article object for navigation
   prefetch?: boolean; // Enable prefetching for better performance
   isRelatedArticle?: boolean; // For related articles navigation
+  isFeaturedArticle?: boolean; // For featured articles - disables auto-scroll to reading position
 };
 
 // Static styles object to prevent recreation
@@ -102,6 +103,7 @@ export function ArticleCard({
   article,
   prefetch: _prefetch = true,
   isRelatedArticle: _isRelatedArticle = false,
+  isFeaturedArticle = false,
 }: ArticleCardProps): JSX.Element {
   const colors = useColors();
   // For mobile-only apps, use constant screen width
@@ -152,7 +154,8 @@ export function ArticleCard({
   const authorDisplayText = formatArticleMetadata(author, category, readingTime);
 
   // Generate article route with proper parameters
-  const articleHref = getArticleRoute(article.id, article.title);
+  // Featured articles should start from the beginning, not resume from saved position
+  const articleHref = getArticleRoute(article.id, article.title, isFeaturedArticle);
 
   const router = useRouter();
 
