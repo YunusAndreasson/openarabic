@@ -407,6 +407,6 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.TINY, // Subtle loading indicator
   },
   vocabularySection: {
-    gap: LAYOUT.SPACING.MEDIUM, // 12px gap between VocabularyStatCards and RecommendationCard
+    gap: LAYOUT.SPACING.SMALL, // 8px gap for perfect consistency with stat cards
   },
 });
