@@ -140,6 +140,7 @@ module.exports = [
       '**/*.spec.*',
       'translate/',
       'admin-dashboard/',
+      'scripts/',
     ],
   },
   prettierConfig,

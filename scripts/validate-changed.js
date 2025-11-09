@@ -44,12 +44,10 @@ function filterFilesByExtension(files, extensions) {
   return files.filter(file => extensions.some(ext => file.endsWith(ext)));
 }
 
-function isTestFile(file) {
-  return (
-    file.includes('/__tests__/') ||
-    file.includes('/__tests__') ||
-    file.match(/\.test\.(ts|tsx|js|jsx)$/)
-  );
+function isExcludedFile(file) {
+  // Files that are excluded from tsconfig.json
+  const excludedPaths = ['admin-dashboard/', 'translate/', '__tests__/', 'scripts/'];
+  return excludedPaths.some(path => file.startsWith(path));
 }
 
 function runCommand(command, args, label) {
@@ -250,9 +248,9 @@ async function main() {
 
   const tasks = [];
 
-  // TypeScript type checking (only .ts/.tsx files changed, excluding tests)
+  // TypeScript type checking (only .ts/.tsx files changed, excluding tests, scripts, and other excluded paths)
   const tsFiles = codeFiles.filter(
-    file => !isTestFile(file) && (file.endsWith('.ts') || file.endsWith('.tsx')),
+    file => !isExcludedFile(file) && (file.endsWith('.ts') || file.endsWith('.tsx')),
   );
   if (tsFiles.length > 0) {
     if (process.env.DEBUG_VALIDATE) {
@@ -270,8 +268,8 @@ async function main() {
     );
   }
 
-  // ESLint - only non-test code files
-  const filesToCheck = allChangedFiles.filter(file => !isTestFile(file));
+  // ESLint - only non-excluded code files
+  const filesToCheck = allChangedFiles.filter(file => !isExcludedFile(file));
   if (filesToCheck.length > 0) {
     const codeFilesToLint = filesToCheck.filter(file =>
       ['.ts', '.tsx', '.js', '.jsx'].some(ext => file.endsWith(ext)),

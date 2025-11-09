@@ -6,10 +6,12 @@ import { APP_SESSION_ID, fsrsQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
+import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
+import { calculateProgressPercentage } from '@/utils/progressUtils';
 
 interface MultipleFeaturedArticlesResult {
   articles: Article[];
@@ -67,6 +69,29 @@ export function useMultipleFeaturedArticles(
   });
 
   const hasAnyStudyWords = allStudyWords.length > 0;
+
+  // Get reading progress for all articles to filter for unread/low-progress
+  const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
+  const { data: progressMap } = useSafeBulkReadingProgress(articleIds);
+
+  // Filter articles to prioritize unread or low-progress articles (< 20%)
+  const unreadOrLowProgressArticles = useMemo(() => {
+    if (!progressMap) return articlesData;
+
+    return articlesData.filter(article => {
+      const progress = progressMap.get(article.id);
+
+      // Include if unread (no progress entry)
+      if (!progress) return true;
+
+      // Include if low progress (< 20%)
+      const progressPercentage = calculateProgressPercentage(
+        progress.last_sentence_read,
+        progress.total_sentences,
+      );
+      return progressPercentage < 20;
+    });
+  }, [articlesData, progressMap]);
 
   // Cache the initial selection to prevent flashing
   const initialSelectionRef = useRef<CachedMultipleSelection | null>(null);
@@ -146,7 +171,7 @@ export function useMultipleFeaturedArticles(
 
         // Strategy 1: If user has due words and enough articles with those words
         if (user?.id && hasDueWordArticles && stableDueWordSet.size > 0) {
-          const dueWordArticles = articlesData.filter(article =>
+          const dueWordArticles = unreadOrLowProgressArticles.filter(article =>
             article.article_sentences?.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
                 stableDueWordSet.has(word.root_id),
@@ -163,7 +188,7 @@ export function useMultipleFeaturedArticles(
             };
           } else {
             intelligentSelection = {
-              articles: getRandomItems(articlesData, MAX_FEATURED_ARTICLES),
+              articles: getRandomItems(unreadOrLowProgressArticles, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'random' as const,
               dueWordRootIds: stableDueWordSet,
@@ -177,7 +202,7 @@ export function useMultipleFeaturedArticles(
           stableDifficultWordSet.size > 0 &&
           hasAnyStudyWords
         ) {
-          const difficultWordArticles = articlesData.filter(article =>
+          const difficultWordArticles = unreadOrLowProgressArticles.filter(article =>
             article.article_sentences?.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
                 stableDifficultWordSet.has(word.root_id),
@@ -194,7 +219,7 @@ export function useMultipleFeaturedArticles(
             };
           } else {
             intelligentSelection = {
-              articles: getRandomItems(articlesData, MAX_FEATURED_ARTICLES),
+              articles: getRandomItems(unreadOrLowProgressArticles, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'random' as const,
               dueWordRootIds: stableDueWordSet,
@@ -203,7 +228,7 @@ export function useMultipleFeaturedArticles(
         }
         // Strategy 3: If new user, show beginner-friendly articles
         else if (!user?.id || !hasAnyStudyWords) {
-          const beginnerArticles = getBeginnerArticles(articlesData);
+          const beginnerArticles = getBeginnerArticles(unreadOrLowProgressArticles);
           if (beginnerArticles.length > 0) {
             intelligentSelection = {
               articles: getRandomItems(beginnerArticles, MAX_FEATURED_ARTICLES),
@@ -213,7 +238,7 @@ export function useMultipleFeaturedArticles(
             };
           } else {
             intelligentSelection = {
-              articles: getRandomItems(articlesData, MAX_FEATURED_ARTICLES),
+              articles: getRandomItems(unreadOrLowProgressArticles, MAX_FEATURED_ARTICLES),
               reason: STRINGS.RECOMMENDED,
               type: 'random' as const,
               dueWordRootIds: stableDueWordSet,
@@ -223,7 +248,7 @@ export function useMultipleFeaturedArticles(
         // Strategy 4: Fallback to random selection
         else {
           intelligentSelection = {
-            articles: getRandomItems(articlesData, MAX_FEATURED_ARTICLES),
+            articles: getRandomItems(unreadOrLowProgressArticles, MAX_FEATURED_ARTICLES),
             reason: STRINGS.RECOMMENDED,
             type: 'random' as const,
             dueWordRootIds: stableDueWordSet,
@@ -249,9 +274,9 @@ export function useMultipleFeaturedArticles(
         };
       }
     } else {
-      // For refreshes, always perform new selection for variety
+      // For refreshes, always perform new selection for variety from unread/low-progress articles
       result = {
-        articles: getRandomItems(articlesData, MAX_FEATURED_ARTICLES),
+        articles: getRandomItems(unreadOrLowProgressArticles, MAX_FEATURED_ARTICLES),
         reason: STRINGS.RECOMMENDED,
         type: 'random' as const,
         dueWordRootIds: stableDueWordSet,
@@ -271,7 +296,7 @@ export function useMultipleFeaturedArticles(
     hasDifficultWordArticles,
     stableDifficultWordRootIds, // Use stable array instead of Set
     hasAnyStudyWords,
-    articlesData,
+    unreadOrLowProgressArticles, // Use filtered articles instead of all articlesData
     // REMOVED: dueWordRootIds - Already tracked via stableDueWordRootIds
     // Including the Set directly caused infinite loops because Sets get new references
   ]);

@@ -211,6 +211,65 @@ function isHighRiskPreposition(pattern: string): boolean {
 }
 
 /**
+ * Standalone pronouns that should not be treated as roots in pure particle combinations
+ *
+ * These are independent pronouns (subject/object) that, when combined with only a
+ * conjunction/particle prefix (و، ف، etc.), create pure particle combinations
+ * that provide no compositional insight.
+ *
+ * Examples of what SHOULD NOT be colored:
+ *   - وَهُوَ = و (and) + هُوَ (he) → pure particles, no root-based word
+ *   - فَهِيَ = ف (then) + هِيَ (she) → pure particles, no root-based word
+ *
+ * Note: These pronouns ARE colored when attached to prepositions or with suffixes:
+ *   - بِهِ = ب (with) + ه (him) → shows preposition + pronoun attachment ✓
+ *   - هُوَ + suffix would be colored ✓
+ */
+const STANDALONE_PRONOUNS = ['هو', 'هي', 'هم', 'هن', 'هما', 'انتم', 'انتن', 'انتما', 'نحن'];
+
+/**
+ * Check if this is a pure particle combination with no compositional root
+ *
+ * Pure particle combinations are conjunctions/particles + pronouns with no root-based word.
+ * These provide no educational value when colored.
+ *
+ * @param prefixes - Detected prefixes
+ * @param remaining - Remaining text after removing components
+ * @returns true if this is a pure particle combination that should not be colored
+ */
+function isPureParticleCombination(
+  prefixes: AnalyzedComponent[],
+  remaining: string,
+): boolean {
+  // Only check if we have exactly 1 prefix and no suffix/infix
+  if (prefixes.length !== 1) {
+    return false;
+  }
+
+  const prefix = prefixes[0];
+  if (!prefix) {
+    return false;
+  }
+
+  // Check if remaining text is a standalone pronoun
+  const remainingNormalized = remaining.trim();
+  if (STANDALONE_PRONOUNS.includes(remainingNormalized)) {
+    // Check if prefix is a conjunction or particle (و، ف، etc.)
+    // These roles indicate pure particles, not prepositions
+    const isConjunctionOrParticle =
+      prefix.role === GrammaticalRole.CONJUNCTION || prefix.role === GrammaticalRole.PARTICLE;
+
+    if (isConjunctionOrParticle) {
+      // This is a pure particle combination (conjunction + pronoun)
+      // Example: و + هو = "and he" (no root-based word)
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Check if analysis result represents a single standalone component with no compositional structure
  *
  * Core principle: Color-coding is educational when it shows how Arabic words are COMPOSED
@@ -1561,11 +1620,13 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // Examples that WILL be skipped:
   //   - "بل → but rather" - single conjunction, entire word consumed, no composition
   //   - "ثم → then" - single particle, entire word consumed, no composition
+  //   - "وَهُوَ → and he" - conjunction + pronoun, pure particles, no composition
   //
   // Examples that will NOT be skipped (still colored):
   //   - "فإذا → so when" - 2 prefixes (ف + إذا), shows composition ✓
   //   - "والله → and by Allah" - prefix + remaining root, shows composition ✓
   //   - "كِتَابٌ → book" - has diacritic, educational value ✓
+  //   - "بِهِ → with him" - preposition + pronoun, shows composition ✓
   //
   // Performance benefit: Saves expensive color segment generation and rendering
   // for words that provide no educational value when colored.
@@ -1579,16 +1640,22 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     normalized,
   );
 
+  // Check if this is a pure particle combination (conjunction + pronoun)
+  const isPureParticles = isPureParticleCombination(finalPrefixes, remaining.trim());
+
   const result: WordAnalysis = {
     original: { arabic, english },
     prefixes: finalPrefixes, // Array of prefixes
     infix,
     suffix: resolvedSuffix,
     diacritic: resolvedDiacritic,
-    // Override hasComponents to false if this is a standalone component
-    hasComponents: isStandalone
-      ? false
-      : Boolean(finalPrefixes.length > 0 || infix || resolvedSuffix || resolvedDiacritic),
+    // Override hasComponents to false if:
+    // 1. Single standalone component (entire word is one particle)
+    // 2. Pure particle combination (conjunction + pronoun, no root)
+    hasComponents:
+      isStandalone || isPureParticles
+        ? false
+        : Boolean(finalPrefixes.length > 0 || infix || resolvedSuffix || resolvedDiacritic),
     remainingArabic: remaining.trim(),
     remainingEnglish,
     hasBracketInjection,

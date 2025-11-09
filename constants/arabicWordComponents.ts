@@ -123,7 +123,11 @@ const BASE_PREPOSITIONS = [
     english: ['about', 'from', 'concerning', 'regarding'],
     role: GrammaticalRole.PREPOSITION,
   },
-  { arabic: 'عند', english: ['at', 'with', 'near', 'within'], role: GrammaticalRole.PREPOSITION },
+  {
+    arabic: 'عند',
+    english: ['at', 'with', 'near', 'within', 'according to'],
+    role: GrammaticalRole.PREPOSITION,
+  }, // 'according to' added for interpretive translations like عِنْدَ → "according to"
   { arabic: 'إلى', english: ['to', 'towards', 'into', 'until'], role: GrammaticalRole.PREPOSITION },
   { arabic: 'إلي', english: ['to', 'towards'], role: GrammaticalRole.PREPOSITION }, // Form before pronoun suffixes (إلى + ه → إليه)
   { arabic: 'إل', english: ['to', 'towards'], role: GrammaticalRole.PREPOSITION }, // Shortened form before possessive suffixes (إلى + ي → إليّ → normalized: إل + ي)
@@ -166,6 +170,11 @@ const OTHER_PREFIXES = [
     english: ['to not', 'lest', 'so that not', 'in order not to'],
     role: GrammaticalRole.NEGATION,
   }, // Compound negation particle
+  {
+    arabic: 'لولا',
+    english: ['if not for', 'were it not for', 'if it were not for'],
+    role: GrammaticalRole.PARTICLE,
+  }, // Compound conditional particle (historically لَوْ + لَا, but fossilized - cannot be decomposed)
   {
     arabic: 'إلا',
     english: ['except', 'but', 'only', 'none', 'nothing but'],

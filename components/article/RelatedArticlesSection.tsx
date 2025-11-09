@@ -39,6 +39,7 @@ interface RelatedArticlesSectionProps {
  * Related Articles Section Component
  *
  * Displays intelligently selected related articles at the end of article content.
+ * Shows only unread or low-progress articles (< 20%) to always offer fresh content.
  * Uses existing article selection logic for consistency and efficiency.
  */
 export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
@@ -59,25 +60,28 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
     const selectedArticleIds = useMemo(() => selectedArticles.map(a => a.id), [selectedArticles]);
     const { data: progressMap } = useSafeBulkReadingProgress(selectedArticleIds);
 
-    // Sort so that unread articles (no progress record) appear first, preserving relative order
-    const sortedByUnreadFirst = useMemo(() => {
+    // Filter to only show unread or low-progress articles (< 20%)
+    const unreadOrLowProgressArticles = useMemo(() => {
       if (!selectedArticles.length) return selectedArticles;
-      const unread: Article[] = [];
-      const read: Article[] = [];
-      for (const a of selectedArticles) {
-        if (progressMap?.has?.(a.id)) {
-          read.push(a);
-        } else {
-          unread.push(a);
-        }
-      }
-      return [...unread, ...read];
+      return selectedArticles.filter(article => {
+        const progress = progressMap?.get?.(article.id);
+
+        // Include if unread (no progress entry)
+        if (!progress) return true;
+
+        // Include if low progress (< 20%)
+        const progressPercentage = calculateProgressPercentage(
+          progress.last_sentence_read,
+          progress.total_sentences,
+        );
+        return progressPercentage < 20;
+      });
     }, [selectedArticles, progressMap]);
 
-    // Limit to requested number of articles after sorting
+    // Limit to requested number of unread/low-progress articles
     const relatedArticles = useMemo(() => {
-      return sortedByUnreadFirst.slice(0, maxArticles);
-    }, [sortedByUnreadFirst, maxArticles]);
+      return unreadOrLowProgressArticles.slice(0, maxArticles);
+    }, [unreadOrLowProgressArticles, maxArticles]);
 
     // Note: Navigation is now handled by Link component with dangerouslySingular
 

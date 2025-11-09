@@ -224,7 +224,9 @@ describe('Arabic Word Analysis - Correct Detections (Regression Tests)', () => {
     const result = analyzeArabicWord('عَلَيْكَ', 'to you');
 
     expect(result.hasComponents).toBe(true);
-    expect(result.prefixes.some(p => p.arabicMatch === 'علي' || p.arabicMatch === 'على')).toBe(true);
+    expect(result.prefixes.some(p => p.arabicMatch === 'علي' || p.arabicMatch === 'على')).toBe(
+      true,
+    );
     expect(result.suffix?.arabicMatch).toBe('ك');
   });
 
@@ -274,9 +276,9 @@ describe('Arabic Word Analysis - Tier 1 Additional Fixes', () => {
       expect(result.suffix).toBeDefined();
       // Should detect compound suffix يه (dual + possessive)
       expect(result.suffix?.arabicMatch).toBe('يه');
-      expect(result.suffix?.englishMatches.some(m => m.includes('his') || m.includes('hands'))).toBe(
-        true,
-      );
+      expect(
+        result.suffix?.englishMatches.some(m => m.includes('his') || m.includes('hands')),
+      ).toBe(true);
     });
 
     test('كَفَّيْهِ → "his hands" should detect يه compound suffix', () => {
@@ -287,9 +289,90 @@ describe('Arabic Word Analysis - Tier 1 Additional Fixes', () => {
       expect(result.suffix).toBeDefined();
       // Should detect compound suffix يه (dual + possessive)
       expect(result.suffix?.arabicMatch).toBe('يه');
-      expect(result.suffix?.englishMatches.some(m => m.includes('his') || m.includes('hands'))).toBe(
-        true,
-      );
+      expect(
+        result.suffix?.englishMatches.some(m => m.includes('his') || m.includes('hands')),
+      ).toBe(true);
+    });
+  });
+});
+
+describe('Arabic Word Analysis - Opportunity Discovery Fixes', () => {
+  describe('عند Translation Variants', () => {
+    test('عِنْدَكَ → "at you" should work (regression test)', () => {
+      // The "according to" addition to عند helps with interpretive translations
+      // where عند + pronoun might be translated as "according to X"
+      // This is a regression test to ensure existing functionality still works
+      const result = analyzeArabicWord('عِنْدَكَ', 'at you');
+
+      expect(result.hasComponents).toBe(true);
+      expect(result.prefixes.some(p => p.arabicMatch === 'عند')).toBe(true);
+      expect(result.suffix?.arabicMatch).toBe('ك');
+    });
+  });
+});
+
+describe('Arabic Word Analysis - False Positive Fixes', () => {
+  describe('Compound Particles Should NOT Be Colored', () => {
+    test('لَوْلَا → "if not for" - compound particle should NOT be colored', () => {
+      const result = analyzeArabicWord('لَوْلَا', 'if not for');
+
+      // لَوْلَا is a compound conditional particle (historically لَوْ + لَا, but fossilized)
+      // BEFORE fix: System decomposed as ل (prefix) + ولا (root) - WRONG!
+      // AFTER fix: System correctly recognizes لولا as complete particle
+      // But has hasComponents=false because no remaining root (pure particle)
+      // This is CORRECT - particles without roots should NOT be colored
+
+      // Should detect لولا as the prefix (not ل alone)
+      expect(result.prefixes.some(p => p.arabicMatch === 'لولا')).toBe(true);
+
+      // Should NOT detect ل as separate prefix
+      expect(result.prefixes.some(p => p.arabicMatch === 'ل')).toBe(false);
+
+      // Should NOT be colored (pure particle, no root)
+      expect(result.hasComponents).toBe(false);
+      expect(result.remainingArabic).toBe('');
+    });
+  });
+
+  describe('Pure Particle Combinations Should NOT Be Colored', () => {
+    test('وَهُوَ → "and he" - conjunction + pronoun should NOT be colored', () => {
+      const result = analyzeArabicWord('وَهُوَ', 'and he');
+
+      // وَهُوَ = و (and) + هُوَ (he)
+      // BEFORE fix: System colored as prefix + root - WRONG (design violation)!
+      // AFTER fix: System recognizes as pure particle combination, hasComponents=false
+      // This is CORRECT - pure particles should NOT be colored
+
+      // Should detect و as prefix
+      expect(result.prefixes.some(p => p.arabicMatch === 'و')).toBe(true);
+
+      // Remaining should be هو (the pronoun)
+      expect(result.remainingArabic).toBe('هو');
+
+      // Should NOT be colored (pure particle combination)
+      expect(result.hasComponents).toBe(false);
+    });
+
+    test('فَهِيَ → "then she" - conjunction + pronoun should NOT be colored', () => {
+      const result = analyzeArabicWord('فَهِيَ', 'then she');
+
+      expect(result.prefixes.some(p => p.arabicMatch === 'ف')).toBe(true);
+      expect(result.remainingArabic).toBe('هي');
+      expect(result.hasComponents).toBe(false);
+    });
+
+    test('بِهِ → "with him" - preposition + pronoun SHOULD be colored (not pure particles)', () => {
+      const result = analyzeArabicWord('بِهِ', 'with him');
+
+      // بِهِ = ب (with) + ه (him)
+      // This SHOULD be colored because ب is a PREPOSITION, not a conjunction
+      // Shows how prepositions attach to pronouns (educational value)
+
+      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBe(true);
+      expect(result.suffix?.arabicMatch).toBe('ه');
+
+      // SHOULD be colored (preposition + pronoun shows composition)
+      expect(result.hasComponents).toBe(true);
     });
   });
 });

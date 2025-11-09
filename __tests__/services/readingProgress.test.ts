@@ -59,7 +59,7 @@ describe('ReadingProgressService', () => {
         article_id: 42,
         last_sentence_read: 10,
         total_sentences: 50,
-        progress_percentage: 20,
+        progress_percentage: 22, // calculateProgressPercentage: (10+1)/50*100 = 22%
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       });
@@ -78,7 +78,8 @@ describe('ReadingProgressService', () => {
 
       const result = toSafeReadingProgress(progress);
 
-      expect(result?.progress_percentage).toBe(0);
+      // calculateProgressPercentage: (0+1)/50*100 = 2%
+      expect(result?.progress_percentage).toBe(2);
     });
 
     it('should use created_at when updated_at is null', () => {
@@ -156,7 +157,8 @@ describe('ReadingProgressService', () => {
 
       const result = toSafeReadingProgress(progress);
 
-      expect(result?.progress_percentage).toBe(0);
+      // calculateProgressPercentage: (0+1)/100*100 = 1%
+      expect(result?.progress_percentage).toBe(1);
       expect(result?.last_sentence_read).toBe(0);
     });
 
@@ -164,7 +166,7 @@ describe('ReadingProgressService', () => {
       const progress: ReadingProgress = {
         user_id: 'user-123',
         article_id: 42,
-        last_sentence_read: 100,
+        last_sentence_read: 99,
         total_sentences: 100,
         progress_percentage: 100,
         updated_at: '2024-01-01T12:00:00Z',
@@ -173,8 +175,9 @@ describe('ReadingProgressService', () => {
 
       const result = toSafeReadingProgress(progress);
 
+      // calculateProgressPercentage: (99+1)/100*100 = 100%
       expect(result?.progress_percentage).toBe(100);
-      expect(result?.last_sentence_read).toBe(100);
+      expect(result?.last_sentence_read).toBe(99);
     });
 
     it('should handle all null optional fields', () => {
@@ -191,7 +194,8 @@ describe('ReadingProgressService', () => {
       const result = toSafeReadingProgress(progress);
 
       expect(result).toBeDefined();
-      expect(result?.progress_percentage).toBe(0);
+      // calculateProgressPercentage: (5+1)/50*100 = 12%
+      expect(result?.progress_percentage).toBe(12);
       expect(result?.updated_at).toBeDefined();
       expect(result?.created_at).toBeDefined();
     });

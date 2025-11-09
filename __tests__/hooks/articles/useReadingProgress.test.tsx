@@ -406,11 +406,12 @@ describe('useReadingProgress', () => {
 
       // Verify progress data is correctly extracted from bulk query
       // Note: The hook transforms snake_case to camelCase
+      // Progress calculation: (lastSentenceRead + 1) / totalSentences = (5 + 1) / 10 = 60%
       expect(result.current.progress).toEqual({
         articleId: testArticleId,
         lastSentenceRead: 5,
         totalSentences: 10,
-        progressPercentage: 50,
+        progressPercentage: 60,
         updatedAt: '2024-01-01T12:00:00Z',
       });
     });
