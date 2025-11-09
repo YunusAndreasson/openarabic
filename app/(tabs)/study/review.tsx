@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -209,7 +210,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
   return (
     <ReviewToastContext value={toastContextValue}>
-      <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
+      <Animated.View style={[baseStyles.container, { backgroundColor: colors.background }, transparentStyle]}>
         {/* Progress header at top of screen */}
         <View style={{ paddingTop: LAYOUT.SPACING.XLARGE }}>
           <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
@@ -232,7 +233,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               currentWord={currentWord}
               onSwipeLeft={handleSwipeLeft}
               onSwipeRight={handleSwipeRight}
-              opacityStyle={transparentStyle}
+              opacityStyle={{}}
               isUpdating={isUpdating}
               testID="review-card"
               translation={currentMeaning}
@@ -247,7 +248,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           <ReviewBottomActions />
         </View>
 
-      </View>
+      </Animated.View>
 
       {/* Local toast for modal - appears on top with maximum z-index */}
       {toastState.visible && (
