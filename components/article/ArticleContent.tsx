@@ -140,7 +140,7 @@ const ArticleContentInternal = function ArticleContent({
   const { scrollY, onScrollAnimated } = useArticleScrollHandler();
 
   // Optimized fade-in animation for snappy article appearance
-  const { animatedStyle, startAnimation } = useOpacityAnimation({
+  const { animatedStyle, startAnimation, reset } = useOpacityAnimation({
     initialOpacity: 0,
     duration: TIMING_CONFIG.FAST.duration, // 150ms for snappier feel
   });
