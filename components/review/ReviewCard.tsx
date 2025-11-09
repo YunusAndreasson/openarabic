@@ -145,18 +145,22 @@ export function ReviewCard({
 
   // ===== SWIPE BACKGROUND COLOR ANIMATION =====
   const errorStart = withOpacity(colors.error, 0);
-  const errorEnd = withOpacity(colors.error, 0.18);
+  const errorEnd = withOpacity(colors.error, 0.35); // Increased from 0.18 for more prominence
   const successStart = withOpacity(colors.success, 0);
-  const successEnd = withOpacity(colors.success, 0.18);
+  const successEnd = withOpacity(colors.success, 0.35); // Increased from 0.18 for more prominence
 
   // Add vague colors (orange/yellow for hesitation)
   const vagueStart = withOpacity(colors.warning, 0);
-  const vagueEnd = withOpacity(colors.warning, 0.25);
+  const vagueEnd = withOpacity(colors.warning, 0.45); // Increased from 0.25 for more prominence
 
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
     const maxTranslation = SCREEN_WIDTH * GESTURE_CONSTANTS.MAX_TRANSLATION_RATIO;
-    const t = Math.min(Math.abs(translateX.value) / maxTranslation, 1);
+    const progress = Math.min(Math.abs(translateX.value) / maxTranslation, 1);
+
+    // Apply easing curve for more prominent color at beginning of swipe
+    // Using quadratic ease-out: starts strong, ends gentle
+    const t = 1 - Math.pow(1 - progress, 2);
 
     if (translateX.value < 0) {
       // Left swipe - ALWAYS unknown (red), regardless of hesitation state
