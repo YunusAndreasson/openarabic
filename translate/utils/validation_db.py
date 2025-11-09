@@ -251,18 +251,37 @@ def fetch_roots_for_validation(root_ids: list[int] | None = None) -> list[dict[s
     try:
         client = get_supabase_client()
 
-        # Fetch roots
-        query = client.table("roots").select("id, letters, meaning")
-        if root_ids:
-            query = query.in_("id", root_ids)
+        # Chunk large root_ids lists to avoid Supabase query limits
+        # Supabase has URL length limits for .in_() queries
+        CHUNK_SIZE = 500  # Safe chunk size for .in_() queries
 
-        roots_response = query.execute()
+        all_roots = []
 
-        if not roots_response.data:
+        if root_ids and len(root_ids) > CHUNK_SIZE:
+            # Process in chunks
+            for i in range(0, len(root_ids), CHUNK_SIZE):
+                chunk = root_ids[i:i+CHUNK_SIZE]
+                chunk_response = (
+                    client.table("roots")
+                    .select("id, letters, meaning")
+                    .in_("id", chunk)
+                    .execute()
+                )
+                if chunk_response.data:
+                    all_roots.extend(chunk_response.data)
+        else:
+            # Single query for small lists or no filter
+            query = client.table("roots").select("id, letters, meaning")
+            if root_ids:
+                query = query.in_("id", root_ids)
+            roots_response = query.execute()
+            all_roots = roots_response.data if roots_response.data else []
+
+        if not all_roots:
             raise ValueError("No roots found in database")
 
         roots_data = []
-        for root in roots_response.data:
+        for root in all_roots:
             root_id = root["id"]
 
             # Fetch 3-5 example sentences showing this root in use

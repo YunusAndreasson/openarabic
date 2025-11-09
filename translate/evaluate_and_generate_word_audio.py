@@ -29,6 +29,8 @@ import os
 import sys
 from typing import Any
 
+from tqdm import tqdm
+
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -41,9 +43,9 @@ from audio.audio_utils import (
 )
 from utils.storage_utils import get_supabase_client
 
-# Configure logging
+# Configure logging - only show errors
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.ERROR,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
@@ -280,7 +282,7 @@ def generate_audio_for_root(root_id: int, voice: str | None = None, force: bool 
 
 
 def generate_audio_batch(
-    table: str, limit: int | None = None, voice: str | None = None
+    table: str, limit: int | None = None, voice: str | None = None, force: bool = False
 ) -> dict[str, Any]:
     """
     Generate audio for a batch of words with empty audio URLs.
@@ -289,6 +291,7 @@ def generate_audio_batch(
         table: Table to process ('sentence_words' or 'roots')
         limit: Optional limit on number of words to process
         voice: Optional voice name (default: 'Enceladus')
+        force: If True, regenerate all audio (not just empty ones)
 
     Returns:
         Dictionary with generation statistics
@@ -296,21 +299,40 @@ def generate_audio_batch(
     client = get_supabase_client()
     stats = {"total": 0, "success": 0, "failed": 0, "cached": 0}
 
+    # Fetch all records with pagination
+    page_size = 1000
+    offset = 0
+    all_records = []
+
     if table == "sentence_words":
-        # Get words with NULL audio_url
-        query = client.table("sentence_words").select("id").is_("audio_url", "null")
+        # Get words with NULL audio_url (or all if force)
+        while True:
+            if force:
+                query = client.table("sentence_words").select("id").range(offset, offset + page_size - 1)
+            else:
+                query = client.table("sentence_words").select("id").is_("audio_url", "null").range(offset, offset + page_size - 1)
 
+            result = query.execute()
+
+            if not result.data:
+                break
+
+            all_records.extend(result.data)
+
+            if len(result.data) < page_size:
+                break
+
+            offset += page_size
+
+        # Apply user limit if specified
         if limit:
-            query = query.limit(limit)
+            all_records = all_records[:limit]
 
-        result = query.execute()
+        stats["total"] = len(all_records)
 
-        stats["total"] = len(result.data)
-        logger.info(f"Processing {stats['total']} sentence words...")
-
-        for word in result.data:
+        for word in tqdm(all_records, desc="Sentence words", unit="word"):
             word_id = word["id"]
-            result = generate_audio_for_sentence_word(word_id, voice)
+            result = generate_audio_for_sentence_word(word_id, voice, force)
 
             if result.get("success"):
                 stats["success"] += 1
@@ -318,35 +340,41 @@ def generate_audio_batch(
                     stats["cached"] += 1
             else:
                 stats["failed"] += 1
-                logger.warning(
-                    f"Failed to generate audio for word {word_id}: {result.get('error')}"
-                )
-
-            # Log progress every 10 words
-            if (stats["success"] + stats["failed"]) % 10 == 0:
-                logger.info(
-                    f"Progress: {stats['success']}/{stats['total']} successful, {stats['failed']} failed"
-                )
 
     elif table == "roots":
-        # Get roots with empty audio URLs
-        query = (
-            client.table("roots")
-            .select("id")
-            .or_("audio_url.eq.,audio_url.is.null,audio_url_en.eq.,audio_url_en.is.null")
-        )
+        # Get roots with empty audio URLs (or all if force)
+        while True:
+            if force:
+                query = client.table("roots").select("id").range(offset, offset + page_size - 1)
+            else:
+                query = (
+                    client.table("roots")
+                    .select("id")
+                    .or_("audio_url.eq.,audio_url.is.null,audio_url_en.eq.,audio_url_en.is.null")
+                    .range(offset, offset + page_size - 1)
+                )
 
+            result = query.execute()
+
+            if not result.data:
+                break
+
+            all_records.extend(result.data)
+
+            if len(result.data) < page_size:
+                break
+
+            offset += page_size
+
+        # Apply user limit if specified
         if limit:
-            query = query.limit(limit)
+            all_records = all_records[:limit]
 
-        result = query.execute()
+        stats["total"] = len(all_records)
 
-        stats["total"] = len(result.data)
-        logger.info(f"Processing {stats['total']} root words...")
-
-        for root in result.data:
+        for root in tqdm(all_records, desc="Root words", unit="root"):
             root_id = root["id"]
-            result = generate_audio_for_root(root_id, voice)
+            result = generate_audio_for_root(root_id, voice, force)
 
             if result.get("success"):
                 stats["success"] += 1
@@ -355,15 +383,6 @@ def generate_audio_batch(
                         stats["cached"] += 1
             else:
                 stats["failed"] += 1
-                logger.warning(
-                    f"Failed to generate audio for root {root_id}: {result.get('errors')}"
-                )
-
-            # Log progress every 10 roots
-            if (stats["success"] + stats["failed"]) % 10 == 0:
-                logger.info(
-                    f"Progress: {stats['success']}/{stats['total']} successful, {stats['failed']} failed"
-                )
 
     return stats
 
@@ -408,7 +427,6 @@ def main():
 
     # Dry run - evaluation only
     if args.dry_run:
-        logger.info("Evaluating empty audio URLs...")
         stats = evaluate_empty_audio(args.table)
 
         print("\n=== Audio Evaluation Results ===\n")
@@ -437,11 +455,6 @@ def main():
 
     # Generate audio for specific word ID
     if args.word_id:
-        force_msg = " (force regenerate)" if args.force else ""
-        logger.info(
-            f"Generating audio for {args.table} ID {args.word_id} with voice {args.voice or 'Enceladus (default)'}{force_msg}..."
-        )
-
         if args.table == "sentence_words":
             result = generate_audio_for_sentence_word(args.word_id, args.voice, args.force)
         elif args.table == "roots":
@@ -479,13 +492,7 @@ def main():
         )
         return 1
 
-    logger.info(
-        f"Generating audio for {args.table} with voice {args.voice or 'Enceladus (default)'}..."
-    )
-    if args.limit:
-        logger.info(f"Limited to {args.limit} words")
-
-    stats = generate_audio_batch(args.table, args.limit, args.voice)
+    stats = generate_audio_batch(args.table, args.limit, args.voice, args.force)
 
     print("\n=== Generation Statistics ===\n")
     print(f"Total words processed: {stats['total']}")

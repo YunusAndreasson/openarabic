@@ -726,30 +726,31 @@ These root translations are designed to help students learn Arabic vocabulary an
 3. Be ACCURATE to Classical Arabic and Quranic usage
 4. Have CORRECT tashkeel (diacritical marks) for proper pronunciation
 
-CRITICAL: ROOT FORMAT IN ARABIC
+CRITICAL: ARABIC LETTERS ARE ALWAYS CORRECT - NEVER CHANGE THEM
+- **THE ARABIC LETTERS ARE ALREADY CORRECT IN THE DATABASE**
+- **YOU MAY ONLY FIX TASHKEEL (DIACRITICAL MARKS) ON THE EXISTING LETTERS**
+- **NEVER suggest a different Arabic word with different letters**
+- Example CORRECT tashkeel fix: قِلَّةٌ → قِلَّةٌ (fix vowel marks on SAME letters)
+- Example WRONG: قِلَّةٌ → قَلَّ (❌ FORBIDDEN - different letters!)
+- If you think the word is "derived", that's probably intentional - the letters are still correct
 - Roots are stored as COMPLETE ARABIC WORDS with tashkeel, NOT separated by dashes
-- Correct format: كَتَبَ (complete word with tashkeel)
-- WRONG format: ك-ت-ب (separated letters)
-- When suggesting tashkeel corrections, provide the COMPLETE Arabic word with proper tashkeel
 
 CRITICAL VALIDATION PRINCIPLES:
 
-1. ROOT FORM vs DERIVED FORM (CRITICAL - BE VERY SELECTIVE):
-   - ROOTS can be either BASE VERBS or BASIC NOUNS if the translation is simple and clear
-   - **ONLY flag OBVIOUS derived forms** - when in doubt, ACCEPT IT
+1. ARABIC LETTERS VALIDATION (CRITICAL):
+   - **NEVER suggest changing the Arabic letters**
+   - The database already has the correct Arabic word
+   - You may ONLY suggest tashkeel fixes on the EXISTING word
+   - If the word looks "derived" (ends in ة, etc.) → That's INTENTIONAL, the letters are still correct
+   - DO NOT suggest a "base verb" with different letters - this is FORBIDDEN
 
-   **ONLY FLAG THESE CLEAR DERIVED FORMS**:
-   - Words ending in ة (taa marbuta): نَفْرَةٌ, إِضَاعَةٌ, كِتَابَةٌ → CLEAR derived nouns, MUST flag
-   - Form II-X verbal nouns: تَفْعِيلٌ, مُفَاعَلَةٌ, إِفْعَالٌ → CLEAR patterns, MUST flag
+   **WHAT TO CHECK**:
+   - Is tashkeel missing entirely? → Suggest adding tashkeel to the SAME word
+   - Is tashkeel clearly wrong? → Suggest correcting tashkeel on the SAME word
+   - Are the letters themselves wrong? → NO! The letters are always correct, never flag this
 
-   **ACCEPT THESE (DO NOT FLAG)**:
-   - Basic nouns with simple translations: وَقْتٌ (time), صَدْرٌ (chest), نَفْسٌ (self), رَبٌّ (Lord)
-   - Simple verbal nouns if translation is clear: ذِكْرٌ (remember), عِلْمٌ (know)
-   - Form I verbs even if you prefer a different form
-   - Anything where the translation is "simple and accurate" for learners
-
-   **CRITICAL RULE**: If the translation is simple, clear, and won't confuse learners → ACCEPT IT
-   Do NOT flag just because you think a different form would be "more accurate"
+   **CRITICAL RULE**: The Arabic word form in the database is intentional and correct.
+   You are ONLY checking tashkeel quality and English translation accuracy.
 
 2. SIMPLICITY FOR LEARNERS (PROVIDE ONLY ONE BEST TRANSLATION):
    - CRITICAL: Suggest only ONE English word - the simplest, most accurate option
@@ -806,27 +807,33 @@ STEP 3: CHECK TASHKEEL
 - Does the vocalization match standard Arabic dictionaries?
 - Is it pronounceable and proper?
 
-STEP 4: SUGGEST IMPROVEMENTS (EXTREMELY CONSERVATIVE - ALMOST NEVER FLAG)
-- **CRITICAL**: Be EXTREMELY conservative - you should flag less than 20% of roots
-- **DEFAULT**: ACCEPT the translation unless it's OBVIOUSLY wrong
-- **HIGH BAR FOR FLAGGING**: If translation is reasonable and won't confuse learners → ACCEPT IT
+STEP 4: SUGGEST IMPROVEMENTS (CONSERVATIVE - 85-90% ACCEPTANCE TARGET)
+- **CRITICAL**: The Arabic letters are ALWAYS correct - never suggest different letters
+- **DEFAULT**: ACCEPT unless tashkeel missing or English wrong/obscure
+- **TARGET**: Flag ~10-15% of roots (tashkeel issues + obscure/wrong English)
 
-- **WHEN TO FLAG (ONLY THESE 3 TYPES)**:
-  1. **Tashkeel completely missing** (فسد with NO vowel marks at all)
-  2. **Obvious ة ending** (نَفْرَةٌ, إِضَاعَةٌ, كِتَابَةٌ - clear derived nouns)
-  3. **Translation completely wrong** (opposite meaning or totally unrelated)
+- **WHEN TO FLAG (ONLY THESE 2 TYPES)**:
+  1. **Tashkeel completely missing** (فسد with NO vowel marks) → Add tashkeel to SAME word
+  2. **English wrong or too technical** → Suggest better English ONLY
+     * Wrong meaning: "happiness" for root meaning "sadness"
+     * Too technical: "vicegerent" → "caliph", "comminution" → "breaking"
+     * Multiple words listed: "gather, unite" → choose ONE best word
+     * Archaic terms: "propinquity" → "nearness"
 
 - **NEVER FLAG THESE (ALWAYS ACCEPT)**:
-  1. Basic nouns: "time", "chest", "self", "Lord", "God", "heart" → ALWAYS ACCEPT
-  2. Simple verbal nouns: "remember", "know", "create" → ALWAYS ACCEPT
-  3. Form I verbs even if you think Form IV would be better → ACCEPT
-  4. Minor synonym differences → ACCEPT
-  5. Tashkeel variations that are both valid → ACCEPT
-  6. ANY translation you describe as "simple and accurate" → YOU MUST ACCEPT IT
+  1. Words ending in ة (نَفْرَةٌ, إِضَاعَةٌ) → INTENTIONAL, accept if translation clear
+  2. Verbal nouns (ذِكْرٌ, عِلْمٌ, تَوْفِيقٌ) → INTENTIONAL, accept if translation clear
+  3. Form II-X verbs → INTENTIONAL, accept if translation clear
+  4. Basic nouns: "time", "chest", "self", "Lord" → ALWAYS ACCEPT
+  5. Minor synonym differences (bad/evil, know/knowledge) → ACCEPT
+  6. ANY translation you describe as "simple and accurate" → MUST ACCEPT
 
-- **LOGIC CHECK**: If you write "simple and accurate translation" in your reasoning → is_correct MUST be true
-- **DEFAULT STANCE**: When uncertain → ACCEPT (aim for 80%+ acceptance rate)
-- **REMEMBER**: You are catching ONLY serious errors, not making improvements
+- **CRITICAL CONSTRAINT**: If suggesting tashkeel fix, keep the EXACT SAME letters
+  - Example: فسد → فَسَدَ ✅ (same letters, added vowels)
+  - Example: قِلَّةٌ → قَلَّ ❌ FORBIDDEN (different letters!)
+
+- **LOGIC CHECK**: If you write "simple and accurate" → is_correct MUST be true
+- **DEFAULT STANCE**: When uncertain → ACCEPT (aim for 95%+ acceptance)
 
 STEP 5: FORMULATE RESPONSE (EXTREMELY CONSERVATIVE)
 - **DEFAULT**: is_correct=true (accept by default)
@@ -894,38 +901,48 @@ REQUIRED OUTPUT FORMAT (valid JSON only):
 
 EXAMPLES (ILLUSTRATIVE PATTERNS - apply this reasoning to all roots you validate):
 
-- **Correct base verb root**: {{"root_id": 123, "is_correct": true, "issues": [], "suggested_english": null, "suggested_tashkeel": null, "reasoning": "كَتَبَ is a Form I base verb (past tense 3rd masc. sing.) - correct root form. CAMeL analysis confirms verb POS. Translation 'writing' captures the core meaning. Tashkeel correct. ACCEPT."}}
+- **Correct root**: {{"root_id": 123, "is_correct": true, "issues": [], "suggested_english": null, "suggested_tashkeel": null, "reasoning": "كَتَبَ - Arabic letters correct, tashkeel correct. Translation 'writing' is simple and accurate. ACCEPT."}}
 
-- **DERIVED FORM - MUST FLAG (using CAMeL data)**: {{"root_id": 456, "is_correct": false, "issues": ["Derived form stored as root"], "suggested_english": "corrupt", "suggested_tashkeel": "فَسَدَ", "reasoning": "فَسَادٌ - CAMeL analysis: root=ف.س.د, pattern=1َ2ا3 (فَعَال), pos=noun, is_derived=true, suggested_base_verb=فَسَدَ. This is a verbal noun 'corruption', NOT a root. Must use base verb فَسَدَ (fasada) - suggest bare infinitive 'corrupt'."}}
+- **Missing tashkeel ONLY**: {{"root_id": 234, "is_correct": false, "issues": ["Tashkeel completely missing"], "suggested_english": null, "suggested_tashkeel": "ذَهَبَ", "reasoning": "Root ذهب has NO tashkeel marks. Adding tashkeel to SAME word: ذَهَبَ (dhahaba). Current translation 'going' is accurate. NOTE: Not changing letters, only adding vowel marks."}}
 
-- **DERIVED FORM with ة - MUST FLAG (using CAMeL data)**: {{"root_id": 789, "is_correct": false, "issues": ["Derived form with taa marbuta"], "suggested_english": "flee", "suggested_tashkeel": "نَفَرَ", "reasoning": "نَفْرَةٌ - CAMeL analysis: root=ن.ف.ر, pattern=1َ2ْ3َةٌ (with taa marbuta), pos=noun, is_derived=true, suggested_base_verb=نَفَرَ. Derived noun 'aversion/fleeing', must use base verb نَفَرَ (nafara) - suggest bare infinitive 'flee'."}}
+- **Wrong English translation**: {{"root_id": 456, "is_correct": false, "issues": ["English translation incorrect"], "suggested_english": "corruption", "suggested_tashkeel": null, "reasoning": "فَسَادٌ - Arabic letters and tashkeel are correct. Current translation 'distortion' is wrong meaning. Should be 'corruption'. NOTE: Not changing Arabic word."}}
 
-- **Form II verbal noun - MUST FLAG**: {{"root_id": 888, "is_correct": false, "issues": ["Form II verbal noun stored as root"], "suggested_english": "agree", "suggested_tashkeel": "وَفَقَ", "reasoning": "تَوْفِيقٌ - CAMeL analysis: root=و.ف.ق, pattern=تَوْ2ِي3 (Form II تَفْعِيل), pos=noun, is_derived=true, suggested_base_verb=وَفَقَ. This is Form II verbal noun 'success/agreement', NOT the root. Must use Form I base verb وَفَقَ (wafaqa) - suggest bare infinitive 'agree'."}}
+- **Obscure English term**: {{"root_id": 789, "is_correct": false, "issues": ["English too technical"], "suggested_english": "breaking", "suggested_tashkeel": null, "reasoning": "كَسْرٌ - Arabic letters and tashkeel correct. Current translation 'comminution' is too technical (most learners don't know this word). Suggest common word 'breaking'. NOTE: Arabic word unchanged."}}
 
-- **Missing tashkeel**: {{"root_id": 234, "is_correct": false, "issues": ["Tashkeel missing"], "suggested_english": null, "suggested_tashkeel": "ذَهَبَ", "reasoning": "Root ذهب has NO tashkeel. Must provide complete word: ذَهَبَ (dhahaba). Current translation 'going' is accurate."}}
+- **Technical archaic term**: {{"root_id": 890, "is_correct": false, "issues": ["English archaic term"], "suggested_english": "caliph", "suggested_tashkeel": null, "reasoning": "خَلِيفَةٌ - Arabic letters and tashkeel correct. Current translation 'vicegerent' is archaic (learners won't know this). Suggest common 'caliph'. NOTE: Arabic word unchanged."}}
 
-- **Acceptable translation**: {{"root_id": 567, "is_correct": true, "issues": [], "suggested_english": null, "suggested_tashkeel": null, "reasoning": "قَلْبٌ is a basic noun root form. While technically could be more verb-like, this is acceptable as a nominal root. Translation 'heart' is simple and accurate. ACCEPT."}}
+- **Multiple words listed**: {{"root_id": 901, "is_correct": false, "issues": ["Multiple words listed"], "suggested_english": "gather", "suggested_tashkeel": null, "reasoning": "اِجْتَمَعَ - Arabic correct. Current translation lists 'gather, unite' - must provide ONE word only. Choose 'gather' as primary meaning. NOTE: Arabic unchanged."}}
 
-VALIDATION CHECKLIST for EACH root (ULTRA-CONSERVATIVE - TARGET 80%+ ACCEPTANCE):
+- **Acceptable derived form**: {{"root_id": 888, "is_correct": true, "issues": [], "suggested_english": null, "suggested_tashkeel": null, "reasoning": "نَفْرَةٌ - Arabic letters and tashkeel correct. Ends with ة (derived form) but this is INTENTIONAL. Translation 'aversion' is simple and accurate. ACCEPT as-is."}}
 
-**CRITICAL PHILOSOPHY**: Your job is to catch ONLY the most obvious errors. You should ACCEPT 80%+ of roots.
-If a translation is "simple and accurate", you MUST accept it. Do NOT suggest improvements.
+- **Acceptable verbal noun**: {{"root_id": 567, "is_correct": true, "issues": [], "suggested_english": null, "suggested_tashkeel": null, "reasoning": "تَوْفِيقٌ - Form II verbal noun but Arabic letters are correct as intended. Translation 'success' is simple. ACCEPT. Do not suggest different Arabic word."}}
 
-**SIMPLIFIED 3-QUESTION VALIDATION**:
+VALIDATION CHECKLIST for EACH root (ULTRA-CONSERVATIVE - TARGET 95%+ ACCEPTANCE):
+
+**CRITICAL PHILOSOPHY**: The Arabic letters are ALWAYS correct. You are ONLY checking tashkeel and English quality.
+Your job is to catch ONLY obvious tashkeel problems or bad English translations. ACCEPT 95%+ of roots.
+
+**SIMPLIFIED 2-QUESTION VALIDATION**:
 
 1. **Is tashkeel completely absent?** (NO vowels at all like فسد)
-   - If YES → Flag it
+   - If YES → Flag it (suggest adding tashkeel to SAME word)
    - If NO → Continue to question 2
 
-2. **Does it end with ة (taa marbuta)?** (like نَفْرَةٌ, إِضَاعَةٌ, كِتَابَةٌ)
-   - If YES → Flag it (these are always derived)
-   - If NO → Continue to question 3
+2. **Is the English translation wrong or too obscure?**
+   - Completely wrong meaning? → Flag it (suggest correct English)
+   - Technical/archaic terms most learners won't know? → Flag it (suggest common English)
+     * Examples to flag: "vicegerent", "comminution", "dissimulation", "propinquity"
+     * Keep simple: "caliph", "breaking", "hypocrisy", "nearness"
+   - Multiple alternatives listed? → Flag it (choose ONE best word)
+   - Common, clear English? → **ACCEPT IT** ✅
 
-3. **Is the translation completely wrong or impossibly obscure?**
-   - If YES → Flag it
-   - If NO → **ACCEPT IT** ✅
+**THAT'S IT. Just 2 questions. If both pass → ACCEPT the root.**
 
-**THAT'S IT. If none of those 3 apply → ACCEPT the root.**
+**FORBIDDEN ACTIONS**:
+- ❌ NEVER suggest different Arabic letters (ة endings are INTENTIONAL)
+- ❌ NEVER suggest "base verbs" with different letters
+- ❌ NEVER flag derived forms (they are correct as-is)
+- ❌ NEVER change the Arabic word, only fix tashkeel on SAME word
 
 **EXPLICIT EXAMPLES OF WHAT TO ACCEPT** (even if you think something else might be "better"):
 ✅ ACCEPT: وَقْتٌ = "time" (basic noun, simple translation)
@@ -935,49 +952,57 @@ If a translation is "simple and accurate", you MUST accept it. Do NOT suggest im
 ✅ ACCEPT: اللَّهُ = "God" (basic noun, simple translation)
 ✅ ACCEPT: ذِكْرٌ = "remember" (verbal noun, clear meaning)
 ✅ ACCEPT: عِلْمٌ = "know" (verbal noun, clear meaning)
-✅ ACCEPT: أَقَرَّ = "acknowledge" (Form IV verb, acceptable)
+✅ ACCEPT: نَفْرَةٌ = "aversion" (ends with ة but INTENTIONAL, translation clear)
+✅ ACCEPT: إِضَاعَةٌ = "waste" (ends with ة but INTENTIONAL, translation clear)
+✅ ACCEPT: تَوْفِيقٌ = "success" (Form II verbal noun but INTENTIONAL)
 ✅ ACCEPT: Any translation you think is "simple and accurate"
 
-**ONLY FLAG THESE 3 TYPES**:
-1. ⚠️ Tashkeel completely missing (فسد with no vowels)
-2. ⚠️ Clear ة ending (نَفْرَةٌ, كِتَابَةٌ, إِضَاعَةٌ)
-3. ⚠️ Translation completely wrong/obscure
+**ONLY FLAG THESE 2 TYPES**:
+1. ⚠️ Tashkeel completely missing (فسد with no vowels) → Add tashkeel to SAME word
+2. ⚠️ Translation completely wrong/obscure → Suggest better English only
 
 **LOGIC CHECK BEFORE SUBMITTING**:
 - Did you write "simple and accurate" in reasoning? → is_correct MUST be true
-- Did you accept at least 80% of roots? → If not, you're being too strict
-- Are you flagging things just because a different form "would be better"? → STOP, accept it instead
+- Did you accept at least 95% of roots? → If not, you're being WAY too strict
+- Are you suggesting different Arabic letters? → STOP, this is FORBIDDEN
+- Did you flag ة endings or derived forms? → STOP, these are INTENTIONAL
 
 CRITICAL REMINDERS:
-- Arabic roots MUST be complete words with tashkeel (كَتَبَ), NEVER separated letters (ك-ت-ب)
-- English suggestions MUST be exactly ONE word or short phrase, NEVER multiple alternatives
-- **ALWAYS use BARE INFINITIVES for verbs**: "write" NOT "to write", "flee" NOT "to flee"
-- If suggesting tashkeel correction, provide the COMPLETE Arabic word
-- **BE EXTREMELY CONSERVATIVE**: Only flag CLEAR, OBVIOUS errors that would confuse learners
+- **THE ARABIC LETTERS ARE ALWAYS CORRECT - NEVER CHANGE THEM**
+- You may ONLY add/fix tashkeel on the SAME word with SAME letters
+- English suggestions MUST be exactly ONE word or short phrase
+- **ALWAYS use BARE INFINITIVES for verbs**: "write" NOT "to write"
+- If suggesting tashkeel correction, keep the EXACT SAME letters
 
 **FINAL REMINDER - YOUR VALIDATION PHILOSOPHY**:
-You are NOT a perfectionist editor making everything "ideal" - you are a quality control filter catching ONLY serious errors.
+The Arabic word forms in the database are intentional and correct.
+You are ONLY checking: (1) Is tashkeel missing? (2) Is English translation bad?
 
-**THE 3-QUESTION TEST** (use this for every root):
-1. No tashkeel at all? → Flag
-2. Ends with ة? → Flag
-3. Translation completely wrong? → Flag
-4. Otherwise → **ACCEPT IT** ✅
+**THE 2-QUESTION TEST** (use this for every root):
+1. No tashkeel at all? → Flag (add tashkeel to SAME word)
+2. English translation clearly wrong/obscure? → Flag (suggest better English)
+3. Otherwise → **ACCEPT IT** ✅
 
 **ABSOLUTE REQUIREMENTS**:
-- You MUST accept at least 80% of roots (flag only 20% or less)
+- You MUST accept at least 85% of roots (flag only ~10-15%)
 - If you say "simple and accurate" → is_correct MUST be true
-- Basic nouns like "time", "chest", "self", "God" → ALWAYS accept
-- Verbal nouns like "remember", "know" → ALWAYS accept
+- Words ending in ة (نَفْرَةٌ, إِضَاعَةٌ) → ALWAYS accept if translation clear
+- Verbal nouns (ذِكْرٌ, عِلْمٌ, تَوْفِيقٌ) → ALWAYS accept if translation clear
 - When uncertain → ALWAYS accept
 
-**FORBIDDEN BEHAVIORS**:
-❌ Do NOT flag because you prefer a different Arabic form
-❌ Do NOT flag because you prefer a different English synonym
-❌ Do NOT say "simple and accurate" then flag it anyway
-❌ Do NOT flag more than 20% of roots
+**WHAT TO FLAG**:
+✅ Missing tashkeel (فسد with no vowels)
+✅ Obscure/archaic English (vicegerent, comminution, propinquity)
+✅ Wrong English meaning
+✅ Multiple words listed (pick ONE best word)
 
-**Your goal**: Accept 80%+, flag only the 3 clear error types above.
+**FORBIDDEN BEHAVIORS**:
+❌ NEVER suggest different Arabic letters (this is the #1 forbidden action)
+❌ NEVER suggest "base verbs" with different letters
+❌ NEVER flag derived forms as wrong (they are correct as stored)
+❌ Do NOT flag common, clear English translations
+
+**Your goal**: Accept 85-90%, flag missing tashkeel + obscure/wrong English.
 
 Return ONLY the JSON object. No markdown, no code blocks, no extra text."""
 
