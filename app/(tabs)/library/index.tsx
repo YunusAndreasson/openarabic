@@ -237,6 +237,7 @@ export default function ReadScreen(): JSX.Element {
       ...styles.listContentContainer,
       paddingTop: 0,
       paddingBottom: insets.bottom,
+      paddingHorizontal: 0, // Remove padding to allow featured cards to be full width
     }),
     [insets.bottom],
   );

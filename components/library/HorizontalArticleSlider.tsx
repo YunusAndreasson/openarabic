@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     paddingTop: LAYOUT.SPACING.TINY,
-    paddingRight: LAYOUT.SCREEN_EDGE_PADDING, // Ensure last card is fully visible
+    paddingLeft: LAYOUT.SPACING.MEDIUM, // Left edge padding for first card
   },
   cardContainer: {
     width: CARD_WIDTH,
