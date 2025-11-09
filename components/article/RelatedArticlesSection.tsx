@@ -86,10 +86,12 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
       return unreadOrLowProgressArticles.slice(0, maxArticles);
     }, [unreadOrLowProgressArticles, maxArticles]);
 
-    // Navigation handler using router.push (consistent with filter screen and article cards)
+    // Navigation handler using router.replace to avoid stacking articles
+    // When navigating between related articles, we replace the current article
+    // instead of pushing, so users don't have to close multiple articles to return
     const handleArticlePress = useCallback(
       (articleId: number, title: string) => {
-        router.push(getArticleRoute(articleId as ArticleId, title));
+        router.replace(getArticleRoute(articleId as ArticleId, title));
       },
       [router],
     );
