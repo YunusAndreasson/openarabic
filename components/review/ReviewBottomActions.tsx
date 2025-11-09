@@ -81,16 +81,8 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
   const leftIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintError }];
   const rightIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintSuccess }];
 
-  const leftTextStyle = [
-    STATIC_STYLES.indicatorText,
-    { color: colors.error },
-    disabled && { opacity: LAYOUT.OPACITY.SUBTLE },
-  ];
-  const rightTextStyle = [
-    STATIC_STYLES.indicatorText,
-    { color: colors.success },
-    disabled && { opacity: LAYOUT.OPACITY.SUBTLE },
-  ];
+  const leftTextStyle = [STATIC_STYLES.indicatorText, { color: colors.error }];
+  const rightTextStyle = [STATIC_STYLES.indicatorText, { color: colors.success }];
 
   // Generic press handler to reduce duplication
   const createPressHandler = (callback?: () => void) => () => {
