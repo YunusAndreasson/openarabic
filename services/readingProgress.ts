@@ -257,16 +257,17 @@ export class ReadingProgressService {
     // Verify rows were actually deleted
     if (!deleteResult || (Array.isArray(deleteResult) && deleteResult.length === 0)) {
       // No rows deleted - likely RLS policy blocking DELETE
-      // Fallback: UPDATE all progress to 0 (RLS might allow UPDATE but not DELETE)
+      // Fallback: UPDATE all progress to -1 to represent "no progress"
+      // Note: -1 is treated as 0% in calculateProgressPercentage
       console.warn(
-        '[ReadingProgress] DELETE blocked, attempting UPDATE fallback to reset progress to 0',
+        '[ReadingProgress] DELETE blocked, attempting UPDATE fallback to reset progress to -1 (0%)',
       );
 
       await executeQuery(
         () =>
           supabase
             .from('reading_progress')
-            .update({ last_sentence_read: 0 })
+            .update({ last_sentence_read: -1 })
             .eq('user_id', userId)
             .select(),
         {
