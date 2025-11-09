@@ -110,8 +110,8 @@ export async function generateWordAudioTrack(
   word: WordAudioData,
   trackIdPrefix: string = 'word',
 ): Promise<EnhancedAudioTrack | null> {
-  // Prefer Arabic audio, fallback to English audio if available
-  const audioUrl = generateAudioUrl(word.audio_url) || generateAudioUrl(word.audio_url_en);
+  // Only use Arabic audio for vocabulary words
+  const audioUrl = generateAudioUrl(word.audio_url);
 
   if (!audioUrl) {
     return null;
@@ -125,7 +125,7 @@ export async function generateWordAudioTrack(
     word.letters || word.meaning || word.english || word.word_form || 'Arabic Pronunciation';
 
   const track: EnhancedAudioTrack = {
-    id: `${trackIdPrefix}-${word.id || word.root_id}-${word.audio_url ? 'ar' : 'en'}`,
+    id: `${trackIdPrefix}-${word.id || word.root_id}-ar`,
     audioUrl: cachedAudioUrl,
     title: trackTitle,
   };

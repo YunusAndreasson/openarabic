@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import type { JSX } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,6 +15,7 @@ import { fsrsQueries } from '@/constants/queries';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
+import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useDictionaryModal, useFSRSQueries } from '@/hooks/vocabulary';
@@ -26,6 +27,14 @@ export default function DictionaryScreen(): JSX.Element {
   const { editMode, reset } = useEditMode('dictionary');
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { preconfigureAudioSession } = useSimpleAudioPlayer();
+
+  // Preconfigure audio session on mount for instant audio playback
+  useEffect(() => {
+    preconfigureAudioSession().catch(() => {
+      // Silent fail - audio will try to configure on first play
+    });
+  }, [preconfigureAudioSession]);
 
   useFocusEffect(
     useCallback(() => {

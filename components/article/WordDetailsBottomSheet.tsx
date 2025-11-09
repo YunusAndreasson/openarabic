@@ -144,60 +144,60 @@ export function WordDetailsBottomSheet({
       <BottomSheetView style={styles.container}>
         {!word ? null : (
           <>
-        {/* Arabic Word Title */}
-        <View style={styles.titleSection}>
-          <ColorCodedText
-            text={word.word_form || ''}
-            arabicWord={word.word_form || ''}
-            englishTranslation={word.english || ''}
-            type="heading1"
-            weight="bold"
-            style={styles.arabicTitle}
-            defaultColor={colors.arabicText}
-            isArabic={true}
-            precomputedSegments={word.coloredSegments}
-          />
-          {word.english && (
-            <ColorCodedText
-              text={word.english}
-              arabicWord={word.word_form || ''}
-              type="heading3"
-              style={styles.englishTranslation}
-              defaultColor={colors.secondaryText}
-              isArabic={false}
-            />
-          )}
-        </View>
+            {/* Arabic Word Title */}
+            <View style={styles.titleSection}>
+              <ColorCodedText
+                text={word.word_form || ''}
+                arabicWord={word.word_form || ''}
+                englishTranslation={word.english || ''}
+                type="heading1"
+                weight="bold"
+                style={styles.arabicTitle}
+                defaultColor={colors.arabicText}
+                isArabic={true}
+                precomputedSegments={word.coloredSegments}
+              />
+              {word.english && (
+                <ColorCodedText
+                  text={word.english}
+                  arabicWord={word.word_form || ''}
+                  type="heading3"
+                  style={styles.englishTranslation}
+                  defaultColor={colors.secondaryText}
+                  isArabic={false}
+                />
+              )}
+            </View>
 
-        {/* Grammar Note */}
-        {word.grammar_note && (
-          <View style={styles.grammarSection}>
-            <ThemedText type="body" style={styles.grammarText}>
-              {word.grammar_note}
-            </ThemedText>
-          </View>
-        )}
+            {/* Grammar Note */}
+            {word.grammar_note && (
+              <View style={styles.grammarSection}>
+                <ThemedText type="body" style={styles.grammarText}>
+                  {word.grammar_note}
+                </ThemedText>
+              </View>
+            )}
 
-        {/* Action Buttons */}
-        <View style={styles.buttonSection}>
-          <View style={styles.buttonContainer}>
-            <ThemedButton
-              title="Play Audio"
-              variant="outlined"
-              onPress={handlePlayAudio}
-              disabled={!word.audio_url}
-              style={styles.actionButton}
-            />
-            <ThemedButton
-              title={
-                optimisticIsInStudyList ? STRINGS.REMOVE_FROM_PRACTICE : STRINGS.ADD_TO_PRACTICE
-              }
-              variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
-              onPress={handleAddToStudy}
-              style={styles.actionButton}
-            />
-          </View>
-        </View>
+            {/* Action Buttons */}
+            <View style={styles.buttonSection}>
+              <View style={styles.buttonContainer}>
+                <ThemedButton
+                  title="Play Audio"
+                  variant="outlined"
+                  onPress={handlePlayAudio}
+                  disabled={!word.audio_url}
+                  style={styles.actionButton}
+                />
+                <ThemedButton
+                  title={
+                    optimisticIsInStudyList ? STRINGS.REMOVE_FROM_PRACTICE : STRINGS.ADD_TO_PRACTICE
+                  }
+                  variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
+                  onPress={handleAddToStudy}
+                  style={styles.actionButton}
+                />
+              </View>
+            </View>
           </>
         )}
       </BottomSheetView>
@@ -213,6 +213,7 @@ const styles = StyleSheet.create({
     ...LAYOUT.BOTTOM_SHEET.STYLES.container,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.XXLARGE, // Extra padding to prevent button cutoff
   },
   titleSection: {
     alignItems: 'center',

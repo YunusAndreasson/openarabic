@@ -573,10 +573,7 @@ function generateJSONOutput(
 /**
  * Generate human-readable report
  */
-function generateReport(
-  clusters: PatternCluster[],
-  allCandidates: FalsePositiveCandidate[],
-): void {
+function generateReport(clusters: PatternCluster[], allCandidates: FalsePositiveCandidate[]): void {
   console.log('\n' + '='.repeat(80));
   console.log('FALSE POSITIVE DETECTION REPORT');
   console.log('='.repeat(80));
@@ -599,7 +596,9 @@ function generateReport(
       console.log(`   Top Examples:`);
       cluster.candidates.slice(0, 3).forEach(candidate => {
         console.log(`      ${candidate.word.arabic} → "${candidate.word.english}"`);
-        console.log(`      Score: ${candidate.totalScore.toFixed(2)}, Signals: ${candidate.signals.length}`);
+        console.log(
+          `      Score: ${candidate.totalScore.toFixed(2)}, Signals: ${candidate.signals.length}`,
+        );
         candidate.signals.forEach(signal => {
           console.log(`         • [${signal.severity}] ${signal.reason}`);
         });

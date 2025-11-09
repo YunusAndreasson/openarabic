@@ -52,10 +52,6 @@ class SimpleAudioService {
   private eventSubscription: { remove: () => void } | null = null;
   private audioSessionConfigured = false;
 
-  // Player cache to avoid recreation for frequently played audio
-  private playerCache: Map<string, AudioPlayer> = new Map();
-  private readonly MAX_CACHE_SIZE = 10; // Increased for practice sessions with more words
-
   // Time-based activation throttling to avoid redundant iOS audio session calls
   private lastActivationTime = 0;
   private readonly ACTIVATION_THROTTLE = 5000; // 5 seconds
@@ -195,9 +191,6 @@ class SimpleAudioService {
       // Stop current playback
       await this.stopInternal();
 
-      // Preserve player cache to keep startup fast across sessions.
-      // Cache eviction is handled separately by MAX_CACHE_SIZE and manual clear in Account.
-
       // Reset audio session configuration
       this.audioSessionConfigured = false;
 
@@ -214,97 +207,35 @@ class SimpleAudioService {
   }
 
   /**
-   * Validate player state to detect corruption
+   * Create fresh audio player for a track
+   * No caching - audio files are already cached locally by audioCache service
    */
-  private isPlayerHealthy(player: AudioPlayer): boolean {
-    try {
-      const currentTime = player.currentTime;
-      const duration = player.duration;
-      return !isNaN(currentTime) && !isNaN(duration) && isFinite(currentTime) && isFinite(duration);
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Create or reuse audio player for a track
-   */
-  private async createOrReusePlayer(audioUrl: string): Promise<AudioPlayer> {
-    // If we have an existing player with the same audio URL, check if it's healthy
-    if (this.currentPlayer && this.currentTrack?.audioUrl === audioUrl) {
-      if (this.isPlayerHealthy(this.currentPlayer)) {
-        return this.currentPlayer;
-      } else {
-        this.currentPlayer = null;
-        this.currentTrack = null;
-      }
-    }
-
-    // Check cache for recently used players
-    const cachedPlayer = this.playerCache.get(audioUrl);
-    if (cachedPlayer) {
-      if (this.isPlayerHealthy(cachedPlayer)) {
-        return cachedPlayer;
-      } else {
-        this.playerCache.delete(audioUrl);
-        try {
-          cachedPlayer.remove();
-        } catch {
-          // Ignore cleanup errors
-        }
-      }
-    }
-
-    // Stop previous playback to prevent overlapping audio
+  private async createFreshPlayer(audioUrl: string): Promise<AudioPlayer> {
+    // Properly clean up previous player to prevent memory leaks
     if (this.currentPlayer) {
-      const previousPlayer = this.currentPlayer;
+      const oldPlayer = this.currentPlayer;
 
-      // Null references immediately to avoid races with new player state
+      // Clear event subscription from previous player
+      this.stopEventSubscription();
+
+      // Null references immediately
       this.currentPlayer = null;
       this.currentTrack = null;
 
-      // Pause previous player to prevent audio overlap
+      // Properly dispose of old player to free memory
       try {
-        previousPlayer.pause();
-      } catch (error) {
-        await handleError(error as Error, {
-          showToast: false,
-          sentryExtra: { operation: 'previousPlayer.pause', location: 'loadAndPlayTrack' },
-        });
-        // Ignore pause errors
+        oldPlayer.pause();
+        oldPlayer.remove();
+      } catch {
+        // Ignore cleanup errors
       }
-
-      // Clear any existing event subscription from the previous session
-      this.stopEventSubscription();
     }
 
-    // Create new player immediately with optimized options
+    // Create fresh player (audio is already cached locally, so this is fast)
     const playerOptions: AudioPlayerOptions = {
-      updateInterval: 500, // Match our previous polling interval for consistency
+      updateInterval: 500,
     };
     const newPlayer = createAudioPlayer(audioUrl, playerOptions);
-
-    // Cache player for potential reuse with proper cleanup
-    if (this.playerCache.size >= this.MAX_CACHE_SIZE) {
-      // Evict oldest player - fire-and-forget cleanup to not block new player creation
-      const firstKey = this.playerCache.keys().next().value;
-      if (firstKey) {
-        const evictedPlayer = this.playerCache.get(firstKey);
-        this.playerCache.delete(firstKey);
-
-        // Clean up evicted player asynchronously (don't block new player creation)
-        if (evictedPlayer) {
-          (async () => {
-            try {
-              evictedPlayer.remove();
-            } catch {
-              // Ignore cleanup errors
-            }
-          })();
-        }
-      }
-    }
-    this.playerCache.set(audioUrl, newPlayer);
 
     return newPlayer;
   }
@@ -339,11 +270,8 @@ class SimpleAudioService {
       // Configure audio session first (should be pre-configured for faster playback)
       await this.configureAudioSession();
 
-      // Track previous player to determine if we're reusing or creating new
-      const previousPlayer = this.currentPlayer;
-
-      // Create or reuse player
-      this.currentPlayer = await this.createOrReusePlayer(track.audioUrl);
+      // Create fresh player (old player already cleaned up in createFreshPlayer)
+      this.currentPlayer = await this.createFreshPlayer(track.audioUrl);
       this.currentTrack = track;
 
       // IMMEDIATE FEEDBACK: Update status to loading right away
@@ -365,23 +293,12 @@ class SimpleAudioService {
         });
       }
 
-      // Only seek if reusing same player (new players start at position 0)
-      // This eliminates 8ms of overhead for new players during practice sessions
-      const isReusingSamePlayer = previousPlayer === this.currentPlayer;
-      if (isReusingSamePlayer && this.currentPlayer) {
-        try {
-          await this.currentPlayer.seekTo(0);
-        } catch {
-          // Continue anyway - seek failure shouldn't block playback
-        }
-      }
-
       // Set up event subscription BEFORE playing to catch immediate failures
       if (!options.skipPolling) {
         this.startEventSubscription();
       }
 
-      // Start playback
+      // Start playback (fresh player starts at position 0)
       this.currentPlayer.play();
 
       // Update status to playing (actual state will come from event subscription)
@@ -744,16 +661,20 @@ class SimpleAudioService {
     this.stopEventSubscription();
 
     if (this.currentPlayer) {
+      const player = this.currentPlayer;
+      this.currentPlayer = null;
+      this.currentTrack = null;
+
       try {
-        // Just pause - keep player in cache for reuse
-        // seekTo(0) on next play will reset position
-        this.currentPlayer.pause();
+        // Properly dispose of player to free memory
+        player.pause();
+        player.remove();
       } catch {
         // Silent failure - callers don't always catch
       }
-      this.currentPlayer = null;
+    } else {
+      this.currentTrack = null;
     }
-    this.currentTrack = null;
   }
 
   /**
@@ -791,16 +712,6 @@ class SimpleAudioService {
       this.appStateSubscription.remove();
       this.appStateSubscription = null;
     }
-
-    // Clear player cache and clean up cached players
-    for (const player of this.playerCache.values()) {
-      try {
-        player.remove();
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
-    this.playerCache.clear();
 
     // Best-effort to release audio session
     try {

@@ -63,7 +63,7 @@ interface OpportunityDiscovery {
 // ============================================================================
 
 const args = process.argv.slice(2);
-const limitArg = args.find((arg) => arg.startsWith('--limit'))?.split('=')[1];
+const limitArg = args.find(arg => arg.startsWith('--limit'))?.split('=')[1];
 const outputJson = args.includes('--output-json');
 const verbose = args.includes('--verbose');
 const minFreq = 2; // Focus on patterns appearing 2+ times
@@ -156,7 +156,7 @@ async function fetchUncoloredMultiWord(): Promise<WordCandidate[]> {
 
   // Convert to array and add metadata
   const candidates: WordCandidate[] = Array.from(wordMap.values())
-    .map((word) => ({
+    .map(word => ({
       arabic: word.arabic,
       english: word.english,
       frequency: word.frequency,
@@ -166,7 +166,7 @@ async function fetchUncoloredMultiWord(): Promise<WordCandidate[]> {
       length: word.arabic.replace(/[َُِّْ]/g, '').length,
       wordCount: word.english.trim().split(/\s+/).length,
     }))
-    .filter((c) => c.frequency >= minFreq) // Focus on patterns appearing 2+ times
+    .filter(c => c.frequency >= minFreq) // Focus on patterns appearing 2+ times
     .sort((a, b) => b.frequency - a.frequency);
 
   console.log(`✅ Found ${candidates.length} uncolored multi-word patterns\n`);
@@ -269,7 +269,7 @@ function clusterByPatterns(candidates: WordCandidate[]): PatternCluster[] {
 function prepareLLMBatches(clusters: PatternCluster[]): void {
   console.log('📝 Preparing for LLM analysis...\n');
 
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
   console.log('PATTERN CLUSTERS FOR LLM ANALYSIS');
   console.log('='.repeat(80));
   console.log();
@@ -288,7 +288,7 @@ function prepareLLMBatches(clusters: PatternCluster[]): void {
       console.log(`  Examples: ${cluster.examples.length} words`);
       console.log(`  Top examples:`);
 
-      cluster.examples.slice(0, 5).forEach((ex) => {
+      cluster.examples.slice(0, 5).forEach(ex => {
         console.log(`    - ${ex.arabic} → "${ex.english}" (freq: ${ex.frequency})`);
       });
 
@@ -332,10 +332,14 @@ async function main() {
     // Output summary
     console.log('📊 DISCOVERY SUMMARY');
     console.log('='.repeat(80));
-    console.log(`Total uncolored multi-word instances: ${candidates.reduce((sum, c) => sum + c.frequency, 0)}`);
+    console.log(
+      `Total uncolored multi-word instances: ${candidates.reduce((sum, c) => sum + c.frequency, 0)}`,
+    );
     console.log(`Unique uncolored multi-word patterns: ${candidates.length}`);
     console.log(`Pattern clusters found: ${clusters.length}`);
-    console.log(`Top opportunity: ${clusters[0]?.pattern} (${clusters[0]?.totalFrequency} instances)`);
+    console.log(
+      `Top opportunity: ${clusters[0]?.pattern} (${clusters[0]?.totalFrequency} instances)`,
+    );
     console.log();
 
     // Save to JSON if requested
@@ -356,13 +360,13 @@ async function main() {
           uniquePatterns: candidates.length,
           topOpportunity: clusters[0]?.pattern,
         },
-        clusters: clusters.map((c) => ({
+        clusters: clusters.map(c => ({
           pattern: c.pattern,
           type: c.type,
           totalFrequency: c.totalFrequency,
           exampleCount: c.examples.length,
           consistencyScore: c.consistencyScore,
-          topExamples: c.examples.slice(0, 10).map((ex) => ({
+          topExamples: c.examples.slice(0, 10).map(ex => ({
             arabic: ex.arabic,
             english: ex.english,
             frequency: ex.frequency,

@@ -10,6 +10,8 @@ export class AudioCacheManager {
   // In-memory cache to reduce file system checks
   private memoryCache = new Map<string, { path: string; timestamp: number }>();
   private readonly MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  // Track pending downloads to prevent duplicate requests for same file
+  private pendingDownloads = new Map<string, Promise<string>>();
 
   private constructor() {
     this.ensureCacheDirectoryExists();
@@ -126,8 +128,24 @@ export class AudioCacheManager {
         return cachedPath;
       }
 
-      // Cache miss - download and cache it
-      return await this.cacheAudio(url);
+      // Check if download is already in progress for this URL
+      const pendingDownload = this.pendingDownloads.get(url);
+      if (pendingDownload) {
+        // Reuse the existing download promise instead of starting a new download
+        return await pendingDownload;
+      }
+
+      // Cache miss - start download and track it
+      const downloadPromise = this.cacheAudio(url);
+      this.pendingDownloads.set(url, downloadPromise);
+
+      try {
+        const result = await downloadPromise;
+        return result;
+      } finally {
+        // Clean up pending download tracking regardless of success/failure
+        this.pendingDownloads.delete(url);
+      }
     } catch (error) {
       await handleError(error as Error, {
         showToast: false,
@@ -148,8 +166,9 @@ export class AudioCacheManager {
         await cacheDir.delete();
         await this.ensureCacheDirectoryExists();
       }
-      // Clear memory cache as well
+      // Clear memory cache and pending downloads
       this.memoryCache.clear();
+      this.pendingDownloads.clear();
     } catch (error) {
       await handleError(error as Error);
       throw error;

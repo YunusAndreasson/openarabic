@@ -215,30 +215,6 @@ describe('audioUtils', () => {
       });
     });
 
-    it('should fallback to English audio when Arabic is not available', async () => {
-      const word: WordAudioData = {
-        id: 2,
-        audio_url: null,
-        audio_url_en: 'english.mp3',
-        meaning: 'house',
-      };
-
-      const remoteUrl = 'https://example.com/english.mp3';
-      const cachedUrl = 'file:///cache/english.mp3';
-
-      generateAudioUrlMock.mockReturnValueOnce(undefined).mockReturnValueOnce(remoteUrl);
-      audioCacheMock.getAudio.mockResolvedValueOnce(cachedUrl);
-
-      const result = await generateWordAudioTrack(word);
-
-      expect(audioCacheMock.getAudio).toHaveBeenCalledWith(remoteUrl);
-      expect(result).toEqual({
-        id: 'word-2-en',
-        audioUrl: cachedUrl,
-        title: 'house',
-      });
-    });
-
     it('should return null when no audio URL is available', async () => {
       const word: WordAudioData = {
         id: 3,
