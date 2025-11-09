@@ -123,7 +123,7 @@ VocabularyStatCards.displayName = 'VocabularyStatCards';
 
 const styles = StyleSheet.create({
   container: {
-    gap: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
   statsRow: {
     flexDirection: 'row',
