@@ -47,15 +47,7 @@ interface ChartBottomSheetProps {
  * ```
  */
 export const ChartBottomSheet = memo<ChartBottomSheetProps>(
-  ({
-    isVisible,
-    onClose,
-    title,
-    subtitle,
-    ChartComponent,
-    filterWords,
-    queryLimit = 1000,
-  }) => {
+  ({ isVisible, onClose, title, subtitle, ChartComponent, filterWords, queryLimit = 1000 }) => {
     const { user } = useAuth();
 
     // Fetch study words for the current user

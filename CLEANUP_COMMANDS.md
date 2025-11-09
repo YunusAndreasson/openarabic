@@ -8,6 +8,7 @@
 ## 🔍 Finding Unused Code
 
 ### Find Unused Exports
+
 ```bash
 # Run knip to find unused exports
 yarn check-unused
@@ -20,6 +21,7 @@ rg "exportName" --count --sort path
 ```
 
 ### Find Unused Imports
+
 ```bash
 # ESLint will catch these automatically
 yarn lint
@@ -29,6 +31,7 @@ rg "^import.*from" -t ts -t tsx | head -50
 ```
 
 ### Find Unused Constants
+
 ```bash
 # List all constants in a file
 rg "^export const [A-Z_]+" constants/
@@ -46,6 +49,7 @@ done
 ```
 
 ### Find Unused Types/Interfaces
+
 ```bash
 # List all type exports
 rg "^export (type|interface) " types/ -t ts
@@ -58,6 +62,7 @@ rg "import type \{.*\}" -t ts -t tsx
 ```
 
 ### Find Unused Components
+
 ```bash
 # List all component files
 find components -name "*.tsx" -type f
@@ -74,6 +79,7 @@ rg "from '@/components" --count --sort path
 ## 🗑️ Finding Dead Code
 
 ### Commented Code
+
 ```bash
 # Find commented JSX
 rg "\{/\*.*\*/\}" -t tsx
@@ -86,6 +92,7 @@ rg "/\*[\s\S]*?\*/" -U -t ts -t tsx
 ```
 
 ### TODO/FIXME/HACK
+
 ```bash
 # Find all TODO comments
 rg "TODO|FIXME|HACK|TEMP|XXX" -t ts -t tsx
@@ -97,6 +104,7 @@ rg "HACK" -t ts -t tsx --count
 ```
 
 ### Debug Code
+
 ```bash
 # Find console statements
 rg "console\.(log|debug|warn|error)" -t ts -t tsx
@@ -109,6 +117,7 @@ rg "__DEV__" -t ts -t tsx
 ```
 
 ### Unreachable Code
+
 ```bash
 # Find code after return (TypeScript will catch this)
 npx tsc --noUnusedLocals --noUnusedParameters --noEmit
@@ -122,6 +131,7 @@ rg "return.*;.*\n.*[^}]" -U -t ts -t tsx
 ## 📊 Analyzing Props & Defaults
 
 ### Find Optional Props
+
 ```bash
 # Find all optional props in interfaces
 rg "^\s+\w+\?:" -t ts -t tsx
@@ -131,6 +141,7 @@ rg "= \{[^}]*\}" -t tsx
 ```
 
 ### Check Prop Usage
+
 ```bash
 # For a specific component, find all usages
 rg "<ComponentName" -t tsx -A 5
@@ -140,6 +151,7 @@ rg "<ComponentName.*propName=" -t tsx
 ```
 
 ### Find Props Always Same Value
+
 ```bash
 # Example: Search for variant="default"
 rg 'variant="default"' -t tsx --count
@@ -155,6 +167,7 @@ rg 'variant="(primary|secondary)"' -t tsx --count
 ## 📈 Measuring Impact
 
 ### Count Lines of Code
+
 ```bash
 # Total lines
 find . -name "*.ts" -o -name "*.tsx" | xargs wc -l
@@ -166,6 +179,7 @@ find utils -name "*.ts" | xargs wc -l | tail -1
 ```
 
 ### Count Files
+
 ```bash
 # Total TypeScript files
 find . -name "*.ts" -o -name "*.tsx" | wc -l
@@ -176,6 +190,7 @@ find hooks -name "*.ts" | wc -l
 ```
 
 ### Bundle Size
+
 ```bash
 # Create production bundle
 npx react-native bundle \
@@ -192,6 +207,7 @@ ls -lh /tmp/bundle-before.js /tmp/bundle-after.js
 ```
 
 ### TypeScript Compile Time
+
 ```bash
 # Time compilation
 time npx tsc --noEmit
@@ -202,6 +218,7 @@ time npx tsc --noEmit
 ## 🔧 Specific Cleanup Patterns
 
 ### Remove Unused Hook Returns
+
 ```bash
 # Find hook destructuring
 rg "const \{.*\} = use\w+" -t tsx
@@ -212,6 +229,7 @@ rg "const \{.*\} = use\w+" -t tsx
 ```
 
 ### Find Duplicate Component Logic
+
 ```bash
 # Search for similar component names
 rg "export.*function.*Button" components/ -t tsx
@@ -221,6 +239,7 @@ rg "interface.*Props" components/ -t ts -t tsx
 ```
 
 ### Find Unused Service Methods
+
 ```bash
 # List service exports
 rg "^export (async )?function" services/ -t ts
@@ -233,6 +252,7 @@ done
 ```
 
 ### Find Unused Utility Functions
+
 ```bash
 # List utils exports
 rg "^export (const|function)" utils/ -t ts
@@ -246,6 +266,7 @@ rg "from '@/utils" -t ts -t tsx
 ## 🎯 Targeted Searches
 
 ### Find All Usages of a Symbol
+
 ```bash
 # Find all usages in code
 rg "SYMBOL_NAME" --type-add 'source:*.{ts,tsx}' -t source
@@ -258,6 +279,7 @@ rg "SYMBOL_NAME" -t ts -t tsx -C 5
 ```
 
 ### Find Import Sources
+
 ```bash
 # Find where something is imported from
 rg "from ['\"].*SYMBOL_NAME" -t ts -t tsx
@@ -267,6 +289,7 @@ rg "export.*from" -t ts
 ```
 
 ### Find Re-exports
+
 ```bash
 # Find barrel export files
 find . -name "index.ts" -o -name "index.tsx"
@@ -280,6 +303,7 @@ rg "export.*from" components/index.ts
 ## 🧪 Validation After Cleanup
 
 ### Run Tests
+
 ```bash
 # All tests
 yarn test:all
@@ -292,6 +316,7 @@ yarn test:coverage
 ```
 
 ### Type Check
+
 ```bash
 # Full type check
 npx tsc --noEmit
@@ -301,6 +326,7 @@ npx tsc --noUnusedLocals --noUnusedParameters --noEmit
 ```
 
 ### Lint
+
 ```bash
 # Full lint
 yarn lint
@@ -313,6 +339,7 @@ npx eslint path/to/file.ts
 ```
 
 ### Check Unused Exports
+
 ```bash
 # Run knip
 yarn check-unused
@@ -322,6 +349,7 @@ npx knip --config knip.json
 ```
 
 ### Build Check
+
 ```bash
 # Development build
 yarn start
@@ -335,6 +363,7 @@ eas build --platform ios --profile preview --local
 ## 📝 Safe Removal Workflow
 
 ### Before Removing Anything
+
 ```bash
 # 1. Search for usages
 rg "ITEM_NAME" --count
@@ -350,6 +379,7 @@ npx tsc --noEmit
 ```
 
 ### After Removal
+
 ```bash
 # 1. Run validation
 yarn validate
@@ -375,6 +405,7 @@ git commit -m "chore: remove unused ITEM_NAME
 ## 🔄 Batch Operations
 
 ### Remove All Unused Imports (ESLint)
+
 ```bash
 # Auto-fix unused imports
 yarn lint:fix
@@ -384,6 +415,7 @@ npx eslint --fix "**/*.{ts,tsx}"
 ```
 
 ### Format All Files
+
 ```bash
 # Prettier fix
 yarn prettier:fix
@@ -393,6 +425,7 @@ npx prettier --write "**/*.{ts,tsx}"
 ```
 
 ### Update All Imports After Removal
+
 ```bash
 # TypeScript will show errors for broken imports
 npx tsc --noEmit
@@ -405,6 +438,7 @@ npx tsc --noEmit
 ## 📊 Reporting
 
 ### Generate Removal Report
+
 ```bash
 # Count before cleanup
 echo "Before:" > cleanup-report.txt
@@ -418,6 +452,7 @@ find . -name "*.ts" -o -name "*.tsx" | xargs wc -l | tail -1 >> cleanup-report.t
 ```
 
 ### List All Commits
+
 ```bash
 # Show cleanup commits
 git log --oneline --grep="chore: remove"
@@ -431,6 +466,7 @@ git log --stat --grep="chore: remove"
 ## 🚨 Emergency Rollback
 
 ### If Something Breaks
+
 ```bash
 # Revert last commit
 git revert HEAD
