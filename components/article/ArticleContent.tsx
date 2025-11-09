@@ -145,13 +145,18 @@ const ArticleContentInternal = function ArticleContent({
     duration: TIMING_CONFIG.FAST.duration, // 150ms for snappier feel
   });
 
-  // Trigger animation when content becomes available OR when article ID changes
-  // This ensures smooth fade transition when navigating between related articles
+  // Trigger fade transition when article ID changes (for related articles navigation)
+  // Reset to 0 then fade in for smooth transition
   React.useEffect(() => {
     if (sortedSentences && sortedSentences.length > 0) {
-      startAnimation();
+      // Reset opacity to 0, then fade in for smooth transition
+      reset();
+      // Use setTimeout to ensure reset completes before fade-in starts
+      setTimeout(() => {
+        startAnimation();
+      }, 16); // One frame delay (16ms at 60fps)
     }
-  }, [id, sortedSentences, startAnimation]);
+  }, [id, sortedSentences, reset, startAnimation]);
 
   // Tooltip closure handler - only triggers when scroll begins, not during continuous scrolling
   // This prevents blocking scroll performance while still closing tooltip on user interaction
