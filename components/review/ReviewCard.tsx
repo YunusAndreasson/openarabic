@@ -63,6 +63,8 @@ interface ReviewCardProps {
   isHesitating?: SharedValue<boolean>;
   // Audio props
   onWordPress?: () => void;
+  // Background props
+  fullScreenBackground?: boolean; // When true, renders background layer only for full-screen flash
 }
 
 export function ReviewCard({
@@ -79,6 +81,7 @@ export function ReviewCard({
   onHesitationEnd,
   isHesitating,
   onWordPress,
+  fullScreenBackground = false,
 }: ReviewCardProps) {
   const colors = useColors();
 
@@ -226,6 +229,43 @@ export function ReviewCard({
     onWordPress,
   };
 
+  // When fullScreenBackground is true, render background and content as separate layers
+  if (fullScreenBackground) {
+    return (
+      <>
+        {/* Background layer - absolutely positioned full screen, no pointer events */}
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              pointerEvents: 'none',
+            },
+            swipeBackgroundStyle,
+          ]}
+        />
+
+        {/* Content layer with gesture detector - full screen */}
+        <View style={STATIC_STYLES.swipeContainer}>
+          <GestureDetector gesture={panGesture}>
+            <Animated.View style={[STATIC_STYLES.swipeContainer, { pointerEvents: 'box-none' }]}>
+              <Animated.View
+                style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
+                testID={testID}
+              >
+                <WordDisplayComponent {...wordDisplayProps} />
+              </Animated.View>
+            </Animated.View>
+          </GestureDetector>
+        </View>
+      </>
+    );
+  }
+
+  // Default rendering - background contained within word area
   return (
     <View style={STATIC_STYLES.swipeContainer}>
       <GestureDetector gesture={panGesture}>

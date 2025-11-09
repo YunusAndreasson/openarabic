@@ -3,7 +3,6 @@ import type { JSX } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -210,45 +209,47 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
   return (
     <ReviewToastContext value={toastContextValue}>
-      <Animated.View style={[baseStyles.container, { backgroundColor: colors.background }, transparentStyle]}>
-        {/* Progress header at top of screen */}
-        <View style={{ paddingTop: LAYOUT.SPACING.XLARGE }}>
-          <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
-        </View>
+      <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
+        {/* Full-screen swipe background + word content */}
+        <ReviewCard
+          key={currentWordKey}
+          word={currentSentence.wordForm}
+          currentWord={currentWord}
+          onSwipeLeft={handleSwipeLeft}
+          onSwipeRight={handleSwipeRight}
+          opacityStyle={transparentStyle}
+          isUpdating={isUpdating}
+          testID="review-card"
+          translation={currentMeaning}
+          showTranslation={showTranslation}
+          onHesitationStart={handleHesitationStart}
+          onHesitationEnd={handleHesitationEnd}
+          isHesitating={isHesitating}
+          onWordPress={handleReplayAudio}
+          fullScreenBackground={true}
+        />
 
-        {/* Main content area */}
-        <View
-          style={[
-            baseStyles.contentContainer,
-            {
-              paddingTop: LAYOUT.SPACING.MEDIUM, // Less padding since header is above
-              paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
-            },
-          ]}
-        >
-          <View style={baseStyles.wordArea}>
-            <ReviewCard
-              key={currentWordKey}
-              word={currentSentence.wordForm}
-              currentWord={currentWord}
-              onSwipeLeft={handleSwipeLeft}
-              onSwipeRight={handleSwipeRight}
-              opacityStyle={{}}
-              isUpdating={isUpdating}
-              testID="review-card"
-              translation={currentMeaning}
-              showTranslation={showTranslation}
-              onHesitationStart={handleHesitationStart}
-              onHesitationEnd={handleHesitationEnd}
-              isHesitating={isHesitating}
-              onWordPress={handleReplayAudio}
-            />
+        {/* UI chrome - header and bottom actions, positioned above background */}
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'box-none' }}>
+          {/* Progress header at top of screen */}
+          <View style={{ paddingTop: LAYOUT.SPACING.XLARGE, pointerEvents: 'box-none' }}>
+            <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
           </View>
 
-          <ReviewBottomActions />
+          {/* Bottom actions */}
+          <View
+            style={{
+              position: 'absolute',
+              bottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
+              left: LAYOUT.SCREEN_EDGE_PADDING,
+              right: LAYOUT.SCREEN_EDGE_PADDING,
+            }}
+          >
+            <ReviewBottomActions />
+          </View>
         </View>
 
-      </Animated.View>
+      </View>
 
       {/* Local toast for modal - appears on top with maximum z-index */}
       {toastState.visible && (
