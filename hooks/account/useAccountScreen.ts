@@ -179,13 +179,22 @@ export const useAccountScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Delete all reading progress from database
+              // Delete all reading progress from database (or reset to 0 if RLS blocks DELETE)
               await ReadingProgressService.deleteAllProgress(user.id);
 
-              // Invalidate and refetch all reading progress queries
-              // Note: Invalidation alone doesn't trigger refetch because queries have refetchOnMount: false
-              await readingProgressQueries.invalidateAll(queryClient, user.id);
-              // Explicitly refetch to update UI immediately
+              // Completely remove all reading progress queries from cache
+              // Using removeQueries instead of invalidate to force complete cache clear
+              await queryClient.removeQueries({
+                queryKey: readingProgressQueries.keys.bulk(user.id),
+              });
+              await queryClient.removeQueries({
+                queryKey: readingProgressQueries.keys.streak(user.id),
+              });
+              await queryClient.removeQueries({
+                queryKey: readingProgressQueries.keys.readingList(user.id),
+              });
+
+              // Refetch to populate cache with fresh (empty or reset) data
               await queryClient.refetchQueries({
                 queryKey: readingProgressQueries.keys.bulk(user.id),
               });
