@@ -4,11 +4,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { ListenListItemCard } from '@/components/bookmarks';
 import { LAYOUT } from '@/constants/layout';
-import { getArticleRoute } from '@/constants/routes';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -86,12 +84,15 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
       return unreadOrLowProgressArticles.slice(0, maxArticles);
     }, [unreadOrLowProgressArticles, maxArticles]);
 
-    // Navigation handler using router.replace to avoid stacking articles
-    // When navigating between related articles, we replace the current article
-    // instead of pushing, so users don't have to close multiple articles to return
+    // Navigation handler using router.setParams to update article without stacking
+    // setParams updates URL params without pushing to history stack
+    // The article screen uses useLocalSearchParams which reactively updates on param changes
     const handleArticlePress = useCallback(
       (articleId: number, title: string) => {
-        router.replace(getArticleRoute(articleId as ArticleId, title));
+        router.setParams({
+          id: articleId.toString(),
+          headerTitle: title,
+        });
       },
       [router],
     );
