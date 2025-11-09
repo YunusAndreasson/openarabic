@@ -84,14 +84,16 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
       return unreadOrLowProgressArticles.slice(0, maxArticles);
     }, [unreadOrLowProgressArticles, maxArticles]);
 
-    // Navigation handler using router.setParams to update article without stacking
-    // setParams updates URL params without pushing to history stack
-    // The article screen uses useLocalSearchParams which reactively updates on param changes
+    // Navigation handler using router.replace for native modal transitions
+    // Replaces current article modal with new one, providing smooth native animation
     const handleArticlePress = useCallback(
       (articleId: number, title: string) => {
-        router.setParams({
-          id: articleId.toString(),
-          headerTitle: title,
+        router.replace({
+          pathname: '/article/[id]',
+          params: {
+            id: articleId.toString(),
+            headerTitle: title,
+          },
         });
       },
       [router],

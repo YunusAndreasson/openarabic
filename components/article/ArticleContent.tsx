@@ -140,23 +140,12 @@ const ArticleContentInternal = function ArticleContent({
   const { scrollY, onScrollAnimated } = useArticleScrollHandler();
 
   // Optimized fade-in animation for snappy article appearance
-  const { animatedStyle, startAnimation, reset } = useOpacityAnimation({
+  // autoStart handles animation automatically on mount - no manual triggers needed
+  const { animatedStyle } = useOpacityAnimation({
     initialOpacity: 0,
     duration: TIMING_CONFIG.FAST.duration, // 150ms for snappier feel
+    autoStart: true, // Automatically fade in when component mounts
   });
-
-  // Trigger fade transition when article ID changes (for related articles navigation)
-  // Reset to 0 then fade in for smooth transition
-  React.useEffect(() => {
-    if (sortedSentences && sortedSentences.length > 0) {
-      // Reset opacity to 0, then fade in for smooth transition
-      reset();
-      // Use setTimeout to ensure reset completes before fade-in starts
-      setTimeout(() => {
-        startAnimation();
-      }, 16); // One frame delay (16ms at 60fps)
-    }
-  }, [id, sortedSentences, reset, startAnimation]);
 
   // Tooltip closure handler - only triggers when scroll begins, not during continuous scrolling
   // This prevents blocking scroll performance while still closing tooltip on user interaction
@@ -278,8 +267,7 @@ const ArticleContentInternal = function ArticleContent({
       {sortedSentences && sortedSentences.length > 0 ? (
         <View style={listContainerStyle}>
           {/* Sticky Parallax Header behind content - using Skia gradients for Android stability */}
-          {/* Key ensures header remounts when navigating between related articles (forces image reload) */}
-          <ParallaxHeader key={`header-${id}`} article={article} colors={colors} scrollY={scrollY} />
+          <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
           <AnimatedFlashList
             /**
              * TypeScript limitation with Reanimated's createAnimatedComponent:
