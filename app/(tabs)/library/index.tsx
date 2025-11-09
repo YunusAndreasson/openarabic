@@ -24,7 +24,7 @@ import { mediumFeedback } from '@/utils/haptics';
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
   headerContainer: {
-    gap: LAYOUT.SPACING.XXXLARGE, // Generous gap between major sections (48px)
+    gap: LAYOUT.SPACING.SMALL, // Same as Practice screen (8px)
   },
   listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
 });
