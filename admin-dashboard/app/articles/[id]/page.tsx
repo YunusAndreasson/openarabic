@@ -18,9 +18,17 @@ import {
 } from '@/components/ui/select';
 import { ArrowLeft, Loader2, Upload, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { ImagePicker } from '@/components/image-picker';
-import { SentenceAudioVerifier } from '@/components/sentence-audio-verifier';
+import dynamic from 'next/dynamic';
 import { SummaryPreviewDialog } from '@/components/summary-preview-dialog';
+import { useAuthorsCategories } from '@/hooks/useAuthorsCategories';
+
+const ImagePicker = dynamic(() => import('@/components/image-picker').then(mod => ({ default: mod.ImagePicker })), {
+  loading: () => <div className="h-10 bg-muted animate-pulse rounded" />,
+});
+
+const SentenceAudioVerifier = dynamic(() => import('@/components/sentence-audio-verifier').then(mod => ({ default: mod.SentenceAudioVerifier })), {
+  loading: () => <div className="h-32 bg-muted animate-pulse rounded" />,
+});
 
 const SUPABASE_STORAGE_URL =
   'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
@@ -46,9 +54,8 @@ export default function EditArticlePage() {
   const params = useParams();
   const articleId = parseInt(params.id as string);
 
+  const { authors, categories } = useAuthorsCategories();
   const [article, setArticle] = useState<Article | null>(null);
-  const [authors, setAuthors] = useState<Author[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -76,15 +83,9 @@ export default function EditArticlePage() {
 
   const fetchData = async () => {
     try {
-      const [articleRes, authorsRes, categoriesRes] = await Promise.all([
-        supabase.from('articles').select('*').eq('id', articleId).single(),
-        supabase.from('authors').select('*').order('name'),
-        supabase.from('categories').select('*').order('name'),
-      ]);
+      const articleRes = await supabase.from('articles').select('*').eq('id', articleId).single();
 
       if (articleRes.error) throw articleRes.error;
-      if (authorsRes.error) throw authorsRes.error;
-      if (categoriesRes.error) throw categoriesRes.error;
 
       const articleData = articleRes.data;
       setArticle(articleData);
@@ -94,9 +95,6 @@ export default function EditArticlePage() {
       setCategoryId(articleData.category_id.toString());
       setImageUrl(articleData.image_url);
       setImagePreview(normalizeImageUrl(articleData.image_url));
-
-      setAuthors(authorsRes.data || []);
-      setCategories(categoriesRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {

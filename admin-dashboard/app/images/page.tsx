@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const SUPABASE_STORAGE_URL =
   'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
@@ -16,6 +17,7 @@ export default function ImagesPage() {
   const [filteredImages, setFilteredImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingImages, setDeletingImages] = useState<Set<string>>(new Set());
 
@@ -24,13 +26,17 @@ export default function ImagesPage() {
   }, []);
 
   useEffect(() => {
-    setCurrentPage(1);
-    if (searchTerm) {
-      setFilteredImages(images.filter(img => img.toLowerCase().includes(searchTerm.toLowerCase())));
+    if (debouncedSearchTerm) {
+      setFilteredImages(images.filter(img => img.toLowerCase().includes(debouncedSearchTerm.toLowerCase())));
     } else {
       setFilteredImages(images);
     }
-  }, [searchTerm, images]);
+  }, [debouncedSearchTerm, images]);
+
+  // Only reset to page 1 when search term changes, not when images change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   const totalPages = Math.ceil(filteredImages.length / IMAGES_PER_PAGE);
   const startIndex = (currentPage - 1) * IMAGES_PER_PAGE;
@@ -50,7 +56,7 @@ export default function ImagesPage() {
       const imageFiles = (data || [])
         .filter(file => {
           const ext = file.name.split('.').pop()?.toLowerCase();
-          return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
+          return ext === 'webp';
         })
         .map(file => file.name);
 
@@ -76,7 +82,17 @@ export default function ImagesPage() {
 
       // Remove from local state
       setImages(prev => prev.filter(img => img !== imageName));
-      setFilteredImages(prev => prev.filter(img => img !== imageName));
+      setFilteredImages(prev => {
+        const updated = prev.filter(img => img !== imageName);
+
+        // If this deletion empties the current page, go to the previous page
+        const newTotalPages = Math.ceil(updated.length / IMAGES_PER_PAGE);
+        if (currentPage > newTotalPages && newTotalPages > 0) {
+          setCurrentPage(newTotalPages);
+        }
+
+        return updated;
+      });
     } catch (error) {
       console.error('Error deleting image:', error);
       alert('Failed to delete image. It may be in use by an article.');

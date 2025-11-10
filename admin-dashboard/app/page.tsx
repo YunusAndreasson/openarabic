@@ -22,8 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, ImageIcon, ArrowUpDown, ArrowUp, ArrowDown, Repeat } from 'lucide-react';
+import { Loader2, ImageIcon, ArrowUpDown, ArrowUp, ArrowDown, Repeat, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useAuthorsCategories } from '@/hooks/useAuthorsCategories';
+import dynamic from 'next/dynamic';
+
+const ImagePicker = dynamic(() => import('@/components/image-picker').then(mod => ({ default: mod.ImagePicker })), {
+  ssr: false,
+});
 
 const SUPABASE_STORAGE_URL =
   'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
@@ -105,14 +112,18 @@ export default function ArticlesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const { authors, categories } = useAuthorsCategories();
   const [articles, setArticles] = useState<Article[]>([]);
-  const [authors, setAuthors] = useState<Author[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set());
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 50;
+  const [editingImageId, setEditingImageId] = useState<number | null>(null);
+  const [savingImageId, setSavingImageId] = useState<number | null>(null);
 
   // Initialize sort state from URL params
   useEffect(() => {
@@ -131,28 +142,46 @@ export default function ArticlesPage() {
 
   const fetchData = async () => {
     try {
-      const [articlesRes, authorsRes, categoriesRes] = await Promise.all([
-        supabase
-          .from('articles')
-          .select(
-            '*, authors(name), categories(name), article_sentences(english_repeat, arabic_repeat)',
-          )
-          .order('created_at', { ascending: false }),
-        supabase.from('authors').select('*').order('name'),
-        supabase.from('categories').select('*').order('name'),
-      ]);
+      const articlesRes = await supabase
+        .from('articles')
+        .select(
+          '*, authors(name), categories(name), article_sentences(english_repeat, arabic_repeat)',
+        )
+        .order('created_at', { ascending: false });
 
       if (articlesRes.error) throw articlesRes.error;
-      if (authorsRes.error) throw authorsRes.error;
-      if (categoriesRes.error) throw categoriesRes.error;
 
       setArticles((articlesRes.data as Article[]) || []);
-      setAuthors(authorsRes.data || []);
-      setCategories(categoriesRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageSelect = async (articleId: number, imageUrl: string) => {
+    setSavingImageId(articleId);
+    try {
+      const { error } = await supabase
+        .from('articles')
+        .update({ image_url: imageUrl })
+        .eq('id', articleId);
+
+      if (error) throw error;
+
+      // Update local state
+      setArticles(prev =>
+        prev.map(article =>
+          article.id === articleId ? { ...article, image_url: imageUrl } : article,
+        ),
+      );
+
+      setEditingImageId(null);
+    } catch (error) {
+      console.error('Error updating image:', error);
+      alert('Failed to update image');
+    } finally {
+      setSavingImageId(null);
     }
   };
 
@@ -249,9 +278,9 @@ export default function ArticlesPage() {
 
   let filteredArticles = articles.filter(
     article =>
-      article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.authors?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.categories?.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      article.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      article.authors?.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      article.categories?.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()),
   );
 
   // Apply sorting if active
@@ -284,6 +313,32 @@ export default function ArticlesPage() {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
   }
+
+  // Pagination
+  const totalPages = Math.ceil(filteredArticles.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedArticles = filteredArticles.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, sortField, sortDirection]);
+
+  // ESC key handler to close modal
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && editingImageId) {
+        setEditingImageId(null);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [editingImageId]);
 
   if (loading) {
     return (
@@ -373,14 +428,14 @@ export default function ArticlesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredArticles.length === 0 ? (
+              {paginatedArticles.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground">
                     No articles found
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredArticles.map(article => {
+                paginatedArticles.map(article => {
                   const wordCount = countWords(article.summary);
                   const summaryStatus = getSummaryColor(wordCount);
                   const isUpdating = updatingIds.has(article.id);
@@ -393,24 +448,53 @@ export default function ArticlesPage() {
                         router.push(`/articles/${article.id}`);
                       }}
                     >
-                      <TableCell>
-                        <div className="relative h-12 w-20 overflow-hidden rounded bg-muted flex items-center justify-center">
-                          {article.image_url ? (
-                            <Image
-                              src={normalizeImageUrl(article.image_url)}
-                              alt={article.title}
-                              fill
-                              className="object-cover"
-                              sizes="80px"
-                              onError={e => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                              }}
-                            />
-                          ) : (
+                      <TableCell onClick={e => e.stopPropagation()}>
+                        {article.image_url ? (
+                          <Tooltip delayDuration={200}>
+                            <TooltipTrigger asChild>
+                              <div
+                                className="relative h-12 w-20 overflow-hidden rounded bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                                onClick={() => setEditingImageId(article.id)}
+                              >
+                                <Image
+                                  src={normalizeImageUrl(article.image_url)}
+                                  alt={article.title}
+                                  fill
+                                  className="object-cover"
+                                  sizes="80px"
+                                  onError={e => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                                {savingImageId === article.id && (
+                                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                                  </div>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="p-0 border-0 bg-transparent shadow-2xl">
+                              <div className="relative w-[400px] h-[300px] overflow-hidden rounded-lg border-2 border-border">
+                                <Image
+                                  src={normalizeImageUrl(article.image_url)}
+                                  alt={article.title}
+                                  fill
+                                  className="object-cover"
+                                  sizes="400px"
+                                  priority
+                                />
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <div
+                            className="relative h-12 w-20 overflow-hidden rounded bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                            onClick={() => setEditingImageId(article.id)}
+                          >
                             <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="font-medium">
                         <div className="max-w-md truncate">{article.title}</div>
@@ -503,10 +587,74 @@ export default function ArticlesPage() {
           </Table>
         </div>
 
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t pt-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredArticles.length)} of{' '}
+              {filteredArticles.length} articles
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <div className="text-sm">
+                Page {currentPage} of {totalPages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="text-sm text-muted-foreground">
-          Showing {filteredArticles.length} of {articles.length} articles
+          Total: {articles.length} articles
         </div>
       </div>
+
+      {/* Image Picker Modal */}
+      {editingImageId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setEditingImageId(null)}
+        >
+          <div
+            className="bg-background rounded-lg p-6 max-w-4xl w-full h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <h2 className="text-xl font-semibold">Select Image</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingImageId(null)}
+              >
+                Close (ESC)
+              </Button>
+            </div>
+            <ImagePicker
+              inline
+              onSelect={(imageUrl) => handleImageSelect(editingImageId, imageUrl)}
+              currentImage={
+                articles.find((a) => a.id === editingImageId)?.image_url || ''
+              }
+            />
+          </div>
+        </div>
+      )}
     </TooltipProvider>
   );
 }

@@ -18,8 +18,18 @@ import { Loader2, Images, Search, Check, ChevronLeft, ChevronRight } from 'lucid
 const SUPABASE_STORAGE_URL =
   'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
 const IMAGES_PER_PAGE = 24;
-const CACHE_KEY = 'image-picker-cache';
+const CACHE_KEY = 'image-picker-cache-webp'; // Changed key to invalidate old cache
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+// Fisher-Yates shuffle algorithm for randomizing array order
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
 
 interface CachedImageData {
   images: string[];
@@ -29,9 +39,10 @@ interface CachedImageData {
 interface ImagePickerProps {
   onSelect: (imageUrl: string) => void;
   currentImage?: string;
+  inline?: boolean; // If true, skip Dialog wrapper and show content directly
 }
 
-export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
+export function ImagePicker({ onSelect, currentImage, inline = false }: ImagePickerProps) {
   const [open, setOpen] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [filteredImages, setFilteredImages] = useState<string[]>([]);
@@ -42,10 +53,10 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
   const [totalImages, setTotalImages] = useState(0);
 
   useEffect(() => {
-    if (open) {
+    if (open || inline) {
       loadImages();
     }
-  }, [open]);
+  }, [open, inline]);
 
   useEffect(() => {
     setCurrentPage(1); // Reset to first page on search
@@ -100,9 +111,11 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
     const cachedImages = getCachedImages();
 
     if (cachedImages && cachedImages.length > 0) {
-      setImages(cachedImages);
-      setFilteredImages(cachedImages);
-      setTotalImages(cachedImages.length);
+      // Randomize the order every time the dialog opens
+      const randomizedImages = shuffleArray(cachedImages);
+      setImages(randomizedImages);
+      setFilteredImages(randomizedImages);
+      setTotalImages(randomizedImages.length);
       return;
     }
 
@@ -123,16 +136,18 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
       const imageFiles = (data || [])
         .filter(file => {
           const ext = file.name.split('.').pop()?.toLowerCase();
-          return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
+          return ext === 'webp';
         })
         .map(file => file.name);
 
-      // Save to cache
+      // Save to cache (unshuffled for consistency)
       setCachedImages(imageFiles);
 
-      setImages(imageFiles);
-      setFilteredImages(imageFiles);
-      setTotalImages(imageFiles.length);
+      // Randomize the order for display
+      const randomizedImages = shuffleArray(imageFiles);
+      setImages(randomizedImages);
+      setFilteredImages(randomizedImages);
+      setTotalImages(randomizedImages.length);
     } catch (error) {
       console.error('Error fetching images:', error);
     } finally {
@@ -156,23 +171,9 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
     return SUPABASE_STORAGE_URL + url;
   };
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button type="button" variant="outline" className="w-full">
-          <Images className="mr-2 h-4 w-4" />
-          Select from Library
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Select Image</DialogTitle>
-          <DialogDescription>
-            Choose an image from your library ({totalImages} images available)
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-4 flex-1 min-h-0">
+  // Image grid content (shared between dialog and inline modes)
+  const imageGridContent = (
+    <div className="flex flex-col gap-4 flex-1 min-h-0">
           <div className="relative flex-shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -260,7 +261,31 @@ export function ImagePicker({ onSelect, currentImage }: ImagePickerProps) {
               </div>
             </>
           )}
-        </div>
+    </div>
+  );
+
+  // Inline mode - just return the content
+  if (inline) {
+    return imageGridContent;
+  }
+
+  // Dialog mode - wrap in Dialog
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline" className="w-full">
+          <Images className="mr-2 h-4 w-4" />
+          Select from Library
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Select Image</DialogTitle>
+          <DialogDescription>
+            Choose an image from your library ({totalImages} images available)
+          </DialogDescription>
+        </DialogHeader>
+        {imageGridContent}
       </DialogContent>
     </Dialog>
   );

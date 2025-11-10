@@ -2,6 +2,10 @@ import type { NextConfig } from 'next';
 import path from 'path';
 
 const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  experimental: {
+    reactCompiler: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -12,6 +16,8 @@ const nextConfig: NextConfig = {
     ],
   },
   outputFileTracingRoot: path.join(__dirname),
+  compress: true,
+  swcMinify: true,
 };
 
 export default nextConfig;
