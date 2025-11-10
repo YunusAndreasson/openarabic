@@ -8,8 +8,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
-import { DictionarySortingHeader } from '@/components/study';
-import { DictionaryWordCard } from '@/components/study';
+import { DictionaryWordCard, MemoryStrengthLegend } from '@/components/study';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { fsrsQueries } from '@/constants/queries';
 import { LAYOUT } from '@/constants/layout';
@@ -95,14 +94,14 @@ export default function DictionaryScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container}>
-      {/* Header with status legend and sort toggle */}
-      <DictionarySortingHeader sortDirection={sortDirection} onToggleDirection={setSorting} />
-
       {isLoading ? null : hasWords ? (
         <View style={styles.contentContainer}>
           <FlashList
             data={sortedWords}
             renderItem={renderItem}
+            ListHeaderComponent={
+              <MemoryStrengthLegend sortDirection={sortDirection} onToggleSort={setSorting} />
+            }
             contentContainerStyle={{ paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE }}
             showsVerticalScrollIndicator={false}
             removeClippedSubviews={true}

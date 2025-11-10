@@ -111,7 +111,8 @@ export const STRINGS = {
 
   // Article & content actions - shortened and action-oriented
   BROWSE_ARTICLES: 'Explore articles',
-  ARTICLES_SELECTED_FOR_YOU: 'Articles selected for you',
+  PULL_TO_REFRESH: 'Pull to refresh',
+  PREPARING_ARTICLES: 'Preparing articles...',
   SUMMARY: 'Summary',
   LATEST_READ: 'Latest Read',
 

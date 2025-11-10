@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ArabicColoringExamples } from '@/components/account/ArabicColoringExamples';
 import { BaseCard } from '@/components/common';
 import { getFAQExpandAnimation } from '@/constants/animation';
 import { FAQ_DATA, type FAQCategoryData, type FAQItem } from '@/constants/faq';
@@ -29,7 +30,12 @@ const CATEGORY_ICONS: Record<FAQCategory, keyof typeof Ionicons.glyphMap> = {
 };
 
 // Popular questions (most common user queries)
-const POPULAR_QUESTION_IDS = ['what-is-app', 'spaced-repetition', 'learning-speed'] as const;
+const POPULAR_QUESTION_IDS = [
+  'what-is-app',
+  'arabic-text-coloring',
+  'spaced-repetition',
+  'learning-speed',
+] as const;
 
 // Helper: Generate unique key for FAQ items
 // Popular questions use prefix to avoid conflicts with category duplicates
@@ -126,6 +132,8 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
                 {parseTextWithEmails(paragraph, 'body')}
               </ThemedText>
             ))}
+            {/* Render colored examples for Arabic text coloring FAQ */}
+            {item.id === 'arabic-text-coloring' && <ArabicColoringExamples />}
           </View>
         )}
       </View>

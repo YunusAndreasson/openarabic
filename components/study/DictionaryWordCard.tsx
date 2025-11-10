@@ -1,5 +1,4 @@
 import { BaseCard } from '@/components/common';
-import { ProgressBar } from '@/components/common';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -12,7 +11,7 @@ import { useTransformAnimation } from '@/hooks/animations';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { calculateStabilityProgress, getStabilityProgressColor } from '@/utils/urgencyScore';
+import { getStabilityProgressColor } from '@/utils/urgencyScore';
 
 interface DictionaryWordCardProps {
   word: StudyWord;
@@ -76,14 +75,8 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const arabicText = word.root?.letters || 'Unknown Arabic';
     const englishText = word.root?.meaning || 'Unknown English';
 
-    // Calculate stability progress for progress bar (0-100%)
-    const stabilityProgress = useMemo(
-      () => calculateStabilityProgress(word.fsrs_stability),
-      [word.fsrs_stability],
-    );
-
-    // Get progress bar color based on stability level
-    const progressColor = useMemo(
+    // Get dot color based on stability level (error=red, warning=orange, success=green)
+    const dotColorKey = useMemo(
       () => getStabilityProgressColor(word.fsrs_stability),
       [word.fsrs_stability],
     );
@@ -98,7 +91,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
             contentStyle={styles.cardContent}
           >
             <View style={styles.content}>
-              {/* English text (vertically centered) */}
+              {/* English text with colored dot indicator below */}
               <View style={styles.leftSection}>
                 <ThemedText
                   type="body"
@@ -109,6 +102,8 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
                 >
                   {englishText}
                 </ThemedText>
+                {/* Memory strength dot indicator */}
+                <View style={[styles.memoryDot, { backgroundColor: colors[dotColorKey] }]} />
               </View>
 
               {/* Arabic text (vertically centered) */}
@@ -123,16 +118,6 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
                   {arabicText}
                 </ThemedText>
               </View>
-            </View>
-
-            {/* Memory strength progress bar */}
-            <View style={styles.progressBarContainer}>
-              <ProgressBar
-                progress={stabilityProgress}
-                height={5}
-                fillColor={colors[progressColor]}
-                backgroundColor={colors.progressBackground}
-              />
             </View>
           </BaseCard>
         </View>
@@ -192,8 +177,9 @@ const styles = StyleSheet.create({
   leftSection: {
     flex: 1, // Take available space
     paddingRight: LAYOUT.SPACING.MEDIUM,
-    justifyContent: 'center', // Vertically center English text
+    justifyContent: 'center', // Vertically center content
     alignItems: 'flex-start', // Keep left-aligned horizontally
+    gap: LAYOUT.SPACING.TINY, // 4px gap between text and dot
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -201,6 +187,11 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     includeFontPadding: false,
     lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1),
+  },
+  memoryDot: {
+    width: LAYOUT.SPACING.SMALL, // 8px
+    height: LAYOUT.SPACING.SMALL, // 8px
+    borderRadius: LAYOUT.SPACING.TINY, // 4px (circular)
   },
   rightSection: {
     flex: 1,
@@ -216,10 +207,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingLeft: LAYOUT.SPACING.SMALL,
-  },
-  progressBarContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Match card content padding
-    paddingTop: LAYOUT.SPACING.SMALL, // 8px spacing above progress bar
-    paddingBottom: LAYOUT.SPACING.TINY, // 4px spacing below to card edge
   },
 });

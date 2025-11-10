@@ -4,6 +4,7 @@
  */
 
 export { AccountBadge } from './AccountBadge';
+export { ArabicColoringExamples } from './ArabicColoringExamples';
 export { ArabicFontSelector } from './ArabicFontSelector';
 export { DeleteAccountModal } from './DeleteAccountModal';
 export { FeedbackForm } from './FeedbackForm';

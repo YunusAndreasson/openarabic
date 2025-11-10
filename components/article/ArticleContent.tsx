@@ -8,9 +8,9 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
-import { FloatingActionButtons } from '@/components/article';
-import { ParallaxHeader } from '@/components/article';
-import { RelatedArticlesSection } from '@/components/article';
+import { FloatingActionButtons } from '@/components/article/FloatingActionButtons';
+import { ParallaxHeader } from '@/components/article/ParallaxHeader';
+import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import { SCROLL_EVENT_THROTTLE, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';

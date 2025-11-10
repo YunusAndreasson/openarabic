@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ArabicWord } from '@/components/article';
+import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
 import { FONTS, LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';

@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,24 +20,9 @@ import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
 import { ToastType } from '@/types/enums';
-import { useReview } from '@/hooks/review';
+import { useReview, ReviewToastContext } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
-
-// Context for review screen toast (works inside modal)
-interface ReviewToastContextType {
-  showToast: (message: string, duration?: number, type?: ToastType) => void;
-}
-
-const ReviewToastContext = createContext<ReviewToastContextType | null>(null);
-
-export const useReviewToast = (): ReviewToastContextType => {
-  const context = useContext(ReviewToastContext);
-  if (!context) {
-    throw new Error('useReviewToast must be used within ReviewContent');
-  }
-  return context;
-};
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -230,7 +215,16 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         />
 
         {/* UI chrome - header and bottom actions, positioned above background */}
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'box-none' }}>
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            pointerEvents: 'box-none',
+          }}
+        >
           {/* Progress header at top of screen */}
           <View style={{ paddingTop: LAYOUT.SPACING.XLARGE, pointerEvents: 'auto' }}>
             <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
@@ -249,7 +243,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
             <ReviewBottomActions />
           </View>
         </View>
-
       </View>
 
       {/* Local toast for modal - appears on top with maximum z-index */}

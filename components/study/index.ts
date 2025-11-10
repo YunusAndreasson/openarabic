@@ -3,6 +3,7 @@ export { DictionarySortingHeader } from './DictionarySortingHeader';
 export { DictionaryWordCard } from './DictionaryWordCard';
 export { DueWordsBottomSheet } from './DueWordsBottomSheet';
 export { MemoryRetentionBottomSheet } from './MemoryRetentionBottomSheet';
+export { MemoryStrengthLegend } from './MemoryStrengthLegend';
 export { RecommendationCard } from './RecommendationCard';
 export { StudyStreakBottomSheet } from './StudyStreakBottomSheet';
 export { VocabularyStatCards } from './VocabularyStatCards';

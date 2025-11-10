@@ -8,7 +8,7 @@ import { ToastType } from '@/types/enums';
 import { useColors } from '@/hooks/theme/useColors';
 import { ReviewAction } from '@/types/enums';
 import { lightFeedback } from '@/utils/haptics';
-import { useReviewToast } from '@/app/(tabs)/study/review';
+import { useReviewToast } from '@/hooks/review/useReviewToast';
 
 const BOTTOM_ACTIONS_CONSTANTS = {
   ICON_SIZE: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
@@ -77,11 +77,7 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = () => {
 
   const handleIndicatorPress = () => {
     lightFeedback();
-    showToast(
-      "Swipe right if you know the word. Swipe left if you don't.",
-      8000,
-      ToastType.INFO,
-    );
+    showToast("Swipe right if you know the word. Swipe left if you don't.", 8000, ToastType.INFO);
   };
 
   return (

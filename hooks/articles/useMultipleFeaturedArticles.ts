@@ -55,15 +55,19 @@ export function useMultipleFeaturedArticles(
   ]);
 
   // Use the existing hooks for due and difficult words with cached data
-  const { hasEnoughArticles: hasDueWordArticles, dueWordRootIds } = useArticlesByDueWords(
-    user?.id,
-    10,
-  );
+  const {
+    hasEnoughArticles: hasDueWordArticles,
+    dueWordRootIds,
+    isLoading: isDueWordsLoading,
+  } = useArticlesByDueWords(user?.id, 10);
 
-  const { hasEnoughArticles: hasDifficultWordArticles, difficultWordRootIds } =
-    useArticlesByDifficultWords(user?.id, 10);
+  const {
+    hasEnoughArticles: hasDifficultWordArticles,
+    difficultWordRootIds,
+    isLoading: isDifficultWordsLoading,
+  } = useArticlesByDifficultWords(user?.id, 10);
 
-  const { data: allStudyWords = [] } = useQuery({
+  const { data: allStudyWords = [], isFetching: isFetchingFSRS } = useQuery({
     ...fsrsQueries.allWithCooldown(user?.id || '', DEFAULT_SESSION_COOLDOWN_HOURS),
     enabled: !!user?.id,
   });
@@ -72,7 +76,12 @@ export function useMultipleFeaturedArticles(
 
   // Get reading progress for all articles to filter for unread/low-progress
   const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
-  const { data: progressMap } = useSafeBulkReadingProgress(articleIds);
+  const { data: progressMap, isLoading: isLoadingProgress } =
+    useSafeBulkReadingProgress(articleIds);
+
+  // Track combined loading state for all queries
+  const allQueriesReady =
+    !isDueWordsLoading && !isDifficultWordsLoading && !isFetchingFSRS && !isLoadingProgress;
 
   // Filter articles to prioritize unread or low-progress articles (< 20%)
   const unreadOrLowProgressArticles = useMemo(() => {
@@ -96,9 +105,10 @@ export function useMultipleFeaturedArticles(
   // Cache the initial selection to prevent flashing
   const initialSelectionRef = useRef<CachedMultipleSelection | null>(null);
 
-  // Memoize expensive computations
-  const articlesLength = useMemo(() => articlesData.length, [articlesData.length]);
-  const hasArticles = useMemo(() => articlesLength > 0, [articlesLength]);
+  // Frozen selection to prevent flickering during refresh
+  const frozenSelectionRef = useRef<MultipleFeaturedArticlesResult | null>(null);
+
+  const hasArticles = articlesData.length > 0;
 
   // Convert Sets to stable array representations for dependencies
   const stableDueWordRootIds = useMemo(() => Array.from(dueWordRootIds).sort(), [dueWordRootIds]);
@@ -144,8 +154,9 @@ export function useMultipleFeaturedArticles(
   // Track if we've already initialized to prevent infinite loops
   const hasInitializedRef = useRef(false);
 
-  // Prevent rapid re-execution during cascading data updates
-  const isUpdatingRef = useRef(false);
+  // Track when refresh is in progress
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const lastRefreshKeyRef = useRef(refreshKey);
 
   // Memoize the selection logic to prevent infinite re-renders
   const selectionLogic = useCallback(() => {
@@ -301,37 +312,52 @@ export function useMultipleFeaturedArticles(
     // Including the Set directly caused infinite loops because Sets get new references
   ]);
 
-  // Run selection logic when dependencies change
+  // Detect when refresh starts and freeze current selection
   useEffect(() => {
-    // Prevent rapid re-execution during cascading updates
-    if (isUpdatingRef.current) return;
-
-    // For initial load (refreshKey === 0), only run if not initialized
-    if (refreshKey === 0 && hasInitializedRef.current) return;
-
-    // For refresh (refreshKey > 0), always run to get new selection
-    if (refreshKey > 0 || !hasInitializedRef.current) {
-      // Mark as initialized for initial load
-      if (refreshKey === 0) {
-        hasInitializedRef.current = true;
+    if (refreshKey !== lastRefreshKeyRef.current && refreshKey > 0) {
+      // Store current selection before refresh
+      if (selectedArticles.articles.length > 0) {
+        frozenSelectionRef.current = selectedArticles;
       }
+      setIsRefreshing(true);
+      lastRefreshKeyRef.current = refreshKey;
+    }
+  }, [refreshKey, selectedArticles]);
 
-      // Only run if we have articles
+  // Run selection once when all queries are ready (initial load or after refresh)
+  useEffect(() => {
+    // For initial load (refreshKey === 0)
+    if (refreshKey === 0 && !hasInitializedRef.current) {
+      if (hasArticles && allQueriesReady) {
+        hasInitializedRef.current = true;
+        const result = selectionLogic();
+        setSelectedArticles(result);
+      }
+      return;
+    }
+
+    // For refresh (refreshKey > 0), wait until all queries ready
+    if (refreshKey > 0 && isRefreshing && allQueriesReady) {
       if (hasArticles) {
-        isUpdatingRef.current = true;
-        selectionLogic();
-        // Reset after a short delay to allow legitimate updates
-        setTimeout(() => {
-          isUpdatingRef.current = false;
-        }, 100);
+        const result = selectionLogic();
+        setSelectedArticles(result);
+        setIsRefreshing(false);
+        // Clear frozen selection after successful update
+        frozenSelectionRef.current = null;
       }
     }
-  }, [hasArticles, selectionLogic, refreshKey]);
+  }, [refreshKey, hasArticles, allQueriesReady, isRefreshing, selectionLogic]);
 
   // CRITICAL: Trust preloader cache for initial load (refreshKey === 0)
   // This prevents expensive recomputation and eliminates jank
   if (cachedFeatured && refreshKey === 0) {
     return cachedFeatured;
+  }
+
+  // During refresh, return frozen selection to prevent flickering
+  // Only update once all queries have stabilized (isRefreshing becomes false)
+  if (isRefreshing && frozenSelectionRef.current) {
+    return frozenSelectionRef.current;
   }
 
   return selectedArticles;

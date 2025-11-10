@@ -12,7 +12,7 @@ import { ToastType } from '@/types/enums';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 import { createTextStyle, type BatchedTextColors } from '@/utils/textStyleUtils';
-import { useReviewToast } from '@/app/(tabs)/study/review';
+import { useReviewToast } from '@/hooks/review/useReviewToast';
 
 const WORD_DISPLAY_CONSTANTS = {
   ARABIC_FONT_SIZE: LAYOUT.SPACING.XXLARGE * 2, // Very large for Arabic (64px)

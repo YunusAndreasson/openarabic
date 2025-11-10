@@ -112,6 +112,13 @@ export const FAQ_DATA: FAQCategoryData[] = [
           "Your memory follows a predictable forgetting curve—information fades rapidly at first, then more slowly over time. Spaced repetition shows words just before you forget them.\n\nEach successful review strengthens memory and extends the interval to the next review. Easy words appear less frequently, challenging words more often. You focus effort where needed most.\n\nFSRS adapts to your individual learning patterns—response speed, consistency, and review history determine when each word appears again. Complete Due reviews daily to maintain spacing intervals. Missing even a few days creates backlogs that disrupt the algorithm's effectiveness.",
         category: FAQCategoryEnum.FEATURES,
       },
+      {
+        id: 'arabic-text-coloring',
+        question: 'Why is Arabic text colored in the app?',
+        answer:
+          'Arabic text is color-coded to help you understand word structure and grammatical components. This makes it easier to see how words are built from smaller parts.\n\nPrefixes like و (and), ب (with), ل (to) appear in green. Suffixes like ي (my), ك (your), ه (his) appear in orange. Diacritics (case endings) appear in blue. Infixes (verb form markers) appear in purple.\n\nWhy only multi-word phrases? Single words like "house" aren\'t colored because there\'s no educational value in that context. But "and the house" shows how و (and) + ال (the) combine with the root word—this helps you understand Arabic grammar naturally through reading.\n\nSee colored examples below to understand how this works in practice.',
+        category: FAQCategoryEnum.FEATURES,
+      },
     ],
   },
   {
