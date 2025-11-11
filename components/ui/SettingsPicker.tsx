@@ -1,8 +1,9 @@
-import { BaseCard } from '@/components/common';
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { startTransition, useCallback, useEffect, useMemo, useOptimistic, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
+
+import { BaseCard } from '@/components/common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
