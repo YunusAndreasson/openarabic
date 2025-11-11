@@ -22,7 +22,7 @@ import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
-import { capitalizeFirstLetter, formatArticleMetadata } from '@/utils/stringUtils';
+import { capitalizeFirstLetter, getArticleMetadata } from '@/utils/stringUtils';
 import { calculateReadingTime } from '@/utils/textUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
 
@@ -284,14 +284,12 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     const isDragging = 'isActive' in params ? params.isActive : false;
 
     // Determine which metadata to show based on filter context
-    const readingTime = calculateReadingTime(article.article_sentences?.length ?? 0);
-
     // When filtering by author, show "Category · Xm" (author is redundant)
     // Otherwise show full "Author · Category · Xm"
     const secondaryText =
       filterType === 'author'
-        ? `${capitalizeFirstLetter(article.category.name)} · ${readingTime}`
-        : formatArticleMetadata(article.author.name, article.category.name, readingTime);
+        ? `${capitalizeFirstLetter(article.category.name)} · ${calculateReadingTime(article.article_sentences?.length ?? 0)}`
+        : getArticleMetadata(article);
 
     return (
       <ListenListItemCard

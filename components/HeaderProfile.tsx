@@ -128,7 +128,6 @@ const styles = StyleSheet.create({
   profileButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: LAYOUT.SPACING.TINY,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   profilePhoto: {

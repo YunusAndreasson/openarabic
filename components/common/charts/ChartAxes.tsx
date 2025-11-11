@@ -168,6 +168,17 @@ export const ChartAxes = memo<AxisLabelsProps>(
                 >
                   {label}
                 </ThemedText>
+                {/* Dot indicator below today's label */}
+                {isToday && (
+                  <View
+                    style={[
+                      styles.todayDot,
+                      {
+                        backgroundColor: colors.tint,
+                      },
+                    ]}
+                  />
+                )}
               </View>
             );
           })}
@@ -203,6 +214,14 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     lineHeight: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
+  },
+  todayDot: {
+    position: 'absolute', // Don't affect text centering
+    bottom: -7, // Position below the container
+    width: 5, // Small filled circle
+    height: 5,
+    borderRadius: 2.5, // Circular shape
+    alignSelf: 'center', // Center dot horizontally
   },
   yAxisContainer: {
     left: 0,

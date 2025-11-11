@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
   englishText: {
     fontFamily: FONTS.ENGLISH,
     paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.TINY, // Add breathing room below English text
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   tutorialContainer: {
@@ -211,6 +212,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     minHeight: LAYOUT.SPACING.XLARGE * 1.5,
     ...createPadding({ horizontal: 'MEDIUM', vertical: 'SMALL' }),
+    paddingBottom: LAYOUT.SPACING.MEDIUM, // Override for better sentence pair separation (12px)
     width: '100%',
   },
 });

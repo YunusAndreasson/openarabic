@@ -65,7 +65,7 @@ export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
             },
           ]}
         >
-          {UiAction.DONE}
+          {UiAction.CLOSE}
         </ThemedText>
       </AnimatedPressable>
     </View>

@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.MEDIUM, // 12px gap from dots
   },
   headerText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Use body text size for better hierarchy (16px vs 13px labels)
   },
   sortIcon: {
     marginTop: 1, // Optical alignment with text

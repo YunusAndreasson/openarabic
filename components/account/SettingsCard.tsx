@@ -41,11 +41,16 @@ interface CustomCardProps extends BaseSettingsCardProps {
   rightComponent: React.ReactNode;
 }
 
+interface NoneCardProps extends BaseSettingsCardProps {
+  rightType?: 'none';
+}
+
 type SettingsCardProps =
   | ChevronCardProps
   | TextChevronCardProps
   | ToggleCardProps
-  | CustomCardProps;
+  | CustomCardProps
+  | NoneCardProps;
 
 /**
  * Reusable settings card component that handles all common patterns
@@ -87,6 +92,9 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
 
       case 'custom':
         return props.rightComponent;
+
+      case 'none':
+        return null;
 
       case 'chevron':
       default:

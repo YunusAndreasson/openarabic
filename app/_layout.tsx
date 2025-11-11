@@ -21,7 +21,6 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import amiriFont from '@/assets/fonts/Amiri.ttf';
-import interFont from '@/assets/fonts/Inter.ttf';
 import madinaFont from '@/assets/fonts/Madina.otf';
 import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
 import notoSansFont from '@/assets/fonts/NotoSans.ttf';
@@ -171,7 +170,6 @@ function AppContent() {
   // PostScript names are used for cross-platform consistency (especially iOS)
   const [fontsLoaded] = useFonts({
     'NotoSansArabic-Regular': notoSansFont,
-    Inter: interFont,
     'Amiri-Regular': amiriFont,
     DigitalKhattNewMadinaRegular: madinaFont,
     'ScheherazadeNew-Regular': scheherazadeFont,

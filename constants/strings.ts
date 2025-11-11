@@ -795,10 +795,10 @@ export const STRINGS = {
   LEGAL_FONT_MADINA_DESC: 'Custom Arabic font',
   LEGAL_FONT_NASTALIQ: 'Nastaliq',
   LEGAL_FONT_NASTALIQ_DESC: 'Traditional calligraphic Arabic script',
-  LEGAL_FONT_INTER: 'Inter',
-  LEGAL_FONT_INTER_DESC: 'SIL Open Font License 1.1 by Rasmus Andersson',
   LEGAL_FONT_NOTO_SANS: 'Noto Sans',
   LEGAL_FONT_NOTO_SANS_DESC: 'SIL Open Font License 1.1 by Google',
+  LEGAL_FONTS_SYSTEM_NOTE:
+    'English UI text uses native system fonts (SF Pro on iOS, Roboto on Android) for optimal performance and native feel.',
   LEGAL_OPEN_SOURCE_TITLE: 'Open Source Libraries',
   LEGAL_OPEN_SOURCE_DESC:
     'This app is built with React Native, Expo, and many other open source libraries. Full license details are available in the app repository.',

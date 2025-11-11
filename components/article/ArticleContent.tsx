@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import type { FlashListProps, FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
@@ -19,7 +20,7 @@ import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
-import { formatArticleMetadata } from '@/utils/stringUtils';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { calculateReadingTime } from '@/utils/textUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
@@ -44,37 +45,56 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    marginTop: -LAYOUT.SPACING.XXXLARGE,
-    paddingBottom: LAYOUT.SPACING.TINY,
+    marginTop: -LAYOUT.SPACING.XLARGE, // Reduced overlap for less aggressive positioning
+    paddingBottom: LAYOUT.SPACING.SMALL, // Increased from TINY for better spacing
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   titleText: {
     width: '100%', // Full width for title without button interference
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE, // Larger title (34px)
+    letterSpacing: -0.5, // Tighter tracking for refined modern look
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE * 1.15, // Better multi-line spacing
+    textShadowColor: 'rgba(0, 0, 0, 0.15)', // Subtle shadow for legibility
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   leftAlign: {
     textAlign: 'left',
   },
   authorContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.LARGE, // Increased breathing room
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: LAYOUT.SPACING.SMALL,
   },
   summaryContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.LARGE, // Increased breathing room
+    marginTop: LAYOUT.SPACING.SMALL, // Added margin for separation
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   summaryText: {
     textAlign: 'left',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: 0.2,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4, // Increased from NORMAL for better breathing
   },
   playIconOffset: {
     marginLeft: LAYOUT.SPACING.TINY,
   },
   authorText: {
-    textAlign: 'left',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Slightly smaller for refined look
+    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
+  },
+  readingTimeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  metadataIcon: {
+    marginRight: LAYOUT.SPACING.TINY / 2, // Tight spacing between icon and text
   },
 });
 
@@ -171,24 +191,17 @@ const ArticleContentInternal = function ArticleContent({
   // React Compiler auto-memoizes
   const authorContainerStyle = [styles.authorContainer, { paddingRight: rightOverlayPadding }];
 
-  // React Compiler auto-memoizes
-  const summaryContainerStyle = [styles.summaryContainer, { paddingRight: rightOverlayPadding }];
-
   const dividerStyle = {
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
-    opacity: 0.4,
+    opacity: 0.5, // Increased from 0.4 for better definition
     marginHorizontal: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.TINY, // Added top margin
     marginBottom: LAYOUT.SPACING.MEDIUM,
   } as const;
 
-  // Calculate reading time from sentence count
+  // Calculate reading time for display with icon
   const readingTime = calculateReadingTime(sortedSentences?.length ?? 0);
-  const articleMetadata = formatArticleMetadata(
-    article.author.name,
-    article.category.name,
-    readingTime,
-  );
 
   // Render title/author below the hero image but above content
   // React Compiler auto-memoizes
@@ -204,15 +217,36 @@ const ArticleContentInternal = function ArticleContent({
         </ThemedText>
       </View>
 
+      {/* Metadata line - author, category, and reading time */}
       <View style={authorContainerStyle}>
-        <ThemedText type="body" weight="medium" colorName="authorText" style={styles.authorText}>
-          {articleMetadata}
+        <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
+          {article.author.name}
         </ThemedText>
+        <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
+          ·
+        </ThemedText>
+        <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
+          {capitalizeFirstLetter(article.category.name)}
+        </ThemedText>
+        <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
+          ·
+        </ThemedText>
+        <View style={styles.readingTimeContainer}>
+          <Ionicons
+            name="time-outline"
+            size={14}
+            color={colors.authorText}
+            style={styles.metadataIcon}
+          />
+          <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
+            {readingTime}
+          </ThemedText>
+        </View>
       </View>
 
       {/* Summary section - positioned between author and content for natural reading flow */}
       {article.summary && (
-        <View style={summaryContainerStyle}>
+        <View style={styles.summaryContainer}>
           <ThemedText
             type="body"
             weight="normal"
@@ -235,7 +269,6 @@ const ArticleContentInternal = function ArticleContent({
   const footerComponent = (
     <RelatedArticlesSection
       currentArticleId={article.id}
-      currentArticle={article}
       articlesData={articlesData}
       onVisible={handleRelatedArticlesVisible}
     />

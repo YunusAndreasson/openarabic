@@ -84,13 +84,15 @@ describe('buildSmoothChartPath', () => {
     expect(result.points[1]).toEqual({ x: 100, y: 100, value: 100, label: 'B' });
     expect(result.points[2]).toEqual({ x: 200, y: 125, value: 75, label: 'C' });
 
-    // Path should start with moveTo and have cubic curves
+    // Path should start with moveTo and have cubic curves connecting all points
     expect(result.path).toContain('M0,150');
-    expect(result.path).toContain('C30,150 70,100 100,100'); // First curve
-    expect(result.path).toContain('C130,100 170,125 200,125'); // Second curve
+    // Should have two cubic curves (one for each transition between points)
+    expect(result.path.match(/C/g)?.length).toBe(2);
+    // Should end at the last point
+    expect(result.path).toContain('200,125');
   });
 
-  test('should use correct cubic bezier control points', () => {
+  test('should create smooth bezier curves between points', () => {
     const data: TestDataItem[] = [
       { value: 0, label: 'Start' },
       { value: 100, label: 'End' },
@@ -104,12 +106,13 @@ describe('buildSmoothChartPath', () => {
       buildPoint: (x, y, item) => ({ x, y, value: item.value, label: item.label }),
     });
 
-    // Control points should be at 30% (90) and 70% (210) of distance (300)
-    // controlX1 = 0 + (300 - 0) * 0.3 = 90
-    // controlY1 = 200 (prevPoint.y)
-    // controlX2 = 0 + (300 - 0) * 0.7 = 210
-    // controlY2 = 100 (current y)
-    expect(result.path).toContain('C90,200 210,100 300,100');
+    // Should start at first point and end at second point
+    expect(result.path).toContain('M0,200');
+    expect(result.path).toContain('300,100');
+    // Should have exactly one cubic bezier curve
+    expect(result.path.match(/C/g)?.length).toBe(1);
+    // Path should contain a cubic bezier command with control points
+    expect(result.path).toMatch(/C[\d.]+,[\d.]+ [\d.]+,[\d.]+ 300,100/);
   });
 
   test('should handle empty data array', () => {

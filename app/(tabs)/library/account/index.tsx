@@ -451,7 +451,6 @@ const AccountScreen: FC = () => {
           <SettingsCard
             icon="phone-portrait-outline"
             label={STRINGS.HAPTICS}
-            subtitle={STRINGS.HAPTICS_DESCRIPTION}
             rightType="toggle"
             toggleValue={hapticsEnabled}
             onToggleChange={handleHapticsToggle}
@@ -491,7 +490,7 @@ const AccountScreen: FC = () => {
           <SettingsCard
             icon="help-circle"
             label="Show tutorials again"
-            rightType="chevron"
+            rightType="none"
             onPress={handleResetTutorials}
           />
         </SettingsSection>
@@ -601,7 +600,7 @@ const AccountScreen: FC = () => {
             icon="refresh"
             label={STRINGS.RESET_READING_PROGRESS}
             subtitle={STRINGS.RESET_READING_PROGRESS_DESCRIPTION}
-            rightType="chevron"
+            rightType="none"
             iconColor={colors.error}
             textColor="error"
             backgroundColor={`${colors.error}0D`}

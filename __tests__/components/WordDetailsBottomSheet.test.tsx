@@ -153,7 +153,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       });
 
       expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord);
-      expect(Haptics.impactAsync).toHaveBeenCalled();
+      expect(Haptics.selectionAsync).toHaveBeenCalled();
     });
   });
 

@@ -226,7 +226,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           }}
         >
           {/* Progress header at top of screen */}
-          <View style={{ paddingTop: LAYOUT.SPACING.XLARGE, pointerEvents: 'auto' }}>
+          <View style={{ paddingTop: LAYOUT.SPACING.XLARGE }}>
             <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
           </View>
 
@@ -237,7 +237,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               bottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
               left: LAYOUT.SCREEN_EDGE_PADDING,
               right: LAYOUT.SCREEN_EDGE_PADDING,
-              pointerEvents: 'auto',
             }}
           >
             <ReviewBottomActions />

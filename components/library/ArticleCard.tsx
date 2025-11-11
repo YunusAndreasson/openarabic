@@ -16,8 +16,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
 import { handleError } from '@/utils/errorHandling';
-import { capitalizeFirstLetter, formatArticleMetadata } from '@/utils/stringUtils';
-import { calculateReadingTime } from '@/utils/textUtils';
+import { capitalizeFirstLetter, getArticleMetadata } from '@/utils/stringUtils';
 
 // Extract constants outside component for better performance
 const MAX_TITLE_LINES = 2;
@@ -93,7 +92,7 @@ const SUMMARY_STYLE = {
  */
 export function ArticleCard({
   title,
-  author,
+  author: _author,
   imageUrl,
   category,
   pillLabel,
@@ -149,9 +148,7 @@ export function ArticleCard({
   const pillText = pillLabel ?? category;
   const capitalizedPillText = capitalizeFirstLetter(pillText);
 
-  // Calculate reading time from article sentences
-  const readingTime = calculateReadingTime(article.article_sentences?.length ?? 0);
-  const authorDisplayText = formatArticleMetadata(author, category, readingTime);
+  const authorDisplayText = getArticleMetadata(article);
 
   // Generate article route with proper parameters
   // Featured articles should start from the beginning, not resume from saved position

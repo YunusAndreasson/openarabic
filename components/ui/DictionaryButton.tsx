@@ -71,7 +71,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     minWidth: 70,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
   buttonText: {

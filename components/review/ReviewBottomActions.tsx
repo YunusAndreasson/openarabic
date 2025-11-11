@@ -24,7 +24,6 @@ const STATIC_STYLES = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     width: '100%',
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.LARGE,
     height: BOTTOM_ACTIONS_CONSTANTS.CONTAINER_HEIGHT,
   },

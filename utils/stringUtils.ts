@@ -2,6 +2,8 @@
  * String utility functions for text formatting and manipulation
  */
 
+import { calculateReadingTime } from './textUtils';
+
 /**
  * Text separator used for displaying metadata (author, category, etc.)
  * Options: • (bullet), · (middle dot), / (slash), | (pipe)
@@ -62,6 +64,26 @@ export function formatArticleMetadata(
   }
 
   return base;
+}
+
+/**
+ * Formats article metadata with author, category, and reading time
+ * Convenience function that calculates reading time from article sentence count
+ * @param article - Article object with author, category, and article_sentences
+ * @returns Formatted string like "Author Name · Category Name · 3 min"
+ * @example
+ * getArticleMetadata(article)
+ * // Returns: 'Ibn Kathir · Tafsir · 4 min'
+ */
+export function getArticleMetadata(article: {
+  author: { name: string };
+  category: { name: string };
+  article_sentences?: Array<unknown>;
+}): string {
+  const sentenceCount = article.article_sentences?.length || 0;
+  const readingTime = calculateReadingTime(sentenceCount);
+
+  return formatArticleMetadata(article.author.name, article.category.name, readingTime);
 }
 
 /**

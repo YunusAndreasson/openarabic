@@ -10,7 +10,7 @@ import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress'
 import type { Article } from '@/types/articles.types';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { getArticleMetadata } from '@/utils/stringUtils';
 
 interface RelatedArticlesSectionProps {
   /**
@@ -22,11 +22,6 @@ interface RelatedArticlesSectionProps {
    * The articles data to select from
    */
   articlesData: Article[];
-
-  /**
-   * The current article being viewed (for author/category comparison)
-   */
-  currentArticle: Article;
 
   /**
    * Maximum number of related articles to show (default: 5)
@@ -50,50 +45,6 @@ const SectionHeader = ({ title }: { title: string }) => (
 );
 
 /**
- * Determines the appropriate section heading based on article similarity
- * Prioritizes showing author or category context over generic heading
- */
-function determineHeading(
-  currentArticle: Article,
-  relatedArticles: Article[],
-): { text: string; type: 'author' | 'category' | 'general' } {
-  if (relatedArticles.length === 0) {
-    return { text: 'Related Articles', type: 'general' };
-  }
-
-  const currentAuthorId = currentArticle.author.id;
-  const currentCategoryId = currentArticle.category.id;
-
-  // Count articles from same author and same category
-  let sameAuthorCount = 0;
-  let sameCategoryCount = 0;
-
-  relatedArticles.forEach(article => {
-    if (article.author.id === currentAuthorId) sameAuthorCount++;
-    if (article.category.id === currentCategoryId) sameCategoryCount++;
-  });
-
-  // Prioritize author if there are more author matches than category matches
-  if (sameAuthorCount > sameCategoryCount && sameAuthorCount > 0) {
-    return {
-      text: `More from ${currentArticle.author.name}`,
-      type: 'author',
-    };
-  }
-
-  // Show category if there are any category matches
-  if (sameCategoryCount > 0) {
-    return {
-      text: `More in ${capitalizeFirstLetter(currentArticle.category.name)}`,
-      type: 'category',
-    };
-  }
-
-  // Fallback to general heading only if no matches at all
-  return { text: 'Related Articles', type: 'general' };
-}
-
-/**
  * Related Articles Section Component
  *
  * Displays intelligently selected related articles at the end of article content.
@@ -101,7 +52,7 @@ function determineHeading(
  * Uses existing article selection logic for consistency and efficiency.
  */
 export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
-  ({ currentArticleId, articlesData, currentArticle, maxArticles = 5, onVisible }) => {
+  ({ currentArticleId, articlesData, maxArticles = 5, onVisible }) => {
     const router = useRouter();
 
     // Filter out current article efficiently with memoization
@@ -143,11 +94,6 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
       return unreadOrLowProgressArticles.slice(0, maxArticles);
     }, [unreadOrLowProgressArticles, maxArticles]);
 
-    // Determine the section heading based on article similarity
-    const heading = useMemo(() => {
-      return determineHeading(currentArticle, relatedArticles);
-    }, [currentArticle, relatedArticles]);
-
     // Navigation handler - dismiss current modal then push new one
     // This ensures clean modal transitions without state synchronization issues
     const handleArticlePress = useCallback(
@@ -182,7 +128,7 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
           <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
             <ListenListItemCard
               title={article.title}
-              secondaryText={capitalizeFirstLetter(article.category.name)}
+              secondaryText={getArticleMetadata(article)}
               imageUrl={generateImageUrl(article.image_url)}
               articleId={article.id}
               progressPercentage={progressPercentage}
@@ -212,7 +158,7 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
 
     return (
       <View style={styles.container} onLayout={handleLayout}>
-        <SectionHeader title={heading.text} />
+        <SectionHeader title="Continue Reading" />
         {articleCards}
       </View>
     );

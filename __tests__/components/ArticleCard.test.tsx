@@ -366,9 +366,13 @@ describe('ArticleCard Component', () => {
     });
 
     test('renders article with Arabic author name', () => {
+      const arabicArticle = createMockArticle({
+        author: { id: 2, name: 'أحمد محمود' },
+      });
       const props = {
         ...defaultProps,
         author: 'أحمد محمود',
+        article: arabicArticle,
       };
 
       const { getByText } = render(<ArticleCard {...props} />);
@@ -523,11 +527,20 @@ describe('ArticleCard Component', () => {
     });
 
     test('should format author and category correctly', () => {
+      const customArticle = createMockArticle({
+        author: { id: 2, name: 'Jane Smith' },
+        category: { id: 2, name: 'Culture' },
+      });
       const { getByText } = render(
-        <ArticleCard {...defaultProps} author="Jane Smith" category="Culture" />,
+        <ArticleCard
+          {...defaultProps}
+          author="Jane Smith"
+          category="Culture"
+          article={customArticle}
+        />,
       );
 
-      // Should format as "Author • Category" or similar
+      // Should format as "Author · Category · X min"
       const authorText = getByText(/Jane Smith/);
       expect(authorText).toBeTruthy();
     });

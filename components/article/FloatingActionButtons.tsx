@@ -68,8 +68,8 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     const closeButtonStyle = useMemo(
       () => ({
         position: 'absolute' as const,
-        top: LAYOUT.SPACING.LARGE, // Increased from SMALL to LARGE for better spacing
-        left: LAYOUT.SPACING.SMALL,
+        top: LAYOUT.SPACING.MEDIUM, // Match category pill spacing (12px on all sides)
+        left: LAYOUT.SPACING.MEDIUM,
         zIndex: LAYOUT.Z_INDEX.OVERLAY,
       }),
       [],
@@ -78,8 +78,8 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     const actionButtonsStyle = useMemo(
       () => ({
         position: 'absolute' as const,
-        top: LAYOUT.SPACING.LARGE, // Increased from SMALL to LARGE for better spacing
-        right: LAYOUT.SPACING.SMALL,
+        top: LAYOUT.SPACING.MEDIUM, // Match category pill spacing (12px on all sides)
+        right: LAYOUT.SPACING.MEDIUM,
         zIndex: LAYOUT.Z_INDEX.OVERLAY,
         flexDirection: 'row' as const,
         gap: LAYOUT.SPACING.TINY,

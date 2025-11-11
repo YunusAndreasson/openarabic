@@ -9,7 +9,7 @@ const SCREEN_DIMENSIONS = Dimensions.get('window');
 export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375; // Default fallback for test environments
 
 export const FONTS = {
-  ENGLISH: 'Inter',
+  ENGLISH: 'System', // Use platform system font (SF Pro on iOS, Roboto on Android)
   ARABIC: 'NotoSansArabic-Regular', // Default Arabic font
 } as const;
 
@@ -255,8 +255,8 @@ export const LAYOUT = {
     SCALE: {
       TINY: BASE_UNIT * 2.75, // 11 - responsive to base unit
       SMALL: BASE_UNIT * 3.25, // 13 - responsive to base unit
-      MEDIUM: BASE_UNIT * 3.75, // 15 - responsive to base unit
-      LARGE: BASE_UNIT * 4.25, // 17 - responsive to base unit
+      MEDIUM: BASE_UNIT * 4, // 16 - Material Design minimum (improved from 15px)
+      LARGE: BASE_UNIT * 4.25, // 17 - Apple HIG minimum for body text
       XLARGE: BASE_UNIT * 5, // 20 - responsive to base unit (fixed inconsistency)
       XXLARGE: BASE_UNIT * 5.5, // 22 - responsive to base unit
       HUGE: BASE_UNIT * 7, // 28 - responsive to base unit

@@ -123,17 +123,14 @@ const LegalAttributionsScreen: FC = () => {
         </ThemedText>
 
         <ThemedText type="body" weight="medium" style={styles.fontName}>
-          {STRINGS.LEGAL_FONT_INTER}
-        </ThemedText>
-        <ThemedText type="body" colorName="textTertiary" style={styles.fontDesc}>
-          {STRINGS.LEGAL_FONT_INTER_DESC}
-        </ThemedText>
-
-        <ThemedText type="body" weight="medium" style={styles.fontName}>
           {STRINGS.LEGAL_FONT_NOTO_SANS}
         </ThemedText>
         <ThemedText type="body" colorName="textTertiary" style={styles.fontDesc}>
           {STRINGS.LEGAL_FONT_NOTO_SANS_DESC}
+        </ThemedText>
+
+        <ThemedText type="body" style={styles.paragraph}>
+          {STRINGS.LEGAL_FONTS_SYSTEM_NOTE}
         </ThemedText>
 
         {/* License Information */}
