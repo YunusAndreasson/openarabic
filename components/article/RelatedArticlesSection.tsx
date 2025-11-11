@@ -51,7 +51,7 @@ const SectionHeader = ({ title }: { title: string }) => (
 
 /**
  * Determines the appropriate section heading based on article similarity
- * Checks if related articles are primarily from same author or category
+ * Prioritizes showing author or category context over generic heading
  */
 function determineHeading(
   currentArticle: Article,
@@ -73,23 +73,23 @@ function determineHeading(
     if (article.category.id === currentCategoryId) sameCategoryCount++;
   });
 
-  // If majority (>50%) are from same author
-  if (sameAuthorCount > relatedArticles.length / 2) {
+  // Prioritize author if there are more author matches than category matches
+  if (sameAuthorCount > sameCategoryCount && sameAuthorCount > 0) {
     return {
       text: `More from ${currentArticle.author.name}`,
       type: 'author',
     };
   }
 
-  // If majority (>50%) are from same category
-  if (sameCategoryCount > relatedArticles.length / 2) {
+  // Show category if there are any category matches
+  if (sameCategoryCount > 0) {
     return {
       text: `More in ${capitalizeFirstLetter(currentArticle.category.name)}`,
       type: 'category',
     };
   }
 
-  // Default to general heading
+  // Fallback to general heading only if no matches at all
   return { text: 'Related Articles', type: 'general' };
 }
 
