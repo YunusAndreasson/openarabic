@@ -13,7 +13,7 @@ import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 import { generateAudioUrl } from '@/utils/imageUtils';
 
 export interface WordDetailsBottomSheetProps {
@@ -102,7 +102,7 @@ export function WordDetailsBottomSheet({
 
     // Instant UI feedback - use functional update to avoid stale closure
     setOptimisticIsInStudyList(prev => !prev);
-    lightFeedback();
+    selectionFeedback();
 
     try {
       const success = await onAddToStudy(word);

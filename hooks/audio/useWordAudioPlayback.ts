@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { handleError } from '@/utils/errorHandling';
 import { generateWordAudioTrack, type WordAudioData } from '@/utils/audioUtils';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 import { useSimpleAudioPlayer } from './useSimpleAudioPlayer';
 
@@ -48,7 +48,7 @@ export function useWordAudioPlayback(options: UseWordAudioPlaybackOptions = {}) 
 
       // Haptic feedback
       if (enableHaptics) {
-        lightFeedback();
+        selectionFeedback();
       }
 
       try {
