@@ -235,6 +235,7 @@ const ArticleContentInternal = function ArticleContent({
   const footerComponent = (
     <RelatedArticlesSection
       currentArticleId={article.id}
+      currentArticle={article}
       articlesData={articlesData}
       onVisible={handleRelatedArticlesVisible}
     />

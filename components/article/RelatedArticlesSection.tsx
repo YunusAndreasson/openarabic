@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { memo, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ThemedText } from '@/components/ThemedText';
 import { ListenListItemCard } from '@/components/bookmarks';
 import { LAYOUT } from '@/constants/layout';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
@@ -23,6 +24,11 @@ interface RelatedArticlesSectionProps {
   articlesData: Article[];
 
   /**
+   * The current article being viewed (for author/category comparison)
+   */
+  currentArticle: Article;
+
+  /**
    * Maximum number of related articles to show (default: 5)
    */
   maxArticles?: number;
@@ -34,6 +40,59 @@ interface RelatedArticlesSectionProps {
   onVisible?: () => void;
 }
 
+// Section header component matching FilteredArticleView style
+const SectionHeader = ({ title }: { title: string }) => (
+  <View style={styles.sectionHeader}>
+    <ThemedText type="heading3" weight="bold">
+      {title}
+    </ThemedText>
+  </View>
+);
+
+/**
+ * Determines the appropriate section heading based on article similarity
+ * Checks if related articles are primarily from same author or category
+ */
+function determineHeading(
+  currentArticle: Article,
+  relatedArticles: Article[],
+): { text: string; type: 'author' | 'category' | 'general' } {
+  if (relatedArticles.length === 0) {
+    return { text: 'Related Articles', type: 'general' };
+  }
+
+  const currentAuthorId = currentArticle.author.id;
+  const currentCategoryId = currentArticle.category.id;
+
+  // Count articles from same author and same category
+  let sameAuthorCount = 0;
+  let sameCategoryCount = 0;
+
+  relatedArticles.forEach(article => {
+    if (article.author.id === currentAuthorId) sameAuthorCount++;
+    if (article.category.id === currentCategoryId) sameCategoryCount++;
+  });
+
+  // If majority (>50%) are from same author
+  if (sameAuthorCount > relatedArticles.length / 2) {
+    return {
+      text: `More from ${currentArticle.author.name}`,
+      type: 'author',
+    };
+  }
+
+  // If majority (>50%) are from same category
+  if (sameCategoryCount > relatedArticles.length / 2) {
+    return {
+      text: `More ${capitalizeFirstLetter(currentArticle.category.name)}`,
+      type: 'category',
+    };
+  }
+
+  // Default to general heading
+  return { text: 'Related Articles', type: 'general' };
+}
+
 /**
  * Related Articles Section Component
  *
@@ -42,7 +101,7 @@ interface RelatedArticlesSectionProps {
  * Uses existing article selection logic for consistency and efficiency.
  */
 export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
-  ({ currentArticleId, articlesData, maxArticles = 5, onVisible }) => {
+  ({ currentArticleId, articlesData, currentArticle, maxArticles = 5, onVisible }) => {
     const router = useRouter();
 
     // Filter out current article efficiently with memoization
@@ -83,6 +142,11 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
     const relatedArticles = useMemo(() => {
       return unreadOrLowProgressArticles.slice(0, maxArticles);
     }, [unreadOrLowProgressArticles, maxArticles]);
+
+    // Determine the section heading based on article similarity
+    const heading = useMemo(() => {
+      return determineHeading(currentArticle, relatedArticles);
+    }, [currentArticle, relatedArticles]);
 
     // Navigation handler - dismiss current modal then push new one
     // This ensures clean modal transitions without state synchronization issues
@@ -148,6 +212,7 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
 
     return (
       <View style={styles.container} onLayout={handleLayout}>
+        <SectionHeader title={heading.text} />
         {articleCards}
       </View>
     );
@@ -161,6 +226,11 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     // paddingBottom removed - FlashList contentContainerStyle handles bottom spacing
+  },
+  sectionHeader: {
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
   },
   articleSpacing: {
     marginTop: LAYOUT.SPACING.SMALL,
