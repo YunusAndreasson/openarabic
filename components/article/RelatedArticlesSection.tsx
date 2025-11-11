@@ -84,7 +84,7 @@ function determineHeading(
   // If majority (>50%) are from same category
   if (sameCategoryCount > relatedArticles.length / 2) {
     return {
-      text: `More ${capitalizeFirstLetter(currentArticle.category.name)}`,
+      text: `More in ${capitalizeFirstLetter(currentArticle.category.name)}`,
       type: 'category',
     };
   }
