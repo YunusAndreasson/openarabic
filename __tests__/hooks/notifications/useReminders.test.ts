@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
 
@@ -34,7 +43,7 @@ beforeEach(() => {
 });
 
 describe('useReminders', () => {
-  it('schedules reminder and updates state', async () => {
+  test('schedules reminder and updates state', async () => {
     const newTime: ReminderTime = { hour: 8, minute: 30, enabled: true };
     (scheduleReminder as jest.Mock).mockResolvedValue('id');
 
@@ -49,7 +58,7 @@ describe('useReminders', () => {
     expect(handleError).not.toHaveBeenCalled();
   });
 
-  it('handles errors when scheduling reminder', async () => {
+  test('handles errors when scheduling reminder', async () => {
     const err = new Error('fail');
     (scheduleReminder as jest.Mock).mockRejectedValue(err);
 
@@ -62,7 +71,7 @@ describe('useReminders', () => {
     expect(handleError).toHaveBeenCalledWith(err, expect.objectContaining({ showToast: false }));
   });
 
-  it('formats reminder time correctly', () => {
+  test('formats reminder time correctly', () => {
     const { result } = renderHook(() => useReminders());
 
     expect(result.current.formatReminderTime(0, 5)).toBe('00:05');

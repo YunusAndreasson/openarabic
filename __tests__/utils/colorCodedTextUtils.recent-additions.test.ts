@@ -3,6 +3,15 @@
  * Verifies new features added during the color-coding enhancement session
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
@@ -73,7 +82,7 @@ const mockColors: ThemeColors = {
 
 describe('Recent Grammar Pattern Additions', () => {
   describe('Conjunction ف (fa) Usage', () => {
-    it('should detect "for" in reason/purpose expressions', () => {
+    test('should detect "for" in reason/purpose expressions', () => {
       const analysis = analyzeArabicWord('ف', 'for this');
 
       // Single component → hasComponents=false (no composition)
@@ -87,7 +96,7 @@ describe('Recent Grammar Pattern Additions', () => {
       expect(forMatch).toBe(true);
     });
 
-    it('should color-code "for" when it\'s a ف prefix', () => {
+    test('should color-code "for" when it\'s a ف prefix', () => {
       const analysis = analyzeArabicWord('فهذا', 'for this');
       const formatted = formatWordAnalysis(analysis);
 
@@ -107,7 +116,7 @@ describe('Recent Grammar Pattern Additions', () => {
   });
 
   describe('Oath Usage: "by" for و (wa)', () => {
-    it('should detect "by" in oath expression "by Allah"', () => {
+    test('should detect "by" in oath expression "by Allah"', () => {
       const analysis = analyzeArabicWord('والله', 'by Allah');
       const formatted = formatWordAnalysis(analysis);
 
@@ -121,7 +130,7 @@ describe('Recent Grammar Pattern Additions', () => {
       expect(byMatch).toBe(true);
     });
 
-    it('should color-code "by" in "by Allah"', () => {
+    test('should color-code "by" in "by Allah"', () => {
       const analysis = analyzeArabicWord('والله', 'by Allah');
       const formatted = formatWordAnalysis(analysis);
 
@@ -139,7 +148,7 @@ describe('Recent Grammar Pattern Additions', () => {
       expect(bySegment?.color).toBe(mockColors.grammar.conjunction);
     });
 
-    it('should NOT match "by" in "nearby" (word boundary)', () => {
+    test('should NOT match "by" in "nearby" (word boundary)', () => {
       const formattedAnalysis = {
         sections: [
           {
@@ -172,7 +181,7 @@ describe('Recent Grammar Pattern Additions', () => {
   });
 
   describe('Preposition ب (bi) New Alternatives', () => {
-    it('should detect "concerning" in "concerning what"', () => {
+    test('should detect "concerning" in "concerning what"', () => {
       const analysis = analyzeArabicWord('بما', 'concerning what');
 
       expect(analysis.hasComponents).toBe(true);
@@ -185,7 +194,7 @@ describe('Recent Grammar Pattern Additions', () => {
       expect(concerningMatch).toBe(true);
     });
 
-    it('should detect "based" in "based on"', () => {
+    test('should detect "based" in "based on"', () => {
       const analysis = analyzeArabicWord('بمقتضى', 'based on');
 
       expect(analysis.hasComponents).toBe(true);
@@ -200,7 +209,7 @@ describe('Recent Grammar Pattern Additions', () => {
   });
 
   describe('Exception Particle إلا (illa)', () => {
-    it('should detect "none" in "none but"', () => {
+    test('should detect "none" in "none but"', () => {
       const analysis = analyzeArabicWord('إلا', 'none but');
 
       // Single component → hasComponents=false (no composition)
@@ -216,7 +225,7 @@ describe('Recent Grammar Pattern Additions', () => {
   });
 
   describe('Negation Particles', () => {
-    it('should detect "does not" for لم', () => {
+    test('should detect "does not" for لم', () => {
       const analysis = analyzeArabicWord('لم', 'does not');
 
       // Single component → hasComponents=false (no composition)
@@ -230,7 +239,7 @@ describe('Recent Grammar Pattern Additions', () => {
       expect(doesNotMatch).toBe(true);
     });
 
-    it('should detect multi-prefix ولا (and not)', () => {
+    test('should detect multi-prefix ولا (and not)', () => {
       const analysis = analyzeArabicWord('ولا', 'and not');
 
       expect(analysis.hasComponents).toBe(true);
@@ -243,7 +252,7 @@ describe('Recent Grammar Pattern Additions', () => {
   });
 
   describe('Interrogative كم (kam)', () => {
-    it('should detect "how much" for كم', () => {
+    test('should detect "how much" for كم', () => {
       const analysis = analyzeArabicWord('كم', 'how much');
 
       // Single component → hasComponents=false (no composition)
@@ -257,7 +266,7 @@ describe('Recent Grammar Pattern Additions', () => {
       expect(howMuchMatch).toBe(true);
     });
 
-    it('should detect "how many" for كم', () => {
+    test('should detect "how many" for كم', () => {
       const analysis = analyzeArabicWord('كم', 'how many');
 
       // Single component → hasComponents=false (no composition)

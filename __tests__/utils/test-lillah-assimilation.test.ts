@@ -14,11 +14,20 @@
  * has been assimilated: ل + الله → لِلَّهِ (alif drops, lam doubles)
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 import { GrammaticalRole } from '@/constants/arabicWordComponents';
 
 describe('لِلَّهِ (for Allah) assimilation bug', () => {
-  it('should NOT detect two lam prefixes in لِلَّهِ (for God)', () => {
+  test('should NOT detect two lam prefixes in لِلَّهِ (for God)', () => {
     const arabic = 'لِلَّهِ';
     const english = 'for God';
 
@@ -34,7 +43,7 @@ describe('لِلَّهِ (for Allah) assimilation bug', () => {
     expect(lamPrefixes.length).toBe(1);
   });
 
-  it('should recognize لَّه as remaining after ل prefix (assimilated الله)', () => {
+  test('should recognize لَّه as remaining after ل prefix (assimilated الله)', () => {
     const arabic = 'لِلَّهِ';
     const english = 'for God';
 
@@ -48,7 +57,7 @@ describe('لِلَّهِ (for Allah) assimilation bug', () => {
     expect(analysis.remainingArabic).not.toBe('ه');
   });
 
-  it('should handle لِلَّهِ without diacritics', () => {
+  test('should handle لِلَّهِ without diacritics', () => {
     const arabic = 'لله'; // Without diacritics
     const english = 'for God';
 
@@ -59,7 +68,7 @@ describe('لِلَّهِ (for Allah) assimilation bug', () => {
     expect(analysis.prefixes[0]?.arabicMatch).toBe('ل');
   });
 
-  it('should prevent لل (lil-) being detected as two preposition prefixes', () => {
+  test('should prevent لل (lil-) being detected as two preposition prefixes', () => {
     const arabic = 'لِلَّهِ';
     const english = 'for God';
 
@@ -74,7 +83,7 @@ describe('لِلَّهِ (for Allah) assimilation bug', () => {
     expect(prepositionCount).not.toBe(2); // Prevent the bug
   });
 
-  it('should allow valid double-lam in different contexts like للبيت (for the house)', () => {
+  test('should allow valid double-lam in different contexts like للبيت (for the house)', () => {
     const arabic = 'للبيت';
     const english = 'for the house';
 

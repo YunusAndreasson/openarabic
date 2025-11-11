@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Article Reading Flow Integration Test
  *
  * Tests the complete user journey for reading an article with progress tracking.
@@ -107,7 +116,7 @@ describe('Article Reading Flow - Integration Test', () => {
   });
 
   describe('First-time Article Reading (No existing progress)', () => {
-    it('should load article and start tracking progress from beginning', async () => {
+    test('should load article and start tracking progress from beginning', async () => {
       // ====== STEP 1: Open article ======
       const article = await articlesService.getArticleById(testArticleId);
 
@@ -144,7 +153,7 @@ describe('Article Reading Flow - Integration Test', () => {
       });
     });
 
-    it('should auto-save progress as user scrolls through sentences', async () => {
+    test('should auto-save progress as user scrolls through sentences', async () => {
       const article = await articlesService.getArticleById(testArticleId);
       const totalSentences = article.article_sentences?.length ?? 0;
 
@@ -176,7 +185,7 @@ describe('Article Reading Flow - Integration Test', () => {
   });
 
   describe('Resuming Article Reading (With existing progress)', () => {
-    it('should load article and resume from last read position', async () => {
+    test('should load article and resume from last read position', async () => {
       // ====== SETUP: User has previously read to sentence 5 ======
       const previousProgress: ReadingProgress = {
         user_id: testUserId,
@@ -228,7 +237,7 @@ describe('Article Reading Flow - Integration Test', () => {
       });
     });
 
-    it('should handle article completion (read all sentences)', async () => {
+    test('should handle article completion (read all sentences)', async () => {
       const article = await articlesService.getArticleById(testArticleId);
       const totalSentences = article.article_sentences?.length ?? 0;
 
@@ -259,7 +268,7 @@ describe('Article Reading Flow - Integration Test', () => {
   });
 
   describe('Multiple Article Opens (Persistence)', () => {
-    it('should persist progress across multiple open/close cycles', async () => {
+    test('should persist progress across multiple open/close cycles', async () => {
       const totalSentences = 10;
 
       // ====== CYCLE 1: Open � Read to sentence 3 � Close ======
@@ -324,7 +333,7 @@ describe('Article Reading Flow - Integration Test', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle user not authenticated (no progress tracking)', async () => {
+    test('should handle user not authenticated (no progress tracking)', async () => {
       // Mock no user
       mockUseAuth.useAuth.mockReturnValue({
         user: null,
@@ -340,7 +349,7 @@ describe('Article Reading Flow - Integration Test', () => {
       expect(mockReadingProgressService.updateProgress).not.toHaveBeenCalled();
     });
 
-    it('should handle article with no sentences gracefully', async () => {
+    test('should handle article with no sentences gracefully', async () => {
       // Mock article with empty sentences
       const emptyArticle: Article = {
         ...createTestArticle(),
@@ -369,7 +378,7 @@ describe('Article Reading Flow - Integration Test', () => {
       });
     });
 
-    it('should handle progress update failures gracefully', async () => {
+    test('should handle progress update failures gracefully', async () => {
       const article = await articlesService.getArticleById(testArticleId);
 
       // Mock updateProgress to fail
@@ -390,7 +399,7 @@ describe('Article Reading Flow - Integration Test', () => {
       expect(mockReadingProgressService.updateProgress).toHaveBeenCalled();
     });
 
-    it('should handle rapid scroll changes efficiently', async () => {
+    test('should handle rapid scroll changes efficiently', async () => {
       const article = await articlesService.getArticleById(testArticleId);
       const totalSentences = article.article_sentences?.length ?? 0;
 
@@ -418,7 +427,7 @@ describe('Article Reading Flow - Integration Test', () => {
   });
 
   describe('Data Integrity', () => {
-    it('should maintain correct progress percentage calculation', async () => {
+    test('should maintain correct progress percentage calculation', async () => {
       const article = await articlesService.getArticleById(testArticleId);
       const totalSentences = article.article_sentences?.length ?? 0;
 
@@ -437,7 +446,7 @@ describe('Article Reading Flow - Integration Test', () => {
       }
     });
 
-    it('should never regress progress (only move forward)', async () => {
+    test('should never regress progress (only move forward)', async () => {
       const totalSentences = 10;
 
       // ====== User reads to sentence 5 ======

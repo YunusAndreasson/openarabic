@@ -1,4 +1,13 @@
 /**
+ * Component Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * CompletionScreen Component Tests
  *
  * Tests the session completion screen shown after:
@@ -173,39 +182,39 @@ describe('CompletionScreen Component', () => {
   });
 
   describe('Basic Rendering', () => {
-    it('renders completion screen with default props', () => {
+    test('renders completion screen with default props', () => {
       const { getByText } = render(<CompletionScreen />);
 
       // Default title from STRINGS.SESSION_COMPLETE
       expect(getByText('Session complete')).toBeTruthy();
     });
 
-    it('renders with custom title', () => {
+    test('renders with custom title', () => {
       const { getByText } = render(<CompletionScreen title="Great Job!" />);
 
       expect(getByText('Great Job!')).toBeTruthy();
     });
 
-    it('renders with custom subtitle', () => {
+    test('renders with custom subtitle', () => {
       const { getByText } = render(<CompletionScreen subtitle="You reviewed 10 words" />);
 
       expect(getByText('You reviewed 10 words')).toBeTruthy();
     });
 
-    it('renders success icon', () => {
+    test('renders success icon', () => {
       const { getByText } = render(<CompletionScreen />);
 
       // Default icon is 'checkmark-circle'
       expect(getByText('checkmark-circle')).toBeTruthy();
     });
 
-    it('renders with custom icon', () => {
+    test('renders with custom icon', () => {
       const { getByText } = render(<CompletionScreen iconName="trophy-outline" />);
 
       expect(getByText('trophy-outline')).toBeTruthy();
     });
 
-    it('renders with testID', () => {
+    test('renders with testID', () => {
       const { getByTestId } = render(<CompletionScreen testID="completion-screen" />);
 
       expect(getByTestId('completion-screen')).toBeTruthy();
@@ -213,7 +222,7 @@ describe('CompletionScreen Component', () => {
   });
 
   describe('Session Metrics Display', () => {
-    it('displays session metrics when provided', () => {
+    test('displays session metrics when provided', () => {
       const metrics = createMockMetrics({
         wordsReviewed: 15,
         currentStreak: 7,
@@ -242,7 +251,7 @@ describe('CompletionScreen Component', () => {
       expect(getByText('7 day streak')).toBeTruthy();
     });
 
-    it('displays multiple encouraging metrics', () => {
+    test('displays multiple encouraging metrics', () => {
       const metrics = createMockMetrics();
 
       useEncouragingMetrics.mockReturnValue([
@@ -276,7 +285,7 @@ describe('CompletionScreen Component', () => {
       expect(getByText('3 words mastered')).toBeTruthy();
     });
 
-    it('handles metrics with zero values', () => {
+    test('handles metrics with zero values', () => {
       const metrics = createMockMetrics({
         wordsReviewed: 0,
         currentStreak: 0,
@@ -292,7 +301,7 @@ describe('CompletionScreen Component', () => {
   });
 
   describe('Review Completion Hooks', () => {
-    it('calls useReviewCompletion with metrics', () => {
+    test('calls useReviewCompletion with metrics', () => {
       const metrics = createMockMetrics();
 
       render(<CompletionScreen sessionMetrics={metrics} />);
@@ -300,7 +309,7 @@ describe('CompletionScreen Component', () => {
       expect(useReviewCompletion).toHaveBeenCalledWith(metrics, true);
     });
 
-    it('calls useEncouragingMetrics with metrics, colors, and dailyStreak', () => {
+    test('calls useEncouragingMetrics with metrics, colors, and dailyStreak', () => {
       const metrics = createMockMetrics();
 
       render(<CompletionScreen sessionMetrics={metrics} />);
@@ -314,7 +323,7 @@ describe('CompletionScreen Component', () => {
       );
     });
 
-    it('does not call review completion for generic screens', () => {
+    test('does not call review completion for generic screens', () => {
       useReviewCompletion.mockClear();
 
       render(<CompletionScreen useThemedView={true} />);
@@ -325,19 +334,19 @@ describe('CompletionScreen Component', () => {
   });
 
   describe('Continue Button', () => {
-    it('renders continue button with default text', () => {
+    test('renders continue button with default text', () => {
       const { getByText } = render(<CompletionScreen />);
 
       expect(getByText('Continue')).toBeTruthy();
     });
 
-    it('renders button with custom text', () => {
+    test('renders button with custom text', () => {
       const { getByText } = render(<CompletionScreen buttonText="Back to Practice" />);
 
       expect(getByText('Back to Practice')).toBeTruthy();
     });
 
-    it('button is pressable', () => {
+    test('button is pressable', () => {
       const { getByText } = render(<CompletionScreen />);
 
       const button = getByText('Continue');
@@ -347,7 +356,7 @@ describe('CompletionScreen Component', () => {
   });
 
   describe('Different Completion Scenarios', () => {
-    it('renders for successful practice session', () => {
+    test('renders for successful practice session', () => {
       const metrics = createMockMetrics({
         wordsReviewed: 20,
         wordsKnown: 18,
@@ -380,7 +389,7 @@ describe('CompletionScreen Component', () => {
       expect(getByText('10 day streak')).toBeTruthy();
     });
 
-    it('renders for small session (few words)', () => {
+    test('renders for small session (few words)', () => {
       const metrics = createMockMetrics({
         wordsReviewed: 3,
         wordsKnown: 3,
@@ -401,7 +410,7 @@ describe('CompletionScreen Component', () => {
       expect(getByText('3 words reviewed')).toBeTruthy();
     });
 
-    it('renders for perfect session (all known)', () => {
+    test('renders for perfect session (all known)', () => {
       const metrics = createMockMetrics({
         wordsReviewed: 10,
         wordsKnown: 10,
@@ -429,22 +438,22 @@ describe('CompletionScreen Component', () => {
   });
 
   describe('Edge Cases', () => {
-    it('handles undefined sessionMetrics', () => {
+    test('handles undefined sessionMetrics', () => {
       expect(() => render(<CompletionScreen />)).not.toThrow();
     });
 
-    it('handles empty title', () => {
+    test('handles empty title', () => {
       const { queryByText } = render(<CompletionScreen title="" />);
 
       // Empty title should render but be empty
       expect(queryByText('Session complete')).toBeFalsy();
     });
 
-    it('handles empty subtitle', () => {
+    test('handles empty subtitle', () => {
       expect(() => render(<CompletionScreen subtitle="" />)).not.toThrow();
     });
 
-    it('handles very long title', () => {
+    test('handles very long title', () => {
       const longTitle = 'A'.repeat(200);
 
       const { getByText } = render(<CompletionScreen title={longTitle} />);
@@ -452,7 +461,7 @@ describe('CompletionScreen Component', () => {
       expect(getByText(longTitle)).toBeTruthy();
     });
 
-    it('handles very long subtitle', () => {
+    test('handles very long subtitle', () => {
       const longSubtitle = 'B'.repeat(300);
 
       const { getByText } = render(<CompletionScreen subtitle={longSubtitle} />);
@@ -460,13 +469,13 @@ describe('CompletionScreen Component', () => {
       expect(getByText(longSubtitle)).toBeTruthy();
     });
 
-    it('handles special characters in title', () => {
+    test('handles special characters in title', () => {
       const { getByText } = render(<CompletionScreen title="Great! You've completed 100% 🎉" />);
 
       expect(getByText("Great! You've completed 100% 🎉")).toBeTruthy();
     });
 
-    it('handles RTL text in title', () => {
+    test('handles RTL text in title', () => {
       const { getByText } = render(<CompletionScreen title="أحسنت! جلسة ممتازة" />);
 
       expect(getByText('أحسنت! جلسة ممتازة')).toBeTruthy();
@@ -474,7 +483,7 @@ describe('CompletionScreen Component', () => {
   });
 
   describe('Performance', () => {
-    it('renders without performance degradation', () => {
+    test('renders without performance degradation', () => {
       const metrics = createMockMetrics({
         wordsReviewed: 100,
       });
@@ -489,7 +498,7 @@ describe('CompletionScreen Component', () => {
   });
 
   describe('Regression Tests', () => {
-    it('should call review completion hook for review flow', () => {
+    test('should call review completion hook for review flow', () => {
       const metrics = createMockMetrics();
 
       useReviewCompletion.mockClear();
@@ -500,7 +509,7 @@ describe('CompletionScreen Component', () => {
       expect(useReviewCompletion).toHaveBeenCalledWith(metrics, true);
     });
 
-    it('should not execute review completion for generic flows', () => {
+    test('should not execute review completion for generic flows', () => {
       useReviewCompletion.mockClear();
 
       render(<CompletionScreen useThemedView={true} />);
@@ -509,7 +518,7 @@ describe('CompletionScreen Component', () => {
       expect(useReviewCompletion).toHaveBeenCalledWith(undefined, true);
     });
 
-    it('should display metrics in order of importance', () => {
+    test('should display metrics in order of importance', () => {
       const metrics = createMockMetrics();
 
       useEncouragingMetrics.mockReturnValue([

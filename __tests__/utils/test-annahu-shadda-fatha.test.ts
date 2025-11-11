@@ -6,11 +6,20 @@
  * Actual: "أَنّ" (prefix) + "َ" (root) + "ه" (suffix) + "ُ" (diacritic)
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, computeColoredSegments } from '@/utils/arabicWordAnalysis';
 
 describe('أَنَّهُ shadda + fatha coloring', () => {
-  it('should show what segments we actually get', () => {
+  test('should show what segments we actually get', () => {
     const mockColors = {
       info: '#3bacda',
       violet: '#b28fef',
@@ -30,7 +39,7 @@ describe('أَنَّهُ shadda + fatha coloring', () => {
     expect(segments.length).toBeGreaterThan(0);
   });
 
-  it('should keep shadda + fatha together in prefix for أَنَّهُ', () => {
+  test('should keep shadda + fatha together in prefix for أَنَّهُ', () => {
     const analysis = analyzeArabicWord('أَنَّهُ', 'that it');
 
     // Analyze structure

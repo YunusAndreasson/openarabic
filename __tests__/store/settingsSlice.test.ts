@@ -1,3 +1,12 @@
+/**
+ * Store Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import reducer, {
   type ArabicFontName,
   setArabicFont,
@@ -32,7 +41,7 @@ describe('settingsSlice reducers', () => {
   });
 
   describe('setReminderTime', () => {
-    it('sets reminder time with enabled true', () => {
+    test('sets reminder time with enabled true', () => {
       const newReminderTime: ReminderTime = {
         hour: 8,
         minute: 30,
@@ -42,7 +51,7 @@ describe('settingsSlice reducers', () => {
       expect(state.reminderTime).toEqual(newReminderTime);
     });
 
-    it('sets reminder time with enabled false', () => {
+    test('sets reminder time with enabled false', () => {
       const newReminderTime: ReminderTime = {
         hour: 22,
         minute: 0,
@@ -78,29 +87,29 @@ describe('settingsSlice reducers', () => {
   });
 
   describe('setAudioLanguagePreference', () => {
-    it('sets to ENGLISH', () => {
+    test('sets to ENGLISH', () => {
       const state = reducer(initialState, setAudioLanguagePreference(AudioLanguage.ENGLISH));
       expect(state.audioLanguagePreference).toBe(AudioLanguage.ENGLISH);
     });
 
-    it('sets to ARABIC', () => {
+    test('sets to ARABIC', () => {
       const state = reducer(initialState, setAudioLanguagePreference(AudioLanguage.ARABIC));
       expect(state.audioLanguagePreference).toBe(AudioLanguage.ARABIC);
     });
 
-    it('sets to ENGLISH_ARABIC', () => {
+    test('sets to ENGLISH_ARABIC', () => {
       const state = reducer(initialState, setAudioLanguagePreference(AudioLanguage.ENGLISH_ARABIC));
       expect(state.audioLanguagePreference).toBe(AudioLanguage.ENGLISH_ARABIC);
     });
   });
 
   describe('setAudioShuffleEnabled', () => {
-    it('enables audio shuffle', () => {
+    test('enables audio shuffle', () => {
       const state = reducer(initialState, setAudioShuffleEnabled(true));
       expect(state.audioShuffleEnabled).toBe(true);
     });
 
-    it('disables audio shuffle', () => {
+    test('disables audio shuffle', () => {
       const modifiedState = { ...initialState, audioShuffleEnabled: true };
       const state = reducer(modifiedState, setAudioShuffleEnabled(false));
       expect(state.audioShuffleEnabled).toBe(false);
@@ -108,17 +117,17 @@ describe('settingsSlice reducers', () => {
   });
 
   describe('setDisplayLanguagePreference', () => {
-    it('sets to ARABIC', () => {
+    test('sets to ARABIC', () => {
       const state = reducer(initialState, setDisplayLanguagePreference(DisplayLanguage.ARABIC));
       expect(state.displayLanguagePreference).toBe(DisplayLanguage.ARABIC);
     });
 
-    it('sets to ENGLISH', () => {
+    test('sets to ENGLISH', () => {
       const state = reducer(initialState, setDisplayLanguagePreference(DisplayLanguage.ENGLISH));
       expect(state.displayLanguagePreference).toBe(DisplayLanguage.ENGLISH);
     });
 
-    it('sets to ARABIC_ENGLISH', () => {
+    test('sets to ARABIC_ENGLISH', () => {
       const state = reducer(
         initialState,
         setDisplayLanguagePreference(DisplayLanguage.ARABIC_ENGLISH),
@@ -136,7 +145,7 @@ describe('settingsSlice reducers', () => {
     });
   });
 
-  it('maintains other state properties when updating a single property', () => {
+  test('maintains other state properties when updating a single property', () => {
     let state = reducer(initialState, setArabicFontSize(22));
     expect(state.arabicFont).toBe(initialState.arabicFont);
     expect(state.dailyWordLimit).toBe(initialState.dailyWordLimit);

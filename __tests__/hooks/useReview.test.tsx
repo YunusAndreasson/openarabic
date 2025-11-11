@@ -1,4 +1,13 @@
 /**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * useReview Hook Tests
  *
  * Tests the critical practice session hook that manages:
@@ -267,7 +276,7 @@ describe('useReview Hook', () => {
   });
 
   describe('Initialization', () => {
-    it('should initialize with default state', () => {
+    test('should initialize with default state', () => {
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
 
@@ -279,7 +288,7 @@ describe('useReview Hook', () => {
       expect(result.current.showTranslation).toBe(false);
     });
 
-    it('should initialize with word queue', () => {
+    test('should initialize with word queue', () => {
       const word1 = createMockWord({ id: 1, root_id: 101 });
       const word2 = createMockWord({ id: 2, root_id: 102 });
 
@@ -301,7 +310,7 @@ describe('useReview Hook', () => {
       expect(result.current.currentSentence.wordForm).toBe('كتاب');
     });
 
-    it('should preconfigure audio session on mount', () => {
+    test('should preconfigure audio session on mount', () => {
       const word = createMockWord();
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -352,7 +361,7 @@ describe('useReview Hook', () => {
       });
     });
 
-    it('should not play audio during preloading', () => {
+    test('should not play audio during preloading', () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
         progress: 50,
@@ -376,7 +385,7 @@ describe('useReview Hook', () => {
       expect(mockAudioPlayer.play).not.toHaveBeenCalled();
     });
 
-    it('should stop audio on session completion', () => {
+    test('should stop audio on session completion', () => {
       useFSRS.mockReturnValue({
         currentWord: null,
         wordQueue: [],
@@ -464,7 +473,7 @@ describe('useReview Hook', () => {
 
     // Unique behavior tests for known words
     describe('Known Word Specific Behavior', () => {
-      it('should fade out and fade in for known word transition', async () => {
+      test('should fade out and fade in for known word transition', async () => {
         const word = createMockWord();
         useFSRS.mockReturnValue({
           currentWord: word,
@@ -488,7 +497,7 @@ describe('useReview Hook', () => {
         });
       });
 
-      it('should not show translation for known words', async () => {
+      test('should not show translation for known words', async () => {
         const word = createMockWord();
         useFSRS.mockReturnValue({
           currentWord: word,
@@ -519,7 +528,7 @@ describe('useReview Hook', () => {
 
     // Unique behavior tests for vague/hesitation
     describe('Vague Word Specific Behavior', () => {
-      it('should reset hesitation after swipe', async () => {
+      test('should reset hesitation after swipe', async () => {
         const word = createMockWord();
         useFSRS.mockReturnValue({
           currentWord: word,
@@ -600,7 +609,7 @@ describe('useReview Hook', () => {
   });
 
   describe('Progress Tracking', () => {
-    it('should update progress as words are reviewed', () => {
+    test('should update progress as words are reviewed', () => {
       useFSRS.mockReturnValue({
         currentWord: createMockWord(),
         wordQueue: [createMockWord(), createMockWord()],
@@ -617,7 +626,7 @@ describe('useReview Hook', () => {
       expect(result.current.progress).toBe(50);
     });
 
-    it('should reach 100% progress on completion', () => {
+    test('should reach 100% progress on completion', () => {
       useFSRS.mockReturnValue({
         currentWord: null,
         wordQueue: [],
@@ -637,7 +646,7 @@ describe('useReview Hook', () => {
   });
 
   describe('Session Completion', () => {
-    it('should trigger completion callback when session complete', () => {
+    test('should trigger completion callback when session complete', () => {
       const onComplete = jest.fn();
 
       useFSRS.mockReturnValue({
@@ -663,7 +672,7 @@ describe('useReview Hook', () => {
   });
 
   describe('Translation Display', () => {
-    it('should hide translation when advancing to new word', () => {
+    test('should hide translation when advancing to new word', () => {
       const word1 = createMockWord({ id: 1, root_id: 101 });
       const word2 = createMockWord({ id: 2, root_id: 102 });
 
@@ -703,7 +712,7 @@ describe('useReview Hook', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty word queue', () => {
+    test('should handle empty word queue', () => {
       useFSRS.mockReturnValue({
         currentWord: null,
         wordQueue: [],
@@ -722,7 +731,7 @@ describe('useReview Hook', () => {
       expect(result.current.isComplete).toBe(true);
     });
 
-    it('should not process swipes when session complete', async () => {
+    test('should not process swipes when session complete', async () => {
       useFSRS.mockReturnValue({
         currentWord: null,
         wordQueue: [],
@@ -744,7 +753,7 @@ describe('useReview Hook', () => {
       expect(mockUpdateWord).not.toHaveBeenCalled();
     });
 
-    it('should not process swipes when already updating', async () => {
+    test('should not process swipes when already updating', async () => {
       const word = createMockWord();
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -800,7 +809,7 @@ describe('useReview Hook', () => {
       });
     });
 
-    it('should handle word update errors gracefully', async () => {
+    test('should handle word update errors gracefully', async () => {
       mockUpdateWord.mockRejectedValueOnce(new Error('Update failed'));
 
       const word = createMockWord();
@@ -829,7 +838,7 @@ describe('useReview Hook', () => {
   });
 
   describe('Cleanup', () => {
-    it('should cleanup audio on unmount', () => {
+    test('should cleanup audio on unmount', () => {
       const word = createMockWord();
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -849,7 +858,7 @@ describe('useReview Hook', () => {
       expect(mockAudioPlayer.stop).toHaveBeenCalled();
     });
 
-    it('should cleanup all timers on unmount', () => {
+    test('should cleanup all timers on unmount', () => {
       const word = createMockWord();
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -869,7 +878,7 @@ describe('useReview Hook', () => {
       expect(mockClearAllTimers).toHaveBeenCalled();
     });
 
-    it('should reset state on unmount', () => {
+    test('should reset state on unmount', () => {
       const word = createMockWord();
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -897,7 +906,7 @@ describe('useReview Hook', () => {
   });
 
   describe('Session Metrics', () => {
-    it('should track session metrics', () => {
+    test('should track session metrics', () => {
       const word = createMockWord();
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -929,7 +938,7 @@ describe('useReview Hook', () => {
       expect(result.current.sessionMetrics.currentStreak).toBe(5);
     });
 
-    it('should update metrics on swipe', async () => {
+    test('should update metrics on swipe', async () => {
       const word = createMockWord({ fsrs_stability: 7 });
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -962,7 +971,7 @@ describe('useReview Hook', () => {
   // Mock configuration was complex and font sizing is UI detail not core logic
 
   describe('Hesitation State', () => {
-    it('should handle hesitation start', () => {
+    test('should handle hesitation start', () => {
       const word = createMockWord();
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -984,7 +993,7 @@ describe('useReview Hook', () => {
       expect(result.current.isHesitating.value).toBe(true);
     });
 
-    it('should handle hesitation end', () => {
+    test('should handle hesitation end', () => {
       const word = createMockWord();
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -1009,7 +1018,7 @@ describe('useReview Hook', () => {
   });
 
   describe('Audio Preloader Integration', () => {
-    it('should wait for audio preloading before playing audio', () => {
+    test('should wait for audio preloading before playing audio', () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
         progress: 30,
@@ -1062,7 +1071,7 @@ describe('useReview Hook', () => {
       });
     });
 
-    it('should expose audio preloader state', () => {
+    test('should expose audio preloader state', () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
         progress: 65,

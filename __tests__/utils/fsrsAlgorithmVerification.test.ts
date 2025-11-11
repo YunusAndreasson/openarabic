@@ -11,7 +11,14 @@
  * 4. Edge cases and boundary conditions
  *
  * Reference: https://github.com/open-spaced-repetition/ts-fsrs
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
  */
+
+import { describe, expect, test } from '@jest/globals';
 
 import { createEmptyCard, Rating, State } from 'ts-fsrs';
 import * as fc from 'fast-check';
@@ -22,7 +29,7 @@ import { calculateRetrievability, calculateRetrievabilityForecast } from '@/util
 
 describe('FSRS Algorithm Verification', () => {
   describe('Retrievability Formula: R = exp(-t/S)', () => {
-    it('calculates retrievability correctly for known values', () => {
+    test('calculates retrievability correctly for known values', () => {
       // Test case 1: Stability = 10 days, 1 day elapsed
       // R = exp(-1/10) ≈ 0.905
       const word1 = createTestWord({
@@ -60,7 +67,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(result3).toBeCloseTo(0.368, 3);
     });
 
-    it('returns 1.0 for freshly reviewed words (t = 0)', () => {
+    test('returns 1.0 for freshly reviewed words (t = 0)', () => {
       const word = createTestWord({
         fsrs_stability: 10,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -73,7 +80,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(result).toBeCloseTo(1.0, 3);
     });
 
-    it('approaches 0 as time increases far beyond stability', () => {
+    test('approaches 0 as time increases far beyond stability', () => {
       const word = createTestWord({
         fsrs_stability: 1,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -90,7 +97,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(result).toBeGreaterThan(0);
     });
 
-    it('handles fractional days correctly', () => {
+    test('handles fractional days correctly', () => {
       const word = createTestWord({
         fsrs_stability: 10,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -108,7 +115,7 @@ describe('FSRS Algorithm Verification', () => {
   });
 
   describe('Mathematical Properties (Invariants)', () => {
-    it('retrievability is always between 0 and 1', () => {
+    test('retrievability is always between 0 and 1', () => {
       fc.assert(
         fc.property(
           fc.float({ min: Math.fround(0.1), max: Math.fround(365), noNaN: true }), // Stability (days)
@@ -135,7 +142,7 @@ describe('FSRS Algorithm Verification', () => {
       );
     });
 
-    it('retrievability decreases monotonically over time', () => {
+    test('retrievability decreases monotonically over time', () => {
       const word = createTestWord({
         fsrs_stability: 10,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -158,7 +165,7 @@ describe('FSRS Algorithm Verification', () => {
       }
     });
 
-    it('higher stability results in slower decay', () => {
+    test('higher stability results in slower decay', () => {
       const lastReview = new Date('2024-01-01T00:00:00Z');
       const targetDate = new Date('2024-01-06T00:00:00Z'); // 5 days later
 
@@ -179,7 +186,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(highR).toBeGreaterThan(lowR);
     });
 
-    it('retrievability at t = stability is always e^(-1) ≈ 0.368', () => {
+    test('retrievability at t = stability is always e^(-1) ≈ 0.368', () => {
       fc.assert(
         fc.property(
           fc.float({ min: Math.fround(0.1), max: Math.fround(100), noNaN: true }), // Stability
@@ -208,7 +215,7 @@ describe('FSRS Algorithm Verification', () => {
   });
 
   describe('Edge Cases and Boundary Conditions', () => {
-    it('returns 0 for words without review history', () => {
+    test('returns 0 for words without review history', () => {
       const word = createTestWord({
         fsrs_last_review: null,
         fsrs_stability: 10,
@@ -218,7 +225,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(result).toBe(0);
     });
 
-    it('returns 0 for words with zero stability', () => {
+    test('returns 0 for words with zero stability', () => {
       const word = createTestWord({
         fsrs_stability: 0,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -228,7 +235,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(result).toBe(0);
     });
 
-    it('returns 0 for words with negative stability', () => {
+    test('returns 0 for words with negative stability', () => {
       const word = createTestWord({
         fsrs_stability: -5,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -238,7 +245,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(result).toBe(0);
     });
 
-    it('handles very small stability values', () => {
+    test('handles very small stability values', () => {
       const word = createTestWord({
         fsrs_stability: 0.1,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -255,7 +262,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(result).toBeLessThan(1);
     });
 
-    it('handles very large stability values', () => {
+    test('handles very large stability values', () => {
       const word = createTestWord({
         fsrs_stability: 365,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -270,7 +277,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(result).toBeCloseTo(0.92, 2);
     });
 
-    it('handles dates in the past (negative time elapsed)', () => {
+    test('handles dates in the past (negative time elapsed)', () => {
       const word = createTestWord({
         fsrs_stability: 10,
         fsrs_last_review: '2024-01-10T00:00:00Z',
@@ -288,7 +295,7 @@ describe('FSRS Algorithm Verification', () => {
   });
 
   describe('Retrievability Forecast', () => {
-    it('generates correct forecast for multiple words', () => {
+    test('generates correct forecast for multiple words', () => {
       const now = new Date('2024-01-01T00:00:00Z');
       const words = [
         createTestWord({
@@ -320,7 +327,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(forecast[1].averageRetrievability).toBeGreaterThan(forecast[2].averageRetrievability);
     });
 
-    it('excludes unreviewed words from forecast', () => {
+    test('excludes unreviewed words from forecast', () => {
       const reviewedWord = createTestWord({
         fsrs_stability: 10,
         fsrs_last_review: new Date().toISOString(),
@@ -338,7 +345,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(forecast[0].wordCount).toBe(1);
     });
 
-    it('identifies critical words correctly', () => {
+    test('identifies critical words correctly', () => {
       const now = new Date('2024-01-01T00:00:00Z');
 
       const criticalWord = createTestWord({
@@ -361,7 +368,7 @@ describe('FSRS Algorithm Verification', () => {
   });
 
   describe('FSRS Library Integration', () => {
-    it('uses ts-fsrs library correctly for new cards', () => {
+    test('uses ts-fsrs library correctly for new cards', () => {
       const emptyCard = createEmptyCard(new Date());
 
       expect(emptyCard.state).toBe(State.New);
@@ -370,7 +377,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(emptyCard).toBeDefined();
     });
 
-    it('verifies Rating enum values match expected', () => {
+    test('verifies Rating enum values match expected', () => {
       // Ensure Rating values are what we expect
       expect(Rating.Again).toBe(1);
       expect(Rating.Hard).toBe(2);
@@ -378,7 +385,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(Rating.Easy).toBe(4);
     });
 
-    it('verifies State enum values match expected', () => {
+    test('verifies State enum values match expected', () => {
       expect(State.New).toBe(0);
       expect(State.Learning).toBe(1);
       expect(State.Review).toBe(2);
@@ -387,7 +394,7 @@ describe('FSRS Algorithm Verification', () => {
   });
 
   describe('Regression Tests', () => {
-    it('should not return NaN for any valid input', () => {
+    test('should not return NaN for any valid input', () => {
       fc.assert(
         fc.property(
           fc.float({ min: Math.fround(0.1), max: Math.fround(365), noNaN: true }),
@@ -413,7 +420,7 @@ describe('FSRS Algorithm Verification', () => {
       );
     });
 
-    it('should handle timezone differences correctly', () => {
+    test('should handle timezone differences correctly', () => {
       const word = createTestWord({
         fsrs_stability: 10,
         fsrs_last_review: '2024-01-01T00:00:00Z', // UTC
@@ -530,7 +537,7 @@ describe('FSRS Algorithm Verification', () => {
       }).toBeDefined();
     });
 
-    it('reference: retrievability forecast structure and progression', () => {
+    test('reference: retrievability forecast structure and progression', () => {
       const now = new Date('2024-01-01T00:00:00Z');
       const words = [
         createTestWord({

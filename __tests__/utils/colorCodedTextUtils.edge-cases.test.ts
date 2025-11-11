@@ -3,6 +3,15 @@
  * Tests for potential bugs, boundary conditions, and robustness
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { generateColorCodedSegments, shouldApplyColorCoding } from '@/utils/colorCodedTextUtils';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -72,7 +81,7 @@ const mockColors: ThemeColors = {
 
 describe('Color-Coding Edge Cases', () => {
   describe('Punctuation Handling', () => {
-    it('should match "by" in "by Allah!" (with exclamation)', () => {
+    test('should match "by" in "by Allah!" (with exclamation)', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -104,7 +113,7 @@ describe('Color-Coding Edge Cases', () => {
       expect(bySegment?.color).toBe(mockColors.tint);
     });
 
-    it('should match "and from" in "(and from)"', () => {
+    test('should match "and from" in "(and from)"', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -135,7 +144,7 @@ describe('Color-Coding Edge Cases', () => {
       expect(coloredSegments.length).toBeGreaterThan(0);
     });
 
-    it('should match components with quotes: by "Allah"', () => {
+    test('should match components with quotes: by "Allah"', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -169,7 +178,7 @@ describe('Color-Coding Edge Cases', () => {
   });
 
   describe('Whitespace Handling', () => {
-    it('should handle multiple spaces: "and    from" (4 spaces)', () => {
+    test('should handle multiple spaces: "and    from" (4 spaces)', () => {
       // Verify that multiple spaces are treated as multi-word
       expect(shouldApplyColorCoding('and    from')).toBe(true);
 
@@ -211,21 +220,21 @@ describe('Color-Coding Edge Cases', () => {
       expect(andSegment?.color).toBe(mockColors.tint);
     });
 
-    it('should handle tabs: "and\\t\\tfrom"', () => {
+    test('should handle tabs: "and\\t\\tfrom"', () => {
       expect(shouldApplyColorCoding('and\t\tfrom')).toBe(true);
     });
 
-    it('should handle newlines: "and\\n\\nfrom"', () => {
+    test('should handle newlines: "and\\n\\nfrom"', () => {
       expect(shouldApplyColorCoding('and\n\nfrom')).toBe(true);
     });
 
-    it('should handle leading/trailing spaces: "  and from  "', () => {
+    test('should handle leading/trailing spaces: "  and from  "', () => {
       expect(shouldApplyColorCoding('  and from  ')).toBe(true);
     });
   });
 
   describe('Empty and Null Handling', () => {
-    it('should handle empty string input', () => {
+    test('should handle empty string input', () => {
       const result = generateColorCodedSegments({
         text: '',
         formattedAnalysis: null,
@@ -239,7 +248,7 @@ describe('Color-Coding Edge Cases', () => {
       expect(result[0]?.color).toBe(mockColors.text);
     });
 
-    it('should handle null formattedAnalysis', () => {
+    test('should handle null formattedAnalysis', () => {
       const result = generateColorCodedSegments({
         text: 'and from',
         formattedAnalysis: null,
@@ -254,7 +263,7 @@ describe('Color-Coding Edge Cases', () => {
       expect(result[0]?.key).toBe('no-analysis');
     });
 
-    it('should handle component with empty englishPart', () => {
+    test('should handle component with empty englishPart', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -287,7 +296,7 @@ describe('Color-Coding Edge Cases', () => {
   });
 
   describe('Overlapping Matches', () => {
-    it('should color both occurrences in "from from"', () => {
+    test('should color both occurrences in "from from"', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -323,7 +332,7 @@ describe('Color-Coding Edge Cases', () => {
   });
 
   describe('Capitalization', () => {
-    it('should match "And" (capitalized) to "and" component', () => {
+    test('should match "And" (capitalized) to "and" component', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -355,7 +364,7 @@ describe('Color-Coding Edge Cases', () => {
       expect(andSegment?.color).toBe(mockColors.tint);
     });
 
-    it('should preserve case: render "And" not "and"', () => {
+    test('should preserve case: render "And" not "and"', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -389,7 +398,7 @@ describe('Color-Coding Edge Cases', () => {
   });
 
   describe('Unknown Color Handling', () => {
-    it('should fallback to default color for unknown colorName', () => {
+    test('should fallback to default color for unknown colorName', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -424,7 +433,7 @@ describe('Color-Coding Edge Cases', () => {
   });
 
   describe('Contraction Handling', () => {
-    it('should match "don\'t" when component says "do not"', () => {
+    test('should match "don\'t" when component says "do not"', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -456,7 +465,7 @@ describe('Color-Coding Edge Cases', () => {
       expect(dontSegment?.color).toBe(mockColors.tint);
     });
 
-    it('should match "doesn\'t" when component says "does not"', () => {
+    test('should match "doesn\'t" when component says "does not"', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -490,7 +499,7 @@ describe('Color-Coding Edge Cases', () => {
   });
 
   describe('Word Boundary Edge Cases', () => {
-    it('should NOT match "and" in "sand"', () => {
+    test('should NOT match "and" in "sand"', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -521,7 +530,7 @@ describe('Color-Coding Edge Cases', () => {
       expect(coloredSegments.length).toBe(0);
     });
 
-    it('should NOT match "and" in "stand"', () => {
+    test('should NOT match "and" in "stand"', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {

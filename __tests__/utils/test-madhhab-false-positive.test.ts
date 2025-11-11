@@ -21,11 +21,20 @@
  * These should NEVER be split because "م" is structural, not grammatical.
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('False positive م detection in morphological patterns', () => {
   describe('مذهب (school of thought) - مَفْعَل pattern', () => {
-    it('should NOT detect م as prefix in ومذهب', () => {
+    test('should NOT detect م as prefix in ومذهب', () => {
       const analysis = analyzeArabicWord('ومذهب', 'and school of thought');
 
       // Should detect only ONE prefix: و (and)
@@ -42,7 +51,7 @@ describe('False positive م detection in morphological patterns', () => {
       expect(analysis.remainingEnglish).toMatch(/school.*thought/i);
     });
 
-    it('should NOT detect م as prefix in standalone مذهب', () => {
+    test('should NOT detect م as prefix in standalone مذهب', () => {
       const analysis = analyzeArabicWord('مذهب', 'school of thought');
 
       // Should have NO prefixes detected
@@ -54,7 +63,7 @@ describe('False positive م detection in morphological patterns', () => {
   });
 
   describe('Other morphological م patterns', () => {
-    it('should NOT split مسجد (mosque)', () => {
+    test('should NOT split مسجد (mosque)', () => {
       const analysis = analyzeArabicWord('مسجد', 'mosque');
 
       // Should have NO prefixes
@@ -64,7 +73,7 @@ describe('False positive م detection in morphological patterns', () => {
       expect(analysis.remainingArabic).toBe('مسجد');
     });
 
-    it('should NOT split مكتوب (written)', () => {
+    test('should NOT split مكتوب (written)', () => {
       const analysis = analyzeArabicWord('مكتوب', 'written');
 
       // Should have NO prefixes
@@ -74,7 +83,7 @@ describe('False positive م detection in morphological patterns', () => {
       expect(analysis.remainingArabic).toBe('مكتوب');
     });
 
-    it('should NOT split مطبخ (kitchen)', () => {
+    test('should NOT split مطبخ (kitchen)', () => {
       const analysis = analyzeArabicWord('مطبخ', 'kitchen');
 
       // Should have NO prefixes
@@ -86,7 +95,7 @@ describe('False positive م detection in morphological patterns', () => {
   });
 
   describe('Legitimate م contraction (should still work)', () => {
-    it('should detect م in legitimate grammatical contractions', () => {
+    test('should detect م in legitimate grammatical contractions', () => {
       // Note: This is a theoretical test - we may not have real examples in database
       // If مِمَّن (mimman = from among whom) appears, م could legitimately be detected
       // But this is very rare and the prefix would need clear grammatical evidence
@@ -96,7 +105,7 @@ describe('False positive م detection in morphological patterns', () => {
   });
 
   describe('Edge case: "of" embedded in phrases', () => {
-    it('should reject "of" when it appears mid-phrase, not as standalone preposition', () => {
+    test('should reject "of" when it appears mid-phrase, not as standalone preposition', () => {
       const analysis = analyzeArabicWord('ومذهب', 'and school of thought');
 
       // "of" is between "school" and "thought" - not a standalone preposition
@@ -105,7 +114,7 @@ describe('False positive م detection in morphological patterns', () => {
       expect(hasMimPrefix).toBe(false);
     });
 
-    it('should handle multi-word translations without false positives', () => {
+    test('should handle multi-word translations without false positives', () => {
       // Similar pattern: word with م + English with "of" in middle
       const analysis = analyzeArabicWord('مكانة', 'status of importance');
 

@@ -3,11 +3,20 @@
  * Validates that sequential prefixes are detected separately with distinct grammatical roles
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { GrammaticalRole } from '@/constants/arabicWordComponents';
 
 describe('Multi-Prefix Detection (formerly compounds)', () => {
-  it('should detect و (conjunction) + من (interrogative) as separate prefixes', () => {
+  test('should detect و (conjunction) + من (interrogative) as separate prefixes', () => {
     const analysis = analyzeArabicWord('ومن', 'and who');
 
     expect(analysis.hasComponents).toBe(true);
@@ -18,7 +27,7 @@ describe('Multi-Prefix Detection (formerly compounds)', () => {
     expect(analysis.prefixes[1]?.role).toBe(GrammaticalRole.INTERROGATIVE);
   });
 
-  it('should format multiple prefixes separately in sections', () => {
+  test('should format multiple prefixes separately in sections', () => {
     const analysis = analyzeArabicWord('والدجال', 'and the Dajjal');
     const formatted = formatWordAnalysis(analysis);
 
@@ -30,7 +39,7 @@ describe('Multi-Prefix Detection (formerly compounds)', () => {
     expect(prefixSections[1]?.englishPart).toContain('the');
   });
 
-  it('should color-code و (conjunction) with primary color', () => {
+  test('should color-code و (conjunction) with primary color', () => {
     const analysis = analyzeArabicWord('والدجال', 'and the Dajjal');
     const formatted = formatWordAnalysis(analysis);
 
@@ -41,7 +50,7 @@ describe('Multi-Prefix Detection (formerly compounds)', () => {
     expect(firstPrefix?.colorName).toBe('grammar.conjunction'); // Conjunction gets grammar conjunction color
   });
 
-  it('should color-code ال (article) with definite article color', () => {
+  test('should color-code ال (article) with definite article color', () => {
     const analysis = analyzeArabicWord('والدجال', 'and the Dajjal');
     const formatted = formatWordAnalysis(analysis);
 
@@ -51,7 +60,7 @@ describe('Multi-Prefix Detection (formerly compounds)', () => {
     expect(secondPrefix?.colorName).toBe('grammar.definiteArticle'); // Article gets grammar definite article color
   });
 
-  it('should detect triple prefix: و + ب + ال', () => {
+  test('should detect triple prefix: و + ب + ال', () => {
     const analysis = analyzeArabicWord('وبالحق', 'and with the truth');
 
     expect(analysis.prefixes).toHaveLength(3);
@@ -63,7 +72,7 @@ describe('Multi-Prefix Detection (formerly compounds)', () => {
     expect(analysis.prefixes[2]?.role).toBe(GrammaticalRole.DEFINITE_ARTICLE);
   });
 
-  it('should color-code ف (conjunction) and إذا (particle) with different colors', () => {
+  test('should color-code ف (conjunction) and إذا (particle) with different colors', () => {
     const analysis = analyzeArabicWord('فإذا', 'so when');
     const formatted = formatWordAnalysis(analysis);
 

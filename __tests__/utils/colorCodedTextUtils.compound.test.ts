@@ -1,3 +1,16 @@
+/**
+ * Color-Coded Text Utils - Compound Tests
+ *
+ * Tests compound multi-prefix English coloring logic.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
@@ -67,7 +80,7 @@ const mockColors: ThemeColors = {
 };
 
 describe('Multi-Prefix English Coloring', () => {
-  it('should color multi-prefix components with different colors (وعن → "and from")', () => {
+  test('should color multi-prefix components with different colors (وعن → "and from")', () => {
     const analysis = analyzeArabicWord('وعن', 'and from');
     const formatted = formatWordAnalysis(analysis);
 
@@ -101,7 +114,7 @@ describe('Multi-Prefix English Coloring', () => {
     expect(prepositionText).toContain('from');
   });
 
-  it('should color multi-prefix with suffix (وعنه → "and from him")', () => {
+  test('should color multi-prefix with suffix (وعنه → "and from him")', () => {
     const analysis = analyzeArabicWord('وعنه', 'and from him');
     const formatted = formatWordAnalysis(analysis);
 

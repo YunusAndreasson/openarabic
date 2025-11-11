@@ -1,7 +1,20 @@
+/**
+ * Priority Queue Tests
+ *
+ * Tests priority queue data structure implementation.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { PriorityQueue } from '../../utils/priorityQueue';
 
 describe('PriorityQueue', () => {
-  it('orders items correctly when pushing and popping', () => {
+  test('orders items correctly when pushing and popping', () => {
     const queue = new PriorityQueue<string>();
 
     queue.push('a', 3);
@@ -13,7 +26,7 @@ describe('PriorityQueue', () => {
     expect(queue.pop()).toBe('a');
   });
 
-  it('maintains ordering when replacing the top element', () => {
+  test('maintains ordering when replacing the top element', () => {
     const queue = new PriorityQueue<string>();
     queue.push('a', 1);
     queue.push('b', 2);
@@ -25,7 +38,7 @@ describe('PriorityQueue', () => {
     expect(queue.pop()).toBe('c');
   });
 
-  it('heapify builds a valid heap from arrays', () => {
+  test('heapify builds a valid heap from arrays', () => {
     const queue = new PriorityQueue<string>();
     queue.heapify(['a', 'b', 'c', 'd'], [3, 1, 4, 2]);
 
@@ -35,7 +48,7 @@ describe('PriorityQueue', () => {
     expect(queue.pop()).toBe('c');
   });
 
-  it('clone creates an independent copy', () => {
+  test('clone creates an independent copy', () => {
     const queue = new PriorityQueue<string>();
     queue.heapify(['a', 'b'], [1, 2]);
 
@@ -54,7 +67,7 @@ describe('PriorityQueue', () => {
     expect(cloned.pop()).toBe('a');
   });
 
-  it('trims internal arrays after many pops', () => {
+  test('trims internal arrays after many pops', () => {
     const queue = new PriorityQueue<number>();
     for (let i = 0; i < 100; i++) {
       queue.push(i, i);

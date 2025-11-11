@@ -1,11 +1,20 @@
 /**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Simple direct tests for vague word behavior in useFSRS
  * Tests the actual hook logic without complex UI mocks
  */
 
 describe('useFSRS - Vague Word Behavior', () => {
   describe('Word persistence logic', () => {
-    it('should only persist known words to database, not vague words', () => {
+    test('should only persist known words to database, not vague words', () => {
       // This test documents the expected behavior:
       // - Known words: Persist to DB immediately with FSRS-calculated due date
       // - Vague words: Stay in session-only spacing queue, no DB update
@@ -16,7 +25,7 @@ describe('useFSRS - Vague Word Behavior', () => {
       expect(shouldPersistToDb).toBe(false);
     });
 
-    it('should persist known words to database', () => {
+    test('should persist known words to database', () => {
       const confidence = 'known';
       const shouldPersistToDb = confidence === 'known';
 
@@ -25,7 +34,7 @@ describe('useFSRS - Vague Word Behavior', () => {
   });
 
   describe('Session completion logic', () => {
-    it('should only complete when all words are known, not just when queue is empty', () => {
+    test('should only complete when all words are known, not just when queue is empty', () => {
       // Simulate session state
       const totalWords = 3;
       const knownWords = 2;
@@ -48,7 +57,7 @@ describe('useFSRS - Vague Word Behavior', () => {
       expect(sessionShouldComplete).toBe(false);
     });
 
-    it('should complete when all words are truly known', () => {
+    test('should complete when all words are truly known', () => {
       const totalWords = 3;
       const knownWords = 3;
       const vagueWordsInSpacing = 0;
@@ -61,7 +70,7 @@ describe('useFSRS - Vague Word Behavior', () => {
   });
 
   describe('Progress calculation', () => {
-    it('should only count known words toward progress, not vague words', () => {
+    test('should only count known words toward progress, not vague words', () => {
       const totalWords = 10;
       const knownWords = 6;
       const vagueWords = 4; // In spacing queue

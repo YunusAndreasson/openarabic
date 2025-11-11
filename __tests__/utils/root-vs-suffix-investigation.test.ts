@@ -13,7 +13,14 @@
  * 2. English matching (does English contain these words?)
  *
  * This creates FALSE POSITIVES where root letters are colored as suffixes.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
  */
+
+import { beforeEach, describe, expect, test } from '@jest/globals';
 
 import {
   analyzeArabicWord,
@@ -36,7 +43,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
    * "he", "his", "it", etc. - even when ه is part of the root!
    */
   describe('🔴 HIGH RISK: ه as Root Letter (not suffix)', () => {
-    it('should NOT color ه as suffix in فقيه (scholar)', () => {
+    test('should NOT color ه as suffix in فقيه (scholar)', () => {
       // Root: ف-ق-ه (f-q-h) = to understand, jurisprudence
       // The final ه is PART OF THE ROOT, not a pronoun suffix
       const analysis = analyzeArabicWord('فقيه', 'scholar');
@@ -46,7 +53,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix).toBeUndefined();
     });
 
-    it('should NOT color ه in وجه (face) when English contains "he"', () => {
+    test('should NOT color ه in وجه (face) when English contains "he"', () => {
       // Root: و-ج-ه (w-j-h) = face, direction
       const analysis = analyzeArabicWord('وجه', 'he faced');
 
@@ -60,7 +67,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix?.arabicMatch).toBe('ه');
     });
 
-    it('should NOT color ه in سفيه (foolish) with "his" context', () => {
+    test('should NOT color ه in سفيه (foolish) with "his" context', () => {
       // Root: س-ف-ه (s-f-h) = foolishness
       const analysis = analyzeArabicWord('سفيه', 'his foolish behavior');
 
@@ -72,7 +79,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix?.arabicMatch).not.toBe('ه');
     });
 
-    it('should NOT color ه in كره (he hates)', () => {
+    test('should NOT color ه in كره (he hates)', () => {
       // Root: ك-ر-ه (k-r-h) = to hate, dislike
       const analysis = analyzeArabicWord('كره', 'he hates');
 
@@ -86,7 +93,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix?.arabicMatch).toBe('ه');
     });
 
-    it('should NOT color ه in نزه (integrity, purity)', () => {
+    test('should NOT color ه in نزه (integrity, purity)', () => {
       // Root: ن-ز-ه (n-z-h) = to be free from, pure
       const analysis = analyzeArabicWord('نزه', 'he is pure');
 
@@ -97,7 +104,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix?.arabicMatch).not.toBe('ه');
     });
 
-    it('should NOT color ه in يكره (he hates) - prefix + root ending in ه', () => {
+    test('should NOT color ه in يكره (he hates) - prefix + root ending in ه', () => {
       // Root: ك-ر-ه (k-r-h) = to hate, dislike
       // Prefix: ي (he)
       // This is a tricky case: prefix ي + root كره
@@ -127,7 +134,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
    * The ي is a nisba suffix (derivational morphology), NOT a possessive pronoun!
    */
   describe('🟡 MEDIUM RISK: ي (nisba suffix) vs ي (possessive suffix)', () => {
-    it('should NOT color ي as possessive in مصري (Egyptian)', () => {
+    test('should NOT color ي as possessive in مصري (Egyptian)', () => {
       // مصر (Egypt) + ي (nisba) = Egyptian
       // The ي makes it an adjective, it's NOT "my"!
       const analysis = analyzeArabicWord('مصري', 'Egyptian man');
@@ -142,7 +149,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // This documents the ambiguity in the system
     });
 
-    it('should NOT color ي as possessive in عربي (Arabic)', () => {
+    test('should NOT color ي as possessive in عربي (Arabic)', () => {
       const analysis = analyzeArabicWord('عربي', 'my Arabic teacher');
 
       // "my" in English will trigger false positive
@@ -152,7 +159,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       }
     });
 
-    it('should NOT color ي in إسلامي (Islamic)', () => {
+    test('should NOT color ي in إسلامي (Islamic)', () => {
       const analysis = analyzeArabicWord('إسلامي', 'Islamic principles');
 
       // Less likely false positive (no "my" in English)
@@ -169,7 +176,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
    * Problem: Some feminine nouns and verb forms end in ها as part of root
    */
   describe('🔴 HIGH RISK: ها as Root Letter (not suffix)', () => {
-    it('should NOT color ها in فكاهة (humor, wit)', () => {
+    test('should NOT color ها in فكاهة (humor, wit)', () => {
       // Root: ف-ك-ه (f-k-h) = to jest, make witty remarks
       // Pattern: فَعَالَة (abstract noun form)
       const analysis = analyzeArabicWord('فكاهة', 'humor');
@@ -178,7 +185,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix?.arabicMatch).not.toBe('ها');
     });
 
-    it('should NOT color ها in جباهة (forehead - poetic)', () => {
+    test('should NOT color ها in جباهة (forehead - poetic)', () => {
       // Root: ج-ب-ه (j-b-h) = forehead
       const analysis = analyzeArabicWord('جباهة', 'his forehead');
 
@@ -197,7 +204,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
    * Prepositions like على، لدى، إلى commonly take pronoun suffixes directly
    */
   describe('🔵 PREPOSITION + SUFFIX: Must Detect Both', () => {
-    it('SHOULD detect علي prefix and ه suffix in عليه (on him)', () => {
+    test('SHOULD detect علي prefix and ه suffix in عليه (on him)', () => {
       // Preposition: علي (form of على before suffix: alef maksura → yeh)
       // Suffix: ه (him)
       const analysis = analyzeArabicWord('عليه', 'in him');
@@ -210,7 +217,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix?.englishMatches).toContain('him');
     });
 
-    it('SHOULD detect لدى prefix and ه suffix in لديه (with him)', () => {
+    test('SHOULD detect لدى prefix and ه suffix in لديه (with him)', () => {
       // Preposition: لدى (with/at)
       // Suffix: ه (him)
       const analysis = analyzeArabicWord('لديه', 'with him');
@@ -219,7 +226,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix?.arabicMatch).toBe('ه');
     });
 
-    it('SHOULD detect إلى prefix and ه suffix in إليه (to him)', () => {
+    test('SHOULD detect إلى prefix and ه suffix in إليه (to him)', () => {
       // Preposition: إلى (to/towards)
       // Suffix: ه (him)
       const analysis = analyzeArabicWord('إليه', 'to him');
@@ -236,7 +243,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
    * We need to ensure our fix doesn't break these!
    */
   describe('✅ CONTROL GROUP: Legitimate Suffixes (Must Still Detect)', () => {
-    it('SHOULD color ه in كتابه (his book)', () => {
+    test('SHOULD color ه in كتابه (his book)', () => {
       // Root: ك-ت-ب (book) + suffix ه (his)
       // This is a REAL suffix, must be detected!
       const analysis = analyzeArabicWord('كتابه', 'his book');
@@ -246,7 +253,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix?.englishMatches).toContain('his');
     });
 
-    it('SHOULD color ها in كتابها (her book)', () => {
+    test('SHOULD color ها in كتابها (her book)', () => {
       // Root: ك-ت-ب + suffix ها (her)
       const analysis = analyzeArabicWord('كتابها', 'her book');
 
@@ -255,7 +262,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix?.englishMatches).toContain('her');
     });
 
-    it('SHOULD color ي in كتابي (my book)', () => {
+    test('SHOULD color ي in كتابي (my book)', () => {
       // Root: ك-ت-ب + suffix ي (my)
       const analysis = analyzeArabicWord('كتابي', 'my book');
 
@@ -264,7 +271,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.suffix?.englishMatches).toContain('my');
     });
 
-    it('SHOULD color هم in كتابهم (their book)', () => {
+    test('SHOULD color هم in كتابهم (their book)', () => {
       // Root: ك-ت-ب + suffix هم (their)
       const analysis = analyzeArabicWord('كتابهم', 'their book');
 
@@ -278,7 +285,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
    * CATEGORY 6: Diacritic Color Inheritance on Pronoun Suffixes
    */
   describe('🎨 DIACRITIC COLOR INHERITANCE: Pronoun Suffixes', () => {
-    it('should make diacritic inherit suffix color in عَلَيْهِ (in him)', () => {
+    test('should make diacritic inherit suffix color in عَلَيْهِ (in him)', () => {
       // Preposition: علي (form of على before suffix: alef maksura → yeh)
       // Pronoun suffix ه with genitive case marker ِ
       const analysis = analyzeArabicWord('عَلَيْهِ', 'in him');
@@ -293,7 +300,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.diacritic?.inheritColorFrom).toBe(ComponentType.SUFFIX);
     });
 
-    it('should make diacritic inherit suffix color in كِتَابَهُ (his book)', () => {
+    test('should make diacritic inherit suffix color in كِتَابَهُ (his book)', () => {
       // Pronoun suffix ه with nominative case marker ُ
       // Add "he" to match damma ُ
       const analysis = analyzeArabicWord('كِتَابَهُ', 'he read his book');
@@ -306,7 +313,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.diacritic?.inheritColorFrom).toBe(ComponentType.SUFFIX);
     });
 
-    it('should make diacritic inherit suffix color in رَأَيْتُهَ (I saw him)', () => {
+    test('should make diacritic inherit suffix color in رَأَيْتُهَ (I saw him)', () => {
       // Pronoun suffix ه with accusative case marker َ
       // English contains "he" to match fatha َ and "him" to match suffix ه
       const analysis = analyzeArabicWord('رَأَيْتُهَ', 'I saw him as he');
@@ -324,7 +331,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
    * CATEGORY 7: EDGE CASES - Ambiguous or Context-Dependent
    */
   describe('🟠 EDGE CASES: Context-Dependent Scenarios', () => {
-    it('should handle شبه (resemblance) vs شبهه (his resemblance)', () => {
+    test('should handle شبه (resemblance) vs شبهه (his resemblance)', () => {
       // شبه = resemblance (root: ش-ب-ه)
       // شبهه = his resemblance (root + suffix)
 
@@ -337,7 +344,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(suffixAnalysis.suffix?.arabicMatch).toBe('ه');
     });
 
-    it('should handle تنبيه (warning) - 4-letter root ending in ه', () => {
+    test('should handle تنبيه (warning) - 4-letter root ending in ه', () => {
       // Root: ن-ب-ه (to alert, warn)
       // Form II verbal noun: تَنْبِيه
       const analysis = analyzeArabicWord('تنبيه', 'warning');
@@ -352,7 +359,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
    * STATISTICS & ANALYSIS
    */
   describe('📊 Pattern Analysis', () => {
-    it('should measure false positive rate for ه suffix', () => {
+    test('should measure false positive rate for ه suffix', () => {
       const testCases = [
         { arabic: 'فقيه', english: 'scholar', shouldHaveSuffix: false },
         { arabic: 'وجه', english: 'he faced', shouldHaveSuffix: false },

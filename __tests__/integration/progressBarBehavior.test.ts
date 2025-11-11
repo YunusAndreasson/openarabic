@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Integration test for progress bar behavior with vague words
  *
  * Bug Report: Progress bar increases when swiping right on vague word (with hint shown)
@@ -19,7 +28,7 @@ describe('Progress Bar Behavior - Integration Test', () => {
   }
 
   describe('Progress calculation with vague words', () => {
-    it('should NOT increase progress when vague word is swiped right', () => {
+    test('should NOT increase progress when vague word is swiped right', () => {
       // Setup: Session with 3 words
       const totalWords = 3;
       const counters: SessionCounters = {
@@ -49,7 +58,7 @@ describe('Progress Bar Behavior - Integration Test', () => {
       expect(counters.processedWords).toBe(1);
     });
 
-    it('should increase progress when known word is swiped right', () => {
+    test('should increase progress when known word is swiped right', () => {
       // Setup: Session with 3 words
       const totalWords = 3;
       const counters: SessionCounters = {
@@ -79,7 +88,7 @@ describe('Progress Bar Behavior - Integration Test', () => {
       expect(counters.processedWords).toBe(1);
     });
 
-    it('should correctly track progress for mixed vague and known words', () => {
+    test('should correctly track progress for mixed vague and known words', () => {
       const totalWords = 5;
       const counters: SessionCounters = {
         processedWords: 0,
@@ -115,7 +124,7 @@ describe('Progress Bar Behavior - Integration Test', () => {
       expect(calculateProgress(counters, totalWords)).toBe(60);
     });
 
-    it('should handle re-presentation of vague words correctly', () => {
+    test('should handle re-presentation of vague words correctly', () => {
       // Scenario: Word shown as vague, then re-presented and marked known
       const totalWords = 2;
       const counters: SessionCounters = {
@@ -152,7 +161,7 @@ describe('Progress Bar Behavior - Integration Test', () => {
   });
 
   describe('Edge cases', () => {
-    it('should handle zero total words', () => {
+    test('should handle zero total words', () => {
       const counters: SessionCounters = {
         processedWords: 0,
         knownWords: 0,
@@ -163,7 +172,7 @@ describe('Progress Bar Behavior - Integration Test', () => {
       expect(progress).toBe(0);
     });
 
-    it('should cap progress at 100%', () => {
+    test('should cap progress at 100%', () => {
       const counters: SessionCounters = {
         processedWords: 3,
         knownWords: 3,
@@ -174,7 +183,7 @@ describe('Progress Bar Behavior - Integration Test', () => {
       expect(progress).toBe(100);
     });
 
-    it('should handle all vague words (0% progress)', () => {
+    test('should handle all vague words (0% progress)', () => {
       const totalWords = 5;
       const counters: SessionCounters = {
         processedWords: 5,

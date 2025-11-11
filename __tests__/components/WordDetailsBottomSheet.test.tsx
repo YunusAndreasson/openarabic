@@ -1,4 +1,13 @@
 /**
+ * Component Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Component test for WordDetailsBottomSheet optimistic state management
  *
  * Tests the dual optimistic state problem:
@@ -77,7 +86,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
   });
 
   describe('Optimistic State Synchronization', () => {
-    it('should initialize optimistic state from isInStudyList prop', () => {
+    test('should initialize optimistic state from isInStudyList prop', () => {
       const { getByText } = render(
         <WordDetailsBottomSheet
           isVisible={true}
@@ -92,7 +101,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       expect(getByText('ADD TO PRACTICE')).toBeTruthy();
     });
 
-    it('should sync optimistic state when isInStudyList prop changes', async () => {
+    test('should sync optimistic state when isInStudyList prop changes', async () => {
       const { rerender, getByText } = render(
         <WordDetailsBottomSheet
           isVisible={true}
@@ -122,7 +131,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       });
     });
 
-    it('should update optimistic state immediately on button press', async () => {
+    test('should update optimistic state immediately on button press', async () => {
       mockOnAddToStudy.mockResolvedValue(true);
 
       const { getByText } = render(
@@ -149,7 +158,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
   });
 
   describe('BUG: Rapid Toggle State Desync', () => {
-    it('should handle rapid button presses without state desync', async () => {
+    test('should handle rapid button presses without state desync', async () => {
       let callCount = 0;
       mockOnAddToStudy.mockImplementation(async () => {
         callCount++;
@@ -201,7 +210,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       expect(callCount).toBe(2);
     });
 
-    it('should rollback optimistic update on error', async () => {
+    test('should rollback optimistic update on error', async () => {
       const mockError = new Error('Failed to add word');
       mockOnAddToStudy.mockRejectedValueOnce(mockError);
 
@@ -231,7 +240,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord);
     });
 
-    it('should rollback optimistic update when daily limit is reached', async () => {
+    test('should rollback optimistic update when daily limit is reached', async () => {
       // Mock daily limit reached (onAddToStudy returns false)
       mockOnAddToStudy.mockResolvedValueOnce(false);
 
@@ -263,7 +272,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle null word gracefully', () => {
+    test('should handle null word gracefully', () => {
       const { queryByText } = render(
         <WordDetailsBottomSheet
           isVisible={true}
@@ -278,7 +287,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       expect(queryByText('ADD TO PRACTICE')).toBeNull();
     });
 
-    it('should not call onAddToStudy if word is null', async () => {
+    test('should not call onAddToStudy if word is null', async () => {
       const { rerender, queryByText } = render(
         <WordDetailsBottomSheet
           isVisible={true}
@@ -304,7 +313,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       expect(mockOnAddToStudy).not.toHaveBeenCalled();
     });
 
-    it('should preserve optimistic state during word changes', async () => {
+    test('should preserve optimistic state during word changes', async () => {
       mockOnAddToStudy.mockResolvedValue(true);
 
       const { getByText, rerender } = render(
@@ -350,7 +359,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
   });
 
   describe('Integration with Parent State', () => {
-    it('should reflect parent state changes after successful mutation', async () => {
+    test('should reflect parent state changes after successful mutation', async () => {
       mockOnAddToStudy.mockResolvedValue(true);
 
       const { getByText, rerender } = render(
@@ -386,7 +395,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       expect(getByText('REMOVE FROM PRACTICE')).toBeTruthy();
     });
 
-    it('should handle parent state lagging behind optimistic update', async () => {
+    test('should handle parent state lagging behind optimistic update', async () => {
       mockOnAddToStudy.mockImplementation(async () => {
         // Simulate slow mutation
         await new Promise(resolve => setTimeout(resolve, 200));

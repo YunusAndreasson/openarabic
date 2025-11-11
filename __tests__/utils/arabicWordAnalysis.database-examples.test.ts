@@ -1,13 +1,21 @@
 /**
  * Tests for grammar rules based on real database examples
  * These test cases come from analyzing actual words in our database
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
  */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { ARABIC_PREFIXES } from '@/constants/arabicWordComponents';
 
 describe('Database Example Grammar Rules', () => {
   describe('Split Behavior: فمن (fa-man)', () => {
-    it('should detect فمن as multi-prefix (so whoever)', () => {
+    test('should detect فمن as multi-prefix (so whoever)', () => {
       const analysis = analyzeArabicWord('فمن', 'so whoever');
 
       // Multi-prefix: ف (so) + من (who/from)
@@ -17,7 +25,7 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should partially match فَمَنْ with "and whoever" (من matches)', () => {
+    test('should partially match فَمَنْ with "and whoever" (من matches)', () => {
       const analysis = analyzeArabicWord('فمن', 'and whoever');
 
       // ف doesn't match "and", but من could match "whoever" if checked as standalone
@@ -27,7 +35,7 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis).toBeDefined();
     });
 
-    it('should handle split coloring for multi-word translations', () => {
+    test('should handle split coloring for multi-word translations', () => {
       const analysis = analyzeArabicWord('فمن', 'so who');
       const formatted = formatWordAnalysis(analysis);
 
@@ -37,7 +45,7 @@ describe('Database Example Grammar Rules', () => {
   });
 
   describe('Split Behavior: فإنما (fa-innama)', () => {
-    it('should detect إن and ما as separate particles (not monolithic إنما)', () => {
+    test('should detect إن and ما as separate particles (not monolithic إنما)', () => {
       // إنما is no longer a single prefix - it's decomposed
       const innama = ARABIC_PREFIXES.find(p => p.arabic === 'إنما');
       expect(innama).toBeUndefined(); // Should NOT exist
@@ -50,7 +58,7 @@ describe('Database Example Grammar Rules', () => {
       expect(ma?.english).toContain('only');
     });
 
-    it('should analyze فَإِنَّ with two separate prefixes (fa + inna)', () => {
+    test('should analyze فَإِنَّ with two separate prefixes (fa + inna)', () => {
       const analysis = analyzeArabicWord('فإن', 'so indeed');
 
       // فإن compound removed - now splits into ف (conjunction) + إن (particle)
@@ -72,7 +80,7 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should analyze فَإِنَّمَا with complete translation "so indeed only"', () => {
+    test('should analyze فَإِنَّمَا with complete translation "so indeed only"', () => {
       const analysis = analyzeArabicWord('فإنما', 'so indeed only');
 
       // New behavior: ف + إن + ما detected as three separate prefixes
@@ -97,7 +105,7 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should analyze فَإِنَّمَا with simplified translation "so only"', () => {
+    test('should analyze فَإِنَّمَا with simplified translation "so only"', () => {
       const analysis = analyzeArabicWord('فإنما', 'so only');
 
       // When إن has no English equivalent in translation, only ف is detected
@@ -114,7 +122,7 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.remainingArabic).toBe('إنما');
     });
 
-    it('should handle standalone إنما as two prefixes', () => {
+    test('should handle standalone إنما as two prefixes', () => {
       const analysis = analyzeArabicWord('إنما', 'indeed only');
 
       // إنما is now detected as إن + ما (two separate prefixes)
@@ -132,7 +140,7 @@ describe('Database Example Grammar Rules', () => {
   });
 
   describe('Standalone Particles', () => {
-    it('should detect إن and ما as separate particles for إنما construction', () => {
+    test('should detect إن and ما as separate particles for إنما construction', () => {
       // إنما is no longer a monolithic prefix - it's decomposed into إن + ما
       const inna = ARABIC_PREFIXES.find(p => p.arabic === 'إن');
       const ma = ARABIC_PREFIXES.find(p => p.arabic === 'ما');
@@ -144,7 +152,7 @@ describe('Database Example Grammar Rules', () => {
       expect(ma?.english).toContain('only'); // ما can mean "only" in restrictive contexts like إنما
     });
 
-    it('should have من/مَنْ entries in ARABIC_PREFIXES', () => {
+    test('should have من/مَنْ entries in ARABIC_PREFIXES', () => {
       // Check for both normalized (من) and diacritical (مَنْ) versions
       const manEntries = ARABIC_PREFIXES.filter(p => p.arabic === 'من' || p.arabic === 'مَنْ');
       expect(manEntries.length).toBeGreaterThan(0);
@@ -158,7 +166,7 @@ describe('Database Example Grammar Rules', () => {
   });
 
   describe('Multi-Prefix Detection (Compound Behavior Removed)', () => {
-    it('should detect وعن as multi-prefix (and from)', () => {
+    test('should detect وعن as multi-prefix (and from)', () => {
       const analysis = analyzeArabicWord('وعن', 'and from');
 
       expect(analysis.hasComponents).toBe(true);
@@ -168,7 +176,7 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should detect ومن as multi-prefix (and from)', () => {
+    test('should detect ومن as multi-prefix (and from)', () => {
       const analysis = analyzeArabicWord('ومن', 'and from');
 
       expect(analysis.hasComponents).toBe(true);
@@ -180,7 +188,7 @@ describe('Database Example Grammar Rules', () => {
   });
 
   describe('Real-World Oath Examples', () => {
-    it('should detect والله (by Allah / and by Allah)', () => {
+    test('should detect والله (by Allah / and by Allah)', () => {
       const analysisByAllah = analyzeArabicWord('والله', 'by Allah');
 
       expect(analysisByAllah.hasComponents).toBe(true);
@@ -194,7 +202,7 @@ describe('Database Example Grammar Rules', () => {
       expect(byMatch).toBe(true);
     });
 
-    it('should detect والسماء (and by the sky)', () => {
+    test('should detect والسماء (and by the sky)', () => {
       const analysis = analyzeArabicWord('والسماء', 'and by the sky');
 
       expect(analysis.hasComponents).toBe(true);
@@ -209,7 +217,7 @@ describe('Database Example Grammar Rules', () => {
   });
 
   describe('Preposition ب Compounds', () => {
-    it('should detect بما (concerning what)', () => {
+    test('should detect بما (concerning what)', () => {
       const analysis = analyzeArabicWord('بما', 'concerning what');
 
       expect(analysis.hasComponents).toBe(true);
@@ -220,7 +228,7 @@ describe('Database Example Grammar Rules', () => {
       expect(hasB).toBe(true);
     });
 
-    it('should detect بمقتضى (based on)', () => {
+    test('should detect بمقتضى (based on)', () => {
       const analysis = analyzeArabicWord('بمقتضى', 'based on');
 
       expect(analysis.hasComponents).toBe(true);
@@ -236,7 +244,7 @@ describe('Database Example Grammar Rules', () => {
   });
 
   describe('Negation Patterns', () => {
-    it('should detect لم in negation phrase', () => {
+    test('should detect لم in negation phrase', () => {
       const analysis = analyzeArabicWord('لم', 'does not');
 
       // Single component → hasComponents=false
@@ -251,7 +259,7 @@ describe('Database Example Grammar Rules', () => {
       expect(doesNotMatch).toBe(true);
     });
 
-    it('should detect ولا (and not)', () => {
+    test('should detect ولا (and not)', () => {
       const analysis = analyzeArabicWord('ولا', 'and not');
 
       expect(analysis.hasComponents).toBe(true);
@@ -265,7 +273,7 @@ describe('Database Example Grammar Rules', () => {
   });
 
   describe('Interrogative كم Examples', () => {
-    it('should detect كم (how much)', () => {
+    test('should detect كم (how much)', () => {
       const analysis = analyzeArabicWord('كم', 'how much');
 
       // Single component → hasComponents=false
@@ -280,7 +288,7 @@ describe('Database Example Grammar Rules', () => {
       expect(howMuchMatch).toBe(true);
     });
 
-    it('should detect وكم (and how many)', () => {
+    test('should detect وكم (and how many)', () => {
       const analysis = analyzeArabicWord('وكم', 'and how many');
 
       expect(analysis.hasComponents).toBe(true);

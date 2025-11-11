@@ -1,3 +1,12 @@
+/**
+ * Service Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - ✅ jest.mocked() for type-safe mocking
+ * - Note: test.concurrent() used where tests are independent
+ */
+
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { articlesService } from '../../services/articles';
 import { supabase } from '../../services/supabase';
@@ -50,7 +59,7 @@ beforeEach(() => {
 
 describe('articlesService', () => {
   describe('getArticles', () => {
-    it('applies filters, sorting, pagination and maps data', async () => {
+    test('applies filters, sorting, pagination and maps data', async () => {
       const response = { data: [{ id: 1 }], error: null };
       const builder = createThenBuilder(response);
       fromMock.mockReturnValue(builder);
@@ -95,7 +104,7 @@ describe('articlesService', () => {
       expect(result).toEqual(['mapped']);
     });
 
-    it('uses word stats columns when includeWordStats is true', async () => {
+    test('uses word stats columns when includeWordStats is true', async () => {
       const builder = createThenBuilder({ data: [], error: null });
       fromMock.mockReturnValue(builder);
 
@@ -126,7 +135,7 @@ describe('articlesService', () => {
       expect(called).toBe(expected);
     });
 
-    it('handles errors from supabase', async () => {
+    test('handles errors from supabase', async () => {
       const err = new Error('fail');
       const builder = createThenBuilder({ data: null, error: err });
       fromMock.mockReturnValue(builder);
@@ -143,7 +152,7 @@ describe('articlesService', () => {
   });
 
   describe('getArticlesWithWordStats', () => {
-    it('queries supabase and maps data', async () => {
+    test('queries supabase and maps data', async () => {
       const response = { data: [{ id: 1 }], error: null };
       const builder = createThenBuilder(response);
       fromMock.mockReturnValue(builder);
@@ -180,7 +189,7 @@ describe('articlesService', () => {
       expect(result).toEqual(['mapped']);
     });
 
-    it('handles errors', async () => {
+    test('handles errors', async () => {
       const err = new Error('bad');
       const builder = createThenBuilder({ data: null, error: err });
       fromMock.mockReturnValue(builder);
@@ -199,7 +208,7 @@ describe('articlesService', () => {
   });
 
   describe('getArticleById', () => {
-    it('retrieves single article and maps data', async () => {
+    test('retrieves single article and maps data', async () => {
       const response = { data: { id: 1 }, error: null };
       const builder = createFinalBuilder(response);
       fromMock.mockReturnValue(builder);
@@ -215,7 +224,7 @@ describe('articlesService', () => {
       expect(result).toBe('mapped');
     });
 
-    it('handles errors', async () => {
+    test('handles errors', async () => {
       const err = new Error('nope');
       const builder = createFinalBuilder({ data: null, error: err });
       fromMock.mockReturnValue(builder);
@@ -232,7 +241,7 @@ describe('articlesService', () => {
   });
 
   describe('getArticleCard', () => {
-    it('fetches minimal article data', async () => {
+    test('fetches minimal article data', async () => {
       const response = { data: { id: 2 }, error: null };
       const builder = createFinalBuilder(response);
       fromMock.mockReturnValue(builder);
@@ -248,7 +257,7 @@ describe('articlesService', () => {
       expect(result).toBe('mapped');
     });
 
-    it('handles errors', async () => {
+    test('handles errors', async () => {
       const err = new Error('nope');
       const builder = createFinalBuilder({ data: null, error: err });
       fromMock.mockReturnValue(builder);

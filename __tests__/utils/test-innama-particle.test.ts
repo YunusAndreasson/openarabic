@@ -6,10 +6,19 @@
  * showing two distinct components: إن (inna) + ما (ma)
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('إنما compound particle analysis', () => {
-  it('should detect إن and ما as separate prefixes, not one monolithic prefix', () => {
+  test('should detect إن and ما as separate prefixes, not one monolithic prefix', () => {
     const arabic = 'إِنَّمَا';
     const english = 'indeed only';
 
@@ -27,7 +36,7 @@ describe('إنما compound particle analysis', () => {
     expect(analysis.prefixes[1]?.englishMatches).toContain('only');
   });
 
-  it('should apply different grammatical role colors to each component', () => {
+  test('should apply different grammatical role colors to each component', () => {
     const arabic = 'إِنَّمَا';
     const english = 'indeed only';
 
@@ -43,7 +52,7 @@ describe('إنما compound particle analysis', () => {
     expect(analysis.prefixes[0]?.role).not.toBe(analysis.prefixes[1]?.role);
   });
 
-  it('should handle إنما in context of a larger word', () => {
+  test('should handle إنما in context of a larger word', () => {
     // Example: إنما + verb
     const arabic = 'إِنَّمَا يَخْشَى'; // "indeed only fear"
     const english = 'indeed only fear';

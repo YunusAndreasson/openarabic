@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Complete Practice Session Flow - Integration Test
  *
  * Tests the entire user journey for a practice session from start to completion.
@@ -30,7 +39,7 @@ describe('Complete Practice Session Flow - Integration Test', () => {
   });
 
   describe('Happy Path: User completes session successfully', () => {
-    it('should complete full session workflow with all words known', async () => {
+    test('should complete full session workflow with all words known', async () => {
       // ====== SETUP: Initial state ======
       const userId = 'user-123';
       const dueWords: StudyWord[] = [
@@ -202,7 +211,7 @@ describe('Complete Practice Session Flow - Integration Test', () => {
   });
 
   describe('Edge Case: User marks all words as unknown', () => {
-    it('should handle session with all words marked unknown', async () => {
+    test('should handle session with all words marked unknown', async () => {
       const userId = 'user-123';
       const dueWords = [
         createTestWord({
@@ -272,7 +281,7 @@ describe('Complete Practice Session Flow - Integration Test', () => {
   });
 
   describe('Edge Case: Session interrupted and resumed', () => {
-    it('should handle session interruption correctly', async () => {
+    test('should handle session interruption correctly', async () => {
       const userId = 'user-123';
       const dueWords = [
         createTestWord({
@@ -326,7 +335,7 @@ describe('Complete Practice Session Flow - Integration Test', () => {
   });
 
   describe('Performance: Large session (50+ words)', () => {
-    it('should handle session with 50 words efficiently', async () => {
+    test('should handle session with 50 words efficiently', async () => {
       const userId = 'user-123';
 
       // Generate 50 due words
@@ -370,7 +379,7 @@ describe('Complete Practice Session Flow - Integration Test', () => {
   });
 
   describe('Data Integrity: FSRS fields consistency', () => {
-    it('should maintain valid FSRS field values throughout session', async () => {
+    test('should maintain valid FSRS field values throughout session', async () => {
       const userId = 'user-123';
       const word = createTestWord({
         id: 1,

@@ -14,11 +14,20 @@
  * من + ما → مِمَّا (the ن becomes the shadda doubling the م)
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 import { GrammaticalRole } from '@/constants/arabicWordComponents';
 
 describe('مِمَّا (from what) assimilation bug', () => {
-  it('DEBUG: show what مِمَّا analysis produces', () => {
+  test('DEBUG: show what مِمَّا analysis produces', () => {
     const tests = [
       { arabic: 'مِمَّا', english: 'from what' },
       { arabic: 'مما', english: 'from what' },
@@ -36,7 +45,7 @@ describe('مِمَّا (from what) assimilation bug', () => {
     });
   });
 
-  it('should detect components for multi-word translation "from what"', () => {
+  test('should detect components for multi-word translation "from what"', () => {
     const arabic = 'مِمَّا';
     const english = 'from what';
 
@@ -53,7 +62,7 @@ describe('مِمَّا (from what) assimilation bug', () => {
     expect(analysis.remainingArabic.length).toBeGreaterThan(0);
   });
 
-  it('should NOT detect two meem prefixes in مِمَّا (from what)', () => {
+  test('should NOT detect two meem prefixes in مِمَّا (from what)', () => {
     const arabic = 'مِمَّا';
     const english = 'from what';
 
@@ -67,7 +76,7 @@ describe('مِمَّا (from what) assimilation bug', () => {
     expect(meemPrefixes.length).not.toBe(2); // Prevent the bug
   });
 
-  it('should detect م prefix and leave ما as remaining', () => {
+  test('should detect م prefix and leave ما as remaining', () => {
     const arabic = 'مِمَّا';
     const english = 'from what';
 
@@ -81,7 +90,7 @@ describe('مِمَّا (from what) assimilation bug', () => {
     expect(analysis.remainingArabic).toBe('ما');
   });
 
-  it('should NOT consume entire word as prefixes', () => {
+  test('should NOT consume entire word as prefixes', () => {
     const arabic = 'مِمَّا';
     const english = 'from what';
 
@@ -92,7 +101,7 @@ describe('مِمَّا (from what) assimilation bug', () => {
     expect(analysis.remainingArabic.length).toBeGreaterThan(0);
   });
 
-  it('should handle مِمَّا without diacritics', () => {
+  test('should handle مِمَّا without diacritics', () => {
     const arabic = 'مما'; // Without diacritics
     const english = 'from what';
 
@@ -103,7 +112,7 @@ describe('مِمَّا (from what) assimilation bug', () => {
     expect(meemPrefixes.length).toBeLessThanOrEqual(1);
   });
 
-  it('should prevent مما being analyzed as م + م + root', () => {
+  test('should prevent مما being analyzed as م + م + root', () => {
     const arabic = 'مِمَّا';
     const english = 'from the usage of';
 

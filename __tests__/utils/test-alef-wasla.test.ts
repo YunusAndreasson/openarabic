@@ -14,10 +14,19 @@
  * It should normalize to regular alef for analysis purposes.
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord, shouldInjectBracket } from '@/utils/arabicWordAnalysis';
 
 describe('Alef wasla normalization', () => {
-  it('should detect alef wasla ٱ in normalizeArabic', () => {
+  test('should detect alef wasla ٱ in normalizeArabic', () => {
     // The word with alef wasla
     const wordWithWasla = 'ٱلعبر'; // alef wasla + lam
     const wordWithRegular = 'العبر'; // regular alef + lam
@@ -30,7 +39,7 @@ describe('Alef wasla normalization', () => {
     expect(analysis1.remainingArabic).toBe(analysis2.remainingArabic);
   });
 
-  it('should inject bracket for ٱل (alef wasla + lam)', () => {
+  test('should inject bracket for ٱل (alef wasla + lam)', () => {
     // Word with alef wasla: ٱلعبر
     const wordWithWasla = 'ٱلعبر';
 
@@ -42,7 +51,7 @@ describe('Alef wasla normalization', () => {
     expect(analysis.hasBracketInjection).toBe(true);
   });
 
-  it('should detect ال prefix with alef wasla in ٱلْعِبَرِ', () => {
+  test('should detect ال prefix with alef wasla in ٱلْعِبَرِ', () => {
     // Single-word "lessons" triggers bracket injection flag
     const singleWordAnalysis = analyzeArabicWord('ٱلعبر', 'lessons');
     expect(singleWordAnalysis.hasBracketInjection).toBe(true);
@@ -59,7 +68,7 @@ describe('Alef wasla normalization', () => {
     expect(multiWordAnalysis.remainingArabic).toBe('عبر');
   });
 
-  it('should handle compound prefixes with alef wasla: بٱل', () => {
+  test('should handle compound prefixes with alef wasla: بٱل', () => {
     // bi + al with alef wasla: بٱلعبر (with the lessons)
     const analysis = analyzeArabicWord('بٱلعبر', 'with the lessons');
 
@@ -72,7 +81,7 @@ describe('Alef wasla normalization', () => {
     expect(analysis.remainingArabic).toBe('عبر');
   });
 
-  it('should inject bracket even with alef wasla', () => {
+  test('should inject bracket even with alef wasla', () => {
     // Test via analyzeArabicWord which handles normalization internally
     const analysis1 = analyzeArabicWord('ٱلعبر', 'lessons');
     const analysis2 = analyzeArabicWord('ٱلعبر', 'the lessons');

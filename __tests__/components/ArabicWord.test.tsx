@@ -1,4 +1,13 @@
 /**
+ * Component Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * SkiaArabicWord Component Tests
  *
  * Tests the Skia-based Arabic word rendering component with:
@@ -99,21 +108,21 @@ describe('ArabicWord Component', () => {
   });
 
   describe('Basic Rendering', () => {
-    it('renders Skia Canvas for Arabic text', () => {
+    test('renders Skia Canvas for Arabic text', () => {
       const word = createMockWord({ word_form: 'كتاب' });
       const { getByTestId } = render(<ArabicWord word={word} testID="arabic-word-1" />);
 
       expect(getByTestId('arabic-word-1')).toBeTruthy();
     });
 
-    it('renders with testID for testing', () => {
+    test('renders with testID for testing', () => {
       const word = createMockWord();
       const { getByTestId } = render(<ArabicWord word={word} testID="arabic-word-1" />);
 
       expect(getByTestId('arabic-word-1')).toBeTruthy();
     });
 
-    it('renders without colored segments when none provided', () => {
+    test('renders without colored segments when none provided', () => {
       const word = createMockWord({
         word_form: 'كتاب',
         coloredSegments: [],
@@ -127,7 +136,7 @@ describe('ArabicWord Component', () => {
   });
 
   describe('Color-Coded Grammar Segments', () => {
-    it('renders word with multiple colored segments', () => {
+    test('renders word with multiple colored segments', () => {
       const word = createMockWord({
         word_form: 'والكتاب',
         english: 'and the book',
@@ -144,7 +153,7 @@ describe('ArabicWord Component', () => {
       expect(getByTestId('word')).toBeTruthy();
     });
 
-    it('applies single-word rule (no color-coding for single English words)', () => {
+    test('applies single-word rule (no color-coding for single English words)', () => {
       const word = createMockWord({
         word_form: 'كتاب',
         english: 'book', // Single word
@@ -157,7 +166,7 @@ describe('ArabicWord Component', () => {
       expect(getByTestId('word')).toBeTruthy();
     });
 
-    it('allows color-coding for multi-word English translations', () => {
+    test('allows color-coding for multi-word English translations', () => {
       const word = createMockWord({
         word_form: 'والكتاب',
         english: 'and the book', // Multi-word
@@ -174,7 +183,7 @@ describe('ArabicWord Component', () => {
       expect(getByTestId('word')).toBeTruthy();
     });
 
-    it('handles diacritics in colored segments', () => {
+    test('handles diacritics in colored segments', () => {
       const word = createMockWord({
         word_form: 'وَالْكِتَابِ',
         english: 'and the book',
@@ -193,7 +202,7 @@ describe('ArabicWord Component', () => {
   });
 
   describe('Selection State', () => {
-    it('applies selected style when word is selected', () => {
+    test('applies selected style when word is selected', () => {
       (useArabicWord as jest.Mock).mockReturnValue({ isSelected: true });
 
       const word = createMockWord();
@@ -206,7 +215,7 @@ describe('ArabicWord Component', () => {
       // Note: Exact style verification depends on test setup
     });
 
-    it('does not apply selected style by default', () => {
+    test('does not apply selected style by default', () => {
       (useArabicWord as jest.Mock).mockReturnValue({ isSelected: false });
 
       const word = createMockWord();
@@ -222,7 +231,7 @@ describe('ArabicWord Component', () => {
     // Tooltip interaction is complex to test properly due to ref timing in React Native
     // The functionality is verified through manual testing and the other tests ensure no crashes
 
-    it('does not crash when onTooltipOpen is not provided', () => {
+    test('does not crash when onTooltipOpen is not provided', () => {
       const word = createMockWord();
       const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
 
@@ -232,7 +241,7 @@ describe('ArabicWord Component', () => {
       expect(() => fireEvent.press(wordElement)).not.toThrow();
     });
 
-    it('does not call tooltip when ref is not provided', () => {
+    test('does not call tooltip when ref is not provided', () => {
       const word = createMockWord();
       const onTooltipOpen = jest.fn();
 
@@ -247,7 +256,7 @@ describe('ArabicWord Component', () => {
       expect(onTooltipOpen).not.toHaveBeenCalled();
     });
 
-    it('handles measurement errors gracefully', () => {
+    test('handles measurement errors gracefully', () => {
       const word = createMockWord();
       const onTooltipOpen = jest.fn();
       const wordRef = createRef<ComponentRef<typeof Pressable>>();
@@ -270,7 +279,7 @@ describe('ArabicWord Component', () => {
       expect(onTooltipOpen).not.toHaveBeenCalled();
     });
 
-    it('ignores invalid coordinates from measurement', () => {
+    test('ignores invalid coordinates from measurement', () => {
       const word = createMockWord();
       const onTooltipOpen = jest.fn();
       const wordRef = createRef<ComponentRef<typeof Pressable>>();
@@ -295,13 +304,13 @@ describe('ArabicWord Component', () => {
   });
 
   describe('Edge Cases', () => {
-    it('handles empty word_form', () => {
+    test('handles empty word_form', () => {
       const word = createMockWord({ word_form: '' });
 
       expect(() => render(<ArabicWord word={word} />)).not.toThrow();
     });
 
-    it('handles very long Arabic text', () => {
+    test('handles very long Arabic text', () => {
       const longText = 'والكتاب'.repeat(20);
       const word = createMockWord({ word_form: longText });
 
@@ -309,20 +318,20 @@ describe('ArabicWord Component', () => {
       expect(getByTestId('word')).toBeTruthy();
     });
 
-    it('handles word with only diacritics', () => {
+    test('handles word with only diacritics', () => {
       const word = createMockWord({ word_form: '\u064E\u064F\u0650' });
 
       expect(() => render(<ArabicWord word={word} />)).not.toThrow();
     });
 
-    it('handles mixed Arabic and non-Arabic text', () => {
+    test('handles mixed Arabic and non-Arabic text', () => {
       const word = createMockWord({ word_form: 'كتابbook123' });
 
       const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
       expect(getByTestId('word')).toBeTruthy();
     });
 
-    it('handles empty coloredSegments array', () => {
+    test('handles empty coloredSegments array', () => {
       const word = createMockWord({
         word_form: 'كتاب',
         coloredSegments: [],
@@ -334,7 +343,7 @@ describe('ArabicWord Component', () => {
   });
 
   describe('Performance', () => {
-    it('renders 100 words without performance degradation', () => {
+    test('renders 100 words without performance degradation', () => {
       const words = Array.from({ length: 100 }, (_, i) =>
         createMockWord({
           id: i,
@@ -358,7 +367,7 @@ describe('ArabicWord Component', () => {
   });
 
   describe('Regression Tests', () => {
-    it('should not color-code single words (regression for single-word rule)', () => {
+    test('should not color-code single words (regression for single-word rule)', () => {
       // Regression: Ensure single-word rule is enforced
       const singleWordCases = [
         { word_form: 'والبيت', english: 'house' },
@@ -378,7 +387,7 @@ describe('ArabicWord Component', () => {
       });
     });
 
-    it('should reconstruct original text from colored segments', () => {
+    test('should reconstruct original text from colored segments', () => {
       // Regression: Ensure segments combine to form original word
       const word = createMockWord({
         word_form: 'والكتاب',

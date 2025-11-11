@@ -1,4 +1,15 @@
-import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
+/**
+ * Auth Event Waiter Tests
+ *
+ * Tests authentication event waiting utility with timeout handling.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ jest.mocked() for type-safe mocking
+ * - ✅ @jest/globals explicit imports (already present)
+ * - Note: No test.concurrent() - uses fake timers
+ */
+
+import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 // Mock Supabase - use jest.fn() inside the factory
@@ -14,7 +25,7 @@ import { waitForAuthEvent } from '@/utils/authEventWaiter';
 import { supabase } from '@/services/supabase';
 
 // Get reference to the mocked function
-const mockOnAuthStateChange = supabase.auth.onAuthStateChange as jest.Mock;
+const mockOnAuthStateChange = jest.mocked(supabase.auth.onAuthStateChange);
 const mockUnsubscribe = jest.fn();
 
 describe('waitForAuthEvent', () => {
@@ -37,7 +48,7 @@ describe('waitForAuthEvent', () => {
     jest.useRealTimers();
   });
 
-  it('should resolve when SIGNED_IN event fires with session', async () => {
+  test('should resolve when SIGNED_IN event fires with session', async () => {
     const mockSession = {
       access_token: 'test-token',
       user: { id: 'user-123', email: 'test@example.com' },
@@ -70,7 +81,7 @@ describe('waitForAuthEvent', () => {
     expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
   });
 
-  it('should timeout after specified duration', async () => {
+  test('should timeout after specified duration', async () => {
     // Don't trigger any events - just let it timeout
     const promise = waitForAuthEvent('SIGNED_IN', 1000);
 
@@ -81,7 +92,7 @@ describe('waitForAuthEvent', () => {
     expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
   });
 
-  it('should unsubscribe immediately on success', async () => {
+  test('should unsubscribe immediately on success', async () => {
     const mockSession = {
       access_token: 'test-token',
       user: { id: 'user-123' },
@@ -115,7 +126,7 @@ describe('waitForAuthEvent', () => {
     expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
   });
 
-  it('should only resolve on matching event (ignore other events)', async () => {
+  test('should only resolve on matching event (ignore other events)', async () => {
     const mockSession = {
       access_token: 'test-token',
       user: { id: 'user-123' },
@@ -151,7 +162,7 @@ describe('waitForAuthEvent', () => {
     expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
   });
 
-  it('should ignore events without session', async () => {
+  test('should ignore events without session', async () => {
     let callback: ((event: AuthChangeEvent, session: Session | null) => void) | null = null;
 
     mockOnAuthStateChange.mockImplementation(cb => {
@@ -176,7 +187,7 @@ describe('waitForAuthEvent', () => {
     await expect(promise).rejects.toThrow('Timeout waiting for SIGNED_IN event after 1000ms');
   });
 
-  it('should use default timeout of 5000ms when not specified', async () => {
+  test('should use default timeout of 5000ms when not specified', async () => {
     const promise = waitForAuthEvent('SIGNED_IN'); // No timeout specified
 
     // Advance just before default timeout
@@ -195,7 +206,7 @@ describe('waitForAuthEvent', () => {
     await expect(promise).rejects.toThrow('Timeout waiting for SIGNED_IN event after 5000ms');
   });
 
-  it('should clear timeout when event fires before timeout', async () => {
+  test('should clear timeout when event fires before timeout', async () => {
     const mockSession = {
       access_token: 'test-token',
       user: { id: 'user-123' },

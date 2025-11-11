@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { act, renderHook } from '@testing-library/react-native';
 import { useSleepTimer } from '../../../hooks/audio/useSleepTimer';
 import { handleError } from '../../../utils/errorHandling';
@@ -17,7 +26,7 @@ afterEach(() => {
 });
 
 describe('useSleepTimer', () => {
-  it('starts countdown and triggers completion', () => {
+  test('starts countdown and triggers completion', () => {
     const onComplete = jest.fn();
     const { result } = renderHook(() => useSleepTimer(onComplete));
 
@@ -43,7 +52,7 @@ describe('useSleepTimer', () => {
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
-  it('cancels an active timer', () => {
+  test('cancels an active timer', () => {
     const onComplete = jest.fn();
     const { result } = renderHook(() => useSleepTimer(onComplete));
 
@@ -66,7 +75,7 @@ describe('useSleepTimer', () => {
     expect(onComplete).not.toHaveBeenCalled();
   });
 
-  it('auto-cancels an active timer', () => {
+  test('auto-cancels an active timer', () => {
     const { result } = renderHook(() => useSleepTimer());
 
     act(() => {
@@ -83,7 +92,7 @@ describe('useSleepTimer', () => {
     expect(result.current.state.remainingTime).toBe(0);
   });
 
-  it('auto-cancel does nothing when timer is not active', () => {
+  test('auto-cancel does nothing when timer is not active', () => {
     const { result } = renderHook(() => useSleepTimer());
 
     expect(result.current.state.isActive).toBe(false);
@@ -96,7 +105,7 @@ describe('useSleepTimer', () => {
     expect(result.current.state.remainingTime).toBe(0);
   });
 
-  it('handles invalid duration', () => {
+  test('handles invalid duration', () => {
     const { result } = renderHook(() => useSleepTimer());
 
     act(() => {
@@ -112,7 +121,7 @@ describe('useSleepTimer', () => {
     );
   });
 
-  it('clears timer on unmount', () => {
+  test('clears timer on unmount', () => {
     const onComplete = jest.fn();
     const { result, unmount } = renderHook(() => useSleepTimer(onComplete));
 
@@ -129,7 +138,7 @@ describe('useSleepTimer', () => {
     expect(onComplete).not.toHaveBeenCalled();
   });
 
-  it('allows starting a new timer after completion', () => {
+  test('allows starting a new timer after completion', () => {
     const onComplete = jest.fn();
     const { result } = renderHook(() => useSleepTimer(onComplete));
 

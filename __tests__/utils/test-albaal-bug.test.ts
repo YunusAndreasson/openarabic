@@ -11,11 +11,20 @@
  * 2. Consuming entire word as prefixes (must leave minimum 2-char root)
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 import { GrammaticalRole } from '@/constants/arabicWordComponents';
 
 describe('البال greedy prefix detection bug', () => {
-  it('should NOT detect ال twice in البال (the mind)', () => {
+  test('should NOT detect ال twice in البال (the mind)', () => {
     const arabic = 'البال';
     const english = 'of the mind';
 
@@ -31,7 +40,7 @@ describe('البال greedy prefix detection bug', () => {
     expect(analysis.remainingArabic.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('should prevent second definite article detection', () => {
+  test('should prevent second definite article detection', () => {
     const arabic = 'البال';
     const english = 'the mind';
 
@@ -47,7 +56,7 @@ describe('البال greedy prefix detection bug', () => {
     expect(articleCount).not.toBe(2); // Prevent the bug
   });
 
-  it('should ensure minimum root remains after prefix detection', () => {
+  test('should ensure minimum root remains after prefix detection', () => {
     const arabic = 'البال';
     const english = 'the mind';
 
@@ -60,7 +69,7 @@ describe('البال greedy prefix detection bug', () => {
     expect(analysis.remainingArabic).not.toBe('');
   });
 
-  it('should handle البال with genitive case marker', () => {
+  test('should handle البال with genitive case marker', () => {
     const arabic = 'الْبَالِ'; // With diacritics and genitive kasra
     const english = 'of the mind';
 
@@ -73,7 +82,7 @@ describe('البال greedy prefix detection bug', () => {
     expect(analysis.remainingArabic.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('should allow valid multi-prefix combinations like والبيت (and the house)', () => {
+  test('should allow valid multi-prefix combinations like والبيت (and the house)', () => {
     const arabic = 'والبيت';
     const english = 'and the house';
 

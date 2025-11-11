@@ -1,16 +1,25 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { renderHook } from '@testing-library/react-native';
 import { describe, expect, it } from '@jest/globals';
 
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 
 describe('useMountSafety', () => {
-  it('should return a ref that is true when mounted', () => {
+  test('should return a ref that is true when mounted', () => {
     const { result } = renderHook(() => useMountSafety());
 
     expect(result.current.current).toBe(true);
   });
 
-  it('should set ref to false when component unmounts', () => {
+  test('should set ref to false when component unmounts', () => {
     const { result, unmount } = renderHook(() => useMountSafety());
 
     expect(result.current.current).toBe(true);
@@ -20,7 +29,7 @@ describe('useMountSafety', () => {
     expect(result.current.current).toBe(false);
   });
 
-  it('should maintain same ref instance across re-renders', () => {
+  test('should maintain same ref instance across re-renders', () => {
     const { result, rerender } = renderHook(() => useMountSafety());
 
     const firstRef = result.current;
@@ -31,14 +40,14 @@ describe('useMountSafety', () => {
     expect(result.current.current).toBe(true);
   });
 
-  it('should be true immediately after mount', () => {
+  test('should be true immediately after mount', () => {
     const { result } = renderHook(() => useMountSafety());
 
     // Should be true right away, not waiting for effect
     expect(result.current.current).toBe(true);
   });
 
-  it('should prevent state updates after unmount (practical example)', () => {
+  test('should prevent state updates after unmount (practical example)', () => {
     const { result, unmount } = renderHook(() => useMountSafety());
 
     const isMountedRef = result.current;
@@ -62,7 +71,7 @@ describe('useMountSafety', () => {
     expect(updateResult).toBe(''); // Not set yet because timeout hasn't run
   });
 
-  it('should allow state updates when still mounted (practical example)', () => {
+  test('should allow state updates when still mounted (practical example)', () => {
     const { result } = renderHook(() => useMountSafety());
 
     const isMountedRef = result.current;
@@ -77,7 +86,7 @@ describe('useMountSafety', () => {
     expect(shouldUpdate).toBe(true);
   });
 
-  it('should handle multiple mount/unmount cycles', () => {
+  test('should handle multiple mount/unmount cycles', () => {
     const { result, unmount, rerender } = renderHook(() => useMountSafety());
 
     expect(result.current.current).toBe(true);
@@ -91,7 +100,7 @@ describe('useMountSafety', () => {
     expect(result.current.current).toBe(false);
   });
 
-  it('should work correctly in cleanup scenarios', () => {
+  test('should work correctly in cleanup scenarios', () => {
     let isMountedRef: { current: boolean } | null = null;
 
     const { unmount } = renderHook(() => {

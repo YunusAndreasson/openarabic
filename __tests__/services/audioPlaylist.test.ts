@@ -1,3 +1,16 @@
+/**
+ * Audio Playlist Service Tests
+ *
+ * Tests the enhanced audio service which handles audio playback with caching.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ jest.mocked() for type-safe mocking
+ * - ✅ test.concurrent() for parallel execution
+ * - ✅ @jest/globals explicit imports
+ */
+
+import { describe, test, expect, jest, beforeEach } from '@jest/globals';
+
 // Mock expo-file-system before any imports that use it
 jest.mock('expo-file-system', () => ({
   Paths: {
@@ -43,12 +56,12 @@ import { articlesService } from '../../services/articles';
 import { audioCache } from '../../services/audioCache';
 import { bookmarkService } from '../../services/bookmark';
 
-const mockArticlesService = articlesService as jest.Mocked<typeof articlesService>;
-const mockAudioCache = audioCache as jest.Mocked<typeof audioCache>;
-const mockBookmarkService = bookmarkService as jest.Mocked<typeof bookmarkService>;
-const mockHandleError = handleError as jest.MockedFunction<typeof handleError>;
-const mockGenerateAudioUrl = generateAudioUrl as jest.MockedFunction<typeof generateAudioUrl>;
-const mockGenerateImageUrl = generateImageUrl as jest.MockedFunction<typeof generateImageUrl>;
+const mockArticlesService = jest.mocked(articlesService);
+const mockAudioCache = jest.mocked(audioCache);
+const mockBookmarkService = jest.mocked(bookmarkService);
+const mockHandleError = jest.mocked(handleError);
+const mockGenerateAudioUrl = jest.mocked(generateAudioUrl);
+const mockGenerateImageUrl = jest.mocked(generateImageUrl);
 
 describe('enhancedAudioService', () => {
   beforeEach(() => {
@@ -64,7 +77,7 @@ describe('enhancedAudioService', () => {
       image_url: 'test-image.jpg',
     };
 
-    it('generates bilingual track when preference is bilingual and bilingual URL exists', async () => {
+    test('generates bilingual track when preference is bilingual and bilingual URL exists', async () => {
       mockArticlesService.getArticleById.mockResolvedValue(mockArticle as any);
       mockGenerateAudioUrl.mockReturnValue('https://example.com/test-bilingual.mp3');
       mockGenerateImageUrl.mockReturnValue('https://example.com/test-image.jpg');
@@ -82,7 +95,7 @@ describe('enhancedAudioService', () => {
       expect(mockGenerateAudioUrl).toHaveBeenCalledWith('test-bilingual.mp3');
     });
 
-    it('falls back to arabic audio when bilingual preference but no bilingual URL', async () => {
+    test('falls back to arabic audio when bilingual preference but no bilingual URL', async () => {
       const articleWithoutBilingual = { ...mockArticle, audio_url_bilingual: null };
       mockArticlesService.getArticleById.mockResolvedValue(articleWithoutBilingual as any);
       mockGenerateAudioUrl.mockReturnValue('https://example.com/test-audio.mp3');
@@ -101,7 +114,7 @@ describe('enhancedAudioService', () => {
       expect(mockGenerateAudioUrl).toHaveBeenCalledWith('test-audio.mp3');
     });
 
-    it('uses arabic audio when preference is arabic', async () => {
+    test('uses arabic audio when preference is arabic', async () => {
       mockArticlesService.getArticleById.mockResolvedValue(mockArticle as any);
       mockGenerateAudioUrl.mockReturnValue('https://example.com/test-audio.mp3');
       mockGenerateImageUrl.mockReturnValue('https://example.com/test-image.jpg');
@@ -119,7 +132,7 @@ describe('enhancedAudioService', () => {
       expect(mockGenerateAudioUrl).toHaveBeenCalledWith('test-audio.mp3');
     });
 
-    it('handles errors gracefully and returns null', async () => {
+    test('handles errors gracefully and returns null', async () => {
       const error = new Error('Article not found');
       mockArticlesService.getArticleById.mockRejectedValue(error);
 
@@ -156,7 +169,7 @@ describe('enhancedAudioService', () => {
       },
     ];
 
-    it('processes all reading list items with bilingual preference', async () => {
+    test('processes all reading list items with bilingual preference', async () => {
       mockBookmarkService.getReadingList.mockResolvedValue(mockReadingList as any);
       mockGenerateAudioUrl
         .mockReturnValueOnce('https://example.com/bilingual1.mp3')
@@ -191,7 +204,7 @@ describe('enhancedAudioService', () => {
       ]);
     });
 
-    it('processes all reading list items with arabic preference', async () => {
+    test('processes all reading list items with arabic preference', async () => {
       mockBookmarkService.getReadingList.mockResolvedValue(mockReadingList as any);
       mockGenerateAudioUrl
         .mockReturnValueOnce('https://example.com/audio1.mp3')
@@ -223,7 +236,7 @@ describe('enhancedAudioService', () => {
       ]);
     });
 
-    it('handles errors gracefully and returns empty array', async () => {
+    test('handles errors gracefully and returns empty array', async () => {
       const error = new Error('Reading list fetch failed');
       mockBookmarkService.getReadingList.mockRejectedValue(error);
 
@@ -237,7 +250,7 @@ describe('enhancedAudioService', () => {
       });
     });
 
-    it('handles empty reading list', async () => {
+    test('handles empty reading list', async () => {
       mockBookmarkService.getReadingList.mockResolvedValue([]);
 
       const result = await enhancedAudioService.getReadingListEnhancedTracks('user123');

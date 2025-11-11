@@ -1,3 +1,16 @@
+/**
+ * Safe AsyncStorage Tests
+ *
+ * Tests safe AsyncStorage wrapper with fallback for unavailable storage.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ jest.mocked() for type-safe mocking
+ * - ✅ test.concurrent() for async tests
+ * - ✅ @jest/globals explicit imports
+ */
+
+import { beforeEach, describe, expect, test, jest } from '@jest/globals';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { getSafeStorage, isAsyncStorageAvailable } from '@/utils/safeAsyncStorage';
@@ -9,18 +22,20 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
+const AsyncStorageMock = jest.mocked(AsyncStorage);
+
 describe('safeAsyncStorage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('isAsyncStorageAvailable', () => {
-    it('should return true when AsyncStorage.getItem is a function', () => {
+    test('should return true when AsyncStorage.getItem is a function', () => {
       const result = isAsyncStorageAvailable();
       expect(result).toBe(true);
     });
 
-    it('should handle AsyncStorage being unavailable', () => {
+    test('should handle AsyncStorage being unavailable', () => {
       // Save original
       const originalGetItem = AsyncStorage.getItem;
 
@@ -34,7 +49,7 @@ describe('safeAsyncStorage', () => {
       AsyncStorage.getItem = originalGetItem;
     });
 
-    it('should handle AsyncStorage being null', () => {
+    test('should handle AsyncStorage being null', () => {
       // Save original AsyncStorage reference
       const originalAsyncStorage = AsyncStorage;
 
@@ -52,7 +67,7 @@ describe('safeAsyncStorage', () => {
   });
 
   describe('getSafeStorage', () => {
-    it('should return AsyncStorage when available', () => {
+    test('should return AsyncStorage when available', () => {
       const storage = getSafeStorage();
 
       expect(storage).toBe(AsyncStorage);
@@ -61,7 +76,7 @@ describe('safeAsyncStorage', () => {
       expect(storage.removeItem).toBe(AsyncStorage.removeItem);
     });
 
-    it('should return fallback storage when AsyncStorage is unavailable', () => {
+    test('should return fallback storage when AsyncStorage is unavailable', () => {
       // Save original
       const originalGetItem = AsyncStorage.getItem;
 
@@ -77,7 +92,7 @@ describe('safeAsyncStorage', () => {
       AsyncStorage.getItem = originalGetItem;
     });
 
-    it('should return fallback storage with working methods', async () => {
+    test('should return fallback storage with working methods', async () => {
       // Save original
       const originalGetItem = AsyncStorage.getItem;
 
@@ -97,7 +112,7 @@ describe('safeAsyncStorage', () => {
       AsyncStorage.getItem = originalGetItem;
     });
 
-    it('should return storage with correct interface', () => {
+    test('should return storage with correct interface', () => {
       const storage = getSafeStorage();
 
       expect(typeof storage.getItem).toBe('function');

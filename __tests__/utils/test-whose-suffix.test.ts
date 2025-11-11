@@ -5,11 +5,20 @@
  * to handle constructions like "وَلِسَانُهُ" (and whose tongue)
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, computeColoredSegments } from '@/utils/arabicWordAnalysis';
 
 describe('"whose" suffix detection', () => {
-  it('should detect ه suffix with "whose" in وَلِسَانُهُ', () => {
+  test('should detect ه suffix with "whose" in وَلِسَانُهُ', () => {
     const analysis = analyzeArabicWord('ولسانه', 'and whose tongue');
 
     // Should detect prefix: و (and)
@@ -63,7 +72,7 @@ describe('"whose" suffix detection', () => {
     expect(suffixSegment?.color).toBe(MOCK_GRAMMAR_COLORS.possessive);
   });
 
-  it('should still work with traditional "his" translation', () => {
+  test('should still work with traditional "his" translation', () => {
     const analysis = analyzeArabicWord('كتابه', 'his book');
 
     // Should detect suffix: ه (his)
@@ -72,7 +81,7 @@ describe('"whose" suffix detection', () => {
     expect(analysis.remainingArabic).toBe('كتاب');
   });
 
-  it('should color "whose" in English translation', () => {
+  test('should color "whose" in English translation', () => {
     const mockColors = {
       violet: '#b28fef',
       text: '#fcfffd',

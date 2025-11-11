@@ -1,4 +1,13 @@
 /**
+ * Component Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Regression test for bug: Single colored segment words rendering white
  *
  * Bug: Words like فَإِذَا (compound prefix = entire word) were showing white
@@ -43,7 +52,7 @@ jest.mock('@/hooks/vocabulary', () => ({
 }));
 
 describe('ArabicWord: Single Colored Segment Bug', () => {
-  it('should render colored text for single colored segment (compound prefix = entire word)', () => {
+  test('should render colored text for single colored segment (compound prefix = entire word)', () => {
     // This is the exact data from the user's bug report
     const word: SentenceWord = {
       id: 20677,
@@ -73,7 +82,7 @@ describe('ArabicWord: Single Colored Segment Bug', () => {
     expect(getByTestId('word-single-segment')).toBeTruthy();
   });
 
-  it('should render white text for non-colored segments', () => {
+  test('should render white text for non-colored segments', () => {
     const word: SentenceWord = {
       id: 1,
       word_form: 'كِتَاب',
@@ -100,7 +109,7 @@ describe('ArabicWord: Single Colored Segment Bug', () => {
     expect(getByTestId('word-default-color')).toBeTruthy();
   });
 
-  it('should render multiple colored segments correctly', () => {
+  test('should render multiple colored segments correctly', () => {
     const word: SentenceWord = {
       id: 2,
       word_form: 'وَالْكِتَابُ',

@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { renderHook } from '@testing-library/react-native';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
@@ -79,7 +88,7 @@ describe('useDueWordsChart', () => {
   });
 
   describe('Empty Data Protection', () => {
-    it('should handle empty studyWords array safely', () => {
+    test('should handle empty studyWords array safely', () => {
       const { result } = renderHook(() => useDueWordsChart([]));
 
       // Should return safe defaults
@@ -94,7 +103,7 @@ describe('useDueWordsChart', () => {
       });
     });
 
-    it('should not crash with undefined studyWords', () => {
+    test('should not crash with undefined studyWords', () => {
       const { result } = renderHook(() => useDueWordsChart(undefined as unknown as StudyWord[]));
 
       // Should handle gracefully (memoized hook will receive undefined)
@@ -105,7 +114,7 @@ describe('useDueWordsChart', () => {
   });
 
   describe('Invalid FSRS Data', () => {
-    it('should filter out words with null due dates', () => {
+    test('should filter out words with null due dates', () => {
       const words: StudyWord[] = [
         createTestWord({ id: 1, fsrs_due: null }), // ✗ No due date
         createTestWord({ id: 2, fsrs_due: null }), // ✗ No due date
@@ -120,7 +129,7 @@ describe('useDueWordsChart', () => {
       expect(result.current.chartData.insights.currentDue).toBe(0);
     });
 
-    it('should handle mix of valid and invalid due dates', () => {
+    test('should handle mix of valid and invalid due dates', () => {
       const today = new Date();
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -142,7 +151,7 @@ describe('useDueWordsChart', () => {
   });
 
   describe('Valid Forecast Generation', () => {
-    it('should generate 7 days of forecast data', () => {
+    test('should generate 7 days of forecast data', () => {
       const today = new Date();
       const words: StudyWord[] = [
         createTestWord({ id: 1, fsrs_due: today.toISOString() }),
@@ -165,7 +174,7 @@ describe('useDueWordsChart', () => {
       });
     });
 
-    it('should calculate correct due word counts', () => {
+    test('should calculate correct due word counts', () => {
       const today = new Date();
       const dayThree = new Date(today);
       dayThree.setDate(dayThree.getDate() + 3);
@@ -190,7 +199,7 @@ describe('useDueWordsChart', () => {
       expect(result.current.dueWordsData[6]?.dueWords).toBe(3);
     });
 
-    it('should calculate chart insights correctly', () => {
+    test('should calculate chart insights correctly', () => {
       const today = new Date();
       const words: StudyWord[] = [
         createTestWord({ id: 1, fsrs_due: today.toISOString() }),
@@ -214,7 +223,7 @@ describe('useDueWordsChart', () => {
   });
 
   describe('Trend Calculation', () => {
-    it('should calculate increasing trend', () => {
+    test('should calculate increasing trend', () => {
       const today = new Date();
       const words: StudyWord[] = [];
 
@@ -231,7 +240,7 @@ describe('useDueWordsChart', () => {
       expect(result.current.chartData.insights.trend).toBe('increasing');
     });
 
-    it('should calculate stable trend for flat data', () => {
+    test('should calculate stable trend for flat data', () => {
       const today = new Date();
       const words: StudyWord[] = [
         createTestWord({ id: 1, fsrs_due: today.toISOString() }),
@@ -247,7 +256,7 @@ describe('useDueWordsChart', () => {
   });
 
   describe('hasData Flag', () => {
-    it('should be true when studyWords has items, even if all filtered', () => {
+    test('should be true when studyWords has items, even if all filtered', () => {
       const words: StudyWord[] = [
         createTestWord({ id: 1, fsrs_due: null }), // Will be filtered
         createTestWord({ id: 2, fsrs_due: null }), // Will be filtered
@@ -262,14 +271,14 @@ describe('useDueWordsChart', () => {
       expect(result.current.dueWordsData).toEqual([]);
     });
 
-    it('should be false only when studyWords is empty', () => {
+    test('should be false only when studyWords is empty', () => {
       const { result } = renderHook(() => useDueWordsChart([]));
 
       // No words at all
       expect(result.current.chartData.hasData).toBe(false);
     });
 
-    it('should be true with valid due words', () => {
+    test('should be true with valid due words', () => {
       const today = new Date();
       const words: StudyWord[] = [createTestWord({ id: 1, fsrs_due: today.toISOString() })];
 
@@ -281,7 +290,7 @@ describe('useDueWordsChart', () => {
   });
 
   describe('Chart Data Structure', () => {
-    it('should return valid chart data structure', () => {
+    test('should return valid chart data structure', () => {
       const today = new Date();
       const words: StudyWord[] = [createTestWord({ id: 1, fsrs_due: today.toISOString() })];
 
@@ -302,7 +311,7 @@ describe('useDueWordsChart', () => {
       expect(typeof chartData.hasData).toBe('boolean');
     });
 
-    it('should generate data points matching forecast length', () => {
+    test('should generate data points matching forecast length', () => {
       const today = new Date();
       const words: StudyWord[] = [createTestWord({ id: 1, fsrs_due: today.toISOString() })];
 

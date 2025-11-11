@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 // Unmock React Query to test real hook behavior
 jest.unmock('@tanstack/react-query');
 
@@ -41,7 +50,7 @@ describe('useArticleData', () => {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   };
 
-  it('returns processed article data with real React Query caching', async () => {
+  test('returns processed article data with real React Query caching', async () => {
     const mockArticle: Article = {
       id: 1,
       title: 'Test Article',
@@ -152,7 +161,7 @@ describe('useArticleData', () => {
     });
   });
 
-  it('handles missing data gracefully with real React Query', async () => {
+  test('handles missing data gracefully with real React Query', async () => {
     // Mock services to return no data
     mockArticlesService.getArticleById.mockRejectedValue(new Error('Not found'));
     mockBookmarkService.isInReadingList.mockResolvedValue(false);
@@ -168,7 +177,7 @@ describe('useArticleData', () => {
     expect(result.current.isInReadingList).toBe(false);
   });
 
-  it('uses real React Query caching - second render should use cache', async () => {
+  test('uses real React Query caching - second render should use cache', async () => {
     const mockArticle: Article = {
       id: 1,
       title: 'Cached Article',
@@ -204,7 +213,7 @@ describe('useArticleData', () => {
     expect(mockArticlesService.getArticleById).not.toHaveBeenCalled();
   });
 
-  it('handles network failures gracefully with real React Query error state', async () => {
+  test('handles network failures gracefully with real React Query error state', async () => {
     // Mock service failures
     const networkError = new Error('Network request failed');
     mockArticlesService.getArticleById.mockRejectedValue(networkError);

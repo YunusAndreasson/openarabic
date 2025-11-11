@@ -1,3 +1,16 @@
+/**
+ * Type Mappers Tests
+ *
+ * Tests type mapping utilities for database records.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { mapToArticle, mapToArticles } from '../../utils/typeMappers';
 
 describe('typeMappers', () => {
@@ -38,7 +51,7 @@ describe('typeMappers', () => {
     author: { id: 1, name: 'auth' },
   } as any;
 
-  it('maps nested article to typed article', () => {
+  test('maps nested article to typed article', () => {
     const article = mapToArticle(rawArticle);
 
     expect(article.title).toBe('Article');
@@ -48,7 +61,7 @@ describe('typeMappers', () => {
     expect(article.author).toEqual({ id: 1, name: 'auth' });
   });
 
-  it('handles missing or invalid properties with defaults', () => {
+  test('handles missing or invalid properties with defaults', () => {
     const invalidArticle = {
       id: 2,
       title: 'Invalid',
@@ -78,7 +91,7 @@ describe('typeMappers', () => {
     expect(mapped.category).toEqual({ id: 1, name: 'cat' });
   });
 
-  it('maps arrays of records and handles invalid input', () => {
+  test('maps arrays of records and handles invalid input', () => {
     const articles = mapToArticles([rawArticle]);
     expect(articles).toHaveLength(1);
     expect(articles[0].title).toBe('Article');

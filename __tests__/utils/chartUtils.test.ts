@@ -1,3 +1,16 @@
+/**
+ * Chart Utils Tests
+ *
+ * Tests chart utility functions for data point key generation.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';
 
 describe('chartUtils', () => {
@@ -18,7 +31,7 @@ describe('chartUtils', () => {
   ];
 
   describe('generateDataPointKeys', () => {
-    it('should generate keys with default prefix', () => {
+    test('should generate keys with default prefix', () => {
       const result = generateDataPointKeys(mockDataPoints);
       expect(result).toEqual([
         'data-point-2023-01-01T00:00:00.000Z',
@@ -27,7 +40,7 @@ describe('chartUtils', () => {
       ]);
     });
 
-    it('should generate keys with custom prefix', () => {
+    test('should generate keys with custom prefix', () => {
       const result = generateDataPointKeys(mockDataPoints, 'custom');
       expect(result).toEqual([
         'custom-2023-01-01T00:00:00.000Z',
@@ -36,14 +49,14 @@ describe('chartUtils', () => {
       ]);
     });
 
-    it('should handle empty array', () => {
+    test('should handle empty array', () => {
       const result = generateDataPointKeys([]);
       expect(result).toEqual([]);
     });
   });
 
   describe('generateMilestoneKeys', () => {
-    it('should generate keys with default prefix', () => {
+    test('should generate keys with default prefix', () => {
       const result = generateMilestoneKeys(mockMilestones);
       expect(result).toEqual([
         'milestone-2023-01-01T00:00:00.000Z-0.8',
@@ -52,7 +65,7 @@ describe('chartUtils', () => {
       ]);
     });
 
-    it('should generate keys with custom prefix', () => {
+    test('should generate keys with custom prefix', () => {
       const result = generateMilestoneKeys(mockMilestones, 'custom');
       expect(result).toEqual([
         'custom-2023-01-01T00:00:00.000Z-0.8',
@@ -61,14 +74,14 @@ describe('chartUtils', () => {
       ]);
     });
 
-    it('should handle empty array', () => {
+    test('should handle empty array', () => {
       const result = generateMilestoneKeys([]);
       expect(result).toEqual([]);
     });
   });
 
   describe('today indicator functionality', () => {
-    it('should automatically set todayIndex to last label when not provided', () => {
+    test('should automatically set todayIndex to last label when not provided', () => {
       const xLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       const providedTodayIndex = undefined;
 
@@ -81,7 +94,7 @@ describe('chartUtils', () => {
       expect(xLabels[todayIndex]).toBe('Sun');
     });
 
-    it('should respect provided todayIndex when specified', () => {
+    test('should respect provided todayIndex when specified', () => {
       const xLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       const providedTodayIndex = 2; // Wednesday
 
@@ -94,7 +107,7 @@ describe('chartUtils', () => {
       expect(xLabels[todayIndex]).toBe('Wed');
     });
 
-    it('should handle empty labels gracefully', () => {
+    test('should handle empty labels gracefully', () => {
       const xLabels: string[] = [];
       const providedTodayIndex = undefined;
 
@@ -106,7 +119,7 @@ describe('chartUtils', () => {
       expect(todayIndex).toBeUndefined();
     });
 
-    it('should handle future prediction charts correctly', () => {
+    test('should handle future prediction charts correctly', () => {
       const xLabels = ['Today', 'Tomorrow', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
       const isFuturePrediction = true;
 
@@ -121,7 +134,7 @@ describe('chartUtils', () => {
       }
     });
 
-    it('should handle historical charts correctly', () => {
+    test('should handle historical charts correctly', () => {
       const xLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       const isFuturePrediction = false;
 

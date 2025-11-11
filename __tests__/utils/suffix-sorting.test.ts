@@ -1,7 +1,16 @@
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { ARABIC_SUFFIXES } from '@/constants/arabicWordComponents';
 
 describe('ARABIC_SUFFIXES sorting', () => {
-  it('should be sorted by length (longest first)', () => {
+  test('should be sorted by length (longest first)', () => {
     let prevLength = Infinity;
 
     for (let i = 0; i < ARABIC_SUFFIXES.length; i++) {
@@ -20,7 +29,7 @@ describe('ARABIC_SUFFIXES sorting', () => {
     expect(true).toBe(true);
   });
 
-  it('should have longest suffixes first', () => {
+  test('should have longest suffixes first', () => {
     const first = ARABIC_SUFFIXES[0];
     const last = ARABIC_SUFFIXES[ARABIC_SUFFIXES.length - 1];
 

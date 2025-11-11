@@ -1,3 +1,16 @@
+/**
+ * FSRS Utils Tests
+ *
+ * Tests FSRS (Free Spaced Repetition Scheduler) utility functions.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
@@ -12,7 +25,7 @@ const createStudyWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
 
 describe('fsrsUtils', () => {
   describe('calculateRetrievability', () => {
-    it('should calculate retrievability correctly', () => {
+    test('should calculate retrievability correctly', () => {
       const word = createStudyWord({
         fsrs_stability: 10,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -26,7 +39,7 @@ describe('fsrsUtils', () => {
       expect(result).toBeCloseTo(0.905, 3);
     });
 
-    it('should return 0 for words without review history', () => {
+    test('should return 0 for words without review history', () => {
       const word = createStudyWord({
         fsrs_last_review: null,
         fsrs_stability: 10,
@@ -37,7 +50,7 @@ describe('fsrsUtils', () => {
       expect(result).toBe(0);
     });
 
-    it('should return 0 for words with zero stability', () => {
+    test('should return 0 for words with zero stability', () => {
       const word = createStudyWord({
         fsrs_stability: 0,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -50,7 +63,7 @@ describe('fsrsUtils', () => {
   });
 
   describe('calculateRetrievabilityForecast', () => {
-    it('should calculate forecast for reviewed words', () => {
+    test('should calculate forecast for reviewed words', () => {
       const now = new Date().toISOString();
       const words = [
         createStudyWord({
@@ -72,7 +85,7 @@ describe('fsrsUtils', () => {
       expect(result[0].averageRetrievability).toBeGreaterThan(0);
     });
 
-    it('should filter out unreviewed words', () => {
+    test('should filter out unreviewed words', () => {
       const words = [
         createStudyWord({
           fsrs_last_review: null,
@@ -91,7 +104,7 @@ describe('fsrsUtils', () => {
   });
 
   describe('calculateRetrievabilityForecast - critical words tracking', () => {
-    it('should track critical words in forecast data', () => {
+    test('should track critical words in forecast data', () => {
       const reviewDate = '2024-01-01T00:00:00Z';
       const words = [
         createStudyWord({
@@ -115,7 +128,7 @@ describe('fsrsUtils', () => {
   });
 
   describe('calculateRetrievabilityTrend', () => {
-    it('should return stable for insufficient data', () => {
+    test('should return stable for insufficient data', () => {
       const data = [
         {
           date: new Date(),
@@ -130,7 +143,7 @@ describe('fsrsUtils', () => {
       expect(result).toBe('stable');
     });
 
-    it('should calculate trend correctly', () => {
+    test('should calculate trend correctly', () => {
       const today = new Date();
       const tomorrow = new Date(today);
       tomorrow.setDate(today.getDate() + 1);

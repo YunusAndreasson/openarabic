@@ -1,3 +1,16 @@
+/**
+ * Article Utils Tests
+ *
+ * Tests article filtering, sorting, and recommendation utilities.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -106,18 +119,18 @@ const mockStudyWords: StudyWord[] = [
 
 describe('articleUtils', () => {
   describe('calculateFilterDate', () => {
-    it('should return null for "all" date range', () => {
+    test('should return null for "all" date range', () => {
       const result = calculateFilterDate('all');
       expect(result).toBeNull();
     });
 
-    it('should calculate week date correctly', () => {
+    test('should calculate week date correctly', () => {
       const result = calculateFilterDate('week');
       expect(result).not.toBeNull();
       expect(result!.getTime()).toBeLessThan(Date.now());
     });
 
-    it('should calculate month date correctly', () => {
+    test('should calculate month date correctly', () => {
       const result = calculateFilterDate('month');
       expect(result).not.toBeNull();
       expect(result!.getTime()).toBeLessThan(Date.now());
@@ -125,7 +138,7 @@ describe('articleUtils', () => {
   });
 
   describe('sortArticlesByProgress', () => {
-    it('should prioritize articles with partial progress (1-94%)', () => {
+    test('should prioritize articles with partial progress (1-94%)', () => {
       const progressMap = new Map([
         [1, { last_sentence_read: 49, total_sentences: 100 }], // 50% partial progress
         // No entry for id 2 - 0% no progress
@@ -134,7 +147,7 @@ describe('articleUtils', () => {
       expect(result[0].id).toBe(1); // Article with partial progress comes first
     });
 
-    it('should place no-progress articles before completed articles (>=95%)', () => {
+    test('should place no-progress articles before completed articles (>=95%)', () => {
       const progressMap = new Map([
         [1, { last_sentence_read: 99, total_sentences: 100 }], // 100% completed
         // No entry for id 2 - 0% no progress
@@ -143,13 +156,13 @@ describe('articleUtils', () => {
       expect(result[0].id).toBe(2); // No progress comes before completed
     });
 
-    it('should handle articles without progress data', () => {
+    test('should handle articles without progress data', () => {
       const progressMap = new Map();
       const result = sortArticlesByProgress(mockArticles, progressMap);
       expect(result).toHaveLength(2);
     });
 
-    it('should sort articles in correct priority order (in-progress > not-opened > completed)', () => {
+    test('should sort articles in correct priority order (in-progress > not-opened > completed)', () => {
       // Create extended mock articles for comprehensive testing
       const extendedArticles: Article[] = [
         { ...mockArticles[0], id: 1 },
@@ -196,7 +209,7 @@ describe('articleUtils', () => {
       expect(result[7].id).toBe(7); // 95% - at threshold
     });
 
-    it('should treat 94% as in-progress but 95%+ as completed', () => {
+    test('should treat 94% as in-progress but 95%+ as completed', () => {
       const extendedArticles: Article[] = [
         { ...mockArticles[0], id: 1 },
         { ...mockArticles[1], id: 2 },
@@ -235,7 +248,7 @@ describe('articleUtils', () => {
   });
 
   describe('filterArticles', () => {
-    it('should filter by author IDs', () => {
+    test('should filter by author IDs', () => {
       const filters = {
         authorIds: [1],
         difficultyRange: [1, 5] as [number, number],
@@ -246,7 +259,7 @@ describe('articleUtils', () => {
       expect(result[0].author.id).toBe(1);
     });
 
-    it('should filter by difficulty range', () => {
+    test('should filter by difficulty range', () => {
       const filters = {
         authorIds: [],
         difficultyRange: [3, 5] as [number, number],
@@ -257,7 +270,7 @@ describe('articleUtils', () => {
       expect(result[0].difficulty_level).toBe(4);
     });
 
-    it('should filter by date range', () => {
+    test('should filter by date range', () => {
       const filters = {
         authorIds: [],
         difficultyRange: [1, 5] as [number, number],
@@ -269,7 +282,7 @@ describe('articleUtils', () => {
       expect(result[0].id).toBe(2); // Second article is newer
     });
 
-    it('should return empty array for empty input', () => {
+    test('should return empty array for empty input', () => {
       const filters = {
         authorIds: [],
         difficultyRange: [1, 5] as [number, number],
@@ -281,7 +294,7 @@ describe('articleUtils', () => {
   });
 
   describe('getArticlesByDueWords', () => {
-    it('should return articles sorted by due words count', () => {
+    test('should return articles sorted by due words count', () => {
       const result = getArticlesByDueWords(mockArticles, mockStudyWords, 10);
       expect(result).toHaveLength(2);
       // Both articles should have due words (root_id 1 and 2)
@@ -289,24 +302,24 @@ describe('articleUtils', () => {
       expect(result[1].id).toBe(2);
     });
 
-    it('should return empty array for no articles', () => {
+    test('should return empty array for no articles', () => {
       const result = getArticlesByDueWords([], mockStudyWords, 10);
       expect(result).toHaveLength(0);
     });
 
-    it('should return empty array for no due words', () => {
+    test('should return empty array for no due words', () => {
       const result = getArticlesByDueWords(mockArticles, [], 10);
       expect(result).toHaveLength(0);
     });
 
-    it('should respect limit', () => {
+    test('should respect limit', () => {
       const result = getArticlesByDueWords(mockArticles, mockStudyWords, 1);
       expect(result).toHaveLength(1);
     });
   });
 
   describe('getArticlesByDifficultWords', () => {
-    it('should return articles sorted by difficult words count', () => {
+    test('should return articles sorted by difficult words count', () => {
       const result = getArticlesByDifficultWords(mockArticles, mockStudyWords, 10);
       expect(result).toHaveLength(2);
       // Both articles should have difficult words (root_id 1 and 2)
@@ -314,17 +327,17 @@ describe('articleUtils', () => {
       expect(result[1].id).toBe(2);
     });
 
-    it('should return empty array for no articles', () => {
+    test('should return empty array for no articles', () => {
       const result = getArticlesByDifficultWords([], mockStudyWords, 10);
       expect(result).toHaveLength(0);
     });
 
-    it('should return empty array for no difficult words', () => {
+    test('should return empty array for no difficult words', () => {
       const result = getArticlesByDifficultWords(mockArticles, [], 10);
       expect(result).toHaveLength(0);
     });
 
-    it('should respect limit', () => {
+    test('should respect limit', () => {
       const result = getArticlesByDifficultWords(mockArticles, mockStudyWords, 1);
       expect(result).toHaveLength(1);
     });

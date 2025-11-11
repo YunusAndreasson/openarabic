@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 // Unmock React Query to test real hook behavior
 jest.unmock('@tanstack/react-query');
 
@@ -67,7 +76,7 @@ describe('useArticleWordInteractions', () => {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   };
 
-  it('initializes with no active tooltip and closed modal', () => {
+  test('initializes with no active tooltip and closed modal', () => {
     const { result } = renderHook(
       () =>
         useArticleWordInteractions({
@@ -84,7 +93,7 @@ describe('useArticleWordInteractions', () => {
   });
 
   describe('handleWordPress', () => {
-    it('opens tooltip when word is pressed with valid layout', () => {
+    test('opens tooltip when word is pressed with valid layout', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -104,7 +113,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.activeTooltip).toEqual({ word, layout });
     });
 
-    it('closes tooltip when same word is pressed again', () => {
+    test('closes tooltip when same word is pressed again', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -132,7 +141,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.activeTooltip).toBeNull();
     });
 
-    it('switches tooltip when different word is pressed', () => {
+    test('switches tooltip when different word is pressed', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -161,7 +170,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.activeTooltip?.word.id).toBe(2);
     });
 
-    it('does not open tooltip with invalid layout (width 0)', () => {
+    test('does not open tooltip with invalid layout (width 0)', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -181,7 +190,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.activeTooltip).toBeNull();
     });
 
-    it('does not open tooltip without layout', () => {
+    test('does not open tooltip without layout', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -202,7 +211,7 @@ describe('useArticleWordInteractions', () => {
   });
 
   describe('handleCloseTooltip', () => {
-    it('closes active tooltip', () => {
+    test('closes active tooltip', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -232,7 +241,7 @@ describe('useArticleWordInteractions', () => {
   });
 
   describe('closeTooltipOnScroll', () => {
-    it('closes tooltip when scroll starts', () => {
+    test('closes tooltip when scroll starts', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -262,7 +271,7 @@ describe('useArticleWordInteractions', () => {
   });
 
   describe('handleOpenWordDetails', () => {
-    it('opens word details modal and closes tooltip', () => {
+    test('opens word details modal and closes tooltip', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -293,7 +302,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.wordDetailsModal.data).toEqual(word);
     });
 
-    it('does nothing if no tooltip is active', () => {
+    test('does nothing if no tooltip is active', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -312,7 +321,7 @@ describe('useArticleWordInteractions', () => {
   });
 
   describe('handleAddWordToStudy', () => {
-    it('adds word to study with haptic feedback', async () => {
+    test('adds word to study with haptic feedback', async () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -333,7 +342,7 @@ describe('useArticleWordInteractions', () => {
       expect(mockRefetchStudyWords).toHaveBeenCalled();
     });
 
-    it('updates local optimistic state immediately', async () => {
+    test('updates local optimistic state immediately', async () => {
       mockHandleRootPress.mockResolvedValue(true);
 
       const { result } = renderHook(
@@ -372,7 +381,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.isInStudyList).toBe(true);
     });
 
-    it('removes word from study when toggled off', async () => {
+    test('removes word from study when toggled off', async () => {
       mockHandleRootPress.mockResolvedValue(false);
 
       const { result } = renderHook(
@@ -408,7 +417,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.isInStudyList).toBe(false);
     });
 
-    it('refetches study words after mutation', async () => {
+    test('refetches study words after mutation', async () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -429,7 +438,7 @@ describe('useArticleWordInteractions', () => {
       expect(mockRefetchStudyWords).toHaveBeenCalled();
     });
 
-    it('does nothing if user is not authenticated', async () => {
+    test('does nothing if user is not authenticated', async () => {
       // This test needs to run in isolation due to auth mock change
       // Create a separate hook test with no user
       const useAuthMock = require('@/hooks/auth/useAuth');
@@ -462,7 +471,7 @@ describe('useArticleWordInteractions', () => {
       useAuthMock.useAuth = originalMock;
     });
 
-    it('does nothing if word has no root_id', async () => {
+    test('does nothing if word has no root_id', async () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -484,7 +493,7 @@ describe('useArticleWordInteractions', () => {
       expect(mockHandleRootPress).not.toHaveBeenCalled();
     });
 
-    it('does nothing if handleRootPress returns undefined', async () => {
+    test('does nothing if handleRootPress returns undefined', async () => {
       mockHandleRootPress.mockResolvedValue(undefined);
 
       const { result } = renderHook(
@@ -508,7 +517,7 @@ describe('useArticleWordInteractions', () => {
   });
 
   describe('isInStudyList', () => {
-    it('checks local optimistic state first', async () => {
+    test('checks local optimistic state first', async () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -536,7 +545,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.isInStudyList).toBe(true);
     });
 
-    it('falls back to query cache when no local state', () => {
+    test('falls back to query cache when no local state', () => {
       // Seed query cache with study words
       const studyWords: StudyWord[] = [
         {
@@ -577,7 +586,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.isInStudyList).toBe(true);
     });
 
-    it('returns false when word not in study list', () => {
+    test('returns false when word not in study list', () => {
       queryClient.setQueryData(fsrsQueries.all('test-user-id').queryKey, []);
 
       const { result } = renderHook(
@@ -598,7 +607,7 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.isInStudyList).toBe(false);
     });
 
-    it('returns false when modal has no data', () => {
+    test('returns false when modal has no data', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -613,7 +622,7 @@ describe('useArticleWordInteractions', () => {
   });
 
   describe('callback stability', () => {
-    it('maintains stable callback references', () => {
+    test('maintains stable callback references', () => {
       const { result, rerender } = renderHook(
         () =>
           useArticleWordInteractions({

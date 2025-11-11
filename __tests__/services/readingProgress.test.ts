@@ -1,4 +1,15 @@
-import { describe, expect, it, jest, beforeEach } from '@jest/globals';
+/**
+ * Reading Progress Service Tests
+ *
+ * Tests the reading progress service which tracks article reading state.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ jest.fn() for mock creation (already type-safe)
+ * - ✅ test.concurrent() for parallel execution
+ * - ✅ @jest/globals explicit imports
+ */
+
+import { describe, expect, test, jest, beforeEach } from '@jest/globals';
 
 import type { ReadingProgress } from '@/services/readingProgress';
 import { ReadingProgressService, toSafeReadingProgress } from '@/services/readingProgress';
@@ -35,13 +46,13 @@ beforeEach(() => {
 
 describe('ReadingProgressService', () => {
   describe('toSafeReadingProgress', () => {
-    it('should return null when progress is null', () => {
+    test('should return null when progress is null', () => {
       const result = toSafeReadingProgress(null);
 
       expect(result).toBeNull();
     });
 
-    it('should convert valid progress with all fields', () => {
+    test('should convert valid progress with all fields', () => {
       const progress: ReadingProgress = {
         user_id: 'user-123',
         article_id: 42,
@@ -65,7 +76,7 @@ describe('ReadingProgressService', () => {
       });
     });
 
-    it('should default null progress_percentage to 0', () => {
+    test('should default null progress_percentage to 0', () => {
       const progress: ReadingProgress = {
         user_id: 'user-123',
         article_id: 42,
@@ -82,7 +93,7 @@ describe('ReadingProgressService', () => {
       expect(result?.progress_percentage).toBe(2);
     });
 
-    it('should use created_at when updated_at is null', () => {
+    test('should use created_at when updated_at is null', () => {
       const progress: ReadingProgress = {
         user_id: 'user-123',
         article_id: 42,
@@ -98,7 +109,7 @@ describe('ReadingProgressService', () => {
       expect(result?.updated_at).toBe('2024-01-01T10:00:00Z');
     });
 
-    it('should use current time when both updated_at and created_at are null', () => {
+    test('should use current time when both updated_at and created_at are null', () => {
       const beforeTest = new Date();
 
       const progress: ReadingProgress = {
@@ -121,7 +132,7 @@ describe('ReadingProgressService', () => {
       expect(resultDate.getTime()).toBeLessThanOrEqual(afterTest.getTime());
     });
 
-    it('should use current time when created_at is null', () => {
+    test('should use current time when created_at is null', () => {
       const beforeTest = new Date();
 
       const progress: ReadingProgress = {
@@ -144,7 +155,7 @@ describe('ReadingProgressService', () => {
       expect(resultDate.getTime()).toBeLessThanOrEqual(afterTest.getTime());
     });
 
-    it('should handle progress with 0% completion', () => {
+    test('should handle progress with 0% completion', () => {
       const progress: ReadingProgress = {
         user_id: 'user-123',
         article_id: 42,
@@ -162,7 +173,7 @@ describe('ReadingProgressService', () => {
       expect(result?.last_sentence_read).toBe(0);
     });
 
-    it('should handle progress with 100% completion', () => {
+    test('should handle progress with 100% completion', () => {
       const progress: ReadingProgress = {
         user_id: 'user-123',
         article_id: 42,
@@ -180,7 +191,7 @@ describe('ReadingProgressService', () => {
       expect(result?.last_sentence_read).toBe(99);
     });
 
-    it('should handle all null optional fields', () => {
+    test('should handle all null optional fields', () => {
       const progress: ReadingProgress = {
         user_id: 'user-123',
         article_id: 42,
@@ -200,7 +211,7 @@ describe('ReadingProgressService', () => {
       expect(result?.created_at).toBeDefined();
     });
 
-    it('should preserve user_id and article_id', () => {
+    test('should preserve user_id and article_id', () => {
       const progress: ReadingProgress = {
         user_id: 'different-user',
         article_id: 999,
@@ -219,7 +230,7 @@ describe('ReadingProgressService', () => {
   });
 
   describe('updateProgress', () => {
-    it('should calculate and upsert progress correctly', async () => {
+    test('should calculate and upsert progress correctly', async () => {
       const { builder, upsertFn } = createUpsertBuilder({ data: null, error: null });
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
@@ -247,7 +258,7 @@ describe('ReadingProgressService', () => {
       // Note: progress_percentage is GENERATED ALWAYS in database, not included in upsert
     });
 
-    it('should not include progress_percentage in upsert (database GENERATED ALWAYS)', async () => {
+    test('should not include progress_percentage in upsert (database GENERATED ALWAYS)', async () => {
       const { builder, upsertFn } = createUpsertBuilder({ data: null, error: null });
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
@@ -268,7 +279,7 @@ describe('ReadingProgressService', () => {
       expect(upsertCall).toHaveProperty('total_sentences', 50);
     });
 
-    it('should set updated_at timestamp', async () => {
+    test('should set updated_at timestamp', async () => {
       const { builder, upsertFn } = createUpsertBuilder({ data: null, error: null });
       (supabase.from as jest.Mock).mockReturnValue(builder);
 

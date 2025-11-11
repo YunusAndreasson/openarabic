@@ -8,10 +8,19 @@
  * This test identifies realistic scenarios where this could cause false positives
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('Potential false positives if "from" added to ب', () => {
-  it('FALSE POSITIVE: بعيد (far) - "from" is من, not ب', () => {
+  test('FALSE POSITIVE: بعيد (far) - "from" is من, not ب', () => {
     // بعيد من البيت = "far from the house"
     // If we analyze just بعيد with translation "far from"
     // the "from" is preview of the next word (من), not part of بعيد itself
@@ -27,7 +36,7 @@ describe('Potential false positives if "from" added to ب', () => {
     // - "from" corresponds to the separate word "من" that follows
   });
 
-  it('FALSE POSITIVE: بدأ (started) - "from" is من, not ب', () => {
+  test('FALSE POSITIVE: بدأ (started) - "from" is من, not ب', () => {
     // بدأ من هنا = "started from here"
     const analysis = analyzeArabicWord('بدأ', 'started from');
 
@@ -38,7 +47,7 @@ describe('Potential false positives if "from" added to ب', () => {
     // But "from" is actually من (the next word), not ب
   });
 
-  it('TRUE POSITIVE: بالله (with/by Allah) - could legitimately be "from Allah" contextually', () => {
+  test('TRUE POSITIVE: بالله (with/by Allah) - could legitimately be "from Allah" contextually', () => {
     // أعوذ بالله = "I seek refuge by/with Allah [from evil]"
     // Context: "from" describes what you flee from, not the preposition ب
     const analysis = analyzeArabicWord('بالله', 'from Allah');
@@ -52,7 +61,7 @@ describe('Potential false positives if "from" added to ب', () => {
     // "from" = contextual/idiomatic interpretation
   });
 
-  it('TRUE POSITIVE: بمرأى (in sight of) - could include "from" in translation', () => {
+  test('TRUE POSITIVE: بمرأى (in sight of) - could include "from" in translation', () => {
     // بمرأى من الناس = "in sight of people" or "visible from people"
     const analysis = analyzeArabicWord('بمرأى', 'visible from');
 
@@ -63,14 +72,14 @@ describe('Potential false positives if "from" added to ب', () => {
     // But "visible from" is idiomatic - literal is "in sight"
   });
 
-  it('SAFE: بيت (house) - unlikely to have "from" in translation', () => {
+  test('SAFE: بيت (house) - unlikely to have "from" in translation', () => {
     // Most words starting with ب won't have "from" in translation
     const analysis = analyzeArabicWord('بيت', 'house');
 
     expect(analysis.prefixes).toHaveLength(0);
   });
 
-  it('Recommendation: Test with literal translations', () => {
+  test('Recommendation: Test with literal translations', () => {
     // Best practice: Use literal translations for grammar coloring
 
     // ✓ Literal: "with Allah"

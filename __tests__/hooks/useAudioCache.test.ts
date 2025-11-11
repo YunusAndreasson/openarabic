@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { renderHook } from '@testing-library/react-native';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 
@@ -17,7 +26,7 @@ describe('useAudioCache', () => {
     jest.clearAllMocks();
   });
 
-  it('calls clearCache on the service', async () => {
+  test('calls clearCache on the service', async () => {
     (audioCache.clearCache as jest.Mock).mockResolvedValueOnce(undefined);
     const { result } = renderHook(() => useAudioCache());
 
@@ -25,7 +34,7 @@ describe('useAudioCache', () => {
     expect(audioCache.clearCache).toHaveBeenCalledTimes(1);
   });
 
-  it('rethrows errors from clearCache', async () => {
+  test('rethrows errors from clearCache', async () => {
     const err = new Error('fail');
     (audioCache.clearCache as jest.Mock).mockRejectedValueOnce(err);
     const { result } = renderHook(() => useAudioCache());
@@ -34,7 +43,7 @@ describe('useAudioCache', () => {
     expect(audioCache.clearCache).toHaveBeenCalledTimes(1);
   });
 
-  it('returns cache size from the service', async () => {
+  test('returns cache size from the service', async () => {
     (audioCache.getCacheSize as jest.Mock).mockResolvedValueOnce(123);
     const { result } = renderHook(() => useAudioCache());
 
@@ -42,7 +51,7 @@ describe('useAudioCache', () => {
     expect(audioCache.getCacheSize).toHaveBeenCalledTimes(1);
   });
 
-  it('returns 0 when getCacheSize throws', async () => {
+  test('returns 0 when getCacheSize throws', async () => {
     (audioCache.getCacheSize as jest.Mock).mockRejectedValueOnce(new Error('oops'));
     const { result } = renderHook(() => useAudioCache());
 
@@ -51,7 +60,7 @@ describe('useAudioCache', () => {
     expect(audioCache.getCacheSize).toHaveBeenCalledTimes(1);
   });
 
-  it('handles concurrent clearCache and getCacheSize calls', async () => {
+  test('handles concurrent clearCache and getCacheSize calls', async () => {
     (audioCache.clearCache as jest.Mock).mockResolvedValueOnce(undefined);
     (audioCache.getCacheSize as jest.Mock).mockResolvedValueOnce(42);
 
@@ -68,7 +77,7 @@ describe('useAudioCache', () => {
     expect(audioCache.getCacheSize).toHaveBeenCalledTimes(1);
   });
 
-  it('returns 0 if getCacheSize resolves to a non-number', async () => {
+  test('returns 0 if getCacheSize resolves to a non-number', async () => {
     (audioCache.getCacheSize as jest.Mock).mockResolvedValueOnce('not-a-number');
     const { result } = renderHook(() => useAudioCache());
 
@@ -76,7 +85,7 @@ describe('useAudioCache', () => {
     expect(size).toBe(0);
   });
 
-  it('returns 0 if getCacheSize resolves to null or undefined', async () => {
+  test('returns 0 if getCacheSize resolves to null or undefined', async () => {
     (audioCache.getCacheSize as jest.Mock).mockResolvedValueOnce(null);
     const { result } = renderHook(() => useAudioCache());
     expect(await result.current.getCacheSize()).toBe(0);
@@ -85,7 +94,7 @@ describe('useAudioCache', () => {
     expect(await result.current.getCacheSize()).toBe(0);
   });
 
-  it('does not update state after unmount', async () => {
+  test('does not update state after unmount', async () => {
     let resolvePromise: (value: number) => void;
     const promise = new Promise<number>(resolve => {
       resolvePromise = resolve;
@@ -104,7 +113,7 @@ describe('useAudioCache', () => {
     await expect(sizePromise).resolves.toBe(99);
   });
 
-  it('recovers from getCacheSize error on retry', async () => {
+  test('recovers from getCacheSize error on retry', async () => {
     (audioCache.getCacheSize as jest.Mock)
       .mockRejectedValueOnce(new Error('fail'))
       .mockResolvedValueOnce(77);

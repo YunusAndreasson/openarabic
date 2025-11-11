@@ -1,3 +1,39 @@
+/**
+ * Background Tasks Service
+ * Background fetch for vocabulary due date calculations
+ *
+ * GRACEFUL DEGRADATION PATTERN
+ * =============================
+ * This service is designed to work when possible, fail gracefully when not.
+ * Background fetch is an optional enhancement, not a core requirement.
+ *
+ * Why Graceful Degradation:
+ * - Background Fetch requires specific iOS/Android configuration
+ * - Missing UIBackgroundModes in Info.plist is expected in some builds
+ * - User permissions for background activity may be denied
+ * - Background tasks may be throttled by OS (battery optimization)
+ * - App works perfectly fine without background updates
+ *
+ * Expected Behavior:
+ * - ✅ Not configured → silent no-op (missing config is OK)
+ * - ✅ Permission denied → silent no-op (user choice respected)
+ * - ✅ OS throttling → silent no-op (system resource management)
+ * - ✅ Task fails → log error but don't crash
+ * - ❌ NEVER blocks app startup or crashes app
+ * - ⚠️  Logs non-configuration errors to Sentry with "warning" severity
+ *
+ * Testing Implications:
+ * - Tests should verify "does not throw" for expected failures
+ * - Mock BackgroundTask.getStatusAsync() to test different scenarios
+ * - Focus on: error handling, graceful fallback, status checks
+ * - Don't test Expo Background Task internals (third-party responsibility)
+ *
+ * Configuration Requirements (Optional):
+ * - iOS: UIBackgroundModes = ['fetch'] in Info.plist
+ * - Android: Permissions and background service configuration
+ * - If missing, app silently continues without background updates
+ */
+
 import * as BackgroundTask from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';

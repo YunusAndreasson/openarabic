@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { renderHook } from '@testing-library/react-native';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
@@ -46,7 +55,7 @@ jest.mock('@/components/common/charts/ChartMessages', () => ({
 
 describe('useCountBasedChart', () => {
   describe('Empty Data Protection', () => {
-    it('should handle empty studyWords array safely', () => {
+    test('should handle empty studyWords array safely', () => {
       const config = {
         parseWord: parseWordBasic,
         shouldCountWord: () => true,
@@ -73,7 +82,7 @@ describe('useCountBasedChart', () => {
       expect(result.current.subtitle).toBe('No words yet');
     });
 
-    it('should handle words with all null FSRS fields', () => {
+    test('should handle words with all null FSRS fields', () => {
       const words: StudyWord[] = [
         createTestWord({
           id: 1,
@@ -107,7 +116,7 @@ describe('useCountBasedChart', () => {
   });
 
   describe('Date Filtering', () => {
-    it('should only count words created before or on target date', () => {
+    test('should only count words created before or on target date', () => {
       const today = new Date();
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
@@ -143,7 +152,7 @@ describe('useCountBasedChart', () => {
   });
 
   describe('State Filtering - Learned Words', () => {
-    it('should only count State 2 words that have been reviewed', () => {
+    test('should only count State 2 words that have been reviewed', () => {
       const reviewDate = '2024-01-01T00:00:00Z';
       const words: StudyWord[] = [
         createTestWord({ id: 1, fsrs_state: 2, fsrs_last_review: reviewDate }), // ✓ Count
@@ -179,7 +188,7 @@ describe('useCountBasedChart', () => {
   });
 
   describe('State + Stability Filtering - Mastered Words', () => {
-    it('should only count State 2 words with stability >= 5', () => {
+    test('should only count State 2 words with stability >= 5', () => {
       const reviewDate = '2024-01-01T00:00:00Z';
       const words: StudyWord[] = [
         createTestWord({
@@ -240,7 +249,7 @@ describe('useCountBasedChart', () => {
   });
 
   describe('Milestone Calculation', () => {
-    it('should identify correct milestones at 10, 25, 50, 100 words', () => {
+    test('should identify correct milestones at 10, 25, 50, 100 words', () => {
       // Create 60 words to achieve 10, 25, 50 milestones (not 100)
       const words: StudyWord[] = Array.from({ length: 60 }, (_, i) =>
         createTestWord({
@@ -280,7 +289,7 @@ describe('useCountBasedChart', () => {
       expect(milestones.every(m => m.achieved)).toBe(true);
     });
 
-    it('should return empty milestones array when no thresholds reached', () => {
+    test('should return empty milestones array when no thresholds reached', () => {
       const words: StudyWord[] = [
         createTestWord({ id: 1, fsrs_state: 2, fsrs_last_review: '2024-01-01T00:00:00Z' }),
         createTestWord({ id: 2, fsrs_state: 2, fsrs_last_review: '2024-01-01T00:00:00Z' }),
@@ -308,7 +317,7 @@ describe('useCountBasedChart', () => {
   });
 
   describe('Trend Calculation', () => {
-    it('should calculate improving trend correctly', () => {
+    test('should calculate improving trend correctly', () => {
       // Trend is calculated by comparing recent 4 days vs older 3 days
       // Need significant change to exceed MASTERY_TREND_THRESHOLD
       const words: StudyWord[] = [];
@@ -351,7 +360,7 @@ describe('useCountBasedChart', () => {
       expect(result.current.insights.weeklyChange).toBeDefined();
     });
 
-    it('should calculate stable trend when change is minimal', () => {
+    test('should calculate stable trend when change is minimal', () => {
       // Create words evenly distributed
       const words: StudyWord[] = Array.from({ length: 10 }, (_, i) =>
         createTestWord({
@@ -384,7 +393,7 @@ describe('useCountBasedChart', () => {
   });
 
   describe('Division by Zero Protection', () => {
-    it('should use minimum maxCount of 1 to prevent division by zero', () => {
+    test('should use minimum maxCount of 1 to prevent division by zero', () => {
       // Empty words, but chart should still render without crash
       const config = {
         parseWord: parseWordBasic,
@@ -409,7 +418,7 @@ describe('useCountBasedChart', () => {
       expect(result.current.insights.totalCount).toBe(0);
     });
 
-    it('should handle totalCount = 0 in rate calculations safely', () => {
+    test('should handle totalCount = 0 in rate calculations safely', () => {
       const words: StudyWord[] = [
         createTestWord({
           id: 1,

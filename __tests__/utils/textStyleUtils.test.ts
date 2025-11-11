@@ -1,3 +1,16 @@
+/**
+ * Text Style Utils Tests
+ *
+ * Tests text styling utility functions for UI rendering.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import {
   TEXT_STYLE_CONSTANTS,
   calculateDynamicPadding,
@@ -24,20 +37,20 @@ describe('textStyleUtils', () => {
   const mockUnderlineColor = '#9AB5A4'; // Soft disabled color for all underlines
 
   describe('TEXT_STYLE_CONSTANTS', () => {
-    it('should have correct constant values', () => {
+    test('should have correct constant values', () => {
       expect(TEXT_STYLE_CONSTANTS.PADDING_TOP_RATIO).toBe(0.15);
       expect(TEXT_STYLE_CONSTANTS.PADDING_BOTTOM_RATIO).toBe(0.05);
     });
   });
 
   describe('calculateDynamicPadding', () => {
-    it('should calculate padding correctly with default ratios', () => {
+    test('should calculate padding correctly with default ratios', () => {
       const result = calculateDynamicPadding(mockFontSize);
       expect(result.paddingTop).toBe(mockFontSize * 0.15);
       expect(result.paddingBottom).toBe(mockFontSize * 0.05);
     });
 
-    it('should handle zero font size', () => {
+    test('should handle zero font size', () => {
       const result = calculateDynamicPadding(0);
       expect(result.paddingTop).toBe(0);
       expect(result.paddingBottom).toBe(0);
@@ -45,7 +58,7 @@ describe('textStyleUtils', () => {
   });
 
   describe('createTextStyleBase', () => {
-    it('should create base style with correct properties', () => {
+    test('should create base style with correct properties', () => {
       const result = createTextStyleBase(mockFontSize);
 
       expect(result).toHaveProperty('fontWeight', '700');
@@ -58,7 +71,7 @@ describe('textStyleUtils', () => {
   });
 
   describe('createTextStyle', () => {
-    it('should create complete text style with colors and elevation', () => {
+    test('should create complete text style with colors and elevation', () => {
       const result = createTextStyle(mockFontSize, mockColors);
 
       expect(result).toHaveProperty('color', mockColors.arabicText);
@@ -69,35 +82,35 @@ describe('textStyleUtils', () => {
   });
 
   describe('determineTextColor', () => {
-    it('should return warning color for vague meaning', () => {
+    test('should return warning color for vague meaning', () => {
       const result = determineTextColor(true, false, false, mockMeaningOverlayColors);
       expect(result).toBe(mockMeaningOverlayColors.warning);
     });
 
-    it('should return error color for struggling word', () => {
+    test('should return error color for struggling word', () => {
       const result = determineTextColor(false, false, true, mockMeaningOverlayColors);
       expect(result).toBe(mockMeaningOverlayColors.error);
     });
 
-    it('should return default text color for normal state', () => {
+    test('should return default text color for normal state', () => {
       const result = determineTextColor(false, false, false, mockMeaningOverlayColors);
       expect(result).toBe(mockMeaningOverlayColors.text);
     });
   });
 
   describe('getSelectedStyle', () => {
-    it('should return soft underline for selected words', () => {
+    test('should return soft underline for selected words', () => {
       const result = getSelectedStyle(true, mockUnderlineColor);
       expect(result).toHaveProperty('borderBottomWidth', 1);
       expect(result).toHaveProperty('borderBottomColor', mockUnderlineColor);
     });
 
-    it('should return empty object for unselected words', () => {
+    test('should return empty object for unselected words', () => {
       const result = getSelectedStyle(false, mockUnderlineColor);
       expect(result).toEqual({});
     });
 
-    it('should use the provided color exactly', () => {
+    test('should use the provided color exactly', () => {
       const customColor = '#FF0000';
       const result = getSelectedStyle(true, customColor);
       expect(result).toHaveProperty('borderBottomColor', customColor);

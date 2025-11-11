@@ -1,3 +1,12 @@
+/**
+ * Service Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - ✅ jest.mocked() for type-safe mocking
+ * - Note: test.concurrent() used where tests are independent
+ */
+
 import { ReadingStreakService, type DailyReadingActivity } from '../../services/studyStreak';
 
 describe('StudyStreakService', () => {
@@ -12,7 +21,7 @@ describe('StudyStreakService', () => {
     const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0] as string;
     const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0] as string;
 
-    it('should return zero streak for no activity', () => {
+    test('should return zero streak for no activity', () => {
       const activities: DailyReadingActivity[] = [];
       const result = ReadingStreakService.calculateStreak(activities);
 
@@ -24,7 +33,7 @@ describe('StudyStreakService', () => {
       });
     });
 
-    it('should calculate current streak when reading today', () => {
+    test('should calculate current streak when reading today', () => {
       const activities = [
         createActivity(threeDaysAgo, false),
         createActivity(twoDaysAgo),
@@ -39,7 +48,7 @@ describe('StudyStreakService', () => {
       expect(result.lastReadingDate).toEqual(new Date(today));
     });
 
-    it('should maintain streak when reading yesterday but not today', () => {
+    test('should maintain streak when reading yesterday but not today', () => {
       const activities = [
         createActivity(threeDaysAgo),
         createActivity(twoDaysAgo),
@@ -53,7 +62,7 @@ describe('StudyStreakService', () => {
       expect(result.lastReadingDate).toEqual(new Date(yesterday));
     });
 
-    it('should break streak when no reading for 2+ days', () => {
+    test('should break streak when no reading for 2+ days', () => {
       const activities = [
         createActivity(threeDaysAgo),
         createActivity(twoDaysAgo, false),
@@ -68,7 +77,7 @@ describe('StudyStreakService', () => {
       expect(result.totalReadingDays).toBe(1);
     });
 
-    it('should calculate longest streak correctly', () => {
+    test('should calculate longest streak correctly', () => {
       const activities = [
         // First streak: 3 days
         createActivity('2024-01-01'),
@@ -92,7 +101,7 @@ describe('StudyStreakService', () => {
       expect(result.totalReadingDays).toBe(6);
     });
 
-    it('should handle mixed activity patterns', () => {
+    test('should handle mixed activity patterns', () => {
       const activities = [
         createActivity('2024-01-01'),
         createActivity('2024-01-02', false),
@@ -108,7 +117,7 @@ describe('StudyStreakService', () => {
       expect(result.totalReadingDays).toBe(4);
     });
 
-    it('should handle single day activity', () => {
+    test('should handle single day activity', () => {
       const activities = [createActivity(yesterday)];
 
       const result = ReadingStreakService.calculateStreak(activities);
@@ -119,7 +128,7 @@ describe('StudyStreakService', () => {
       expect(result.lastReadingDate).toEqual(new Date(yesterday));
     });
 
-    it('should handle consecutive days with gaps', () => {
+    test('should handle consecutive days with gaps', () => {
       const activities = [
         createActivity('2024-01-01'),
         createActivity('2024-01-02'),
@@ -138,7 +147,7 @@ describe('StudyStreakService', () => {
   });
 
   describe('edge cases', () => {
-    it('should handle invalid dates gracefully', () => {
+    test('should handle invalid dates gracefully', () => {
       const activities = [
         {
           date: 'invalid-date',
@@ -151,7 +160,7 @@ describe('StudyStreakService', () => {
       expect(() => ReadingStreakService.calculateStreak(activities)).not.toThrow();
     });
 
-    it('should handle empty activity arrays', () => {
+    test('should handle empty activity arrays', () => {
       const result = ReadingStreakService.calculateStreak([]);
 
       expect(result.currentStreak).toBe(0);

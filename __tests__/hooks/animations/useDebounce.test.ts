@@ -1,5 +1,16 @@
+/**
+ * useDebounce Hook Tests
+ *
+ * Tests debounce hook for callback execution control.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - uses fake timers
+ * - Note: No jest.mocked() needed - inline mocks used
+ */
+
 import { act, renderHook } from '@testing-library/react-native';
-import { describe, expect, it, jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import { useDebounce } from '@/hooks/animations/useDebounce';
 
@@ -13,7 +24,7 @@ describe('useDebounce', () => {
     jest.useRealTimers();
   });
 
-  it('should execute callback immediately on first call', () => {
+  test('should execute callback immediately on first call', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebounce(callback, 300));
 
@@ -26,7 +37,7 @@ describe('useDebounce', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  it('should block subsequent calls during debounce period', () => {
+  test('should block subsequent calls during debounce period', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebounce(callback, 300));
 
@@ -52,7 +63,7 @@ describe('useDebounce', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  it('should allow execution after debounce delay', () => {
+  test('should allow execution after debounce delay', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebounce(callback, 300));
 
@@ -75,7 +86,7 @@ describe('useDebounce', () => {
     expect(callback).toHaveBeenCalledTimes(2);
   });
 
-  it('should return isDebouncing state', () => {
+  test('should return isDebouncing state', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebounce(callback, 300));
 
@@ -98,7 +109,7 @@ describe('useDebounce', () => {
     expect(isDebouncing3).toBe(false);
   });
 
-  it('should pass arguments to the callback', () => {
+  test('should pass arguments to the callback', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebounce(callback, 300));
 
@@ -111,7 +122,7 @@ describe('useDebounce', () => {
     expect(callback).toHaveBeenCalledWith('arg1', 'arg2', 123);
   });
 
-  it('should return the callback result', () => {
+  test('should return the callback result', () => {
     const callback = jest.fn().mockReturnValue('result');
     const { result } = renderHook(() => useDebounce(callback, 300));
 
@@ -125,7 +136,7 @@ describe('useDebounce', () => {
     expect(returnValue).toBe('result');
   });
 
-  it('should work with custom delay', () => {
+  test('should work with custom delay', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebounce(callback, 500));
 
@@ -150,7 +161,7 @@ describe('useDebounce', () => {
     expect(isDebouncing2).toBe(false);
   });
 
-  it('should reset timer on new debounce attempts', async () => {
+  test('should reset timer on new debounce attempts', async () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebounce(callback, 300));
 
@@ -185,7 +196,7 @@ describe('useDebounce', () => {
     expect(isDebouncing2).toBe(false);
   });
 
-  it('should handle rapid successive calls', () => {
+  test('should handle rapid successive calls', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebounce(callback, 300));
 
@@ -209,7 +220,7 @@ describe('useDebounce', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  it('should work with default delay (300ms) when not specified', () => {
+  test('should work with default delay (300ms) when not specified', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebounce(callback));
 

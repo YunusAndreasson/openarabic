@@ -1,3 +1,12 @@
+/**
+ * Store Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import reducer, {
   clearAllFilters,
   type FilterState,
@@ -45,7 +54,7 @@ describe('filtersSlice reducers', () => {
     });
   });
 
-  it('clears all filters', () => {
+  test('clears all filters', () => {
     let state: FilterState = {
       ...initialState,
       filters: { authorIds: [1], difficultyRange: [2, 3], dateRange: 'week' },

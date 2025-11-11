@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { describe, expect, it } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
 
@@ -5,7 +14,7 @@ import { useSessionMetrics } from '@/hooks/review/useSessionMetrics';
 
 describe('useSessionMetrics', () => {
   describe('Unique word counting (CRITICAL)', () => {
-    it('should count 2 unique words when reviewing 2 different words', () => {
+    test('should count 2 unique words when reviewing 2 different words', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -29,7 +38,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.wordsKnown).toBe(2);
     });
 
-    it('should count 2 unique words when reviewing same word twice', () => {
+    test('should count 2 unique words when reviewing same word twice', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -61,7 +70,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.wordsUnknown).toBe(1); // 1 unknown response
     });
 
-    it('should count 3 unique words when reviewing 3 different words', () => {
+    test('should count 3 unique words when reviewing 3 different words', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -85,7 +94,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.wordsReviewed).toBe(3);
     });
 
-    it('should handle missing rootId with backwards compatibility', () => {
+    test('should handle missing rootId with backwards compatibility', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -100,7 +109,7 @@ describe('useSessionMetrics', () => {
   });
 
   describe('NEW mastered words (not total) - CRITICAL', () => {
-    it('should count word that crosses 5.0 threshold during session', () => {
+    test('should count word that crosses 5.0 threshold during session', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -115,7 +124,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.masteredWords).toBe(1);
     });
 
-    it('should NOT count word that was already mastered', () => {
+    test('should NOT count word that was already mastered', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -130,7 +139,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.masteredWords).toBe(0);
     });
 
-    it('should NOT count word that stays below threshold', () => {
+    test('should NOT count word that stays below threshold', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -145,7 +154,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.masteredWords).toBe(0);
     });
 
-    it('should count exactly at 5.0 threshold', () => {
+    test('should count exactly at 5.0 threshold', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -160,7 +169,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.masteredWords).toBe(1);
     });
 
-    it('should count multiple words crossing threshold', () => {
+    test('should count multiple words crossing threshold', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -196,7 +205,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.masteredWords).toBe(2); // Only words 100 and 300
     });
 
-    it('should not count mastered on vague or unknown responses', () => {
+    test('should not count mastered on vague or unknown responses', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -220,7 +229,7 @@ describe('useSessionMetrics', () => {
   });
 
   describe('Actual stability increase calculation', () => {
-    it('should calculate actual stability increase (not estimated)', () => {
+    test('should calculate actual stability increase (not estimated)', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -235,7 +244,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.averageStabilityIncrease).toBeCloseTo(1.5, 2);
     });
 
-    it('should calculate average of multiple increases', () => {
+    test('should calculate average of multiple increases', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -259,7 +268,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.averageStabilityIncrease).toBeCloseTo(1.0, 2);
     });
 
-    it('should handle negative stability changes', () => {
+    test('should handle negative stability changes', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -274,7 +283,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.averageStabilityIncrease).toBeCloseTo(-0.5, 2);
     });
 
-    it('should not change average when stability data missing', () => {
+    test('should not change average when stability data missing', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -295,7 +304,7 @@ describe('useSessionMetrics', () => {
   });
 
   describe('Streak logic', () => {
-    it('should track current streak correctly', () => {
+    test('should track current streak correctly', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -308,7 +317,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.longestStreak).toBe(3);
     });
 
-    it('should reset streak on vague', () => {
+    test('should reset streak on vague', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -321,7 +330,7 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.longestStreak).toBe(2);
     });
 
-    it('should reset streak on unknown', () => {
+    test('should reset streak on unknown', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -335,7 +344,7 @@ describe('useSessionMetrics', () => {
   });
 
   describe('Response type tracking', () => {
-    it('should track all response types correctly', () => {
+    test('should track all response types correctly', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
@@ -359,7 +368,7 @@ describe('useSessionMetrics', () => {
   });
 
   describe('Reset functionality', () => {
-    it('should reset all metrics including unique words set', () => {
+    test('should reset all metrics including unique words set', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       // Build up metrics
@@ -405,7 +414,7 @@ describe('useSessionMetrics', () => {
   });
 
   describe('Real session simulation', () => {
-    it('should handle realistic practice session correctly', () => {
+    test('should handle realistic practice session correctly', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {

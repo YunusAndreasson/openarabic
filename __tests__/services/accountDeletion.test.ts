@@ -1,4 +1,13 @@
 /**
+ * Service Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - ✅ jest.mocked() for type-safe mocking
+ * - Note: test.concurrent() used where tests are independent
+ */
+
+/**
  * Unit tests for AccountDeletionService
  *
  * Tests the delete_user_account RPC function integration
@@ -34,7 +43,7 @@ describe('AccountDeletionService', () => {
   });
 
   describe('deleteAccount', () => {
-    it('successfully deletes account via RPC and signs out', async () => {
+    test('successfully deletes account via RPC and signs out', async () => {
       // Mock authenticated user
       (supabase.auth.getUser as jest.Mock).mockResolvedValue({
         data: {
@@ -65,7 +74,7 @@ describe('AccountDeletionService', () => {
       expect(supabase.auth.signOut).toHaveBeenCalled();
     });
 
-    it('throws error when user is not authenticated', async () => {
+    test('throws error when user is not authenticated', async () => {
       // Mock no authenticated user
       (supabase.auth.getUser as jest.Mock).mockResolvedValue({
         data: { user: null },
@@ -80,7 +89,7 @@ describe('AccountDeletionService', () => {
       expect(supabase.rpc).not.toHaveBeenCalled();
     });
 
-    it('throws error when session check fails', async () => {
+    test('throws error when session check fails', async () => {
       // Mock session error
       (supabase.auth.getUser as jest.Mock).mockResolvedValue({
         data: { user: null },
@@ -95,7 +104,7 @@ describe('AccountDeletionService', () => {
       expect(supabase.rpc).not.toHaveBeenCalled();
     });
 
-    it('throws error when RPC deletion fails', async () => {
+    test('throws error when RPC deletion fails', async () => {
       // Mock authenticated user
       (supabase.auth.getUser as jest.Mock).mockResolvedValue({
         data: {
@@ -119,7 +128,7 @@ describe('AccountDeletionService', () => {
       expect(supabase.auth.signOut).not.toHaveBeenCalled();
     });
 
-    it('verifies delete_user_account RPC is the only one used (per audit)', async () => {
+    test('verifies delete_user_account RPC is the only one used (per audit)', async () => {
       // Mock authenticated user
       (supabase.auth.getUser as jest.Mock).mockResolvedValue({
         data: {
@@ -156,7 +165,7 @@ describe('AccountDeletionService', () => {
   });
 
   describe('getCurrentUserEmail', () => {
-    it('returns user email when authenticated', async () => {
+    test('returns user email when authenticated', async () => {
       (supabase.auth.getUser as jest.Mock).mockResolvedValue({
         data: {
           user: { id: mockUserId, email: mockUserEmail },
@@ -169,7 +178,7 @@ describe('AccountDeletionService', () => {
       expect(email).toBe(mockUserEmail);
     });
 
-    it('returns null when user is not authenticated', async () => {
+    test('returns null when user is not authenticated', async () => {
       (supabase.auth.getUser as jest.Mock).mockResolvedValue({
         data: { user: null },
         error: null,
@@ -180,7 +189,7 @@ describe('AccountDeletionService', () => {
       expect(email).toBeNull();
     });
 
-    it('returns null when user has no email', async () => {
+    test('returns null when user has no email', async () => {
       (supabase.auth.getUser as jest.Mock).mockResolvedValue({
         data: {
           user: { id: mockUserId, email: null },
@@ -193,7 +202,7 @@ describe('AccountDeletionService', () => {
       expect(email).toBeNull();
     });
 
-    it('handles errors gracefully and returns null', async () => {
+    test('handles errors gracefully and returns null', async () => {
       (supabase.auth.getUser as jest.Mock).mockRejectedValue(new Error('Auth error'));
 
       const email = await AccountDeletionService.getCurrentUserEmail();
@@ -203,7 +212,7 @@ describe('AccountDeletionService', () => {
   });
 
   describe('RPC Function Documentation Coverage', () => {
-    it('documents why delete_user_account requires RPC (not local code)', () => {
+    test('documents why delete_user_account requires RPC (not local code)', () => {
       // This test serves as documentation for the RPC architecture decision
       // See: services/accountDeletion.ts lines 36-42 for detailed comments
 
@@ -220,7 +229,7 @@ describe('AccountDeletionService', () => {
       expect(whyRPC.cannotBeLocalCode).toMatch(/elevated privileges/);
     });
 
-    it('confirms no other RPCs should be added without justification', () => {
+    test('confirms no other RPCs should be added without justification', () => {
       // Per RPC_AUDIT_SUMMARY.md:
       // - Only 1 application-callable RPC: delete_user_account
       // - Other functions (sync_difficulty_scales, update_bookmark_categories_updated_at) are TRIGGERS

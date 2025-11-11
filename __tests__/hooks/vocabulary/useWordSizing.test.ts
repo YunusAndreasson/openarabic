@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { renderHook } from '@testing-library/react-native';
 import { useWordSizing } from '../../../hooks/vocabulary/useWordSizing';
 
@@ -11,14 +20,14 @@ jest.mock('../../../constants/layout', () => {
 });
 
 describe('useWordSizing', () => {
-  it('returns max font size for short words', () => {
+  test('returns max font size for short words', () => {
     const { result } = renderHook(() =>
       useWordSizing('سلام', { maxFontSize: 100, minFontSize: 50 }),
     );
     expect(result.current).toBe(100);
   });
 
-  it('returns min font size for extremely long words', () => {
+  test('returns min font size for extremely long words', () => {
     // Temporarily override SCREEN_WIDTH for this test
     const mockLayoutModule = require('../../../constants/layout');
     const originalWidth = mockLayoutModule.SCREEN_WIDTH;
@@ -34,14 +43,14 @@ describe('useWordSizing', () => {
     mockLayoutModule.SCREEN_WIDTH = originalWidth;
   });
 
-  it('returns max font size when word is undefined', () => {
+  test('returns max font size when word is undefined', () => {
     const { result } = renderHook(() =>
       useWordSizing(undefined, { maxFontSize: 120, minFontSize: 60 }),
     );
     expect(result.current).toBe(120);
   });
 
-  it('returns max font size for words equal to long word threshold', () => {
+  test('returns max font size for words equal to long word threshold', () => {
     const thresholdWord = 'abcdefghijklmno'; // 15 characters
     const { result } = renderHook(() =>
       useWordSizing(thresholdWord, { maxFontSize: 100, minFontSize: 50 }),
@@ -49,7 +58,7 @@ describe('useWordSizing', () => {
     expect(result.current).toBe(100);
   });
 
-  it('calculates scaled size between min and max for long words', () => {
+  test('calculates scaled size between min and max for long words', () => {
     // Temporarily override SCREEN_WIDTH for this test
     const mockLayoutModule = require('../../../constants/layout');
     const originalWidth = mockLayoutModule.SCREEN_WIDTH;

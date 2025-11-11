@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Simplified integration test to reproduce the "stuck button" bug
  *
  * BUG DESCRIPTION:
@@ -21,7 +30,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
   });
 
   describe('Service-Level Toggle Behavior', () => {
-    it('should return true when adding new word (word does not exist)', async () => {
+    test('should return true when adding new word (word does not exist)', async () => {
       // Mock: word doesn't exist, so insert returns true
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValue(true);
 
@@ -31,7 +40,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith('user-123', 1);
     });
 
-    it('should return false when removing existing word', async () => {
+    test('should return false when removing existing word', async () => {
       // Mock: word exists, so delete returns false
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValue(false);
 
@@ -43,7 +52,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
   });
 
   describe('Multiple Sequential Toggles (Reproduces Bug)', () => {
-    it('should correctly alternate true/false for sequential toggles of same word', async () => {
+    test('should correctly alternate true/false for sequential toggles of same word', async () => {
       const userId = 'user-123';
       const rootId = 42;
 
@@ -71,7 +80,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledTimes(4);
     });
 
-    it('should handle adding multiple different words sequentially', async () => {
+    test('should handle adding multiple different words sequentially', async () => {
       const userId = 'user-123';
       const words = [1, 2, 3, 4, 5, 6]; // Add 6 different words
 
@@ -96,7 +105,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
   });
 
   describe('State Management Bug Pattern', () => {
-    it('documents the expected behavior after multiple adds', () => {
+    test('documents the expected behavior after multiple adds', () => {
       /**
        * EXPECTED BEHAVIOR:
        * 1. Add word 1 → localStudyStates.set(1, true) → button shows "Remove"
@@ -136,7 +145,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
       // when the callback closure captures stale Map references
     });
 
-    it('demonstrates the stale closure problem', () => {
+    test('demonstrates the stale closure problem', () => {
       /**
        * STALE CLOSURE BUG:
        *

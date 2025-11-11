@@ -1,4 +1,13 @@
 /**
+ * Component Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * ArticleCard Component Tests
  *
  * Tests the article card component used throughout the app for displaying articles.
@@ -169,38 +178,38 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Basic Rendering', () => {
-    it('renders article title correctly', () => {
+    test('renders article title correctly', () => {
       const { getByText } = render(<ArticleCard {...defaultProps} />);
 
       expect(getByText('Introduction to Arabic Grammar')).toBeTruthy();
     });
 
-    it('renders author name correctly', () => {
+    test('renders author name correctly', () => {
       const { getByText } = render(<ArticleCard {...defaultProps} />);
 
       // Author is formatted with category
       expect(getByText(/Dr. Ahmad/)).toBeTruthy();
     });
 
-    it('renders category pill', () => {
+    test('renders category pill', () => {
       const { getByText } = render(<ArticleCard {...defaultProps} />);
 
       expect(getByText('Grammar')).toBeTruthy();
     });
 
-    it('renders summary text', () => {
+    test('renders summary text', () => {
       const { getByText } = render(<ArticleCard {...defaultProps} />);
 
       expect(getByText('Learn the basics of Arabic grammar and sentence structure.')).toBeTruthy();
     });
 
-    it('renders with testID for testing', () => {
+    test('renders with testID for testing', () => {
       const { getByTestId } = render(<ArticleCard {...defaultProps} testID="article-card-1" />);
 
       expect(getByTestId('article-card-1')).toBeTruthy();
     });
 
-    it('renders image with correct source', () => {
+    test('renders image with correct source', () => {
       const { getByTestId } = render(<ArticleCard {...defaultProps} />);
 
       // EnhancedImage is mocked but we can verify it renders
@@ -209,7 +218,7 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Navigation', () => {
-    it('navigates to article on press', () => {
+    test('navigates to article on press', () => {
       const mockPush = jest.fn();
       (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
 
@@ -223,7 +232,7 @@ describe('ArticleCard Component', () => {
       expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('/article/'));
     });
 
-    it('includes article ID in navigation path', () => {
+    test('includes article ID in navigation path', () => {
       const mockPush = jest.fn();
       (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
 
@@ -239,13 +248,13 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Custom Pill Label', () => {
-    it('uses category by default for pill', () => {
+    test('uses category by default for pill', () => {
       const { getByText } = render(<ArticleCard {...defaultProps} category="Culture" />);
 
       expect(getByText('Culture')).toBeTruthy();
     });
 
-    it('uses custom pillLabel when provided', () => {
+    test('uses custom pillLabel when provided', () => {
       const { getByText } = render(
         <ArticleCard {...defaultProps} category="Grammar" pillLabel="Beginner" />,
       );
@@ -253,7 +262,7 @@ describe('ArticleCard Component', () => {
       expect(getByText('Beginner')).toBeTruthy();
     });
 
-    it('capitalizes pill text', () => {
+    test('capitalizes pill text', () => {
       const { getByText } = render(<ArticleCard {...defaultProps} category="advanced topics" />);
 
       // Should capitalize first letter
@@ -262,7 +271,7 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Text Truncation', () => {
-    it('handles very long titles', () => {
+    test('handles very long titles', () => {
       const longTitle = 'A'.repeat(200);
       const props = {
         ...defaultProps,
@@ -275,7 +284,7 @@ describe('ArticleCard Component', () => {
       expect(getByText(longTitle)).toBeTruthy();
     });
 
-    it('handles very long summaries', () => {
+    test('handles very long summaries', () => {
       const longSummary = 'B'.repeat(500);
       const props = {
         ...defaultProps,
@@ -287,7 +296,7 @@ describe('ArticleCard Component', () => {
       expect(getByText(longSummary)).toBeTruthy();
     });
 
-    it('handles empty summary', () => {
+    test('handles empty summary', () => {
       const props = {
         ...defaultProps,
         summary: '',
@@ -298,13 +307,13 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Image Handling', () => {
-    it('renders with valid image URL', () => {
+    test('renders with valid image URL', () => {
       const { getByTestId } = render(<ArticleCard {...defaultProps} />);
 
       expect(getByTestId('article-image')).toBeTruthy();
     });
 
-    it('handles missing image URL gracefully', () => {
+    test('handles missing image URL gracefully', () => {
       const props = {
         ...defaultProps,
         imageUrl: '',
@@ -313,7 +322,7 @@ describe('ArticleCard Component', () => {
       expect(() => render(<ArticleCard {...props} />)).not.toThrow();
     });
 
-    it('handles invalid image URL', () => {
+    test('handles invalid image URL', () => {
       const props = {
         ...defaultProps,
         imageUrl: 'not-a-valid-url',
@@ -324,7 +333,7 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Different Article Types', () => {
-    it('renders beginner article correctly', () => {
+    test('renders beginner article correctly', () => {
       const article = createMockArticle({
         difficulty_level: 1,
         category: { id: 1, name: 'Basics' },
@@ -340,7 +349,7 @@ describe('ArticleCard Component', () => {
       expect(getByText('Basics')).toBeTruthy();
     });
 
-    it('renders advanced article correctly', () => {
+    test('renders advanced article correctly', () => {
       const article = createMockArticle({
         difficulty_level: 5,
         category: { id: 2, name: 'Advanced' },
@@ -356,7 +365,7 @@ describe('ArticleCard Component', () => {
       expect(getByText('Advanced')).toBeTruthy();
     });
 
-    it('renders article with Arabic author name', () => {
+    test('renders article with Arabic author name', () => {
       const props = {
         ...defaultProps,
         author: 'أحمد محمود',
@@ -369,7 +378,7 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Related Articles', () => {
-    it('renders related article variant', () => {
+    test('renders related article variant', () => {
       const props = {
         ...defaultProps,
         isRelatedArticle: true,
@@ -380,7 +389,7 @@ describe('ArticleCard Component', () => {
       expect(getByTestId('related-article')).toBeTruthy();
     });
 
-    it('navigates correctly from related article', () => {
+    test('navigates correctly from related article', () => {
       const mockPush = jest.fn();
       (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
 
@@ -398,7 +407,7 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Edge Cases', () => {
-    it('handles article with no author', () => {
+    test('handles article with no author', () => {
       const article = createMockArticle({
         author: { id: 1, name: '' },
       });
@@ -411,7 +420,7 @@ describe('ArticleCard Component', () => {
       expect(() => render(<ArticleCard {...props} />)).not.toThrow();
     });
 
-    it('handles article with no category', () => {
+    test('handles article with no category', () => {
       const article = createMockArticle({
         category: { id: 1, name: '' },
       });
@@ -424,7 +433,7 @@ describe('ArticleCard Component', () => {
       expect(() => render(<ArticleCard {...props} />)).not.toThrow();
     });
 
-    it('handles special characters in title', () => {
+    test('handles special characters in title', () => {
       const props = {
         ...defaultProps,
         title: 'Arabic & Grammar: A Comprehensive Guide (2024)',
@@ -435,7 +444,7 @@ describe('ArticleCard Component', () => {
       expect(getByText('Arabic & Grammar: A Comprehensive Guide (2024)')).toBeTruthy();
     });
 
-    it('handles RTL text in title', () => {
+    test('handles RTL text in title', () => {
       const props = {
         ...defaultProps,
         title: 'النحو العربي للمبتدئين',
@@ -446,7 +455,7 @@ describe('ArticleCard Component', () => {
       expect(getByText('النحو العربي للمبتدئين')).toBeTruthy();
     });
 
-    it('handles mixed LTR and RTL text', () => {
+    test('handles mixed LTR and RTL text', () => {
       const props = {
         ...defaultProps,
         title: 'Arabic Grammar - النحو العربي',
@@ -459,7 +468,7 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Performance', () => {
-    it('renders 10 cards without performance degradation', () => {
+    test('renders 10 cards without performance degradation', () => {
       const articles = Array.from({ length: 10 }, (_, i) =>
         createMockArticle({
           id: i + 1,
@@ -479,14 +488,14 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Accessibility', () => {
-    it('provides accessible card for screen readers', () => {
+    test('provides accessible card for screen readers', () => {
       const { getByTestId } = render(<ArticleCard {...defaultProps} testID="article-card" />);
 
       const card = getByTestId('article-card');
       expect(card).toBeTruthy();
     });
 
-    it('includes all important text content', () => {
+    test('includes all important text content', () => {
       const { getByText } = render(<ArticleCard {...defaultProps} />);
 
       // All key information should be accessible
@@ -498,7 +507,7 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Regression Tests', () => {
-    it('should navigate to correct article detail route', () => {
+    test('should navigate to correct article detail route', () => {
       const mockPush = jest.fn();
       (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
 
@@ -513,7 +522,7 @@ describe('ArticleCard Component', () => {
       expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/\/article\/123/));
     });
 
-    it('should format author and category correctly', () => {
+    test('should format author and category correctly', () => {
       const { getByText } = render(
         <ArticleCard {...defaultProps} author="Jane Smith" category="Culture" />,
       );

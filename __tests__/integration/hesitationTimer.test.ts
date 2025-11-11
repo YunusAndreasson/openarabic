@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Hesitation Timer Behavior Tests
  *
  * Tests the 3-second hesitation timer that triggers hint display
@@ -9,7 +18,7 @@ describe('Hesitation Timer - Integration Test', () => {
   const HESITATION_DELAY_MS = 3000;
 
   describe('Timer trigger behavior', () => {
-    it('should trigger hint display after 3 seconds of no interaction', () => {
+    test('should trigger hint display after 3 seconds of no interaction', () => {
       let isHesitating = false;
       let timerElapsed = false;
 
@@ -38,7 +47,7 @@ describe('Hesitation Timer - Integration Test', () => {
       expect(isHesitating).toBe(true);
     });
 
-    it('should NOT trigger hint if user swipes before 3 seconds', () => {
+    test('should NOT trigger hint if user swipes before 3 seconds', () => {
       let isHesitating = false;
       let isGestureActiveFlag = false;
 
@@ -59,7 +68,7 @@ describe('Hesitation Timer - Integration Test', () => {
       expect(isGestureActiveFlag).toBe(true);
     });
 
-    it('should clear timer on component unmount', () => {
+    test('should clear timer on component unmount', () => {
       let timerCleared = false;
       let timeoutId: NodeJS.Timeout | null = null;
 
@@ -81,7 +90,7 @@ describe('Hesitation Timer - Integration Test', () => {
   });
 
   describe('Hesitation state management', () => {
-    it('should set isHesitating to true when timer fires', () => {
+    test('should set isHesitating to true when timer fires', () => {
       const state = {
         isHesitating: false,
         isGestureActive: false,
@@ -99,7 +108,7 @@ describe('Hesitation Timer - Integration Test', () => {
       expect(state.isHesitating).toBe(true);
     });
 
-    it('should reset isHesitating on word change', () => {
+    test('should reset isHesitating on word change', () => {
       let isHesitating = true; // Was hesitating on previous word
 
       // New word appears (ReviewCard.tsx line 159: useEffect with word dependency)
@@ -112,7 +121,7 @@ describe('Hesitation Timer - Integration Test', () => {
       expect(isHesitating).toBe(false);
     });
 
-    it('should call onHesitationEnd when swipe completes', () => {
+    test('should call onHesitationEnd when swipe completes', () => {
       const state = {
         isHesitating: true,
         hesitationEnded: false,
@@ -132,7 +141,7 @@ describe('Hesitation Timer - Integration Test', () => {
   });
 
   describe('Gesture active tracking', () => {
-    it('should set isGestureActive when user starts swiping', () => {
+    test('should set isGestureActive when user starts swiping', () => {
       let isGestureActive = false;
 
       function onGestureStart(): void {
@@ -146,7 +155,7 @@ describe('Hesitation Timer - Integration Test', () => {
       expect(isGestureActive).toBe(true);
     });
 
-    it('should prevent hint from showing when gesture is active', () => {
+    test('should prevent hint from showing when gesture is active', () => {
       const state = {
         isGestureActive: true,
         isHesitating: false,
@@ -161,7 +170,7 @@ describe('Hesitation Timer - Integration Test', () => {
       expect(state.isHesitating).toBe(false);
     });
 
-    it('should reset gesture active flag on new word', () => {
+    test('should reset gesture active flag on new word', () => {
       let isGestureActive = true; // Was gesturing on previous word
 
       // New word appears - reset state
@@ -176,7 +185,7 @@ describe('Hesitation Timer - Integration Test', () => {
   });
 
   describe('Race condition prevention', () => {
-    it('should handle rapid swipes without triggering hesitation', () => {
+    test('should handle rapid swipes without triggering hesitation', () => {
       const state = {
         isHesitating: false,
         isGestureActive: false,
@@ -197,7 +206,7 @@ describe('Hesitation Timer - Integration Test', () => {
       expect(state.isHesitating).toBe(false);
     });
 
-    it('should NOT call onHesitationEnd during gesture start', () => {
+    test('should NOT call onHesitationEnd during gesture start', () => {
       // CRITICAL FIX: ReviewCard.tsx line 104-106 comment
       // onHesitationEnd must be called AFTER swipe handler reads isHesitating
       const state = {

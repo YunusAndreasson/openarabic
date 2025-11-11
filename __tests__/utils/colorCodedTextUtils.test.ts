@@ -1,3 +1,12 @@
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { GRAMMAR_COLOR_MAP } from '@/__tests__/utils/grammarColorMap';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -70,7 +79,7 @@ const mockColors: ThemeColors = {
 
 describe('colorCodedTextUtils', () => {
   describe('GRAMMAR_COLOR_MAP', () => {
-    it('should have correct color mappings', () => {
+    test('should have correct color mappings', () => {
       expect(GRAMMAR_COLOR_MAP).toEqual({
         tint: 'tint',
         primary: 'primary',
@@ -84,20 +93,20 @@ describe('colorCodedTextUtils', () => {
   });
 
   describe('shouldApplyColorCoding', () => {
-    it('should return false for single words', () => {
+    test('should return false for single words', () => {
       expect(shouldApplyColorCoding('house')).toBe(false);
       expect(shouldApplyColorCoding('book')).toBe(false);
       expect(shouldApplyColorCoding('school')).toBe(false);
     });
 
-    it('should return true for multi-word phrases', () => {
+    test('should return true for multi-word phrases', () => {
       expect(shouldApplyColorCoding('and house')).toBe(true);
       expect(shouldApplyColorCoding('his book')).toBe(true);
       expect(shouldApplyColorCoding('in the house')).toBe(true);
       expect(shouldApplyColorCoding('the big house')).toBe(true);
     });
 
-    it('should handle whitespace correctly', () => {
+    test('should handle whitespace correctly', () => {
       expect(shouldApplyColorCoding('  house  ')).toBe(false);
       expect(shouldApplyColorCoding('  the house  ')).toBe(true);
       expect(shouldApplyColorCoding('house   book')).toBe(true);
@@ -105,7 +114,7 @@ describe('colorCodedTextUtils', () => {
   });
 
   describe('generateColorCodedSegments', () => {
-    it('should return single segment for single words', () => {
+    test('should return single segment for single words', () => {
       const result = generateColorCodedSegments({
         text: 'house',
         formattedAnalysis: null,
@@ -120,7 +129,7 @@ describe('colorCodedTextUtils', () => {
       expect(result[0]?.key).toBe('no-analysis'); // No analysis available, not single-word
     });
 
-    it('should return single segment when no analysis available', () => {
+    test('should return single segment when no analysis available', () => {
       const result = generateColorCodedSegments({
         text: 'the house',
         formattedAnalysis: null,
@@ -135,7 +144,7 @@ describe('colorCodedTextUtils', () => {
       expect(result[0]?.key).toBe('no-analysis');
     });
 
-    it('should return single segment when no components found', () => {
+    test('should return single segment when no components found', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -160,7 +169,7 @@ describe('colorCodedTextUtils', () => {
       expect(result[0]?.key).toBe('no-components');
     });
 
-    it('should color-code multi-word phrases with components', () => {
+    test('should color-code multi-word phrases with components', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -193,7 +202,7 @@ describe('colorCodedTextUtils', () => {
       expect(andSegment?.color).toBe(mockColors.tint);
     });
 
-    it('should handle bracket injection for definite articles', () => {
+    test('should handle bracket injection for definite articles', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -234,7 +243,7 @@ describe('colorCodedTextUtils', () => {
       expect(bracketSegment?.color).toBe(mockColors.tint);
     });
 
-    it('should NOT bypass color-coding when bracket injection makes single word multi-word', () => {
+    test('should NOT bypass color-coding when bracket injection makes single word multi-word', () => {
       // This tests the critical bug fix: bracket injection should enable color-coding
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
@@ -275,7 +284,7 @@ describe('colorCodedTextUtils', () => {
       expect(bracketSegment?.color).toBe(mockColors.tint);
     });
 
-    it('should handle multiple component matches', () => {
+    test('should handle multiple component matches', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -318,7 +327,7 @@ describe('colorCodedTextUtils', () => {
       expect(hisSegment?.color).toBe(mockColors.warning);
     });
 
-    it('should handle word boundaries correctly', () => {
+    test('should handle word boundaries correctly', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -353,7 +362,7 @@ describe('colorCodedTextUtils', () => {
       expect(result.length).toBeGreaterThan(1);
     });
 
-    it('should handle multiple occurrences of the same word', () => {
+    test('should handle multiple occurrences of the same word', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -387,7 +396,7 @@ describe('colorCodedTextUtils', () => {
       });
     });
 
-    it('should handle slash-separated alternatives in englishPart', () => {
+    test('should handle slash-separated alternatives in englishPart', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {

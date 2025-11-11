@@ -1,3 +1,12 @@
+/**
+ * Component Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 // Mock Skia before imports
 jest.mock('@shopify/react-native-skia', () => ({
   Skia: {
@@ -39,7 +48,7 @@ describe('buildSmoothChartPath', () => {
     jest.clearAllMocks();
   });
 
-  it('should build path with single data point', () => {
+  test('should build path with single data point', () => {
     const data: TestDataItem[] = [{ value: 50, label: 'A' }];
     const positions = [10];
 
@@ -55,7 +64,7 @@ describe('buildSmoothChartPath', () => {
     expect(result.path).toBe('M10,150');
   });
 
-  it('should build smooth path with multiple data points', () => {
+  test('should build smooth path with multiple data points', () => {
     const data: TestDataItem[] = [
       { value: 50, label: 'A' },
       { value: 100, label: 'B' },
@@ -81,7 +90,7 @@ describe('buildSmoothChartPath', () => {
     expect(result.path).toContain('C130,100 170,125 200,125'); // Second curve
   });
 
-  it('should use correct cubic bezier control points', () => {
+  test('should use correct cubic bezier control points', () => {
     const data: TestDataItem[] = [
       { value: 0, label: 'Start' },
       { value: 100, label: 'End' },
@@ -103,7 +112,7 @@ describe('buildSmoothChartPath', () => {
     expect(result.path).toContain('C90,200 210,100 300,100');
   });
 
-  it('should handle empty data array', () => {
+  test('should handle empty data array', () => {
     const data: TestDataItem[] = [];
     const positions: number[] = [];
 
@@ -118,7 +127,7 @@ describe('buildSmoothChartPath', () => {
     expect(result.path).toBe('');
   });
 
-  it('should pass index to calculateY and buildPoint functions', () => {
+  test('should pass index to calculateY and buildPoint functions', () => {
     const data: TestDataItem[] = [
       { value: 10, label: 'A' },
       { value: 20, label: 'B' },
@@ -151,7 +160,7 @@ describe('buildSmoothChartPath', () => {
     expect(buildPoint).toHaveBeenCalledWith(100, 170, data[1], 1);
   });
 
-  it('should handle missing position (fallback to 0)', () => {
+  test('should handle missing position (fallback to 0)', () => {
     const data: TestDataItem[] = [{ value: 50, label: 'A' }];
     const positions: number[] = []; // Missing position
 

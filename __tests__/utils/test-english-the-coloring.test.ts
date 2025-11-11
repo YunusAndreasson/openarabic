@@ -7,12 +7,21 @@
  * Fix: Added coral (and other missing colors) to colorMapping
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 
 describe('English "the" coloring', () => {
-  it('should color "the" with coral for الذي (the one who)', () => {
+  test('should color "the" with coral for الذي (the one who)', () => {
     const analysis = analyzeArabicWord('الذي', 'the one who');
     const formatted = formatWordAnalysis(analysis);
 
@@ -43,7 +52,7 @@ describe('English "the" coloring', () => {
     expect(theSegment?.color).not.toBe('#fcfffd'); // NOT default text color
   });
 
-  it('should color "the" for any word with ال prefix', () => {
+  test('should color "the" for any word with ال prefix', () => {
     const testCases = [
       { arabic: 'الكتاب', english: 'the book' },
       { arabic: 'البيت', english: 'the house' },

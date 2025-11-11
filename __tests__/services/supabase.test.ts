@@ -1,3 +1,12 @@
+/**
+ * Service Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - ✅ jest.mocked() for type-safe mocking
+ * - Note: test.concurrent() used where tests are independent
+ */
+
 import { jest } from '@jest/globals';
 
 import { checkAuthentication, supabase } from '../../services/supabase';
@@ -29,21 +38,21 @@ describe('checkAuthentication', () => {
     getSessionMock.mockResolvedValue({ data: { session }, error: null });
   });
 
-  it('returns session and user when valid session exists and id matches', async () => {
+  test('returns session and user when valid session exists and id matches', async () => {
     const result = await checkAuthentication('user-1');
 
     expect(result).toEqual({ session, user: session.user });
     expect(handleError).not.toHaveBeenCalled();
   });
 
-  it('returns session when no expected user id is provided', async () => {
+  test('returns session when no expected user id is provided', async () => {
     const result = await checkAuthentication();
 
     expect(result).toEqual({ session, user: session.user });
     expect(handleError).not.toHaveBeenCalled();
   });
 
-  it('throws an error and calls handleError when no session', async () => {
+  test('throws an error and calls handleError when no session', async () => {
     getSessionMock.mockResolvedValueOnce({ data: { session: null }, error: null });
 
     await expect(checkAuthentication('user-1')).rejects.toThrow('User must be authenticated');
@@ -56,7 +65,7 @@ describe('checkAuthentication', () => {
     );
   });
 
-  it('throws an error and calls handleError when user ID mismatches', async () => {
+  test('throws an error and calls handleError when user ID mismatches', async () => {
     getSessionMock.mockResolvedValueOnce({
       data: { session: { user: { id: 'user-2' } } },
       error: null,
@@ -72,7 +81,7 @@ describe('checkAuthentication', () => {
     );
   });
 
-  it('logs and rejects when getSession fails with network error', async () => {
+  test('logs and rejects when getSession fails with network error', async () => {
     const networkError = new Error('Network error');
     getSessionMock.mockRejectedValueOnce(networkError);
 

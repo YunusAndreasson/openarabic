@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Vague Word Flow Integration Tests
  *
  * Tests the complete flow when user swipes right on a vague word (with hint shown)
@@ -15,7 +24,7 @@ describe('Vague Word Flow - Integration Test', () => {
   type Confidence = 'known' | 'vague' | 'unknown';
 
   describe('Vague word behavior (right swipe with hint)', () => {
-    it('should NOT show translation overlay for vague words', () => {
+    test('should NOT show translation overlay for vague words', () => {
       const confidence: Confidence = 'vague';
 
       // For vague words, translation should NOT be shown
@@ -24,7 +33,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldShowTranslation).toBe(false);
     });
 
-    it('should NOT call displayMeaning() for vague words', () => {
+    test('should NOT call displayMeaning() for vague words', () => {
       const confidence: Confidence = 'vague';
 
       // displayMeaning should only be called for unknown words
@@ -33,7 +42,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldDisplayMeaning).toBe(false);
     });
 
-    it('should NOT play English audio for vague words', () => {
+    test('should NOT play English audio for vague words', () => {
       const confidence: Confidence = 'vague';
 
       // English audio should only play for unknown words
@@ -42,7 +51,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldPlayEnglishAudio).toBe(false);
     });
 
-    it('should proceed immediately without meaningDisplay delay for vague words', () => {
+    test('should proceed immediately without meaningDisplay delay for vague words', () => {
       const confidence: Confidence = 'vague';
       const MEANING_DISPLAY_DELAY_MS = 3000;
 
@@ -54,7 +63,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldWaitForMeaningDisplay).toBe(false);
     });
 
-    it('should show orange background flash for vague words', () => {
+    test('should show orange background flash for vague words', () => {
       const isHesitating = true;
       const swipeDirection = 'right';
       const confidence: Confidence = isHesitating ? 'vague' : 'known';
@@ -77,7 +86,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(backgroundColor).toBe(COLORS.warning); // Orange
     });
 
-    it('should process feedback immediately for vague words', () => {
+    test('should process feedback immediately for vague words', () => {
       const confidence: Confidence = 'vague';
 
       // Vague words should call processFeedback immediately
@@ -88,7 +97,7 @@ describe('Vague Word Flow - Integration Test', () => {
   });
 
   describe('Unknown word behavior (left swipe) - for comparison', () => {
-    it('should show translation overlay for unknown words', () => {
+    test('should show translation overlay for unknown words', () => {
       const confidence: Confidence = 'unknown';
 
       // Unknown words SHOULD show translation
@@ -97,7 +106,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldShowTranslation).toBe(true);
     });
 
-    it('should call displayMeaning() for unknown words', () => {
+    test('should call displayMeaning() for unknown words', () => {
       const confidence: Confidence = 'unknown';
 
       // displayMeaning SHOULD be called for unknown
@@ -106,7 +115,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldDisplayMeaning).toBe(true);
     });
 
-    it('should play English audio for unknown words', () => {
+    test('should play English audio for unknown words', () => {
       const confidence: Confidence = 'unknown';
 
       // English audio SHOULD play for unknown
@@ -115,7 +124,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldPlayEnglishAudio).toBe(true);
     });
 
-    it('should wait for meaningDisplay delay before processing unknown words', () => {
+    test('should wait for meaningDisplay delay before processing unknown words', () => {
       const confidence: Confidence = 'unknown';
       const MEANING_DISPLAY_DELAY_MS = 3000;
 
@@ -127,7 +136,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldWaitForMeaningDisplay).toBe(true);
     });
 
-    it('should show red background for unknown words', () => {
+    test('should show red background for unknown words', () => {
       const swipeDirection = 'left';
       const confidence: Confidence = 'unknown';
 
@@ -145,7 +154,7 @@ describe('Vague Word Flow - Integration Test', () => {
   });
 
   describe('Known word behavior (right swipe, no hint) - for comparison', () => {
-    it('should NOT show translation for known words', () => {
+    test('should NOT show translation for known words', () => {
       const confidence: Confidence = 'known';
 
       // Known words should NOT show translation
@@ -154,7 +163,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldShowTranslation).toBe(false);
     });
 
-    it('should NOT play audio for known words', () => {
+    test('should NOT play audio for known words', () => {
       const confidence: Confidence = 'known';
 
       // No audio for known words
@@ -163,7 +172,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(shouldPlayAudio).toBe(false);
     });
 
-    it('should proceed quickly for known words', () => {
+    test('should proceed quickly for known words', () => {
       const confidence: Confidence = 'known';
       const FADE_DURATION_MS = 200;
 
@@ -176,7 +185,7 @@ describe('Vague Word Flow - Integration Test', () => {
   });
 
   describe('Complete flow sequences', () => {
-    it('should handle vague flow: orange flash → immediate next word', () => {
+    test('should handle vague flow: orange flash → immediate next word', () => {
       const flow = {
         confidence: 'vague' as Confidence,
         showTranslation: false,
@@ -193,7 +202,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(flow.backgroundColor).toBe('#FFA500'); // Orange flash
     });
 
-    it('should handle unknown flow: red flash → translation + audio → 3s delay → next', () => {
+    test('should handle unknown flow: red flash → translation + audio → 3s delay → next', () => {
       const flow = {
         confidence: 'unknown' as Confidence,
         showTranslation: true,
@@ -210,7 +219,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(flow.backgroundColor).toBe('#F44336'); // Red flash
     });
 
-    it('should handle known flow: green flash → fade → next word', () => {
+    test('should handle known flow: green flash → fade → next word', () => {
       const flow = {
         confidence: 'known' as Confidence,
         showTranslation: false,
@@ -229,7 +238,7 @@ describe('Vague Word Flow - Integration Test', () => {
   });
 
   describe('Timing verification', () => {
-    it('should verify vague words have minimal delay compared to unknown', () => {
+    test('should verify vague words have minimal delay compared to unknown', () => {
       const vagueDelay = 0; // Immediate
       const unknownDelay = 3000; // 3 seconds
       const knownDelay = 200; // Fade only
@@ -240,7 +249,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(vagueDelay).toBeLessThan(knownDelay); // Even faster than known
     });
 
-    it('should not set meaningTimeout for vague words', () => {
+    test('should not set meaningTimeout for vague words', () => {
       const confidence: Confidence = 'vague';
 
       // Meaning timeout should only be set for unknown words
@@ -251,7 +260,7 @@ describe('Vague Word Flow - Integration Test', () => {
   });
 
   describe('Audio preloading behavior', () => {
-    it('should preload all session audio files at session start', () => {
+    test('should preload all session audio files at session start', () => {
       const sessionWords = [
         { id: 1, audioUrl: 'word1.mp3', audioUrlEn: 'word1-en.mp3' },
         { id: 2, audioUrl: 'word2.mp3', audioUrlEn: 'word2-en.mp3' },
@@ -276,7 +285,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(audioUrlsToPreload).toContain('word1-en.mp3');
     });
 
-    it('should show loading state while audio is preloading', () => {
+    test('should show loading state while audio is preloading', () => {
       const session = {
         isAudioPreloading: true,
         audioPreloadProgress: 45, // 45% complete
@@ -290,7 +299,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(session.isAudioPreloadingComplete).toBe(false);
     });
 
-    it('should NOT start practice until audio preloading is complete', () => {
+    test('should NOT start practice until audio preloading is complete', () => {
       let canStartPractice = false;
 
       const preloadState = {
@@ -319,7 +328,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(canStartPractice).toBe(true);
     });
 
-    it('should gracefully degrade if audio preloading fails', () => {
+    test('should gracefully degrade if audio preloading fails', () => {
       const preloadResult = {
         isAudioPreloading: false,
         isAudioPreloadingComplete: true, // Still set to true even on failure
@@ -336,7 +345,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(canProceed).toBe(true);
     });
 
-    it('should preload in batches to prevent resource exhaustion', () => {
+    test('should preload in batches to prevent resource exhaustion', () => {
       const totalUrls = 20; // 10 words × 2 audio files each
       const BATCH_SIZE = 5;
 
@@ -351,7 +360,7 @@ describe('Vague Word Flow - Integration Test', () => {
       expect(batches.reduce((sum, size) => sum + size, 0)).toBe(totalUrls);
     });
 
-    it('should only preload audio once per session', () => {
+    test('should only preload audio once per session', () => {
       const session = {
         hasPreloadedAudio: false,
         preloadCount: 0,

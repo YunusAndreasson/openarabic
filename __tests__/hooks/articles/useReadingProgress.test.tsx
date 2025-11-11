@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 // Unmock React Query to test real hook behavior
 jest.unmock('@tanstack/react-query');
 
@@ -69,7 +78,7 @@ describe('useReadingProgress', () => {
   };
 
   describe('Query Configuration', () => {
-    it('should have refetchOnMount set to false for optimization', async () => {
+    test('should have refetchOnMount set to false for optimization', async () => {
       // Mock getProgress for article open tracking
       mockReadingProgressService.getProgress.mockResolvedValue({
         user_id: testUserId,
@@ -107,7 +116,7 @@ describe('useReadingProgress', () => {
       expect(query.options.refetchOnMount).toBe(false);
     });
 
-    it('should have refetchOnReconnect set to false', async () => {
+    test('should have refetchOnReconnect set to false', async () => {
       // Mock getProgress for article open tracking
       mockReadingProgressService.getProgress.mockResolvedValue({
         user_id: testUserId,
@@ -147,7 +156,7 @@ describe('useReadingProgress', () => {
   });
 
   describe('Cache Invalidation', () => {
-    it('should invalidate reading progress queries on successful mutation', async () => {
+    test('should invalidate reading progress queries on successful mutation', async () => {
       // Mock successful update (updateProgress returns void)
       mockReadingProgressService.updateProgress.mockResolvedValue(undefined);
 
@@ -204,7 +213,7 @@ describe('useReadingProgress', () => {
       invalidateQueriesSpy.mockRestore();
     });
 
-    it('should NOT invalidate cache on mutation error', async () => {
+    test('should NOT invalidate cache on mutation error', async () => {
       // Mock failed update
       const error = new Error('Network error');
       mockReadingProgressService.updateProgress.mockRejectedValue(error);
@@ -255,7 +264,7 @@ describe('useReadingProgress', () => {
   });
 
   describe('Mutation Flow', () => {
-    it('should successfully update reading progress when active', async () => {
+    test('should successfully update reading progress when active', async () => {
       // Mock successful update (updateProgress returns void)
       mockReadingProgressService.updateProgress.mockResolvedValue(undefined);
 
@@ -299,7 +308,7 @@ describe('useReadingProgress', () => {
       });
     });
 
-    it('should NOT update progress when inactive via updateProgress callback', async () => {
+    test('should NOT update progress when inactive via updateProgress callback', async () => {
       // Mock getProgress for article open tracking (returns existing progress)
       mockReadingProgressService.getProgress.mockResolvedValue({
         user_id: testUserId,
@@ -338,7 +347,7 @@ describe('useReadingProgress', () => {
       expect(mockReadingProgressService.updateProgress).not.toHaveBeenCalled();
     });
 
-    it('should NOT update progress when user is not authenticated', async () => {
+    test('should NOT update progress when user is not authenticated', async () => {
       // Mock no user
       mockUseAuth.useAuth.mockReturnValue({
         user: null,
@@ -372,7 +381,7 @@ describe('useReadingProgress', () => {
   });
 
   describe('Progress Data', () => {
-    it('should return reading progress from bulk query', async () => {
+    test('should return reading progress from bulk query', async () => {
       // Mock getProgress for article open tracking
       mockReadingProgressService.getProgress.mockResolvedValue({
         user_id: testUserId,
@@ -416,7 +425,7 @@ describe('useReadingProgress', () => {
       });
     });
 
-    it('should handle missing progress gracefully', async () => {
+    test('should handle missing progress gracefully', async () => {
       // Mock empty progress map
       mockReadingProgressService.getBulkProgress.mockResolvedValue(
         new Map<number, ReadingProgress>(),

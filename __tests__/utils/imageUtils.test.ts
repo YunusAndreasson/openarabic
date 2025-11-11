@@ -1,3 +1,16 @@
+/**
+ * Image Utils Tests
+ *
+ * Tests image and audio URL generation utilities.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ jest.mocked() for type-safe mocking
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ */
+
+import { beforeEach, describe, expect, test, jest } from '@jest/globals';
+
 import { generateAudioUrl, generateImageUrl } from '../../utils/imageUtils';
 import { supabase } from '../../services/supabase';
 
@@ -10,8 +23,8 @@ jest.mock('../../services/supabase', () => ({
   },
 }));
 
-const storageMock = supabase.storage as jest.Mocked<typeof supabase.storage>;
-const fromMock = storageMock.from as jest.Mock;
+const storageMock = jest.mocked(supabase.storage);
+const fromMock = jest.mocked(storageMock.from);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -26,17 +39,17 @@ beforeEach(() => {
 
 describe('imageUtils', () => {
   describe('generateImageUrl', () => {
-    it('should return empty string for null/undefined input', () => {
+    test('should return empty string for null/undefined input', () => {
       expect(generateImageUrl(null)).toBe('');
       expect(generateImageUrl(undefined)).toBe('');
     });
 
-    it('should return empty string for non-string input', () => {
+    test('should return empty string for non-string input', () => {
       expect(generateImageUrl(123 as any)).toBe('');
       expect(generateImageUrl({} as any)).toBe('');
     });
 
-    it('should return full URLs as-is', () => {
+    test('should return full URLs as-is', () => {
       const fullUrl = 'https://example.com/image.jpg';
       expect(generateImageUrl(fullUrl)).toBe(fullUrl);
 
@@ -44,13 +57,13 @@ describe('imageUtils', () => {
       expect(generateImageUrl(httpUrl)).toBe(httpUrl);
     });
 
-    it('should reconstruct URLs for filenames', () => {
+    test('should reconstruct URLs for filenames', () => {
       const result = generateImageUrl('test.jpg');
       // Uses Supabase SDK getPublicUrl() which returns mocked URL
       expect(result).toBe('https://example.com/file.jpg');
     });
 
-    it('should reconstruct URLs for relative paths (treats them as filenames)', () => {
+    test('should reconstruct URLs for relative paths (treats them as filenames)', () => {
       const result = generateImageUrl('images/test.jpg');
       // Uses Supabase SDK getPublicUrl() which returns mocked URL
       expect(result).toBe('https://example.com/file.jpg');
@@ -58,22 +71,22 @@ describe('imageUtils', () => {
   });
 
   describe('generateAudioUrl', () => {
-    it('should return empty string for null/undefined input', () => {
+    test('should return empty string for null/undefined input', () => {
       expect(generateAudioUrl(null)).toBe('');
       expect(generateAudioUrl(undefined)).toBe('');
     });
 
-    it('should return empty string for non-string input', () => {
+    test('should return empty string for non-string input', () => {
       expect(generateAudioUrl(123 as any)).toBe('');
       expect(generateAudioUrl({} as any)).toBe('');
     });
 
-    it('should return full URLs as-is', () => {
+    test('should return full URLs as-is', () => {
       const fullUrl = 'https://example.com/audio.mp3';
       expect(generateAudioUrl(fullUrl)).toBe(fullUrl);
     });
 
-    it('should reconstruct URLs for audio filenames', () => {
+    test('should reconstruct URLs for audio filenames', () => {
       const result = generateAudioUrl('test.mp3');
       // Uses Supabase SDK getPublicUrl() which returns mocked URL
       expect(result).toBe('https://example.com/file.jpg');

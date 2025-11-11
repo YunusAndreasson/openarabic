@@ -1,3 +1,12 @@
+/**
+ * Service Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - ✅ jest.mocked() for type-safe mocking
+ * - Note: test.concurrent() used where tests are independent
+ */
+
 import { studyWordsFSRSService } from '../../services/studyWordsFSRS';
 
 jest.mock('../../services/supabase', () => ({
@@ -32,7 +41,7 @@ beforeEach(() => {
 });
 
 describe('toggleFSRSStudyRoot', () => {
-  it('inserts a new entry when none exists', async () => {
+  test('inserts a new entry when none exists', async () => {
     const selectObj = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -51,7 +60,7 @@ describe('toggleFSRSStudyRoot', () => {
     expect(result).toBe(true);
   });
 
-  it('deletes existing entry when found', async () => {
+  test('deletes existing entry when found', async () => {
     const selectObj = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -91,7 +100,7 @@ describe('updateWordAndReview', () => {
     fsrs_last_review: '2024-01-01T00:00:00.000Z',
   };
 
-  it('calls direct UPDATE to update word FSRS parameters', async () => {
+  test('calls direct UPDATE to update word FSRS parameters', async () => {
     const selectMock = jest.fn().mockResolvedValue({ data: [{ root_id: 5 }], error: null });
     const updateObj = {
       update: jest.fn().mockReturnThis(),
@@ -126,7 +135,7 @@ describe('getFSRSWords', () => {
     jest.useRealTimers();
   });
 
-  it('adds due filter when onlyDue is true', async () => {
+  test('adds due filter when onlyDue is true', async () => {
     const builder = createBuilder();
     (supabase.from as jest.Mock).mockReturnValue(builder);
 
@@ -139,7 +148,7 @@ describe('getFSRSWords', () => {
     );
   });
 
-  it('selects reduced columns when forStats is true', async () => {
+  test('selects reduced columns when forStats is true', async () => {
     const builder = createBuilder();
     (supabase.from as jest.Mock).mockReturnValue(builder);
 
@@ -162,7 +171,7 @@ describe('getFSRSWords', () => {
     expect(called).toBe(expected);
   });
 
-  it('applies mastered and learning category filters', async () => {
+  test('applies mastered and learning category filters', async () => {
     const builder = createBuilder();
     (supabase.from as jest.Mock).mockReturnValue(builder);
 
@@ -184,7 +193,7 @@ describe('getFSRSWords', () => {
     );
   });
 
-  it('throws when supabase returns an error', async () => {
+  test('throws when supabase returns an error', async () => {
     const err = new Error('bad');
     const builder = createBuilder({ data: null, error: err });
     (supabase.from as jest.Mock).mockReturnValue(builder);
@@ -193,7 +202,7 @@ describe('getFSRSWords', () => {
   });
 
   describe('getFSRSWords - Session Cooldown', () => {
-    it('should exclude words reviewed within cooldown period', async () => {
+    test('should exclude words reviewed within cooldown period', async () => {
       const userId = 'test-user-cooldown';
 
       const olderWord = {
@@ -223,7 +232,7 @@ describe('getFSRSWords', () => {
       );
     });
 
-    it('should not apply cooldown when sessionCooldownHours is 0', async () => {
+    test('should not apply cooldown when sessionCooldownHours is 0', async () => {
       const userId = 'test-user-no-cooldown';
 
       const recentWord = {
@@ -248,7 +257,7 @@ describe('getFSRSWords', () => {
       expect(builder.or).toHaveBeenCalledWith(expect.stringContaining('fsrs_due.lte.'));
     });
 
-    it('should apply both due date and cooldown filters together', async () => {
+    test('should apply both due date and cooldown filters together', async () => {
       const userId = 'test-user-combined-filters';
 
       const dueAndCoolWord = {

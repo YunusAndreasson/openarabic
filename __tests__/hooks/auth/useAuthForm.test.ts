@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
@@ -101,7 +110,7 @@ describe('useAuthForm', () => {
     jest.useRealTimers();
   });
 
-  it('validates email correctly', () => {
+  test('validates email correctly', () => {
     const { result } = renderHook(() => useAuthForm());
 
     act(() => {
@@ -115,7 +124,7 @@ describe('useAuthForm', () => {
     expect(result.current.emailError).toBe('');
   });
 
-  it('validates password correctly', () => {
+  test('validates password correctly', () => {
     const { result } = renderHook(() => useAuthForm());
 
     act(() => {
@@ -129,7 +138,7 @@ describe('useAuthForm', () => {
     expect(result.current.passwordError).toBe('');
   });
 
-  it('toggles registration mode', () => {
+  test('toggles registration mode', () => {
     const { result } = renderHook(() => useAuthForm());
 
     expect(result.current.isRegistering).toBe(true);
@@ -139,7 +148,7 @@ describe('useAuthForm', () => {
     expect(result.current.isRegistering).toBe(false);
   });
 
-  it('calls supabase on sign in', async () => {
+  test('calls supabase on sign in', async () => {
     const { result } = renderHook(() => useAuthForm());
 
     act(() => {
@@ -170,7 +179,7 @@ describe('useAuthForm', () => {
         });
       });
 
-      it('shows success toast with welcome message', async () => {
+      test('shows success toast with welcome message', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -188,7 +197,7 @@ describe('useAuthForm', () => {
         );
       });
 
-      it('triggers haptic feedback', async () => {
+      test('triggers haptic feedback', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -203,7 +212,7 @@ describe('useAuthForm', () => {
         expect(mockSuccessFeedback).toHaveBeenCalledTimes(1);
       });
 
-      it('navigates to library after 1 second delay', async () => {
+      test('navigates to library after 1 second delay', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -227,7 +236,7 @@ describe('useAuthForm', () => {
         expect(mockRouterReplace).toHaveBeenCalledWith(ROUTE_PATHS.EXPLORE_TAB);
       });
 
-      it('tracks analytics identify with user data', async () => {
+      test('tracks analytics identify with user data', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -249,7 +258,7 @@ describe('useAuthForm', () => {
         );
       });
 
-      it('calls supabase signUp with correct credentials', async () => {
+      test('calls supabase signUp with correct credentials', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -280,7 +289,7 @@ describe('useAuthForm', () => {
         });
       });
 
-      it('shows email confirmation toast', async () => {
+      test('shows email confirmation toast', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -295,7 +304,7 @@ describe('useAuthForm', () => {
         expect(mockShowSuccessToast).toHaveBeenCalledWith(STRINGS.CHECK_EMAIL_CONFIRMATION, 5000);
       });
 
-      it('does NOT navigate to library', async () => {
+      test('does NOT navigate to library', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -315,7 +324,7 @@ describe('useAuthForm', () => {
         expect(mockRouterReplace).not.toHaveBeenCalled();
       });
 
-      it('still triggers haptic feedback', async () => {
+      test('still triggers haptic feedback', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -330,7 +339,7 @@ describe('useAuthForm', () => {
         expect(mockSuccessFeedback).toHaveBeenCalledTimes(1);
       });
 
-      it('still tracks analytics identify', async () => {
+      test('still tracks analytics identify', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -353,7 +362,7 @@ describe('useAuthForm', () => {
     });
 
     describe('error handling', () => {
-      it('returns early if email is invalid', async () => {
+      test('returns early if email is invalid', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -370,7 +379,7 @@ describe('useAuthForm', () => {
         expect(result.current.emailError).toBe(STRINGS.ENTER_VALID_EMAIL);
       });
 
-      it('returns early if password is too short', async () => {
+      test('returns early if password is too short', async () => {
         const { result } = renderHook(() => useAuthForm());
 
         act(() => {
@@ -387,7 +396,7 @@ describe('useAuthForm', () => {
         expect(result.current.passwordError).toContain(`${PASSWORD_REQUIREMENTS.minLength}`);
       });
 
-      it('handles Supabase errors correctly', async () => {
+      test('handles Supabase errors correctly', async () => {
         const errorMessage = 'User already exists';
         mockSignUp.mockResolvedValue({
           data: { user: null, session: null },
@@ -418,7 +427,7 @@ describe('useAuthForm', () => {
   });
 
   describe('signInWithEmail', () => {
-    it('navigates to library on successful sign in', async () => {
+    test('navigates to library on successful sign in', async () => {
       const { result } = renderHook(() => useAuthForm());
 
       act(() => {
@@ -433,7 +442,7 @@ describe('useAuthForm', () => {
       expect(mockRouterReplace).toHaveBeenCalledWith(ROUTE_PATHS.EXPLORE_TAB);
     });
 
-    it('tracks analytics on successful sign in', async () => {
+    test('tracks analytics on successful sign in', async () => {
       const { result } = renderHook(() => useAuthForm());
 
       act(() => {
@@ -458,7 +467,7 @@ describe('useAuthForm', () => {
       expect(mockAnalyticsTrackSignIn).toHaveBeenCalledWith('email');
     });
 
-    it('triggers haptic feedback on successful sign in', async () => {
+    test('triggers haptic feedback on successful sign in', async () => {
       const { result } = renderHook(() => useAuthForm());
 
       act(() => {

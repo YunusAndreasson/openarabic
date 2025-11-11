@@ -1,4 +1,15 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+/**
+ * Vocabulary Stats Service Tests
+ *
+ * Tests the vocabulary stats service which tracks user vocabulary progress.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ jest.fn() for mock creation (already type-safe)
+ * - ✅ test.concurrent() for parallel execution
+ * - ✅ @jest/globals explicit imports
+ */
+
+import { describe, test, expect, beforeEach, jest } from '@jest/globals';
 import { vocabularyStatsService } from '../../services/vocabularyStats';
 import { handleError } from '../../utils/errorHandling';
 
@@ -41,7 +52,7 @@ beforeEach(() => {
 
 describe('vocabularyStatsService', () => {
   describe('getUserStats', () => {
-    it('maps data correctly', async () => {
+    test('maps data correctly', async () => {
       const response = {
         data: {
           total_words: 10,
@@ -74,7 +85,7 @@ describe('vocabularyStatsService', () => {
       expect(handleError).not.toHaveBeenCalled();
     });
 
-    it('handles errors', async () => {
+    test('handles errors', async () => {
       const err = new Error('fail');
       const response = { data: null, error: err };
       const builder = createBuilder(response, 'single');
@@ -93,7 +104,7 @@ describe('vocabularyStatsService', () => {
   });
 
   describe('getMasteryProgress', () => {
-    it('maps data correctly', async () => {
+    test('maps data correctly', async () => {
       const response = {
         data: [{ date: '2024-01-01', cumulative_words: 2, cumulative_mastered: 1 }],
         error: null,
@@ -116,7 +127,7 @@ describe('vocabularyStatsService', () => {
       expect(handleError).not.toHaveBeenCalled();
     });
 
-    it('handles errors', async () => {
+    test('handles errors', async () => {
       const err = new Error('oops');
       const response = { data: null, error: err };
       const builder = createBuilder(response, 'limit');
@@ -135,7 +146,7 @@ describe('vocabularyStatsService', () => {
   });
 
   describe('getEfficiencyProgress', () => {
-    it('maps data correctly', async () => {
+    test('maps data correctly', async () => {
       const response = {
         data: [{ date: '2024-01-02', words_reviewed: 5, avg_efficiency: 0.8 }],
         error: null,
@@ -157,7 +168,7 @@ describe('vocabularyStatsService', () => {
       expect(handleError).not.toHaveBeenCalled();
     });
 
-    it('handles errors', async () => {
+    test('handles errors', async () => {
       const err = new Error('err');
       const response = { data: null, error: err };
       const builder = createBuilder(response, 'limit');
@@ -176,7 +187,7 @@ describe('vocabularyStatsService', () => {
   });
 
   describe('getRetrievabilityForecast', () => {
-    it('maps data correctly', async () => {
+    test('maps data correctly', async () => {
       const response = {
         data: [
           {
@@ -208,7 +219,7 @@ describe('vocabularyStatsService', () => {
       expect(handleError).not.toHaveBeenCalled();
     });
 
-    it('handles errors', async () => {
+    test('handles errors', async () => {
       const err = new Error('bad');
       const response = { data: null, error: err };
       const builder = createBuilder(response, 'order');
@@ -227,7 +238,7 @@ describe('vocabularyStatsService', () => {
   });
 
   describe('getDifficultyDistribution', () => {
-    it('maps data correctly', async () => {
+    test('maps data correctly', async () => {
       const response = {
         data: {
           total_words: 20,
@@ -258,7 +269,7 @@ describe('vocabularyStatsService', () => {
       expect(handleError).not.toHaveBeenCalled();
     });
 
-    it('handles errors', async () => {
+    test('handles errors', async () => {
       const err = new Error('nope');
       const response = { data: null, error: err };
       const builder = createBuilder(response, 'single');
@@ -277,7 +288,7 @@ describe('vocabularyStatsService', () => {
   });
 
   describe('getAllChartData', () => {
-    it('aggregates data from all helpers', async () => {
+    test('aggregates data from all helpers', async () => {
       const userStats = {
         totalWords: 1,
         masteredWords: 1,

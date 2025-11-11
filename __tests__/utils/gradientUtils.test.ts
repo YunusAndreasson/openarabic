@@ -1,3 +1,16 @@
+/**
+ * Gradient Utils Tests
+ *
+ * Tests gradient utility functions for UI overlays and backgrounds.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import {
   calculateHeaderHeight,
   createBackgroundGradientColors,
@@ -17,7 +30,7 @@ const mockThemeColors = {
 
 describe('gradientUtils', () => {
   describe('calculateHeaderHeight', () => {
-    it('should calculate header height with safe area', () => {
+    test('should calculate header height with safe area', () => {
       const safeAreaTop = 50;
       const result = calculateHeaderHeight(safeAreaTop);
 
@@ -26,14 +39,14 @@ describe('gradientUtils', () => {
       expect(typeof result).toBe('number');
     });
 
-    it('should handle zero safe area', () => {
+    test('should handle zero safe area', () => {
       const result = calculateHeaderHeight(0);
       expect(result).toBeGreaterThan(0);
     });
   });
 
   describe('createImageGradientColors', () => {
-    it('should create dark mode gradient colors', () => {
+    test('should create dark mode gradient colors', () => {
       const result = createImageGradientColors(mockThemeColors, true);
 
       expect(result).toHaveLength(7);
@@ -43,7 +56,7 @@ describe('gradientUtils', () => {
       expect(result[6]).toContain('rgba(0,0,0,0.4)');
     });
 
-    it('should create light mode gradient colors', () => {
+    test('should create light mode gradient colors', () => {
       const result = createImageGradientColors(mockThemeColors, false);
 
       expect(result).toHaveLength(7);
@@ -55,7 +68,7 @@ describe('gradientUtils', () => {
   });
 
   describe('createBackgroundGradientColors', () => {
-    it('should create dark mode background gradient', () => {
+    test('should create dark mode background gradient', () => {
       const result = createBackgroundGradientColors(mockThemeColors, true);
 
       expect(result).toHaveLength(10);
@@ -65,7 +78,7 @@ describe('gradientUtils', () => {
       expect(result[9]).toBe(mockThemeColors.background);
     });
 
-    it('should create light mode background gradient', () => {
+    test('should create light mode background gradient', () => {
       const result = createBackgroundGradientColors(mockThemeColors, false);
 
       expect(result).toHaveLength(10);
@@ -77,7 +90,7 @@ describe('gradientUtils', () => {
   });
 
   describe('createStrongDarkOverlayGradient', () => {
-    it('should create strong dark overlay gradient with sage-tinted black', () => {
+    test('should create strong dark overlay gradient with sage-tinted black', () => {
       const result = createStrongDarkOverlayGradient();
 
       expect(result).toHaveLength(7);
@@ -89,7 +102,7 @@ describe('gradientUtils', () => {
   });
 
   describe('createThemeBackgroundGradient', () => {
-    it('should create theme background gradient with hex opacity', () => {
+    test('should create theme background gradient with hex opacity', () => {
       const backgroundColor = '#F5F5DC';
       const result = createThemeBackgroundGradient(backgroundColor);
 

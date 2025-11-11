@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Hesitation + Left Swipe Sequence Test
  *
  * Tests the complete flow when user hesitates (hint shown) then swipes left
@@ -20,7 +29,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
   const TRANSLATION_DISPLAY_MS = 3000;
 
   describe('State cleanup between words', () => {
-    it('should reset isHesitating when word changes', () => {
+    test('should reset isHesitating when word changes', () => {
       const session = {
         currentWordId: 'word1',
         isHesitating: false,
@@ -40,7 +49,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       expect(session.currentWordId).toBe('word2');
     });
 
-    it('should clear translation state when word changes', () => {
+    test('should clear translation state when word changes', () => {
       const session = {
         currentWordId: 'word1',
         showTranslation: true,
@@ -61,7 +70,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       expect(session.isHesitating).toBe(false);
     });
 
-    it('should not leak hesitation state from previous word', () => {
+    test('should not leak hesitation state from previous word', () => {
       const wordStates = [
         { id: 'word1', isHesitating: false },
         { id: 'word2', isHesitating: false },
@@ -81,7 +90,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
   });
 
   describe('Complete hesitate → left swipe → next word flow', () => {
-    it('should NOT show hint on next word after hesitate + left swipe', () => {
+    test('should NOT show hint on next word after hesitate + left swipe', () => {
       const session = {
         words: ['word1', 'word2'],
         currentIndex: 0,
@@ -126,7 +135,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       // (not tested here - separate timer test)
     });
 
-    it('should handle multiple hesitate + left swipe cycles', () => {
+    test('should handle multiple hesitate + left swipe cycles', () => {
       const session = {
         currentWordIndex: 0,
         isHesitating: false,
@@ -159,7 +168,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
   });
 
   describe('Translation vs hint separation', () => {
-    it('should distinguish between red translation (unknown) and orange hint (hesitation)', () => {
+    test('should distinguish between red translation (unknown) and orange hint (hesitation)', () => {
       const word1State = {
         isHesitating: true, // Orange hint shown
         showTranslation: false, // No red translation yet
@@ -178,7 +187,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       expect(word2State.showTranslation).toBe(true);
     });
 
-    it('should show red translation after left swipe, then clear for next word', () => {
+    test('should show red translation after left swipe, then clear for next word', () => {
       const flow = {
         currentWord: 'word1',
         isHesitating: true, // Hint shown
@@ -205,7 +214,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
   });
 
   describe('Timer cleanup verification', () => {
-    it('should clear hesitation timer when word changes', () => {
+    test('should clear hesitation timer when word changes', () => {
       let hesitationTimer: NodeJS.Timeout | null = null;
       let timerCleared = false;
 
@@ -225,7 +234,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       expect(hesitationTimer).toBe(null);
     });
 
-    it('should not have overlapping timers between words', () => {
+    test('should not have overlapping timers between words', () => {
       const timers: Array<NodeJS.Timeout | null> = [];
 
       // Word 1: Start timer
@@ -252,7 +261,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
   });
 
   describe('EnglishTranslation synchronization (CRITICAL)', () => {
-    it('should ensure englishTranslation updates with currentWord, not lag behind', () => {
+    test('should ensure englishTranslation updates with currentWord, not lag behind', () => {
       interface WordData {
         id: string;
         meaning: string;
@@ -278,7 +287,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       expect(state.isHesitating).toBe(false);
     });
 
-    it('should NEVER show old word hint during transition', () => {
+    test('should NEVER show old word hint during transition', () => {
       interface WordPair {
         arabic: string;
         english: string;
@@ -306,7 +315,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       expect(potentialHint).not.toBe('H...'); // Definitely not old hint
     });
 
-    it('should prevent hint from showing if englishTranslation is stale', () => {
+    test('should prevent hint from showing if englishTranslation is stale', () => {
       const state = {
         isHesitating: false, // Reset to false
         englishTranslation: 'OldWord', // Stale translation
@@ -330,7 +339,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
   });
 
   describe('Edge cases', () => {
-    it('should handle rapid word transitions without state leakage', () => {
+    test('should handle rapid word transitions without state leakage', () => {
       const words = ['word1', 'word2', 'word3'];
       let currentIndex = 0;
       let isHesitating = false;
@@ -350,7 +359,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       expect(isHesitating).toBe(false);
     });
 
-    it('should handle hesitation on first word, then quick progression', () => {
+    test('should handle hesitation on first word, then quick progression', () => {
       const session = {
         currentWordIndex: 0,
         totalWords: 5,
@@ -373,7 +382,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
   });
 
   describe('3-Second delay transition (CRITICAL BUG FIX)', () => {
-    it('should NOT restart hesitation timer when onHesitationEnd is called during translation', () => {
+    test('should NOT restart hesitation timer when onHesitationEnd is called during translation', () => {
       const timerState = {
         isHesitating: true, // User hesitated on Word 1
         showTranslation: false,
@@ -400,7 +409,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       expect(timerState.isHesitating).toBe(false);
     });
 
-    it('should NOT show hint when 3-second translation delay ends', () => {
+    test('should NOT show hint when 3-second translation delay ends', () => {
       const timeline = {
         time: 0,
         isHesitating: false,
@@ -443,7 +452,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       expect(wouldShowHint).toBe(false);
     });
 
-    it('should NOT fire haptic during word transition after 3-second delay', () => {
+    test('should NOT fire haptic during word transition after 3-second delay', () => {
       let hapticFired = false;
 
       const mockHaptic = () => {
@@ -468,7 +477,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       expect(shouldShowHint).toBe(false);
     });
 
-    it('should ensure isHesitating is reset BEFORE word changes', () => {
+    test('should ensure isHesitating is reset BEFORE word changes', () => {
       const processFeedbackFlow = {
         step1_isHesitating: true, // Before processFeedback
         step2_resetHesitation: false, // Reset at START of processFeedback
@@ -489,7 +498,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
   });
 
   describe('Integration: Complete session flow', () => {
-    it('should handle mixed known/vague/unknown with hesitation states', () => {
+    test('should handle mixed known/vague/unknown with hesitation states', () => {
       const sessionFlow = [
         { word: 'word1', action: 'hesitate+left', expectedHintOnNext: false },
         { word: 'word2', action: 'quick-right', expectedHintOnNext: false },
@@ -506,7 +515,7 @@ describe('Hesitation + Left Swipe Sequence', () => {
       });
     });
 
-    it('should verify complete state reset pattern', () => {
+    test('should verify complete state reset pattern', () => {
       interface WordState {
         id: string;
         isHesitating: boolean;

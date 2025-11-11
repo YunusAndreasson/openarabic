@@ -1,7 +1,15 @@
 /**
  * Test for user-reported bug: Arabic white but English green
  * Tests consistency between Arabic coloring (modal display) and English coloring (tooltip)
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
  */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
@@ -20,7 +28,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
     const arabic = 'وَمِنْ';
     const english = 'and from';
 
-    it('should have components detected', () => {
+    test('should have components detected', () => {
       const analysis = analyzeArabicWord(arabic, english);
 
       expect(analysis.hasComponents).toBe(true);
@@ -32,7 +40,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
       }
     });
 
-    it('should have colored Arabic segments (modal display)', () => {
+    test('should have colored Arabic segments (modal display)', () => {
       const analysis = analyzeArabicWord(arabic, english);
       const formatted = formatWordAnalysis(analysis);
 
@@ -52,7 +60,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
       expect(segments[0]?.colorName).toBe('grammar.conjunction');
     });
 
-    it('should have colored English segments (tooltip)', () => {
+    test('should have colored English segments (tooltip)', () => {
       const analysis = analyzeArabicWord(arabic, english);
       const formatted = formatWordAnalysis(analysis);
 
@@ -71,7 +79,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
       expect(hasColoredSegment).toBe(true);
     });
 
-    it('CONSISTENCY CHECK: Arabic and English should both be colored or both be white', () => {
+    test('CONSISTENCY CHECK: Arabic and English should both be colored or both be white', () => {
       const analysis = analyzeArabicWord(arabic, english);
       const formatted = formatWordAnalysis(analysis);
 
@@ -100,7 +108,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
     const arabic = 'فإِذَا';
     const english = 'so when';
 
-    it('CONSISTENCY CHECK: Arabic and English both colored', () => {
+    test('CONSISTENCY CHECK: Arabic and English both colored', () => {
       const analysis = analyzeArabicWord(arabic, english);
       const formatted = formatWordAnalysis(analysis);
 

@@ -1,3 +1,41 @@
+/**
+ * Notification Service
+ * Push notification and reminder management with graceful error handling
+ *
+ * ERROR RESILIENCE PATTERN
+ * ========================
+ * This service prioritizes user experience over notification reliability.
+ * Notification failures should never block user actions or crash the app.
+ *
+ * Why Error Resilience:
+ * - Permissions may be denied by user (user choice must be respected)
+ * - Notification channels may fail on specific Android versions
+ * - OS may throttle notifications (battery optimization, Do Not Disturb)
+ * - Scheduling may fail due to system limits (64 pending notifications on iOS)
+ * - App should work perfectly without notifications
+ *
+ * Expected Behavior:
+ * - ✅ Permission denied → returns false, no error thrown
+ * - ✅ Scheduling fails → logs to Sentry (warning), no crash
+ * - ✅ Channel creation fails → continues with fallback channel
+ * - ✅ Listener setup fails → app continues without notifications
+ * - ❌ NEVER throws exceptions that propagate to UI
+ * - ❌ NEVER shows user-facing errors for notification failures
+ * - ⚠️  Logs errors to Sentry with "warning" severity (not critical)
+ *
+ * Testing Implications:
+ * - Tests should verify "does not throw" for permission denials
+ * - Mock Notifications methods to return different permission states
+ * - Focus on: error boundaries, graceful fallback, status checks
+ * - Test listener cleanup to prevent memory leaks
+ * - Don't test Expo Notifications internals (third-party responsibility)
+ *
+ * Platform Differences:
+ * - iOS: Requires explicit permission request
+ * - Android: Requires notification channels (API 26+)
+ * - Both: May have system-level notification blocking
+ */
+
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 

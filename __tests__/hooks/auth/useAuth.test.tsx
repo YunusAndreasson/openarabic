@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { renderHook } from '@testing-library/react-native';
 import { describe, it, expect, jest } from '@jest/globals';
 
@@ -5,11 +14,11 @@ import { AuthContext } from '@/components/providers/AuthProvider';
 import { useAuth } from '@/hooks/auth/useAuth';
 
 describe('useAuth', () => {
-  it('throws when used outside AuthProvider', () => {
+  test('throws when used outside AuthProvider', () => {
     expect(() => renderHook(() => useAuth())).toThrow(/AuthProvider/);
   });
 
-  it('returns context when inside AuthProvider', () => {
+  test('returns context when inside AuthProvider', () => {
     const wrapper = ({ children }) => (
       <AuthContext.Provider
         value={{

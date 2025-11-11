@@ -1,3 +1,16 @@
+/**
+ * Authors Service Tests
+ *
+ * Tests the authors service which handles author data retrieval.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ jest.mocked() for type-safe mocking
+ * - ✅ test.concurrent() for parallel execution
+ * - ✅ @jest/globals explicit imports
+ */
+
+import { describe, test, expect, jest, beforeEach } from '@jest/globals';
+
 import { authorsService } from '../../services/authors';
 import { handleError } from '../../utils/errorHandling';
 import { supabase } from '../../services/supabase';
@@ -10,7 +23,8 @@ jest.mock('../../utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
 
-const fromMock = supabase.from as jest.Mock;
+const fromMock = jest.mocked(supabase.from);
+const mockHandleError = jest.mocked(handleError);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -18,7 +32,7 @@ beforeEach(() => {
 
 describe('authorsService', () => {
   describe('getAuthors', () => {
-    it('returns authors ordered by name', async () => {
+    test('returns authors ordered by name', async () => {
       const authors = [
         { id: 1, name: 'Ali' },
         { id: 2, name: 'Bilal' },
@@ -37,10 +51,10 @@ describe('authorsService', () => {
       expect(builder.order).toHaveBeenCalledWith('name');
       const sorted = [...authors].sort((a, b) => a.name.localeCompare(b.name));
       expect(result).toEqual(sorted);
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockHandleError).not.toHaveBeenCalled();
     });
 
-    it('handles errors from supabase', async () => {
+    test('handles errors from supabase', async () => {
       const error = new Error('fail');
       const builder: any = {
         select: jest.fn().mockReturnThis(),
@@ -50,7 +64,7 @@ describe('authorsService', () => {
       fromMock.mockReturnValue(builder);
 
       await expect(authorsService.getAuthors()).rejects.toThrow(error);
-      expect(handleError).toHaveBeenCalledWith(
+      expect(mockHandleError).toHaveBeenCalledWith(
         expect.any(Error),
         expect.objectContaining({
           toastMessage: "Couldn't load authors. Try again",
@@ -63,7 +77,7 @@ describe('authorsService', () => {
   });
 
   describe('getAuthorsByCategory', () => {
-    it('maps and sorts returned authors', async () => {
+    test('maps and sorts returned authors', async () => {
       const rows = [{ author: { id: 2, name: 'Zayd' } }, { author: { id: 1, name: 'Ali' } }];
       const builder: any = {
         select: jest.fn().mockReturnThis(),
@@ -83,10 +97,10 @@ describe('authorsService', () => {
         { id: 1, name: 'Ali' },
         { id: 2, name: 'Zayd' },
       ]);
-      expect(handleError).not.toHaveBeenCalled();
+      expect(mockHandleError).not.toHaveBeenCalled();
     });
 
-    it('handles errors from supabase', async () => {
+    test('handles errors from supabase', async () => {
       const error = new Error('oops');
       const builder: any = {
         select: jest.fn().mockReturnThis(),
@@ -98,7 +112,7 @@ describe('authorsService', () => {
 
       await expect(authorsService.getAuthorsByCategory(4)).rejects.toThrow(error);
 
-      expect(handleError).toHaveBeenCalledWith(
+      expect(mockHandleError).toHaveBeenCalledWith(
         expect.any(Error),
         expect.objectContaining({
           toastMessage: "Couldn't load authors. Try again",

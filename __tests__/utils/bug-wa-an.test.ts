@@ -1,13 +1,21 @@
 /**
  * Debug test for user-reported bug: "wa an" (and from) and "fa idha" (so when)
  * Arabic white but English green
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
  */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { ARABIC_PREFIXES } from '@/constants/arabicWordComponents';
 
 describe('Bug Report: wa-an and fa-idha WITH DIACRITICS', () => {
   describe('وَمِنْ (with diacritics - and from)', () => {
-    it('should analyze وَمِنْ with diacritics', () => {
+    test('should analyze وَمِنْ with diacritics', () => {
       const analysis = analyzeArabicWord('وَمِنْ', 'and from');
 
       expect(analysis.hasComponents).toBe(true);
@@ -16,7 +24,7 @@ describe('Bug Report: wa-an and fa-idha WITH DIACRITICS', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
-    it('should have colored Arabic segments for وَمِنْ', () => {
+    test('should have colored Arabic segments for وَمِنْ', () => {
       const analysis = analyzeArabicWord('وَمِنْ', 'and from');
       const formatted = formatWordAnalysis(analysis);
 
@@ -32,7 +40,7 @@ describe('Bug Report: wa-an and fa-idha WITH DIACRITICS', () => {
 
 describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
   describe('ومن (and from)', () => {
-    it('should find individual prefixes و and من in ARABIC_PREFIXES', () => {
+    test('should find individual prefixes و and من in ARABIC_PREFIXES', () => {
       const waPrefix = ARABIC_PREFIXES.find(p => p.arabic === 'و');
       const minPrefix = ARABIC_PREFIXES.find(p => p.arabic === 'من');
 
@@ -42,7 +50,7 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
       expect(minPrefix?.english).toContain('from');
     });
 
-    it('should analyze ومن (and from)', () => {
+    test('should analyze ومن (and from)', () => {
       const analysis = analyzeArabicWord('ومن', 'and from');
 
       expect(analysis.hasComponents).toBe(true);
@@ -51,7 +59,7 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
-    it('should have colored Arabic segments', () => {
+    test('should have colored Arabic segments', () => {
       const analysis = analyzeArabicWord('ومن', 'and from');
       const formatted = formatWordAnalysis(analysis);
 
@@ -70,7 +78,7 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
   });
 
   describe('فإذا (so when) - Split Coloring for Education', () => {
-    it('should split فإذا into ف (so) + إذا (remaining)', () => {
+    test('should split فإذا into ف (so) + إذا (remaining)', () => {
       const analysis = analyzeArabicWord('فإذا', 'so when');
 
       // Multi-prefix: ف (conjunction) + إذا (particle) - both prefixes
@@ -80,7 +88,7 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
       expect(analysis.prefixes[1]?.arabicMatch).toBe('إذا');
     });
 
-    it('should have multiple colored Arabic segments for educational clarity', () => {
+    test('should have multiple colored Arabic segments for educational clarity', () => {
       const analysis = analyzeArabicWord('فإذا', 'so when');
       const formatted = formatWordAnalysis(analysis);
 

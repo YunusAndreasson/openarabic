@@ -1,13 +1,20 @@
 /**
  * Multi-prefix detection tests
  * Tests the new sequential prefix detection algorithm that replaces compound prefixes
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
  */
+
+import { describe, expect, test } from '@jest/globals';
 
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 import { GrammaticalRole } from '@/constants/arabicWordComponents';
 
 describe('Multiple Prefix Detection', () => {
-  it('should detect و (conjunction) + ال (article) separately instead of compound', () => {
+  test('should detect و (conjunction) + ال (article) separately instead of compound', () => {
     const result = analyzeArabicWord('والدجال', 'and the Dajjal');
 
     expect(result.prefixes).toHaveLength(2);
@@ -17,7 +24,7 @@ describe('Multiple Prefix Detection', () => {
     expect(result.prefixes[1]?.role).toBe(GrammaticalRole.DEFINITE_ARTICLE);
   });
 
-  it('should detect ف (conjunction) + ال (article) separately', () => {
+  test('should detect ف (conjunction) + ال (article) separately', () => {
     const result = analyzeArabicWord('فالكتاب', 'so the book');
 
     expect(result.prefixes).toHaveLength(2);
@@ -27,7 +34,7 @@ describe('Multiple Prefix Detection', () => {
     expect(result.prefixes[1]?.role).toBe(GrammaticalRole.DEFINITE_ARTICLE);
   });
 
-  it('should detect و (conjunction) + ب (preposition) + ال (article) - triple prefix', () => {
+  test('should detect و (conjunction) + ب (preposition) + ال (article) - triple prefix', () => {
     const result = analyzeArabicWord('وبالحق', 'and with the truth');
 
     expect(result.prefixes).toHaveLength(3);
@@ -39,7 +46,7 @@ describe('Multiple Prefix Detection', () => {
     expect(result.prefixes[2]?.role).toBe(GrammaticalRole.DEFINITE_ARTICLE);
   });
 
-  it('should handle single prefix without regression', () => {
+  test('should handle single prefix without regression', () => {
     const result = analyzeArabicWord('الكتاب', 'the book');
 
     expect(result.prefixes).toHaveLength(1);
@@ -47,20 +54,20 @@ describe('Multiple Prefix Detection', () => {
     expect(result.prefixes[0]?.role).toBe(GrammaticalRole.DEFINITE_ARTICLE);
   });
 
-  it('should handle no prefixes', () => {
+  test('should handle no prefixes', () => {
     const result = analyzeArabicWord('كتاب', 'book');
 
     expect(result.prefixes).toHaveLength(0);
   });
 
-  it('should assign position numbers correctly', () => {
+  test('should assign position numbers correctly', () => {
     const result = analyzeArabicWord('والدجال', 'and the Dajjal');
 
     expect(result.prefixes[0]?.position).toBe(0);
     expect(result.prefixes[1]?.position).toBe(1);
   });
 
-  it('should detect ف (conjunction) + إذا (particle) with different roles and colors', () => {
+  test('should detect ف (conjunction) + إذا (particle) with different roles and colors', () => {
     const result = analyzeArabicWord('فإذا', 'so when');
 
     expect(result.prefixes).toHaveLength(2);

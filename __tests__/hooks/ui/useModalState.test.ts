@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { act, renderHook } from '@testing-library/react-native';
 import { describe, expect, it } from '@jest/globals';
 
@@ -9,14 +18,14 @@ interface TestData {
 }
 
 describe('useModalState', () => {
-  it('should initialize with modal closed and no data', () => {
+  test('should initialize with modal closed and no data', () => {
     const { result } = renderHook(() => useModalState<TestData>());
 
     expect(result.current.isVisible).toBe(false);
     expect(result.current.data).toBeNull();
   });
 
-  it('should open modal without data', () => {
+  test('should open modal without data', () => {
     const { result } = renderHook(() => useModalState<TestData>());
 
     act(() => {
@@ -27,7 +36,7 @@ describe('useModalState', () => {
     expect(result.current.data).toBeNull();
   });
 
-  it('should open modal with data payload', () => {
+  test('should open modal with data payload', () => {
     const { result } = renderHook(() => useModalState<TestData>());
 
     const testData: TestData = { id: 1, name: 'Test' };
@@ -40,7 +49,7 @@ describe('useModalState', () => {
     expect(result.current.data).toEqual(testData);
   });
 
-  it('should close modal and clear data', () => {
+  test('should close modal and clear data', () => {
     const { result } = renderHook(() => useModalState<TestData>());
 
     const testData: TestData = { id: 1, name: 'Test' };
@@ -94,7 +103,7 @@ describe('useModalState', () => {
     }
   });
 
-  it('should toggle with data payload when opening', () => {
+  test('should toggle with data payload when opening', () => {
     const { result } = renderHook(() => useModalState<TestData>());
 
     const testData: TestData = { id: 2, name: 'Toggle Test' };
@@ -107,7 +116,7 @@ describe('useModalState', () => {
     expect(result.current.data).toEqual(testData);
   });
 
-  it('should update data when opening modal multiple times', () => {
+  test('should update data when opening modal multiple times', () => {
     const { result } = renderHook(() => useModalState<TestData>());
 
     const data1: TestData = { id: 1, name: 'First' };
@@ -130,7 +139,7 @@ describe('useModalState', () => {
     expect(result.current.data).toEqual(data2);
   });
 
-  it('should maintain stable function references', () => {
+  test('should maintain stable function references', () => {
     const { result } = renderHook(() => useModalState<TestData>());
 
     const { open, close, toggle } = result.current;
@@ -172,7 +181,7 @@ describe('useModalState', () => {
     expect(result.current.data).toEqual(value);
   });
 
-  it('should handle undefined payload gracefully', () => {
+  test('should handle undefined payload gracefully', () => {
     const { result } = renderHook(() => useModalState<TestData>());
 
     act(() => {
@@ -183,7 +192,7 @@ describe('useModalState', () => {
     expect(result.current.data).toBeNull();
   });
 
-  it('should allow opening modal without closing first', () => {
+  test('should allow opening modal without closing first', () => {
     const { result } = renderHook(() => useModalState<TestData>());
 
     const data1: TestData = { id: 1, name: 'First' };
@@ -205,7 +214,7 @@ describe('useModalState', () => {
     expect(result.current.data).toEqual(data2);
   });
 
-  it('should handle complex object data', () => {
+  test('should handle complex object data', () => {
     interface ComplexData {
       user: { id: number; name: string };
       metadata: { timestamp: string; tags: string[] };

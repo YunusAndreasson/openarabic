@@ -1,3 +1,16 @@
+/**
+ * Positioning Utils Tests
+ *
+ * Tests positioning utility functions for tooltips.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import {
   TOOLTIP_CONSTANTS,
   calculateTooltipDimensions,
@@ -6,7 +19,7 @@ import {
 
 describe('Positioning Utilities', () => {
   describe('TOOLTIP_CONSTANTS', () => {
-    it('should have correct constant values', () => {
+    test('should have correct constant values', () => {
       expect(TOOLTIP_CONSTANTS.ARROW_SIZE).toBe(6);
       expect(TOOLTIP_CONSTANTS.MIN_PADDING).toBe(8);
       expect(TOOLTIP_CONSTANTS.SCREEN_MARGIN).toBe(16);
@@ -27,7 +40,7 @@ describe('Positioning Utilities', () => {
       height: 30,
     };
 
-    it('should calculate dimensions for simple text without bookmark', () => {
+    test('should calculate dimensions for simple text without bookmark', () => {
       const result = calculateTooltipDimensions(mockLayout, 'Hello', false);
 
       expect(result.tooltipTop).toBe(168); // 200 - 32
@@ -36,7 +49,7 @@ describe('Positioning Utilities', () => {
       expect(result.arrowLeft).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.ARROW_SIZE);
     });
 
-    it('should calculate dimensions for text with bookmark', () => {
+    test('should calculate dimensions for text with bookmark', () => {
       const result = calculateTooltipDimensions(mockLayout, 'Hello', true);
 
       expect(result.tooltipTop).toBe(168);
@@ -44,14 +57,14 @@ describe('Positioning Utilities', () => {
       expect(result.tooltipHeight).toBe(TOOLTIP_CONSTANTS.HEIGHT);
     });
 
-    it('should handle long text', () => {
+    test('should handle long text', () => {
       const longText = 'This is a very long text that should increase the tooltip width';
       const result = calculateTooltipDimensions(mockLayout, longText, false);
 
       expect(result.tooltipWidth).toBeGreaterThan(TOOLTIP_CONSTANTS.MIN_WIDTH);
     });
 
-    it('should handle edge positioning near screen boundaries', () => {
+    test('should handle edge positioning near screen boundaries', () => {
       const edgeLayout: TooltipLayout = {
         x: 0,
         y: 200,
@@ -63,7 +76,7 @@ describe('Positioning Utilities', () => {
       expect(result.tooltipLeft).toBe(TOOLTIP_CONSTANTS.SCREEN_MARGIN);
     });
 
-    it('should handle container offset of 0 (baseline)', () => {
+    test('should handle container offset of 0 (baseline)', () => {
       const result = calculateTooltipDimensions(mockLayout, 'Test', false, undefined, 0);
 
       // Should position normally when container is at screen origin
@@ -71,7 +84,7 @@ describe('Positioning Utilities', () => {
       expect(result.tooltipWidth).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.MIN_WIDTH);
     });
 
-    it('should handle positive container offset (safe area)', () => {
+    test('should handle positive container offset (safe area)', () => {
       const edgeLayout: TooltipLayout = {
         x: 10, // Container-relative position
         y: 200,
@@ -93,7 +106,7 @@ describe('Positioning Utilities', () => {
       expect(result.tooltipLeft).toBeGreaterThanOrEqual(6);
     });
 
-    it('should handle large container offset', () => {
+    test('should handle large container offset', () => {
       const edgeLayout: TooltipLayout = {
         x: 5, // Container-relative position near edge
         y: 200,
@@ -115,7 +128,7 @@ describe('Positioning Utilities', () => {
       expect(result.tooltipLeft).toBeGreaterThanOrEqual(0);
     });
 
-    it('should handle negative container offset (edge case)', () => {
+    test('should handle negative container offset (edge case)', () => {
       const layout: TooltipLayout = {
         x: 25,
         y: 200,
@@ -131,7 +144,7 @@ describe('Positioning Utilities', () => {
       expect(result.tooltipLeft).toBeGreaterThanOrEqual(16);
     });
 
-    it('should use container width when provided', () => {
+    test('should use container width when provided', () => {
       const layout: TooltipLayout = {
         x: 300, // Near right edge (container-relative)
         y: 200,
@@ -156,7 +169,7 @@ describe('Positioning Utilities', () => {
       expect(rightEdge).toBeLessThanOrEqual(334);
     });
 
-    it('should handle container with right padding', () => {
+    test('should handle container with right padding', () => {
       const layout: TooltipLayout = {
         x: 280, // Near right edge
         y: 200,
@@ -180,7 +193,7 @@ describe('Positioning Utilities', () => {
       expect(rightEdge).toBeLessThanOrEqual(319);
     });
 
-    it('should fallback to calculated width when containerWidth is 0', () => {
+    test('should fallback to calculated width when containerWidth is 0', () => {
       const layout: TooltipLayout = {
         x: 300,
         y: 200,

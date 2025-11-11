@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 // Unmock React Query to test real hook behavior
 jest.unmock('@tanstack/react-query');
 
@@ -39,7 +48,7 @@ describe('useArticlesByDifficultWords', () => {
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 
-  it('sorts articles by difficult word count with real React Query', async () => {
+  test('sorts articles by difficult word count with real React Query', async () => {
     const mockDifficultWords: StudyWord[] = [
       createTestWord({
         root_id: 2,
@@ -227,7 +236,7 @@ describe('useArticlesByDifficultWords', () => {
     expect(result.current.hasEnoughArticles).toBe(false); // Only 2 articles, need 10
   });
 
-  it('returns loading state when words query is loading', async () => {
+  test('returns loading state when words query is loading', async () => {
     // Don't resolve the promise immediately
     mockStrugglingWordsService.getStrugglingWords.mockImplementation(
       () => new Promise(() => {}), // Never resolves
@@ -241,7 +250,7 @@ describe('useArticlesByDifficultWords', () => {
     expect(result.current.articles).toEqual([]);
   });
 
-  it('handles no difficult words with real React Query', async () => {
+  test('handles no difficult words with real React Query', async () => {
     mockStrugglingWordsService.getStrugglingWords.mockResolvedValue([]);
     mockArticlesService.getArticlesWithWordStats.mockResolvedValue([]);
 

@@ -21,11 +21,20 @@
  * words while preserving educational value when showing composition.
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('Standalone particle optimization', () => {
   describe('Single-component words should NOT be colored', () => {
-    it('should have hasComponents=false for بل (but rather)', () => {
+    test('should have hasComponents=false for بل (but rather)', () => {
       // Single component, no composition to show
       const analysis = analyzeArabicWord('بل', 'but rather');
 
@@ -40,7 +49,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should have hasComponents=false for لا (that does not)', () => {
+    test('should have hasComponents=false for لا (that does not)', () => {
       // Single negation component, no composition despite multi-word English
       const analysis = analyzeArabicWord('لا', 'that does not');
 
@@ -55,7 +64,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.remainingArabic).toBe('');
     });
 
-    it('should have hasComponents=false for من (who/he who)', () => {
+    test('should have hasComponents=false for من (who/he who)', () => {
       // Single interrogative component, no composition
       const analysis = analyzeArabicWord('من', 'he who');
 
@@ -72,7 +81,7 @@ describe('Standalone particle optimization', () => {
   });
 
   describe('Multi-component words SHOULD be colored', () => {
-    it('should have hasComponents=true for فإذا (so when) - 2 prefixes', () => {
+    test('should have hasComponents=true for فإذا (so when) - 2 prefixes', () => {
       const analysis = analyzeArabicWord('فإذا', 'so when');
 
       // Should detect 2 prefixes
@@ -82,7 +91,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should have hasComponents=true for والله (and by Allah) - prefix + remaining', () => {
+    test('should have hasComponents=true for والله (and by Allah) - prefix + remaining', () => {
       const analysis = analyzeArabicWord('والله', 'and by Allah');
 
       // Should detect prefix
@@ -97,7 +106,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should have hasComponents=true for فقال (so he said) - prefix + remaining', () => {
+    test('should have hasComponents=true for فقال (so he said) - prefix + remaining', () => {
       const analysis = analyzeArabicWord('فقال', 'so he said');
 
       // Should detect ف prefix
@@ -114,7 +123,7 @@ describe('Standalone particle optimization', () => {
   });
 
   describe('Words with diacritics SHOULD be colored', () => {
-    it('should have hasComponents=true when diacritic is detected', () => {
+    test('should have hasComponents=true when diacritic is detected', () => {
       // Test the principle: IF a diacritic is detected, THEN hasComponents should be true
       const analysis = analyzeArabicWord('كِتَابٌ', 'book');
 
@@ -129,7 +138,7 @@ describe('Standalone particle optimization', () => {
       }
     });
 
-    it('should have hasComponents=true when word has only diacritic detected', () => {
+    test('should have hasComponents=true when word has only diacritic detected', () => {
       // Any word with case marking should be colored if diacritic is detected
       const analysis = analyzeArabicWord('مُحَمَّدٌ', 'Muhammad');
 
@@ -142,7 +151,7 @@ describe('Standalone particle optimization', () => {
   });
 
   describe('Words with suffix SHOULD be colored', () => {
-    it('should have hasComponents=true for كتابه (his book) - has suffix', () => {
+    test('should have hasComponents=true for كتابه (his book) - has suffix', () => {
       const analysis = analyzeArabicWord('كتابه', 'his book');
 
       // Should detect suffix
@@ -155,7 +164,7 @@ describe('Standalone particle optimization', () => {
   });
 
   describe('Edge cases', () => {
-    it('should handle diacritics in particle detection', () => {
+    test('should handle diacritics in particle detection', () => {
       // Particle with diacritics like بَلْ should still be detected
       const analysis = analyzeArabicWord('بَلْ', 'but rather');
 
@@ -168,7 +177,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.hasComponents).toBe(false);
     });
 
-    it('should have hasComponents=true for prefix + infix', () => {
+    test('should have hasComponents=true for prefix + infix', () => {
       // If we ever detect infix, hasComponents should be true
       const analysis = analyzeArabicWord('مما', 'from what');
 

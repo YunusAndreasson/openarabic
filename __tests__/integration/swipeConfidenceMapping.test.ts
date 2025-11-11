@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Swipe to Confidence Mapping Tests
  *
  * Tests the logic that converts swipe gestures to word confidence levels
@@ -62,7 +71,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
   });
 
   describe('Left swipe confidence mapping', () => {
-    it('should map left swipe to "unknown" (always)', () => {
+    test('should map left swipe to "unknown" (always)', () => {
       const swipeDirection = 'left';
       const isHesitating = false;
 
@@ -72,7 +81,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
       expect(confidence).toBe('unknown');
     });
 
-    it('should map left swipe to "unknown" even when hesitating', () => {
+    test('should map left swipe to "unknown" even when hesitating', () => {
       const swipeDirection = 'left';
       const isHesitating = true; // Doesn't matter for left swipe
 
@@ -113,7 +122,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
   });
 
   describe('Race condition prevention', () => {
-    it('should read isHesitating state before onHesitationEnd is called', () => {
+    test('should read isHesitating state before onHesitationEnd is called', () => {
       // CRITICAL: ReviewCard.tsx line 104-106
       // onHesitationEnd must be called AFTER swipe handler reads isHesitating
 
@@ -136,7 +145,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
       expect(state.isHesitating).toBe(false); // Reset after
     });
 
-    it('should NOT call onHesitationEnd during onGestureStart', () => {
+    test('should NOT call onHesitationEnd during onGestureStart', () => {
       // Bug scenario: If onHesitationEnd is called in onGestureStart,
       // isHesitating becomes false BEFORE swipe handler reads it
 
@@ -161,7 +170,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
       expect(state.isHesitating).toBe(false);
     });
 
-    it('should correctly handle the fix: onHesitationEnd called in onSwipeComplete', () => {
+    test('should correctly handle the fix: onHesitationEnd called in onSwipeComplete', () => {
       const state = {
         isHesitating: true,
         confidence: null as Confidence | null,
@@ -250,7 +259,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
   });
 
   describe('Edge cases', () => {
-    it('should handle multiple rapid swipes on same word', () => {
+    test('should handle multiple rapid swipes on same word', () => {
       let isHesitating = false;
       const swipes: Confidence[] = [];
 
@@ -264,7 +273,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
       expect(swipes).toEqual(['known', 'known', 'known']);
     });
 
-    it('should reset hesitation between words', () => {
+    test('should reset hesitation between words', () => {
       const words = ['word1', 'word2'];
       const results: Array<{ word: string; confidence: Confidence }> = [];
 

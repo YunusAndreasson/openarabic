@@ -1,9 +1,19 @@
+/**
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord, formatWordAnalysis } from '../../utils/arabicWordAnalysis';
 import { ComponentType } from '../../constants/arabicWordComponents';
 
 describe('arabicWordAnalysis', () => {
   // Test case for the user's initial report (ID 10214)
-  it('should colorize "it" for "وَكِتَابَتِهِ"', () => {
+  test('should colorize "it" for "وَكِتَابَتِهِ"', () => {
     const analysis = analyzeArabicWord('وَكِتَابَتِهِ', 'and recording it');
     expect(analysis.suffix?.arabicMatch).toBe('ه');
     expect(analysis.suffix?.matchedInEnglish).toBe(true);
@@ -11,7 +21,7 @@ describe('arabicWordAnalysis', () => {
   });
 
   // Test case for the user's second report (ID 10308)
-  it('should colorize both prefix and suffix for "مِنْهُمْ"', () => {
+  test('should colorize both prefix and suffix for "مِنْهُمْ"', () => {
     const analysis = analyzeArabicWord('مِنْهُمْ', 'from them');
     const formatted = formatWordAnalysis(analysis);
 
@@ -35,7 +45,7 @@ describe('arabicWordAnalysis', () => {
   });
 
   // General test for prefix + suffix
-  it('should colorize both prefix and suffix for "وبيتها"', () => {
+  test('should colorize both prefix and suffix for "وبيتها"', () => {
     const analysis = analyzeArabicWord('وبيتها', 'and her house');
 
     // Check that both prefix and suffix are found
@@ -52,7 +62,7 @@ describe('arabicWordAnalysis', () => {
   });
 
   // Test normalization
-  it('should properly normalize Arabic text with diacritics', () => {
+  test('should properly normalize Arabic text with diacritics', () => {
     const analysis = analyzeArabicWord('وَكِتَابَتِهِ', 'and recording it');
     expect(analysis.hasComponents).toBe(true);
 
@@ -62,7 +72,7 @@ describe('arabicWordAnalysis', () => {
   });
 
   // Test that words without components are handled correctly
-  it('should handle words without recognizable components', () => {
+  test('should handle words without recognizable components', () => {
     const analysis = analyzeArabicWord('كتاب', 'book');
     expect(analysis.hasComponents).toBe(false);
     expect(analysis.prefixes[0]).toBeUndefined();
@@ -74,7 +84,7 @@ describe('arabicWordAnalysis', () => {
 
   // Test cleanup: normalized patterns should work correctly
   describe('Component Pattern Matching', () => {
-    it('should match diacritical and non-diacritical versions equally', () => {
+    test('should match diacritical and non-diacritical versions equally', () => {
       // Test that both diacritical and non-diacritical versions work the same
       const withDiacritics = analyzeArabicWord('وَكَتَبَ', 'and he wrote');
       const withoutDiacritics = analyzeArabicWord('وكتب', 'and he wrote');
@@ -99,7 +109,7 @@ describe('arabicWordAnalysis', () => {
       },
     );
 
-    it('should match common prefixes correctly', () => {
+    test('should match common prefixes correctly', () => {
       const tests = [
         // Multiple prefixes are detected separately (not as compounds)
         { arabic: 'والكتاب', english: 'and the book', expectedPrefixes: ['و', 'ال'] },
@@ -135,7 +145,7 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.prefixes.some(p => p.arabicMatch === expectedPrefix)).toBe(true);
     });
 
-    it('should require English correspondence to avoid false positives', () => {
+    test('should require English correspondence to avoid false positives', () => {
       // Test that components are only matched when their English equivalents exist
       const analysis = analyzeArabicWord('والبيت', 'house'); // "house" only, no "and"
       // Should not match 'و' prefix because "and" is not in English
@@ -143,7 +153,7 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBe(false);
     });
 
-    it('should handle definite article correctly', () => {
+    test('should handle definite article correctly', () => {
       const tests = [
         { arabic: 'الكتاب', english: 'the book', expectedPrefixes: ['ال'] },
         // Multiple prefixes detected separately: و (and) + ال (the)
@@ -164,7 +174,7 @@ describe('arabicWordAnalysis', () => {
       });
     });
 
-    it('should handle negation particles correctly', () => {
+    test('should handle negation particles correctly', () => {
       // Debug the actual behavior first
       const analysis1 = analyzeArabicWord('لايعرف', 'does not know');
       const analysis2 = analyzeArabicWord('لنيذهب', 'will not go');
@@ -189,7 +199,7 @@ describe('arabicWordAnalysis', () => {
       }
     });
 
-    it('should handle verbal prefix ي for "was" and third person', () => {
+    test('should handle verbal prefix ي for "was" and third person', () => {
       // Test cases where remaining word after ي has sufficient length (>=3 chars)
       const validTests = [
         { arabic: 'يُكتب', english: 'he was writing', expectedPrefix: 'ي' }, // Remaining: كتب (3 chars) ✓
@@ -213,14 +223,14 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBe(false);
     });
 
-    it('should not match ي prefix when English has no correspondence', () => {
+    test('should not match ي prefix when English has no correspondence', () => {
       // Test that ي prefix is only matched when English contains appropriate words
       const analysis = analyzeArabicWord('يُكتب', 'writing'); // No "he" or "was" in English
       expect(analysis.prefixes[0]).toBeUndefined();
       expect(analysis.hasComponents).toBe(false);
     });
 
-    it('should match preposition + al combinations as separate prefixes', () => {
+    test('should match preposition + al combinations as separate prefixes', () => {
       const tests = [
         { arabic: 'بالكتاب', english: 'with the book', expectedPrefixes: ['ب', 'ال'] },
         // للقلم has elided alef after ل, so only first ل detected
@@ -242,7 +252,7 @@ describe('arabicWordAnalysis', () => {
       });
     });
 
-    it('should match multiple sequential prefixes (conjunction + subject/future/negation)', () => {
+    test('should match multiple sequential prefixes (conjunction + subject/future/negation)', () => {
       // Note: These tests verify multi-prefix detection.
       // Some patterns may be ambiguous (e.g., 'في' as preposition "in" vs ف+ي "then he")
       const tests = [
@@ -266,26 +276,26 @@ describe('arabicWordAnalysis', () => {
 
   // Test edge cases and potential issues
   describe('Edge Cases', () => {
-    it('should handle very short words - single-word rule applies', () => {
+    test('should handle very short words - single-word rule applies', () => {
       const analysis = analyzeArabicWord('و', 'and');
       // Single-word rule: 'and' is one word, so no color-coding for educational clarity
       expect(analysis.hasComponents).toBe(false);
     });
 
-    it('should handle overlapping components correctly', () => {
+    test('should handle overlapping components correctly', () => {
       // Test a word where prefix and suffix might overlap
       const analysis = analyzeArabicWord('وه', 'and it');
       // Should resolve overlap by keeping the longer component or following resolution rules
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should prioritize longer components', () => {
+    test('should prioritize longer components', () => {
       // If there are multiple matching patterns, should prefer the longer one
       const analysis = analyzeArabicWord('سوفيذهب', 'he will go');
       expect(analysis.prefixes[0]?.arabicMatch).toBe('سوف'); // Should match longer 'سوف' over 'س'
     });
 
-    it('should prefer plural suffix over singular subject marker for person/number', () => {
+    test('should prefer plural suffix over singular subject marker for person/number', () => {
       // ويكتبون -> "they write"; ensure ي is not matched as "he" due to ون$ suffix
       const analysis = analyzeArabicWord('ويكتبون', 'they write');
       expect(analysis.suffix?.arabicMatch).toBe('ون');
@@ -295,7 +305,7 @@ describe('arabicWordAnalysis', () => {
 
   // Test infix functionality
   describe('Infix Detection', () => {
-    it('should detect reflexive infix ت in Form VIII verbs', () => {
+    test('should detect reflexive infix ت in Form VIII verbs', () => {
       // Example: اِجْتَمَعَ (ijtama'a) - "they gathered together"
       const analysis = analyzeArabicWord('اجتمع', 'they gathered together');
       if (analysis.infix) {
@@ -305,7 +315,7 @@ describe('arabicWordAnalysis', () => {
       }
     });
 
-    it('should detect seeking infix ست in Form X verbs', () => {
+    test('should detect seeking infix ست in Form X verbs', () => {
       // Example: اِسْتَطَاعَ (istaTaa'a) - "he was able to / sought to do"
       const analysis = analyzeArabicWord('استطاع', 'he sought to do');
       if (analysis.infix) {
@@ -315,7 +325,7 @@ describe('arabicWordAnalysis', () => {
       }
     });
 
-    it('should detect reflexive infix ن in Form VII verbs', () => {
+    test('should detect reflexive infix ن in Form VII verbs', () => {
       // Example: اِنْكَسَرَ (inkasara) - "it broke itself / broke automatically"
       const analysis = analyzeArabicWord('انكسر', 'it broke itself');
       if (analysis.infix) {
@@ -325,7 +335,7 @@ describe('arabicWordAnalysis', () => {
       }
     });
 
-    it('should handle combination of prefix and infix', () => {
+    test('should handle combination of prefix and infix', () => {
       // Example: واجتمع - "and they gathered together"
       const analysis = analyzeArabicWord('واجتمع', 'and they gathered together');
 
@@ -340,7 +350,7 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should handle combination of infix and suffix', () => {
+    test('should handle combination of infix and suffix', () => {
       // Example: اجتمعوا - "they gathered together" (plural)
       const analysis = analyzeArabicWord('اجتمعوا', 'they gathered together');
 
@@ -357,7 +367,7 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should handle prefix + infix + suffix combination', () => {
+    test('should handle prefix + infix + suffix combination', () => {
       // Example: ويجتمعون - "and they gather together" (present tense, plural)
       const analysis = analyzeArabicWord('ويجتمعون', 'and they gather together');
 
@@ -377,14 +387,14 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should require English correspondence for infixes', () => {
+    test('should require English correspondence for infixes', () => {
       // Test that infix is only matched when its English equivalent exists
       const analysis = analyzeArabicWord('اجتمع', 'he met'); // "met" only, no "together"
       // Should not match 'ت' infix because "together" is not in English
       expect(analysis.infix).toBeUndefined();
     });
 
-    it('should include infix information in formatted analysis', () => {
+    test('should include infix information in formatted analysis', () => {
       const analysis = analyzeArabicWord('اجتمع', 'they gathered together');
       if (analysis.infix) {
         const formatted = formatWordAnalysis(analysis);
@@ -401,7 +411,7 @@ describe('arabicWordAnalysis', () => {
   });
 
   describe('Arabic diacritic detection', () => {
-    it('should detect fatha at end of word with "he" correspondence', () => {
+    test('should detect fatha at end of word with "he" correspondence', () => {
       const analysis = analyzeArabicWord('كتابَ', 'he wrote a book'); // Fatha on final letter
 
       expect(analysis.diacritic).toBeDefined();
@@ -411,7 +421,7 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should detect kasra at end with "in" correspondence', () => {
+    test('should detect kasra at end with "in" correspondence', () => {
       const analysis = analyzeArabicWord('المدرسةِ', 'in the school'); // Kasra at end
 
       expect(analysis.diacritic).toBeDefined();
@@ -421,7 +431,7 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should detect damma at end with "he" correspondence', () => {
+    test('should detect damma at end with "he" correspondence', () => {
       const analysis = analyzeArabicWord('الكتابُ', 'he reads the book'); // Damma at end
 
       expect(analysis.diacritic).toBeDefined();
@@ -431,7 +441,7 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should detect tanween fath with "an" correspondence', () => {
+    test('should detect tanween fath with "an" correspondence', () => {
       const analysis = analyzeArabicWord('كتابًا', 'he wrote an book'); // Tanween fath
 
       expect(analysis.diacritic).toBeDefined();
@@ -441,14 +451,14 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should not detect diacritic when English has no correspondence', () => {
+    test('should not detect diacritic when English has no correspondence', () => {
       const analysis = analyzeArabicWord('كتابَ', 'book'); // Fatha but no "he" in English
 
       expect(analysis.diacritic).toBeUndefined();
       expect(analysis.hasComponents).toBe(false);
     });
 
-    it('should handle multiple prefixes, suffix, and diacritic', () => {
+    test('should handle multiple prefixes, suffix, and diacritic', () => {
       const analysis = analyzeArabicWord('وبكتابهِ', 'and with his book in'); // Multiple prefixes + suffix + diacritic
 
       expect(analysis.prefixes.length).toBeGreaterThan(0);
@@ -465,7 +475,7 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should correctly reconstruct diacritic coloring', () => {
+    test('should correctly reconstruct diacritic coloring', () => {
       const analysis = analyzeArabicWord('كتابَ', 'he wrote a book');
       const formatted = formatWordAnalysis(analysis);
 
@@ -479,7 +489,7 @@ describe('arabicWordAnalysis', () => {
       expect(formatted.reconstructedArabic?.segments[1].type).toBe('diacritic');
     });
 
-    it('should include diacritic in tooltip sections', () => {
+    test('should include diacritic in tooltip sections', () => {
       const analysis = analyzeArabicWord('كتابَ', 'he wrote a book');
       const formatted = formatWordAnalysis(analysis);
 
@@ -491,7 +501,7 @@ describe('arabicWordAnalysis', () => {
       expect(diacriticSection?.colorName).toBe('accent');
       expect(diacriticSection?.icon).toBe('◌');
     });
-    it('should handle diacritic with other components correctly', () => {
+    test('should handle diacritic with other components correctly', () => {
       const analysis = analyzeArabicWord('والكتابَ', 'and he wrote the book');
       const formatted = formatWordAnalysis(analysis);
 
@@ -509,7 +519,7 @@ describe('arabicWordAnalysis', () => {
     });
   });
 
-  it('should detect final fatha on a verb as "he"', () => {
+  test('should detect final fatha on a verb as "he"', () => {
     const analysis = analyzeArabicWord('كَتَبَ', 'he wrote');
     expect(analysis.diacritic).toBeDefined();
     expect(analysis.diacritic?.arabicMatch).toBe('َ');
@@ -518,7 +528,7 @@ describe('arabicWordAnalysis', () => {
 });
 
 describe('Diacritic Double-Matching Prevention', () => {
-  it('should keep definite article and case ending separate (no merging)', () => {
+  test('should keep definite article and case ending separate (no merging)', () => {
     // الثَّنَاءِ → "[the] praise" (bracket injection adds "the")
     // Prefix "ال" matches "the", kasra "ِ" has patterns "in/of/with" (not "the")
     // They serve different grammatical functions (definiteness vs. case)
@@ -534,7 +544,7 @@ describe('Diacritic Double-Matching Prevention', () => {
     expect(analysis.hasComponents).toBe(true);
   });
 
-  it('should merge diacritic color with suffix when both match pronoun', () => {
+  test('should merge diacritic color with suffix when both match pronoun', () => {
     // أَضَافَهُ → "attributed it"
     // Suffix "ه" matches "it", damma "ُ" also has pattern "it"
     // Both are grammatically related (pronoun system)
@@ -552,7 +562,7 @@ describe('Diacritic Double-Matching Prevention', () => {
     expect(analysis.hasComponents).toBe(true);
   });
 
-  it('should keep diacritic when it has unique English match', () => {
+  test('should keep diacritic when it has unique English match', () => {
     // قَالَ → "he says"
     // Fatha "َ" matches "he", which is unique (no other component claims it)
     // Expected: Diacritic should be kept
@@ -564,7 +574,7 @@ describe('Diacritic Double-Matching Prevention', () => {
     expect(analysis.hasComponents).toBe(true);
   });
 
-  it('should keep diacritic when multiple patterns exist and at least one is unique', () => {
+  test('should keep diacritic when multiple patterns exist and at least one is unique', () => {
     // Word with diacritic that has multiple patterns, some overlap with other components
     // Use a simpler example: والكتابُ → "and he the book"
     // Prefix "و" matches "and", damma "ُ" has patterns ["he", "it", "they", "of"]
@@ -580,7 +590,7 @@ describe('Diacritic Double-Matching Prevention', () => {
     expect(analysis.diacritic?.englishMatches).toContain('he');
   });
 
-  it('should filter diacritic when all its patterns are claimed by other components', () => {
+  test('should filter diacritic when all its patterns are claimed by other components', () => {
     // Complex case: multiple components all matching different words
     // Diacritic patterns all overlap with existing components
     // Example constructed for testing: و prefix matches "and", suffix matches "in"
@@ -611,7 +621,7 @@ describe('Diacritic Double-Matching Prevention', () => {
 });
 
 describe('Edge cases and error handling', () => {
-  it('should handle new programmatically generated combinations', () => {
+  test('should handle new programmatically generated combinations', () => {
     // Test that new إلى combinations are now available (since we added it to PREPOSITIONS)
     const analysis1 = analyzeArabicWord('وإلىالمدرسة', 'and to the school');
     expect(analysis1.hasComponents).toBe(true);
@@ -624,7 +634,7 @@ describe('Edge cases and error handling', () => {
     expect(analysis2.hasComponents).toBe(true);
   });
 
-  it('should handle new common plural suffixes', () => {
+  test('should handle new common plural suffixes', () => {
     const tests = [
       { arabic: 'ذهبوا', english: 'they went', expectedSuffix: 'وا' },
       { arabic: 'رأيتكم', english: 'I saw you all', expectedSuffix: 'كم' }, // Fixed: word ends with كم
@@ -642,20 +652,20 @@ describe('Edge cases and error handling', () => {
 });
 
 describe('New suffix coverage', () => {
-  it('should match object pronoun ني (me)', () => {
+  test('should match object pronoun ني (me)', () => {
     const analysis = analyzeArabicWord('أعطني', 'give me');
     expect(analysis.suffix?.arabicMatch).toBe('ني');
     expect(analysis.suffix?.englishMatches).toContain('me');
     expect(analysis.hasComponents).toBe(true);
   });
 
-  it('should match dual you كما', () => {
+  test('should match dual you كما', () => {
     const analysis = analyzeArabicWord('كتابكما', 'your (dual) book');
     expect(analysis.suffix?.arabicMatch).toBe('كما');
     expect(analysis.hasComponents).toBe(true);
   });
 
-  it('should match dual them هما', () => {
+  test('should match dual them هما', () => {
     const analysis = analyzeArabicWord('كتابهما', 'their (dual) book');
     expect(analysis.suffix?.arabicMatch).toBe('هما');
     expect(analysis.hasComponents).toBe(true);
@@ -663,7 +673,7 @@ describe('New suffix coverage', () => {
 });
 
 describe('Single Word Color-Coding Rule', () => {
-  it('should never apply color-coding to single English words', () => {
+  test('should never apply color-coding to single English words', () => {
     // Test cases where Arabic analysis might suggest components but English is single word
     const testCases = [
       { arabic: 'والبيت', english: 'house' }, // "wa" prefix but single English word
@@ -686,7 +696,7 @@ describe('Single Word Color-Coding Rule', () => {
     });
   });
 
-  it('should apply color-coding to multi-word English phrases', () => {
+  test('should apply color-coding to multi-word English phrases', () => {
     // Test cases where color-coding should be applied
     const testCases = [
       { arabic: 'والبيت', english: 'and house' }, // Two words, should be color-coded
@@ -712,19 +722,19 @@ describe('Single Word Color-Coding Rule', () => {
 });
 
 describe('Bracket Injection', () => {
-  it('should detect bracket injection for definite articles', () => {
+  test('should detect bracket injection for definite articles', () => {
     const analysis = analyzeArabicWord('الكتاب', 'book');
     expect(analysis).not.toBeNull();
     expect(analysis?.hasBracketInjection).toBe(true);
   });
 
-  it('should not detect bracket injection when the is already present', () => {
+  test('should not detect bracket injection when the is already present', () => {
     const analysis = analyzeArabicWord('الكتاب', 'the book');
     expect(analysis).not.toBeNull();
     expect(analysis?.hasBracketInjection).toBe(false);
   });
 
-  it('should not detect bracket injection for divine names', () => {
+  test('should not detect bracket injection for divine names', () => {
     const analysis = analyzeArabicWord('الله', 'Allah');
     expect(analysis).not.toBeNull();
     expect(analysis?.hasBracketInjection).toBe(false);
@@ -732,7 +742,7 @@ describe('Bracket Injection', () => {
 });
 
 describe('Whole Translation Matching Rejection', () => {
-  it('should NOT match patterns that equal the entire English translation', () => {
+  test('should NOT match patterns that equal the entire English translation', () => {
     // CRITICAL: If a component pattern matches the ENTIRE translation,
     // it defeats the educational purpose of showing component breakdown.
     // Both words would be colored the same, which is incorrect.
@@ -770,7 +780,7 @@ describe('Whole Translation Matching Rejection', () => {
     });
   });
 
-  it('should STILL match partial patterns within translations', () => {
+  test('should STILL match partial patterns within translations', () => {
     // These should work because the pattern matches PART of the translation
     // (not the entire translation)
 
@@ -803,7 +813,7 @@ describe('Whole Translation Matching Rejection', () => {
     });
   });
 
-  it('should allow single-word patterns in multi-word translations', () => {
+  test('should allow single-word patterns in multi-word translations', () => {
     // Single-word patterns like "they" or "said" should still work
     // Only multi-word patterns that match the ENTIRE translation are rejected
 
@@ -815,7 +825,7 @@ describe('Whole Translation Matching Rejection', () => {
     expect(analysis.suffix?.englishMatches).toContain('they');
   });
 
-  it('should ensure different components in 2-word translations', () => {
+  test('should ensure different components in 2-word translations', () => {
     // The goal: 2-word translations should show component breakdown
     // Not both words colored the same
 
@@ -849,7 +859,7 @@ describe('Whole Translation Matching Rejection', () => {
 
 describe('2025 Pattern Enhancements', () => {
   describe('Fixed: Diacritic Pattern Bug', () => {
-    it('should detect من (who/whoever) without diacritics', () => {
+    test('should detect من (who/whoever) without diacritics', () => {
       const analysis = analyzeArabicWord('من', 'he who');
       // Single component → hasComponents=false (no composition to show)
       expect(analysis.hasComponents).toBe(false);
@@ -858,7 +868,7 @@ describe('2025 Pattern Enhancements', () => {
       expect(analysis.prefixes[0]?.englishMatches).toContain('he who');
     });
 
-    it('should detect من in standalone interrogative', () => {
+    test('should detect من in standalone interrogative', () => {
       const analysis = analyzeArabicWord('من', 'who is');
       // Single component → hasComponents=false (no composition to show)
       expect(analysis.hasComponents).toBe(false);
@@ -869,7 +879,7 @@ describe('2025 Pattern Enhancements', () => {
   });
 
   describe('Enhanced: Shadda-Aware Possessive Suffixes', () => {
-    it('should detect shadda suffix patterns ىّ and يّ in suffix list', () => {
+    test('should detect shadda suffix patterns ىّ and يّ in suffix list', () => {
       // Verify the patterns exist in our suffix definitions
       const { ARABIC_SUFFIXES } = require('../../constants/arabicWordComponents');
       const shaddaSuffixes = ARABIC_SUFFIXES.filter(
@@ -879,7 +889,7 @@ describe('2025 Pattern Enhancements', () => {
       expect(shaddaSuffixes.some((s: any) => s.english.includes('me'))).toBe(true);
     });
 
-    it('should detect لِي (to me) with possessive suffix', () => {
+    test('should detect لِي (to me) with possessive suffix', () => {
       const analysis = analyzeArabicWord('لي', 'to me');
       expect(analysis.hasComponents).toBe(true);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ل');
@@ -891,7 +901,7 @@ describe('2025 Pattern Enhancements', () => {
       }
     });
 
-    it('should detect preposition + possessive in في (in me)', () => {
+    test('should detect preposition + possessive in في (in me)', () => {
       const analysis = analyzeArabicWord('في', 'in me');
       // Note: This may not detect both components due to overlap (في as preposition vs ي as suffix)
       // If only one component is detected → hasComponents=false (no composition)
@@ -904,21 +914,21 @@ describe('2025 Pattern Enhancements', () => {
   });
 
   describe('Enhanced: Verbal Prefix ت for Inanimate Subjects', () => {
-    it('should detect ت prefix with "it" in present tense verb', () => {
+    test('should detect ت prefix with "it" in present tense verb', () => {
       const analysis = analyzeArabicWord('تَدْعُو', 'it calls');
       expect(analysis.hasComponents).toBe(true);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ت');
       expect(analysis.prefixes[0]?.englishMatches).toContain('it');
     });
 
-    it('should detect ت prefix with "it desires"', () => {
+    test('should detect ت prefix with "it desires"', () => {
       const analysis = analyzeArabicWord('تَشْتَهِي', 'it desires');
       expect(analysis.hasComponents).toBe(true);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ت');
       expect(analysis.prefixes[0]?.englishMatches).toContain('it');
     });
 
-    it('should still detect ت prefix with traditional "you/she" subjects', () => {
+    test('should still detect ت prefix with traditional "you/she" subjects', () => {
       const analysis1 = analyzeArabicWord('تَكْتُبُ', 'you write');
       expect(analysis1.hasComponents).toBe(true);
       expect(analysis1.prefixes[0]?.arabicMatch).toBe('ت');
@@ -932,21 +942,21 @@ describe('2025 Pattern Enhancements', () => {
   });
 
   describe('Enhanced: First-Person Plural نا Suffix', () => {
-    it('should detect نا suffix with "we" in past-tense verb', () => {
+    test('should detect نا suffix with "we" in past-tense verb', () => {
       const analysis = analyzeArabicWord('كُنَّا', 'we were');
       expect(analysis.hasComponents).toBe(true);
       expect(analysis.suffix?.arabicMatch).toBe('نا');
       expect(analysis.suffix?.englishMatches).toContain('we');
     });
 
-    it('should detect نا suffix with "we" as subject pronoun', () => {
+    test('should detect نا suffix with "we" as subject pronoun', () => {
       const analysis = analyzeArabicWord('ذَهَبْنَا', 'we went');
       expect(analysis.hasComponents).toBe(true);
       expect(analysis.suffix?.arabicMatch).toBe('نا');
       expect(analysis.suffix?.englishMatches).toContain('we');
     });
 
-    it('should still detect نا suffix with traditional possessive meanings', () => {
+    test('should still detect نا suffix with traditional possessive meanings', () => {
       const analysis = analyzeArabicWord('كتابنا', 'our book');
       expect(analysis.hasComponents).toBe(true);
       expect(analysis.suffix?.arabicMatch).toBe('نا');
@@ -955,7 +965,7 @@ describe('2025 Pattern Enhancements', () => {
   });
 
   describe('Form VI Verb Pattern (يَتَفَاعَلُ)', () => {
-    it('should not split يت into separate prefixes for Form VI verbs', () => {
+    test('should not split يت into separate prefixes for Form VI verbs', () => {
       // Form VI present tense: يَتَدَارَسُونَهُ = "and studying it"
       // Should detect: و (conjunction) + يتدارسون (Form VI verb) + ه (object pronoun)
       // Should NOT detect: و + ي + ت as three separate prefixes
@@ -971,7 +981,7 @@ describe('2025 Pattern Enhancements', () => {
       expect(analysis.remainingArabic).toMatch(/^يت/);
     });
 
-    it('should not split يت for other Form VI examples', () => {
+    test('should not split يت for other Form VI examples', () => {
       // يَتَعَاوَنُ = "he cooperates" (Form VI from root ع-و-ن)
       const analysis1 = analyzeArabicWord('يَتَعَاوَنُ', 'he cooperates');
       expect(analysis1.prefixes).toHaveLength(0); // No prefixes, يت is part of Form VI pattern
@@ -981,7 +991,7 @@ describe('2025 Pattern Enhancements', () => {
       expect(analysis2.prefixes).toHaveLength(0); // No prefixes, يت is part of Form VI pattern
     });
 
-    it('should still allow ي and ت as separate prefixes in non-Form VI contexts', () => {
+    test('should still allow ي and ت as separate prefixes in non-Form VI contexts', () => {
       // يَكْتُبُ = "he writes" (Form I, ي is legitimate prefix)
       const analysis1 = analyzeArabicWord('يَكْتُبُ', 'he writes');
       expect(analysis1.prefixes).toHaveLength(1);
@@ -995,7 +1005,7 @@ describe('2025 Pattern Enhancements', () => {
   });
 
   describe('Form V Verb Pattern (تَفَعَّلَ)', () => {
-    it('should not split root و as a conjunction in Form V verbs', () => {
+    test('should not split root و as a conjunction in Form V verbs', () => {
       // Form V present tense: وَتَوَدَّدْ = "and you draw close"
       // Root: و-د-د (w-d-d = to love, show affection)
       // Should detect: و (conjunction) + تودد (Form V verb)
@@ -1014,7 +1024,7 @@ describe('2025 Pattern Enhancements', () => {
       expect(analysis.remainingArabic).toMatch(/^ود/);
     });
 
-    it('should not split root ي as a subject marker in Form V verbs', () => {
+    test('should not split root ي as a subject marker in Form V verbs', () => {
       // فَتَبَيَّنَ = "so it became clear" (Form V from root ب-ي-ن)
       // Should detect: ف (conjunction) + تبين (Form V verb)
       // Should NOT detect: ف + ت + ي (treating ي as subject marker)
@@ -1029,7 +1039,7 @@ describe('2025 Pattern Enhancements', () => {
       expect(analysis.remainingArabic).toMatch(/^بي/);
     });
 
-    it('should allow و/ف/ب/ل prefixes after subject markers with sufficient remaining', () => {
+    test('should allow و/ف/ب/ل prefixes after subject markers with sufficient remaining', () => {
       // Valid case: و + ت + ب + root (5+ chars)
       // "and you begin" - ب is a real prefix here, not part of root
       const _analysis1 = analyzeArabicWord('وتبدأ', 'and you begin');
@@ -1044,7 +1054,7 @@ describe('2025 Pattern Enhancements', () => {
       expect(analysis2.prefixes).toBeTruthy();
     });
 
-    it('should still allow و/ي as conjunctions when not after subject markers', () => {
+    test('should still allow و/ي as conjunctions when not after subject markers', () => {
       // وَيُحِبُّ = "and he loves"
       // و is legitimate conjunction, ي is legitimate subject marker
       // Even though root is ح-ب-ب (with و radical), the و here is a prefix

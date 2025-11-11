@@ -1,4 +1,13 @@
 /**
+ * Component Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Toast Component Tests
  *
  * Tests the toast notification system:
@@ -91,7 +100,7 @@ describe('Toast', () => {
     jest.useRealTimers();
   });
 
-  it('should render visible toast with message', () => {
+  test('should render visible toast with message', () => {
     const { getByText } = render(
       <Toast visible={true} message="Test message" onClose={mockOnClose} />,
     );
@@ -99,7 +108,7 @@ describe('Toast', () => {
     expect(getByText('Test message')).toBeTruthy();
   });
 
-  it('should not render when visible is false', () => {
+  test('should not render when visible is false', () => {
     const { queryByText } = render(
       <Toast visible={false} message="Test message" onClose={mockOnClose} />,
     );
@@ -107,7 +116,7 @@ describe('Toast', () => {
     expect(queryByText('Test message')).toBeNull();
   });
 
-  it('should auto-close after default duration', () => {
+  test('should auto-close after default duration', () => {
     render(<Toast visible={true} message="Test message" onClose={mockOnClose} />);
 
     expect(mockOnClose).not.toHaveBeenCalled();
@@ -120,7 +129,7 @@ describe('Toast', () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should auto-close after custom duration', () => {
+  test('should auto-close after custom duration', () => {
     render(<Toast visible={true} message="Test message" duration={1000} onClose={mockOnClose} />);
 
     expect(mockOnClose).not.toHaveBeenCalled();
@@ -133,7 +142,7 @@ describe('Toast', () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should cleanup timer on unmount', () => {
+  test('should cleanup timer on unmount', () => {
     const { unmount } = render(
       <Toast visible={true} message="Test message" onClose={mockOnClose} />,
     );
@@ -149,7 +158,7 @@ describe('Toast', () => {
     expect(mockOnClose).not.toHaveBeenCalled();
   });
 
-  it('should reset timer when visibility changes to true again', () => {
+  test('should reset timer when visibility changes to true again', () => {
     const { rerender } = render(
       <Toast visible={true} message="Test message" onClose={mockOnClose} />,
     );
@@ -198,7 +207,7 @@ describe('Toast', () => {
     expect(getByText(expectedContent)).toBeTruthy();
   });
 
-  it('should handle long messages with ellipsis', () => {
+  test('should handle long messages with ellipsis', () => {
     const longMessage =
       'This is a very long message that should be truncated with ellipsis when it exceeds the maximum number of lines allowed in the toast component';
 
@@ -212,7 +221,7 @@ describe('Toast', () => {
     expect(textElement.props.ellipsizeMode).toBe('tail');
   });
 
-  it('should use safe area insets for positioning', () => {
+  test('should use safe area insets for positioning', () => {
     const { getByText } = render(
       <Toast visible={true} message="Test message" onClose={mockOnClose} />,
     );
@@ -225,7 +234,7 @@ describe('Toast', () => {
     expect(container?.props.style).toBeDefined();
   });
 
-  it('should default to INFO type when type is not specified', () => {
+  test('should default to INFO type when type is not specified', () => {
     const { getByText } = render(
       <Toast visible={true} message="Default type message" onClose={mockOnClose} />,
     );
@@ -233,7 +242,7 @@ describe('Toast', () => {
     expect(getByText('Default type message')).toBeTruthy();
   });
 
-  it('should handle rapid visibility toggles', () => {
+  test('should handle rapid visibility toggles', () => {
     const { rerender } = render(
       <Toast visible={false} message="Test message" onClose={mockOnClose} />,
     );
@@ -252,7 +261,7 @@ describe('Toast', () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should handle onClose callback changes', () => {
+  test('should handle onClose callback changes', () => {
     const firstOnClose = jest.fn();
     const secondOnClose = jest.fn();
 

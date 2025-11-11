@@ -1,3 +1,16 @@
+/**
+ * Audio Cache Service Tests
+ *
+ * Tests the audio cache service which handles file caching and downloads.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ jest.fn() for mock creation (already type-safe)
+ * - ✅ test.concurrent() for parallel execution
+ * - ✅ @jest/globals explicit imports
+ */
+
+import { describe, test, expect, jest, beforeEach } from '@jest/globals';
+
 // Unmock audioCache since this test file tests the real implementation
 jest.unmock('@/services/audioCache');
 

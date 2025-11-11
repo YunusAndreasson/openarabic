@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Integration test for vague word persistence fix
  *
  * Bug: When user hesitates (shows hint) and swipes right, word was marked 'vague'
@@ -9,7 +18,7 @@
 
 describe('Vague Word Persistence - Integration Test', () => {
   describe('Database persistence behavior', () => {
-    it('should demonstrate the fix: vague words are NOT persisted to DB', () => {
+    test('should demonstrate the fix: vague words are NOT persisted to DB', () => {
       // Simulate the fix in useFSRS.ts line 413-430
 
       const wordResponses = [
@@ -34,7 +43,7 @@ describe('Vague Word Persistence - Integration Test', () => {
   });
 
   describe('Session completion behavior', () => {
-    it('should NOT complete session when vague words exist in spacing queue', () => {
+    test('should NOT complete session when vague words exist in spacing queue', () => {
       // Simulate useFSRS.ts line 375: allKnown check
       const totalWords = 3;
       const knownWords = 2; // word1, word3 are known
@@ -48,7 +57,7 @@ describe('Vague Word Persistence - Integration Test', () => {
       expect(vagueWordsInSpacing).toBeGreaterThan(0);
     });
 
-    it('should complete session when all vague words are eventually marked known', () => {
+    test('should complete session when all vague words are eventually marked known', () => {
       // Scenario: word2 was vague, but after re-presentation, user marks it known
       const totalWords = 3;
       let knownWords = 2; // Initially: word1, word3
@@ -69,7 +78,7 @@ describe('Vague Word Persistence - Integration Test', () => {
   });
 
   describe('Progress calculation', () => {
-    it('should show progress based on known words only, not vague words', () => {
+    test('should show progress based on known words only, not vague words', () => {
       // useFSRS.ts line 347: progress = (knownWords / totalWords) * 100
       const totalWords = 10;
       const knownWords = 3;
@@ -86,7 +95,7 @@ describe('Vague Word Persistence - Integration Test', () => {
   });
 
   describe('Word state tracking', () => {
-    it('should track word states correctly', () => {
+    test('should track word states correctly', () => {
       interface WordState {
         id: string;
         state: 'unprocessed' | 'known' | 'vague-in-spacing';
@@ -114,7 +123,7 @@ describe('Vague Word Persistence - Integration Test', () => {
   });
 
   describe("Regression test: ensure fix doesn't break known word flow", () => {
-    it('should still persist known words immediately with FSRS due date', () => {
+    test('should still persist known words immediately with FSRS due date', () => {
       const confidence = 'known';
       const shouldPersistImmediately = confidence === 'known';
 
@@ -129,7 +138,7 @@ describe('Vague Word Persistence - Integration Test', () => {
       expect(dueDate).toBe(fsrsCalculatedDueDate);
     });
 
-    it('should increment known counter only for known words', () => {
+    test('should increment known counter only for known words', () => {
       const responses = ['known', 'vague', 'unknown', 'known'];
       let knownCount = 0;
 
@@ -144,7 +153,7 @@ describe('Vague Word Persistence - Integration Test', () => {
   });
 
   describe('Due date preservation', () => {
-    it('should preserve original due date for vague words (no 10-min cooldown)', () => {
+    test('should preserve original due date for vague words (no 10-min cooldown)', () => {
       const originalDueDate = new Date('2025-01-15T10:00:00Z'); // Original due date
       const now = new Date('2025-01-10T12:00:00Z');
 
@@ -163,7 +172,7 @@ describe('Vague Word Persistence - Integration Test', () => {
       expect(dueDate).toEqual(originalDueDate);
     });
 
-    it('should update due date to FSRS-calculated date for known words', () => {
+    test('should update due date to FSRS-calculated date for known words', () => {
       const originalDueDate = new Date('2025-01-15T10:00:00Z');
       const now = new Date('2025-01-10T12:00:00Z');
 
@@ -182,7 +191,7 @@ describe('Vague Word Persistence - Integration Test', () => {
       expect(dueDate).not.toEqual(originalDueDate);
     });
 
-    it('should NOT give vague words 10-minute cooldown', () => {
+    test('should NOT give vague words 10-minute cooldown', () => {
       const now = new Date();
       const confidence = 'vague';
 
@@ -196,7 +205,7 @@ describe('Vague Word Persistence - Integration Test', () => {
       // Vague words don't get cooldown because they're not persisted
     });
 
-    it('should result in 0 due words when all words marked known', () => {
+    test('should result in 0 due words when all words marked known', () => {
       const totalWords = 3;
       const wordStates = [
         { id: 1, confidence: 'known' as const },
@@ -211,7 +220,7 @@ describe('Vague Word Persistence - Integration Test', () => {
       // All known = all persisted with future due dates = 0 due now
     });
 
-    it('should keep words due when session closed with vague words', () => {
+    test('should keep words due when session closed with vague words', () => {
       const totalWords = 3;
       const wordStates = [
         { id: 1, confidence: 'known' as const, originalDue: new Date('2025-01-15') },
@@ -228,7 +237,7 @@ describe('Vague Word Persistence - Integration Test', () => {
       expect(stillDue[0].originalDue).toEqual(new Date('2025-01-10'));
     });
 
-    it('should verify due count decreases correctly based on known words only', () => {
+    test('should verify due count decreases correctly based on known words only', () => {
       interface DueCountScenario {
         initialDueCount: number;
         knownWords: number;

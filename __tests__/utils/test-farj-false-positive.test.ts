@@ -17,11 +17,20 @@
  * of the root "فرج" (farj), not a conjunction.
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, computeColoredSegments } from '@/utils/arabicWordAnalysis';
 
 describe('False positive ف detection in فرج', () => {
-  it('should NOT detect ف as prefix in وَفَرْجُهُ', () => {
+  test('should NOT detect ف as prefix in وَفَرْجُهُ', () => {
     const analysis = analyzeArabicWord('وفرجه', 'and his private parts');
 
     // Should detect only ONE prefix: و (and)
@@ -65,7 +74,7 @@ describe('False positive ف detection in فرج', () => {
     expect(segments[2]?.text).toMatch(/ه/);
   });
 
-  it('should detect ف as conjunction in actual conjunction contexts', () => {
+  test('should detect ف as conjunction in actual conjunction contexts', () => {
     // ف should still work as a conjunction when it's actually a conjunction
     const analysis = analyzeArabicWord('فقال', 'so he said');
 

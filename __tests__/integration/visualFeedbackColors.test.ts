@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Visual Feedback - Background Colors Test
  *
  * Tests that correct background colors are shown based on swipe confidence
@@ -21,7 +30,7 @@ describe('Visual Feedback - Background Colors', () => {
   };
 
   describe('Background color selection', () => {
-    it('should show green background for known word (right swipe, no hesitation)', () => {
+    test('should show green background for known word (right swipe, no hesitation)', () => {
       const isHesitating = false;
       const swipeDirection = 'right';
 
@@ -35,7 +44,7 @@ describe('Visual Feedback - Background Colors', () => {
       expect(endColor).toContain(COLORS.success);
     });
 
-    it('should show orange background for vague word (right swipe, with hesitation)', () => {
+    test('should show orange background for vague word (right swipe, with hesitation)', () => {
       const isHesitating = true;
       const swipeDirection = 'right';
 
@@ -49,7 +58,7 @@ describe('Visual Feedback - Background Colors', () => {
       expect(endColor).toContain(COLORS.warning);
     });
 
-    it('should show red background for unknown word (left swipe)', () => {
+    test('should show red background for unknown word (left swipe)', () => {
       const isHesitating = false; // Doesn't matter for left swipe
       const swipeDirection = 'left';
 
@@ -62,7 +71,7 @@ describe('Visual Feedback - Background Colors', () => {
       expect(endColor).toContain(COLORS.error);
     });
 
-    it('should show transparent background when not swiping', () => {
+    test('should show transparent background when not swiping', () => {
       const translateX = 0; // No swipe
 
       const backgroundColor = translateX === 0 ? COLORS.transparent : COLORS.success;
@@ -72,7 +81,7 @@ describe('Visual Feedback - Background Colors', () => {
   });
 
   describe('Hesitation state affects background color', () => {
-    it('should change from green to orange when hesitation starts mid-swipe', () => {
+    test('should change from green to orange when hesitation starts mid-swipe', () => {
       // Scenario: User starts swiping right, then hesitation timer fires
       let isHesitating = false;
       const swipeDirection = 'right';
@@ -89,7 +98,7 @@ describe('Visual Feedback - Background Colors', () => {
       expect(backgroundColor).toBe(COLORS.warning);
     });
 
-    it('should ALWAYS show red for left swipe, even when hesitating', () => {
+    test('should ALWAYS show red for left swipe, even when hesitating', () => {
       const isHesitating = true;
       const swipeDirection = 'left';
 
@@ -102,7 +111,7 @@ describe('Visual Feedback - Background Colors', () => {
   });
 
   describe('Translation display styling', () => {
-    it('should show translation for vague words WITHOUT red text styling', () => {
+    test('should show translation for vague words WITHOUT red text styling', () => {
       const confidence = 'vague';
       const isHesitating = true;
 
@@ -114,7 +123,7 @@ describe('Visual Feedback - Background Colors', () => {
       expect(shouldShowAsError).toBe(false); // NOT error styling
     });
 
-    it('should show translation for unknown words WITH red text styling', () => {
+    test('should show translation for unknown words WITH red text styling', () => {
       const confidence = 'unknown';
 
       // From useReview.tsx line 284: shouldShowAsError = true
@@ -125,7 +134,7 @@ describe('Visual Feedback - Background Colors', () => {
       expect(isVague).toBe(false);
     });
 
-    it('should NOT show translation for known words', () => {
+    test('should NOT show translation for known words', () => {
       const confidence = 'known';
 
       // From useReview.tsx line 281: returns null for known
@@ -136,7 +145,7 @@ describe('Visual Feedback - Background Colors', () => {
   });
 
   describe('Opacity animation with swipe distance', () => {
-    it('should interpolate background opacity based on swipe distance', () => {
+    test('should interpolate background opacity based on swipe distance', () => {
       const maxTranslation = 100; // Screen width * ratio
       const currentTranslation = 50; // Halfway
 
@@ -145,7 +154,7 @@ describe('Visual Feedback - Background Colors', () => {
       expect(t).toBe(0.5); // 50% of max translation
     });
 
-    it('should cap opacity at 100% when swipe exceeds max translation', () => {
+    test('should cap opacity at 100% when swipe exceeds max translation', () => {
       const maxTranslation = 100;
       const currentTranslation = 150; // Exceeds max
 
@@ -154,7 +163,7 @@ describe('Visual Feedback - Background Colors', () => {
       expect(t).toBe(1); // Capped at 100%
     });
 
-    it('should have 0 opacity when not swiping', () => {
+    test('should have 0 opacity when not swiping', () => {
       const maxTranslation = 100;
       const currentTranslation = 0; // No swipe
 
@@ -165,7 +174,7 @@ describe('Visual Feedback - Background Colors', () => {
   });
 
   describe('Integration: Swipe + Hesitation + Color', () => {
-    it('should show correct color sequence for vague word flow', () => {
+    test('should show correct color sequence for vague word flow', () => {
       // Flow: Word appears → User hesitates → Timer fires → Swipe right → Orange background
       const flow = {
         isHesitating: false,
@@ -189,7 +198,7 @@ describe('Visual Feedback - Background Colors', () => {
       expect(flow.backgroundColor).toBe(COLORS.warning);
     });
 
-    it('should show correct color sequence for known word flow', () => {
+    test('should show correct color sequence for known word flow', () => {
       // Flow: Word appears → User swipes right quickly → Green background
       const flow = {
         isHesitating: false,
@@ -208,7 +217,7 @@ describe('Visual Feedback - Background Colors', () => {
       expect(flow.backgroundColor).toBe(COLORS.success);
     });
 
-    it('should show correct color sequence for unknown word flow', () => {
+    test('should show correct color sequence for unknown word flow', () => {
       // Flow: Word appears → User swipes left → Red background
       const flow = {
         isHesitating: false,

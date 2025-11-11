@@ -1,3 +1,16 @@
+/**
+ * Word Classification Tests
+ *
+ * Tests word classification utilities for FSRS vocabulary.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
@@ -14,7 +27,7 @@ const createStudyWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
 
 describe('wordClassification', () => {
   describe('isStrugglingWord', () => {
-    it('should identify struggling words correctly', () => {
+    test('should identify struggling words correctly', () => {
       const strugglingWord = createStudyWord({
         fsrs_difficulty: 8.5,
         fsrs_lapses: 2,
@@ -25,7 +38,7 @@ describe('wordClassification', () => {
       expect(isStrugglingWord(strugglingWord)).toBe(true);
     });
 
-    it('should not identify normal words as struggling', () => {
+    test('should not identify normal words as struggling', () => {
       const normalWord = createStudyWord({
         fsrs_difficulty: 6.5,
         fsrs_lapses: 0,
@@ -37,7 +50,7 @@ describe('wordClassification', () => {
   });
 
   describe('calculateDueWords', () => {
-    it('should count due words correctly', () => {
+    test('should count due words correctly', () => {
       const now = new Date();
       const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(); // Yesterday
       const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(); // Tomorrow
@@ -51,7 +64,7 @@ describe('wordClassification', () => {
       expect(calculateDueWords(words)).toBe(2); // Past due words only
     });
 
-    it('should handle null due dates', () => {
+    test('should handle null due dates', () => {
       const words = [
         createStudyWord({ fsrs_due: null, fsrs_state: 2 }), // No due date, review state
         createStudyWord({ fsrs_due: null, fsrs_state: 0 }), // No due date, new state (always due)
@@ -62,7 +75,7 @@ describe('wordClassification', () => {
   });
 
   describe('calculateMasteredWords', () => {
-    it('should count mastered words correctly', () => {
+    test('should count mastered words correctly', () => {
       const words = [
         createStudyWord({ fsrs_state: 2, fsrs_stability: 10 }), // Mastered
         createStudyWord({ fsrs_state: 2, fsrs_stability: 3 }), // Not mastered
@@ -74,7 +87,7 @@ describe('wordClassification', () => {
   });
 
   describe('calculateStrugglingWords', () => {
-    it('should count struggling words that have been reviewed (outside cooldown)', () => {
+    test('should count struggling words that have been reviewed (outside cooldown)', () => {
       const now = new Date();
       const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(); // 13 hours ago (beyond 12-hour cooldown)
       const words = [
@@ -103,7 +116,7 @@ describe('wordClassification', () => {
   });
 
   describe('calculateWordCategories', () => {
-    it('should calculate all categories correctly (respecting struggling cooldown)', () => {
+    test('should calculate all categories correctly (respecting struggling cooldown)', () => {
       const now = new Date();
       const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
       const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(); // 13 hours ago (beyond 12-hour cooldown)
@@ -128,7 +141,7 @@ describe('wordClassification', () => {
       expect(result.strugglingWords).toBe(1);
     });
 
-    it('should prioritize dueWords prop over calculated value', () => {
+    test('should prioritize dueWords prop over calculated value', () => {
       const words = [createStudyWord({ fsrs_due: null })]; // No due words
       const result = calculateWordCategories(words, 5); // But prop says 5
 

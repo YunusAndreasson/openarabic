@@ -1,3 +1,16 @@
+/**
+ * Bookmark Service Tests
+ *
+ * Tests the bookmark/reading list service which handles saved articles.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ jest.mocked() for type-safe mocking
+ * - ✅ test.concurrent() for parallel execution
+ * - ✅ @jest/globals explicit imports
+ */
+
+import { describe, test, expect, jest, beforeEach } from '@jest/globals';
+
 import { bookmarkService } from '../../services/bookmark';
 import { checkAuthentication, supabase } from '../../services/supabase';
 import { handleError } from '../../utils/errorHandling';
@@ -23,7 +36,9 @@ jest.mock('../../utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
 
-const fromMock = supabase.from as jest.Mock;
+const fromMock = jest.mocked(supabase.from);
+const mockCheckAuthentication = jest.mocked(checkAuthentication);
+const mockHandleError = jest.mocked(handleError);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -31,13 +46,13 @@ beforeEach(() => {
 
 describe('bookmarkService', () => {
   describe('addToReadingList', () => {
-    it('upserts the article', async () => {
+    test('upserts the article', async () => {
       const upsert = jest.fn().mockResolvedValue({ error: null });
       fromMock.mockReturnValue({ upsert } as FromReturn);
 
       await bookmarkService.addToReadingList('u1', 10);
 
-      expect(checkAuthentication).toHaveBeenCalledWith('u1');
+      expect(mockCheckAuthentication).toHaveBeenCalledWith('u1');
       expect(fromMock).toHaveBeenCalledWith('reading_list');
       expect(upsert).toHaveBeenCalledWith(
         { user_id: 'u1', article_id: 10 },
@@ -73,14 +88,14 @@ describe('bookmarkService', () => {
       expect(list[0]).toEqual(expect.objectContaining({ user_id: 'u1', article_id: 7 }));
     });
 
-    it('handles errors from supabase', async () => {
+    test('handles errors from supabase', async () => {
       const error = new Error('fail');
       const upsert = jest.fn().mockResolvedValue({ error });
       fromMock.mockReturnValue({ upsert } as FromReturn);
 
       await expect(bookmarkService.addToReadingList('u1', 5)).rejects.toThrow(error);
 
-      expect(handleError).toHaveBeenCalledWith(
+      expect(mockHandleError).toHaveBeenCalledWith(
         error,
         expect.objectContaining({ analyticsProperties: { articleId: 5 } }),
       );
@@ -88,7 +103,7 @@ describe('bookmarkService', () => {
   });
 
   describe('removeFromReadingList', () => {
-    it('deletes the entry', async () => {
+    test('deletes the entry', async () => {
       const query: FromReturn = {} as FromReturn;
       query.delete = jest.fn(() => query);
       query.eq = jest.fn(() => query) as any;
@@ -105,7 +120,7 @@ describe('bookmarkService', () => {
   });
 
   describe('isInReadingList', () => {
-    it('returns true when data exists', async () => {
+    test('returns true when data exists', async () => {
       const query: FromReturn = {} as FromReturn;
       query.select = jest.fn(() => query);
       query.eq = jest.fn(() => query) as any;
@@ -117,7 +132,7 @@ describe('bookmarkService', () => {
       expect(query.select).toHaveBeenCalledWith('article_id');
     });
 
-    it('returns false when no data', async () => {
+    test('returns false when no data', async () => {
       const query: FromReturn = {} as FromReturn;
       query.select = jest.fn(() => query);
       query.eq = jest.fn(() => query) as any;
@@ -130,7 +145,7 @@ describe('bookmarkService', () => {
   });
 
   describe('getReadingList', () => {
-    it('fetches articles with select query', async () => {
+    test('fetches articles with select query', async () => {
       const query: FromReturn = {} as FromReturn;
       query.select = jest.fn(() => query);
       query.eq = jest.fn(() => query) as any;
@@ -167,7 +182,7 @@ describe('bookmarkService', () => {
   });
 
   describe('error handling', () => {
-    it('calls handleError when removal fails', async () => {
+    test('calls handleError when removal fails', async () => {
       const error = new Error('bad');
       const query: FromReturn = {} as FromReturn;
       query.delete = jest.fn(() => query);
@@ -177,7 +192,7 @@ describe('bookmarkService', () => {
 
       await expect(bookmarkService.removeFromReadingList('u1', 5)).rejects.toThrow(error);
 
-      expect(handleError).toHaveBeenCalledWith(
+      expect(mockHandleError).toHaveBeenCalledWith(
         error,
         expect.objectContaining({ toastMessage: "Couldn't remove article. Try again" }),
       );

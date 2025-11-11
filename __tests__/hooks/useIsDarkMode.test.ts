@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { renderHook } from '@testing-library/react-native';
 
 import { Theme } from '@/constants/colors';
@@ -17,7 +26,7 @@ describe('useIsDarkMode', () => {
     jest.clearAllMocks();
   });
 
-  it('returns true when theme is dark', () => {
+  test('returns true when theme is dark', () => {
     mockedSelector.mockReturnValue(Theme.Dark);
 
     const { result } = renderHook(() => useIsDarkMode());
@@ -25,7 +34,7 @@ describe('useIsDarkMode', () => {
     expect(result.current).toBe(true);
   });
 
-  it('returns false when theme is light', () => {
+  test('returns false when theme is light', () => {
     mockedSelector.mockReturnValue(Theme.Light);
 
     const { result } = renderHook(() => useIsDarkMode());
@@ -33,7 +42,7 @@ describe('useIsDarkMode', () => {
     expect(result.current).toBe(false);
   });
 
-  it('falls back to system preference when theme is null', () => {
+  test('falls back to system preference when theme is null', () => {
     mockedSelector.mockReturnValue(null);
     mockedUseColorScheme.mockReturnValue('dark');
 
@@ -43,7 +52,7 @@ describe('useIsDarkMode', () => {
     expect(mockedUseColorScheme).toHaveBeenCalled();
   });
 
-  it('returns false for light system preference fallback', () => {
+  test('returns false for light system preference fallback', () => {
     mockedSelector.mockReturnValue(null);
     mockedUseColorScheme.mockReturnValue('light');
 
@@ -52,7 +61,7 @@ describe('useIsDarkMode', () => {
     expect(result.current).toBe(false);
   });
 
-  it('returns false for sepia theme', () => {
+  test('returns false for sepia theme', () => {
     mockedSelector.mockReturnValue(Theme.Sepia);
 
     const { result } = renderHook(() => useIsDarkMode());
@@ -60,7 +69,7 @@ describe('useIsDarkMode', () => {
     expect(result.current).toBe(false);
   });
 
-  it('handles undefined selector return', () => {
+  test('handles undefined selector return', () => {
     mockedSelector.mockReturnValue(undefined);
     mockedUseColorScheme.mockReturnValue('light');
 

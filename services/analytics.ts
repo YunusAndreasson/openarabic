@@ -2,11 +2,34 @@
  * Analytics Service
  * Production-ready Mixpanel integration with silent operation
  *
+ * SILENT-FAILURE DESIGN PATTERN
+ * ==============================
+ * This service is designed to fail silently and never throw errors.
+ * Analytics failures should never crash the app or disrupt user experience.
+ *
+ * Why Silent Failures:
+ * - Analytics is a non-critical feature - user experience takes priority
+ * - Missing MIXPANEL_TOKEN is expected in development/test environments
+ * - Network failures should not block user actions
+ * - Third-party SDK errors should not propagate to app code
+ *
+ * Expected Behavior:
+ * - ✅ Missing token → silent no-op (expected in dev/test)
+ * - ✅ Initialization fails → silent no-op (SDK issues)
+ * - ✅ Network errors → silent no-op (offline mode)
+ * - ✅ Invalid data → silent no-op (malformed properties)
+ * - ❌ NEVER throws exceptions
+ * - ❌ NEVER logs errors in production
+ *
+ * Testing Implications:
+ * - Tests should verify "does not throw" rather than mock internals
+ * - No need to test Mixpanel SDK behavior (third-party responsibility)
+ * - Focus on: method signatures, type safety, error resilience
+ *
  * Features:
  * - Lazy initialization (only when first analytics call is made)
  * - Automatic fallback when Mixpanel is unavailable
  * - Silent success operation (no production logging)
- * - Error logging only in development mode
  * - Type-safe interface
  */
 

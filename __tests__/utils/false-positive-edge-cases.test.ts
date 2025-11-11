@@ -7,13 +7,20 @@
  * 3. Demonstrative suffixes on non-demonstrative words
  *
  * These tests document expected behavior and provide regression protection.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
  */
+
+import { describe, expect, test } from '@jest/globals';
 
 import { analyzeArabicWord } from '../../utils/arabicWordAnalysis';
 
 describe('False Positive Edge Cases', () => {
   describe('Short Root Words (should NOT over-parse)', () => {
-    it('should not over-parse short root words starting with و', () => {
+    test('should not over-parse short root words starting with و', () => {
       // These are root words, not prefix + remainder
       const tests = [
         {
@@ -53,7 +60,7 @@ describe('False Positive Edge Cases', () => {
       });
     });
 
-    it('should not over-parse short root words starting with ف', () => {
+    test('should not over-parse short root words starting with ف', () => {
       const tests = [
         {
           arabic: 'فرق',
@@ -81,7 +88,7 @@ describe('False Positive Edge Cases', () => {
       });
     });
 
-    it('should correctly detect conjunctions when English confirms them', () => {
+    test('should correctly detect conjunctions when English confirms them', () => {
       // These SHOULD be parsed because English contains conjunction words
       const tests = [
         {
@@ -108,7 +115,7 @@ describe('False Positive Edge Cases', () => {
   });
 
   describe('Internal Alif/Yaa Verification (should NEVER be infixes)', () => {
-    it('should NOT detect internal alif as infix', () => {
+    test('should NOT detect internal alif as infix', () => {
       // Critical: After our fix, these should NEVER show infix matches
       const tests = [
         { arabic: 'قال', english: 'he said' },
@@ -129,7 +136,7 @@ describe('False Positive Edge Cases', () => {
       });
     });
 
-    it('should NOT detect internal yaa as infix', () => {
+    test('should NOT detect internal yaa as infix', () => {
       const tests = [
         { arabic: 'بيت', english: 'house' },
         { arabic: 'زيت', english: 'oil' },
@@ -146,7 +153,7 @@ describe('False Positive Edge Cases', () => {
       });
     });
 
-    it('should detect other infixes correctly (not alif/yaa)', () => {
+    test('should detect other infixes correctly (not alif/yaa)', () => {
       // These legitimate infixes should still work
       const tests = [
         {
@@ -174,7 +181,7 @@ describe('False Positive Edge Cases', () => {
   });
 
   describe('Multi-Word vs Single-Word Analysis', () => {
-    it('should NOT color-code single-word English translations', () => {
+    test('should NOT color-code single-word English translations', () => {
       // Single English words should never have color-coding
       const tests = [
         { arabic: 'والبيت', english: 'house' }, // Not "and house"
@@ -191,7 +198,7 @@ describe('False Positive Edge Cases', () => {
       });
     });
 
-    it('should color-code multi-word English translations', () => {
+    test('should color-code multi-word English translations', () => {
       const tests = [
         {
           arabic: 'والبيت',
@@ -226,7 +233,7 @@ describe('False Positive Edge Cases', () => {
   });
 
   describe('Demonstrative Suffix Edge Cases', () => {
-    it('should not falsely detect demonstratives as suffixes', () => {
+    test('should not falsely detect demonstratives as suffixes', () => {
       // Words that end with demonstrative letter sequences but aren't demonstratives
       const tests = [
         {
@@ -259,7 +266,7 @@ describe('False Positive Edge Cases', () => {
   });
 
   describe('Validation Logic Verification', () => {
-    it('should enforce minimum remaining length for prefixes', () => {
+    test('should enforce minimum remaining length for prefixes', () => {
       // Test that MIN_REMAINING_LENGTH (3 chars) is enforced
       const shortWord = 'يُحب'; // "he loves" - only 2 chars after ي
 
@@ -269,7 +276,7 @@ describe('False Positive Edge Cases', () => {
       expect(analysis.prefixes.find(p => p.arabicMatch === 'ي')).toBeUndefined();
     });
 
-    it('should accept valid prefix when remaining length is sufficient', () => {
+    test('should accept valid prefix when remaining length is sufficient', () => {
       const validWord = 'يُكتب'; // "he was writing" - 3 chars after ي
 
       const analysis = analyzeArabicWord(validWord, 'he was writing');
@@ -278,7 +285,7 @@ describe('False Positive Edge Cases', () => {
       expect(analysis.prefixes.some(p => p.arabicMatch === 'ي')).toBe(true);
     });
 
-    it('should require English match for component detection', () => {
+    test('should require English match for component detection', () => {
       // Prefix exists in Arabic but English doesn't contain trigger word
       const tests = [
         {
@@ -307,7 +314,7 @@ describe('False Positive Edge Cases', () => {
   });
 
   describe('Summary Statistics', () => {
-    it('should report overall false positive findings', () => {
+    test('should report overall false positive findings', () => {
       const allTests = [
         // Short root words
         { arabic: 'ولد', english: 'boy' },

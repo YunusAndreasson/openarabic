@@ -13,10 +13,19 @@
  * - remainingEnglish should be "one who" (not "the one who")
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('remainingEnglish calculation', () => {
-  it('should remove prefix words from English in الذي (the one who)', () => {
+  test('should remove prefix words from English in الذي (the one who)', () => {
     const analysis = analyzeArabicWord('الذي', 'the one who');
 
     // Prefix "ال" matches "the"
@@ -31,7 +40,7 @@ describe('remainingEnglish calculation', () => {
     expect(analysis.remainingEnglish.toLowerCase()).toBe(expectedRemaining);
   });
 
-  it('should remove suffix words from English in كتابه (his book)', () => {
+  test('should remove suffix words from English in كتابه (his book)', () => {
     const analysis = analyzeArabicWord('كتابه', 'his book');
 
     // Suffix "ه" matches "his"
@@ -44,7 +53,7 @@ describe('remainingEnglish calculation', () => {
     expect(analysis.remainingEnglish.toLowerCase()).toBe('book');
   });
 
-  it('should remove both prefix and suffix words in وكتابه (and his book)', () => {
+  test('should remove both prefix and suffix words in وكتابه (and his book)', () => {
     const analysis = analyzeArabicWord('وكتابه', 'and his book');
 
     // Prefix "و" matches "and"
@@ -60,7 +69,7 @@ describe('remainingEnglish calculation', () => {
     expect(analysis.remainingEnglish.toLowerCase()).toBe('book');
   });
 
-  it('should handle words with only prefixes like في (in)', () => {
+  test('should handle words with only prefixes like في (in)', () => {
     const analysis = analyzeArabicWord('في', 'in');
 
     // This is just a preposition - no root remaining

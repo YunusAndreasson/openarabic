@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
@@ -57,7 +66,7 @@ describe('OAuth Race Condition Prevention', () => {
   });
 
   describe('Race Condition Scenario', () => {
-    it('should prevent double login by waiting for deferred session state update', async () => {
+    test('should prevent double login by waiting for deferred session state update', async () => {
       /**
        * This test simulates the exact race condition that was fixed:
        *
@@ -123,7 +132,7 @@ describe('OAuth Race Condition Prevention', () => {
       expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle timeout gracefully if event never fires', async () => {
+    test('should handle timeout gracefully if event never fires', async () => {
       /**
        * Tests graceful degradation - if the event doesn't fire within timeout,
        * we still navigate (better than being stuck on login screen)
@@ -154,7 +163,7 @@ describe('OAuth Race Condition Prevention', () => {
       expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
     });
 
-    it('should not block navigation if event fires immediately', async () => {
+    test('should not block navigation if event fires immediately', async () => {
       /**
        * Tests the case where the event fires very quickly (< 10ms)
        * This can happen if the session was already in localStorage
@@ -194,7 +203,7 @@ describe('OAuth Race Condition Prevention', () => {
       expect(elapsedTime).toBeLessThan(100);
     });
 
-    it('should ignore wrong event types', async () => {
+    test('should ignore wrong event types', async () => {
       /**
        * Tests that we only resolve on SIGNED_IN, not other events like TOKEN_REFRESHED
        */
@@ -240,7 +249,7 @@ describe('OAuth Race Condition Prevention', () => {
   });
 
   describe('Integration with OAuth flow', () => {
-    it('demonstrates the complete OAuth flow with waitForAuthEvent', async () => {
+    test('demonstrates the complete OAuth flow with waitForAuthEvent', async () => {
       /**
        * This test documents the full OAuth flow:
        * 1. OAuth provider returns ID token

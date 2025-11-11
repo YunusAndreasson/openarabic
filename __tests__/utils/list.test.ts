@@ -1,8 +1,21 @@
+/**
+ * List Utils Tests
+ *
+ * Tests list utility functions for array operations.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { shuffleArray } from '@/utils/list';
 
 describe('list utilities', () => {
   describe('shuffleArray', () => {
-    it('should return a new array without modifying the original', () => {
+    test('should return a new array without modifying the original', () => {
       const original = [1, 2, 3, 4, 5];
       const shuffled = shuffleArray(original);
 
@@ -10,7 +23,7 @@ describe('list utilities', () => {
       expect(original).toEqual([1, 2, 3, 4, 5]);
     });
 
-    it('should return an array with the same elements', () => {
+    test('should return an array with the same elements', () => {
       const original = ['a', 'b', 'c', 'd'];
       const shuffled = shuffleArray(original);
 
@@ -18,7 +31,7 @@ describe('list utilities', () => {
       expect(shuffled.sort()).toEqual(original.sort());
     });
 
-    it('should handle empty arrays', () => {
+    test('should handle empty arrays', () => {
       const original: number[] = [];
       const shuffled = shuffleArray(original);
 
@@ -26,7 +39,7 @@ describe('list utilities', () => {
       expect(shuffled).not.toBe(original);
     });
 
-    it('should handle single element arrays', () => {
+    test('should handle single element arrays', () => {
       const original = [42];
       const shuffled = shuffleArray(original);
 
@@ -34,7 +47,7 @@ describe('list utilities', () => {
       expect(shuffled).not.toBe(original);
     });
 
-    it('should produce different orders on multiple calls (statistical test)', () => {
+    test('should produce different orders on multiple calls (statistical test)', () => {
       const original = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
       const results = new Set();
 

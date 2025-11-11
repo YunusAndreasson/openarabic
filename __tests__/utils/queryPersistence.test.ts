@@ -1,3 +1,16 @@
+/**
+ * Query Persistence Tests
+ *
+ * Tests React Query persistence configuration and shouldDehydrateQuery logic.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: jest.mocked() not needed - inline mock pattern used
+ */
+
+import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+
 import { PERSISTENCE_OPTIONS, queryPersister } from '@/utils/queryPersistence';
 
 // Capture options passed into the persister factory
@@ -34,7 +47,7 @@ describe('Query Persistence', () => {
   });
 
   describe('queryPersister', () => {
-    it('should expose public API and be configured with correct options', () => {
+    test('should expose public API and be configured with correct options', () => {
       // Public API shape
       expect(typeof (queryPersister as any).persistClient).toBe('function');
       expect(typeof (queryPersister as any).restoreClient).toBe('function');
@@ -51,7 +64,7 @@ describe('Query Persistence', () => {
   });
 
   describe('PERSISTENCE_OPTIONS', () => {
-    it('should have correct configuration', () => {
+    test('should have correct configuration', () => {
       expect(PERSISTENCE_OPTIONS.persister).toBe(queryPersister);
       expect(PERSISTENCE_OPTIONS.maxAge).toBe(1000 * 60 * 60 * 24 * 7); // 7 days
       expect(PERSISTENCE_OPTIONS.dehydrateOptions).toBeDefined();
@@ -63,70 +76,70 @@ describe('Query Persistence', () => {
     const shouldDehydrateQuery = PERSISTENCE_OPTIONS.dehydrateOptions.shouldDehydrateQuery;
 
     describe('static data keys', () => {
-      it('should persist categories query', () => {
+      test('should persist categories query', () => {
         const query = createMockQuery(['categories']);
         expect(shouldDehydrateQuery(query)).toBe(true);
       });
 
-      it('should persist authors query', () => {
+      test('should persist authors query', () => {
         const query = createMockQuery(['authors']);
         expect(shouldDehydrateQuery(query)).toBe(true);
       });
 
-      it('should persist articles query', () => {
+      test('should persist articles query', () => {
         const query = createMockQuery(['articles']);
         expect(shouldDehydrateQuery(query)).toBe(true);
       });
     });
 
     describe('filtered article keys', () => {
-      it('should persist filtered-articles query', () => {
+      test('should persist filtered-articles query', () => {
         const query = createMockQuery(['filtered-articles', { category: 1 }]);
         expect(shouldDehydrateQuery(query)).toBe(true);
       });
     });
 
     describe('user data keys', () => {
-      it('should NOT persist readingList query (user-specific & auth-dependent)', () => {
+      test('should NOT persist readingList query (user-specific & auth-dependent)', () => {
         const query = createMockQuery(['readingList', 'user-123']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
     });
 
     describe('reading progress keys', () => {
-      it('should NOT persist reading-progress-bulk query (excluded to prevent HMR hydration errors)', () => {
+      test('should NOT persist reading-progress-bulk query (excluded to prevent HMR hydration errors)', () => {
         const query = createMockQuery(['reading-progress-bulk', 'user-123']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
     });
 
     describe('vocabulary keys', () => {
-      it('should persist fsrs-words query without userId (fallback queries)', () => {
+      test('should persist fsrs-words query without userId (fallback queries)', () => {
         const query = createMockQuery(['fsrs-words']);
         expect(shouldDehydrateQuery(query)).toBe(true);
       });
 
-      it('should NOT persist fsrs-words query with userId (user-specific)', () => {
+      test('should NOT persist fsrs-words query with userId (user-specific)', () => {
         const query = createMockQuery(['fsrs-words', 'f6020b4d-9c1d-4002-afd6-33eee6ce4c25']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist fsrs-words query with "due" pattern', () => {
+      test('should NOT persist fsrs-words query with "due" pattern', () => {
         const query = createMockQuery(['fsrs-words', 'user-123', 'due']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist fsrs-words query with "live" pattern', () => {
+      test('should NOT persist fsrs-words query with "live" pattern', () => {
         const query = createMockQuery(['fsrs-words', 'user-123', 'live']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist fsrs-words query with "cooldown" pattern', () => {
+      test('should NOT persist fsrs-words query with "cooldown" pattern', () => {
         const query = createMockQuery(['fsrs-words', 'user-123', 'all', 'cooldown', 1]);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist fsrs-words stats query with userId', () => {
+      test('should NOT persist fsrs-words stats query with userId', () => {
         const query = createMockQuery([
           'fsrs-words',
           'f6020b4d-9c1d-4002-afd6-33eee6ce4c25',
@@ -137,41 +150,41 @@ describe('Query Persistence', () => {
     });
 
     describe('excluded keys', () => {
-      it('should NOT persist isInReadingList query', () => {
+      test('should NOT persist isInReadingList query', () => {
         const query = createMockQuery(['isInReadingList', 'user-123', 1]);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist enhancedAudioTracks query', () => {
+      test('should NOT persist enhancedAudioTracks query', () => {
         const query = createMockQuery(['enhancedAudioTracks', 1]);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist struggling-words query', () => {
+      test('should NOT persist struggling-words query', () => {
         const query = createMockQuery(['struggling-words', 'user-123']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
     });
 
     describe('excluded patterns', () => {
-      it('should NOT persist queries with "due" pattern in any position', () => {
+      test('should NOT persist queries with "due" pattern in any position', () => {
         const query = createMockQuery(['some-key', 'due', 'user-123']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist queries with "live" pattern in any position', () => {
+      test('should NOT persist queries with "live" pattern in any position', () => {
         const query = createMockQuery(['some-key', 'user-123', 'live']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist queries with "cooldown" pattern in any position', () => {
+      test('should NOT persist queries with "cooldown" pattern in any position', () => {
         const query = createMockQuery(['some-key', 'user-123', 'cooldown', 2]);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
     });
 
     describe('query status checks', () => {
-      it('should NOT persist queries without success status', () => {
+      test('should NOT persist queries without success status', () => {
         const query = {
           queryKey: ['categories'],
           queryHash: JSON.stringify(['categories']),
@@ -180,7 +193,7 @@ describe('Query Persistence', () => {
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist queries with error status', () => {
+      test('should NOT persist queries with error status', () => {
         const query = {
           queryKey: ['categories'],
           queryHash: JSON.stringify(['categories']),
@@ -189,7 +202,7 @@ describe('Query Persistence', () => {
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist queries with pending status', () => {
+      test('should NOT persist queries with pending status', () => {
         const query = {
           queryKey: ['categories'],
           queryHash: JSON.stringify(['categories']),
@@ -200,12 +213,12 @@ describe('Query Persistence', () => {
     });
 
     describe('default behavior', () => {
-      it('should NOT persist unknown query keys by default', () => {
+      test('should NOT persist unknown query keys by default', () => {
         const query = createMockQuery(['unknown-key']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });
 
-      it('should NOT persist arbitrary nested keys', () => {
+      test('should NOT persist arbitrary nested keys', () => {
         const query = createMockQuery(['some', 'random', 'query']);
         expect(shouldDehydrateQuery(query)).toBe(false);
       });

@@ -14,11 +14,20 @@
  * The "ي" should be part of the prefix, not a root.
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, computeColoredSegments } from '@/utils/arabicWordAnalysis';
 
 describe('إِلَيْهِ prefix detection', () => {
-  it('should debug the normalized form', () => {
+  test('should debug the normalized form', () => {
     const word = 'إِلَيْهِ';
     const constantYaaForm = 'إلي'; // From constants - with regular yaa (ي U+064A)
     const constantMaksuraForm = 'إلى'; // From constants - with alef maksura (ى U+0649)
@@ -35,7 +44,7 @@ describe('إِلَيْهِ prefix detection', () => {
     expect(matchesMaksura).toBe(false); // Should NOT match إلى
   });
 
-  it('should detect إلى as full prefix for إِلَيْهِ', () => {
+  test('should detect إلى as full prefix for إِلَيْهِ', () => {
     const analysis = analyzeArabicWord('إِلَيْهِ', 'to it');
 
     // Should detect "إلي" (3 letters with regular yaa ي) as prefix, NOT "إل" (2 letters)

@@ -141,6 +141,7 @@ module.exports = [
       'translate/',
       'admin-dashboard/',
       'scripts/',
+      'coverage/',
     ],
   },
   prettierConfig,

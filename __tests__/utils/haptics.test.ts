@@ -1,3 +1,16 @@
+/**
+ * Haptics Tests
+ *
+ * Tests haptic feedback debouncing logic.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - uses fake timers
+ * - Note: No jest.mocked() needed - inline mock pattern
+ */
+
+import { beforeEach, afterEach, describe, expect, test, jest } from '@jest/globals';
+
 import { selectionFeedback } from '@/utils/haptics';
 
 // Keep inline mock for this test since it needs direct access to jest.fn() instances for assertions
@@ -20,7 +33,7 @@ describe('haptics - debounce', () => {
     jest.useRealTimers();
   });
 
-  it('prevents double selectionFeedback within debounce window', () => {
+  test('prevents double selectionFeedback within debounce window', () => {
     const { selectionAsync } = require('expo-haptics');
 
     selectionFeedback();

@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Integration test to reproduce the "stuck button" bug in study list management
  *
  * BUG REPRODUCTION:
@@ -110,7 +119,7 @@ describe('Study List Button State - Bug Reproduction', () => {
   });
 
   describe('BUG: Add → Remove → Add Again Flow', () => {
-    it('should correctly toggle button state through multiple add/remove cycles', async () => {
+    test('should correctly toggle button state through multiple add/remove cycles', async () => {
       // SETUP: Start with empty study list
       queryClient.setQueryData(FSRS_QUERY_KEYS.all(mockUserId), []);
       queryClient.setQueryData(FSRS_QUERY_KEYS.allWithCooldown(mockUserId, 24), []);
@@ -186,7 +195,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       expect(afterSecondAdd?.some(w => w.root_id === mockRootId)).toBe(true);
     });
 
-    it('should maintain correct local state map through multiple toggles', async () => {
+    test('should maintain correct local state map through multiple toggles', async () => {
       // SETUP: Start with empty study list
       queryClient.setQueryData(FSRS_QUERY_KEYS.all(mockUserId), []);
       queryClient.setQueryData(FSRS_QUERY_KEYS.allWithCooldown(mockUserId, 24), []);
@@ -229,7 +238,7 @@ describe('Study List Button State - Bug Reproduction', () => {
   });
 
   describe('Cache and Local State Synchronization', () => {
-    it('should prioritize local state over query cache when both exist', async () => {
+    test('should prioritize local state over query cache when both exist', async () => {
       // SETUP: Word exists in cache but local state says it was removed
       const existingWord = createStudyWord(mockRootId);
       queryClient.setQueryData(FSRS_QUERY_KEYS.all(mockUserId), [existingWord]);
@@ -253,7 +262,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       // but may use stale cache data instead
     });
 
-    it('should handle rapid toggles without state desync', async () => {
+    test('should handle rapid toggles without state desync', async () => {
       queryClient.setQueryData(FSRS_QUERY_KEYS.all(mockUserId), []);
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -281,7 +290,7 @@ describe('Study List Button State - Bug Reproduction', () => {
   });
 
   describe('Query Cache Invalidation Timing', () => {
-    it('should invalidate all related queries after successful toggle', async () => {
+    test('should invalidate all related queries after successful toggle', async () => {
       queryClient.setQueryData(FSRS_QUERY_KEYS.all(mockUserId), []);
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -325,7 +334,7 @@ describe('Study List Button State - Bug Reproduction', () => {
   });
 
   describe('Error Rollback Behavior', () => {
-    it('should rollback optimistic update if mutation fails', async () => {
+    test('should rollback optimistic update if mutation fails', async () => {
       // SETUP: Word already in study list
       const existingWord = createStudyWord(mockRootId);
       queryClient.setQueryData(FSRS_QUERY_KEYS.allWithCooldown(mockUserId, 24), [existingWord]);

@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Session Completion Flow - Integration Tests
  *
  * Tests the complete practice session lifecycle from start to completion.
@@ -24,7 +33,7 @@ describe('Session Completion Flow - Integration Test', () => {
   }
 
   describe('Completion triggers', () => {
-    it('should complete session when all words are marked known', () => {
+    test('should complete session when all words are marked known', () => {
       const session = {
         totalWords: 3,
         knownWords: 0,
@@ -46,7 +55,7 @@ describe('Session Completion Flow - Integration Test', () => {
       expect(session.isComplete).toBe(true);
     });
 
-    it('should NOT complete when vague words remain in spacing queue', () => {
+    test('should NOT complete when vague words remain in spacing queue', () => {
       const session = {
         totalWords: 3,
         knownWords: 2,
@@ -64,7 +73,7 @@ describe('Session Completion Flow - Integration Test', () => {
       expect(correctComplete).toBe(false); // Should NOT complete (correct)
     });
 
-    it('should eventually complete when vague words are re-reviewed as known', () => {
+    test('should eventually complete when vague words are re-reviewed as known', () => {
       const session = {
         totalWords: 3,
         knownWords: 2,
@@ -85,7 +94,7 @@ describe('Session Completion Flow - Integration Test', () => {
       expect(session.vagueWordsInSpacing).toBe(0);
     });
 
-    it('should handle session with only unknown words eventually completing', () => {
+    test('should handle session with only unknown words eventually completing', () => {
       const session = {
         totalWords: 2,
         knownWords: 0,
@@ -102,7 +111,7 @@ describe('Session Completion Flow - Integration Test', () => {
   });
 
   describe('Session metrics tracking', () => {
-    it('should track wordsReviewed, wordsKnown, wordsVague, wordsUnknown correctly', () => {
+    test('should track wordsReviewed, wordsKnown, wordsVague, wordsUnknown correctly', () => {
       const metrics: SessionMetrics = {
         wordsReviewed: 0,
         wordsKnown: 0,
@@ -145,7 +154,7 @@ describe('Session Completion Flow - Integration Test', () => {
       });
     });
 
-    it('should track current streak and longest streak correctly', () => {
+    test('should track current streak and longest streak correctly', () => {
       const metrics: SessionMetrics = {
         wordsReviewed: 0,
         wordsKnown: 0,
@@ -185,7 +194,7 @@ describe('Session Completion Flow - Integration Test', () => {
       expect(metrics.longestStreak).toBe(2); // Still 2
     });
 
-    it('should track mastered words (stability >= 5 days)', () => {
+    test('should track mastered words (stability >= 5 days)', () => {
       const words = [
         { id: 1, stability: 3 }, // Not mastered
         { id: 2, stability: 4 }, // Will be mastered after known review
@@ -205,7 +214,7 @@ describe('Session Completion Flow - Integration Test', () => {
       expect(masteredWords).toBe(2); // Words 2 and 3
     });
 
-    it('should calculate average stability increase', () => {
+    test('should calculate average stability increase', () => {
       interface WordReview {
         stability: number;
         confidence: 'known' | 'vague' | 'unknown';
@@ -239,7 +248,7 @@ describe('Session Completion Flow - Integration Test', () => {
   });
 
   describe('Completion screen data', () => {
-    it('should provide all required metrics for completion screen', () => {
+    test('should provide all required metrics for completion screen', () => {
       const sessionMetrics: SessionMetrics = {
         wordsReviewed: 10,
         wordsKnown: 7,
@@ -267,7 +276,7 @@ describe('Session Completion Flow - Integration Test', () => {
       expect(totalProcessed).toBe(sessionMetrics.wordsReviewed);
     });
 
-    it('should show session duration in completion metrics', () => {
+    test('should show session duration in completion metrics', () => {
       const startTime = Date.now();
       const endTime = startTime + 120000; // 2 minutes later
 
@@ -281,7 +290,7 @@ describe('Session Completion Flow - Integration Test', () => {
   });
 
   describe('Query invalidation after completion', () => {
-    it('should invalidate FSRS queries when session completes', () => {
+    test('should invalidate FSRS queries when session completes', () => {
       const invalidatedQueries: string[] = [];
 
       function invalidateQuery(queryKey: string): void {
@@ -306,7 +315,7 @@ describe('Session Completion Flow - Integration Test', () => {
       expect(invalidatedQueries).toContain(`fsrs-words-due-${userId}`);
     });
 
-    it('should refetch queries after invalidation to update UI', () => {
+    test('should refetch queries after invalidation to update UI', () => {
       const refetchedQueries: string[] = [];
 
       function refetchQuery(queryKey: string): void {
@@ -324,7 +333,7 @@ describe('Session Completion Flow - Integration Test', () => {
   });
 
   describe('Edge cases', () => {
-    it('should handle empty session (0 words)', () => {
+    test('should handle empty session (0 words)', () => {
       const session = {
         totalWords: 0,
         knownWords: 0,
@@ -334,7 +343,7 @@ describe('Session Completion Flow - Integration Test', () => {
       expect(isComplete).toBe(true); // Vacuously true
     });
 
-    it('should handle session with all words immediately known', () => {
+    test('should handle session with all words immediately known', () => {
       const session = {
         totalWords: 5,
         knownWords: 5,
@@ -358,7 +367,7 @@ describe('Session Completion Flow - Integration Test', () => {
       expect(metrics.wordsVague + metrics.wordsUnknown).toBe(0);
     });
 
-    it('should handle session with all words unknown → vague → known progression', () => {
+    test('should handle session with all words unknown → vague → known progression', () => {
       const session = {
         totalWords: 1,
         reviewCount: 0,

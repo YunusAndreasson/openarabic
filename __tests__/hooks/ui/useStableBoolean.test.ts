@@ -1,3 +1,12 @@
+/**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { act, renderHook } from '@testing-library/react-native';
 import { describe, expect, it, jest } from '@jest/globals';
 
@@ -13,12 +22,12 @@ describe('useStableBoolean', () => {
     jest.useRealTimers();
   });
 
-  it('should initialize with the provided value', () => {
+  test('should initialize with the provided value', () => {
     const { result } = renderHook(() => useStableBoolean(true));
     expect(result.current).toBe(true);
   });
 
-  it('should delay updating the value', () => {
+  test('should delay updating the value', () => {
     const { result, rerender } = renderHook(({ value }) => useStableBoolean(value), {
       initialProps: { value: false },
     });
@@ -40,7 +49,7 @@ describe('useStableBoolean', () => {
     expect(result.current).toBe(true);
   });
 
-  it('should cancel pending updates when value changes again', () => {
+  test('should cancel pending updates when value changes again', () => {
     const { result, rerender } = renderHook(({ value }) => useStableBoolean(value), {
       initialProps: { value: false },
     });
@@ -61,7 +70,7 @@ describe('useStableBoolean', () => {
     expect(result.current).toBe(false);
   });
 
-  it('should use custom delay', () => {
+  test('should use custom delay', () => {
     const { result, rerender } = renderHook(({ value, delay }) => useStableBoolean(value, delay), {
       initialProps: { value: false, delay: 500 },
     });

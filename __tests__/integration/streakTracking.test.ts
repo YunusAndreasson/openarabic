@@ -1,4 +1,13 @@
 /**
+ * Integration Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * Integration test: Streak tracking with word updates
  *
  * Tests the full flow:
@@ -144,7 +153,7 @@ describe('Streak Tracking Integration', () => {
   };
 
   describe('1-Day Streak', () => {
-    it('should show 1-day streak after first practice session', async () => {
+    test('should show 1-day streak after first practice session', async () => {
       const today = new Date();
 
       // Simulate completing a session today
@@ -164,7 +173,7 @@ describe('Streak Tracking Integration', () => {
   });
 
   describe('2-Day Streak', () => {
-    it('should show 2-day streak after practicing 2 consecutive days', async () => {
+    test('should show 2-day streak after practicing 2 consecutive days', async () => {
       const today = new Date();
       const yesterday = daysAgo(1);
 
@@ -185,7 +194,7 @@ describe('Streak Tracking Integration', () => {
   });
 
   describe('3-Day Streak', () => {
-    it('should show 3-day streak after practicing 3 consecutive days', async () => {
+    test('should show 3-day streak after practicing 3 consecutive days', async () => {
       const today = new Date();
       const yesterday = daysAgo(1);
       const twoDaysAgo = daysAgo(2);
@@ -206,7 +215,7 @@ describe('Streak Tracking Integration', () => {
   });
 
   describe('4-Day Streak', () => {
-    it('should show 4-day streak after practicing 4 consecutive days', async () => {
+    test('should show 4-day streak after practicing 4 consecutive days', async () => {
       const reviewDates = [daysAgo(3), daysAgo(2), daysAgo(1), new Date()];
 
       for (const date of reviewDates) {
@@ -225,7 +234,7 @@ describe('Streak Tracking Integration', () => {
   });
 
   describe('5-Day Streak', () => {
-    it('should show 5-day streak after practicing 5 consecutive days', async () => {
+    test('should show 5-day streak after practicing 5 consecutive days', async () => {
       const reviewDates = [daysAgo(4), daysAgo(3), daysAgo(2), daysAgo(1), new Date()];
 
       for (const date of reviewDates) {
@@ -244,7 +253,7 @@ describe('Streak Tracking Integration', () => {
   });
 
   describe('10+ Day Streak', () => {
-    it('should correctly calculate streaks longer than 10 days', async () => {
+    test('should correctly calculate streaks longer than 10 days', async () => {
       const reviewDates = Array.from({ length: 15 }, (_, i) => daysAgo(14 - i));
 
       for (const date of reviewDates) {
@@ -261,7 +270,7 @@ describe('Streak Tracking Integration', () => {
       expect(streak.totalReadingDays).toBe(15);
     });
 
-    it('should handle 30-day streak', async () => {
+    test('should handle 30-day streak', async () => {
       const reviewDates = Array.from({ length: 30 }, (_, i) => daysAgo(29 - i));
 
       for (const date of reviewDates) {
@@ -280,7 +289,7 @@ describe('Streak Tracking Integration', () => {
   });
 
   describe('Streak Breaks', () => {
-    it('should reset streak to 1 after missing a day', async () => {
+    test('should reset streak to 1 after missing a day', async () => {
       const today = new Date();
       const threeDaysAgo = daysAgo(3);
 
@@ -301,7 +310,7 @@ describe('Streak Tracking Integration', () => {
       expect(streak.totalReadingDays).toBe(2);
     });
 
-    it('should maintain longest streak when current streak breaks', async () => {
+    test('should maintain longest streak when current streak breaks', async () => {
       const reviewDates = [
         // First streak: 5 days
         daysAgo(10),
@@ -333,7 +342,7 @@ describe('Streak Tracking Integration', () => {
   });
 
   describe('Streak Incrementing Behavior', () => {
-    it('should increment from 1 to 2 days when practicing on consecutive days', async () => {
+    test('should increment from 1 to 2 days when practicing on consecutive days', async () => {
       const yesterday = daysAgo(1);
       const today = new Date();
 
@@ -354,7 +363,7 @@ describe('Streak Tracking Integration', () => {
       expect(streak.currentStreak).toBe(2);
     });
 
-    it('should increment through multiple consecutive days (1→2→3→4→5)', async () => {
+    test('should increment through multiple consecutive days (1→2→3→4→5)', async () => {
       const dates: Date[] = [];
       // Start from today and work backwards to build consecutive streak
       const expectedStreaks = [1, 2, 3, 4, 5];
@@ -376,7 +385,7 @@ describe('Streak Tracking Integration', () => {
   });
 
   describe('Multiple Words Same Day', () => {
-    it('should count as 1 day even if multiple words reviewed same day', async () => {
+    test('should count as 1 day even if multiple words reviewed same day', async () => {
       const today = new Date();
       const timestamp = today.toISOString();
 

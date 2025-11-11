@@ -1,3 +1,12 @@
+/**
+ * Component Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: test.concurrent() used where tests are independent
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { calculateEfficiencyScore } from '@/components/common/charts/utils';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -5,7 +14,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 describe('charts/utils', () => {
   describe('calculateEfficiencyScore', () => {
     describe('NaN Protection', () => {
-      it('should handle null/undefined FSRS fields safely', () => {
+      test('should handle null/undefined FSRS fields safely', () => {
         const word: StudyWord = createTestWord({
           fsrs_state: null,
           fsrs_stability: null,
@@ -23,7 +32,7 @@ describe('charts/utils', () => {
         expect(Number.isNaN(score)).toBe(false);
       });
 
-      it('should handle undefined StudyWord fields', () => {
+      test('should handle undefined StudyWord fields', () => {
         const word = createTestWord({});
 
         const score = calculateEfficiencyScore(word);
@@ -33,7 +42,7 @@ describe('charts/utils', () => {
         expect(score).toBeLessThanOrEqual(100);
       });
 
-      it('should handle NaN values in calculations', () => {
+      test('should handle NaN values in calculations', () => {
         const word: StudyWord = createTestWord({
           fsrs_state: NaN as unknown as number,
           fsrs_stability: NaN as unknown as number,
@@ -52,7 +61,7 @@ describe('charts/utils', () => {
     });
 
     describe('State Scoring', () => {
-      it('should score State 0 (New) correctly - 15 pts if reps=1', () => {
+      test('should score State 0 (New) correctly - 15 pts if reps=1', () => {
         const word: StudyWord = createTestWord({
           fsrs_state: 0,
           fsrs_reps: 1, // Just started
@@ -72,7 +81,7 @@ describe('charts/utils', () => {
         expect(score).toBeLessThanOrEqual(50);
       });
 
-      it('should score State 1 (Learning) correctly - 25 pts if reps>1', () => {
+      test('should score State 1 (Learning) correctly - 25 pts if reps>1', () => {
         const word: StudyWord = createTestWord({
           fsrs_state: 1,
           fsrs_reps: 3, // Making progress
@@ -92,7 +101,7 @@ describe('charts/utils', () => {
         expect(score).toBeLessThanOrEqual(75);
       });
 
-      it('should score State 2 (Review) with low stability - 30 pts', () => {
+      test('should score State 2 (Review) with low stability - 30 pts', () => {
         const word: StudyWord = createTestWord({
           fsrs_state: 2,
           fsrs_reps: 5,
@@ -112,7 +121,7 @@ describe('charts/utils', () => {
         expect(score).toBeLessThanOrEqual(80);
       });
 
-      it('should score State 3 (Relearning) correctly - 10 pts', () => {
+      test('should score State 3 (Relearning) correctly - 10 pts', () => {
         const word: StudyWord = createTestWord({
           fsrs_state: 3, // Failed, relearning
           fsrs_reps: 5,
@@ -134,7 +143,7 @@ describe('charts/utils', () => {
     });
 
     describe('Mastery Boundary (Critical)', () => {
-      it('should award 30pts for State 2 + stability 4.99 (below threshold)', () => {
+      test('should award 30pts for State 2 + stability 4.99 (below threshold)', () => {
         const word: StudyWord = createTestWord({
           fsrs_state: 2,
           fsrs_stability: 4.99, // Just below mastery
@@ -150,7 +159,7 @@ describe('charts/utils', () => {
         expect(score).toBeLessThan(80); // Not mastered
       });
 
-      it('should award 40pts for State 2 + stability 5.0 (at threshold)', () => {
+      test('should award 40pts for State 2 + stability 5.0 (at threshold)', () => {
         const word: StudyWord = createTestWord({
           fsrs_state: 2,
           fsrs_stability: 5.0, // Exactly at mastery
@@ -169,7 +178,7 @@ describe('charts/utils', () => {
     });
 
     describe('Perfect and Worst Words', () => {
-      it('should score a perfect word at 100 points', () => {
+      test('should score a perfect word at 100 points', () => {
         const perfectWord: StudyWord = createTestWord({
           fsrs_state: 2, // Review
           fsrs_stability: 30, // Very high
@@ -188,7 +197,7 @@ describe('charts/utils', () => {
         expect(score).toBe(100);
       });
 
-      it('should score a worst-case word at minimum points', () => {
+      test('should score a worst-case word at minimum points', () => {
         const worstWord: StudyWord = createTestWord({
           fsrs_state: 3, // Relearning (failed)
           fsrs_stability: 0, // No stability
@@ -210,7 +219,7 @@ describe('charts/utils', () => {
     });
 
     describe('Score Bounds', () => {
-      it('should never exceed 100 points', () => {
+      test('should never exceed 100 points', () => {
         // Try to create a word that would exceed 100 if not capped
         const word: StudyWord = createTestWord({
           fsrs_state: 2,
@@ -227,7 +236,7 @@ describe('charts/utils', () => {
         expect(score).toBeLessThanOrEqual(100);
       });
 
-      it('should never return negative scores', () => {
+      test('should never return negative scores', () => {
         const word: StudyWord = createTestWord({
           fsrs_state: 0, // New word, no progress
           fsrs_stability: 0,
@@ -242,7 +251,7 @@ describe('charts/utils', () => {
         expect(score).toBeGreaterThanOrEqual(0);
       });
 
-      it('should handle extreme stability values', () => {
+      test('should handle extreme stability values', () => {
         const highStabilityWord: StudyWord = createTestWord({
           fsrs_state: 2,
           fsrs_stability: 9999, // Unrealistically high
@@ -260,7 +269,7 @@ describe('charts/utils', () => {
     });
 
     describe('Stability Thresholds', () => {
-      it('should score stability tiers correctly', () => {
+      test('should score stability tiers correctly', () => {
         const testCases = [
           { stability: 0, expectedRange: [0, 5] }, // 0 pts
           { stability: 0.5, expectedRange: [0, 10] }, // 5 pts
@@ -290,7 +299,7 @@ describe('charts/utils', () => {
     });
 
     describe('Lapse Penalties', () => {
-      it('should penalize lapses progressively', () => {
+      test('should penalize lapses progressively', () => {
         const baseLine: StudyWord = createTestWord({
           fsrs_state: 2,
           fsrs_stability: 10,

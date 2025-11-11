@@ -4,7 +4,14 @@
  * Tests for specific bugs found in database validation:
  * 1. False negatives: Suffix detection failures (28 cases)
  * 2. False positives: ب detected as prefix when it's a root letter
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
  */
+
+import { describe, expect, test } from '@jest/globals';
 
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 

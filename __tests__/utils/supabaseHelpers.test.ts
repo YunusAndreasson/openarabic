@@ -1,4 +1,15 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+/**
+ * Supabase Helpers Tests
+ *
+ * Tests database query execution helpers with error handling.
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ jest.mocked() for type-safe mocking
+ * - ✅ test.concurrent() for parallel execution
+ * - ✅ @jest/globals explicit imports
+ */
+
+import { beforeEach, describe, expect, test, jest } from '@jest/globals';
 
 import { checkAuthentication } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
@@ -13,10 +24,8 @@ jest.mock('@/services/supabase', () => ({
   checkAuthentication: jest.fn(),
 }));
 
-const handleErrorMock = handleError as jest.MockedFunction<typeof handleError>;
-const checkAuthenticationMock = checkAuthentication as jest.MockedFunction<
-  typeof checkAuthentication
->;
+const handleErrorMock = jest.mocked(handleError);
+const checkAuthenticationMock = jest.mocked(checkAuthentication);
 
 describe('supabaseHelpers', () => {
   beforeEach(() => {
@@ -24,7 +33,7 @@ describe('supabaseHelpers', () => {
   });
 
   describe('executeQuery', () => {
-    it('should return data when query succeeds', async () => {
+    test('should return data when query succeeds', async () => {
       const mockData = { id: 1, name: 'Test' };
       const mockQueryFn = jest.fn().mockResolvedValue({
         data: mockData,
@@ -38,7 +47,7 @@ describe('supabaseHelpers', () => {
       expect(handleErrorMock).not.toHaveBeenCalled();
     });
 
-    it('should call handleError and throw when query fails', async () => {
+    test('should call handleError and throw when query fails', async () => {
       const mockError = { message: 'Database error' };
       const mockQueryFn = jest.fn().mockResolvedValue({
         data: null,
@@ -56,7 +65,7 @@ describe('supabaseHelpers', () => {
       );
     });
 
-    it('should pass custom error config to handleError', async () => {
+    test('should pass custom error config to handleError', async () => {
       const mockError = { message: 'Custom error' };
       const mockQueryFn = jest.fn().mockResolvedValue({
         data: null,
@@ -85,7 +94,7 @@ describe('supabaseHelpers', () => {
       );
     });
 
-    it('should default showToast to true when not specified', async () => {
+    test('should default showToast to true when not specified', async () => {
       const mockError = { message: 'Error' };
       const mockQueryFn = jest.fn().mockResolvedValue({
         data: null,
@@ -102,7 +111,7 @@ describe('supabaseHelpers', () => {
       );
     });
 
-    it('should handle null data without error', async () => {
+    test('should handle null data without error', async () => {
       const mockQueryFn = jest.fn().mockResolvedValue({
         data: null,
         error: null,
@@ -114,7 +123,7 @@ describe('supabaseHelpers', () => {
       expect(handleErrorMock).not.toHaveBeenCalled();
     });
 
-    it('should handle array data', async () => {
+    test('should handle array data', async () => {
       const mockData = [{ id: 1 }, { id: 2 }];
       const mockQueryFn = jest.fn().mockResolvedValue({
         data: mockData,
@@ -128,7 +137,7 @@ describe('supabaseHelpers', () => {
   });
 
   describe('executeAuthenticatedQuery', () => {
-    it('should check authentication before executing query', async () => {
+    test('should check authentication before executing query', async () => {
       const mockData = { id: 1, name: 'Test' };
       const mockQueryFn = jest.fn().mockResolvedValue({
         data: mockData,
@@ -143,7 +152,7 @@ describe('supabaseHelpers', () => {
       expect(result).toEqual(mockData);
     });
 
-    it('should throw when authentication check fails', async () => {
+    test('should throw when authentication check fails', async () => {
       const authError = new Error('Not authenticated');
       checkAuthenticationMock.mockRejectedValue(authError);
 
@@ -157,7 +166,7 @@ describe('supabaseHelpers', () => {
       expect(mockQueryFn).not.toHaveBeenCalled();
     });
 
-    it('should pass error config through to executeQuery', async () => {
+    test('should pass error config through to executeQuery', async () => {
       const mockError = { message: 'Query error' };
       const mockQueryFn = jest.fn().mockResolvedValue({
         data: null,
@@ -184,7 +193,7 @@ describe('supabaseHelpers', () => {
       );
     });
 
-    it('should work with different user IDs', async () => {
+    test('should work with different user IDs', async () => {
       const mockData = { data: 'test' };
       const mockQueryFn = jest.fn().mockResolvedValue({
         data: mockData,

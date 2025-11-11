@@ -1,4 +1,13 @@
 /**
+ * Hook Tests
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - hook tests use renderHook
+ * - Note: jest.mocked() used for type-safe mocking where needed
+ */
+
+/**
  * useSimpleAudioPlayer Hook Tests
  *
  * Tests the audio player hook that manages:
@@ -92,7 +101,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Initialization', () => {
-    it('should initialize with default status', () => {
+    test('should initialize with default status', () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       expect(result.current.isPlaying).toBe(false);
@@ -102,7 +111,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(result.current.currentTrack).toBeNull();
     });
 
-    it('should provide all required functions', () => {
+    test('should provide all required functions', () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       expect(typeof result.current.play).toBe('function');
@@ -111,7 +120,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(typeof result.current.preconfigureAudioSession).toBe('function');
     });
 
-    it('should return status object', () => {
+    test('should return status object', () => {
       const mockStatus = createMockStatus({ isPlaying: true });
       useAudioSubscription.mockReturnValue({
         status: mockStatus,
@@ -125,7 +134,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Play Function', () => {
-    it('should play audio track', async () => {
+    test('should play audio track', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
       const track = createMockTrack();
 
@@ -138,7 +147,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(playResult).toBe(true);
     });
 
-    it('should return false when component unmounted', async () => {
+    test('should return false when component unmounted', async () => {
       mockIsMountedRef.current = false;
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
@@ -153,7 +162,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(playResult).toBe(false);
     });
 
-    it('should handle play errors', async () => {
+    test('should handle play errors', async () => {
       (simpleAudioService.play as jest.Mock).mockRejectedValueOnce(new Error('Play failed'));
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
@@ -162,7 +171,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       await expect(result.current.play(track)).rejects.toThrow('Play failed');
     });
 
-    it('should play different tracks sequentially', async () => {
+    test('should play different tracks sequentially', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
       const track1 = createMockTrack({ id: 'track-1', title: 'Track 1' });
       const track2 = createMockTrack({ id: 'track-2', title: 'Track 2' });
@@ -179,7 +188,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Stop Function', () => {
-    it('should stop audio playback', async () => {
+    test('should stop audio playback', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       await act(async () => {
@@ -189,7 +198,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.stop).toHaveBeenCalled();
     });
 
-    it('should not call service when unmounted', async () => {
+    test('should not call service when unmounted', async () => {
       mockIsMountedRef.current = false;
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
@@ -201,7 +210,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.stop).not.toHaveBeenCalled();
     });
 
-    it('should handle stop errors', async () => {
+    test('should handle stop errors', async () => {
       (simpleAudioService.stop as jest.Mock).mockRejectedValueOnce(new Error('Stop failed'));
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
@@ -211,7 +220,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Seek Function', () => {
-    it('should seek to position', async () => {
+    test('should seek to position', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       await act(async () => {
@@ -221,7 +230,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.seekTo).toHaveBeenCalledWith(30);
     });
 
-    it('should not call service when unmounted', async () => {
+    test('should not call service when unmounted', async () => {
       mockIsMountedRef.current = false;
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
@@ -233,7 +242,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.seekTo).not.toHaveBeenCalled();
     });
 
-    it('should seek to beginning', async () => {
+    test('should seek to beginning', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       await act(async () => {
@@ -243,7 +252,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.seekTo).toHaveBeenCalledWith(0);
     });
 
-    it('should seek to end', async () => {
+    test('should seek to end', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       await act(async () => {
@@ -253,7 +262,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.seekTo).toHaveBeenCalledWith(120);
     });
 
-    it('should handle seek errors', async () => {
+    test('should handle seek errors', async () => {
       (simpleAudioService.seekTo as jest.Mock).mockRejectedValueOnce(new Error('Seek failed'));
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
@@ -263,7 +272,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Audio Session Configuration', () => {
-    it('should preconfigure audio session', async () => {
+    test('should preconfigure audio session', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       await act(async () => {
@@ -273,7 +282,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.preconfigureAudioSession).toHaveBeenCalled();
     });
 
-    it('should not preconfigure when unmounted', async () => {
+    test('should not preconfigure when unmounted', async () => {
       mockIsMountedRef.current = false;
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
@@ -285,7 +294,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.preconfigureAudioSession).not.toHaveBeenCalled();
     });
 
-    it('should handle preconfiguration errors', async () => {
+    test('should handle preconfiguration errors', async () => {
       (simpleAudioService.preconfigureAudioSession as jest.Mock).mockRejectedValueOnce(
         new Error('Config failed'),
       );
@@ -297,7 +306,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Status Subscription', () => {
-    it('should reflect playing status', () => {
+    test('should reflect playing status', () => {
       useAudioSubscription.mockReturnValue({
         status: createMockStatus({ isPlaying: true }),
         isMounted: true,
@@ -308,7 +317,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(result.current.isPlaying).toBe(true);
     });
 
-    it('should reflect loading status', () => {
+    test('should reflect loading status', () => {
       useAudioSubscription.mockReturnValue({
         status: createMockStatus({ isLoading: true }),
         isMounted: true,
@@ -319,7 +328,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(result.current.isLoading).toBe(true);
     });
 
-    it('should update current time', () => {
+    test('should update current time', () => {
       useAudioSubscription.mockReturnValue({
         status: createMockStatus({ currentTime: 45.5 }),
         isMounted: true,
@@ -330,7 +339,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(result.current.currentTime).toBe(45.5);
     });
 
-    it('should update duration', () => {
+    test('should update duration', () => {
       useAudioSubscription.mockReturnValue({
         status: createMockStatus({ duration: 180 }),
         isMounted: true,
@@ -341,7 +350,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(result.current.duration).toBe(180);
     });
 
-    it('should update current track', () => {
+    test('should update current track', () => {
       const track = createMockTrack({ id: 'track-123', title: 'Playing Track' });
       useAudioSubscription.mockReturnValue({
         status: createMockStatus({ currentTrack: track }),
@@ -353,7 +362,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(result.current.currentTrack).toEqual(track);
     });
 
-    it('should provide safe defaults when status is null', () => {
+    test('should provide safe defaults when status is null', () => {
       useAudioSubscription.mockReturnValue({
         status: null,
         isMounted: true,
@@ -368,7 +377,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(result.current.currentTrack).toBeNull();
     });
 
-    it('should update when status changes', () => {
+    test('should update when status changes', () => {
       const initialStatus = createMockStatus({ isPlaying: false, currentTime: 0 });
       useAudioSubscription.mockReturnValue({
         status: initialStatus,
@@ -395,7 +404,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Complete Playback Workflow', () => {
-    it('should handle play → stop workflow', async () => {
+    test('should handle play → stop workflow', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
       const track = createMockTrack();
 
@@ -412,7 +421,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.stop).toHaveBeenCalled();
     });
 
-    it('should handle play → seek → stop workflow', async () => {
+    test('should handle play → seek → stop workflow', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
       const track = createMockTrack();
 
@@ -429,7 +438,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Mount Safety', () => {
-    it('should check mount status before each call', async () => {
+    test('should check mount status before each call', async () => {
       mockIsMountedRef.current = false;
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
@@ -449,7 +458,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.preconfigureAudioSession).not.toHaveBeenCalled();
     });
 
-    it('should become unmounted during operation', async () => {
+    test('should become unmounted during operation', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
       const track = createMockTrack();
 
@@ -470,7 +479,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty audio URL', async () => {
+    test('should handle empty audio URL', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
       const track = createMockTrack({ audioUrl: '' });
 
@@ -481,7 +490,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.play).toHaveBeenCalledWith(track);
     });
 
-    it('should handle invalid seek position (negative)', async () => {
+    test('should handle invalid seek position (negative)', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       await act(async () => {
@@ -491,7 +500,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.seekTo).toHaveBeenCalledWith(-10);
     });
 
-    it('should handle seek beyond duration', async () => {
+    test('should handle seek beyond duration', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       await act(async () => {
@@ -501,7 +510,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.seekTo).toHaveBeenCalledWith(9999);
     });
 
-    it('should handle rapid play calls', async () => {
+    test('should handle rapid play calls', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
       const track1 = createMockTrack({ id: 'track-1' });
       const track2 = createMockTrack({ id: 'track-2' });
@@ -518,7 +527,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(simpleAudioService.play).toHaveBeenCalledTimes(3);
     });
 
-    it('should handle stop without play', async () => {
+    test('should handle stop without play', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
       await act(async () => {
@@ -530,7 +539,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Status Properties', () => {
-    it('should expose all status properties', () => {
+    test('should expose all status properties', () => {
       const fullStatus = createMockStatus({
         isPlaying: true,
         isLoading: false,
@@ -558,7 +567,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(result.current.status).toEqual(fullStatus);
     });
 
-    it('should handle partial status updates', () => {
+    test('should handle partial status updates', () => {
       const partialStatus = createMockStatus({
         isPlaying: true,
         // Other fields use defaults
@@ -578,7 +587,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Performance', () => {
-    it('should handle multiple rapid status updates', () => {
+    test('should handle multiple rapid status updates', () => {
       const { rerender } = renderHook(() => useSimpleAudioPlayer());
 
       // Simulate rapid status updates
@@ -594,7 +603,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle concurrent operations', async () => {
+    test('should handle concurrent operations', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
       const track = createMockTrack();
 

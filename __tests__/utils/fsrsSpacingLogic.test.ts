@@ -1,3 +1,13 @@
+/**
+ *
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { MIN_WORD_SPACING } from '../../constants/fsrs';
 import type { StudyWord } from '../../types/vocabulary.types';
 import {

@@ -16,10 +16,19 @@
  * Neither directly corresponds to ب, which means "with/by" in Arabic.
  */
 
+/**
+ * Modern Jest 29 Patterns:
+ * - ✅ @jest/globals explicit imports
+ * - Note: No test.concurrent() - these are synchronous tests
+ * - Note: No jest.mocked() needed - no mocks used
+ */
+
+import { describe, expect, test } from '@jest/globals';
+
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('ب detection patterns', () => {
-  it('should detect ب with literal translation "with adherence"', () => {
+  test('should detect ب with literal translation "with adherence"', () => {
     const analysis = analyzeArabicWord('بملازمة', 'with adherence');
 
     // Should detect ب prefix
@@ -31,7 +40,7 @@ describe('ب detection patterns', () => {
     expect(analysis.remainingArabic).toBe('ملازمة');
   });
 
-  it('should NOT detect ب with idiomatic "to adhere to"', () => {
+  test('should NOT detect ب with idiomatic "to adhere to"', () => {
     const analysis = analyzeArabicWord('بملازمة', 'to adhere to');
 
     // ب should NOT match because "to" is not in its patterns
@@ -40,7 +49,7 @@ describe('ب detection patterns', () => {
     expect(analysis.hasComponents).toBe(false);
   });
 
-  it('should detect ب with "by adhering to"', () => {
+  test('should detect ب with "by adhering to"', () => {
     // Alternative translation that includes "by"
     const analysis = analyzeArabicWord('بملازمة', 'by adhering to');
 
@@ -50,7 +59,7 @@ describe('ب detection patterns', () => {
     expect(analysis.prefixes[0]?.englishMatches).toContain('by');
   });
 
-  it('should NOT detect ب with idiomatic "from Allah"', () => {
+  test('should NOT detect ب with idiomatic "from Allah"', () => {
     const analysis = analyzeArabicWord('بالله', 'from Allah');
 
     // ب should NOT match because "from" is not in its patterns
@@ -61,7 +70,7 @@ describe('ب detection patterns', () => {
     expect(analysis.hasComponents).toBe(false);
   });
 
-  it('should detect ب with literal "with Allah" but preserve Allah as divine name', () => {
+  test('should detect ب with literal "with Allah" but preserve Allah as divine name', () => {
     const analysis = analyzeArabicWord('بالله', 'with Allah');
 
     // Should detect only ب prefix
