@@ -61,10 +61,10 @@ export const useReviewCompletion = (
       fsrsQueries.due(user.id).queryKey,
       fsrsQueries.stats(user.id).queryKey,
       fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
-    ];
+    ] as const;
 
     queriesToInvalidate.forEach(queryKey => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: queryKey as unknown as unknown[] });
     });
   }, [user?.id, queryClient]);
 
