@@ -140,7 +140,7 @@ export function WordDisplay({
   const handleHintPress = () => {
     lightFeedback();
     showToast(
-      'Swipe right if you knew it after the hint. Swipe left if you still need to see the word.',
+      'This is a hint! Swipe right if you know the word. Swipe left to see the full translation.',
       8000,
       ToastType.INFO,
     );

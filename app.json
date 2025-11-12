@@ -88,7 +88,6 @@
         {
           "fonts": [
             "./assets/fonts/NotoSans.ttf",
-            "./assets/fonts/Inter.ttf",
             "./assets/fonts/Amiri.ttf",
             "./assets/fonts/Madina.otf",
             "./assets/fonts/Scheherazade.ttf",
