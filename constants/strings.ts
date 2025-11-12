@@ -222,6 +222,16 @@ export const STRINGS = {
   // Account - Support section
   HELP_CENTER: 'Help Center',
   CONTACT_SUPPORT: 'Contact Support',
+  PHOTO_PERMISSION_TITLE: 'Allow photo access?',
+  PHOTO_PERMISSION_DESCRIPTION:
+    'OpenArabic uploads the image you pick so you can attach screenshots and personalize your profile.',
+  PHOTO_PERMISSION_DETAILS: [
+    'Uploads only the photo you choose when you attach a feedback screenshot or profile photo.',
+    'Ignores the rest of your library and stores selected images securely with your account.',
+  ] as const,
+  PHOTO_PERMISSION_PRIVACY_NOTE: 'We never scan or upload other photos from your device.',
+  PHOTO_PERMISSION_ACTION_ALLOW: 'Allow photo access',
+  PHOTO_PERMISSION_ACTION_NOT_NOW: 'Not now',
   // Account - About section
   ABOUT_SECTION: 'About',
   APP_VERSION_LABEL: 'Version',

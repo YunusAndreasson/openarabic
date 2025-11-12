@@ -16,11 +16,13 @@ import {
 } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
+import { PhotoPermissionDisclosure } from '@/components/privacy/PhotoPermissionDisclosure';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme';
+import { usePhotoPermissionDisclosure } from '@/hooks/privacy/usePhotoPermissionDisclosure';
 import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
@@ -34,6 +36,12 @@ export const FeedbackForm = memo(() => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
+  const {
+    isVisible: isPhotoDisclosureVisible,
+    ensureDisclosureAccepted,
+    acceptDisclosure,
+    declineDisclosure,
+  } = usePhotoPermissionDisclosure();
 
   const characterCount = message.trim().length;
 
@@ -45,6 +53,11 @@ export const FeedbackForm = memo(() => {
 
   const handleAddScreenshot = useCallback(async () => {
     try {
+      const hasConsent = await ensureDisclosureAccepted();
+      if (!hasConsent) {
+        return;
+      }
+
       // Check current permission status first
       const { status: existingStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
 
@@ -90,7 +103,7 @@ export const FeedbackForm = memo(() => {
       });
       Alert.alert('Error', 'Could not open photo library. Please try again.');
     }
-  }, []);
+  }, [ensureDisclosureAccepted]);
 
   const handleRemoveScreenshot = useCallback(() => {
     setScreenshotUri(null);
@@ -211,17 +224,18 @@ export const FeedbackForm = memo(() => {
   }, [message, user?.email, user?.id]);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <ThemedView style={styles.content}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <ThemedView style={styles.content}>
           <TextInput
             style={[
               styles.textInput,
@@ -286,9 +300,15 @@ export const FeedbackForm = memo(() => {
             variant={characterCount < MIN_CHARACTERS ? 'outlined' : 'filled'}
             style={styles.submitButton}
           />
-        </ThemedView>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </ThemedView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <PhotoPermissionDisclosure
+        visible={isPhotoDisclosureVisible}
+        onAccept={acceptDisclosure}
+        onDecline={declineDisclosure}
+      />
+    </>
   );
 });
 

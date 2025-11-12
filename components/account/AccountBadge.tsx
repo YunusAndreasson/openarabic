@@ -13,9 +13,11 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { PhotoPermissionDisclosure } from '@/components/privacy/PhotoPermissionDisclosure';
 import { PRESS_SCALE, SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { usePhotoPermissionDisclosure } from '@/hooks/privacy/usePhotoPermissionDisclosure';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
@@ -59,6 +61,12 @@ const getMemberSinceDate = (createdAt?: string) => {
 export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps) {
   const colors = useColors();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
+  const {
+    isVisible: isPhotoDisclosureVisible,
+    ensureDisclosureAccepted,
+    acceptDisclosure,
+    declineDisclosure,
+  } = usePhotoPermissionDisclosure();
 
   // Animation values
   const scaleValue = useSharedValue(1);
@@ -109,6 +117,11 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   // Handle photo selection
   const handlePhotoSelect = useCallback(async () => {
     try {
+      const hasConsent = await ensureDisclosureAccepted();
+      if (!hasConsent) {
+        return;
+      }
+
       // Request permissions - this will show the system permission dialog
       const { status, canAskAgain, granted } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -176,7 +189,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
         showToast: true,
       });
     }
-  }, [storageKey]);
+  }, [ensureDisclosureAccepted, storageKey]);
 
   // Handle photo press animation
   const handlePhotoPress = useCallback(() => {
@@ -241,53 +254,60 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   };
 
   return (
-    <Animated.View style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}>
-      <View style={styles.profileContent}>
-        {/* Profile Photo */}
-        <Pressable onPress={handlePhotoPress} style={styles.photoContainer}>
-          <Animated.View style={[styles.photoWrapper, photoAnimatedStyle]}>
-            <View style={dynamicStyles.photoRing}>
-              {profilePhotoUri ? (
-                <Image
-                  source={{ uri: profilePhotoUri }}
-                  style={styles.profilePhoto}
-                  contentFit="cover"
-                  cachePolicy="memory-disk"
-                  transition={200}
-                  priority="high"
-                />
-              ) : (
-                <View style={dynamicStyles.initialsContainer}>
-                  <ThemedText
-                    type="heading2"
-                    weight="bold"
-                    // Use dark text to be legible on elevation background in dark mode
-                    style={[styles.initialsText, dynamicStyles.initialsText]}
-                  >
-                    {initials}
-                  </ThemedText>
+    <>
+      <Animated.View style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}>
+        <View style={styles.profileContent}>
+          {/* Profile Photo */}
+          <Pressable onPress={handlePhotoPress} style={styles.photoContainer}>
+            <Animated.View style={[styles.photoWrapper, photoAnimatedStyle]}>
+              <View style={dynamicStyles.photoRing}>
+                {profilePhotoUri ? (
+                  <Image
+                    source={{ uri: profilePhotoUri }}
+                    style={styles.profilePhoto}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    transition={200}
+                    priority="high"
+                  />
+                ) : (
+                  <View style={dynamicStyles.initialsContainer}>
+                    <ThemedText
+                      type="heading2"
+                      weight="bold"
+                      // Use dark text to be legible on elevation background in dark mode
+                      style={[styles.initialsText, dynamicStyles.initialsText]}
+                    >
+                      {initials}
+                    </ThemedText>
+                  </View>
+                )}
+
+                {/* Edit Icon Overlay */}
+                <View style={dynamicStyles.editIconContainer}>
+                  <Ionicons name="camera" size={12} color={colors.background} />
                 </View>
-              )}
-
-              {/* Edit Icon Overlay */}
-              <View style={dynamicStyles.editIconContainer}>
-                <Ionicons name="camera" size={12} color={colors.background} />
               </View>
-            </View>
-          </Animated.View>
-        </Pressable>
+            </Animated.View>
+          </Pressable>
 
-        {/* User Info */}
-        <View style={styles.userInfo}>
-          <ThemedText type="heading2" weight="bold" style={styles.userName} numberOfLines={1}>
-            {firstName}
-          </ThemedText>
-          <ThemedText type="body" variant="secondary" style={styles.memberSince} numberOfLines={1}>
-            {memberSince}
-          </ThemedText>
+          {/* User Info */}
+          <View style={styles.userInfo}>
+            <ThemedText type="heading2" weight="bold" style={styles.userName} numberOfLines={1}>
+              {firstName}
+            </ThemedText>
+            <ThemedText type="body" variant="secondary" style={styles.memberSince} numberOfLines={1}>
+              {memberSince}
+            </ThemedText>
+          </View>
         </View>
-      </View>
-    </Animated.View>
+      </Animated.View>
+      <PhotoPermissionDisclosure
+        visible={isPhotoDisclosureVisible}
+        onAccept={acceptDisclosure}
+        onDecline={declineDisclosure}
+      />
+    </>
   );
 }
 
