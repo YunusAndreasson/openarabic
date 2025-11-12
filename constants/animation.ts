@@ -120,20 +120,8 @@ export const WORD_PRESS_SCALE = 0.95;
 /** Scale value applied when dragging cards */
 export const CARD_DRAG_SCALE = 1.05;
 
-/** Minimum progress value before triggering animations */
-export const REVIEW_MIN_PROGRESS_VALUE = 1;
-
-/** Starting offset for toast translate animations */
-export const TOAST_INITIAL_TRANSLATE_Y = 50;
-
-/** Threshold to hide the header when scrolling */
-export const HEADER_SCROLL_THRESHOLD = 50;
-
 /** Multiplier applied to list item height for overscroll draw distance */
 export const LIST_DRAW_DISTANCE_MULTIPLIER = 3;
-
-/** Larger multiplier used for sentence lists */
-export const SENTENCE_DRAW_DISTANCE_MULTIPLIER = 12;
 
 /** Default scroll event throttle for smooth animations (16ms = 60fps, 8ms = 120fps) */
 export const SCROLL_EVENT_THROTTLE = 8;

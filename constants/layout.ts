@@ -161,12 +161,6 @@ export const ICON_CONTAINER = {
   MEDIUM_RADIUS: TOUCH_TARGETS.MEDIUM / 2, // 22 - half for perfect circle
 } as const;
 
-// Utility function for enhancing touch padding (moved out of constants)
-export const enhanceTouchPadding = (currentSize: number): number => {
-  const needed = TOUCH_TARGETS.MEDIUM - currentSize;
-  return needed > 0 ? Math.ceil(needed / 2) : 0;
-};
-
 export const LAYOUT = {
   /** Left/right screen edge padding for all content (12px) */
   SCREEN_HORIZONTAL_PADDING: SPACING_SCALE.MEDIUM,

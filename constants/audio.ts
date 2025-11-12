@@ -6,5 +6,3 @@ export const AUDIO_STATES = {
   LOADING: 'loading',
   PLAYING: 'playing',
 } as const;
-
-export type AudioState = (typeof AUDIO_STATES)[keyof typeof AUDIO_STATES];

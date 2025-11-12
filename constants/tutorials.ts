@@ -16,7 +16,7 @@ export type TutorialId = (typeof TutorialId)[keyof typeof TutorialId];
 /**
  * Configuration for a single tutorial
  */
-export interface TutorialConfig {
+interface TutorialConfig {
   /** Unique identifier */
   id: TutorialId;
   /** AsyncStorage key for completion state */

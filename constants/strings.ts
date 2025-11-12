@@ -374,4 +374,3 @@ export const STRINGS = {
   LEGAL_SIL_OFL_DESC:
     'Fonts licensed under SIL OFL are free to use, modify, and distribute. Full license text available at scripts.sil.org/OFL',
 } as const;
-export type StringKey = keyof typeof STRINGS;

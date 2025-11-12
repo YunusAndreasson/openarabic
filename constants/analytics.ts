@@ -26,9 +26,3 @@ export const ANALYTICS_EVENTS = {
 } as const;
 
 // User property keys for identify calls
-export const USER_PROPERTIES = {
-  EMAIL: 'email',
-  LAST_ACTIVE: 'last_active',
-  LAST_SIGN_IN: 'last_sign_in',
-  CREATED_AT: 'created_at',
-} as const;
