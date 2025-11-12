@@ -8,6 +8,7 @@ import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
 // Define different column sets for different use cases
 const LIST_VIEW_COLUMNS = `
   id,
+  published,
   title,
   image_url,
   created_at,
@@ -28,6 +29,7 @@ const CARD_VIEW_COLUMNS = `
 
 const DETAIL_VIEW_COLUMNS = `
   id,
+  published,
   title,
   image_url,
   created_at,
@@ -68,6 +70,7 @@ const DETAIL_VIEW_COLUMNS = `
 // Optimized query for articles with word counts (for due words analysis)
 const ARTICLES_WITH_WORD_STATS = `
   id,
+  published,
   title,
   image_url,
   created_at,
@@ -137,7 +140,7 @@ export const articlesService = {
     }
 
     const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : CARD_VIEW_COLUMNS;
-    let query = supabase.from('articles').select(columns);
+    let query = supabase.from('articles').select(columns).eq('published', true);
 
     // Apply filters
     if (categoryId) query = query.eq('category_id', categoryId);
@@ -174,6 +177,7 @@ export const articlesService = {
         supabase
           .from('articles')
           .select(ARTICLES_WITH_WORD_STATS)
+          .eq('published', true)
           .order('created_at', {
             ascending: false,
           })
@@ -194,6 +198,7 @@ export const articlesService = {
           .from('articles')
           .select(DETAIL_VIEW_COLUMNS)
           .eq('id', id)
+          .eq('published', true)
           .maybeSingle()
           .returns<ArticleRow>(),
       {
@@ -222,6 +227,7 @@ export const articlesService = {
           .from('articles')
           .select(DETAIL_VIEW_COLUMNS)
           .in('id', ids as number[]) // Cast branded type to number[] for Supabase query
+          .eq('published', true)
           .returns<ArticleRow[]>(),
       {
         toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
@@ -241,6 +247,7 @@ export const articlesService = {
           .from('articles')
           .select(CARD_VIEW_COLUMNS)
           .eq('id', id)
+          .eq('published', true)
           .maybeSingle()
           .returns<ArticleRow>(),
       {

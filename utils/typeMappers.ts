@@ -32,6 +32,7 @@ function mapToArticleSentence(item: ArticleSentenceRow): ArticleSentence {
 
 export function mapToArticle(item: ArticleRow): Article {
   const base = item as Tables<'articles'>;
+  const published = (item as { published?: boolean | null }).published ?? false;
 
   // Ensure we have the required relations
   if (!item.category || !item.author) {
@@ -41,6 +42,7 @@ export function mapToArticle(item: ArticleRow): Article {
   return {
     ...base,
     id: base.id as ArticleId,
+    published,
     category_id: base.category_id as CategoryId,
     author_id: base.author_id as AuthorId,
     article_sentences: Array.isArray(item.article_sentences)

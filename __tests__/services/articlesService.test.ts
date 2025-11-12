@@ -80,6 +80,7 @@ describe('articlesService', () => {
       const calledColumns = builder.select.mock.calls[0][0].replace(/\s/g, '');
       const expected = `
         id,
+        published,
         title,
         image_url,
         created_at,
@@ -113,6 +114,7 @@ describe('articlesService', () => {
       const called = builder.select.mock.calls[0][0].replace(/\s/g, '');
       const expected = `
         id,
+        published,
         title,
         image_url,
         created_at,
@@ -164,6 +166,7 @@ describe('articlesService', () => {
       const called = builder.select.mock.calls[0][0].replace(/\s/g, '');
       const expected = `
         id,
+        published,
         title,
         image_url,
         created_at,

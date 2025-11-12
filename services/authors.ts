@@ -34,10 +34,13 @@ export const authorsService = {
     );
 
     // Get unique author IDs from articles
-    const articleAuthors = await executeQuery(() => supabase.from('articles').select('author_id'), {
-      toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
-      analyticsEventName: 'Article_Authors_Load_Error',
-    });
+    const articleAuthors = await executeQuery(
+      () => supabase.from('articles').select('author_id').eq('published', true),
+      {
+        toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
+        analyticsEventName: 'Article_Authors_Load_Error',
+      },
+    );
 
     // Filter to only authors that have articles
     const authorIdsWithArticles = new Set(articleAuthors?.map(a => a.author_id) ?? []);
@@ -54,6 +57,7 @@ export const authorsService = {
           .from('articles')
           .select('author:authors!inner(id, name)')
           .eq('category_id', categoryId)
+          .eq('published', true)
           .order('name', { foreignTable: 'author' })
           .returns<ArticleAuthorResult[]>(),
       {

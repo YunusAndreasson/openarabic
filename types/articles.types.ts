@@ -28,6 +28,8 @@ export interface ArticleSentence extends Tables<'article_sentences'> {
 export interface Article extends Omit<Tables<'articles'>, 'id' | 'category_id' | 'author_id'> {
   /** Unique article ID (branded for type safety) */
   id: ArticleId;
+  /** Whether the article is visible to end users */
+  published: boolean;
   /** Sentences that make up this article, with word-level data */
   article_sentences: ArticleSentence[];
   /** Category information for the article - always exists */
