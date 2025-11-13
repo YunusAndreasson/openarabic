@@ -65,18 +65,20 @@ export function TutorialCard({
         },
       ]}
     >
-      {/* Custom content (e.g., pulsing highlights, animated hand) */}
-      {children && <View style={styles.customContent}>{children}</View>}
-
       {/* Title */}
       <ThemedText type="heading3" weight="bold" style={styles.title}>
         {title}
       </ThemedText>
 
       {/* Description */}
-      <ThemedText type="body" style={styles.description}>
-        {description}
-      </ThemedText>
+      {description && (
+        <ThemedText type="body" style={styles.description}>
+          {description}
+        </ThemedText>
+      )}
+
+      {/* Custom content (e.g., pulsing highlights, animated hand) */}
+      {children && <View style={styles.customContent}>{children}</View>}
 
       {/* Optional dismiss button */}
       {dismissText && onDismiss && (

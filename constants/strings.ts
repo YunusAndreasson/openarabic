@@ -211,7 +211,7 @@ export const STRINGS = {
   SIGN_IN_WITH_APPLE: 'Sign in with Apple',
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
   CONTINUE_WITH: 'or',
-  MEMORY_STRENGTH: 'Memory strength',
+  MEMORY_STRENGTH: 'Memory Strength',
   WORD_MASTERY: 'Words Mastered',
   // Practice bottom sheet subtitles (condensed for subtitle format)
   MEMORY_STRENGTH_SUBTITLE:

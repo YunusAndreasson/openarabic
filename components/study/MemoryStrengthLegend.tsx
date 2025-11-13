@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SortDirection } from '@/hooks/vocabulary/useDictionaryModal';
 import { selectionFeedback } from '@/utils/haptics';
@@ -63,7 +64,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
         }}
       >
         <ThemedText type="caption" weight="semibold" style={styles.headerText}>
-          Memory strength
+          {STRINGS.MEMORY_STRENGTH}
         </ThemedText>
         <Ionicons
           name={sortDirection === 'desc' ? 'chevron-down' : 'chevron-up'}
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.MEDIUM, // 12px gap from dots
   },
   headerText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Use body text size for better hierarchy (16px vs 13px labels)
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Match legend labels (13px)
   },
   sortIcon: {
     marginTop: 1, // Optical alignment with text

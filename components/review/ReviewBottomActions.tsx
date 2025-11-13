@@ -58,25 +58,39 @@ const createIconProps = (name: ComponentProps<typeof Ionicons>['name'], color: s
 });
 
 interface ReviewBottomActionsProps {
-  // No props needed - these are now visual indicators only
+  onVague?: () => void; // Handler for explicit Vague button press
 }
 
-export const ReviewBottomActions: FC<ReviewBottomActionsProps> = () => {
+export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({ onVague }) => {
   const colors = useColors();
   const { showToast } = useReviewToast();
 
   const tintError = colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
   const tintSuccess = colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
+  const tintWarning = colors.warning + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
 
   const leftIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintError }];
+  const centerIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintWarning }];
   const rightIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintSuccess }];
 
   const leftTextStyle = [STATIC_STYLES.indicatorText, { color: colors.error }];
+  const centerTextStyle = [STATIC_STYLES.indicatorText, { color: colors.warning }];
   const rightTextStyle = [STATIC_STYLES.indicatorText, { color: colors.success }];
 
   const handleIndicatorPress = () => {
     lightFeedback();
-    showToast("Swipe right if you know the word. Swipe left if you don't.", 8000, ToastType.INFO);
+    showToast(
+      "Tap screen (or center button) for hint. After hint: swipe right = vague, left = unknown. Tap word = replay audio.",
+      8000,
+      ToastType.INFO,
+    );
+  };
+
+  const handleVaguePress = () => {
+    if (onVague) {
+      lightFeedback();
+      onVague();
+    }
   };
 
   return (
@@ -87,6 +101,14 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = () => {
           <Ionicons {...createIconProps('chevron-back', colors.error)} />
         </View>
         <ThemedText style={leftTextStyle}>{ReviewAction.DONT_KNOW}</ThemedText>
+      </Pressable>
+
+      {/* Center button - Vague (tappable to record response) */}
+      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleVaguePress}>
+        <View style={centerIndicatorStyle}>
+          <Ionicons {...createIconProps('help-circle', colors.warning)} />
+        </View>
+        <ThemedText style={centerTextStyle}>Vague</ThemedText>
       </Pressable>
 
       {/* Right indicator - Known (tappable for educational toast) */}

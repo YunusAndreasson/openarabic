@@ -135,7 +135,7 @@ const ArticleSentenceInternal = function ArticleSentence({
               weight="bold"
               style={[styles.tutorialText, { color: colors.background }]}
             >
-              Tap any Arabic word below to see its meaning
+              Tap an Arabic word to see meaning
             </ThemedText>
 
             {/* Close button */}

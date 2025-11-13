@@ -190,7 +190,7 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
         </View>
 
         {/* Memory Strength label below gauge */}
-        <ThemedText type="caption" colorName="textTertiary" style={styles.memoryStrengthLabel}>
+        <ThemedText type="caption" variant="secondary" style={styles.memoryStrengthLabel}>
           {STRINGS.MEMORY_STRENGTH}
         </ThemedText>
       </View>
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   },
   memoryStrengthLabel: {
     textAlign: 'center',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Match legend labels (Weak, Medium, Strong)
     marginTop: LAYOUT.SPACING.SMALL,
   },
   touchOverlay: {

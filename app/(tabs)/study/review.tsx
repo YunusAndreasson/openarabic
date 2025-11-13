@@ -89,13 +89,12 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     currentWordKey,
     handleSwipeLeft,
     handleSwipeRight,
+    handleVague, // NEW: explicit vague handler (also used for tap-to-reveal hint)
     handleClose,
     isUpdating,
     transparentStyle,
     sessionMetrics,
-    isHesitating,
-    handleHesitationStart,
-    handleHesitationEnd,
+    showHint, // NEW: hint visibility state
     handleReplayAudio,
     isAudioPreloading,
     audioPreloadProgress,
@@ -207,10 +206,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           testID="review-card"
           translation={currentMeaning}
           showTranslation={showTranslation}
-          onHesitationStart={handleHesitationStart}
-          onHesitationEnd={handleHesitationEnd}
-          isHesitating={isHesitating}
-          onWordPress={handleReplayAudio}
+          showHint={showHint}
+          onToggleHint={handleVague} // Tap anywhere on screen = Vague (shows hint + sets flag)
+          onReplayAudio={handleReplayAudio} // Tap word to replay audio
           fullScreenBackground={true}
         />
 
@@ -239,7 +237,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               right: LAYOUT.SCREEN_EDGE_PADDING,
             }}
           >
-            <ReviewBottomActions />
+            <ReviewBottomActions onVague={handleVague} />
           </View>
         </View>
       </View>

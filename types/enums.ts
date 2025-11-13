@@ -252,7 +252,7 @@ export enum WordManagementAction {
 export const ReviewAction = {
   DONT_KNOW: 'Unknown',
   KNOW: 'Known',
-  STUDY_DUE_WORDS: 'Practice Due Words',
+  STUDY_DUE_WORDS: 'Practice Due',
 } as const;
 
 export type ReviewAction = (typeof ReviewAction)[keyof typeof ReviewAction];

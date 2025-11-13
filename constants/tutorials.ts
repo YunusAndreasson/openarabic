@@ -47,8 +47,8 @@ export const TUTORIALS: Record<TutorialId, TutorialConfig> = {
   [TutorialId.SWIPE_GESTURE]: {
     id: TutorialId.SWIPE_GESTURE,
     storageKey: '@openarabic/tutorials/swipeGestureCompleted',
-    title: 'Swipe to answer',
-    description: 'Swipe left for "Don\'t Know", swipe right for "Know" — or tap the buttons',
+    title: 'How to practice',
+    description: '',
     showDelay: 500,
   },
 };

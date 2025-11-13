@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { FlashListProps, FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
@@ -20,8 +19,7 @@ import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { calculateReadingTime } from '@/utils/textUtils';
+import { getArticleMetadata } from '@/utils/stringUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
 const AnimatedFlashList = Animated.createAnimatedComponent(
@@ -63,12 +61,8 @@ const styles = StyleSheet.create({
   },
   authorContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.LARGE, // Increased breathing room
+    paddingBottom: LAYOUT.SPACING.SMALL,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.SMALL,
   },
   summaryContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
@@ -82,19 +76,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4, // Increased from NORMAL for better breathing
   },
-  playIconOffset: {
-    marginLeft: LAYOUT.SPACING.TINY,
-  },
   authorText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Slightly smaller for refined look
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
-  },
-  readingTimeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  metadataIcon: {
-    marginRight: LAYOUT.SPACING.TINY / 2, // Tight spacing between icon and text
   },
 });
 
@@ -200,8 +184,8 @@ const ArticleContentInternal = function ArticleContent({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   } as const;
 
-  // Calculate reading time for display with icon
-  const readingTime = calculateReadingTime(sortedSentences?.length ?? 0);
+  // Get formatted metadata (author · category · reading time)
+  const metadataText = getArticleMetadata(article);
 
   // Render title/author below the hero image but above content
   // React Compiler auto-memoizes
@@ -220,28 +204,8 @@ const ArticleContentInternal = function ArticleContent({
       {/* Metadata line - author, category, and reading time */}
       <View style={authorContainerStyle}>
         <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
-          {article.author.name}
+          {metadataText}
         </ThemedText>
-        <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
-          ·
-        </ThemedText>
-        <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
-          {capitalizeFirstLetter(article.category.name)}
-        </ThemedText>
-        <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
-          ·
-        </ThemedText>
-        <View style={styles.readingTimeContainer}>
-          <Ionicons
-            name="time-outline"
-            size={14}
-            color={colors.authorText}
-            style={styles.metadataIcon}
-          />
-          <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
-            {readingTime}
-          </ThemedText>
-        </View>
       </View>
 
       {/* Summary section - positioned between author and content for natural reading flow */}

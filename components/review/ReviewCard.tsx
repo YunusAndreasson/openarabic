@@ -1,17 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
-import type {
-  AnimatedStyle as ReanimatedAnimatedStyle,
-  SharedValue,
-} from 'react-native-reanimated';
-import Animated, {
-  interpolateColor,
-  useAnimatedReaction,
-  useAnimatedStyle,
-} from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-reanimated';
+import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
 import { SPRING_CONFIG } from '@/constants/animation';
 
@@ -57,12 +49,10 @@ interface ReviewCardProps {
   // Translation props
   translation?: string;
   showTranslation?: boolean;
-  // Hesitation props
-  onHesitationStart?: () => void;
-  onHesitationEnd?: () => void;
-  isHesitating?: SharedValue<boolean>;
-  // Audio props
-  onWordPress?: () => void;
+  // Hint props (tap-to-reveal)
+  showHint?: boolean; // Controlled from parent instead of timer
+  onToggleHint?: () => void; // Handler for tapping screen to reveal hint
+  onReplayAudio?: () => void; // Handler for tapping word to replay audio
   // Background props
   fullScreenBackground?: boolean; // When true, renders background layer only for full-screen flash
 }
@@ -77,45 +67,15 @@ export function ReviewCard({
   testID,
   translation,
   showTranslation = false,
-  onHesitationStart,
-  onHesitationEnd,
-  isHesitating,
-  onWordPress,
+  showHint = false,
+  onToggleHint, // Handler for tapping screen (anywhere)
+  onReplayAudio, // Handler for tapping word specifically
   fullScreenBackground = false,
 }: ReviewCardProps) {
   const colors = useColors();
 
-  // ===== SHARED VALUE SYNC FOR UI UPDATES =====
-  // Sync SharedValue to local state for React re-renders (needed for WordDisplay hint)
-  const [showHint, setShowHint] = useState(false);
-
-  // Use native Reanimated reaction instead of 60fps polling for better performance
-  useAnimatedReaction(
-    () => (isHesitating ? isHesitating.value : false),
-    (currentValue, previousValue) => {
-      if (currentValue !== previousValue) {
-        scheduleOnRN(setShowHint, currentValue);
-      }
-    },
-    [isHesitating],
-  );
-
-  // ===== HESITATION TIMER =====
-  const hesitationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isGestureActiveRef = useRef(false);
-
-  // Hesitation timer constant (3 seconds)
-  const HESITATION_DELAY_MS = 3000;
-
-  // Clean up hesitation timer
-  const clearHesitationTimer = () => {
-    if (hesitationTimeoutRef.current) {
-      clearTimeout(hesitationTimeoutRef.current);
-      hesitationTimeoutRef.current = null;
-    }
-    // Also reset gesture active state
-    isGestureActiveRef.current = false;
-  };
+  // Prevent tap from firing during swipe gestures
+  const didMoveRef = useRef(false);
 
   // ===== SWIPE GESTURE HOOK (v2 OPTIMIZED) =====
   const { gesture: panGesture, translateX } = useSwipeGesture({
@@ -123,23 +83,15 @@ export function ReviewCard({
     onSwipeLeft,
     onSwipeRight,
     springConfig: SPRING_CONFIG.CARD,
-    onSwipeComplete: () => {
-      clearHesitationTimer();
-      if (onHesitationEnd) {
-        onHesitationEnd();
-      }
-    }, // Clear timer when swipe completes
-    // Clear hesitation timer when user first touches the card (BEGAN state)
-    // This provides immediate feedback as soon as finger touches screen
     onGestureBegin: () => {
-      clearHesitationTimer();
-      isGestureActiveRef.current = true;
+      // Track that gesture started (any movement)
+      didMoveRef.current = true;
     },
-    // onStart is called when gesture is activated (swipe recognized)
-    // We use onBegin for earlier detection (on first touch)
-    onGestureStart: () => {
-      // Gesture is now active (swipe recognized)
-      // Timer already cleared in onBegin
+    onSwipeComplete: () => {
+      // Reset after animation completes
+      setTimeout(() => {
+        didMoveRef.current = false;
+      }, 100);
     },
   });
 
@@ -148,10 +100,6 @@ export function ReviewCard({
   const errorEnd = withOpacity(colors.error, 0.35); // Increased from 0.18 for more prominence
   const successStart = withOpacity(colors.success, 0);
   const successEnd = withOpacity(colors.success, 0.35); // Increased from 0.18 for more prominence
-
-  // Add vague colors (orange/yellow for hesitation)
-  const vagueStart = withOpacity(colors.warning, 0);
-  const vagueEnd = withOpacity(colors.warning, 0.45); // Increased from 0.25 for more prominence
 
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
@@ -163,24 +111,19 @@ export function ReviewCard({
     const t = 1 - Math.pow(1 - progress, 2);
 
     if (translateX.value < 0) {
-      // Left swipe - ALWAYS unknown (red), regardless of hesitation state
-      // Hesitation state only affects right swipes (known vs vague)
+      // Left swipe = Unknown (red)
       return {
         backgroundColor: interpolateColor(t, [0, 1], [errorStart, errorEnd]),
       };
     }
     if (translateX.value > 0) {
-      // Right swipe - success (green) or vague (orange) depending on hesitation state
-      // Read SharedValue directly on UI thread for better performance
-      const isCurrentlyHesitating = isHesitating?.value ?? false;
-      const startColor = isCurrentlyHesitating ? vagueStart : successStart;
-      const endColor = isCurrentlyHesitating ? vagueEnd : successEnd;
+      // Right swipe = Known (green)
       return {
-        backgroundColor: interpolateColor(t, [0, 1], [startColor, endColor]),
+        backgroundColor: interpolateColor(t, [0, 1], [successStart, successEnd]),
       };
     }
     return { backgroundColor: colors.transparent };
-  }, [errorStart, errorEnd, successStart, successEnd, vagueStart, vagueEnd, isHesitating]);
+  }, [errorStart, errorEnd, successStart, successEnd]);
 
   // ===== COMBINED ANIMATED STYLE (SINGLE ANIMATED VIEW) =====
   const combinedAnimatedStyle = useAnimatedStyle(() => {
@@ -193,44 +136,22 @@ export function ReviewCard({
   // Get English translation for hint from root
   const englishTranslation = currentWord?.root?.meaning || '';
 
-  // Auto-start hesitation timer when word appears (if not already hesitating)
-  useEffect(() => {
-    // CRITICAL FIX: Don't start timer if translation is showing (prevents timer restart during feedback)
-    // This prevents the bug where onHesitationEnd → isHesitating=false triggers new timer while showing translation
-    // Use synced JS state (showHint) to avoid blocking SharedValue read
-    if (
-      word &&
-      englishTranslation &&
-      !showHint &&
-      !hesitationTimeoutRef.current &&
-      !showTranslation
-    ) {
-      hesitationTimeoutRef.current = setTimeout(() => {
-        if (!isGestureActiveRef.current) {
-          // Only show hint if user hasn't interacted
-          onHesitationStart?.();
-        }
-      }, HESITATION_DELAY_MS);
+  // Handle tap on screen (but not during swipes)
+  const handleScreenTap = () => {
+    // If finger moved (swipe gesture), ignore the tap
+    if (didMoveRef.current) {
+      return;
     }
-
-    // Cleanup on unmount or word change
-    return () => {
-      if (hesitationTimeoutRef.current) {
-        clearTimeout(hesitationTimeoutRef.current);
-        hesitationTimeoutRef.current = null;
-      }
-      // CRITICAL FIX: Reset gesture active flag on word change to prevent stale state
-      isGestureActiveRef.current = false;
-    };
-  }, [word, englishTranslation, showHint, onHesitationStart, showTranslation]);
+    onToggleHint?.();
+  };
 
   // Word display props
   const wordDisplayProps = {
     word,
     translation: showTranslation ? translation : undefined,
-    showFirstLetterOnly: showHint, // Use synced state instead of SharedValue
+    showFirstLetterOnly: showHint, // Controlled from parent (tap-to-reveal)
     englishTranslation: englishTranslation || undefined, // Always pass English translation when available
-    onWordPress,
+    onWordPress: onReplayAudio, // Tapping word replays audio
   };
 
   // When fullScreenBackground is true, render background and content as separate layers
@@ -263,15 +184,26 @@ export function ReviewCard({
               bottom: 0,
             }}
           >
-            {/* Word content - centered in screen */}
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Animated.View
-                style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
-                testID={testID}
-              >
-                <WordDisplayComponent {...wordDisplayProps} />
-              </Animated.View>
-            </View>
+            {/* Full-screen tap handler for hint toggle */}
+            <Pressable
+              style={{ flex: 1 }}
+              onPress={handleScreenTap}
+              onPressIn={() => {
+                // Reset movement flag when press starts
+                didMoveRef.current = false;
+              }}
+              disabled={!onToggleHint}
+            >
+              {/* Word content - centered in screen */}
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Animated.View
+                  style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
+                  testID={testID}
+                >
+                  <WordDisplayComponent {...wordDisplayProps} />
+                </Animated.View>
+              </View>
+            </Pressable>
           </Animated.View>
         </GestureDetector>
       </>
@@ -283,12 +215,24 @@ export function ReviewCard({
     <View style={STATIC_STYLES.swipeContainer}>
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[STATIC_STYLES.swipeContainer, swipeBackgroundStyle]}>
-          <Animated.View
-            style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
-            testID={testID}
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={handleScreenTap}
+            onPressIn={() => {
+              // Reset movement flag when press starts
+              didMoveRef.current = false;
+            }}
+            disabled={!onToggleHint}
           >
-            <WordDisplayComponent {...wordDisplayProps} />
-          </Animated.View>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <Animated.View
+                style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
+                testID={testID}
+              >
+                <WordDisplayComponent {...wordDisplayProps} />
+              </Animated.View>
+            </View>
+          </Pressable>
         </Animated.View>
       </GestureDetector>
     </View>

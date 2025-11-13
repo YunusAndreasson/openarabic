@@ -32,75 +32,124 @@ interface SwipeGestureTutorialProps {
 
 /**
  * Tutorial #2: Swipe Gestures (HIGH)
- * Shows animated hand demonstrating swipe left (Don't Know) and swipe right (Know)
+ * Shows animated hand demonstrating tap for hint, then swipe left (Unknown) or right (Know/Vague)
  */
 export function SwipeGestureTutorial({ visible, onDismiss }: SwipeGestureTutorialProps) {
   const colors = useColors();
   const config = TUTORIALS[TutorialId.SWIPE_GESTURE];
 
-  // Hand animation: swipe left → center → swipe right → center (loop 3 times)
+  // Hand animation: tap → swipe left → center → tap → swipe right → center (loop)
   const handTranslateX = useSharedValue(0);
+  const handScale = useSharedValue(1);
 
   useEffect(() => {
     if (visible) {
-      // Animate hand: center → left → center → right → center (loop 3 times then pause)
+      // Animate hand: tap → swipe left → tap → swipe right (loop 3 times)
       handTranslateX.value = withRepeat(
         withSequence(
-          // Swipe left (Don't Know)
-          withTiming(-60, { duration: TUTORIAL_ANIMATION.BOUNCE_DURATION / 2 }),
+          // Tap at center (pause)
+          withDelay(300, withTiming(0)),
+
+          // Swipe left (Unknown)
+          withTiming(-100, { duration: TUTORIAL_ANIMATION.BOUNCE_DURATION / 2 }),
           withTiming(0, { duration: TUTORIAL_ANIMATION.BOUNCE_DURATION / 2 }),
-          withDelay(200, withTiming(0)), // Pause at center
+
+          // Pause at center
+          withDelay(400, withTiming(0)),
+
+          // Tap at center again
+          withDelay(300, withTiming(0)),
 
           // Swipe right (Know)
-          withTiming(60, { duration: TUTORIAL_ANIMATION.BOUNCE_DURATION / 2 }),
+          withTiming(100, { duration: TUTORIAL_ANIMATION.BOUNCE_DURATION / 2 }),
           withTiming(0, { duration: TUTORIAL_ANIMATION.BOUNCE_DURATION / 2 }),
-          withDelay(200, withTiming(0)), // Pause at center
+
+          // Pause before loop
+          withDelay(400, withTiming(0)),
         ),
         3, // Loop 3 times
         false,
       );
+
+      // Scale animation for tap gesture - happens before each swipe
+      handScale.value = withRepeat(
+        withSequence(
+          // First tap (before left swipe)
+          withTiming(0.85, { duration: 150 }),
+          withTiming(1, { duration: 150 }),
+          withDelay(TUTORIAL_ANIMATION.BOUNCE_DURATION + 400, withTiming(1)),
+
+          // Second tap (before right swipe)
+          withTiming(0.85, { duration: 150 }),
+          withTiming(1, { duration: 150 }),
+          withDelay(TUTORIAL_ANIMATION.BOUNCE_DURATION + 400, withTiming(1)),
+        ),
+        3,
+        false,
+      );
     }
-  }, [visible, handTranslateX]);
+  }, [visible, handTranslateX, handScale]);
 
   const handStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: handTranslateX.value }],
+    transform: [{ translateX: handTranslateX.value }, { scale: handScale.value }],
   }));
 
   return (
     <TutorialOverlay visible={visible} onDismiss={onDismiss}>
-      <TutorialCard title={config.title} description={config.description}>
-        {/* Swipe gesture demonstration */}
-        <View style={styles.gestureContainer}>
-          {/* Left indicator (Don't Know) */}
-          <View style={styles.indicatorContainer}>
+      <TutorialCard
+        title={config.title}
+        description={config.description}
+        dismissText="Start practicing"
+        onDismiss={onDismiss}
+      >
+        {/* Animated hand - primary focal point */}
+        <Animated.View style={[styles.handContainer, handStyle]}>
+          <Ionicons name="hand-left-outline" size={72} color={colors.tint} />
+        </Animated.View>
+
+        {/* Swipe directions with chevrons */}
+        <View style={styles.swipeRow}>
+          <View style={styles.swipeIndicator}>
             <View style={[styles.indicator, { backgroundColor: colors.error }]}>
-              <Ionicons name="chevron-back" size={24} color={colors.white} />
+              <Ionicons name="chevron-back" size={28} color={colors.white} />
             </View>
-            <ThemedText type="caption" colorName="error" style={styles.indicatorLabel}>
-              Don't Know
+            <ThemedText type="body" colorName="error" style={styles.label}>
+              Unknown
             </ThemedText>
           </View>
 
-          {/* Animated hand icon */}
-          <Animated.View style={[styles.handContainer, handStyle]}>
-            <Ionicons name="hand-left-outline" size={48} color={colors.tint} />
-          </Animated.View>
+          <ThemedText type="heading3" colorName="textTertiary" style={styles.divider}>
+            or
+          </ThemedText>
 
-          {/* Right indicator (Know) */}
-          <View style={styles.indicatorContainer}>
+          <View style={styles.swipeIndicator}>
             <View style={[styles.indicator, { backgroundColor: colors.success }]}>
-              <Ionicons name="chevron-forward" size={24} color={colors.white} />
+              <Ionicons name="chevron-forward" size={28} color={colors.white} />
             </View>
-            <ThemedText type="caption" colorName="success" style={styles.indicatorLabel}>
+            <ThemedText type="body" colorName="success" style={styles.label}>
               Know
             </ThemedText>
           </View>
         </View>
 
-        {/* Subtitle: or tap buttons */}
-        <ThemedText type="caption" colorName="textTertiary" style={styles.subtitle}>
-          or tap the buttons
-        </ThemedText>
+        {/* Vague option - visually separated */}
+        <View style={styles.vagueSeparator}>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+        </View>
+
+        <View style={styles.vagueSection}>
+          <View style={[styles.indicator, styles.vagueIndicator, { backgroundColor: colors.warning }]}>
+            <Ionicons name="hand-left-outline" size={20} color={colors.white} />
+          </View>
+          <View style={styles.vagueText}>
+            <ThemedText type="body" weight="medium">
+              Tap screen for hint
+            </ThemedText>
+            <ThemedText type="caption" colorName="textTertiary">
+              Then swipe right = Vague
+            </ThemedText>
+          </View>
+        </View>
       </TutorialCard>
     </TutorialOverlay>
   );
@@ -109,34 +158,56 @@ export function SwipeGestureTutorial({ visible, onDismiss }: SwipeGestureTutoria
 SwipeGestureTutorial.displayName = 'SwipeGestureTutorial';
 
 const styles = StyleSheet.create({
-  gestureContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  indicatorContainer: {
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.TINY,
-  },
-  indicator: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  indicatorLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '600',
-  },
   handContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
-  subtitle: {
-    textAlign: 'center',
-    fontStyle: 'italic',
+  swipeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  swipeIndicator: {
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  indicator: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '600',
+  },
+  divider: {
+    marginHorizontal: LAYOUT.SPACING.SMALL,
+  },
+  vagueSeparator: {
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  dividerLine: {
+    height: 1,
+    width: '100%',
+  },
+  vagueSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  vagueIndicator: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  vagueText: {
+    flex: 1,
+    gap: LAYOUT.SPACING.TINY,
   },
 });

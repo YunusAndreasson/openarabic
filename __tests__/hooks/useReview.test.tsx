@@ -421,18 +421,11 @@ describe('useReview Hook', () => {
         setupHesitation: false,
       },
       {
-        gesture: 'swipe right with hesitation',
+        gesture: 'swipe right with vague',
         action: (result: any) => {
-          result.current.handleHesitationStart();
+          result.current.handleVague();
           result.current.handleSwipeRight();
         },
-        expectedConfidence: 'vague',
-        expectedStability: 5,
-        setupHesitation: true,
-      },
-      {
-        gesture: 'long press',
-        action: (result: any) => result.current.handleLongPress(),
         expectedConfidence: 'vague',
         expectedStability: 5,
         setupHesitation: false,
@@ -526,9 +519,9 @@ describe('useReview Hook', () => {
       });
     });
 
-    // Unique behavior tests for vague/hesitation
+    // Unique behavior tests for vague/hint
     describe('Vague Word Specific Behavior', () => {
-      test('should reset hesitation after swipe', async () => {
+      test('should hide hint after swipe', async () => {
         const word = createMockWord();
         useFSRS.mockReturnValue({
           currentWord: word,
@@ -543,19 +536,20 @@ describe('useReview Hook', () => {
         const wrapper = createWrapper();
         const { result } = renderHook(() => useReview(), { wrapper });
 
-        // Start hesitation
+        // Show hint (vague button)
         act(() => {
-          result.current.handleHesitationStart();
+          result.current.handleVague();
         });
+
+        expect(result.current.showHint).toBe(true);
 
         // Swipe
         act(() => {
           result.current.handleSwipeRight();
         });
 
-        await waitFor(() => {
-          expect(result.current.isHesitating.value).toBe(false);
-        });
+        // Hint should be hidden after swipe
+        expect(result.current.showHint).toBe(false);
       });
     });
 
@@ -970,8 +964,8 @@ describe('useReview Hook', () => {
   // REMOVED: Word Font Sizing test - useWordSizing hook is tested separately
   // Mock configuration was complex and font sizing is UI detail not core logic
 
-  describe('Hesitation State', () => {
-    test('should handle hesitation start', () => {
+  describe('Vague/Hint State', () => {
+    test('should handle vague button press (show hint)', () => {
       const word = createMockWord();
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -987,13 +981,13 @@ describe('useReview Hook', () => {
       const { result } = renderHook(() => useReview(), { wrapper });
 
       act(() => {
-        result.current.handleHesitationStart();
+        result.current.handleVague();
       });
 
-      expect(result.current.isHesitating.value).toBe(true);
+      expect(result.current.showHint).toBe(true);
     });
 
-    test('should handle hesitation end', () => {
+    test('should toggle hint visibility', () => {
       const word = createMockWord();
       useFSRS.mockReturnValue({
         currentWord: word,
@@ -1008,12 +1002,20 @@ describe('useReview Hook', () => {
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
 
-      act(() => {
-        result.current.handleHesitationStart();
-        result.current.handleHesitationEnd();
-      });
+      // Initially false
+      expect(result.current.showHint).toBe(false);
 
-      expect(result.current.isHesitating.value).toBe(false);
+      // Toggle on
+      act(() => {
+        result.current.handleToggleHint();
+      });
+      expect(result.current.showHint).toBe(true);
+
+      // Toggle off
+      act(() => {
+        result.current.handleToggleHint();
+      });
+      expect(result.current.showHint).toBe(false);
     });
   });
 

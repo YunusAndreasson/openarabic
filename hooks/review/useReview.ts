@@ -3,8 +3,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
-import type { SharedValue } from 'react-native-reanimated';
-import { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { useAnimatedStyle } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
@@ -59,14 +58,13 @@ interface UseReviewReturn {
   currentWordKey: string;
   handleSwipeLeft: () => void;
   handleSwipeRight: () => void;
-  handleLongPress: () => void;
+  handleVague: () => void; // NEW: explicit vague handler for center button
   handleClose: () => void;
   transparentStyle: ViewStyle;
   sessionMetrics: SessionMetrics;
-  isHesitating: SharedValue<boolean>;
-  handleHesitationStart: () => void;
-  handleHesitationEnd: () => void;
   handleReplayAudio: () => Promise<void>;
+  showHint: boolean; // NEW: hint visibility state
+  handleToggleHint: () => void; // NEW: tap-to-reveal hint handler
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
   isAudioPreloadingComplete: boolean;
@@ -130,10 +128,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const [isVagueMeaning, setIsVagueMeaning] = useState(false);
   // Ensure UI re-renders when updating state changes so gestures re-enable
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
-  // Hesitation state as SharedValue for UI thread performance
-  const isHesitating = useSharedValue(false);
-  // Ref for immediate synchronous reads (avoids blocking .value reads on JS thread)
-  const isHesitatingRef = useRef(false);
+  // NEW: Hint visibility state (tap-to-reveal instead of automatic timer)
+  const [showHint, setShowHint] = useState(false);
+  // NEW: Track if Vague button was pressed (affects swipe right behavior)
+  const vagueButtonPressedRef = useRef(false);
 
   // Consolidated time tracking refs
   const timeRefs = useRef<ReviewTimeRefs>({
@@ -194,9 +192,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     ? `${currentWord.root_id}-${currentWord.fsrs_last_review ?? ''}-${currentWord.fsrs_reps ?? 0}`
     : 'none';
 
-  // Track which word hesitation applies to
-  const hesitationWordKeyRef = useRef<string>('');
-
   // Stable refs for callback optimization
   const currentWordRef = useRef(currentWord);
   const currentWordKeyRef = useRef(currentWordKey);
@@ -207,14 +202,16 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentWordKeyRef.current = currentWordKey;
   }, [currentWord, currentWordKey]);
 
-  // Ensure translation is hidden when advancing to a new word
+  // Ensure translation and hint are hidden when advancing to a new word
   useEffect(() => {
     // Clear any pending translation timers
     clearTimer('meaningTimeout');
 
-    // Immediately hide translation and reset related flags
+    // Immediately hide translation, hint, and reset related flags
     setShowTranslation(false);
     setCurrentMeaning('');
+    setShowHint(false); // NEW: Hide hint when advancing to new word
+    vagueButtonPressedRef.current = false; // NEW: Reset vague button flag
     // Reset stale completion flag if a new word/session appears
     if (currentWordKey !== 'none' && stateRefs.current.completionTriggered) {
       stateRefs.current.completionTriggered = false;
@@ -260,14 +257,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // Store old stability before update for metrics tracking
       const oldStability = currentWord.fsrs_stability ?? undefined;
       const rootId = currentWord.root_id;
-
-      // CRITICAL FIX: Reset hesitation immediately before processing feedback
-      // This prevents hint from showing on the next word during transition
-      // Must happen BEFORE updateWord changes currentWord to prevent timing issues
-      isHesitating.value = false;
-      // Sync ref immediately for synchronous reads
-      isHesitatingRef.current = false;
-      hesitationWordKeyRef.current = '';
 
       try {
         // Call updateWord and capture the new stability value
@@ -371,7 +360,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           // Clean up any playing audio before proceeding
           stopAudioSafely();
 
-          // VAGUE WORDS: Very snappy transition with brief fade for consistency
+          // VAGUE WORDS: Very snappy transition with brief fade
           if (confidence === 'vague') {
             timeRefs.current.lastVagueTime = Date.now();
             fadeOut();
@@ -381,8 +370,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
                 if (controller.signal.aborted) return;
                 processFeedback(confidence, controller);
               },
-              80,
-            ); // Very snappy 80ms fade
+              80, // Very snappy 80ms fade
+            );
             return;
           }
 
@@ -576,38 +565,38 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   const handleSwipeLeft = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
-    // Gesture swipe left - after hesitation: unknown, otherwise: unknown
+    // Hide hint immediately when swiping
+    setShowHint(false);
     handleKnowledgeResponse('unknown');
   }, [handleKnowledgeResponse, isComplete]);
 
   const handleSwipeRight = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
-    // Gesture swipe right - after hesitation: vague, otherwise: known
-    // Use ref for immediate synchronous read (avoids both blocking and async state issues)
-    const confidence = isHesitatingRef.current ? 'vague' : 'known';
+    // Hide hint immediately when swiping
+    setShowHint(false);
+    // Check if Vague button was pressed - if so, swipe right = "vague", otherwise = "known"
+    const confidence = vagueButtonPressedRef.current ? 'vague' : 'known';
     handleKnowledgeResponse(confidence);
   }, [handleKnowledgeResponse, isComplete]);
 
-  const handleLongPress = useCallback(() => {
+  // NEW: Vague button just shows hint and sets flag (user then swipes to proceed)
+  const handleVague = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
-    handleKnowledgeResponse('vague');
-  }, [isComplete, handleKnowledgeResponse]);
+    // Show hint and mark that vague was pressed (user will swipe to proceed)
+    setShowHint(true);
+    vagueButtonPressedRef.current = true;
+  }, [isComplete]);
 
-  // Hesitation callbacks - stable with refs
-  const handleHesitationStart = useCallback(() => {
-    isHesitating.value = true;
-    // Sync ref immediately for synchronous reads
-    isHesitatingRef.current = true;
-    // Track which word this hesitation is for using ref for stability
-    hesitationWordKeyRef.current = currentWordKeyRef.current;
-  }, []); // Empty deps - all values are stable (SharedValue, ref)
-
-  const handleHesitationEnd = useCallback(() => {
-    isHesitating.value = false;
-    // Sync ref immediately for synchronous reads
-    isHesitatingRef.current = false;
-    hesitationWordKeyRef.current = '';
-  }, []); // Empty deps - all values are stable (SharedValue, ref)
+  // NEW: Toggle hint visibility (tap word to reveal/hide hint)
+  const handleToggleHint = useCallback(() => {
+    setShowHint(prev => {
+      // If hiding hint, also reset vague button flag
+      if (prev) {
+        vagueButtonPressedRef.current = false;
+      }
+      return !prev;
+    });
+  }, []);
 
   // Replay audio for current word (passed to WordDisplay via ReviewCard)
   // This callback is provided to ReviewContent via context and used in WordDisplay
@@ -729,14 +718,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentWordKey,
     handleSwipeLeft,
     handleSwipeRight,
-    handleLongPress,
+    handleVague, // NEW: explicit vague handler
     handleClose,
     transparentStyle: opacityStyle,
     sessionMetrics,
-    isHesitating,
-    handleHesitationStart,
-    handleHesitationEnd,
     handleReplayAudio,
+    showHint, // NEW: hint visibility state
+    handleToggleHint, // NEW: tap-to-reveal hint handler
     isAudioPreloading,
     audioPreloadProgress,
     isAudioPreloadingComplete,
