@@ -1,37 +1,43 @@
 'use client';
 
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { Footer } from '@/components/footer';
+import { PublicHeader } from '@/components/public-header';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { supabase } from '@/lib/supabase';
+import type { Database } from '@/lib/database.types';
+
+type Category = Database['public']['Tables']['categories']['Row'];
 
 export default function AccountDeletionPage() {
   usePageTitle('Account Deletion - OpenArabic');
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b bg-background">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <Link
-            href="/"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Back to Home
-          </Link>
-        </div>
-      </header>
+      <PublicHeader
+        categories={categories}
+        selectedCategoryId={null}
+        onSelectCategory={() => {}}
+      />
 
       {/* Content */}
       <main className="flex-1 max-w-4xl mx-auto px-4 py-12">

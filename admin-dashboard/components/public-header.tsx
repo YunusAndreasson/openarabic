@@ -27,15 +27,16 @@ export function PublicHeader({
               e.preventDefault();
               onSelectCategory(null);
             }}
-            className="flex items-center gap-3 flex-shrink-0 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out group"
+            title="Home - All Articles"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/oaLogo.png"
               alt="OpenArabic"
-              className="h-8 w-auto"
+              className="h-8 w-auto transition-transform"
             />
-            <span className="text-lg font-bold text-foreground hidden sm:inline">
+            <span className="text-lg font-bold text-foreground hidden sm:inline group-hover:text-primary transition-colors">
               OpenArabic
             </span>
           </Link>
@@ -51,10 +52,11 @@ export function PublicHeader({
                   flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 snap-start
                   ${
                     selectedCategoryId === null
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20'
                       : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                   }
                 `}
+                title="All Articles"
               >
                 All
               </button>
@@ -66,7 +68,7 @@ export function PublicHeader({
                   onClick={() => onSelectCategory(category.id)}
                   style={{ cursor: 'default' }}
                   className={`
-                    flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 snap-start category-badge
+                    flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 snap-start category-badge capitalize
                     ${
                       selectedCategoryId === category.id
                         ? 'bg-primary text-primary-foreground shadow-sm'

@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 // Routes that should NOT show the admin header
-const PUBLIC_ROUTES = ['/', '/login', '/account-deletion'];
+const PUBLIC_ROUTES = ['/', '/login', '/account-deletion', '/privacy', '/terms', '/contact'];
 const isPublicRoute = (path: string) => {
   return PUBLIC_ROUTES.includes(path) || path.startsWith('/read/');
 };
