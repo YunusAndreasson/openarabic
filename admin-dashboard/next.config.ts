@@ -1,5 +1,9 @@
 import type { NextConfig } from 'next';
 import path from 'path';
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
+
+// Initialize OpenNext for Cloudflare development
+initOpenNextCloudflareForDev();
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -7,6 +11,7 @@ const nextConfig: NextConfig = {
     reactCompiler: true,
   },
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,7 +22,6 @@ const nextConfig: NextConfig = {
   },
   outputFileTracingRoot: path.join(__dirname),
   compress: true,
-  swcMinify: true,
 };
 
 export default nextConfig;

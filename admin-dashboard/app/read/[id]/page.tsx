@@ -10,6 +10,7 @@ import { SentencePair } from '@/components/sentence-pair';
 import { Footer } from '@/components/footer';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -26,6 +27,9 @@ export default function ArticleReadPage() {
   const [sentences, setSentences] = useState<ArticleSentence[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Update page title dynamically based on article
+  usePageTitle(article ? `${article.title} - OpenArabic` : 'Reading - OpenArabic');
 
   useEffect(() => {
     fetchArticle();

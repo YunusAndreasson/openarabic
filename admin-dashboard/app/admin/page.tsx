@@ -180,7 +180,7 @@ export default function AdminPage() {
           <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/5">
             <h3 className="font-medium mb-2 text-destructive">Clear Cache</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              Remove all cached translation data from localStorage. You'll need to refresh the cache
+              Remove all cached translation data from localStorage. You&apos;ll need to refresh the cache
               to rebuild it.
             </p>
             <Button onClick={handleClear} variant="destructive" className="cursor-pointer">
@@ -204,7 +204,7 @@ export default function AdminPage() {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            <span>Cache persists in your browser's localStorage, so it survives page reloads</span>
+            <span>Cache persists in your browser&apos;s localStorage, so it survives page reloads</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>

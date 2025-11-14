@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendPrompt, MODELS } from '@/lib/openrouter';
 
-export const runtime = 'edge';
-
 interface GenerateRequest {
   prompt: string;
   model?: string;

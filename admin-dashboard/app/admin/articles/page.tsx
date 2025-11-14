@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
@@ -108,7 +108,7 @@ type Category = Database['public']['Tables']['categories']['Row'];
 type SortField = 'title' | 'author' | 'category' | 'summary' | 'created_at';
 type SortDirection = 'asc' | 'desc' | null;
 
-export default function ArticlesPage() {
+function ArticlesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -656,5 +656,13 @@ export default function ArticlesPage() {
         </div>
       )}
     </TooltipProvider>
+  );
+}
+
+export default function ArticlesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <ArticlesPageContent />
+    </Suspense>
   );
 }

@@ -131,7 +131,7 @@ export function useGlobalTranslationCache(): UseGlobalTranslationCacheReturn {
         count,
       } = await supabase
         .from('sentence_words')
-        .select('id, word_form, english, position, grammar_note, sentence_id', { count: 'exact' })
+        .select('id, word_form, english, position, grammar_note, sentence_id, audio_url, difficulty_level, root_id, word_type_id', { count: 'exact' })
         .order('word_form')
         .range(from, from + BATCH_SIZE - 1);
 

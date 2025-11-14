@@ -165,7 +165,12 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
             word_form,
             english,
             position,
-            grammar_note
+            grammar_note,
+            audio_url,
+            difficulty_level,
+            root_id,
+            sentence_id,
+            word_type_id
           )
         `,
         )
@@ -882,7 +887,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
           englishSentence={selectedSentenceForImprovement.english}
           words={
             selectedSentenceForImprovement.sentence_words?.map(w => ({
-              arabic: w.arabic,
+              arabic: w.word_form,
               english: w.english,
               position: w.position,
               id: w.id,
