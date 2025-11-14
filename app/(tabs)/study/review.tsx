@@ -224,7 +224,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           }}
         >
           {/* Progress header at top of screen */}
-          <View style={{ paddingTop: LAYOUT.SPACING.XLARGE }}>
+          <View style={{ paddingTop: LAYOUT.SPACING.LARGE }}>
             <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
           </View>
 
@@ -232,9 +232,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           <View
             style={{
               position: 'absolute',
-              bottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
-              left: LAYOUT.SCREEN_EDGE_PADDING,
-              right: LAYOUT.SCREEN_EDGE_PADDING,
+              bottom: insets.bottom + LAYOUT.SPACING.LARGE,
+              left: LAYOUT.SPACING.LARGE,
+              right: LAYOUT.SPACING.LARGE,
             }}
           >
             <ReviewBottomActions onVague={handleVague} />

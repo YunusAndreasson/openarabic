@@ -9,27 +9,31 @@ import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
 
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====
+const CLOSE_BUTTON_CONSTANTS = {
+  SIZE: MIN_TOUCH_TARGET.SMALL, // 32px - matches bottom action buttons
+  TINT_OPACITY: '20', // 12.5% opacity - matches bottom buttons
+} as const;
+
 const STATIC_STYLES = StyleSheet.create({
   header: {
     alignItems: 'center',
     flexDirection: 'row',
     height: LAYOUT.SPACING.XXLARGE, // Compact height for progress bar only (32px)
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
     zIndex: 1,
   },
   progressContainer: {
     flex: 1,
     marginBottom: LAYOUT.SPACING.TINY, // Bottom margin only for spacing
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginRight: LAYOUT.SPACING.LARGE,
   },
   closeButton: {
-    padding: LAYOUT.SPACING.SMALL,
-    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2, // Circular
+    width: CLOSE_BUTTON_CONSTANTS.SIZE,
+    height: CLOSE_BUTTON_CONSTANTS.SIZE,
+    borderRadius: CLOSE_BUTTON_CONSTANTS.SIZE / 2, // Circular
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: MIN_TOUCH_TARGET.MEDIUM,
-    minHeight: MIN_TOUCH_TARGET.MEDIUM,
   },
 });
 
@@ -52,7 +56,10 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({ progress, maxProgress, onC
     }
   };
 
-  const closeButtonStyle = [STATIC_STYLES.closeButton, { backgroundColor: colors.elevation1 }];
+  const closeButtonStyle = [
+    STATIC_STYLES.closeButton,
+    { backgroundColor: colors.textTertiary + CLOSE_BUTTON_CONSTANTS.TINT_OPACITY },
+  ];
 
   return (
     <View style={STATIC_STYLES.header}>
