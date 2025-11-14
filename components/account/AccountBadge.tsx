@@ -13,11 +13,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { PhotoPermissionDisclosure } from '@/components/privacy/PhotoPermissionDisclosure';
 import { PRESS_SCALE, SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { usePhotoPermissionDisclosure } from '@/hooks/privacy/usePhotoPermissionDisclosure';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
@@ -61,12 +59,6 @@ const getMemberSinceDate = (createdAt?: string) => {
 export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps) {
   const colors = useColors();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
-  const {
-    isVisible: isPhotoDisclosureVisible,
-    ensureDisclosureAccepted,
-    acceptDisclosure,
-    declineDisclosure,
-  } = usePhotoPermissionDisclosure();
 
   // Animation values
   const scaleValue = useSharedValue(1);
@@ -117,11 +109,6 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   // Handle photo selection
   const handlePhotoSelect = useCallback(async () => {
     try {
-      const hasConsent = await ensureDisclosureAccepted();
-      if (!hasConsent) {
-        return;
-      }
-
       // Request permissions - this will show the system permission dialog
       const { status, canAskAgain, granted } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -189,7 +176,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
         showToast: true,
       });
     }
-  }, [ensureDisclosureAccepted, storageKey]);
+  }, [storageKey]);
 
   // Handle photo press animation
   const handlePhotoPress = useCallback(() => {
@@ -302,11 +289,6 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
           </View>
         </View>
       </Animated.View>
-      <PhotoPermissionDisclosure
-        visible={isPhotoDisclosureVisible}
-        onAccept={acceptDisclosure}
-        onDecline={declineDisclosure}
-      />
     </>
   );
 }

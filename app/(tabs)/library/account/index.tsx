@@ -1,9 +1,8 @@
 // External Libraries
 import { TimePicker } from '@/components/ui';
-import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState, type FC } from 'react';
-import { Alert, Linking, StyleSheet, View } from 'react-native';
+import { Alert, Linking, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { THEME_OPTIONS } from '@/components/ThemePicker';
@@ -12,16 +11,16 @@ import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge } from '@/components/account';
 import { SettingsCard } from '@/components/account';
 import { SettingsSection } from '@/components/account';
+import { BrandFooter } from '@/components/library';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useTutorialContext } from '@/components/providers';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
-import pkg from '@/package.json';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
   setAudioLanguagePreference,
@@ -120,8 +119,6 @@ const AccountScreen: FC = () => {
     handleResetReadingProgress,
     handleSupportContact,
     handleRequestReview,
-    appVersion,
-    currentYear,
     user,
     handleClearCache,
     cacheSize,
@@ -422,12 +419,19 @@ const AccountScreen: FC = () => {
             onPress={() => handlePickerOpen('language')}
           />
           <SettingsCard
-            icon="remove-circle-outline"
+            icon="eye-off-outline"
             label={STRINGS.WORD_DETAILS}
             subtitle={STRINGS.WORD_DETAILS_DESCRIPTION}
             rightType="toggle"
             toggleValue={!wordDetailsEnabled}
             onToggleChange={enabled => handleWordDetailsToggle(!enabled)}
+          />
+          <SettingsCard
+            icon="pulse"
+            label={STRINGS.HAPTICS}
+            rightType="toggle"
+            toggleValue={hapticsEnabled}
+            onToggleChange={handleHapticsToggle}
           />
         </SettingsSection>
 
@@ -447,13 +451,6 @@ const AccountScreen: FC = () => {
             rightType="toggle"
             toggleValue={audioShuffleEnabled}
             onToggleChange={handleAudioShuffleToggle}
-          />
-          <SettingsCard
-            icon="phone-portrait-outline"
-            label={STRINGS.HAPTICS}
-            rightType="toggle"
-            toggleValue={hapticsEnabled}
-            onToggleChange={handleHapticsToggle}
           />
         </SettingsSection>
 
@@ -487,12 +484,6 @@ const AccountScreen: FC = () => {
               onPress={handleTimePickerOpen}
             />
           )}
-          <SettingsCard
-            icon="help-circle"
-            label="Show tutorials again"
-            rightType="none"
-            onPress={handleResetTutorials}
-          />
         </SettingsSection>
 
         {/* Support - Help and assistance */}
@@ -502,6 +493,12 @@ const AccountScreen: FC = () => {
             label={STRINGS.HELP_CENTER}
             rightType="chevron"
             onPress={() => router.push(ROUTE_PATHS.ACCOUNT_HELP)}
+          />
+          <SettingsCard
+            icon="school"
+            label={STRINGS.RESET_TUTORIALS}
+            rightType="chevron"
+            onPress={handleResetTutorials}
           />
           <SettingsCard
             icon="mail"
@@ -561,10 +558,10 @@ const AccountScreen: FC = () => {
           />
         </SettingsSection>
 
-        {/* Data - Cache management */}
-        <SettingsSection title={STRINGS.DATA_SECTION}>
+        {/* Storage & Account - Data management and session */}
+        <SettingsSection title="Storage & Account">
           <SettingsCard
-            icon="folder"
+            icon="archive-outline"
             label={STRINGS.CLEAR_CACHE}
             subtitle={formattedCacheSize}
             rightType="custom"
@@ -581,10 +578,6 @@ const AccountScreen: FC = () => {
               </ThemedText>
             }
           />
-        </SettingsSection>
-
-        {/* Account - Session management */}
-        <SettingsSection title={STRINGS.DATA_ACCOUNT_SECTION}>
           <SettingsCard
             icon="log-out"
             label={STRINGS.SIGN_OUT}
@@ -600,7 +593,7 @@ const AccountScreen: FC = () => {
             icon="refresh"
             label={STRINGS.RESET_READING_PROGRESS}
             subtitle={STRINGS.RESET_READING_PROGRESS_DESCRIPTION}
-            rightType="none"
+            rightType="chevron"
             iconColor={colors.error}
             textColor="error"
             backgroundColor={`${colors.error}0D`}
@@ -619,16 +612,7 @@ const AccountScreen: FC = () => {
         </SettingsSection>
 
         {/* App Footer */}
-        <View style={styles.appFooterWrapper}>
-          <View style={styles.appFooterContent}>
-            <ThemedText colorName="captionText" style={styles.versionText} type="caption">
-              {STRINGS.APP_VERSION_LABEL} {Constants.expoConfig?.version || appVersion || '0.0.0'}
-            </ThemedText>
-            <ThemedText colorName="captionText" style={styles.copyrightText} type="caption">
-              {STRINGS.COPYRIGHT_SYMBOL} {currentYear} {pkg.name}
-            </ThemedText>
-          </View>
-        </View>
+        <BrandFooter />
       </ThemedView>
 
       {/* Time Picker Modal */}
@@ -677,26 +661,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  appFooterWrapper: {
-    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
-    marginTop: LAYOUT.SPACING.SMALL,
-    paddingTop: LAYOUT.SPACING.LARGE,
-  },
-  appFooterContent: {
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.TINY,
-  },
-  versionText: {
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
-    opacity: LAYOUT.OPACITY.HIGH,
-  },
-  copyrightText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
-    opacity: LAYOUT.OPACITY.MEDIUM,
   },
   clearButton: {
     minWidth: MIN_TOUCH_TARGET.MEDIUM,

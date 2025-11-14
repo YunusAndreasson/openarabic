@@ -135,17 +135,17 @@ const ArticleSentenceInternal = function ArticleSentence({
               weight="bold"
               style={[styles.tutorialText, { color: colors.background }]}
             >
-              Tap an Arabic word to see meaning
+              Tap any word to see its meaning
             </ThemedText>
 
             {/* Close button */}
             {onDismissTutorial && (
               <Pressable
                 onPress={onDismissTutorial}
-                style={styles.closeButton}
+                style={[styles.closeButton, { backgroundColor: `${colors.background}20` }]}
                 hitSlop={LAYOUT.SPACING.SMALL}
               >
-                <Ionicons name="close" size={20} color={colors.background} />
+                <Ionicons name="close" size={18} color={colors.background} />
               </Pressable>
             )}
           </View>
@@ -178,14 +178,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   tutorialContainer: {
-    alignItems: 'center',
+    // No alignment - let card fill width naturally
   },
   tutorialCard: {
     marginHorizontal: LAYOUT.SPACING.MEDIUM,
     marginTop: LAYOUT.SPACING.MEDIUM,
     padding: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    width: '90%',
     position: 'relative',
   },
   tutorialText: {
@@ -196,8 +195,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: LAYOUT.SPACING.SMALL,
     right: LAYOUT.SPACING.SMALL,
-    padding: LAYOUT.SPACING.TINY,
-    opacity: 0.8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   arrowContainer: {
     alignItems: 'center',

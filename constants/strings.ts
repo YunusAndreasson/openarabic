@@ -10,19 +10,20 @@ export const STRINGS = {
   BILINGUAL_LABEL: 'English + Arabic',
   AUDIO_LANGUAGE: 'Audio language',
   AUDIO_LANGUAGE_ARABIC: 'Arabic only',
-  AUDIO_LANGUAGE_ARABIC_SUBTITLE: 'Play only Arabic audio',
-  AUDIO_LANGUAGE_BILINGUAL_SUBTITLE: 'Play bilingual audio (English then Arabic)',
+  AUDIO_LANGUAGE_ARABIC_SUBTITLE: 'Plays Arabic audio',
+  AUDIO_LANGUAGE_BILINGUAL_SUBTITLE: 'Plays bilingual audio (English then Arabic)',
   AUDIO_SHUFFLE: 'Shuffle audio',
-  AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order in the Saved tab',
+  AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order',
   HAPTICS: 'Haptic feedback',
   WORD_DETAILS: 'Minimal word tooltips',
-  WORD_DETAILS_DESCRIPTION: 'Hide chevron icon for a cleaner interface',
+  WORD_DETAILS_DESCRIPTION: 'Hides chevron in word tooltips',
   DISPLAY_LANGUAGE: 'Display language',
   DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
-  DISPLAY_LANGUAGE_ARABIC_SUBTITLE: 'Show only Arabic text',
-  DISPLAY_LANGUAGE_BILINGUAL_SUBTITLE: 'Show Arabic with English translations',
+  DISPLAY_LANGUAGE_ARABIC_SUBTITLE: 'Shows Arabic text',
+  DISPLAY_LANGUAGE_BILINGUAL_SUBTITLE: 'Shows Arabic with English translations',
   DAILY_WORD_LIMIT: 'Daily word limit',
   WORDS_REMAINING_TODAY: '{count} words remaining today',
+  RESET_TUTORIALS: 'Reset tutorials',
   // Contact email - single source of truth
   CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',
   // Account section titles - now imported directly from enums in components
@@ -31,8 +32,8 @@ export const STRINGS = {
   DATA_SECTION: 'Storage',
   DATA_ACCOUNT_SECTION: 'Account',
   DANGER_ZONE_SECTION: 'Danger zone',
-  RESET_READING_PROGRESS_DESCRIPTION: 'Clears all reading history, streaks, and progress tracking',
-  DELETE_ACCOUNT_DESCRIPTION: 'Permanently removes your account and all data',
+  RESET_READING_PROGRESS_DESCRIPTION: 'Clear reading history, streaks and progress',
+  DELETE_ACCOUNT_DESCRIPTION: 'Permanently remove your account and data',
   // Social Media
   FOLLOW_US: 'Follow us',
   TWITTER: 'Twitter',
@@ -49,7 +50,7 @@ export const STRINGS = {
   THEME_AUTUMN: 'Autumn Leaves',
   SOMETHING_WENT_WRONG: 'Something went wrong',
   PLEASE_TRY_AGAIN: tryAgain,
-  LOADING_ARTICLES: 'Loading articles',
+  LOADING_ARTICLES: 'Loading articles...',
   LOADING_AUDIO_ELLIPSIS: 'Loading session...',
   AUDIO_READY: 'Audio ready',
   PREPARING_PRACTICE_SESSION: 'Preparing practice session...',
@@ -72,7 +73,7 @@ export const STRINGS = {
   CATEGORY: 'Category',
   RESUMED_READING_TEMPLATE: 'Resumed at {percent}%',
   // Article & content actions - shortened and action-oriented
-  BROWSE_ARTICLES: 'Explore articles',
+  BROWSE_ARTICLES: 'Explore Articles',
   PULL_TO_REFRESH: 'Pull to refresh',
   PREPARING_ARTICLES: 'Preparing articles...',
   // Article section headings (for progress-based sorting)
@@ -81,7 +82,7 @@ export const STRINGS = {
   COMPLETED: 'Completed',
   SET_TIME: 'Set time',
   // Empty states & hints - more actionable
-  TRY_ADJUSTING_FILTERS: 'Try different filters',
+  TRY_ADJUSTING_FILTERS: 'Adjust filters',
   NO_ARTICLES_FOUND: 'No matches found',
   // Saved tab empty state - emphasizes on-the-go bilingual learning
   BOOKMARKS_EMPTY_TITLE: 'Build your listening routine',
@@ -91,7 +92,7 @@ export const STRINGS = {
   STUDY_LIST_EMPTY_TITLE: 'Remember what you learn',
   STUDY_LIST_EMPTY_DESCRIPTION:
     'Tap words while reading articles, then practice at optimal intervals with spaced repetition',
-  ERROR_LOADING_DATA: "Couldn't load data",
+  ERROR_LOADING_DATA: "Couldn't load data. " + tryAgain,
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',
   SESSION_COMPLETE_EDUCATIONAL:
@@ -99,12 +100,12 @@ export const STRINGS = {
   ADDED_TO_BOOKMARKS: 'Saved to bookmarks',
   REMOVED_FROM_BOOKMARKS: 'Removed from bookmarks',
   // Word action buttons
-  ADD_TO_PRACTICE: 'Add to Practice',
-  REMOVE_FROM_PRACTICE: 'Remove from Practice',
+  ADD_TO_PRACTICE: 'Add to practice',
+  REMOVE_FROM_PRACTICE: 'Remove from practice',
   CHECK_EMAIL_CONFIRMATION: 'Check your email for confirmation',
   SUCCESS: 'Success',
   NEW_RECOMMENDATION_SELECTED: 'New recommendation selected',
-  SELECTED_TO_HELP_PRACTICE_DUE: 'Selected to help study due words',
+  SELECTED_TO_HELP_PRACTICE_DUE: 'Selected for reviewing due words',
   CHOSEN_TO_REINFORCE_CHALLENGING: 'Chosen to reinforce challenging words',
   PERFECT_FOR_GETTING_STARTED: 'Perfect for getting started',
   RANDOMLY_SELECTED_FOR_DISCOVERY: 'Randomly selected for discovery',
@@ -135,7 +136,7 @@ export const STRINGS = {
   TERMS_INTRO: 'Welcome to OpenArabic. By using our app, you agree to these terms.',
   TERMS_SERVICE_DESCRIPTION_TITLE: '1. Our Service',
   TERMS_SERVICE_DESCRIPTION:
-    'OpenArabic is an Arabic language learning platform. We provide articles, audio content, vocabulary tools, and spaced repetition learning features to help you learn Arabic.',
+    'OpenArabic is an Arabic language learning platform. We provide articles, audio content, vocabulary tools, and spaced repetition learning features for learning Arabic.',
   TERMS_ACCOUNT_TITLE: '2. Your Account',
   TERMS_ACCOUNT:
     'You can create an account using email and password, Apple Sign In, or Google Sign In. You are responsible for maintaining the security of your account. Provide accurate information and keep your password confidential.',
@@ -147,7 +148,7 @@ export const STRINGS = {
     'All content on OpenArabic, including articles, translations, audio, and educational materials, is owned by OpenArabic or licensed to us. You may use it for personal learning but may not redistribute, republish, or use it commercially.',
   TERMS_USER_DATA_TITLE: '5. Your Data',
   TERMS_USER_DATA:
-    'You own your learning data (reading progress, vocabulary lists, study history). We collect and use this data as described in our Privacy Policy to provide and improve the service.',
+    'You own your learning data (reading progress, vocabulary lists, practice history). We collect and use this data as described in our Privacy Policy to provide and improve the service.',
   TERMS_DISCLAIMER_TITLE: '6. Disclaimers',
   TERMS_DISCLAIMER:
     'OpenArabic is provided "as is" without warranties of any kind. We strive for accuracy but cannot guarantee that all content is error-free. Your use of the app is at your own risk.',
@@ -172,7 +173,7 @@ export const STRINGS = {
     'When you create an account, we collect your email address. If you use Apple or Google Sign In, we receive basic profile information from those services.',
   PRIVACY_COLLECTION_LEARNING: 'Learning Data',
   PRIVACY_COLLECTION_LEARNING_DESC:
-    'We store your reading progress, vocabulary lists, study session history, review performance, and app preferences (theme, audio settings, notifications).',
+    'We store your reading progress, vocabulary lists, practice session history, review performance, and app preferences (theme, audio settings, notifications).',
   PRIVACY_COLLECTION_ANALYTICS: 'Usage Analytics',
   PRIVACY_COLLECTION_ANALYTICS_DESC:
     'We use Mixpanel to track basic events like sign in, sign up, and practice sessions. This helps us understand how the app is used and improve it.',
@@ -222,16 +223,6 @@ export const STRINGS = {
   // Account - Support section
   HELP_CENTER: 'Help Center',
   CONTACT_SUPPORT: 'Contact Support',
-  PHOTO_PERMISSION_TITLE: 'Allow photo access?',
-  PHOTO_PERMISSION_DESCRIPTION:
-    'OpenArabic uploads the image you pick so you can attach screenshots and personalize your profile.',
-  PHOTO_PERMISSION_DETAILS: [
-    'Uploads only the photo you choose when you attach a feedback screenshot or profile photo.',
-    'Ignores the rest of your library and stores selected images securely with your account.',
-  ] as const,
-  PHOTO_PERMISSION_PRIVACY_NOTE: 'We never scan or upload other photos from your device.',
-  PHOTO_PERMISSION_ACTION_ALLOW: 'Allow photo access',
-  PHOTO_PERMISSION_ACTION_NOT_NOW: 'Not now',
   // Account - About section
   ABOUT_SECTION: 'About',
   APP_VERSION_LABEL: 'Version',
@@ -244,9 +235,9 @@ export const STRINGS = {
   CLEAR_CACHE_BUTTON: 'Clear',
   NO_CACHE: 'No cache',
   NO_CACHED_FILES: 'No cached files to clear',
-  DATA_RELOAD_REQUIRED: 'Data loads when you open the app',
+  DATA_RELOAD_REQUIRED: 'Reloads on next app launch',
   // Reading progress management
-  RESET_READING_PROGRESS: 'Reading progress',
+  RESET_READING_PROGRESS: 'Reset reading progress',
   THIS_WILL_DELETE_ALL_READING_PROGRESS:
     'This will delete reading positions and progress percentages for all articles. This cannot be undone.',
   READING_PROGRESS_RESET_SUCCESSFULLY: 'Reading progress reset',
@@ -256,11 +247,11 @@ export const STRINGS = {
   TURN_ON_NOTIFICATIONS: 'Get daily practice reminders',
   OPEN_SETTINGS: 'Open Settings',
   NOTIFICATIONS_DISABLED: 'Notifications disabled',
-  NOTIFICATION_REMINDER_TITLE: 'Time to study Arabic!',
+  NOTIFICATION_REMINDER_TITLE: 'Time to practice Arabic!',
   NOTIFICATION_REMINDER_BODY: 'Continue your Arabic learning journey',
-  START_REVIEWING_TO_BUILD_STRENGTH: 'Practice some vocabulary to see memory strength',
-  START_PRACTICING_TO_SEE_SPEED: 'Practice some vocabulary to see your learning speed',
-  STUDY_TO_MONITOR_REVIEW_TIMING: 'Practice some vocabulary to see review schedule',
+  START_REVIEWING_TO_BUILD_STRENGTH: 'Practice vocabulary to see memory strength',
+  START_PRACTICING_TO_SEE_SPEED: 'Practice vocabulary to see your learning speed',
+  STUDY_TO_MONITOR_REVIEW_TIMING: 'Practice vocabulary to see review schedule',
   STUDY_WORDS_TO_TRACK_MEMORY_RETENTION: 'Practice to track retention',
   // Performance indicators
   PERFORMING_EXCELLENTLY: 'Performing excellently',
@@ -292,13 +283,13 @@ export const STRINGS = {
   FAILED_TO_STOP_AUDIO_ON_CLOSE: "Couldn't stop audio on close. " + tryAgain,
   // Reading list errors
   FAILED_TO_LOAD_BOOKMARKS: "Couldn't load bookmarks. " + tryAgain,
-  FAILED_TO_ADD_TO_READING_LIST: "Couldn't save article. " + tryAgain,
-  FAILED_TO_REMOVE_FROM_READING_LIST: "Couldn't remove article. " + tryAgain,
-  FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check save status. " + tryAgain,
+  FAILED_TO_ADD_TO_READING_LIST: "Couldn't save bookmark. " + tryAgain,
+  FAILED_TO_REMOVE_FROM_READING_LIST: "Couldn't remove bookmark. " + tryAgain,
+  FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check bookmark status. " + tryAgain,
   ERROR_UPDATING_STUDY_LIST: "Couldn't update practice list. " + tryAgain,
   FAILED_TO_LOAD_STUDY_WORDS: "Couldn't load practice words. " + tryAgain,
   FAILED_TO_UPDATE_WORD_AND_REVIEW: "Couldn't update word and record review. " + tryAgain,
-  FAILED_TO_TOGGLE_STUDY_WORD: "Couldn't toggle study word. " + tryAgain,
+  FAILED_TO_TOGGLE_STUDY_WORD: "Couldn't toggle practice word. " + tryAgain,
   FAILED_TO_DELETE_WORD: "Couldn't delete word. " + tryAgain,
   FAILED_TO_LOAD_PRACTICE_DATA: "Couldn't load practice data. " + tryAgain,
   // Timer errors
@@ -317,7 +308,7 @@ export const STRINGS = {
     'This will permanently delete your account and all associated data, including:',
   DELETE_ACCOUNT_DATA_LIST: [
     'Reading progress and history',
-    'Vocabulary study lists and progress',
+    'Vocabulary practice lists and progress',
     'Bookmarked articles',
     'App preferences and settings',
   ] as const,
@@ -340,17 +331,17 @@ export const STRINGS = {
   HELP_SEARCH_RESULTS_SINGULAR: 'result',
   HELP_SEARCH_RESULTS_PLURAL: 'results',
   HELP_NO_RESULTS_TITLE: 'No results found',
-  HELP_NO_RESULTS_DESCRIPTION: 'Try different keywords or browse categories below',
+  HELP_NO_RESULTS_DESCRIPTION: 'Use different keywords or browse categories below',
   HELP_POPULAR_QUESTIONS: 'Popular Questions',
   HELP_STILL_NEED_HELP_TITLE: 'Still need help?',
   HELP_STILL_NEED_HELP_DESCRIPTION:
     "Can't find what you're looking for? Contact the developer directly.",
   // Chart empty states
-  CHART_EMPTY_STATE: 'Add your first words to start tracking your progress',
+  CHART_EMPTY_STATE: 'Add words to track your progress',
   // Legal & Attributions
   LEGAL_ATTRIBUTIONS: 'Legal & Attributions',
   LEGAL_INTRO:
-    'OpenArabic is built with the help of various open source projects and third-party services. We are grateful to the developers and organizations that make their work freely available.',
+    'OpenArabic is built using open source projects and third-party services. We are grateful to the developers and organizations that make their work freely available.',
   LEGAL_AUDIO_TITLE: 'Audio Generation',
   LEGAL_AUDIO_ELEVENLABS: 'ElevenLabs',
   LEGAL_AUDIO_ELEVENLABS_DESC:
@@ -359,7 +350,7 @@ export const STRINGS = {
   LEGAL_ERROR_TRACKING_TITLE: 'Error Tracking',
   LEGAL_ERROR_SENTRY: 'Sentry',
   LEGAL_ERROR_SENTRY_DESC:
-    'Error monitoring and crash reporting to help improve app stability and user experience.',
+    'Error monitoring and crash reporting to improve app stability and user experience.',
   LEGAL_ERROR_SENTRY_URL: 'https://sentry.io',
   LEGAL_FONTS_TITLE: 'Typefaces',
   LEGAL_FONTS_ARABIC_TITLE: 'Arabic Fonts',
