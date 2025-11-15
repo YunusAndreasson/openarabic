@@ -181,7 +181,7 @@ export default function ArticleReadPage() {
       <ArticleHeader article={article} />
 
       {/* Article Content */}
-      <ArticleContent summary={article.summary}>
+      <ArticleContent summary={article.summary} audioUrlBilingual={article.audio_url_bilingual}>
         {sentences.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
             No content available for this article.

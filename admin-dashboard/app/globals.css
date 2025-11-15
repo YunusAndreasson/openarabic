@@ -166,3 +166,34 @@
     }
   }
 }
+
+/* Custom Audio Player Styles - Sage Green Theme */
+audio.audio-player {
+  outline: none;
+  filter: sepia(20%) saturate(70%) hue-rotate(85deg);
+}
+
+audio.audio-player::-webkit-media-controls-panel {
+  background-color: hsl(162 25% 92%);
+}
+
+audio.audio-player::-webkit-media-controls-play-button,
+audio.audio-player::-webkit-media-controls-pause-button {
+  background-color: hsl(156 17% 43%);
+  border-radius: 50%;
+}
+
+audio.audio-player::-webkit-media-controls-current-time-display,
+audio.audio-player::-webkit-media-controls-time-remaining-display {
+  color: hsl(164 25% 15%);
+}
+
+/* Dark mode audio player */
+.dark audio.audio-player::-webkit-media-controls-panel {
+  background-color: hsl(164 14% 12%);
+}
+
+.dark audio.audio-player::-webkit-media-controls-current-time-display,
+.dark audio.audio-player::-webkit-media-controls-time-remaining-display {
+  color: hsl(160 20% 90%);
+}
