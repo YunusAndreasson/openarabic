@@ -159,17 +159,6 @@ button, a, [role="button"] {
   }
 }
 
-@keyframes slide-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Optimized Tailwind animate-in utilities */
 .animate-in {
   animation: fade-in 0.3s cubic-bezier(0.23, 1, 0.32, 1);
@@ -178,10 +167,6 @@ button, a, [role="button"] {
 
 .fade-in {
   animation-name: fade-in;
-}
-
-.slide-in-up {
-  animation-name: slide-in-up;
 }
 
 /* View Transitions API - Modern Native Page Transitions */
