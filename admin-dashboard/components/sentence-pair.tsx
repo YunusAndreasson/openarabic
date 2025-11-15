@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import type { Database } from '@/lib/database.types';
 import { ArabicWord } from '@/components/arabic-word';
+import { Volume2, Loader2 } from 'lucide-react';
 
 type ArticleSentence = Database['public']['Tables']['article_sentences']['Row'];
 type SentenceWord = Database['public']['Tables']['sentence_words']['Row'];
@@ -13,39 +15,104 @@ interface SentencePairProps {
 }
 
 export function SentencePair({ sentence, words, isLast = false }: SentencePairProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Cleanup audio on unmount
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const handlePlayAudio = async () => {
+    if (!sentence.audio_url) return;
+
+    try {
+      // If already playing, pause it
+      if (isPlaying && audioRef.current) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+        return;
+      }
+
+      // Create or reuse audio element
+      if (!audioRef.current) {
+        audioRef.current = new Audio(sentence.audio_url);
+        audioRef.current.addEventListener('ended', () => setIsPlaying(false));
+        audioRef.current.addEventListener('error', () => {
+          setIsLoading(false);
+          setIsPlaying(false);
+        });
+      }
+
+      setIsLoading(true);
+      await audioRef.current.play();
+      setIsPlaying(true);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setIsLoading(false);
+      setIsPlaying(false);
+    }
+  };
+
   return (
     <div className={`${isLast ? '' : 'mb-10'}`}>
-      {/* Arabic Sentence - Primary (Word by Word) */}
-      <div
-        lang="ar"
-        dir="rtl"
-        className="text-2xl md:text-[28px] leading-[1.9] text-right text-foreground mb-4"
-      >
-        {words.length > 0 ? (
-          words.map((word, index) => (
-            <span key={word.id}>
-              <ArabicWord
-                wordForm={word.word_form}
-                english={word.english}
-                grammarNote={word.grammar_note}
-              />
-              {/* Add space between words */}
-              {index < words.length - 1 && ' '}
+      {/* Arabic Sentence - Primary (Word by Word) with Audio Button */}
+      <div className="flex items-start gap-3 mb-4">
+        <div
+          lang="ar"
+          dir="rtl"
+          className="flex-1 text-2xl md:text-[28px] leading-[1.9] text-right text-foreground"
+        >
+          {words.length > 0 ? (
+            words.map((word, index) => (
+              <span key={word.id}>
+                <ArabicWord
+                  wordForm={word.word_form}
+                  english={word.english}
+                  grammarNote={word.grammar_note}
+                />
+                {/* Add space between words */}
+                {index < words.length - 1 && ' '}
+              </span>
+            ))
+          ) : (
+            // Fallback to full sentence if no words available
+            <span
+              style={{
+                fontFamily: 'Madina, "Noto Naskh Arabic", "Traditional Arabic", serif',
+                fontFeatureSettings: '"calt" 1, "liga" 1, "kern" 1',
+                WebkitFontSmoothing: 'antialiased',
+                MozOsxFontSmoothing: 'grayscale',
+                fontWeight: 500,
+              }}
+            >
+              {sentence.arabic}
             </span>
-          ))
-        ) : (
-          // Fallback to full sentence if no words available
-          <span
-            style={{
-              fontFamily: 'Madina, "Noto Naskh Arabic", "Traditional Arabic", serif',
-              fontFeatureSettings: '"calt" 1, "liga" 1, "kern" 1',
-              WebkitFontSmoothing: 'antialiased',
-              MozOsxFontSmoothing: 'grayscale',
-              fontWeight: 500,
-            }}
+          )}
+        </div>
+
+        {/* Subtle Audio Play Button */}
+        {sentence.audio_url && (
+          <button
+            onClick={handlePlayAudio}
+            disabled={isLoading}
+            className="flex-shrink-0 p-2 rounded-lg text-muted-foreground/40 hover:text-primary hover:bg-primary/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+            aria-label={isPlaying ? 'Pause Arabic audio' : 'Play Arabic audio'}
+            title={isPlaying ? 'Pause' : 'Play Arabic audio'}
           >
-            {sentence.arabic}
-          </span>
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Volume2 className={`h-5 w-5 ${isPlaying ? 'text-primary' : ''}`} />
+            )}
+          </button>
         )}
       </div>
 
