@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 import { ArticlesClient } from '@/components/articles-client';
 
@@ -13,11 +13,7 @@ const ITEMS_PER_PAGE = 12;
 
 // Server component - renders on Cloudflare Workers
 export default async function PublicArticlesPage() {
-  // Server-side Supabase client (runs on Cloudflare Workers)
-  const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Use existing Supabase client (works on both server and client)
 
   // Fetch initial articles on the server
   const { data: articles, error: articlesError } = await supabase
