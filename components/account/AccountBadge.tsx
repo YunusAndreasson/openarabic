@@ -109,6 +109,29 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   // Handle photo selection
   const handlePhotoSelect = useCallback(async () => {
     try {
+      // Show prominent disclosure BEFORE requesting permissions (Google Play requirement)
+      const userAgreed = await new Promise<boolean>(resolve => {
+        Alert.alert(
+          'Profile Photo',
+          'OpenArabic accesses your photo library to let you select a profile photo for your account. The photo is stored locally on your device and is never uploaded to our servers.\n\nDo you want to select a profile photo?',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+              onPress: () => resolve(false),
+            },
+            {
+              text: 'I Agree',
+              onPress: () => resolve(true),
+            },
+          ],
+        );
+      });
+
+      if (!userAgreed) {
+        return;
+      }
+
       // Request permissions - this will show the system permission dialog
       const { status, canAskAgain, granted } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -242,7 +265,9 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
 
   return (
     <>
-      <Animated.View style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}>
+      <Animated.View
+        style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}
+      >
         <View style={styles.profileContent}>
           {/* Profile Photo */}
           <Pressable onPress={handlePhotoPress} style={styles.photoContainer}>
