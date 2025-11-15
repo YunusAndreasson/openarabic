@@ -35,10 +35,10 @@ export function ArabicWord({ wordForm, english, grammarNote }: ArabicWordProps) 
           side="top"
           className="max-w-[250px] bg-popover text-popover-foreground border border-border shadow-lg"
         >
-          <div className="space-y-1 text-left" dir="ltr">
-            <p className="font-medium text-sm">{english}</p>
+          <div className="space-y-1.5 text-left" dir="ltr">
+            <p className="font-semibold text-base leading-tight">{english}</p>
             {grammarNote && (
-              <p className="text-xs text-muted-foreground italic">{grammarNote}</p>
+              <p className="text-sm text-muted-foreground italic leading-snug">{grammarNote}</p>
             )}
           </div>
         </TooltipContent>
