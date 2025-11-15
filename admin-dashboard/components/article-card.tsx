@@ -139,7 +139,7 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
           )}
 
           {/* Summary */}
-          <p className="text-foreground/90 text-base line-clamp-3 leading-[1.618] font-serif -mx-2 md:-mx-[10px]">
+          <p className="text-foreground/90 text-base line-clamp-4 leading-[1.618] font-serif -mx-2 md:-mx-[10px]">
             {article.summary}
           </p>
 
