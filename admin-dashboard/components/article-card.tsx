@@ -79,7 +79,7 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
       prefetch={null}
       className="group block h-full"
     >
-      <article className="h-full flex flex-col bg-card rounded-lg overflow-hidden shadow-[0_2px_0_rgba(0,0,0,0.08)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-[0_0_0_3px_hsl(156_17%_43%/0.35),0_0_0_6px_hsl(156_17%_43%/0.12)]">
+      <article className="h-full flex flex-col bg-card rounded-lg overflow-hidden shadow-[0_2px_0_rgba(0,0,0,0.08)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-[0_0_0_2px_hsl(156_17%_43%/0.25),0_0_0_4px_hsl(156_17%_43%/0.08)]">
         {/* Image - Golden Ratio (φ:1) with conditional title overlay */}
         <div className="relative w-full aspect-[1.618/1] bg-muted overflow-hidden">
           <Image
