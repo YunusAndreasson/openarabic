@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Database } from '@/lib/database.types';
 import { ArabicWord } from '@/components/arabic-word';
-import { Play, Pause, Loader2 } from 'lucide-react';
+import { Play, Pause } from 'lucide-react';
 
 type ArticleSentence = Database['public']['Tables']['article_sentences']['Row'];
 type SentenceWord = Database['public']['Tables']['sentence_words']['Row'];
@@ -118,7 +118,7 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
             title={isPlaying ? 'Pause' : 'Play Arabic audio'}
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="h-4 w-4 rounded-full bg-primary animate-pulse-sage" />
             ) : isPlaying ? (
               <Pause className="h-4 w-4 text-primary fill-primary" />
             ) : (

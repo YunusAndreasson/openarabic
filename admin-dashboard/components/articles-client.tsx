@@ -6,7 +6,6 @@ import type { Database } from '@/lib/database.types';
 import { PublicHeader } from '@/components/public-header';
 import { ArticleGrid } from '@/components/article-grid';
 import { Footer } from '@/components/footer';
-import { Loader2 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
@@ -153,7 +152,7 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
         {/* Infinite scroll trigger point */}
         {!loading && hasMore && articles.length > 0 && (
           <div ref={observerTarget} className="flex justify-center mt-12 py-8">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/60" />
+            <div className="h-4 w-4 rounded-full bg-primary/60 animate-pulse-sage" />
           </div>
         )}
 

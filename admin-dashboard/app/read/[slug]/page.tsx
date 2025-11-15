@@ -11,7 +11,6 @@ import { SentencePair } from '@/components/sentence-pair';
 import { RelatedArticles } from '@/components/related-articles';
 import { Footer } from '@/components/footer';
 import { ReadingProgress } from '@/components/reading-progress';
-import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { parseIdFromSlug } from '@/lib/slugify';
@@ -145,7 +144,7 @@ export default function ArticleReadPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="h-8 w-8 rounded-full bg-primary animate-pulse-sage" />
       </div>
     );
   }
