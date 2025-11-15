@@ -133,18 +133,18 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
         <div className="flex flex-col flex-1 px-6 pb-4 md:px-[26px] md:pb-4 pt-4 md:pt-5">
           {/* Title - Light mode only (below image) */}
           {!isDark && (
-            <h2 className="text-lg md:text-xl font-bold leading-[1.3] text-foreground line-clamp-2 mb-3">
+            <h2 className="text-lg md:text-xl font-bold leading-[1.3] text-foreground line-clamp-2 mb-3 -mx-2 md:-mx-[10px]">
               {article.title}
             </h2>
           )}
 
           {/* Summary */}
-          <p className="text-foreground/90 text-base line-clamp-3 leading-[1.618] font-serif">
+          <p className="text-foreground/90 text-base line-clamp-3 leading-[1.618] font-serif -mx-2 md:-mx-[10px]">
             {article.summary}
           </p>
 
           {/* Metadata - Author, Date, Read Time */}
-          <div className={`flex items-center gap-2 text-xs text-muted-foreground/80 flex-wrap mt-auto ${isDark ? 'pt-5' : 'pt-4'}`}>
+          <div className={`flex items-center gap-2 text-xs text-muted-foreground/80 flex-wrap mt-auto -mx-2 md:-mx-[10px] ${isDark ? 'pt-5' : 'pt-4'}`}>
             <span className="font-medium text-foreground/90">{article.authors?.name || 'OpenArabic'}</span>
             <span className="opacity-30">·</span>
             <span className="opacity-65">{formatDate(article.created_at)}</span>
