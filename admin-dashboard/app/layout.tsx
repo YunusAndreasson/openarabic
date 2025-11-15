@@ -60,15 +60,6 @@ export default function RootLayout({
           as="image"
           fetchPriority="high"
         />
-
-        {/* Preload Madina font for better Arabic rendering */}
-        <link
-          rel="preload"
-          href="/fonts/madina.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
