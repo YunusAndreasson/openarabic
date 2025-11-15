@@ -72,7 +72,7 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
   };
 
   return (
-    <div className={`${isLast ? '' : 'mb-10'}`}>
+    <div className={`group ${isLast ? '' : 'mb-10'}`}>
       {/* Arabic Sentence - Primary (Word by Word) with Audio Button */}
       <div className="flex items-start gap-3 mb-4">
         <div
@@ -113,16 +113,16 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
           <button
             onClick={handlePlayAudio}
             disabled={isLoading}
-            className="flex-shrink-0 p-2 rounded-lg text-muted-foreground/40 hover:text-primary hover:bg-primary/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+            className="flex-shrink-0 p-1.5 rounded-md text-muted-foreground/30 hover:text-primary hover:bg-primary/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-1 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
             aria-label={isPlaying ? 'Pause Arabic audio' : 'Play Arabic audio'}
             title={isPlaying ? 'Pause' : 'Play Arabic audio'}
           >
             {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : isPlaying ? (
-              <Pause className="h-5 w-5 text-primary" />
+              <Pause className="h-4 w-4 text-primary" />
             ) : (
-              <Play className="h-5 w-5" />
+              <Play className="h-4 w-4" />
             )}
           </button>
         )}
