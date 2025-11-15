@@ -14,6 +14,14 @@ interface ArticleHeaderProps {
   article: Article;
 }
 
+function normalizeAudioUrl(audioUrl: string): string {
+  if (!audioUrl) return '';
+  if (audioUrl.startsWith('http://') || audioUrl.startsWith('https://')) {
+    return audioUrl;
+  }
+  return `https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/audio/${audioUrl}`;
+}
+
 function normalizeImageUrl(imageUrl: string): string {
   if (!imageUrl) return '';
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
@@ -110,7 +118,7 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
           </h1>
 
           {/* Metadata */}
-          <div className="flex flex-wrap items-center gap-3 md:gap-4 text-white/90 text-sm md:text-base">
+          <div className="flex flex-wrap items-center gap-3 md:gap-4 text-white/90 text-sm md:text-base mb-6">
             <span className="font-medium">{article.authors?.name || 'OpenArabic'}</span>
             <span className="opacity-50">•</span>
             <time
@@ -122,6 +130,27 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
             <span className="opacity-50">•</span>
             <span className="opacity-90">{estimateReadTime(article.summary, article.difficulty_level)}</span>
           </div>
+
+          {/* Bilingual Audio Player - Hero Section */}
+          {article.audio_url_bilingual && (
+            <div className="max-w-2xl">
+              <audio
+                controls
+                preload="metadata"
+                className="w-full audio-player-hero"
+                style={{
+                  height: '48px',
+                  borderRadius: '12px',
+                }}
+              >
+                <source src={normalizeAudioUrl(article.audio_url_bilingual)} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+              <p className="text-xs text-white/60 mt-2">
+                Listen to full article (Arabic & English)
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </header>

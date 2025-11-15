@@ -167,33 +167,26 @@
   }
 }
 
-/* Custom Audio Player Styles - Sage Green Theme */
-audio.audio-player {
+/* Custom Audio Player Styles - Hero Section (on dark overlay) */
+audio.audio-player-hero {
   outline: none;
-  filter: sepia(20%) saturate(70%) hue-rotate(85deg);
+  filter: brightness(1.1) saturate(80%);
 }
 
-audio.audio-player::-webkit-media-controls-panel {
-  background-color: hsl(162 25% 92%);
+audio.audio-player-hero::-webkit-media-controls-panel {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-audio.audio-player::-webkit-media-controls-play-button,
-audio.audio-player::-webkit-media-controls-pause-button {
-  background-color: hsl(156 17% 43%);
-  border-radius: 50%;
+audio.audio-player-hero::-webkit-media-controls-play-button,
+audio.audio-player-hero::-webkit-media-controls-pause-button {
+  filter: brightness(1.3);
 }
 
-audio.audio-player::-webkit-media-controls-current-time-display,
-audio.audio-player::-webkit-media-controls-time-remaining-display {
-  color: hsl(164 25% 15%);
-}
-
-/* Dark mode audio player */
-.dark audio.audio-player::-webkit-media-controls-panel {
-  background-color: hsl(164 14% 12%);
-}
-
-.dark audio.audio-player::-webkit-media-controls-current-time-display,
-.dark audio.audio-player::-webkit-media-controls-time-remaining-display {
-  color: hsl(160 20% 90%);
+audio.audio-player-hero::-webkit-media-controls-current-time-display,
+audio.audio-player-hero::-webkit-media-controls-time-remaining-display {
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
