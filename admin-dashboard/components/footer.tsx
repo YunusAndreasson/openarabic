@@ -1,30 +1,49 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 export function Footer() {
+
   return (
     <footer className="border-t border-border/40 bg-muted/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Brand */}
           <div className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/oaLogo.png" alt="OpenArabic" className="h-5 w-auto" />
+            <Image
+              src="/oaLogo.png"
+              alt="OpenArabic"
+              width={20}
+              height={20}
+              className="h-5 w-auto"
+            />
             <span className="text-sm font-medium text-foreground">OpenArabic</span>
           </div>
 
           {/* Legal Links - Inline with dot separators */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap justify-center">
-            <Link href="/privacy" className="hover:text-foreground transition-colors duration-150 cursor-pointer">
+            <Link
+              href="/privacy"
+              prefetch={null}
+              className="hover:text-foreground transition-colors duration-150 cursor-pointer"
+            >
               Privacy
             </Link>
             <span className="opacity-40">·</span>
-            <Link href="/terms" className="hover:text-foreground transition-colors duration-150 cursor-pointer">
+            <Link
+              href="/terms"
+              prefetch={null}
+              className="hover:text-foreground transition-colors duration-150 cursor-pointer"
+            >
               Terms
             </Link>
             <span className="opacity-40">·</span>
-            <Link href="/account-deletion" className="hover:text-foreground transition-colors duration-150 cursor-pointer">
+            <Link
+              href="/account-deletion"
+              prefetch={null}
+              className="hover:text-foreground transition-colors duration-150 cursor-pointer"
+            >
               Delete Account
             </Link>
             <span className="opacity-40">·</span>

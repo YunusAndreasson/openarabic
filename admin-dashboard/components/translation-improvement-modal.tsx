@@ -60,6 +60,7 @@ export function TranslationImprovementModal({
     if (open && suggestions.length === 0 && !isLoading && !error) {
       loadSuggestions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const loadSuggestions = async () => {

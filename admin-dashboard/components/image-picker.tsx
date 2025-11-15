@@ -56,6 +56,7 @@ export function ImagePicker({ onSelect, currentImage, inline = false }: ImagePic
     if (open || inline) {
       loadImages();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, inline]);
 
   useEffect(() => {

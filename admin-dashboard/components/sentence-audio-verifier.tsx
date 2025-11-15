@@ -131,6 +131,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
 
   useEffect(() => {
     fetchSentences();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [articleId]);
 
   // Close tooltip on click outside
@@ -256,7 +257,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
   };
 
   // Check if word has alternative multi-word translations using global cache
-  const getAlternativeTranslations = (word: SentenceWord): string[] => {
+  const getAlternativeTranslations = useCallback((word: SentenceWord): string[] => {
     const translations = translationsMap.get(word.word_form);
     if (!translations) return [];
 
@@ -270,7 +271,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
       const wordCount = translation.trim().split(/\s+/).length;
       return translation !== word.english.trim() && wordCount >= 2;
     });
-  };
+  }, [translationsMap]);
 
   const hasAlternativeTranslations = useCallback(
     (word: SentenceWord): boolean => {

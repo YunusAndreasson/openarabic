@@ -49,6 +49,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Resource hints for faster external requests */}
+        <link rel="preconnect" href="https://kkmnzbeugdoajtzfjkxg.supabase.co" />
+        <link rel="dns-prefetch" href="https://kkmnzbeugdoajtzfjkxg.supabase.co" />
+
         {/* Preload Madina font for better Arabic rendering */}
         <link
           rel="preload"

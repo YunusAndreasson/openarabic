@@ -74,6 +74,7 @@ export default function TranslationReviewsPage() {
   useEffect(() => {
     fetchImprovements();
     fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const fetchImprovements = async () => {

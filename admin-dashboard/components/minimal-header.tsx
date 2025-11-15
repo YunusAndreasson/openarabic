@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ThemeToggle } from './theme-toggle';
 import {
   Dialog,
@@ -24,11 +25,13 @@ export function MinimalHeader() {
             className="flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity duration-150"
             title="Back to Home"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/oaLogo.png"
               alt="OpenArabic"
+              width={24}
+              height={24}
               className="h-6 w-auto"
+              priority
             />
             <span className="text-sm font-semibold text-foreground">
               OpenArabic

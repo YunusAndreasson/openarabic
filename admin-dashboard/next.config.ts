@@ -7,11 +7,35 @@ initOpenNextCloudflareForDev();
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+
+  // Performance optimizations
+  compress: true,
+  poweredByHeader: false,
+
   experimental: {
     reactCompiler: true,
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-select'],
+    scrollRestoration: true,
   },
+
+  // Turbopack configuration (Next.js 15.5+)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
+
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+
   images: {
-    unoptimized: true,
+    unoptimized: true, // Cloudflare image resizing not available on Pages
     remotePatterns: [
       {
         protocol: 'https',
@@ -20,8 +44,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
   outputFileTracingRoot: path.join(__dirname),
-  compress: true,
 };
 
 export default nextConfig;

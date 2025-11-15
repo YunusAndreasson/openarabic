@@ -79,6 +79,7 @@ export default function EditArticlePage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [articleId]);
 
   const fetchData = async () => {

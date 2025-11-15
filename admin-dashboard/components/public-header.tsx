@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Database } from '@/lib/database.types';
 import { ThemeToggle } from './theme-toggle';
 import {
@@ -47,14 +48,17 @@ export function PublicHeader({
             onClick={() => {
               onSelectCategory(null);
             }}
+            prefetch={null}
             className="flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity duration-150 group"
             title="Home"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/oaLogo.png"
               alt="OpenArabic"
+              width={28}
+              height={28}
               className="h-7 w-auto"
+              priority
             />
             <span className="text-base font-semibold text-foreground">
               OpenArabic
@@ -268,7 +272,7 @@ export function PublicHeader({
           </DialogHeader>
           <div className="space-y-4 text-sm leading-relaxed">
             <p className="text-foreground">
-              A free Arabic learning app based on classical Islamic texts. You read bilingual sentence pairs (an Arabic sentence followed by an English sentence), tap words you don't understand, and add them to a spaced repetition system (FSRS) to learn over time.
+              A free Arabic learning app based on classical Islamic texts. You read bilingual sentence pairs (an Arabic sentence followed by an English sentence), tap words you don&apos;t understand, and add them to a spaced repetition system (FSRS) to learn over time.
             </p>
 
             <div className="space-y-2">

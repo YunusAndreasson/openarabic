@@ -72,6 +72,7 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
       {/* Back to Articles Button */}
       <Link
         href="/"
+        prefetch={null}
         className="absolute top-6 left-4 sm:left-6 lg:left-8 z-10 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white/10 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-white/20 transition-colors duration-150 cursor-pointer"
         aria-label="Back to articles"
       >
