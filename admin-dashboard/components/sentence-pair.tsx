@@ -12,6 +12,7 @@ interface SentencePairProps {
   sentence: ArticleSentence;
   words: SentenceWord[];
   isLast?: boolean;
+  disableTooltips?: boolean;
 }
 
 function normalizeAudioUrl(audioUrl: string): string {
@@ -22,7 +23,7 @@ function normalizeAudioUrl(audioUrl: string): string {
   return `https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/audio/${audioUrl}`;
 }
 
-export function SentencePair({ sentence, words, isLast = false }: SentencePairProps) {
+export function SentencePair({ sentence, words, isLast = false, disableTooltips = false }: SentencePairProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -87,6 +88,7 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
                   wordForm={word.word_form}
                   english={word.english}
                   grammarNote={word.grammar_note}
+                  disableTooltip={disableTooltips}
                 />
                 {/* Add space between words */}
                 {index < words.length - 1 && ' '}

@@ -196,6 +196,7 @@ export default function ArticleReadPage() {
               sentence={sentence}
               words={sentenceWords[sentence.id] || []}
               isLast={index === sentences.length - 1}
+              disableTooltips={index === 0}
             />
           ))
         )}

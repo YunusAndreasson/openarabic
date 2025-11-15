@@ -11,25 +11,34 @@ interface ArabicWordProps {
   wordForm: string;
   english: string;
   grammarNote?: string | null;
+  disableTooltip?: boolean;
 }
 
-export function ArabicWord({ wordForm, english, grammarNote }: ArabicWordProps) {
+export function ArabicWord({ wordForm, english, grammarNote, disableTooltip = false }: ArabicWordProps) {
+  const wordSpan = (
+    <span
+      className={disableTooltip ? "inline-block" : "cursor-pointer transition-colors duration-150 hover:bg-primary/10 rounded-md px-0.5 inline-block"}
+      style={{
+        fontFamily: 'Madina, "Noto Naskh Arabic", "Traditional Arabic", serif',
+        fontFeatureSettings: '"calt" 1, "liga" 1, "kern" 1',
+        WebkitFontSmoothing: 'antialiased',
+        MozOsxFontSmoothing: 'grayscale',
+        fontWeight: 500,
+      }}
+    >
+      {wordForm}
+    </span>
+  );
+
+  if (disableTooltip) {
+    return wordSpan;
+  }
+
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span
-            className="cursor-pointer transition-colors duration-150 hover:bg-primary/10 rounded-md px-0.5 inline-block"
-            style={{
-              fontFamily: 'Madina, "Noto Naskh Arabic", "Traditional Arabic", serif',
-              fontFeatureSettings: '"calt" 1, "liga" 1, "kern" 1',
-              WebkitFontSmoothing: 'antialiased',
-              MozOsxFontSmoothing: 'grayscale',
-              fontWeight: 500,
-            }}
-          >
-            {wordForm}
-          </span>
+          {wordSpan}
         </TooltipTrigger>
         <TooltipContent
           side="top"
