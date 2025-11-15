@@ -152,7 +152,7 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
         {/* Infinite scroll trigger point */}
         {!loading && hasMore && articles.length > 0 && (
           <div ref={observerTarget} className="flex justify-center mt-12 py-8">
-            <div className="h-4 w-4 rounded-full bg-primary/60 animate-pulse-sage" />
+            <div className="h-4 w-4 rounded-full border-2 border-primary/60 animate-pulse-sage" />
           </div>
         )}
 

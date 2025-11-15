@@ -118,7 +118,7 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
             title={isPlaying ? 'Pause' : 'Play Arabic audio'}
           >
             {isLoading ? (
-              <div className="h-4 w-4 rounded-full bg-primary animate-pulse-sage" />
+              <div className="h-4 w-4 rounded-full border-2 border-primary animate-pulse-sage" />
             ) : isPlaying ? (
               <Pause className="h-4 w-4 text-primary fill-primary" />
             ) : (
