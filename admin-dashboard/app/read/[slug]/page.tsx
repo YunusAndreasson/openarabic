@@ -144,9 +144,13 @@ export default function ArticleReadPage() {
     });
   };
 
-  // Don't render anything while loading - let loading.tsx skeleton show
+  // Show minimal loader while fetching article
   if (loading) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-8 w-8 rounded-full border-2 border-primary/60 animate-pulse-sage" />
+      </div>
+    );
   }
 
   if (error || !article) {
