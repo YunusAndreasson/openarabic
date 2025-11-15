@@ -136,6 +136,7 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
             <div className="max-w-2xl">
               <audio
                 controls
+                controlsList="nodownload noplaybackrate"
                 preload="metadata"
                 className="w-full audio-player-hero"
                 style={{

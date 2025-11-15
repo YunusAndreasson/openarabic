@@ -191,13 +191,25 @@ audio.audio-player-hero::-webkit-media-controls-time-remaining-display {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Hide volume controls for cleaner interface */
-audio.audio-player-hero::-webkit-media-controls-volume-slider,
-audio.audio-player-hero::-webkit-media-controls-mute-button {
-  display: none;
+/* Hide volume controls for cleaner interface - Comprehensive browser support */
+audio.audio-player-hero::-webkit-media-controls-volume-slider {
+  display: none !important;
+  -webkit-appearance: none;
 }
 
-audio.audio-player-hero::-moz-media-controls-volume-slider,
+audio.audio-player-hero::-webkit-media-controls-mute-button {
+  display: none !important;
+}
+
+audio.audio-player-hero::-webkit-media-controls-volume-control-container {
+  display: none !important;
+}
+
+/* Firefox */
+audio.audio-player-hero::-moz-media-controls-volume-slider {
+  display: none !important;
+}
+
 audio.audio-player-hero::-moz-media-controls-mute-button {
-  display: none;
+  display: none !important;
 }
