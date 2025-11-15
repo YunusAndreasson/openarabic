@@ -1,7 +1,10 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import type { Database } from '@/lib/database.types';
+import { useTheme } from '@/components/providers/theme-provider';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -43,16 +46,39 @@ function formatDate(dateString: string): string {
   });
 }
 
-function estimateReadTime(difficultyLevel: number): string {
-  // Estimate read time based on difficulty level
-  if (difficultyLevel <= 2) return '3 min read';
-  if (difficultyLevel <= 4) return '5 min read';
-  return '7 min read';
+function estimateReadTime(summary: string, difficultyLevel: number): string {
+  // Count words in summary as a proxy for article length
+  const wordCount = summary.trim().split(/\s+/).length;
+
+  // Estimate total article length (summary is typically ~10-15% of article)
+  const estimatedTotalWords = wordCount * 8;
+
+  // Average reading speed: 200-250 words/min, use 225
+  // Adjust for difficulty (harder = slower reading)
+  const readingSpeed = difficultyLevel <= 2 ? 250 : difficultyLevel <= 4 ? 225 : 200;
+  const minutes = Math.ceil(estimatedTotalWords / readingSpeed);
+
+  // Round to nearest minute, minimum 1 min
+  const readTime = Math.max(1, minutes);
+
+  return `${readTime} min read`;
 }
 
 export function ArticleHeader({ article }: ArticleHeaderProps) {
+  const { isDark } = useTheme();
+
   return (
-    <header className="relative h-[50vh] md:h-[70vh] w-full overflow-hidden">
+    <header className="relative h-[40vh] md:h-[50vh] w-full overflow-hidden">
+      {/* Back to Articles Button */}
+      <Link
+        href="/"
+        className="absolute top-6 left-4 sm:left-6 lg:left-8 z-10 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white/10 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-white/20 transition-colors duration-150 cursor-pointer"
+        aria-label="Back to articles"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span className="hidden sm:inline">Articles</span>
+      </Link>
+
       {/* Optimized Hero Image */}
       <Image
         src={normalizeImageUrl(article.image_url)}
@@ -64,29 +90,33 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
         quality={90}
       />
 
-      {/* Modern Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/20" />
+      {/* Theme-aware Gradient Overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-black/90 via-black/60 to-black/20' : 'from-black/80 via-black/40 to-black/10'}`} />
 
       {/* Content */}
       <div className="absolute inset-0 flex items-end">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 md:pb-20 lg:pb-24">
-          {/* Category Badge */}
+          {/* Category Badge - Clickable to navigate to category */}
           <div className="mb-6 md:mb-8">
-            <span
-              className="inline-flex items-center px-4 py-2 rounded-full text-sm md:text-base font-medium bg-primary/20 text-white backdrop-blur-sm border border-white/20 capitalize"
-              aria-label={`Category: ${article.categories?.name || 'Uncategorized'}`}
+            <Link
+              href="/"
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm md:text-base font-semibold bg-white/25 text-white backdrop-blur-md ring-1 ring-white/30 shadow-lg shadow-black/25 capitalize cursor-pointer hover:bg-white/30 transition-colors duration-150"
+              style={{
+                textShadow: '0 1px 3px rgba(0,0,0,0.5), 0 0 8px rgba(0,0,0,0.3)',
+              }}
+              aria-label={`View all ${article.categories?.name || 'Uncategorized'} articles`}
             >
               {article.categories?.name || 'Uncategorized'}
-            </span>
+            </Link>
           </div>
 
-          {/* Title */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-6 md:mb-8 leading-[1.1] tracking-tight max-w-6xl">
+          {/* Title - Reduced size for better balance */}
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 md:mb-8 leading-[1.1] tracking-tight max-w-5xl">
             {article.title}
           </h1>
 
           {/* Metadata */}
-          <div className="flex flex-wrap items-center gap-3 md:gap-4 text-white/90 text-base md:text-lg">
+          <div className="flex flex-wrap items-center gap-3 md:gap-4 text-white/90 text-sm md:text-base">
             <span className="font-medium">{article.authors?.name || 'OpenArabic'}</span>
             <span className="opacity-50">•</span>
             <time
@@ -96,7 +126,7 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
               {formatDate(article.created_at)}
             </time>
             <span className="opacity-50">•</span>
-            <span className="opacity-90">{estimateReadTime(article.difficulty_level)}</span>
+            <span className="opacity-90">{estimateReadTime(article.summary, article.difficulty_level)}</span>
           </div>
         </div>
       </div>

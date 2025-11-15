@@ -17,7 +17,7 @@ interface ArticleGridProps {
 
 function EmptyState() {
   return (
-    <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
+    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
       <svg
         className="w-16 h-16 text-muted-foreground/20 mb-4"
         fill="none"
@@ -58,7 +58,7 @@ export function ArticleGrid({ articles, loading = false, showCategoryPill = true
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 3 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
       </div>

@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Database } from '@/lib/database.types';
+import { generateSlug } from '@/lib/slugify';
+import { useTheme } from '@/components/providers/theme-provider';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -46,19 +48,31 @@ function formatDate(dateString: string): string {
   });
 }
 
-function estimateReadTime(difficultyLevel: number): string {
-  // Estimate read time based on difficulty level
-  // Higher difficulty typically correlates with longer, more complex articles
-  if (difficultyLevel <= 2) return '3 min read';
-  if (difficultyLevel <= 4) return '5 min read';
-  return '7 min read';
+function estimateReadTime(summary: string, difficultyLevel: number): string {
+  // Count words in summary as a proxy for article length
+  const wordCount = summary.trim().split(/\s+/).length;
+
+  // Estimate total article length (summary is typically ~10-15% of article)
+  const estimatedTotalWords = wordCount * 8;
+
+  // Average reading speed: 200-250 words/min, use 225
+  // Adjust for difficulty (harder = slower reading)
+  const readingSpeed = difficultyLevel <= 2 ? 250 : difficultyLevel <= 4 ? 225 : 200;
+  const minutes = Math.ceil(estimatedTotalWords / readingSpeed);
+
+  // Round to nearest minute, minimum 1 min
+  const readTime = Math.max(1, minutes);
+
+  return `${readTime} min read`;
 }
 
 export function ArticleCard({ article, priority = false, showCategoryPill = true }: ArticleCardProps) {
+  const { isDark } = useTheme();
+
   return (
-    <Link href={`/read/${article.id}`} className="group block h-full">
-      <article className="h-full flex flex-col bg-card rounded-lg overflow-hidden border-2 border-transparent shadow-[0_2px_0_rgba(0,0,0,0.08)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-[0_0_0_3px_hsl(156_17%_43%/0.35),0_0_0_6px_hsl(156_17%_43%/0.12)]">
-        {/* Image - Golden Ratio (φ:1) with Title Overlay */}
+    <Link href={`/read/${generateSlug(article.title, article.id)}`} className="group block h-full">
+      <article className="h-full flex flex-col bg-card rounded-lg overflow-hidden shadow-[0_2px_0_rgba(0,0,0,0.08)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-[0_0_0_3px_hsl(156_17%_43%/0.35),0_0_0_6px_hsl(156_17%_43%/0.12)]">
+        {/* Image - Golden Ratio (φ:1) with conditional title overlay */}
         <div className="relative w-full aspect-[1.618/1] bg-muted overflow-hidden">
           <Image
             src={normalizeImageUrl(article.image_url)}
@@ -68,9 +82,14 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             priority={priority}
           />
-          {/* Gradient overlay - stronger at bottom for title readability, fades to card bg */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent via-card/40 to-card" />
+
+          {/* Gradient overlay - only in dark mode */}
+          {isDark && (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent via-card/40 to-card" />
+            </>
+          )}
 
           {/* Category Badge - Conditionally shown */}
           {showCategoryPill && (
@@ -86,33 +105,37 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
             </div>
           )}
 
-          {/* Title Overlay - Bottom (aligned with pill at 16px, extends into content) */}
-          <div className="absolute bottom-0 left-0 right-0 pl-4 pr-4 pb-1 pt-6 md:pr-5 md:pb-1.5 md:pt-8">
-            <h2
-              className="text-lg md:text-xl font-bold leading-[1.3] text-white line-clamp-2"
-              style={{
-                textShadow: '0 2px 4px rgba(0,0,0,0.6), 0 1px 12px rgba(0,0,0,0.4)',
-              }}
-            >
-              {article.title}
-            </h2>
-          </div>
+          {/* Title Overlay - Only in dark mode */}
+          {isDark && (
+            <div className="absolute bottom-0 left-0 right-0 pl-4 pr-4 pb-0 pt-6 md:pr-5 md:pb-0 md:pt-8">
+              <h2 className="text-lg md:text-xl font-bold leading-[1.3] text-white line-clamp-2">
+                {article.title}
+              </h2>
+            </div>
+          )}
         </div>
 
-        {/* Content - Summary and Metadata only */}
-        <div className="flex flex-col flex-1 px-6 pt-3 pb-4 md:px-[26px] md:pt-4 md:pb-4">
-          {/* Summary - Golden ratio line-height */}
-          <p className="text-muted-foreground text-sm line-clamp-4 leading-[1.618] -mx-2 md:-mx-[10px]">
+        {/* Content - Title (light mode only), Summary and Metadata */}
+        <div className={`flex flex-col flex-1 px-6 pb-4 md:px-[26px] md:pb-4 ${isDark ? 'pt-2 md:pt-2' : 'pt-4 md:pt-5'}`}>
+          {/* Title - Light mode only (below image) */}
+          {!isDark && (
+            <h2 className="text-lg md:text-xl font-bold leading-[1.3] text-foreground line-clamp-2 mb-2 -mx-2 md:-mx-[10px]">
+              {article.title}
+            </h2>
+          )}
+
+          {/* Summary */}
+          <p className="text-foreground/90 text-sm line-clamp-4 leading-[1.618] -mx-2 md:-mx-[10px]">
             {article.summary}
           </p>
 
           {/* Metadata - Author, Date, Read Time */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground/70 flex-wrap mt-auto pt-4 -mx-2 md:-mx-[10px]">
+          <div className={`flex items-center gap-2 text-xs text-muted-foreground/70 flex-wrap mt-auto -mx-2 md:-mx-[10px] ${isDark ? 'pt-5' : 'pt-4'}`}>
             <span className="font-medium">{article.authors?.name || 'OpenArabic'}</span>
             <span className="opacity-50">·</span>
             <span className="opacity-90">{formatDate(article.created_at)}</span>
             <span className="opacity-50">·</span>
-            <span className="opacity-90">{estimateReadTime(article.difficulty_level)}</span>
+            <span className="opacity-90">{estimateReadTime(article.summary, article.difficulty_level)}</span>
           </div>
         </div>
       </article>

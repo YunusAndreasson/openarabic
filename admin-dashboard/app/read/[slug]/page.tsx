@@ -10,9 +10,11 @@ import { ArticleContent } from '@/components/article-content';
 import { SentencePair } from '@/components/sentence-pair';
 import { RelatedArticles } from '@/components/related-articles';
 import { Footer } from '@/components/footer';
+import { ReadingProgress } from '@/components/reading-progress';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { parseIdFromSlug } from '@/lib/slugify';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -28,7 +30,7 @@ type Category = Database['public']['Tables']['categories']['Row'];
 export default function ArticleReadPage() {
   const params = useParams();
   const router = useRouter();
-  const articleId = parseInt(params.id as string);
+  const articleId = parseIdFromSlug(params.slug as string);
 
   const [article, setArticle] = useState<Article | null>(null);
   const [sentences, setSentences] = useState<ArticleSentence[]>([]);
@@ -164,6 +166,9 @@ export default function ArticleReadPage() {
 
   return (
     <div className="min-h-screen">
+      {/* Reading Progress Bar */}
+      <ReadingProgress />
+
       {/* Full Header with Categories */}
       <PublicHeader
         categories={categories}

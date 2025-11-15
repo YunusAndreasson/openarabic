@@ -14,27 +14,12 @@ interface SentencePairProps {
 
 export function SentencePair({ sentence, words, isLast = false }: SentencePairProps) {
   return (
-    <div className={`${isLast ? '' : 'mb-12'}`}>
-      {/* English Sentence */}
-      <p
-        lang="en"
-        className="text-xl md:text-[21px] leading-[1.7] mb-5 font-serif text-foreground/95 text-left"
-        style={{
-          fontFamily: 'Georgia, "Times New Roman", serif',
-          WebkitFontSmoothing: 'antialiased',
-          MozOsxFontSmoothing: 'grayscale',
-          letterSpacing: '0.01em',
-          fontWeight: 400,
-        }}
-      >
-        {sentence.english}
-      </p>
-
-      {/* Arabic Sentence - Word by Word */}
+    <div className={`${isLast ? '' : 'mb-10'}`}>
+      {/* Arabic Sentence - Primary (Word by Word) */}
       <div
         lang="ar"
         dir="rtl"
-        className="text-2xl md:text-[28px] leading-[1.9] text-right text-foreground/95"
+        className="text-2xl md:text-[28px] leading-[1.9] text-right text-foreground mb-4"
       >
         {words.length > 0 ? (
           words.map((word, index) => (
@@ -63,6 +48,21 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
           </span>
         )}
       </div>
+
+      {/* English Translation - Support */}
+      <p
+        lang="en"
+        className="text-xl md:text-[21px] leading-[1.7] mb-5 font-serif text-foreground/70 text-left"
+        style={{
+          fontFamily: 'Georgia, "Times New Roman", serif',
+          WebkitFontSmoothing: 'antialiased',
+          MozOsxFontSmoothing: 'grayscale',
+          letterSpacing: '0.01em',
+          fontWeight: 400,
+        }}
+      >
+        {sentence.english}
+      </p>
     </div>
   );
 }

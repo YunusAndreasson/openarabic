@@ -37,19 +37,7 @@ export default function PublicArticlesPage() {
     : 'OpenArabic - Learn Arabic Through Reading';
   usePageTitle(pageTitle);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    // Reset and fetch when category changes
-    setPage(1);
-    setArticles([]);
-    setHasMore(true);
-    fetchArticles(1, true);
-  }, [selectedCategoryId]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('categories')
@@ -61,9 +49,9 @@ export default function PublicArticlesPage() {
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
-  };
+  }, []);
 
-  const fetchArticles = async (pageNum: number, isInitial = false) => {
+  const fetchArticles = useCallback(async (pageNum: number, isInitial = false) => {
     try {
       if (isInitial) {
         setLoading(true);
@@ -93,7 +81,12 @@ export default function PublicArticlesPage() {
       if (isInitial) {
         setArticles(newArticles);
       } else {
-        setArticles(prev => [...prev, ...newArticles]);
+        // Deduplicate articles by ID to prevent duplicate keys
+        setArticles(prev => {
+          const existingIds = new Set(prev.map(a => a.id));
+          const uniqueNewArticles = newArticles.filter(a => !existingIds.has(a.id));
+          return [...prev, ...uniqueNewArticles];
+        });
       }
 
       // Check if there are more articles
@@ -104,14 +97,26 @@ export default function PublicArticlesPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  };
+  }, [selectedCategoryId]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    // Reset and fetch when category changes
+    setPage(1);
+    setArticles([]);
+    setHasMore(true);
+    fetchArticles(1, true);
+  }, [selectedCategoryId, fetchArticles]);
 
   const handleLoadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     const nextPage = page + 1;
     setPage(nextPage);
     fetchArticles(nextPage);
-  }, [page, loadingMore, hasMore]);
+  }, [page, loadingMore, hasMore, fetchArticles]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -148,16 +153,13 @@ export default function PublicArticlesPage() {
         onSelectCategory={handleSelectCategory}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <ArticleGrid articles={articles} loading={loading} showCategoryPill={selectedCategoryId === null} />
 
         {/* Infinite scroll trigger point */}
         {!loading && hasMore && articles.length > 0 && (
           <div ref={observerTarget} className="flex justify-center mt-12 py-8">
-            <div className="flex items-center gap-2 text-muted-foreground/60">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-xs">Loading more articles...</span>
-            </div>
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/60" />
           </div>
         )}
 

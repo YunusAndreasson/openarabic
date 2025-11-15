@@ -44,8 +44,7 @@ export function PublicHeader({
           {/* Logo + Brand Name */}
           <Link
             href="/"
-            onClick={(e) => {
-              e.preventDefault();
+            onClick={() => {
               onSelectCategory(null);
             }}
             className="flex items-center gap-2.5 flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity duration-200 group"
@@ -66,7 +65,7 @@ export function PublicHeader({
           <div className="flex md:hidden items-center gap-2">
             <button
               onClick={() => setCategorySheetOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted/50 text-foreground hover:bg-muted transition-colors duration-150 capitalize cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted/50 text-foreground hover:bg-muted transition-colors duration-150 capitalize cursor-pointer"
               aria-label="Select category"
             >
               <Filter className="h-3.5 w-3.5" />
@@ -98,10 +97,10 @@ export function PublicHeader({
               <button
                 onClick={() => onSelectCategory(null)}
                 className={`
-                  flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 cursor-pointer
+                  flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer
                   ${
                     selectedCategoryId === null
-                      ? 'bg-foreground text-background'
+                      ? 'bg-muted text-foreground shadow-sm ring-1 ring-border/50'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   }
                 `}
@@ -116,10 +115,10 @@ export function PublicHeader({
                   key={category.id}
                   onClick={() => onSelectCategory(category.id)}
                   className={`
-                    flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 capitalize cursor-pointer
+                    flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 capitalize cursor-pointer
                     ${
                       selectedCategoryId === category.id
-                        ? 'bg-foreground text-background'
+                        ? 'bg-muted text-foreground shadow-sm ring-1 ring-border/50'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                     }
                   `}
@@ -129,7 +128,7 @@ export function PublicHeader({
               ))}
 
               {/* Info + Contact + Theme Toggle */}
-              <div className="ml-2 flex items-center gap-2 flex-shrink-0">
+              <div className="ml-4 flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={() => setAboutDialogOpen(true)}
                   className="flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-150 cursor-pointer flex-shrink-0"

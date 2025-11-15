@@ -8,15 +8,10 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Brand */}
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/oaLogo.png" alt="OpenArabic" className="h-5 w-auto" />
-              <span className="text-sm font-medium text-foreground">OpenArabic</span>
-            </div>
-            <p className="text-xs text-muted-foreground hidden sm:block">
-              Learn Arabic through reading
-            </p>
+          <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/oaLogo.png" alt="OpenArabic" className="h-5 w-auto" />
+            <span className="text-sm font-medium text-foreground">OpenArabic</span>
           </div>
 
           {/* Legal Links - Inline with dot separators */}
@@ -33,7 +28,7 @@ export function Footer() {
               Delete Account
             </Link>
             <span className="opacity-40">·</span>
-            <span>© 2025 OpenArabic</span>
+            <span className="text-muted-foreground">© 2025 OpenArabic</span>
           </div>
         </div>
       </div>
