@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
     scrollRestoration: true,
     optimizeCss: true, // Optimize CSS loading and reduce render-blocking
     cssChunking: 'loose', // Reduce CSS chunk size for faster loading
+    ppr: false, // Partial Prerendering (not needed for this app)
+    after: true, // Enable React 19 after() for cleanup actions
   },
 
   // Turbopack configuration (Next.js 15.5+)

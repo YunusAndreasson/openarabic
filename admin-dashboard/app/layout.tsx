@@ -73,6 +73,13 @@ export default function RootLayout({
                 const appliedTheme = theme === 'system' || !theme ? systemTheme : theme;
                 document.documentElement.classList.add(appliedTheme);
               } catch (e) {}
+
+              // Enable View Transitions API for smooth page transitions (Chrome 111+, Safari 18+)
+              if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && document.startViewTransition) {
+                window.addEventListener('popstate', () => {
+                  document.documentElement.classList.add('view-transition');
+                });
+              }
             `,
           }}
         />

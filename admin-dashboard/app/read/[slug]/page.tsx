@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
@@ -30,6 +30,7 @@ export default function ArticleReadPage() {
   const params = useParams();
   const router = useRouter();
   const articleId = parseIdFromSlug(params.slug as string);
+  const [isPending, startTransition] = useTransition();
 
   const [article, setArticle] = useState<Article | null>(null);
   const [sentences, setSentences] = useState<ArticleSentence[]>([]);
@@ -137,8 +138,10 @@ export default function ArticleReadPage() {
   };
 
   const handleSelectCategory = (categoryId: number | null) => {
-    // Navigate to homepage, which will handle category filtering
-    router.push('/');
+    // Navigate to homepage with React 19 transition (non-blocking)
+    startTransition(() => {
+      router.push('/');
+    });
   };
 
   if (loading) {
