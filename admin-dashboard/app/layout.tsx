@@ -53,6 +53,14 @@ export default function RootLayout({
         <link rel="preconnect" href="https://kkmnzbeugdoajtzfjkxg.supabase.co" />
         <link rel="dns-prefetch" href="https://kkmnzbeugdoajtzfjkxg.supabase.co" />
 
+        {/* Preload logo for LCP optimization */}
+        <link
+          rel="preload"
+          href="/oaLogo.png"
+          as="image"
+          fetchPriority="high"
+        />
+
         {/* Preload Madina font for better Arabic rendering */}
         <link
           rel="preload"

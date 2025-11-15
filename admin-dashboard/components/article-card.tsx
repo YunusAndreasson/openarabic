@@ -85,6 +85,7 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
             className="object-cover"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             priority={priority}
+            fetchPriority={priority ? 'high' : undefined}
           />
 
           {/* Gradient overlay - only in dark mode */}

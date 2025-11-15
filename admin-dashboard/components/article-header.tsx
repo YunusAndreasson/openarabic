@@ -86,6 +86,7 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
         alt={`Cover image for ${article.title}`}
         fill
         priority
+        fetchPriority="high"
         className="object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:hover:scale-105"
         sizes="100vw"
         quality={90}
