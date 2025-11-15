@@ -16,19 +16,19 @@ export function Footer() {
 
           {/* Legal Links - Inline with dot separators */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap justify-center">
-            <Link href="/privacy" className="hover:text-foreground transition-colors cursor-pointer">
+            <Link href="/privacy" className="hover:text-foreground transition-colors duration-150 cursor-pointer">
               Privacy
             </Link>
             <span className="opacity-40">·</span>
-            <Link href="/terms" className="hover:text-foreground transition-colors cursor-pointer">
+            <Link href="/terms" className="hover:text-foreground transition-colors duration-150 cursor-pointer">
               Terms
             </Link>
             <span className="opacity-40">·</span>
-            <Link href="/account-deletion" className="hover:text-foreground transition-colors cursor-pointer">
+            <Link href="/account-deletion" className="hover:text-foreground transition-colors duration-150 cursor-pointer">
               Delete Account
             </Link>
             <span className="opacity-40">·</span>
-            <span className="text-muted-foreground">© 2025 OpenArabic</span>
+            <span className="text-muted-foreground/70">© 2025 OpenArabic</span>
           </div>
         </div>
       </div>

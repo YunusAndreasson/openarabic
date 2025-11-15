@@ -52,7 +52,7 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
       {/* English Translation - Support */}
       <p
         lang="en"
-        className="text-xl md:text-[21px] leading-[1.7] mb-5 font-serif text-foreground/70 text-left"
+        className="text-xl md:text-[21px] leading-[1.7] mb-5 font-serif text-foreground/75 text-left"
         style={{
           fontFamily: 'Georgia, "Times New Roman", serif',
           WebkitFontSmoothing: 'antialiased',

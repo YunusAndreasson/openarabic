@@ -19,7 +19,7 @@ export function ArabicWord({ wordForm, english, grammarNote }: ArabicWordProps) 
       <Tooltip>
         <TooltipTrigger asChild>
           <span
-            className="cursor-pointer transition-colors hover:bg-primary/10 rounded-sm px-0.5 inline-block"
+            className="cursor-pointer transition-colors duration-150 hover:bg-primary/10 rounded-md px-0.5 inline-block"
             style={{
               fontFamily: 'Madina, "Noto Naskh Arabic", "Traditional Arabic", serif',
               fontFeatureSettings: '"calt" 1, "liga" 1, "kern" 1',

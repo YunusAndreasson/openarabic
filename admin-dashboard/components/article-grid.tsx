@@ -19,7 +19,7 @@ function EmptyState() {
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
       <svg
-        className="w-16 h-16 text-muted-foreground/20 mb-4"
+        className="w-12 h-12 text-muted-foreground/20 mb-4"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -41,7 +41,7 @@ function EmptyState() {
 
 function SkeletonCard() {
   return (
-    <div className="bg-card rounded-lg overflow-hidden border border-border/40 will-change-auto">
+    <div className="bg-card rounded-lg overflow-hidden will-change-auto">
       <div className="relative w-full aspect-[16/9] bg-muted animate-pulse will-change-opacity" />
       <div className="p-6 space-y-3">
         <div className="h-3 bg-muted rounded animate-pulse w-1/3 will-change-opacity" />

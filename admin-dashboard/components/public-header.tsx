@@ -47,7 +47,7 @@ export function PublicHeader({
             onClick={() => {
               onSelectCategory(null);
             }}
-            className="flex items-center gap-2.5 flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity duration-200 group"
+            className="flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity duration-150 group"
             title="Home"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -68,7 +68,7 @@ export function PublicHeader({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted/50 text-foreground hover:bg-muted transition-colors duration-150 capitalize cursor-pointer"
               aria-label="Select category"
             >
-              <Filter className="h-3.5 w-3.5" />
+              <Filter className="h-4 w-4" />
               {selectedLabel}
             </button>
             <button

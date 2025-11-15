@@ -31,7 +31,7 @@
   --color-secondary-foreground: hsl(164 25% 15%); /* Forest darkest */
 
   --color-muted: hsl(162 25% 92%); /* #E8F1EC - Sage light */
-  --color-muted-foreground: hsl(162 13% 45%); /* #5C6F65 - Metadata text */
+  --color-muted-foreground: hsl(162 13% 38%); /* Darker for WCAG AA compliance (4.5:1) */
 
   --color-accent: hsl(162 25% 92%); /* #E8F1EC - Sage light */
   --color-accent-foreground: hsl(164 25% 15%);

@@ -21,7 +21,7 @@ export function MinimalHeader() {
           {/* Logo + Brand Name */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity duration-200"
+            className="flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity duration-150"
             title="Back to Home"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
