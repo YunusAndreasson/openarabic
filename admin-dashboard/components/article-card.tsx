@@ -60,8 +60,12 @@ function estimateReadTime(summary: string, difficultyLevel: number): string {
   const readingSpeed = difficultyLevel <= 2 ? 250 : difficultyLevel <= 4 ? 225 : 200;
   const minutes = Math.ceil(estimatedTotalWords / readingSpeed);
 
-  // Round to nearest minute, minimum 1 min
-  const readTime = Math.max(1, minutes);
+  // Bilingual multiplier: reading both Arabic and English takes ~2x longer
+  // Users switch between languages, compare translations, process dual content
+  const bilingualReadTime = Math.ceil(minutes * 2);
+
+  // Minimum 1 min
+  const readTime = Math.max(1, bilingualReadTime);
 
   return `${readTime} min read`;
 }
