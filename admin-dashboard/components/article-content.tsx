@@ -9,7 +9,7 @@ interface ArticleContentProps {
 
 export function ArticleContent({ children, summary }: ArticleContentProps) {
   return (
-    <article className="py-12 md:py-16">
+    <article className="py-12 md:py-16 view-transition-stable" style={{ viewTransitionName: 'content' }}>
       <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Summary (if provided) */}
         {summary && (

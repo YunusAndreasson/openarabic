@@ -207,10 +207,19 @@
   navigation: auto;
 }
 
+/* Prevent layout shifts during transitions */
+::view-transition-group(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 0.3s;
   animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Prevent flickering */
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 ::view-transition-old(root) {
@@ -221,10 +230,37 @@
   animation-name: fade-in;
 }
 
+/* Named transitions for smooth morphing */
+::view-transition-old(header),
+::view-transition-new(header) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  height: auto;
+  overflow: clip;
+}
+
+::view-transition-old(content),
+::view-transition-new(content) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  overflow: clip;
+}
+
 @keyframes fade-out {
   to {
     opacity: 0;
   }
+}
+
+/* Layout Stability - Prevent shifts */
+.view-transition-stable {
+  contain: layout style paint;
+  content-visibility: auto;
+}
+
+/* Prevent CLS from images */
+img {
+  content-visibility: auto;
 }
 
 /* Branded Pulsating Loader - Sage Green Circle */

@@ -79,9 +79,9 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
       prefetch={null}
       className="group block h-full"
     >
-      <article className="h-full flex flex-col bg-card rounded-lg overflow-hidden shadow-[0_2px_0_rgba(0,0,0,0.08)] transition-shadow duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-[0_0_0_2px_hsl(156_17%_43%/0.25),0_0_0_4px_hsl(156_17%_43%/0.08)]">
+      <article className="h-full flex flex-col bg-card rounded-lg overflow-hidden shadow-[0_2px_0_rgba(0,0,0,0.08)] transition-shadow duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-[0_0_0_2px_hsl(156_17%_43%/0.25),0_0_0_4px_hsl(156_17%_43%/0.08)]" style={{ contain: 'layout paint' }}>
         {/* Image - Golden Ratio (φ:1) with conditional title overlay */}
-        <div className="relative w-full aspect-[1.618/1] bg-muted overflow-hidden">
+        <div className="relative w-full aspect-[1.618/1] bg-muted overflow-hidden" style={{ contain: 'size layout paint' }}>
           <Image
             src={normalizeImageUrl(article.image_url)}
             alt={article.title}
