@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
+import { PublicHeader } from '@/components/public-header';
 import { ArticleHeader } from '@/components/article-header';
 import { ArticleContent } from '@/components/article-content';
 import { SentencePair } from '@/components/sentence-pair';
+import { RelatedArticles } from '@/components/related-articles';
 import { Footer } from '@/components/footer';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -19,12 +21,20 @@ type Article = Database['public']['Tables']['articles']['Row'] & {
 
 type ArticleSentence = Database['public']['Tables']['article_sentences']['Row'];
 
+type SentenceWord = Database['public']['Tables']['sentence_words']['Row'];
+
+type Category = Database['public']['Tables']['categories']['Row'];
+
 export default function ArticleReadPage() {
   const params = useParams();
+  const router = useRouter();
   const articleId = parseInt(params.id as string);
 
   const [article, setArticle] = useState<Article | null>(null);
   const [sentences, setSentences] = useState<ArticleSentence[]>([]);
+  const [sentenceWords, setSentenceWords] = useState<Record<number, SentenceWord[]>>({});
+  const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,8 +42,23 @@ export default function ArticleReadPage() {
   usePageTitle(article ? `${article.title} - OpenArabic` : 'Reading - OpenArabic');
 
   useEffect(() => {
+    fetchCategories();
     fetchArticle();
   }, [articleId]);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const fetchArticle = async () => {
     try {
@@ -58,6 +83,47 @@ export default function ArticleReadPage() {
 
       if (sentencesError) throw sentencesError;
 
+      // Fetch sentence words if sentences exist
+      if (sentencesData && sentencesData.length > 0) {
+        const sentenceIds = sentencesData.map(s => s.id);
+        const { data: wordsData, error: wordsError } = await supabase
+          .from('sentence_words')
+          .select('*')
+          .in('sentence_id', sentenceIds)
+          .order('position', { ascending: true });
+
+        if (wordsError) {
+          console.error('Error fetching sentence words:', wordsError);
+        } else if (wordsData) {
+          // Group words by sentence_id
+          const wordsBySentence: Record<number, SentenceWord[]> = {};
+          wordsData.forEach(word => {
+            if (!wordsBySentence[word.sentence_id]) {
+              wordsBySentence[word.sentence_id] = [];
+            }
+            wordsBySentence[word.sentence_id].push(word);
+          });
+          setSentenceWords(wordsBySentence);
+        }
+      }
+
+      // Fetch related articles from same category
+      if (articleData) {
+        const { data: relatedData, error: relatedError } = await supabase
+          .from('articles')
+          .select('*, authors(name), categories(name)')
+          .eq('category_id', articleData.category_id)
+          .neq('id', articleId)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (relatedError) {
+          console.error('Error fetching related articles:', relatedError);
+        } else {
+          setRelatedArticles((relatedData as Article[]) || []);
+        }
+      }
+
       setArticle(articleData as Article);
       setSentences(sentencesData || []);
     } catch (err) {
@@ -66,6 +132,11 @@ export default function ArticleReadPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSelectCategory = (categoryId: number | null) => {
+    // Navigate to homepage, which will handle category filtering
+    router.push('/');
   };
 
   if (loading) {
@@ -93,6 +164,13 @@ export default function ArticleReadPage() {
 
   return (
     <div className="min-h-screen">
+      {/* Full Header with Categories */}
+      <PublicHeader
+        categories={categories}
+        selectedCategoryId={article?.category_id || null}
+        onSelectCategory={handleSelectCategory}
+      />
+
       {/* Parallax Header */}
       <ArticleHeader article={article} />
 
@@ -107,34 +185,15 @@ export default function ArticleReadPage() {
             <SentencePair
               key={sentence.id}
               sentence={sentence}
+              words={sentenceWords[sentence.id] || []}
               isLast={index === sentences.length - 1}
             />
           ))
         )}
       </ArticleContent>
 
-      {/* Back to Articles Link */}
-      <div className="max-w-3xl mx-auto px-6 md:px-8 pb-12">
-        <Link
-          href="/"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          Back to all articles
-        </Link>
-      </div>
+      {/* Related Articles */}
+      <RelatedArticles articles={relatedArticles} />
 
       {/* Footer */}
       <Footer />

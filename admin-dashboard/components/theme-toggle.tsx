@@ -11,10 +11,14 @@ export function ThemeToggle() {
 
   useEffect(() => {
     setMounted(true);
-    // Get theme from localStorage
+    // Get theme from localStorage, default to 'system' if not set
     const stored = localStorage.getItem('openarabic-theme') as Theme | null;
     if (stored) {
       setTheme(stored);
+    } else {
+      // First visit - default to system and persist it
+      localStorage.setItem('openarabic-theme', 'system');
+      setTheme('system');
     }
   }, []);
 

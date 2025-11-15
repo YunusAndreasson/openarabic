@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+/* Madina Font - Traditional Arabic calligraphic font */
+@font-face {
+  font-family: 'Madina';
+  src: url('/fonts/madina.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   /* OpenArabic Branded Color System - Sage Green Palette */
   /* Based on mobile app's OKLCH color system */

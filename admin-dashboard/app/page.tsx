@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 import { PublicHeader } from '@/components/public-header';
@@ -26,6 +26,9 @@ export default function PublicArticlesPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
+
+  // Ref for infinite scroll observer
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   // Dynamic page title based on selected category
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
@@ -103,11 +106,35 @@ export default function PublicArticlesPage() {
     }
   };
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
     const nextPage = page + 1;
     setPage(nextPage);
     fetchArticles(nextPage);
-  };
+  }, [page, loadingMore, hasMore]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          handleLoadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, loadingMore, loading, handleLoadMore]);
 
   const handleSelectCategory = (categoryId: number | null) => {
     setSelectedCategoryId(categoryId);
@@ -124,30 +151,20 @@ export default function PublicArticlesPage() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ArticleGrid articles={articles} loading={loading} />
 
-        {/* Load More Button */}
+        {/* Infinite scroll trigger point */}
         {!loading && hasMore && articles.length > 0 && (
-          <div className="flex justify-center mt-12">
-            <button
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-              className="px-4 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loadingMore ? (
-                <>
-                  <Loader2 className="inline mr-1.5 h-3 w-3 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Load More'
-              )}
-            </button>
+          <div ref={observerTarget} className="flex justify-center mt-12 py-8">
+            <div className="flex items-center gap-2 text-muted-foreground/60">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-xs">Loading more articles...</span>
+            </div>
           </div>
         )}
 
-        {/* No more articles message */}
+        {/* End of content message */}
         {!loading && !hasMore && articles.length > 0 && (
-          <div className="text-center mt-12 text-muted-foreground/80 text-xs">
-            No more articles to load
+          <div className="text-center mt-12 mb-8 text-muted-foreground/60 text-xs">
+            You&apos;ve reached the end
           </div>
         )}
       </main>

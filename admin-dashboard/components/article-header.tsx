@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Database } from '@/lib/database.types';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
@@ -21,66 +22,83 @@ function normalizeImageUrl(imageUrl: string): string {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  // Relative dates for recent articles (within 30 days)
+  if (diffInDays === 0) return 'Today';
+  if (diffInDays === 1) return 'Yesterday';
+  if (diffInDays < 7) return `${diffInDays} days ago`;
+  if (diffInDays < 30) {
+    const weeks = Math.floor(diffInDays / 7);
+    return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
+  }
+
+  // Absolute dates for older articles
   return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
   });
+}
+
+function estimateReadTime(difficultyLevel: number): string {
+  // Estimate read time based on difficulty level
+  if (difficultyLevel <= 2) return '3 min read';
+  if (difficultyLevel <= 4) return '5 min read';
+  return '7 min read';
 }
 
 export function ArticleHeader({ article }: ArticleHeaderProps) {
   return (
-    <header className="relative h-[40vh] md:h-[60vh] w-full overflow-hidden">
-      {/* Parallax Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-fixed"
-        style={{
-          backgroundImage: `url(${normalizeImageUrl(article.image_url)})`,
-        }}
+    <header className="relative h-[50vh] md:h-[70vh] w-full overflow-hidden">
+      {/* Optimized Hero Image */}
+      <Image
+        src={normalizeImageUrl(article.image_url)}
+        alt={`Cover image for ${article.title}`}
+        fill
+        priority
+        className="object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:hover:scale-105"
+        sizes="100vw"
+        quality={90}
       />
 
-      {/* Gradient Overlay - Sage-tinted */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
+      {/* Modern Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/20" />
 
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-        <div className="max-w-4xl mx-auto">
+      <div className="absolute inset-0 flex items-end">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 md:pb-20 lg:pb-24">
           {/* Category Badge */}
-          <div className="mb-4">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/20 text-white backdrop-blur-sm border border-white/10 category-badge">
+          <div className="mb-6 md:mb-8">
+            <span
+              className="inline-flex items-center px-4 py-2 rounded-full text-sm md:text-base font-medium bg-primary/20 text-white backdrop-blur-sm border border-white/20 capitalize"
+              aria-label={`Category: ${article.categories?.name || 'Uncategorized'}`}
+            >
               {article.categories?.name || 'Uncategorized'}
             </span>
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight drop-shadow-lg">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-6 md:mb-8 leading-[1.1] tracking-tight max-w-6xl">
             {article.title}
           </h1>
 
           {/* Metadata */}
-          <div className="flex flex-wrap items-center gap-4 text-white/90 text-sm md:text-base">
-            <span className="font-medium">{article.authors?.name || 'Unknown Author'}</span>
-            <span>•</span>
-            <time dateTime={article.created_at}>{formatDate(article.created_at)}</time>
+          <div className="flex flex-wrap items-center gap-3 md:gap-4 text-white/90 text-base md:text-lg">
+            <span className="font-medium">{article.authors?.name || 'OpenArabic'}</span>
+            <span className="opacity-50">•</span>
+            <time
+              dateTime={article.created_at}
+              className="opacity-90"
+            >
+              {formatDate(article.created_at)}
+            </time>
+            <span className="opacity-50">•</span>
+            <span className="opacity-90">{estimateReadTime(article.difficulty_level)}</span>
           </div>
         </div>
-      </div>
-
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce">
-        <svg
-          className="w-6 h-6 text-white/60"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 14l-7 7m0 0l-7-7m7 7V3"
-          />
-        </svg>
       </div>
     </header>
   );

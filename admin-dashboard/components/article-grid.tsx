@@ -73,11 +73,9 @@ export function ArticleGrid({ articles, loading = false }: ArticleGridProps) {
       {articles.map((article, index) => (
         <div
           key={article.id}
-          className="animate-in fade-in slide-in-from-bottom-4 duration-500 will-change-transform"
+          className="animate-in fade-in duration-300"
           style={{
-            animationDelay: `${Math.min(index * 50, 300)}ms`,
             animationFillMode: 'backwards',
-            transform: 'translateZ(0)', // GPU acceleration
           }}
         >
           <ArticleCard article={article} priority={index < 3} />

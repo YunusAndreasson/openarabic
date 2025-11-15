@@ -12,6 +12,33 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'OpenArabic - Learn Arabic Through Reading',
   description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://openarabic.io',
+    siteName: 'OpenArabic',
+    title: 'OpenArabic - Learn Arabic Through Reading',
+    description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+    images: [
+      {
+        url: 'https://openarabic.io/oaLogo.png',
+        width: 1200,
+        height: 630,
+        alt: 'OpenArabic - Learn Arabic Through Reading',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@openarabicio',
+    creator: '@openarabicio',
+    title: 'OpenArabic - Learn Arabic Through Reading',
+    description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+    images: ['https://openarabic.io/oaLogo.png'],
+  },
+  alternates: {
+    canonical: 'https://openarabic.io',
+  },
 };
 
 export default function RootLayout({
@@ -22,6 +49,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Preload Madina font for better Arabic rendering */}
+        <link
+          rel="preload"
+          href="/fonts/madina.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `

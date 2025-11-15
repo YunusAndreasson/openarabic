@@ -9,20 +9,22 @@ interface ArticleContentProps {
 
 export function ArticleContent({ children, summary }: ArticleContentProps) {
   return (
-    <div className="max-w-3xl mx-auto px-6 md:px-8 py-16 md:py-20">
-      {/* Summary (if provided) */}
-      {summary && (
-        <div className="mb-12 pb-8 border-b border-border">
-          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed italic">
-            {summary}
-          </p>
-        </div>
-      )}
+    <article className="py-20 md:py-28">
+      <div className="max-w-[720px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Summary (if provided) */}
+        {summary && (
+          <div className="mb-16 pb-12 border-b border-border/40">
+            <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed font-light">
+              {summary}
+            </p>
+          </div>
+        )}
 
-      {/* Main Content */}
-      <div className="bg-card rounded-xl p-8 md:p-12 shadow-sm border border-border">
-        {children}
+        {/* Main Content - No box, clean reading experience */}
+        <div className="space-y-12">
+          {children}
+        </div>
       </div>
-    </div>
+    </article>
   );
 }
