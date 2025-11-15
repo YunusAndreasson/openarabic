@@ -16,9 +16,9 @@ interface ArticleGridProps {
 
 function EmptyState() {
   return (
-    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+    <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
       <svg
-        className="w-24 h-24 text-muted-foreground/20 mb-4"
+        className="w-16 h-16 text-muted-foreground/20 mb-4"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -30,7 +30,7 @@ function EmptyState() {
           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
         />
       </svg>
-      <h3 className="text-lg font-semibold mb-2">No articles found</h3>
+      <h3 className="text-base font-medium mb-2">No articles found</h3>
       <p className="text-muted-foreground text-sm max-w-sm">
         Try selecting a different category or check back later for new content.
       </p>
@@ -40,14 +40,14 @@ function EmptyState() {
 
 function SkeletonCard() {
   return (
-    <div className="bg-card rounded-lg overflow-hidden border border-border shadow-sm">
-      <div className="relative w-full aspect-[16/9] bg-muted animate-pulse" />
+    <div className="bg-card rounded-lg overflow-hidden border border-border/40 will-change-auto">
+      <div className="relative w-full aspect-[16/9] bg-muted animate-pulse will-change-opacity" />
       <div className="p-6 space-y-3">
-        <div className="h-4 bg-muted rounded animate-pulse w-1/3" />
-        <div className="h-6 bg-muted rounded animate-pulse w-3/4" />
-        <div className="h-4 bg-muted rounded animate-pulse w-full" />
-        <div className="h-4 bg-muted rounded animate-pulse w-2/3" />
-        <div className="h-4 bg-muted rounded animate-pulse w-1/4 mt-4" />
+        <div className="h-3 bg-muted rounded animate-pulse w-1/3 will-change-opacity" />
+        <div className="h-4 bg-muted rounded animate-pulse w-3/4 will-change-opacity" />
+        <div className="h-3 bg-muted rounded animate-pulse w-full will-change-opacity" />
+        <div className="h-3 bg-muted rounded animate-pulse w-2/3 will-change-opacity" />
+        <div className="h-3 bg-muted rounded animate-pulse w-full will-change-opacity" />
       </div>
     </div>
   );
@@ -73,10 +73,11 @@ export function ArticleGrid({ articles, loading = false }: ArticleGridProps) {
       {articles.map((article, index) => (
         <div
           key={article.id}
-          className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+          className="animate-in fade-in slide-in-from-bottom-4 duration-500 will-change-transform"
           style={{
             animationDelay: `${Math.min(index * 50, 300)}ms`,
             animationFillMode: 'backwards',
+            transform: 'translateZ(0)', // GPU acceleration
           }}
         >
           <ArticleCard article={article} priority={index < 3} />

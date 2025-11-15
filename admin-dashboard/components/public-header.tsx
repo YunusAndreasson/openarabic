@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { Database } from '@/lib/database.types';
+import { ThemeToggle } from './theme-toggle';
 
 type Category = Database['public']['Tables']['categories']['Row'];
 
@@ -17,9 +18,9 @@ export function PublicHeader({
   onSelectCategory,
 }: PublicHeaderProps) {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex h-16 items-center justify-between gap-4">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md will-change-transform supports-[backdrop-filter]:bg-background/80">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between gap-6">
           {/* Logo + Brand Name */}
           <Link
             href="/"
@@ -27,33 +28,32 @@ export function PublicHeader({
               e.preventDefault();
               onSelectCategory(null);
             }}
-            className="flex items-center gap-3 flex-shrink-0 cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200 ease-in-out group"
-            title="Home - All Articles"
+            className="flex items-center gap-2.5 flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity duration-200 group"
+            title="Home"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/oaLogo.png"
               alt="OpenArabic"
-              className="h-8 w-auto transition-transform"
+              className="h-7 w-auto"
             />
-            <span className="text-lg font-bold text-foreground hidden sm:inline group-hover:text-primary transition-colors">
+            <span className="text-base font-semibold text-foreground hidden sm:inline">
               OpenArabic
             </span>
           </Link>
 
           {/* Category Navigation */}
           <nav className="flex-1 flex justify-end">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory max-w-full">
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide snap-x snap-mandatory max-w-full items-center">
               {/* All Articles pill */}
               <button
                 onClick={() => onSelectCategory(null)}
-                style={{ cursor: 'default' }}
                 className={`
-                  flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 snap-start
+                  flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 snap-start cursor-pointer
                   ${
                     selectedCategoryId === null
-                      ? 'bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20'
-                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                      ? 'bg-foreground text-background'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   }
                 `}
                 title="All Articles"
@@ -66,19 +66,23 @@ export function PublicHeader({
                 <button
                   key={category.id}
                   onClick={() => onSelectCategory(category.id)}
-                  style={{ cursor: 'default' }}
                   className={`
-                    flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 snap-start category-badge capitalize
+                    flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 snap-start capitalize cursor-pointer
                     ${
                       selectedCategoryId === category.id
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                        ? 'bg-foreground text-background'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                     }
                   `}
                 >
                   {category.name}
                 </button>
               ))}
+
+              {/* Theme Toggle */}
+              <div className="ml-2 flex-shrink-0">
+                <ThemeToggle />
+              </div>
             </div>
           </nav>
         </div>

@@ -6,7 +6,6 @@ import type { Database } from '@/lib/database.types';
 import { PublicHeader } from '@/components/public-header';
 import { ArticleGrid } from '@/components/article-grid';
 import { Footer } from '@/components/footer';
-import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -122,34 +121,32 @@ export default function PublicArticlesPage() {
         onSelectCategory={handleSelectCategory}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ArticleGrid articles={articles} loading={loading} />
 
         {/* Load More Button */}
         {!loading && hasMore && articles.length > 0 && (
           <div className="flex justify-center mt-12">
-            <Button
+            <button
               onClick={handleLoadMore}
               disabled={loadingMore}
-              variant="outline"
-              size="lg"
-              className="px-8"
+              className="px-4 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingMore ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="inline mr-1.5 h-3 w-3 animate-spin" />
                   Loading...
                 </>
               ) : (
                 'Load More'
               )}
-            </Button>
+            </button>
           </div>
         )}
 
         {/* No more articles message */}
         {!loading && !hasMore && articles.length > 0 && (
-          <div className="text-center mt-12 text-muted-foreground text-sm">
+          <div className="text-center mt-12 text-muted-foreground/80 text-xs">
             No more articles to load
           </div>
         )}

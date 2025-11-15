@@ -1,41 +1,159 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(222.2 84% 4.9%);
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(222.2 84% 4.9%);
+  /* OpenArabic Branded Color System - Sage Green Palette */
+  /* Based on mobile app's OKLCH color system */
+  /* Never uses pure black/white - all colors have subtle green brand tint */
 
-  --color-primary: hsl(222.2 47.4% 11.2%);
-  --color-primary-foreground: hsl(210 40% 98%);
+  /* Light Mode - Sage Green Tinted Neutrals */
+  --color-background: hsl(160 33% 96%); /* #F2F7F4 - Sage lighter */
+  --color-foreground: hsl(150 20% 6%); /* #0A0F0B - Green-tinted black */
 
-  --color-secondary: hsl(210 40% 96.1%);
-  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
+  --color-card: hsl(157 25% 99%); /* #FEFEFD - Sage-tinted white */
+  --color-card-foreground: hsl(164 25% 15%); /* #1A2B23 - Forest darkest */
 
-  --color-muted: hsl(210 40% 96.1%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+  --color-popover: hsl(157 25% 99%); /* Sage-tinted white */
+  --color-popover-foreground: hsl(164 25% 15%);
 
-  --color-accent: hsl(210 40% 96.1%);
-  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
+  --color-primary: hsl(156 17% 43%); /* #5B7F68 - Brand sage green */
+  --color-primary-foreground: hsl(157 25% 99%); /* Sage-tinted white */
 
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-secondary: hsl(162 25% 92%); /* #E8F1EC - Sage light */
+  --color-secondary-foreground: hsl(164 25% 15%); /* Forest darkest */
 
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222.2 84% 4.9%);
+  --color-muted: hsl(162 25% 92%); /* #E8F1EC - Sage light */
+  --color-muted-foreground: hsl(162 13% 45%); /* #5C6F65 - Metadata text */
 
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222.2 84% 4.9%);
+  --color-accent: hsl(162 25% 92%); /* #E8F1EC - Sage light */
+  --color-accent-foreground: hsl(164 25% 15%);
+
+  --color-destructive: hsl(4 65% 51%); /* #D32F2F - Error red */
+  --color-destructive-foreground: hsl(157 25% 99%);
+
+  --color-border: hsl(162 25% 92%); /* #E8F1EC - Sage light */
+  --color-input: hsl(162 25% 92%);
+  --color-ring: hsl(156 17% 43%); /* Brand sage */
 
   --radius: 0.5rem;
 }
 
+.dark {
+  /* Dark Mode - 2025 Best Practices with Sage Brand */
+  /* Following: Proper elevation, WCAG AAA contrast, reduced eye strain, brand consistency */
+
+  /* Base colors - Deep sage backgrounds (not pure black for comfort) */
+  --color-background: hsl(160 12% 9%); /* Deeper base for better elevation hierarchy */
+  --color-foreground: hsl(157 15% 94%); /* Slightly warmer white (WCAG AAA compliant) */
+
+  /* Elevated surfaces - Progressive lightness for clear hierarchy */
+  --color-card: hsl(158 10% 14%); /* Cards elevated above background */
+  --color-card-foreground: hsl(157 15% 94%);
+
+  --color-popover: hsl(156 10% 16%); /* Popovers slightly above cards */
+  --color-popover-foreground: hsl(157 15% 94%);
+
+  /* Primary - Muted sage for comfortable dark mode interaction */
+  --color-primary: hsl(151 25% 55%); /* Softer sage, still vibrant enough */
+  --color-primary-foreground: hsl(160 15% 8%); /* Dark on light primary */
+
+  /* Secondary - Subtle elevation for secondary elements */
+  --color-secondary: hsl(158 10% 14%); /* Same as card for consistency */
+  --color-secondary-foreground: hsl(157 15% 94%);
+
+  /* Muted - For less prominent elements */
+  --color-muted: hsl(158 8% 16%); /* Slightly lighter than cards */
+  --color-muted-foreground: hsl(157 8% 65%); /* Better contrast (WCAG AA) */
+
+  /* Accent - Highlights and interactive states */
+  --color-accent: hsl(156 10% 16%); /* Matches popover level */
+  --color-accent-foreground: hsl(157 15% 94%);
+
+  /* Semantic - Softer error red for dark mode */
+  --color-destructive: hsl(4 70% 58%); /* Slightly muted for comfort */
+  --color-destructive-foreground: hsl(157 15% 94%);
+
+  /* Borders - Visible but subtle, following 2025 minimal aesthetic */
+  --color-border: hsl(155 8% 22%); /* More visible against dark backgrounds */
+  --color-input: hsl(155 8% 22%);
+  --color-ring: hsl(151 30% 50%); /* Brighter focus rings for accessibility */
+}
+
 @layer base {
+  /* Smooth theme transitions - 2025 best practice */
   * {
     @apply border-border;
   }
+
+  html {
+    /* View Transitions API - 2025 smooth page transitions */
+    @supports (view-transition-name: none) {
+      view-transition-name: root;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+      transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
   body {
     @apply bg-background text-foreground;
+    /* Optimize for readability - 2025 best practices */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Performance optimization */
+    overscroll-behavior: none;
+  }
+
+  /* Improve readability for body text */
+  p {
+    text-wrap: pretty; /* Prevent orphans - 2025 CSS feature */
+  }
+
+  /* Headings should have balanced wrapping */
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance; /* Better heading wrapping - 2025 CSS feature */
+  }
+
+  /* Ensure images don't get too bright in dark mode */
+  .dark img:not([class*="logo"]) {
+    opacity: 0.9;
+  }
+
+  /* Better focus visibility in both modes - 2025 accessibility */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--color-ring));
+    outline-offset: 2px;
+  }
+
+  /* Performance optimizations - 2025 best practices */
+  /* GPU acceleration for interactive elements */
+  button, a, [role="button"] {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Optimize animations - only use transform and opacity */
+  @media (prefers-reduced-motion: no-preference) {
+    * {
+      /* Use modern easing functions */
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  /* Respect user's motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
