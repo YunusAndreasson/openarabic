@@ -69,17 +69,6 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
 
   return (
     <header className="relative h-[40vh] md:h-[50vh] w-full overflow-hidden">
-      {/* Back to Articles Button */}
-      <Link
-        href="/"
-        prefetch={null}
-        className="absolute top-6 left-4 sm:left-6 lg:left-8 z-10 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white/10 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-white/20 transition-colors duration-150 cursor-pointer"
-        aria-label="Back to articles"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span className="hidden sm:inline">Articles</span>
-      </Link>
-
       {/* Optimized Hero Image */}
       <Image
         src={normalizeImageUrl(article.image_url)}
@@ -95,9 +84,23 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
       {/* Theme-aware Gradient Overlay */}
       <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-black/90 via-black/60 to-black/20' : 'from-black/80 via-black/40 to-black/10'}`} />
 
-      {/* Content */}
-      <div className="absolute inset-0 flex items-end">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 md:pb-20 lg:pb-24">
+      {/* Content - All aligned with same margins */}
+      <div className="absolute inset-0 flex flex-col">
+        {/* Back Button - Top aligned with same horizontal padding as content */}
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+          <Link
+            href="/"
+            prefetch={null}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white/10 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-white/20 transition-colors duration-150 cursor-pointer"
+            aria-label="Back to articles"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Articles</span>
+          </Link>
+        </div>
+
+        {/* Title & Metadata - Bottom aligned */}
+        <div className="mt-auto w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 md:pb-20 lg:pb-24">
           {/* Category Badge - Clickable to navigate to category */}
           <div className="mb-6 md:mb-8">
             <Link
