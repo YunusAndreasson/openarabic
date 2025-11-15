@@ -74,7 +74,7 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
   return (
     <div className={`group ${isLast ? '' : 'mb-10'}`}>
       {/* Arabic Sentence - Primary (Word by Word) with Audio Button */}
-      <div className="flex items-start gap-3 mb-2">
+      <div className="flex items-start gap-3 mb-1.5">
         <div
           lang="ar"
           dir="rtl"
