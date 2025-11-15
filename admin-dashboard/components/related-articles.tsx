@@ -16,7 +16,7 @@ export function RelatedArticles({ articles }: RelatedArticlesProps) {
   if (articles.length === 0) return null;
 
   return (
-    <section className="border-t border-border/40 bg-muted/20 py-16 md:py-20">
+    <section className="border-t border-border/60 bg-muted/20 py-16 md:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl md:text-3xl font-bold mb-8 md:mb-12 text-foreground">
           You Might Also Like
