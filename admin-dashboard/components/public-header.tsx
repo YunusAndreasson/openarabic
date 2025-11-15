@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Filter, MessageCircle, Mail } from 'lucide-react';
+import { Filter, MessageCircle, Info, Mail } from 'lucide-react';
 
 type Category = Database['public']['Tables']['categories']['Row'];
 
@@ -27,6 +27,7 @@ export function PublicHeader({
 }: PublicHeaderProps) {
   const [categorySheetOpen, setCategorySheetOpen] = useState(false);
   const [contactSheetOpen, setContactSheetOpen] = useState(false);
+  const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
 
   const handleSelectCategory = (categoryId: number | null) => {
     onSelectCategory(categoryId);
@@ -61,7 +62,7 @@ export function PublicHeader({
             </span>
           </Link>
 
-          {/* Mobile: Category Button + Contact + Theme Toggle */}
+          {/* Mobile: Category Button + Info + Contact + Theme Toggle */}
           <div className="flex md:hidden items-center gap-2">
             <button
               onClick={() => setCategorySheetOpen(true)}
@@ -70,6 +71,14 @@ export function PublicHeader({
             >
               <Filter className="h-3.5 w-3.5" />
               {selectedLabel}
+            </button>
+            <button
+              onClick={() => setAboutDialogOpen(true)}
+              className="flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-150 cursor-pointer flex-shrink-0"
+              title="About"
+              aria-label="About OpenArabic"
+            >
+              <Info className="h-4 w-4" />
             </button>
             <button
               onClick={() => setContactSheetOpen(true)}
@@ -119,8 +128,16 @@ export function PublicHeader({
                 </button>
               ))}
 
-              {/* Contact + Theme Toggle */}
+              {/* Info + Contact + Theme Toggle */}
               <div className="ml-2 flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setAboutDialogOpen(true)}
+                  className="flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-150 cursor-pointer flex-shrink-0"
+                  title="About"
+                  aria-label="About OpenArabic"
+                >
+                  <Info className="h-4 w-4" />
+                </button>
                 <button
                   onClick={() => setContactSheetOpen(true)}
                   className="flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-150 cursor-pointer flex-shrink-0"
@@ -236,6 +253,44 @@ export function PublicHeader({
                 </svg>
                 Facebook
               </a>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* About Dialog */}
+      <Dialog open={aboutDialogOpen} onOpenChange={setAboutDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Info className="h-5 w-5 text-primary" />
+              About OpenArabic
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-sm leading-relaxed">
+            <p className="text-foreground">
+              A free Arabic learning app based on classical Islamic texts. You read bilingual sentence pairs (an Arabic sentence followed by an English sentence), tap words you don't understand, and add them to a spaced repetition system (FSRS) to learn over time.
+            </p>
+
+            <div className="space-y-2">
+              <h3 className="font-semibold text-foreground">Who is this for?</h3>
+              <p className="text-muted-foreground">
+                Learners who can decode Arabic and want to read real texts efficiently—especially those studying with a course or who just finished one and need vocabulary to read independently.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-semibold text-foreground">How does it work?</h3>
+              <p className="text-muted-foreground">
+                You read bilingual sentence pairs at 90-95% comprehension (i+1 level), with 5-10% new vocabulary per article. Tap unknown words to add them to spaced repetition. Regular reading builds pattern recognition without explicit grammar study.
+              </p>
+            </div>
+
+            <div className="border-t border-border/40 pt-4 mt-4">
+              <p className="text-xs text-muted-foreground">
+                Developed by Yunus Andréasson<br />
+                Contact: <a href="mailto:yunus+openarabic@edenmind.com" className="text-primary hover:underline">yunus+openarabic@edenmind.com</a>
+              </p>
             </div>
           </div>
         </DialogContent>

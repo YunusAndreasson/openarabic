@@ -149,7 +149,7 @@ export default function PublicArticlesPage() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ArticleGrid articles={articles} loading={loading} />
+        <ArticleGrid articles={articles} loading={loading} showCategoryPill={selectedCategoryId === null} />
 
         {/* Infinite scroll trigger point */}
         {!loading && hasMore && articles.length > 0 && (

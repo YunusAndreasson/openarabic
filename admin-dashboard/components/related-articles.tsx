@@ -21,7 +21,7 @@ export function RelatedArticles({ articles }: RelatedArticlesProps) {
         <h2 className="text-2xl md:text-3xl font-bold mb-8 md:mb-12 text-foreground">
           You Might Also Like
         </h2>
-        <ArticleGrid articles={articles} />
+        <ArticleGrid articles={articles} showCategoryPill={false} />
       </div>
     </section>
   );

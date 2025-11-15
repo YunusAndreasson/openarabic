@@ -12,6 +12,7 @@ type Article = Database['public']['Tables']['articles']['Row'] & {
 interface ArticleGridProps {
   articles: Article[];
   loading?: boolean;
+  showCategoryPill?: boolean;
 }
 
 function EmptyState() {
@@ -53,7 +54,7 @@ function SkeletonCard() {
   );
 }
 
-export function ArticleGrid({ articles, loading = false }: ArticleGridProps) {
+export function ArticleGrid({ articles, loading = false, showCategoryPill = true }: ArticleGridProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -78,7 +79,7 @@ export function ArticleGrid({ articles, loading = false }: ArticleGridProps) {
             animationFillMode: 'backwards',
           }}
         >
-          <ArticleCard article={article} priority={index < 3} />
+          <ArticleCard article={article} priority={index < 3} showCategoryPill={showCategoryPill} />
         </div>
       ))}
     </div>
