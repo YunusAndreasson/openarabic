@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Database } from '@/lib/database.types';
 import { ArabicWord } from '@/components/arabic-word';
-import { Volume2, Loader2 } from 'lucide-react';
+import { Play, Pause, Loader2 } from 'lucide-react';
 
 type ArticleSentence = Database['public']['Tables']['article_sentences']['Row'];
 type SentenceWord = Database['public']['Tables']['sentence_words']['Row'];
@@ -12,6 +12,14 @@ interface SentencePairProps {
   sentence: ArticleSentence;
   words: SentenceWord[];
   isLast?: boolean;
+}
+
+function normalizeAudioUrl(audioUrl: string): string {
+  if (!audioUrl) return '';
+  if (audioUrl.startsWith('http://') || audioUrl.startsWith('https://')) {
+    return audioUrl;
+  }
+  return `https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/audio/${audioUrl}`;
 }
 
 export function SentencePair({ sentence, words, isLast = false }: SentencePairProps) {
@@ -42,9 +50,11 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
 
       // Create or reuse audio element
       if (!audioRef.current) {
-        audioRef.current = new Audio(sentence.audio_url);
+        const normalizedUrl = normalizeAudioUrl(sentence.audio_url);
+        audioRef.current = new Audio(normalizedUrl);
         audioRef.current.addEventListener('ended', () => setIsPlaying(false));
-        audioRef.current.addEventListener('error', () => {
+        audioRef.current.addEventListener('error', (e) => {
+          console.error('Audio error:', e, 'URL:', normalizedUrl);
           setIsLoading(false);
           setIsPlaying(false);
         });
@@ -109,8 +119,10 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
+            ) : isPlaying ? (
+              <Pause className="h-5 w-5 text-primary" />
             ) : (
-              <Volume2 className={`h-5 w-5 ${isPlaying ? 'text-primary' : ''}`} />
+              <Play className="h-5 w-5" />
             )}
           </button>
         )}
