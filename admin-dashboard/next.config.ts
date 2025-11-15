@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-select'],
     scrollRestoration: true,
     optimizeCss: true, // Optimize CSS loading and reduce render-blocking
-    cssChunking: 'loose', // Reduce CSS chunk size for faster loading
+    cssChunking: 'strict', // Strict CSS chunking for optimal loading
     ppr: false, // Partial Prerendering (not needed for this app)
     after: true, // Enable React 19 after() for cleanup actions
   },

@@ -7,6 +7,7 @@ import { PublicHeader } from '@/components/public-header';
 import { ArticleGrid } from '@/components/article-grid';
 import { Footer } from '@/components/footer';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { ITEMS_PER_PAGE } from '@/lib/constants';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -15,16 +16,17 @@ type Article = Database['public']['Tables']['articles']['Row'] & {
 
 type Category = Database['public']['Tables']['categories']['Row'];
 
-const ITEMS_PER_PAGE = 12;
-
 interface ArticlesClientProps {
   initialArticles: Article[];
   initialCategories: Category[];
 }
 
+/**
+ * ArticlesClient - Handles client-side article filtering and infinite scroll
+ * Receives server-rendered initial data and manages category filtering
+ */
 export function ArticlesClient({ initialArticles, initialCategories }: ArticlesClientProps) {
   const [articles, setArticles] = useState<Article[]>(initialArticles);
-  const [categories] = useState<Category[]>(initialCategories);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -35,7 +37,7 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Dynamic page title based on selected category
-  const selectedCategory = categories.find(c => c.id === selectedCategoryId);
+  const selectedCategory = initialCategories.find(c => c.id === selectedCategoryId);
   const pageTitle = selectedCategory
     ? `${selectedCategory.name} Articles - OpenArabic`
     : 'OpenArabic - Learn Arabic Through Reading';
@@ -43,6 +45,7 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
 
   const fetchArticles = useCallback(async (pageNum: number, isInitial = false) => {
     try {
+      // Set appropriate loading state
       if (isInitial) {
         setLoading(true);
       } else {
@@ -63,13 +66,13 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
 
       const newArticles = (data as Article[]) || [];
 
       if (isInitial) {
         setArticles(newArticles);
+        setHasMore(newArticles.length === ITEMS_PER_PAGE);
       } else {
         // Deduplicate articles by ID to prevent duplicate keys
         setArticles(prev => {
@@ -77,12 +80,11 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
           const uniqueNewArticles = newArticles.filter(a => !existingIds.has(a.id));
           return [...prev, ...uniqueNewArticles];
         });
+        setHasMore(newArticles.length === ITEMS_PER_PAGE);
       }
-
-      // Check if there are more articles
-      setHasMore(newArticles.length === ITEMS_PER_PAGE);
     } catch (error) {
       console.error('Error fetching articles:', error);
+      // TODO: Show error toast to user
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -93,7 +95,6 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
     // Only fetch when category changes (initial data already loaded from server)
     if (selectedCategoryId !== null) {
       setPage(1);
-      setArticles([]);
       setHasMore(true);
       fetchArticles(1, true);
     } else {
@@ -102,7 +103,9 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
       setPage(1);
       setHasMore(initialArticles.length === ITEMS_PER_PAGE);
     }
-  }, [selectedCategoryId, fetchArticles, initialArticles]);
+    // Only depend on selectedCategoryId to avoid unnecessary re-fetches
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategoryId]);
 
   const handleLoadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
@@ -111,8 +114,11 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
     fetchArticles(nextPage);
   }, [page, loadingMore, hasMore, fetchArticles]);
 
-  // Infinite scroll observer
+  // Infinite scroll observer - memoize to avoid recreation
   useEffect(() => {
+    const currentTarget = observerTarget.current;
+    if (!currentTarget) return;
+
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
@@ -122,17 +128,13 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
       { threshold: 0.1, rootMargin: '100px' }
     );
 
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
+    observer.observe(currentTarget);
 
     return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
+      observer.unobserve(currentTarget);
     };
-  }, [hasMore, loadingMore, loading, handleLoadMore]);
+    // Only recreate when handleLoadMore changes (which includes page, hasMore, etc.)
+  }, [handleLoadMore, hasMore, loadingMore, loading]);
 
   const handleSelectCategory = (categoryId: number | null) => {
     setSelectedCategoryId(categoryId);
@@ -141,12 +143,12 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
   return (
     <div className="min-h-screen flex flex-col">
       <PublicHeader
-        categories={categories}
+        categories={initialCategories}
         selectedCategoryId={selectedCategoryId}
         onSelectCategory={handleSelectCategory}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         <ArticleGrid articles={articles} loading={loading} showCategoryPill={selectedCategoryId === null} />
 
         {/* Infinite scroll trigger point */}

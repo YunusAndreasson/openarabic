@@ -2,7 +2,6 @@
 
 import { ArticleCard } from './article-card';
 import type { Database } from '@/lib/database.types';
-import { Loader2 } from 'lucide-react';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -39,47 +38,35 @@ function EmptyState() {
   );
 }
 
-function SkeletonCard() {
-  return (
-    <div className="bg-card rounded-lg overflow-hidden">
-      <div className="relative w-full aspect-[16/9] bg-muted animate-pulse" />
-      <div className="p-6 space-y-3">
-        <div className="h-3 bg-muted rounded animate-pulse w-1/3" />
-        <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
-        <div className="h-3 bg-muted rounded animate-pulse w-full" />
-        <div className="h-3 bg-muted rounded animate-pulse w-2/3" />
-        <div className="h-3 bg-muted rounded animate-pulse w-full" />
-      </div>
-    </div>
-  );
-}
-
+/**
+ * ArticleGrid - Pure presentation component
+ * Renders articles in a responsive grid or shows empty state
+ * Let Next.js Image handle loading - no manual tracking needed
+ */
 export function ArticleGrid({ articles, loading = false, showCategoryPill = true }: ArticleGridProps) {
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <SkeletonCard key={i} />
-        ))}
-      </div>
-    );
-  }
-
-  if (articles.length === 0) {
+  // Show empty state if no articles
+  if (articles.length === 0 && !loading) {
     return <EmptyState />;
   }
 
+  // Render articles with staggered fade-in animation (capped at 6 items)
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr view-transition-stable">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
       {articles.map((article, index) => (
         <div
           key={article.id}
-          className="animate-in fade-in duration-300"
+          className="animate-in fade-in duration-300 p-0.5"
           style={{
+            // Cap delay at 6 items (300ms max) to avoid slow perceived performance
+            animationDelay: `${Math.min(index, 6) * 50}ms`,
             animationFillMode: 'backwards',
           }}
         >
-          <ArticleCard article={article} priority={index < 3} showCategoryPill={showCategoryPill} />
+          <ArticleCard
+            article={article}
+            priority={index < 3}
+            showCategoryPill={showCategoryPill}
+          />
         </div>
       ))}
     </div>

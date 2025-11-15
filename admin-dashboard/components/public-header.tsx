@@ -39,7 +39,7 @@ export function PublicHeader({
   const selectedLabel = selectedCategory?.name || 'All';
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md will-change-transform supports-[backdrop-filter]:bg-background/80 view-transition-stable" style={{ viewTransitionName: 'header' }}>
+    <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md will-change-transform supports-[backdrop-filter]:bg-background/80 view-transition-stable" style={{ viewTransitionName: 'header' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-6">
           {/* Logo + Brand Name */}
@@ -48,7 +48,6 @@ export function PublicHeader({
             onClick={() => {
               onSelectCategory(null);
             }}
-            prefetch={null}
             className="flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity duration-150 group"
             title="Home"
           >

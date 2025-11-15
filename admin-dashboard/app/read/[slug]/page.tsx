@@ -144,12 +144,9 @@ export default function ArticleReadPage() {
     });
   };
 
+  // Don't render anything while loading - let loading.tsx skeleton show
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="h-8 w-8 rounded-full border-2 border-primary animate-pulse-sage" />
-      </div>
-    );
+    return null;
   }
 
   if (error || !article) {
@@ -183,7 +180,7 @@ export default function ArticleReadPage() {
       <ArticleHeader article={article} />
 
       {/* Article Content */}
-      <ArticleContent summary={article.summary}>
+      <ArticleContent>
         {sentences.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
             No content available for this article.

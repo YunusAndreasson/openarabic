@@ -133,7 +133,6 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
         lang="en"
         className="text-xl md:text-[21px] leading-[1.7] mb-5 font-serif text-foreground/75 text-left"
         style={{
-          fontFamily: 'Georgia, "Times New Roman", serif',
           WebkitFontSmoothing: 'antialiased',
           MozOsxFontSmoothing: 'grayscale',
           letterSpacing: '0.01em',

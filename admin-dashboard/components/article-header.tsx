@@ -12,6 +12,7 @@ type Article = Database['public']['Tables']['articles']['Row'] & {
 
 interface ArticleHeaderProps {
   article: Article;
+  showSummary?: boolean;
 }
 
 function normalizeImageUrl(imageUrl: string): string {
@@ -67,7 +68,7 @@ function estimateReadTime(summary: string, difficultyLevel: number): string {
   return `${readTime} min read`;
 }
 
-export function ArticleHeader({ article }: ArticleHeaderProps) {
+export function ArticleHeader({ article, showSummary = true }: ArticleHeaderProps) {
   const { isDark } = useTheme();
 
   return (
@@ -94,7 +95,7 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
           <div className="mb-6 md:mb-8">
             <Link
               href="/"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm md:text-base font-semibold bg-white/25 text-white backdrop-blur-md ring-1 ring-white/30 shadow-lg shadow-black/25 capitalize cursor-pointer hover:bg-white/30 transition-colors duration-150"
+              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm md:text-base font-semibold bg-white/25 text-white backdrop-blur-md ring-1 ring-white/30 shadow-lg shadow-black/25 capitalize cursor-pointer hover:bg-white/30 transition-colors duration-150"
               style={{
                 textShadow: '0 1px 3px rgba(0,0,0,0.5), 0 0 8px rgba(0,0,0,0.3)',
               }}
@@ -104,10 +105,17 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
             </Link>
           </div>
 
-          {/* Title - Reduced size for better balance */}
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 md:mb-8 leading-[1.1] tracking-tight max-w-5xl">
+          {/* Title */}
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6 leading-[1.1] tracking-tight max-w-5xl">
             {article.title}
           </h1>
+
+          {/* Summary - Subtitle style */}
+          {showSummary && article.summary && (
+            <p className="text-lg md:text-xl lg:text-2xl text-white/90 font-serif leading-relaxed mb-6 md:mb-8 max-w-4xl">
+              {article.summary}
+            </p>
+          )}
 
           {/* Metadata */}
           <div className="flex flex-wrap items-center gap-3 md:gap-4 text-white/90 text-sm md:text-base">
