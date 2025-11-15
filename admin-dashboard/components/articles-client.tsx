@@ -153,14 +153,14 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
 
         {/* Infinite scroll trigger point */}
         {!loading && hasMore && articles.length > 0 && (
-          <div ref={observerTarget} className="flex justify-center mt-12 py-8">
+          <div ref={observerTarget} className="flex justify-center mt-8 py-6">
             <div className="h-4 w-4 rounded-full border-2 border-primary/60 animate-pulse-sage" />
           </div>
         )}
 
         {/* End of content message */}
         {!loading && !hasMore && articles.length > 0 && (
-          <div className="text-center mt-12 mb-8 text-muted-foreground/60 text-xs">
+          <div className="text-center mt-8 mb-6 text-muted-foreground/60 text-xs">
             You&apos;ve reached the end
           </div>
         )}

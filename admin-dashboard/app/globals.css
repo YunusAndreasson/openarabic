@@ -97,7 +97,7 @@ body {
 }
 
 .article-card:hover {
-  outline-color: oklch(from var(--color-primary) l c h / 0.45);
+  outline-color: oklch(from var(--color-primary) l c h / 0.35);
   box-shadow:
     0 4px 6px -1px rgb(0 0 0 / 0.1),
     0 2px 4px -2px rgb(0 0 0 / 0.1);
