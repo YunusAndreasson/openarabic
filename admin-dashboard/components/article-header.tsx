@@ -79,7 +79,7 @@ export function ArticleHeader({ article }: ArticleHeaderProps) {
         fill
         priority
         fetchPriority="high"
-        className="object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:hover:scale-105"
+        className="object-cover motion-safe:transition-transform motion-safe:duration-700 motion-safe:ease-[cubic-bezier(0.23,1,0.32,1)] motion-safe:hover:scale-105"
         sizes="100vw"
         quality={90}
       />

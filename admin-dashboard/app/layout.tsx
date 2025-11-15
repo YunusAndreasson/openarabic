@@ -12,6 +12,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'OpenArabic - Learn Arabic Through Reading',
   description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+  other: {
+    // Enable View Transitions API for modern browsers
+    'view-transition': 'same-origin',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',

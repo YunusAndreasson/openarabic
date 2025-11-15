@@ -41,14 +41,14 @@ function EmptyState() {
 
 function SkeletonCard() {
   return (
-    <div className="bg-card rounded-lg overflow-hidden will-change-auto">
-      <div className="relative w-full aspect-[16/9] bg-muted animate-pulse will-change-opacity" />
+    <div className="bg-card rounded-lg overflow-hidden">
+      <div className="relative w-full aspect-[16/9] bg-muted animate-pulse" />
       <div className="p-6 space-y-3">
-        <div className="h-3 bg-muted rounded animate-pulse w-1/3 will-change-opacity" />
-        <div className="h-4 bg-muted rounded animate-pulse w-3/4 will-change-opacity" />
-        <div className="h-3 bg-muted rounded animate-pulse w-full will-change-opacity" />
-        <div className="h-3 bg-muted rounded animate-pulse w-2/3 will-change-opacity" />
-        <div className="h-3 bg-muted rounded animate-pulse w-full will-change-opacity" />
+        <div className="h-3 bg-muted rounded animate-pulse w-1/3" />
+        <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+        <div className="h-3 bg-muted rounded animate-pulse w-full" />
+        <div className="h-3 bg-muted rounded animate-pulse w-2/3" />
+        <div className="h-3 bg-muted rounded animate-pulse w-full" />
       </div>
     </div>
   );
