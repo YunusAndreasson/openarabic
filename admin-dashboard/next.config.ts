@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
     reactCompiler: true,
     optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-select'],
     scrollRestoration: true,
+    optimizeCss: true, // Optimize CSS loading and reduce render-blocking
+    cssChunking: 'loose', // Reduce CSS chunk size for faster loading
   },
 
   // Turbopack configuration (Next.js 15.5+)

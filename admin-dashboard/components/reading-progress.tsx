@@ -1,22 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export function ReadingProgress() {
   const [progress, setProgress] = useState(0);
+  const ticking = useRef(false);
+  const docHeightCache = useRef(0);
 
   useEffect(() => {
-    const updateProgress = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const scrollPercent = (scrollTop / docHeight) * 100;
-      setProgress(Math.min(scrollPercent, 100));
+    // Cache document height to avoid repeated reflows
+    const cacheDocHeight = () => {
+      docHeightCache.current = document.documentElement.scrollHeight - window.innerHeight;
     };
 
-    window.addEventListener('scroll', updateProgress, { passive: true });
+    // Batch scroll updates with requestAnimationFrame to prevent forced reflows
+    const updateProgress = () => {
+      if (!ticking.current) {
+        window.requestAnimationFrame(() => {
+          const scrollTop = window.scrollY;
+          const scrollPercent = (scrollTop / docHeightCache.current) * 100;
+          setProgress(Math.min(scrollPercent, 100));
+          ticking.current = false;
+        });
+        ticking.current = true;
+      }
+    };
+
+    cacheDocHeight();
     updateProgress();
 
-    return () => window.removeEventListener('scroll', updateProgress);
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', cacheDocHeight, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', updateProgress);
+      window.removeEventListener('resize', cacheDocHeight);
+    };
   }, []);
 
   return (
