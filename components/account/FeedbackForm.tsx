@@ -45,6 +45,29 @@ export const FeedbackForm = memo(() => {
 
   const handleAddScreenshot = useCallback(async () => {
     try {
+      // Show prominent disclosure BEFORE requesting permissions (Google Play requirement)
+      const userAgreed = await new Promise<boolean>(resolve => {
+        Alert.alert(
+          'Screenshot Upload Notice',
+          'OpenArabic collects screenshot images to help our team investigate and resolve reported issues. Screenshots are uploaded to our servers and attached to your feedback report.\n\nDo you agree to upload a screenshot?',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+              onPress: () => resolve(false),
+            },
+            {
+              text: 'I Agree',
+              onPress: () => resolve(true),
+            },
+          ],
+        );
+      });
+
+      if (!userAgreed) {
+        return;
+      }
+
       // Check current permission status first
       const { status: existingStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
 
@@ -208,7 +231,7 @@ export const FeedbackForm = memo(() => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [message, user?.email, user?.id]);
+  }, [message, user?.email, user?.id, screenshotUri]);
 
   return (
     <>
@@ -223,70 +246,70 @@ export const FeedbackForm = memo(() => {
           keyboardShouldPersistTaps="handled"
         >
           <ThemedView style={styles.content}>
-          <TextInput
-            style={[
-              styles.textInput,
-              {
-                backgroundColor: colors.background,
-                color: colors.text,
-                borderColor: colors.border,
-              },
-            ]}
-            placeholder="What happened? How can we help?"
-            placeholderTextColor={colors.textTertiary}
-            value={message}
-            onChangeText={setMessage}
-            multiline={true}
-            numberOfLines={6}
-            textAlignVertical="top"
-            autoFocus={true}
-            editable={!isSubmitting}
-          />
+            <TextInput
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ]}
+              placeholder="What happened? How can we help?"
+              placeholderTextColor={colors.textTertiary}
+              value={message}
+              onChangeText={setMessage}
+              multiline={true}
+              numberOfLines={6}
+              textAlignVertical="top"
+              autoFocus={true}
+              editable={!isSubmitting}
+            />
 
-          {screenshotUri ? (
-            <View style={styles.screenshotPreview}>
-              <Image source={{ uri: screenshotUri }} style={styles.screenshotImage} />
+            {screenshotUri ? (
+              <View style={styles.screenshotPreview}>
+                <Image source={{ uri: screenshotUri }} style={styles.screenshotImage} />
+                <Pressable
+                  onPress={handleRemoveScreenshot}
+                  style={[
+                    styles.removeButton,
+                    { backgroundColor: colors.error, shadowColor: colors.shadow },
+                  ]}
+                >
+                  <Ionicons name="close" size={20} color={colors.white} />
+                </Pressable>
+              </View>
+            ) : (
               <Pressable
-                onPress={handleRemoveScreenshot}
-                style={[
-                  styles.removeButton,
-                  { backgroundColor: colors.error, shadowColor: colors.shadow },
-                ]}
+                onPress={handleAddScreenshot}
+                style={[styles.addScreenshotButton, { borderColor: colors.border }]}
               >
-                <Ionicons name="close" size={20} color={colors.white} />
+                <Ionicons name="image-outline" size={24} color={colors.tint} />
+                <ThemedText type="body" colorName="tint" style={styles.addScreenshotText}>
+                  Add Screenshot (Optional)
+                </ThemedText>
               </Pressable>
-            </View>
-          ) : (
-            <Pressable
-              onPress={handleAddScreenshot}
-              style={[styles.addScreenshotButton, { borderColor: colors.border }]}
-            >
-              <Ionicons name="image-outline" size={24} color={colors.tint} />
-              <ThemedText type="body" colorName="tint" style={styles.addScreenshotText}>
-                Add Screenshot (Optional)
+            )}
+
+            <ThemedView style={styles.metaRow}>
+              <ThemedText type="caption" colorName="textTertiary" style={styles.hint}>
+                Your email ({user?.email || 'not available'}) will be included
               </ThemedText>
-            </Pressable>
-          )}
+              <ThemedText
+                type="caption"
+                style={[styles.characterCount, { color: characterCountColor }]}
+              >
+                {characterCount}/{MIN_CHARACTERS}
+              </ThemedText>
+            </ThemedView>
 
-          <ThemedView style={styles.metaRow}>
-            <ThemedText type="caption" colorName="textTertiary" style={styles.hint}>
-              Your email ({user?.email || 'not available'}) will be included
-            </ThemedText>
-            <ThemedText
-              type="caption"
-              style={[styles.characterCount, { color: characterCountColor }]}
-            >
-              {characterCount}/{MIN_CHARACTERS}
-            </ThemedText>
-          </ThemedView>
-
-          <ThemedButton
-            title={isSubmitting ? 'Sending...' : 'Send Feedback'}
-            onPress={handleSubmit}
-            disabled={isSubmitting || characterCount < MIN_CHARACTERS}
-            variant={characterCount < MIN_CHARACTERS ? 'outlined' : 'filled'}
-            style={styles.submitButton}
-          />
+            <ThemedButton
+              title={isSubmitting ? 'Sending...' : 'Send Feedback'}
+              onPress={handleSubmit}
+              disabled={isSubmitting || characterCount < MIN_CHARACTERS}
+              variant={characterCount < MIN_CHARACTERS ? 'outlined' : 'filled'}
+              style={styles.submitButton}
+            />
           </ThemedView>
         </ScrollView>
       </KeyboardAvoidingView>
