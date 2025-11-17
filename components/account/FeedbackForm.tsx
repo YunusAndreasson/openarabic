@@ -7,6 +7,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -25,6 +26,7 @@ import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
+import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 const MIN_CHARACTERS = 10;
 
@@ -45,6 +47,26 @@ export const FeedbackForm = memo(() => {
 
   const handleAddScreenshot = useCallback(async () => {
     try {
+      const permissionDeniedKey = `screenshot_permission_denied_${user?.id || 'anonymous'}`;
+      const storage = getSafeStorage();
+
+      // Check if permission was previously denied (subsequent attempt)
+      const wasPreviouslyDenied = await storage.getItem(permissionDeniedKey);
+
+      if (wasPreviouslyDenied === 'true') {
+        // User is trying to use feature after denying permission - show informational alert
+        // This is explicitly allowed by both Apple and Google Play policies
+        Alert.alert(
+          'Permission Required',
+          'Photo library access is needed to attach screenshots. Please enable it in Settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ],
+        );
+        return;
+      }
+
       // Show prominent disclosure BEFORE requesting permissions (Google Play requirement)
       const userAgreed = await new Promise<boolean>(resolve => {
         Alert.alert(
@@ -80,17 +102,9 @@ export const FeedbackForm = memo(() => {
       }
 
       if (finalStatus !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Please allow access to your photos in Settings to attach a screenshot.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Open Settings',
-              onPress: () => ImagePicker.requestMediaLibraryPermissionsAsync(),
-            },
-          ],
-        );
+        // Save denied state for subsequent attempts
+        await storage.setItem(permissionDeniedKey, 'true');
+        // Accept denial silently (Apple requirement - no retry, no auto-redirect)
         return;
       }
 
@@ -113,7 +127,7 @@ export const FeedbackForm = memo(() => {
       });
       Alert.alert('Error', 'Could not open photo library. Please try again.');
     }
-  }, []);
+  }, [user?.id]);
 
   const handleRemoveScreenshot = useCallback(() => {
     setScreenshotUri(null);

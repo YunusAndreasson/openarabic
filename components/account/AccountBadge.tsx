@@ -109,6 +109,26 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   // Handle photo selection
   const handlePhotoSelect = useCallback(async () => {
     try {
+      const storage = getSafeStorage();
+      const permissionDeniedKey = `photo_permission_denied_${userId}`;
+
+      // Check if permission was previously denied (subsequent attempt)
+      const wasPreviouslyDenied = await storage.getItem(permissionDeniedKey);
+
+      if (wasPreviouslyDenied === 'true') {
+        // User is trying to use feature after denying permission - show informational alert
+        // This is explicitly allowed by both Apple and Google Play policies
+        Alert.alert(
+          'Permission Required',
+          'Photo library access is needed to select a profile photo. Please enable it in Settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ],
+        );
+        return;
+      }
+
       // Show prominent disclosure BEFORE requesting permissions (Google Play requirement)
       const userAgreed = await new Promise<boolean>(resolve => {
         Alert.alert(
@@ -133,39 +153,13 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
       }
 
       // Request permissions - this will show the system permission dialog
-      const { status, canAskAgain, granted } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-      if (!granted || status !== 'granted') {
-        // If we can ask again, prompt once more to surface the system dialog
-        if (canAskAgain) {
-          const retry = await ImagePicker.requestMediaLibraryPermissionsAsync();
-          if (retry.status !== 'granted') {
-            Alert.alert(
-              'Permission Required',
-              'We need photo library permission to select a profile photo.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Open Settings',
-                  onPress: () => Linking.openSettings(),
-                },
-              ],
-            );
-            return;
-          }
-        } else {
-          // Cannot ask again: guide user to settings
-          Alert.alert(
-            'Permission Required',
-            'Photo library access is disabled. Please enable it in system settings.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Open Settings', onPress: () => Linking.openSettings() },
-            ],
-          );
-          return;
-        }
+      if (status !== 'granted') {
+        // Save denied state for subsequent attempts
+        await storage.setItem(permissionDeniedKey, 'true');
+        // Accept denial silently (Apple requirement - no retry, no auto-redirect)
+        return;
       }
 
       // Launch image picker
@@ -181,16 +175,12 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
         const selectedUri = result.assets[0].uri;
 
         // Save to local storage
-        const storage = getSafeStorage();
         await storage.setItem(storageKey, selectedUri);
 
         // Update state
         setProfilePhotoUri(selectedUri);
 
         // Success feedback after selection completed
-        // Using selection-like subtle feedback is fine here, but we keep a single call
-        // Consider mediumFeedback in future if we want stronger confirmation
-        // Use selection feedback for subtle action
         selectionFeedback();
       }
     } catch (error) {
@@ -199,7 +189,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
         showToast: true,
       });
     }
-  }, [storageKey]);
+  }, [storageKey, userId]);
 
   // Handle photo press animation
   const handlePhotoPress = useCallback(() => {
