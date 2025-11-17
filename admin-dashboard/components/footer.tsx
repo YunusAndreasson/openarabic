@@ -21,7 +21,7 @@ export function Footer() {
             <span className="text-sm font-medium text-foreground">OpenArabic</span>
           </div>
 
-          {/* Legal Links - Inline with dot separators */}
+          {/* Legal Links */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap justify-center">
             <Link
               href="/privacy"
@@ -30,7 +30,6 @@ export function Footer() {
             >
               Privacy
             </Link>
-            <span className="opacity-40">·</span>
             <Link
               href="/terms"
               prefetch={null}
@@ -38,7 +37,6 @@ export function Footer() {
             >
               Terms
             </Link>
-            <span className="opacity-40">·</span>
             <Link
               href="/account-deletion"
               prefetch={null}
@@ -46,7 +44,6 @@ export function Footer() {
             >
               Delete Account
             </Link>
-            <span className="opacity-40">·</span>
             <span className="text-muted-foreground/70">© 2025 OpenArabic</span>
           </div>
         </div>

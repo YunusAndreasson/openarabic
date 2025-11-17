@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Tooltip,
   TooltipContent,
@@ -11,38 +12,41 @@ interface ArabicWordProps {
   wordForm: string;
   english: string;
   grammarNote?: string | null;
-  disableTooltip?: boolean;
 }
 
-export function ArabicWord({ wordForm, english, grammarNote, disableTooltip = false }: ArabicWordProps) {
-  const wordSpan = (
-    <span
-      className={disableTooltip ? "inline-block" : "cursor-pointer transition-colors duration-150 hover:bg-primary/10 rounded-md px-0.5 inline-block"}
-      style={{
-        fontFamily: 'Madina, "Noto Naskh Arabic", "Traditional Arabic", serif',
-        fontFeatureSettings: '"calt" 1, "liga" 1, "kern" 1',
-        WebkitFontSmoothing: 'antialiased',
-        MozOsxFontSmoothing: 'grayscale',
-        fontWeight: 500,
-      }}
-    >
-      {wordForm}
-    </span>
-  );
+export function ArabicWord({ wordForm, english, grammarNote }: ArabicWordProps) {
+  const [open, setOpen] = useState(false);
 
-  if (disableTooltip) {
-    return wordSpan;
-  }
+  const handleClick = () => {
+    setOpen(!open);
+  };
 
   return (
     <TooltipProvider delayDuration={200}>
-      <Tooltip>
+      <Tooltip open={open} onOpenChange={setOpen}>
         <TooltipTrigger asChild>
-          {wordSpan}
+          <span
+            onClick={handleClick}
+            className={`cursor-pointer transition-colors duration-150 rounded-md px-0.5 inline-block touch-manipulation ${
+              open
+                ? 'bg-primary/25'
+                : 'hover:bg-primary/10 active:bg-primary/15'
+            }`}
+            style={{
+              fontFamily: 'Madina, "Noto Naskh Arabic", "Traditional Arabic", serif',
+              fontFeatureSettings: '"calt" 1, "liga" 1, "kern" 1',
+              WebkitFontSmoothing: 'antialiased',
+              MozOsxFontSmoothing: 'grayscale',
+              fontWeight: 500,
+            }}
+          >
+            {wordForm}
+          </span>
         </TooltipTrigger>
         <TooltipContent
           side="top"
           className="max-w-[250px] bg-popover text-popover-foreground border border-border shadow-lg"
+          onPointerDownOutside={() => setOpen(false)}
         >
           <div className="space-y-1.5 text-left" dir="ltr">
             <p className="font-semibold text-base leading-tight">{english}</p>

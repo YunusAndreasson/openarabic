@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Database } from '@/lib/database.types';
 import { generateSlug } from '@/lib/slugify';
 import { useTheme } from '@/components/providers/theme-provider';
+import { ARTICLE_CARD_BLUR } from '@/lib/blur-placeholder';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -72,6 +74,7 @@ function estimateReadTime(summary: string, difficultyLevel: number): string {
 
 export function ArticleCard({ article, priority = false, showCategoryPill = true }: ArticleCardProps) {
   const { isDark } = useTheme();
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <Link
@@ -91,10 +94,13 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
             src={normalizeImageUrl(article.image_url)}
             alt={article.title}
             fill
-            className="object-cover"
+            className={`object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             priority={priority}
             fetchPriority={priority ? 'high' : undefined}
+            placeholder="blur"
+            blurDataURL={ARTICLE_CARD_BLUR}
+            onLoad={() => setImageLoaded(true)}
           />
 
           {/* Gradient overlay - only in dark mode */}
@@ -146,9 +152,7 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
           {/* Metadata - Author, Date, Read Time */}
           <div className={`flex items-center gap-2 text-xs text-muted-foreground/80 flex-wrap mt-auto -mx-2 md:-mx-[10px] ${isDark ? 'pt-5' : 'pt-4'}`}>
             <span className="font-medium text-foreground/90">{article.authors?.name || 'OpenArabic'}</span>
-            <span className="opacity-30">·</span>
             <span className="opacity-65">{formatDate(article.created_at)}</span>
-            <span className="opacity-30">·</span>
             <span className="opacity-65">{estimateReadTime(article.summary, article.difficulty_level)}</span>
           </div>
         </div>

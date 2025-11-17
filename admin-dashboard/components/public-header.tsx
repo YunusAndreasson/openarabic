@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Database } from '@/lib/database.types';
@@ -29,6 +29,8 @@ export function PublicHeader({
   const [categorySheetOpen, setCategorySheetOpen] = useState(false);
   const [contactSheetOpen, setContactSheetOpen] = useState(false);
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   const handleSelectCategory = (categoryId: number | null) => {
     onSelectCategory(categoryId);
@@ -38,8 +40,34 @@ export function PublicHeader({
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
   const selectedLabel = selectedCategory?.name || 'All';
 
+  // Auto-hide header on scroll down, show on scroll up
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Always show header at top of page
+      if (currentScrollY < 50) {
+        setIsVisible(true);
+      }
+      // Hide on scroll down, show on scroll up
+      else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY.current) {
+        setIsVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md will-change-transform supports-[backdrop-filter]:bg-background/80 view-transition-stable" style={{ viewTransitionName: 'header' }}>
+    <header
+      className={`sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md will-change-transform supports-[backdrop-filter]:bg-background/80 view-transition-stable transition-transform duration-300 ease-out ${!isVisible ? '-translate-y-full' : 'translate-y-0'}`}
+      style={{ viewTransitionName: 'header' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-6">
           {/* Logo + Brand Name */}

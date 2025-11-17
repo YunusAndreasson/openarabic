@@ -11,6 +11,8 @@ import { SentencePair } from '@/components/sentence-pair';
 import { RelatedArticles } from '@/components/related-articles';
 import { Footer } from '@/components/footer';
 import { ReadingProgress } from '@/components/reading-progress';
+import { ArticleMetadata } from '@/components/article-metadata';
+import { ArticleStructuredData } from '@/components/article-structured-data';
 import Link from 'next/link';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { parseIdFromSlug } from '@/lib/slugify';
@@ -170,6 +172,10 @@ export default function ArticleReadPage() {
 
   return (
     <div className="min-h-screen">
+      {/* Dynamic SEO Metadata */}
+      <ArticleMetadata article={article} />
+      <ArticleStructuredData article={article} />
+
       {/* Reading Progress Bar */}
       <ReadingProgress />
 
@@ -196,7 +202,6 @@ export default function ArticleReadPage() {
               sentence={sentence}
               words={sentenceWords[sentence.id] || []}
               isLast={index === sentences.length - 1}
-              disableTooltips={index === 0}
             />
           ))
         )}

@@ -12,7 +12,6 @@ interface SentencePairProps {
   sentence: ArticleSentence;
   words: SentenceWord[];
   isLast?: boolean;
-  disableTooltips?: boolean;
 }
 
 function normalizeAudioUrl(audioUrl: string): string {
@@ -23,9 +22,10 @@ function normalizeAudioUrl(audioUrl: string): string {
   return `https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/audio/${audioUrl}`;
 }
 
-export function SentencePair({ sentence, words, isLast = false, disableTooltips = false }: SentencePairProps) {
+export function SentencePair({ sentence, words, isLast = false }: SentencePairProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -37,6 +37,22 @@ export function SentencePair({ sentence, words, isLast = false, disableTooltips 
       }
     };
   }, []);
+
+  // Update progress as audio plays
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const updateProgress = () => {
+      if (audio.duration) {
+        const progressPercent = (audio.currentTime / audio.duration) * 100;
+        setProgress(progressPercent);
+      }
+    };
+
+    audio.addEventListener('timeupdate', updateProgress);
+    return () => audio.removeEventListener('timeupdate', updateProgress);
+  }, [isPlaying]);
 
   const handlePlayAudio = async () => {
     if (!sentence.audio_url) return;
@@ -69,6 +85,7 @@ export function SentencePair({ sentence, words, isLast = false, disableTooltips 
       console.error('Error playing audio:', error);
       setIsLoading(false);
       setIsPlaying(false);
+      setProgress(0);
     }
   };
 
@@ -88,7 +105,6 @@ export function SentencePair({ sentence, words, isLast = false, disableTooltips 
                   wordForm={word.word_form}
                   english={word.english}
                   grammarNote={word.grammar_note}
-                  disableTooltip={disableTooltips}
                 />
                 {/* Add space between words */}
                 {index < words.length - 1 && ' '}
@@ -110,23 +126,57 @@ export function SentencePair({ sentence, words, isLast = false, disableTooltips 
           )}
         </div>
 
-        {/* Subtle Audio Play Button */}
+        {/* Audio Play Button with Progress Ring */}
         {sentence.audio_url && (
-          <button
-            onClick={handlePlayAudio}
-            disabled={isLoading}
-            className="flex-shrink-0 p-2 rounded-md text-muted-foreground/35 hover:text-primary hover:bg-primary/6 transition-[color,background-color] duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-1"
-            aria-label={isPlaying ? 'Pause Arabic audio' : 'Play Arabic audio'}
-            title={isPlaying ? 'Pause' : 'Play Arabic audio'}
-          >
-            {isLoading ? (
-              <div className="h-4 w-4 rounded-full border-2 border-primary animate-pulse-sage" />
-            ) : isPlaying ? (
-              <Pause className="h-4 w-4 text-primary fill-primary" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-          </button>
+          <div className="relative flex-shrink-0 mt-1">
+            {/* Circular Progress Ring */}
+            <svg className="absolute inset-0 w-8 h-8 -rotate-90" viewBox="0 0 32 32">
+              {/* Background circle */}
+              <circle
+                cx="16"
+                cy="16"
+                r="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-muted/20"
+              />
+              {/* Progress circle */}
+              {isPlaying && (
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className="text-primary transition-all duration-150"
+                  style={{
+                    strokeDasharray: `${2 * Math.PI * 14}`,
+                    strokeDashoffset: `${2 * Math.PI * 14 * (1 - progress / 100)}`,
+                  }}
+                />
+              )}
+            </svg>
+
+            {/* Play/Pause Button */}
+            <button
+              onClick={handlePlayAudio}
+              disabled={isLoading}
+              className="relative flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground/60 hover:text-primary hover:bg-primary/6 transition-[color,background-color] duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              aria-label={isPlaying ? 'Pause Arabic audio' : 'Play Arabic audio'}
+              title={isPlaying ? 'Pause' : 'Play Arabic audio'}
+            >
+              {isLoading ? (
+                <div className="h-3 w-3 rounded-full border-2 border-primary animate-pulse-sage" />
+              ) : isPlaying ? (
+                <Pause className="h-3 w-3 text-primary fill-primary" />
+              ) : (
+                <Play className="h-3 w-3" />
+              )}
+            </button>
+          </div>
         )}
       </div>
 
