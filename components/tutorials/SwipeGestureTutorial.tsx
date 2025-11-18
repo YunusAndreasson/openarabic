@@ -138,7 +138,9 @@ export function SwipeGestureTutorial({ visible, onDismiss }: SwipeGestureTutoria
         </View>
 
         <View style={styles.vagueSection}>
-          <View style={[styles.indicator, styles.vagueIndicator, { backgroundColor: colors.warning }]}>
+          <View
+            style={[styles.indicator, styles.vagueIndicator, { backgroundColor: colors.warning }]}
+          >
             <Ionicons name="hand-left-outline" size={20} color={colors.white} />
           </View>
           <View style={styles.vagueText}>

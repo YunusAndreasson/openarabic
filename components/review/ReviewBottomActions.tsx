@@ -80,7 +80,7 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({ onVague }) =
   const handleIndicatorPress = () => {
     lightFeedback();
     showToast(
-      "Tap screen (or center button) for hint. After hint: swipe right = vague, left = unknown. Tap word = replay audio.",
+      'Tap screen (or center button) for hint. After hint: swipe right = vague, left = unknown. Tap word = replay audio.',
       8000,
       ToastType.INFO,
     );
