@@ -130,27 +130,19 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
       }
 
       // Show prominent disclosure BEFORE requesting permissions (Google Play requirement)
-      const userAgreed = await new Promise<boolean>(resolve => {
+      // Note: No "Cancel" button per Apple guideline 5.1.1 - user must proceed to system dialog
+      await new Promise<void>(resolve => {
         Alert.alert(
           'Profile Photo',
-          'OpenArabic accesses your photo library to let you select a profile photo for your account. The photo is stored locally on your device and is never uploaded to our servers.\n\nDo you want to select a profile photo?',
+          'OpenArabic accesses your photo library to let you select a profile photo for your account. The photo is stored locally on your device and is never uploaded to our servers.',
           [
             {
-              text: 'Cancel',
-              style: 'cancel',
-              onPress: () => resolve(false),
-            },
-            {
-              text: 'I Agree',
-              onPress: () => resolve(true),
+              text: 'Continue',
+              onPress: () => resolve(),
             },
           ],
         );
       });
-
-      if (!userAgreed) {
-        return;
-      }
 
       // Request permissions - this will show the system permission dialog
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -298,7 +290,12 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
             <ThemedText type="heading2" weight="bold" style={styles.userName} numberOfLines={1}>
               {firstName}
             </ThemedText>
-            <ThemedText type="body" variant="secondary" style={styles.memberSince} numberOfLines={1}>
+            <ThemedText
+              type="body"
+              variant="secondary"
+              style={styles.memberSince}
+              numberOfLines={1}
+            >
               {memberSince}
             </ThemedText>
           </View>

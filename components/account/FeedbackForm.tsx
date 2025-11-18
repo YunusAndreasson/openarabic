@@ -68,27 +68,19 @@ export const FeedbackForm = memo(() => {
       }
 
       // Show prominent disclosure BEFORE requesting permissions (Google Play requirement)
-      const userAgreed = await new Promise<boolean>(resolve => {
+      // Note: No "Cancel" button per Apple guideline 5.1.1 - user must proceed to system dialog
+      await new Promise<void>(resolve => {
         Alert.alert(
           'Screenshot Upload Notice',
-          'OpenArabic collects screenshot images to help our team investigate and resolve reported issues. Screenshots are uploaded to our servers and attached to your feedback report.\n\nDo you agree to upload a screenshot?',
+          'OpenArabic collects screenshot images to help our team investigate and resolve reported issues. Screenshots are uploaded to our servers and attached to your feedback report.',
           [
             {
-              text: 'Cancel',
-              style: 'cancel',
-              onPress: () => resolve(false),
-            },
-            {
-              text: 'I Agree',
-              onPress: () => resolve(true),
+              text: 'Continue',
+              onPress: () => resolve(),
             },
           ],
         );
       });
-
-      if (!userAgreed) {
-        return;
-      }
 
       // Check current permission status first
       const { status: existingStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();

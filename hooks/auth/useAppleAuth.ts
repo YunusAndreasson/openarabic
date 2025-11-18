@@ -256,9 +256,8 @@ export function useAppleAuth(): UseAppleAuthReturn {
           }
         }
 
-        // Track analytics
+        // Track analytics (first-party analytics only, no PII to third parties)
         await analytics.identify(data.user.id, {
-          email: data.user.email,
           last_sign_in: new Date().toISOString(),
         });
         await analytics.trackSignIn('apple');
@@ -405,9 +404,8 @@ export function useAppleAuth(): UseAppleAuthReturn {
           throw error;
         }
 
-        // Track analytics
+        // Track analytics (first-party analytics only, no PII to third parties)
         await analytics.identify(data.user.id, {
-          email: data.user.email,
           last_sign_in: new Date().toISOString(),
         });
         await analytics.trackSignIn('apple');

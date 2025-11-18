@@ -217,7 +217,6 @@ function AppContent() {
       if (session?.user) {
         try {
           await analytics.identify(session.user.id, {
-            email: session.user.email,
             last_active: new Date().toISOString(),
           });
         } catch (err) {

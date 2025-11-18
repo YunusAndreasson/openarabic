@@ -114,7 +114,6 @@ export function useAuthForm(): UseAuthFormReturn {
         });
       } else {
         await analytics.identify(data.user.id, {
-          email: data.user.email,
           last_sign_in: new Date().toISOString(),
         });
         await analytics.trackSignIn('email');

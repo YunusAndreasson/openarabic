@@ -12,10 +12,7 @@
     "primaryColor": "#5B7F68",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
@@ -24,22 +21,15 @@
       "newArchEnabled": true,
       "usesAppleSignIn": true,
       "entitlements": {
-        "com.apple.developer.applesignin": [
-          "Default"
-        ]
+        "com.apple.developer.applesignin": ["Default"]
       },
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio",
-          "processing",
-          "fetch"
-        ],
+        "UIBackgroundModes": ["audio", "processing", "fetch"],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",
           "openarabic.backgroundfetch"
         ],
-        "NSUserTrackingUsageDescription": "This app uses tracking to provide personalized learning analytics and improve your Arabic learning experience.",
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select screenshots for issue reports or profile photos.",
         "NSCameraUsageDescription": "This app needs access to your camera to let you take a profile photo for your account.",
         "NSMicrophoneUsageDescription": "This app needs access to your microphone for audio recording features.",
@@ -61,10 +51,7 @@
         "android.permission.SCHEDULE_EXACT_ALARM",
         "android.permission.VIBRATE"
       ],
-      "blockedPermissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ]
+      "blockedPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },
     "notification": {
       "icon": "./assets/images/oaIcon.png",

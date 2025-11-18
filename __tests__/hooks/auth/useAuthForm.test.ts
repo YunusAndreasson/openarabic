@@ -458,7 +458,6 @@ describe('useAuthForm', () => {
         expect(mockAnalyticsIdentify).toHaveBeenCalledWith(
           '1',
           expect.objectContaining({
-            email: 'test@example.com',
             last_sign_in: expect.any(String),
           }),
         );
