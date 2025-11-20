@@ -78,7 +78,8 @@ export const calculateTooltipDimensions = (
   const estimatedTooltipWidth = Math.max(contentWidth + MIN_PADDING * 2, MIN_WIDTH);
 
   // Use measured width if available, but cap it at a reasonable maximum
-  const maxReasonableWidth = Math.min(SCREEN_WIDTH * 0.8, 320); // Cap at 80% of screen or 320px
+  // CRITICAL: Allow wider tooltips for long English words to prevent truncation
+  const maxReasonableWidth = Math.min(SCREEN_WIDTH * 0.9, 400); // Increased to 90% of screen or 400px for long words
   const baseWidth =
     measuredWidth && measuredWidth > 0 && measuredWidth <= maxReasonableWidth
       ? measuredWidth

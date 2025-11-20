@@ -112,14 +112,26 @@ describe('audioPlayer service', () => {
     jest.clearAllMocks();
 
     // Create fresh mock player for each test
+    // CRITICAL: Default mock must fire ready status to prevent waitForPlayerReady from hanging
+    let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
     mockPlayer = {
       play: jest.fn(),
       pause: jest.fn(),
       remove: jest.fn(),
       seekTo: jest.fn().mockResolvedValue(undefined),
-      addListener: jest.fn(() => ({
-        remove: jest.fn(),
-      })),
+      addListener: jest.fn((event, callback) => {
+        if (event === 'playbackStatusUpdate') {
+          statusCallback = callback;
+          // Automatically fire ready status to prevent tests from hanging
+          // Tests that need specific behavior can override this
+          process.nextTick(() => {
+            if (statusCallback) {
+              statusCallback({ isLoaded: true, playbackState: 'ready' });
+            }
+          });
+        }
+        return { remove: jest.fn() };
+      }),
     };
 
     mockCreateAudioPlayer.mockReturnValue(mockPlayer);
@@ -226,12 +238,25 @@ describe('audioPlayer service', () => {
       const firstPlayer = mockPlayer;
 
       // Create new mock player for second track
+      // CRITICAL: Must fire ready status to prevent waitForPlayerReady from hanging
+      let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
       const secondPlayer = {
         play: jest.fn(),
         pause: jest.fn(),
         remove: jest.fn(),
         seekTo: jest.fn(),
-        addListener: jest.fn(() => ({ remove: jest.fn() })),
+        addListener: jest.fn((event, callback) => {
+          if (event === 'playbackStatusUpdate') {
+            statusCallback = callback;
+            // Automatically fire ready status
+            process.nextTick(() => {
+              if (statusCallback) {
+                statusCallback({ isLoaded: true, playbackState: 'ready' });
+              }
+            });
+          }
+          return { remove: jest.fn() };
+        }),
       };
       mockCreateAudioPlayer.mockReturnValueOnce(secondPlayer);
 
@@ -259,6 +284,93 @@ describe('audioPlayer service', () => {
 
       const status = audioService.getStatus();
       expect(status.isPlaying).toBe(false);
+    });
+
+    test('should wait for player readiness before playing', async () => {
+      // Mock player with listener that simulates readiness
+      let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
+      const mockRemoveListener = jest.fn();
+      const mockPlayerWithListener = {
+        ...mockPlayer,
+        addListener: jest.fn((event, callback) => {
+          if (event === 'playbackStatusUpdate') {
+            statusCallback = callback;
+          }
+          return { remove: mockRemoveListener };
+        }),
+      };
+      mockCreateAudioPlayer.mockReturnValueOnce(mockPlayerWithListener);
+
+      // Start play (should wait for readiness)
+      const playPromise = audioService.play(testTrack);
+
+      // Give it a moment to set up the listener
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      // Verify play() hasn't been called yet (waiting for readiness)
+      expect(mockPlayerWithListener.play).not.toHaveBeenCalled();
+
+      // Simulate player becoming ready
+      if (statusCallback) {
+        statusCallback({ isLoaded: true, playbackState: 'ready' });
+      }
+
+      // Wait for play to complete
+      await playPromise;
+
+      // Now play() should have been called
+      expect(mockPlayerWithListener.play).toHaveBeenCalled();
+      expect(mockRemoveListener).toHaveBeenCalled(); // Listener should be cleaned up
+    });
+
+    test('should resolve immediately if player is ready with playbackState', async () => {
+      let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
+      const mockPlayerWithListener = {
+        ...mockPlayer,
+        addListener: jest.fn((event, callback) => {
+          if (event === 'playbackStatusUpdate') {
+            statusCallback = callback;
+            // Immediately fire ready state
+            process.nextTick(() => {
+              if (statusCallback) {
+                statusCallback({ playbackState: 'ready' });
+              }
+            });
+          }
+          return { remove: jest.fn() };
+        }),
+      };
+      mockCreateAudioPlayer.mockReturnValueOnce(mockPlayerWithListener);
+
+      const success = await audioService.play(testTrack);
+
+      expect(success).toBe(true);
+      expect(mockPlayerWithListener.play).toHaveBeenCalled();
+    });
+
+    test('should resolve immediately if player is ready with isLoaded', async () => {
+      let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
+      const mockPlayerWithListener = {
+        ...mockPlayer,
+        addListener: jest.fn((event, callback) => {
+          if (event === 'playbackStatusUpdate') {
+            statusCallback = callback;
+            // Immediately fire ready state
+            process.nextTick(() => {
+              if (statusCallback) {
+                statusCallback({ isLoaded: true });
+              }
+            });
+          }
+          return { remove: jest.fn() };
+        }),
+      };
+      mockCreateAudioPlayer.mockReturnValueOnce(mockPlayerWithListener);
+
+      const success = await audioService.play(testTrack);
+
+      expect(success).toBe(true);
+      expect(mockPlayerWithListener.play).toHaveBeenCalled();
     });
 
     test('should attempt audio session reset on first play failure', async () => {

@@ -71,8 +71,9 @@ const STATIC_STYLES = StyleSheet.create({
       LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     includeFontPadding: false,
     textAlignVertical: 'center',
-    // Ensure text doesn't overflow horizontally
-    maxWidth: '100%',
+    // CRITICAL: Allow text to expand tooltip width instead of truncating
+    // maxWidth removed to allow full text display - tooltip width is calculated dynamically
+    flexShrink: 0, // Prevent text from shrinking - tooltip should expand instead
   },
   chevronIcon: {
     marginLeft: LAYOUT.SPACING.SMALL,
@@ -82,6 +83,9 @@ const STATIC_STYLES = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    // Ensure text container can expand to show full text without truncation
+    minWidth: 0, // Allow flex shrinking if needed
+    flexShrink: 1, // Allow shrinking but prefer expanding
   },
 });
 
@@ -134,15 +138,15 @@ export function WordTooltip({
   };
 
   // Render color-coded English text
+  // CRITICAL: Never truncate English words - always show full text
   const renderColorCodedEnglish = (
     <View style={STATIC_STYLES.textContainer}>
-      <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText} numberOfLines={1}>
+      <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText}>
         {coloredSegments.map(segment => (
           <ThemedText
             key={segment.key}
             skipDefaultColor
             style={[STATIC_STYLES.singleLineText, { color: segment.color }]}
-            numberOfLines={1}
           >
             {segment.text}
           </ThemedText>

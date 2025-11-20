@@ -253,6 +253,7 @@ export const LAYOUT = {
       LARGE: BASE_UNIT * 4.25, // 17 - Apple HIG minimum for body text
       XLARGE: BASE_UNIT * 5, // 20 - responsive to base unit (fixed inconsistency)
       XXLARGE: BASE_UNIT * 5.5, // 22 - responsive to base unit
+      DEFAULT_ARABIC: BASE_UNIT * 7, // 28 - default Arabic font size (average of 13-40px range)
       HUGE: BASE_UNIT * 7, // 28 - responsive to base unit
       XXHUGE: BASE_UNIT * 8.5, // 34 - responsive to base unit
       MASSIVE: BASE_UNIT * 10, // 40 - responsive to base unit

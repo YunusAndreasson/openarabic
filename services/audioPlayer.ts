@@ -207,6 +207,33 @@ class SimpleAudioService {
   }
 
   /**
+   * Wait for player to be ready before playing
+   * Uses native playbackStatusUpdate events to detect when player is initialized
+   */
+  private async waitForPlayerReady(): Promise<void> {
+    if (!this.currentPlayer) {
+      return;
+    }
+
+    return new Promise<void>(resolve => {
+      // Listen for first status update indicating player is ready
+      const readySubscription = this.currentPlayer!.addListener(
+        PLAYBACK_STATUS_UPDATE,
+        (status: { isLoaded?: boolean; playbackState?: string }) => {
+          // Player is ready when isLoaded is true or playbackState is 'ready'
+          const isReady =
+            status.isLoaded === true || status.playbackState === 'ready';
+
+          if (isReady) {
+            readySubscription.remove();
+            resolve();
+          }
+        },
+      );
+    });
+  }
+
+  /**
    * Create fresh audio player for a track
    * No caching - audio files are already cached locally by audioCache service
    */
@@ -298,8 +325,18 @@ class SimpleAudioService {
         this.startEventSubscription();
       }
 
+      // CRITICAL FIX: Wait for player to be ready using native status updates
+      // This prevents ~1-20% of playback failures where play() is called before player is initialized
+      await this.waitForPlayerReady();
+
       // Start playback (fresh player starts at position 0)
-      this.currentPlayer.play();
+      // Wrap in try-catch to handle cases where play() fails even after ready check
+      try {
+        this.currentPlayer.play();
+      } catch (playError) {
+        // If play() fails synchronously, throw to trigger retry logic
+        throw new Error(`Failed to start playback: ${playError}`);
+      }
 
       // Update status to playing (actual state will come from event subscription)
       // Note: Native states (isLoaded, isBuffering) will be updated by event subscription

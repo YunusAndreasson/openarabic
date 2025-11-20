@@ -262,27 +262,15 @@ export function useAppleAuth(): UseAppleAuthReturn {
         });
         await analytics.trackSignIn('apple');
 
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Apple Sign In completed, waiting for auth state change',
-          level: 'info',
-        });
-
-        // Wait for auth state change event to ensure session is fully established
-        // This prevents race condition where we navigate before session state updates
-        try {
-          await waitForAuthEvent('SIGNED_IN', 3000);
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'Auth state confirmed, navigating to app',
-            level: 'info',
-          });
-        } catch (waitError) {
-          // If timeout, log but continue anyway (session might be ready)
-          Sentry.captureException(waitError, {
-            tags: { location: 'apple_auth', step: 'wait_for_event', platform: 'ios' },
-            level: 'warning',
-          });
+        // Check if session is already available (might be ready immediately)
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          // Wait for auth state change event if session not ready yet
+          try {
+            await waitForAuthEvent('SIGNED_IN', 5000);
+          } catch {
+            // Timeout is OK - session might be ready anyway, continue
+          }
         }
 
         successFeedback();
@@ -410,27 +398,15 @@ export function useAppleAuth(): UseAppleAuthReturn {
         });
         await analytics.trackSignIn('apple');
 
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Apple Sign In completed (Android), waiting for auth state change',
-          level: 'info',
-        });
-
-        // Wait for auth state change event to ensure session is fully established
-        // This prevents race condition where we navigate before session state updates
-        try {
-          await waitForAuthEvent('SIGNED_IN', 3000);
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'Auth state confirmed, navigating to app',
-            level: 'info',
-          });
-        } catch (waitError) {
-          // If timeout, log but continue anyway (session might be ready)
-          Sentry.captureException(waitError, {
-            tags: { location: 'apple_auth', step: 'wait_for_event', platform: 'android' },
-            level: 'warning',
-          });
+        // Check if session is already available (might be ready immediately)
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          // Wait for auth state change event if session not ready yet
+          try {
+            await waitForAuthEvent('SIGNED_IN', 5000);
+          } catch {
+            // Timeout is OK - session might be ready anyway, continue
+          }
         }
 
         successFeedback();

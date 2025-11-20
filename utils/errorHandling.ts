@@ -61,6 +61,44 @@ const DEFAULT_OPTIONS: ErrorOptions = {
   sentrySeverity: 'error',
 };
 
+/**
+ * Checks if an error is an expected authentication failure that shouldn't be logged to Sentry.
+ * These are normal user errors (wrong password, invalid credentials) not system errors.
+ *
+ * We still log system errors like:
+ * - Network failures
+ * - Server errors (500s, etc.)
+ * - Configuration issues
+ * - Token refresh failures
+ * - Rate limiting
+ * - Other unexpected errors
+ */
+const isExpectedAuthError = (error: Error | string): boolean => {
+  const errorMessage =
+    typeof error === 'string' ? error.toLowerCase() : error.message?.toLowerCase() || '';
+  const errorName = typeof error === 'string' ? '' : error.name || '';
+
+  // Only filter specific user mistakes - these are expected and don't indicate system problems
+  const userMistakePatterns = [
+    'invalid login credentials', // Exact match for the Sentry issue
+    'invalid credentials', // Generic invalid credentials
+    'wrong password',
+    'incorrect password',
+  ];
+
+  // Check if error message matches any user mistake pattern
+  const isUserMistake = userMistakePatterns.some(pattern => errorMessage.includes(pattern));
+
+  // For AuthApiError, only filter if it's specifically about invalid credentials
+  // Other AuthApiErrors (network issues, server errors, rate limits) should still be logged
+  const isInvalidCredentialsAuthError =
+    errorName === 'AuthApiError' &&
+    (errorMessage.includes('invalid login credentials') ||
+      errorMessage.includes('invalid credentials'));
+
+  return isUserMistake || isInvalidCredentialsAuthError;
+};
+
 // Helper functions to reduce complexity
 const captureInSentry = (
   errorObj: Error,
@@ -134,8 +172,12 @@ export const handleError = async (
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const errorObj = typeof error === 'string' ? new Error(error) : error;
 
+  // Skip Sentry logging for expected authentication errors (wrong password, invalid credentials, etc.)
+  const shouldSkipSentry = isExpectedAuthError(errorObj);
+  const shouldCaptureSentry = opts.captureSentry && !shouldSkipSentry;
+
   try {
-    if (opts.captureSentry) {
+    if (shouldCaptureSentry) {
       captureInSentry(errorObj, opts.sentrySeverity, opts.sentryTags, opts.sentryExtra);
     }
 

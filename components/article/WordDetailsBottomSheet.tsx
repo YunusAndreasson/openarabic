@@ -5,10 +5,12 @@ import { StyleSheet, View } from 'react-native';
 import { ColorCodedText } from '@/components/common/ColorCodedText';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
+import { useToast } from '@/components/providers';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
+import { ToastType } from '@/types/enums';
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
@@ -32,7 +34,9 @@ export function WordDetailsBottomSheet({
   isInStudyList = false,
 }: WordDetailsBottomSheetProps) {
   const colors = useColors();
+  const { showToast } = useToast();
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const hasShownFirstAddToast = useRef(false);
 
   // Calculate snap points - compact height to fit content without excess space
   const snapPoints = useMemo(() => [380], []);
@@ -101,8 +105,15 @@ export function WordDetailsBottomSheet({
     if (!word) return;
 
     // Instant UI feedback - use functional update to avoid stale closure
+    const wasInStudyList = optimisticIsInStudyList;
     setOptimisticIsInStudyList(prev => !prev);
     selectionFeedback();
+
+    // Show toast immediately on first add (optimistic)
+    if (!wasInStudyList && !hasShownFirstAddToast.current) {
+      hasShownFirstAddToast.current = true;
+      showToast(STRINGS.WORD_ADDED_TO_PRACTICE, undefined, ToastType.INFO);
+    }
 
     try {
       const success = await onAddToStudy(word);
@@ -110,11 +121,19 @@ export function WordDetailsBottomSheet({
       // If operation failed (e.g., daily limit reached), revert optimistic update
       if (!success) {
         setOptimisticIsInStudyList(prev => !prev);
+        // Revert toast flag if operation failed
+        if (!wasInStudyList) {
+          hasShownFirstAddToast.current = false;
+        }
       }
       // Success - optimistic state should now match actual state
     } catch (error) {
       // Revert optimistic update on error - use functional update
       setOptimisticIsInStudyList(prev => !prev);
+      // Revert toast flag on error
+      if (!wasInStudyList) {
+        hasShownFirstAddToast.current = false;
+      }
       handleError(error as Error, { toastMessage: 'Failed to update study list' });
     }
   };

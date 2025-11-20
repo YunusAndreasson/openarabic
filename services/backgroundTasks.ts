@@ -34,6 +34,7 @@
  * - If missing, app silently continues without background updates
  */
 
+import NetInfo from '@react-native-community/netinfo';
 import * as BackgroundTask from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
@@ -52,6 +53,13 @@ const BACKGROUND_FETCH_TASK = 'background-due-words-calculation';
  */
 TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
   try {
+    // Check network connectivity before making any requests
+    const netState = await NetInfo.fetch();
+    if (!netState.isConnected) {
+      // No network - fail silently (expected in background)
+      return BackgroundTask.BackgroundTaskResult.Failed;
+    }
+
     // Check if user is authenticated
     const {
       data: { session },
@@ -87,9 +95,24 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
 
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch (error) {
+    // Check if it's a network error - these are expected in background
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isNetworkError =
+      errorMessage.includes('Network request failed') ||
+      errorMessage.includes('network') ||
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('ETIMEDOUT');
+
+    if (isNetworkError) {
+      // Network errors in background are expected - fail silently
+      return BackgroundTask.BackgroundTaskResult.Failed;
+    }
+
+    // Log other errors to Sentry (unexpected errors)
     handleError(error as Error, {
       showToast: false,
       analyticsEventName: 'Background_Task_Error',
+      sentrySeverity: 'warning',
     });
     return BackgroundTask.BackgroundTaskResult.Failed;
   }

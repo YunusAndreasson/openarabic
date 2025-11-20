@@ -102,6 +102,7 @@ export const STRINGS = {
   // Word action buttons
   ADD_TO_PRACTICE: 'Add to practice',
   REMOVE_FROM_PRACTICE: 'Remove from practice',
+  WORD_ADDED_TO_PRACTICE: 'Word added to practice tab so you can practice the meaning',
   CHECK_EMAIL_CONFIRMATION: 'Check your email for confirmation',
   SUCCESS: 'Success',
   NEW_RECOMMENDATION_SELECTED: 'New recommendation selected',

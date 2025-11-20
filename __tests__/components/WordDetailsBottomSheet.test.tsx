@@ -16,7 +16,7 @@
  * 3. These can desynchronize, especially during rapid toggles
  */
 
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 
@@ -42,6 +42,12 @@ jest.mock('@/hooks/theme/useColors', () => ({
     grammar: MOCK_GRAMMAR_COLORS,
   }),
 }));
+jest.mock('@/components/providers', () => ({
+  useToast: () => ({
+    showToast: jest.fn(),
+  }),
+}));
+
 jest.mock('@/hooks/audio/useAudioSubscription', () => ({
   useAudioSubscription: () => ({
     status: {

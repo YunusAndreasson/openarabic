@@ -102,11 +102,6 @@ export function useAuthForm(): UseAuthFormReturn {
 
       if (error) {
         if (!isMountedRef.current) return;
-        Sentry.captureMessage('Sign in error', {
-          level: 'error',
-          tags: { location: 'auth_component' },
-          extra: { error: error.message },
-        });
         handleError(error, {
           toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${error.message}`,
           analyticsEventName: 'Sign_In_Error',

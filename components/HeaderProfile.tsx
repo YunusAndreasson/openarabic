@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -45,23 +46,33 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   );
 
   // Load saved profile photo
-  useEffect(() => {
+  const loadProfilePhoto = useCallback(async () => {
     if (!user?.id) return;
 
-    const loadProfilePhoto = async () => {
-      try {
-        const storage = getSafeStorage();
-        const savedUri = await storage.getItem(`profile_photo_${user.id}`);
-        if (savedUri) {
-          setProfilePhotoUri(savedUri);
-        }
-      } catch (error) {
-        handleError(error as Error, { showToast: false });
+    try {
+      const storage = getSafeStorage();
+      const savedUri = await storage.getItem(`profile_photo_${user.id}`);
+      if (savedUri) {
+        setProfilePhotoUri(savedUri);
+      } else {
+        setProfilePhotoUri(null);
       }
-    };
-
-    loadProfilePhoto();
+    } catch (error) {
+      handleError(error as Error, { showToast: false });
+    }
   }, [user?.id]);
+
+  // Load on mount
+  useEffect(() => {
+    loadProfilePhoto();
+  }, [loadProfilePhoto]);
+
+  // Reload when screen comes into focus (e.g., after updating profile picture)
+  useFocusEffect(
+    useCallback(() => {
+      loadProfilePhoto();
+    }, [loadProfilePhoto]),
+  );
 
   if (!user) return null;
 
