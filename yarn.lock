@@ -2179,10 +2179,10 @@
     use-latest-callback "^0.2.4"
     use-sync-external-store "^1.5.0"
 
-"@react-navigation/native-stack@^7.3.16", "@react-navigation/native-stack@^7.6.4":
-  version "7.6.4"
-  resolved "https://registry.yarnpkg.com/@react-navigation/native-stack/-/native-stack-7.6.4.tgz#35200b7ae008db0998e6de61b84b37956dba3e31"
-  integrity sha512-Lj4+m6gVPYOURf/yRAOvvqGL5LCVq9Pg3qdfGUR9SXPU61Kf386WZMOBJAusXQDkszavEusV+ROKYGPXkgIgDQ==
+"@react-navigation/native-stack@^7.3.16", "@react-navigation/native-stack@^7.7.0":
+  version "7.7.0"
+  resolved "https://registry.yarnpkg.com/@react-navigation/native-stack/-/native-stack-7.7.0.tgz#3e6b27e26d887804b9b662293235108cdc4beec1"
+  integrity sha512-9RTnXwE6x6mxRYQMj1ZcbslrcBTUQfafNVwiHkHM0nscld/qSP+e+FrUJW561UWXojyui3U3g7prMSooSgUB/g==
   dependencies:
     "@react-navigation/elements" "^2.8.3"
     color "^4.2.3"
@@ -3966,9 +3966,9 @@ ee-first@1.1.1:
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
 electron-to-chromium@^1.5.249:
-  version "1.5.258"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.258.tgz#094b0280928b1bf967b202e4be5b335aa4754b69"
-  integrity sha512-rHUggNV5jKQ0sSdWwlaRDkFc3/rRJIVnOSe9yR4zrR07m3ZxhP4N27Hlg8VeJGGYgFTxK5NqDmWI4DSH72vIJg==
+  version "1.5.259"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.259.tgz#d4393167ec14c5a046cebaec3ddf3377944ce965"
+  integrity sha512-I+oLXgpEJzD6Cwuwt1gYjxsDmu/S/Kd41mmLA3O+/uH2pFRO/DvOjUyGozL8j3KeLV6WyZ7ssPwELMsXCcsJAQ==
 
 emittery@^0.13.1:
   version "0.13.1"
@@ -4397,10 +4397,10 @@ expo-asset@^12.0.10, expo-asset@~12.0.10:
     "@expo/image-utils" "^0.8.7"
     expo-constants "~18.0.10"
 
-expo-audio@~1.0.14:
-  version "1.0.14"
-  resolved "https://registry.yarnpkg.com/expo-audio/-/expo-audio-1.0.14.tgz#c30108005c452291ed36295f0247ce880ff979b2"
-  integrity sha512-UU8n1mIDPfO9zFQbPnIpnzhHeqC8c8WQUoOOFvlgI5CeOJMUrQ6UXDpX+LBcHxw/amSBhF5HP6VMr58foPKwbA==
+expo-audio@~1.0.15:
+  version "1.0.15"
+  resolved "https://registry.yarnpkg.com/expo-audio/-/expo-audio-1.0.15.tgz#ec35fb9b44ce4d078823d08e92daaac073df1d38"
+  integrity sha512-zXKJ070jhEaxQwOwi44fzEznPUrOkCCltqHDK6mK/AfGdj9/ZfiwrmTxcgcQq4wpq0UeXsG2iEYPiRMsnPgBmg==
 
 expo-background-task@~1.0.9:
   version "1.0.9"
@@ -4486,7 +4486,7 @@ expo-mail-composer@~15.0.6:
   resolved "https://registry.yarnpkg.com/expo-mail-composer/-/expo-mail-composer-15.0.7.tgz#642bdd9f9a1f5d4dc0574bd4bddd0aef95077df1"
   integrity sha512-QEytis4Vrinff2WKcNaQJtR5wDdOyfuP72ezvaSJ81mV/J9yFntiQeynSS/svaU0N9m4inDWJ9WD5eRUGL55oQ==
 
-expo-manifests@~1.0.8:
+expo-manifests@~1.0.9:
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/expo-manifests/-/expo-manifests-1.0.9.tgz#7c612d80e552a3f1e479a9a18763c5bdcd43ca6e"
   integrity sha512-5uVgvIo0o+xBcEJiYn4uVh72QSIqyHePbYTWXYa4QamXd+AmGY/yWmtHaNqCqjsPLCwXyn4OxPr7jXJCeTWLow==
@@ -4603,10 +4603,10 @@ expo-updates-interface@~2.0.0:
   resolved "https://registry.yarnpkg.com/expo-updates-interface/-/expo-updates-interface-2.0.0.tgz#7721cb64c37bcb46b23827b2717ef451a9378749"
   integrity sha512-pTzAIufEZdVPKql6iMi5ylVSPqV1qbEopz9G6TSECQmnNde2nwq42PxdFBaUEd8IZJ/fdJLQnOT3m6+XJ5s7jg==
 
-expo-updates@^29.0.12:
-  version "29.0.12"
-  resolved "https://registry.yarnpkg.com/expo-updates/-/expo-updates-29.0.12.tgz#cb43a20a6d32426694d414a2551f7300a4f75631"
-  integrity sha512-gE3bU6qi5g8Y1TtBzoeHac3utR0i1Wj1ufThh+zpDyFjFbegFm+gwvNLVCBagZUClYKk/4CKxh5ytnwZmPzH+g==
+expo-updates@^29.0.13:
+  version "29.0.13"
+  resolved "https://registry.yarnpkg.com/expo-updates/-/expo-updates-29.0.13.tgz#d8fd9cca4fbabe6c8c3db746537ce61c06274441"
+  integrity sha512-tf/yex7U7betbIyDNwaSyDWDxMQVgmJ5qyghGEDlHP0052CPKUvbNEdtdf4DNCpsL3uxn8+71A4O4NxQdJEFuA==
   dependencies:
     "@expo/code-signing-certificates" "0.0.5"
     "@expo/plist" "^0.4.7"
@@ -4615,7 +4615,7 @@ expo-updates@^29.0.12:
     chalk "^4.1.2"
     debug "^4.3.4"
     expo-eas-client "~1.0.7"
-    expo-manifests "~1.0.8"
+    expo-manifests "~1.0.9"
     expo-structured-headers "~5.0.0"
     expo-updates-interface "~2.0.0"
     getenv "^2.0.0"

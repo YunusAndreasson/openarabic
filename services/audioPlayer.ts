@@ -111,6 +111,57 @@ class SimpleAudioService {
   }
 
   /**
+   * Safely activate audio session with proper error handling
+   * Suppresses non-critical errors (e.g., background activation failures)
+   * Only logs to Sentry for critical failures when app is active
+   */
+  private async safeActivateAudioSession(context: {
+    location: string;
+    isPlaying?: boolean;
+    isPlaylistMode?: boolean;
+  }): Promise<void> {
+    const appState = AppState.currentState;
+    // Default to 'active' if AppState.currentState is undefined (test environments)
+    const isAppActive = appState === 'active' || appState === undefined;
+    const isPlaying = context.isPlaying ?? this.status.isPlaying;
+    const isPlaylistMode = context.isPlaylistMode ?? this.isPlaylistMode;
+    const shouldBePlaying = isPlaying || isPlaylistMode;
+
+    // Skip activation if app is in background and not actively playing
+    // iOS may reject activation in these scenarios, which is expected behavior
+    if (!isAppActive && !shouldBePlaying) {
+      return; // Silently skip - not an error condition
+    }
+
+    try {
+      await setIsAudioActiveAsync(true);
+      this.lastActivationTime = Date.now();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      // Only log to Sentry if app is active and we're trying to play audio
+      // Background activation failures are expected iOS behavior and not errors
+      const shouldLogToSentry = isAppActive && shouldBePlaying;
+
+      if (shouldLogToSentry) {
+        await handleError(error as Error, {
+          showToast: false,
+          sentryExtra: {
+            operation: 'setIsAudioActiveAsync',
+            location: context.location,
+            appState,
+            isPlaying,
+            isPlaylistMode,
+            shouldBePlaying,
+            errorMessage,
+          },
+        });
+      }
+      // Continue execution - audio may still work in some scenarios
+    }
+  }
+
+  /**
    * Configure audio session for proper playback
    */
   private async configureAudioSession(): Promise<void> {
@@ -119,16 +170,12 @@ class SimpleAudioService {
     }
 
     try {
-      // Ensure audio is active at the OS level
-      try {
-        await setIsAudioActiveAsync(true);
-      } catch (error) {
-        await handleError(error as Error, {
-          showToast: false,
-          sentryExtra: { operation: 'setIsAudioActiveAsync', location: 'initializeAudioMode' },
-        });
-        // Continue with audio mode setup even if this fails
-      }
+      // Ensure audio is active at the OS level (only if app is active)
+      await this.safeActivateAudioSession({
+        location: 'configureAudioSession',
+        isPlaying: false,
+        isPlaylistMode: false,
+      });
 
       await setAudioModeAsync(AUDIO_MODE_CONFIG);
 
@@ -162,22 +209,47 @@ class SimpleAudioService {
       try {
         if (nextAppState === 'background' || nextAppState === 'inactive') {
           // App is going to background - ensure audio session stays active
+          // Only attempt if we're actively playing (iOS may reject otherwise)
           if (this.status.isPlaying || this.isPlaylistMode) {
-            await setIsAudioActiveAsync(true);
+            await this.safeActivateAudioSession({
+              location: 'AppState.background',
+              isPlaying: this.status.isPlaying,
+              isPlaylistMode: this.isPlaylistMode,
+            });
             // Re-configure audio session to maintain background playback
-            await setAudioModeAsync(AUDIO_MODE_CONFIG);
+            try {
+              await setAudioModeAsync(AUDIO_MODE_CONFIG);
+            } catch {
+              // Audio mode configuration may fail in background - not critical
+            }
           }
         } else if (nextAppState === 'active') {
           // App is coming to foreground - ensure audio session is still active
           if (this.status.isPlaying || this.isPlaylistMode) {
-            await setIsAudioActiveAsync(true);
+            await this.safeActivateAudioSession({
+              location: 'AppState.active',
+              isPlaying: this.status.isPlaying,
+              isPlaylistMode: this.isPlaylistMode,
+            });
           }
         }
       } catch (error) {
-        await handleError(error as Error, {
-          showToast: false,
-          sentryExtra: { operation: 'AppState.addEventListener', appState: nextAppState },
-        });
+        // Don't log AppState listener errors to Sentry - they're often expected
+        // (e.g., iOS rejecting audio activation in certain system states)
+        // Only log if it's a critical error that prevents playback
+        const isPlaying = this.status.isPlaying || this.isPlaylistMode;
+        if (isPlaying && nextAppState === 'active') {
+          // Only log if we're trying to play and app became active
+          await handleError(error as Error, {
+            showToast: false,
+            sentryExtra: {
+              operation: 'AppState.addEventListener',
+              appState: nextAppState,
+              isPlaying,
+              isPlaylistMode: this.isPlaylistMode,
+            },
+          });
+        }
         // Don't throw errors from AppState listener as it can cause crashes
       }
     });
@@ -211,18 +283,18 @@ class SimpleAudioService {
    * Uses native playbackStatusUpdate events to detect when player is initialized
    */
   private async waitForPlayerReady(): Promise<void> {
-    if (!this.currentPlayer) {
+    const player = this.currentPlayer;
+    if (!player) {
       return;
     }
 
     return new Promise<void>(resolve => {
       // Listen for first status update indicating player is ready
-      const readySubscription = this.currentPlayer!.addListener(
+      const readySubscription = player.addListener(
         PLAYBACK_STATUS_UPDATE,
         (status: { isLoaded?: boolean; playbackState?: string }) => {
           // Player is ready when isLoaded is true or playbackState is 'ready'
-          const isReady =
-            status.isLoaded === true || status.playbackState === 'ready';
+          const isReady = status.isLoaded === true || status.playbackState === 'ready';
 
           if (isReady) {
             readySubscription.remove();
@@ -286,12 +358,11 @@ class SimpleAudioService {
       // Reduces redundant calls during practice sessions while maintaining iOS reliability
       const now = Date.now();
       if (now - this.lastActivationTime > this.ACTIVATION_THROTTLE) {
-        try {
-          await setIsAudioActiveAsync(true);
-          this.lastActivationTime = now;
-        } catch {
-          // Try to continue anyway
-        }
+        await this.safeActivateAudioSession({
+          location: 'play',
+          isPlaying: false, // Not playing yet, but about to
+          isPlaylistMode: false,
+        });
       }
 
       // Configure audio session first (should be pre-configured for faster playback)
@@ -751,11 +822,11 @@ class SimpleAudioService {
     }
 
     // Best-effort to release audio session
+    // Don't throw errors during cleanup - they're not critical
     try {
       await setIsAudioActiveAsync(false);
-    } catch (destroyError) {
-      // Re-throw to make the error visible
-      throw new Error(`Failed to release audio session during destroy: ${destroyError}`);
+    } catch {
+      // Silently ignore cleanup errors - audio session will be released when app terminates
     }
 
     // Reset internal state to prevent stale references

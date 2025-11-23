@@ -115,6 +115,8 @@ jobs:
           # Google Sign-In
           EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
           EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
+          # Apple Sign-In (Android)
+          EXPO_PUBLIC_APPLE_SERVICE_ID: ${{ secrets.EXPO_PUBLIC_APPLE_SERVICE_ID }}
 
       # === Submit Android to Google Play Store (Internal Testing) ===
       - name: Submit Android to Google Play (Internal)
