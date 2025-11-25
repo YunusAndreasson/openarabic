@@ -65,6 +65,17 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     type: ToastType.INFO,
   });
 
+  // Tutorial overlay state - can be shown on-demand by tapping bottom buttons
+  const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
+
+  const handleShowTutorial = useCallback(() => {
+    setShowTutorialOverlay(true);
+  }, []);
+
+  const handleDismissTutorial = useCallback(() => {
+    setShowTutorialOverlay(false);
+  }, []);
+
   const showLocalToast = useCallback(
     (message: string, duration: number = 3000, type: ToastType = ToastType.INFO) => {
       setToastState({ visible: true, message, duration, type });
@@ -237,7 +248,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               right: LAYOUT.SPACING.LARGE,
             }}
           >
-            <ReviewBottomActions onVague={handleVague} />
+            <ReviewBottomActions onVague={handleVague} onShowTutorial={handleShowTutorial} />
           </View>
         </View>
       </View>
@@ -264,6 +275,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           />
         </View>
       )}
+
+      {/* Tutorial overlay - shown on-demand when tapping bottom buttons */}
+      <SwipeGestureTutorial visible={showTutorialOverlay} onDismiss={handleDismissTutorial} />
     </ReviewToastContext>
   );
 }

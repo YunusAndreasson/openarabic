@@ -206,10 +206,7 @@ export function useRecommendationEngine({
 
     // State 3: Due words (normal) - review with upcoming load preview
     if (dueWordsCount > 0) {
-      const upcomingContext =
-        tomorrowDue > 0
-          ? `, with ${tomorrowDue} more coming tomorrow`
-          : '';
+      const upcomingContext = tomorrowDue > 0 ? `, with ${tomorrowDue} more coming tomorrow` : '';
 
       if (hasManyDue) {
         return {
@@ -250,9 +247,7 @@ export function useRecommendationEngine({
           ? ` Just ${milestone.remaining} away from ${milestone.target}!`
           : '';
       const streakContext =
-        currentStreak && currentStreak > 0
-          ? ` ${currentStreak}-day streak going strong!`
-          : '';
+        currentStreak && currentStreak > 0 ? ` ${currentStreak}-day streak going strong!` : '';
 
       return {
         message: `All caught up! Your ${memoryStrength}% Memory Strength shows strong retention. With ${totalWords} words, you have room to grow — adding from articles you enjoy creates stronger memory connections.${milestoneHint}${streakContext}`,

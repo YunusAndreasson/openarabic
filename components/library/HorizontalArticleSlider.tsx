@@ -15,7 +15,7 @@ interface HorizontalArticleSliderProps {
 }
 
 // Calculate card width based on screen width and spacing
-const CARD_SPACING = LAYOUT.SPACING.MEDIUM;
+const CARD_SPACING = LAYOUT.SPACING.SMALL; // 8px - consistent with Practice stat cards
 const CARD_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width for better visibility
 // Fixed height for article cards in horizontal slider
 // Analysis: ArticleCard contains image (~40% of height) + title (2 lines) + author (1 line) + summary (5 lines) + padding

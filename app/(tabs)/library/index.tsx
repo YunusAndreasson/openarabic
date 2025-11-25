@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     // No gap - using manual spacing between sections for better visual hierarchy
   },
   sectionSeparator: {
-    marginTop: LAYOUT.SPACING.LARGE, // 16px - larger gap between major sections
+    marginTop: LAYOUT.SPACING.SMALL, // 8px - consistent with Practice screen
   },
   listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
 });

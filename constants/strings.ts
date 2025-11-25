@@ -97,8 +97,7 @@ export const STRINGS = {
   NO_ARTICLES_FOUND: 'No articles match your filters',
   // Saved tab empty state - emphasizes on-the-go bilingual learning
   BOOKMARKS_EMPTY_TITLE: 'Build your listening routine',
-  BOOKMARKS_EMPTY_DESCRIPTION:
-    'Save articles to listen on the go with bilingual audio',
+  BOOKMARKS_EMPTY_DESCRIPTION: 'Save articles to listen on the go with bilingual audio',
   // Practice tab empty state - benefit-first with spaced repetition explanation
   STUDY_LIST_EMPTY_TITLE: 'Remember what you learn',
   STUDY_LIST_EMPTY_DESCRIPTION:
@@ -106,8 +105,7 @@ export const STRINGS = {
   ERROR_LOADING_DATA: "Couldn't load data. " + tryAgain,
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',
-  SESSION_COMPLETE_EDUCATIONAL:
-    'Words will reappear at optimal intervals for long-term memory',
+  SESSION_COMPLETE_EDUCATIONAL: 'Words will reappear at optimal intervals for long-term memory',
   ADDED_TO_BOOKMARKS: 'Saved to bookmarks',
   REMOVED_FROM_BOOKMARKS: 'Removed from bookmarks',
   // Word action buttons
@@ -373,13 +371,11 @@ export const STRINGS = {
     'OpenArabic uses open source projects and third-party services. Thanks to all developers who make their work freely available.',
   LEGAL_AUDIO_TITLE: 'Audio generation',
   LEGAL_AUDIO_ELEVENLABS: 'ElevenLabs',
-  LEGAL_AUDIO_ELEVENLABS_DESC:
-    'Text-to-speech API for high-quality Arabic and English audio',
+  LEGAL_AUDIO_ELEVENLABS_DESC: 'Text-to-speech API for high-quality Arabic and English audio',
   LEGAL_AUDIO_ELEVENLABS_URL: 'https://elevenlabs.io',
   LEGAL_ERROR_TRACKING_TITLE: 'Error tracking',
   LEGAL_ERROR_SENTRY: 'Sentry',
-  LEGAL_ERROR_SENTRY_DESC:
-    'Error monitoring and crash reporting for app stability',
+  LEGAL_ERROR_SENTRY_DESC: 'Error monitoring and crash reporting for app stability',
   LEGAL_ERROR_SENTRY_URL: 'https://sentry.io',
   LEGAL_FONTS_TITLE: 'Typefaces',
   LEGAL_FONTS_ARABIC_TITLE: 'Arabic fonts',

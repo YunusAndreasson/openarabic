@@ -68,4 +68,3 @@ export const parseTextWithEmails = (
     return <EmailLink key={part.key} email={part.email} type={type} />;
   });
 };
-

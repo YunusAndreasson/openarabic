@@ -4,11 +4,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { ToastType } from '@/types/enums';
 import { useColors } from '@/hooks/theme/useColors';
 import { ReviewAction } from '@/types/enums';
 import { lightFeedback } from '@/utils/haptics';
-import { useReviewToast } from '@/hooks/review/useReviewToast';
 
 const BOTTOM_ACTIONS_CONSTANTS = {
   ICON_SIZE: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
@@ -59,11 +57,11 @@ const createIconProps = (name: ComponentProps<typeof Ionicons>['name'], color: s
 
 interface ReviewBottomActionsProps {
   onVague?: () => void; // Handler for explicit Vague button press
+  onShowTutorial?: () => void; // Handler to show the swipe tutorial
 }
 
-export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({ onVague }) => {
+export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({ onVague, onShowTutorial }) => {
   const colors = useColors();
-  const { showToast } = useReviewToast();
 
   const tintError = colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
   const tintSuccess = colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
@@ -77,33 +75,32 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({ onVague }) =
   const centerTextStyle = [STATIC_STYLES.indicatorText, { color: colors.warning }];
   const rightTextStyle = [STATIC_STYLES.indicatorText, { color: colors.success }];
 
-  const handleIndicatorPress = () => {
+  const handleShowTutorial = () => {
     lightFeedback();
-    showToast(
-      'Tap screen (or center button) for hint. After hint: swipe right = vague, left = unknown. Tap word = replay audio.',
-      8000,
-      ToastType.INFO,
-    );
+    onShowTutorial?.();
   };
 
   const handleVaguePress = () => {
-    if (onVague) {
-      lightFeedback();
+    lightFeedback();
+    // If tutorial handler exists, show tutorial; otherwise trigger vague action
+    if (onShowTutorial) {
+      onShowTutorial();
+    } else if (onVague) {
       onVague();
     }
   };
 
   return (
     <View style={STATIC_STYLES.container}>
-      {/* Left indicator - Unknown (tappable for educational toast) */}
-      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleIndicatorPress}>
+      {/* Left indicator - Unknown (tappable to show tutorial) */}
+      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleShowTutorial}>
         <View style={leftIndicatorStyle}>
           <Ionicons {...createIconProps('chevron-back', colors.error)} />
         </View>
         <ThemedText style={leftTextStyle}>{ReviewAction.DONT_KNOW}</ThemedText>
       </Pressable>
 
-      {/* Center button - Vague (tappable to record response) */}
+      {/* Center button - Vague (tappable to show tutorial) */}
       <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleVaguePress}>
         <View style={centerIndicatorStyle}>
           <Ionicons {...createIconProps('help-circle', colors.warning)} />
@@ -111,8 +108,8 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({ onVague }) =
         <ThemedText style={centerTextStyle}>Vague</ThemedText>
       </Pressable>
 
-      {/* Right indicator - Known (tappable for educational toast) */}
-      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleIndicatorPress}>
+      {/* Right indicator - Known (tappable to show tutorial) */}
+      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleShowTutorial}>
         <View style={rightIndicatorStyle}>
           <Ionicons {...createIconProps('chevron-forward', colors.success)} />
         </View>
