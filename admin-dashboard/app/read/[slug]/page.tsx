@@ -1,21 +1,20 @@
-'use client';
-
-import { useEffect, useState, useTransition } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
-import { PublicHeader } from '@/components/public-header';
+import { ArticleNav } from '@/components/article-nav';
 import { ArticleHeader } from '@/components/article-header';
 import { ArticleContent } from '@/components/article-content';
 import { SentencePair } from '@/components/sentence-pair';
 import { RelatedArticles } from '@/components/related-articles';
+import { AppDownloadCTA } from '@/components/app-download-cta';
+import { ReadingHint } from '@/components/reading-hint';
 import { Footer } from '@/components/footer';
 import { ReadingProgress } from '@/components/reading-progress';
-import { ArticleMetadata } from '@/components/article-metadata';
 import { ArticleStructuredData } from '@/components/article-structured-data';
-import Link from 'next/link';
-import { usePageTitle } from '@/hooks/usePageTitle';
 import { parseIdFromSlug } from '@/lib/slugify';
+import { detectPlatform } from '@/lib/platform-detection';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -23,174 +22,140 @@ type Article = Database['public']['Tables']['articles']['Row'] & {
 };
 
 type ArticleSentence = Database['public']['Tables']['article_sentences']['Row'];
-
 type SentenceWord = Database['public']['Tables']['sentence_words']['Row'];
-
 type Category = Database['public']['Tables']['categories']['Row'];
 
-export default function ArticleReadPage() {
-  const params = useParams();
-  const router = useRouter();
-  const articleId = parseIdFromSlug(params.slug as string);
-  const [isPending, startTransition] = useTransition();
+const SUPABASE_STORAGE_URL =
+  'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images';
 
-  const [article, setArticle] = useState<Article | null>(null);
-  const [sentences, setSentences] = useState<ArticleSentence[]>([]);
-  const [sentenceWords, setSentenceWords] = useState<Record<number, SentenceWord[]>>({});
-  const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Fetch article by ID
+async function getArticle(articleId: number): Promise<Article | null> {
+  const { data, error } = await supabase
+    .from('articles')
+    .select('*, authors(name), categories(name)')
+    .eq('id', articleId)
+    .single();
 
-  // Update page title dynamically based on article
-  usePageTitle(article ? `${article.title} - OpenArabic` : 'Reading - OpenArabic');
+  if (error) return null;
+  return data as Article;
+}
 
-  useEffect(() => {
-    fetchCategories();
-    fetchArticle();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [articleId]);
+// Generate dynamic metadata for SEO
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const articleId = parseIdFromSlug(slug);
+  const article = await getArticle(articleId);
 
-  const fetchCategories = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name');
+  if (!article) {
+    return { title: 'Article Not Found - OpenArabic' };
+  }
 
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
+  const imageUrl = `${SUPABASE_STORAGE_URL}/${article.image_url}`;
+
+  return {
+    title: `${article.title} - OpenArabic`,
+    description: article.summary,
+    openGraph: {
+      title: article.title,
+      description: article.summary,
+      type: 'article',
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: article.title }],
+      publishedTime: article.created_at,
+      authors: [article.authors?.name || 'OpenArabic'],
+      section: article.categories?.name || 'General',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.summary,
+      images: [imageUrl],
+    },
   };
+}
 
-  const fetchArticle = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+export default async function ArticleReadPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const articleId = parseIdFromSlug(slug);
 
-      // Fetch article with author and category
-      const { data: articleData, error: articleError } = await supabase
-        .from('articles')
-        .select('*, authors(name), categories(name)')
-        .eq('id', articleId)
-        .single();
-
-      if (articleError) throw articleError;
-
-      // Fetch sentences ordered by position
-      const { data: sentencesData, error: sentencesError } = await supabase
+  // Parallel data fetching - all requests run simultaneously
+  const [article, sentencesResult, categoriesResult, platformInfo] =
+    await Promise.all([
+      getArticle(articleId),
+      supabase
         .from('article_sentences')
         .select('*')
         .eq('article_id', articleId)
-        .order('position', { ascending: true });
+        .order('position', { ascending: true }),
+      supabase.from('categories').select('*').order('name'),
+      detectPlatform(),
+    ]);
 
-      if (sentencesError) throw sentencesError;
+  // Handle not found
+  if (!article) {
+    notFound();
+  }
 
-      // Fetch sentence words if sentences exist
-      if (sentencesData && sentencesData.length > 0) {
-        const sentenceIds = sentencesData.map(s => s.id);
-        const { data: wordsData, error: wordsError } = await supabase
+  const sentences = (sentencesResult.data as ArticleSentence[]) || [];
+  const categories = (categoriesResult.data as Category[]) || [];
+
+  // Fetch sentence words and related articles (depend on article data)
+  const sentenceIds = sentences.map((s) => s.id);
+  const [wordsResult, relatedResult] = await Promise.all([
+    sentenceIds.length > 0
+      ? supabase
           .from('sentence_words')
           .select('*')
           .in('sentence_id', sentenceIds)
-          .order('position', { ascending: true });
+          .order('position', { ascending: true })
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from('articles')
+      .select('*, authors(name), categories(name)')
+      .eq('category_id', article.category_id)
+      .neq('id', articleId)
+      .order('created_at', { ascending: false })
+      .limit(3),
+  ]);
 
-        if (wordsError) {
-          console.error('Error fetching sentence words:', wordsError);
-        } else if (wordsData) {
-          // Group words by sentence_id
-          const wordsBySentence: Record<number, SentenceWord[]> = {};
-          wordsData.forEach(word => {
-            if (!wordsBySentence[word.sentence_id]) {
-              wordsBySentence[word.sentence_id] = [];
-            }
-            wordsBySentence[word.sentence_id].push(word);
-          });
-          setSentenceWords(wordsBySentence);
-        }
-      }
-
-      // Fetch related articles from same category
-      if (articleData) {
-        const { data: relatedData, error: relatedError } = await supabase
-          .from('articles')
-          .select('*, authors(name), categories(name)')
-          .eq('category_id', articleData.category_id)
-          .neq('id', articleId)
-          .order('created_at', { ascending: false })
-          .limit(3);
-
-        if (relatedError) {
-          console.error('Error fetching related articles:', relatedError);
-        } else {
-          setRelatedArticles((relatedData as Article[]) || []);
-        }
-      }
-
-      setArticle(articleData as Article);
-      setSentences(sentencesData || []);
-    } catch (err) {
-      console.error('Error fetching article:', err);
-      setError('Failed to load article');
-    } finally {
-      setLoading(false);
+  // Group words by sentence_id
+  const sentenceWords: Record<number, SentenceWord[]> = {};
+  ((wordsResult.data as SentenceWord[]) || []).forEach((word) => {
+    if (!sentenceWords[word.sentence_id]) {
+      sentenceWords[word.sentence_id] = [];
     }
-  };
+    sentenceWords[word.sentence_id].push(word);
+  });
 
-  const handleSelectCategory = (categoryId: number | null) => {
-    // Navigate to homepage with React 19 transition (non-blocking)
-    startTransition(() => {
-      router.push('/');
-    });
-  };
-
-  // Show minimal loader while fetching article
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="h-8 w-8 rounded-full border-2 border-primary/60 animate-pulse-sage" />
-      </div>
-    );
-  }
-
-  if (error || !article) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen px-4">
-        <h2 className="text-2xl font-bold mb-4">Article Not Found</h2>
-        <p className="text-muted-foreground mb-6">{error || 'The article you are looking for does not exist.'}</p>
-        <Link
-          href="/"
-          className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          ← Back to Articles
-        </Link>
-      </div>
-    );
-  }
+  const relatedArticles = (relatedResult.data as Article[]) || [];
 
   return (
     <div className="min-h-screen">
-      {/* Dynamic SEO Metadata */}
-      <ArticleMetadata article={article} />
+      {/* JSON-LD Structured Data */}
       <ArticleStructuredData article={article} />
 
       {/* Reading Progress Bar */}
       <ReadingProgress />
 
-      {/* Full Header with Categories */}
-      <PublicHeader
+      {/* Header with Categories */}
+      <ArticleNav
         categories={categories}
-        selectedCategoryId={article?.category_id || null}
-        onSelectCategory={handleSelectCategory}
+        selectedCategoryId={article.category_id}
       />
 
-      {/* Parallax Header */}
+      {/* Article Header */}
       <ArticleHeader article={article} />
 
       {/* Article Content */}
       <ArticleContent>
+        <ReadingHint />
         {sentences.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
             No content available for this article.
@@ -206,6 +171,18 @@ export default function ArticleReadPage() {
           ))
         )}
       </ArticleContent>
+
+      {/* App Download CTA - Show on mobile */}
+      {platformInfo.isMobile && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+          <AppDownloadCTA
+            platformInfo={platformInfo}
+            variant="inline"
+            title="Continue learning on the app"
+            description="Get bilingual texts with synchronized audio, spaced repetition vocabulary practice, and personalized lessons."
+          />
+        </div>
+      )}
 
       {/* Related Articles */}
       <RelatedArticles articles={relatedArticles} />

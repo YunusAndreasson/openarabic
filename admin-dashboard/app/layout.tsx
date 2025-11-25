@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { LayoutWrapper } from '@/components/layout-wrapper';
+import { SmartAppBanner } from '@/components/smart-app-banner';
+import { detectPlatform } from '@/lib/platform-detection';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -12,6 +14,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'OpenArabic - Learn Arabic Through Reading',
   description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f8faf9' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f1412' },
+  ],
   other: {
     // Enable View Transitions API for modern browsers
     'view-transition': 'same-origin',
@@ -45,11 +51,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Detect user's platform for app download features
+  const platformInfo = await detectPlatform();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -63,6 +72,15 @@ export default function RootLayout({
           href="/oaLogo.png"
           as="image"
           fetchPriority="high"
+        />
+
+        {/* Preload Arabic font for faster text rendering */}
+        <link
+          rel="preload"
+          href="/fonts/madina.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
         />
         <script
           dangerouslySetInnerHTML={{
@@ -85,6 +103,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className} suppressHydrationWarning>
+        <SmartAppBanner platformInfo={platformInfo} />
         <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>

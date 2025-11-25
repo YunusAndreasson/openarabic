@@ -159,14 +159,63 @@ button, a, [role="button"] {
   }
 }
 
+@keyframes slide-in-from-bottom {
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 /* Optimized Tailwind animate-in utilities */
 .animate-in {
-  animation: fade-in 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
   animation-fill-mode: backwards;
 }
 
 .fade-in {
   animation-name: fade-in;
+}
+
+.slide-in-from-bottom-4 {
+  animation-name: slide-in-from-bottom;
+}
+
+/* Animation delays for staggered entrance effects */
+@media (prefers-reduced-motion: no-preference) {
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+
+  /* Duration variants */
+  .duration-500 {
+    animation-duration: 500ms;
+  }
+
+  .duration-700 {
+    animation-duration: 700ms;
+  }
+}
+
+/* Skip animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* View Transitions API - Modern Native Page Transitions */

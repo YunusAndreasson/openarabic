@@ -6,8 +6,10 @@ import type { Database } from '@/lib/database.types';
 import { PublicHeader } from '@/components/public-header';
 import { ArticleGrid } from '@/components/article-grid';
 import { Footer } from '@/components/footer';
+import { AppDownloadCTA } from '@/components/app-download-cta';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { ITEMS_PER_PAGE } from '@/lib/constants';
+import type { PlatformInfo } from '@/lib/platform-detection';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -15,17 +17,25 @@ type Article = Database['public']['Tables']['articles']['Row'] & {
 };
 
 type Category = Database['public']['Tables']['categories']['Row'];
+type Author = Database['public']['Tables']['authors']['Row'];
 
 interface ArticlesClientProps {
   initialArticles: Article[];
   initialCategories: Category[];
+  initialAuthors: Author[];
+  platformInfo: PlatformInfo;
 }
 
 /**
  * ArticlesClient - Handles client-side article filtering and infinite scroll
  * Receives server-rendered initial data and manages category filtering
  */
-export function ArticlesClient({ initialArticles, initialCategories }: ArticlesClientProps) {
+export function ArticlesClient({
+  initialArticles,
+  initialCategories,
+  initialAuthors,
+  platformInfo,
+}: ArticlesClientProps) {
   const [articles, setArticles] = useState<Article[]>(initialArticles);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -149,6 +159,17 @@ export function ArticlesClient({ initialArticles, initialCategories }: ArticlesC
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+        {/* App download CTA - Only show when not filtering by category */}
+        {selectedCategoryId === null && platformInfo.isMobile && (
+          <div className="mb-8">
+            <AppDownloadCTA
+              platformInfo={platformInfo}
+              variant="hero"
+              authors={initialAuthors}
+            />
+          </div>
+        )}
+
         <ArticleGrid articles={articles} loading={loading} showCategoryPill={selectedCategoryId === null} />
 
         {/* Infinite scroll trigger point */}
