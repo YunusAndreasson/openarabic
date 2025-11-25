@@ -7,7 +7,38 @@
  * - Note: test.concurrent() used where tests are independent
  */
 
-import { ReadingStreakService, type DailyReadingActivity } from '../../services/studyStreak';
+import { describe, expect, test, jest, beforeEach } from '@jest/globals';
+
+import {
+  ReadingStreakService,
+  StudySessionStreakService,
+  type DailyReadingActivity,
+} from '../../services/studyStreak';
+
+jest.mock('@/services/supabase', () => ({
+  supabase: {
+    from: jest.fn(),
+  },
+}));
+
+const { supabase } = require('@/services/supabase');
+
+// Helper to create query builder chain for SELECT queries
+const createSelectBuilder = (response: any = { data: [], error: null }) => {
+  const promise = Promise.resolve(response);
+  const selectFn = jest.fn();
+  const eqFn = jest.fn(() => promise);
+
+  selectFn.mockReturnValue({ eq: eqFn });
+
+  const builder: any = { select: selectFn };
+
+  return { builder, selectFn, eqFn };
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('StudyStreakService', () => {
   describe('calculateStreak', () => {
@@ -166,6 +197,360 @@ describe('StudyStreakService', () => {
       expect(result.currentStreak).toBe(0);
       expect(result.longestStreak).toBe(0);
       expect(result.totalReadingDays).toBe(0);
+    });
+  });
+
+  describe('calculateStreakPeriods', () => {
+    const createActivity = (date: string, hasActivity: boolean = true): DailyReadingActivity => ({
+      date,
+      hasActivity,
+    });
+
+    const today = new Date().toISOString().split('T')[0] as string;
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0] as string;
+
+    test('should return empty array for no activity', () => {
+      const result = ReadingStreakService.calculateStreakPeriods([]);
+
+      expect(result).toEqual([]);
+    });
+
+    test('should return empty array when all activities are inactive', () => {
+      const activities = [
+        createActivity('2024-01-01', false),
+        createActivity('2024-01-02', false),
+        createActivity('2024-01-03', false),
+      ];
+
+      const result = ReadingStreakService.calculateStreakPeriods(activities);
+
+      expect(result).toEqual([]);
+    });
+
+    test('should create single period for consecutive days', () => {
+      const activities = [
+        createActivity('2024-01-01'),
+        createActivity('2024-01-02'),
+        createActivity('2024-01-03'),
+      ];
+
+      const result = ReadingStreakService.calculateStreakPeriods(activities);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        startDate: '2024-01-01',
+        endDate: '2024-01-03',
+        length: 3,
+      });
+    });
+
+    test('should create multiple periods for gaps', () => {
+      const activities = [
+        createActivity('2024-01-01'),
+        createActivity('2024-01-02'),
+        createActivity('2024-01-04', false), // Gap
+        createActivity('2024-01-05'),
+        createActivity('2024-01-06'),
+      ];
+
+      const result = ReadingStreakService.calculateStreakPeriods(activities);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        startDate: '2024-01-01',
+        endDate: '2024-01-02',
+        length: 2,
+      });
+      expect(result[1]).toMatchObject({
+        startDate: '2024-01-05',
+        endDate: '2024-01-06',
+        length: 2,
+      });
+    });
+
+    test('should mark most recent period as active if ends today', () => {
+      const activities = [createActivity(yesterday), createActivity(today)];
+
+      const result = ReadingStreakService.calculateStreakPeriods(activities);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.isActive).toBe(true);
+    });
+
+    test('should mark most recent period as active if ends yesterday', () => {
+      const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0] as string;
+      const activities = [createActivity(twoDaysAgo), createActivity(yesterday)];
+
+      const result = ReadingStreakService.calculateStreakPeriods(activities);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.isActive).toBe(true);
+    });
+
+    test('should mark old period as inactive', () => {
+      const activities = [createActivity('2024-01-01'), createActivity('2024-01-02')];
+
+      const result = ReadingStreakService.calculateStreakPeriods(activities);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.isActive).toBe(false);
+    });
+
+    test('should handle single day period', () => {
+      const activities = [createActivity('2024-01-01')];
+
+      const result = ReadingStreakService.calculateStreakPeriods(activities);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        startDate: '2024-01-01',
+        endDate: '2024-01-01',
+        length: 1,
+      });
+    });
+
+    test('should handle many small periods', () => {
+      const activities = [
+        createActivity('2024-01-01'),
+        createActivity('2024-01-02', false),
+        createActivity('2024-01-03'),
+        createActivity('2024-01-04', false),
+        createActivity('2024-01-05'),
+      ];
+
+      const result = ReadingStreakService.calculateStreakPeriods(activities);
+
+      expect(result).toHaveLength(3);
+      expect(result[0]?.length).toBe(1);
+      expect(result[1]?.length).toBe(1);
+      expect(result[2]?.length).toBe(1);
+    });
+  });
+
+  describe('date boundary conditions', () => {
+    const createActivity = (date: string, hasActivity: boolean = true): DailyReadingActivity => ({
+      date,
+      hasActivity,
+    });
+
+    test('should handle UTC date calculations correctly', () => {
+      // Create dates that cross midnight boundaries
+      const activities = [createActivity('2024-01-31'), createActivity('2024-02-01')];
+
+      const result = ReadingStreakService.calculateStreak(activities);
+
+      expect(result.longestStreak).toBe(2);
+    });
+
+    test('should handle month boundaries', () => {
+      const activities = [
+        createActivity('2024-01-30'),
+        createActivity('2024-01-31'),
+        createActivity('2024-02-01'),
+        createActivity('2024-02-02'),
+      ];
+
+      const result = ReadingStreakService.calculateStreak(activities);
+
+      expect(result.longestStreak).toBe(4);
+    });
+
+    test('should handle year boundaries', () => {
+      const activities = [
+        createActivity('2023-12-30'),
+        createActivity('2023-12-31'),
+        createActivity('2024-01-01'),
+        createActivity('2024-01-02'),
+      ];
+
+      const result = ReadingStreakService.calculateStreak(activities);
+
+      expect(result.longestStreak).toBe(4);
+    });
+
+    test('should handle leap year Feb 29', () => {
+      const activities = [
+        createActivity('2024-02-28'),
+        createActivity('2024-02-29'), // Leap day
+        createActivity('2024-03-01'),
+      ];
+
+      const result = ReadingStreakService.calculateStreak(activities);
+
+      expect(result.longestStreak).toBe(3);
+    });
+
+    test('should break streak correctly at exactly 1-day gap', () => {
+      const activities = [
+        createActivity('2024-01-01'),
+        createActivity('2024-01-02'),
+        // Gap on 2024-01-03
+        createActivity('2024-01-04'),
+        createActivity('2024-01-05'),
+      ];
+
+      const result = ReadingStreakService.calculateStreak(activities);
+
+      // Each streak is 2 days
+      expect(result.longestStreak).toBe(2);
+    });
+  });
+});
+
+describe('StudySessionStreakService', () => {
+  describe('getDailyStudySessionActivity', () => {
+    test('should return activity for specified number of days', async () => {
+      const mockData = [{ fsrs_last_review: new Date().toISOString() }];
+      const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
+      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
+
+      expect(result).toHaveLength(7);
+      expect(supabase.from).toHaveBeenCalledWith('study_words');
+    });
+
+    test('should mark days with activity correctly', async () => {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const mockData = [
+        { fsrs_last_review: today.toISOString() },
+        { fsrs_last_review: yesterday.toISOString() },
+      ];
+      const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
+      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
+
+      const activeDays = result.filter(day => day.hasActivity);
+      expect(activeDays.length).toBeGreaterThanOrEqual(2);
+    });
+
+    test('should handle null fsrs_last_review values', async () => {
+      const mockData = [{ fsrs_last_review: null }, { fsrs_last_review: new Date().toISOString() }];
+      const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
+      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
+
+      expect(result).toHaveLength(7);
+      // Should handle null gracefully without throwing
+    });
+
+    test('should handle empty data', async () => {
+      const { builder, eqFn } = createSelectBuilder({ data: [], error: null });
+      eqFn.mockReturnValue(Promise.resolve({ data: [], error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
+
+      expect(result).toHaveLength(7);
+      expect(result.every(day => !day.hasActivity)).toBe(true);
+    });
+  });
+
+  describe('getStudySessionStreak', () => {
+    test('should calculate streak from study activity', async () => {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const mockData = [
+        { fsrs_last_review: today.toISOString() },
+        { fsrs_last_review: yesterday.toISOString() },
+      ];
+      const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
+      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await StudySessionStreakService.getStudySessionStreak('user-123');
+
+      expect(result.currentStreak).toBeGreaterThanOrEqual(1);
+      expect(result.totalReadingDays).toBeGreaterThanOrEqual(1);
+    });
+
+    test('should return zero streak when no study sessions', async () => {
+      const { builder, eqFn } = createSelectBuilder({ data: [], error: null });
+      eqFn.mockReturnValue(Promise.resolve({ data: [], error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await StudySessionStreakService.getStudySessionStreak('user-123');
+
+      expect(result.currentStreak).toBe(0);
+      expect(result.longestStreak).toBe(0);
+      expect(result.totalReadingDays).toBe(0);
+    });
+
+    test('should handle query errors gracefully', async () => {
+      const { builder, eqFn } = createSelectBuilder({ data: null, error: { message: 'DB error' } });
+      eqFn.mockReturnValue(Promise.reject(new Error('DB error')));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await StudySessionStreakService.getStudySessionStreak('user-123');
+
+      // Should return empty streak on error
+      expect(result.currentStreak).toBe(0);
+      expect(result.longestStreak).toBe(0);
+    });
+  });
+
+  describe('getStudySessionHistory', () => {
+    test('should return complete history data', async () => {
+      const today = new Date();
+      const mockData = [{ fsrs_last_review: today.toISOString() }];
+      const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
+      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await StudySessionStreakService.getStudySessionHistory('user-123', 7);
+
+      expect(result).toHaveProperty('dailyActivity');
+      expect(result).toHaveProperty('streakPeriods');
+      expect(result).toHaveProperty('metrics');
+      expect(result.dailyActivity).toHaveLength(7);
+    });
+
+    test('should return empty history on error', async () => {
+      const { builder, eqFn } = createSelectBuilder({ data: null, error: { message: 'Error' } });
+      eqFn.mockReturnValue(Promise.reject(new Error('Error')));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await StudySessionStreakService.getStudySessionHistory('user-123', 7);
+
+      expect(result.dailyActivity).toHaveLength(7);
+      expect(result.streakPeriods).toEqual([]);
+      expect(result.metrics.currentStreak).toBe(0);
+    });
+
+    test('should calculate streak periods from activity', async () => {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const mockData = [
+        { fsrs_last_review: today.toISOString() },
+        { fsrs_last_review: yesterday.toISOString() },
+      ];
+      const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
+      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await StudySessionStreakService.getStudySessionHistory('user-123', 30);
+
+      expect(result.streakPeriods.length).toBeGreaterThanOrEqual(1);
+      expect(result.metrics.totalReadingDays).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('recordStudySession', () => {
+    test('should be a no-op function', async () => {
+      // recordStudySession is now a no-op (study sessions tracked via fsrs_last_review)
+      await expect(StudySessionStreakService.recordStudySession('user-123')).resolves.not.toThrow();
     });
   });
 });

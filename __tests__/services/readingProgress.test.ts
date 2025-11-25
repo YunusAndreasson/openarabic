@@ -40,8 +40,72 @@ const createUpsertBuilder = (response: any = { data: null, error: null }) => {
   return { builder, upsertFn };
 };
 
+// Helper to create query builder chain for SELECT queries
+const createSelectBuilder = (response: any = { data: [], error: null }) => {
+  const promise = Promise.resolve(response);
+  const selectFn = jest.fn();
+  const eqFn = jest.fn();
+  const inFn = jest.fn();
+  const orderFn = jest.fn();
+  const limitFn = jest.fn();
+  const gtFn = jest.fn();
+  const maybeSingleFn = jest.fn(() => promise);
+
+  // Chain methods
+  selectFn.mockReturnValue({ eq: eqFn, in: inFn, order: orderFn });
+  eqFn.mockReturnValue({
+    eq: eqFn,
+    in: inFn,
+    maybeSingle: maybeSingleFn,
+    gt: gtFn,
+    order: orderFn,
+  });
+  inFn.mockReturnValue(promise);
+  gtFn.mockReturnValue({ order: orderFn });
+  orderFn.mockReturnValue({ ascending: false, limit: limitFn });
+  limitFn.mockReturnValue({ maybeSingle: maybeSingleFn });
+
+  const builder: any = { select: selectFn };
+
+  return { builder, selectFn, eqFn, inFn, maybeSingleFn };
+};
+
+// Helper to create DELETE builder chain
+const createDeleteBuilder = (response: any = { data: [], error: null }) => {
+  const promise = Promise.resolve(response);
+  const deleteFn = jest.fn();
+  const eqFn = jest.fn();
+  const selectFn = jest.fn(() => promise);
+
+  deleteFn.mockReturnValue({ eq: eqFn });
+  eqFn.mockReturnValue({ select: selectFn });
+
+  const builder: any = { delete: deleteFn };
+
+  return { builder, deleteFn, eqFn, selectFn };
+};
+
+// Helper to create UPDATE builder chain
+const createUpdateBuilder = (response: any = { data: [], error: null }) => {
+  const promise = Promise.resolve(response);
+  const updateFn = jest.fn();
+  const eqFn = jest.fn();
+  const selectFn = jest.fn(() => promise);
+
+  updateFn.mockReturnValue({ eq: eqFn });
+  eqFn.mockReturnValue({ select: selectFn });
+
+  const builder: any = { update: updateFn };
+
+  return { builder, updateFn, eqFn, selectFn };
+};
+
+// Helper to mock console.warn for fallback tests
+const mockConsoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
 beforeEach(() => {
   jest.clearAllMocks();
+  mockConsoleWarn.mockClear();
 });
 
 describe('ReadingProgressService', () => {
@@ -302,6 +366,350 @@ describe('ReadingProgressService', () => {
 
       expect(updateTime.getTime()).toBeGreaterThanOrEqual(new Date(beforeUpdate).getTime());
       expect(updateTime.getTime()).toBeLessThanOrEqual(new Date(afterUpdate).getTime());
+    });
+  });
+
+  describe('getProgress', () => {
+    test('should return progress when found', async () => {
+      const mockProgress = {
+        user_id: 'user-123',
+        article_id: 42,
+        last_sentence_read: 10,
+        total_sentences: 50,
+        progress_percentage: 20,
+        updated_at: '2024-01-01T12:00:00Z',
+        created_at: '2024-01-01T10:00:00Z',
+      };
+      const { builder, maybeSingleFn } = createSelectBuilder({ data: mockProgress, error: null });
+      maybeSingleFn.mockReturnValue(Promise.resolve({ data: mockProgress, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getProgress('user-123', 42);
+
+      expect(supabase.from).toHaveBeenCalledWith('reading_progress');
+      expect(result).toEqual(mockProgress);
+    });
+
+    test('should return null when not found', async () => {
+      const { builder, maybeSingleFn } = createSelectBuilder({ data: null, error: null });
+      maybeSingleFn.mockReturnValue(Promise.resolve({ data: null, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getProgress('user-123', 42);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getSafeProgress', () => {
+    test('should return safe progress with calculated percentage', async () => {
+      const mockProgress = {
+        user_id: 'user-123',
+        article_id: 42,
+        last_sentence_read: 10,
+        total_sentences: 50,
+        progress_percentage: 20,
+        updated_at: '2024-01-01T12:00:00Z',
+        created_at: '2024-01-01T10:00:00Z',
+      };
+      const { builder, maybeSingleFn } = createSelectBuilder({ data: mockProgress, error: null });
+      maybeSingleFn.mockReturnValue(Promise.resolve({ data: mockProgress, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getSafeProgress('user-123', 42);
+
+      expect(result).not.toBeNull();
+      // calculateProgressPercentage: (10+1)/50*100 = 22%
+      expect(result?.progress_percentage).toBe(22);
+    });
+
+    test('should return null when no progress found', async () => {
+      const { builder, maybeSingleFn } = createSelectBuilder({ data: null, error: null });
+      maybeSingleFn.mockReturnValue(Promise.resolve({ data: null, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getSafeProgress('user-123', 42);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getBulkProgress', () => {
+    test('should return Map of progress for multiple articles', async () => {
+      const mockData = [
+        {
+          user_id: 'user-123',
+          article_id: 1,
+          last_sentence_read: 5,
+          total_sentences: 20,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+        {
+          user_id: 'user-123',
+          article_id: 2,
+          last_sentence_read: 15,
+          total_sentences: 30,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+      ];
+      const { builder, inFn } = createSelectBuilder({ data: mockData, error: null });
+      inFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getBulkProgress('user-123', [1, 2]);
+
+      expect(result).toBeInstanceOf(Map);
+      expect(result.size).toBe(2);
+      expect(result.get(1)?.last_sentence_read).toBe(5);
+      expect(result.get(2)?.last_sentence_read).toBe(15);
+    });
+
+    test('should return empty Map when no articles provided and no progress exists', async () => {
+      const { builder, eqFn } = createSelectBuilder({ data: [], error: null });
+      // When articleIds is empty, it doesn't call .in() - returns promise from eq chain
+      eqFn.mockReturnValue(Promise.resolve({ data: [], error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getBulkProgress('user-123', []);
+
+      expect(result).toBeInstanceOf(Map);
+      expect(result.size).toBe(0);
+    });
+
+    test('should fetch ALL progress when articleIds is empty array', async () => {
+      const mockAllProgress = [
+        {
+          user_id: 'user-123',
+          article_id: 1,
+          last_sentence_read: 5,
+          total_sentences: 20,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+        {
+          user_id: 'user-123',
+          article_id: 5,
+          last_sentence_read: 10,
+          total_sentences: 25,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+        {
+          user_id: 'user-123',
+          article_id: 10,
+          last_sentence_read: 20,
+          total_sentences: 40,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+      ];
+      const { builder, eqFn, inFn } = createSelectBuilder({ data: mockAllProgress, error: null });
+      // When articleIds is empty, the query doesn't use .in(), so resolve from eq
+      eqFn.mockReturnValue(Promise.resolve({ data: mockAllProgress, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getBulkProgress('user-123', []);
+
+      expect(result.size).toBe(3);
+      expect(inFn).not.toHaveBeenCalled(); // Empty array skips .in() filter
+    });
+  });
+
+  describe('getBulkSafeProgress', () => {
+    test('should return Map with calculated percentages', async () => {
+      const mockData = [
+        {
+          user_id: 'user-123',
+          article_id: 1,
+          last_sentence_read: 9,
+          total_sentences: 100,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+      ];
+      const { builder, inFn } = createSelectBuilder({ data: mockData, error: null });
+      inFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getBulkSafeProgress('user-123', [1]);
+
+      expect(result).toBeInstanceOf(Map);
+      // calculateProgressPercentage: (9+1)/100*100 = 10%
+      expect(result.get(1)?.progress_percentage).toBe(10);
+    });
+  });
+
+  describe('getArticlesByProgress', () => {
+    test('should sort articles by progress ascending', async () => {
+      const mockData = [
+        {
+          user_id: 'user-123',
+          article_id: 1,
+          last_sentence_read: 50,
+          total_sentences: 100,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+        {
+          user_id: 'user-123',
+          article_id: 2,
+          last_sentence_read: 10,
+          total_sentences: 100,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+        {
+          user_id: 'user-123',
+          article_id: 3,
+          last_sentence_read: 90,
+          total_sentences: 100,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+      ];
+      const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
+      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getArticlesByProgress('user-123', 'asc');
+
+      // Should be sorted: article 2 (11%), article 1 (51%), article 3 (91%)
+      expect(result[0].article_id).toBe(2);
+      expect(result[1].article_id).toBe(1);
+      expect(result[2].article_id).toBe(3);
+    });
+
+    test('should sort articles by progress descending', async () => {
+      const mockData = [
+        {
+          user_id: 'user-123',
+          article_id: 1,
+          last_sentence_read: 50,
+          total_sentences: 100,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+        {
+          user_id: 'user-123',
+          article_id: 2,
+          last_sentence_read: 10,
+          total_sentences: 100,
+          updated_at: '2024-01-01T12:00:00Z',
+          created_at: '2024-01-01T10:00:00Z',
+        },
+      ];
+      const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
+      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getArticlesByProgress('user-123', 'desc');
+
+      // Should be sorted: article 1 (51%), article 2 (11%)
+      expect(result[0].article_id).toBe(1);
+      expect(result[1].article_id).toBe(2);
+    });
+  });
+
+  describe('getLastReadArticle', () => {
+    test('should return most recently read article', async () => {
+      const mockProgress = {
+        user_id: 'user-123',
+        article_id: 42,
+        last_sentence_read: 10,
+        total_sentences: 50,
+        updated_at: '2024-01-15T12:00:00Z',
+        created_at: '2024-01-01T10:00:00Z',
+      };
+      const { builder, maybeSingleFn } = createSelectBuilder({ data: mockProgress, error: null });
+      maybeSingleFn.mockReturnValue(Promise.resolve({ data: mockProgress, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getLastReadArticle('user-123');
+
+      expect(result).toEqual(mockProgress);
+    });
+
+    test('should return null when no articles have been read', async () => {
+      const { builder, maybeSingleFn } = createSelectBuilder({ data: null, error: null });
+      maybeSingleFn.mockReturnValue(Promise.resolve({ data: null, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await ReadingProgressService.getLastReadArticle('user-123');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('deleteAllProgress', () => {
+    test('should delete all progress successfully', async () => {
+      const deletedRows = [
+        { user_id: 'user-123', article_id: 1 },
+        { user_id: 'user-123', article_id: 2 },
+      ];
+      const { builder, selectFn } = createDeleteBuilder({ data: deletedRows, error: null });
+      selectFn.mockReturnValue(Promise.resolve({ data: deletedRows, error: null }));
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      await ReadingProgressService.deleteAllProgress('user-123');
+
+      expect(supabase.from).toHaveBeenCalledWith('reading_progress');
+      expect(mockConsoleWarn).not.toHaveBeenCalled();
+    });
+
+    test('should fallback to UPDATE when DELETE returns empty array (RLS blocked)', async () => {
+      // First call: DELETE returns empty array (RLS blocked)
+      const { builder: deleteBuilder, selectFn: deleteSelectFn } = createDeleteBuilder({
+        data: [],
+        error: null,
+      });
+      deleteSelectFn.mockReturnValue(Promise.resolve({ data: [], error: null }));
+
+      // Second call: UPDATE succeeds
+      const { builder: updateBuilder, selectFn: updateSelectFn } = createUpdateBuilder({
+        data: [{ user_id: 'user-123' }],
+        error: null,
+      });
+      updateSelectFn.mockReturnValue(
+        Promise.resolve({ data: [{ user_id: 'user-123' }], error: null }),
+      );
+
+      (supabase.from as jest.Mock)
+        .mockReturnValueOnce(deleteBuilder)
+        .mockReturnValueOnce(updateBuilder);
+
+      await ReadingProgressService.deleteAllProgress('user-123');
+
+      expect(supabase.from).toHaveBeenCalledTimes(2);
+      expect(mockConsoleWarn).toHaveBeenCalledWith(expect.stringContaining('DELETE blocked'));
+    });
+
+    test('should fallback to UPDATE when DELETE returns null', async () => {
+      // First call: DELETE returns null (treated as no rows deleted)
+      const { builder: deleteBuilder, selectFn: deleteSelectFn } = createDeleteBuilder({
+        data: null,
+        error: null,
+      });
+      deleteSelectFn.mockReturnValue(Promise.resolve({ data: null, error: null }));
+
+      // Second call: UPDATE succeeds
+      const { builder: updateBuilder, selectFn: updateSelectFn } = createUpdateBuilder({
+        data: [{ user_id: 'user-123' }],
+        error: null,
+      });
+      updateSelectFn.mockReturnValue(
+        Promise.resolve({ data: [{ user_id: 'user-123' }], error: null }),
+      );
+
+      (supabase.from as jest.Mock)
+        .mockReturnValueOnce(deleteBuilder)
+        .mockReturnValueOnce(updateBuilder);
+
+      await ReadingProgressService.deleteAllProgress('user-123');
+
+      expect(supabase.from).toHaveBeenCalledTimes(2);
+      expect(mockConsoleWarn).toHaveBeenCalled();
     });
   });
 });
