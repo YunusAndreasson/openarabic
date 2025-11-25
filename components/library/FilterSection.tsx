@@ -9,7 +9,7 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 const styles = StyleSheet.create({
   filterSectionContainer: {
-    gap: LAYOUT.SPACING.SMALL, // Tight spacing within section (8px)
+    gap: LAYOUT.SPACING.MEDIUM, // 12px - better breathing room for navigation cards
   },
 });
 
