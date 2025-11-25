@@ -7,7 +7,7 @@ import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { ArticleCard } from './ArticleCard';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
-import { generateImageUrl } from '@/utils/imageUtils';
+import { buildArticleCardProps } from '@/utils/articleUtils';
 // Haptics for scroll position changes are non-semantic; avoid to reduce noise
 
 interface HorizontalArticleSliderProps {
@@ -62,12 +62,8 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
         <View style={containerStyle}>
           <ArticleCard
             article={info.item}
-            author={info.item.author.name}
-            category={info.item.category.name}
-            imageUrl={generateImageUrl(info.item.image_url)}
+            {...buildArticleCardProps(info.item)}
             style={cardStyle}
-            summary={String(info.item.summary)}
-            title={info.item.title}
             testID={`slider-article-${info.item.id}`}
             isFeaturedArticle={true}
           />

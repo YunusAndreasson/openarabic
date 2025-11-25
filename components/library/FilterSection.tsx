@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -71,7 +71,7 @@ const compactCardStyles = StyleSheet.create({
   },
   label: {
     flex: 1,
-    fontWeight: '600',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
   },
   countBadge: {
     alignItems: 'center',
@@ -83,7 +83,7 @@ const compactCardStyles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   countText: {
-    fontWeight: '600',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     textAlign: 'center',
   },
 });

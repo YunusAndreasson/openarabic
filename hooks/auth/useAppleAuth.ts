@@ -10,6 +10,7 @@ import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { waitForAuthEvent } from '@/utils/authEventWaiter';
+import { isCancellationError } from '@/utils/authUtils';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 
@@ -19,29 +20,6 @@ import { successFeedback } from '@/utils/haptics';
 export interface UseAppleAuthReturn {
   signInWithApple: () => Promise<void>;
   loading: boolean;
-}
-
-/**
- * Helper to detect if error is a user cancellation (not an actual error)
- * Checks both error codes and error messages for cancellation patterns
- */
-function isCancellationError(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-
-  // Check error code
-  const errorCode = 'code' in error ? String(error.code) : '';
-  if (errorCode === '1001') return true; // Apple iOS cancellation
-
-  // Check error message for cancellation keywords
-  const errorMessage =
-    error instanceof Error
-      ? error.message.toLowerCase()
-      : 'message' in error && typeof error.message === 'string'
-        ? error.message.toLowerCase()
-        : '';
-
-  const cancellationKeywords = ['cancel', 'cancelled', 'canceled', 'dismiss', 'dismissed'];
-  return cancellationKeywords.some(keyword => errorMessage.includes(keyword));
 }
 
 /**

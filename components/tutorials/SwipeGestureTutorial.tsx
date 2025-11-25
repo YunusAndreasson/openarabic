@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { TutorialId, TUTORIALS, TUTORIAL_ANIMATION } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
   },
   divider: {
     marginHorizontal: LAYOUT.SPACING.SMALL,

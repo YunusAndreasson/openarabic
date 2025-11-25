@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     marginBottom: 2,
-    fontWeight: '600',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
   },
   summaryValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

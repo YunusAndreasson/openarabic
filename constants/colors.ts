@@ -1134,6 +1134,21 @@ const sepiaColors: ThemeColors = {
   },
 } as const;
 
+/**
+ * Hex opacity suffixes for use with color strings
+ * Example: `${colors.tint}${OPACITY_HEX.HIGH}` → "#5B7F68CC"
+ */
+export const OPACITY_HEX = {
+  FULL: 'FF', // 100%
+  HIGH: 'CC', // 80%
+  MEDIUM_HIGH: 'B3', // 70%
+  MEDIUM: '99', // 60%
+  MEDIUM_LOW: '66', // 40%
+  LOW: '26', // 15%
+  SUBTLE: '14', // 8%
+  FAINT: '0D', // 5%
+} as const;
+
 export const Colors = { light: lightColors, dark: darkColors, sepia: sepiaColors } as const;
 
 export enum Theme {

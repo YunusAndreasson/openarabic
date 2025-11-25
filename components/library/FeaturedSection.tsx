@@ -6,7 +6,7 @@ import { LAYOUT } from '@/constants/layout';
 import { ArticleCard } from './ArticleCard';
 import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
-import { generateImageUrl } from '@/utils/imageUtils';
+import { buildArticleCardProps } from '@/utils/articleUtils';
 
 interface FeaturedSectionProps {
   article: Article;
@@ -24,13 +24,9 @@ const FeaturedSectionComponent: FC<FeaturedSectionProps> = ({ article }) => {
     <View style={styles.container}>
       <ArticleCard
         article={article}
-        author={article.author.name}
-        category={article.category.name}
+        {...buildArticleCardProps(article)}
         pillLabel={STRINGS.RECOMMENDED}
-        imageUrl={generateImageUrl(article.image_url)}
         style={styles.cardStyle}
-        summary={String(article.summary)}
-        title={article.title}
         prefetch={true}
         isRelatedArticle={false}
         testID="featured-article-card"

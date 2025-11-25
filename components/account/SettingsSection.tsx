@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BaseCard } from '@/components/common';
 import { SectionTitle } from '@/components/common';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface SettingsSectionProps {
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.TINY,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '600' as const,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     letterSpacing: 0.6,
     opacity: LAYOUT.OPACITY.HIGH,
     paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,

@@ -1,7 +1,47 @@
 import type { Article } from '@/types/articles.types';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { generateImageUrl } from '@/utils/imageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
+
+/**
+ * Common props extracted from an Article for use with ArticleCard component.
+ * This eliminates repetitive prop mapping across multiple components.
+ */
+export interface ArticleCardBaseProps {
+  author: string;
+  category: string;
+  imageUrl: string;
+  summary: string;
+  title: string;
+}
+
+/**
+ * Builds the common props for ArticleCard from an Article object.
+ * Eliminates duplicated prop mapping across FeaturedSection, HorizontalArticleSlider, etc.
+ *
+ * @param article - The article to extract props from
+ * @returns Common props ready to spread into ArticleCard
+ *
+ * @example
+ * ```tsx
+ * <ArticleCard
+ *   article={article}
+ *   {...buildArticleCardProps(article)}
+ *   // Add component-specific props
+ *   pillLabel={STRINGS.RECOMMENDED}
+ * />
+ * ```
+ */
+export function buildArticleCardProps(article: Article): ArticleCardBaseProps {
+  return {
+    author: article.author.name,
+    category: article.category.name,
+    imageUrl: generateImageUrl(article.image_url),
+    summary: String(article.summary),
+    title: article.title,
+  };
+}
 
 /**
  * Helper function to shuffle array and return first N items using Fisher-Yates algorithm

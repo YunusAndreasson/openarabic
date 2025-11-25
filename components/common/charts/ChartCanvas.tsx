@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import React from 'react';
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 
-import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
+import { LAYOUT, STATUS_INDICATOR, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DataPoint } from '@/types/ui/chart.types';
 
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.CHART.BADGE_DOT_MARGIN,
   },
   badgeText: {
-    fontWeight: '600',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
   },
   cursor: {
     position: 'absolute',

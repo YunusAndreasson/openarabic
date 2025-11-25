@@ -5,7 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from '@/components/bookmarks';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     textAlign: 'left',
     includeFontPadding: false,
     lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1),

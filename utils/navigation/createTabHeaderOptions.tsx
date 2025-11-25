@@ -1,7 +1,7 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { Text, View } from 'react-native';
 
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import type { AppTab } from '@/types/enums';
 
 interface TabHeaderOptions {
@@ -38,7 +38,7 @@ export function createTabHeaderOptions({
     },
     titleText: {
       fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-      fontWeight: '600' as const,
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
       color: textColor,
       textAlign: 'left' as const,
       flex: 1,

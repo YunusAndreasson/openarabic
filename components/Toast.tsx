@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { DEFAULT_TOAST_DURATION, TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { ToastType } from '@/types/enums';
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   },
   toastText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Larger text
-    fontWeight: '600',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     textAlign: 'center',
   },
