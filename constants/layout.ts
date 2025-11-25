@@ -521,20 +521,17 @@ export const getEnhancedOpacity = (
 /**
  * 2025 Dark Mode Elevation Pattern
  *
- * Modern dark mode design uses borders instead of shadows for visual depth.
- * Shadows are nearly invisible on dark backgrounds, so we:
- * - Remove/reduce shadows in dark mode
- * - Add subtle borders for card definition
- * - Rely on elevation background colors for hierarchy
- *
- * @see Toast.tsx for reference implementation
+ * Modern dark mode design relies on elevation background colors for hierarchy.
+ * Shadows are nearly invisible on dark backgrounds, so we remove them entirely.
+ * The perceptually uniform 4.5% lightness steps between elevation levels
+ * provide sufficient visual separation without borders or shadows.
  */
 
 /**
- * Returns theme-aware elevation styles that reduce shadows in dark mode
+ * Returns theme-aware elevation styles that remove shadows in dark mode
  * @param level - Elevation level ('SUBTLE' | 'SMALL' | 'MEDIUM' | 'LARGE')
  * @param isDarkMode - Whether dark mode is active
- * @returns Shadow styles with reduced opacity in dark mode
+ * @returns Shadow styles with zero opacity in dark mode
  */
 export const getThemeAwareElevation = (
   level: 'SUBTLE' | 'SMALL' | 'MEDIUM' | 'LARGE',
@@ -542,14 +539,4 @@ export const getThemeAwareElevation = (
 ) => ({
   ...ELEVATION_SYSTEM[level],
   shadowOpacity: isDarkMode ? 0 : ELEVATION_SYSTEM[level].shadowOpacity,
-});
-
-/**
- * Returns border styles for dark mode elevation
- * In dark mode, borders replace shadows for visual card definition
- * @param isDarkMode - Whether dark mode is active
- * @returns Border width and color style object (color should be overridden with theme colors)
- */
-export const getDarkModeBorderStyle = (isDarkMode: boolean) => ({
-  borderWidth: isDarkMode ? LAYOUT.BORDER.WIDTH.THIN : 0,
 });

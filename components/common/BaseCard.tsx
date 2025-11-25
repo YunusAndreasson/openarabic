@@ -2,7 +2,7 @@ import { type FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { getDarkModeBorderStyle, getThemeAwareElevation, LAYOUT } from '@/constants/layout';
+import { getThemeAwareElevation, LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -42,9 +42,6 @@ export const BaseCard: FC<BaseCardProps> = ({
     shadowStyles = getThemeAwareElevation(level, isDarkMode);
   }
 
-  // 2025 Dark Mode: Borders replace shadows for visual card definition
-  const darkModeBorder = getDarkModeBorderStyle(isDarkMode);
-
   const combinedCardStyle = [
     styles.card,
     { backgroundColor: colors.card },
@@ -52,10 +49,6 @@ export const BaseCard: FC<BaseCardProps> = ({
     shadowSize !== 'none' && {
       shadowColor: colors.shadow,
     },
-    // Add subtle border in dark mode for card definition (replaces invisible shadows)
-    // Using borderOverlay (15% opacity tint) for a softer, more refined look
-    darkModeBorder,
-    isDarkMode && { borderColor: colors.borderOverlay },
     style,
   ];
 
