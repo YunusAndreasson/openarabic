@@ -52,9 +52,10 @@ export const BaseCard: FC<BaseCardProps> = ({
     shadowSize !== 'none' && {
       shadowColor: colors.shadow,
     },
-    // Add border in dark mode for card definition (replaces invisible shadows)
+    // Add subtle border in dark mode for card definition (replaces invisible shadows)
+    // Using borderOverlay (15% opacity tint) for a softer, more refined look
     darkModeBorder,
-    isDarkMode && { borderColor: colors.border },
+    isDarkMode && { borderColor: colors.borderOverlay },
     style,
   ];
 
