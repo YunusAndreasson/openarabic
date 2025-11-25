@@ -9,11 +9,7 @@ import {
   ENGLISH_NORMALIZATION_CACHE,
   cacheWithLRUEviction,
 } from './cache';
-import {
-  DIACRITIC_REGEX_GLOBAL,
-  NON_WORD_REGEX,
-  UNICODE_FORMAT_REGEX,
-} from './constants';
+import { DIACRITIC_REGEX_GLOBAL, NON_WORD_REGEX, UNICODE_FORMAT_REGEX } from './constants';
 
 /**
  * Normalizes Arabic text for comparison (with caching)

@@ -2,11 +2,7 @@
  * Prefix detection functions for Arabic word analysis
  */
 
-import {
-  ARABIC_PREFIXES,
-  ComponentType,
-  GrammaticalRole,
-} from '@/constants/arabicWordComponents';
+import { ARABIC_PREFIXES, ComponentType, GrammaticalRole } from '@/constants/arabicWordComponents';
 
 import { findComponent } from './componentDetection';
 import { hasEnglishMatch } from './englishMatching';

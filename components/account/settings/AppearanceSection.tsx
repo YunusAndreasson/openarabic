@@ -5,10 +5,7 @@ import { SettingsCard, SettingsSection } from '@/components/account';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import {
-  setHapticsEnabled,
-  setWordDetailsEnabled,
-} from '@/store/settingsSlice';
+import { setHapticsEnabled, setWordDetailsEnabled } from '@/store/settingsSlice';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface AppearanceSectionProps {

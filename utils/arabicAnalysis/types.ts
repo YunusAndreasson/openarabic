@@ -2,7 +2,11 @@
  * Type definitions for Arabic word analysis
  */
 
-import type { ComponentType, WordComponent, GrammaticalRole } from '@/constants/arabicWordComponents';
+import type {
+  ComponentType,
+  WordComponent,
+  GrammaticalRole,
+} from '@/constants/arabicWordComponents';
 
 export interface AnalyzedComponent {
   component: WordComponent;

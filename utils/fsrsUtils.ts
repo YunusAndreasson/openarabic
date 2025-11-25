@@ -233,4 +233,3 @@ export function calculateNextDueDate(studyWords: StudyWord[]): Date | null {
   // Find the earliest due date
   return new Date(Math.min(...validDueDates.map(d => d.getTime())));
 }
-

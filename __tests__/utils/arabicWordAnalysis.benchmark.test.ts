@@ -23,11 +23,7 @@ import {
   PREFIX_CASES,
   SUFFIX_CASES,
 } from '@/__tests__/fixtures/grammarGroundTruth';
-import {
-  formatBenchmarkReport,
-  runBenchmark,
-  runDetailedBenchmark,
-} from '@/utils/benchmarkUtils';
+import { formatBenchmarkReport, runBenchmark, runDetailedBenchmark } from '@/utils/benchmarkUtils';
 
 // Current baseline thresholds (adjusted based on initial benchmark)
 // These represent minimum acceptable levels - improvement targets are in comments
@@ -218,7 +214,9 @@ describe('Grammar System Accuracy Benchmark', () => {
       for (const c of singleWordCases) {
         // All single-word cases should expect hasComponents=false
         if (c.expectedHasComponents === true) {
-          console.log(`Warning: Test case expects coloring for single word: ${c.arabic} → "${c.english}"`);
+          console.log(
+            `Warning: Test case expects coloring for single word: ${c.arabic} → "${c.english}"`,
+          );
           violations++;
         }
       }
@@ -234,12 +232,8 @@ describe('Grammar System Accuracy Benchmark', () => {
 
       const result = runBenchmark(rootConfusionCases);
 
-      console.log(
-        `\nRoot letter confusion cases: ${rootConfusionCases.length}`,
-      );
-      console.log(
-        `  False positives: ${result.falsePositives} (should be 0)`,
-      );
+      console.log(`\nRoot letter confusion cases: ${rootConfusionCases.length}`);
+      console.log(`  False positives: ${result.falsePositives} (should be 0)`);
 
       // Should have zero false positives for root letter cases
       expect(result.falsePositives).toBe(0);

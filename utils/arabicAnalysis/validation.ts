@@ -24,7 +24,11 @@ export function countConsonants(text: string): number {
  * Check if text has substantial structure (minimum length and consonants)
  * Used to distinguish roots from affixes
  */
-export function hasSubstantialStructure(text: string, minLength: number, minConsonants: number): boolean {
+export function hasSubstantialStructure(
+  text: string,
+  minLength: number,
+  minConsonants: number,
+): boolean {
   return text.length >= minLength && countConsonants(text) >= minConsonants;
 }
 

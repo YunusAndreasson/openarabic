@@ -17,18 +17,10 @@ export {
 } from './constants';
 
 // Cache
-export {
-  ANALYSIS_CACHE,
-  cacheWithLRUEviction,
-  clearAnalysisCache,
-} from './cache';
+export { ANALYSIS_CACHE, cacheWithLRUEviction, clearAnalysisCache } from './cache';
 
 // Normalization
-export {
-  expandContractions,
-  normalizeArabic,
-  normalizeEnglish,
-} from './normalization';
+export { expandContractions, normalizeArabic, normalizeEnglish } from './normalization';
 
 // Validation (only export what's used by other modules)
 export {
@@ -42,10 +34,7 @@ export {
 } from './validation';
 
 // Edge Cases
-export {
-  isPureParticleCombination,
-  isSingleStandaloneComponent,
-} from './edgeCases';
+export { isPureParticleCombination, isSingleStandaloneComponent } from './edgeCases';
 
 // English Matching
 export { hasEnglishMatch } from './englishMatching';

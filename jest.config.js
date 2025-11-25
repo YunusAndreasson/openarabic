@@ -114,6 +114,25 @@ module.exports = {
       lines: 30,
       statements: 30,
     },
+    // Per-directory thresholds for targeted coverage improvements
+    './utils/**/*.ts': {
+      branches: 50,
+      functions: 60,
+      lines: 60,
+      statements: 60,
+    },
+    './hooks/**/*.ts': {
+      branches: 40,
+      functions: 50,
+      lines: 50,
+      statements: 50,
+    },
+    './services/**/*.ts': {
+      branches: 45,
+      functions: 55,
+      lines: 55,
+      statements: 55,
+    },
   },
 
   // Enhanced reporting for AI analysis

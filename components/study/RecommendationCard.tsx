@@ -17,7 +17,14 @@ interface RecommendationCardProps {
 }
 
 export const RecommendationCard = memo<RecommendationCardProps>(
-  ({ studyWords, dueWordsCount, currentRetention, learningWords, masteredWords, currentStreak }) => {
+  ({
+    studyWords,
+    dueWordsCount,
+    currentRetention,
+    learningWords,
+    masteredWords,
+    currentStreak,
+  }) => {
     const recommendation = useRecommendationEngine({
       studyWords,
       dueWordsCount,

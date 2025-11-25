@@ -280,7 +280,7 @@ export const ARABIC_INFIXES: WordComponent[] = [
   // Form X seeking/requesting infix ست
   {
     arabic: 'ست',
-    english: ['seek', 'request', 'ask for', 'try to', 'attempt to'],
+    english: ['seek', 'sought', 'request', 'ask for', 'try to', 'attempt to'],
     type: ComponentType.INFIX,
   },
 

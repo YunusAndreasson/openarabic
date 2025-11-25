@@ -16,11 +16,7 @@
  * - WordAnalysis - Complete analysis result
  */
 
-import {
-  ARABIC_SUFFIXES,
-  ComponentType,
-  GrammaticalRole,
-} from '@/constants/arabicWordComponents';
+import { ARABIC_SUFFIXES, ComponentType, GrammaticalRole } from '@/constants/arabicWordComponents';
 import type { ColoredSegment } from '@/types/vocabulary.types';
 
 // Import from sub-modules

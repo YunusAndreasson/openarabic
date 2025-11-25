@@ -1,11 +1,7 @@
 import { useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
 
-import {
-  CARD_DRAG_SCALE,
-  SPRING_CONFIG,
-  WORD_PRESS_SCALE,
-} from '@/constants/animation';
+import { CARD_DRAG_SCALE, SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
 import { useTransformAnimation } from '@/hooks/animations';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 

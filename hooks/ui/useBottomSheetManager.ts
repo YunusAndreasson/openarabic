@@ -42,10 +42,7 @@ export function useBottomSheetManager<T extends string>() {
   /**
    * Check if a specific sheet is currently visible
    */
-  const isVisible = useCallback(
-    (sheet: T) => activeSheet === sheet,
-    [activeSheet],
-  );
+  const isVisible = useCallback((sheet: T) => activeSheet === sheet, [activeSheet]);
 
   return {
     /** The currently active sheet key, or null if no sheet is open */

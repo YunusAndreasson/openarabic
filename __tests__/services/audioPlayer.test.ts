@@ -113,7 +113,8 @@ describe('audioPlayer service', () => {
 
     // Create fresh mock player for each test
     // CRITICAL: Default mock must fire ready status to prevent waitForPlayerReady from hanging
-    let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
+    let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null =
+      null;
     mockPlayer = {
       play: jest.fn(),
       pause: jest.fn(),
@@ -239,7 +240,9 @@ describe('audioPlayer service', () => {
 
       // Create new mock player for second track
       // CRITICAL: Must fire ready status to prevent waitForPlayerReady from hanging
-      let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
+      let statusCallback:
+        | ((status: { isLoaded?: boolean; playbackState?: string }) => void)
+        | null = null;
       const secondPlayer = {
         play: jest.fn(),
         pause: jest.fn(),
@@ -288,7 +291,9 @@ describe('audioPlayer service', () => {
 
     test('should wait for player readiness before playing', async () => {
       // Mock player with listener that simulates readiness
-      let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
+      let statusCallback:
+        | ((status: { isLoaded?: boolean; playbackState?: string }) => void)
+        | null = null;
       const mockRemoveListener = jest.fn();
       const mockPlayerWithListener = {
         ...mockPlayer,
@@ -324,7 +329,9 @@ describe('audioPlayer service', () => {
     });
 
     test('should resolve immediately if player is ready with playbackState', async () => {
-      let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
+      let statusCallback:
+        | ((status: { isLoaded?: boolean; playbackState?: string }) => void)
+        | null = null;
       const mockPlayerWithListener = {
         ...mockPlayer,
         addListener: jest.fn((event, callback) => {
@@ -349,7 +356,9 @@ describe('audioPlayer service', () => {
     });
 
     test('should resolve immediately if player is ready with isLoaded', async () => {
-      let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
+      let statusCallback:
+        | ((status: { isLoaded?: boolean; playbackState?: string }) => void)
+        | null = null;
       const mockPlayerWithListener = {
         ...mockPlayer,
         addListener: jest.fn((event, callback) => {

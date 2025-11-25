@@ -17,7 +17,10 @@ import type { AnalyzedComponent } from './types';
  * @param remaining - Remaining text after removing components
  * @returns true if this is a pure particle combination that should not be colored
  */
-export function isPureParticleCombination(prefixes: AnalyzedComponent[], remaining: string): boolean {
+export function isPureParticleCombination(
+  prefixes: AnalyzedComponent[],
+  remaining: string,
+): boolean {
   // Only check if we have exactly 1 prefix and no suffix/infix
   if (prefixes.length !== 1) {
     return false;

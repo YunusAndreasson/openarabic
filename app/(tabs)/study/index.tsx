@@ -312,7 +312,7 @@ export default function VocabularyScreen(): JSX.Element {
                   currentRetention={chartData.insights.currentRetrievability}
                   learningWords={calculatedStats.learningPhaseWords}
                   masteredWords={calculatedStats.masteredWords}
-                  trend={chartData.insights.trend}
+                  currentStreak={currentStreak}
                 />
               </>
             ) : (

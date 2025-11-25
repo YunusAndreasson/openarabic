@@ -765,9 +765,7 @@ export const ALL_GROUND_TRUTH_CASES: GroundTruthCase[] = [
 /**
  * Get cases by category
  */
-export function getCasesByCategory(
-  category: GroundTruthCase['category'],
-): GroundTruthCase[] {
+export function getCasesByCategory(category: GroundTruthCase['category']): GroundTruthCase[] {
   return ALL_GROUND_TRUTH_CASES.filter(c => c.category === category);
 }
 

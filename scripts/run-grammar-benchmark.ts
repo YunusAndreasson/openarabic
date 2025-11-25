@@ -13,7 +13,11 @@ const {
   getCorpusStats,
   NONE_CASES,
 } = require('../__tests__/fixtures/grammarGroundTruth');
-const { formatBenchmarkReport, runBenchmark, runDetailedBenchmark } = require('../utils/benchmarkUtils');
+const {
+  formatBenchmarkReport,
+  runBenchmark,
+  runDetailedBenchmark,
+} = require('../utils/benchmarkUtils');
 
 // Run the benchmark
 console.log('Running Grammar System Accuracy Benchmark...\n');
@@ -44,7 +48,9 @@ console.log('\n=== Summary ===');
 console.log(`Overall Precision: ${(detailed.overall.precision * 100).toFixed(1)}%`);
 console.log(`Overall Recall: ${(detailed.overall.recall * 100).toFixed(1)}%`);
 console.log(`Overall F1 Score: ${(detailed.overall.f1Score * 100).toFixed(1)}%`);
-console.log(`hasComponents Accuracy: ${(detailed.overall.hasComponentsAccuracy * 100).toFixed(1)}%`);
+console.log(
+  `hasComponents Accuracy: ${(detailed.overall.hasComponentsAccuracy * 100).toFixed(1)}%`,
+);
 
 // Targets
 console.log('\n=== Improvement Targets ===');
