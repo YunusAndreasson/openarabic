@@ -14,6 +14,7 @@ import Animated, {
 import { ThemedText } from '@/components/ThemedText';
 import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
 import { FONTS, LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -135,7 +136,7 @@ const ArticleSentenceInternal = function ArticleSentence({
               weight="bold"
               style={[styles.tutorialText, { color: colors.background }]}
             >
-              Tap any word to see its meaning
+              {STRINGS.TUTORIAL_WORD_TAP_CTA}
             </ThemedText>
 
             {/* Close button */}

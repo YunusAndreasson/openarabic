@@ -3,6 +3,8 @@
  * Defines all tutorial IDs, configurations, and strings for the progressive disclosure tutorial system
  */
 
+import { STRINGS } from './strings';
+
 /**
  * Tutorial identifiers (branded type pattern for type safety)
  */
@@ -39,16 +41,16 @@ export const TUTORIALS: Record<TutorialId, TutorialConfig> = {
   [TutorialId.WORD_TAP]: {
     id: TutorialId.WORD_TAP,
     storageKey: '@openarabic/tutorials/wordTapCompleted',
-    title: 'All Arabic words are tappable',
-    description: 'Tap any Arabic word to see its meaning and add it to your practice list',
+    title: STRINGS.TUTORIAL_WORD_TAP_TITLE,
+    description: STRINGS.TUTORIAL_WORD_TAP_DESCRIPTION,
     showDelay: 800,
     // Completed when user taps any word
   },
   [TutorialId.SWIPE_GESTURE]: {
     id: TutorialId.SWIPE_GESTURE,
     storageKey: '@openarabic/tutorials/swipeGestureCompleted',
-    title: 'How to practice',
-    description: '',
+    title: STRINGS.TUTORIAL_SWIPE_TITLE,
+    description: STRINGS.TUTORIAL_SWIPE_DESCRIPTION,
     showDelay: 500,
   },
 };

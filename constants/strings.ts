@@ -24,6 +24,17 @@ export const STRINGS = {
   DAILY_WORD_LIMIT: 'Daily word limit',
   WORDS_REMAINING_TODAY: '{count} words remaining today',
   RESET_TUTORIALS: 'Reset tutorials',
+  // Tutorial copy
+  TUTORIAL_WORD_TAP_TITLE: 'Tap to learn words',
+  TUTORIAL_WORD_TAP_DESCRIPTION: 'Tap any Arabic word to see its meaning and save it for practice',
+  TUTORIAL_WORD_TAP_CTA: 'Tap any word to learn it',
+  TUTORIAL_SWIPE_TITLE: 'Review your words',
+  TUTORIAL_SWIPE_DESCRIPTION: 'Swipe to rate how well you know each word',
+  TUTORIAL_SWIPE_DONT_KNOW: "Don't know",
+  TUTORIAL_SWIPE_KNOW: 'Know it',
+  TUTORIAL_SWIPE_UNSURE: 'Unsure?',
+  TUTORIAL_SWIPE_UNSURE_HINT: 'Tap to reveal, then swipe right',
+  TUTORIAL_START_PRACTICING: 'Start practicing',
   // Contact email - single source of truth
   CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',
   // Account section titles - now imported directly from enums in components
