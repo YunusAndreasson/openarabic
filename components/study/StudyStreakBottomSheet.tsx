@@ -6,6 +6,7 @@ import { StreakChart } from '@/components/library';
 import { StreakMetrics } from '@/components/library';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useStudyStreakHistory } from '@/hooks/study/useStudyStreakHistory';
 
 interface StudyStreakBottomSheetProps {
@@ -27,7 +28,7 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
         return (
           <View style={styles.loadingContainer}>
             <ThemedText type="body" colorName="text">
-              Loading your streak
+              {STRINGS.LOADING_STREAK}
             </ThemedText>
           </View>
         );
@@ -37,7 +38,7 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
         return (
           <View style={styles.errorContainer}>
             <ThemedText type="body" colorName="error">
-              Can&apos;t load streak data. Try again
+              {STRINGS.FAILED_TO_LOAD_STREAK}
             </ThemedText>
           </View>
         );
@@ -46,15 +47,15 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
       if (streakHistory) {
         const hasActiveStreak = streakHistory.metrics.currentStreak > 0;
         const subtitle = hasActiveStreak
-          ? 'Keep up the great momentum'
-          : 'Start building your study habit';
+          ? STRINGS.STUDY_STREAK_ACTIVE_SUBTITLE
+          : STRINGS.STUDY_STREAK_INACTIVE_SUBTITLE;
 
         return (
           <>
             {/* Header */}
             <View style={styles.header}>
               <ThemedText type="heading3" weight="bold" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
-                Study streak
+                {STRINGS.STUDY_STREAK_TITLE}
               </ThemedText>
               <ThemedText
                 type="body"
@@ -73,14 +74,14 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
             {/* Streak Chart */}
             <>
               <ThemedText type="heading3" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
-                Last 40 days
+                {STRINGS.STUDY_STREAK_CHART_TITLE}
               </ThemedText>
               <ThemedText
                 type="body"
                 colorName="textTertiary"
                 style={LAYOUT.BOTTOM_SHEET.STYLES.subtitle}
               >
-                Each bar shows a study session day
+                {STRINGS.STUDY_STREAK_CHART_DESCRIPTION}
               </ThemedText>
               <StreakChart
                 dailyActivity={streakHistory.dailyActivity}
@@ -94,7 +95,7 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
       return (
         <View style={styles.emptyContainer}>
           <ThemedText type="body" colorName="textTertiary">
-            Complete study sessions to build your streak
+            {STRINGS.STUDY_STREAK_EMPTY_STATE}
           </ThemedText>
         </View>
       );

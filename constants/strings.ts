@@ -61,10 +61,10 @@ export const STRINGS = {
   THEME_AUTUMN: 'Autumn Leaves',
   SOMETHING_WENT_WRONG: 'Something went wrong',
   PLEASE_TRY_AGAIN: tryAgain,
-  LOADING_ARTICLES: 'Loading articles...',
-  LOADING_AUDIO_ELLIPSIS: 'Loading session...',
+  LOADING_ARTICLES: 'Loading articles…',
+  LOADING_AUDIO_ELLIPSIS: 'Loading session…',
   AUDIO_READY: 'Audio ready',
-  PREPARING_PRACTICE_SESSION: 'Preparing practice session...',
+  PREPARING_PRACTICE_SESSION: 'Preparing session…',
   // Timer controls
   STOP_TIMER: 'Stop timer',
   TIME_REMAINING: 'Time remaining',
@@ -73,22 +73,22 @@ export const STRINGS = {
   WELCOME_SUBTITLE: 'Sign in to continue learning Arabic',
   // Sign In screen
   SIGN_IN_TITLE: 'Sign in to OpenArabic',
-  SIGN_IN_SUBTITLE: 'Welcome back! Continue your Arabic learning journey.',
+  SIGN_IN_SUBTITLE: 'Welcome back! Pick up where you left off.',
   // Sign Up screen
   CREATE_ACCOUNT_TITLE: 'Create your account',
-  CREATE_ACCOUNT_SUBTITLE: 'Start your journey to mastering Arabic.',
+  CREATE_ACCOUNT_SUBTITLE: 'Start learning Arabic today.',
   // Landing screen
   CONTINUE_WITH_EMAIL_OPTION: 'Continue with email',
   HIDE_EMAIL_OPTIONS: 'Hide email options',
-  AUTHOR_ARTICLES: 'Author Articles',
+  AUTHOR_ARTICLES: 'Author articles',
   CATEGORY: 'Category',
   RESUMED_READING_TEMPLATE: 'Resumed at {percent}%',
   // Article & content actions - shortened and action-oriented
-  BROWSE_ARTICLES: 'Explore Articles',
+  BROWSE_ARTICLES: 'Explore articles',
   PULL_TO_REFRESH: 'Pull to refresh',
-  PREPARING_ARTICLES: 'Preparing articles...',
+  PREPARING_ARTICLES: 'Preparing articles…',
   // Article section headings (for progress-based sorting)
-  CONTINUE_READING: 'Continue Reading',
+  CONTINUE_READING: 'Continue reading',
   UNREAD: 'Unread',
   COMPLETED: 'Completed',
   SET_TIME: 'Set time',
@@ -98,16 +98,16 @@ export const STRINGS = {
   // Saved tab empty state - emphasizes on-the-go bilingual learning
   BOOKMARKS_EMPTY_TITLE: 'Build your listening routine',
   BOOKMARKS_EMPTY_DESCRIPTION:
-    'Bookmark articles to listen with bilingual audio on the go—while commuting, exercising, or unwinding',
+    'Save articles to listen on the go with bilingual audio',
   // Practice tab empty state - benefit-first with spaced repetition explanation
   STUDY_LIST_EMPTY_TITLE: 'Remember what you learn',
   STUDY_LIST_EMPTY_DESCRIPTION:
-    'Tap words while reading articles, then practice at optimal intervals with spaced repetition',
+    'Tap words while reading to save them, then practice with spaced repetition',
   ERROR_LOADING_DATA: "Couldn't load data. " + tryAgain,
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',
   SESSION_COMPLETE_EDUCATIONAL:
-    'Your words will return at the perfect moment for lasting retention.',
+    'Words will reappear at optimal intervals for long-term memory',
   ADDED_TO_BOOKMARKS: 'Saved to bookmarks',
   REMOVED_FROM_BOOKMARKS: 'Removed from bookmarks',
   // Word action buttons
@@ -224,17 +224,35 @@ export const STRINGS = {
   SIGN_IN_WITH_APPLE: 'Sign in with Apple',
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
   CONTINUE_WITH: 'or',
-  MEMORY_STRENGTH: 'Memory Strength',
-  WORD_MASTERY: 'Words Mastered',
-  // Practice bottom sheet subtitles (condensed for subtitle format)
-  MEMORY_STRENGTH_SUBTITLE:
-    "Words you'll likely remember. Target 75%+ before adding new words",
-  WORD_MASTERY_SUBTITLE: 'Words with strong, stable memories requiring minimal review',
-  DUE_WORDS_FORECAST_SUBTITLE: 'Upcoming reviews for the next 7 days',
-  DUE_WORDS_FORECAST: 'Due Words Forecast',
+  MEMORY_STRENGTH: 'Memory strength',
+  WORD_MASTERY: 'Words mastered',
+  // Practice bottom sheet subtitles (concise: what it shows + why it matters)
+  MEMORY_STRENGTH_SUBTITLE: "How likely you'll recall each word — aim for 75%+",
+  WORD_MASTERY_SUBTITLE: 'Words with stable, long-term memory',
+  DUE_WORDS_FORECAST_SUBTITLE: 'Your review schedule for the next 7 days',
+  DUE_WORDS_FORECAST: 'Due words forecast',
+  // Study Streak Bottom Sheet
+  STUDY_STREAK_TITLE: 'Study streak',
+  STUDY_STREAK_ACTIVE_SUBTITLE: 'Keep the momentum going',
+  STUDY_STREAK_INACTIVE_SUBTITLE: 'Start your study habit',
+  STUDY_STREAK_CHART_TITLE: 'Last 40 days',
+  STUDY_STREAK_CHART_DESCRIPTION: 'Each bar is a study day',
+  LOADING_STREAK: 'Loading streak…',
+  FAILED_TO_LOAD_STREAK: "Couldn't load streak. Try again",
+  STUDY_STREAK_EMPTY_STATE: 'Complete sessions to build your streak',
+  // Chart Empty States (action + outcome, concise)
+  EMPTY_STATE_MASTERY: 'Review 5 words to see your strength trend',
+  EMPTY_STATE_LEARNED: 'Complete reviews to track learned words',
+  EMPTY_STATE_EFFICIENCY: 'Practice 10 words to track learning speed',
+  EMPTY_STATE_RETRIEVABILITY: 'Study 5 words to see review timing',
+  EMPTY_STATE_DUE_WORDS: 'Add words to see your forecast',
+  EMPTY_STATE_GENERAL: 'Add words to start tracking progress',
+  // Chart Dynamic Message Suffixes (concatenated with numbers)
+  WORDS_NEED_URGENT_REVIEW: '% of words need urgent review',
+  WORDS_LIKELY_FORGOTTEN: ' words likely to be forgotten soon',
   // Account - Support section
-  HELP_CENTER: 'Help Center',
-  CONTACT_SUPPORT: 'Contact Support',
+  HELP_CENTER: 'Help center',
+  CONTACT_SUPPORT: 'Contact support',
   // Account - About section
   ABOUT_SECTION: 'About',
   APP_VERSION_LABEL: 'Version',
@@ -251,16 +269,16 @@ export const STRINGS = {
   // Reading progress management
   RESET_READING_PROGRESS: 'Reset reading progress',
   THIS_WILL_DELETE_ALL_READING_PROGRESS:
-    'This will delete reading positions and progress percentages for all articles. This cannot be undone.',
+    'Permanently deletes all reading positions and progress. This cannot be undone.',
   READING_PROGRESS_RESET_SUCCESSFULLY: 'Reading progress reset',
   FAILED_TO_RESET_READING_PROGRESS: "Couldn't reset reading progress. " + tryAgain,
   // Notifications
   ENABLE_NOTIFICATIONS: 'Enable notifications',
   TURN_ON_NOTIFICATIONS: 'Get daily practice reminders',
-  OPEN_SETTINGS: 'Open Settings',
+  OPEN_SETTINGS: 'Open settings',
   NOTIFICATIONS_DISABLED: 'Notifications disabled',
-  NOTIFICATION_REMINDER_TITLE: 'Time to practice Arabic!',
-  NOTIFICATION_REMINDER_BODY: 'Continue your Arabic learning journey',
+  NOTIFICATION_REMINDER_TITLE: 'Time to practice Arabic',
+  NOTIFICATION_REMINDER_BODY: 'Your daily words are ready for review',
   START_REVIEWING_TO_BUILD_STRENGTH: 'Practice vocabulary to see memory strength',
   START_PRACTICING_TO_SEE_SPEED: 'Practice vocabulary to see your learning speed',
   STUDY_TO_MONITOR_REVIEW_TIMING: 'Practice vocabulary to see review schedule',
@@ -332,7 +350,7 @@ export const STRINGS = {
   DELETE_ACCOUNT_CONFIRMATION_MISMATCH: 'Type DELETE to confirm',
   DELETE_ACCOUNT_SUCCESS: 'Account deleted',
   FAILED_TO_DELETE_ACCOUNT: "Couldn't delete account. " + tryAgain,
-  ACCOUNT_DELETION_IN_PROGRESS: 'Deleting account...',
+  ACCOUNT_DELETION_IN_PROGRESS: 'Deleting account…',
   // Sign-in requirements - clearer and shorter
   PLEASE_SIGN_IN_TO_ADD_WORDS: 'Sign in to add words',
   PLEASE_SIGN_IN_TO_ADD_ROOTS: 'Sign in to add roots',
@@ -343,29 +361,29 @@ export const STRINGS = {
   HELP_SEARCH_RESULTS_SINGULAR: 'result',
   HELP_SEARCH_RESULTS_PLURAL: 'results',
   HELP_NO_RESULTS_TITLE: 'No results found',
-  HELP_NO_RESULTS_DESCRIPTION: 'Use different keywords or browse categories below',
-  HELP_POPULAR_QUESTIONS: 'Popular Questions',
+  HELP_NO_RESULTS_DESCRIPTION: 'Try different keywords or browse below',
+  HELP_POPULAR_QUESTIONS: 'Popular questions',
   HELP_STILL_NEED_HELP_TITLE: 'Still need help?',
-  HELP_STILL_NEED_HELP_DESCRIPTION: 'Need more help? Contact support',
+  HELP_STILL_NEED_HELP_DESCRIPTION: 'Contact support for more help',
   // Chart empty states
   CHART_EMPTY_STATE: 'Add 10+ words to see your progress chart',
   // Legal & Attributions
-  LEGAL_ATTRIBUTIONS: 'Legal & Attributions',
+  LEGAL_ATTRIBUTIONS: 'Legal & attributions',
   LEGAL_INTRO:
-    'OpenArabic is built using open source projects and third-party services. We are grateful to the developers and organizations that make their work freely available.',
-  LEGAL_AUDIO_TITLE: 'Audio Generation',
+    'OpenArabic uses open source projects and third-party services. Thanks to all developers who make their work freely available.',
+  LEGAL_AUDIO_TITLE: 'Audio generation',
   LEGAL_AUDIO_ELEVENLABS: 'ElevenLabs',
   LEGAL_AUDIO_ELEVENLABS_DESC:
-    'Text-to-speech API for generating high-quality Arabic and English audio pronunciations.',
+    'Text-to-speech API for high-quality Arabic and English audio',
   LEGAL_AUDIO_ELEVENLABS_URL: 'https://elevenlabs.io',
-  LEGAL_ERROR_TRACKING_TITLE: 'Error Tracking',
+  LEGAL_ERROR_TRACKING_TITLE: 'Error tracking',
   LEGAL_ERROR_SENTRY: 'Sentry',
   LEGAL_ERROR_SENTRY_DESC:
-    'Error monitoring and crash reporting to improve app stability and user experience.',
+    'Error monitoring and crash reporting for app stability',
   LEGAL_ERROR_SENTRY_URL: 'https://sentry.io',
   LEGAL_FONTS_TITLE: 'Typefaces',
-  LEGAL_FONTS_ARABIC_TITLE: 'Arabic Fonts',
-  LEGAL_FONTS_ENGLISH_TITLE: 'English Fonts',
+  LEGAL_FONTS_ARABIC_TITLE: 'Arabic fonts',
+  LEGAL_FONTS_ENGLISH_TITLE: 'English fonts',
   LEGAL_FONT_SCHEHERAZADE: 'Scheherazade New',
   LEGAL_FONT_SCHEHERAZADE_DESC: 'SIL Open Font License 1.1',
   LEGAL_FONT_AMIRI: 'Amiri',
@@ -377,12 +395,12 @@ export const STRINGS = {
   LEGAL_FONT_NOTO_SANS: 'Noto Sans',
   LEGAL_FONT_NOTO_SANS_DESC: 'SIL Open Font License 1.1 by Google',
   LEGAL_FONTS_SYSTEM_NOTE:
-    'English UI text uses native system fonts (SF Pro on iOS, Roboto on Android) for optimal performance and native feel.',
-  LEGAL_OPEN_SOURCE_TITLE: 'Open Source Libraries',
+    'English UI uses system fonts (SF Pro on iOS, Roboto on Android) for native feel.',
+  LEGAL_OPEN_SOURCE_TITLE: 'Open source libraries',
   LEGAL_OPEN_SOURCE_DESC:
-    'This app is built with React Native, Expo, and many other open source libraries. Full license details are available in the app repository.',
-  LEGAL_LICENSE_INFO: 'License Information',
+    'Built with React Native, Expo, and many open source libraries. Full license details in the app repository.',
+  LEGAL_LICENSE_INFO: 'License information',
   LEGAL_SIL_OFL_TITLE: 'SIL Open Font License 1.1',
   LEGAL_SIL_OFL_DESC:
-    'Fonts licensed under SIL OFL are free to use, modify, and distribute. Full license text available at scripts.sil.org/OFL',
+    'Fonts under SIL OFL are free to use, modify, and distribute. Full text at scripts.sil.org/OFL',
 } as const;

@@ -135,20 +135,20 @@ export const generateChartSubtitle = {
     }
 
     if (criticalPercentage > 30) {
-      return `${Math.round(criticalPercentage)}% of words need urgent review (next 7 days)`;
+      return `${Math.round(criticalPercentage)}${STRINGS.WORDS_NEED_URGENT_REVIEW} (next 7 days)`;
     }
 
-    return `${criticalWords} words likely to be forgotten soon (next 7 days)`;
+    return `${criticalWords}${STRINGS.WORDS_LIKELY_FORGOTTEN} (next 7 days)`;
   },
 } as const;
 
 // Jakob's Law: Users expect specific, actionable empty states like fitness apps (Strava, MyFitnessPal)
 // Updated from generic messages to specific action + benefit format
 export const EMPTY_STATE_MESSAGES = {
-  mastery: 'Complete your first 5 reviews to see your memory strength trend',
-  learned: 'Complete your first reviews to see learned words progress',
-  efficiency: 'Practice 10 words to track your learning speed progress',
-  retrievability: 'Study 5 words to monitor which ones need review timing',
-  dueWords: 'Add words to see due forecast',
-  general: 'Add your first words to start tracking your progress',
+  mastery: STRINGS.EMPTY_STATE_MASTERY,
+  learned: STRINGS.EMPTY_STATE_LEARNED,
+  efficiency: STRINGS.EMPTY_STATE_EFFICIENCY,
+  retrievability: STRINGS.EMPTY_STATE_RETRIEVABILITY,
+  dueWords: STRINGS.EMPTY_STATE_DUE_WORDS,
+  general: STRINGS.EMPTY_STATE_GENERAL,
 } as const;
