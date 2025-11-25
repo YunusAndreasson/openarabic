@@ -320,7 +320,7 @@ describe('arabicWordAnalysis', () => {
       const analysis = analyzeArabicWord('استطاع', 'he sought to do');
       if (analysis.infix) {
         expect(analysis.infix.arabicMatch).toBe('ست');
-        expect(analysis.infix.englishMatches).toContain('seek');
+        expect(analysis.infix.englishMatches).toContain('sought');
         expect(analysis.hasComponents).toBe(true);
       }
     });
