@@ -207,6 +207,6 @@ const styles = StyleSheet.create({
   },
   unsureTextContainer: {
     alignItems: 'flex-start',
-    gap: 2,
+    gap: LAYOUT.SPACING.HALF_TINY, // 2px
   },
 });

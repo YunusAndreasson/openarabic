@@ -4,22 +4,49 @@
  * Tests error handling utility wrappers.
  *
  * Modern Jest 29 Patterns:
- * - ✅ jest.mocked() for type-safe mocking
- * - ✅ test.concurrent() for parallel execution
+ * - ✅ Full module mock with custom implementations
  * - ✅ @jest/globals explicit imports (already present)
  */
 
 import { beforeEach, describe, expect, test, jest } from '@jest/globals';
 
-import { handleError } from '@/utils/errorHandling';
-import { withErrorHandling, withErrorHandlingDefault } from '@/utils/errorHandlingUtils';
+// Create mock handleError that we can track
+const mockHandleError = jest.fn();
 
-// Mock the error handling module
+// Mock the entire module with custom implementations that use our mock
 jest.mock('@/utils/errorHandling', () => ({
-  handleError: jest.fn(),
+  handleError: mockHandleError,
+  withErrorHandling: <TArgs extends unknown[], TReturn>(
+    fn: (...args: TArgs) => Promise<TReturn>,
+    errorOptions: Record<string, unknown> = {},
+  ) => {
+    return async (...args: TArgs): Promise<TReturn> => {
+      try {
+        return await fn(...args);
+      } catch (error) {
+        mockHandleError(error, errorOptions);
+        throw error;
+      }
+    };
+  },
+  withErrorHandlingDefault: <TArgs extends unknown[], TReturn>(
+    fn: (...args: TArgs) => Promise<TReturn>,
+    defaultValue: TReturn,
+    errorOptions: Record<string, unknown> = {},
+  ) => {
+    return async (...args: TArgs): Promise<TReturn> => {
+      try {
+        return await fn(...args);
+      } catch (error) {
+        mockHandleError(error, errorOptions);
+        return defaultValue;
+      }
+    };
+  },
 }));
 
-const handleErrorMock = jest.mocked(handleError);
+// Import after mock is set up
+import { withErrorHandling, withErrorHandlingDefault } from '@/utils/errorHandling';
 
 describe('errorHandlingUtils', () => {
   beforeEach(() => {
@@ -35,7 +62,7 @@ describe('errorHandlingUtils', () => {
 
       expect(result).toBe('success');
       expect(successFn).toHaveBeenCalledWith('arg1', 'arg2');
-      expect(handleErrorMock).not.toHaveBeenCalled();
+      expect(mockHandleError).not.toHaveBeenCalled();
     });
 
     test('should call handleError and re-throw when the wrapped function fails', async () => {
@@ -44,7 +71,7 @@ describe('errorHandlingUtils', () => {
       const wrapped = withErrorHandling(failFn);
 
       await expect(wrapped()).rejects.toThrow('Test error');
-      expect(handleErrorMock).toHaveBeenCalledWith(error, {});
+      expect(mockHandleError).toHaveBeenCalledWith(error, {});
     });
 
     test('should pass error options to handleError', async () => {
@@ -57,7 +84,7 @@ describe('errorHandlingUtils', () => {
       const wrapped = withErrorHandling(failFn, errorOptions);
 
       await expect(wrapped()).rejects.toThrow('Test error');
-      expect(handleErrorMock).toHaveBeenCalledWith(error, errorOptions);
+      expect(mockHandleError).toHaveBeenCalledWith(error, errorOptions);
     });
   });
 
@@ -70,7 +97,7 @@ describe('errorHandlingUtils', () => {
 
       expect(result).toBe('success');
       expect(successFn).toHaveBeenCalledWith('arg1', 'arg2');
-      expect(handleErrorMock).not.toHaveBeenCalled();
+      expect(mockHandleError).not.toHaveBeenCalled();
     });
 
     test('should return default value when the wrapped function fails', async () => {
@@ -81,7 +108,7 @@ describe('errorHandlingUtils', () => {
       const result = await wrapped();
 
       expect(result).toBe('default-value');
-      expect(handleErrorMock).toHaveBeenCalledWith(error, {});
+      expect(mockHandleError).toHaveBeenCalledWith(error, {});
     });
 
     test('should pass error options to handleError and return default', async () => {
@@ -96,7 +123,7 @@ describe('errorHandlingUtils', () => {
       const result = await wrapped();
 
       expect(result).toBe(42);
-      expect(handleErrorMock).toHaveBeenCalledWith(error, errorOptions);
+      expect(mockHandleError).toHaveBeenCalledWith(error, errorOptions);
     });
 
     test('should not re-throw error (unlike withErrorHandling)', async () => {

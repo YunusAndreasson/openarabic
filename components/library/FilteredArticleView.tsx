@@ -22,8 +22,11 @@ import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
 import { generateImageUrl } from '@/utils/imageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
-import { capitalizeFirstLetter, getArticleMetadata } from '@/utils/stringUtils';
-import { calculateReadingTime } from '@/utils/textUtils';
+import {
+  calculateReadingTime,
+  capitalizeFirstLetter,
+  getArticleMetadata,
+} from '@/utils/stringUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
 
 // Completion threshold matches articleUtils.ts

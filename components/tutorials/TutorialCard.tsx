@@ -9,9 +9,9 @@ import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
+import { BaseCard } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { TUTORIAL_ANIMATION } from '@/constants/tutorials';
-import { useColors } from '@/hooks/theme/useColors';
 
 interface TutorialCardProps {
   /** Tutorial title */
@@ -50,45 +50,38 @@ export function TutorialCard({
   dismissText,
   onDismiss,
 }: TutorialCardProps) {
-  const colors = useColors();
-
   return (
     <Animated.View
       entering={FadeInUp.duration(TUTORIAL_ANIMATION.FADE_IN_DURATION)}
       exiting={FadeOutDown.duration(TUTORIAL_ANIMATION.FADE_OUT_DURATION)}
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.elevation2,
-          ...LAYOUT.ELEVATION.LARGE,
-          shadowColor: colors.shadow,
-        },
-      ]}
+      style={styles.animatedWrapper}
     >
-      {/* Title */}
-      <ThemedText type="heading3" weight="bold" style={styles.title}>
-        {title}
-      </ThemedText>
-
-      {/* Description */}
-      {description && (
-        <ThemedText type="body" style={styles.description}>
-          {description}
+      <BaseCard shadowSize="large" style={styles.card} contentStyle={styles.cardContent}>
+        {/* Title */}
+        <ThemedText type="heading3" weight="bold" style={styles.title}>
+          {title}
         </ThemedText>
-      )}
 
-      {/* Custom content (e.g., pulsing highlights, animated hand) */}
-      {children && <View style={styles.customContent}>{children}</View>}
+        {/* Description */}
+        {description && (
+          <ThemedText type="body" style={styles.description}>
+            {description}
+          </ThemedText>
+        )}
 
-      {/* Optional dismiss button */}
-      {dismissText && onDismiss && (
-        <ThemedButton
-          title={dismissText}
-          variant="filled"
-          onPress={onDismiss}
-          style={styles.button}
-        />
-      )}
+        {/* Custom content (e.g., pulsing highlights, animated hand) */}
+        {children && <View style={styles.customContent}>{children}</View>}
+
+        {/* Optional dismiss button */}
+        {dismissText && onDismiss && (
+          <ThemedButton
+            title={dismissText}
+            variant="filled"
+            onPress={onDismiss}
+            style={styles.button}
+          />
+        )}
+      </BaseCard>
     </Animated.View>
   );
 }
@@ -96,10 +89,14 @@ export function TutorialCard({
 TutorialCard.displayName = 'TutorialCard';
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    padding: LAYOUT.SPACING.XLARGE,
+  animatedWrapper: {
     marginHorizontal: LAYOUT.SPACING.LARGE,
+  },
+  card: {
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE, // Override BaseCard's MEDIUM radius
+  },
+  cardContent: {
+    padding: LAYOUT.SPACING.XLARGE,
   },
   customContent: {
     marginBottom: LAYOUT.SPACING.LARGE,

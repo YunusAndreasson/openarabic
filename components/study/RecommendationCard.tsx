@@ -35,7 +35,7 @@ export const RecommendationCard = memo<RecommendationCardProps>(
     });
 
     return (
-      <BaseCard shadowSize="small" style={styles.card}>
+      <BaseCard shadowSize="small">
         <View style={styles.container}>
           <ThemedText type="caption" colorName="text">
             {recommendation.message}
@@ -47,9 +47,6 @@ export const RecommendationCard = memo<RecommendationCardProps>(
 );
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
   container: {
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

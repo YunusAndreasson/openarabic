@@ -11,7 +11,7 @@
 
 import { describe, expect, test } from '@jest/globals';
 
-import { calculateReadingTime } from '@/utils/textUtils';
+import { calculateReadingTime } from '@/utils/stringUtils';
 
 describe('textUtils', () => {
   describe('calculateReadingTime', () => {

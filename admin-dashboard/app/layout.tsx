@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { LayoutWrapper } from '@/components/layout-wrapper';
@@ -11,13 +11,16 @@ const inter = Inter({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: 'OpenArabic - Learn Arabic Through Reading',
-  description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#f8faf9' },
     { media: '(prefers-color-scheme: dark)', color: '#0f1412' },
   ],
+};
+
+export const metadata: Metadata = {
+  title: 'OpenArabic - Learn Arabic Through Reading',
+  description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
   other: {
     // Enable View Transitions API for modern browsers
     'view-transition': 'same-origin',

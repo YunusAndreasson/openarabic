@@ -1,28 +1,14 @@
+/**
+ * Text utilities that require JSX (React components)
+ * Pure text utilities are in stringUtils.ts
+ */
+
 import React from 'react';
 
 import { EmailLink } from '@/components/common/EmailLink';
 
 // Email regex pattern for detecting email addresses in text
 const EMAIL_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-
-/**
- * Average sentences per minute for interactive bilingual Arabic learning
- * Very conservative estimate accounting for:
- * - Arabic script reading speed (significantly slower for learners)
- * - English translation reading (shown side-by-side for EVERY sentence)
- * - Interactive word tooltips (clicking words, reading definitions)
- * - Grammar analysis (color-coded components, grammar notes)
- * - Word details exploration (root meanings, word types)
- * - Mental processing to connect Arabic and English
- * - Diacritics and morphological analysis
- * - Re-reading sentences for comprehension
- * - Bilingual cognitive load (processing two languages simultaneously)
- *
- * Note: Interactive bilingual language learning with word-level analysis takes
- * significantly longer than passive monolingual reading. This estimate accounts
- * for the full dual-language learning workflow.
- */
-const SENTENCES_PER_MINUTE = 4;
 
 /**
  * Parse text and render email addresses as EmailLink components
@@ -83,30 +69,3 @@ export const parseTextWithEmails = (
   });
 };
 
-/**
- * Calculates estimated reading time based on sentence count
- * Optimized for interactive bilingual Arabic-English learning
- *
- * @param sentenceCount - Number of sentences in the article
- * @returns Formatted reading time string (e.g., "1 min", "3 min", "15 min")
- *
- * @example
- * calculateReadingTime(6) // "1 min"
- * calculateReadingTime(12) // "3 min"
- * calculateReadingTime(60) // "15 min"
- */
-export function calculateReadingTime(sentenceCount: number): string {
-  if (sentenceCount <= 0) {
-    return '1 min';
-  }
-
-  // Calculate minutes and round up (better to overestimate than underestimate)
-  const minutes = Math.ceil(sentenceCount / SENTENCES_PER_MINUTE);
-
-  // Minimum 1 minute for readability on small cards
-  if (minutes < 1) {
-    return '1 min';
-  }
-
-  return `${minutes} min`;
-}

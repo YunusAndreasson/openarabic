@@ -141,8 +141,6 @@ SettingsCard.displayName = 'SettingsCard';
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
     marginBottom: 0,
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

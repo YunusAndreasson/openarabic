@@ -1,6 +1,7 @@
 import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { OPACITY_HEX } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -35,10 +36,10 @@ export function Pill({ id, label, isSelected = false, onSelect, variant = 'filte
       return {
         ...baseStyle,
         backgroundColor: isSelected
-          ? `${colors.tint}CC` // 80% opacity
+          ? `${colors.tint}${OPACITY_HEX.HIGH}` // 80%
           : isDarkMode
-            ? `${colors.elevation2}99` // 60% opacity
-            : `${colors.elevation1}B3`, // 70% opacity
+            ? `${colors.elevation2}${OPACITY_HEX.MEDIUM}` // 60%
+            : `${colors.elevation1}${OPACITY_HEX.MEDIUM_HIGH}`, // 70%
         paddingHorizontal: LAYOUT.SPACING.MEDIUM,
         paddingVertical: 0,
         ...LAYOUT.ELEVATION.SMALL,

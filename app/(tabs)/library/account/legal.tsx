@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   fontDesc: {
     marginBottom: LAYOUT.SPACING.TINY,
-    fontSize: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px
   },
 });
 

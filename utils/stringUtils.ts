@@ -2,7 +2,48 @@
  * String utility functions for text formatting and manipulation
  */
 
-import { calculateReadingTime } from './textUtils';
+/**
+ * Average sentences per minute for interactive bilingual Arabic learning
+ * Very conservative estimate accounting for:
+ * - Arabic script reading speed (significantly slower for learners)
+ * - English translation reading (shown side-by-side for EVERY sentence)
+ * - Interactive word tooltips (clicking words, reading definitions)
+ * - Grammar analysis (color-coded components, grammar notes)
+ * - Word details exploration (root meanings, word types)
+ * - Mental processing to connect Arabic and English
+ * - Diacritics and morphological analysis
+ * - Re-reading sentences for comprehension
+ * - Bilingual cognitive load (processing two languages simultaneously)
+ */
+const SENTENCES_PER_MINUTE = 4;
+
+/**
+ * Calculates estimated reading time based on sentence count
+ * Optimized for interactive bilingual Arabic-English learning
+ *
+ * @param sentenceCount - Number of sentences in the article
+ * @returns Formatted reading time string (e.g., "1 min", "3 min", "15 min")
+ *
+ * @example
+ * calculateReadingTime(6) // "1 min"
+ * calculateReadingTime(12) // "3 min"
+ * calculateReadingTime(60) // "15 min"
+ */
+export function calculateReadingTime(sentenceCount: number): string {
+  if (sentenceCount <= 0) {
+    return '1 min';
+  }
+
+  // Calculate minutes and round up (better to overestimate than underestimate)
+  const minutes = Math.ceil(sentenceCount / SENTENCES_PER_MINUTE);
+
+  // Minimum 1 minute for readability on small cards
+  if (minutes < 1) {
+    return '1 min';
+  }
+
+  return `${minutes} min`;
+}
 
 /**
  * Text separator used for displaying metadata (author, category, etc.)
