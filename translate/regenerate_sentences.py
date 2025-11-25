@@ -3,7 +3,7 @@
 Regenerate English audio for sentences marked with english_repeat = TRUE.
 
 Uses optimal quality settings discovered through testing:
-- Maximum stability (0.95) for consistent output
+- Maximum stability (1.0) for consistent output
 - Maximum similarity_boost (1.0) to match original voice closely
 - Slower speed (0.85) for better clarity
 - Text cleaning to remove problematic punctuation
@@ -53,7 +53,7 @@ os.makedirs(AUDIO_TEMP_DIR, exist_ok=True)
 
 # OPTIMAL QUALITY SETTINGS (discovered through testing)
 OPTIMAL_SETTINGS = {
-    "stability": 0.95,           # Maximum stability for consistency
+    "stability": 1.0,            # Robust stability (must be 0.0, 0.5, or 1.0 per ElevenLabs API)
     "similarity_boost": 1.0,     # Maximum similarity to original voice
     "style": 0.0,                # No exaggeration, pure neutral
     "use_speaker_boost": True,   # Enhanced clarity

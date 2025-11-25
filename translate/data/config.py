@@ -50,7 +50,7 @@ ENGLISH_VOICE_ID_FALLBACK = "21m00Tcm4TlvDq8ikWAM"  # Rachel - Backup option
 
 # ElevenLabs TTS - Premium Configuration
 ELEVENLABS_TTS_MODEL_ID = (
-    "eleven_multilingual_v2"  # Latest multilingual model for best quality
+    "eleven_v3"  # Latest multilingual model for best quality
 )
 
 # Voice settings for ElevenLabs API compatibility
@@ -61,7 +61,7 @@ DEFAULT_VOICE_SETTINGS = {
 
 # English voice settings for bilingual audio - Optimized for quality and stability
 ENGLISH_VOICE_SETTINGS = {
-    "stability": 0.95,           # Maximum stability for consistent output
+    "stability": 0.5,            # Natural stability (must be 0.0, 0.5, or 1.0 per ElevenLabs API)
     "similarity_boost": 1.0,     # Maximum similarity to original voice
     "use_speaker_boost": True,   # Enhanced speaker clarity
     "speed": 0.90,               # Slower for better clarity
@@ -88,7 +88,7 @@ TRANSLATION_TIMEOUT = 30
 
 # Author mapping for inbox folders and file prefixes
 AUTHOR_FOLDER_MAPPING = {
-    "1_al_imam_an_nawawi": "al-Imam an-Nawawi",
+    "1_al_imam_an_nawawi": "an-Nawawi",
     "2_ibn_al_qayyim": "Ibn al-Qayyim al-Jawziyyah",
     "3_ibn_taymiyyah": "Ibn Taymiyyah",
     "4_ibn_al_jawzi": "Ibn al-Jawzi",
@@ -102,7 +102,7 @@ AUTHOR_FOLDER_MAPPING = {
     "12_al_imam_at_tirmidhi": "al-Imam at-Tirmidhi",
     "13_al_imam_as_suyuti": "al-Imam as-Suyuti",
     "14_at_tabari": "at-Tabari",
-    "15_al_imam_al_dhahabi": "al-Imam al-Dhahabi",
+    "15_al_imam_al_dhahabi": "adh-Dhahabi",
 }
 
 # Derive author number mapping from folder mapping for single source of truth

@@ -18,9 +18,54 @@ def clean_arabic_text(text: str) -> str:
     return text.strip()
 
 
+def clean_text_for_tts(text: str) -> str:
+    """
+    Clean text for TTS by removing invisible/control characters while preserving content.
+    Works for both Arabic and English text.
+
+    Removes:
+    - Invisible characters (zero-width space, right-to-left marks, etc.)
+    - Control characters that can confuse TTS engines
+    - HTML tags
+
+    Preserves:
+    - All visible content (Arabic, English, numbers, punctuation)
+    - Proper spacing and formatting
+    """
+    if not text:
+        return text
+
+    # Remove HTML tags
+    text = re.sub(r"<[^>]+>", "", text)
+
+    # Remove invisible/control characters that can confuse TTS
+    invisible_chars = {
+        "\u200b": "",  # Zero-width space
+        "\u200c": "",  # Zero-width non-joiner
+        "\u200d": "",  # Zero-width joiner
+        "\u200e": "",  # Left-to-right mark
+        "\u200f": "",  # Right-to-left mark (common in Arabic text)
+        "\ufeff": "",  # Zero-width no-break space (BOM)
+        "\u2028": " ",  # Line separator -> space
+        "\u2029": " ",  # Paragraph separator -> space
+        "\u202a": "",  # Left-to-right embedding
+        "\u202b": "",  # Right-to-left embedding
+        "\u202c": "",  # Pop directional formatting
+        "\u202d": "",  # Left-to-right override
+        "\u202e": "",  # Right-to-left override
+    }
+    for char, replacement in invisible_chars.items():
+        text = text.replace(char, replacement)
+
+    # Normalize whitespace (multiple spaces -> single space)
+    text = re.sub(r"\s+", " ", text)
+
+    return text.strip()
+
+
 def preprocess_text_for_tts(text: str) -> str:
     """Preprocess text before sending to ElevenLabs TTS."""
-    return clean_arabic_text(text)
+    return clean_text_for_tts(text)
 
 
 def wrap_in_arabic_ssml(text: str) -> str:

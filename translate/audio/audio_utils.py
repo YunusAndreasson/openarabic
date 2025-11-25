@@ -33,6 +33,7 @@ from data.config import (
     GOOGLE_CLOUD_CREDENTIALS_PATH,
 )
 from data.models import AudioResult
+from utils.arabic_text import clean_text_for_tts
 from utils.config_common import get_storage_url
 from utils.exceptions import AudioGenerationError
 from utils.google_tts_service import GoogleTTSService
@@ -234,6 +235,9 @@ def generate_speech(
     try:
         client = _get_eleven_labs_client()
 
+        # Clean text before sending to ElevenLabs (removes invisible/control characters)
+        cleaned_text = clean_text_for_tts(text)
+
         # Use default voice settings if none provided
         if voice_settings is None:
             voice_settings = VoiceSettings(**DEFAULT_VOICE_SETTINGS)
@@ -242,7 +246,7 @@ def generate_speech(
 
         # Generate speech
         response = client.text_to_speech.convert(
-            text=text,
+            text=cleaned_text,
             voice_id=voice_id,
             model_id=ELEVENLABS_TTS_MODEL_ID,
             voice_settings=voice_settings,
