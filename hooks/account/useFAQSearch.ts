@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { LayoutAnimation } from 'react-native';
 
 import { getFAQExpandAnimation } from '@/constants/animation';
@@ -11,9 +11,6 @@ const POPULAR_QUESTION_IDS = [
   'spaced-repetition',
   'learning-speed',
 ] as const;
-
-/** Debounce delay for search input (ms) */
-const SEARCH_DEBOUNCE_MS = 150;
 
 interface UseFAQSearchOptions {
   /** Item ID to auto-expand on mount (from URL params) */
@@ -54,7 +51,7 @@ export const getFAQItemKey = (itemId: string, prefix?: string): string =>
  * Hook for managing FAQ search, filtering, and expand/collapse state.
  *
  * Features:
- * - Debounced search for performance
+ * - Deferred search using React 19's useDeferredValue for performance
  * - Expand/collapse state with layout animations
  * - Popular questions extraction
  * - Auto-expand from URL params
@@ -80,7 +77,10 @@ export function useFAQSearch({
 }: UseFAQSearchOptions = {}): UseFAQSearchResult {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  // React 19: useDeferredValue replaces manual debounce - automatically schedules
+  // low-priority updates based on device performance
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   // Auto-expand item from URL params
   useEffect(() => {
@@ -93,23 +93,10 @@ export function useFAQSearch({
     });
   }, [initialExpandedItem]);
 
-  // Debounce search query for performance
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, SEARCH_DEBOUNCE_MS);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
   const handleToggleItem = useCallback((id: string) => {
     // Use spring-based LayoutAnimation for natural expand/collapse feel
     const animationConfig = getFAQExpandAnimation();
-    if (
-      animationConfig &&
-      LayoutAnimation &&
-      typeof LayoutAnimation.configureNext === 'function'
-    ) {
+    if (animationConfig && LayoutAnimation && typeof LayoutAnimation.configureNext === 'function') {
       LayoutAnimation.configureNext(animationConfig);
     }
 
@@ -128,20 +115,19 @@ export function useFAQSearch({
     setSearchQuery('');
   }, []);
 
-  // Filter FAQ based on debounced search query for performance
+  // Filter FAQ based on deferred search query for performance
   const filteredFAQData = useMemo(() => {
-    if (!debouncedSearchQuery.trim()) return FAQ_DATA;
+    if (!deferredSearchQuery.trim()) return FAQ_DATA;
 
-    const query = debouncedSearchQuery.toLowerCase().trim();
+    const query = deferredSearchQuery.toLowerCase().trim();
     return FAQ_DATA.map(category => ({
       ...category,
       items: category.items.filter(
         item =>
-          item.question.toLowerCase().includes(query) ||
-          item.answer.toLowerCase().includes(query),
+          item.question.toLowerCase().includes(query) || item.answer.toLowerCase().includes(query),
       ),
     })).filter(category => category.items.length > 0);
-  }, [debouncedSearchQuery]);
+  }, [deferredSearchQuery]);
 
   const totalResults = useMemo(
     () => filteredFAQData.reduce((sum, category) => sum + category.items.length, 0),
@@ -159,7 +145,7 @@ export function useFAQSearch({
   }, []);
 
   // Only show popular questions when not searching
-  const showPopularQuestions = !debouncedSearchQuery.trim();
+  const showPopularQuestions = !deferredSearchQuery.trim();
 
   return {
     searchQuery,
