@@ -23,6 +23,9 @@ export * from './bookmarks';
 // App hooks
 export * from './app';
 
+// Card hooks
+export * from './cards';
+
 // Notification hooks
 export * from './notifications';
 

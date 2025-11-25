@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
+import React, { useCallback } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -15,10 +14,8 @@ import Animated, {
 import { ThemedText } from '@/components/ThemedText';
 import { PRESS_SCALE, SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { useProfilePhotoPicker } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
-import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
-import { getSafeStorage } from '@/utils/safeAsyncStorage';
 import { getFirstNameFromEmail } from '@/utils/stringUtils';
 
 // Static constants for performance
@@ -58,11 +55,20 @@ const getMemberSinceDate = (createdAt?: string) => {
 
 export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps) {
   const colors = useColors();
-  const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
   // Animation values
   const scaleValue = useSharedValue(1);
   const opacityValue = useSharedValue(0);
+
+  // Profile photo picker with local storage persistence
+  const { profilePhotoUri, selectPhoto } = useProfilePhotoPicker({
+    userId,
+    onPhotoLoaded: useCallback(() => {
+      // Animate in after loading (cancel any existing animation first)
+      cancelAnimation(opacityValue);
+      opacityValue.set(withTiming(1, TIMING_CONFIG.ENTRANCE));
+    }, [opacityValue]),
+  });
 
   // Cleanup animations on unmount
   React.useEffect(() => {
@@ -83,105 +89,6 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   const firstName = getFirstNameFromEmail(userEmail);
   const memberSince = formatMemberSince(getMemberSinceDate(createdAt));
   const initials = getInitials(firstName);
-  const storageKey = `profile_photo_${userId}`;
-
-  // Load saved profile photo on mount
-  useEffect(() => {
-    const loadProfilePhoto = async () => {
-      try {
-        const storage = getSafeStorage();
-        const savedUri = await storage.getItem(storageKey);
-        if (savedUri) {
-          setProfilePhotoUri(savedUri);
-        }
-      } catch (error) {
-        handleError(error as Error, { showToast: false });
-      } finally {
-        // Animate in after loading (cancel any existing animation first)
-        cancelAnimation(opacityValue);
-        opacityValue.set(withTiming(1, TIMING_CONFIG.ENTRANCE));
-      }
-    };
-
-    loadProfilePhoto();
-  }, [userId, storageKey, opacityValue]);
-
-  // Handle photo selection
-  const handlePhotoSelect = useCallback(async () => {
-    try {
-      const storage = getSafeStorage();
-      const permissionDeniedKey = `photo_permission_denied_${userId}`;
-
-      // Check if permission was previously denied (subsequent attempt)
-      const wasPreviouslyDenied = await storage.getItem(permissionDeniedKey);
-
-      if (wasPreviouslyDenied === 'true') {
-        // User is trying to use feature after denying permission - show informational alert
-        // This is explicitly allowed by both Apple and Google Play policies
-        Alert.alert(
-          'Permission Required',
-          'Photo library access is needed to select a profile photo. Please enable it in Settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => Linking.openSettings() },
-          ],
-        );
-        return;
-      }
-
-      // Show prominent disclosure BEFORE requesting permissions (Google Play requirement)
-      // Note: No "Cancel" button per Apple guideline 5.1.1 - user must proceed to system dialog
-      await new Promise<void>(resolve => {
-        Alert.alert(
-          'Profile Photo',
-          'OpenArabic accesses your photo library to let you select a profile photo for your account. The photo is stored locally on your device and is never uploaded to our servers.',
-          [
-            {
-              text: 'Continue',
-              onPress: () => resolve(),
-            },
-          ],
-        );
-      });
-
-      // Request permissions - this will show the system permission dialog
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (status !== 'granted') {
-        // Save denied state for subsequent attempts
-        await storage.setItem(permissionDeniedKey, 'true');
-        // Accept denial silently (Apple requirement - no retry, no auto-redirect)
-        return;
-      }
-
-      // Launch image picker
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        selectionLimit: 1,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const selectedUri = result.assets[0].uri;
-
-        // Save to local storage
-        await storage.setItem(storageKey, selectedUri);
-
-        // Update state
-        setProfilePhotoUri(selectedUri);
-
-        // Success feedback after selection completed
-        selectionFeedback();
-      }
-    } catch (error) {
-      handleError(error as Error, {
-        toastMessage: 'Failed to select profile photo',
-        showToast: true,
-      });
-    }
-  }, [storageKey, userId]);
 
   // Handle photo press animation
   const handlePhotoPress = useCallback(() => {
@@ -192,8 +99,8 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
         withSpring(1, SPRING_CONFIG.BUTTON),
       ),
     );
-    handlePhotoSelect();
-  }, [scaleValue, handlePhotoSelect]);
+    selectPhoto();
+  }, [scaleValue, selectPhoto]);
 
   // Animated styles
   const containerAnimatedStyle = useAnimatedStyle(() => ({

@@ -1,18 +1,17 @@
 import { BaseCard } from '@/components/common/BaseCard';
 import { ProgressBar } from '@/components/common/ProgressBar';
-import { useEffect, type FC } from 'react';
+import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
-import { CARD_DRAG_SCALE, SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
 
 import { DeleteButton } from './DeleteButton';
 import { DragHandle, type DragHandleProps } from './DragHandle';
 import { PlayButton } from './PlayButton';
 import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { useTransformAnimation } from '@/hooks/animations';
+import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
@@ -57,27 +56,12 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = ({
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
 
-  const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
-    type: 'scale',
-    initialValue: 1,
-    targetValue: 1,
-    useSpring: true,
-    damping: SPRING_CONFIG.RESPONSIVE.damping,
-    stiffness: SPRING_CONFIG.RESPONSIVE.stiffness,
+  // Edit mode animation (scales down when in edit mode or being dragged)
+  const { animatedStyle } = useEditModeCardAnimation({
+    editMode,
+    isBeingDragged,
+    shouldAnimateOnMount,
   });
-
-  useEffect(() => {
-    if (isBeingDragged) {
-      setValue(CARD_DRAG_SCALE);
-    } else if (editMode) {
-      setValue(WORD_PRESS_SCALE);
-    } else if (shouldAnimateOnMount) {
-      startAnimation();
-    } else {
-      // Ensure we are at the target value without triggering an animation
-      setValue(1);
-    }
-  }, [editMode, isBeingDragged, shouldAnimateOnMount, startAnimation, setValue]);
 
   // Enhanced title and secondary text styles with semantic colors
   const titleOpacity = getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode);

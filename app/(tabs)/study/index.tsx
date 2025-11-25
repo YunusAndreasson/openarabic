@@ -2,7 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { InteractionManager, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -26,6 +26,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/study/useStudyStreak';
 import { useColors } from '@/hooks/theme';
+import { useBottomSheetManager } from '@/hooks/ui';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { Article } from '@/types/articles.types';
@@ -34,6 +35,8 @@ import { ReviewAction } from '@/types/enums';
 import { getBeginnerArticles } from '@/utils/articleUtils';
 import { mediumFeedback } from '@/utils/haptics';
 import { calculateWordCategories } from '@/utils/wordClassification';
+
+type BottomSheetKey = 'memory' | 'due' | 'streak' | 'mastered';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -51,10 +54,8 @@ export default function VocabularyScreen(): JSX.Element {
     return beginnerArticles.slice(0, 3);
   }, [allArticles]);
 
-  // Single coordinated state for bottom sheet visibility
-  const [activeBottomSheet, setActiveBottomSheet] = useState<
-    'memory' | 'due' | 'streak' | 'mastered' | null
-  >(null);
+  // Bottom sheet visibility management (only one sheet visible at a time)
+  const { showSheet, hideSheet, isVisible } = useBottomSheetManager<BottomSheetKey>();
 
   // Fetch study streak data
   const { streak } = useStudyStreak();
@@ -137,36 +138,11 @@ export default function VocabularyScreen(): JSX.Element {
     router.push(getStudyReviewRoute());
   }, [user, router]);
 
-  // Bottom sheet handler
-  const handleBottomSheetChange = useCallback(
-    (sheet: 'memory' | 'due' | 'streak' | 'mastered' | null) => {
-      setActiveBottomSheet(sheet);
-    },
-    [],
-  );
-
-  // Handle memory strength gauge info press - now opens bottom sheet
-  const handleMemoryStrengthInfo = useCallback(() => {
-    handleBottomSheetChange('memory');
-  }, [handleBottomSheetChange]);
-
-  // Handle closing any bottom sheet
-  const handleCloseBottomSheet = useCallback(() => {
-    handleBottomSheetChange(null);
-  }, [handleBottomSheetChange]);
-
-  // Handle card presses
-  const handleDuePress = useCallback(() => {
-    handleBottomSheetChange('due');
-  }, [handleBottomSheetChange]);
-
-  const handleStreakPress = useCallback(() => {
-    handleBottomSheetChange('streak');
-  }, [handleBottomSheetChange]);
-
-  const handleMasteredPress = useCallback(() => {
-    handleBottomSheetChange('mastered');
-  }, [handleBottomSheetChange]);
+  // Bottom sheet press handlers
+  const handleMemoryStrengthInfo = useCallback(() => showSheet('memory'), [showSheet]);
+  const handleDuePress = useCallback(() => showSheet('due'), [showSheet]);
+  const handleStreakPress = useCallback(() => showSheet('streak'), [showSheet]);
+  const handleMasteredPress = useCallback(() => showSheet('mastered'), [showSheet]);
 
   // Handle article press from recommendations
   const handleRecommendedArticlePress = useCallback(
@@ -374,25 +350,10 @@ export default function VocabularyScreen(): JSX.Element {
       )}
 
       {/* Coordinated Bottom Sheets - only one can be visible at a time */}
-      <MemoryRetentionBottomSheet
-        isVisible={activeBottomSheet === 'memory'}
-        onClose={handleCloseBottomSheet}
-      />
-
-      <DueWordsBottomSheet
-        isVisible={activeBottomSheet === 'due'}
-        onClose={handleCloseBottomSheet}
-      />
-
-      <StudyStreakBottomSheet
-        isVisible={activeBottomSheet === 'streak'}
-        onClose={handleCloseBottomSheet}
-      />
-
-      <WordsMasteredBottomSheet
-        isVisible={activeBottomSheet === 'mastered'}
-        onClose={handleCloseBottomSheet}
-      />
+      <MemoryRetentionBottomSheet isVisible={isVisible('memory')} onClose={hideSheet} />
+      <DueWordsBottomSheet isVisible={isVisible('due')} onClose={hideSheet} />
+      <StudyStreakBottomSheet isVisible={isVisible('streak')} onClose={hideSheet} />
+      <WordsMasteredBottomSheet isVisible={isVisible('mastered')} onClose={hideSheet} />
     </ThemedView>
   );
 }

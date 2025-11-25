@@ -2,24 +2,27 @@
 import { TimePicker } from '@/components/ui';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState, type FC } from 'react';
-import { Alert, Linking, StyleSheet } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { THEME_OPTIONS } from '@/components/ThemePicker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { AccountBadge } from '@/components/account';
-import { SettingsCard } from '@/components/account';
-import { SettingsSection } from '@/components/account';
+import { AccountBadge, SettingsCard, SettingsSection } from '@/components/account';
+import {
+  AboutSection,
+  AppearanceSection,
+  DangerZoneSection,
+  SocialMediaSection,
+} from '@/components/account/settings';
 import { BrandFooter } from '@/components/library';
+import { useTutorialContext } from '@/components/providers';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useTutorialContext } from '@/components/providers';
 import { useAccountScreen } from '@/hooks/account';
-import { useColors } from '@/hooks/theme/useColors';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
@@ -27,8 +30,6 @@ import {
   setAudioShuffleEnabled,
   setDailyWordLimit,
   setDisplayLanguagePreference,
-  setHapticsEnabled,
-  setWordDetailsEnabled,
   type AudioLanguagePreference,
   type DisplayLanguagePreference,
 } from '@/store/settingsSlice';
@@ -53,7 +54,6 @@ function validateEnumValue<T>(value: unknown, validValues: readonly T[], default
 type ActivePicker = 'theme' | 'language' | 'audioLanguage' | 'dailyWordLimit' | null;
 
 const AccountScreen: FC = () => {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
 
   // Get theme with validation
@@ -91,8 +91,6 @@ const AccountScreen: FC = () => {
 
   const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
   const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
-  const hapticsEnabled = useAppSelectorShallow(state => state.settings.hapticsEnabled);
-  const wordDetailsEnabled = useAppSelectorShallow(state => state.settings.wordDetailsEnabled);
   const dispatch = useAppDispatch();
 
   const [activePicker, setActivePicker] = React.useState<ActivePicker>(null);
@@ -157,12 +155,6 @@ const AccountScreen: FC = () => {
     setActivePicker(null);
   }, []);
 
-  // Delete Account handler
-  const handleDeleteAccountPress = useCallback(() => {
-    errorFeedback();
-    router.push(ROUTE_PATHS.ACCOUNT_DELETE_ACCOUNT);
-  }, []);
-
   // Reset tutorials handler
   const handleResetTutorials = useCallback(async () => {
     Alert.alert(
@@ -189,44 +181,11 @@ const AccountScreen: FC = () => {
     );
   }, [resetAllTutorials]);
 
-  // Social Media handlers
-  const handleSocialMediaPress = useCallback(async (url: string) => {
-    try {
-      await Linking.openURL(url);
-    } catch (error) {
-      handleError(error as Error, {
-        analyticsEventName: 'Social_Media_Link_Failed',
-        sentryTags: { location: 'account_screen', action: 'social_media' },
-        sentryExtra: { url },
-        showToast: false, // Silent failure for social media links
-        sentrySeverity: 'info', // Not critical, just informational
-      });
-    }
-  }, []);
-
   // Audio Shuffle toggle handler
   const handleAudioShuffleToggle = useCallback(
     (enabled: boolean) => {
       selectionFeedback();
       dispatch(setAudioShuffleEnabled(enabled));
-    },
-    [dispatch],
-  );
-
-  // Haptics toggle handler
-  const handleHapticsToggle = useCallback(
-    (enabled: boolean) => {
-      selectionFeedback();
-      dispatch(setHapticsEnabled(enabled));
-    },
-    [dispatch],
-  );
-
-  // Word details toggle handler
-  const handleWordDetailsToggle = useCallback(
-    (enabled: boolean) => {
-      selectionFeedback();
-      dispatch(setWordDetailsEnabled(enabled));
     },
     [dispatch],
   );
@@ -396,44 +355,13 @@ const AccountScreen: FC = () => {
         )}
 
         {/* Appearance - All visual customization together */}
-        <SettingsSection title={STRINGS.APPEARANCE_SECTION}>
-          <SettingsCard
-            icon="color-palette"
-            label={STRINGS.THEME}
-            rightType="text-chevron"
-            rightText={currentThemeText}
-            onPress={() => handlePickerOpen('theme')}
-          />
-          <SettingsCard
-            icon="text"
-            label={STRINGS.ARABIC_FONT}
-            rightType="text-chevron"
-            rightText={currentArabicFontText}
-            onPress={() => router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR)}
-          />
-          <SettingsCard
-            icon="language"
-            label={STRINGS.DISPLAY_LANGUAGE}
-            rightType="text-chevron"
-            rightText={currentLanguageText}
-            onPress={() => handlePickerOpen('language')}
-          />
-          <SettingsCard
-            icon="eye-off-outline"
-            label={STRINGS.WORD_DETAILS}
-            subtitle={STRINGS.WORD_DETAILS_DESCRIPTION}
-            rightType="toggle"
-            toggleValue={!wordDetailsEnabled}
-            onToggleChange={enabled => handleWordDetailsToggle(!enabled)}
-          />
-          <SettingsCard
-            icon="pulse"
-            label={STRINGS.HAPTICS}
-            rightType="toggle"
-            toggleValue={hapticsEnabled}
-            onToggleChange={handleHapticsToggle}
-          />
-        </SettingsSection>
+        <AppearanceSection
+          currentThemeText={currentThemeText}
+          currentLanguageText={currentLanguageText}
+          currentArabicFontText={currentArabicFontText}
+          onThemePress={() => handlePickerOpen('theme')}
+          onLanguagePress={() => handlePickerOpen('language')}
+        />
 
         {/* Audio & Playback - Audio settings */}
         <SettingsSection title={AccountSection.AUDIO_PLAYBACK}>
@@ -515,48 +443,10 @@ const AccountScreen: FC = () => {
         </SettingsSection>
 
         {/* About - Legal and informational */}
-        <SettingsSection title={STRINGS.ABOUT_SECTION}>
-          <SettingsCard
-            icon="document-text"
-            label={STRINGS.TERMS_OF_SERVICE}
-            rightType="chevron"
-            onPress={() => router.push(ROUTE_PATHS.TERMS)}
-          />
-          <SettingsCard
-            icon="shield-checkmark"
-            label={STRINGS.PRIVACY_POLICY}
-            rightType="chevron"
-            onPress={() => router.push(ROUTE_PATHS.PRIVACY)}
-          />
-          <SettingsCard
-            icon="documents"
-            label={STRINGS.LEGAL_ATTRIBUTIONS}
-            rightType="chevron"
-            onPress={() => router.push(ROUTE_PATHS.LEGAL)}
-          />
-        </SettingsSection>
+        <AboutSection />
 
         {/* Follow Us - Social media links */}
-        <SettingsSection title={STRINGS.FOLLOW_US}>
-          <SettingsCard
-            icon="logo-twitter"
-            label={STRINGS.TWITTER}
-            rightType="chevron"
-            onPress={() => handleSocialMediaPress(STRINGS.TWITTER_URL)}
-          />
-          <SettingsCard
-            icon="logo-instagram"
-            label={STRINGS.INSTAGRAM}
-            rightType="chevron"
-            onPress={() => handleSocialMediaPress(STRINGS.INSTAGRAM_URL)}
-          />
-          <SettingsCard
-            icon="logo-facebook"
-            label={STRINGS.FACEBOOK}
-            rightType="chevron"
-            onPress={() => handleSocialMediaPress(STRINGS.FACEBOOK_URL)}
-          />
-        </SettingsSection>
+        <SocialMediaSection />
 
         {/* Storage & Account - Data management and session */}
         <SettingsSection title="Storage & Account">
@@ -588,28 +478,7 @@ const AccountScreen: FC = () => {
         </SettingsSection>
 
         {/* Danger Zone - Destructive actions */}
-        <SettingsSection title={STRINGS.DANGER_ZONE_SECTION} dangerZone>
-          <SettingsCard
-            icon="refresh"
-            label={STRINGS.RESET_READING_PROGRESS}
-            subtitle={STRINGS.RESET_READING_PROGRESS_DESCRIPTION}
-            rightType="chevron"
-            iconColor={colors.error}
-            textColor="error"
-            backgroundColor={`${colors.error}0D`}
-            onPress={handleResetReadingProgress}
-          />
-          <SettingsCard
-            icon="trash"
-            label={STRINGS.DELETE_ACCOUNT}
-            subtitle={STRINGS.DELETE_ACCOUNT_DESCRIPTION}
-            rightType="chevron"
-            iconColor={colors.error}
-            textColor="error"
-            backgroundColor={`${colors.error}0D`}
-            onPress={handleDeleteAccountPress}
-          />
-        </SettingsSection>
+        <DangerZoneSection onResetReadingProgress={handleResetReadingProgress} />
 
         {/* App Footer */}
         <BrandFooter />

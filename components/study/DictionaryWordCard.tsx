@@ -5,10 +5,9 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from '@/components/bookmarks';
-import { SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { useTransformAnimation } from '@/hooks/animations';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
+import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { getStabilityProgressColor } from '@/utils/urgencyScore';
@@ -26,22 +25,8 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     // Use consolidated word audio playback hook
     const playWordAudio = useWordAudioPlayback({ showErrorToast: false });
 
-    // Transform animation for edit mode (similar to bookmarks)
-    const { animatedStyle, setValue } = useTransformAnimation({
-      type: 'scale',
-      initialValue: 1,
-      targetValue: 1,
-      useSpring: true,
-      damping: SPRING_CONFIG.RESPONSIVE.damping,
-      stiffness: SPRING_CONFIG.RESPONSIVE.stiffness,
-    });
-
-    // Apply edit mode scaling
-    if (editMode) {
-      setValue(WORD_PRESS_SCALE);
-    } else {
-      setValue(1);
-    }
+    // Edit mode animation (scales down when in edit mode)
+    const { animatedStyle } = useEditModeCardAnimation({ editMode });
 
     // Handle audio playback for word pronunciation when card is pressed
     const handleCardPress = useCallback(async () => {

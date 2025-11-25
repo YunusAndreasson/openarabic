@@ -1,13 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
 import { memo, useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
-  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -20,13 +18,13 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { useScreenshotAttachment } from '@/hooks/account';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme';
 import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback, selectionFeedback } from '@/utils/haptics';
-import { getSafeStorage } from '@/utils/safeAsyncStorage';
+import { lightFeedback } from '@/utils/haptics';
 
 const MIN_CHARACTERS = 10;
 
@@ -35,7 +33,11 @@ export const FeedbackForm = memo(() => {
   const { user } = useAuth();
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
+
+  // Screenshot attachment with permission handling
+  const { screenshotUri, handleAddScreenshot, handleRemoveScreenshot } = useScreenshotAttachment({
+    userId: user?.id,
+  });
 
   const characterCount = message.trim().length;
 
@@ -44,87 +46,6 @@ export const FeedbackForm = memo(() => {
     if (characterCount < MIN_CHARACTERS) return colors.error;
     return colors.tint;
   }, [characterCount, colors.textTertiary, colors.error, colors.tint]);
-
-  const handleAddScreenshot = useCallback(async () => {
-    try {
-      const permissionDeniedKey = `screenshot_permission_denied_${user?.id || 'anonymous'}`;
-      const storage = getSafeStorage();
-
-      // Check if permission was previously denied (subsequent attempt)
-      const wasPreviouslyDenied = await storage.getItem(permissionDeniedKey);
-
-      if (wasPreviouslyDenied === 'true') {
-        // User is trying to use feature after denying permission - show informational alert
-        // This is explicitly allowed by both Apple and Google Play policies
-        Alert.alert(
-          'Permission Required',
-          'Photo library access is needed to attach screenshots. Please enable it in Settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => Linking.openSettings() },
-          ],
-        );
-        return;
-      }
-
-      // Show prominent disclosure BEFORE requesting permissions (Google Play requirement)
-      // Note: No "Cancel" button per Apple guideline 5.1.1 - user must proceed to system dialog
-      await new Promise<void>(resolve => {
-        Alert.alert(
-          'Screenshot Upload Notice',
-          'OpenArabic collects screenshot images to help our team investigate and resolve reported issues. Screenshots are uploaded to our servers and attached to your feedback report.',
-          [
-            {
-              text: 'Continue',
-              onPress: () => resolve(),
-            },
-          ],
-        );
-      });
-
-      // Check current permission status first
-      const { status: existingStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
-
-      let finalStatus = existingStatus;
-
-      // Only request if not already granted
-      if (existingStatus !== 'granted') {
-        const { status: newStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        finalStatus = newStatus;
-      }
-
-      if (finalStatus !== 'granted') {
-        // Save denied state for subsequent attempts
-        await storage.setItem(permissionDeniedKey, 'true');
-        // Accept denial silently (Apple requirement - no retry, no auto-redirect)
-        return;
-      }
-
-      // Launch image picker
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: false,
-        quality: 0.8,
-        exif: false,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setScreenshotUri(result.assets[0].uri);
-        selectionFeedback();
-      }
-    } catch (error) {
-      handleError(error as Error, {
-        showToast: false,
-        analyticsEventName: 'Feedback_Screenshot_Picker_Error',
-      });
-      Alert.alert('Error', 'Could not open photo library. Please try again.');
-    }
-  }, [user?.id]);
-
-  const handleRemoveScreenshot = useCallback(() => {
-    setScreenshotUri(null);
-    selectionFeedback();
-  }, []);
 
   const handleSubmit = useCallback(async () => {
     if (!message || message.trim().length === 0) {

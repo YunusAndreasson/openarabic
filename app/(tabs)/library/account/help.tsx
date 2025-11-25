@@ -1,8 +1,8 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { memo, useCallback, useEffect, useMemo, useState, type FC } from 'react';
-import { LayoutAnimation, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import React, { memo, useCallback, useMemo, type FC } from 'react';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -10,13 +10,13 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArabicColoringExamples } from '@/components/account/ArabicColoringExamples';
 import { BaseCard } from '@/components/common';
-import { getFAQExpandAnimation } from '@/constants/animation';
-import { FAQ_DATA, type FAQCategoryData, type FAQItem } from '@/constants/faq';
+import { type FAQCategoryData, type FAQItem } from '@/constants/faq';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { FAQCategory } from '@/types/enums';
+import { getFAQItemKey, useFAQSearch } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
+import { FAQCategory } from '@/types/enums';
 import { lightFeedback } from '@/utils/haptics';
 import { parseTextWithEmails } from '@/utils/textUtils';
 
@@ -28,19 +28,6 @@ const CATEGORY_ICONS: Record<FAQCategory, keyof typeof Ionicons.glyphMap> = {
   [FAQCategory.LEARNING_APPROACH]: 'school',
   [FAQCategory.PRIVACY_DATA]: 'lock-closed',
 };
-
-// Popular questions (most common user queries)
-const POPULAR_QUESTION_IDS = [
-  'what-is-app',
-  'arabic-text-coloring',
-  'spaced-repetition',
-  'learning-speed',
-] as const;
-
-// Helper: Generate unique key for FAQ items
-// Popular questions use prefix to avoid conflicts with category duplicates
-const getFAQItemKey = (itemId: string, prefix?: string): string =>
-  prefix ? `${prefix}-${itemId}` : itemId;
 
 // FAQ item component props
 interface FAQItemComponentProps {
@@ -57,15 +44,6 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
     const colors = useColors();
 
     const handlePress = useCallback(() => {
-      // Use spring-based LayoutAnimation for natural expand/collapse feel
-      const animationConfig = getFAQExpandAnimation();
-      if (
-        animationConfig &&
-        LayoutAnimation &&
-        typeof LayoutAnimation.configureNext === 'function'
-      ) {
-        LayoutAnimation.configureNext(animationConfig);
-      }
       onToggle(uniqueKey);
     }, [uniqueKey, onToggle]);
 
@@ -203,79 +181,25 @@ const HelpScreen: FC = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ expandItem?: string }>();
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
-  // Auto-expand item from URL params
-  useEffect(() => {
-    const itemToExpand = params.expandItem;
-    if (!itemToExpand) return;
-
-    setExpandedItems(prev => {
-      const newSet = new Set(prev);
-      newSet.add(itemToExpand);
-      return newSet;
-    });
-  }, [params.expandItem]);
-
-  // Debounce search query for performance (150ms delay)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 150);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const handleToggleItem = useCallback((id: string) => {
-    setExpandedItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  }, []);
-
-  // Filter FAQ based on debounced search query for performance
-  const filteredFAQData = useMemo(() => {
-    if (!debouncedSearchQuery.trim()) return FAQ_DATA;
-
-    const query = debouncedSearchQuery.toLowerCase().trim();
-    return FAQ_DATA.map(category => ({
-      ...category,
-      items: category.items.filter(
-        item =>
-          item.question.toLowerCase().includes(query) || item.answer.toLowerCase().includes(query),
-      ),
-    })).filter(category => category.items.length > 0);
-  }, [debouncedSearchQuery]);
+  // FAQ search and state management
+  const {
+    searchQuery,
+    setSearchQuery,
+    clearSearch,
+    expandedItems,
+    handleToggleItem,
+    filteredFAQData,
+    totalResults,
+    hasResults,
+    showPopularQuestions,
+    popularQuestions,
+  } = useFAQSearch({ initialExpandedItem: params.expandItem });
 
   const handleClearSearch = useCallback(() => {
     lightFeedback();
-    setSearchQuery('');
-  }, []);
-
-  const totalResults = useMemo(
-    () => filteredFAQData.reduce((sum, category) => sum + category.items.length, 0),
-    [filteredFAQData],
-  );
-
-  const hasResults = totalResults > 0;
-
-  // Get popular questions for quick access
-  const popularQuestions = useMemo(() => {
-    const allQuestions = FAQ_DATA.flatMap(category => category.items);
-    return POPULAR_QUESTION_IDS.map(id => allQuestions.find(q => q.id === id)).filter(
-      Boolean,
-    ) as FAQItem[];
-  }, []);
-
-  // Only show popular questions when not searching
-  const showPopularQuestions = !debouncedSearchQuery.trim();
+    clearSearch();
+  }, [clearSearch]);
 
   return (
     <ThemedView
