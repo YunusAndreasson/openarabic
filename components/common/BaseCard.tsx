@@ -2,9 +2,10 @@ import { type FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { LAYOUT } from '@/constants/layout';
+import { getDarkModeBorderStyle, getThemeAwareElevation, LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseCardProps } from '@/types/ui/card.types';
 import { createCardContentStyle } from '@/utils/textStyleUtils';
 
@@ -20,28 +21,29 @@ export const BaseCard: FC<BaseCardProps> = ({
   testID,
 }) => {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
   // Use sophisticated press animation for better feel and scroll compatibility
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',
   });
 
+  // 2025 Dark Mode: Use theme-aware elevation (no shadows in dark mode)
   let shadowStyles = {};
   if (shadowSize !== 'none') {
-    switch (shadowSize) {
-      case 'subtle':
-        shadowStyles = LAYOUT.ELEVATION.SUBTLE;
-        break;
-      case 'small':
-        shadowStyles = LAYOUT.ELEVATION.SMALL;
-        break;
-      case 'large':
-        shadowStyles = LAYOUT.ELEVATION.LARGE;
-        break;
-      default:
-        shadowStyles = LAYOUT.ELEVATION.MEDIUM;
-    }
+    const level =
+      shadowSize === 'subtle'
+        ? 'SUBTLE'
+        : shadowSize === 'small'
+          ? 'SMALL'
+          : shadowSize === 'large'
+            ? 'LARGE'
+            : 'MEDIUM';
+    shadowStyles = getThemeAwareElevation(level, isDarkMode);
   }
+
+  // 2025 Dark Mode: Borders replace shadows for visual card definition
+  const darkModeBorder = getDarkModeBorderStyle(isDarkMode);
 
   const combinedCardStyle = [
     styles.card,
@@ -50,6 +52,9 @@ export const BaseCard: FC<BaseCardProps> = ({
     shadowSize !== 'none' && {
       shadowColor: colors.shadow,
     },
+    // Add border in dark mode for card definition (replaces invisible shadows)
+    darkModeBorder,
+    isDarkMode && { borderColor: colors.border },
     style,
   ];
 

@@ -8,7 +8,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui/button.types';
 import { createPadding } from '@/utils/layoutUtils';
 import { createButtonTextStyle } from '@/utils/textStyleUtils';
@@ -74,7 +73,6 @@ export function ThemedButton({
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'button', // Scale-only feedback for better accessibility and performance
@@ -103,9 +101,7 @@ export function ThemedButton({
   const textColor = disabled
     ? colors.disabled
     : variant === 'filled'
-      ? isDarkMode
-        ? colors.black
-        : colors.white // Use white text for all light themes filled buttons for better contrast
+      ? colors.white // White text on tint background provides best contrast in all themes
       : colors.tint;
   const iconSize = getIconSize(size, customIconSize);
 
@@ -170,9 +166,7 @@ export function ThemedButton({
                 disabled
                   ? 'disabled'
                   : variant === 'filled'
-                    ? isDarkMode
-                      ? 'black'
-                      : 'white'
+                    ? 'white' // White text on tint background for all themes
                     : 'tint'
               }
               style={[buttonTextStyle, textOpacityStyle]}

@@ -15,7 +15,6 @@ import { useStudyStreak } from '@/hooks/study';
 import { useColors } from '@/hooks/theme/useColors';
 import { UiAction } from '@/types/enums';
 import type { SessionMetrics } from '@/types/review.types';
-import { withOpacity } from '@/utils/colorUtils';
 import { createMargin, createPadding, COMMON_STYLES } from '@/utils/layoutUtils';
 
 interface CompletionScreenProps {
@@ -96,8 +95,8 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
                 style={[
                   styles.metricItem,
                   {
-                    backgroundColor: withOpacity(colors.black, 0.02),
-                    borderColor: withOpacity(colors.black, 0.05),
+                    backgroundColor: colors.elevation1,
+                    borderColor: colors.border,
                   },
                 ]}
               >
