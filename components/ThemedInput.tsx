@@ -31,7 +31,7 @@ const InputIcon = ({
   colors: ReturnType<typeof useColors>;
 }) => (
   <Ionicons
-    color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
+    color={error ? colors.error : isFocused ? colors.tint : colors.icon}
     name={name}
     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
     style={styles.leftIcon}
@@ -53,7 +53,7 @@ const RightInputIcon = ({
 }) => (
   <TouchableOpacity hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={styles.rightIcon} onPress={onPress}>
     <Ionicons
-      color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
+      color={error ? colors.error : isFocused ? colors.tint : colors.icon}
       name={name}
       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
     />
@@ -88,11 +88,11 @@ export function ThemedInput({
       styles.container,
       {
         backgroundColor: colors.elevation1,
-        borderColor: error ? colors.icon : isFocused ? colors.tabIconSelected : colors.tint,
+        borderColor: error ? colors.error : isFocused ? colors.tabIconSelected : colors.tint,
       },
       isFocused && styles.containerFocused,
     ],
-    [colors.elevation1, colors.icon, colors.tabIconSelected, colors.tint, error, isFocused],
+    [colors.elevation1, colors.error, colors.tabIconSelected, colors.tint, error, isFocused],
   );
 
   const inputStyle = useMemo(

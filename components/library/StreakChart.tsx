@@ -4,6 +4,7 @@ import { Dimensions, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 import type { DailyReadingActivity, StreakPeriod } from '@/services/studyStreak';
 
 interface StreakChartProps {
@@ -17,21 +18,6 @@ const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
 const BAR_RADIUS = LAYOUT.BORDER_RADIUS.SMALL; // ~8 via constants
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const BAR_GAP = LAYOUT.CHART.BAR_GAP; // 2 via constants
-
-/**
- * Convert hex color and opacity to RGBA string for Skia
- */
-const hexToRGBA = (hex: string, opacity: number): string => {
-  // Remove # if present
-  const cleanHex = hex.replace('#', '');
-
-  // Parse RGB values
-  const r = parseInt(cleanHex.substring(0, 2), 16);
-  const g = parseInt(cleanHex.substring(2, 4), 16);
-  const b = parseInt(cleanHex.substring(4, 6), 16);
-
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-};
 
 // Extract expensive calculations outside component
 const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPeriod> => {
@@ -105,7 +91,7 @@ export const StreakChart = memo<StreakChartProps>(
         const x = index * (barWidth + BAR_GAP);
 
         // Convert to RGBA color for Skia
-        const color = hexToRGBA(barColor, barOpacity);
+        const color = withOpacity(barColor, barOpacity);
 
         return {
           key: activity.date,

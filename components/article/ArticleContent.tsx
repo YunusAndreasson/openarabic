@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE, // Larger title (34px)
     letterSpacing: -0.5, // Tighter tracking for refined modern look
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE * 1.15, // Better multi-line spacing
-    textShadowColor: 'rgba(0, 0, 0, 0.15)', // Subtle shadow for legibility
+    // textShadowColor applied inline via colors.textShadow for theme consistency
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
@@ -195,7 +195,7 @@ const ArticleContentInternal = function ArticleContent({
         <ThemedText
           type="heading1"
           colorName="headingText"
-          style={[styles.titleText, styles.leftAlign]}
+          style={[styles.titleText, styles.leftAlign, { textShadowColor: colors.shadow }]}
         >
           {article.title}
         </ThemedText>
