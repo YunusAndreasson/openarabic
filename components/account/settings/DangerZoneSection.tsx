@@ -2,6 +2,7 @@ import { memo, useCallback } from 'react';
 import { router } from 'expo-router';
 
 import { SettingsCard, SettingsSection } from '@/components/account';
+import { OPACITY_HEX } from '@/constants/colors';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -35,7 +36,7 @@ export const DangerZoneSection = memo<DangerZoneSectionProps>(({ onResetReadingP
         rightType="none"
         iconColor={colors.error}
         textColor="error"
-        backgroundColor={`${colors.error}0D`}
+        backgroundColor={`${colors.error}${OPACITY_HEX.FAINT}`}
         onPress={onResetReadingProgress}
       />
       <SettingsCard
@@ -45,7 +46,7 @@ export const DangerZoneSection = memo<DangerZoneSectionProps>(({ onResetReadingP
         rightType="chevron"
         iconColor={colors.error}
         textColor="error"
-        backgroundColor={`${colors.error}0D`}
+        backgroundColor={`${colors.error}${OPACITY_HEX.FAINT}`}
         onPress={handleDeleteAccountPress}
       />
     </SettingsSection>

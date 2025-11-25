@@ -110,7 +110,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
   };
 
   return (
-    <BaseCard shadowSize="none" style={cardStyle} onPress={onPress}>
+    <BaseCard shadowSize="subtle" style={cardStyle} onPress={onPress}>
       <View style={styles.content}>
         <View style={styles.left}>
           <View style={styles.iconContainer}>
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   content: {
     alignItems: 'center',

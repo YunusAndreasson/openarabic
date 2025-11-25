@@ -138,8 +138,8 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
     },
     editIconContainer: {
       position: 'absolute' as const,
-      bottom: -2,
-      right: -2,
+      bottom: 0,
+      right: 0,
       width: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
       height: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
       borderRadius: LAYOUT.BUTTON.ICON_SIZE.MEDIUM / 2,
@@ -186,7 +186,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
 
                 {/* Edit Icon Overlay */}
                 <View style={dynamicStyles.editIconContainer}>
-                  <Ionicons name="camera" size={12} color={colors.background} />
+                  <Ionicons name="camera" size={14} color={colors.background} />
                 </View>
               </View>
             </Animated.View>

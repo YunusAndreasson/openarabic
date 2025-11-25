@@ -29,6 +29,9 @@ export const BaseCard: FC<BaseCardProps> = ({
   let shadowStyles = {};
   if (shadowSize !== 'none') {
     switch (shadowSize) {
+      case 'subtle':
+        shadowStyles = LAYOUT.ELEVATION.SUBTLE;
+        break;
       case 'small':
         shadowStyles = LAYOUT.ELEVATION.SMALL;
         break;

@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BaseCard } from '@/components/common';
 import { SectionTitle } from '@/components/common';
+import { OPACITY_HEX } from '@/constants/colors';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -24,9 +25,9 @@ export const SettingsSection = memo(({ title, children, dangerZone }: SettingsSe
         styles.sectionContainer,
         {
           overflow: 'hidden' as const,
-          borderWidth: 1,
+          borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
           borderColor: colors.error,
-          backgroundColor: `${colors.error}26`,
+          backgroundColor: `${colors.error}${OPACITY_HEX.LOW}`,
         },
       ]
     : styles.sectionContainer;
@@ -79,7 +80,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.TINY,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: 0.6,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     opacity: LAYOUT.OPACITY.HIGH,
     paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
   },

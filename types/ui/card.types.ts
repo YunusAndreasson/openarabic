@@ -10,7 +10,7 @@ export interface BaseCardProps extends BaseComponentProps {
   /** Optional callback when card is long pressed */
   onLongPress?: () => void;
   /** Shadow size for the card */
-  shadowSize?: 'large' | 'medium' | 'none' | 'small';
+  shadowSize?: 'large' | 'medium' | 'none' | 'small' | 'subtle';
   /** Additional styling for the content container */
   contentStyle?: StyleProp<ViewStyle>;
 }
