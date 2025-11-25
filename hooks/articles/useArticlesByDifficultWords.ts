@@ -5,6 +5,7 @@ import { articleQueries } from '@/constants/queries';
 import { articlesService } from '@/services/articles';
 import { strugglingWordsService } from '@/services/strugglingWords';
 import type { Article } from '@/types/articles.types';
+import type { RootId } from '@/types/branded.types';
 import { getArticlesByDifficultWords } from '@/utils/articleUtils';
 
 interface UseArticlesByDifficultWordsResult {
@@ -12,7 +13,7 @@ interface UseArticlesByDifficultWordsResult {
   isLoading: boolean;
   difficultWordsCount: number;
   hasEnoughArticles: boolean; // Flag to determine if we have enough articles (≥3)
-  difficultWordRootIds: Set<number>; // Set of root IDs for words that are difficult
+  difficultWordRootIds: Set<RootId>; // Set of root IDs for words that are difficult
 }
 
 /**

@@ -1,3 +1,4 @@
+import type { RootId } from '@/types/branded.types';
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -18,7 +19,7 @@ export type UseFSRSResult = {
   isLoading: boolean;
   isComplete: boolean;
   progress: number;
-  updateWord: (rootId: number, confidence: WordConfidence) => Promise<number | undefined>;
+  updateWord: (rootId: RootId, confidence: WordConfidence) => Promise<number | undefined>;
   invalidateQueries: () => void;
   resetQueue: () => void;
 };

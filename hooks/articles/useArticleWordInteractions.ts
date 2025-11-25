@@ -41,7 +41,7 @@ export function useArticleWordInteractions({
   const wordDetailsModal = useModalState<SentenceWord>();
 
   // Local study states for immediate UI updates (optimistic updates)
-  const [localStudyStates, setLocalStudyStates] = useState<Map<number, boolean>>(new Map());
+  const [localStudyStates, setLocalStudyStates] = useState<Map<RootId, boolean>>(new Map());
 
   // Ref to avoid handleWordPress identity changes when tooltip toggles
   const activeTooltipRef = useRef<typeof activeTooltip>(null);

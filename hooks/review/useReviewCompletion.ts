@@ -64,7 +64,7 @@ export const useReviewCompletion = (
     ] as const;
 
     queriesToInvalidate.forEach(queryKey => {
-      queryClient.invalidateQueries({ queryKey: queryKey as unknown as unknown[] });
+      queryClient.invalidateQueries({ queryKey });
     });
   }, [user?.id, queryClient]);
 

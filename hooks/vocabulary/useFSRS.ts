@@ -31,7 +31,7 @@ interface FSRSCounters {
   totalWords: number;
   processedWords: number;
   knownWords: number;
-  uniqueWords: Set<number>;
+  uniqueWords: Set<RootId>;
 }
 
 // Enhanced state tracking with more fields
@@ -56,7 +56,7 @@ export function useFSRS({
     totalWords: 0,
     processedWords: 0,
     knownWords: 0,
-    uniqueWords: new Set<number>(),
+    uniqueWords: new Set<RootId>(),
   });
 
   // Priority queue for efficient reordering
@@ -243,7 +243,7 @@ export function useFSRS({
   }, []);
 
   const updateWord = useCallback(
-    async (rootId: number, confidence: WordConfidence) => {
+    async (rootId: RootId, confidence: WordConfidence) => {
       if (!userId || !currentWord) {
         return;
       }
@@ -484,7 +484,7 @@ export function useFSRS({
       totalWords: 0,
       processedWords: 0,
       knownWords: 0,
-      uniqueWords: new Set(),
+      uniqueWords: new Set<RootId>(),
     };
     queueRef.current = new PriorityQueue<StudyWord>();
     spacingQueueRef.current = createSpacingState();

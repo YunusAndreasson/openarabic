@@ -2,7 +2,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { memo, useCallback, useMemo, type FC } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -129,7 +129,7 @@ interface FAQCategorySectionProps {
   onToggle: (id: string) => void;
   itemCount?: number;
   keyPrefix?: string; // Prefix for unique keys (e.g., 'popular' for popular questions)
-  containerStyle?: object;
+  containerStyle?: ViewStyle;
 }
 
 // Reusable FAQ category section with header and items

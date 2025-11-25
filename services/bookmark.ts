@@ -1,5 +1,6 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
+import type { ArticleId } from '@/types/branded.types';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import { executeAuthenticatedQuery } from '@/utils/supabaseHelpers';
 
@@ -35,7 +36,7 @@ export const bookmarkService = {
    * @param userId - The user ID
    * @param articleId - The article ID to add to reading list
    */
-  async addToReadingList(userId: string, articleId: number): Promise<void> {
+  async addToReadingList(userId: string, articleId: ArticleId): Promise<void> {
     await executeAuthenticatedQuery(
       userId,
       () =>
@@ -52,7 +53,7 @@ export const bookmarkService = {
   /**
    * Removes an article from the reading list
    */
-  async removeFromReadingList(userId: string, articleId: number): Promise<void> {
+  async removeFromReadingList(userId: string, articleId: ArticleId): Promise<void> {
     await executeAuthenticatedQuery(
       userId,
       () =>
@@ -67,7 +68,7 @@ export const bookmarkService = {
   /**
    * Checks if an article is in the user's reading list
    */
-  async isInReadingList(userId: string, articleId: number): Promise<boolean> {
+  async isInReadingList(userId: string, articleId: ArticleId): Promise<boolean> {
     try {
       const data = await executeAuthenticatedQuery(
         userId,

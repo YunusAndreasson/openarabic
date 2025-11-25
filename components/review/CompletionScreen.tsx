@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { Fragment, type ComponentProps, type FC } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -24,7 +24,7 @@ interface CompletionScreenProps {
   buttonText?: string;
   iconName?: ComponentProps<typeof Ionicons>['name'];
   iconSize?: number;
-  contentStyle?: object;
+  contentStyle?: ViewStyle;
   sessionMetrics?: SessionMetrics;
   testID?: string;
   fromRemember?: boolean; // For dismissTo navigation

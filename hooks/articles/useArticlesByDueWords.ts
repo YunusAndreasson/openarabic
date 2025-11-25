@@ -5,6 +5,7 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries, articleQueries } from '@/constants/queries';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
+import type { RootId } from '@/types/branded.types';
 import { getArticlesByDueWords } from '@/utils/articleUtils';
 
 interface UseArticlesByDueWordsResult {
@@ -12,7 +13,7 @@ interface UseArticlesByDueWordsResult {
   isLoading: boolean;
   dueWordsCount: number;
   hasEnoughArticles: boolean; // Flag to determine if we have enough articles (≥1)
-  dueWordRootIds: Set<number>; // Set of root IDs for words that are due
+  dueWordRootIds: Set<RootId>; // Set of root IDs for words that are due
 }
 
 /**
