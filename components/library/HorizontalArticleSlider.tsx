@@ -17,9 +17,9 @@ interface HorizontalArticleSliderProps {
 // Calculate card width based on screen width and spacing
 const CARD_SPACING = LAYOUT.SPACING.MEDIUM;
 const CARD_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width for better visibility
-// Fixed height now that summary is limited to 5 lines
-// Analysis: ArticleCard contains image (~40% of height) + title (2 lines) + author (1 line) + summary (5 lines) + reduced padding
-const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 7.5 - LAYOUT.SPACING.MEDIUM; // Reduced for minimal bottom padding
+// Fixed height for article cards in horizontal slider
+// Analysis: ArticleCard contains image (~40% of height) + title (2 lines) + author (1 line) + summary (5 lines) + padding
+const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 7; // Sized for summary with bottom padding
 const CARD_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + BASE_CONTENT_HEIGHT;
 
 // Pure function for FlashList key extraction
