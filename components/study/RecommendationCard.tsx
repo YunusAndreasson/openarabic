@@ -2,7 +2,8 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BaseCard } from '@/components/common';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
 import { useRecommendationEngine } from '@/hooks/study/useRecommendationEngine';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -12,28 +13,26 @@ interface RecommendationCardProps {
   currentRetention: number;
   learningWords: number;
   masteredWords: number;
-  trend: 'improving' | 'declining' | 'stable';
+  currentStreak?: number;
 }
 
 export const RecommendationCard = memo<RecommendationCardProps>(
-  ({ studyWords, dueWordsCount, currentRetention, learningWords, masteredWords, trend }) => {
+  ({ studyWords, dueWordsCount, currentRetention, learningWords, masteredWords, currentStreak }) => {
     const recommendation = useRecommendationEngine({
       studyWords,
       dueWordsCount,
       currentRetention,
       learningWords,
       masteredWords,
-      trend,
+      currentStreak,
     });
-
-    if (!recommendation) {
-      return null;
-    }
 
     return (
       <BaseCard shadowSize="small" style={styles.card}>
         <View style={styles.container}>
-          <View style={styles.header}>{recommendation.message}</View>
+          <ThemedText type="caption" colorName="text">
+            {recommendation.message}
+          </ThemedText>
         </View>
       </BaseCard>
     );
@@ -47,14 +46,6 @@ const styles = StyleSheet.create({
   container: {
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  message: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
 });
 
