@@ -10,13 +10,13 @@ export const STRINGS = {
   BILINGUAL_LABEL: 'English + Arabic',
   AUDIO_LANGUAGE: 'Audio language',
   AUDIO_LANGUAGE_ARABIC: 'Arabic only',
-  AUDIO_LANGUAGE_ARABIC_SUBTITLE: 'Plays Arabic audio',
-  AUDIO_LANGUAGE_BILINGUAL_SUBTITLE: 'Plays bilingual audio (English then Arabic)',
+  AUDIO_LANGUAGE_ARABIC_SUBTITLE: 'Arabic pronunciation only',
+  AUDIO_LANGUAGE_BILINGUAL_SUBTITLE: 'English translation, then Arabic',
   AUDIO_SHUFFLE: 'Shuffle audio',
   AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order',
   HAPTICS: 'Haptic feedback',
   WORD_DETAILS: 'Minimal word tooltips',
-  WORD_DETAILS_DESCRIPTION: 'Hides chevron in word tooltips',
+  WORD_DETAILS_DESCRIPTION: 'Show simplified word details',
   DISPLAY_LANGUAGE: 'Display language',
   DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
   DISPLAY_LANGUAGE_ARABIC_SUBTITLE: 'Shows Arabic text',
@@ -82,8 +82,8 @@ export const STRINGS = {
   COMPLETED: 'Completed',
   SET_TIME: 'Set time',
   // Empty states & hints - more actionable
-  TRY_ADJUSTING_FILTERS: 'Adjust filters',
-  NO_ARTICLES_FOUND: 'No matches found',
+  TRY_ADJUSTING_FILTERS: 'Try different filters',
+  NO_ARTICLES_FOUND: 'No articles match your filters',
   // Saved tab empty state - emphasizes on-the-go bilingual learning
   BOOKMARKS_EMPTY_TITLE: 'Build your listening routine',
   BOOKMARKS_EMPTY_DESCRIPTION:
@@ -102,14 +102,14 @@ export const STRINGS = {
   // Word action buttons
   ADD_TO_PRACTICE: 'Add to practice',
   REMOVE_FROM_PRACTICE: 'Remove from practice',
-  WORD_ADDED_TO_PRACTICE: 'Word added to practice tab so you can practice the meaning',
+  WORD_ADDED_TO_PRACTICE: 'Added to practice',
   CHECK_EMAIL_CONFIRMATION: 'Check your email for confirmation',
   SUCCESS: 'Success',
   NEW_RECOMMENDATION_SELECTED: 'New recommendation selected',
-  SELECTED_TO_HELP_PRACTICE_DUE: 'Selected for reviewing due words',
-  CHOSEN_TO_REINFORCE_CHALLENGING: 'Chosen to reinforce challenging words',
-  PERFECT_FOR_GETTING_STARTED: 'Perfect for getting started',
-  RANDOMLY_SELECTED_FOR_DISCOVERY: 'Randomly selected for discovery',
+  SELECTED_TO_HELP_PRACTICE_DUE: "Has words you're reviewing",
+  CHOSEN_TO_REINFORCE_CHALLENGING: 'Reinforces challenging words',
+  PERFECT_FOR_GETTING_STARTED: 'Great for beginners',
+  RANDOMLY_SELECTED_FOR_DISCOVERY: 'Discover something new',
   // Auth - shortened and clearer
   CREATE_ACCOUNT: 'Create account',
   SIGN_IN: 'Sign in',
@@ -124,7 +124,7 @@ export const STRINGS = {
   PASSWORD_USE_AT_LEAST_TEMPLATE: 'Use at least {minLength} characters',
   FORGOT_PASSWORD: 'Forgot password?',
   RESET_PASSWORD_EMAIL_SENT: 'Check your email for a password reset link',
-  RESET_PASSWORD_ERROR: "Couldn't send reset email. " + tryAgain,
+  RESET_PASSWORD_ERROR: "Couldn't send reset email. Check your email address or try again",
   PASSWORD_STRENGTH_GOOD: 'Good',
   PASSWORD_STRENGTH_STRONG: 'Strong',
   PASSWORD_REQUIREMENT_LENGTH: 'At least {minLength} characters',
@@ -217,7 +217,7 @@ export const STRINGS = {
   WORD_MASTERY: 'Words Mastered',
   // Practice bottom sheet subtitles (condensed for subtitle format)
   MEMORY_STRENGTH_SUBTITLE:
-    'Percentage of words you are expected to recall at a given time. Target at least 75% before adding new words',
+    "Words you'll likely remember. Target 75%+ before adding new words",
   WORD_MASTERY_SUBTITLE: 'Words with strong, stable memories requiring minimal review',
   DUE_WORDS_FORECAST_SUBTITLE: 'Upcoming reviews for the next 7 days',
   DUE_WORDS_FORECAST: 'Due Words Forecast',
@@ -236,7 +236,7 @@ export const STRINGS = {
   CLEAR_CACHE_BUTTON: 'Clear',
   NO_CACHE: 'No cache',
   NO_CACHED_FILES: 'No cached files to clear',
-  DATA_RELOAD_REQUIRED: 'Reloads on next app launch',
+  DATA_RELOAD_REQUIRED: 'Data refreshes when you reopen the app',
   // Reading progress management
   RESET_READING_PROGRESS: 'Reset reading progress',
   THIS_WILL_DELETE_ALL_READING_PROGRESS:
@@ -335,10 +335,9 @@ export const STRINGS = {
   HELP_NO_RESULTS_DESCRIPTION: 'Use different keywords or browse categories below',
   HELP_POPULAR_QUESTIONS: 'Popular Questions',
   HELP_STILL_NEED_HELP_TITLE: 'Still need help?',
-  HELP_STILL_NEED_HELP_DESCRIPTION:
-    "Can't find what you're looking for? Contact the developer directly.",
+  HELP_STILL_NEED_HELP_DESCRIPTION: 'Need more help? Contact support',
   // Chart empty states
-  CHART_EMPTY_STATE: 'Add words to track your progress',
+  CHART_EMPTY_STATE: 'Add 10+ words to see your progress chart',
   // Legal & Attributions
   LEGAL_ATTRIBUTIONS: 'Legal & Attributions',
   LEGAL_INTRO:
