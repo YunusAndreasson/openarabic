@@ -84,18 +84,6 @@ function hasReviewedToday(studyWords: StudyWord[]): boolean {
 }
 
 /**
- * Calculate number of words reviewed in the last 7 days
- */
-function calculateWeeklyReviews(studyWords: StudyWord[]): number {
-  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  return studyWords.filter(word => {
-    const lastReview = word.fsrs_last_review;
-    if (!lastReview) return false;
-    return new Date(lastReview).getTime() >= oneWeekAgo;
-  }).length;
-}
-
-/**
  * Format next due date for display
  */
 function formatNextDue(nextDue: Date | null): string {
@@ -167,7 +155,6 @@ export function useRecommendationEngine({
 }: RecommendationEngineParams): RecommendationData {
   return useMemo(() => {
     const totalWords = studyWords.length;
-    const weeklyReviews = calculateWeeklyReviews(studyWords);
     const nextDue = calculateNextDueDate(studyWords);
     const nextDueText = formatNextDue(nextDue);
     const isLowRetention = currentRetention < LOW_RETENTION_THRESHOLD;
@@ -200,7 +187,7 @@ export function useRecommendationEngine({
     if (totalWords === 0) {
       return {
         message:
-          'Start by adding 10-15 words from articles. Your brain learns best in small batches—it consolidates them during sleep, turning short-term memories into lasting knowledge.',
+          'Start by adding 10-15 words from articles. Your brain learns best in small batches — it consolidates them during sleep, turning short-term memories into lasting knowledge.',
         type: 'start',
       };
     }
@@ -209,10 +196,10 @@ export function useRecommendationEngine({
     if (dueWordsCount > 0 && isLowRetention) {
       const strugglingContext =
         strugglingCount >= 3
-          ? ` ${strugglingCount} words have been difficult—they'll appear more often until they stick.`
+          ? `, especially for ${strugglingCount} difficult words that will repeat until they stick`
           : '';
       return {
-        message: `Your Memory Strength is at ${memoryStrength}%—below 50% means words are at risk of being forgotten. Each review now rebuilds the memory trace.${strugglingContext}`,
+        message: `Your Memory Strength is at ${memoryStrength}% — below 50% means words are at risk of being forgotten. Each review rebuilds the memory trace${strugglingContext}.`,
         type: 'review',
       };
     }
@@ -221,17 +208,17 @@ export function useRecommendationEngine({
     if (dueWordsCount > 0) {
       const upcomingContext =
         tomorrowDue > 0
-          ? ` Heads up: ${tomorrowDue} more ${tomorrowDue === 1 ? 'word' : 'words'} due tomorrow.`
+          ? `, with ${tomorrowDue} more coming tomorrow`
           : '';
 
       if (hasManyDue) {
         return {
-          message: `${dueWordsCount} words are due—reviewing now at ${memoryStrength}% Memory Strength prevents the forgetting curve from taking hold.${upcomingContext}`,
+          message: `${dueWordsCount} words are due — reviewing now at ${memoryStrength}% Memory Strength prevents the forgetting curve from taking hold${upcomingContext}.`,
           type: 'review',
         };
       }
       return {
-        message: `Just ${dueWordsCount} word${dueWordsCount === 1 ? '' : 's'} due. Quick review keeps your ${memoryStrength}% Memory Strength strong—these appear right before you'd forget, which strengthens retention.${upcomingContext}`,
+        message: `Just ${dueWordsCount} word${dueWordsCount === 1 ? '' : 's'} due. Quick review keeps your ${memoryStrength}% Memory Strength strong — timed right before you'd forget${upcomingContext}.`,
         type: 'review',
       };
     }
@@ -239,7 +226,7 @@ export function useRecommendationEngine({
     // State 4a: Heavy learning load (>70%) - brain at capacity
     if (isHeavyLoad) {
       return {
-        message: `${learningWords} words are in active learning—your brain is forming new neural connections. Research shows sleep consolidates these memories. Focus on reviews before adding more; next batch due ${nextDueText}.`,
+        message: `${learningWords} words are in active learning — your brain is forming new neural connections. Sleep consolidates these memories, so focus on reviews before adding more. Next batch due ${nextDueText}.`,
         type: 'consolidate',
       };
     }
@@ -248,47 +235,45 @@ export function useRecommendationEngine({
     if (isModerateLoad) {
       const milestoneHint =
         milestone && milestone.remaining <= 5
-          ? ` Just ${milestone.remaining} more to reach ${milestone.target} mastered!`
+          ? ` Just ${milestone.remaining} away from ${milestone.target} mastered!`
           : '';
       return {
-        message: `${learningWords} words are growing stronger with each review. You can add a few more, but prioritize reviews when they come due—consistency beats volume.${milestoneHint}`,
+        message: `${learningWords} words are growing stronger with each review. You can add a few more, but prioritize reviews when they come due — consistency beats volume.${milestoneHint}`,
         type: 'consolidate',
       };
     }
 
     // State 5: Small vocabulary, caught up - encourage growth with milestone context
     if (totalWords < SMALL_VOCABULARY_THRESHOLD) {
-      const weeklyContext =
-        weeklyReviews > 0 ? `You've reviewed ${weeklyReviews} words this week. ` : '';
       const milestoneHint =
         milestone && milestone.remaining <= 5
-          ? ` Just ${milestone.remaining} more to reach ${milestone.target} mastered! 🎯`
+          ? ` Just ${milestone.remaining} away from ${milestone.target}!`
           : '';
       const streakContext =
-        currentStreak && currentStreak > 0 && !reviewedToday && dueWordsCount === 0
-          ? ` Your ${currentStreak}-day streak is safe—next words due ${nextDueText}.`
+        currentStreak && currentStreak > 0
+          ? ` ${currentStreak}-day streak going strong!`
           : '';
 
       return {
-        message: `All caught up! ${weeklyContext}Your ${memoryStrength}% Memory Strength shows strong retention. With ${totalWords} words, you have room to grow—adding from articles you enjoy creates stronger memory connections.${milestoneHint}${streakContext}`,
+        message: `All caught up! Your ${memoryStrength}% Memory Strength shows strong retention. With ${totalWords} words, you have room to grow — adding from articles you enjoy creates stronger memory connections.${milestoneHint}${streakContext}`,
         type: 'add_words',
       };
     }
 
     // State 6: Established vocabulary, caught up - explain optimization with streak context
-    const streakContext =
-      currentStreak && currentStreak > 0 && reviewedToday
-        ? ` Your ${currentStreak}-day streak grows stronger!`
-        : currentStreak && currentStreak > 0
-          ? ` Your ${currentStreak}-day streak is protected—next review ${nextDueText}.`
-          : '';
     const milestoneHint =
       milestone && milestone.remaining <= 10
-        ? ` ${milestone.remaining} more words to reach ${milestone.target} mastered.`
+        ? ` ${milestone.remaining} more to reach ${milestone.target}!`
         : '';
+    const streakContext =
+      currentStreak && currentStreak > 0 && reviewedToday
+        ? ` ${currentStreak}-day streak grows stronger!`
+        : currentStreak && currentStreak > 0
+          ? ` ${currentStreak}-day streak protected.`
+          : '';
 
     return {
-      message: `All caught up with ${masteredWords} words mastered!${streakContext} Your Memory Strength may dip slightly before your next review ${nextDueText}—longer gaps between reviews build deeper memory.${milestoneHint}`,
+      message: `All caught up with ${masteredWords} words mastered! Your Memory Strength may dip slightly before your next review ${nextDueText} — longer gaps build deeper memory.${milestoneHint}${streakContext}`,
       type: 'balanced',
     };
   }, [studyWords, dueWordsCount, currentRetention, learningWords, masteredWords, currentStreak]);
