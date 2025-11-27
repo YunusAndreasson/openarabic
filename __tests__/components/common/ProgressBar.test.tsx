@@ -94,33 +94,25 @@ describe('ProgressBar', () => {
 
   describe('Custom Styling', () => {
     test('accepts custom style prop', () => {
-      const { toJSON } = render(
-        <ProgressBar progress={50} style={{ marginTop: 10 }} />,
-      );
+      const { toJSON } = render(<ProgressBar progress={50} style={{ marginTop: 10 }} />);
 
       expect(toJSON()).toBeTruthy();
     });
 
     test('accepts custom fillStyle prop', () => {
-      const { toJSON } = render(
-        <ProgressBar progress={50} fillStyle={{ opacity: 0.8 }} />,
-      );
+      const { toJSON } = render(<ProgressBar progress={50} fillStyle={{ opacity: 0.8 }} />);
 
       expect(toJSON()).toBeTruthy();
     });
 
     test('accepts custom backgroundColor', () => {
-      const { toJSON } = render(
-        <ProgressBar progress={50} backgroundColor="#FF0000" />,
-      );
+      const { toJSON } = render(<ProgressBar progress={50} backgroundColor="#FF0000" />);
 
       expect(toJSON()).toBeTruthy();
     });
 
     test('accepts custom fillColor', () => {
-      const { toJSON } = render(
-        <ProgressBar progress={50} fillColor="#00FF00" />,
-      );
+      const { toJSON } = render(<ProgressBar progress={50} fillColor="#00FF00" />);
 
       expect(toJSON()).toBeTruthy();
     });
@@ -128,9 +120,7 @@ describe('ProgressBar', () => {
 
   describe('Animation', () => {
     test('accepts custom animationDuration', () => {
-      const { toJSON } = render(
-        <ProgressBar progress={50} animationDuration={500} />,
-      );
+      const { toJSON } = render(<ProgressBar progress={50} animationDuration={500} />);
 
       expect(toJSON()).toBeTruthy();
     });

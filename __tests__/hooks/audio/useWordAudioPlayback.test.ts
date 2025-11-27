@@ -111,9 +111,12 @@ describe('useWordAudioPlayback', () => {
         await result.current(mockWord);
       });
 
-      expect(mockHandleError).toHaveBeenCalledWith(error, expect.objectContaining({
-        showToast: false,
-      }));
+      expect(mockHandleError).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({
+          showToast: false,
+        }),
+      );
     });
 
     test('shows toast on error when configured', async () => {
@@ -126,9 +129,12 @@ describe('useWordAudioPlayback', () => {
         await result.current(mockWord);
       });
 
-      expect(mockHandleError).toHaveBeenCalledWith(error, expect.objectContaining({
-        showToast: true,
-      }));
+      expect(mockHandleError).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({
+          showToast: true,
+        }),
+      );
     });
 
     test('uses custom error message when provided', async () => {
@@ -143,9 +149,12 @@ describe('useWordAudioPlayback', () => {
         await result.current(mockWord);
       });
 
-      expect(mockHandleError).toHaveBeenCalledWith(error, expect.objectContaining({
-        toastMessage: 'Custom error message',
-      }));
+      expect(mockHandleError).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({
+          toastMessage: 'Custom error message',
+        }),
+      );
     });
   });
 

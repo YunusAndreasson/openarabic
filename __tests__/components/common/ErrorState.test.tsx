@@ -29,8 +29,11 @@ jest.mock('@/components/ThemedButton', () => {
   const React = require('react');
   return {
     ThemedButton: ({ title, onPress }: { title: string; onPress?: () => void }) =>
-      React.createElement(Pressable, { onPress, testID: 'retry-button' },
-        React.createElement(Text, null, title)),
+      React.createElement(
+        Pressable,
+        { onPress, testID: 'retry-button' },
+        React.createElement(Text, null, title),
+      ),
   };
 });
 
@@ -62,9 +65,7 @@ describe('ErrorState', () => {
     });
 
     test('renders retry button when onRetry is provided', () => {
-      const { getByTestId } = render(
-        <ErrorState message="Error" onRetry={mockOnRetry} />,
-      );
+      const { getByTestId } = render(<ErrorState message="Error" onRetry={mockOnRetry} />);
 
       expect(getByTestId('retry-button')).toBeTruthy();
     });
@@ -86,9 +87,7 @@ describe('ErrorState', () => {
 
   describe('Retry Interaction', () => {
     test('calls onRetry when retry button is pressed', () => {
-      const { getByTestId } = render(
-        <ErrorState message="Error" onRetry={mockOnRetry} />,
-      );
+      const { getByTestId } = render(<ErrorState message="Error" onRetry={mockOnRetry} />);
 
       fireEvent.press(getByTestId('retry-button'));
 
@@ -98,7 +97,8 @@ describe('ErrorState', () => {
 
   describe('Edge Cases', () => {
     test('handles long error messages', () => {
-      const longMessage = 'This is a very long error message that might wrap to multiple lines and should still display correctly in the error state component.';
+      const longMessage =
+        'This is a very long error message that might wrap to multiple lines and should still display correctly in the error state component.';
 
       const { getByText } = render(<ErrorState message={longMessage} />);
 

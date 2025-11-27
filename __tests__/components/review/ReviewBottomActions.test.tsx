@@ -43,8 +43,7 @@ jest.mock('@expo/vector-icons', () => {
   const { View } = require('react-native');
   const React = require('react');
   return {
-    Ionicons: ({ name }: { name: string }) =>
-      React.createElement(View, { testID: `icon-${name}` }),
+    Ionicons: ({ name }: { name: string }) => React.createElement(View, { testID: `icon-${name}` }),
   };
 });
 
@@ -87,7 +86,7 @@ describe('ReviewBottomActions', () => {
     });
   });
 
-  describe('Left Indicator (Don\'t Know)', () => {
+  describe("Left Indicator (Don't Know)", () => {
     test('calls onShowTutorial when pressed', () => {
       const { getByText } = render(<ReviewBottomActions onShowTutorial={mockOnShowTutorial} />);
 

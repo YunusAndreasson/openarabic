@@ -9,8 +9,10 @@ import {
 
 import type { FlashListRef } from '@shopify/flash-list';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { analytics } from '@/services/analytics';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useArticleWordInteractions } from '@/hooks/articles/useArticleWordInteractions';
@@ -60,6 +62,19 @@ export function useArticleScreen({
     isInReadingList,
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
+
+  // Track article viewed (once per article load)
+  const hasTrackedArticleView = useRef(false);
+  useEffect(() => {
+    if (article && !hasTrackedArticleView.current) {
+      hasTrackedArticleView.current = true;
+      analytics.track(ANALYTICS_EVENTS.ARTICLE_VIEWED, {
+        article_id: article.id,
+        article_title: article.title,
+        category: article.category?.name,
+      });
+    }
+  }, [article]);
 
   // Current sentence index for reading progress
   const [currentSentenceIndexForProgress, setCurrentSentenceIndexForProgress] = useState(0);

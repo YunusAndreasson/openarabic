@@ -187,7 +187,9 @@ export const createReanimatedMock = () => {
       return {
         value: initialValue,
         get: () => currentValue,
-        set: (newValue: any) => { currentValue = typeof newValue === 'function' ? newValue(currentValue) : newValue; },
+        set: (newValue: any) => {
+          currentValue = typeof newValue === 'function' ? newValue(currentValue) : newValue;
+        },
         modify: jest.fn(),
       };
     },

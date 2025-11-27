@@ -39,9 +39,7 @@ describe('SectionTitle', () => {
     });
 
     test('renders subtitle when provided', () => {
-      const { getByText } = render(
-        <SectionTitle title="Main Title" subtitle="Supporting text" />,
-      );
+      const { getByText } = render(<SectionTitle title="Main Title" subtitle="Supporting text" />);
 
       expect(getByText('Main Title')).toBeTruthy();
       expect(getByText('Supporting text')).toBeTruthy();
@@ -75,9 +73,7 @@ describe('SectionTitle', () => {
     });
 
     test('accepts textStyle prop', () => {
-      const { toJSON } = render(
-        <SectionTitle title="Styled Text" textStyle={{ fontSize: 24 }} />,
-      );
+      const { toJSON } = render(<SectionTitle title="Styled Text" textStyle={{ fontSize: 24 }} />);
 
       expect(toJSON()).toBeTruthy();
     });

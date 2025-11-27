@@ -2,11 +2,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { audioQueries, readingProgressQueries } from '@/constants/queries';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 // Use direct service access to avoid frequent parent re-renders from time updates
 import { useAuth } from '@/hooks/auth/useAuth';
+import { analytics } from '@/services/analytics';
 import { bookmarkService } from '@/services/bookmark';
 import { enhancedAudioService } from '@/services/audioPlaylist';
 import { simpleAudioService } from '@/services/audioPlayer';
@@ -191,6 +193,13 @@ export const useBookmarksScreen = () => {
         // STABILIZATION: Set playback mode immediately for UI feedback
         setPlaybackMode('all');
 
+        // Track Play All started
+        analytics.track(ANALYTICS_EVENTS.AUDIO_PLAY_ALL_STARTED, {
+          article_count: currentTracks.length,
+          source: 'listen_tab',
+          shuffle_enabled: audioShuffleEnabled,
+        });
+
         // PLAYLIST SUPPORT: Use the new playlist functionality instead of just playing the first track
         const tracksToPlay = audioShuffleEnabled ? shuffleArray(currentTracks) : currentTracks;
 
@@ -278,6 +287,12 @@ export const useBookmarksScreen = () => {
           audioPreference,
         );
         if (track) {
+          // Track individual article playback
+          analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
+            article_id: articleId,
+            article_title: track.title || '',
+          });
+
           const success = await simpleAudioService.play(track);
           if (!success) {
             playbackModeTimeoutRef.current = setTimeout(() => {

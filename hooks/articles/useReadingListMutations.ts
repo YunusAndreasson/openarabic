@@ -2,8 +2,10 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { audioQueries, readingProgressQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
+import { analytics } from '@/services/analytics';
 import { bookmarkService } from '@/services/bookmark';
 import { checkAuthentication } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
@@ -46,6 +48,12 @@ export const useReadingListMutations = (
       mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
         bookmarkService.addToReadingList(userId, articleId),
       onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
+        // Track bookmark added
+        analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
+          article_id: articleId,
+          action: 'add',
+        });
+
         // Immediately update cache to reflect the bookmark was added
         queryClient.setQueryData(
           readingProgressQueries.keys.readingListDetail(userId, articleId),
@@ -85,6 +93,12 @@ export const useReadingListMutations = (
       mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
         bookmarkService.removeFromReadingList(userId, articleId),
       onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
+        // Track bookmark removed
+        analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
+          article_id: articleId,
+          action: 'remove',
+        });
+
         // Immediately update cache to reflect the bookmark was removed
         queryClient.setQueryData(
           readingProgressQueries.keys.readingListDetail(userId, articleId),

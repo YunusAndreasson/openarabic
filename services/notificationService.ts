@@ -39,6 +39,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { Colors } from '@/constants/colors';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -62,7 +63,7 @@ Notifications.setNotificationHandler({
   handleError: (notificationId: string, error: Error) => {
     // Handle scheduling errors gracefully
     handleError(error, {
-      analyticsEventName: 'Notification_Scheduling_Failed',
+      analyticsEventName: ANALYTICS_EVENTS.NOTIFICATION_SCHEDULING_FAILED,
       sentryTags: { location: 'notifications', notificationId },
       sentryExtra: { notificationId },
       showToast: false, // Silent failure for notifications
@@ -179,7 +180,7 @@ function setupNotificationListeners(): void {
   // This occurs when the notification queue overflows
   droppedSubscription = Notifications.addNotificationsDroppedListener(() => {
     // Track dropped notifications for monitoring
-    analytics.track('Notifications_Dropped', {
+    analytics.track(ANALYTICS_EVENTS.NOTIFICATIONS_DROPPED, {
       platform: Platform.OS,
       timestamp: new Date().toISOString(),
     });
@@ -187,7 +188,7 @@ function setupNotificationListeners(): void {
     // Also log to Sentry as a warning
     handleError(new Error('Notifications were dropped due to queue overflow'), {
       showToast: false,
-      analyticsEventName: 'Notifications_Dropped',
+      analyticsEventName: ANALYTICS_EVENTS.NOTIFICATIONS_DROPPED,
       sentrySeverity: 'warning',
       sentryTags: {
         location: 'notifications',

@@ -192,12 +192,7 @@ describe('SettingsCard', () => {
 
     test('accepts custom icon color', () => {
       const { toJSON } = render(
-        <SettingsCard
-          icon="settings"
-          label="Settings"
-          iconColor="#00FF00"
-          onPress={mockOnPress}
-        />,
+        <SettingsCard icon="settings" label="Settings" iconColor="#00FF00" onPress={mockOnPress} />,
       );
       expect(toJSON()).toBeTruthy();
     });

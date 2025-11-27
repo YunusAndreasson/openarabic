@@ -3,11 +3,13 @@ import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
 import { useToast } from '@/components/providers';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { audioQueries, fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
+import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { checkAuthentication } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
@@ -171,7 +173,26 @@ export const useStudyWordMutations = (
           queryKey: fsrsQueries.all(userId).queryKey,
         });
       },
-      onSuccess: async (_: boolean, { userId }: { userId: string }) => {
+      onSuccess: async (
+        _: boolean,
+        { userId, wordId, rootId }: { userId: string; wordId?: RootId; rootId?: number },
+        context?: StudyWordContext,
+      ) => {
+        // Track word added/removed
+        const id = (wordId ?? rootId) as number;
+        const wasInStudyList = context?.previousStudyWords?.some(sw => sw.root_id === id) ?? false;
+
+        if (wasInStudyList) {
+          analytics.track(ANALYTICS_EVENTS.WORD_REMOVED_FROM_STUDY, {
+            root_id: id,
+          });
+        } else {
+          analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
+            root_id: id,
+            source: 'article',
+          });
+        }
+
         // Batch invalidate related queries using helpers
         await Promise.all([
           fsrsQueries.invalidateCommon(queryClient, userId, DEFAULT_SESSION_COOLDOWN_HOURS),

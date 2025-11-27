@@ -5,11 +5,13 @@ import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
 import { useAnimatedStyle } from 'react-native-reanimated';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
+import { analytics } from '@/services/analytics';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useSimpleAudioPlayer } from '@/hooks/audio';
 import { useAuth } from '@/hooks/auth';
@@ -148,6 +150,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     progressUpdatedForCompletion: false,
   });
 
+  // Session tracking refs for analytics
+  const sessionStartTime = useRef<number | null>(null);
+  const sessionStarted = useRef(false);
+  const wordsReviewedCount = useRef(0);
+
   // Add controller ref for proper cleanup
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -261,6 +268,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       try {
         // Call updateWord and capture the new stability value
         const newStability = await updateWord(rootId, confidence);
+
+        // Increment words reviewed count for analytics
+        wordsReviewedCount.current += 1;
 
         // Update session metrics with old and new stability for accurate tracking
         updateMetrics(confidence, {
@@ -487,7 +497,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
   }, [isComplete]);
 
-  // Effect: Initialize audio session when practice starts
+  // Effect: Initialize audio session when practice starts and track session start
   useEffect(() => {
     if (wordQueue && wordQueue.length > 0 && !isComplete) {
       // Stop any existing audio from other sessions (like listen tab)
@@ -497,6 +507,16 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       audioPlayerRef.current.preconfigureAudioSession?.().catch(() => {
         // Ignore pre-configuration errors - session will be configured on first play
       });
+
+      // Track review session started (only once per session)
+      if (!sessionStarted.current) {
+        sessionStarted.current = true;
+        sessionStartTime.current = Date.now();
+        analytics.track(ANALYTICS_EVENTS.REVIEW_SESSION_STARTED, {
+          word_count: wordQueue.length,
+          source: 'practice_tab',
+        });
+      }
     }
   }, [wordQueue?.length, isComplete, stopAudioSafely]);
 
@@ -666,7 +686,25 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Cleanup effect
   useEffect(() => {
+    // Capture current values for cleanup closure
+    const wasSessionStarted = sessionStarted.current;
+    const sessionStart = sessionStartTime.current;
+    const totalWordsInQueue = wordQueue?.length ?? 0;
+
     return () => {
+      // Track abandoned session if user leaves without completing
+      // Only track if session was started and not completed
+      if (wasSessionStarted && !stateRefs.current.completionTriggered && sessionStart) {
+        const sessionDurationMs = Date.now() - sessionStart;
+        const wordsRemaining = totalWordsInQueue - wordsReviewedCount.current;
+
+        analytics.track(ANALYTICS_EVENTS.REVIEW_SESSION_ABANDONED, {
+          words_reviewed: wordsReviewedCount.current,
+          words_remaining: Math.max(0, wordsRemaining),
+          session_duration_ms: sessionDurationMs,
+        });
+      }
+
       // Abort any ongoing knowledge response operations
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -699,8 +737,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       timeRefs.current.lastProcessedWordId = null;
       timeRefs.current.lastVagueTime = null;
       timeRefs.current.lastProgressUpdate = Date.now();
+
+      // Reset session tracking refs
+      sessionStarted.current = false;
+      sessionStartTime.current = null;
+      wordsReviewedCount.current = 0;
     };
-  }, [fadeIn, stopAudioSafely, clearAllTimers]);
+  }, [fadeIn, stopAudioSafely, clearAllTimers, wordQueue?.length]);
 
   return {
     currentSentence,

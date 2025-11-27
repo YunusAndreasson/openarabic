@@ -137,11 +137,7 @@ describe('WordDisplay', () => {
       fireEvent.press(getByText('W...'));
 
       expect(mockLightFeedback).toHaveBeenCalled();
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('hint'),
-        8000,
-        'info',
-      );
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('hint'), 8000, 'info');
     });
   });
 

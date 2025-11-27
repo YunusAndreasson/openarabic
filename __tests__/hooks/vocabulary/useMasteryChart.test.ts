@@ -54,9 +54,7 @@ describe('useMasteryChart', () => {
   const mockChartResult = {
     path: 'M0,100 L50,80 L100,60',
     hasData: true,
-    milestones: [
-      { x: 50, y: 80, count: 10, achieved: true, date: new Date() },
-    ],
+    milestones: [{ x: 50, y: 80, count: 10, achieved: true, date: new Date() }],
     points: [
       { x: 0, y: 100, count: 0, date: new Date() },
       { x: 50, y: 80, count: 5, date: new Date() },

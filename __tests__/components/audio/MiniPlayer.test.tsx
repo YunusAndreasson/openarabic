@@ -187,10 +187,7 @@ describe('MiniPlayer', () => {
       expect(getByText('Test Article Title')).toBeTruthy();
 
       rerender(
-        <MiniPlayer
-          {...defaultProps}
-          article={{ ...mockArticle, id: 2, title: 'New Article' }}
-        />,
+        <MiniPlayer {...defaultProps} article={{ ...mockArticle, id: 2, title: 'New Article' }} />,
       );
       expect(getByText('New Article')).toBeTruthy();
     });

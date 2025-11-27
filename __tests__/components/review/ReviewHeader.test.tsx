@@ -47,8 +47,7 @@ jest.mock('@expo/vector-icons', () => {
   const { View } = require('react-native');
   const React = require('react');
   return {
-    Ionicons: ({ name }: { name: string }) =>
-      React.createElement(View, { testID: `icon-${name}` }),
+    Ionicons: ({ name }: { name: string }) => React.createElement(View, { testID: `icon-${name}` }),
   };
 });
 

@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
@@ -84,7 +85,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
       await AccountDeletionService.deleteAccount();
 
       // Track successful deletion
-      await analytics.track('Account_Deleted', {
+      await analytics.track(ANALYTICS_EVENTS.ACCOUNT_DELETED, {
         timestamp: new Date().toISOString(),
       });
 

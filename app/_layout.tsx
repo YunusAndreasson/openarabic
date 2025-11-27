@@ -47,6 +47,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { analytics } from '@/services/analytics';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import * as Notifications from 'expo-notifications';
@@ -161,6 +162,8 @@ function AppContent() {
   const isDark = theme === Theme.Dark;
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
+  const sessionStartTime = useRef<number>(Date.now());
+  const backgroundedTime = useRef<number | null>(null);
   const { isLoading: isAuthLoading, session } = useAuth();
   const navigationRef = useNavigationContainerRef();
   const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
@@ -280,6 +283,11 @@ function AppContent() {
 
       // Hide splash screen when app is ready
       SplashScreen.hide();
+
+      // Track app opened event
+      analytics.track(ANALYTICS_EVENTS.APP_OPENED, {
+        timestamp: new Date().toISOString(),
+      });
     }
   }, [fontsLoaded, isAuthLoading, isLoaded, appReady]);
 
@@ -367,12 +375,32 @@ function AppContent() {
   // Cleanup effect for AppState subscription
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
+      const wasActive = appState.current === 'active';
       const wasInactive = appState.current !== 'active';
       const isActivating = wasInactive && nextAppState === 'active';
+      const isBackgrounding = wasActive && nextAppState !== 'active';
 
       appState.current = nextAppState;
 
+      if (isBackgrounding && appReady) {
+        // Track app backgrounded
+        backgroundedTime.current = Date.now();
+        const sessionDurationMs = Date.now() - sessionStartTime.current;
+        analytics.track(ANALYTICS_EVENTS.APP_BACKGROUNDED, {
+          session_duration_ms: sessionDurationMs,
+        });
+      }
+
       if (isActivating && appReady) {
+        // Track app resumed
+        const timeBackgroundedMs = backgroundedTime.current
+          ? Date.now() - backgroundedTime.current
+          : 0;
+        analytics.track(ANALYTICS_EVENTS.APP_RESUMED, {
+          time_backgrounded_ms: timeBackgroundedMs,
+        });
+        backgroundedTime.current = null;
+
         // When resuming from background, refresh app data
         setTimeout(preloadAppData, 300);
       }
@@ -480,6 +508,17 @@ const styles = StyleSheet.create({
 const AudioOverlays = memo(function AudioOverlays() {
   const globalAudioState = useGlobalAudioState();
 
+  // Wrap onSleepTimerSet to track analytics
+  const handleSleepTimerSet = useMemo(
+    () => (durationMinutes: number) => {
+      analytics.track(ANALYTICS_EVENTS.SLEEP_TIMER_SET, {
+        duration_minutes: durationMinutes,
+      });
+      globalAudioState.onSleepTimerSet(durationMinutes);
+    },
+    [globalAudioState],
+  );
+
   // Calculate raw visibility condition
   const rawShouldShow = useMemo(
     () =>
@@ -534,7 +573,7 @@ const AudioOverlays = memo(function AudioOverlays() {
         isTimerActive={globalAudioState.isTimerActive}
         remainingTime={globalAudioState.sleepTimerRemainingTime}
         onClose={globalAudioState.onSleepTimerClose}
-        onTimerSet={globalAudioState.onSleepTimerSet}
+        onTimerSet={handleSleepTimerSet}
         onTimerCancel={globalAudioState.onSleepTimerCancel}
       />
     </>
