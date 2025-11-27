@@ -182,10 +182,15 @@ export const createReanimatedMock = () => {
     ZoomIn: mockAnimation,
     ZoomOut: mockAnimation,
     // Hooks
-    useSharedValue: (initialValue: any = 0) => ({
-      value: initialValue,
-      modify: jest.fn(),
-    }),
+    useSharedValue: (initialValue: any = 0) => {
+      let currentValue = initialValue;
+      return {
+        value: initialValue,
+        get: () => currentValue,
+        set: (newValue: any) => { currentValue = typeof newValue === 'function' ? newValue(currentValue) : newValue; },
+        modify: jest.fn(),
+      };
+    },
     useAnimatedStyle: (styleCallback: () => any) => {
       try {
         return styleCallback() || {};
