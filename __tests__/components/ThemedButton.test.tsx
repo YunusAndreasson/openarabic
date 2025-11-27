@@ -13,51 +13,18 @@ import React from 'react';
 
 import { ThemedButton } from '@/components/ThemedButton';
 
-// Mock dependencies
-jest.mock('react-native-reanimated', () => {
-  const React = require('react');
-  const { Pressable, View } = require('react-native');
+// Use shared mock factories from componentMocks.tsx
+jest.mock('react-native-reanimated', () =>
+  require('@/__tests__/helpers/componentMocks').createReanimatedMock(),
+);
 
-  const AnimatedView = React.forwardRef((props: any, ref: any) =>
-    React.createElement(View, { ...props, ref }),
-  );
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 
-  return {
-    __esModule: true,
-    default: {
-      View: AnimatedView,
-      createAnimatedComponent: (component: any) =>
-        React.forwardRef((props: any, ref: any) =>
-          React.createElement(component, { ...props, ref }),
-        ),
-    },
-    createAnimatedComponent: (component: any) =>
-      React.forwardRef((props: any, ref: any) => React.createElement(component, { ...props, ref })),
-    useSharedValue: (val: number) => ({ value: val }),
-    useAnimatedStyle: () => ({}),
-    withTiming: (val: number) => val,
-    withSpring: (val: number) => val,
-    Easing: {
-      out: (fn: (n: number) => number) => fn,
-      bezier: () => (n: number) => n,
-    },
-  };
-});
-
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    tint: '#4A9B8E',
-    white: '#FFFFFF',
-    black: '#000000',
-    disabled: '#999999',
-    cardBorder: '#CCCCCC',
-    border: '#DDDDDD',
-  }),
-}));
-
-jest.mock('@/hooks/theme/useThemeDetection', () => ({
-  useIsDarkMode: () => false,
-}));
+jest.mock('@/hooks/theme/useThemeDetection', () =>
+  require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
+);
 
 jest.mock('@/hooks/animations', () => ({
   usePressAnimation: () => ({

@@ -13,46 +13,14 @@ import React from 'react';
 
 import { Toggle } from '@/components/ui/Toggle';
 
-// Mock dependencies
-jest.mock('react-native-reanimated', () => {
-  const React = require('react');
-  const { View, Pressable } = require('react-native');
+// Use shared mock factories from componentMocks.tsx
+jest.mock('react-native-reanimated', () =>
+  require('@/__tests__/helpers/componentMocks').createReanimatedMock(),
+);
 
-  const AnimatedView = React.forwardRef((props: any, ref: any) =>
-    React.createElement(View, { ...props, ref }),
-  );
-
-  return {
-    __esModule: true,
-    default: {
-      View: AnimatedView,
-      createAnimatedComponent: (component: any) =>
-        React.forwardRef((props: any, ref: any) =>
-          React.createElement(component, { ...props, ref }),
-        ),
-    },
-    createAnimatedComponent: (component: any) =>
-      React.forwardRef((props: any, ref: any) => React.createElement(component, { ...props, ref })),
-    useSharedValue: (val: number) => ({ value: val }),
-    useAnimatedStyle: () => ({}),
-    withTiming: (val: number) => val,
-    withSpring: (val: number) => val,
-    Easing: {
-      out: (fn: (n: number) => number) => fn,
-      bezier: () => (n: number) => n,
-    },
-  };
-});
-
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    tint: '#4A9B8E',
-    border: '#CCCCCC',
-    shadow: '#000000',
-    elevation2: '#F5F5F5',
-    elevation3: '#FFFFFF',
-  }),
-}));
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 
 jest.mock('@/hooks/animations', () => ({
   useToggleAnimation: () => ({

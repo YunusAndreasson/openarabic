@@ -24,68 +24,22 @@ import React from 'react';
 import { Toast } from '@/components/Toast';
 import { ToastType } from '@/types/enums';
 
-// Mock dependencies
-jest.mock('react-native-reanimated', () => {
-  const React = require('react');
-  const { View } = require('react-native');
+// Use shared mock factories from componentMocks.tsx
+jest.mock('react-native-reanimated', () =>
+  require('@/__tests__/helpers/componentMocks').createReanimatedMock(),
+);
 
-  const mockAnimation = {
-    duration: () => mockAnimation,
-  };
+jest.mock('react-native-safe-area-context', () =>
+  require('@/__tests__/helpers/componentMocks').createSafeAreaContextMock(),
+);
 
-  const mockEasing = {
-    linear: (x: number) => x,
-    ease: (x: number) => x,
-    quad: (x: number) => x * x,
-    cubic: (x: number) => x * x * x,
-    in: (easing: (x: number) => number) => easing,
-    out: (easing: (x: number) => number) => easing,
-    inOut: (easing: (x: number) => number) => easing,
-    bezier: () => (x: number) => x,
-  };
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 
-  return {
-    __esModule: true,
-    default: {
-      View: ({ children, style, entering, exiting, ...props }: any) => (
-        <View style={style} {...props}>
-          {children}
-        </View>
-      ),
-    },
-    Easing: mockEasing,
-    FadeInUp: mockAnimation,
-    FadeOutUp: mockAnimation,
-  };
-});
-
-jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({
-    top: 44,
-    bottom: 34,
-    left: 0,
-    right: 0,
-  }),
-}));
-
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    tint: '#4A9B8E',
-    success: '#4CAF50',
-    error: '#F44336',
-    warning: '#FF9800',
-    elevation2: '#2C2C2E',
-    text: '#FFFFFF',
-    white: '#FFFFFF',
-    shadow: '#000000',
-    border: '#3A3A3C',
-    transparent: 'transparent',
-  }),
-}));
-
-jest.mock('@/hooks/theme/useThemeDetection', () => ({
-  useIsDarkMode: () => false,
-}));
+jest.mock('@/hooks/theme/useThemeDetection', () =>
+  require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
+);
 
 describe('Toast', () => {
   const mockOnClose = jest.fn();

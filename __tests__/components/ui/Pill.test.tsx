@@ -13,22 +13,14 @@ import React from 'react';
 
 import { Pill } from '@/components/ui/Pill';
 
-// Mock dependencies
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    tint: '#4A9B8E',
-    text: '#000000',
-    background: '#FFFFFF',
-    elevation1: '#F5F5F5',
-    elevation2: '#EEEEEE',
-    shadow: '#000000',
-    borderOverlay: '#DDDDDD',
-  }),
-}));
+// Use shared mock factories from componentMocks.tsx
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 
-jest.mock('@/hooks/theme/useThemeDetection', () => ({
-  useIsDarkMode: () => false,
-}));
+jest.mock('@/hooks/theme/useThemeDetection', () =>
+  require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
+);
 
 describe('Pill', () => {
   const mockOnSelect = jest.fn();

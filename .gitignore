@@ -89,3 +89,7 @@ translate/.ruff_cache/
 translate/venv/
 translate/.venv/
 translate/uv.lock
+
+# Additional translate directories
+translate_2/
+translate_3/

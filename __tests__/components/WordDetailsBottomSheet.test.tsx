@@ -21,27 +21,16 @@ import * as Haptics from 'expo-haptics';
 import React from 'react';
 
 import { mockExpoHaptics } from '@/__tests__/setup/commonMocks';
-import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { WordDetailsBottomSheet } from '@/components/article/WordDetailsBottomSheet';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
 // Mock dependencies
 mockExpoHaptics();
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    elevation1: '#FFFFFF',
-    tint: '#8BC34A',
-    primary: '#4CAF50',
-    warning: '#FF9800',
-    secondaryText: '#757575',
-    text: '#212121',
-    arabicText: '#000000',
-    modalIndicator: '#BDBDBD',
-    transparent: 'transparent',
-    wordDueUnderline: '#FF5722',
-    grammar: MOCK_GRAMMAR_COLORS,
-  }),
-}));
+
+// Use shared mock factory from componentMocks.tsx
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 jest.mock('@/components/providers', () => ({
   useToast: () => ({
     showToast: jest.fn(),
@@ -67,10 +56,9 @@ jest.mock('@/services/audioPlayer', () => ({
 jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
-jest.mock('@/hooks/theme/useThemeDetection', () => ({
-  useIsDarkMode: () => false,
-  useCurrentTheme: () => 'dark',
-}));
+jest.mock('@/hooks/theme/useThemeDetection', () =>
+  require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
+);
 
 describe('WordDetailsBottomSheet - Optimistic State Management', () => {
   const mockWord: SentenceWord = {

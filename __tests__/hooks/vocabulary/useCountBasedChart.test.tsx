@@ -3,6 +3,7 @@
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
+ * - ✅ Shared mock values from helpers/chartMocks.ts
  * - Note: No test.concurrent() - hook tests use renderHook
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
@@ -10,6 +11,7 @@
 import { renderHook } from '@testing-library/react-native';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { resetChartMocks } from '@/__tests__/helpers/chartMocks';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   parseWordBasic,
@@ -17,7 +19,7 @@ import {
   useCountBasedChart,
 } from '@/hooks/vocabulary/useCountBasedChart';
 
-// Mock chart utilities that are already tested elsewhere
+// Chart mocks - inline jest.mock() for hoisting
 jest.mock('@/components/common/charts/constants', () => {
   const actualConstants = jest.requireActual('@/components/common/charts/constants');
   return {
@@ -54,6 +56,11 @@ jest.mock('@/components/common/charts/ChartMessages', () => ({
 }));
 
 describe('useCountBasedChart', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    resetChartMocks();
+  });
+
   describe('Empty Data Protection', () => {
     test('should handle empty studyWords array safely', () => {
       const config = {

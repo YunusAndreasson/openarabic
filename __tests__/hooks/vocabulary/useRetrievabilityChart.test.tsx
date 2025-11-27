@@ -5,6 +5,7 @@
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
+ * - ✅ Shared mock values from helpers/chartMocks.ts
  * - ✅ jest.mocked() for type-safe mocking
  */
 
@@ -12,17 +13,13 @@ import { renderHook } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { resetChartMocks } from '@/__tests__/helpers/chartMocks';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 
-// Mock chart utilities
+// Chart mocks - using shared mock values but inline jest.mock() for hoisting
 jest.mock('@/components/common/charts/ChartColors', () => ({
-  useChartColors: () => ({
-    primary: '#4CAF50',
-    secondary: '#2196F3',
-    danger: '#F44336',
-    warning: '#FF9800',
-  }),
+  useChartColors: () => require('@/__tests__/helpers/chartMocks').mockChartColors,
 }));
 
 jest.mock('@/components/common/charts/constants', () => ({
@@ -42,10 +39,7 @@ jest.mock('@/components/common/charts/pathBuilder', () => ({
 }));
 
 jest.mock('@/components/common/charts/utils', () => ({
-  createStandardizedPerformanceZones: () => [
-    { y: 0, height: 50, color: 'green' },
-    { y: 50, height: 100, color: 'yellow' },
-  ],
+  createStandardizedPerformanceZones: () => require('@/__tests__/helpers/chartMocks').mockPerformanceZones,
 }));
 
 jest.mock('@/utils/fsrsUtils', () => ({
@@ -70,6 +64,7 @@ jest.mock('@/utils/fsrsUtils', () => ({
 describe('useRetrievabilityChart', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetChartMocks();
   });
 
   describe('Empty State', () => {

@@ -1,8 +1,9 @@
 /**
+ * Arabic Word Analysis Tests
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
- * - Note: No test.concurrent() - these are synchronous tests
+ * - ✅ test.concurrent.each() for parameterized tests (stateless pure functions)
  * - Note: No jest.mocked() needed - no mocks used
  */
 
@@ -94,7 +95,7 @@ describe('arabicWordAnalysis', () => {
       expect(withDiacritics.hasComponents).toBe(withoutDiacritics.hasComponents);
     });
 
-    test.each([
+    test.concurrent.each([
       { arabic: 'كتابه', english: 'his book', expectedSuffix: 'ه', pronoun: 'his' },
       { arabic: 'كتابها', english: 'her book', expectedSuffix: 'ها', pronoun: 'her' },
       { arabic: 'كتابنا', english: 'our book', expectedSuffix: 'نا', pronoun: 'our' },
@@ -102,7 +103,7 @@ describe('arabicWordAnalysis', () => {
       { arabic: 'كتابهم', english: 'their book', expectedSuffix: 'هم', pronoun: 'their' },
     ])(
       'should match possessive pronoun $pronoun ($expectedSuffix)',
-      ({ arabic, english, expectedSuffix }) => {
+      async ({ arabic, english, expectedSuffix }) => {
         const analysis = analyzeArabicWord(arabic, english);
         expect(analysis.suffix?.arabicMatch).toBe(expectedSuffix);
         expect(analysis.hasComponents).toBe(true);
@@ -134,12 +135,12 @@ describe('arabicWordAnalysis', () => {
       });
     });
 
-    test.each([
+    test.concurrent.each([
       { arabic: 'معه', english: 'with him', expectedPrefix: 'مع', pronoun: 'him' },
       { arabic: 'معك', english: 'with you', expectedPrefix: 'مع', pronoun: 'you' },
       { arabic: 'معنا', english: 'with us', expectedPrefix: 'مع', pronoun: 'us' },
       { arabic: 'معهم', english: 'with them', expectedPrefix: 'مع', pronoun: 'them' },
-    ])('should match مع preposition with $pronoun', ({ arabic, english, expectedPrefix }) => {
+    ])('should match مع preposition with $pronoun', async ({ arabic, english, expectedPrefix }) => {
       const analysis = analyzeArabicWord(arabic, english);
       expect(analysis.hasComponents).toBe(true);
       expect(analysis.prefixes.some(p => p.arabicMatch === expectedPrefix)).toBe(true);

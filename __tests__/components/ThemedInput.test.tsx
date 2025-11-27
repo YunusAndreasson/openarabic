@@ -13,19 +13,10 @@ import React from 'react';
 
 import { ThemedInput } from '@/components/ThemedInput';
 
-// Mock dependencies
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    elevation1: '#F5F5F5',
-    icon: '#666666',
-    tabIconSelected: '#4A9B8E',
-    tint: '#4A9B8E',
-    text: '#000000',
-    textTertiary: '#999999',
-    shadow: '#000000',
-    border: '#DDDDDD',
-  }),
-}));
+// Use shared mock factory from componentMocks.tsx
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 
 jest.mock('@/utils/haptics', () => ({
   errorFeedback: jest.fn(),

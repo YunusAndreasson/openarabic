@@ -40,70 +40,18 @@ jest.mock('expo-router', () => ({
 // LinearGradient is now from @shopify/react-native-skia, not expo-linear-gradient
 // The mock is handled in jest.config.js transformIgnorePatterns
 
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    text: '#000000',
-    background: '#ffffff',
-    cardGradient: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)'],
-    tint: '#4a7c59',
-  }),
-}));
+// Use shared mock factories from componentMocks.tsx
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 
-jest.mock('@/hooks/animations', () => ({
-  useTransformAnimation: () => ({
-    animatedStyle: {},
-    setValue: jest.fn(),
-  }),
-}));
+jest.mock('@/hooks/animations', () =>
+  require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
+);
 
-jest.mock('react-native-reanimated', () => {
-  const React = require('react');
-  const { View, Text, ScrollView, Image } = require('react-native');
-
-  return {
-    __esModule: true,
-    default: {
-      View: React.forwardRef((props: any, ref: any) =>
-        React.createElement(View, { ...props, ref }),
-      ),
-      Text: React.forwardRef((props: any, ref: any) =>
-        React.createElement(Text, { ...props, ref }),
-      ),
-      ScrollView: React.forwardRef((props: any, ref: any) =>
-        React.createElement(ScrollView, { ...props, ref }),
-      ),
-      Image: React.forwardRef((props: any, ref: any) =>
-        React.createElement(Image, { ...props, ref }),
-      ),
-      createAnimatedComponent: (component: any) =>
-        React.forwardRef((props: any, ref: any) =>
-          React.createElement(component, { ...props, ref }),
-        ),
-    },
-    Easing: {
-      out: jest.fn(fn => fn),
-      in: jest.fn(fn => fn),
-      inOut: jest.fn(fn => fn),
-      cubic: jest.fn(t => t * t * t),
-      bezier: jest.fn(() => jest.fn(t => t)),
-    },
-    useSharedValue: (initialValue = 0) => ({
-      value: initialValue,
-      modify: jest.fn(),
-    }),
-    useAnimatedStyle: (styleCallback: any) => {
-      try {
-        return styleCallback() || {};
-      } catch {
-        return {};
-      }
-    },
-    withTiming: (value: any) => value,
-    withSpring: (value: any) => value,
-    createAnimatedComponent: (component: any) =>
-      React.forwardRef((props: any, ref: any) => React.createElement(component, { ...props, ref })),
-  };
-});
+jest.mock('react-native-reanimated', () =>
+  require('@/__tests__/helpers/componentMocks').createReanimatedMock(),
+);
 
 jest.mock('@/components/EnhancedImage', () => {
   const React = require('react');

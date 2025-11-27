@@ -3,6 +3,7 @@
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
+ * - ✅ Shared mock values from helpers/chartMocks.ts
  * - Note: No test.concurrent() - hook tests use renderHook
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
@@ -10,9 +11,37 @@
 import { renderHook } from '@testing-library/react-native';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { resetChartMocks } from '@/__tests__/helpers/chartMocks';
 import { useDueWordsChart } from '@/hooks/vocabulary/useDueWordsChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { DueWordsForecast } from '@/utils/fsrsUtils';
+
+// Chart mocks - inline jest.mock() for hoisting (uses shared mock implementations via require)
+jest.mock('@/components/common/charts/pathBuilder', () => ({
+  buildSmoothChartPath: (params: {
+    data: unknown[];
+    buildPoint: (x: number, y: number, d: unknown) => unknown;
+    dataPointPositions?: number[];
+    calculateY?: (d: unknown) => number;
+  }) => {
+    const { data, buildPoint } = params;
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return { path: '', points: [] };
+    }
+    return {
+      path: 'M0,0 L100,100',
+      points: data.map((d, i) => buildPoint(i * 10, i * 10, d)),
+    };
+  },
+}));
+
+jest.mock('@/components/common/charts/constants', () => {
+  const actualConstants = jest.requireActual('@/components/common/charts/constants');
+  return {
+    ...actualConstants,
+    calculateDataPointPositions: (length: number) => Array.from({ length }, (_, i) => i * 10),
+  };
+});
 
 // Mock the FSRS utilities that are already tested
 jest.mock('@/utils/fsrsUtils', () => ({
@@ -54,37 +83,10 @@ jest.mock('@/utils/fsrsUtils', () => ({
   },
 }));
 
-// Mock chart utilities
-jest.mock('@/components/common/charts/pathBuilder', () => ({
-  buildSmoothChartPath: (params: {
-    data: unknown[];
-    buildPoint: (x: number, y: number, d: unknown) => unknown;
-    dataPointPositions?: number[];
-    calculateY?: (d: unknown) => number;
-  }) => {
-    const { data, buildPoint } = params;
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      return { path: '', points: [] };
-    }
-    return {
-      path: 'M0,0 L100,100',
-      points: data.map((d, i) => buildPoint(i * 10, i * 10, d)),
-    };
-  },
-}));
-
-// Mock constants
-jest.mock('@/components/common/charts/constants', () => {
-  const actualConstants = jest.requireActual('@/components/common/charts/constants');
-  return {
-    ...actualConstants,
-    calculateDataPointPositions: (length: number) => Array.from({ length }, (_, i) => i * 10),
-  };
-});
-
 describe('useDueWordsChart', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetChartMocks();
   });
 
   describe('Empty Data Protection', () => {

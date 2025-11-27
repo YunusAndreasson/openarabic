@@ -13,24 +13,14 @@ import React from 'react';
 
 import { ThemedText } from '@/components/ThemedText';
 
-// Mock dependencies
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    text: '#000000',
-    secondaryText: '#666666',
-    textTertiary: '#999999',
-    error: '#F44336',
-    warning: '#FF9800',
-    success: '#4CAF50',
-    info: '#2196F3',
-    disabled: '#CCCCCC',
-    tint: '#4A9B8E',
-  }),
-}));
+// Use shared mock factories from componentMocks.tsx
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 
-jest.mock('@/hooks/theme/useThemeDetection', () => ({
-  useIsDarkMode: () => false,
-}));
+jest.mock('@/hooks/theme/useThemeDetection', () =>
+  require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
+);
 
 jest.mock('@/hooks/theme/useDebouncedArabicFontSize', () => ({
   useDebouncedArabicFontSize: () => null,

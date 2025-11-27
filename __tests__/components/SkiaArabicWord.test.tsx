@@ -26,22 +26,10 @@ import { Pressable } from 'react-native';
 import { SkiaArabicWord } from '@/components/article/SkiaArabicWord';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
-// Mock hooks
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    text: '#000000',
-    arabicText: '#1a1a1a',
-    tint: '#4a7c59',
-    disabled: '#cccccc',
-    transparent: 'transparent',
-    // Grammar colors
-    primary: '#2563eb',
-    secondary: '#7c3aed',
-    accent: '#dc2626',
-    tertiary: '#ea580c',
-    quaternary: '#059669',
-  }),
-}));
+// Use shared mock factory from componentMocks.tsx
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 
 jest.mock('@/hooks/theme/useSkiaFonts', () => ({
   useSkiaFonts: jest.fn(() => ({

@@ -22,16 +22,10 @@ import { render } from '@testing-library/react-native';
 import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
-// Mock hooks
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    tint: '#8fb397',
-    text: '#000000',
-    arabicText: '#1a1a1a',
-    disabled: '#cccccc',
-    transparent: 'transparent',
-  }),
-}));
+// Use shared mock factory from componentMocks.tsx
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 
 jest.mock('@/hooks/theme/useSkiaFonts', () => ({
   useSkiaFonts: () => ({

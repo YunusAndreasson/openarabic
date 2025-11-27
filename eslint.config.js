@@ -139,6 +139,8 @@ module.exports = [
       '**/*.test.*',
       '**/*.spec.*',
       'translate/',
+      'translate_2/',
+      'translate_3/',
       'admin-dashboard/',
       'scripts/',
       'coverage/',

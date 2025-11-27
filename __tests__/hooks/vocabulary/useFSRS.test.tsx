@@ -20,12 +20,9 @@ jest.unmock('@tanstack/react-query');
 
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
-import type { QueryClient } from '@tanstack/react-query';
-import { QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
 import { State } from 'ts-fsrs';
 
-import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId } from '@/types/branded.types';
@@ -57,20 +54,19 @@ function createMockStudyWord(overrides: Partial<StudyWord> = {}): StudyWord {
 }
 
 describe('useFSRS Hook', () => {
-  let queryClient: QueryClient;
+  let wrapper: ReturnType<typeof createHookTestWrapper>['wrapper'];
+  let queryClient: ReturnType<typeof createHookTestWrapper>['queryClient'];
 
   beforeEach(() => {
     jest.clearAllMocks();
-    queryClient = createTestQueryClient();
+    const testWrapper = createHookTestWrapper();
+    wrapper = testWrapper.wrapper;
+    queryClient = testWrapper.queryClient;
 
     // Default mock implementations
     studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([]);
     studyWordsFSRSService.updateWordAndReview = jest.fn().mockResolvedValue(undefined);
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
 
   describe('Initialization & Setup', () => {
     test('initializes with empty state when no userId provided', () => {
@@ -282,69 +278,60 @@ describe('useFSRS Hook', () => {
   });
 
   describe('Word Processing & Confidence Mapping', () => {
-    test('maps "known" confidence to Good rating', async () => {
-      const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+    /**
+     * Confidence mapping tests using test.each for reduced duplication.
+     * Tests how different confidence levels affect session state.
+     */
+    test.each([
+      {
+        confidence: 'known' as const,
+        rating: 'Good',
+        expectedProgress: 100,
+        expectComplete: true,
+        description: 'completes session (100% progress with 1 word)',
+      },
+      {
+        confidence: 'vague' as const,
+        rating: 'Hard',
+        expectedProgress: 0,
+        expectComplete: false,
+        description: 'adds to spacing queue (no progress increase)',
+      },
+      {
+        confidence: 'unknown' as const,
+        rating: 'Again',
+        expectedProgress: 0,
+        expectComplete: false,
+        description: 'adds to spacing queue (no progress increase)',
+      },
+    ])(
+      'maps "$confidence" confidence to $rating rating - $description',
+      async ({ confidence, expectedProgress, expectComplete }) => {
+        const word = createMockStudyWord({ root_id: 1 as RootId });
+        studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
 
-      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+        const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
-      await waitFor(() => {
-        expect(result.current.currentWord).not.toBeNull();
-      });
+        await waitFor(() => {
+          expect(result.current.currentWord).not.toBeNull();
+        });
 
-      await result.current.updateWord(1, 'known');
+        await result.current.updateWord(1, confidence);
 
-      await waitFor(() => {
-        expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalled();
-      });
+        await waitFor(() => {
+          expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalled();
+        });
 
-      // Known words should complete the session (100% progress with 1 word)
-      await waitFor(() => {
-        expect(result.current.isComplete).toBe(true);
-      });
+        if (expectComplete) {
+          await waitFor(() => {
+            expect(result.current.isComplete).toBe(true);
+          });
+        }
 
-      expect(result.current.progress).toBe(100);
-    });
-
-    test('maps "vague" confidence to Hard rating', async () => {
-      const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
-
-      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.currentWord).not.toBeNull();
-      });
-
-      await result.current.updateWord(1, 'vague');
-
-      await waitFor(() => {
-        expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalled();
-      });
-
-      // Vague words should be added back to spacing queue (not increase progress)
-      expect(result.current.progress).toBe(0);
-    });
-
-    test('maps "unknown" confidence to Again rating', async () => {
-      const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
-
-      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
-
-      await waitFor(() => {
-        expect(result.current.currentWord).not.toBeNull();
-      });
-
-      await result.current.updateWord(1, 'unknown');
-
-      await waitFor(() => {
-        expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalled();
-      });
-
-      // Unknown words should be added back to spacing queue (not increase progress)
-      expect(result.current.progress).toBe(0);
-    });
+        expect(result.current.progress).toBe(expectedProgress);
+        expect(result.current.isComplete).toBe(expectComplete);
+      },
+    );
 
     test('increments processedWords counter', async () => {
       const words = [

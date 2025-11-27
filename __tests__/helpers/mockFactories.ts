@@ -438,3 +438,125 @@ export const wordScenarios = {
       grammar_note: 'Definite article + noun in nominative case',
     }),
 };
+
+// ============================================================================
+// SUPABASE QUERY MOCKS
+// ============================================================================
+
+/**
+ * Response type for Supabase query mocks
+ */
+export interface SupabaseQueryResponse<T> {
+  data: T | null;
+  error: { message: string; code?: string } | null;
+}
+
+/**
+ * Creates a chainable Supabase query builder mock
+ *
+ * Supports all common query methods and can be awaited.
+ * The response is returned when the chain is awaited or when
+ * a terminal method like single() or maybeSingle() is called.
+ *
+ * @example
+ * ```typescript
+ * // Mock a successful query
+ * const mockQuery = createSupabaseQueryMock({ data: [{ id: 1 }], error: null });
+ * supabase.from.mockReturnValue(mockQuery);
+ *
+ * // Mock an error
+ * const errorQuery = createSupabaseQueryMock({
+ *   data: null,
+ *   error: { message: 'Not found', code: 'PGRST116' }
+ * });
+ * ```
+ */
+export const createSupabaseQueryMock = <T>(
+  response: SupabaseQueryResponse<T> = { data: null, error: null },
+) => {
+  const builder: Record<string, jest.Mock> & {
+    then: (resolve: (value: SupabaseQueryResponse<T>) => void) => Promise<SupabaseQueryResponse<T>>;
+  } = {
+    select: jest.fn().mockReturnThis(),
+    insert: jest.fn().mockReturnThis(),
+    update: jest.fn().mockReturnThis(),
+    upsert: jest.fn().mockReturnThis(),
+    delete: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    neq: jest.fn().mockReturnThis(),
+    gt: jest.fn().mockReturnThis(),
+    gte: jest.fn().mockReturnThis(),
+    lt: jest.fn().mockReturnThis(),
+    lte: jest.fn().mockReturnThis(),
+    like: jest.fn().mockReturnThis(),
+    ilike: jest.fn().mockReturnThis(),
+    is: jest.fn().mockReturnThis(),
+    in: jest.fn().mockReturnThis(),
+    contains: jest.fn().mockReturnThis(),
+    containedBy: jest.fn().mockReturnThis(),
+    range: jest.fn().mockReturnThis(),
+    filter: jest.fn().mockReturnThis(),
+    not: jest.fn().mockReturnThis(),
+    or: jest.fn().mockReturnThis(),
+    and: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    offset: jest.fn().mockReturnThis(),
+    single: jest.fn().mockReturnThis(),
+    maybeSingle: jest.fn().mockReturnThis(),
+    throwOnError: jest.fn().mockReturnThis(),
+    // Make the builder thenable for await support
+    then: (resolve: (value: SupabaseQueryResponse<T>) => void) =>
+      Promise.resolve(response).then(resolve),
+  };
+
+  return builder;
+};
+
+/**
+ * Creates a Supabase 'from' mock that returns a query builder
+ *
+ * @example
+ * ```typescript
+ * const mockFrom = createSupabaseFromMock([
+ *   { id: 1, name: 'Test' }
+ * ]);
+ * supabase.from = mockFrom;
+ * ```
+ */
+export const createSupabaseFromMock = <T>(data: T | null, error: { message: string } | null = null) =>
+  jest.fn(() => createSupabaseQueryMock<T>({ data, error }));
+
+/**
+ * Creates a complete Supabase client mock for service tests
+ *
+ * @example
+ * ```typescript
+ * const mockSupabase = createSupabaseClientMock();
+ * mockSupabase.from.mockImplementation((table) => {
+ *   if (table === 'articles') {
+ *     return createSupabaseQueryMock({ data: mockArticles, error: null });
+ *   }
+ *   return createSupabaseQueryMock({ data: null, error: null });
+ * });
+ * ```
+ */
+export const createSupabaseClientMock = () => ({
+  from: jest.fn(() => createSupabaseQueryMock({ data: null, error: null })),
+  auth: {
+    getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
+    getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    signInWithPassword: jest.fn().mockResolvedValue({ data: { user: null, session: null }, error: null }),
+    signOut: jest.fn().mockResolvedValue({ error: null }),
+    onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
+  },
+  storage: {
+    from: jest.fn(() => ({
+      getPublicUrl: jest.fn((path: string) => ({ data: { publicUrl: `https://storage.example.com/${path}` } })),
+      upload: jest.fn().mockResolvedValue({ data: { path: 'uploaded/file.txt' }, error: null }),
+      download: jest.fn().mockResolvedValue({ data: new Blob(), error: null }),
+      remove: jest.fn().mockResolvedValue({ data: null, error: null }),
+    })),
+  },
+  rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+});

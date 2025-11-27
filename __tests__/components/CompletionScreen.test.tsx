@@ -45,63 +45,10 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('react-native-reanimated', () => {
-  const React = require('react');
-  const { View, Text, ScrollView, Image } = require('react-native');
-
-  const mockAnimation = {
-    duration: (ms: number) => mockAnimation,
-    delay: (ms: number) => mockAnimation,
-    springify: () => mockAnimation,
-  };
-
-  return {
-    __esModule: true,
-    default: {
-      View: React.forwardRef((props: any, ref: any) =>
-        React.createElement(View, { ...props, ref }),
-      ),
-      Text: React.forwardRef((props: any, ref: any) =>
-        React.createElement(Text, { ...props, ref }),
-      ),
-      ScrollView: React.forwardRef((props: any, ref: any) =>
-        React.createElement(ScrollView, { ...props, ref }),
-      ),
-      Image: React.forwardRef((props: any, ref: any) =>
-        React.createElement(Image, { ...props, ref }),
-      ),
-      createAnimatedComponent: (component: any) =>
-        React.forwardRef((props: any, ref: any) =>
-          React.createElement(component, { ...props, ref }),
-        ),
-    },
-    FadeIn: mockAnimation,
-    FadeInUp: mockAnimation,
-    ZoomIn: mockAnimation,
-    Easing: {
-      out: jest.fn(fn => fn),
-      in: jest.fn(fn => fn),
-      inOut: jest.fn(fn => fn),
-      cubic: jest.fn(t => t * t * t),
-      bezier: jest.fn(() => jest.fn(t => t)),
-    },
-    useSharedValue: (initialValue = 0) => ({
-      value: initialValue,
-      modify: jest.fn(),
-    }),
-    useAnimatedStyle: (styleCallback: any) => {
-      try {
-        return styleCallback() || {};
-      } catch {
-        return {};
-      }
-    },
-    withTiming: (value: any) => value,
-    withSpring: (value: any) => value,
-    createAnimatedComponent: (component: any) =>
-      React.forwardRef((props: any, ref: any) => React.createElement(component, { ...props, ref })),
-  };
-});
+// Use shared mock factory from componentMocks.tsx
+jest.mock('react-native-reanimated', () =>
+  require('@/__tests__/helpers/componentMocks').createReanimatedMock(),
+);
 
 jest.mock('@/components/ThemedButton', () => {
   const React = require('react');
@@ -116,20 +63,9 @@ jest.mock('@/components/ThemedButton', () => {
   };
 });
 
-jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({
-    completionSuccess: '#10b981',
-    headingText: '#1a1a1a',
-    subtitleText: '#4a4a4a',
-    black: '#000000',
-    tint: '#4a7c59',
-    error: '#ef4444',
-    warning: '#f59e0b',
-    success: '#10b981',
-    progressIndicator: '#3b82f6',
-    info: '#06b6d4',
-  }),
-}));
+jest.mock('@/hooks/theme/useColors', () =>
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+);
 
 jest.mock('@/hooks/study', () => ({
   useStudyStreak: () => ({
