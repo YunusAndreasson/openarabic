@@ -6,10 +6,10 @@
  * Usage:
  * ```typescript
  * import {
- *   // Render utilities
- *   renderWithQuery,
- *   renderWithProviders,
+ *   // Query client + timing
  *   createTestQueryClient,
+ *   flushPromisesAndTimers,
+ *   advanceTimersByTime,
  *
  *   // Hook mocks
  *   createAuthMock,
@@ -34,18 +34,7 @@
 // ============================================================================
 // RENDER UTILITIES (testUtils.tsx)
 // ============================================================================
-export {
-  createTestQueryClient,
-  renderWithQuery,
-  renderWithProviders,
-  renderWithAppProviders,
-  renderWithAsyncSetup,
-  waitForQueryToSettle,
-  waitForQuery,
-  createMockSessionMetrics,
-  flushPromisesAndTimers,
-  advanceTimersByTime,
-} from './testUtils';
+export { createTestQueryClient, flushPromisesAndTimers, advanceTimersByTime } from './testUtils';
 
 // ============================================================================
 // HOOK MOCKS (hookMocks.ts)
@@ -58,18 +47,12 @@ export {
   createAudioPreloaderMock,
   // Vocabulary/FSRS
   createFSRSMock,
-  createWordSizingMock,
   // Session
   createSessionMetricsMock,
   // Utilities
   createTimerCleanupMock,
   createOpacityAnimationMock,
-  // Services
-  createAudioCacheMock,
-  createStorageUtilsMock,
-  createCheckAuthenticationMock,
   // Setup helpers
-  hookMockConfigs,
   setupInteractionManagerMock,
   // Test wrappers
   createHookTestWrapper,
@@ -90,26 +73,8 @@ export {
   createMockSentenceWordList,
   // Sentences
   createMockArticleSentence,
-  createMockSentenceWithWords,
   // Articles
   createMockArticle,
-  createMockArticleMinimal,
-  createMockArticleList,
-  createMockArticleWithDifficulty,
-  createMockArticleWithSentences,
-  // User data
-  createMockUserId,
-  createMockReadingProgress,
-  createMockBookmark,
-  createMockTranslationImprovement,
-  // Scenarios
-  articleScenarios,
-  wordScenarios,
-  // Supabase mocks
-  createSupabaseQueryMock,
-  createSupabaseFromMock,
-  createSupabaseClientMock,
-  type SupabaseQueryResponse,
 } from './mockFactories';
 
 // ============================================================================
@@ -131,46 +96,14 @@ export {
   createWordsWithStates,
   createLargeWordSet,
   createEdgeCaseWords,
-  // Query client
-  createMockQueryClient,
   // Test patterns
   testPatterns,
-  performanceBenchmarks,
-  testUtils as fsrsTestUtils,
 } from './fsrsTestHelpers';
 
 // ============================================================================
 // TYPE-SAFE MOCKING (mockHelpers.ts)
 // ============================================================================
-export {
-  mockFunction,
-  mockService,
-  mockWithDefault,
-  mockAsyncWithDefault,
-  mockClass,
-  mockMethods,
-  expectCalledWith,
-  expectResolvedWith,
-  createSpy,
-  mockImplementation,
-  resetServiceMocks,
-  clearServiceMocks,
-  isMockedFunction,
-  mockWithSequence,
-  mockAsyncWithSequence,
-} from './mockHelpers';
-
-// ============================================================================
-// EXPO MODULE MOCKS (mockExpoModules.ts)
-// ============================================================================
-export {
-  createExpoNotificationsMock,
-  createExpoBackgroundTaskMock,
-  createExpoTaskManagerMock,
-  createExpoAudioMock,
-  createExpoHapticsMock,
-  createReactNativeAppStateMock,
-} from './mockExpoModules';
+export { mockFunction, mockService, mockWithDefault, mockAsyncWithDefault } from './mockHelpers';
 
 // ============================================================================
 // REDUX TEST STORE (testStore.tsx)
@@ -178,39 +111,20 @@ export {
 export {
   setupTestStore,
   TestStoreProvider,
-  TestProviders,
   defaultPreloadedState,
   type TestRootState,
 } from './testStore';
 
 // ============================================================================
-// CUSTOM MATCHERS (customMatchers.ts)
-// ============================================================================
-export { customMatchers } from './customMatchers';
-
-// ============================================================================
 // CHART MOCKS (chartMocks.ts)
 // ============================================================================
-export {
-  // Path builder mocks
-  mockBuildSmoothChartPath,
-  // Constants mocks
-  mockCalculateDataPointPositions,
-  mockChartConstants,
-  // Colors mocks
-  mockChartColors,
-  // Utils mocks
-  mockPerformanceZones,
-  // Reset utility
-  resetChartMocks,
-} from './chartMocks';
+export { mockChartColors, mockPerformanceZones, resetChartMocks } from './chartMocks';
 
 // ============================================================================
 // COMPONENT MOCKS (componentMocks.tsx)
 // ============================================================================
 export {
   // Theme/Colors mocks
-  mockColors,
   useColorsMockFactory,
   useThemeDetectionMockFactory,
   // Reanimated mock
@@ -219,6 +133,4 @@ export {
   createSafeAreaContextMock,
   // Animation hooks mock
   createAnimationHooksMock,
-  // Reset utility
-  resetComponentMocks,
 } from './componentMocks';

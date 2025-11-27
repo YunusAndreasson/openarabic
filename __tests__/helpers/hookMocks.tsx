@@ -126,11 +126,6 @@ export const createFSRSMock = (
   ...overrides,
 });
 
-/**
- * Creates mock return value for useWordSizing hook
- */
-export const createWordSizingMock = (size: number = 80) => size;
-
 // ============================================================================
 // SESSION / REVIEW HOOKS
 // ============================================================================
@@ -202,112 +197,8 @@ export const createOpacityAnimationMock = (
 });
 
 // ============================================================================
-// SERVICE MOCKS
-// ============================================================================
-
-/**
- * Creates mock for audioCache service
- */
-export const createAudioCacheMock = (
-  overrides: Partial<{
-    getAudio: jest.Mock;
-    preloadAudio: jest.Mock;
-    clearCache: jest.Mock;
-  }> = {},
-) => ({
-  getAudio: jest.fn((url: string) => Promise.resolve(url)),
-  preloadAudio: jest.fn(() => Promise.resolve()),
-  clearCache: jest.fn(() => Promise.resolve()),
-  ...overrides,
-});
-
-/**
- * Creates mock for storageUtils
- */
-export const createStorageUtilsMock = () => ({
-  generateStorageUrl: jest.fn((bucket: string, path: string | null | undefined) => {
-    if (!path || typeof path !== 'string') return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    return `https://example.com/storage/${bucket}/${path}`;
-  }),
-  generateImageUrl: jest.fn((path: string | null | undefined) => {
-    if (!path || typeof path !== 'string') return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    return `https://example.com/storage/images/${path}`;
-  }),
-  generateAudioUrl: jest.fn((path: string | null | undefined) => {
-    if (!path || typeof path !== 'string') return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    return `https://example.com/storage/audio/${path}`;
-  }),
-  isValidStoragePath: jest.fn((path: unknown): path is string => {
-    return typeof path === 'string' && path.trim().length > 0;
-  }),
-});
-
-/**
- * Creates mock for checkAuthentication from supabase service
- */
-export const createCheckAuthenticationMock = (userId: string = 'test-user-123') =>
-  jest.fn().mockResolvedValue({
-    session: { user: { id: userId } },
-    user: { id: userId },
-  });
-
-// ============================================================================
 // SETUP HELPERS
 // ============================================================================
-
-/**
- * Standard hook mock configurations for common test scenarios.
- * Use with jest.mock() or require() patterns.
- */
-export const hookMockConfigs = {
-  auth: () => ({
-    useAuth: jest.fn(() => createAuthMock()),
-  }),
-
-  vocabulary: () => ({
-    useFSRS: jest.fn(() => createFSRSMock()),
-    useWordSizing: jest.fn(() => createWordSizingMock()),
-  }),
-
-  audio: () => ({
-    useSimpleAudioPlayer: jest.fn(() => createAudioPlayerMock()),
-  }),
-
-  audioPreloader: () => ({
-    useAudioPreloader: jest.fn(() => createAudioPreloaderMock()),
-  }),
-
-  sessionMetrics: () => ({
-    useSessionMetrics: jest.fn(() => createSessionMetricsMock()),
-  }),
-
-  timerCleanup: () => ({
-    useTimerCleanup: jest.fn(() => createTimerCleanupMock()),
-  }),
-
-  opacityAnimation: () => ({
-    useOpacityAnimation: jest.fn(() => createOpacityAnimationMock()),
-  }),
-
-  expoRouter: () => ({
-    router: {
-      back: jest.fn(),
-      replace: jest.fn(),
-      push: jest.fn(),
-      navigate: jest.fn(),
-    },
-    useLocalSearchParams: jest.fn(() => ({})),
-    useRouter: jest.fn(() => ({
-      back: jest.fn(),
-      replace: jest.fn(),
-      push: jest.fn(),
-      navigate: jest.fn(),
-    })),
-  }),
-};
 
 /**
  * Creates InteractionManager mock that executes callbacks immediately
@@ -350,16 +241,10 @@ export function createHookTestWrapper(options?: {
   const queryClient = createTestQueryClient();
 
   const wrapper = ({ children }: { children: React.ReactNode }) => {
-    const content = (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
+    const content = <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 
     if (options?.withRedux) {
-      return (
-        <Provider store={setupTestStore(options.preloadedState)}>
-          {content}
-        </Provider>
-      );
+      return <Provider store={setupTestStore(options.preloadedState)}>{content}</Provider>;
     }
     return content;
   };

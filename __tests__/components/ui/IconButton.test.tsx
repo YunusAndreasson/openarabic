@@ -26,14 +26,9 @@ jest.mock('@/hooks/theme/useThemeDetection', () =>
   require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
 );
 
-jest.mock('@/hooks/animations', () => ({
-  usePressAnimation: () => ({
-    animatedStyle: {},
-    handlePressIn: jest.fn(),
-    handlePressOut: jest.fn(),
-  }),
-  useDebounce: (fn: () => void) => [fn, false],
-}));
+jest.mock('@/hooks/animations', () =>
+  require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
+);
 
 jest.mock('@/utils/haptics', () => ({
   lightFeedback: jest.fn(),

@@ -39,7 +39,8 @@ jest.mock('@/components/common/charts/pathBuilder', () => ({
 }));
 
 jest.mock('@/components/common/charts/utils', () => ({
-  createStandardizedPerformanceZones: () => require('@/__tests__/helpers/chartMocks').mockPerformanceZones,
+  createStandardizedPerformanceZones: () =>
+    require('@/__tests__/helpers/chartMocks').mockPerformanceZones,
 }));
 
 jest.mock('@/utils/fsrsUtils', () => ({

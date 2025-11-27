@@ -20,22 +20,14 @@
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
-import type { ReactNode } from 'react';
 
 import { useReview } from '@/hooks/review/useReview';
-import type { StudyWord } from '@/types/vocabulary.types';
 import {
-  createAuthMock,
-  createAudioPlayerMock,
-  createFSRSMock,
-  createSessionMetricsMock,
-  createAudioPreloaderMock,
-  createTimerCleanupMock,
-  createOpacityAnimationMock,
-  setupInteractionManagerMock,
-} from '@/__tests__/helpers/hookMocks';
+  setupUseReviewMocks,
+  createMockWord,
+  createWrapper,
+  type UseReviewMockRefs,
+} from './review/useReviewTestSetup';
 
 // Mock dependencies
 jest.mock('@/hooks/auth', () => ({
@@ -113,117 +105,17 @@ jest.mock('@/services/supabase', () => ({
   }),
 }));
 
-const { useAuth } = require('@/hooks/auth');
+// Get mocked hooks for direct manipulation in tests
 const { useFSRS } = require('@/hooks/vocabulary');
-const { useSimpleAudioPlayer } = require('@/hooks/audio/useSimpleAudioPlayer');
-const { useSessionMetrics } = require('@/hooks/review/useSessionMetrics');
 const { useAudioPreloader } = require('@/hooks/review/useAudioPreloader');
-const { useTimerCleanup } = require('@/hooks/utils/useTimerCleanup');
-const { useOpacityAnimation } = require('@/hooks/animations/useOpacityAnimation');
-
-// Test helper: Create mock word
-const createMockWord = (overrides: Partial<StudyWord> = {}): StudyWord => ({
-  id: 1,
-  user_id: 'test-user-123',
-  root_id: 101,
-  fsrs_due: new Date(Date.now() - 1000).toISOString(),
-  fsrs_stability: 5,
-  fsrs_difficulty: 5,
-  fsrs_scheduled_days: 1,
-  fsrs_reps: 2,
-  fsrs_lapses: 0,
-  fsrs_state: 2,
-  fsrs_last_review: new Date().toISOString(),
-  created_at: new Date().toISOString(),
-  root: {
-    id: 101,
-    letters: 'كتاب',
-    meaning: 'book',
-    audio_url: 'audio/kitab.mp3',
-    audio_url_en: 'audio/book.mp3',
-  },
-  ...overrides,
-});
-
-// Test wrapper with QueryClient
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
-  return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
-};
+const { useSessionMetrics } = require('@/hooks/review/useSessionMetrics');
 
 describe('useReview Hook - Session Management', () => {
-  let mockAudioPlayer: ReturnType<typeof createAudioPlayerMock>;
-  let mockUpdateWord: jest.Mock;
-  let mockInvalidateQueries: jest.Mock;
-  let mockUpdateMetrics: jest.Mock;
-  let mockSetTimer: jest.Mock;
-  let mockClearTimer: jest.Mock;
-  let mockClearAllTimers: jest.Mock;
-  let mockFadeIn: jest.Mock;
-  let mockFadeOut: jest.Mock;
+  let mocks: UseReviewMockRefs;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    setupInteractionManagerMock();
-
-    useAuth.mockReturnValue(createAuthMock());
-
-    mockAudioPlayer = createAudioPlayerMock();
-    useSimpleAudioPlayer.mockReturnValue(mockAudioPlayer);
-
-    mockUpdateWord = jest.fn().mockResolvedValue(7.5);
-    mockInvalidateQueries = jest.fn();
-    useFSRS.mockReturnValue(
-      createFSRSMock({
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
-      }),
-    );
-
-    mockUpdateMetrics = jest.fn();
-    useSessionMetrics.mockReturnValue(
-      createSessionMetricsMock({
-        updateMetrics: mockUpdateMetrics,
-      }),
-    );
-
-    useAudioPreloader.mockReturnValue(
-      createAudioPreloaderMock({
-        isPreloading: false,
-        progress: 100,
-      }),
-    );
-
-    mockSetTimer = jest.fn((_name, callback) => {
-      callback();
-    });
-    mockClearTimer = jest.fn();
-    mockClearAllTimers = jest.fn();
-    useTimerCleanup.mockReturnValue(
-      createTimerCleanupMock({
-        setTimer: mockSetTimer,
-        clearTimer: mockClearTimer,
-        clearAllTimers: mockClearAllTimers,
-      }),
-    );
-
-    mockFadeIn = jest.fn();
-    mockFadeOut = jest.fn();
-    useOpacityAnimation.mockReturnValue(
-      createOpacityAnimationMock({
-        fadeIn: mockFadeIn,
-        fadeOut: mockFadeOut,
-      }),
-    );
+    mocks = setupUseReviewMocks();
   });
 
   describe('Session Completion', () => {
@@ -236,8 +128,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: true,
         progress: 100,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -260,8 +152,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -273,8 +165,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 50,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       rerender();
@@ -292,8 +184,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: true,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -311,8 +203,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: true,
         progress: 100,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -322,7 +214,7 @@ describe('useReview Hook - Session Management', () => {
         result.current.handleSwipeRight();
       });
 
-      expect(mockUpdateWord).not.toHaveBeenCalled();
+      expect(mocks.mockUpdateWord).not.toHaveBeenCalled();
     });
 
     test('should not process swipes when already updating', async () => {
@@ -333,8 +225,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -349,13 +241,13 @@ describe('useReview Hook - Session Management', () => {
       });
 
       await waitFor(() => {
-        expect(mockUpdateWord).toHaveBeenCalledTimes(1);
+        expect(mocks.mockUpdateWord).toHaveBeenCalledTimes(1);
       });
     });
 
     // SKIP: Complex async timing issue with audioCache.getAudio promise resolution
     it.skip('should handle audio playback errors gracefully', async () => {
-      mockAudioPlayer.play.mockRejectedValueOnce(new Error('Audio failed'));
+      mocks.mockAudioPlayer.play.mockRejectedValueOnce(new Error('Audio failed'));
 
       const word = createMockWord();
       useFSRS.mockReturnValue({
@@ -364,20 +256,20 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
       renderHook(() => useReview(), { wrapper });
 
       await waitFor(() => {
-        expect(mockAudioPlayer.play).toHaveBeenCalled();
+        expect(mocks.mockAudioPlayer.play).toHaveBeenCalled();
       });
     });
 
     test('should handle word update errors gracefully', async () => {
-      mockUpdateWord.mockRejectedValueOnce(new Error('Update failed'));
+      mocks.mockUpdateWord.mockRejectedValueOnce(new Error('Update failed'));
 
       const word = createMockWord();
       useFSRS.mockReturnValue({
@@ -386,8 +278,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -398,7 +290,7 @@ describe('useReview Hook - Session Management', () => {
       });
 
       await waitFor(() => {
-        expect(mockUpdateWord).toHaveBeenCalled();
+        expect(mocks.mockUpdateWord).toHaveBeenCalled();
       });
     });
   });
@@ -412,8 +304,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -421,7 +313,7 @@ describe('useReview Hook - Session Management', () => {
 
       unmount();
 
-      expect(mockAudioPlayer.stop).toHaveBeenCalled();
+      expect(mocks.mockAudioPlayer.stop).toHaveBeenCalled();
     });
 
     test('should cleanup all timers on unmount', () => {
@@ -432,8 +324,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -441,7 +333,7 @@ describe('useReview Hook - Session Management', () => {
 
       unmount();
 
-      expect(mockClearAllTimers).toHaveBeenCalled();
+      expect(mocks.mockClearAllTimers).toHaveBeenCalled();
     });
 
     test('should reset state on unmount', () => {
@@ -452,8 +344,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -465,7 +357,7 @@ describe('useReview Hook - Session Management', () => {
 
       unmount();
 
-      expect(mockClearAllTimers).toHaveBeenCalled();
+      expect(mocks.mockClearAllTimers).toHaveBeenCalled();
     });
   });
 
@@ -478,8 +370,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       useSessionMetrics.mockReturnValue({
@@ -491,7 +383,7 @@ describe('useReview Hook - Session Management', () => {
           currentStreak: 5,
           longestStreak: 7,
         },
-        updateMetrics: mockUpdateMetrics,
+        updateMetrics: mocks.mockUpdateMetrics,
       });
 
       const wrapper = createWrapper();
@@ -510,8 +402,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -522,7 +414,7 @@ describe('useReview Hook - Session Management', () => {
       });
 
       await waitFor(() => {
-        expect(mockUpdateMetrics).toHaveBeenCalledWith('known', {
+        expect(mocks.mockUpdateMetrics).toHaveBeenCalledWith('known', {
           rootId: 101,
           oldStability: 7,
           newStability: 7.5,
@@ -546,14 +438,14 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
       renderHook(() => useReview(), { wrapper });
 
-      expect(mockAudioPlayer.play).not.toHaveBeenCalled();
+      expect(mocks.mockAudioPlayer.play).not.toHaveBeenCalled();
     });
 
     // SKIP: Complex async timing issue with audioCache.getAudio promise resolution
@@ -571,15 +463,15 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
       renderHook(() => useReview(), { wrapper });
 
       await waitFor(() => {
-        expect(mockAudioPlayer.play).toHaveBeenCalled();
+        expect(mocks.mockAudioPlayer.play).toHaveBeenCalled();
       });
     });
 
@@ -597,8 +489,8 @@ describe('useReview Hook - Session Management', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();

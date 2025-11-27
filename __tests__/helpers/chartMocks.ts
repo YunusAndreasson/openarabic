@@ -25,57 +25,6 @@
  */
 
 // ============================================================================
-// PATH BUILDER MOCKS
-// ============================================================================
-
-/**
- * Mock implementation of buildSmoothChartPath
- * Returns predictable path and points for testing
- *
- * Note: Use inline jest.mock() in test files, but can reference this
- * implementation via require() for consistency.
- */
-export const mockBuildSmoothChartPath = jest.fn(
-  (params: {
-    data: unknown[];
-    buildPoint: (x: number, y: number, d: unknown) => unknown;
-    dataPointPositions?: number[];
-    calculateY?: (d: unknown) => number;
-  }) => {
-    const { data, buildPoint } = params;
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      return { path: '', points: [] };
-    }
-    return {
-      path: 'M0,0 L100,100',
-      points: data.map((d, i) => buildPoint(i * 10, i * 10, d)),
-    };
-  },
-);
-
-// ============================================================================
-// CONSTANTS MOCKS
-// ============================================================================
-
-/**
- * Mock implementation of calculateDataPointPositions
- * Returns evenly spaced positions for testing
- */
-export const mockCalculateDataPointPositions = (length: number) =>
-  Array.from({ length }, (_, i) => i * 10);
-
-/**
- * Mock chart visual constants
- */
-export const mockChartConstants = {
-  CHART_VISUAL: { CHART_TOP_PADDING: 10 },
-  DAYS_7: 7,
-  GRAPH_HEIGHT_LARGE: 200,
-  getEffectiveChartHeight: () => 180,
-  calculateDataPointPositions: mockCalculateDataPointPositions,
-};
-
-// ============================================================================
 // CHART COLORS MOCKS
 // ============================================================================
 
@@ -108,7 +57,8 @@ export const mockPerformanceZones = [
 /**
  * Resets all chart mock call histories
  * Call in beforeEach for clean test isolation
+ * Note: Currently a no-op since remaining mocks are plain objects
  */
 export function resetChartMocks() {
-  mockBuildSmoothChartPath.mockClear();
+  // No-op: mockChartColors and mockPerformanceZones are plain objects
 }

@@ -18,22 +18,14 @@
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
-import type { ReactNode } from 'react';
 
 import { useReview } from '@/hooks/review/useReview';
-import type { StudyWord } from '@/types/vocabulary.types';
 import {
-  createAuthMock,
-  createAudioPlayerMock,
-  createFSRSMock,
-  createSessionMetricsMock,
-  createAudioPreloaderMock,
-  createTimerCleanupMock,
-  createOpacityAnimationMock,
-  setupInteractionManagerMock,
-} from '@/__tests__/helpers/hookMocks';
+  setupUseReviewMocks,
+  createMockWord,
+  createWrapper,
+  type UseReviewMockRefs,
+} from './review/useReviewTestSetup';
 
 // Mock dependencies
 jest.mock('@/hooks/auth', () => ({
@@ -111,117 +103,15 @@ jest.mock('@/services/supabase', () => ({
   }),
 }));
 
-const { useAuth } = require('@/hooks/auth');
+// Get mocked hooks for direct manipulation in tests
 const { useFSRS } = require('@/hooks/vocabulary');
-const { useSimpleAudioPlayer } = require('@/hooks/audio/useSimpleAudioPlayer');
-const { useSessionMetrics } = require('@/hooks/review/useSessionMetrics');
-const { useAudioPreloader } = require('@/hooks/review/useAudioPreloader');
-const { useTimerCleanup } = require('@/hooks/utils/useTimerCleanup');
-const { useOpacityAnimation } = require('@/hooks/animations/useOpacityAnimation');
-
-// Test helper: Create mock word
-const createMockWord = (overrides: Partial<StudyWord> = {}): StudyWord => ({
-  id: 1,
-  user_id: 'test-user-123',
-  root_id: 101,
-  fsrs_due: new Date(Date.now() - 1000).toISOString(),
-  fsrs_stability: 5,
-  fsrs_difficulty: 5,
-  fsrs_scheduled_days: 1,
-  fsrs_reps: 2,
-  fsrs_lapses: 0,
-  fsrs_state: 2,
-  fsrs_last_review: new Date().toISOString(),
-  created_at: new Date().toISOString(),
-  root: {
-    id: 101,
-    letters: 'كتاب',
-    meaning: 'book',
-    audio_url: 'audio/kitab.mp3',
-    audio_url_en: 'audio/book.mp3',
-  },
-  ...overrides,
-});
-
-// Test wrapper with QueryClient
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
-  return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
-};
 
 describe('useReview Hook - Swipe Gestures', () => {
-  let mockAudioPlayer: ReturnType<typeof createAudioPlayerMock>;
-  let mockUpdateWord: jest.Mock;
-  let mockInvalidateQueries: jest.Mock;
-  let mockUpdateMetrics: jest.Mock;
-  let mockSetTimer: jest.Mock;
-  let mockClearTimer: jest.Mock;
-  let mockClearAllTimers: jest.Mock;
-  let mockFadeIn: jest.Mock;
-  let mockFadeOut: jest.Mock;
+  let mocks: UseReviewMockRefs;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    setupInteractionManagerMock();
-
-    useAuth.mockReturnValue(createAuthMock());
-
-    mockAudioPlayer = createAudioPlayerMock();
-    useSimpleAudioPlayer.mockReturnValue(mockAudioPlayer);
-
-    mockUpdateWord = jest.fn().mockResolvedValue(7.5);
-    mockInvalidateQueries = jest.fn();
-    useFSRS.mockReturnValue(
-      createFSRSMock({
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
-      }),
-    );
-
-    mockUpdateMetrics = jest.fn();
-    useSessionMetrics.mockReturnValue(
-      createSessionMetricsMock({
-        updateMetrics: mockUpdateMetrics,
-      }),
-    );
-
-    useAudioPreloader.mockReturnValue(
-      createAudioPreloaderMock({
-        isPreloading: false,
-        progress: 100,
-      }),
-    );
-
-    mockSetTimer = jest.fn((_name, callback) => {
-      callback();
-    });
-    mockClearTimer = jest.fn();
-    mockClearAllTimers = jest.fn();
-    useTimerCleanup.mockReturnValue(
-      createTimerCleanupMock({
-        setTimer: mockSetTimer,
-        clearTimer: mockClearTimer,
-        clearAllTimers: mockClearAllTimers,
-      }),
-    );
-
-    mockFadeIn = jest.fn();
-    mockFadeOut = jest.fn();
-    useOpacityAnimation.mockReturnValue(
-      createOpacityAnimationMock({
-        fadeIn: mockFadeIn,
-        fadeOut: mockFadeOut,
-      }),
-    );
+    mocks = setupUseReviewMocks();
   });
 
   describe('Swipe Gestures', () => {
@@ -261,8 +151,8 @@ describe('useReview Hook - Swipe Gestures', () => {
           isLoading: false,
           isComplete: false,
           progress: 0,
-          updateWord: mockUpdateWord,
-          invalidateQueries: mockInvalidateQueries,
+          updateWord: mocks.mockUpdateWord,
+          invalidateQueries: mocks.mockInvalidateQueries,
         });
 
         const wrapper = createWrapper();
@@ -273,8 +163,8 @@ describe('useReview Hook - Swipe Gestures', () => {
         });
 
         await waitFor(() => {
-          expect(mockUpdateWord).toHaveBeenCalledWith(101, expectedConfidence);
-          expect(mockUpdateMetrics).toHaveBeenCalledWith(expectedConfidence, {
+          expect(mocks.mockUpdateWord).toHaveBeenCalledWith(101, expectedConfidence);
+          expect(mocks.mockUpdateMetrics).toHaveBeenCalledWith(expectedConfidence, {
             rootId: 101,
             oldStability: expectedStability,
             newStability: 7.5,
@@ -292,8 +182,8 @@ describe('useReview Hook - Swipe Gestures', () => {
           isLoading: false,
           isComplete: false,
           progress: 0,
-          updateWord: mockUpdateWord,
-          invalidateQueries: mockInvalidateQueries,
+          updateWord: mocks.mockUpdateWord,
+          invalidateQueries: mocks.mockInvalidateQueries,
         });
 
         const wrapper = createWrapper();
@@ -304,7 +194,7 @@ describe('useReview Hook - Swipe Gestures', () => {
         });
 
         await waitFor(() => {
-          expect(mockFadeOut).toHaveBeenCalled();
+          expect(mocks.mockFadeOut).toHaveBeenCalled();
         });
       });
 
@@ -316,8 +206,8 @@ describe('useReview Hook - Swipe Gestures', () => {
           isLoading: false,
           isComplete: false,
           progress: 0,
-          updateWord: mockUpdateWord,
-          invalidateQueries: mockInvalidateQueries,
+          updateWord: mocks.mockUpdateWord,
+          invalidateQueries: mocks.mockInvalidateQueries,
         });
 
         const wrapper = createWrapper();
@@ -328,7 +218,7 @@ describe('useReview Hook - Swipe Gestures', () => {
         });
 
         await waitFor(() => {
-          expect(mockUpdateWord).toHaveBeenCalled();
+          expect(mocks.mockUpdateWord).toHaveBeenCalled();
         });
 
         expect(result.current.showTranslation).toBe(false);
@@ -344,8 +234,8 @@ describe('useReview Hook - Swipe Gestures', () => {
           isLoading: false,
           isComplete: false,
           progress: 0,
-          updateWord: mockUpdateWord,
-          invalidateQueries: mockInvalidateQueries,
+          updateWord: mocks.mockUpdateWord,
+          invalidateQueries: mocks.mockInvalidateQueries,
         });
 
         const wrapper = createWrapper();
@@ -384,8 +274,8 @@ describe('useReview Hook - Swipe Gestures', () => {
           isLoading: false,
           isComplete: false,
           progress: 0,
-          updateWord: mockUpdateWord,
-          invalidateQueries: mockInvalidateQueries,
+          updateWord: mocks.mockUpdateWord,
+          invalidateQueries: mocks.mockInvalidateQueries,
         });
 
         const wrapper = createWrapper();
@@ -398,7 +288,7 @@ describe('useReview Hook - Swipe Gestures', () => {
         });
 
         await waitFor(() => {
-          expect(mockAudioPlayer.play).toHaveBeenCalledWith(
+          expect(mocks.mockAudioPlayer.play).toHaveBeenCalledWith(
             expect.objectContaining({
               audioUrl: expect.stringContaining('book.mp3'),
             }),
@@ -417,8 +307,8 @@ describe('useReview Hook - Swipe Gestures', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();
@@ -439,8 +329,8 @@ describe('useReview Hook - Swipe Gestures', () => {
         isLoading: false,
         isComplete: false,
         progress: 0,
-        updateWord: mockUpdateWord,
-        invalidateQueries: mockInvalidateQueries,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
       });
 
       const wrapper = createWrapper();

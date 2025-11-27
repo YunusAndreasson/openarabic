@@ -26,13 +26,9 @@ jest.mock('@/hooks/theme/useThemeDetection', () =>
   require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
 );
 
-jest.mock('@/hooks/animations', () => ({
-  usePressAnimation: () => ({
-    animatedStyle: {},
-    handlePressIn: jest.fn(),
-    handlePressOut: jest.fn(),
-  }),
-}));
+jest.mock('@/hooks/animations', () =>
+  require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
+);
 
 describe('ThemedButton', () => {
   const mockOnPress = jest.fn();

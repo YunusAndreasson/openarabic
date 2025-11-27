@@ -22,13 +22,9 @@ jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
 
-jest.mock('@/hooks/animations', () => ({
-  useToggleAnimation: () => ({
-    containerAnimatedStyle: {},
-    handleAnimatedStyle: {},
-    forceAnimateToInitialState: jest.fn(),
-  }),
-}));
+jest.mock('@/hooks/animations', () =>
+  require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
+);
 
 jest.mock('@/utils/haptics', () => ({
   selectionFeedback: jest.fn(),

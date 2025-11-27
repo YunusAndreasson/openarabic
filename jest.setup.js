@@ -853,9 +853,3 @@ if (typeof TextDecoder === 'undefined') {
   global.TextDecoder = TextDecoder;
 }
 
-// Register custom Jest matchers for domain-specific assertions
-// Provides matchers for FSRS validation, Arabic text validation, etc.
-// Usage: expect(word).toBeDueWord(), expect('كتاب').toBeValidArabicText()
-import { customMatchers } from './__tests__/helpers/customMatchers';
-// eslint-disable-next-line no-undef
-expect.extend(customMatchers);

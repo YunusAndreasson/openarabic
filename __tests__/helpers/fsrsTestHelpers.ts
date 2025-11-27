@@ -417,14 +417,6 @@ export const createEdgeCaseWords = () => ({
   }),
 });
 
-// Mock query client factory
-export const createMockQueryClient = () => ({
-  invalidateQueries: jest.fn(),
-  removeQueries: jest.fn(),
-  getQueryData: jest.fn(),
-  setQueryData: jest.fn(),
-});
-
 // Common test patterns
 export const testPatterns = {
   // Pattern for testing priority ordering
@@ -498,13 +490,6 @@ export const testPatterns = {
       },
     },
   ],
-};
-
-// Performance benchmarks
-export const performanceBenchmarks = {
-  QUEUE_INIT_TIME: 100, // ms
-  UPDATE_TIME: 50, // ms per update
-  LARGE_DATASET_PROCESSING: 200, // ms for 1000+ words
 };
 
 // Test utilities

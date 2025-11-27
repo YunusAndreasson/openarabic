@@ -118,15 +118,16 @@ describe('Study List Button State - Bug Reproduction', () => {
     });
   });
 
+  // Shared wrapper for all tests - uses queryClient from beforeEach
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+
   describe('BUG: Add → Remove → Add Again Flow', () => {
     test('should correctly toggle button state through multiple add/remove cycles', async () => {
       // SETUP: Start with empty study list
       queryClient.setQueryData(FSRS_QUERY_KEYS.all(mockUserId), []);
       queryClient.setQueryData(FSRS_QUERY_KEYS.allWithCooldown(mockUserId, 24), []);
-
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      );
 
       const { result } = renderHook(
         () => useArticleMutations(mockUserId, jest.fn(), jest.fn().mockResolvedValue(undefined)),
@@ -200,10 +201,6 @@ describe('Study List Button State - Bug Reproduction', () => {
       queryClient.setQueryData(FSRS_QUERY_KEYS.all(mockUserId), []);
       queryClient.setQueryData(FSRS_QUERY_KEYS.allWithCooldown(mockUserId, 24), []);
 
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      );
-
       // Track what localStudyStates Map should contain after each operation
       const expectedLocalState = new Map<number, boolean>();
 
@@ -243,10 +240,6 @@ describe('Study List Button State - Bug Reproduction', () => {
       const existingWord = createStudyWord(mockRootId);
       queryClient.setQueryData(FSRS_QUERY_KEYS.all(mockUserId), [existingWord]);
 
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      );
-
       const { result } = renderHook(
         () => useArticleMutations(mockUserId, jest.fn(), jest.fn().mockResolvedValue(undefined)),
         { wrapper },
@@ -264,10 +257,6 @@ describe('Study List Button State - Bug Reproduction', () => {
 
     test('should handle rapid toggles without state desync', async () => {
       queryClient.setQueryData(FSRS_QUERY_KEYS.all(mockUserId), []);
-
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      );
 
       const { result } = renderHook(
         () => useArticleMutations(mockUserId, jest.fn(), jest.fn().mockResolvedValue(undefined)),
@@ -292,10 +281,6 @@ describe('Study List Button State - Bug Reproduction', () => {
   describe('Query Cache Invalidation Timing', () => {
     test('should invalidate all related queries after successful toggle', async () => {
       queryClient.setQueryData(FSRS_QUERY_KEYS.all(mockUserId), []);
-
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      );
 
       const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
@@ -338,10 +323,6 @@ describe('Study List Button State - Bug Reproduction', () => {
       // SETUP: Word already in study list
       const existingWord = createStudyWord(mockRootId);
       queryClient.setQueryData(FSRS_QUERY_KEYS.allWithCooldown(mockUserId, 24), [existingWord]);
-
-      const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      );
 
       const { result } = renderHook(
         () => useArticleMutations(mockUserId, jest.fn(), jest.fn().mockResolvedValue(undefined)),

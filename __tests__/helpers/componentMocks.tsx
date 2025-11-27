@@ -28,7 +28,7 @@ import { View, Text, ScrollView, Image } from 'react-native';
  * Comprehensive mock colors covering all usage across the test suite.
  * Includes: basic colors, grammar colors, elevation colors, state colors.
  */
-export const mockColors = {
+const mockColors = {
   // Basic text colors
   text: '#000000',
   arabicText: '#1a1a1a',
@@ -220,9 +220,7 @@ export const createReanimatedMock = () => {
     },
     // Component creator
     createAnimatedComponent: (component: any) =>
-      React.forwardRef((props: any, ref: any) =>
-        React.createElement(component, { ...props, ref }),
-      ),
+      React.forwardRef((props: any, ref: any) => React.createElement(component, { ...props, ref })),
   };
 };
 
@@ -245,8 +243,14 @@ export const createSafeAreaContextMock = (insets = { top: 44, bottom: 34, left: 
 
 /**
  * Creates mocks for @/hooks/animations.
+ * Covers all hooks exported from hooks/animations/index.ts.
  */
 export const createAnimationHooksMock = () => ({
+  usePressAnimation: () => ({
+    animatedStyle: {},
+    handlePressIn: jest.fn(),
+    handlePressOut: jest.fn(),
+  }),
   useTransformAnimation: () => ({
     animatedStyle: {},
     setValue: jest.fn(),
@@ -257,20 +261,14 @@ export const createAnimationHooksMock = () => ({
     fadeOut: jest.fn(),
   }),
   useToggleAnimation: () => ({
-    animatedStyle: {},
-    toggle: jest.fn(),
-    isActive: false,
+    containerAnimatedStyle: {},
+    handleAnimatedStyle: {},
+    translateX: { value: 0 },
+    toggleScale: { value: 1 },
+    forceAnimateToInitialState: jest.fn(),
   }),
+  useDebounce: (fn: () => void) => [fn, false],
+  // Re-export animation configs as empty objects (tests rarely need actual values)
+  SPRING_CONFIG: {},
+  TIMING_CONFIG: {},
 });
-
-// ============================================================================
-// RESET UTILITIES
-// ============================================================================
-
-/**
- * Resets any stateful mocks.
- * Call in beforeEach for clean test isolation.
- */
-export function resetComponentMocks() {
-  // Currently stateless, but available for future use
-}
