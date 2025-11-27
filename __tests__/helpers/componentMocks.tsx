@@ -262,6 +262,8 @@ export const createAnimationHooksMock = () => ({
   }),
   useOpacityAnimation: () => ({
     opacity: { value: 1 },
+    animatedStyle: {},
+    setOpacity: jest.fn(),
     fadeIn: jest.fn(),
     fadeOut: jest.fn(),
   }),
