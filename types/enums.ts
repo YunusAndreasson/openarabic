@@ -27,18 +27,6 @@ export const DisplayLanguage = {
 
 export type DisplayLanguage = (typeof DisplayLanguage)[keyof typeof DisplayLanguage];
 
-/**
- * Available app themes
- * Using const object for zero runtime overhead
- */
-export const ThemeName = {
-  BIRCHES: 'Birches in Spring',
-  MIDNIGHT: 'Midnight Summer',
-  AUTUMN: 'Autumn Leaves',
-} as const;
-
-export type ThemeName = (typeof ThemeName)[keyof typeof ThemeName];
-
 // ===== DAILY WORD LIMITS =====
 
 /**
