@@ -144,29 +144,6 @@ export function isUnstableWord(word: StudyWord): boolean {
   return stability <= UNSTABLE_STABILITY_THRESHOLD && difficulty >= UNSTABLE_DIFFICULTY_THRESHOLD;
 }
 
-/**
- * Calculate the count of struggling words from a list of study words
- */
-export const getStrugglingWordsCount = (studyWords: StudyWord[]): number => {
-  if (!Array.isArray(studyWords) || studyWords.length === 0) {
-    return 0;
-  }
-
-  const nowMs = Date.now();
-  const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-
-  return studyWords.filter(word => {
-    if (word?.root_id == null) return false;
-    const hasBeenReviewed = (word.fsrs_reps ?? 0) > 0;
-    if (!hasBeenReviewed) return false;
-    const lastStr = normalizeTimestamp(word.fsrs_last_review);
-    const lastMs = lastStr ? Date.parse(lastStr) : 0;
-    const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-    if (isRecentlyReviewed) return false;
-    return isStrugglingWord(word);
-  }).length;
-};
-
 // ===== WORD STATUS UTILITY FUNCTIONS FOR DICTIONARY UI =====
 
 /**

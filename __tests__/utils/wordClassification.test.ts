@@ -19,7 +19,6 @@ import {
   calculateMasteredWords,
   calculateStrugglingWords,
   calculateWordCategories,
-  getStrugglingWordsCount,
   isDueWord,
   isExtraHardWord,
   isLearnedWord,
@@ -215,51 +214,6 @@ describe('wordClassification', () => {
 
       // Default stability is 0 (<= 7), default difficulty is 6.5 (< 7.5)
       expect(isUnstableWord(wordWithNulls)).toBe(false);
-    });
-  });
-
-  describe('getStrugglingWordsCount', () => {
-    test('should return 0 for empty array', () => {
-      expect(getStrugglingWordsCount([])).toBe(0);
-    });
-
-    test('should return 0 for null/undefined input', () => {
-      expect(getStrugglingWordsCount(null as any)).toBe(0);
-      expect(getStrugglingWordsCount(undefined as any)).toBe(0);
-    });
-
-    test('should count struggling words outside cooldown', () => {
-      const now = new Date();
-      const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString();
-
-      const words = [
-        createStudyWord({
-          root_id: 1,
-          fsrs_difficulty: 8.5,
-          fsrs_lapses: 2,
-          fsrs_last_review: pastBeyondCooldown,
-          fsrs_reps: 3,
-        }),
-      ];
-
-      expect(getStrugglingWordsCount(words)).toBe(1);
-    });
-
-    test('should exclude words without root_id', () => {
-      const now = new Date();
-      const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString();
-
-      const words = [
-        createStudyWord({
-          root_id: null as any,
-          fsrs_difficulty: 8.5,
-          fsrs_lapses: 2,
-          fsrs_last_review: pastBeyondCooldown,
-          fsrs_reps: 3,
-        }),
-      ];
-
-      expect(getStrugglingWordsCount(words)).toBe(0);
     });
   });
 
