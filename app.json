@@ -113,7 +113,6 @@
         }
       ],
       "expo-audio",
-      "expo-mail-composer",
       [
         "expo-image-picker",
         {
