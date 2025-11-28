@@ -102,16 +102,20 @@ export const STRINGS = {
   TRY_ADJUSTING_FILTERS: 'Try different filters',
   NO_ARTICLES_FOUND: 'No articles match your filters',
   // Saved tab empty state - one-tap start with beginner articles
-  BOOKMARKS_EMPTY_TITLE: 'Ready to listen in Arabic?',
-  BOOKMARKS_EMPTY_DESCRIPTION: 'We picked 5 beginner articles to get you started',
+  BOOKMARKS_EMPTY_TITLE: 'Get started with these articles',
+  BOOKMARKS_EMPTY_DESCRIPTION: 'Each has bilingual audio in Arabic and English for easy listening.',
   BOOKMARKS_EMPTY_CTA: 'Add to Saved',
-  BOOKMARKS_EMPTY_HINT: 'Or tap the bookmark icon in any article',
+  BOOKMARKS_EMPTY_HINT: 'Bookmark any article while reading to add your own',
   // Practice tab empty state - one-tap start with common words
-  STUDY_LIST_EMPTY_TITLE: 'Ready to learn Arabic?',
-  STUDY_LIST_EMPTY_DESCRIPTION: 'We picked 10 common words to get you started',
+  STUDY_LIST_EMPTY_TITLE: 'Get started with these words',
+  STUDY_LIST_EMPTY_DESCRIPTION:
+    'Common words with smart review scheduling to help you remember long-term.',
   STUDY_LIST_EMPTY_CTA: 'Add to Practice',
-  STUDY_LIST_EMPTY_HINT: 'Or tap words in articles to add your own',
+  STUDY_LIST_EMPTY_HINT: 'Tap any word while reading to add your own',
   STUDY_LIST_WORDS_ADDED: 'words added to practice',
+  // Success toasts for empty state actions
+  WORDS_ADDED_SUCCESS: 'Your first review session is ready',
+  ARTICLES_ADDED_SUCCESS: 'Your playlist is ready to go',
   ERROR_LOADING_DATA: "Couldn't load data. " + tryAgain,
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',

@@ -10,6 +10,7 @@ import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
+import { successFeedback } from '@/utils/haptics';
 
 interface UseAddCommonWordsOptions {
   onSuccess?: () => void;
@@ -56,6 +57,10 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
 
       // Invalidate FSRS queries to refresh the practice list
       await fsrsQueries.invalidateCommon(queryClient, user.id, DEFAULT_SESSION_COOLDOWN_HOURS);
+
+      // Show encouraging toast with haptic
+      successFeedback();
+      showToast(STRINGS.WORDS_ADDED_SUCCESS, undefined, ToastType.SUCCESS);
 
       // Call onSuccess callback
       options?.onSuccess?.();

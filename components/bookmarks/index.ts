@@ -3,7 +3,6 @@
  * Components for the audio bookmarks/listen tab
  */
 
-export { ArticlePreviewCard } from './ArticlePreviewCard';
 export { AudioProgressIndicator } from './AudioProgressIndicator';
 export { BottomControls } from './BottomControls';
 export { DeleteButton } from './DeleteButton';

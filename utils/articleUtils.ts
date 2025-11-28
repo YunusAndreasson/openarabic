@@ -67,18 +67,52 @@ export function getRandomItems<T>(items: T[], count: number): T[] {
 }
 
 /**
- * Gets beginner-friendly articles (difficulty level 1-3)
+ * Gets beginner-friendly articles (difficulty level 1-3) with variety
+ * Prioritizes longer articles and ensures a mix of different authors
  * @param articles - The articles to sort
  * @param limit - The maximum number of articles to return (default: 20)
- * @returns Beginner-friendly articles sorted by difficulty level (lowest first)
+ * @returns Beginner-friendly articles with author diversity
  */
 export function getBeginnerArticles(articles: Article[], limit = 20): Article[] {
   if (!articles.length) return [];
 
-  return articles
-    .filter(article => article.difficulty_level >= 1 && article.difficulty_level <= 3)
-    .sort((a, b) => a.difficulty_level - b.difficulty_level)
-    .slice(0, limit);
+  // Filter beginner articles (difficulty 1-3)
+  const beginnerArticles = articles.filter(
+    article => article.difficulty_level >= 1 && article.difficulty_level <= 3,
+  );
+
+  if (beginnerArticles.length === 0) return [];
+
+  // Sort by length (longer articles first, using sentence count)
+  const sortedByLength = [...beginnerArticles].sort(
+    (a, b) => (b.article_sentences?.length ?? 0) - (a.article_sentences?.length ?? 0),
+  );
+
+  // Select articles with author diversity
+  const result: Article[] = [];
+  const usedAuthorIds = new Set<number>();
+
+  // First pass: pick one article per author (longest available)
+  for (const article of sortedByLength) {
+    if (result.length >= limit) break;
+    if (!usedAuthorIds.has(article.author.id)) {
+      result.push(article);
+      usedAuthorIds.add(article.author.id);
+    }
+  }
+
+  // Second pass: fill remaining slots with longest articles not yet selected
+  if (result.length < limit) {
+    const selectedIds = new Set(result.map(a => a.id));
+    for (const article of sortedByLength) {
+      if (result.length >= limit) break;
+      if (!selectedIds.has(article.id)) {
+        result.push(article);
+      }
+    }
+  }
+
+  return result;
 }
 
 /**

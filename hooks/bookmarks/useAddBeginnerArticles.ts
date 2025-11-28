@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { audioQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
@@ -9,6 +10,7 @@ import { bookmarkService } from '@/services/bookmark';
 import type { ArticleId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
+import { successFeedback } from '@/utils/haptics';
 
 interface UseAddBeginnerArticlesOptions {
   onSuccess?: () => void;
@@ -57,8 +59,15 @@ export function useAddBeginnerArticles(
         count: addedCount,
       });
 
-      // Invalidate reading list query to refresh
-      await queryClient.invalidateQueries({ queryKey: ['readingList', user.id] });
+      // Invalidate reading list and audio tracks queries to refresh
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['readingList', user.id] }),
+        audioQueries.invalidateAll(queryClient, user.id),
+      ]);
+
+      // Show encouraging toast with haptic
+      successFeedback();
+      showToast(STRINGS.ARTICLES_ADDED_SUCCESS, undefined, ToastType.SUCCESS);
 
       // Call onSuccess callback
       options?.onSuccess?.();

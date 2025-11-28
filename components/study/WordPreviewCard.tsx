@@ -5,12 +5,14 @@ import { ThemedText } from '@/components/ThemedText';
 import { BaseCard } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 interface WordPreviewCardProps {
   arabic: string;
   english: string;
   selected?: boolean;
   onPress?: () => void;
+  style?: object;
 }
 
 /**
@@ -22,19 +24,29 @@ export function WordPreviewCard({
   english,
   selected = false,
   onPress,
+  style,
 }: WordPreviewCardProps) {
   const colors = useColors();
+
+  const handlePress = () => {
+    selectionFeedback();
+    onPress?.();
+  };
 
   return (
     <BaseCard
       style={[
         styles.card,
-        selected && { borderColor: colors.tint, borderWidth: 2 },
-        !selected && { opacity: 0.5 },
+        {
+          borderWidth: 2,
+          borderColor: selected ? colors.tint : 'transparent',
+          opacity: selected ? 1 : 0.5,
+        },
+        style,
       ]}
       shadowSize="subtle"
       contentStyle={styles.cardContent}
-      onPress={onPress}
+      onPress={handlePress}
     >
       <View style={styles.content}>
         {selected && (
@@ -67,8 +79,7 @@ export function WordPreviewCard({
 
 const styles = StyleSheet.create({
   card: {
-    minWidth: 100,
-    maxWidth: 140,
+    // Width controlled by parent via style prop for grid layouts
   },
   cardContent: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
@@ -77,13 +88,13 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     alignItems: 'center',
-    borderRadius: 12,
-    height: 24,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    height: LAYOUT.SPACING.XLARGE,
     justifyContent: 'center',
     position: 'absolute',
-    bottom: LAYOUT.SPACING.TINY,
-    right: LAYOUT.SPACING.TINY,
-    width: 24,
+    top: -LAYOUT.SPACING.TINY,
+    right: -LAYOUT.SPACING.TINY,
+    width: LAYOUT.SPACING.XLARGE,
   },
   content: {
     alignItems: 'center',
