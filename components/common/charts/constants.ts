@@ -8,7 +8,7 @@ const X_AXIS_LABEL_PADDING = 8; // Reduced from 12 for tighter spacing
 
 export const GRAPH_WIDTH =
   SCREEN_WIDTH -
-  LAYOUT.SCREEN_EDGE_PADDING * 2 -
+  LAYOUT.SCREEN_HORIZONTAL_PADDING * 2 -
   LAYOUT.SPACING.MEDIUM * 2 -
   16 - // Reduced from 24 for more graph space
   X_AXIS_LABEL_PADDING;

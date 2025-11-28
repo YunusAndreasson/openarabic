@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   container: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     // No bottom padding - button sits lower
   },
   fullWidthButtonContainer: {

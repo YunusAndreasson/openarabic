@@ -82,6 +82,6 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     opacity: LAYOUT.OPACITY.HIGH,
-    paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingLeft: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
 });

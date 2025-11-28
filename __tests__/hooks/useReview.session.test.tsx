@@ -95,8 +95,6 @@ jest.mock('@/utils/storageUtils', () => ({
   }),
 }));
 
-jest.mock('@/utils/imageUtils', () => require('@/utils/storageUtils'));
-
 jest.mock('@/services/supabase', () => ({
   ...jest.requireActual('@/services/supabase'),
   checkAuthentication: jest.fn().mockResolvedValue({

@@ -1,7 +1,7 @@
 /**
- * Image Utils Tests
+ * Storage Utils Tests
  *
- * Tests image and audio URL generation utilities.
+ * Tests storage URL generation utilities.
  *
  * Modern Jest 29 Patterns:
  * - ✅ jest.mocked() for type-safe mocking
@@ -11,7 +11,7 @@
 
 import { beforeEach, describe, expect, test, jest } from '@jest/globals';
 
-import { generateAudioUrl, generateImageUrl } from '../../utils/imageUtils';
+import { generateStorageUrl, isValidStoragePath } from '../../utils/storageUtils';
 import { supabase } from '../../services/supabase';
 
 // Mock supabase storage for URL generation tests
@@ -37,59 +37,83 @@ beforeEach(() => {
   } as any);
 });
 
-describe('imageUtils', () => {
-  describe('generateImageUrl', () => {
+describe('storageUtils', () => {
+  describe('isValidStoragePath', () => {
+    test('should return false for null/undefined', () => {
+      expect(isValidStoragePath(null)).toBe(false);
+      expect(isValidStoragePath(undefined)).toBe(false);
+    });
+
+    test('should return false for non-string input', () => {
+      expect(isValidStoragePath(123)).toBe(false);
+      expect(isValidStoragePath({})).toBe(false);
+    });
+
+    test('should return false for empty strings', () => {
+      expect(isValidStoragePath('')).toBe(false);
+      expect(isValidStoragePath('   ')).toBe(false);
+    });
+
+    test('should return true for valid paths', () => {
+      expect(isValidStoragePath('test.jpg')).toBe(true);
+      expect(isValidStoragePath('folder/file.mp3')).toBe(true);
+    });
+  });
+
+  describe('generateStorageUrl for images', () => {
     test('should return empty string for null/undefined input', () => {
-      expect(generateImageUrl(null)).toBe('');
-      expect(generateImageUrl(undefined)).toBe('');
+      expect(generateStorageUrl('images', null)).toBe('');
+      expect(generateStorageUrl('images', undefined)).toBe('');
     });
 
     test('should return empty string for non-string input', () => {
-      expect(generateImageUrl(123 as any)).toBe('');
-      expect(generateImageUrl({} as any)).toBe('');
+      expect(generateStorageUrl('images', 123 as any)).toBe('');
+      expect(generateStorageUrl('images', {} as any)).toBe('');
     });
 
     test('should return full URLs as-is', () => {
       const fullUrl = 'https://example.com/image.jpg';
-      expect(generateImageUrl(fullUrl)).toBe(fullUrl);
+      expect(generateStorageUrl('images', fullUrl)).toBe(fullUrl);
 
       const httpUrl = 'http://example.com/image.png';
-      expect(generateImageUrl(httpUrl)).toBe(httpUrl);
+      expect(generateStorageUrl('images', httpUrl)).toBe(httpUrl);
     });
 
-    test('should reconstruct URLs for filenames', () => {
-      const result = generateImageUrl('test.jpg');
+    test('should generate URLs for filenames using Supabase SDK', () => {
+      const result = generateStorageUrl('images', 'test.jpg');
       // Uses Supabase SDK getPublicUrl() which returns mocked URL
       expect(result).toBe('https://example.com/file.jpg');
+      expect(fromMock).toHaveBeenCalledWith('images');
     });
 
-    test('should reconstruct URLs for relative paths (treats them as filenames)', () => {
-      const result = generateImageUrl('images/test.jpg');
+    test('should generate URLs for relative paths', () => {
+      const result = generateStorageUrl('images', 'folder/test.jpg');
       // Uses Supabase SDK getPublicUrl() which returns mocked URL
       expect(result).toBe('https://example.com/file.jpg');
     });
   });
 
-  describe('generateAudioUrl', () => {
+  describe('generateStorageUrl for audio', () => {
     test('should return empty string for null/undefined input', () => {
-      expect(generateAudioUrl(null)).toBe('');
-      expect(generateAudioUrl(undefined)).toBe('');
+      expect(generateStorageUrl('audio', null)).toBe('');
+      expect(generateStorageUrl('audio', undefined)).toBe('');
     });
 
     test('should return empty string for non-string input', () => {
-      expect(generateAudioUrl(123 as any)).toBe('');
-      expect(generateAudioUrl({} as any)).toBe('');
+      expect(generateStorageUrl('audio', 123 as any)).toBe('');
+      expect(generateStorageUrl('audio', {} as any)).toBe('');
     });
 
     test('should return full URLs as-is', () => {
       const fullUrl = 'https://example.com/audio.mp3';
-      expect(generateAudioUrl(fullUrl)).toBe(fullUrl);
+      expect(generateStorageUrl('audio', fullUrl)).toBe(fullUrl);
     });
 
-    test('should reconstruct URLs for audio filenames', () => {
-      const result = generateAudioUrl('test.mp3');
+    test('should generate URLs for audio filenames using Supabase SDK', () => {
+      const result = generateStorageUrl('audio', 'test.mp3');
       // Uses Supabase SDK getPublicUrl() which returns mocked URL
       expect(result).toBe('https://example.com/file.jpg');
+      expect(fromMock).toHaveBeenCalledWith('audio');
     });
   });
 });

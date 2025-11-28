@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between', // Dots left, label right
     paddingVertical: LAYOUT.SPACING.MEDIUM, // 12px top/bottom
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING, // 12px left/right
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING, // 12px left/right
   },
   legendRow: {
     flexDirection: 'row',

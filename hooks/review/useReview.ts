@@ -23,7 +23,7 @@ import { audioCache } from '@/services/audioCache';
 import type { SessionMetrics } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-import { generateAudioUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 
 // Consolidated refs for easier state management
 interface ReviewTimeRefs {
@@ -411,7 +411,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
                 // Play English feedback audio
                 if (currentWord?.root?.audio_url_en) {
-                  const englishAudioUrl = generateAudioUrl(currentWord.root.audio_url_en);
+                  const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
                   if (englishAudioUrl) {
                     playAudio(englishAudioUrl);
                   }
@@ -540,8 +540,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
 
     const wordId = String(currentWord.root_id);
-    // generateAudioUrl is a pure utility function - no need in dependency array
-    const audioUrl = generateAudioUrl(currentWord.root.audio_url);
+    // generateStorageUrl is a pure utility function - no need in dependency array
+    const audioUrl = generateStorageUrl('audio', currentWord.root.audio_url);
 
     // Play audio for Arabic words (preloaded, so should be instant)
     if (audioUrl) {
@@ -630,7 +630,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // Ignore stop errors - audio might not be playing
     }
 
-    const audioUrl = generateAudioUrl(currentWord.root.audio_url);
+    const audioUrl = generateStorageUrl('audio', currentWord.root.audio_url);
     if (audioUrl) {
       playAudio(audioUrl).catch(handleError);
     }

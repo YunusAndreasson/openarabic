@@ -1,7 +1,7 @@
 import type { Article } from '@/types/articles.types';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 
 /**
@@ -37,7 +37,7 @@ export function buildArticleCardProps(article: Article): ArticleCardBaseProps {
   return {
     author: article.author.name,
     category: article.category.name,
-    imageUrl: generateImageUrl(article.image_url),
+    imageUrl: generateStorageUrl('images', article.image_url),
     summary: String(article.summary),
     title: article.title,
   };

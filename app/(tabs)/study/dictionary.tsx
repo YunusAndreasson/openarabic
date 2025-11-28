@@ -13,7 +13,7 @@ import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { fsrsQueries } from '@/constants/queries';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
+import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEditMode } from '@/hooks/ui/useEditMode';
@@ -48,16 +48,12 @@ export default function DictionaryScreen(): JSX.Element {
   // Get all study words for dictionary display (shows all words, sorted by memory strength)
   const { allWords: studyWords, isLoading } = useFSRSQueries({ userId: user?.id });
 
-  const { toggleRootMutation } = useArticleMutations(
-    user?.id,
-    () => {},
-    async () => {
-      if (user?.id) {
-        // Use helper to invalidate all FSRS-related queries
-        fsrsQueries.invalidateAll(queryClient, user.id);
-      }
-    },
-  );
+  const { toggleRootMutation } = useStudyWordMutations(async () => {
+    if (user?.id) {
+      // Use helper to invalidate all FSRS-related queries
+      fsrsQueries.invalidateAll(queryClient, user.id);
+    }
+  });
 
   const { sortedWords, sortDirection, setSorting } = useDictionaryModal({
     studyWords: studyWords || [],

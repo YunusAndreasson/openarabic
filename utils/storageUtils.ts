@@ -67,26 +67,3 @@ export const generateStorageUrl = (
 
   return publicUrl;
 };
-
-/**
- * Generate URL for image files
- * Wrapper around generateStorageUrl for backward compatibility
- *
- * @deprecated Use generateStorageUrl('images', path) directly for new code
- */
-export const generateImageUrl = (imageUrl: string | null | undefined): string => {
-  return generateStorageUrl('images', imageUrl);
-};
-
-/**
- * Generate URL for audio files
- * Wrapper around generateStorageUrl for backward compatibility
- *
- * Note: Returns empty string for invalid input (consistent with generateImageUrl)
- * Previous implementation returned undefined, but empty string is more consistent
- *
- * @deprecated Use generateStorageUrl('audio', path) directly for new code
- */
-export const generateAudioUrl = (audioUrl: string | null | undefined): string => {
-  return generateStorageUrl('audio', audioUrl);
-};

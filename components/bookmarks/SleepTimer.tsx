@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   container: {
     ...LAYOUT.BOTTOM_SHEET.STYLES.container,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
   },
 

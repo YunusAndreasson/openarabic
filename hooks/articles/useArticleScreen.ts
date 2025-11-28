@@ -14,7 +14,8 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
 import { useArticleData } from '@/hooks/articles/useArticleData';
-import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
+import { useReadingListMutations } from '@/hooks/articles/useReadingListMutations';
+import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { useArticleWordInteractions } from '@/hooks/articles/useArticleWordInteractions';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -79,14 +80,11 @@ export function useArticleScreen({
   // Current sentence index for reading progress
   const [currentSentenceIndexForProgress, setCurrentSentenceIndexForProgress] = useState(0);
 
-  // Article mutations
-  const { handleToggleReadingList, handleRootPress } = useArticleMutations(
-    user?.id,
-    refetchReadingListStatus,
-    async () => {
-      await refetchStudyWords();
-    },
-  );
+  // Article mutations - using focused hooks directly
+  const { handleToggleReadingList } = useReadingListMutations(refetchReadingListStatus);
+  const { handleRootPress } = useStudyWordMutations(async () => {
+    await refetchStudyWords();
+  });
 
   // Word interactions (tooltips, modal, study state)
   const {

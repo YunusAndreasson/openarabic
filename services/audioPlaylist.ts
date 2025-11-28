@@ -5,7 +5,7 @@ import { bookmarkService } from '@/services/bookmark';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { ArticleId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
-import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 
 // Helper function to generate composite ID
 const generateTrackId = (articleId: ArticleId): string => {
@@ -28,7 +28,7 @@ const createEnhancedTrack = async (
   article: { title: string; image_url: string },
   audioUrl: string,
 ): Promise<EnhancedAudioTrack> => {
-  const fullAudioUrl = generateAudioUrl(audioUrl);
+  const fullAudioUrl = generateStorageUrl('audio', audioUrl);
   const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl || audioUrl);
 
   return {
@@ -36,7 +36,7 @@ const createEnhancedTrack = async (
     articleId,
     audioUrl: cachedAudioUrl,
     title: article.title,
-    imageUrl: generateImageUrl(article.image_url),
+    imageUrl: generateStorageUrl('images', article.image_url),
   };
 };
 

@@ -32,7 +32,7 @@ import React from 'react';
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { fsrsQueries } from '@/constants/queries';
-import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
+import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -130,7 +130,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       queryClient.setQueryData(fsrsQueries.allWithCooldown(mockUserId, 24).queryKey, []);
 
       const { result } = renderHook(
-        () => useArticleMutations(mockUserId, jest.fn(), jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
         { wrapper },
       );
 
@@ -215,7 +215,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       const expectedLocalState = new Map<number, boolean>();
 
       const { result } = renderHook(
-        () => useArticleMutations(mockUserId, jest.fn(), jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
         { wrapper },
       );
 
@@ -251,7 +251,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       queryClient.setQueryData(fsrsQueries.all(mockUserId).queryKey, [existingWord]);
 
       const { result } = renderHook(
-        () => useArticleMutations(mockUserId, jest.fn(), jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
         { wrapper },
       );
 
@@ -269,7 +269,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       queryClient.setQueryData(fsrsQueries.all(mockUserId).queryKey, []);
 
       const { result } = renderHook(
-        () => useArticleMutations(mockUserId, jest.fn(), jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
         { wrapper },
       );
 
@@ -295,7 +295,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
       const { result } = renderHook(
-        () => useArticleMutations(mockUserId, jest.fn(), jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
         { wrapper },
       );
 
@@ -337,7 +337,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       ]);
 
       const { result } = renderHook(
-        () => useArticleMutations(mockUserId, jest.fn(), jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
         { wrapper },
       );
 

@@ -1,6 +1,5 @@
 // Article hooks
 export * from './useArticleData';
-export * from './useArticleMutations';
 export * from './useArticleScreen';
 export * from './useArticlesByDifficultWords';
 export * from './useArticlesByDueWords';

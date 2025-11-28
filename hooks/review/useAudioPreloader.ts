@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { audioCache } from '@/services/audioCache';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { generateAudioUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 
 interface UseAudioPreloaderReturn {
   isPreloading: boolean;
@@ -50,13 +50,13 @@ export const useAudioPreloader = (
       // Collect all unique audio URLs from the session words
       words.forEach(word => {
         if (word.root?.audio_url) {
-          const audioUrl = generateAudioUrl(word.root.audio_url);
+          const audioUrl = generateStorageUrl('audio', word.root.audio_url);
           if (audioUrl && !audioUrls.includes(audioUrl)) {
             audioUrls.push(audioUrl);
           }
         }
         if (word.root?.audio_url_en) {
-          const englishAudioUrl = generateAudioUrl(word.root.audio_url_en);
+          const englishAudioUrl = generateStorageUrl('audio', word.root.audio_url_en);
           if (englishAudioUrl && !audioUrls.includes(englishAudioUrl)) {
             audioUrls.push(englishAudioUrl);
           }

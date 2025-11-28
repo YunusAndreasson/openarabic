@@ -16,7 +16,7 @@ import type { SentenceWord } from '@/types/vocabulary.types';
 import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
-import { generateAudioUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 
 export interface WordDetailsBottomSheetProps {
   isVisible: boolean;
@@ -79,7 +79,7 @@ export function WordDetailsBottomSheet({
 
     const prefetchAudio = async () => {
       try {
-        const fullAudioUrl = generateAudioUrl(word.audio_url);
+        const fullAudioUrl = generateStorageUrl('audio', word.audio_url);
         if (!fullAudioUrl) return;
 
         // Prefetch and cache audio in background - no await to avoid blocking
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   background: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
   container: {
     ...LAYOUT.BOTTOM_SHEET.STYLES.container,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM, // Tighter padding at bottom
   },

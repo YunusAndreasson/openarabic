@@ -20,7 +20,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
-import { generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 import {
   calculateReadingTime,
@@ -61,7 +61,7 @@ const STATIC_STYLES = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   headerSpacing: {
     height: LAYOUT.SPACING.MEDIUM,
@@ -72,7 +72,7 @@ const STATIC_STYLES = StyleSheet.create({
   sectionHeader: {
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
 });
 
@@ -230,7 +230,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     () => ({
       paddingTop: LAYOUT.SPACING.MEDIUM, // Add spacing between header and first card
       paddingBottom: LAYOUT.SCREEN_PADDING.bottomDefault + insets.bottom, // Safe area for home indicator
-      paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+      paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     }),
     [insets.bottom],
   );
@@ -298,7 +298,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
       <ListenListItemCard
         title={article.title}
         secondaryText={secondaryText}
-        imageUrl={generateImageUrl(article.image_url)}
+        imageUrl={generateStorageUrl('images', article.image_url)}
         articleId={article.id}
         editMode={editMode}
         onPress={!editMode ? () => onArticlePress(article) : undefined}

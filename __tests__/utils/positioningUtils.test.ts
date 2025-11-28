@@ -76,90 +76,42 @@ describe('Positioning Utilities', () => {
       expect(result.tooltipLeft).toBe(TOOLTIP_CONSTANTS.SCREEN_MARGIN);
     });
 
-    test('should handle container offset of 0 (baseline)', () => {
+    test('should handle default container width', () => {
       const result = calculateTooltipDimensions(mockLayout, 'Test', false, undefined, 0);
 
-      // Should position normally when container is at screen origin
+      // Should position normally when using default container width (SCREEN_WIDTH)
       expect(result.tooltipTop).toBe(168);
       expect(result.tooltipWidth).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.MIN_WIDTH);
     });
 
-    test('should handle positive container offset (safe area)', () => {
+    test('should respect screen margin on left edge', () => {
       const edgeLayout: TooltipLayout = {
-        x: 10, // Container-relative position
+        x: 10, // Position near left edge
         y: 200,
         width: 50,
         height: 30,
       };
 
-      const containerOffset = 10; // Container is 10px from screen left
-      const result = calculateTooltipDimensions(
-        edgeLayout,
-        'Test',
-        false,
-        undefined,
-        containerOffset,
-      );
+      const result = calculateTooltipDimensions(edgeLayout, 'Test', false);
 
-      // effectiveScreenMargin = max(0, 16 - 10) = 6px
-      // With word at container-relative x=10, tooltip should be positioned to respect effective margin
-      expect(result.tooltipLeft).toBeGreaterThanOrEqual(6);
-    });
-
-    test('should handle large container offset', () => {
-      const edgeLayout: TooltipLayout = {
-        x: 5, // Container-relative position near edge
-        y: 200,
-        width: 50,
-        height: 30,
-      };
-
-      const containerOffset = 20; // Container is 20px from screen left
-      const result = calculateTooltipDimensions(
-        edgeLayout,
-        'Test',
-        false,
-        undefined,
-        containerOffset,
-      );
-
-      // effectiveScreenMargin = max(0, 16 - 20) = 0
-      // Tooltip can position at container edge since container already has margin
-      expect(result.tooltipLeft).toBeGreaterThanOrEqual(0);
-    });
-
-    test('should handle negative container offset (edge case)', () => {
-      const layout: TooltipLayout = {
-        x: 25,
-        y: 200,
-        width: 50,
-        height: 30,
-      };
-
-      const containerOffset = -5; // Unusual but possible edge case
-      const result = calculateTooltipDimensions(layout, 'Test', false, undefined, containerOffset);
-
-      // containerOffset is now deprecated and ignored
-      // effectiveScreenMargin is always SCREEN_MARGIN (16px)
-      expect(result.tooltipLeft).toBeGreaterThanOrEqual(16);
+      // Tooltip should respect SCREEN_MARGIN (16px)
+      expect(result.tooltipLeft).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.SCREEN_MARGIN);
     });
 
     test('should use container width when provided', () => {
       const layout: TooltipLayout = {
-        x: 300, // Near right edge (container-relative)
+        x: 300, // Near right edge
         y: 200,
         width: 50,
         height: 30,
       };
 
-      const containerOffset = 10;
-      const containerWidth = 350; // Container is 350px wide (has 15px right margin)
+      const containerWidth = 350; // Container is 350px wide
       const result = calculateTooltipDimensions(
         layout,
         'Test',
         false,
         undefined,
-        containerOffset,
         containerWidth,
       );
 
@@ -177,14 +129,12 @@ describe('Positioning Utilities', () => {
         height: 30,
       };
 
-      const containerOffset = 20; // 20px left margin
-      const containerWidth = 335; // Container is 335px wide (screen 375 - 20 left - 20 right)
+      const containerWidth = 335; // Container is 335px wide
       const result = calculateTooltipDimensions(
         layout,
         'Long text for tooltip',
         false,
         undefined,
-        containerOffset,
         containerWidth,
       );
 
@@ -193,7 +143,7 @@ describe('Positioning Utilities', () => {
       expect(rightEdge).toBeLessThanOrEqual(319);
     });
 
-    test('should fallback to calculated width when containerWidth is 0', () => {
+    test('should fallback to SCREEN_WIDTH when containerWidth is 0', () => {
       const layout: TooltipLayout = {
         x: 300,
         y: 200,
@@ -201,18 +151,15 @@ describe('Positioning Utilities', () => {
         height: 30,
       };
 
-      const containerOffset = 10;
       const containerWidth = 0; // Not provided
       const result = calculateTooltipDimensions(
         layout,
         'Test',
         false,
         undefined,
-        containerOffset,
         containerWidth,
       );
 
-      // containerOffset is now deprecated and ignored
       // When containerWidth is 0, falls back to SCREEN_WIDTH (375px)
       // Right boundary at 375 - 16 = 359px
       const rightEdge = result.tooltipLeft + result.tooltipWidth;

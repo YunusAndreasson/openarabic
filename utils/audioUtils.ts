@@ -7,7 +7,7 @@ import { simpleAudioService } from '@/services/audioPlayer';
 import type { Article } from '@/types/articles.types';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { ArticleId } from '@/types/branded.types';
-import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 
 /**
  * Extract current article ID from audio status
@@ -71,7 +71,7 @@ export async function prefetchArticleWithImage(
 
   // Get cached article for image URL
   const cachedArticle = queryClient.getQueryData<Article>(['article', articleId]);
-  const imageUrl = generateImageUrl(cachedArticle?.image_url);
+  const imageUrl = generateStorageUrl('images', cachedArticle?.image_url);
 
   if (imageUrl) {
     // Prefetch image - silent failure won't block functionality
@@ -111,7 +111,7 @@ export async function generateWordAudioTrack(
   trackIdPrefix: string = 'word',
 ): Promise<EnhancedAudioTrack | null> {
   // Only use Arabic audio for vocabulary words
-  const audioUrl = generateAudioUrl(word.audio_url);
+  const audioUrl = generateStorageUrl('audio', word.audio_url);
 
   if (!audioUrl) {
     return null;

@@ -26,7 +26,8 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('@/hooks/auth/useAuth');
 jest.mock('@/hooks/articles/useArticleData');
-jest.mock('@/hooks/articles/useArticleMutations');
+jest.mock('@/hooks/articles/useReadingListMutations');
+jest.mock('@/hooks/articles/useStudyWordMutations');
 jest.mock('@/hooks/articles/useArticleWordInteractions');
 jest.mock('@/hooks/articles/useReadingProgress');
 jest.mock('@/utils/audioUtils');
@@ -45,7 +46,8 @@ import type { Tables } from '@/types/database.types';
 const { router } = require('expo-router');
 const { useAuth } = require('@/hooks/auth/useAuth');
 const { useArticleData } = require('@/hooks/articles/useArticleData');
-const { useArticleMutations } = require('@/hooks/articles/useArticleMutations');
+const { useReadingListMutations } = require('@/hooks/articles/useReadingListMutations');
+const { useStudyWordMutations } = require('@/hooks/articles/useStudyWordMutations');
 const { useArticleWordInteractions } = require('@/hooks/articles/useArticleWordInteractions');
 const { useReadingProgress } = require('@/hooks/articles/useReadingProgress');
 const { stopAudioSafely } = require('@/utils/audioUtils');
@@ -115,8 +117,11 @@ describe('useArticleScreen Hook', () => {
       refetchReadingListStatus: mockRefetchReadingListStatus,
     } as any);
 
-    jest.mocked(useArticleMutations).mockReturnValue({
+    jest.mocked(useReadingListMutations).mockReturnValue({
       handleToggleReadingList: mockHandleToggleReadingList,
+    } as any);
+
+    jest.mocked(useStudyWordMutations).mockReturnValue({
       handleRootPress: mockHandleRootPress,
     } as any);
 

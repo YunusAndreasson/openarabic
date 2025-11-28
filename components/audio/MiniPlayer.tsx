@@ -11,7 +11,7 @@ import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { withAlpha } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
-import { generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 import { formatAuthorCategory } from '@/utils/stringUtils';
 
 export interface MiniPlayerProps {
@@ -47,8 +47,8 @@ const CONTAINER_STYLE = [
   StyleSheet.create({
     container: {
       position: 'absolute' as const,
-      left: LAYOUT.SCREEN_EDGE_PADDING,
-      right: LAYOUT.SCREEN_EDGE_PADDING,
+      left: LAYOUT.SCREEN_HORIZONTAL_PADDING,
+      right: LAYOUT.SCREEN_HORIZONTAL_PADDING,
       zIndex: LAYOUT.Z_INDEX.OVERLAY,
     },
   }).container,
@@ -98,7 +98,7 @@ const MiniPlayerComponent = ({
   const colors = useColors();
 
   // Memoize image URL to prevent duplicate generation on every render
-  const imageUrl = useMemo(() => generateImageUrl(article.image_url), [article.image_url]);
+  const imageUrl = useMemo(() => generateStorageUrl('images', article.image_url), [article.image_url]);
 
   // Memoize dynamic styles for better performance - use elevation2 for prominence
   const cardStyle = useMemo(

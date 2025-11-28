@@ -48,7 +48,7 @@ const DictionarySortingHeaderComponent: FC<DictionarySortingHeaderProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingVertical: LAYOUT.SPACING.SMALL, // 8px top/bottom
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING, // 12px left/right
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING, // 12px left/right
     marginBottom: LAYOUT.SPACING.TINY, // 4px bottom margin
     alignItems: 'flex-end', // Right-align sort button
   },

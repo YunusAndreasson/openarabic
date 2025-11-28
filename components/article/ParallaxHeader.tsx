@@ -14,7 +14,7 @@ import {
   createBackgroundGradientColors,
   createImageGradientColors,
 } from '@/utils/gradientUtils';
-import { generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 
 // Static styles to prevent recreation
 const STATIC_STYLES = StyleSheet.create({
@@ -109,7 +109,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
   );
 
   // Memoize image source - images are guaranteed to be available
-  const imageSource = useMemo(() => generateImageUrl(article.image_url), [article.image_url]);
+  const imageSource = useMemo(() => generateStorageUrl('images', article.image_url), [article.image_url]);
 
   // Enhanced gradient for better text visibility - different approach for light vs dark mode
   const imageGradientColors = useMemo(() => {

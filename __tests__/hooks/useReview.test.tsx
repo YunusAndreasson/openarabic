@@ -104,9 +104,6 @@ jest.mock('@/utils/storageUtils', () => ({
   }),
 }));
 
-// imageUtils uses same pattern as storageUtils - reuse the mock
-jest.mock('@/utils/imageUtils', () => require('@/utils/storageUtils'));
-
 // Mock checkAuthentication from supabase service
 jest.mock('@/services/supabase', () => ({
   ...jest.requireActual('@/services/supabase'),

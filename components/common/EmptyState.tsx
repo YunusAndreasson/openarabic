@@ -14,7 +14,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
-import { generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 import { formatAuthorCategory } from '@/utils/stringUtils';
 
 // Define EmptyStateProps inline
@@ -122,7 +122,7 @@ export function EmptyState({
                 <ListenListItemCard
                   title={article.title}
                   secondaryText={formatAuthorCategory(article.author.name, article.category.name)}
-                  imageUrl={generateImageUrl(article.image_url)}
+                  imageUrl={generateStorageUrl('images', article.image_url)}
                   articleId={article.id}
                   onPress={() => onArticlePress?.(article)}
                   shouldAnimateOnMount={false}

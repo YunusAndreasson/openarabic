@@ -29,7 +29,7 @@ import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
 import { AudioAction, ToastType } from '@/types/enums';
 import { getBeginnerArticles } from '@/utils/articleUtils';
-import { generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadata } from '@/utils/stringUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
 
@@ -98,7 +98,7 @@ const ListenListItem = memo(
         // Entire card triggers article navigation when not in edit mode
         onPress={!editMode ? handlePress : undefined}
         // Add article image for bookmarks-style appearance
-        imageUrl={generateImageUrl(item.articles.image_url)}
+        imageUrl={generateStorageUrl('images', item.articles.image_url)}
         articleId={item.article_id}
         dragHandleProps={dragHandleProps}
       />

@@ -38,7 +38,6 @@ export interface TooltipDimensions {
  * @param text - The text content to display
  * @param hasBookmark - Whether the tooltip has a bookmark button
  * @param measuredWidth - Optional measured width of the tooltip content
- * @param _containerOffsetX - Deprecated, kept for compatibility (unused)
  * @param containerWidth - The actual width of the container (for right boundary checks)
  * @returns Calculated tooltip dimensions and positioning
  */
@@ -47,7 +46,6 @@ export const calculateTooltipDimensions = (
   text: string,
   hasBookmark: boolean,
   measuredWidth?: number,
-  _containerOffsetX: number = 0,
   containerWidth: number = 0,
 ): TooltipDimensions => {
   const {

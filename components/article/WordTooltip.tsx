@@ -172,7 +172,6 @@ export function WordTooltip({
           displayedText,
           false,
           undefined,
-          0, // No container offset needed
           SCREEN_WIDTH, // Use screen width directly for boundary checks
         );
       })();

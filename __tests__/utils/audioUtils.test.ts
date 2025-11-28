@@ -21,7 +21,7 @@ import {
   stopAudioSafely,
   type WordAudioData,
 } from '@/utils/audioUtils';
-import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 
 // Mock dependencies
 jest.mock('@/services/audioPlayer', () => ({
@@ -37,9 +37,8 @@ jest.mock('@/services/audioCache', () => ({
   },
 }));
 
-jest.mock('@/utils/imageUtils', () => ({
-  generateAudioUrl: jest.fn(),
-  generateImageUrl: jest.fn(),
+jest.mock('@/utils/storageUtils', () => ({
+  generateStorageUrl: jest.fn(),
 }));
 
 jest.mock('expo-image', () => ({
@@ -50,8 +49,7 @@ jest.mock('expo-image', () => ({
 
 const simpleAudioServiceMock = jest.mocked(simpleAudioService);
 const audioCacheMock = jest.mocked(audioCache);
-const generateAudioUrlMock = jest.mocked(generateAudioUrl);
-const generateImageUrlMock = jest.mocked(generateImageUrl);
+const generateStorageUrlMock = jest.mocked(generateStorageUrl);
 
 describe('audioUtils', () => {
   beforeEach(() => {
@@ -213,11 +211,12 @@ describe('audioUtils', () => {
       const remoteUrl = 'https://example.com/arabic.mp3';
       const cachedUrl = 'file:///cache/arabic.mp3';
 
-      generateAudioUrlMock.mockReturnValueOnce(remoteUrl);
+      generateStorageUrlMock.mockReturnValueOnce(remoteUrl);
       audioCacheMock.getAudio.mockResolvedValueOnce(cachedUrl);
 
       const result = await generateWordAudioTrack(word);
 
+      expect(generateStorageUrlMock).toHaveBeenCalledWith('audio', 'arabic.mp3');
       expect(audioCacheMock.getAudio).toHaveBeenCalledWith(remoteUrl);
       expect(result).toEqual({
         id: 'word-1-ar',
@@ -233,7 +232,7 @@ describe('audioUtils', () => {
         audio_url_en: null,
       };
 
-      generateAudioUrlMock.mockReturnValue(undefined);
+      generateStorageUrlMock.mockReturnValue('');
 
       const result = await generateWordAudioTrack(word);
 
@@ -251,7 +250,7 @@ describe('audioUtils', () => {
       const remoteUrl = 'https://example.com/test.mp3';
       const cachedUrl = 'file:///cache/test.mp3';
 
-      generateAudioUrlMock.mockReturnValue(remoteUrl);
+      generateStorageUrlMock.mockReturnValue(remoteUrl);
       audioCacheMock.getAudio.mockResolvedValueOnce(cachedUrl);
 
       const result = await generateWordAudioTrack(word, 'custom');
@@ -273,7 +272,7 @@ describe('audioUtils', () => {
 
       const cachedUrl = 'file:///cache/test.mp3';
 
-      generateAudioUrlMock.mockReturnValue('https://example.com/test.mp3');
+      generateStorageUrlMock.mockReturnValue('https://example.com/test.mp3');
       audioCacheMock.getAudio.mockResolvedValue(cachedUrl);
 
       expect((await generateWordAudioTrack(word1))?.title).toBe('A');
@@ -291,7 +290,7 @@ describe('audioUtils', () => {
       const remoteUrl = 'https://example.com/test.mp3';
       const cachedUrl = 'file:///cache/test.mp3';
 
-      generateAudioUrlMock.mockReturnValue(remoteUrl);
+      generateStorageUrlMock.mockReturnValue(remoteUrl);
       audioCacheMock.getAudio.mockResolvedValueOnce(cachedUrl);
 
       const result = await generateWordAudioTrack(word);
@@ -312,7 +311,7 @@ describe('audioUtils', () => {
 
       const { Image } = require('expo-image');
       Image.prefetch.mockResolvedValue(true);
-      generateImageUrlMock.mockReturnValue('https://example.com/test.jpg');
+      generateStorageUrlMock.mockReturnValue('https://example.com/test.jpg');
 
       await prefetchArticleWithImage(1, mockQueryClient);
 
@@ -329,7 +328,7 @@ describe('audioUtils', () => {
       } as any;
 
       const mockPrefetchArticle = jest.fn().mockResolvedValue(true);
-      generateImageUrlMock.mockReturnValue(null);
+      generateStorageUrlMock.mockReturnValue('');
 
       await prefetchArticleWithImage(1, mockQueryClient, mockPrefetchArticle);
 

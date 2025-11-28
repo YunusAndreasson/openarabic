@@ -8,7 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
-import { generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 import { getArticleMetadata } from '@/utils/stringUtils';
 
@@ -129,7 +129,7 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
             <ListenListItemCard
               title={article.title}
               secondaryText={getArticleMetadata(article)}
-              imageUrl={generateImageUrl(article.image_url)}
+              imageUrl={generateStorageUrl('images', article.image_url)}
               articleId={article.id}
               progressPercentage={progressPercentage}
               onPress={() => handleArticlePress(article.id, article.title)}

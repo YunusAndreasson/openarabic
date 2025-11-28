@@ -33,7 +33,7 @@ const baseStyles = StyleSheet.create({
     flex: 1,
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   } as ViewStyle,
   wordArea: {
     flex: 1,

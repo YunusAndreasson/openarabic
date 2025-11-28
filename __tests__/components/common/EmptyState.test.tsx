@@ -88,8 +88,8 @@ jest.mock('@/constants/strings', () => ({
 }));
 
 // Mock utils
-jest.mock('@/utils/imageUtils', () => ({
-  generateImageUrl: (url: string) => url,
+jest.mock('@/utils/storageUtils', () => ({
+  generateStorageUrl: (_bucket: string, path: string) => path,
 }));
 
 jest.mock('@/utils/stringUtils', () => ({

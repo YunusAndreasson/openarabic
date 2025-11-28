@@ -45,12 +45,12 @@ jest.mock('../../services/readingProgress', () => ({
   updateReadingProgress: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('@/utils/errorHandling');
-jest.mock('@/utils/imageUtils');
+jest.mock('@/utils/storageUtils');
 
 import { STRINGS } from '@/constants/strings';
 import { enhancedAudioService } from '@/services/audioPlaylist';
 import { handleError } from '@/utils/errorHandling';
-import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 
 import { articlesService } from '../../services/articles';
 import { audioCache } from '../../services/audioCache';
@@ -60,8 +60,7 @@ const mockArticlesService = jest.mocked(articlesService);
 const mockAudioCache = jest.mocked(audioCache);
 const mockBookmarkService = jest.mocked(bookmarkService);
 const mockHandleError = jest.mocked(handleError);
-const mockGenerateAudioUrl = jest.mocked(generateAudioUrl);
-const mockGenerateImageUrl = jest.mocked(generateImageUrl);
+const mockGenerateStorageUrl = jest.mocked(generateStorageUrl);
 
 describe('enhancedAudioService', () => {
   beforeEach(() => {
@@ -79,8 +78,11 @@ describe('enhancedAudioService', () => {
 
     test('generates bilingual track when preference is bilingual and bilingual URL exists', async () => {
       mockArticlesService.getArticleById.mockResolvedValue(mockArticle as any);
-      mockGenerateAudioUrl.mockReturnValue('https://example.com/test-bilingual.mp3');
-      mockGenerateImageUrl.mockReturnValue('https://example.com/test-image.jpg');
+      mockGenerateStorageUrl.mockImplementation((bucket, path) => {
+        if (bucket === 'audio') return 'https://example.com/test-bilingual.mp3';
+        if (bucket === 'images') return 'https://example.com/test-image.jpg';
+        return '';
+      });
       mockAudioCache.getAudio.mockResolvedValue('cached-bilingual.mp3');
 
       const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'bilingual');
@@ -92,14 +94,17 @@ describe('enhancedAudioService', () => {
         title: 'Test Article',
         imageUrl: 'https://example.com/test-image.jpg',
       });
-      expect(mockGenerateAudioUrl).toHaveBeenCalledWith('test-bilingual.mp3');
+      expect(mockGenerateStorageUrl).toHaveBeenCalledWith('audio', 'test-bilingual.mp3');
     });
 
     test('falls back to arabic audio when bilingual preference but no bilingual URL', async () => {
       const articleWithoutBilingual = { ...mockArticle, audio_url_bilingual: null };
       mockArticlesService.getArticleById.mockResolvedValue(articleWithoutBilingual as any);
-      mockGenerateAudioUrl.mockReturnValue('https://example.com/test-audio.mp3');
-      mockGenerateImageUrl.mockReturnValue('https://example.com/test-image.jpg');
+      mockGenerateStorageUrl.mockImplementation((bucket, _path) => {
+        if (bucket === 'audio') return 'https://example.com/test-audio.mp3';
+        if (bucket === 'images') return 'https://example.com/test-image.jpg';
+        return '';
+      });
       mockAudioCache.getAudio.mockResolvedValue('cached-arabic.mp3');
 
       const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'bilingual');
@@ -111,13 +116,16 @@ describe('enhancedAudioService', () => {
         title: 'Test Article',
         imageUrl: 'https://example.com/test-image.jpg',
       });
-      expect(mockGenerateAudioUrl).toHaveBeenCalledWith('test-audio.mp3');
+      expect(mockGenerateStorageUrl).toHaveBeenCalledWith('audio', 'test-audio.mp3');
     });
 
     test('uses arabic audio when preference is arabic', async () => {
       mockArticlesService.getArticleById.mockResolvedValue(mockArticle as any);
-      mockGenerateAudioUrl.mockReturnValue('https://example.com/test-audio.mp3');
-      mockGenerateImageUrl.mockReturnValue('https://example.com/test-image.jpg');
+      mockGenerateStorageUrl.mockImplementation((bucket, _path) => {
+        if (bucket === 'audio') return 'https://example.com/test-audio.mp3';
+        if (bucket === 'images') return 'https://example.com/test-image.jpg';
+        return '';
+      });
       mockAudioCache.getAudio.mockResolvedValue('cached-arabic.mp3');
 
       const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'arabic');
@@ -129,7 +137,7 @@ describe('enhancedAudioService', () => {
         title: 'Test Article',
         imageUrl: 'https://example.com/test-image.jpg',
       });
-      expect(mockGenerateAudioUrl).toHaveBeenCalledWith('test-audio.mp3');
+      expect(mockGenerateStorageUrl).toHaveBeenCalledWith('audio', 'test-audio.mp3');
     });
 
     test('handles errors gracefully and returns null', async () => {
@@ -171,12 +179,23 @@ describe('enhancedAudioService', () => {
 
     test('processes all reading list items with bilingual preference', async () => {
       mockBookmarkService.getReadingList.mockResolvedValue(mockReadingList as any);
-      mockGenerateAudioUrl
-        .mockReturnValueOnce('https://example.com/bilingual1.mp3')
-        .mockReturnValueOnce('https://example.com/audio2.mp3');
-      mockGenerateImageUrl
-        .mockReturnValueOnce('https://example.com/image1.jpg')
-        .mockReturnValueOnce('https://example.com/image2.jpg');
+      let audioCallCount = 0;
+      let imageCallCount = 0;
+      mockGenerateStorageUrl.mockImplementation((bucket, _path) => {
+        if (bucket === 'audio') {
+          audioCallCount++;
+          return audioCallCount === 1
+            ? 'https://example.com/bilingual1.mp3'
+            : 'https://example.com/audio2.mp3';
+        }
+        if (bucket === 'images') {
+          imageCallCount++;
+          return imageCallCount === 1
+            ? 'https://example.com/image1.jpg'
+            : 'https://example.com/image2.jpg';
+        }
+        return '';
+      });
       mockAudioCache.getAudio
         .mockResolvedValueOnce('cached-bilingual1.mp3')
         .mockResolvedValueOnce('cached-audio2.mp3');
@@ -206,12 +225,23 @@ describe('enhancedAudioService', () => {
 
     test('processes all reading list items with arabic preference', async () => {
       mockBookmarkService.getReadingList.mockResolvedValue(mockReadingList as any);
-      mockGenerateAudioUrl
-        .mockReturnValueOnce('https://example.com/audio1.mp3')
-        .mockReturnValueOnce('https://example.com/audio2.mp3');
-      mockGenerateImageUrl
-        .mockReturnValueOnce('https://example.com/image1.jpg')
-        .mockReturnValueOnce('https://example.com/image2.jpg');
+      let audioCallCount = 0;
+      let imageCallCount = 0;
+      mockGenerateStorageUrl.mockImplementation((bucket, _path) => {
+        if (bucket === 'audio') {
+          audioCallCount++;
+          return audioCallCount === 1
+            ? 'https://example.com/audio1.mp3'
+            : 'https://example.com/audio2.mp3';
+        }
+        if (bucket === 'images') {
+          imageCallCount++;
+          return imageCallCount === 1
+            ? 'https://example.com/image1.jpg'
+            : 'https://example.com/image2.jpg';
+        }
+        return '';
+      });
       mockAudioCache.getAudio
         .mockResolvedValueOnce('cached-audio1.mp3')
         .mockResolvedValueOnce('cached-audio2.mp3');
