@@ -11,7 +11,6 @@
 import { renderHook } from '@testing-library/react-native';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
-import { resetChartMocks } from '@/__tests__/helpers/chartMocks';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   parseWordBasic,
@@ -58,7 +57,6 @@ jest.mock('@/components/common/charts/ChartMessages', () => ({
 describe('useCountBasedChart', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    resetChartMocks();
   });
 
   describe('Empty Data Protection', () => {

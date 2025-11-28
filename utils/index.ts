@@ -4,7 +4,6 @@
 // NOTE: This barrel is OPTIONAL for new code. Existing imports use specific paths.
 // imageUtils is excluded (re-exports from storageUtils, would cause duplicates)
 
-export * from './arabicAnalysis';
 export * from './arabicWordAnalysis';
 export * from './articleUtils';
 export * from './audioUtils';
@@ -27,7 +26,6 @@ export * from './haptics';
 // imageUtils is just re-exports from storageUtils, skip to avoid duplicates
 export * from './layoutUtils';
 export * from './list';
-export * from './navigation';
 export * from './positioningUtils';
 export * from './priorityQueue';
 export * from './progressUtils';

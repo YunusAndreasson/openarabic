@@ -208,17 +208,6 @@ export class ReadingStreakService {
  */
 export class StudySessionStreakService {
   /**
-   * Record a study session for today
-   * No-op: Study sessions are automatically tracked via study_words.fsrs_last_review
-   * Kept for API compatibility
-   */
-  static async recordStudySession(_userId: string): Promise<void> {
-    // Study sessions are automatically recorded via study_words.fsrs_last_review
-    // This timestamp is updated whenever a user reviews words
-    // No explicit recording needed
-  }
-
-  /**
    * Get daily study session activity for a user over a specified period
    * Uses study_words table fsrs_last_review timestamps to track study sessions
    */

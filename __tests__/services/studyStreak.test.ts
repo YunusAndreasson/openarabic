@@ -546,11 +546,4 @@ describe('StudySessionStreakService', () => {
       expect(result.metrics.totalReadingDays).toBeGreaterThanOrEqual(1);
     });
   });
-
-  describe('recordStudySession', () => {
-    test('should be a no-op function', async () => {
-      // recordStudySession is now a no-op (study sessions tracked via fsrs_last_review)
-      await expect(StudySessionStreakService.recordStudySession('user-123')).resolves.not.toThrow();
-    });
-  });
 });

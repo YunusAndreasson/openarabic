@@ -11,7 +11,6 @@ import reducer, {
   type EditModeState,
   type EditModeType,
   resetEditMode,
-  setEditMode,
   toggleEditMode,
 } from '../../store/editModeSlice';
 
@@ -60,41 +59,6 @@ describe('editModeSlice reducers', () => {
     });
   });
 
-  describe('setEditMode', () => {
-    test('enables listen mode', () => {
-      const state = reducer(initialState, setEditMode({ type: 'listen', enabled: true }));
-      expect(state.listen).toBe(true);
-      expect(state.dictionary).toBe(false);
-    });
-
-    test('disables listen mode', () => {
-      const modifiedState: EditModeState = { listen: true, dictionary: false };
-      const state = reducer(modifiedState, setEditMode({ type: 'listen', enabled: false }));
-      expect(state.listen).toBe(false);
-      expect(state.dictionary).toBe(false);
-    });
-
-    test('enables dictionary mode', () => {
-      const state = reducer(initialState, setEditMode({ type: 'dictionary', enabled: true }));
-      expect(state.dictionary).toBe(true);
-      expect(state.listen).toBe(false);
-    });
-
-    test('disables dictionary mode', () => {
-      const modifiedState: EditModeState = { listen: false, dictionary: true };
-      const state = reducer(modifiedState, setEditMode({ type: 'dictionary', enabled: false }));
-      expect(state.dictionary).toBe(false);
-      expect(state.listen).toBe(false);
-    });
-
-    test('does not affect other mode when setting', () => {
-      const modifiedState: EditModeState = { listen: true, dictionary: false };
-      const state = reducer(modifiedState, setEditMode({ type: 'dictionary', enabled: true }));
-      expect(state.listen).toBe(true);
-      expect(state.dictionary).toBe(true);
-    });
-  });
-
   describe('resetEditMode', () => {
     test('resets listen mode to false', () => {
       const modifiedState: EditModeState = { listen: true, dictionary: false };
@@ -135,7 +99,7 @@ describe('editModeSlice reducers', () => {
       state = reducer(state, resetEditMode('listen'));
       expect(state).toEqual({ listen: false, dictionary: true });
 
-      state = reducer(state, setEditMode({ type: 'listen', enabled: true }));
+      state = reducer(state, toggleEditMode('listen'));
       expect(state).toEqual({ listen: true, dictionary: true });
 
       state = reducer(state, toggleEditMode('dictionary'));

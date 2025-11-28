@@ -163,7 +163,7 @@ export default function VocabularyScreen(): JSX.Element {
   // Show main UI if there are any words available in either query source
   // - allWords may lag if mutations only invalidate 'due' keys
   // - dueWords reflects immediate availability for study
-  const hasAnyStudyWords = (allWords?.length ?? 0) > 0 || (dueWords?.length ?? 0) > 0;
+  const hasAnyStudyWords = (allWords?.length ?? 0) > 0 || dueWordsCount > 0;
 
   // FIXED: Calculate all word stats in single pass using optimized utility
   // Uses calculateWordCategories for efficiency (1 pass vs 3 separate filter passes)

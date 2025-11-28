@@ -8,7 +8,6 @@ export interface PriorityItem<T> {
 export class PriorityQueue<T> {
   private heap: T[] = [];
   private priorities: number[] = [];
-  private prevTrimLength = 0;
 
   constructor(private compare: (a: number, b: number) => number = (a, b) => a - b) {}
 
@@ -153,24 +152,6 @@ export class PriorityQueue<T> {
     }
   }
 
-  // New method: optimize memory usage
-  trim() {
-    // In JavaScript, arrays automatically resize, but we can force garbage collection
-    if (this.heap.length < this.prevTrimLength / 2) {
-      this.heap = this.heap.slice();
-      this.priorities = this.priorities.slice();
-    }
-    this.prevTrimLength = this.heap.length;
-  }
-
-  // New method: clone the priority queue
-  clone(): PriorityQueue<T> {
-    const cloned = new PriorityQueue<T>(this.compare);
-    cloned.heap = [...this.heap];
-    cloned.priorities = [...this.priorities];
-    return cloned;
-  }
-
   toArray(): T[] {
     // Create array of indices and sort by priority
     const indices = Array.from({ length: this.heap.length }, (_, i) => i);
@@ -181,18 +162,5 @@ export class PriorityQueue<T> {
       return this.compare(priorityA, priorityB);
     });
     return indices.map(i => this.heap[i]).filter((item): item is T => item !== undefined);
-  }
-
-  pushItem(priorityItem: PriorityItem<T>) {
-    this.push(priorityItem.item, priorityItem.priority);
-  }
-
-  popItem(): PriorityItem<T> | undefined {
-    const item = this.pop();
-    if (item === undefined) return undefined;
-
-    // Note: We can't retrieve the exact priority after popping,
-    // so this method is less efficient. Use pop() directly when possible.
-    return { item, priority: 0 }; // Priority is lost in the optimized version
   }
 }

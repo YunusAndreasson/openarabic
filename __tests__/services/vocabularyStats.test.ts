@@ -112,7 +112,7 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'limit');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      const result = await vocabularyStatsService.getMasteryProgress('u1');
+      const result = await vocabularyStatsService.getMasteryProgress();
 
       expect(supabase.from).toHaveBeenCalledWith('daily_mastery_stats');
       expect(builder.limit).toHaveBeenCalledWith(14);
@@ -133,7 +133,7 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'limit');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      await expect(vocabularyStatsService.getMasteryProgress('u1')).rejects.toThrow(err);
+      await expect(vocabularyStatsService.getMasteryProgress()).rejects.toThrow(err);
 
       expect(handleError).toHaveBeenCalledWith(
         expect.any(Error),
@@ -154,7 +154,7 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'limit');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      const result = await vocabularyStatsService.getEfficiencyProgress('u1');
+      const result = await vocabularyStatsService.getEfficiencyProgress();
 
       expect(supabase.from).toHaveBeenCalledWith('daily_efficiency_stats');
       expect(builder.limit).toHaveBeenCalledWith(14);
@@ -174,7 +174,7 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'limit');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      await expect(vocabularyStatsService.getEfficiencyProgress('u1')).rejects.toThrow(err);
+      await expect(vocabularyStatsService.getEfficiencyProgress()).rejects.toThrow(err);
 
       expect(handleError).toHaveBeenCalledWith(
         expect.any(Error),
@@ -203,7 +203,7 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'order');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      const result = await vocabularyStatsService.getRetrievabilityForecast('u1');
+      const result = await vocabularyStatsService.getRetrievabilityForecast();
 
       expect(supabase.from).toHaveBeenCalledWith('retrievability_forecast');
       expect(builder.order).toHaveBeenCalledWith('forecast_date', { ascending: true });
@@ -225,7 +225,7 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'order');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      await expect(vocabularyStatsService.getRetrievabilityForecast('u1')).rejects.toThrow(err);
+      await expect(vocabularyStatsService.getRetrievabilityForecast()).rejects.toThrow(err);
 
       expect(handleError).toHaveBeenCalledWith(
         expect.any(Error),
@@ -254,7 +254,7 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'single');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      const result = await vocabularyStatsService.getDifficultyDistribution('u1');
+      const result = await vocabularyStatsService.getDifficultyDistribution();
 
       expect(supabase.from).toHaveBeenCalledWith('difficulty_distribution');
       expect(result).toEqual({
@@ -275,7 +275,7 @@ describe('vocabularyStatsService', () => {
       const builder = createBuilder(response, 'single');
       (supabase.from as jest.Mock).mockReturnValueOnce(builder);
 
-      await expect(vocabularyStatsService.getDifficultyDistribution('u1')).rejects.toThrow(err);
+      await expect(vocabularyStatsService.getDifficultyDistribution()).rejects.toThrow(err);
 
       expect(handleError).toHaveBeenCalledWith(
         expect.any(Error),
@@ -331,10 +331,10 @@ describe('vocabularyStatsService', () => {
       const result = await vocabularyStatsService.getAllChartData('u1');
 
       expect(vocabularyStatsService.getUserStats).toHaveBeenCalledWith('u1');
-      expect(vocabularyStatsService.getMasteryProgress).toHaveBeenCalledWith('u1');
-      expect(vocabularyStatsService.getEfficiencyProgress).toHaveBeenCalledWith('u1');
-      expect(vocabularyStatsService.getRetrievabilityForecast).toHaveBeenCalledWith('u1');
-      expect(vocabularyStatsService.getDifficultyDistribution).toHaveBeenCalledWith('u1');
+      expect(vocabularyStatsService.getMasteryProgress).toHaveBeenCalled();
+      expect(vocabularyStatsService.getEfficiencyProgress).toHaveBeenCalled();
+      expect(vocabularyStatsService.getRetrievabilityForecast).toHaveBeenCalled();
+      expect(vocabularyStatsService.getDifficultyDistribution).toHaveBeenCalled();
 
       expect(result).toEqual({
         userStats,

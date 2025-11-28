@@ -11,7 +11,6 @@
 import { renderHook } from '@testing-library/react-native';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
-import { resetChartMocks } from '@/__tests__/helpers/chartMocks';
 import { useDueWordsChart } from '@/hooks/vocabulary/useDueWordsChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { DueWordsForecast } from '@/utils/fsrsUtils';
@@ -86,7 +85,6 @@ jest.mock('@/utils/fsrsUtils', () => ({
 describe('useDueWordsChart', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    resetChartMocks();
   });
 
   describe('Empty Data Protection', () => {

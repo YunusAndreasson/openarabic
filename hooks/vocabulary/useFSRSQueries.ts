@@ -111,19 +111,6 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
       allWordsQuery?.isLoading || dueWordsQuery?.isLoading || statsQuery?.isLoading || false,
     isFetching:
       allWordsQuery?.isFetching || dueWordsQuery?.isFetching || statsQuery?.isFetching || false,
-    // Fix: Clear empty error objects that React Query sometimes leaves behind
-    error: (() => {
-      const allWordsError = allWordsQuery?.error;
-      const dueWordsError = dueWordsQuery?.error;
-      const statsError = statsQuery?.error;
-
-      // If any query has a real error, return it
-      if (allWordsError && Object.keys(allWordsError).length > 0) return allWordsError;
-      if (dueWordsError && Object.keys(dueWordsError).length > 0) return dueWordsError;
-      if (statsError && Object.keys(statsError).length > 0) return statsError;
-
-      // If all queries succeeded (no real errors), return null
-      return null;
-    })(),
+    error: allWordsQuery?.error || dueWordsQuery?.error || statsQuery?.error || null,
   };
 }

@@ -13,7 +13,6 @@ import { renderHook } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
-import { resetChartMocks } from '@/__tests__/helpers/chartMocks';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -65,7 +64,6 @@ jest.mock('@/utils/fsrsUtils', () => ({
 describe('useRetrievabilityChart', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    resetChartMocks();
   });
 
   describe('Empty State', () => {

@@ -1,5 +1,3 @@
-const React = require('react');
-
 // Mock haptic feedback with realistic behavior
 const mockImpactAsync = jest.fn().mockImplementation(async style => {
   if (!['Light', 'Medium', 'Heavy'].includes(style)) {

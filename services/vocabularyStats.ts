@@ -35,7 +35,7 @@ export const vocabularyStatsService = {
     };
   },
 
-  async getMasteryProgress(_userId: string) {
+  async getMasteryProgress() {
     const data = await executeQuery(
       () => supabase.from('daily_mastery_stats').select('*').limit(14),
       {
@@ -63,7 +63,7 @@ export const vocabularyStatsService = {
     );
   },
 
-  async getEfficiencyProgress(_userId: string) {
+  async getEfficiencyProgress() {
     const data = await executeQuery(
       () => supabase.from('daily_efficiency_stats').select('*').limit(14),
       {
@@ -87,7 +87,7 @@ export const vocabularyStatsService = {
     );
   },
 
-  async getRetrievabilityForecast(_userId: string) {
+  async getRetrievabilityForecast() {
     const data = await executeQuery(
       () =>
         supabase
@@ -112,7 +112,7 @@ export const vocabularyStatsService = {
     );
   },
 
-  async getDifficultyDistribution(_userId: string) {
+  async getDifficultyDistribution() {
     const data = await executeQuery(
       () => supabase.from('difficulty_distribution').select('*').single(),
       {
@@ -145,10 +145,10 @@ export const vocabularyStatsService = {
       difficultyDistribution,
     ] = await Promise.all([
       this.getUserStats(userId),
-      this.getMasteryProgress(userId),
-      this.getEfficiencyProgress(userId),
-      this.getRetrievabilityForecast(userId),
-      this.getDifficultyDistribution(userId),
+      this.getMasteryProgress(),
+      this.getEfficiencyProgress(),
+      this.getRetrievabilityForecast(),
+      this.getDifficultyDistribution(),
     ]);
 
     return {

@@ -10,17 +10,10 @@
  *
  * Usage:
  * ```typescript
- * import { resetChartMocks } from '@/__tests__/helpers/chartMocks';
- *
  * // Use require() inside jest.mock() for hoisting compatibility
  * jest.mock('@/components/common/charts/ChartColors', () => ({
  *   useChartColors: () => require('@/__tests__/helpers/chartMocks').mockChartColors,
  * }));
- *
- * // In beforeEach
- * beforeEach(() => {
- *   resetChartMocks();
- * });
  * ```
  */
 
@@ -49,16 +42,3 @@ export const mockPerformanceZones = [
   { y: 0, height: 50, color: 'green' },
   { y: 50, height: 100, color: 'yellow' },
 ];
-
-// ============================================================================
-// RESET UTILITIES
-// ============================================================================
-
-/**
- * Resets all chart mock call histories
- * Call in beforeEach for clean test isolation
- * Note: Currently a no-op since remaining mocks are plain objects
- */
-export function resetChartMocks() {
-  // No-op: mockChartColors and mockPerformanceZones are plain objects
-}

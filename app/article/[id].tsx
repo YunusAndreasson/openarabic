@@ -48,7 +48,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     sortedSentences,
     sentenceWordsMap,
     isInReadingList,
-    currentSentenceIndex: _currentSentenceIndex,
     scrollViewRef,
     activeTooltip,
     wordDetailsModal,

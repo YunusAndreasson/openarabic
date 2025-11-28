@@ -259,9 +259,11 @@ export class ReadingProgressService {
       // No rows deleted - likely RLS policy blocking DELETE
       // Fallback: UPDATE all progress to -1 to represent "no progress"
       // Note: -1 is treated as 0% in calculateProgressPercentage
-      console.warn(
-        '[ReadingProgress] DELETE blocked, attempting UPDATE fallback to reset progress to -1 (0%)',
-      );
+      if (__DEV__) {
+        console.warn(
+          '[ReadingProgress] DELETE blocked, attempting UPDATE fallback to reset progress to -1 (0%)',
+        );
+      }
 
       await executeQuery(
         () =>

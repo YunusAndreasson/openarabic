@@ -8,7 +8,6 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY } from '@/constants/fsrs'
 import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
-import { studySessionStreakService } from '@/services/studyStreak';
 import type { SessionMetrics } from '@/types/review.types';
 import { successFeedback } from '@/utils/haptics';
 
@@ -37,10 +36,8 @@ export const useReviewCompletion = (
     // Mark session completion time to enable temporary cooldown
     queryClient.setQueryData([FSRS_BASE_KEY, user.id, 'lastCompletedAt'], Date.now());
 
-    // Record study session for streak tracking (silent - don't block on failure)
+    // Invalidate study streak queries to update UI immediately (silent - don't block on failure)
     try {
-      await studySessionStreakService.recordStudySession(user.id);
-      // Invalidate study streak queries to update UI immediately
       await studyStreakQueries.invalidateAll(queryClient, user.id);
     } catch {
       // Silently fail - don't block review completion on streak recording failure

@@ -5,7 +5,6 @@
  *
  * Modern Jest 29 Patterns:
  * - ✅ jest.mocked() for type-safe mocking
- * - ✅ test.concurrent() for parallel execution
  * - ✅ @jest/globals explicit imports
  */
 
@@ -31,97 +30,57 @@ beforeEach(() => {
 });
 
 describe('authorsService', () => {
-  describe('getAuthors', () => {
-    test('returns authors ordered by name', async () => {
-      const authors = [
+  describe('getUniqueAuthors', () => {
+    test('returns authors that have published articles', async () => {
+      const allAuthors = [
         { id: 1, name: 'Ali' },
         { id: 2, name: 'Bilal' },
+        { id: 3, name: 'Omar' },
       ];
-      const builder: any = {
-        select: jest.fn().mockReturnThis(),
-        order: jest.fn().mockReturnThis(),
-        returns: jest.fn().mockResolvedValue({ data: authors, error: null }),
-      };
-      fromMock.mockReturnValue(builder);
+      const articleAuthors = [{ author_id: 1 }, { author_id: 3 }];
 
-      const result = await authorsService.getAuthors();
+      // Mock first call for authors table
+      const authorsBuilder: any = {
+        select: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: allAuthors, error: null }),
+      };
+
+      // Mock second call for articles table
+      const articlesBuilder: any = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: articleAuthors, error: null }),
+      };
+
+      fromMock.mockReturnValueOnce(authorsBuilder).mockReturnValueOnce(articlesBuilder);
+
+      const result = await authorsService.getUniqueAuthors();
 
       expect(fromMock).toHaveBeenCalledWith('authors');
-      expect(builder.select).toHaveBeenCalledWith('id, name');
-      expect(builder.order).toHaveBeenCalledWith('name');
-      const sorted = [...authors].sort((a, b) => a.name.localeCompare(b.name));
-      expect(result).toEqual(sorted);
-      expect(mockHandleError).not.toHaveBeenCalled();
-    });
-
-    test('handles errors from supabase', async () => {
-      const error = new Error('fail');
-      const builder: any = {
-        select: jest.fn().mockReturnThis(),
-        order: jest.fn().mockReturnThis(),
-        returns: jest.fn().mockResolvedValue({ data: null, error }),
-      };
-      fromMock.mockReturnValue(builder);
-
-      await expect(authorsService.getAuthors()).rejects.toThrow(error);
-      expect(mockHandleError).toHaveBeenCalledWith(
-        expect.any(Error),
-        expect.objectContaining({
-          toastMessage: "Couldn't load authors. Try again",
-          analyticsEventName: 'Authors_Load_Error',
-          showToast: true,
-          sentrySeverity: 'error',
-        }),
-      );
-    });
-  });
-
-  describe('getAuthorsByCategory', () => {
-    test('maps and sorts returned authors', async () => {
-      const rows = [{ author: { id: 2, name: 'Zayd' } }, { author: { id: 1, name: 'Ali' } }];
-      const builder: any = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        order: jest.fn().mockReturnThis(),
-        returns: jest.fn().mockResolvedValue({ data: rows, error: null }),
-      };
-      fromMock.mockReturnValue(builder);
-
-      const result = await authorsService.getAuthorsByCategory(5);
-
       expect(fromMock).toHaveBeenCalledWith('articles');
-      expect(builder.select).toHaveBeenCalledWith('author:authors!inner(id, name)');
-      expect(builder.eq).toHaveBeenCalledWith('category_id', 5);
-      expect(builder.order).toHaveBeenCalledWith('name', { foreignTable: 'author' });
+      // Should only return authors with articles (ids 1 and 3)
       expect(result).toEqual([
         { id: 1, name: 'Ali' },
-        { id: 2, name: 'Zayd' },
+        { id: 3, name: 'Omar' },
       ]);
       expect(mockHandleError).not.toHaveBeenCalled();
     });
 
-    test('handles errors from supabase', async () => {
-      const error = new Error('oops');
-      const builder: any = {
+    test('returns empty array when no authors exist', async () => {
+      const authorsBuilder: any = {
         select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        order: jest.fn().mockReturnThis(),
-        returns: jest.fn().mockResolvedValue({ data: null, error }),
+        order: jest.fn().mockResolvedValue({ data: [], error: null }),
       };
-      fromMock.mockReturnValue(builder);
 
-      await expect(authorsService.getAuthorsByCategory(4)).rejects.toThrow(error);
+      const articlesBuilder: any = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+      };
 
-      expect(mockHandleError).toHaveBeenCalledWith(
-        expect.any(Error),
-        expect.objectContaining({
-          toastMessage: "Couldn't load authors. Try again",
-          analyticsEventName: 'Authors_By_Category_Load_Error',
-          analyticsProperties: { categoryId: 4 },
-          showToast: true,
-          sentrySeverity: 'error',
-        }),
-      );
+      fromMock.mockReturnValueOnce(authorsBuilder).mockReturnValueOnce(articlesBuilder);
+
+      const result = await authorsService.getUniqueAuthors();
+
+      expect(result).toEqual([]);
     });
   });
 });

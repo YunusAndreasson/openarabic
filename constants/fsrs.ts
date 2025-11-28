@@ -7,26 +7,6 @@ export const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
 export const FSRS_BASE_KEY = 'fsrs-words';
 export const STRUGGLING_WORDS_KEY = 'struggling-words';
 
-// Query keys for consistent cache management
-export const FSRS_QUERY_KEYS = {
-  all: (userId: string) => [FSRS_BASE_KEY, userId] as const,
-  // Include cooldown in key to avoid cache collisions between cooled and uncooled "all" queries
-  allWithCooldown: (userId: string, hours: number) =>
-    [FSRS_BASE_KEY, userId, 'all', 'cooldown', hours] as const,
-  due: (userId: string) => [FSRS_BASE_KEY, userId, 'due'] as const,
-  stats: (userId: string) => [FSRS_BASE_KEY, userId, 'stats'] as const,
-  struggling: (userId: string, limit: number) => [STRUGGLING_WORDS_KEY, userId, limit] as const,
-  filtered: (userId: string, category: string) =>
-    [FSRS_BASE_KEY, userId, 'filtered', category] as const,
-  // Fallback keys when userId is not available (unauthenticated state)
-  FALLBACK: {
-    all: [FSRS_BASE_KEY] as const,
-    allWithCooldown: (hours: number) => [FSRS_BASE_KEY, 'all', 'cooldown', hours] as const,
-    due: [FSRS_BASE_KEY, 'due'] as const,
-    stats: [FSRS_BASE_KEY, 'stats'] as const,
-  },
-} as const;
-
 export const MIN_WORD_SPACING = 3;
 
 // Default values and scaling

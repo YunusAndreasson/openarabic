@@ -1,5 +1,3 @@
-const React = require('react');
-
 // Mock audio service with realistic behavior
 const createMockSound = () => ({
   playAsync: jest.fn().mockResolvedValue({ status: 'loaded' }),

@@ -21,10 +21,6 @@ const editModeSlice = createSlice({
       const type = action.payload;
       state[type] = !state[type];
     },
-    setEditMode: (state, action: PayloadAction<{ type: EditModeType; enabled: boolean }>) => {
-      const { type, enabled } = action.payload;
-      state[type] = enabled;
-    },
     resetEditMode: (state, action: PayloadAction<EditModeType>) => {
       const type = action.payload;
       state[type] = false;
@@ -32,6 +28,6 @@ const editModeSlice = createSlice({
   },
 });
 
-export const { toggleEditMode, setEditMode, resetEditMode } = editModeSlice.actions;
+export const { toggleEditMode, resetEditMode } = editModeSlice.actions;
 
 export default editModeSlice.reducer;

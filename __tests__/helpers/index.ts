@@ -118,7 +118,7 @@ export {
 // ============================================================================
 // CHART MOCKS (chartMocks.ts)
 // ============================================================================
-export { mockChartColors, mockPerformanceZones, resetChartMocks } from './chartMocks';
+export { mockChartColors, mockPerformanceZones } from './chartMocks';
 
 // ============================================================================
 // COMPONENT MOCKS (componentMocks.tsx)

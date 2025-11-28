@@ -69,14 +69,6 @@ export enum DailyWordLimitStatus {
   APPROACHING = 'Approaching daily limit',
 }
 
-/**
- * Daily word limit status descriptions
- */
-export enum DailyWordLimitStatusDescription {
-  REACHED = "Complete today's reviews before adding more words",
-  APPROACHING = "You're close to your daily word limit",
-}
-
 // ===== ACCOUNT SECTIONS =====
 
 /**
@@ -92,15 +84,6 @@ export enum AccountSection {
 }
 
 // ===== PRACTICE SYSTEM =====
-
-/**
- * Practice state labels for word confidence
- */
-export enum PracticeState {
-  UNKNOWN = 'Unknown',
-  UNSURE = 'Unsure',
-  KNOWN = 'Known',
-}
 
 /**
  * Vocabulary statistics categories
@@ -135,20 +118,6 @@ export enum FontDescription {
   NASTALIQ = 'Calligraphic',
   NOTO_SANS = 'Simple',
 }
-
-// ===== DIFFICULTY LEVELS =====
-
-/**
- * Content difficulty levels
- * Using const object for zero runtime overhead
- */
-export const ContentDifficulty = {
-  BEGINNER: 'Beginner',
-  INTERMEDIATE: 'Intermediate',
-  ADVANCED: 'Advanced',
-} as const;
-
-export type ContentDifficulty = (typeof ContentDifficulty)[keyof typeof ContentDifficulty];
 
 // ===== NAVIGATION & UI ACTIONS =====
 
@@ -216,33 +185,6 @@ export enum SleepTimerAction {
   CANCEL = 'Cancel',
 }
 
-// ===== WORD MANAGEMENT =====
-
-/**
- * Word difficulty adjustment actions
- */
-export enum WordDifficultyAction {
-  MAKE_EASIER = 'Reduce difficulty',
-  REDUCE_DIFFICULTY_LEVEL = 'Reduce difficulty level',
-  MARK_EASY = 'Mark easy',
-  SHOW_MORE_OFTEN = 'Show more',
-  MARK_HARD = 'Mark hard',
-  SHOW_LESS_OFTEN = 'Show less',
-  NEEDS_PRACTICE = 'Needs practice',
-}
-
-/**
- * Word management actions
- */
-export enum WordManagementAction {
-  SKIP_TODAY = 'Skip today',
-  HIDE_FROM_SESSION = 'Hide this session',
-  RESET_PROGRESS = 'Reset progress',
-  START_OVER = 'Start over',
-  STOP_STUDYING = 'Stop practicing',
-  REMOVE_FROM_LIST = 'Remove from list',
-}
-
 // ===== REVIEW ACTIONS =====
 
 /**
@@ -256,24 +198,6 @@ export const ReviewAction = {
 } as const;
 
 export type ReviewAction = (typeof ReviewAction)[keyof typeof ReviewAction];
-
-// ===== LEARNING PHASES =====
-
-/**
- * Learning capacity phases
- */
-export enum LearningPhase {
-  READY_TO_ADD = 'Add new words',
-  PRACTICE_MORE_FIRST = 'Build capacity',
-  FOCUS_ON_CURRENT = 'Preserve memory',
-}
-
-// ===== UTILITY TYPES =====
-
-/**
- * Helper type to get all values from an enum
- */
-export type EnumValues<T> = T[keyof T];
 
 // ===== NOTIFICATION & TOAST TYPES =====
 
@@ -302,31 +226,3 @@ export enum FAQCategory {
   LEARNING_APPROACH = 'Learning approach',
   PRIVACY_DATA = 'Privacy & data',
 }
-
-// ===== LAYOUT & SPACING =====
-
-/**
- * Standardized spacing scale for consistent layout
- */
-export enum SpacingScale {
-  MICRO = 'micro',
-  HALF_TINY = 'half_tiny',
-  TINY = 'tiny',
-  SMALL = 'small',
-  MEDIUM = 'medium',
-  LARGE = 'large',
-  XLARGE = 'xlarge',
-  XXLARGE = 'xxlarge',
-  XXXLARGE = 'xxxlarge',
-}
-
-// ===== UTILITY FUNCTIONS =====
-
-/**
- * Type-safe way to get enum values as array
- */
-export const getEnumValues = <T extends Record<string, string | number>>(
-  enumObj: T,
-): EnumValues<T>[] => {
-  return Object.values(enumObj) as EnumValues<T>[];
-};

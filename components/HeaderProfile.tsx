@@ -141,9 +141,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
-  profilePhoto: {
-    // Base style - dynamic properties applied inline
-  },
   initialsContainer: {
     justifyContent: 'center',
     alignItems: 'center',

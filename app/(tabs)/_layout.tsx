@@ -70,11 +70,7 @@ export default function TabLayout(): JSX.Element {
     lineHeight: LAYOUT.SPACING.XLARGE, // Center text vertically
   };
 
-  if (!colors) {
-    return <Fragment />;
-  }
-
-  if (!session?.user) {
+  if (!colors || !session?.user) {
     return <Fragment />;
   }
 
