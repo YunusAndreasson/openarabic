@@ -1,9 +1,7 @@
 /**
  * Tutorial system constants
- * Defines all tutorial IDs, configurations, and strings for the progressive disclosure tutorial system
+ * Defines all tutorial IDs, configurations, and timing for the progressive disclosure tutorial system
  */
-
-import { STRINGS } from './strings';
 
 /**
  * Tutorial identifiers (branded type pattern for type safety)
@@ -16,17 +14,21 @@ export const TutorialId = {
 export type TutorialId = (typeof TutorialId)[keyof typeof TutorialId];
 
 /**
+ * Swipe tutorial step indices
+ */
+export const SwipeTutorialStep = {
+  CORE_FLOW: 0,
+  UNSURE_FLOW: 1,
+} as const;
+
+export type SwipeTutorialStep = (typeof SwipeTutorialStep)[keyof typeof SwipeTutorialStep];
+
+/**
  * Configuration for a single tutorial
  */
 interface TutorialConfig {
-  /** Unique identifier */
-  id: TutorialId;
   /** AsyncStorage key for completion state */
   storageKey: string;
-  /** Tutorial title */
-  title: string;
-  /** Tutorial description */
-  description: string;
   /** Auto-dismiss delay in milliseconds (optional - if not set, requires manual dismiss) */
   autoDismissDelay?: number;
   /** Delay before showing tutorial in milliseconds */
@@ -39,18 +41,11 @@ interface TutorialConfig {
  */
 export const TUTORIALS: Record<TutorialId, TutorialConfig> = {
   [TutorialId.WORD_TAP]: {
-    id: TutorialId.WORD_TAP,
     storageKey: '@openarabic/tutorials/wordTapCompleted',
-    title: STRINGS.TUTORIAL_WORD_TAP_TITLE,
-    description: STRINGS.TUTORIAL_WORD_TAP_DESCRIPTION,
     showDelay: 800,
-    // Completed when user taps any word
   },
   [TutorialId.SWIPE_GESTURE]: {
-    id: TutorialId.SWIPE_GESTURE,
     storageKey: '@openarabic/tutorials/swipeGestureCompleted',
-    title: STRINGS.TUTORIAL_SWIPE_TITLE,
-    description: STRINGS.TUTORIAL_SWIPE_DESCRIPTION,
     showDelay: 500,
   },
 };
@@ -61,6 +56,11 @@ export const TUTORIALS: Record<TutorialId, TutorialConfig> = {
 export const TUTORIAL_ANIMATION = {
   FADE_IN_DURATION: 300,
   FADE_OUT_DURATION: 200,
-  PULSE_DURATION: 1000,
   BOUNCE_DURATION: 800,
 } as const;
+
+/**
+ * Fixed height for tutorial step content area
+ * Prevents modal from resizing between steps
+ */
+export const TUTORIAL_STEP_HEIGHT = 240;

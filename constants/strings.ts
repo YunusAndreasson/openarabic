@@ -25,16 +25,22 @@ export const STRINGS = {
   WORDS_REMAINING_TODAY: '{count} words remaining today',
   RESET_TUTORIALS: 'Reset tutorials',
   // Tutorial copy
-  TUTORIAL_WORD_TAP_TITLE: 'Tap to learn words',
-  TUTORIAL_WORD_TAP_DESCRIPTION: 'Tap any Arabic word to see its meaning and save it for practice',
   TUTORIAL_WORD_TAP_CTA: 'Tap any word to learn it',
-  TUTORIAL_SWIPE_TITLE: 'Review your words',
-  TUTORIAL_SWIPE_DESCRIPTION: 'Swipe to rate how well you know each word',
+  // Swipe tutorial - Step 1
+  TUTORIAL_SWIPE_TITLE: 'Swipe to rate',
   TUTORIAL_SWIPE_DONT_KNOW: "Don't know",
-  TUTORIAL_SWIPE_KNOW: 'Know it',
-  TUTORIAL_SWIPE_UNSURE: 'Unsure?',
-  TUTORIAL_SWIPE_UNSURE_HINT: 'Tap to reveal, then swipe right',
-  TUTORIAL_START_PRACTICING: 'Start practicing',
+  TUTORIAL_SWIPE_DONT_KNOW_HINT: 'See again soon',
+  TUTORIAL_SWIPE_KNOW: 'Know',
+  TUTORIAL_SWIPE_KNOW_HINT: 'See less often',
+  // Swipe tutorial - Step 2
+  TUTORIAL_VAGUE_TITLE: 'Unsure? Tap to peek',
+  TUTORIAL_VAGUE: 'Vague',
+  // Swipe tutorial navigation
+  TUTORIAL_NEXT: 'Next',
+  TUTORIAL_START_PRACTICING: 'Got it',
+  // Swipe tutorial - Sample word
+  TUTORIAL_SAMPLE_WORD_ARABIC: 'كِتَاب',
+  TUTORIAL_SAMPLE_WORD_HINT: 'B...',
   // Contact email - single source of truth
   CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',
   // Account section titles - now imported directly from enums in components
