@@ -7,6 +7,8 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { bookmarkService } from '@/services/bookmark';
+import { useAppDispatch } from '@/store/hooks';
+import { resetEditMode } from '@/store/editModeSlice';
 import type { ArticleId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
@@ -33,6 +35,7 @@ export function useAddBeginnerArticles(
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const dispatch = useAppDispatch();
 
   const mutation = useMutation({
     mutationFn: async (articleIds: number[]) => {
@@ -64,6 +67,9 @@ export function useAddBeginnerArticles(
         queryClient.invalidateQueries({ queryKey: ['readingList', user.id] }),
         audioQueries.invalidateAll(queryClient, user.id),
       ]);
+
+      // Reset edit mode in case it was persisted from previous session
+      dispatch(resetEditMode('listen'));
 
       // Show encouraging toast with haptic
       successFeedback();
