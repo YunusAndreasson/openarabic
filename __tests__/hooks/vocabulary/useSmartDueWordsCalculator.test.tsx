@@ -46,6 +46,11 @@ jest.mock('@/constants/queries', () => ({
     all: (userId: string) => ({ queryKey: ['fsrs-words', userId] }),
     stats: (userId: string) => ({ queryKey: ['fsrs-words', userId, 'stats'] }),
   },
+  CACHE_TIMES: {
+    CRITICAL: { staleTime: 30000, gcTime: 120000 },
+    SHORT: { staleTime: 60000, gcTime: 300000 },
+    MEDIUM: { staleTime: 180000, gcTime: 600000 },
+  },
 }));
 
 describe('useSmartDueWordsCalculator', () => {
