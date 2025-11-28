@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { CACHE_TIMES, QUERY_DEFAULTS } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { studySessionStreakService, type StreakHistoryData } from '@/services/studyStreak';
 import { handleError } from '@/utils/errorHandling';
@@ -46,8 +47,8 @@ export function useStudyStreakHistory(): UseStudyStreakHistoryResult {
       }
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes (stable historical data)
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: QUERY_DEFAULTS.STALE_TIME, // 5 minutes (stable historical data)
+    gcTime: CACHE_TIMES.MEDIUM.gcTime, // 10 minutes
     retry: 2,
     refetchOnMount: false,
     refetchOnWindowFocus: false,

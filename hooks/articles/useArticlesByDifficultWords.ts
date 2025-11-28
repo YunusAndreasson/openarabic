@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { articleQueries } from '@/constants/queries';
+import { articleQueries, CACHE_TIMES } from '@/constants/queries';
 import { articlesService } from '@/services/articles';
 import { strugglingWordsService } from '@/services/strugglingWords';
 import type { Article } from '@/types/articles.types';
@@ -35,8 +35,8 @@ export function useArticlesByDifficultWords(
       return strugglingWordsService.getStrugglingWords(userId, 50);
     },
     enabled: !!userId,
-    staleTime: 180000, // 3 minutes - struggling words change less frequently than due words
-    gcTime: 600000, // 10 minutes
+    staleTime: CACHE_TIMES.MEDIUM.staleTime, // 3 minutes - struggling words change less frequently than due words
+    gcTime: CACHE_TIMES.MEDIUM.gcTime, // 10 minutes
     retry: 2,
   });
 

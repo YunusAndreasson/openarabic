@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { AppStateStatus } from 'react-native';
 import { AppState } from 'react-native';
 
-import { fsrsQueries } from '@/constants/queries';
+import { CACHE_TIMES, fsrsQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { handleError } from '@/utils/errorHandling';
@@ -27,7 +27,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
   const appStateRef = useRef(AppState.currentState);
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastRefreshRef = useRef<number>(0);
-  const MIN_REFRESH_INTERVAL = 30000; // 30 seconds minimum between refreshes
+  const MIN_REFRESH_INTERVAL = CACHE_TIMES.CRITICAL.staleTime; // 30 seconds minimum between refreshes
 
   /**
    * Calculate and refresh due words data
@@ -63,7 +63,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
               limit: 100,
             }),
           staleTime: 0, // Always fetch fresh
-          gcTime: 120000, // 2 minutes cache
+          gcTime: CACHE_TIMES.CRITICAL.gcTime, // 2 minutes cache
         }),
 
         // Refresh all words for accurate memory strength calculation
@@ -75,7 +75,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
               limit: 1000,
             }),
           staleTime: 0, // Always fetch fresh
-          gcTime: 300000, // 5 minutes cache
+          gcTime: CACHE_TIMES.SHORT.gcTime, // 5 minutes cache
         }),
 
         // Refresh stats for accurate counts
@@ -87,7 +87,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
               limit: 1000,
             }),
           staleTime: 0, // Always fetch fresh
-          gcTime: 300000, // 5 minutes cache
+          gcTime: CACHE_TIMES.SHORT.gcTime, // 5 minutes cache
         }),
       ];
 
