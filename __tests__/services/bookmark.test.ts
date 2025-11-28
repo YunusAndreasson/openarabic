@@ -194,7 +194,7 @@ describe('bookmarkService', () => {
 
       expect(mockHandleError).toHaveBeenCalledWith(
         error,
-        expect.objectContaining({ toastMessage: "Couldn't remove bookmark. Try again" }),
+        expect.objectContaining({ toastMessage: "Couldn't remove from playlist. Try again" }),
       );
     });
   });

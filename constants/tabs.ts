@@ -6,7 +6,7 @@ import type { AppTab } from '@/types/enums';
  */
 export const TAB_ICONS = {
   EXPLORE: { filled: 'compass', outline: 'compass-outline' },
-  SAVED: { filled: 'bookmark', outline: 'bookmark-outline' },
+  PLAYLIST: { filled: 'headset', outline: 'headset-outline' },
   PRACTICE: { filled: 'school', outline: 'school-outline' },
 } as const;
 
@@ -34,8 +34,8 @@ export const TAB_SCREENS: readonly TabScreenConfig[] = [
   },
   {
     name: 'bookmarks',
-    title: 'Saved' as AppTab,
-    icon: TAB_ICONS.SAVED,
+    title: 'Playlist' as AppTab,
+    icon: TAB_ICONS.PLAYLIST,
   },
   {
     name: 'study',

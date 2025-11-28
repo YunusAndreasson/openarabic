@@ -273,33 +273,51 @@ export const useBookmarksScreen = () => {
         return;
       }
 
-      // Always generate fresh track to ensure correct audio preference
-      // Don't use pre-generated tracks as they might have stale preferences
+      // Play from tapped article (Spotify-style): start playlist from this position
       try {
         selectionFeedback();
         setPlaybackMode('all');
 
+        // Find the index of the tapped article in the sorted tracks
+        const startIndex = sortedEnhancedTracks.findIndex(t => t.articleId === articleId);
+
+        if (startIndex === -1 || sortedEnhancedTracks.length === 0) {
+          // Fallback: generate single track if not found in playlist
+          const track = await enhancedAudioService.generateEnhancedAudioTrack(
+            articleId as ArticleId,
+            audioPreference,
+          );
+          if (track) {
+            await simpleAudioService.play(track);
+          }
+          return;
+        }
+
         // PREFETCH: warm article data and image so audio components show artwork instantly
         await prefetchArticleWithImage(articleId, queryClient, prefetchArticle);
 
-        const track = await enhancedAudioService.generateEnhancedAudioTrack(
-          articleId as ArticleId,
-          audioPreference,
-        );
-        if (track) {
-          // Track individual article playback
-          analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
-            article_id: articleId,
-            article_title: track.title || '',
-          });
+        // Play playlist starting from tapped article
+        const tracksFromHere = sortedEnhancedTracks.slice(startIndex);
 
-          const success = await simpleAudioService.play(track);
-          if (!success) {
+        analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
+          article_id: articleId,
+          article_title: tracksFromHere[0]?.title || '',
+          playlist_position: startIndex + 1,
+          playlist_total: sortedEnhancedTracks.length,
+        });
+
+        const success = await simpleAudioService.playPlaylist(tracksFromHere, nextTrack => {
+          if (nextTrack?.articleId) {
+            prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
+          } else {
+            // Playlist complete
             playbackModeTimeoutRef.current = setTimeout(() => {
               setPlaybackMode('none');
             }, TIMING_CONSTANTS.QUICK_DELAY);
           }
-        } else {
+        });
+
+        if (!success) {
           playbackModeTimeoutRef.current = setTimeout(() => {
             setPlaybackMode('none');
           }, TIMING_CONSTANTS.QUICK_DELAY);
@@ -311,7 +329,7 @@ export const useBookmarksScreen = () => {
         handleError(error as Error);
       }
     },
-    [isCurrentlyPlaying, sortedEnhancedTracks, audioPreference],
+    [isCurrentlyPlaying, sortedEnhancedTracks, audioPreference, queryClient, prefetchArticle],
   );
 
   // Cleanup timeouts on unmount

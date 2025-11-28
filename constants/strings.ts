@@ -101,11 +101,11 @@ export const STRINGS = {
   // Empty states & hints - more actionable
   TRY_ADJUSTING_FILTERS: 'Try different filters',
   NO_ARTICLES_FOUND: 'No articles match your filters',
-  // Saved tab empty state - one-tap start with beginner articles
-  BOOKMARKS_EMPTY_TITLE: 'Get started with these articles',
+  // Playlist tab empty state - one-tap start with beginner articles
+  BOOKMARKS_EMPTY_TITLE: 'Get started with your playlist',
   BOOKMARKS_EMPTY_DESCRIPTION: 'Each has bilingual audio in Arabic and English for easy listening.',
-  BOOKMARKS_EMPTY_CTA: 'Add to Saved',
-  BOOKMARKS_EMPTY_HINT: 'Bookmark any article while reading to add your own',
+  BOOKMARKS_EMPTY_CTA: 'Add to Playlist',
+  BOOKMARKS_EMPTY_HINT: 'Tap the headset icon on any article to add',
   // Practice tab empty state - one-tap start with common words
   STUDY_LIST_EMPTY_TITLE: 'Get started with these words',
   STUDY_LIST_EMPTY_DESCRIPTION:
@@ -120,8 +120,8 @@ export const STRINGS = {
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',
   SESSION_COMPLETE_EDUCATIONAL: 'Words will reappear at optimal intervals for long-term memory',
-  ADDED_TO_BOOKMARKS: 'Saved to bookmarks',
-  REMOVED_FROM_BOOKMARKS: 'Removed from bookmarks',
+  ADDED_TO_BOOKMARKS: 'Added to playlist',
+  REMOVED_FROM_BOOKMARKS: 'Removed from playlist',
   // Word action buttons
   ADD_TO_PRACTICE: 'Add to practice',
   REMOVE_FROM_PRACTICE: 'Remove from practice',
@@ -323,11 +323,11 @@ export const STRINGS = {
   FAILED_TO_GET_ENHANCED_AUDIO_TRACKS: "Couldn't get tracks. " + tryAgain,
   FAILED_TO_LOAD_AUDIO_TRACKS: "Couldn't load audio tracks. " + tryAgain,
   FAILED_TO_STOP_AUDIO_ON_CLOSE: "Couldn't stop audio on close. " + tryAgain,
-  // Reading list errors
-  FAILED_TO_LOAD_BOOKMARKS: "Couldn't load bookmarks. " + tryAgain,
-  FAILED_TO_ADD_TO_READING_LIST: "Couldn't save bookmark. " + tryAgain,
-  FAILED_TO_REMOVE_FROM_READING_LIST: "Couldn't remove bookmark. " + tryAgain,
-  FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check bookmark status. " + tryAgain,
+  // Playlist errors
+  FAILED_TO_LOAD_BOOKMARKS: "Couldn't load playlist. " + tryAgain,
+  FAILED_TO_ADD_TO_READING_LIST: "Couldn't add to playlist. " + tryAgain,
+  FAILED_TO_REMOVE_FROM_READING_LIST: "Couldn't remove from playlist. " + tryAgain,
+  FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check playlist status. " + tryAgain,
   ERROR_UPDATING_STUDY_LIST: "Couldn't update practice list. " + tryAgain,
   FAILED_TO_LOAD_STUDY_WORDS: "Couldn't load practice words. " + tryAgain,
   FAILED_TO_UPDATE_WORD_AND_REVIEW: "Couldn't update word and record review. " + tryAgain,
@@ -354,7 +354,7 @@ export const STRINGS = {
   DELETE_ACCOUNT_DATA_LIST: [
     'Reading progress and history',
     'Vocabulary practice lists and progress',
-    'Bookmarked articles',
+    'Playlist articles',
     'App preferences and settings',
   ] as const,
   DELETE_ACCOUNT_PERMANENT: 'This action cannot be undone.',

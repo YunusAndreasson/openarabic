@@ -115,7 +115,7 @@ export enum FontDescription {
  */
 export const AppTab = {
   EXPLORE: 'Explore',
-  SAVED: 'Saved',
+  PLAYLIST: 'Playlist',
   PRACTICE: 'Practice',
 } as const;
 

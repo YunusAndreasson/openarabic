@@ -16,7 +16,7 @@ export interface FloatingActionButtonsProps {
 
 /**
  * Floating action buttons component positioned over parallax header
- * Provides controls for bookmarking and closing the article
+ * Provides controls for adding to playlist and closing the article
  */
 export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
   ({ isInReadingList, onToggleReadingList, onClose }) => {
@@ -109,7 +109,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
 
         {/* Action buttons - top right */}
         <View style={actionButtonsStyle}>
-          {/* Bookmark button */}
+          {/* Add to playlist button */}
           <Pressable
             onPress={handleOptimisticToggle}
             onPressIn={bookmarkPressAnimation.handlePressIn}
@@ -123,7 +123,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
               ]}
             >
               <Ionicons
-                name={optimisticIsInReadingList ? 'bookmark' : 'bookmark-outline'}
+                name={optimisticIsInReadingList ? 'headset' : 'headset-outline'}
                 size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                 color={optimisticIsInReadingList ? colors.tint : colors.secondaryText}
               />

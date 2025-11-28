@@ -1,7 +1,7 @@
 /**
  * FloatingActionButtons Component Tests
  *
- * Tests article floating action buttons (close and bookmark).
+ * Tests article floating action buttons (close and add-to-playlist).
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
@@ -69,7 +69,7 @@ describe('FloatingActionButtons', () => {
       expect(getByTestId('icon-close')).toBeTruthy();
     });
 
-    test('renders bookmark outline when not in reading list', () => {
+    test('renders headset outline when not in reading list', () => {
       const { getByTestId } = render(
         <FloatingActionButtons
           isInReadingList={false}
@@ -78,10 +78,10 @@ describe('FloatingActionButtons', () => {
         />,
       );
 
-      expect(getByTestId('icon-bookmark-outline')).toBeTruthy();
+      expect(getByTestId('icon-headset-outline')).toBeTruthy();
     });
 
-    test('renders filled bookmark when in reading list', () => {
+    test('renders filled headset when in reading list', () => {
       const { getByTestId } = render(
         <FloatingActionButtons
           isInReadingList={true}
@@ -90,7 +90,7 @@ describe('FloatingActionButtons', () => {
         />,
       );
 
-      expect(getByTestId('icon-bookmark')).toBeTruthy();
+      expect(getByTestId('icon-headset')).toBeTruthy();
     });
   });
 
@@ -114,8 +114,8 @@ describe('FloatingActionButtons', () => {
     });
   });
 
-  describe('Bookmark Button', () => {
-    test('calls onToggleReadingList when bookmark is pressed', () => {
+  describe('Playlist Button', () => {
+    test('calls onToggleReadingList when playlist button is pressed', () => {
       const { getByTestId } = render(
         <FloatingActionButtons
           isInReadingList={false}
@@ -124,8 +124,8 @@ describe('FloatingActionButtons', () => {
         />,
       );
 
-      const bookmarkIcon = getByTestId('icon-bookmark-outline');
-      const pressable = bookmarkIcon.parent?.parent;
+      const playlistIcon = getByTestId('icon-headset-outline');
+      const pressable = playlistIcon.parent?.parent;
 
       if (pressable) {
         fireEvent.press(pressable);
@@ -133,7 +133,7 @@ describe('FloatingActionButtons', () => {
       }
     });
 
-    test('toggles bookmark icon optimistically on press', () => {
+    test('toggles playlist icon optimistically on press', () => {
       const { getByTestId, rerender, queryByTestId } = render(
         <FloatingActionButtons
           isInReadingList={false}
@@ -143,7 +143,7 @@ describe('FloatingActionButtons', () => {
       );
 
       // Initial state - outline
-      expect(getByTestId('icon-bookmark-outline')).toBeTruthy();
+      expect(getByTestId('icon-headset-outline')).toBeTruthy();
 
       // Rerender with updated prop
       rerender(
@@ -154,9 +154,9 @@ describe('FloatingActionButtons', () => {
         />,
       );
 
-      // Should now show filled bookmark
-      expect(getByTestId('icon-bookmark')).toBeTruthy();
-      expect(queryByTestId('icon-bookmark-outline')).toBeNull();
+      // Should now show filled headset
+      expect(getByTestId('icon-headset')).toBeTruthy();
+      expect(queryByTestId('icon-headset-outline')).toBeNull();
     });
   });
 
