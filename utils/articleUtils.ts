@@ -144,26 +144,6 @@ export function getArticlesByDueWords(
 }
 
 /**
- * Gets articles sorted by difficult words count - articles with more difficult words are prioritized
- * @param articles - The articles to sort
- * @param difficultWords - The user's difficult words (from strugglingWordsService)
- * @param limit - The maximum number of articles to return (default: 10)
- * @returns Articles sorted by difficult words count (highest first)
- */
-export function getArticlesByDifficultWords(
-  articles: Article[],
-  difficultWords: StudyWord[],
-  limit = 10,
-): Article[] {
-  if (!articles.length || !difficultWords.length) return [];
-
-  // Get the root IDs of difficult words
-  const difficultWordRootIds = new Set(difficultWords.map(word => word.root_id));
-
-  return filterArticlesByWordSet(articles, difficultWordRootIds, limit);
-}
-
-/**
  * Calculate filter date based on date range
  */
 export function calculateFilterDate(dateRange: 'week' | 'month' | 'all'): Date | null {

@@ -119,7 +119,9 @@ export function ArticleCard({
   });
 
   // Image height calculation - screenWidth is stable for mobile
-  const imageHeight = Math.round((screenWidth - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2) / GOLDEN_RATIO);
+  const imageHeight = Math.round(
+    (screenWidth - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2) / GOLDEN_RATIO,
+  );
 
   // Use pre-computed gradient colors from theme for performance
   const gradientColors = colors.cardGradient;

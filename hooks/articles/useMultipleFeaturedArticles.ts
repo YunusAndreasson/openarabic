@@ -1,17 +1,18 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
-import { APP_SESSION_ID, fsrsQueries } from '@/constants/queries';
+import { APP_SESSION_ID } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
-import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
+import { useFSRSData } from '@/components/providers/FSRSDataProvider';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
+import type { RootId } from '@/types/branded.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
+import { isHardWord } from '@/utils/wordClassification';
 
 interface MultipleFeaturedArticlesResult {
   articles: Article[];
@@ -54,25 +55,24 @@ export function useMultipleFeaturedArticles(
     APP_SESSION_ID,
   ]);
 
-  // Use the existing hooks for due and difficult words with cached data
+  // Use due words hook for Strategy 1
   const {
     hasEnoughArticles: hasDueWordArticles,
     dueWordRootIds,
     isLoading: isDueWordsLoading,
   } = useArticlesByDueWords(user?.id, 10);
 
-  const {
-    hasEnoughArticles: hasDifficultWordArticles,
-    difficultWordRootIds,
-    isLoading: isDifficultWordsLoading,
-  } = useArticlesByDifficultWords(user?.id, 10);
+  // Use already-loaded FSRS data for difficult words (Strategy 2) - no separate API call needed
+  const { studyWords = [], isLoading: isFSRSLoading } = useFSRSData();
 
-  const { data: allStudyWords = [], isFetching: isFetchingFSRS } = useQuery({
-    ...fsrsQueries.allWithCooldown(user?.id || '', DEFAULT_SESSION_COOLDOWN_HOURS),
-    enabled: !!user?.id,
-  });
+  // Compute hard word root IDs inline using simplified isHardWord logic
+  const difficultWordRootIds = useMemo(() => {
+    const hardWords = studyWords.filter(isHardWord);
+    return new Set(hardWords.map(w => w.root_id as RootId));
+  }, [studyWords]);
 
-  const hasAnyStudyWords = allStudyWords.length > 0;
+  const hasDifficultWordArticles = difficultWordRootIds.size >= 3;
+  const hasAnyStudyWords = studyWords.length > 0;
 
   // Get reading progress for all articles to filter for unread/low-progress
   const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
@@ -80,8 +80,7 @@ export function useMultipleFeaturedArticles(
     useSafeBulkReadingProgress(articleIds);
 
   // Track combined loading state for all queries
-  const allQueriesReady =
-    !isDueWordsLoading && !isDifficultWordsLoading && !isFetchingFSRS && !isLoadingProgress;
+  const allQueriesReady = !isDueWordsLoading && !isFSRSLoading && !isLoadingProgress;
 
   // Filter articles to prioritize unread or low-progress articles (< 20%)
   const unreadOrLowProgressArticles = useMemo(() => {

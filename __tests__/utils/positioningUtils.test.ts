@@ -107,13 +107,7 @@ describe('Positioning Utilities', () => {
       };
 
       const containerWidth = 350; // Container is 350px wide
-      const result = calculateTooltipDimensions(
-        layout,
-        'Test',
-        false,
-        undefined,
-        containerWidth,
-      );
+      const result = calculateTooltipDimensions(layout, 'Test', false, undefined, containerWidth);
 
       // With containerWidth=350, right boundary should be at 350 - 16 = 334px
       // Tooltip should not exceed this boundary
@@ -152,13 +146,7 @@ describe('Positioning Utilities', () => {
       };
 
       const containerWidth = 0; // Not provided
-      const result = calculateTooltipDimensions(
-        layout,
-        'Test',
-        false,
-        undefined,
-        containerWidth,
-      );
+      const result = calculateTooltipDimensions(layout, 'Test', false, undefined, containerWidth);
 
       // When containerWidth is 0, falls back to SCREEN_WIDTH (375px)
       // Right boundary at 375 - 16 = 359px

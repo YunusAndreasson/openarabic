@@ -8,8 +8,10 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
 
-interface PlayButtonProps
-  extends Omit<BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>, 'icon'> {
+interface PlayButtonProps extends Omit<
+  BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>,
+  'icon'
+> {
   isPlaying?: boolean;
 }
 

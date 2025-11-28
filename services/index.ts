@@ -18,7 +18,6 @@ export * from './authors';
 export * from './bookmark';
 export * from './categories';
 export * from './readingProgress';
-export * from './strugglingWords';
 export * from './studyStreak';
 export * from './studyWordsFSRS';
 export * from './supabase';

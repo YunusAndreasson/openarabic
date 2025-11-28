@@ -1,16 +1,17 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InteractionManager, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
 import { BottomControls } from '@/components/bookmarks';
-import { EmptyState, ErrorState } from '@/components/common';
+import { ErrorState } from '@/components/common';
 import { DueWordsBottomSheet } from '@/components/study';
 import { MemoryRetentionBottomSheet } from '@/components/study';
+import { PracticeEmptyState, type EmptyStateButtonProps } from '@/components/study';
 import { RecommendationCard } from '@/components/study';
 import { StudyStreakBottomSheet } from '@/components/study';
 import { VocabularyStatCards } from '@/components/study';
@@ -18,8 +19,8 @@ import { WordsMasteredBottomSheet } from '@/components/study';
 import { PulsatingLoader } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { articleQueries, fsrsQueries } from '@/constants/queries';
-import { getArticleRoute, getStudyReviewRoute } from '@/constants/routes';
+import { fsrsQueries } from '@/constants/queries';
+import { getStudyReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -29,10 +30,7 @@ import { useColors } from '@/hooks/theme';
 import { useBottomSheetManager } from '@/hooks/ui';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
-import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
 import { ReviewAction } from '@/types/enums';
-import { getBeginnerArticles } from '@/utils/articleUtils';
 import { mediumFeedback } from '@/utils/haptics';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
@@ -42,17 +40,11 @@ export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { prefetchVocabularyData, prefetchArticle } = useAppPreloader();
+  const { prefetchVocabularyData } = useAppPreloader();
   const colors = useColors();
 
-  // Fetch all articles (same query as library) and extract beginner articles
-  const { data: allArticles = [] } = useQuery(articleQueries.all());
-
-  // Get 3 beginner articles for empty state recommendations
-  const recommendedArticles = useMemo(() => {
-    const beginnerArticles = getBeginnerArticles(allArticles);
-    return beginnerArticles.slice(0, 3);
-  }, [allArticles]);
+  // Empty state button props (for when showing empty state)
+  const [emptyButtonProps, setEmptyButtonProps] = useState<EmptyStateButtonProps | null>(null);
 
   // Bottom sheet visibility management (only one sheet visible at a time)
   const { showSheet, hideSheet, isVisible } = useBottomSheetManager<BottomSheetKey>();
@@ -143,18 +135,6 @@ export default function VocabularyScreen(): JSX.Element {
   const handleDuePress = useCallback(() => showSheet('due'), [showSheet]);
   const handleStreakPress = useCallback(() => showSheet('streak'), [showSheet]);
   const handleMasteredPress = useCallback(() => showSheet('mastered'), [showSheet]);
-
-  // Handle article press from recommendations
-  const handleRecommendedArticlePress = useCallback(
-    (article: Article) => {
-      // Prefetch article data after navigation animation completes
-      InteractionManager.runAfterInteractions(() => {
-        prefetchArticle(article.id);
-      });
-      router.push(getArticleRoute(article.id as ArticleId, article.title));
-    },
-    [prefetchArticle, router],
-  );
 
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
@@ -316,22 +296,17 @@ export default function VocabularyScreen(): JSX.Element {
                 />
               </>
             ) : (
-              <EmptyState
-                title={STRINGS.STUDY_LIST_EMPTY_TITLE}
-                description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
-                recommendedArticles={recommendedArticles}
-                onArticlePress={handleRecommendedArticlePress}
-              />
+              <PracticeEmptyState onButtonPropsChange={setEmptyButtonProps} />
             )}
           </Animated.View>
         )}
       </ThemedView>
 
       {/* Solid overlay below button */}
-      {hasAnyStudyWords && <View style={bottomOverlayStyle} />}
+      {(hasAnyStudyWords || emptyButtonProps) && <View style={bottomOverlayStyle} />}
 
-      {/* Bottom fixed action button, hidden when there are no study words */}
-      {hasAnyStudyWords && (
+      {/* Bottom fixed action button - shows Practice Due or Add to Practice based on state */}
+      {(hasAnyStudyWords || emptyButtonProps) && (
         <View
           style={{
             position: 'absolute',
@@ -342,9 +317,16 @@ export default function VocabularyScreen(): JSX.Element {
           }}
         >
           <BottomControls
-            primaryLabel={ReviewAction.STUDY_DUE_WORDS}
-            onPrimaryPress={handleStartReview}
-            primaryDisabled={dueWordsCount === 0}
+            primaryLabel={
+              hasAnyStudyWords ? ReviewAction.STUDY_DUE_WORDS : (emptyButtonProps?.label ?? '')
+            }
+            onPrimaryPress={
+              hasAnyStudyWords ? handleStartReview : (emptyButtonProps?.onPress ?? (() => {}))
+            }
+            primaryDisabled={
+              hasAnyStudyWords ? dueWordsCount === 0 : (emptyButtonProps?.disabled ?? true)
+            }
+            primaryLoading={hasAnyStudyWords ? false : (emptyButtonProps?.loading ?? false)}
           />
         </View>
       )}

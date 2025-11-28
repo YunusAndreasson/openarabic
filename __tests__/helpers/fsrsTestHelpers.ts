@@ -100,7 +100,7 @@ export const studyWordArbitrary = fc.record({
 export const wordSetArbitrary = (size: number = 10) =>
   fc.array(studyWordArbitrary, { minLength: size, maxLength: size });
 
-// Generate struggling words (high difficulty + lapses)
+// Generate hard/struggling words (lapses >= 2, matching isHardWord definition)
 export const strugglingWordArbitrary = fc.record({
   root_id: fsrsArbitraries.wordId,
   user_id: fc.constant('test-user'),
@@ -124,7 +124,7 @@ export const strugglingWordArbitrary = fc.record({
   fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
   fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
   fsrs_reps: fsrsArbitraries.reps,
-  fsrs_lapses: fc.integer({ min: 1, max: 20 }), // At least 1 lapse
+  fsrs_lapses: fc.integer({ min: 2, max: 20 }), // At least 2 lapses (matches isHardWord)
   fsrs_state: fc.integer({ min: 1, max: 3 }), // Learning, Review, or Relearning
   fsrs_last_review: fc
     .date()

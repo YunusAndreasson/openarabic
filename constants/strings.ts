@@ -101,13 +101,17 @@ export const STRINGS = {
   // Empty states & hints - more actionable
   TRY_ADJUSTING_FILTERS: 'Try different filters',
   NO_ARTICLES_FOUND: 'No articles match your filters',
-  // Saved tab empty state - emphasizes on-the-go bilingual learning
-  BOOKMARKS_EMPTY_TITLE: 'Build your listening routine',
-  BOOKMARKS_EMPTY_DESCRIPTION: 'Save articles to listen on the go with bilingual audio',
-  // Practice tab empty state - benefit-first with spaced repetition explanation
-  STUDY_LIST_EMPTY_TITLE: 'Remember what you learn',
-  STUDY_LIST_EMPTY_DESCRIPTION:
-    'Tap words while reading to save them, then practice with spaced repetition',
+  // Saved tab empty state - one-tap start with beginner articles
+  BOOKMARKS_EMPTY_TITLE: 'Ready to listen in Arabic?',
+  BOOKMARKS_EMPTY_DESCRIPTION: 'We picked 5 beginner articles to get you started',
+  BOOKMARKS_EMPTY_CTA: 'Add to Saved',
+  BOOKMARKS_EMPTY_HINT: 'Or tap the bookmark icon in any article',
+  // Practice tab empty state - one-tap start with common words
+  STUDY_LIST_EMPTY_TITLE: 'Ready to learn Arabic?',
+  STUDY_LIST_EMPTY_DESCRIPTION: 'We picked 10 common words to get you started',
+  STUDY_LIST_EMPTY_CTA: 'Add to Practice',
+  STUDY_LIST_EMPTY_HINT: 'Or tap words in articles to add your own',
+  STUDY_LIST_WORDS_ADDED: 'words added to practice',
   ERROR_LOADING_DATA: "Couldn't load data. " + tryAgain,
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',
@@ -324,6 +328,9 @@ export const STRINGS = {
   FAILED_TO_LOAD_STUDY_WORDS: "Couldn't load practice words. " + tryAgain,
   FAILED_TO_UPDATE_WORD_AND_REVIEW: "Couldn't update word and record review. " + tryAgain,
   FAILED_TO_TOGGLE_STUDY_WORD: "Couldn't toggle practice word. " + tryAgain,
+  FAILED_TO_LOAD_COMMON_WORDS: "Couldn't load common words. " + tryAgain,
+  FAILED_TO_ADD_COMMON_WORDS: "Couldn't add words. " + tryAgain,
+  FAILED_TO_ADD_BEGINNER_ARTICLES: "Couldn't add articles. " + tryAgain,
   FAILED_TO_DELETE_WORD: "Couldn't delete word. " + tryAgain,
   FAILED_TO_LOAD_PRACTICE_DATA: "Couldn't load practice data. " + tryAgain,
   // Timer errors

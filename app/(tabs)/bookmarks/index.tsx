@@ -1,8 +1,6 @@
-import { EmptyState } from '@/components/common';
 import { ListSeparator } from '@/components/common';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
-import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -11,12 +9,15 @@ import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 
 import { ThemedView } from '@/components/ThemedView';
-import { BottomControls } from '@/components/bookmarks';
+import {
+  BottomControls,
+  SavedEmptyState,
+  type EmptyStateButtonProps,
+} from '@/components/bookmarks';
 import { ListenListItemCard } from '@/components/bookmarks';
 import { useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { articleQueries } from '@/constants/queries';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -24,11 +25,9 @@ import { useBookmarksScreen, useListenUI } from '@/hooks/bookmarks';
 import { useColors } from '@/hooks/theme';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
-import type { Article } from '@/types/articles.types';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
 import { AudioAction, ToastType } from '@/types/enums';
-import { getBeginnerArticles } from '@/utils/articleUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadata } from '@/utils/stringUtils';
 // v2 handles layout automatically - no overrideFixedHeight needed
@@ -120,14 +119,8 @@ export default function ListenScreen(): JSX.Element {
   const { prefetchArticle } = useAppPreloader();
   const colors = useColors();
 
-  // Fetch all articles (same query as library) and extract beginner articles
-  const { data: allArticles = [] } = useQuery(articleQueries.all());
-
-  // Get 3 beginner articles for empty state recommendations
-  const recommendedArticles = useMemo(() => {
-    const beginnerArticles = getBeginnerArticles(allArticles);
-    return beginnerArticles.slice(0, 3);
-  }, [allArticles]);
+  // Empty state button props (for when showing empty state)
+  const [emptyButtonProps, setEmptyButtonProps] = useState<EmptyStateButtonProps | null>(null);
 
   // Reset edit mode when screen loses focus
   useFocusEffect(
@@ -217,6 +210,9 @@ export default function ListenScreen(): JSX.Element {
     [stableHasArticles, shouldShowEmpty],
   );
 
+  // Show bottom controls when has articles OR showing empty state with button
+  const showBottomControls = stableHasArticles || (shouldShowEmpty && emptyButtonProps);
+
   // Bottom controls positioned above tab bar
   const bottomControlsStyle = useMemo(
     () => ({
@@ -225,12 +221,9 @@ export default function ListenScreen(): JSX.Element {
       left: 0,
       right: 0,
       overflow: 'visible' as const,
-      // STABILIZATION: Use stable hasArticles state and prevent rapid opacity changes
-      opacity: stableHasArticles ? 1 : 0,
-      pointerEvents: stableHasArticles ? ('auto' as const) : ('none' as const),
       zIndex: 2, // Above the gradient
     }),
-    [stableHasArticles],
+    [],
   );
 
   // Solid overlay below button to cover gap to tab bar
@@ -241,38 +234,17 @@ export default function ListenScreen(): JSX.Element {
       right: 0,
       bottom: 0,
       height: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION, // Just cover the gap (4px)
-      opacity: stableHasArticles ? 1 : 0,
       pointerEvents: 'none' as const,
       zIndex: 1, // Behind the button controls
       backgroundColor: colors.elevation0,
     }),
-    [stableHasArticles, colors.elevation0],
-  );
-
-  // Handle article press from recommendations
-  const handleRecommendedArticlePress = useCallback(
-    (article: Article) => {
-      // Prefetch article data after navigation animation completes
-      InteractionManager.runAfterInteractions(() => {
-        prefetchArticle(article.id);
-      });
-      router.push(getArticleRoute(article.id as ArticleId, article.title));
-    },
-    [prefetchArticle],
+    [colors.elevation0],
   );
 
   // Memoize shared components to prevent recreation
   const EmptyStateComponent = useMemo(
-    () =>
-      shouldShowEmpty ? (
-        <EmptyState
-          title={STRINGS.BOOKMARKS_EMPTY_TITLE}
-          description={STRINGS.BOOKMARKS_EMPTY_DESCRIPTION}
-          recommendedArticles={recommendedArticles}
-          onArticlePress={handleRecommendedArticlePress}
-        />
-      ) : null,
-    [shouldShowEmpty, recommendedArticles, handleRecommendedArticlePress],
+    () => (shouldShowEmpty ? <SavedEmptyState onButtonPropsChange={setEmptyButtonProps} /> : null),
+    [shouldShowEmpty],
   );
 
   // Create the article press handler
@@ -363,17 +335,27 @@ export default function ListenScreen(): JSX.Element {
       </ThemedView>
 
       {/* Solid overlay below button */}
-      <View style={bottomOverlayStyle} />
+      {showBottomControls && <View style={bottomOverlayStyle} />}
 
-      {/* STABILIZATION: Bottom controls with stable state and loading indicator */}
-      <View style={bottomControlsStyle}>
-        <BottomControls
-          primaryDisabled={isPlayAllLoading}
-          primaryLoading={isPlayAllLoading}
-          primaryLabel={AudioAction.PLAY_ALL}
-          onPrimaryPress={handlePlayAllStable}
-        />
-      </View>
+      {/* Bottom controls - shows Play All or Add to Saved based on state */}
+      {showBottomControls && (
+        <View style={bottomControlsStyle}>
+          <BottomControls
+            primaryDisabled={
+              stableHasArticles ? isPlayAllLoading : (emptyButtonProps?.disabled ?? true)
+            }
+            primaryLoading={
+              stableHasArticles ? isPlayAllLoading : (emptyButtonProps?.loading ?? false)
+            }
+            primaryLabel={
+              stableHasArticles ? AudioAction.PLAY_ALL : (emptyButtonProps?.label ?? '')
+            }
+            onPrimaryPress={
+              stableHasArticles ? handlePlayAllStable : (emptyButtonProps?.onPress ?? (() => {}))
+            }
+          />
+        </View>
+      )}
     </ThemedView>
   );
 }

@@ -21,6 +21,7 @@ import {
   calculateWordCategories,
   isDueWord,
   isExtraHardWord,
+  isHardWord,
   isLearnedWord,
   isMasteredWord,
   isStrugglingWord,
@@ -32,13 +33,52 @@ const createStudyWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
   createTestWord(overrides);
 
 describe('wordClassification', () => {
-  describe('isStrugglingWord', () => {
-    test('should identify struggling words correctly', () => {
-      const strugglingWord = createStudyWord({
-        fsrs_difficulty: 8.5,
+  describe('isHardWord', () => {
+    test('should identify hard words (lapses >= 2)', () => {
+      const hardWord = createStudyWord({
         fsrs_lapses: 2,
-        fsrs_last_review: new Date().toISOString(),
-        fsrs_reps: 3,
+      });
+
+      expect(isHardWord(hardWord)).toBe(true);
+    });
+
+    test('should identify very hard words (lapses > 2)', () => {
+      const veryHardWord = createStudyWord({
+        fsrs_lapses: 5,
+      });
+
+      expect(isHardWord(veryHardWord)).toBe(true);
+    });
+
+    test('should not identify words with 1 lapse as hard', () => {
+      const normalWord = createStudyWord({
+        fsrs_lapses: 1,
+      });
+
+      expect(isHardWord(normalWord)).toBe(false);
+    });
+
+    test('should not identify words with 0 lapses as hard', () => {
+      const easyWord = createStudyWord({
+        fsrs_lapses: 0,
+      });
+
+      expect(isHardWord(easyWord)).toBe(false);
+    });
+
+    test('should handle null lapses as 0', () => {
+      const wordWithNullLapses = createStudyWord({
+        fsrs_lapses: null,
+      });
+
+      expect(isHardWord(wordWithNullLapses)).toBe(false);
+    });
+  });
+
+  describe('isStrugglingWord (deprecated, delegates to isHardWord)', () => {
+    test('should identify struggling words (lapses >= 2)', () => {
+      const strugglingWord = createStudyWord({
+        fsrs_lapses: 2,
       });
 
       expect(isStrugglingWord(strugglingWord)).toBe(true);
@@ -46,9 +86,7 @@ describe('wordClassification', () => {
 
     test('should not identify normal words as struggling', () => {
       const normalWord = createStudyWord({
-        fsrs_difficulty: 6.5,
         fsrs_lapses: 0,
-        fsrs_stability: 10,
       });
 
       expect(isStrugglingWord(normalWord)).toBe(false);
@@ -93,28 +131,25 @@ describe('wordClassification', () => {
   });
 
   describe('calculateStrugglingWords', () => {
-    test('should count struggling words that have been reviewed (outside cooldown)', () => {
+    test('should count hard words (lapses >= 2) that have been reviewed (outside cooldown)', () => {
       const now = new Date();
-      const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(); // 13 hours ago (beyond 12-hour cooldown)
+      const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(); // 13 hours ago (beyond 2-hour cooldown)
       const words = [
         createStudyWord({
-          fsrs_difficulty: 8.5,
           fsrs_lapses: 2,
           fsrs_last_review: pastBeyondCooldown,
           fsrs_reps: 3,
-        }), // Struggling and reviewed
+        }), // Hard and reviewed outside cooldown
         createStudyWord({
-          fsrs_difficulty: 8.5,
           fsrs_lapses: 2,
           fsrs_last_review: null,
           fsrs_reps: 0,
-        }), // Struggling but not reviewed
+        }), // Hard but not reviewed (reps = 0)
         createStudyWord({
-          fsrs_difficulty: 6.5,
           fsrs_lapses: 0,
-          fsrs_last_review: now,
+          fsrs_last_review: pastBeyondCooldown,
           fsrs_reps: 3,
-        }), // Not struggling
+        }), // Not hard (lapses < 2)
       ];
 
       expect(calculateStrugglingWords(words)).toBe(1);
@@ -122,22 +157,21 @@ describe('wordClassification', () => {
   });
 
   describe('calculateWordCategories', () => {
-    test('should calculate all categories correctly (respecting struggling cooldown)', () => {
+    test('should calculate all categories correctly (respecting cooldown)', () => {
       const now = new Date();
       const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-      const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(); // 13 hours ago (beyond 12-hour cooldown)
+      const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(); // 13 hours ago (beyond 2-hour cooldown)
       const words = [
         createStudyWord({ fsrs_due: pastDate }), // Due
         createStudyWord({ fsrs_state: 0, fsrs_due: null }), // New - should be counted as due for first review
         createStudyWord({ fsrs_state: 2, fsrs_stability: 10, fsrs_due: null }), // Mastered (and learned)
         createStudyWord({
           fsrs_state: 1, // Learning state
-          fsrs_difficulty: 8.5,
           fsrs_lapses: 2,
           fsrs_last_review: pastBeyondCooldown,
           fsrs_reps: 3,
           fsrs_due: null,
-        }), // Struggling (but not learned yet)
+        }), // Hard (lapses >= 2) and reviewed outside cooldown
       ];
 
       const result = calculateWordCategories(words);

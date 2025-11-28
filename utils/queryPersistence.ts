@@ -1,7 +1,7 @@
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import type { Query } from '@tanstack/react-query';
 
-import { FSRS_BASE_KEY, STRUGGLING_WORDS_KEY } from '@/constants/fsrs';
+import { FSRS_BASE_KEY } from '@/constants/fsrs';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 // Constants for better performance and maintainability
@@ -23,7 +23,6 @@ const EXCLUDED_KEYS = new Set([
   'isInReadingList',
   'readingList', // User-specific & auth-dependent - causes hydration errors
   'enhancedAudioTracks',
-  STRUGGLING_WORDS_KEY,
   'reading-progress-bulk', // Explicitly exclude to prevent HMR hydration errors
 ]);
 const EXCLUDED_PATTERNS = new Set(['due', 'live', 'cooldown']);

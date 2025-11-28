@@ -3,7 +3,7 @@ import { supabase } from '@/services/supabase';
 import type { RootId, UserId } from '@/types/branded.types';
 import type { Tables, TablesInsert } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { executeAuthenticatedQuery } from '@/utils/supabaseHelpers';
+import { executeAuthenticatedQuery, executeQuery } from '@/utils/supabaseHelpers';
 
 // Interface for FSRS-specific update fields - matches RPC function requirements
 interface FSRSWordUpdate {
@@ -271,5 +271,81 @@ export const studyWordsFSRSService = {
     });
 
     return true;
+  },
+
+  /**
+   * Get common beginner-friendly roots from the database.
+   * Returns roots that are foundational for Arabic learning.
+   */
+  async getCommonRoots(limit: number = 10): Promise<Tables<'roots'>[]> {
+    // Query roots ordered by ID (foundational words have lower IDs)
+    // This provides reliable, high-quality starter vocabulary
+    const data = await executeQuery(
+      () =>
+        supabase
+          .from('roots')
+          .select('id, letters, meaning, audio_url, audio_url_en')
+          .order('id', { ascending: true })
+          .limit(limit),
+      {
+        toastMessage: STRINGS.FAILED_TO_LOAD_COMMON_WORDS,
+        analyticsEventName: 'Get_Common_Roots_Error',
+        showToast: false,
+      },
+    );
+
+    return (data ?? []) as Tables<'roots'>[];
+  },
+
+  /**
+   * Add multiple roots to the user's study list at once.
+   * Skips roots that are already in the study list.
+   */
+  async addMultipleRoots(userId: string, rootIds: number[]): Promise<number> {
+    if (rootIds.length === 0) return 0;
+
+    // Get existing study words to avoid duplicates
+    const existingData = await executeAuthenticatedQuery(
+      userId,
+      () =>
+        supabase.from('study_words').select('root_id').eq('user_id', userId).in('root_id', rootIds),
+      {
+        toastMessage: STRINGS.FAILED_TO_ADD_COMMON_WORDS,
+        analyticsEventName: 'Add_Multiple_Roots_Check_Error',
+        showToast: false,
+      },
+    );
+
+    const existingRootIds = new Set((existingData ?? []).map(row => row.root_id));
+    const newRootIds = rootIds.filter(id => !existingRootIds.has(id));
+
+    if (newRootIds.length === 0) return 0;
+
+    const now = new Date();
+    const INITIAL_FSRS_DIFFICULTY = 6.5;
+    const INITIAL_STABILITY = 0.4;
+
+    const entries: TablesInsert<'study_words'>[] = newRootIds.map(rootId => ({
+      user_id: userId,
+      root_id: rootId,
+      created_at: now.toISOString(),
+      fsrs_due: now.toISOString(),
+      fsrs_stability: INITIAL_STABILITY,
+      fsrs_difficulty: INITIAL_FSRS_DIFFICULTY,
+      fsrs_scheduled_days: 0,
+      fsrs_learning_steps: 0,
+      fsrs_reps: 0,
+      fsrs_lapses: 0,
+      fsrs_state: 0,
+      fsrs_last_review: now.toISOString(),
+    }));
+
+    await executeAuthenticatedQuery(userId, () => supabase.from('study_words').insert(entries), {
+      toastMessage: STRINGS.FAILED_TO_ADD_COMMON_WORDS,
+      analyticsEventName: 'Add_Multiple_Roots_Insert_Error',
+      showToast: false,
+    });
+
+    return newRootIds.length;
   },
 };

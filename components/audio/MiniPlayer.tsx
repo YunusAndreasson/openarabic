@@ -98,7 +98,10 @@ const MiniPlayerComponent = ({
   const colors = useColors();
 
   // Memoize image URL to prevent duplicate generation on every render
-  const imageUrl = useMemo(() => generateStorageUrl('images', article.image_url), [article.image_url]);
+  const imageUrl = useMemo(
+    () => generateStorageUrl('images', article.image_url),
+    [article.image_url],
+  );
 
   // Memoize dynamic styles for better performance - use elevation2 for prominence
   const cardStyle = useMemo(

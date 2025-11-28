@@ -17,7 +17,6 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import {
   calculateFilterDate,
   filterArticles,
-  getArticlesByDifficultWords,
   getArticlesByDueWords,
   sortArticlesByProgress,
 } from '@/utils/articleUtils';
@@ -314,31 +313,6 @@ describe('articleUtils', () => {
 
     test('should respect limit', () => {
       const result = getArticlesByDueWords(mockArticles, mockStudyWords, 1);
-      expect(result).toHaveLength(1);
-    });
-  });
-
-  describe('getArticlesByDifficultWords', () => {
-    test('should return articles sorted by difficult words count', () => {
-      const result = getArticlesByDifficultWords(mockArticles, mockStudyWords, 10);
-      expect(result).toHaveLength(2);
-      // Both articles should have difficult words (root_id 1 and 2)
-      expect(result[0].id).toBe(1);
-      expect(result[1].id).toBe(2);
-    });
-
-    test('should return empty array for no articles', () => {
-      const result = getArticlesByDifficultWords([], mockStudyWords, 10);
-      expect(result).toHaveLength(0);
-    });
-
-    test('should return empty array for no difficult words', () => {
-      const result = getArticlesByDifficultWords(mockArticles, [], 10);
-      expect(result).toHaveLength(0);
-    });
-
-    test('should respect limit', () => {
-      const result = getArticlesByDifficultWords(mockArticles, mockStudyWords, 1);
       expect(result).toHaveLength(1);
     });
   });

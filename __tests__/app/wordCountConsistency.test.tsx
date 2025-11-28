@@ -133,8 +133,8 @@ describe('Word Count Consistency Validation', () => {
       // UI Display Logic (what VocabularyStatCards shows)
       const uiStrugglingCount = calculateStrugglingWords(mockStudyWords);
 
-      // Session Logic (what strugglingWordsService.getStrugglingWords() would return)
-      // This should match the UI count exactly
+      // Session Logic (uses same calculateStrugglingWords function)
+      // Both use unified isHardWord definition (lapses >= 2)
       const sessionStrugglingCount = calculateStrugglingWords(mockStudyWords);
 
       // BEFORE FIX: These could be different due to inconsistent filtering

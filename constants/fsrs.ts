@@ -5,7 +5,6 @@ export const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
 
 // Base keys for consistent cache management
 export const FSRS_BASE_KEY = 'fsrs-words';
-export const STRUGGLING_WORDS_KEY = 'struggling-words';
 
 export const MIN_WORD_SPACING = 3;
 
@@ -15,8 +14,6 @@ export const DEFAULT_FSRS_DIFFICULTY = 6.5;
 export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7;
 
 // Word classification thresholds
-export const STRUGGLING_DIFFICULTY_THRESHOLD = 8.0;
-export const STRUGGLING_LAPSES_THRESHOLD = 1;
 export const UNSTABLE_STABILITY_THRESHOLD = 7;
 export const UNSTABLE_DIFFICULTY_THRESHOLD = 7.5;
 

@@ -1,8 +1,6 @@
 import {
   DEFAULT_FSRS_DIFFICULTY,
   DEFAULT_SESSION_COOLDOWN_HOURS,
-  STRUGGLING_DIFFICULTY_THRESHOLD,
-  STRUGGLING_LAPSES_THRESHOLD,
   UNSTABLE_DIFFICULTY_THRESHOLD,
   UNSTABLE_STABILITY_THRESHOLD,
 } from '@/constants/fsrs';
@@ -10,28 +8,25 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 
 /**
- * Determines if a word needs attention (is struggling/hard) based on FSRS metrics
- * This logic is used consistently across the app for:
- * - VocabularyStatCards "Struggling" count
- * - useWordList "needsAttention" category
- * - Session options modal struggling words count
+ * Simple classification for "hard" words based on FSRS lapses.
+ * A word is considered hard if the user has forgotten it 2+ times.
+ *
+ * Used for:
+ * - Article recommendations (Strategy 2: difficult words)
+ * - Recommendation engine insights
+ */
+export function isHardWord(word: StudyWord): boolean {
+  return (word.fsrs_lapses ?? 0) >= 2;
+}
+
+/**
+ * @deprecated Use isHardWord for article recommendations.
+ * This complex version is kept for backwards compatibility with stat cards
+ * but will be removed in a future cleanup.
  */
 export function isStrugglingWord(word: StudyWord): boolean {
-  const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY; // Default to medium difficulty in 5-10 range
-  const lapses = word.fsrs_lapses ?? 0;
-  const stability = word.fsrs_stability ?? 0;
-  const state = word.fsrs_state;
-
-  const isHighDifficultyWithLapses =
-    difficulty >= STRUGGLING_DIFFICULTY_THRESHOLD && lapses >= STRUGGLING_LAPSES_THRESHOLD;
-  const isStrugglingInLearning =
-    (state === 1 || state === 2) && lapses > STRUGGLING_LAPSES_THRESHOLD;
-  const isUnstableAndDifficult =
-    stability < UNSTABLE_STABILITY_THRESHOLD &&
-    difficulty >= UNSTABLE_DIFFICULTY_THRESHOLD &&
-    lapses >= STRUGGLING_LAPSES_THRESHOLD;
-
-  return isHighDifficultyWithLapses || isStrugglingInLearning || isUnstableAndDifficult;
+  // Now delegates to the simplified isHardWord
+  return isHardWord(word);
 }
 
 /**

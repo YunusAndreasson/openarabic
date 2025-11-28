@@ -1,15 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef } from 'react';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
-import { fsrsQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
-import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
+import { useFSRSData } from '@/components/providers/FSRSDataProvider';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
+import type { RootId } from '@/types/branded.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { getBeginnerArticles } from '@/utils/articleUtils';
+import { isHardWord } from '@/utils/wordClassification';
 
 interface FeaturedArticleResult {
   article: Article | null;
@@ -82,21 +81,23 @@ export function useFeaturedArticleSelection(
 ): FeaturedArticleResult {
   const { user } = useAuth();
 
-  // Use the existing hooks for due and difficult words (they work globally)
+  // Use due words hook for Strategy 1
   const { hasEnoughArticles: hasDueWordArticles, dueWordRootIds } = useArticlesByDueWords(
     user?.id,
     10,
   );
 
-  const { hasEnoughArticles: hasDifficultWordArticles, difficultWordRootIds } =
-    useArticlesByDifficultWords(user?.id, 10);
+  // Use already-loaded FSRS data for difficult words (Strategy 2) - no separate API call needed
+  const { studyWords = [] } = useFSRSData();
 
-  const { data: allStudyWords = [] } = useQuery({
-    ...fsrsQueries.allWithCooldown(user?.id || '', DEFAULT_SESSION_COOLDOWN_HOURS),
-    enabled: !!user?.id,
-  });
+  // Compute hard word root IDs inline using simplified isHardWord logic
+  const difficultWordRootIds = useMemo(() => {
+    const hardWords = studyWords.filter(isHardWord);
+    return new Set(hardWords.map(w => w.root_id as RootId));
+  }, [studyWords]);
 
-  const hasAnyStudyWords = allStudyWords.length > 0;
+  const hasDifficultWordArticles = difficultWordRootIds.size >= 3;
+  const hasAnyStudyWords = studyWords.length > 0;
 
   // Cache the initial selection to prevent flashing
   const initialSelectionRef = useRef<CachedSelection | null>(null);

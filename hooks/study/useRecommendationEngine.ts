@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';
 import { calculateNextDueDate } from '@/utils/fsrsUtils';
+import { isHardWord } from '@/utils/wordClassification';
 
 export interface RecommendationData {
   message: string;
@@ -23,26 +24,15 @@ const HEAVY_LOAD_RATIO = 0.7;
 const MODERATE_LOAD_RATIO = 0.5;
 const SMALL_VOCABULARY_THRESHOLD = 50;
 const MANY_DUE_THRESHOLD = 5;
-const STRUGGLING_LAPSES_THRESHOLD = 3;
-const WEAK_STABILITY_THRESHOLD = 5;
 
 // Milestone targets
 const WORD_MILESTONES = [10, 25, 50, 100, 200, 300, 500];
 
 /**
- * Count words that are struggling (high lapses or weak stability)
+ * Count words that are hard (forgotten 2+ times) using shared isHardWord logic
  */
-function countStrugglingWords(studyWords: StudyWord[]): number {
-  return studyWords.filter(w => {
-    const lapses = w.fsrs_lapses ?? 0;
-    const state = w.fsrs_state ?? 0;
-    const stability = w.fsrs_stability ?? 0;
-    // Forgotten 3+ times OR in review/relearning with weak stability
-    return (
-      lapses >= STRUGGLING_LAPSES_THRESHOLD ||
-      ((state === 2 || state === 3) && stability < WEAK_STABILITY_THRESHOLD)
-    );
-  }).length;
+function countHardWords(studyWords: StudyWord[]): number {
+  return studyWords.filter(isHardWord).length;
 }
 
 /**
@@ -162,7 +152,7 @@ export function useRecommendationEngine({
     const hasManyDue = dueWordsCount >= MANY_DUE_THRESHOLD;
 
     // Smart insights calculations
-    const strugglingCount = countStrugglingWords(studyWords);
+    const hardWordsCount = countHardWords(studyWords);
     const tomorrowDue = countUpcomingDue(studyWords, 1);
     const milestone = getNextMilestone(masteredWords);
     const reviewedToday = hasReviewedToday(studyWords);
@@ -192,14 +182,14 @@ export function useRecommendationEngine({
       };
     }
 
-    // State 2: Due words + low memory strength - urgent with struggling words context
+    // State 2: Due words + low memory strength - urgent with hard words context
     if (dueWordsCount > 0 && isLowRetention) {
-      const strugglingContext =
-        strugglingCount >= 3
-          ? `, especially for ${strugglingCount} difficult words that will repeat until they stick`
+      const hardWordsContext =
+        hardWordsCount >= 3
+          ? `, especially for ${hardWordsCount} difficult words that will repeat until they stick`
           : '';
       return {
-        message: `Your Memory Strength is at ${memoryStrength}% — below 50% means words are at risk of being forgotten. Each review rebuilds the memory trace${strugglingContext}.`,
+        message: `Your Memory Strength is at ${memoryStrength}% — below 50% means words are at risk of being forgotten. Each review rebuilds the memory trace${hardWordsContext}.`,
         type: 'review',
       };
     }

@@ -39,6 +39,8 @@ export const ANALYTICS_EVENTS = {
   // Vocabulary/Study events
   WORD_ADDED_TO_STUDY: 'Word Added to Study',
   WORD_REMOVED_FROM_STUDY: 'Word Removed from Study',
+  COMMON_WORDS_ADDED: 'Common Words Added',
+  BEGINNER_ARTICLES_ADDED: 'Beginner Articles Added',
 
   // Navigation events
   SCREEN_VIEWED: 'Screen Viewed',

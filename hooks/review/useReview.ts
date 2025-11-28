@@ -411,7 +411,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
                 // Play English feedback audio
                 if (currentWord?.root?.audio_url_en) {
-                  const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
+                  const englishAudioUrl = generateStorageUrl(
+                    'audio',
+                    currentWord.root.audio_url_en,
+                  );
                   if (englishAudioUrl) {
                     playAudio(englishAudioUrl);
                   }

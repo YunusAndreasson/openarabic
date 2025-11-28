@@ -139,26 +139,18 @@ describe('FSRS Property-Based Tests', () => {
       );
     });
 
-    test('should maintain struggling word invariants', () => {
+    test('should maintain hard word invariants (lapses >= 2)', () => {
       fc.assert(
         propertyTestUtils.testInvariant(
           isStrugglingWord,
           studyWordArbitrary,
           (word, isStruggling) => {
             if (isStruggling) {
-              // If classified as struggling, should meet at least one criteria
-              const highDifficulty =
-                (word.fsrs_difficulty ?? 0) >= 8.0 && (word.fsrs_lapses ?? 0) >= 1;
-              const learningWithLapses =
-                (word.fsrs_state === 1 || word.fsrs_state === 2) && (word.fsrs_lapses ?? 0) > 1;
-              const lowStability =
-                (word.fsrs_stability ?? 0) < 10 &&
-                (word.fsrs_difficulty ?? 0) >= 7.5 &&
-                (word.fsrs_lapses ?? 0) >= 1;
-
-              return highDifficulty || learningWithLapses || lowStability;
+              // If classified as hard/struggling, should have 2+ lapses
+              return (word.fsrs_lapses ?? 0) >= 2;
             }
-            return true; // Non-struggling words don't need to meet criteria
+            // If not hard/struggling, should have < 2 lapses
+            return (word.fsrs_lapses ?? 0) < 2;
           },
         ),
       );
@@ -367,7 +359,7 @@ describe('FSRS Property-Based Tests', () => {
               fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
               fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
               fsrs_reps: fc.integer({ min: 0, max: 10 }),
-              fsrs_lapses: fc.integer({ min: 0, max: 2 }), // Low lapses
+              fsrs_lapses: fc.integer({ min: 0, max: 1 }), // Low lapses (< 2, not hard)
               fsrs_state: fc.integer({ min: 1, max: 3 }),
               fsrs_last_review: fc.option(
                 fc
