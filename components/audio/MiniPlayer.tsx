@@ -109,10 +109,12 @@ const MiniPlayerComponent = ({
       styles.card,
       {
         backgroundColor: colors.elevation2,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: withAlpha(colors.border, 0.5),
         ...LAYOUT.ELEVATION.MEDIUM,
       },
     ],
-    [colors.elevation2],
+    [colors.elevation2, colors.border],
   );
 
   // Memoize button colors - use subtle tinted background for visibility

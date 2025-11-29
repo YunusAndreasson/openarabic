@@ -95,9 +95,9 @@ describe('gradientUtils', () => {
 
       expect(result).toHaveLength(7);
       expect(result[0]).toBe('transparent');
-      // Uses sage-tinted black (#0A0F0B = rgba(10,15,11)) from OKLCH color system
-      expect(result[1]).toBe('rgba(10,15,11,0.1)');
-      expect(result[6]).toBe('rgba(10,15,11,0.95)');
+      // Uses sage-tinted black from OKLCH color system (updated for 2025 vibrant tint)
+      expect(result[1]).toBe('rgba(2,4,2,0.1)');
+      expect(result[6]).toBe('rgba(2,4,2,0.95)');
     });
   });
 

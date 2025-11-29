@@ -1,42 +1,34 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { SectionLabel } from '@/components/common';
 import { ArticleList } from '@/components/library';
 import { BrandFooter } from '@/components/library';
 import { FilterSection } from '@/components/library';
 import { IntelligentArticleSection } from '@/components/library';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
-import { getAuthorFilterRoute, getCategoryFilterRoute } from '@/constants/routes';
+import {
+  getAuthorFilterRoute,
+  getCategoryFilterRoute,
+  getDifficultyFilterRoute,
+} from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useToast } from '@/components/providers/ToastProvider';
 import type { AuthorId, CategoryId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
-  headerContainer: {
-    // No gap - using manual spacing between sections for better visual hierarchy
-  },
-  sectionSeparator: {
-    marginTop: LAYOUT.SPACING.LARGE, // 16px - more breathing room above sections
-  },
-  sectionHeader: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginLeft: LAYOUT.SPACING.MEDIUM, // Align with card text padding
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    opacity: 0.6, // More subtle
-  },
   listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
 });
 
@@ -58,22 +50,32 @@ export default function ReadScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const { showToast } = useToast();
+  const { from } = useLocalSearchParams<{ from?: string }>();
+
+  // Show welcome toast when navigating from empty states
+  const hasShownWelcomeRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (from && from !== hasShownWelcomeRef.current) {
+      hasShownWelcomeRef.current = from;
+      if (from === 'playlist') {
+        showToast(STRINGS.EXPLORE_WELCOME_FROM_PLAYLIST, 4000);
+      } else if (from === 'practice') {
+        showToast(STRINGS.EXPLORE_WELCOME_FROM_PRACTICE, 4000);
+      }
+    }
+  }, [from, showToast]);
 
   // Scroll position preservation refs
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollPositionRef = useRef<number>(0);
   const isRestoringScrollRef = useRef<boolean>(false);
 
-  const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery(
-    articleQueries.categories(),
-  );
+  const { data: categoriesData = [] } = useQuery(articleQueries.categories());
 
-  const { data: authorsData = [], isLoading: isAuthorsLoading } = useQuery(
-    articleQueries.authors(),
-  );
+  const { data: authorsData = [] } = useQuery(articleQueries.authors());
 
-  // Get articles for display and filtering
-  const { data: articlesData = [], isLoading: isArticlesLoading } = useQuery({
+  const { data: articlesData = [] } = useQuery({
     ...articleQueries.all(),
     refetchOnMount: false, // Don't refetch on mount if we have data
   });
@@ -109,36 +111,52 @@ export default function ReadScreen(): JSX.Element {
 
   // Note: Categories are prioritized over authors since IDs overlap and categories are primary navigation
 
-  // OPTIMIZED: Single-pass count calculation for both categories and authors (O(n) instead of O(2n))
-  const { categoryCounts, authorCounts } = useMemo(() => {
+  // OPTIMIZED: Single-pass count calculation for categories, authors, and difficulty
+  const { categoryCounts, authorCounts, difficultyCounts } = useMemo(() => {
     return articlesData.reduce<{
       categoryCounts: Record<number, number>;
       authorCounts: Record<number, number>;
+      difficultyCounts: Record<number, number>;
     }>(
       (acc, article) => {
         // Every article has a category and author (guaranteed)
         acc.categoryCounts[article.category.id] =
           (acc.categoryCounts[article.category.id] || 0) + 1;
         acc.authorCounts[article.author.id] = (acc.authorCounts[article.author.id] || 0) + 1;
+
+        // Difficulty counts (map 1-5 to 3 buckets)
+        const diffLevel = article.difficulty_level ?? 3;
+        const diffBucket = diffLevel <= 2 ? 1 : diffLevel <= 4 ? 2 : 3;
+        acc.difficultyCounts[diffBucket] = (acc.difficultyCounts[diffBucket] || 0) + 1;
+
         return acc;
       },
-      { categoryCounts: {}, authorCounts: {} },
+      { categoryCounts: {}, authorCounts: {}, difficultyCounts: {} },
     );
   }, [articlesData]);
 
-  // Build categories list with counts
+  // Build categories list with counts (only show categories with articles)
   const categoriesWithArticles = useMemo(
-    () => buildEntitiesWithCounts(categoriesData, categoryCounts),
+    () => buildEntitiesWithCounts(categoriesData, categoryCounts).filter(c => c.count > 0),
     [categoriesData, categoryCounts],
   );
 
-  // Build authors list with counts
+  // Build authors list with counts (only show authors with articles)
   const authorsWithArticles = useMemo(
-    () => buildEntitiesWithCounts(authorsData, authorCounts),
+    () => buildEntitiesWithCounts(authorsData, authorCounts).filter(a => a.count > 0),
     [authorsData, authorCounts],
   );
 
-  // Note: We're now rendering regular categories and Continue Reading category separately
+  // Build difficulty items with counts (only show items with articles)
+  const difficultyItems = useMemo(
+    () =>
+      [
+        { id: 1, name: STRINGS.DIFFICULTY_BEGINNER, count: difficultyCounts[1] || 0 },
+        { id: 2, name: STRINGS.DIFFICULTY_INTERMEDIATE, count: difficultyCounts[2] || 0 },
+        { id: 3, name: STRINGS.DIFFICULTY_ADVANCED, count: difficultyCounts[3] || 0 },
+      ].filter(item => item.count > 0),
+    [difficultyCounts],
+  );
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
@@ -167,10 +185,8 @@ export default function ReadScreen(): JSX.Element {
     }
   }, [isRefreshing, queryClient, user?.id]);
 
-  // Note: Article navigation is now handled by Link components in ArticleCard
-
   const handleSelectFilter = useCallback(
-    (id: number, _name?: string, filterType?: string) => {
+    (id: number, name?: string, filterType?: string) => {
       if (filterType === 'category') {
         const category = categoriesData.find(c => c.id === id);
         if (category) {
@@ -181,6 +197,8 @@ export default function ReadScreen(): JSX.Element {
         if (author) {
           router.push(getAuthorFilterRoute(id as AuthorId, author.name));
         }
+      } else if (filterType === 'difficulty') {
+        router.push(getDifficultyFilterRoute(id, name));
       }
     },
     [categoriesData, authorsData],
@@ -200,10 +218,8 @@ export default function ReadScreen(): JSX.Element {
     );
 
     sections.push(
-      <View key="categories-wrapper" style={styles.sectionSeparator}>
-        <ThemedText type="caption" variant="secondary" style={styles.sectionHeader}>
-          {STRINGS.SECTION_CATEGORIES}
-        </ThemedText>
+      <View key="categories-wrapper">
+        <SectionLabel title={STRINGS.SECTION_CATEGORIES} />
         <FilterSection
           items={categoriesWithArticles}
           onSelect={handleSelectFilter}
@@ -213,10 +229,8 @@ export default function ReadScreen(): JSX.Element {
     );
 
     sections.push(
-      <View key="authors-wrapper" style={styles.sectionSeparator}>
-        <ThemedText type="caption" variant="secondary" style={styles.sectionHeader}>
-          {STRINGS.SECTION_AUTHORS}
-        </ThemedText>
+      <View key="authors-wrapper">
+        <SectionLabel title={STRINGS.SECTION_AUTHORS} />
         <FilterSection
           items={authorsWithArticles}
           onSelect={handleSelectFilter}
@@ -225,13 +239,28 @@ export default function ReadScreen(): JSX.Element {
       </View>,
     );
 
-    return sections;
-  }, [articlesData, refreshKey, categoriesWithArticles, authorsWithArticles, handleSelectFilter]);
+    sections.push(
+      <View key="difficulty-wrapper">
+        <SectionLabel title={STRINGS.SECTION_DIFFICULTY} />
+        <FilterSection
+          items={difficultyItems}
+          onSelect={handleSelectFilter}
+          filterType="difficulty"
+        />
+      </View>,
+    );
 
-  const ListHeaderComponent = useMemo(
-    () => <View style={styles.headerContainer}>{headerSections}</View>,
-    [headerSections],
-  );
+    return sections;
+  }, [
+    articlesData,
+    refreshKey,
+    categoriesWithArticles,
+    authorsWithArticles,
+    difficultyItems,
+    handleSelectFilter,
+  ]);
+
+  const ListHeaderComponent = useMemo(() => <>{headerSections}</>, [headerSections]);
 
   const ListFooterComponent = useMemo(() => <BrandFooter />, []);
 
@@ -243,12 +272,6 @@ export default function ReadScreen(): JSX.Element {
     }),
     [insets.bottom],
   );
-
-  const isLoading = isArticlesLoading || isCategoriesLoading || isAuthorsLoading;
-
-  if (isLoading && !articlesData.length && !categoriesData.length && !authorsData.length) {
-    // Show loading state - handled by ArticleList
-  }
 
   return (
     <ThemedView

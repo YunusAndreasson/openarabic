@@ -1,4 +1,4 @@
-import { ListSeparator } from '@/components/common';
+import { ListSeparator, SectionLabel } from '@/components/common';
 import { FlashList } from '@shopify/flash-list';
 import React, { type FC, useDeferredValue, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -6,7 +6,6 @@ import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/bookmarks';
 import { PulsatingLoader } from '@/components/ui';
@@ -26,7 +25,6 @@ import {
   capitalizeFirstLetter,
   getArticleMetadata,
 } from '@/utils/stringUtils';
-// v2 handles layout automatically - no overrideFixedHeight needed
 
 // Completion threshold matches articleUtils.ts
 const COMPLETION_THRESHOLD = 95;
@@ -68,24 +66,9 @@ const STATIC_STYLES = StyleSheet.create({
   footerSpacer: {
     height: LAYOUT.SPACING.LARGE,
   },
-  sectionHeader: {
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-  },
 });
 
-// Static footer component
 const FooterComponent = () => <View style={STATIC_STYLES.footerSpacer} />;
-
-// Section header component
-const SectionHeader = ({ title }: { title: string }) => (
-  <View style={STATIC_STYLES.sectionHeader}>
-    <ThemedText type="heading3" weight="bold">
-      {title}
-    </ThemedText>
-  </View>
-);
 
 /**
  * Groups articles by progress state and flattens them with section headers
@@ -265,9 +248,8 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   ): React.JSX.Element => {
     const { item } = params;
 
-    // Render section header
     if (item.type === 'header') {
-      return <SectionHeader title={item.title} />;
+      return <SectionLabel title={item.title} />;
     }
 
     // Render article item
@@ -308,8 +290,6 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
 
   const keyExtractor = (item: ListItem) => item.id;
 
-  // v2 handles layout automatically - no overrideItemLayout needed
-
   // ThemedView props
   const themedViewProps = {
     includeBottomInset: false,
@@ -322,8 +302,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   // 2. Loading progress data on first render (prevents showing items without indicators)
   const isInitialProgressLoad =
     isProgressLoading && visibleArticles.length > 0 && progressMap.size === 0;
-  const shouldShowLoading =
-    (loading && visibleArticles.length === 0) || isInitialProgressLoad;
+  const shouldShowLoading = (loading && visibleArticles.length === 0) || isInitialProgressLoad;
 
   if (shouldShowLoading) {
     return (

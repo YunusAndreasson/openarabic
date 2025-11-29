@@ -197,9 +197,9 @@ export const LAYOUT = {
     NONE: 0, // No border radius
     TINY: 3, // Perfect circles for 6px elements (STATUS_INDICATOR dots)
     SMALL_CIRCLE: 6, // Small rounded elements
-    SMALL: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
-    MEDIUM: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
-    LARGE: SPACING_SCALE.LARGE, // 16 - for larger cards/containers
+    SMALL: BASE_UNIT * 2.5, // 10 - softer corners (2025 trend)
+    MEDIUM: SPACING_SCALE.LARGE, // 16 - softer corners (2025 trend)
+    LARGE: BASE_UNIT * 5, // 20 - for larger cards/containers (2025 trend)
     PILL: 9999, // Keep as is for perfect circles
   },
 
@@ -249,12 +249,12 @@ export const LAYOUT = {
       SMALL: BASE_UNIT * 3.25, // 13 - responsive to base unit
       MEDIUM: BASE_UNIT * 4, // 16 - Material Design minimum (improved from 15px)
       LARGE: BASE_UNIT * 4.25, // 17 - Apple HIG minimum for body text
-      XLARGE: BASE_UNIT * 5, // 20 - responsive to base unit (fixed inconsistency)
-      XXLARGE: BASE_UNIT * 5.5, // 22 - responsive to base unit
-      DEFAULT_ARABIC: BASE_UNIT * 7, // 28 - default Arabic font size (average of 13-40px range)
-      HUGE: BASE_UNIT * 7, // 28 - responsive to base unit
-      XXHUGE: BASE_UNIT * 8.5, // 34 - responsive to base unit
-      MASSIVE: BASE_UNIT * 10, // 40 - responsive to base unit
+      XLARGE: BASE_UNIT * 5.5, // 22 - bolder heading (2025 trend)
+      XXLARGE: BASE_UNIT * 6, // 24 - bolder heading (2025 trend)
+      DEFAULT_ARABIC: BASE_UNIT * 8, // 32 - larger Arabic font (2025 trend)
+      HUGE: BASE_UNIT * 8, // 32 - bolder heading (2025 trend)
+      XXHUGE: BASE_UNIT * 9.5, // 38 - bolder heading (2025 trend)
+      MASSIVE: BASE_UNIT * 11, // 44 - bolder heading (2025 trend)
     },
     LINE_HEIGHT: TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS,
   },
@@ -316,8 +316,8 @@ export const LAYOUT = {
     },
     STYLES: {
       bottomSheet: {
-        borderTopLeftRadius: SPACING_SCALE.MEDIUM, // 12 - consistent border radius
-        borderTopRightRadius: SPACING_SCALE.MEDIUM, // 12 - consistent border radius
+        borderTopLeftRadius: BASE_UNIT * 5, // 20 - softer corners (2025 trend)
+        borderTopRightRadius: BASE_UNIT * 5, // 20 - softer corners (2025 trend)
       },
       indicator: {
         width: BASE_UNIT * 9, // 36 - consistent indicator width

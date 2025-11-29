@@ -33,14 +33,15 @@ const forestOKLCH = {
 
 /**
  * Sage Backgrounds - Neutral green-tinted surfaces
- * Dark mode: Perceptually uniform ~4.5% lightness steps for smoother elevation
+ * Dark mode: Premium 2025 - deeper backgrounds with ~4% lightness steps
+ * Higher chroma (0.020-0.026) for visible sage tint on dark backgrounds
  * Hue range: 151-167° (subtle green tint)
  */
 const sageOKLCH = {
-  darkest: { l: 0.19, c: 0.012, h: 160.0 }, // Polished: even elevation base
-  dark: { l: 0.235, c: 0.014, h: 158.0 }, // Polished: +4.5% L step
-  mediumDark: { l: 0.28, c: 0.016, h: 156.0 }, // Polished: +4.5% L step
-  medium: { l: 0.325, c: 0.018, h: 155.0 }, // Polished: +4.5% L step
+  darkest: { l: 0.145, c: 0.020, h: 160.0 }, // Premium 2025: deeper + more chroma for visible tint
+  dark: { l: 0.185, c: 0.022, h: 158.0 }, // Premium 2025: +4% L step
+  mediumDark: { l: 0.225, c: 0.024, h: 156.0 }, // Premium 2025: +4% L step
+  medium: { l: 0.265, c: 0.026, h: 155.0 }, // Premium 2025: +4% L step
   light: { l: 0.95, c: 0.0116, h: 162.0 }, // #E8F1EC (unchanged)
   lighter: { l: 0.9715, c: 0.0066, h: 160.1 }, // #F2F7F4 (unchanged)
   lightest: { l: 0.9833, c: 0.0025, h: 165.1 }, // #F8FAF9 (unchanged)
@@ -49,10 +50,11 @@ const sageOKLCH = {
 /**
  * Tint Colors - Primary interactive sage
  * Hue range: 151-156° (sage green)
+ * Chroma increased ~15% for more vibrant 2025 aesthetic
  */
 const tintOKLCH = {
-  primary: { l: 0.5624, c: 0.0541, h: 156.2 }, // #5B7F68
-  primaryDark: { l: 0.7323, c: 0.056, h: 151.5 }, // #8FB397
+  primary: { l: 0.5624, c: 0.0622, h: 156.2 }, // More vibrant sage (2025 trend)
+  primaryDark: { l: 0.7323, c: 0.0644, h: 151.5 }, // More vibrant sage (2025 trend)
 } as const;
 
 /**
@@ -125,7 +127,7 @@ const coralOKLCH = {
  */
 const pureOKLCH = {
   white: { l: 0.9965, c: 0.004, h: 157.0 }, // Sage-green brand tint
-  black: { l: 0.1613, c: 0.0115, h: 150.9 }, // #0A0F0B
+  black: { l: 0.10, c: 0.012, h: 150.9 }, // Premium 2025: darker for proper shadows on deep backgrounds
 } as const;
 
 /**
@@ -266,10 +268,10 @@ const textHierarchyOKLCH = {
     caption: { l: 0.5326, c: 0.0284, h: 163.7 }, // #5E7268 (unchanged)
   },
   dark: {
-    subtitle: { l: 0.93, c: 0.012, h: 157.0 }, // Polished: brightest, uniform chroma
-    metadata: { l: 0.87, c: 0.012, h: 157.0 }, // Polished: -6% L step
-    caption: { l: 0.81, c: 0.012, h: 157.0 }, // Polished: -6% L step
-    secondaryMetadata: { l: 0.75, c: 0.012, h: 157.0 }, // Polished: -6% L step, most subtle
+    subtitle: { l: 0.93, c: 0.014, h: 157.0 }, // Premium 2025: slightly more chroma for tint
+    metadata: { l: 0.87, c: 0.014, h: 157.0 }, // Premium 2025: -6% L step
+    caption: { l: 0.81, c: 0.014, h: 157.0 }, // Premium 2025: -6% L step
+    secondaryMetadata: { l: 0.75, c: 0.014, h: 157.0 }, // Premium 2025: -6% L step, most subtle
   },
   sepia: {
     subtitle: { l: 0.3337, c: 0.0476, h: 51.1 }, // #4A2F1F
@@ -968,7 +970,7 @@ const darkColors: ThemeColors = {
   // Reading experience
   wordTooltipBg: basePalette.sage.medium,
   wordTooltipText: basePalette.pure.white,
-  wordTooltipBorder: elevation.dark.level3,
+  wordTooltipBorder: basePalette.forest.light, // Premium 2025: subtle brighter border (L: 0.576 vs bg L: 0.265)
   wordTooltipShadow: withAlpha(basePalette.pure.black, opacity.active),
 
   // Navigation

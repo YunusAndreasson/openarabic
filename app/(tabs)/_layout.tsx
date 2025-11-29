@@ -75,39 +75,37 @@ export default function TabLayout(): JSX.Element {
   }
 
   return (
-    <>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: colors.tint,
-          tabBarInactiveTintColor: colors.tabIconDefault,
-          tabBarShowLabel: true,
-          tabBarStyle: tabBarStyle,
-        }}
-        screenListeners={{
-          state: handleTabStateChange,
-        }}
-      >
-        {TAB_SCREENS.map(screen => (
-          <Tabs.Screen
-            key={screen.name}
-            name={screen.name}
-            options={{
-              title: screen.title,
-              tabBarBadge: screen.name === 'study' && dueWordsCount > 0 ? dueWordsCount : undefined,
-              tabBarBadgeStyle:
-                screen.name === 'study' && dueWordsCount > 0 ? badgeStyle : undefined,
-              tabBarIcon: ({ color, focused }) => (
-                <Ionicons
-                  name={focused ? screen.icon.filled : screen.icon.outline}
-                  size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
-                  color={color}
-                />
-              ),
-            }}
-          />
-        ))}
-      </Tabs>
-    </>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.tabIconDefault,
+        tabBarShowLabel: true,
+        tabBarStyle: tabBarStyle,
+      }}
+      screenListeners={{
+        state: handleTabStateChange,
+      }}
+    >
+      {TAB_SCREENS.map(screen => (
+        <Tabs.Screen
+          key={screen.name}
+          name={screen.name}
+          options={{
+            title: screen.title,
+            tabBarBadge: screen.name === 'study' && dueWordsCount > 0 ? dueWordsCount : undefined,
+            tabBarBadgeStyle:
+              screen.name === 'study' && dueWordsCount > 0 ? badgeStyle : undefined,
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons
+                name={focused ? screen.icon.filled : screen.icon.outline}
+                size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
+                color={color}
+              />
+            ),
+          }}
+        />
+      ))}
+    </Tabs>
   );
 }

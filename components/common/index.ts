@@ -6,4 +6,5 @@ export { ErrorState } from './ErrorState';
 export { GenericBottomSheet } from './GenericBottomSheet';
 export { ListSeparator } from './ListSeparator';
 export { ProgressBar } from './ProgressBar';
+export { SectionLabel } from './SectionLabel';
 export { SectionTitle } from './SectionTitle';
