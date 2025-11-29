@@ -8,7 +8,6 @@ export { PracticeEmptyState, type EmptyStateButtonProps } from './PracticeEmptyS
 export { RecommendationCard } from './RecommendationCard';
 export { StudyStreakBottomSheet } from './StudyStreakBottomSheet';
 export { VocabularyStatCards } from './VocabularyStatCards';
-export { WordPreviewCard } from './WordPreviewCard';
 export { WordsMasteredBottomSheet } from './WordsMasteredBottomSheet';
 
 // Chart exports

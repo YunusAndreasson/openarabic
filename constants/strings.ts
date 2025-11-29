@@ -117,18 +117,14 @@ export const STRINGS = {
   // Empty states & hints - more actionable
   TRY_ADJUSTING_FILTERS: 'Try different filters',
   NO_ARTICLES_FOUND: 'No articles match your filters',
-  // Playlist tab empty state - one-tap start with beginner articles
-  BOOKMARKS_EMPTY_TITLE: 'Quick start: Beginner articles',
-  BOOKMARKS_EMPTY_DESCRIPTION:
-    'Handpicked short articles with bilingual audio—perfect for trying the app.',
-  BOOKMARKS_EMPTY_CTA: 'Add to Playlist',
-  BOOKMARKS_EMPTY_HINT: 'Tap the headset icon on any article to add your own',
-  // Practice tab empty state - one-tap start with common words
-  STUDY_LIST_EMPTY_TITLE: 'Quick start: Essential words',
-  STUDY_LIST_EMPTY_DESCRIPTION:
-    'Handpicked common words to try spaced repetition—add more as you read.',
-  STUDY_LIST_EMPTY_CTA: 'Add to Practice',
-  STUDY_LIST_EMPTY_HINT: 'Tap any word while reading to add your own',
+  // Playlist tab empty state - minimal one-tap start
+  BOOKMARKS_EMPTY_TITLE: 'Your playlist is empty',
+  BOOKMARKS_EMPTY_CTA: 'Add 10 beginner texts',
+  BOOKMARKS_EMPTY_HINT: 'Tip: Tap the headset icon in top right corner of any text to add it',
+  // Practice tab empty state - minimal one-tap start
+  STUDY_LIST_EMPTY_TITLE: 'No words to practice',
+  STUDY_LIST_EMPTY_CTA: 'Add 10 essential words',
+  STUDY_LIST_EMPTY_HINT: 'Tip: Tap any word while reading, then add to practice',
   STUDY_LIST_WORDS_ADDED: 'words added to practice',
   // Success toasts for empty state actions
   WORDS_ADDED_SUCCESS: 'Ready to try your first review session',

@@ -1,16 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { WordPreviewCard } from '@/components/study/WordPreviewCard';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAddCommonWords } from '@/hooks/study/useAddCommonWords';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import { selectionFeedback } from '@/utils/haptics';
-
-const PREVIEW_WORDS_COUNT = 9;
+import { useColors } from '@/hooks/theme/useColors';
 
 export interface EmptyStateButtonProps {
   label: string;
@@ -24,91 +20,38 @@ interface PracticeEmptyStateProps {
 }
 
 /**
- * Empty state for the Practice screen.
- * Allows users to select and add common Arabic words to start practicing.
+ * Simplified empty state for the Practice screen.
+ * One-tap to add 10 essential words.
  */
 export function PracticeEmptyState({ onButtonPropsChange }: PracticeEmptyStateProps) {
   const { addWords, isLoading } = useAddCommonWords();
+  const colors = useColors();
 
-  // Fetch common words for preview
-  const { data: previewWords = [] } = useQuery({
-    queryKey: ['commonWordsPreview'],
-    queryFn: () => studyWordsFSRSService.getCommonRoots(PREVIEW_WORDS_COUNT),
-    staleTime: Infinity,
-  });
+  // Use ref to avoid recreating the handler and causing infinite loops
+  const addWordsRef = useRef(addWords);
+  addWordsRef.current = addWords;
 
-  // Selection state - start with all selected
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(
-    () => new Set(previewWords.map(w => w.id)),
-  );
-
-  // Update selection when words load
-  useEffect(() => {
-    if (previewWords.length > 0 && selectedIds.size === 0) {
-      setSelectedIds(new Set(previewWords.map(w => w.id)));
-    }
-  }, [previewWords, selectedIds.size]);
-
-  const toggleSelection = useCallback((id: number) => {
-    selectionFeedback();
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
-
-  const handleAdd = useCallback(() => {
-    addWords(Array.from(selectedIds));
-  }, [addWords, selectedIds]);
-
-  const selectionCount = selectedIds.size;
-  const buttonText =
-    selectionCount === 0
-      ? STRINGS.STUDY_LIST_EMPTY_CTA
-      : `${STRINGS.STUDY_LIST_EMPTY_CTA} (${selectionCount})`;
-
-  // Notify parent of button props changes
+  // Notify parent of button props - only depends on isLoading
   useEffect(() => {
     onButtonPropsChange?.({
-      label: buttonText,
-      onPress: handleAdd,
+      label: STRINGS.STUDY_LIST_EMPTY_CTA,
+      onPress: () => addWordsRef.current(),
       loading: isLoading,
-      disabled: selectionCount === 0,
+      disabled: false,
     });
-  }, [buttonText, handleAdd, isLoading, selectionCount, onButtonPropsChange]);
+  }, [isLoading, onButtonPropsChange]);
 
   return (
     <View style={styles.container}>
-      {/* Title */}
-      <ThemedText type="heading3">{STRINGS.STUDY_LIST_EMPTY_TITLE}</ThemedText>
+      {/* Empty state icon */}
+      <Ionicons name="albums-outline" size={80} color={colors.textTertiary} />
 
-      {/* Description */}
-      <ThemedText style={styles.description} type="body" variant="secondary">
-        {STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
+      {/* Title */}
+      <ThemedText type="heading3" style={styles.title}>
+        {STRINGS.STUDY_LIST_EMPTY_TITLE}
       </ThemedText>
 
-      {/* Word Preview Cards - 3×3 Grid */}
-      {previewWords.length > 0 && (
-        <View style={styles.grid}>
-          {previewWords.map(word => (
-            <WordPreviewCard
-              key={word.id}
-              arabic={word.letters}
-              english={word.meaning}
-              selected={selectedIds.has(word.id)}
-              onPress={() => toggleSelection(word.id)}
-              style={styles.gridItem}
-            />
-          ))}
-        </View>
-      )}
-
-      {/* Hint about adding words from articles */}
+      {/* Hint */}
       <ThemedText style={styles.hint} type="caption" variant="secondary">
         {STRINGS.STUDY_LIST_EMPTY_HINT}
       </ThemedText>
@@ -116,29 +59,19 @@ export function PracticeEmptyState({ onButtonPropsChange }: PracticeEmptyStatePr
   );
 }
 
-// Calculate card width: (100% - 2 gaps) / 3 columns
-// Using 31% leaves room for MEDIUM (12px) gaps between cards
-const GRID_ITEM_WIDTH = '31%' as const;
-
 const styles = StyleSheet.create({
   container: {
+    alignItems: 'center',
     flex: 1,
-    paddingTop: LAYOUT.SPACING.LARGE,
-  },
-  description: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.XXLARGE,
-    width: '100%',
-  },
-  gridItem: {
-    width: GRID_ITEM_WIDTH,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.XLARGE,
   },
   hint: {
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    textAlign: 'center',
+  },
+  title: {
+    marginTop: LAYOUT.SPACING.LARGE,
+    textAlign: 'center',
   },
 });

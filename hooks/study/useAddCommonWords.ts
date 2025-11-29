@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
@@ -12,37 +13,50 @@ import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 
+/** Number of common words to add */
+const COMMON_WORDS_COUNT = 10;
+
 interface UseAddCommonWordsOptions {
   onSuccess?: () => void;
 }
 
 interface UseAddCommonWordsResult {
-  addWords: (rootIds: number[]) => void;
+  addWords: () => void;
   isLoading: boolean;
   isSuccess: boolean;
   isError: boolean;
 }
 
 /**
- * Hook to add selected words to the user's practice list.
- * Used in the empty state to help users start practicing immediately.
+ * Hook to add common words to the user's practice list.
+ * Automatically fetches and adds 10 essential Arabic words.
  */
 export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCommonWordsResult {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
+  // Fetch common words
+  const { data: commonWords = [] } = useQuery({
+    queryKey: ['commonWordsForAdd'],
+    queryFn: () => studyWordsFSRSService.getCommonRoots(COMMON_WORDS_COUNT),
+    staleTime: Infinity,
+  });
+
+  // Get root IDs
+  const rootIds = useMemo(() => commonWords.map(w => w.id), [commonWords]);
+
   const mutation = useMutation({
-    mutationFn: async (rootIds: number[]) => {
+    mutationFn: async () => {
       if (!user?.id) {
         throw new Error('User not authenticated');
       }
 
       if (rootIds.length === 0) {
-        throw new Error('No words selected');
+        throw new Error('No common words available');
       }
 
-      // Add selected roots to study list
+      // Add common roots to study list
       const addedCount = await studyWordsFSRSService.addMultipleRoots(user.id, rootIds);
 
       return { addedCount };
@@ -72,7 +86,7 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
   });
 
   return {
-    addWords: mutation.mutate,
+    addWords: () => mutation.mutate(),
     isLoading: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,

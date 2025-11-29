@@ -1,8 +1,9 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { audioQueries } from '@/constants/queries';
+import { articleQueries, audioQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
@@ -11,23 +12,27 @@ import { useAppDispatch } from '@/store/hooks';
 import { resetEditMode } from '@/store/editModeSlice';
 import type { ArticleId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
+import { getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
+
+/** Number of beginner articles to add */
+const BEGINNER_ARTICLE_COUNT = 10;
 
 interface UseAddBeginnerArticlesOptions {
   onSuccess?: () => void;
 }
 
 interface UseAddBeginnerArticlesResult {
-  addArticles: (articleIds: number[]) => void;
+  addArticles: () => void;
   isLoading: boolean;
   isSuccess: boolean;
   isError: boolean;
 }
 
 /**
- * Hook to add selected articles to the user's reading list.
- * Used in the empty state to help users start listening immediately.
+ * Hook to add beginner articles to the user's reading list.
+ * Automatically fetches and adds 10 beginner-friendly articles.
  */
 export function useAddBeginnerArticles(
   options?: UseAddBeginnerArticlesOptions,
@@ -37,22 +42,31 @@ export function useAddBeginnerArticles(
   const { showToast } = useToast();
   const dispatch = useAppDispatch();
 
+  // Fetch all articles to get beginner articles
+  const { data: allArticles = [] } = useQuery(articleQueries.all());
+
+  // Get 10 beginner articles
+  const beginnerArticleIds = useMemo(
+    () => getBeginnerArticles(allArticles, BEGINNER_ARTICLE_COUNT).map(a => a.id),
+    [allArticles],
+  );
+
   const mutation = useMutation({
-    mutationFn: async (articleIds: number[]) => {
+    mutationFn: async () => {
       if (!user?.id) {
         throw new Error('User not authenticated');
       }
 
-      if (articleIds.length === 0) {
-        throw new Error('No articles selected');
+      if (beginnerArticleIds.length === 0) {
+        throw new Error('No beginner articles available');
       }
 
-      // Add selected articles to reading list
+      // Add beginner articles to reading list
       await Promise.all(
-        articleIds.map(id => bookmarkService.addToReadingList(user.id, id as ArticleId)),
+        beginnerArticleIds.map(id => bookmarkService.addToReadingList(user.id, id as ArticleId)),
       );
 
-      return { addedCount: articleIds.length };
+      return { addedCount: beginnerArticleIds.length };
     },
     onSuccess: async ({ addedCount }) => {
       if (!user?.id) return;
@@ -85,7 +99,7 @@ export function useAddBeginnerArticles(
   });
 
   return {
-    addArticles: mutation.mutate,
+    addArticles: () => mutation.mutate(),
     isLoading: mutation.isPending,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,
