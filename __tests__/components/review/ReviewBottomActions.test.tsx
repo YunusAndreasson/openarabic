@@ -111,7 +111,10 @@ describe('ReviewBottomActions', () => {
   describe('Center Button (Hint)', () => {
     test('calls onShowContextualHelp when pressed if available', () => {
       const { getByText } = render(
-        <ReviewBottomActions onVague={mockOnVague} onShowContextualHelp={mockOnShowContextualHelp} />,
+        <ReviewBottomActions
+          onVague={mockOnVague}
+          onShowContextualHelp={mockOnShowContextualHelp}
+        />,
       );
 
       fireEvent.press(getByText('Hint'));

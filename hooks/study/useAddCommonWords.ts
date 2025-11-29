@@ -61,20 +61,20 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
 
       return { addedCount };
     },
-    onSuccess: async ({ addedCount }) => {
+    onSuccess: ({ addedCount }) => {
       if (!user?.id) return;
+
+      // Show toast with haptic immediately (don't wait for cache invalidation)
+      successFeedback();
+      showToast(STRINGS.WORDS_ADDED_SUCCESS, undefined, ToastType.SUCCESS);
 
       // Track analytics
       analytics.track(ANALYTICS_EVENTS.COMMON_WORDS_ADDED, {
         count: addedCount,
       });
 
-      // Invalidate FSRS queries to refresh the practice list
-      await fsrsQueries.invalidateCommon(queryClient, user.id, DEFAULT_SESSION_COOLDOWN_HOURS);
-
-      // Show encouraging toast with haptic
-      successFeedback();
-      showToast(STRINGS.WORDS_ADDED_SUCCESS, undefined, ToastType.SUCCESS);
+      // Invalidate queries in background (UI updates when ready)
+      fsrsQueries.invalidateCommon(queryClient, user.id, DEFAULT_SESSION_COOLDOWN_HOURS);
 
       // Call onSuccess callback
       options?.onSuccess?.();

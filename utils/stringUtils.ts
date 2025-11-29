@@ -146,3 +146,20 @@ export const getFirstNameFromEmail = (email: string): string => {
 
   return cleanName.split(' ')[0] || 'User';
 };
+
+/**
+ * Removes punctuation characters from word text for clean display
+ * Strips: , . : ; ! ? ( ) [ ] { } " ' ` - — – / \ and Arabic punctuation
+ * @param text - The word text to clean
+ * @returns Clean text without punctuation
+ * @example
+ * cleanWordText('hello,') // 'hello'
+ * cleanWordText('(world)') // 'world'
+ * cleanWordText('مَرْحَبًا،') // 'مَرْحَبًا'
+ */
+export function cleanWordText(text: string): string {
+  if (!text) return '';
+  // Remove common punctuation (ASCII and Arabic)
+  // Preserves Arabic diacritics (tashkeel) which are in Unicode range 0x064B-0x0652
+  return text.replace(/[,.:;!?()[\]{}"'`\-—–/\\،؛؟«»]/g, '').trim();
+}

@@ -51,7 +51,10 @@ export function Auth(): JSX.Element {
 
       {/* Content Container */}
       <View style={styles.contentContainer}>
-        {/* Email Options Toggle Button */}
+        {/* Social Authentication Buttons - Primary action, top for visibility */}
+        <SocialAuthButtons />
+
+        {/* Email Options Toggle Button - Secondary option */}
         <ThemedButton
           variant="outlined"
           title={showEmailOptions ? STRINGS.HIDE_EMAIL_OPTIONS : STRINGS.CONTINUE_WITH_EMAIL_OPTION}
@@ -72,9 +75,6 @@ export function Auth(): JSX.Element {
             <EmailAuthOptions />
           </View>
         ) : null}
-
-        {/* Social Authentication Buttons - Bottom for easy thumb access */}
-        <SocialAuthButtons />
       </View>
 
       {/* Legal Links */}
@@ -90,31 +90,33 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     maxWidth: SCREEN_WIDTH * 0.9,
-    paddingHorizontal: LAYOUT.SPACING.LARGE, // Content padding for alignment
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
   },
   emailOptionsContainer: {
-    marginTop: LAYOUT.SPACING.XLARGE, // Clearer separation when expanded (was LARGE)
+    marginTop: LAYOUT.SPACING.LARGE, // Grouped with email toggle (proximity)
     width: '100%',
   },
   emailToggleButton: {
+    marginTop: LAYOUT.SPACING.XLARGE, // Clear separation after divider
     width: '100%',
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.XXXLARGE, // Major section separator (was XLARGE)
-    marginTop: LAYOUT.SPACING.XXXLARGE, // More breathing room at top (was MEDIUM)
+    marginBottom: LAYOUT.SPACING.XXLARGE, // Balanced separation to actions
+    marginTop: LAYOUT.SPACING.XXXLARGE, // Breathing room at top
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
   },
   logo: {
-    width: LAYOUT.BRAND.LOGO_WIDTH * 1.5, // 120px - Larger for auth screen prominence
-    height: LAYOUT.BRAND.LOGO_HEIGHT * 1.5, // 60px - Maintains 2:1 ratio
-    marginBottom: LAYOUT.SPACING.LARGE, // Tighter grouping with title - Law of Proximity (was XLARGE)
+    width: LAYOUT.BRAND.LOGO_WIDTH * 1.5, // 120px
+    height: LAYOUT.BRAND.LOGO_HEIGHT * 1.5, // 60px
+    marginBottom: LAYOUT.SPACING.MEDIUM, // Tight grouping with title (proximity)
     backgroundColor: 'transparent',
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
   },
   subtitle: {
-    marginTop: LAYOUT.SPACING.SMALL, // Subtitle subordinate to title (was MEDIUM)
+    marginTop: LAYOUT.SPACING.SMALL, // Subordinate to title (hierarchy)
+    paddingHorizontal: LAYOUT.SPACING.XLARGE, // Narrower width for better readability
   },
 });

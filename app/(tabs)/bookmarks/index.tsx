@@ -1,10 +1,9 @@
 import { ListSeparator } from '@/components/common';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
-import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { InteractionManager, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 
@@ -18,15 +17,12 @@ import { ListenListItemCard } from '@/components/bookmarks';
 import { useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useBookmarksScreen, useListenUI } from '@/hooks/bookmarks';
 import { useColors } from '@/hooks/theme';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
 import type { BookmarkItem } from '@/types/bookmark.types';
-import type { ArticleId } from '@/types/branded.types';
 import { AudioAction, ToastType } from '@/types/enums';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadata } from '@/utils/stringUtils';
@@ -116,7 +112,6 @@ ListenListItem.displayName = 'ListenListItem';
 export default function ListenScreen(): JSX.Element {
   const { editMode, reset } = useEditMode('listen');
   const { showToast } = useToast();
-  const { prefetchArticle } = useAppPreloader();
   const colors = useColors();
 
   // Empty state button props (for when showing empty state)
@@ -139,6 +134,7 @@ export default function ListenScreen(): JSX.Element {
     sortedReadingList,
     isReadingListLoading,
     handlePlayAll,
+    handleArticlePlay,
     handleDelete,
     enhancedTracksError,
   } = useBookmarksScreen();
@@ -247,16 +243,12 @@ export default function ListenScreen(): JSX.Element {
     [shouldShowEmpty],
   );
 
-  // Create the article press handler
+  // Create the article press handler - plays audio in miniplayer
   const handleArticlePress = useCallback(
-    (articleId: number, title: string) => {
-      // Prefetch article data after navigation animation completes
-      InteractionManager.runAfterInteractions(() => {
-        prefetchArticle(articleId);
-      });
-      router.push(getArticleRoute(articleId as ArticleId, title));
+    (articleId: number, _title: string) => {
+      handleArticlePlay(articleId);
     },
-    [prefetchArticle],
+    [handleArticlePlay],
   );
 
   // Optimized render function - unified for both list types
@@ -353,6 +345,8 @@ export default function ListenScreen(): JSX.Element {
             onPrimaryPress={
               stableHasArticles ? handlePlayAllStable : (emptyButtonProps?.onPress ?? (() => {}))
             }
+            secondaryLabel={stableHasArticles ? undefined : emptyButtonProps?.secondaryLabel}
+            onSecondaryPress={stableHasArticles ? undefined : emptyButtonProps?.secondaryOnPress}
           />
         </View>
       )}

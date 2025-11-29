@@ -159,13 +159,14 @@ export function ArticlesClient({
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-        {/* App download CTA - Only show when not filtering by category */}
-        {selectedCategoryId === null && platformInfo.isMobile && (
+        {/* App download CTA - Mobile: single store, Desktop: both stores */}
+        {selectedCategoryId === null && (
           <div className="mb-8">
             <AppDownloadCTA
               platformInfo={platformInfo}
               variant="hero"
               authors={initialAuthors}
+              showBothStores={!platformInfo.isMobile}
             />
           </div>
         )}

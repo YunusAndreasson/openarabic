@@ -103,9 +103,18 @@ export function ReviewCard({
 
   // ===== BACKGROUND FLASH COLORS =====
   const flashColors = {
-    error: [withOpacity(colors.error, 0), withOpacity(colors.error, GESTURE_CONSTANTS.FLASH_OPACITY)] as [string, string],
-    success: [withOpacity(colors.success, 0), withOpacity(colors.success, GESTURE_CONSTANTS.FLASH_OPACITY)] as [string, string],
-    warning: [withOpacity(colors.warning, 0), withOpacity(colors.warning, GESTURE_CONSTANTS.FLASH_OPACITY)] as [string, string],
+    error: [
+      withOpacity(colors.error, 0),
+      withOpacity(colors.error, GESTURE_CONSTANTS.FLASH_OPACITY),
+    ] as [string, string],
+    success: [
+      withOpacity(colors.success, 0),
+      withOpacity(colors.success, GESTURE_CONSTANTS.FLASH_OPACITY),
+    ] as [string, string],
+    warning: [
+      withOpacity(colors.warning, 0),
+      withOpacity(colors.warning, GESTURE_CONSTANTS.FLASH_OPACITY),
+    ] as [string, string],
   };
 
   // ===== HINT FLASH ANIMATION =====
@@ -127,7 +136,9 @@ export function ReviewCard({
 
     // Hint flash (yellow)
     if (hintFlashProgress.value > 0) {
-      return { backgroundColor: interpolateColor(hintFlashProgress.value, [0, 1], flashColors.warning) };
+      return {
+        backgroundColor: interpolateColor(hintFlashProgress.value, [0, 1], flashColors.warning),
+      };
     }
     // Left swipe (red)
     if (translateX.value < 0) {

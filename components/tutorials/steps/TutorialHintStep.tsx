@@ -88,7 +88,7 @@ export function TutorialHintStep() {
 
       {/* Animated hand tapping */}
       <Animated.View style={[styles.handContainer, handStyle]}>
-        <Ionicons name="hand-left-outline" size={TUTORIAL_VISUALS.ICON_SIZE} color={colors.tint} />
+        <Ionicons name="hand-left-outline" size={TUTORIAL_VISUALS.ICON_SIZE} color={colors.text} />
       </Animated.View>
     </View>
   );

@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef } from 'react';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAddCommonWords } from '@/hooks/study/useAddCommonWords';
 import { useColors } from '@/hooks/theme/useColors';
@@ -13,6 +15,8 @@ export interface EmptyStateButtonProps {
   onPress: () => void;
   loading: boolean;
   disabled: boolean;
+  secondaryLabel?: string;
+  secondaryOnPress?: () => void;
 }
 
 interface PracticeEmptyStateProps {
@@ -26,10 +30,16 @@ interface PracticeEmptyStateProps {
 export function PracticeEmptyState({ onButtonPropsChange }: PracticeEmptyStateProps) {
   const { addWords, isLoading } = useAddCommonWords();
   const colors = useColors();
+  const router = useRouter();
 
   // Use ref to avoid recreating the handler and causing infinite loops
   const addWordsRef = useRef(addWords);
   addWordsRef.current = addWords;
+
+  // Navigation to browse texts with hint param
+  const handleBrowse = useCallback(() => {
+    router.push(`${ROUTE_PATHS.EXPLORE_TAB}?from=practice`);
+  }, [router]);
 
   // Notify parent of button props - only depends on isLoading
   useEffect(() => {
@@ -38,8 +48,10 @@ export function PracticeEmptyState({ onButtonPropsChange }: PracticeEmptyStatePr
       onPress: () => addWordsRef.current(),
       loading: isLoading,
       disabled: false,
+      secondaryLabel: STRINGS.STUDY_LIST_EMPTY_CTA_SECONDARY,
+      secondaryOnPress: handleBrowse,
     });
-  }, [isLoading, onButtonPropsChange]);
+  }, [isLoading, onButtonPropsChange, handleBrowse]);
 
   return (
     <View style={styles.container}>

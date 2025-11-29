@@ -173,12 +173,12 @@ export const useStudyWordMutations = (
           queryKey: fsrsQueries.all(userId).queryKey,
         });
       },
-      onSuccess: async (
+      onSuccess: (
         _: boolean,
         { userId, wordId, rootId }: { userId: string; wordId?: RootId; rootId?: number },
         context?: StudyWordContext,
       ) => {
-        // Track word added/removed
+        // Track word added/removed (fire and forget - don't block UI)
         const id = (wordId ?? rootId) as number;
         const wasInStudyList = context?.previousStudyWords?.some(sw => sw.root_id === id) ?? false;
 
@@ -193,13 +193,14 @@ export const useStudyWordMutations = (
           });
         }
 
-        // Batch invalidate related queries using helpers
-        await Promise.all([
-          fsrsQueries.invalidateCommon(queryClient, userId, DEFAULT_SESSION_COOLDOWN_HOURS),
-          audioPreference ? audioQueries.invalidateAll(queryClient, userId) : Promise.resolve(),
-        ]);
+        // Invalidate queries in background (don't await - optimistic update already applied)
+        fsrsQueries.invalidateCommon(queryClient, userId, DEFAULT_SESSION_COOLDOWN_HOURS);
+        if (audioPreference) {
+          audioQueries.invalidateAll(queryClient, userId);
+        }
 
-        await refetchStudyWords?.();
+        // Call refetch callback if provided (also don't await)
+        refetchStudyWords?.();
       },
     }),
     [queryClient, refetchStudyWords, showToast, audioPreference],

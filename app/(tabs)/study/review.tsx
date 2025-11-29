@@ -18,7 +18,7 @@ import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutoria
 import { PulsatingLoader } from '@/components/ui';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import type { ContextualHelpType} from '@/constants/tutorials';
+import type { ContextualHelpType } from '@/constants/tutorials';
 import { TutorialId } from '@/constants/tutorials';
 import { ToastType } from '@/types/enums';
 import { useReview, ReviewToastContext } from '@/hooks/review';
@@ -249,7 +249,10 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               right: LAYOUT.SPACING.LARGE,
             }}
           >
-            <ReviewBottomActions onVague={handleVague} onShowContextualHelp={handleShowContextualHelp} />
+            <ReviewBottomActions
+              onVague={handleVague}
+              onShowContextualHelp={handleShowContextualHelp}
+            />
           </View>
         </View>
       </View>

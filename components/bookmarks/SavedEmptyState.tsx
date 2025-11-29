@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef } from 'react';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { type EmptyStateButtonProps } from '@/components/study/PracticeEmptyState';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAddBeginnerArticles } from '@/hooks/bookmarks/useAddBeginnerArticles';
 import { useColors } from '@/hooks/theme/useColors';
@@ -23,10 +25,16 @@ interface SavedEmptyStateProps {
 export function SavedEmptyState({ onButtonPropsChange }: SavedEmptyStateProps) {
   const { addArticles, isLoading } = useAddBeginnerArticles();
   const colors = useColors();
+  const router = useRouter();
 
   // Use ref to avoid recreating the handler and causing infinite loops
   const addArticlesRef = useRef(addArticles);
   addArticlesRef.current = addArticles;
+
+  // Navigation to browse texts with hint param
+  const handleBrowse = useCallback(() => {
+    router.push(`${ROUTE_PATHS.EXPLORE_TAB}?from=playlist`);
+  }, [router]);
 
   // Notify parent of button props - only depends on isLoading
   useEffect(() => {
@@ -35,8 +43,10 @@ export function SavedEmptyState({ onButtonPropsChange }: SavedEmptyStateProps) {
       onPress: () => addArticlesRef.current(),
       loading: isLoading,
       disabled: false,
+      secondaryLabel: STRINGS.BOOKMARKS_EMPTY_CTA_SECONDARY,
+      secondaryOnPress: handleBrowse,
     });
-  }, [isLoading, onButtonPropsChange]);
+  }, [isLoading, onButtonPropsChange, handleBrowse]);
 
   return (
     <View style={styles.container}>

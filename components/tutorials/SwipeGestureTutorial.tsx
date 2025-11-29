@@ -11,11 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import {
-  ContextualHelpType,
-  SwipeTutorialStep,
-  TUTORIAL_STEP_HEIGHT,
-} from '@/constants/tutorials';
+import { ContextualHelpType, SwipeTutorialStep, TUTORIAL_STEP_HEIGHT } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
 

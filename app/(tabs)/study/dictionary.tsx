@@ -1,6 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
-import { useQueryClient } from '@tanstack/react-query';
 import type { JSX } from 'react';
 import { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -10,7 +9,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { DictionaryWordCard, MemoryStrengthLegend } from '@/components/study';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
-import { fsrsQueries } from '@/constants/queries';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
@@ -25,7 +23,6 @@ export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
   const { editMode, reset } = useEditMode('dictionary');
   const insets = useSafeAreaInsets();
-  const queryClient = useQueryClient();
   const { preconfigureAudioSession } = useSimpleAudioPlayer();
 
   // Preconfigure audio session on mount for instant audio playback
@@ -48,12 +45,8 @@ export default function DictionaryScreen(): JSX.Element {
   // Get all study words for dictionary display (shows all words, sorted by memory strength)
   const { allWords: studyWords, isLoading } = useFSRSQueries({ userId: user?.id });
 
-  const { toggleRootMutation } = useStudyWordMutations(async () => {
-    if (user?.id) {
-      // Use helper to invalidate all FSRS-related queries
-      fsrsQueries.invalidateAll(queryClient, user.id);
-    }
-  });
+  // No refetch callback needed - mutation's onSuccess handles invalidation
+  const { toggleRootMutation } = useStudyWordMutations();
 
   const { sortedWords, sortDirection, setSorting } = useDictionaryModal({
     studyWords: studyWords || [],

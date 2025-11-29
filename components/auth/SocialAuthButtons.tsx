@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -8,6 +8,8 @@ import { STRINGS } from '@/constants/strings';
 import { useAppleAuth } from '@/hooks/auth/useAppleAuth';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 import { useColors } from '@/hooks/theme/useColors';
+
+const isIOS = Platform.OS === 'ios';
 
 /**
  * Social Authentication Buttons Component
@@ -35,33 +37,21 @@ export function SocialAuthButtons(): JSX.Element {
 
   return (
     <View style={styles.container}>
-      {/* Divider with "or" text */}
-      <View style={styles.dividerContainer}>
-        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-        <ThemedText
-          type="caption"
-          variant="secondary"
-          style={styles.dividerText}
-          accessibilityLabel="Or sign in with social"
-        >
-          {STRINGS.CONTINUE_WITH}
-        </ThemedText>
-        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-      </View>
-
-      {/* Apple Sign In Button */}
-      <ThemedButton
-        variant="outlined"
-        title={STRINGS.SIGN_IN_WITH_APPLE}
-        icon="logo-apple"
-        loading={appleLoading}
-        disabled={appleLoading || googleLoading}
-        uppercase={false}
-        style={styles.button}
-        testID="apple-sign-in-button"
-        accessibilityLabel="Sign in with Apple"
-        onPress={signInWithApple}
-      />
+      {/* Apple Sign In Button - iOS only */}
+      {isIOS && (
+        <ThemedButton
+          variant="outlined"
+          title={STRINGS.SIGN_IN_WITH_APPLE}
+          icon="logo-apple"
+          loading={appleLoading}
+          disabled={appleLoading || googleLoading}
+          uppercase={false}
+          style={styles.button}
+          testID="apple-sign-in-button"
+          accessibilityLabel="Sign in with Apple"
+          onPress={signInWithApple}
+        />
+      )}
 
       {/* Google Sign In Button */}
       <ThemedButton
@@ -69,31 +59,44 @@ export function SocialAuthButtons(): JSX.Element {
         title={STRINGS.SIGN_IN_WITH_GOOGLE}
         icon="logo-google"
         loading={googleLoading}
-        disabled={appleLoading || googleLoading}
+        disabled={isIOS ? appleLoading || googleLoading : googleLoading}
         uppercase={false}
         style={styles.button}
         testID="google-sign-in-button"
         accessibilityLabel="Sign in with Google"
         onPress={signInWithGoogle}
       />
+
+      {/* Divider with "or" text - appears after social buttons */}
+      <View style={styles.dividerContainer}>
+        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+        <ThemedText
+          type="caption"
+          variant="secondary"
+          style={styles.dividerText}
+          accessibilityLabel="Or continue with email"
+        >
+          {STRINGS.CONTINUE_WITH}
+        </ThemedText>
+        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL, // Tighter grouping between social buttons (proximity)
     width: '100%',
   },
   container: {
-    marginTop: LAYOUT.SPACING.XXLARGE, // Major section separator email → social (was XLARGE)
-    maxWidth: SCREEN_WIDTH * 0.9, // Match form input width constraint
+    maxWidth: SCREEN_WIDTH * 0.9,
     width: '100%',
   },
   dividerContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: LAYOUT.SPACING.LARGE, // More breathing room after divider (was MEDIUM)
+    marginTop: LAYOUT.SPACING.XLARGE, // More space above divider (clear separation)
     width: '100%',
   },
   dividerLine: {
@@ -101,6 +104,6 @@ const styles = StyleSheet.create({
     height: LAYOUT.BORDER.WIDTH.THIN,
   },
   dividerText: {
-    marginHorizontal: LAYOUT.SPACING.MEDIUM,
+    marginHorizontal: LAYOUT.SPACING.LARGE, // More breathing room around "or"
   },
 });

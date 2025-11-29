@@ -55,11 +55,6 @@ export function TutorialSwipeRightStep() {
         </ThemedText>
       </View>
 
-      {/* Animated hand swiping right */}
-      <Animated.View style={[styles.handContainer, handStyle]}>
-        <Ionicons name="hand-left-outline" size={TUTORIAL_VISUALS.ICON_SIZE} color={colors.tint} />
-      </Animated.View>
-
       {/* Right indicator */}
       <View style={styles.indicatorRow}>
         <View style={[styles.indicator, { backgroundColor: colors.success + '20' }]}>
@@ -73,6 +68,11 @@ export function TutorialSwipeRightStep() {
           {STRINGS.TUTORIAL_SWIPE_KNOW}
         </ThemedText>
       </View>
+
+      {/* Animated hand swiping right */}
+      <Animated.View style={[styles.handContainer, handStyle]}>
+        <Ionicons name="hand-left-outline" size={TUTORIAL_VISUALS.ICON_SIZE} color={colors.text} />
+      </Animated.View>
     </View>
   );
 }
@@ -89,17 +89,15 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   description: {
     textAlign: 'center',
   },
-  handContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
   indicatorRow: {
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   indicator: {
     width: TUTORIAL_VISUALS.INDICATOR_SIZE,
@@ -107,5 +105,8 @@ const styles = StyleSheet.create({
     borderRadius: TUTORIAL_VISUALS.INDICATOR_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  handContainer: {
+    // Hand at bottom, no extra margin needed
   },
 });

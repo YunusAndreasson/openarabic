@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 
 // Routes that should NOT show the admin header
-const PUBLIC_ROUTES = ['/', '/login', '/account-deletion', '/privacy', '/terms', '/contact'];
+const PUBLIC_ROUTES = ['/', '/login', '/account-deletion', '/privacy', '/terms', '/contact', '/download-app'];
 const isPublicRoute = (path: string) => {
   return PUBLIC_ROUTES.includes(path) || path.startsWith('/read/');
 };

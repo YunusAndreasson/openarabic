@@ -15,6 +15,7 @@ import {
   calculateTooltipDimensions,
   type TooltipLayout,
 } from '@/utils/positioningUtils';
+import { cleanWordText } from '@/utils/stringUtils';
 
 // Static constants to prevent recreation
 const STATIC_STYLES = StyleSheet.create({
@@ -109,6 +110,10 @@ export function WordTooltip({
 }: WordTooltipProps) {
   const colors = useColors();
 
+  // Clean text by removing punctuation for display
+  const cleanedText = cleanWordText(text);
+  const cleanedArabicWord = cleanWordText(arabicWord || '');
+
   // Press animation for better user feedback
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',
@@ -117,14 +122,14 @@ export function WordTooltip({
 
   // Arabic word analysis for English color-coding
   const { formattedAnalysis, analysis } = useArabicWordAnalysis(
-    arabicWord || '',
-    text,
-    !!(arabicWord && text),
+    cleanedArabicWord,
+    cleanedText,
+    !!(cleanedArabicWord && cleanedText),
   );
 
   // Generate color-coded segments using shared utility
   const coloredSegments = generateColorCodedSegments({
-    text,
+    text: cleanedText,
     formattedAnalysis,
     analysis,
     colors,

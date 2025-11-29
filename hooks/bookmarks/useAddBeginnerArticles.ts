@@ -68,26 +68,24 @@ export function useAddBeginnerArticles(
 
       return { addedCount: beginnerArticleIds.length };
     },
-    onSuccess: async ({ addedCount }) => {
+    onSuccess: ({ addedCount }) => {
       if (!user?.id) return;
+
+      // Show toast with haptic immediately (don't wait for cache invalidation)
+      successFeedback();
+      showToast(STRINGS.ARTICLES_ADDED_SUCCESS, undefined, ToastType.SUCCESS);
 
       // Track analytics
       analytics.track(ANALYTICS_EVENTS.BEGINNER_ARTICLES_ADDED, {
         count: addedCount,
       });
 
-      // Invalidate reading list and audio tracks queries to refresh
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['readingList', user.id] }),
-        audioQueries.invalidateAll(queryClient, user.id),
-      ]);
-
       // Reset edit mode in case it was persisted from previous session
       dispatch(resetEditMode('listen'));
 
-      // Show encouraging toast with haptic
-      successFeedback();
-      showToast(STRINGS.ARTICLES_ADDED_SUCCESS, undefined, ToastType.SUCCESS);
+      // Invalidate queries in background (UI updates when ready)
+      queryClient.invalidateQueries({ queryKey: ['readingList', user.id] });
+      audioQueries.invalidateAll(queryClient, user.id);
 
       // Call onSuccess callback
       options?.onSuccess?.();

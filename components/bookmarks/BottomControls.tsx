@@ -53,10 +53,10 @@ export const BottomControls = memo<BottomControlsProps>(
           },
         ]}
       >
-        {/* Action buttons row */}
-        <View style={styles.buttonsRow}>
+        {/* Action buttons - stacked vertically when secondary exists, primary at bottom for thumb reach */}
+        <View style={hasSecondaryButton ? styles.buttonsColumn : styles.buttonsRow}>
           {hasSecondaryButton && (
-            <View style={styles.buttonContainer}>
+            <View style={styles.fullWidthButtonContainer}>
               <ThemedButton
                 disabled={secondaryDisabled}
                 title={secondaryLabel ?? ''}
@@ -71,9 +71,7 @@ export const BottomControls = memo<BottomControlsProps>(
               />
             </View>
           )}
-          <View
-            style={hasSecondaryButton ? styles.buttonContainer : styles.fullWidthButtonContainer}
-          >
+          <View style={styles.fullWidthButtonContainer}>
             <ThemedButton
               disabled={primaryDisabled}
               loading={primaryLoading}
@@ -96,8 +94,10 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
   },
-  buttonContainer: {
-    width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`,
+  buttonsColumn: {
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+    width: '100%',
   },
   buttonsRow: {
     alignItems: 'center',

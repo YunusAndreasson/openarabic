@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import type { PlatformInfo } from '@/lib/platform-detection';
+import { ArabicWordCloud } from '@/components/arabic-word-cloud';
 
 const AppleLogo = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 384 512" fill="currentColor" aria-hidden="true">
@@ -33,9 +34,9 @@ const GOOGLE_PLAY_URL =
 
 const DEFAULTS = {
   hero: {
-    title: 'Download OpenArabic',
+    title: 'Learn Arabic Through Classical Texts',
     description:
-      'A free app for learning Arabic through real texts with translations and native audio.',
+      'Read bilingual Islamic literature with word-by-word translations, native audio, and smart vocabulary building.',
   },
   inline: {
     title: 'Continue reading in the app',
@@ -43,6 +44,12 @@ const DEFAULTS = {
       'Read more articles with translations, listen to native audio, and build your vocabulary.',
   },
 } as const;
+
+const FEATURES = [
+  'Bilingual texts',
+  'Native audio',
+  'Spaced repetition',
+] as const;
 
 export function AppDownloadCTA({
   platformInfo,
@@ -69,10 +76,13 @@ export function AppDownloadCTA({
             href={APP_STORE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary/85 active:bg-primary/70 text-primary-foreground rounded-full transition-colors duration-150 font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="inline-flex items-center gap-3 px-5 py-3 bg-foreground hover:bg-foreground/90 active:bg-foreground/80 text-background rounded-xl transition-colors duration-150 font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <AppleLogo className="w-4 h-4" />
-            <span>Get the app</span>
+            <AppleLogo className="w-7 h-7 flex-shrink-0" />
+            <div className="text-left">
+              <div className="text-[10px] opacity-80 leading-tight">Download on the</div>
+              <div className="text-base font-semibold leading-tight">App Store</div>
+            </div>
           </a>
         )}
         {showGooglePlay && (
@@ -80,10 +90,13 @@ export function AppDownloadCTA({
             href={GOOGLE_PLAY_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary/85 active:bg-primary/70 text-primary-foreground rounded-full transition-colors duration-150 font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="inline-flex items-center gap-3 px-5 py-3 bg-foreground hover:bg-foreground/90 active:bg-foreground/80 text-background rounded-xl transition-colors duration-150 font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <PlayStoreLogo className="w-4 h-4" />
-            <span>Get the app</span>
+            <PlayStoreLogo className="w-6 h-6 flex-shrink-0" />
+            <div className="text-left">
+              <div className="text-[10px] uppercase opacity-80 leading-tight">Get it on</div>
+              <div className="text-base font-semibold leading-tight">Google Play</div>
+            </div>
           </a>
         )}
       </>
@@ -135,29 +148,59 @@ export function AppDownloadCTA({
 
     return (
       <section
-        className="bg-secondary rounded-2xl"
+        className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary to-primary/5 dark:from-primary/10 dark:via-secondary dark:to-primary/10 rounded-2xl border border-primary/10"
         style={{ contain: 'layout style paint' }}
         aria-labelledby="hero-cta-title"
       >
-        <div className="px-6 py-10 sm:px-8 sm:py-12 text-center">
-          <h2
-            id="hero-cta-title"
-            className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight"
-          >
-            {finalTitle}
-          </h2>
+        <div className="px-6 py-10 sm:px-10 sm:py-12 lg:grid lg:grid-cols-5 lg:gap-8 lg:items-center">
+          {/* Left: Content (3 cols on desktop) */}
+          <div className="text-center sm:text-left lg:col-span-3">
+            {/* Badge */}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 mb-3 text-xs font-medium bg-primary/10 text-primary rounded-full">
+              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+              Free &amp; No Ads
+            </span>
 
-          <p className="mt-2 text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-            {finalDescription}
-          </p>
+            <h2
+              id="hero-cta-title"
+              className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight"
+            >
+              {finalTitle}
+            </h2>
 
-          <div className="mt-6">{storeButtons}</div>
-
-          {authors.length > 0 && (
-            <p className="mt-5 text-xs text-gray-500 dark:text-gray-500">
-              Featuring {formatAuthors()}
+            <p className="mt-2 text-gray-600 dark:text-gray-400 max-w-lg mx-auto sm:mx-0">
+              {finalDescription}
             </p>
-          )}
+
+            {/* Features */}
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-4">
+              {FEATURES.map((feature) => (
+                <span
+                  key={feature}
+                  className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full"
+                >
+                  {feature}
+                </span>
+              ))}
+            </div>
+
+            {/* Store Buttons */}
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3">
+              {storeButtons}
+            </div>
+
+            {/* Authors */}
+            {authors.length > 0 && (
+              <p className="mt-4 text-xs text-gray-500 dark:text-gray-500">
+                Featuring works by {formatAuthors()}
+              </p>
+            )}
+          </div>
+
+          {/* Right: Word Cloud (2 cols on desktop, hidden on mobile) */}
+          <div className="hidden lg:block lg:col-span-2">
+            <ArabicWordCloud />
+          </div>
         </div>
       </section>
     );

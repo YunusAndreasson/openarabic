@@ -17,6 +17,7 @@ import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { generateStorageUrl } from '@/utils/storageUtils';
+import { cleanWordText } from '@/utils/stringUtils';
 
 export interface WordDetailsBottomSheetProps {
   isVisible: boolean;
@@ -112,7 +113,7 @@ export function WordDetailsBottomSheet({
     // Show toast immediately on first add (optimistic)
     if (!wasInStudyList && !hasShownFirstAddToast.current) {
       hasShownFirstAddToast.current = true;
-      showToast(STRINGS.WORD_ADDED_TO_PRACTICE, undefined, ToastType.INFO);
+      showToast(STRINGS.WORD_ADDED_TO_PRACTICE, undefined, ToastType.SUCCESS);
     }
 
     try {
@@ -171,9 +172,9 @@ export function WordDetailsBottomSheet({
             {/* Arabic Word Title */}
             <View style={styles.titleSection}>
               <ColorCodedText
-                text={word.word_form || ''}
-                arabicWord={word.word_form || ''}
-                englishTranslation={word.english || ''}
+                text={cleanWordText(word.word_form || '')}
+                arabicWord={cleanWordText(word.word_form || '')}
+                englishTranslation={cleanWordText(word.english || '')}
                 type="heading1"
                 weight="bold"
                 style={styles.arabicTitle}
@@ -183,8 +184,8 @@ export function WordDetailsBottomSheet({
               />
               {word.english && (
                 <ColorCodedText
-                  text={word.english}
-                  arabicWord={word.word_form || ''}
+                  text={cleanWordText(word.english)}
+                  arabicWord={cleanWordText(word.word_form || '')}
                   type="heading3"
                   style={styles.englishTranslation}
                   defaultColor={colors.secondaryText}

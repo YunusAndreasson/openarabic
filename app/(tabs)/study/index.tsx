@@ -327,6 +327,8 @@ export default function VocabularyScreen(): JSX.Element {
               hasAnyStudyWords ? dueWordsCount === 0 : (emptyButtonProps?.disabled ?? true)
             }
             primaryLoading={hasAnyStudyWords ? false : (emptyButtonProps?.loading ?? false)}
+            secondaryLabel={hasAnyStudyWords ? undefined : emptyButtonProps?.secondaryLabel}
+            onSecondaryPress={hasAnyStudyWords ? undefined : emptyButtonProps?.secondaryOnPress}
           />
         </View>
       )}
