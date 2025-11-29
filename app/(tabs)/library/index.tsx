@@ -28,10 +28,14 @@ const styles = StyleSheet.create({
     // No gap - using manual spacing between sections for better visual hierarchy
   },
   sectionSeparator: {
-    marginTop: LAYOUT.SPACING.SMALL, // 8px - consistent with Practice screen
+    marginTop: LAYOUT.SPACING.LARGE, // 16px - more breathing room above sections
   },
   sectionHeader: {
     marginBottom: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SPACING.MEDIUM, // Align with card text padding
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.6, // More subtle
   },
   listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
 });
