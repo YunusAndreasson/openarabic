@@ -88,14 +88,14 @@ export const STRINGS = {
   STOP_TIMER: 'Stop timer',
   TIME_REMAINING: 'Time remaining',
   // Welcome & onboarding
-  WELCOME_TITLE: 'Welcome to OpenArabic',
-  WELCOME_SUBTITLE: 'Sign in to continue learning Arabic',
+  WELCOME_TITLE: 'OpenArabic',
+  WELCOME_SUBTITLE: 'Read, listen, and memorize',
   // Sign In screen
-  SIGN_IN_TITLE: 'Sign in to OpenArabic',
-  SIGN_IN_SUBTITLE: 'Welcome back! Pick up where you left off.',
+  SIGN_IN_TITLE: 'Sign In',
+  SIGN_IN_SUBTITLE: 'Welcome back',
   // Sign Up screen
-  CREATE_ACCOUNT_TITLE: 'Create your account',
-  CREATE_ACCOUNT_SUBTITLE: 'Start learning Arabic today.',
+  CREATE_ACCOUNT_TITLE: 'Create Account',
+  CREATE_ACCOUNT_SUBTITLE: 'Start your Arabic journey',
   // Landing screen
   CONTINUE_WITH_EMAIL_OPTION: 'Continue with email',
   HIDE_EMAIL_OPTIONS: 'Hide email options',
@@ -104,6 +104,16 @@ export const STRINGS = {
   // Section headers for Explore tab
   SECTION_CATEGORIES: 'Categories',
   SECTION_AUTHORS: 'Authors',
+  SECTION_DIFFICULTY: 'Difficulty',
+  SECTION_LENGTH: 'Reading Time',
+  // Difficulty levels
+  DIFFICULTY_BEGINNER: 'Beginner',
+  DIFFICULTY_INTERMEDIATE: 'Intermediate',
+  DIFFICULTY_ADVANCED: 'Advanced',
+  // Length categories
+  LENGTH_SHORT: 'Short',
+  LENGTH_MEDIUM: 'Medium',
+  LENGTH_LONG: 'Long',
   RESUMED_READING_TEMPLATE: 'Resumed at {percent}%',
   // Article & content actions - shortened and action-oriented
   BROWSE_ARTICLES: 'Explore articles',
@@ -120,12 +130,17 @@ export const STRINGS = {
   // Playlist tab empty state - minimal one-tap start
   BOOKMARKS_EMPTY_TITLE: 'Your playlist is empty',
   BOOKMARKS_EMPTY_CTA: 'Add 10 beginner texts',
+  BOOKMARKS_EMPTY_CTA_SECONDARY: 'Browse',
   BOOKMARKS_EMPTY_HINT: 'Tip: Tap the headset icon in top right corner of any text to add it',
   // Practice tab empty state - minimal one-tap start
   STUDY_LIST_EMPTY_TITLE: 'No words to practice',
   STUDY_LIST_EMPTY_CTA: 'Add 10 essential words',
+  STUDY_LIST_EMPTY_CTA_SECONDARY: 'Browse',
   STUDY_LIST_EMPTY_HINT: 'Tip: Tap any word while reading, then add to practice',
   STUDY_LIST_WORDS_ADDED: 'words added to practice',
+  // Welcome toasts when navigating from empty states
+  EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headset icon on any text to add it to your playlist',
+  EXPLORE_WELCOME_FROM_PRACTICE: 'Tap any word while reading to add it to practice',
   // Success toasts for empty state actions
   WORDS_ADDED_SUCCESS: 'Ready to try your first review session',
   ARTICLES_ADDED_SUCCESS: 'Ready to try your first listen',
