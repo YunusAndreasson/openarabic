@@ -18,6 +18,7 @@ import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutoria
 import { PulsatingLoader } from '@/components/ui';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import type { ContextualHelpType} from '@/constants/tutorials';
 import { TutorialId } from '@/constants/tutorials';
 import { ToastType } from '@/types/enums';
 import { useReview, ReviewToastContext } from '@/hooks/review';
@@ -65,15 +66,15 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     type: ToastType.INFO,
   });
 
-  // Tutorial overlay state - can be shown on-demand by tapping bottom buttons
-  const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
+  // Contextual help state - shows specific help when tapping bottom buttons
+  const [contextualHelpType, setContextualHelpType] = useState<ContextualHelpType | null>(null);
 
-  const handleShowTutorial = useCallback(() => {
-    setShowTutorialOverlay(true);
+  const handleShowContextualHelp = useCallback((helpType: ContextualHelpType) => {
+    setContextualHelpType(helpType);
   }, []);
 
-  const handleDismissTutorial = useCallback(() => {
-    setShowTutorialOverlay(false);
+  const handleDismissContextualHelp = useCallback(() => {
+    setContextualHelpType(null);
   }, []);
 
   const showLocalToast = useCallback(
@@ -248,7 +249,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               right: LAYOUT.SPACING.LARGE,
             }}
           >
-            <ReviewBottomActions onVague={handleVague} onShowTutorial={handleShowTutorial} />
+            <ReviewBottomActions onVague={handleVague} onShowContextualHelp={handleShowContextualHelp} />
           </View>
         </View>
       </View>
@@ -276,8 +277,12 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         </View>
       )}
 
-      {/* Tutorial overlay - shown on-demand when tapping bottom buttons */}
-      <SwipeGestureTutorial visible={showTutorialOverlay} onDismiss={handleDismissTutorial} />
+      {/* Contextual help overlay - shown when tapping bottom buttons */}
+      <SwipeGestureTutorial
+        visible={contextualHelpType !== null}
+        onDismiss={handleDismissContextualHelp}
+        contextualHelp={contextualHelpType ?? undefined}
+      />
     </ReviewToastContext>
   );
 }

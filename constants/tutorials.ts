@@ -14,14 +14,28 @@ export const TutorialId = {
 export type TutorialId = (typeof TutorialId)[keyof typeof TutorialId];
 
 /**
- * Swipe tutorial step indices
+ * Swipe tutorial step indices (full tutorial flow)
  */
 export const SwipeTutorialStep = {
-  CORE_FLOW: 0,
-  UNSURE_FLOW: 1,
+  INTRO: 0,
+  SWIPE_LEFT: 1,
+  SWIPE_RIGHT: 2,
+  HINT: 3,
+  SRS_EXPLAIN: 4,
 } as const;
 
 export type SwipeTutorialStep = (typeof SwipeTutorialStep)[keyof typeof SwipeTutorialStep];
+
+/**
+ * Contextual help types (single-step help triggered by tapping icons)
+ */
+export const ContextualHelpType = {
+  SWIPE_LEFT: 'swipe_left',
+  SWIPE_RIGHT: 'swipe_right',
+  HINT: 'hint',
+} as const;
+
+export type ContextualHelpType = (typeof ContextualHelpType)[keyof typeof ContextualHelpType];
 
 /**
  * Configuration for a single tutorial
@@ -63,4 +77,17 @@ export const TUTORIAL_ANIMATION = {
  * Fixed height for tutorial step content area
  * Prevents modal from resizing between steps
  */
-export const TUTORIAL_STEP_HEIGHT = 240;
+export const TUTORIAL_STEP_HEIGHT = 280;
+
+/**
+ * Shared tutorial visual constants
+ * Ensures consistency across all tutorial steps
+ */
+export const TUTORIAL_VISUALS = {
+  /** Main gesture icon size (hand, sparkles) */
+  ICON_SIZE: 40,
+  /** Circular indicator dimensions */
+  INDICATOR_SIZE: 36,
+  /** Icons inside indicators */
+  INDICATOR_ICON_SIZE: 20,
+} as const;

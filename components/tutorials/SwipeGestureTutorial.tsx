@@ -1,53 +1,134 @@
 /**
- * Swipe gesture tutorial - visual-first, minimal text
+ * Swipe gesture tutorial - supports both full onboarding and contextual help
+ *
+ * Full tutorial (first-time): 5 steps - Intro → Swipe Left → Swipe Right → Hint → Ready
+ * Contextual help: Single step explaining specific action (reuses same step components)
  */
 
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { SwipeTutorialStep, TUTORIAL_STEP_HEIGHT } from '@/constants/tutorials';
+import {
+  ContextualHelpType,
+  SwipeTutorialStep,
+  TUTORIAL_STEP_HEIGHT,
+} from '@/constants/tutorials';
+import { useColors } from '@/hooks/theme/useColors';
+import { lightFeedback, successFeedback } from '@/utils/haptics';
 
-import { TutorialCoreFlowStep, TutorialUnsureStep } from './steps';
+import {
+  TutorialHintStep,
+  TutorialIntroStep,
+  TutorialSRSStep,
+  TutorialSwipeLeftStep,
+  TutorialSwipeRightStep,
+} from './steps';
 import { TutorialCard } from './TutorialCard';
 import { TutorialOverlay } from './TutorialOverlay';
 
 interface SwipeGestureTutorialProps {
   visible: boolean;
   onDismiss: () => void;
+  /** If set, shows only the contextual help for this action */
+  contextualHelp?: ContextualHelpType;
 }
 
-const STEP_COMPONENTS = [TutorialCoreFlowStep, TutorialUnsureStep];
+// Full tutorial flow (first-time users) - reuses contextual help screens
+const FULL_TUTORIAL_COMPONENTS = [
+  TutorialIntroStep,
+  TutorialSwipeLeftStep,
+  TutorialSwipeRightStep,
+  TutorialHintStep,
+  TutorialSRSStep,
+];
 
-export function SwipeGestureTutorial({ visible, onDismiss }: SwipeGestureTutorialProps) {
-  const [currentStep, setCurrentStep] = useState<SwipeTutorialStep>(SwipeTutorialStep.CORE_FLOW);
+// Titles for full tutorial - null means no title (contextual screens already self-explanatory)
+const FULL_TUTORIAL_TITLES: (string | null)[] = [
+  STRINGS.TUTORIAL_INTRO_TITLE,
+  null,
+  null,
+  null,
+  STRINGS.TUTORIAL_SRS_TITLE,
+];
 
-  const isLastStep = currentStep === SwipeTutorialStep.UNSURE_FLOW;
-  const StepContent = STEP_COMPONENTS[currentStep]!;
+// Contextual help (single step, no title)
+const CONTEXTUAL_COMPONENTS: Record<ContextualHelpType, React.ComponentType> = {
+  [ContextualHelpType.SWIPE_LEFT]: TutorialSwipeLeftStep,
+  [ContextualHelpType.SWIPE_RIGHT]: TutorialSwipeRightStep,
+  [ContextualHelpType.HINT]: TutorialHintStep,
+};
 
-  const handleNext = useCallback(() => {
+export function SwipeGestureTutorial({
+  visible,
+  onDismiss,
+  contextualHelp,
+}: SwipeGestureTutorialProps) {
+  const colors = useColors();
+  const [currentStep, setCurrentStep] = useState<SwipeTutorialStep>(SwipeTutorialStep.INTRO);
+
+  // Determine if this is the last step in full tutorial mode
+  const isLastStep = currentStep === SwipeTutorialStep.SRS_EXPLAIN;
+
+  // All hooks must be called unconditionally
+  const handleContextualDismiss = useCallback(() => {
+    lightFeedback();
+    onDismiss();
+  }, [onDismiss]);
+
+  const handleFullTutorialNext = useCallback(() => {
     if (isLastStep) {
-      setCurrentStep(SwipeTutorialStep.CORE_FLOW);
+      successFeedback();
+      setCurrentStep(SwipeTutorialStep.INTRO);
       onDismiss();
     } else {
-      setCurrentStep(SwipeTutorialStep.UNSURE_FLOW);
+      lightFeedback();
+      setCurrentStep(prev => (prev + 1) as SwipeTutorialStep);
     }
   }, [isLastStep, onDismiss]);
 
   React.useEffect(() => {
-    if (visible) {
-      setCurrentStep(SwipeTutorialStep.CORE_FLOW);
+    if (visible && !contextualHelp) {
+      setCurrentStep(SwipeTutorialStep.INTRO);
     }
-  }, [visible]);
+  }, [visible, contextualHelp]);
+
+  // Contextual help mode - single step (no title)
+  if (contextualHelp) {
+    const StepContent = CONTEXTUAL_COMPONENTS[contextualHelp];
+
+    return (
+      <TutorialOverlay visible={visible} onDismiss={onDismiss}>
+        <TutorialCard dismissText={STRINGS.TUTORIAL_NEXT} onDismiss={handleContextualDismiss}>
+          <View style={styles.stepContainer}>
+            <View style={styles.stepContent}>
+              <StepContent />
+            </View>
+          </View>
+        </TutorialCard>
+      </TutorialOverlay>
+    );
+  }
+
+  // Full tutorial mode - multi-step
+  const StepContent = FULL_TUTORIAL_COMPONENTS[currentStep] ?? TutorialIntroStep;
+  const stepTitle = FULL_TUTORIAL_TITLES[currentStep];
+  const dismissText = isLastStep ? STRINGS.TUTORIAL_SRS_CTA : STRINGS.TUTORIAL_NEXT;
 
   return (
     <TutorialOverlay visible={visible} onDismiss={onDismiss}>
-      <TutorialCard
-        dismissText={isLastStep ? STRINGS.TUTORIAL_START_PRACTICING : STRINGS.TUTORIAL_NEXT}
-        onDismiss={handleNext}
-      >
-        <View style={styles.stepContent}>
-          <StepContent />
+      <TutorialCard dismissText={dismissText} onDismiss={handleFullTutorialNext}>
+        <View style={styles.stepContainer}>
+          {stepTitle && (
+            <ThemedText type="heading3" style={[styles.title, { color: colors.text }]}>
+              {stepTitle}
+            </ThemedText>
+          )}
+          <View style={styles.stepContent}>
+            <StepContent />
+          </View>
         </View>
       </TutorialCard>
     </TutorialOverlay>
@@ -57,11 +138,19 @@ export function SwipeGestureTutorial({ visible, onDismiss }: SwipeGestureTutoria
 SwipeGestureTutorial.displayName = 'SwipeGestureTutorial';
 
 const styles = StyleSheet.create({
-  stepContent: {
+  stepContainer: {
     height: TUTORIAL_STEP_HEIGHT,
+    width: '100%',
+  },
+  title: {
+    textAlign: 'center',
+    marginBottom: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.TINY,
+  },
+  stepContent: {
+    flex: 1,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'visible',
   },
 });

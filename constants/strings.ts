@@ -25,22 +25,35 @@ export const STRINGS = {
   WORDS_REMAINING_TODAY: '{count} words remaining today',
   RESET_TUTORIALS: 'Reset tutorials',
   // Tutorial copy
-  TUTORIAL_WORD_TAP_CTA: 'Tap any word to learn it',
-  // Swipe tutorial - Step 1
-  TUTORIAL_SWIPE_TITLE: 'Swipe to rate',
-  TUTORIAL_SWIPE_DONT_KNOW: "Don't know",
-  TUTORIAL_SWIPE_DONT_KNOW_HINT: 'See again soon',
-  TUTORIAL_SWIPE_KNOW: 'Know',
-  TUTORIAL_SWIPE_KNOW_HINT: 'See less often',
-  // Swipe tutorial - Step 2
-  TUTORIAL_VAGUE_TITLE: 'Unsure? Tap to peek',
-  TUTORIAL_VAGUE: 'Vague',
+  TUTORIAL_WORD_TAP_CTA: 'Tap the highlighted word to see its meaning and save it for practice',
+  // Swipe tutorial - Intro
+  TUTORIAL_INTRO_TITLE: 'How it works',
+  TUTORIAL_INTRO_DESCRIPTION: 'Rate each word by swiping. Tap for a hint if needed.',
+  // Swipe tutorial - action labels
+  TUTORIAL_SWIPE_DONT_KNOW: 'Unknown',
+  TUTORIAL_SWIPE_KNOW: 'Known',
+  // Swipe tutorial - Ready step
+  TUTORIAL_SRS_TITLE: "You're ready!",
+  TUTORIAL_SRS_DESCRIPTION: 'Rate honestly. We adapt to you.',
+  TUTORIAL_SRS_CTA: "Let's go!",
   // Swipe tutorial navigation
-  TUTORIAL_NEXT: 'Next',
+  TUTORIAL_NEXT: 'Got it',
   TUTORIAL_START_PRACTICING: 'Got it',
   // Swipe tutorial - Sample word
   TUTORIAL_SAMPLE_WORD_ARABIC: 'كِتَاب',
   TUTORIAL_SAMPLE_WORD_HINT: 'B...',
+  // Contextual help - Swipe left (Unknown)
+  TUTORIAL_CONTEXT_LEFT_LINE1: "Don't know the word?",
+  TUTORIAL_CONTEXT_LEFT_LINE2: 'Swipe left.',
+  TUTORIAL_CONTEXT_LEFT_LINE3: 'It appears more often so you focus on hard words.',
+  // Contextual help - Swipe right (Known)
+  TUTORIAL_CONTEXT_RIGHT_LINE1: 'Know the word?',
+  TUTORIAL_CONTEXT_RIGHT_LINE2: 'Swipe right.',
+  TUTORIAL_CONTEXT_RIGHT_LINE3: 'It appears less often so you skip easy words.',
+  // Contextual help - Tap for hint
+  TUTORIAL_CONTEXT_HINT_LINE1: 'Need a hint?',
+  TUTORIAL_CONTEXT_HINT_LINE2: 'Tap the screen.',
+  TUTORIAL_CONTEXT_HINT_LINE3: 'It reveals the first letter of the translation.',
   // Contact email - single source of truth
   CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',
   // Account section titles - now imported directly from enums in components
@@ -105,20 +118,21 @@ export const STRINGS = {
   TRY_ADJUSTING_FILTERS: 'Try different filters',
   NO_ARTICLES_FOUND: 'No articles match your filters',
   // Playlist tab empty state - one-tap start with beginner articles
-  BOOKMARKS_EMPTY_TITLE: 'Get started with your playlist',
-  BOOKMARKS_EMPTY_DESCRIPTION: 'Each has bilingual audio in Arabic and English for easy listening.',
+  BOOKMARKS_EMPTY_TITLE: 'Quick start: Beginner articles',
+  BOOKMARKS_EMPTY_DESCRIPTION:
+    'Handpicked short articles with bilingual audio—perfect for trying the app.',
   BOOKMARKS_EMPTY_CTA: 'Add to Playlist',
-  BOOKMARKS_EMPTY_HINT: 'Tap the headset icon on any article to add',
+  BOOKMARKS_EMPTY_HINT: 'Tap the headset icon on any article to add your own',
   // Practice tab empty state - one-tap start with common words
-  STUDY_LIST_EMPTY_TITLE: 'Get started with these words',
+  STUDY_LIST_EMPTY_TITLE: 'Quick start: Essential words',
   STUDY_LIST_EMPTY_DESCRIPTION:
-    'Common words with smart review scheduling to help you remember long-term.',
+    'Handpicked common words to try spaced repetition—add more as you read.',
   STUDY_LIST_EMPTY_CTA: 'Add to Practice',
   STUDY_LIST_EMPTY_HINT: 'Tap any word while reading to add your own',
   STUDY_LIST_WORDS_ADDED: 'words added to practice',
   // Success toasts for empty state actions
-  WORDS_ADDED_SUCCESS: 'Your first review session is ready',
-  ARTICLES_ADDED_SUCCESS: 'Your playlist is ready to go',
+  WORDS_ADDED_SUCCESS: 'Ready to try your first review session',
+  ARTICLES_ADDED_SUCCESS: 'Ready to try your first listen',
   ERROR_LOADING_DATA: "Couldn't load data. " + tryAgain,
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',

@@ -45,9 +45,8 @@ export default function FilterScreen(): JSX.Element {
     });
   }, [allArticles, filterType, filterId]);
 
-  // Show loader only when no articles are preloaded yet
-  // Once articles are loaded, filtering is instant (no network requests)
-  const shouldShowLoader = isFetching && allArticles.length === 0;
+  // Show loader while fetching (articles are guaranteed to exist once loaded)
+  const shouldShowLoader = isFetching;
 
   if (error) {
     return (

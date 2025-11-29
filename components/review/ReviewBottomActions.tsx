@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { ContextualHelpType } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
 import { ReviewAction } from '@/types/enums';
 import { lightFeedback } from '@/utils/haptics';
@@ -57,10 +58,13 @@ const createIconProps = (name: ComponentProps<typeof Ionicons>['name'], color: s
 
 interface ReviewBottomActionsProps {
   onVague?: () => void; // Handler for explicit Vague button press
-  onShowTutorial?: () => void; // Handler to show the swipe tutorial
+  onShowContextualHelp?: (helpType: ContextualHelpType) => void; // Handler to show contextual help
 }
 
-export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({ onVague, onShowTutorial }) => {
+export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
+  onVague,
+  onShowContextualHelp,
+}) => {
   const colors = useColors();
 
   const tintError = colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
@@ -75,41 +79,46 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({ onVague, onS
   const centerTextStyle = [STATIC_STYLES.indicatorText, { color: colors.warning }];
   const rightTextStyle = [STATIC_STYLES.indicatorText, { color: colors.success }];
 
-  const handleShowTutorial = () => {
+  const handleLeftPress = () => {
     lightFeedback();
-    onShowTutorial?.();
+    onShowContextualHelp?.(ContextualHelpType.SWIPE_LEFT);
   };
 
-  const handleVaguePress = () => {
+  const handleCenterPress = () => {
     lightFeedback();
-    // If tutorial handler exists, show tutorial; otherwise trigger vague action
-    if (onShowTutorial) {
-      onShowTutorial();
+    // Show contextual help if handler exists, otherwise trigger vague action
+    if (onShowContextualHelp) {
+      onShowContextualHelp(ContextualHelpType.HINT);
     } else if (onVague) {
       onVague();
     }
   };
 
+  const handleRightPress = () => {
+    lightFeedback();
+    onShowContextualHelp?.(ContextualHelpType.SWIPE_RIGHT);
+  };
+
   return (
     <View style={STATIC_STYLES.container}>
-      {/* Left indicator - Unknown (tappable to show tutorial) */}
-      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleShowTutorial}>
+      {/* Left indicator - Unknown (tappable to show contextual help) */}
+      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleLeftPress}>
         <View style={leftIndicatorStyle}>
           <Ionicons {...createIconProps('chevron-back', colors.error)} />
         </View>
         <ThemedText style={leftTextStyle}>{ReviewAction.DONT_KNOW}</ThemedText>
       </Pressable>
 
-      {/* Center button - Vague (tappable to show tutorial) */}
-      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleVaguePress}>
+      {/* Center button - Hint (tappable to show contextual help) */}
+      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleCenterPress}>
         <View style={centerIndicatorStyle}>
-          <Ionicons {...createIconProps('help-circle', colors.warning)} />
+          <Ionicons {...createIconProps('finger-print', colors.warning)} />
         </View>
-        <ThemedText style={centerTextStyle}>Vague</ThemedText>
+        <ThemedText style={centerTextStyle}>Hint</ThemedText>
       </Pressable>
 
-      {/* Right indicator - Known (tappable to show tutorial) */}
-      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleShowTutorial}>
+      {/* Right indicator - Known (tappable to show contextual help) */}
+      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleRightPress}>
         <View style={rightIndicatorStyle}>
           <Ionicons {...createIconProps('chevron-forward', colors.success)} />
         </View>

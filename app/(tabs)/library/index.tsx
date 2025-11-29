@@ -42,21 +42,16 @@ const styles = StyleSheet.create({
 
 /**
  * Generic helper to build entities (categories/authors) with article counts
- * Filters out entities with no articles (count === 0)
+ * All categories/authors are guaranteed to have articles
  */
 function buildEntitiesWithCounts<T extends { id: number; name: string }>(
   entities: T[],
   counts: Record<number, number>,
 ): (T & { count: number })[] {
-  return entities.reduce<(T & { count: number })[]>((acc, entity) => {
-    if (entity?.id && entity.id > 0 && entity.name) {
-      const count = counts[entity.id] || 0;
-      if (count > 0) {
-        acc.push({ ...entity, count });
-      }
-    }
-    return acc;
-  }, []);
+  return entities.map(entity => ({
+    ...entity,
+    count: counts[entity.id] || 0,
+  }));
 }
 
 export default function ReadScreen(): JSX.Element {
@@ -121,16 +116,10 @@ export default function ReadScreen(): JSX.Element {
       authorCounts: Record<number, number>;
     }>(
       (acc, article) => {
-        const categoryId = article?.category?.id;
-        const authorId = article?.author?.id;
-
-        if (categoryId) {
-          acc.categoryCounts[categoryId] = (acc.categoryCounts[categoryId] || 0) + 1;
-        }
-        if (authorId) {
-          acc.authorCounts[authorId] = (acc.authorCounts[authorId] || 0) + 1;
-        }
-
+        // Every article has a category and author (guaranteed)
+        acc.categoryCounts[article.category.id] =
+          (acc.categoryCounts[article.category.id] || 0) + 1;
+        acc.authorCounts[article.author.id] = (acc.authorCounts[article.author.id] || 0) + 1;
         return acc;
       },
       { categoryCounts: {}, authorCounts: {} },
@@ -201,45 +190,40 @@ export default function ReadScreen(): JSX.Element {
   const headerSections = useMemo(() => {
     const sections = [];
 
-    if (articlesData.length > 0) {
-      sections.push(
-        <IntelligentArticleSection
-          key="featured"
-          articlesData={articlesData}
-          refreshKey={refreshKey}
-        />,
-      );
-    }
+    // Articles, categories, and authors are guaranteed to exist
+    sections.push(
+      <IntelligentArticleSection
+        key="featured"
+        articlesData={articlesData}
+        refreshKey={refreshKey}
+      />,
+    );
 
-    if (categoriesWithArticles.length > 0) {
-      sections.push(
-        <View key="categories-wrapper" style={styles.sectionSeparator}>
-          <ThemedText type="caption" variant="secondary" style={styles.sectionHeader}>
-            {STRINGS.SECTION_CATEGORIES}
-          </ThemedText>
-          <FilterSection
-            items={categoriesWithArticles}
-            onSelect={handleSelectFilter}
-            filterType="category"
-          />
-        </View>,
-      );
-    }
+    sections.push(
+      <View key="categories-wrapper" style={styles.sectionSeparator}>
+        <ThemedText type="caption" variant="secondary" style={styles.sectionHeader}>
+          {STRINGS.SECTION_CATEGORIES}
+        </ThemedText>
+        <FilterSection
+          items={categoriesWithArticles}
+          onSelect={handleSelectFilter}
+          filterType="category"
+        />
+      </View>,
+    );
 
-    if (authorsWithArticles.length > 0) {
-      sections.push(
-        <View key="authors-wrapper" style={styles.sectionSeparator}>
-          <ThemedText type="caption" variant="secondary" style={styles.sectionHeader}>
-            {STRINGS.SECTION_AUTHORS}
-          </ThemedText>
-          <FilterSection
-            items={authorsWithArticles}
-            onSelect={handleSelectFilter}
-            filterType="author"
-          />
-        </View>,
-      );
-    }
+    sections.push(
+      <View key="authors-wrapper" style={styles.sectionSeparator}>
+        <ThemedText type="caption" variant="secondary" style={styles.sectionHeader}>
+          {STRINGS.SECTION_AUTHORS}
+        </ThemedText>
+        <FilterSection
+          items={authorsWithArticles}
+          onSelect={handleSelectFilter}
+          filterType="author"
+        />
+      </View>,
+    );
 
     return sections;
   }, [articlesData, refreshKey, categoriesWithArticles, authorsWithArticles, handleSelectFilter]);

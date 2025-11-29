@@ -1,6 +1,13 @@
 import { memo, useEffect, useMemo, useRef, type ComponentRef, type RefObject } from 'react';
 import type { LayoutRectangle } from 'react-native';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
 
@@ -18,6 +25,8 @@ interface SkiaArabicWordProps {
   position?: number;
   wordRef?: RefObject<ComponentRef<typeof Pressable>>;
   testID?: string;
+  /** When true, shows a pulsing highlight to draw attention (used for tutorial) */
+  isHighlighted?: boolean;
 }
 
 const SkiaArabicWordInternal = function SkiaArabicWord({
@@ -26,12 +35,32 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   position,
   wordRef,
   testID,
+  isHighlighted = false,
 }: SkiaArabicWordProps) {
   const colors = useColors();
   const { arabicFont, getArabicFont, fontFamily } = useSkiaFonts();
 
   // Prevent memory leaks from async callbacks on unmounted components
   const isMountedRef = useRef(true);
+
+  // Pulsing highlight animation for tutorial
+  const highlightOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (isHighlighted) {
+      highlightOpacity.value = withRepeat(
+        withSequence(withTiming(1, { duration: 800 }), withTiming(0.3, { duration: 800 })),
+        -1,
+        false,
+      );
+    } else {
+      highlightOpacity.value = 0;
+    }
+  }, [isHighlighted, highlightOpacity]);
+
+  const highlightStyle = useAnimatedStyle(() => ({
+    opacity: highlightOpacity.value,
+  }));
 
   // Use our existing hook for word selection state
   const { isSelected } = useArabicWord({
@@ -137,30 +166,44 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   ];
 
   return (
-    <Pressable ref={wordRef} style={containerStyle} testID={testID} onPress={handlePress}>
-      <Canvas
-        style={{ width: canvasDimensions.width, height: canvasDimensions.height }}
-        pointerEvents="none"
-      >
-        {paragraph && (
-          <SkiaParagraph
-            paragraph={paragraph}
-            x={0}
-            y={canvasDimensions.yOffset}
-            width={canvasDimensions.width}
-          />
-        )}
-      </Canvas>
-    </Pressable>
+    <View style={styles.wordWrapper}>
+      {isHighlighted && (
+        <Animated.View
+          style={[styles.highlightOverlay, { backgroundColor: colors.tint }, highlightStyle]}
+        />
+      )}
+      <Pressable ref={wordRef} style={containerStyle} testID={testID} onPress={handlePress}>
+        <Canvas
+          style={{ width: canvasDimensions.width, height: canvasDimensions.height }}
+          pointerEvents="none"
+        >
+          {paragraph && (
+            <SkiaParagraph
+              paragraph={paragraph}
+              x={0}
+              y={canvasDimensions.yOffset}
+              width={canvasDimensions.width}
+            />
+          )}
+        </Canvas>
+      </Pressable>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  highlightOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
   wordContainer: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.MICRO,
+  },
+  wordWrapper: {
+    position: 'relative',
   },
 });
 

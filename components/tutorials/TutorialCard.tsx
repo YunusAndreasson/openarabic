@@ -59,6 +59,6 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.XLARGE,
   },
   button: {
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.XXXLARGE,
   },
 });

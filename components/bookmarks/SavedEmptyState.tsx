@@ -48,7 +48,7 @@ export function SavedEmptyState({ onButtonPropsChange }: SavedEmptyStateProps) {
   );
 
   // Update selection when articles load
-  useMemo(() => {
+  useEffect(() => {
     if (previewArticles.length > 0 && selectedIds.size === 0) {
       setSelectedIds(new Set(previewArticles.map(a => a.id)));
     }

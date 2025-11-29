@@ -1,15 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentRef, RefObject } from 'react';
-import { createRef, memo, useEffect, useMemo, useRef } from 'react';
+import { createRef, memo, useMemo, useRef } from 'react';
 import type { LayoutRectangle, StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
@@ -18,6 +11,7 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { selectionFeedback } from '@/utils/haptics';
 import { createPadding } from '@/utils/layoutUtils';
 
 interface ArticleSentenceProps {
@@ -55,24 +49,6 @@ const ArticleSentenceInternal = function ArticleSentence({
   // Only create new refs when new word IDs appear
   const wordRefs = useRef<Map<string, RefObject<ComponentRef<typeof Pressable>>>>(new Map());
 
-  // Bouncing arrow animation for tutorial card
-  const arrowTranslateY = useSharedValue(0);
-
-  useEffect(() => {
-    if (showTutorialCard) {
-      // Bouncing arrow
-      arrowTranslateY.value = withRepeat(
-        withSequence(withTiming(-8, { duration: 600 }), withTiming(0, { duration: 600 })),
-        -1,
-        false,
-      );
-    }
-  }, [showTutorialCard, arrowTranslateY]);
-
-  const animatedArrowStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: arrowTranslateY.value }],
-  }));
-
   // Memoize English text style to prevent recreation
   const englishTextStyle = useMemo(
     () => ({
@@ -100,6 +76,9 @@ const ArticleSentenceInternal = function ArticleSentence({
         wordRefs.current.set(refKey, wordRef);
       }
 
+      // Highlight the first word when tutorial is showing
+      const isFirstWord = index === 0;
+
       return (
         <ArabicWord
           key={refKey}
@@ -107,10 +86,11 @@ const ArticleSentenceInternal = function ArticleSentence({
           onTooltipOpen={onWordPress}
           wordRef={wordRef}
           position={index}
+          isHighlighted={isFirstWord && showTutorialCard}
         />
       );
     });
-  }, [words, onWordPress, sentence.id]);
+  }, [words, onWordPress, sentence.id, showTutorialCard]);
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -142,7 +122,10 @@ const ArticleSentenceInternal = function ArticleSentence({
             {/* Close button */}
             {onDismissTutorial && (
               <Pressable
-                onPress={onDismissTutorial}
+                onPress={() => {
+                  selectionFeedback();
+                  onDismissTutorial();
+                }}
                 style={[styles.closeButton, { backgroundColor: `${colors.background}20` }]}
                 hitSlop={LAYOUT.SPACING.SMALL}
               >
@@ -150,11 +133,6 @@ const ArticleSentenceInternal = function ArticleSentence({
               </Pressable>
             )}
           </View>
-
-          {/* Bouncing arrow */}
-          <Animated.View style={[styles.arrowContainer, animatedArrowStyle]}>
-            <Ionicons name="chevron-down" size={32} color={colors.tint} />
-          </Animated.View>
         </View>
       )}
 
@@ -190,7 +168,7 @@ const styles = StyleSheet.create({
   },
   tutorialText: {
     textAlign: 'center',
-    paddingRight: LAYOUT.SPACING.LARGE, // Space for close button
+    paddingRight: LAYOUT.SPACING.XLARGE, // Space for close button
   },
   closeButton: {
     position: 'absolute',
@@ -201,11 +179,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  arrowContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.TINY,
   },
   wordsContainer: {
     alignItems: 'center',

@@ -8,11 +8,9 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { ToastType } from '@/types/enums';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 import { createTextStyle, type BatchedTextColors } from '@/utils/textStyleUtils';
-import { useReviewToast } from '@/hooks/review/useReviewToast';
 
 const WORD_DISPLAY_CONSTANTS = {
   ARABIC_FONT_SIZE: LAYOUT.SPACING.XXLARGE * 2, // Very large for Arabic (64px)
@@ -68,7 +66,6 @@ export function WordDisplay({
   onWordPress,
 }: WordDisplayProps) {
   const colors = useColors();
-  const { showToast } = useReviewToast();
 
   // Color batching
   const batchedColors: BatchedTextColors = {
@@ -139,11 +136,6 @@ export function WordDisplay({
 
   const handleHintPress = () => {
     lightFeedback();
-    showToast(
-      "This is a hint! Swipe right if this helps you remember (vague), or left if you still don't know (unknown).",
-      8000,
-      ToastType.INFO,
-    );
   };
 
   return (

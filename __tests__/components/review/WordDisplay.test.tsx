@@ -55,14 +55,6 @@ jest.mock('@/utils/textStyleUtils', () => ({
   createTextStyle: () => ({ fontSize: 64, color: '#1a1a1a' }),
 }));
 
-// Mock useReviewToast hook
-const mockShowToast = jest.fn();
-jest.mock('@/hooks/review/useReviewToast', () => ({
-  useReviewToast: () => ({
-    showToast: mockShowToast,
-  }),
-}));
-
 // Mock ToastType enum
 jest.mock('@/types/enums', () => ({
   ToastType: {
@@ -129,7 +121,7 @@ describe('WordDisplay', () => {
       expect(queryByText(/\.\.\./)).toBeNull();
     });
 
-    test('shows toast when hint is pressed', () => {
+    test('triggers haptic feedback when hint is pressed', () => {
       const { getByText } = render(
         <WordDisplay word="كتب" showFirstLetterOnly englishTranslation="write" />,
       );
@@ -137,7 +129,6 @@ describe('WordDisplay', () => {
       fireEvent.press(getByText('W...'));
 
       expect(mockLightFeedback).toHaveBeenCalled();
-      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('hint'), 8000, 'info');
     });
   });
 

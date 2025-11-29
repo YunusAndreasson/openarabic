@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -8,6 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAddCommonWords } from '@/hooks/study/useAddCommonWords';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { selectionFeedback } from '@/utils/haptics';
 
 const PREVIEW_WORDS_COUNT = 9;
 
@@ -42,13 +43,14 @@ export function PracticeEmptyState({ onButtonPropsChange }: PracticeEmptyStatePr
   );
 
   // Update selection when words load
-  useMemo(() => {
+  useEffect(() => {
     if (previewWords.length > 0 && selectedIds.size === 0) {
       setSelectedIds(new Set(previewWords.map(w => w.id)));
     }
   }, [previewWords, selectedIds.size]);
 
   const toggleSelection = useCallback((id: number) => {
+    selectionFeedback();
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {

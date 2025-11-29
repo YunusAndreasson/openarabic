@@ -1,7 +1,7 @@
 /**
  * ReviewBottomActions Component Tests
  *
- * Tests review action buttons (Don't Know, Vague, Know).
+ * Tests review action buttons (Don't Know, Hint, Know).
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
@@ -57,7 +57,7 @@ jest.mock('@/types/enums', () => ({
 
 describe('ReviewBottomActions', () => {
   const mockOnVague = jest.fn();
-  const mockOnShowTutorial = jest.fn();
+  const mockOnShowContextualHelp = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -68,7 +68,7 @@ describe('ReviewBottomActions', () => {
       const { getByText } = render(<ReviewBottomActions />);
 
       expect(getByText("Don't Know")).toBeTruthy();
-      expect(getByText('Vague')).toBeTruthy();
+      expect(getByText('Hint')).toBeTruthy();
       expect(getByText('Know')).toBeTruthy();
     });
 
@@ -79,24 +79,28 @@ describe('ReviewBottomActions', () => {
       expect(getByTestId('icon-chevron-forward')).toBeTruthy();
     });
 
-    test('renders help circle icon for vague action', () => {
+    test('renders fingerprint icon for hint action', () => {
       const { getByTestId } = render(<ReviewBottomActions />);
 
-      expect(getByTestId('icon-help-circle')).toBeTruthy();
+      expect(getByTestId('icon-finger-print')).toBeTruthy();
     });
   });
 
   describe("Left Indicator (Don't Know)", () => {
-    test('calls onShowTutorial when pressed', () => {
-      const { getByText } = render(<ReviewBottomActions onShowTutorial={mockOnShowTutorial} />);
+    test('calls onShowContextualHelp when pressed', () => {
+      const { getByText } = render(
+        <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
+      );
 
       fireEvent.press(getByText("Don't Know"));
 
-      expect(mockOnShowTutorial).toHaveBeenCalledTimes(1);
+      expect(mockOnShowContextualHelp).toHaveBeenCalledTimes(1);
     });
 
     test('triggers haptic feedback when pressed', () => {
-      const { getByText } = render(<ReviewBottomActions onShowTutorial={mockOnShowTutorial} />);
+      const { getByText } = render(
+        <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
+      );
 
       fireEvent.press(getByText("Don't Know"));
 
@@ -104,22 +108,22 @@ describe('ReviewBottomActions', () => {
     });
   });
 
-  describe('Center Button (Vague)', () => {
-    test('calls onShowTutorial when pressed if available', () => {
+  describe('Center Button (Hint)', () => {
+    test('calls onShowContextualHelp when pressed if available', () => {
       const { getByText } = render(
-        <ReviewBottomActions onVague={mockOnVague} onShowTutorial={mockOnShowTutorial} />,
+        <ReviewBottomActions onVague={mockOnVague} onShowContextualHelp={mockOnShowContextualHelp} />,
       );
 
-      fireEvent.press(getByText('Vague'));
+      fireEvent.press(getByText('Hint'));
 
-      expect(mockOnShowTutorial).toHaveBeenCalledTimes(1);
+      expect(mockOnShowContextualHelp).toHaveBeenCalledTimes(1);
       expect(mockOnVague).not.toHaveBeenCalled();
     });
 
-    test('calls onVague when pressed if onShowTutorial not provided', () => {
+    test('calls onVague when pressed if onShowContextualHelp not provided', () => {
       const { getByText } = render(<ReviewBottomActions onVague={mockOnVague} />);
 
-      fireEvent.press(getByText('Vague'));
+      fireEvent.press(getByText('Hint'));
 
       expect(mockOnVague).toHaveBeenCalledTimes(1);
     });
@@ -127,23 +131,27 @@ describe('ReviewBottomActions', () => {
     test('triggers haptic feedback when pressed', () => {
       const { getByText } = render(<ReviewBottomActions onVague={mockOnVague} />);
 
-      fireEvent.press(getByText('Vague'));
+      fireEvent.press(getByText('Hint'));
 
       expect(mockLightFeedback).toHaveBeenCalled();
     });
   });
 
   describe('Right Indicator (Know)', () => {
-    test('calls onShowTutorial when pressed', () => {
-      const { getByText } = render(<ReviewBottomActions onShowTutorial={mockOnShowTutorial} />);
+    test('calls onShowContextualHelp when pressed', () => {
+      const { getByText } = render(
+        <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
+      );
 
       fireEvent.press(getByText('Know'));
 
-      expect(mockOnShowTutorial).toHaveBeenCalledTimes(1);
+      expect(mockOnShowContextualHelp).toHaveBeenCalledTimes(1);
     });
 
     test('triggers haptic feedback when pressed', () => {
-      const { getByText } = render(<ReviewBottomActions onShowTutorial={mockOnShowTutorial} />);
+      const { getByText } = render(
+        <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
+      );
 
       fireEvent.press(getByText('Know'));
 
@@ -157,7 +165,7 @@ describe('ReviewBottomActions', () => {
 
       // Should render without errors
       expect(getByText("Don't Know")).toBeTruthy();
-      expect(getByText('Vague')).toBeTruthy();
+      expect(getByText('Hint')).toBeTruthy();
       expect(getByText('Know')).toBeTruthy();
     });
 
@@ -166,7 +174,7 @@ describe('ReviewBottomActions', () => {
 
       // Should not throw
       fireEvent.press(getByText("Don't Know"));
-      fireEvent.press(getByText('Vague'));
+      fireEvent.press(getByText('Hint'));
       fireEvent.press(getByText('Know'));
     });
   });

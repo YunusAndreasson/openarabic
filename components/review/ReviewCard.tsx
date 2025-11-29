@@ -1,9 +1,14 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-reanimated';
-import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { SPRING_CONFIG } from '@/constants/animation';
 
@@ -18,6 +23,7 @@ import { withOpacity } from '@/utils/colorUtils';
 // ===== GESTURE CONSTANTS =====
 const GESTURE_CONSTANTS = {
   MAX_TRANSLATION_RATIO: LAYOUT.OPACITY.HOVER,
+  FLASH_OPACITY: 0.35,
 } as const;
 
 const STATIC_STYLES = StyleSheet.create({
@@ -95,35 +101,44 @@ export function ReviewCard({
     },
   });
 
-  // ===== SWIPE BACKGROUND COLOR ANIMATION =====
-  const errorStart = withOpacity(colors.error, 0);
-  const errorEnd = withOpacity(colors.error, 0.35); // Increased from 0.18 for more prominence
-  const successStart = withOpacity(colors.success, 0);
-  const successEnd = withOpacity(colors.success, 0.35); // Increased from 0.18 for more prominence
+  // ===== BACKGROUND FLASH COLORS =====
+  const flashColors = {
+    error: [withOpacity(colors.error, 0), withOpacity(colors.error, GESTURE_CONSTANTS.FLASH_OPACITY)] as [string, string],
+    success: [withOpacity(colors.success, 0), withOpacity(colors.success, GESTURE_CONSTANTS.FLASH_OPACITY)] as [string, string],
+    warning: [withOpacity(colors.warning, 0), withOpacity(colors.warning, GESTURE_CONSTANTS.FLASH_OPACITY)] as [string, string],
+  };
+
+  // ===== HINT FLASH ANIMATION =====
+  const hintFlashProgress = useSharedValue(0);
+
+  useEffect(() => {
+    if (showHint) {
+      hintFlashProgress.value = withTiming(1, { duration: 150 }, () => {
+        hintFlashProgress.value = withTiming(0, { duration: 300 });
+      });
+    }
+  }, [showHint, hintFlashProgress]);
 
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
     const maxTranslation = SCREEN_WIDTH * GESTURE_CONSTANTS.MAX_TRANSLATION_RATIO;
     const progress = Math.min(Math.abs(translateX.value) / maxTranslation, 1);
+    const t = 1 - Math.pow(1 - progress, 2); // Quadratic ease-out
 
-    // Apply easing curve for more prominent color at beginning of swipe
-    // Using quadratic ease-out: starts strong, ends gentle
-    const t = 1 - Math.pow(1 - progress, 2);
-
-    if (translateX.value < 0) {
-      // Left swipe = Unknown (red)
-      return {
-        backgroundColor: interpolateColor(t, [0, 1], [errorStart, errorEnd]),
-      };
+    // Hint flash (yellow)
+    if (hintFlashProgress.value > 0) {
+      return { backgroundColor: interpolateColor(hintFlashProgress.value, [0, 1], flashColors.warning) };
     }
+    // Left swipe (red)
+    if (translateX.value < 0) {
+      return { backgroundColor: interpolateColor(t, [0, 1], flashColors.error) };
+    }
+    // Right swipe (green)
     if (translateX.value > 0) {
-      // Right swipe = Known (green)
-      return {
-        backgroundColor: interpolateColor(t, [0, 1], [successStart, successEnd]),
-      };
+      return { backgroundColor: interpolateColor(t, [0, 1], flashColors.success) };
     }
     return { backgroundColor: colors.transparent };
-  }, [errorStart, errorEnd, successStart, successEnd]);
+  }, [flashColors.error, flashColors.success, flashColors.warning]);
 
   // ===== COMBINED ANIMATED STYLE (SINGLE ANIMATED VIEW) =====
   const combinedAnimatedStyle = useAnimatedStyle(() => {

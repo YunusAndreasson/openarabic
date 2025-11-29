@@ -1,4 +1,3 @@
-import { EmptyState } from '@/components/common';
 import { ListSeparator } from '@/components/common';
 import { FlashList } from '@shopify/flash-list';
 import React, { type FC, useDeferredValue, useMemo } from 'react';
@@ -221,10 +220,6 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     [deferredVisibleArticles, progressMap],
   );
 
-  // Simple derived state (no need for useMemo on primitives)
-  const hasArticles = visibleArticles.length > 0;
-  const shouldShowEmpty = !loading && !hasArticles;
-
   // Dynamic list content style with safe area inset for bottom padding
   const listContentStyle = useMemo(
     () => ({
@@ -315,15 +310,6 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
 
   // v2 handles layout automatically - no overrideItemLayout needed
 
-  // Empty state props - only shows when filters eliminate all results
-  const emptyStateProps = {
-    description: STRINGS.TRY_ADJUSTING_FILTERS,
-    icon: 'funnel' as const,
-    title: STRINGS.NO_ARTICLES_FOUND,
-    hideArticlesButton: true,
-    containerStyle: STATIC_STYLES.emptyContainer,
-  };
-
   // ThemedView props
   const themedViewProps = {
     includeBottomInset: false,
@@ -337,8 +323,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   const isInitialProgressLoad =
     isProgressLoading && visibleArticles.length > 0 && progressMap.size === 0;
   const shouldShowLoading =
-    (loading && (visibleArticles.length === 0 || (articles?.length && !shouldShowEmpty))) ||
-    isInitialProgressLoad;
+    (loading && visibleArticles.length === 0) || isInitialProgressLoad;
 
   if (shouldShowLoading) {
     return (
@@ -346,14 +331,6 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
         <View style={[STATIC_STYLES.emptyContainer, { paddingTop: LAYOUT.SPACING.XXLARGE }]}>
           <PulsatingLoader size={64} />
         </View>
-      </ThemedView>
-    );
-  }
-
-  if (shouldShowEmpty) {
-    return (
-      <ThemedView {...themedViewProps}>
-        <EmptyState {...emptyStateProps} />
       </ThemedView>
     );
   }

@@ -1,4 +1,3 @@
-import { EmptyState } from '@/components/common';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
@@ -7,6 +6,7 @@ import { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { DictionaryWordCard, MemoryStrengthLegend } from '@/components/study';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
@@ -111,11 +111,9 @@ export default function DictionaryScreen(): JSX.Element {
         </View>
       ) : (
         <View style={styles.emptyContainer}>
-          <EmptyState
-            title={STRINGS.STUDY_LIST_EMPTY_TITLE}
-            description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
-            icon="school"
-          />
+          <ThemedText type="body" variant="secondary" align="center">
+            {STRINGS.STUDY_LIST_EMPTY_HINT}
+          </ThemedText>
         </View>
       )}
     </ThemedView>
@@ -127,6 +125,8 @@ const styles = StyleSheet.create({
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: LAYOUT.SPACING.XLARGE,
   },
   contentContainer: {
     ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,

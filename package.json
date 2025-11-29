@@ -116,7 +116,7 @@
     "jest-expo": "~54.0.13",
     "knip": "^5.70.2",
     "patch-package": "^8.0.1",
-    "prettier": "^3.7.1",
+    "prettier": "^3.7.2",
     "react-test-renderer": "19.1.0",
     "tsc-files": "^1.1.4",
     "typescript": "~5.9.3"
