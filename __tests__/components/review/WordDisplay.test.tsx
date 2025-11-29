@@ -80,7 +80,7 @@ describe('WordDisplay', () => {
       const { getByText } = render(<WordDisplay word="كتب" translation="to write" />);
 
       expect(getByText('كتب')).toBeTruthy();
-      expect(getByText('to write')).toBeTruthy();
+      expect(getByText('To write')).toBeTruthy(); // Capitalized
     });
 
     test('renders without translation when not provided', () => {
@@ -185,7 +185,7 @@ describe('WordDisplay', () => {
         <WordDisplay word="كتب" translation="to write, to compose, to author a book" />,
       );
 
-      expect(getByText('to write, to compose, to author a book')).toBeTruthy();
+      expect(getByText('To write, to compose, to author a book')).toBeTruthy(); // Capitalized
     });
   });
 });

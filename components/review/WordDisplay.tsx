@@ -10,6 +10,7 @@ import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { createTextStyle, type BatchedTextColors } from '@/utils/textStyleUtils';
 
 const WORD_DISPLAY_CONSTANTS = {
@@ -117,7 +118,7 @@ export function WordDisplay({
   const translationTextProps = {
     variant: 'error' as const,
     type: 'heading2' as const,
-    children: translation,
+    children: translation ? capitalizeFirstLetter(translation) : translation,
   };
 
   // Create props for hesitation hint (similar to translation but auto-shown)
