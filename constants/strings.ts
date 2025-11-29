@@ -88,6 +88,9 @@ export const STRINGS = {
   HIDE_EMAIL_OPTIONS: 'Hide email options',
   AUTHOR_ARTICLES: 'Author articles',
   CATEGORY: 'Category',
+  // Section headers for Explore tab
+  SECTION_CATEGORIES: 'Categories',
+  SECTION_AUTHORS: 'Authors',
   RESUMED_READING_TEMPLATE: 'Resumed at {percent}%',
   // Article & content actions - shortened and action-oriented
   BROWSE_ARTICLES: 'Explore articles',

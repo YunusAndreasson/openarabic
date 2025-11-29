@@ -7,6 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import type { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleList } from '@/components/library';
 import { BrandFooter } from '@/components/library';
@@ -28,6 +29,9 @@ const styles = StyleSheet.create({
   },
   sectionSeparator: {
     marginTop: LAYOUT.SPACING.SMALL, // 8px - consistent with Practice screen
+  },
+  sectionHeader: {
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
 });
@@ -206,6 +210,9 @@ export default function ReadScreen(): JSX.Element {
     if (categoriesWithArticles.length > 0) {
       sections.push(
         <View key="categories-wrapper" style={styles.sectionSeparator}>
+          <ThemedText type="caption" variant="secondary" style={styles.sectionHeader}>
+            {STRINGS.SECTION_CATEGORIES}
+          </ThemedText>
           <FilterSection
             items={categoriesWithArticles}
             onSelect={handleSelectFilter}
@@ -218,6 +225,9 @@ export default function ReadScreen(): JSX.Element {
     if (authorsWithArticles.length > 0) {
       sections.push(
         <View key="authors-wrapper" style={styles.sectionSeparator}>
+          <ThemedText type="caption" variant="secondary" style={styles.sectionHeader}>
+            {STRINGS.SECTION_AUTHORS}
+          </ThemedText>
           <FilterSection
             items={authorsWithArticles}
             onSelect={handleSelectFilter}
