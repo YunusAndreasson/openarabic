@@ -8,14 +8,11 @@
     "icon": "./assets/images/oaIcon.png",
     "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#1A211C",
-    "primaryColor": "#5B7F68",
+    "backgroundColor": "#111614",
+    "primaryColor": "#568066",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
@@ -24,16 +21,10 @@
       "newArchEnabled": true,
       "usesAppleSignIn": true,
       "entitlements": {
-        "com.apple.developer.applesignin": [
-          "Default"
-        ]
+        "com.apple.developer.applesignin": ["Default"]
       },
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio",
-          "processing",
-          "fetch"
-        ],
+        "UIBackgroundModes": ["audio", "processing", "fetch"],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",
@@ -47,7 +38,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#1A211C",
+        "backgroundColor": "#111614",
         "foregroundImage": "./assets/images/oaIcon.png"
       },
       "package": "com.edenmind.OpenArabic",
@@ -60,14 +51,11 @@
         "android.permission.SCHEDULE_EXACT_ALARM",
         "android.permission.VIBRATE"
       ],
-      "blockedPermissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ]
+      "blockedPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },
     "notification": {
       "icon": "./assets/images/oaIcon.png",
-      "color": "#5B7F68",
+      "color": "#568066",
       "iosDisplayInForeground": true,
       "androidMode": "default"
     },
@@ -76,7 +64,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#1A211C",
+          "backgroundColor": "#111614",
           "resizeMode": "contain",
           "image": "./assets/images/oaIcon.png"
         }
@@ -105,7 +93,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/oaIcon.png",
-          "color": "#5B7F68",
+          "color": "#568066",
           "defaultChannel": "reminders",
           "sounds": [],
           "_comment": "Background remote notifications disabled - app uses local notifications only (no backend push notifications)",

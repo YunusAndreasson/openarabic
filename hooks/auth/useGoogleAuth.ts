@@ -1,3 +1,4 @@
+import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -216,26 +217,66 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       });
 
       let userInfo;
-      try {
-        userInfo = await GoogleSignin.signIn();
-      } catch (signInError) {
-        Sentry.captureException(signInError, {
-          tags: {
-            location: 'google_auth',
-            step: 'google_signin',
-          },
-          level: 'error',
-          extra: {
-            errorType:
-              typeof signInError === 'object' ? signInError?.constructor?.name : typeof signInError,
-            errorCode:
-              typeof signInError === 'object' && signInError && 'code' in signInError
-                ? signInError.code
-                : 'unknown',
-            errorMessage: signInError instanceof Error ? signInError.message : String(signInError),
-          },
-        });
-        throw signInError;
+      let signInAttempt = 0;
+      const maxRetries = 1; // Single retry for INTERNAL_ERROR
+
+      while (signInAttempt <= maxRetries) {
+        try {
+          if (signInAttempt > 0) {
+            // Check network before retry
+            const netState = await NetInfo.fetch();
+            if (!netState.isConnected) {
+              throw new Error('No network connection available');
+            }
+
+            // Wait 1 second before retry (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * signInAttempt));
+
+            Sentry.addBreadcrumb({
+              category: 'auth',
+              message: `Retrying Google Sign In (attempt ${signInAttempt + 1})`,
+              level: 'info',
+            });
+          }
+
+          userInfo = await GoogleSignin.signIn();
+          break; // Success - exit retry loop
+        } catch (signInError) {
+          const errorCode =
+            typeof signInError === 'object' && signInError && 'code' in signInError
+              ? signInError.code
+              : 'unknown';
+
+          // Retry only for INTERNAL_ERROR (code 8) on first attempt
+          const isInternalError = errorCode === 8;
+          const shouldRetry = isInternalError && signInAttempt < maxRetries;
+
+          Sentry.captureException(signInError, {
+            tags: {
+              location: 'google_auth',
+              step: 'google_signin',
+              attempt: signInAttempt + 1,
+              willRetry: shouldRetry,
+            },
+            level: shouldRetry ? 'warning' : 'error',
+            extra: {
+              errorType:
+                typeof signInError === 'object'
+                  ? signInError?.constructor?.name
+                  : typeof signInError,
+              errorCode,
+              errorMessage:
+                signInError instanceof Error ? signInError.message : String(signInError),
+            },
+          });
+
+          if (shouldRetry) {
+            signInAttempt++;
+            continue; // Retry
+          }
+
+          throw signInError; // Don't retry - throw error
+        }
       }
 
       Sentry.addBreadcrumb({
@@ -441,11 +482,13 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         isConfigured,
       };
 
-      // Determine which step failed based on error message
+      // Determine which step failed based on error message and code
       let failedStep = 'unknown';
       let stepMessage = 'Sign in failed';
 
       const errorMsg = errorDetails.errorMessage.toLowerCase();
+      const isInternalError = String(errorDetails.errorCode) === '8';
+
       if (
         errorMsg.includes('module') ||
         errorMsg.includes('not available') ||
@@ -466,6 +509,10 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       ) {
         failedStep = 'supabase_exchange';
         stepMessage = 'Google sign-in succeeded, but server authentication failed';
+      } else if (isInternalError) {
+        failedStep = 'google_signin';
+        stepMessage =
+          'Google Sign-In service temporarily unavailable. Please check your connection and try again.';
       } else if (errorMsg.includes('sign') || errorMsg.includes('google')) {
         failedStep = 'google_signin';
         stepMessage = 'Google sign-in failed';
@@ -478,39 +525,41 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
               .originalError
           : null;
 
-      // Build full error message for toast with ALL details
-      const detailedErrorMessage = [
-        `❌ Google Sign In Failed`,
-        ``,
-        `Step: ${stepMessage}`,
-        errorDetails.errorCode !== 'unknown' ? `Error Code: ${errorDetails.errorCode}` : '',
-        ``,
-        `Error Message:`,
-        errorDetails.errorMessage,
-        ``,
-        supabaseError
-          ? [
-              `Supabase Details:`,
-              `• Message: ${supabaseError.message || 'none'}`,
-              `• Status: ${supabaseError.status || 'unknown'}`,
-              `• Name: ${supabaseError.name || 'unknown'}`,
-              ``,
-            ].join('\n')
-          : '',
-        `Error Stack (first 200 chars):`,
-        errorDetails.errorStack?.substring(0, 200) || '[no stack]',
-        ``,
-        `Config Status: ${errorDetails.isConfigured ? 'Configured' : 'Not Configured'}`,
-      ]
-        .filter(Boolean)
-        .join('\n');
+      // Build error message - simplified for INTERNAL_ERROR, detailed for others
+      const detailedErrorMessage = isInternalError
+        ? stepMessage // Simplified message for INTERNAL_ERROR
+        : [
+            `❌ Google Sign In Failed`,
+            ``,
+            `Step: ${stepMessage}`,
+            errorDetails.errorCode !== 'unknown' ? `Error Code: ${errorDetails.errorCode}` : '',
+            ``,
+            `Error Message:`,
+            errorDetails.errorMessage,
+            ``,
+            supabaseError
+              ? [
+                  `Supabase Details:`,
+                  `• Message: ${supabaseError.message || 'none'}`,
+                  `• Status: ${supabaseError.status || 'unknown'}`,
+                  `• Name: ${supabaseError.name || 'unknown'}`,
+                  ``,
+                ].join('\n')
+              : '',
+            `Error Stack (first 200 chars):`,
+            errorDetails.errorStack?.substring(0, 200) || '[no stack]',
+            ``,
+            `Config Status: ${errorDetails.isConfigured ? 'Configured' : 'Not Configured'}`,
+          ]
+            .filter(Boolean)
+            .join('\n');
 
       // Use handleError to avoid duplicate Sentry captures
       handleError(error instanceof Error ? error : new Error('Google Sign In failed'), {
         toastMessage: detailedErrorMessage,
-        toastDuration: 20000, // 20 seconds to read ALL details and screenshot
+        toastDuration: isInternalError ? 5000 : 20000, // Shorter duration for INTERNAL_ERROR
         analyticsEventName: 'Google_Sign_In_Error',
-        sentrySeverity: 'error',
+        sentrySeverity: isInternalError ? 'warning' : 'error', // Lower severity for transient errors
         sentryTags: {
           location: 'google_auth',
           step: failedStep,

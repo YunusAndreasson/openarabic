@@ -1,3 +1,4 @@
+import NetInfo from '@react-native-community/netinfo';
 import * as Crypto from 'expo-crypto';
 import { Directory, File, Paths } from 'expo-file-system';
 
@@ -85,30 +86,62 @@ export class AudioCacheManager {
   }
 
   /**
-   * Download and cache audio file
+   * Download and cache audio file with retry logic
    */
   private async cacheAudio(url: string): Promise<string> {
-    try {
-      await this.ensureCacheDirectoryExists();
+    await this.ensureCacheDirectoryExists();
 
-      const cacheKey = await this.generateCacheKey(url);
-      const cachedFilePath = `${this.cacheDir}${cacheKey}`;
+    const cacheKey = await this.generateCacheKey(url);
+    const cachedFilePath = `${this.cacheDir}${cacheKey}`;
 
-      // Download to cache
-      const file = new File(cachedFilePath);
-      const downloadResult = await File.downloadFileAsync(url, file);
+    const maxRetries = 2; // 2 retries = 3 total attempts
+    let lastError: Error | null = null;
 
-      if (downloadResult.exists) {
-        // Update memory cache
-        this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
-        return cachedFilePath;
-      } else {
-        throw new Error('Download failed - file does not exist after download');
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // Check network before retry (skip check on first attempt for efficiency)
+        if (attempt > 0) {
+          const netState = await NetInfo.fetch();
+          if (!netState.isConnected) {
+            throw new Error('No network connection available');
+          }
+          // Exponential backoff: 1s, 2s
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+
+        // Download to cache
+        const file = new File(cachedFilePath);
+        const downloadResult = await File.downloadFileAsync(url, file);
+
+        if (downloadResult.exists) {
+          // Update memory cache
+          this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
+          return cachedFilePath;
+        } else {
+          throw new Error('Download failed - file does not exist after download');
+        }
+      } catch (error) {
+        lastError = error as Error;
+        const errorMsg = lastError.message.toLowerCase();
+
+        // Don't retry on non-network errors (4xx, file system errors, etc.)
+        const isNetworkError =
+          errorMsg.includes('network') ||
+          errorMsg.includes('failed') ||
+          errorMsg.includes('timeout') ||
+          errorMsg.includes('connection');
+
+        if (!isNetworkError || attempt >= maxRetries) {
+          await handleError(lastError, { showToast: false });
+          throw lastError;
+        }
+        // Continue to retry for network errors
       }
-    } catch (error) {
-      await handleError(error as Error, { showToast: false });
-      throw error;
     }
+
+    // Should never reach here, but TypeScript needs it
+    await handleError(lastError || new Error('Download failed'), { showToast: false });
+    throw lastError || new Error('Download failed');
   }
 
   /**
