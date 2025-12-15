@@ -483,7 +483,6 @@ CRITICAL VALIDATION RULES:
    - NO anthropomorphism (attributing human qualities to Allah improperly)
    - NO problematic theological statements
    - Proper use of Islamic honorifics
-   - If grammar notes contain ANY theological issue, flag it
 
 11. META-INSTRUCTION - USE YOUR FULL EXPERTISE:
    CRITICAL: The examples and patterns above are ILLUSTRATIVE, not exhaustive.
@@ -547,20 +546,21 @@ CRITICAL VALIDATION RULES:
    - If NO Arabic justification → FLAG as spurious addition
 
    Step 7: THEOLOGICAL REVIEW
-   - Check grammar note for shirk/bidah/anthropomorphism
+   - Check translation for shirk/bidah/anthropomorphism
    - Verify Islamic honorifics
 
    Step 8: FORMULATE RESPONSE
-   - If ALL checks pass → is_correct=true, issues=[], suggestions=null
-   - If ANY check fails → is_correct=false, list specific issues, provide corrections
+   - If ALL checks pass → is_correct=true, issues=[], suggested_english=null
+   - If ANY check fails → is_correct=false, list specific issues, provide English correction
 
 13. RESPONSE FORMAT:
    - Return ONLY valid JSON
    - Match the exact structure provided
    - Include reasoning for EVERY word (even if correct)
-   - If word is CORRECT: set is_correct=true, issues=[], suggested_english=null, suggested_grammar_note=null
-   - If word has ISSUES: set is_correct=false, list issues, provide specific suggestions
+   - If word is CORRECT: set is_correct=true, issues=[], suggested_english=null
+   - If word has ISSUES: set is_correct=false, list issues, provide specific English suggestion
    - CRITICAL: Use null (not the current value) when accepting current translation as correct
+   - NOTE: Do NOT include grammar notes in your response - focus ONLY on English translations
 """
 
         if retry_count > 0:
@@ -597,20 +597,19 @@ REQUIRED OUTPUT FORMAT (valid JSON only):
       "is_correct": <boolean>,
       "issues": [],  // Empty array if word is correct
       "suggested_english": null,  // null if current translation is correct, or "<new translation>" if issues found
-      "suggested_grammar_note": null,  // null if current note is correct, or "<new note>" if issues found
       "reasoning": "<detailed explanation of validation>"
     }}
   ]
 }}
 
 EXAMPLES (ILLUSTRATIVE PATTERNS - apply this reasoning to all words you validate):
-- Correct morphemes: {{"word_id": 123, "is_correct": true, "issues": [], "suggested_english": null, "suggested_grammar_note": null, "reasoning": "Translation 'and book' is accurate. Arabic وَكِتَابٌ has 2 discrete morphemes (wa + kitaab) matching 2 English words."}}
-- Missing prefix: {{"word_id": 456, "is_correct": false, "issues": ["Missing prefix 'fa' translation"], "suggested_english": "so whoever", "suggested_grammar_note": "Conjunction fa (so) + relative pronoun man (whoever)", "reasoning": "Arabic فَمَن has 2 morphemes but current translation 'whoever' only has 1 word. Missing 'fa' prefix."}}
-- Grammatical concept (future): {{"word_id": 234, "is_correct": false, "issues": ["Missing future marker translation"], "suggested_english": "will write", "suggested_grammar_note": "Future marker sa (will) + imperfect verb write", "reasoning": "Arabic سَيَكْتُبُ contains future marker سَ which requires 'will' in English. Current 'writes' omits this grammatical concept."}}
-- Grammatical concept (dual): {{"word_id": 567, "is_correct": false, "issues": ["Missing dual number marker"], "suggested_english": "two books", "suggested_grammar_note": "Noun book in dual form", "reasoning": "Arabic كِتَابَانِ is dual form (two books), not plural. Must include 'two' to represent dual number concept."}}
-- Grammatical concept (jussive negation): {{"word_id": 890, "is_correct": false, "issues": ["Incomplete negation particle representation"], "suggested_english": "did not go", "suggested_grammar_note": "Negation particle lam (did not) + jussive verb go", "reasoning": "Arabic لَمْ يَذْهَبْ uses لَمْ which encodes past negation + jussive mood. English needs 'did not' (2 words) to fully represent this grammatical concept."}}
-- Correct passive voice: {{"word_id": 321, "is_correct": true, "issues": [], "suggested_english": null, "suggested_grammar_note": null, "reasoning": "Translation 'it is' correctly captures the inna particle (إِنَّ) + pronoun suffix (هُ). Both 'it' and 'is' map to Arabic grammatical structures."}}
-- Spurious addition: {{"word_id": 789, "is_correct": false, "issues": ["Added preposition 'of' with no Arabic source"], "suggested_english": "door", "suggested_grammar_note": "Noun meaning door", "reasoning": "Arabic باب has only 1 element (root baab) but current translation 'door of' has 2 words. The word 'of' has no corresponding Arabic morpheme or grammatical concept."}}
+- Correct morphemes: {{"word_id": 123, "is_correct": true, "issues": [], "suggested_english": null, "reasoning": "Translation 'and book' is accurate. Arabic وَكِتَابٌ has 2 discrete morphemes (wa + kitaab) matching 2 English words."}}
+- Missing prefix: {{"word_id": 456, "is_correct": false, "issues": ["Missing prefix 'fa' translation"], "suggested_english": "so whoever", "reasoning": "Arabic فَمَن has 2 morphemes but current translation 'whoever' only has 1 word. Missing 'fa' prefix."}}
+- Grammatical concept (future): {{"word_id": 234, "is_correct": false, "issues": ["Missing future marker translation"], "suggested_english": "will write", "reasoning": "Arabic سَيَكْتُبُ contains future marker سَ which requires 'will' in English. Current 'writes' omits this grammatical concept."}}
+- Grammatical concept (dual): {{"word_id": 567, "is_correct": false, "issues": ["Missing dual number marker"], "suggested_english": "two books", "reasoning": "Arabic كِتَابَانِ is dual form (two books), not plural. Must include 'two' to represent dual number concept."}}
+- Grammatical concept (jussive negation): {{"word_id": 890, "is_correct": false, "issues": ["Incomplete negation particle representation"], "suggested_english": "did not go", "reasoning": "Arabic لَمْ يَذْهَبْ uses لَمْ which encodes past negation + jussive mood. English needs 'did not' (2 words) to fully represent this grammatical concept."}}
+- Correct passive voice: {{"word_id": 321, "is_correct": true, "issues": [], "suggested_english": null, "reasoning": "Translation 'it is' correctly captures the inna particle (إِنَّ) + pronoun suffix (هُ). Both 'it' and 'is' map to Arabic grammatical structures."}}
+- Spurious addition: {{"word_id": 789, "is_correct": false, "issues": ["Added preposition 'of' with no Arabic source"], "suggested_english": "door", "reasoning": "Arabic باب has only 1 element (root baab) but current translation 'door of' has 2 words. The word 'of' has no corresponding Arabic morpheme or grammatical concept."}}
 
 CRITICAL VALIDATION WORKFLOW for EACH word:
 
@@ -657,12 +656,12 @@ STEP 6: EXTRA WORDS CHECK
 
 STEP 7: ROOT ACCURACY & THEOLOGICAL REVIEW
 - Does root translation match Arabic meaning? (literal preferred)
-- Check grammar note for shirk/bidah/anthropomorphism
+- Check translation for shirk/bidah/anthropomorphism
 - Verify Islamic honorifics
 
 STEP 8: FORMULATE RESPONSE
-- If ALL checks pass → is_correct=true, issues=[], suggestions=null
-- If ANY check fails → is_correct=false, list ALL specific issues, provide complete corrected translation
+- If ALL checks pass → is_correct=true, issues=[], suggested_english=null
+- If ANY check fails → is_correct=false, list ALL specific issues, provide corrected English translation
 - Include detailed reasoning showing morpheme + grammatical concept analysis
 
 Return ONLY the JSON object. No markdown, no code blocks, no extra text."""

@@ -133,28 +133,23 @@ def save_validation_improvements(
                 or current_word.get("current_english")
                 or ""
             )
-            suggested_note = validation.get("suggested_grammar_note") or current_word.get(
-                "current_grammar_note"
-            )
 
             # Get current values for comparison
             current_english = current_word.get("current_english", "")
-            current_note = current_word.get("current_grammar_note")
 
-            # Only save if there's a real difference
+            # Only save if there's a real difference in English translation
             english_differs = suggested_english != current_english
-            grammar_differs = suggested_note != current_note
 
-            if not english_differs and not grammar_differs:
+            if not english_differs:
                 # No improvement needed - skip this word
                 skipped_count += 1
                 continue
 
-            # Prepare record for insertion
+            # Prepare record for insertion (no grammar note - only English)
             record = {
                 "sentence_word_id": word_id,
                 "suggested_english": suggested_english,
-                "suggested_grammar_note": suggested_note,
+                "suggested_grammar_note": None,  # Skip grammar notes
                 "status": "pending",
             }
 

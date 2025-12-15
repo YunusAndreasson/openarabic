@@ -102,7 +102,7 @@ Return ONLY the JSON array. NO markdown, NO code blocks, NO explanations.`;
 
     // Call DeepSeek
     const aiResponse = await sendPrompt(prompt, {
-      model: 'deepseek/deepseek-chat-v3.1:free',
+      model: 'deepseek/deepseek-chat-v3.1',
       temperature: 0.3, // Lower temperature for more consistent formatting
       maxTokens: 2000,
     });

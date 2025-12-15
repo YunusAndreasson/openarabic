@@ -245,7 +245,7 @@ export default function EditArticlePage() {
 
       if (error) throw error;
 
-      router.push('/');
+      router.push('/admin/articles');
     } catch (error) {
       console.error('Error saving article:', error);
       alert('Failed to save article. Please try again.');

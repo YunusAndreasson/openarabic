@@ -187,8 +187,8 @@ function ArticlesPageContent() {
 
   const updateArticle = async (
     articleId: number,
-    field: 'author_id' | 'category_id',
-    value: number,
+    field: 'author_id' | 'category_id' | 'published',
+    value: number | boolean,
   ) => {
     setUpdatingIds(prev => new Set(prev).add(articleId));
     try {
@@ -203,18 +203,23 @@ function ArticlesPageContent() {
       setArticles(prev =>
         prev.map(article => {
           if (article.id === articleId) {
-            if (field === 'author_id') {
+            if (field === 'published') {
+              return {
+                ...article,
+                published: value as boolean,
+              };
+            } else if (field === 'author_id') {
               const author = authors.find(a => a.id === value);
               return {
                 ...article,
-                author_id: value,
+                author_id: value as number,
                 authors: author ? { name: author.name } : null,
               };
             } else {
               const category = categories.find(c => c.id === value);
               return {
                 ...article,
-                category_id: value,
+                category_id: value as number,
                 categories: category ? { name: category.name } : null,
               };
             }
@@ -402,6 +407,7 @@ function ArticlesPageContent() {
                     {getSortIcon('category')}
                   </Button>
                 </TableHead>
+                <TableHead className="w-32">Published</TableHead>
                 <TableHead className="w-32">
                   <Button
                     variant="ghost"
@@ -430,7 +436,7 @@ function ArticlesPageContent() {
             <TableBody>
               {paginatedArticles.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     No articles found
                   </TableCell>
                 </TableRow>
@@ -536,6 +542,23 @@ function ArticlesPageContent() {
                                 {category.name}
                               </SelectItem>
                             ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell onClick={e => e.stopPropagation()}>
+                        <Select
+                          value={article.published ? 'true' : 'false'}
+                          onValueChange={value =>
+                            updateArticle(article.id, 'published', value === 'true')
+                          }
+                          disabled={isUpdating}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="true">Yes</SelectItem>
+                            <SelectItem value="false">No</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>

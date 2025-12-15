@@ -97,9 +97,9 @@ Requirements:
 
 New summary:`;
 
-    // Call OpenRouter with free DeepSeek Chat v3.1 model
+    // Call OpenRouter with free DeepSeek Chat model
     const optimizedSummary = await sendPrompt(prompt, {
-      model: 'deepseek/deepseek-chat-v3.1:free',
+      model: 'deepseek/deepseek-chat-v3.1',
       temperature: 0.7,
       maxTokens: 200,
     });
