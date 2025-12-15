@@ -4,7 +4,7 @@ export { DictionaryWordCard } from './DictionaryWordCard';
 export { DueWordsBottomSheet } from './DueWordsBottomSheet';
 export { MemoryRetentionBottomSheet } from './MemoryRetentionBottomSheet';
 export { MemoryStrengthLegend } from './MemoryStrengthLegend';
-export { PracticeEmptyState, type EmptyStateButtonProps } from './PracticeEmptyState';
+export { PracticeEmptyState } from './PracticeEmptyState';
 export { RecommendationCard } from './RecommendationCard';
 export { StudyStreakBottomSheet } from './StudyStreakBottomSheet';
 export { VocabularyStatCards } from './VocabularyStatCards';

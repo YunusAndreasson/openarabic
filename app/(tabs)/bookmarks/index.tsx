@@ -8,11 +8,7 @@ import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 
 import { ThemedView } from '@/components/ThemedView';
-import {
-  BottomControls,
-  SavedEmptyState,
-  type EmptyStateButtonProps,
-} from '@/components/bookmarks';
+import { BottomControls, SavedEmptyState } from '@/components/bookmarks';
 import { ListenListItemCard } from '@/components/bookmarks';
 import { useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
@@ -114,9 +110,6 @@ export default function ListenScreen(): JSX.Element {
   const { showToast } = useToast();
   const colors = useColors();
 
-  // Empty state button props (for when showing empty state)
-  const [emptyButtonProps, setEmptyButtonProps] = useState<EmptyStateButtonProps | null>(null);
-
   // Reset edit mode when screen loses focus
   useFocusEffect(
     useCallback(() => {
@@ -206,8 +199,8 @@ export default function ListenScreen(): JSX.Element {
     [stableHasArticles, shouldShowEmpty],
   );
 
-  // Show bottom controls when has articles OR showing empty state with button
-  const showBottomControls = stableHasArticles || (shouldShowEmpty && emptyButtonProps);
+  // Show bottom controls only when has articles
+  const showBottomControls = stableHasArticles;
 
   // Bottom controls positioned above tab bar
   const bottomControlsStyle = useMemo(
@@ -239,7 +232,7 @@ export default function ListenScreen(): JSX.Element {
 
   // Memoize shared components to prevent recreation
   const EmptyStateComponent = useMemo(
-    () => (shouldShowEmpty ? <SavedEmptyState onButtonPropsChange={setEmptyButtonProps} /> : null),
+    () => (shouldShowEmpty ? <SavedEmptyState /> : null),
     [shouldShowEmpty],
   );
 
@@ -329,24 +322,14 @@ export default function ListenScreen(): JSX.Element {
       {/* Solid overlay below button */}
       {showBottomControls && <View style={bottomOverlayStyle} />}
 
-      {/* Bottom controls - shows Play All or Add to Saved based on state */}
+      {/* Bottom controls - shows Play All when has articles */}
       {showBottomControls && (
         <View style={bottomControlsStyle}>
           <BottomControls
-            primaryDisabled={
-              stableHasArticles ? isPlayAllLoading : (emptyButtonProps?.disabled ?? true)
-            }
-            primaryLoading={
-              stableHasArticles ? isPlayAllLoading : (emptyButtonProps?.loading ?? false)
-            }
-            primaryLabel={
-              stableHasArticles ? AudioAction.PLAY_ALL : (emptyButtonProps?.label ?? '')
-            }
-            onPrimaryPress={
-              stableHasArticles ? handlePlayAllStable : (emptyButtonProps?.onPress ?? (() => {}))
-            }
-            secondaryLabel={stableHasArticles ? undefined : emptyButtonProps?.secondaryLabel}
-            onSecondaryPress={stableHasArticles ? undefined : emptyButtonProps?.secondaryOnPress}
+            primaryDisabled={isPlayAllLoading}
+            primaryLoading={isPlayAllLoading}
+            primaryLabel={AudioAction.PLAY_ALL}
+            onPrimaryPress={handlePlayAllStable}
           />
         </View>
       )}

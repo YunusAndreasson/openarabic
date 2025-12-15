@@ -2,7 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { InteractionManager, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -11,7 +11,7 @@ import { BottomControls } from '@/components/bookmarks';
 import { ErrorState } from '@/components/common';
 import { DueWordsBottomSheet } from '@/components/study';
 import { MemoryRetentionBottomSheet } from '@/components/study';
-import { PracticeEmptyState, type EmptyStateButtonProps } from '@/components/study';
+import { PracticeEmptyState } from '@/components/study';
 import { RecommendationCard } from '@/components/study';
 import { StudyStreakBottomSheet } from '@/components/study';
 import { VocabularyStatCards } from '@/components/study';
@@ -42,9 +42,6 @@ export default function VocabularyScreen(): JSX.Element {
   const router = useRouter();
   const { prefetchVocabularyData } = useAppPreloader();
   const colors = useColors();
-
-  // Empty state button props (for when showing empty state)
-  const [emptyButtonProps, setEmptyButtonProps] = useState<EmptyStateButtonProps | null>(null);
 
   // Bottom sheet visibility management (only one sheet visible at a time)
   const { showSheet, hideSheet, isVisible } = useBottomSheetManager<BottomSheetKey>();
@@ -296,17 +293,17 @@ export default function VocabularyScreen(): JSX.Element {
                 />
               </>
             ) : (
-              <PracticeEmptyState onButtonPropsChange={setEmptyButtonProps} />
+              <PracticeEmptyState />
             )}
           </Animated.View>
         )}
       </ThemedView>
 
       {/* Solid overlay below button */}
-      {(hasAnyStudyWords || emptyButtonProps) && <View style={bottomOverlayStyle} />}
+      {hasAnyStudyWords && <View style={bottomOverlayStyle} />}
 
-      {/* Bottom fixed action button - shows Practice Due or Add to Practice based on state */}
-      {(hasAnyStudyWords || emptyButtonProps) && (
+      {/* Bottom fixed action button - shows Practice Due when has words */}
+      {hasAnyStudyWords && (
         <View
           style={{
             position: 'absolute',
@@ -317,18 +314,10 @@ export default function VocabularyScreen(): JSX.Element {
           }}
         >
           <BottomControls
-            primaryLabel={
-              hasAnyStudyWords ? ReviewAction.STUDY_DUE_WORDS : (emptyButtonProps?.label ?? '')
-            }
-            onPrimaryPress={
-              hasAnyStudyWords ? handleStartReview : (emptyButtonProps?.onPress ?? (() => {}))
-            }
-            primaryDisabled={
-              hasAnyStudyWords ? dueWordsCount === 0 : (emptyButtonProps?.disabled ?? true)
-            }
-            primaryLoading={hasAnyStudyWords ? false : (emptyButtonProps?.loading ?? false)}
-            secondaryLabel={hasAnyStudyWords ? undefined : emptyButtonProps?.secondaryLabel}
-            onSecondaryPress={hasAnyStudyWords ? undefined : emptyButtonProps?.secondaryOnPress}
+            primaryLabel={ReviewAction.STUDY_DUE_WORDS}
+            onPrimaryPress={handleStartReview}
+            primaryDisabled={dueWordsCount === 0}
+            primaryLoading={false}
           />
         </View>
       )}

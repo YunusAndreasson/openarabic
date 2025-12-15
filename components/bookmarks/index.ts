@@ -10,5 +10,5 @@ export { DragHandle, type DragHandleProps } from './DragHandle';
 export { ListenHeader } from './ListenHeader';
 export { ListenListItemCard } from './ListenListItemCard';
 export { PlayButton } from './PlayButton';
-export { SavedEmptyState, type EmptyStateButtonProps } from './SavedEmptyState';
+export { SavedEmptyState } from './SavedEmptyState';
 export { SleepTimer } from './SleepTimer';

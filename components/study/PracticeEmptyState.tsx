@@ -1,62 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useAddCommonWords } from '@/hooks/study/useAddCommonWords';
 import { useColors } from '@/hooks/theme/useColors';
 
-export interface EmptyStateButtonProps {
-  label: string;
-  onPress: () => void;
-  loading: boolean;
-  disabled: boolean;
-  secondaryLabel?: string;
-  secondaryOnPress?: () => void;
-}
-
-interface PracticeEmptyStateProps {
-  onButtonPropsChange?: (props: EmptyStateButtonProps) => void;
-}
-
 /**
- * Simplified empty state for the Practice screen.
- * One-tap to add 10 essential words.
+ * Empty state for the Practice screen.
  */
-export function PracticeEmptyState({ onButtonPropsChange }: PracticeEmptyStateProps) {
-  const { addWords, isLoading } = useAddCommonWords();
+export function PracticeEmptyState() {
   const colors = useColors();
-  const router = useRouter();
-
-  // Use ref to avoid recreating the handler and causing infinite loops
-  const addWordsRef = useRef(addWords);
-  addWordsRef.current = addWords;
-
-  // Navigation to browse texts with hint param
-  const handleBrowse = useCallback(() => {
-    router.push(`${ROUTE_PATHS.EXPLORE_TAB}?from=practice`);
-  }, [router]);
-
-  // Notify parent of button props - only depends on isLoading
-  useEffect(() => {
-    onButtonPropsChange?.({
-      label: STRINGS.STUDY_LIST_EMPTY_CTA,
-      onPress: () => addWordsRef.current(),
-      loading: isLoading,
-      disabled: false,
-      secondaryLabel: STRINGS.STUDY_LIST_EMPTY_CTA_SECONDARY,
-      secondaryOnPress: handleBrowse,
-    });
-  }, [isLoading, onButtonPropsChange, handleBrowse]);
 
   return (
     <View style={styles.container}>
-      {/* Empty state icon */}
-      <Ionicons name="albums-outline" size={80} color={colors.textTertiary} />
+      {/* Empty state icon - fixed height container to prevent layout shifts */}
+      <View style={styles.iconContainer}>
+        <Ionicons name="albums-outline" size={80} color={colors.textTertiary} />
+      </View>
 
       {/* Title */}
       <ThemedText type="heading3" style={styles.title}>
@@ -78,8 +39,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.XLARGE,
   },
+  iconContainer: {
+    height: 80,
+    width: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   hint: {
     marginTop: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
   },
   title: {
