@@ -128,12 +128,12 @@ export const STRINGS = {
   TRY_ADJUSTING_FILTERS: 'Try different filters',
   NO_ARTICLES_FOUND: 'No articles match your filters',
   // Playlist tab empty state - minimal one-tap start
-  BOOKMARKS_EMPTY_TITLE: 'Your playlist is empty',
+  BOOKMARKS_EMPTY_TITLE: 'Your Playlist is empty',
   BOOKMARKS_EMPTY_CTA: 'Add 10 beginner texts',
   BOOKMARKS_EMPTY_CTA_SECONDARY: 'Browse',
-  BOOKMARKS_EMPTY_HINT: 'Tap the headset icon on any article to build your playlist and listen anytime',
+  BOOKMARKS_EMPTY_HINT: 'Tap the headset icon on any article to build your Playlist and listen anytime',
   // Practice tab empty state - minimal one-tap start
-  STUDY_LIST_EMPTY_TITLE: 'Your practice list is empty',
+  STUDY_LIST_EMPTY_TITLE: 'Your Practice list is empty',
   STUDY_LIST_EMPTY_CTA: 'Add 10 essential words',
   STUDY_LIST_EMPTY_CTA_SECONDARY: 'Browse',
   STUDY_LIST_EMPTY_HINT: "Tap any word while reading to add it. We'll remind you at the perfect time so you remember it long-term",

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -14,20 +14,19 @@ export function PracticeEmptyState() {
 
   return (
     <View style={styles.container}>
-      {/* Empty state icon - fixed height container to prevent layout shifts */}
       <View style={styles.iconContainer}>
-        <Ionicons name="albums-outline" size={80} color={colors.textTertiary} />
+        <Ionicons name="albums-outline" size={96} color={colors.textTertiary} />
       </View>
 
-      {/* Title */}
       <ThemedText type="heading3" style={styles.title}>
         {STRINGS.STUDY_LIST_EMPTY_TITLE}
       </ThemedText>
 
-      {/* Hint */}
-      <ThemedText style={styles.hint} type="caption" variant="secondary">
-        {STRINGS.STUDY_LIST_EMPTY_HINT}
-      </ThemedText>
+      <View style={styles.hintContainer}>
+        <ThemedText style={styles.hint} type="caption" variant="secondary">
+          {STRINGS.STUDY_LIST_EMPTY_HINT}
+        </ThemedText>
+      </View>
     </View>
   );
 }
@@ -40,18 +39,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.XLARGE,
   },
   iconContainer: {
-    height: 80,
-    width: 80,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  hint: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    textAlign: 'center',
+    marginBottom: LAYOUT.SPACING.XLARGE, // 24px - modern spacing between icon and title
   },
   title: {
-    marginTop: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
+    marginBottom: LAYOUT.SPACING.MEDIUM, // 12px - balanced spacing between title and description
+  },
+  hintContainer: {
+    maxWidth: 320, // Optimal reading width for mobile (2025 best practice)
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    width: '100%',
+    alignItems: 'center',
+    minHeight: 80, // Fixed height to prevent title movement (accommodates longest text)
+  },
+  hint: {
+    textAlign: 'center',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE, // 1.6x for better readability
   },
 });

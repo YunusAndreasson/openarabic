@@ -7,10 +7,9 @@ import {
   type ReactElement,
   type Ref,
 } from 'react';
-import { Platform, RefreshControl, ScrollView, type StyleProp, type ViewStyle } from 'react-native';
+import { RefreshControl, ScrollView, type StyleProp, type ViewStyle } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface ArticleListProps {
@@ -63,17 +62,13 @@ export function ArticleList({
     }
   };
 
-  // Refresh control (title is iOS-only, shows different text during refresh)
+  // Refresh control
   const refreshControl = (
     <RefreshControl
       colors={[colors.tint]}
       progressBackgroundColor={colors.background}
       refreshing={isRefreshing}
       tintColor={colors.tint}
-      {...(Platform.OS === 'ios' && {
-        title: isRefreshing ? STRINGS.PREPARING_ARTICLES : STRINGS.PULL_TO_REFRESH,
-        titleColor: colors.secondaryText,
-      })}
       progressViewOffset={
         progressViewOffset !== undefined
           ? progressViewOffset
