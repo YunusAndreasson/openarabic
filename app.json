@@ -112,7 +112,14 @@
           "enableBackgroundRemoteNotifications": false
         }
       ],
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "recordAudioAndroid": false,
+          "_comment": "Audio recording disabled - app only uses playback. This prevents RECORD_AUDIO permission from being added."
+        }
+      ],
+      "./plugins/withRemoveExpoAudioBootReceiver.js",
       [
         "expo-image-picker",
         {

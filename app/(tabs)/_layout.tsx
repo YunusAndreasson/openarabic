@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import type { JSX } from 'react';
 import React, { Fragment, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
@@ -51,14 +52,43 @@ export default function TabLayout(): JSX.Element {
   }, [session, isLoading]);
 
   // Tab bar style with padding for proper icon spacing
+  // Android needs explicit height to prevent label text clipping
   const tabBarStyle = useMemo(
-    () => ({
-      borderTopWidth: 0,
-      backgroundColor: colors.elevation0,
-      paddingTop: LAYOUT.SPACING.SMALL, // 8px padding above icons
-      paddingBottom: insets.bottom, // Safe area only
-    }),
+    () => {
+      const baseStyle = {
+        borderTopWidth: 0,
+        backgroundColor: colors.elevation0,
+        paddingTop: LAYOUT.SPACING.SMALL, // 8px padding above icons
+      };
+
+      if (Platform.OS === 'android') {
+        // Android: Set explicit height to ensure labels have enough space
+        // 56px base height + safe area inset + extra padding for labels
+        return {
+          ...baseStyle,
+          height: 56 + insets.bottom + LAYOUT.SPACING.MEDIUM,
+          paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
+        };
+      }
+
+      // iOS: Just use padding for safe area
+      return {
+        ...baseStyle,
+        paddingBottom: insets.bottom,
+      };
+    },
     [colors.elevation0, insets.bottom],
+  );
+
+  // Label style to fix Android text rendering
+  // Android adds extra font padding - disabling it ensures proper text rendering
+  const tabBarLabelStyle = useMemo(
+    () => ({
+      ...(Platform.OS === 'android' && {
+        includeFontPadding: false,
+      }),
+    }),
+    [],
   );
 
   // Badge style for perfect circle
@@ -82,6 +112,7 @@ export default function TabLayout(): JSX.Element {
         tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarShowLabel: true,
         tabBarStyle: tabBarStyle,
+        tabBarLabelStyle: tabBarLabelStyle,
       }}
       screenListeners={{
         state: handleTabStateChange,

@@ -208,12 +208,14 @@ export function useAuthForm(): UseAuthFormReturn {
   const resetPassword = useCallback(async (): Promise<void> => {
     const isEmailValid = validateEmail(email);
     if (!isEmailValid) {
-      // Show error message if email is invalid
+      // Show inline error (already set by validateEmail) and toast message
+      // This is expected user validation, not a system error
       handleError(new Error('Invalid email'), {
         toastMessage: email ? STRINGS.ENTER_VALID_EMAIL : STRINGS.ERROR_EMPTY_EMAIL,
         analyticsEventName: 'Password_Reset_Invalid_Email',
-        sentrySeverity: 'info',
-        showToast: true,
+        captureSentry: false, // Don't log user validation errors to Sentry
+        trackAnalytics: false, // Don't track expected validation errors
+        showToast: true, // Show toast in addition to inline error for clarity
       });
       return;
     }

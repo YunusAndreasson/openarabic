@@ -82,6 +82,7 @@ const isExpectedAuthError = (error: Error | string): boolean => {
   const userMistakePatterns = [
     'invalid login credentials', // Exact match for the Sentry issue
     'invalid credentials', // Generic invalid credentials
+    'invalid email', // User input validation error (email format)
     'wrong password',
     'incorrect password',
   ];
