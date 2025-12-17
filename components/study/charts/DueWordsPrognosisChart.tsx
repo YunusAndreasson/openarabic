@@ -26,6 +26,7 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
     const { dueWordsData, chartData } = useDueWordsChart(studyWords);
 
     // Generate subtitle showing current and peak due words
+    // Explains that Y-axis numbers represent word counts
     const subtitle = useMemo(() => {
       const { currentDue, peakDue, trend } = chartData.insights;
       const totalWords = studyWords.length;
@@ -41,7 +42,8 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
             ? '↘️ Decreasing'
             : '→ Stable';
 
-      return `${currentDue} due today, peak ${peakDue} • ${trendText}`;
+      // Clarify that numbers represent words (Y-axis explanation)
+      return `${currentDue} words due today, peak ${peakDue} words • ${trendText}`;
     }, [chartData.insights, studyWords.length]);
 
     // Prepare data points for interactive tooltips

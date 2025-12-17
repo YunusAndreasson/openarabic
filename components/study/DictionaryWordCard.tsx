@@ -60,7 +60,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     // Get Arabic and English text from root
     const arabicText = word.root?.letters || 'Unknown Arabic';
     const rawEnglishText = word.root?.meaning || 'Unknown English';
-    
+
     // Capitalize first letter of English text for display
     const englishText = useMemo(
       () => capitalizeFirstLetter(rawEnglishText),
