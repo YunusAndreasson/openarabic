@@ -63,7 +63,7 @@ const tintOKLCH = {
  * Follows Material Design 3 and iOS HIG best practices
  */
 const disabledOKLCH = {
-  universal: { l: 0.6, c: 0.012, h: 160 }, // Desaturated grey-green
+  universal: { l: 0.48, c: 0.012, h: 160 }, // Desaturated grey-green - reduced lightness for better disabled appearance
 } as const;
 
 /**
