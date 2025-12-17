@@ -269,8 +269,8 @@ export const STRINGS = {
   MEMORY_STRENGTH: 'Memory strength',
   WORD_MASTERY: 'Words mastered',
   // Practice bottom sheet subtitles (concise: what it shows + why it matters)
-  MEMORY_STRENGTH_SUBTITLE: "How likely you'll recall each word — aim for 75%+",
-  WORD_MASTERY_SUBTITLE: 'Words with stable, long-term memory',
+  MEMORY_STRENGTH_SUBTITLE: 'How likely you are to remember each word (aim for 75%+)',
+  WORD_MASTERY_SUBTITLE: 'Words you’re likely to remember long-term',
   DUE_WORDS_FORECAST_SUBTITLE: 'Words to review each day (next 7 days)',
   DUE_WORDS_FORECAST: 'Due words forecast',
   // Study Streak Bottom Sheet
@@ -278,7 +278,7 @@ export const STRINGS = {
   STUDY_STREAK_ACTIVE_SUBTITLE: 'Keep the momentum going',
   STUDY_STREAK_INACTIVE_SUBTITLE: 'Start your study habit',
   STUDY_STREAK_CHART_TITLE: 'Last 40 days',
-  STUDY_STREAK_CHART_DESCRIPTION: 'Each bar is a study day',
+  STUDY_STREAK_CHART_DESCRIPTION: 'Each bar is a day you practiced',
   LOADING_STREAK: 'Loading streak…',
   FAILED_TO_LOAD_STREAK: "Couldn't load streak. Try again",
   STUDY_STREAK_EMPTY_STATE: 'Complete sessions to build your streak',
@@ -290,8 +290,8 @@ export const STRINGS = {
   EMPTY_STATE_DUE_WORDS: 'Add words to see your forecast',
   EMPTY_STATE_GENERAL: 'Add words to start tracking progress',
   // Chart Dynamic Message Suffixes (concatenated with numbers)
-  WORDS_NEED_URGENT_REVIEW: '% of words need urgent review',
-  WORDS_LIKELY_FORGOTTEN: ' words likely to be forgotten soon',
+  WORDS_NEED_URGENT_REVIEW: '% need review soon',
+  WORDS_LIKELY_FORGOTTEN: ' words need review soon',
   // Account - Support section
   HELP_CENTER: 'Help center',
   CONTACT_SUPPORT: 'Contact support',
@@ -321,9 +321,9 @@ export const STRINGS = {
   NOTIFICATIONS_DISABLED: 'Notifications disabled',
   NOTIFICATION_REMINDER_TITLE: 'Time to practice Arabic',
   NOTIFICATION_REMINDER_BODY: 'Your daily words are ready for review',
-  START_REVIEWING_TO_BUILD_STRENGTH: 'Practice vocabulary to see memory strength',
-  START_PRACTICING_TO_SEE_SPEED: 'Practice vocabulary to see your learning speed',
-  STUDY_TO_MONITOR_REVIEW_TIMING: 'Practice vocabulary to see review schedule',
+  START_REVIEWING_TO_BUILD_STRENGTH: 'Practice to see your memory strength',
+  START_PRACTICING_TO_SEE_SPEED: 'Practice to see your learning speed',
+  STUDY_TO_MONITOR_REVIEW_TIMING: 'Practice to see what to review next',
   STUDY_WORDS_TO_TRACK_MEMORY_RETENTION: 'Practice to track retention',
   // Performance indicators
   PERFORMING_EXCELLENTLY: 'Performing excellently',

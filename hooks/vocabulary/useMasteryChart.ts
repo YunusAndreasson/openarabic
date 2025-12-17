@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import type { DataPoint } from '@/components/common/charts';
+import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 import { parseWordWithStability, useCountBasedChart } from './useCountBasedChart';
@@ -62,7 +63,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
         return { date, masteredCount: count, totalCount, masteryRate };
       },
       getCount: (data: MasteryRecord) => data.masteredCount,
-      zeroStateMessage: 'Start reviewing to build memory strength',
+      zeroStateMessage: STRINGS.START_REVIEWING_TO_BUILD_STRENGTH,
       pathFieldName: 'masteryPath',
       insightsTotalFieldName: 'totalMastered',
     }),
