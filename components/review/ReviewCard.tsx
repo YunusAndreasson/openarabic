@@ -102,6 +102,8 @@ export function ReviewCard({
   });
 
   // ===== BACKGROUND FLASH COLORS =====
+  // Hint flash uses lower opacity since yellow appears brighter than red/green at same opacity
+  const HINT_FLASH_OPACITY = 0.25; // Reduced from 0.35 to balance visual intensity
   const flashColors = {
     error: [
       withOpacity(colors.error, 0),
@@ -113,7 +115,7 @@ export function ReviewCard({
     ] as [string, string],
     warning: [
       withOpacity(colors.warning, 0),
-      withOpacity(colors.warning, GESTURE_CONSTANTS.FLASH_OPACITY),
+      withOpacity(colors.warning, HINT_FLASH_OPACITY),
     ] as [string, string],
   };
 
