@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-reanimated';
 import Animated, {
+  cancelAnimation,
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
@@ -124,11 +125,18 @@ export function ReviewCard({
 
   useEffect(() => {
     if (showHint) {
+      // Cancel any existing animation and start fresh
+      cancelAnimation(hintFlashProgress);
+      hintFlashProgress.value = 0;
       hintFlashProgress.value = withTiming(1, { duration: 150 }, () => {
         hintFlashProgress.value = withTiming(0, { duration: 300 });
       });
+    } else {
+      // Cancel animation and reset immediately when hint is hidden
+      cancelAnimation(hintFlashProgress);
+      hintFlashProgress.value = 0;
     }
-  }, [showHint, hintFlashProgress]);
+  }, [showHint]);
 
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
