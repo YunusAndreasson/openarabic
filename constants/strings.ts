@@ -271,7 +271,7 @@ export const STRINGS = {
   // Practice bottom sheet subtitles (concise: what it shows + why it matters)
   MEMORY_STRENGTH_SUBTITLE: "How likely you'll recall each word — aim for 75%+",
   WORD_MASTERY_SUBTITLE: 'Words with stable, long-term memory',
-  DUE_WORDS_FORECAST_SUBTITLE: 'Y-axis shows word counts for the next 7 days',
+  DUE_WORDS_FORECAST_SUBTITLE: 'Numbers show words due each day for the next 7 days',
   DUE_WORDS_FORECAST: 'Due words forecast',
   // Study Streak Bottom Sheet
   STUDY_STREAK_TITLE: 'Study streak',
