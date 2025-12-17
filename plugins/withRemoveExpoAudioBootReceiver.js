@@ -1,5 +1,45 @@
 const { withAndroidManifest } = require('@expo/config-plugins');
 
+const BOOT_RELATED_ACTIONS = new Set([
+  'android.intent.action.BOOT_COMPLETED',
+  'android.intent.action.REBOOT',
+  'android.intent.action.QUICKBOOT_POWERON',
+  'com.htc.intent.action.QUICKBOOT_POWERON',
+]);
+
+const ANDROID_NAME_ATTR = 'android:name';
+
+function removeUsesPermission(manifest, permissionName) {
+  if (!manifest['uses-permission'] || !Array.isArray(manifest['uses-permission'])) {
+    return;
+  }
+
+  manifest['uses-permission'] = manifest['uses-permission'].filter((perm) => {
+    const name = perm?.$?.[ANDROID_NAME_ATTR];
+    return name !== permissionName;
+  });
+}
+
+function stripBootActionsFromIntentFilters(component) {
+  if (!component?.['intent-filter'] || !Array.isArray(component['intent-filter'])) {
+    return;
+  }
+
+  component['intent-filter'] = component['intent-filter'].filter((filter) => {
+    if (!filter?.action || !Array.isArray(filter.action)) {
+      return true;
+    }
+
+    filter.action = filter.action.filter((action) => {
+      const actionName = action?.$?.[ANDROID_NAME_ATTR];
+      return !BOOT_RELATED_ACTIONS.has(actionName);
+    });
+
+    // Keep this intent-filter if it still has any actions (or categories, etc.)
+    return filter.action.length > 0;
+  });
+}
+
 /**
  * Expo config plugin to remove expo-audio's BOOT_COMPLETED receivers
  * that violate Android 15 restrictions on starting foreground services from boot receivers.
@@ -16,47 +56,26 @@ const withRemoveExpoAudioBootReceiver = (config) => {
       return config;
     }
 
+    // Ensure the final merged manifest does not request boot delivery.
+    // Libraries like expo-notifications can contribute this permission.
+    removeUsesPermission(manifest, 'android.permission.RECEIVE_BOOT_COMPLETED');
+
     const application = manifest.application[0];
 
-    // Remove expo-audio's BOOT_COMPLETED receivers
+    // Strip boot-related actions from ALL receivers (not just expo-audio).
+    // This avoids any possible boot → restricted-foreground-service path on Android 15+.
     if (application.receiver && Array.isArray(application.receiver)) {
       application.receiver = application.receiver.filter((receiver) => {
-        // Check if this is an expo-audio receiver
-        const receiverName = receiver.$?.['android:name'];
-        const isExpoAudioReceiver =
-          receiverName &&
-          (receiverName.includes('expo.modules.audio.service.AudioRecordingService') ||
-            receiverName.includes('expo.modules.audio.service.AudioControlsService'));
+        stripBootActionsFromIntentFilters(receiver);
 
-        if (!isExpoAudioReceiver) {
-          // Keep non-expo-audio receivers
-          return true;
-        }
-
-        // For expo-audio receivers, remove BOOT_COMPLETED intent-filters
-        if (receiver['intent-filter'] && Array.isArray(receiver['intent-filter'])) {
-          receiver['intent-filter'] = receiver['intent-filter'].filter((filter) => {
-            if (filter.action && Array.isArray(filter.action)) {
-              const hasBootCompleted = filter.action.some(
-                (action) => action.$?.['android:name'] === 'android.intent.action.BOOT_COMPLETED'
-              );
-              // Remove filters that contain BOOT_COMPLETED action
-              return !hasBootCompleted;
-            }
-            // Keep filters without actions (shouldn't happen, but be safe)
-            return true;
-          });
-
-          // If receiver has no intent-filters left after filtering, remove the entire receiver
-          if (receiver['intent-filter'].length === 0) {
-            return false;
-          }
-        } else {
-          // Receiver has no intent-filters, remove it
+        // If receiver has no intent-filters left after filtering, remove the entire receiver.
+        // This is safe for receivers that only exist to handle boot.
+        const hasIntentFilters =
+          receiver?.['intent-filter'] && Array.isArray(receiver['intent-filter']);
+        if (hasIntentFilters && receiver['intent-filter'].length === 0) {
           return false;
         }
 
-        // Keep receiver if it still has intent-filters after removing BOOT_COMPLETED
         return true;
       });
     }
