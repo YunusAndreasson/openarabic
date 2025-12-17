@@ -110,12 +110,12 @@ describe('DictionaryWordCard', () => {
       expect(getByText('كتب')).toBeTruthy();
     });
 
-    test('renders English meaning from root', () => {
+    test('renders English meaning from root with capitalized first letter', () => {
       const word = createMockWord();
       const { getByText } = render(
         <DictionaryWordCard word={word} editMode={false} onDelete={mockOnDelete} />,
       );
-      expect(getByText('to write')).toBeTruthy();
+      expect(getByText('To write')).toBeTruthy();
     });
 
     test('renders fallback text when root is missing', () => {
@@ -124,6 +124,7 @@ describe('DictionaryWordCard', () => {
         <DictionaryWordCard word={word} editMode={false} onDelete={mockOnDelete} />,
       );
       expect(getByText('Unknown Arabic')).toBeTruthy();
+      // Fallback text is already capitalized, so it remains "Unknown English"
       expect(getByText('Unknown English')).toBeTruthy();
     });
   });

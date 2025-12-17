@@ -10,6 +10,7 @@ import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { getStabilityProgressColor } from '@/utils/urgencyScore';
 
 interface DictionaryWordCardProps {
@@ -58,7 +59,13 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
 
     // Get Arabic and English text from root
     const arabicText = word.root?.letters || 'Unknown Arabic';
-    const englishText = word.root?.meaning || 'Unknown English';
+    const rawEnglishText = word.root?.meaning || 'Unknown English';
+    
+    // Capitalize first letter of English text for display
+    const englishText = useMemo(
+      () => capitalizeFirstLetter(rawEnglishText),
+      [rawEnglishText],
+    );
 
     // Get dot color based on stability level (error=red, warning=orange, success=green)
     const dotColorKey = useMemo(
