@@ -232,7 +232,7 @@ const ArticleContentInternal = function ArticleContent({
   // React Compiler auto-memoizes
   const footerComponent = (
     <RelatedArticlesSection
-      currentArticleId={article.id}
+      article={article}
       articlesData={articlesData}
       onVisible={handleRelatedArticlesVisible}
     />

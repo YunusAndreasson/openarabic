@@ -121,6 +121,8 @@ export const STRINGS = {
   PREPARING_ARTICLES: 'Preparing articles…',
   // Article section headings (for progress-based sorting)
   CONTINUE_READING: 'Continue reading',
+  MORE_FROM_AUTHOR: 'More from {author}',
+  MORE_FROM_CATEGORY: 'More in {category}',
   UNREAD: 'Unread',
   COMPLETED: 'Completed',
   SET_TIME: 'Set time',

@@ -1,0 +1,224 @@
+import { useRouter } from 'expo-router';
+import React, { memo, useCallback, useMemo, useRef } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { ThemedText } from '@/components/ThemedText';
+import { ListenListItemCard } from '@/components/bookmarks';
+import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
+import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
+import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import type { Article } from '@/types/articles.types';
+import { generateStorageUrl } from '@/utils/storageUtils';
+import { calculateProgressPercentage } from '@/utils/progressUtils';
+import { getArticleMetadata, capitalizeFirstLetter } from '@/utils/stringUtils';
+
+interface RelatedArticlesByFilterProps {
+  /**
+   * The current article ID to exclude from recommendations
+   */
+  currentArticleId: number;
+
+  /**
+   * The articles data to select from
+   */
+  articlesData: Article[];
+
+  /**
+   * Filter type: 'author' or 'category'
+   */
+  filterType: 'author' | 'category';
+
+  /**
+   * The ID to filter by (author_id or category_id)
+   */
+  filterId: number;
+
+  /**
+   * The name to display in the section title (author name or category name)
+   */
+  filterName: string;
+
+  /**
+   * Maximum number of related articles to show (default: 5)
+   */
+  maxArticles?: number;
+
+  /**
+   * Callback fired when related articles section becomes visible
+   * Used as heuristic to mark article as 100% complete
+   */
+  onVisible?: () => void;
+}
+
+// Section header component matching FilteredArticleView style
+// Memoized to prevent unnecessary re-renders
+const SectionHeader = memo(({ title }: { title: string }) => (
+  <View style={styles.sectionHeader}>
+    <ThemedText type="heading3" weight="bold">
+      {title}
+    </ThemedText>
+  </View>
+));
+
+SectionHeader.displayName = 'SectionHeader';
+
+/**
+ * Related Articles By Filter Component
+ *
+ * Displays intelligently selected related articles filtered by author or category.
+ * Shows only unread or low-progress articles (< 20%) to always offer fresh content.
+ * Uses existing article selection logic for consistency and efficiency.
+ */
+export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
+  ({ currentArticleId, articlesData, filterType, filterId, filterName, maxArticles = 5, onVisible }) => {
+    const router = useRouter();
+
+    // Filter articles by author or category, excluding current article
+    // Optimized: use early return pattern and single filter condition
+    const filteredArticles = useMemo(() => {
+      if (!articlesData.length) return [];
+
+      // Use single filter with optimized condition based on filterType
+      if (filterType === 'author') {
+        return articlesData.filter(
+          article => article.id !== currentArticleId && article.author_id === filterId,
+        );
+      }
+      return articlesData.filter(
+        article => article.id !== currentArticleId && article.category_id === filterId,
+      );
+    }, [articlesData, currentArticleId, filterType, filterId]);
+
+    // Use existing intelligent selection logic for consistency
+    const { articles: selectedArticles } = useMultipleFeaturedArticles(
+      filteredArticles,
+      0, // No refresh for stability in article context
+      `article-${currentArticleId}-${filterType}-${filterId}`, // Unique scope per filter for cache consistency
+    );
+
+    // Fetch bulk reading progress for selected articles
+    const selectedArticleIds = useMemo(() => selectedArticles.map(a => a.id), [selectedArticles]);
+    const { data: progressMap } = useSafeBulkReadingProgress(selectedArticleIds);
+
+    // Filter to only show unread or low-progress articles (< 20%)
+    const unreadOrLowProgressArticles = useMemo(() => {
+      if (!selectedArticles.length) return selectedArticles;
+      return selectedArticles.filter(article => {
+        const progress = progressMap?.get?.(article.id);
+
+        // Include if unread (no progress entry)
+        if (!progress) return true;
+
+        // Include if low progress (< 20%)
+        const progressPercentage = calculateProgressPercentage(
+          progress.last_sentence_read,
+          progress.total_sentences,
+        );
+        return progressPercentage < 20;
+      });
+    }, [selectedArticles, progressMap]);
+
+    // Limit to requested number of unread/low-progress articles
+    const relatedArticles = useMemo(() => {
+      return unreadOrLowProgressArticles.slice(0, maxArticles);
+    }, [unreadOrLowProgressArticles, maxArticles]);
+
+    // Navigation handler - dismiss current modal then push new one
+    // This ensures clean modal transitions without state synchronization issues
+    const handleArticlePress = useCallback(
+      (articleId: number, title: string) => {
+        // Dismiss current article modal
+        router.back();
+
+        // Wait for dismiss animation to start, then push new article
+        // This prevents modal stacking while giving smooth transition
+        setTimeout(() => {
+          router.push({
+            pathname: '/article/[id]',
+            params: {
+              id: articleId.toString(),
+              headerTitle: title,
+            },
+          });
+        }, 100); // Brief delay for dismiss animation to start
+      },
+      [router],
+    );
+
+    // Memoize the article cards to prevent unnecessary re-renders
+    const articleCards = useMemo(() => {
+      return relatedArticles.map((article, index) => {
+        const progress = progressMap?.get?.(article.id);
+        const progressPercentage = progress
+          ? calculateProgressPercentage(progress.last_sentence_read, progress.total_sentences)
+          : 0;
+
+        return (
+          <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
+            <ListenListItemCard
+              title={article.title}
+              secondaryText={getArticleMetadata(article)}
+              imageUrl={generateStorageUrl('images', article.image_url)}
+              articleId={article.id}
+              progressPercentage={progressPercentage}
+              onPress={() => handleArticlePress(article.id, article.title)}
+            />
+          </View>
+        );
+      });
+    }, [relatedArticles, progressMap, handleArticlePress]);
+
+    // Track if we've already fired the callback
+    const hasCalledOnVisibleRef = useRef(false);
+
+    // Format section title based on filter type
+    // Capitalize category name for consistency with rest of app
+    // Must be called before early return to satisfy React Hooks rules
+    const sectionTitle = useMemo(() => {
+      if (filterType === 'author') {
+        return STRINGS.MORE_FROM_AUTHOR.replace('{author}', filterName);
+      }
+      return STRINGS.MORE_FROM_CATEGORY.replace('{category}', capitalizeFirstLetter(filterName));
+    }, [filterType, filterName]);
+
+    // Fire callback when related articles section becomes visible on screen
+    // This serves as a heuristic to mark article as 100% complete
+    const handleLayout = useCallback(() => {
+      if (!hasCalledOnVisibleRef.current && onVisible) {
+        hasCalledOnVisibleRef.current = true;
+        onVisible();
+      }
+    }, [onVisible]);
+
+    // Early return if no articles to show
+    if (relatedArticles.length === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.container} onLayout={handleLayout}>
+        <SectionHeader title={sectionTitle} />
+        {articleCards}
+      </View>
+    );
+  },
+);
+
+RelatedArticlesByFilter.displayName = 'RelatedArticlesByFilter';
+
+const styles = StyleSheet.create({
+  container: {
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    // paddingBottom removed - FlashList contentContainerStyle handles bottom spacing
+  },
+  sectionHeader: {
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+  },
+  articleSpacing: {
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+});
