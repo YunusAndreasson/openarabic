@@ -2,21 +2,54 @@ const { withAndroidManifest } = require('@expo/config-plugins');
 
 const BOOT_RELATED_ACTIONS = new Set([
   'android.intent.action.BOOT_COMPLETED',
+  'android.intent.action.LOCKED_BOOT_COMPLETED',
   'android.intent.action.REBOOT',
   'android.intent.action.QUICKBOOT_POWERON',
   'com.htc.intent.action.QUICKBOOT_POWERON',
 ]);
 
 const ANDROID_NAME_ATTR = 'android:name';
+const TOOLS_NODE_ATTR = 'tools:node';
+const TOOLS_NS = 'http://schemas.android.com/tools';
 
 function removeUsesPermission(manifest, permissionName) {
-  if (!manifest['uses-permission'] || !Array.isArray(manifest['uses-permission'])) {
-    return;
+  const keysToCheck = ['uses-permission', 'uses-permission-sdk-23'];
+
+  keysToCheck.forEach(key => {
+    if (!manifest[key] || !Array.isArray(manifest[key])) {
+      return;
+    }
+
+    manifest[key] = manifest[key].filter(perm => {
+      const name = perm?.$?.[ANDROID_NAME_ATTR];
+      return name !== permissionName;
+    });
+  });
+}
+
+function ensureToolsNamespace(manifest) {
+  if (!manifest.$) {
+    manifest.$ = {};
+  }
+  if (!manifest.$['xmlns:tools']) {
+    manifest.$['xmlns:tools'] = TOOLS_NS;
+  }
+}
+
+function addUsesPermissionRemove(manifest, permissionName) {
+  ensureToolsNamespace(manifest);
+
+  if (!manifest['uses-permission']) {
+    manifest['uses-permission'] = [];
   }
 
-  manifest['uses-permission'] = manifest['uses-permission'].filter((perm) => {
-    const name = perm?.$?.[ANDROID_NAME_ATTR];
-    return name !== permissionName;
+  // Add a tools:node="remove" marker so the Gradle manifest merger also removes
+  // the permission if it's contributed by a library manifest (e.g. expo-notifications).
+  manifest['uses-permission'].push({
+    $: {
+      [ANDROID_NAME_ATTR]: permissionName,
+      [TOOLS_NODE_ATTR]: 'remove',
+    },
   });
 }
 
@@ -25,18 +58,47 @@ function stripBootActionsFromIntentFilters(component) {
     return;
   }
 
-  component['intent-filter'] = component['intent-filter'].filter((filter) => {
+  component['intent-filter'] = component['intent-filter'].filter(filter => {
     if (!filter?.action || !Array.isArray(filter.action)) {
       return true;
     }
 
-    filter.action = filter.action.filter((action) => {
+    filter.action = filter.action.filter(action => {
       const actionName = action?.$?.[ANDROID_NAME_ATTR];
       return !BOOT_RELATED_ACTIONS.has(actionName);
     });
 
     // Keep this intent-filter if it still has any actions (or categories, etc.)
     return filter.action.length > 0;
+  });
+}
+
+function addReceiverBootActionRemovals(application, receiverName, actionNames) {
+  if (!application.receiver) {
+    application.receiver = [];
+  }
+
+  // We can't safely delete expo-notifications/task-manager receivers entirely because they
+  // also handle non-boot actions. Instead we add an overlay receiver definition that tells
+  // the manifest merger to remove only the boot actions.
+  application.receiver.push({
+    $: {
+      [ANDROID_NAME_ATTR]: receiverName,
+      [TOOLS_NODE_ATTR]: 'merge',
+    },
+    'intent-filter': [
+      {
+        $: {
+          [TOOLS_NODE_ATTR]: 'merge',
+        },
+        action: actionNames.map(name => ({
+          $: {
+            [ANDROID_NAME_ATTR]: name,
+            [TOOLS_NODE_ATTR]: 'remove',
+          },
+        })),
+      },
+    ],
   });
 }
 
@@ -48,8 +110,8 @@ function stripBootActionsFromIntentFilters(component) {
  * from BOOT_COMPLETED receivers. expo-audio registers these receivers internally,
  * so we need to remove them to prevent app crashes on Android 15+.
  */
-const withRemoveExpoAudioBootReceiver = (config) => {
-  return withAndroidManifest(config, (config) => {
+const withRemoveExpoAudioBootReceiver = config => {
+  return withAndroidManifest(config, config => {
     const manifest = config.modResults.manifest;
 
     if (!manifest.application || !manifest.application[0]) {
@@ -59,13 +121,14 @@ const withRemoveExpoAudioBootReceiver = (config) => {
     // Ensure the final merged manifest does not request boot delivery.
     // Libraries like expo-notifications can contribute this permission.
     removeUsesPermission(manifest, 'android.permission.RECEIVE_BOOT_COMPLETED');
+    addUsesPermissionRemove(manifest, 'android.permission.RECEIVE_BOOT_COMPLETED');
 
     const application = manifest.application[0];
 
     // Strip boot-related actions from ALL receivers (not just expo-audio).
     // This avoids any possible boot → restricted-foreground-service path on Android 15+.
     if (application.receiver && Array.isArray(application.receiver)) {
-      application.receiver = application.receiver.filter((receiver) => {
+      application.receiver = application.receiver.filter(receiver => {
         stripBootActionsFromIntentFilters(receiver);
 
         // If receiver has no intent-filters left after filtering, remove the entire receiver.
@@ -79,6 +142,33 @@ const withRemoveExpoAudioBootReceiver = (config) => {
         return true;
       });
     }
+
+    // Ensure Gradle's manifest merger also removes boot actions contributed by library manifests.
+    // These receivers are known to include BOOT_COMPLETED in their own AndroidManifest.xml.
+    addReceiverBootActionRemovals(
+      application,
+      'expo.modules.notifications.service.NotificationsService',
+      [
+        'android.intent.action.BOOT_COMPLETED',
+        'android.intent.action.LOCKED_BOOT_COMPLETED',
+        'android.intent.action.REBOOT',
+        'android.intent.action.QUICKBOOT_POWERON',
+        'com.htc.intent.action.QUICKBOOT_POWERON',
+      ],
+    );
+
+    addReceiverBootActionRemovals(application, 'expo.modules.taskManager.TaskBroadcastReceiver', [
+      'android.intent.action.BOOT_COMPLETED',
+      'android.intent.action.LOCKED_BOOT_COMPLETED',
+    ]);
+
+    // WorkManager contributes a RescheduleReceiver with BOOT_COMPLETED. If you don't need any
+    // work to reschedule after reboot, removing this action avoids Play's boot→FGS warnings.
+    addReceiverBootActionRemovals(
+      application,
+      'androidx.work.impl.background.systemalarm.RescheduleReceiver',
+      ['android.intent.action.BOOT_COMPLETED'],
+    );
 
     return config;
   });
