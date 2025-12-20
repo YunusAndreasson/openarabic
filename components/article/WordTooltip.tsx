@@ -222,6 +222,7 @@ export function WordTooltip({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         disabled={!onOpenWordDetails}
+        hitSlop={LAYOUT.HIT_SLOP.SMALL}
       >
         <Animated.View style={[tooltipStyle, animatedStyle]} testID="word-tooltip">
           <View style={arrowStyle} />

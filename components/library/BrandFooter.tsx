@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   logo: {
-    width: 120,
-    height: 40,
+    width: LAYOUT.BRAND.LOGO_WIDTH,
+    height: LAYOUT.BRAND.LOGO_HEIGHT,
     opacity: LAYOUT.OPACITY.SUBTLE,
     alignSelf: 'center',
   },

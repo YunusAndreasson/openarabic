@@ -88,7 +88,12 @@ export function Toggle({ value, onValueChange, testID }: ToggleProps) {
   ];
 
   return (
-    <Pressable style={TOUCHABLE_WRAPPER_STYLE} onPress={handlePress} testID={testID}>
+    <Pressable
+      style={TOUCHABLE_WRAPPER_STYLE}
+      onPress={handlePress}
+      hitSlop={LAYOUT.HIT_SLOP.SMALL}
+      testID={testID}
+    >
       <Animated.View style={[containerStyle, combinedContainerStyle]}>
         <View style={styles.toggleTrack}>
           <Animated.View style={[handleStyle, handleAnimatedStyle]} />

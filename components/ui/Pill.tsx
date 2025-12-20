@@ -98,7 +98,12 @@ export function Pill({ id, label, isSelected = false, onSelect, variant = 'filte
 
   // Interactive pill
   return (
-    <Pressable disabled={!onSelect} style={getPressableStyle} onPress={handlePress}>
+    <Pressable
+      disabled={!onSelect}
+      style={getPressableStyle}
+      onPress={handlePress}
+      hitSlop={LAYOUT.HIT_SLOP.SMALL}
+    >
       <ThemedText colorName={textColorName} ellipsizeMode="tail" numberOfLines={1} type={textType}>
         {label}
       </ThemedText>

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ColorCodedText } from '@/components/common/ColorCodedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 /**
@@ -191,9 +191,9 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
   },
   colorDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: STATUS_INDICATOR.DOT_SIZE,
+    height: STATUS_INDICATOR.DOT_SIZE,
+    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
   },
   exampleContainer: {
     gap: LAYOUT.SPACING.TINY,
