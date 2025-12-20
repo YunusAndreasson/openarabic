@@ -1,7 +1,31 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { Tables } from '@/types/database.types';
+import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeQuery } from '@/utils/supabaseHelpers';
+
+const errorConfig = {
+  userStats: createServiceErrorConfig('user_stats', 'load', {
+    toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
+    showToast: false,
+  }),
+  masteryProgress: createServiceErrorConfig('mastery_progress', 'load', {
+    toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
+    showToast: false,
+  }),
+  efficiencyProgress: createServiceErrorConfig('efficiency_progress', 'load', {
+    toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
+    showToast: false,
+  }),
+  retrievabilityForecast: createServiceErrorConfig('retrievability_forecast', 'load', {
+    toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
+    showToast: false,
+  }),
+  difficultyDistribution: createServiceErrorConfig('difficulty_distribution', 'load', {
+    toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
+    showToast: false,
+  }),
+};
 
 export const vocabularyStatsService = {
   async getUserStats(userId: string) {
@@ -15,10 +39,8 @@ export const vocabularyStatsService = {
           .eq('user_id', userId)
           .single(),
       {
-        toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
-        analyticsEventName: 'User_Stats_Load_Error',
+        ...errorConfig.userStats,
         analyticsProperties: { userId },
-        showToast: false, // Silent for stats
       },
     );
 
@@ -38,11 +60,7 @@ export const vocabularyStatsService = {
   async getMasteryProgress() {
     const data = await executeQuery(
       () => supabase.from('daily_mastery_stats').select('*').limit(14),
-      {
-        toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
-        analyticsEventName: 'Mastery_Progress_Load_Error',
-        showToast: false,
-      },
+      errorConfig.masteryProgress,
     );
 
     // Note: daily_mastery_stats view may have additional fields not in type definition
@@ -66,11 +84,7 @@ export const vocabularyStatsService = {
   async getEfficiencyProgress() {
     const data = await executeQuery(
       () => supabase.from('daily_efficiency_stats').select('*').limit(14),
-      {
-        toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
-        analyticsEventName: 'Efficiency_Progress_Load_Error',
-        showToast: false,
-      },
+      errorConfig.efficiencyProgress,
     );
 
     // Note: daily_efficiency_stats view may have additional fields not in type definition
@@ -94,11 +108,7 @@ export const vocabularyStatsService = {
           .from('retrievability_forecast')
           .select('*')
           .order('forecast_date', { ascending: true }),
-      {
-        toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
-        analyticsEventName: 'Retrievability_Forecast_Load_Error',
-        showToast: false,
-      },
+      errorConfig.retrievabilityForecast,
     );
 
     return (
@@ -115,11 +125,7 @@ export const vocabularyStatsService = {
   async getDifficultyDistribution() {
     const data = await executeQuery(
       () => supabase.from('difficulty_distribution').select('*').single(),
-      {
-        toastMessage: STRINGS.UNABLE_TO_LOAD_CHART_DATA,
-        analyticsEventName: 'Difficulty_Distribution_Load_Error',
-        showToast: false,
-      },
+      errorConfig.difficultyDistribution,
     );
 
     if (!data) return null;

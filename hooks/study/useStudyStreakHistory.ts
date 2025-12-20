@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { CACHE_TIMES, QUERY_DEFAULTS } from '@/constants/queries';
+import { studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { studySessionStreakService, type StreakHistoryData } from '@/services/studyStreak';
-import { handleError } from '@/utils/errorHandling';
+import type { StreakHistoryData } from '@/services/studyStreak';
 
 interface UseStudyStreakHistoryResult {
   streakHistory: StreakHistoryData | null;
@@ -31,27 +30,8 @@ export function useStudyStreakHistory(): UseStudyStreakHistoryResult {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: user?.id
-      ? ['study-streak-history', user.id, 40, 'v2']
-      : ['study-streak-history', 'none', 40, 'v2'],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      try {
-        return await studySessionStreakService.getStudySessionHistory(user.id, 40);
-      } catch (error) {
-        handleError(error as Error, {
-          showToast: false,
-          analyticsEventName: 'Study_Streak_History_Load_Error',
-        });
-        throw error;
-      }
-    },
+    ...studyStreakQueries.history(user?.id || '', 40),
     enabled: !!user?.id,
-    staleTime: QUERY_DEFAULTS.STALE_TIME, // 5 minutes (stable historical data)
-    gcTime: CACHE_TIMES.MEDIUM.gcTime, // 10 minutes
-    retry: 2,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
   });
 
   return { streakHistory, isLoading, isError };

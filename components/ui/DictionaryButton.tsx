@@ -7,9 +7,9 @@ import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layo
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { UiAction } from '@/types/enums';
-import { createAndroidRipple } from '@/utils/layoutUtils';
 
 interface DictionaryButtonProps {
   hideWhenEmpty?: boolean;
@@ -26,9 +26,15 @@ export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | nu
   const studyWordsCount = (allWords?.length ?? 0) + (dueWords?.length ?? 0);
   const effectiveCount = itemCount ?? studyWordsCount;
 
-  const handlePress = (): void => {
+  const handlePressAction = (): void => {
     router.push(ROUTE_PATHS.STUDY_DICTIONARY);
   };
+
+  // Use shared button press hook
+  const { handlePress, rippleConfig } = useButtonPress({
+    onPress: handlePressAction,
+    hapticType: 'selection',
+  });
 
   // Hide button when hideWhenEmpty is true and there are no study words
   if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {
@@ -45,7 +51,7 @@ export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | nu
       ]}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       onPress={handlePress}
-      android_ripple={createAndroidRipple(colors)}
+      android_ripple={rippleConfig}
     >
       <ThemedText
         type="body"

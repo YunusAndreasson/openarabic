@@ -1,14 +1,13 @@
 import { router } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
+import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
+import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-
-import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { STRINGS } from '@/constants/strings';
 import { useAuthForm } from '@/hooks/auth/useAuthForm';
 
@@ -26,11 +25,6 @@ import { useAuthForm } from '@/hooks/auth/useAuthForm';
  * - Error handling
  */
 export function SignUpForm(): JSX.Element {
-  const [showPassword, setShowPassword] = useState(false);
-  const handleTogglePassword = useCallback(() => {
-    setShowPassword(prev => !prev);
-  }, []);
-
   const {
     email,
     setEmail,
@@ -79,52 +73,22 @@ export function SignUpForm(): JSX.Element {
 
   return (
     <View style={styles.container}>
-      <View style={styles.inputWrapper}>
-        <ThemedInput
-          autoCapitalize="none"
-          autoComplete="email"
-          error={emailError}
-          icon="mail"
-          importantForAutofill="yes"
-          keyboardType="email-address"
-          placeholder={STRINGS.YOUR_EMAIL}
-          returnKeyType="next"
-          textAlignVertical="center"
-          textContentType="emailAddress"
-          value={email}
-          testID="email-input"
-          accessibilityLabel="Email address"
-          accessibilityHint="Enter your email address"
-          onBlur={handleEmailBlur}
-          onChangeText={handleEmailChange}
-        />
-      </View>
+      <AuthEmailInput
+        value={email}
+        onChangeText={handleEmailChange}
+        onBlur={handleEmailBlur}
+        error={emailError}
+      />
 
-      <View style={styles.inputWrapper}>
-        <ThemedInput
-          autoCapitalize="none"
-          autoComplete="password-new"
-          error={passwordError}
-          icon="lock-closed"
-          importantForAutofill="yes"
-          placeholder={STRINGS.YOUR_PASSWORD}
-          returnKeyType="done"
-          rightIcon={showPassword ? 'eye-off' : 'eye'}
-          secureTextEntry={!showPassword}
-          textAlignVertical="center"
-          textContentType="newPassword"
-          value={password}
-          testID="password-input"
-          accessibilityLabel="Password"
-          accessibilityHint="Enter a password with at least 8 characters"
-          onBlur={handlePasswordBlur}
-          onChangeText={handlePasswordChange}
-          onRightIconPress={handleTogglePassword}
-        />
-
-        {/* Password Strength Meter */}
+      <AuthPasswordInput
+        value={password}
+        onChangeText={handlePasswordChange}
+        onBlur={handlePasswordBlur}
+        error={passwordError}
+        isSignUp
+      >
         <PasswordStrengthMeter password={password} />
-      </View>
+      </AuthPasswordInput>
 
       <ThemedButton
         disabled={loading}
@@ -163,10 +127,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   container: {
-    width: '100%',
-  },
-  inputWrapper: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
   signInContainer: {

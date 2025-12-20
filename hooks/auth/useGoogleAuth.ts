@@ -1,16 +1,8 @@
 import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
-import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { ROUTE_PATHS } from '@/constants/routes';
-import { useMountSafety } from '@/hooks/common/useMountSafety';
-import { analytics } from '@/services/analytics';
-import { supabase } from '@/services/supabase';
-import { waitForAuthEvent } from '@/utils/authEventWaiter';
-import { isCancellationError } from '@/utils/authUtils';
-import { handleError } from '@/utils/errorHandling';
-import { successFeedback } from '@/utils/haptics';
+import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
 
 /**
  * Hook return type for Google authentication
@@ -27,7 +19,7 @@ export interface UseGoogleAuthReturn {
  * Implementation:
  * - Configures Google Sign In with Web Client ID
  * - Retrieves ID token from Google
- * - Signs in to Supabase using signInWithIdToken
+ * - Signs in to Supabase using signInWithIdToken (via useOAuthProvider)
  * - Tracks analytics events with method: 'google'
  * - Handles errors gracefully with toast notifications
  *
@@ -36,9 +28,7 @@ export interface UseGoogleAuthReturn {
  * - EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: (Optional) iOS Client ID for native config
  */
 export function useGoogleAuth(): UseGoogleAuthReturn {
-  const [loading, setLoading] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
-  const isMountedRef = useMountSafety();
 
   // Configure Google Sign In on mount
   useEffect(() => {
@@ -102,123 +92,27 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     configure();
   }, []);
 
-  const signInWithGoogle = useCallback(async (): Promise<void> => {
-    // Log initial state
-    Sentry.addBreadcrumb({
-      category: 'auth',
-      message: 'Google Sign In initiated',
-      level: 'info',
-      data: {
-        isConfigured,
-        webClientIdSet: !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-        iosClientIdSet: !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      },
-    });
+  // Use OAuth provider factory with Google-specific configuration
+  const { signIn, loading } = useOAuthProvider({
+    provider: 'google',
 
-    if (!isConfigured) {
-      const error = new Error('Google Sign In not configured');
-      Sentry.captureException(error, {
-        tags: {
-          location: 'google_auth',
-          step: 'config_check',
-        },
-        level: 'warning',
-        extra: {
-          webClientIdAvailable: !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-          iosClientIdAvailable: !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-        },
-      });
-      handleError(error, {
-        toastMessage: 'Google Sign In not available. Please rebuild the app.',
-        analyticsEventName: 'Google_Sign_In_Not_Configured',
-        sentrySeverity: 'warning',
-      });
-      return;
-    }
-
-    if (!isMountedRef.current) return;
-    setLoading(true);
-
-    try {
-      // STEP 1: Check if native module is available
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Checking Google Sign In native module availability',
-        level: 'info',
-      });
-
-      let GoogleSignin;
-      try {
-        GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Google Sign In native module loaded successfully',
-          level: 'info',
-        });
-      } catch (moduleError) {
-        Sentry.captureException(moduleError, {
-          tags: {
-            location: 'google_auth',
-            step: 'module_load',
-          },
-          level: 'error',
-          extra: {
-            errorType: 'module_not_available',
-            errorMessage: String(moduleError),
-          },
-        });
-        throw new Error(
-          'Google Sign In is not available. Please rebuild the app with: npx expo prebuild',
-        );
+    loadModule: async () => {
+      if (!isConfigured) {
+        throw new Error('Google Sign In not configured');
       }
 
-      // STEP 2: Check if Google Play Services are available (Android)
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Checking Google Play Services availability',
-        level: 'info',
-      });
+      const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+      return GoogleSignin;
+    },
 
-      try {
-        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Google Play Services available',
-          level: 'info',
-        });
-      } catch (playServicesError) {
-        Sentry.captureException(playServicesError, {
-          tags: {
-            location: 'google_auth',
-            step: 'play_services_check',
-          },
-          level: 'error',
-          extra: {
-            errorMessage:
-              playServicesError instanceof Error
-                ? playServicesError.message
-                : String(playServicesError),
-            errorCode:
-              typeof playServicesError === 'object' &&
-              playServicesError &&
-              'code' in playServicesError
-                ? playServicesError.code
-                : 'unknown',
-          },
-        });
-        throw playServicesError;
-      }
+    executeSignIn: async (GoogleSignin: any): Promise<OAuthSignInResult> => {
+      // Check Play Services availability (Android)
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-      // STEP 3: Sign in and get user info with ID token
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Requesting Google Sign In',
-        level: 'info',
-      });
-
+      // Sign in with retry logic for INTERNAL_ERROR
       let userInfo;
       let signInAttempt = 0;
-      const maxRetries = 1; // Single retry for INTERNAL_ERROR
+      const maxRetries = 1;
 
       while (signInAttempt <= maxRetries) {
         try {
@@ -229,7 +123,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
               throw new Error('No network connection available');
             }
 
-            // Wait 1 second before retry (exponential backoff)
+            // Wait before retry (exponential backoff)
             await new Promise(resolve => setTimeout(resolve, 1000 * signInAttempt));
 
             Sentry.addBreadcrumb({
@@ -240,7 +134,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           }
 
           userInfo = await GoogleSignin.signIn();
-          break; // Success - exit retry loop
+          break; // Success
         } catch (signInError) {
           const errorCode =
             typeof signInError === 'object' && signInError && 'code' in signInError
@@ -260,10 +154,6 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
             },
             level: shouldRetry ? 'warning' : 'error',
             extra: {
-              errorType:
-                typeof signInError === 'object'
-                  ? signInError?.constructor?.name
-                  : typeof signInError,
               errorCode,
               errorMessage:
                 signInError instanceof Error ? signInError.message : String(signInError),
@@ -272,175 +162,35 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
 
           if (shouldRetry) {
             signInAttempt++;
-            continue; // Retry
+            continue;
           }
 
-          throw signInError; // Don't retry - throw error
+          throw signInError;
         }
       }
-
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Google Sign In successful',
-        level: 'info',
-        data: {
-          hasUserInfo: !!userInfo,
-          hasData: !!userInfo?.data,
-          hasIdToken: !!userInfo?.data?.idToken,
-          hasEmail: !!userInfo?.data?.user?.email,
-        },
-      });
 
       if (!userInfo.data?.idToken) {
-        const error = new Error('No ID token returned from Google Sign In');
-        Sentry.captureException(error, {
-          tags: {
-            location: 'google_auth',
-            step: 'token_validation',
-          },
-          level: 'error',
-          extra: {
-            userInfoKeys: userInfo ? Object.keys(userInfo) : [],
-            dataKeys: userInfo?.data ? Object.keys(userInfo.data) : [],
-            hasUser: !!userInfo?.data?.user,
-          },
-        });
-        throw error;
+        throw new Error('No ID token returned from Google Sign In');
       }
 
-      // STEP 4: Sign in to Supabase with Google ID token
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Exchanging Google token with Supabase',
-        level: 'info',
-        data: {
-          hasIdToken: !!userInfo.data.idToken,
-          tokenLength: userInfo.data.idToken.length,
-          tokenStructureValid: userInfo.data.idToken.split('.').length === 3,
-          webClientIdConfigured: !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-          iosClientIdConfigured: !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      return {
+        idToken: userInfo.data.idToken,
+        userInfo: {
+          email: userInfo.data.user?.email,
+          name: userInfo.data.user?.name,
         },
-      });
+      };
+    },
 
-      let authResponse;
-      try {
-        authResponse = await supabase.auth.signInWithIdToken({
-          provider: 'google',
-          token: userInfo.data.idToken,
-        });
-      } catch (supabaseError) {
-        // Capture detailed error information
-        const errorDetails = {
-          errorMessage:
-            supabaseError instanceof Error ? supabaseError.message : String(supabaseError),
-          errorType:
-            typeof supabaseError === 'object' && supabaseError
-              ? supabaseError.constructor?.name
-              : typeof supabaseError,
-          errorStatus:
-            typeof supabaseError === 'object' &&
-            supabaseError &&
-            'status' in supabaseError &&
-            typeof supabaseError.status === 'number'
-              ? supabaseError.status
-              : 'unknown',
-          tokenLength: userInfo.data.idToken.length,
-          tokenStructureValid: userInfo.data.idToken.split('.').length === 3,
-        };
-
-        Sentry.captureException(supabaseError, {
-          tags: {
-            location: 'google_auth',
-            step: 'supabase_signin',
-          },
-          level: 'error',
-          extra: errorDetails,
-        });
-        throw supabaseError;
-      }
-
-      const { data, error } = authResponse;
-
-      if (error) {
-        const supabaseErrorDetails = {
-          errorMessage: error.message,
-          errorStatus: 'status' in error ? error.status : 'unknown',
-          errorName: error.name,
-        };
-
-        Sentry.captureException(error, {
-          tags: {
-            location: 'google_auth',
-            step: 'supabase_response',
-          },
-          level: 'error',
-          extra: supabaseErrorDetails,
-        });
-
-        // Create enriched error with Supabase details
-        const enrichedError = new Error(
-          `Supabase authentication failed: ${error.message} (Status: ${supabaseErrorDetails.errorStatus})`,
-        );
-        // Preserve original error properties
-        Object.assign(enrichedError, {
-          originalError: error,
-          ...supabaseErrorDetails,
-        });
-        throw enrichedError;
-      }
-
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Supabase authentication successful',
-        level: 'info',
-        data: {
-          userId: data.user.id,
-          hasSession: !!data.session,
-        },
-      });
-
-      // Track analytics (first-party analytics only, no PII to third parties)
-      await analytics.identify(data.user.id, {
-        last_sign_in: new Date().toISOString(),
-      });
-      await analytics.trackSignIn('google');
-
-      // Check if session is already available (might be ready immediately)
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        // Wait for auth state change event if session not ready yet
-        try {
-          await waitForAuthEvent('SIGNED_IN', 5000);
-        } catch {
-          // Timeout is OK - session might be ready anyway, continue
-        }
-      }
-
-      successFeedback();
-      router.replace(ROUTE_PATHS.EXPLORE_TAB);
-    } catch (error: unknown) {
-      if (!isMountedRef.current) return;
-
-      // Handle user cancellation silently
-      if (isCancellationError(error)) {
-        // User cancelled - no error needed
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Google Sign In cancelled by user',
-          level: 'info',
-        });
-        return;
-      }
-
-      // Check Play Services not available (Android) - needs statusCodes
+    handleProviderError: (error: unknown) => {
+      // Handle Play Services not available (Android)
       let statusCodes;
       try {
         statusCodes = require('@react-native-google-signin/google-signin').statusCodes;
       } catch {
-        statusCodes = null;
+        return undefined;
       }
 
-      // Handle Play Services not available (Android)
       if (
         statusCodes &&
         error &&
@@ -448,134 +198,15 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         'code' in error &&
         error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE
       ) {
-        const errorDetails = {
-          errorType: error instanceof Error ? error.constructor.name : typeof error,
-          errorMessage: error instanceof Error ? error.message : String(error),
-          errorCode: String(error.code),
-        };
-
-        Sentry.captureException(error, {
-          tags: {
-            location: 'google_auth',
-            step: 'play_services',
-            errorCode: errorDetails.errorCode,
-          },
-          level: 'warning',
-          extra: errorDetails,
-        });
-
-        handleError(error instanceof Error ? error : new Error('Play Services not available'), {
-          toastMessage: 'Google Play Services not available. Please update.',
-          analyticsEventName: 'Google_Sign_In_Play_Services_Error',
-          sentrySeverity: 'warning',
-        });
-        return;
+        return 'Google Play Services not available. Please update.';
       }
 
-      // Handle other errors with comprehensive logging and step-specific messages
-      const errorDetails = {
-        errorType: error instanceof Error ? error.constructor.name : typeof error,
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorCode:
-          typeof error === 'object' && error && 'code' in error ? String(error.code) : 'unknown',
-        errorStack: error instanceof Error ? error.stack : undefined,
-        isConfigured,
-      };
-
-      // Determine which step failed based on error message and code
-      let failedStep = 'unknown';
-      let stepMessage = 'Sign in failed';
-
-      const errorMsg = errorDetails.errorMessage.toLowerCase();
-      const isInternalError = String(errorDetails.errorCode) === '8';
-
-      if (
-        errorMsg.includes('module') ||
-        errorMsg.includes('not available') ||
-        errorMsg.includes('rebuild')
-      ) {
-        failedStep = 'module_load';
-        stepMessage = 'Google Sign In not available';
-      } else if (errorMsg.includes('play services')) {
-        failedStep = 'play_services';
-        stepMessage = 'Google Play Services issue';
-      } else if (errorMsg.includes('id token') && errorMsg.includes('returned')) {
-        failedStep = 'token_validation';
-        stepMessage = 'Google sign-in succeeded, but no auth token received';
-      } else if (
-        errorMsg.includes('supabase') ||
-        errorMsg.includes('auth') ||
-        errorMsg.includes('server')
-      ) {
-        failedStep = 'supabase_exchange';
-        stepMessage = 'Google sign-in succeeded, but server authentication failed';
-      } else if (isInternalError) {
-        failedStep = 'google_signin';
-        stepMessage =
-          'Google Sign-In service temporarily unavailable. Please check your connection and try again.';
-      } else if (errorMsg.includes('sign') || errorMsg.includes('google')) {
-        failedStep = 'google_signin';
-        stepMessage = 'Google sign-in failed';
-      }
-
-      // Extract Supabase error details if available
-      const supabaseError =
-        typeof error === 'object' && error && 'originalError' in error
-          ? (error as { originalError: { message?: string; status?: number; name?: string } })
-              .originalError
-          : null;
-
-      // Build error message - simplified for INTERNAL_ERROR, detailed for others
-      const detailedErrorMessage = isInternalError
-        ? stepMessage // Simplified message for INTERNAL_ERROR
-        : [
-            `❌ Google Sign In Failed`,
-            ``,
-            `Step: ${stepMessage}`,
-            errorDetails.errorCode !== 'unknown' ? `Error Code: ${errorDetails.errorCode}` : '',
-            ``,
-            `Error Message:`,
-            errorDetails.errorMessage,
-            ``,
-            supabaseError
-              ? [
-                  `Supabase Details:`,
-                  `• Message: ${supabaseError.message || 'none'}`,
-                  `• Status: ${supabaseError.status || 'unknown'}`,
-                  `• Name: ${supabaseError.name || 'unknown'}`,
-                  ``,
-                ].join('\n')
-              : '',
-            `Error Stack (first 200 chars):`,
-            errorDetails.errorStack?.substring(0, 200) || '[no stack]',
-            ``,
-            `Config Status: ${errorDetails.isConfigured ? 'Configured' : 'Not Configured'}`,
-          ]
-            .filter(Boolean)
-            .join('\n');
-
-      // Use handleError to avoid duplicate Sentry captures
-      handleError(error instanceof Error ? error : new Error('Google Sign In failed'), {
-        toastMessage: detailedErrorMessage,
-        toastDuration: isInternalError ? 5000 : 20000, // Shorter duration for INTERNAL_ERROR
-        analyticsEventName: 'Google_Sign_In_Error',
-        sentrySeverity: isInternalError ? 'warning' : 'error', // Lower severity for transient errors
-        sentryTags: {
-          location: 'google_auth',
-          step: failedStep,
-          errorCode: errorDetails.errorCode,
-        },
-        sentryExtra: { ...errorDetails, failedStep, supabaseError },
-      });
-    } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [isConfigured, isMountedRef]);
+      return undefined;
+    },
+  });
 
   return {
-    signInWithGoogle,
+    signInWithGoogle: signIn,
     loading,
   };
 }

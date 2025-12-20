@@ -4,15 +4,13 @@ import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { usePressAnimation } from '@/hooks/animations';
 import { useBookmarksScreen } from '@/hooks/bookmarks/useBookmarksScreen';
 import { useColors } from '@/hooks/theme/useColors';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { EditModeType } from '@/store/editModeSlice';
 import { UiAction } from '@/types/enums';
 import { HEADER_BUTTON_STYLE, HEADER_BUTTON_TEXT_STYLE } from '@/utils/buttonStyleUtils';
-import { selectionFeedback } from '@/utils/haptics';
-import { createAndroidRipple } from '@/utils/layoutUtils';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -57,12 +55,8 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
   const derivedCount = type === 'listen' ? sortedReadingList.length : undefined;
   const effectiveCount = itemCount ?? derivedCount ?? undefined;
 
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'card',
-    includeOpacity: true,
-  });
-
-  const handlePress = useCallback((): void => {
+  // Create press handler with optimistic state logic
+  const handlePressAction = useCallback((): void => {
     const newEditMode = !optimisticEditMode;
 
     // React 19: Optimistic update in transition for immediate UI feedback
@@ -71,10 +65,17 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
     });
 
     // Execute other operations immediately (not in transition)
-    selectionFeedback();
     toggle();
     onEditModeChange?.(newEditMode);
   }, [toggle, optimisticEditMode, onEditModeChange, setOptimisticEditMode]);
+
+  // Use shared button press hook
+  const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig } =
+    useButtonPress({
+      onPress: handlePressAction,
+      hapticType: 'selection',
+      animationOptions: { type: 'card', includeOpacity: true },
+    });
 
   // Guard early return only after all hooks and callbacks above have been created
   if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {
@@ -103,7 +104,7 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      android_ripple={createAndroidRipple(colors)}
+      android_ripple={rippleConfig}
     >
       <ThemedText
         type="body"

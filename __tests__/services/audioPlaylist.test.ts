@@ -151,6 +151,8 @@ describe('enhancedAudioService', () => {
         toastMessage: STRINGS.FAILED_TO_GENERATE_AUDIO_TRACK,
         analyticsEventName: 'Enhanced_Audio_Generation_Error',
         sentrySeverity: 'error',
+        showToast: true,
+        analyticsProperties: { articleId: 1 },
       });
     });
   });
@@ -277,6 +279,8 @@ describe('enhancedAudioService', () => {
         toastMessage: STRINGS.FAILED_TO_GET_ENHANCED_AUDIO_TRACKS,
         analyticsEventName: 'Enhanced_Audio_Playlist_Error',
         sentrySeverity: 'error',
+        showToast: true,
+        analyticsProperties: { userId: 'user123' },
       });
     });
 

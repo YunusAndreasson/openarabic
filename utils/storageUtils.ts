@@ -1,4 +1,5 @@
 import { supabase } from '@/services/supabase';
+import { isNonEmptyString } from './stringUtils';
 
 /**
  * Centralized Supabase storage URL generation
@@ -14,9 +15,7 @@ export type StorageBucket = 'images' | 'audio';
  * Validate if a path is a non-empty string
  * Handles null, undefined, and empty strings consistently
  */
-export const isValidStoragePath = (path: unknown): path is string => {
-  return typeof path === 'string' && path.trim().length > 0;
-};
+export const isValidStoragePath = isNonEmptyString;
 
 /**
  * Generate the full URL for a Supabase storage object

@@ -5,7 +5,19 @@ import { bookmarkService } from '@/services/bookmark';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { ArticleId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
+import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { generateStorageUrl } from '@/utils/storageUtils';
+
+const errorConfig = {
+  generate: createServiceErrorConfig('enhanced_audio_track', 'load', {
+    toastMessage: STRINGS.FAILED_TO_GENERATE_AUDIO_TRACK,
+    analyticsEventName: 'Enhanced_Audio_Generation_Error',
+  }),
+  playlist: createServiceErrorConfig('enhanced_audio_playlist', 'load', {
+    toastMessage: STRINGS.FAILED_TO_GET_ENHANCED_AUDIO_TRACKS,
+    analyticsEventName: 'Enhanced_Audio_Playlist_Error',
+  }),
+};
 
 // Helper function to generate composite ID
 const generateTrackId = (articleId: ArticleId): string => {
@@ -57,9 +69,8 @@ export const enhancedAudioService = {
       return await createEnhancedTrack(articleId, article, selectedAudioUrl);
     } catch (error) {
       await handleError(error instanceof Error ? error : new Error(String(error)), {
-        toastMessage: STRINGS.FAILED_TO_GENERATE_AUDIO_TRACK,
-        analyticsEventName: 'Enhanced_Audio_Generation_Error',
-        sentrySeverity: 'error',
+        ...errorConfig.generate,
+        analyticsProperties: { articleId },
       });
       return null;
     }
@@ -89,9 +100,8 @@ export const enhancedAudioService = {
       return allTracks;
     } catch (error) {
       await handleError(error instanceof Error ? error : String(error), {
-        toastMessage: STRINGS.FAILED_TO_GET_ENHANCED_AUDIO_TRACKS,
-        analyticsEventName: 'Enhanced_Audio_Playlist_Error',
-        sentrySeverity: 'error',
+        ...errorConfig.playlist,
+        analyticsProperties: { userId },
       });
       return [];
     }

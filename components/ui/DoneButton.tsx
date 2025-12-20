@@ -5,11 +5,10 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { UiAction } from '@/types/enums';
 import { HEADER_BUTTON_STYLE, HEADER_BUTTON_TEXT_STYLE } from '@/utils/buttonStyleUtils';
-import { createAndroidRipple } from '@/utils/layoutUtils';
 
 interface DoneButtonProps {
   /**
@@ -25,11 +24,9 @@ const NAVIGATION_DELAY = TIMING_CONFIG.FAST.duration / 2; // 60ms
 
 export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
   const colors = useColors();
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    includeOpacity: true,
-  });
 
-  const handlePress = () => {
+  // Create press handler with navigation delay
+  const handlePressAction = () => {
     if (onPress) {
       onPress();
     } else {
@@ -39,6 +36,14 @@ export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
       }, NAVIGATION_DELAY);
     }
   };
+
+  // Use shared button press hook
+  const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig } =
+    useButtonPress({
+      onPress: handlePressAction,
+      hapticType: 'selection',
+      animationOptions: { includeOpacity: true },
+    });
 
   return (
     <View style={styles.container}>
@@ -53,7 +58,7 @@ export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        android_ripple={createAndroidRipple(colors)}
+        android_ripple={rippleConfig}
       >
         <ThemedText
           type="body"

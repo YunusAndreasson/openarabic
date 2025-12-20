@@ -9,9 +9,9 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 // Use direct service access to avoid frequent parent re-renders from time updates
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
-import { bookmarkService } from '@/services/bookmark';
 import { enhancedAudioService } from '@/services/audioPlaylist';
 import { simpleAudioService } from '@/services/audioPlayer';
+import { bookmarkService } from '@/services/bookmark';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
 import type { ArticleId } from '@/types/branded.types';
@@ -24,6 +24,7 @@ import {
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { shuffleArray } from '@/utils/list';
+import { sortByCustomOrder, sortByDateDesc } from '@/utils/sortingUtils';
 
 /**
  * Official React Query pattern for refetching on screen focus
@@ -60,20 +61,15 @@ export const useBookmarksScreen = () => {
 
   // Sleep timer functionality is handled by useGlobalAudioState
 
-  const readingListQuery = useQuery({
-    queryKey: user?.id ? readingProgressQueries.keys.readingList(user.id) : ['readingList', 'none'],
-    queryFn: () => {
-      if (!user?.id) return Promise.resolve([]);
-      return bookmarkService.getReadingList(user.id);
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
-    gcTime: 10 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
-    retry: 2,
-    retryDelay: attemptIndex =>
-      Math.min(TIMING_CONSTANTS.RETRY_DELAY_BASE * 2 ** attemptIndex, TIMING_CONSTANTS.LONG_DELAY),
-    placeholderData: [],
-  });
+  const readingListQuery = useQuery(
+    user?.id
+      ? readingProgressQueries.readingList(user.id)
+      : {
+          queryKey: ['readingList', 'none'] as const,
+          queryFn: () => Promise.resolve([]),
+          enabled: false,
+        },
+  );
   const { data: readingList = [], isLoading: isReadingListLoading } = readingListQuery;
 
   const sortedReadingList = useMemo(() => {
@@ -87,62 +83,37 @@ export const useBookmarksScreen = () => {
       return true;
     });
 
-    // Sort the already-deduped array (no spread needed since filter returns new array)
-    if (customOrder.length > 0) {
-      const customOrderMap = new Map(customOrder.map((id, index) => [id, index]));
-      return deduped.sort((a, b) => {
-        const posA = customOrderMap.get(a.article_id) ?? 999;
-        const posB = customOrderMap.get(b.article_id) ?? 999;
-
-        if (posA !== 999 && posB !== 999) {
-          return posA - posB;
-        }
-
-        if (posA !== 999) return -1;
-        if (posB !== 999) return 1;
-
-        return new Date(b.added_at).getTime() - new Date(a.added_at).getTime();
-      });
-    }
-
-    return deduped.sort((a, b) => {
-      const dateA = new Date(a.added_at).getTime();
-      const dateB = new Date(b.added_at).getTime();
-      return dateB - dateA;
-    });
+    // Sort by custom order with date fallback
+    return sortByCustomOrder(
+      deduped,
+      customOrder,
+      item => item.article_id,
+      (a, b) => sortByDateDesc(a.added_at, b.added_at),
+    );
   }, [readingList, customOrder]);
 
   const isDataCached = useMemo(() => {
     return Boolean(user?.id && queryClient.getQueryData(['readingList', user.id]));
   }, [user?.id, queryClient]);
 
-  const enhancedTracksQuery = useQuery({
-    queryKey: user?.id
-      ? audioQueries.keys.tracks(user.id, audioPreference)
-      : ['enhancedAudioTracks', 'none'],
-    queryFn: () => {
-      if (!user?.id) return Promise.resolve([]);
-      return enhancedAudioService.getReadingListEnhancedTracks(user.id, audioPreference);
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND, // Standard stale time is fine now
-    gcTime: 10 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
-    placeholderData: [],
-  });
+  const enhancedTracksQuery = useQuery(
+    user?.id
+      ? audioQueries.tracks(user.id, audioPreference)
+      : {
+          queryKey: ['enhancedAudioTracks', 'none', 'arabic'] as const,
+          queryFn: () => Promise.resolve([]),
+          enabled: false,
+        },
+  );
   const { data: enhancedTracks = [], error: enhancedTracksError } = enhancedTracksQuery;
 
   const sortedEnhancedTracks = useMemo(() => {
     if (!enhancedTracks.length || !sortedReadingList.length) return enhancedTracks;
 
-    const articlePositionMap = new Map(
-      sortedReadingList.map((item, index) => [item.article_id, index]),
-    );
+    // Create position map from sorted reading list order
+    const readingListOrder = sortedReadingList.map(item => item.article_id);
 
-    return [...enhancedTracks].sort((a, b) => {
-      const posA = a.articleId ? (articlePositionMap.get(a.articleId) ?? 999) : 999;
-      const posB = b.articleId ? (articlePositionMap.get(b.articleId) ?? 999) : 999;
-      return posA - posB;
-    });
+    return sortByCustomOrder(enhancedTracks, readingListOrder, track => track.articleId || 0);
   }, [enhancedTracks, sortedReadingList]);
 
   const shouldShowInitialLoading = useMemo(() => {

@@ -1,16 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, type ComponentProps, type FC } from 'react';
+import type { ComponentProps, FC } from 'react';
 import type { TextStyle, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useDebounce, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { lightFeedback, selectionFeedback } from '@/utils/haptics';
-import { createAndroidRipple } from '@/utils/layoutUtils';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 
 interface IconButtonProps {
   /**
@@ -96,31 +94,17 @@ export const IconButton: FC<IconButtonProps> = ({
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    scaleAmount: ICON_BUTTON_PRESS_SCALE,
-  });
 
-  // Create the press handler with haptic feedback
-  const pressHandler = useCallback(() => {
-    if (disabled) return;
-
-    // Trigger appropriate haptic feedback
-    if (hapticType === 'light') {
-      lightFeedback();
-    } else if (hapticType === 'selection') {
-      selectionFeedback();
-    }
-    // 'none' - no haptic feedback
-
-    onPress();
-  }, [disabled, onPress, hapticType]);
-
-  // Always call useDebounce hook (hooks must be called unconditionally)
-  const [debouncedHandlePress, isDebouncing] = useDebounce(pressHandler, debounceDuration);
-
-  // Use the appropriate handler based on debounce setting
-  const finalHandler = debounce ? debouncedHandlePress : pressHandler;
-  const finalDisabled = disabled || (debounce && isDebouncing);
+  // Use shared button press hook
+  const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig, isDisabled } =
+    useButtonPress({
+      onPress,
+      disabled,
+      hapticType,
+      debounce,
+      debounceDuration,
+      animationOptions: { scaleAmount: ICON_BUTTON_PRESS_SCALE },
+    });
 
   // Determine colors with theme-aware defaults
   const resolvedBackgroundColor =
@@ -130,12 +114,12 @@ export const IconButton: FC<IconButtonProps> = ({
   return (
     <Pressable
       style={styles.button}
-      onPress={finalHandler}
+      onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      disabled={finalDisabled}
+      disabled={isDisabled}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-      android_ripple={createAndroidRipple(colors)}
+      android_ripple={rippleConfig}
     >
       <Animated.View
         style={[
@@ -144,7 +128,7 @@ export const IconButton: FC<IconButtonProps> = ({
           animatedStyle as ViewStyle,
           {
             backgroundColor: resolvedBackgroundColor,
-            opacity: finalDisabled ? LAYOUT.OPACITY.MEDIUM : 1,
+            opacity: isDisabled ? LAYOUT.OPACITY.MEDIUM : 1,
           },
         ]}
       >

@@ -2,7 +2,43 @@ import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { Tables } from '@/types/database.types';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
+import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeQuery } from '@/utils/supabaseHelpers';
+
+const errorConfig = {
+  update: createServiceErrorConfig('reading_progress', 'update', {
+    toastMessage: STRINGS.ERROR_LOADING_DATA,
+    showToast: false,
+  }),
+  get: createServiceErrorConfig('reading_progress', 'fetch', {
+    toastMessage: STRINGS.ERROR_LOADING_DATA,
+    showToast: false,
+  }),
+  bulkGet: createServiceErrorConfig('reading_progress', 'fetch', {
+    toastMessage: STRINGS.ERROR_LOADING_DATA,
+    analyticsEventName: 'Reading_Progress_Bulk_Get_Error',
+    showToast: false,
+  }),
+  byProgress: createServiceErrorConfig('reading_progress', 'fetch', {
+    toastMessage: STRINGS.ERROR_LOADING_DATA,
+    analyticsEventName: 'Reading_Progress_By_Progress_Get_Error',
+    showToast: false,
+  }),
+  lastRead: createServiceErrorConfig('last_read_article', 'fetch', {
+    toastMessage: STRINGS.ERROR_LOADING_DATA,
+    showToast: false,
+  }),
+  deleteAll: createServiceErrorConfig('reading_progress', 'delete', {
+    toastMessage: STRINGS.FAILED_TO_RESET_READING_PROGRESS,
+    analyticsEventName: 'Reading_Progress_Delete_All_Error',
+    showToast: false,
+  }),
+  resetUpdate: createServiceErrorConfig('reading_progress', 'update', {
+    toastMessage: STRINGS.FAILED_TO_RESET_READING_PROGRESS,
+    analyticsEventName: 'Reading_Progress_Reset_Update_Error',
+    showToast: false,
+  }),
+};
 
 export interface ReadingProgress {
   user_id: string;
@@ -76,10 +112,8 @@ export class ReadingProgressService {
           onConflict: 'user_id,article_id',
         }),
       {
-        toastMessage: STRINGS.ERROR_LOADING_DATA,
-        analyticsEventName: 'Reading_Progress_Update_Error',
+        ...errorConfig.update,
         analyticsProperties: { userId, articleId },
-        showToast: false, // Silent error for reading progress
       },
     );
   }
@@ -97,10 +131,8 @@ export class ReadingProgressService {
           .eq('article_id', articleId)
           .maybeSingle(),
       {
-        toastMessage: STRINGS.ERROR_LOADING_DATA,
-        analyticsEventName: 'Reading_Progress_Get_Error',
+        ...errorConfig.get,
         analyticsProperties: { userId, articleId },
-        showToast: false, // Silent error for reading progress
       },
     );
 
@@ -136,10 +168,8 @@ export class ReadingProgressService {
     }
 
     const data = await executeQuery(() => query, {
-      toastMessage: STRINGS.ERROR_LOADING_DATA,
-      analyticsEventName: 'Reading_Progress_Bulk_Get_Error',
+      ...errorConfig.bulkGet,
       analyticsProperties: { userId, count: articleIds.length },
-      showToast: false, // Silent error for reading progress
     });
 
     // Convert to Map for easy lookup
@@ -182,10 +212,8 @@ export class ReadingProgressService {
     const data = await executeQuery(
       () => supabase.from('reading_progress').select('*').eq('user_id', userId),
       {
-        toastMessage: STRINGS.ERROR_LOADING_DATA,
-        analyticsEventName: 'Reading_Progress_By_Progress_Get_Error',
+        ...errorConfig.byProgress,
         analyticsProperties: { userId, sortOrder },
-        showToast: false,
       },
     );
 
@@ -227,10 +255,8 @@ export class ReadingProgressService {
           .limit(1)
           .maybeSingle(),
       {
-        toastMessage: STRINGS.ERROR_LOADING_DATA,
-        analyticsEventName: 'Last_Read_Article_Get_Error',
+        ...errorConfig.lastRead,
         analyticsProperties: { userId },
-        showToast: false,
       },
     );
 
@@ -247,10 +273,8 @@ export class ReadingProgressService {
     const deleteResult = await executeQuery(
       () => supabase.from('reading_progress').delete().eq('user_id', userId).select(),
       {
-        toastMessage: STRINGS.FAILED_TO_RESET_READING_PROGRESS,
-        analyticsEventName: 'Reading_Progress_Delete_All_Error',
+        ...errorConfig.deleteAll,
         analyticsProperties: { userId },
-        showToast: false, // Silent error - caller will handle alert
       },
     );
 
@@ -273,10 +297,8 @@ export class ReadingProgressService {
             .eq('user_id', userId)
             .select(),
         {
-          toastMessage: STRINGS.FAILED_TO_RESET_READING_PROGRESS,
-          analyticsEventName: 'Reading_Progress_Reset_Update_Error',
+          ...errorConfig.resetUpdate,
           analyticsProperties: { userId },
-          showToast: false,
         },
       );
     }

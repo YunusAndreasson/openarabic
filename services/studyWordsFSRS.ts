@@ -1,9 +1,56 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { RootId, UserId } from '@/types/branded.types';
-import type { Tables, TablesInsert } from '@/types/database.types';
+import type { Tables } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { createBulkFSRSEntries, createInitialFSRSEntry } from '@/utils/fsrsInitializers';
+import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeAuthenticatedQuery, executeQuery } from '@/utils/supabaseHelpers';
+
+const errorConfig = {
+  load: createServiceErrorConfig('study_words_fsrs', 'load', {
+    toastMessage: STRINGS.FAILED_TO_LOAD_STUDY_WORDS,
+    showToast: false,
+  }),
+  update: createServiceErrorConfig('word_and_review', 'update', {
+    toastMessage: STRINGS.FAILED_TO_UPDATE_WORD_AND_REVIEW,
+    showToast: false,
+  }),
+  toggleCheck: createServiceErrorConfig('study_word', 'check', {
+    toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
+    analyticsEventName: 'Toggle_Study_Word_Check_Error',
+    showToast: false,
+  }),
+  toggleDelete: createServiceErrorConfig('study_word', 'delete', {
+    toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
+    analyticsEventName: 'Toggle_Study_Word_Delete_Error',
+    showToast: false,
+  }),
+  toggleInsert: createServiceErrorConfig('study_word', 'add', {
+    toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
+    analyticsEventName: 'Toggle_Study_Word_Insert_Error',
+    showToast: false,
+  }),
+  allRoots: createServiceErrorConfig('roots', 'load', {
+    toastMessage: STRINGS.FAILED_TO_LOAD_ALL_ROOTS,
+    showToast: false,
+  }),
+  addMultipleCheck: createServiceErrorConfig('common_words', 'check', {
+    toastMessage: STRINGS.FAILED_TO_ADD_COMMON_WORDS,
+    analyticsEventName: 'Add_Multiple_Roots_Check_Error',
+    showToast: false,
+  }),
+  addMultipleInsert: createServiceErrorConfig('common_words', 'add', {
+    toastMessage: STRINGS.FAILED_TO_ADD_COMMON_WORDS,
+    analyticsEventName: 'Add_Multiple_Roots_Insert_Error',
+    showToast: false,
+  }),
+  deleteAll: createServiceErrorConfig('study_words', 'delete', {
+    toastMessage: STRINGS.FAILED_TO_DELETE_STUDY_WORDS,
+    analyticsEventName: 'Delete_All_Study_Words_Error',
+    showToast: false,
+  }),
+};
 
 // Interface for FSRS-specific update fields - matches RPC function requirements
 interface FSRSWordUpdate {
@@ -135,14 +182,12 @@ export const studyWordsFSRSService = {
     }
 
     const data = await executeAuthenticatedQuery(userId, () => filteredQuery, {
-      toastMessage: STRINGS.FAILED_TO_LOAD_STUDY_WORDS,
-      analyticsEventName: 'Study_Words_FSRS_Load_Error',
+      ...errorConfig.load,
       analyticsProperties: {
         ...(options.onlyDue !== undefined && { onlyDue: options.onlyDue }),
         ...(options.forStats !== undefined && { forStats: options.forStats }),
         ...(options.category !== undefined && { category: options.category }),
       },
-      showToast: false, // Silent for vocabulary loading
     });
 
     // Type-safe mapping from database rows to StudyWord interface
@@ -193,10 +238,8 @@ export const studyWordsFSRSService = {
           .eq('root_id', rootId)
           .select(),
       {
-        toastMessage: STRINGS.FAILED_TO_UPDATE_WORD_AND_REVIEW,
-        analyticsEventName: 'Update_Word_And_Review_Error',
+        ...errorConfig.update,
         analyticsProperties: { rootId },
-        showToast: false,
       },
     );
 
@@ -217,10 +260,8 @@ export const studyWordsFSRSService = {
           .eq('root_id', rootId)
           .maybeSingle(),
       {
-        toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
-        analyticsEventName: 'Toggle_Study_Word_Check_Error',
+        ...errorConfig.toggleCheck,
         analyticsProperties: { rootId },
-        showToast: false,
       },
     );
 
@@ -230,44 +271,19 @@ export const studyWordsFSRSService = {
         userId,
         () => supabase.from('study_words').delete().eq('user_id', userId).eq('root_id', rootId),
         {
-          toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
-          analyticsEventName: 'Toggle_Study_Word_Delete_Error',
+          ...errorConfig.toggleDelete,
           analyticsProperties: { rootId },
-          showToast: false,
         },
       );
       return false;
     }
 
     // Create a new FSRS card for the root with proper initial values
-    const now = new Date();
-
-    // Use FSRS default values that comply with database constraints
-    const INITIAL_FSRS_DIFFICULTY = 6.5; // Must be between 1 and 10, use standard FSRS default
-    const INITIAL_STABILITY = 0.4; // Default FSRS initial stability
-
-    // Create entry matching the actual database schema columns
-    // Note: fsrs_last_review has default "now()" in database, but we set it explicitly for consistency
-    const newEntry: TablesInsert<'study_words'> = {
-      user_id: userId,
-      root_id: rootId,
-      created_at: now.toISOString(),
-      fsrs_due: now.toISOString(), // Due immediately for new words
-      fsrs_stability: INITIAL_STABILITY,
-      fsrs_difficulty: INITIAL_FSRS_DIFFICULTY,
-      fsrs_scheduled_days: 0,
-      fsrs_learning_steps: 0,
-      fsrs_reps: 0,
-      fsrs_lapses: 0,
-      fsrs_state: 0, // New state - will show as "due" for first review
-      fsrs_last_review: now.toISOString(), // Explicitly set to ensure database constraint compliance
-    };
+    const newEntry = createInitialFSRSEntry(userId, rootId);
 
     await executeAuthenticatedQuery(userId, () => supabase.from('study_words').insert(newEntry), {
-      toastMessage: STRINGS.FAILED_TO_TOGGLE_STUDY_WORD,
-      analyticsEventName: 'Toggle_Study_Word_Insert_Error',
+      ...errorConfig.toggleInsert,
       analyticsProperties: { rootId },
-      showToast: false,
     });
 
     return true;
@@ -287,11 +303,7 @@ export const studyWordsFSRSService = {
           .select('id, letters, meaning, audio_url, audio_url_en')
           .order('id', { ascending: true })
           .limit(limit),
-      {
-        toastMessage: STRINGS.FAILED_TO_LOAD_COMMON_WORDS,
-        analyticsEventName: 'Get_Common_Roots_Error',
-        showToast: false,
-      },
+      errorConfig.allRoots,
     );
 
     return (data ?? []) as Tables<'roots'>[];
@@ -309,11 +321,7 @@ export const studyWordsFSRSService = {
       userId,
       () =>
         supabase.from('study_words').select('root_id').eq('user_id', userId).in('root_id', rootIds),
-      {
-        toastMessage: STRINGS.FAILED_TO_ADD_COMMON_WORDS,
-        analyticsEventName: 'Add_Multiple_Roots_Check_Error',
-        showToast: false,
-      },
+      errorConfig.addMultipleCheck,
     );
 
     const existingRootIds = new Set((existingData ?? []).map(row => row.root_id));
@@ -321,29 +329,10 @@ export const studyWordsFSRSService = {
 
     if (newRootIds.length === 0) return 0;
 
-    const now = new Date();
-    const INITIAL_FSRS_DIFFICULTY = 6.5;
-    const INITIAL_STABILITY = 0.4;
-
-    const entries: TablesInsert<'study_words'>[] = newRootIds.map(rootId => ({
-      user_id: userId,
-      root_id: rootId,
-      created_at: now.toISOString(),
-      fsrs_due: now.toISOString(),
-      fsrs_stability: INITIAL_STABILITY,
-      fsrs_difficulty: INITIAL_FSRS_DIFFICULTY,
-      fsrs_scheduled_days: 0,
-      fsrs_learning_steps: 0,
-      fsrs_reps: 0,
-      fsrs_lapses: 0,
-      fsrs_state: 0,
-      fsrs_last_review: now.toISOString(),
-    }));
+    const entries = createBulkFSRSEntries(userId, newRootIds);
 
     await executeAuthenticatedQuery(userId, () => supabase.from('study_words').insert(entries), {
-      toastMessage: STRINGS.FAILED_TO_ADD_COMMON_WORDS,
-      analyticsEventName: 'Add_Multiple_Roots_Insert_Error',
-      showToast: false,
+      ...errorConfig.addMultipleInsert,
     });
 
     return newRootIds.length;

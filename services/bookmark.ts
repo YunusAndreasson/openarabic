@@ -2,32 +2,19 @@ import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { ArticleId } from '@/types/branded.types';
 import type { BookmarkItem } from '@/types/bookmark.types';
+import { createServiceErrorConfigs } from '@/utils/serviceErrorConfig';
 import { executeAuthenticatedQuery } from '@/utils/supabaseHelpers';
 
 const errorConfig = {
-  readingList: {
-    load: {
-      toastMessage: STRINGS.FAILED_TO_LOAD_BOOKMARKS,
-      analyticsEventName: 'Reading_List_Load_Error',
-      sentrySeverity: 'error' as const,
-    },
-    add: {
-      toastMessage: STRINGS.FAILED_TO_ADD_TO_READING_LIST,
-      analyticsEventName: 'Reading_List_Add_Error',
-      sentrySeverity: 'error' as const,
-    },
-    remove: {
-      toastMessage: STRINGS.FAILED_TO_REMOVE_FROM_READING_LIST,
-      analyticsEventName: 'Reading_List_Remove_Error',
-      sentrySeverity: 'error' as const,
-    },
+  readingList: createServiceErrorConfigs('reading_list', {
+    load: { toastMessage: STRINGS.FAILED_TO_LOAD_BOOKMARKS },
+    add: { toastMessage: STRINGS.FAILED_TO_ADD_TO_READING_LIST },
+    remove: { toastMessage: STRINGS.FAILED_TO_REMOVE_FROM_READING_LIST },
     check: {
       toastMessage: STRINGS.FAILED_TO_CHECK_READING_LIST_STATUS,
-      analyticsEventName: 'Reading_List_Check_Error',
-      sentrySeverity: 'warning' as const,
       showToast: false,
     },
-  },
+  }),
 };
 
 export const bookmarkService = {

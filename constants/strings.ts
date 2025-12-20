@@ -368,6 +368,8 @@ export const STRINGS = {
   FAILED_TO_ADD_COMMON_WORDS: "Couldn't add words. " + tryAgain,
   FAILED_TO_ADD_BEGINNER_ARTICLES: "Couldn't add articles. " + tryAgain,
   FAILED_TO_DELETE_WORD: "Couldn't delete word. " + tryAgain,
+  FAILED_TO_LOAD_ALL_ROOTS: "Couldn't load roots. " + tryAgain,
+  FAILED_TO_DELETE_STUDY_WORDS: "Couldn't delete practice words. " + tryAgain,
   FAILED_TO_LOAD_PRACTICE_DATA: "Couldn't load practice data. " + tryAgain,
   // Timer errors
   FAILED_TO_START_SLEEP_TIMER: "Couldn't start timer. " + tryAgain,

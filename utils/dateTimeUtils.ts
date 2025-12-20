@@ -96,3 +96,76 @@ export function safePercent(position: number, duration: number): number {
   if (!Number.isFinite(pct)) return 0;
   return Math.max(0, Math.min(100, pct));
 }
+
+/**
+ * Converts a date to UTC date string (YYYY-MM-DD format).
+ * Used for streak tracking and calendar data where we need consistent UTC date strings.
+ *
+ * @param date - Date to convert
+ * @returns UTC date string in YYYY-MM-DD format
+ *
+ * @example
+ * ```ts
+ * const dateStr = toUTCDateString(new Date());
+ * // Returns: "2024-01-15" (UTC date, regardless of local timezone)
+ * ```
+ */
+export function toUTCDateString(date: Date): string {
+  return (
+    new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+      .toISOString()
+      .split('T')[0] || ''
+  );
+}
+
+/**
+ * Generates an array of future dates for forecasting.
+ * Used by FSRS charts for due word predictions.
+ *
+ * @param days - Number of days in the future to generate
+ * @returns Array of Date objects from today to days in the future
+ *
+ * @example
+ * ```ts
+ * const forecast = generateFutureDateRange(7);
+ * // Returns: [today, tomorrow, ..., 7 days from now]
+ * ```
+ */
+export function generateFutureDateRange(days: number): Date[] {
+  const dates: Date[] = [];
+  const today = new Date();
+
+  for (let i = 0; i <= days; i++) {
+    const futureDate = new Date(today);
+    futureDate.setDate(today.getDate() + i);
+    dates.push(futureDate);
+  }
+
+  return dates;
+}
+
+/**
+ * Generates an array of past dates for historical analysis.
+ * Used by study streak charts.
+ *
+ * @param days - Number of days in the past to generate
+ * @returns Array of Date objects from days ago to today
+ *
+ * @example
+ * ```ts
+ * const history = generatePastDateRange(7);
+ * // Returns: [7 days ago, 6 days ago, ..., today]
+ * ```
+ */
+export function generatePastDateRange(days: number): Date[] {
+  const dates: Date[] = [];
+  const today = new Date();
+
+  for (let i = days; i >= 0; i--) {
+    const pastDate = new Date(today);
+    pastDate.setDate(today.getDate() - i);
+    dates.push(pastDate);
+  }
+
+  return dates;
+}

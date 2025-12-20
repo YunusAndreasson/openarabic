@@ -3,6 +3,26 @@
  */
 
 /**
+ * Validates if a value is a non-empty string.
+ * Handles null, undefined, and empty strings consistently.
+ *
+ * @param value - Value to check
+ * @returns True if value is a non-empty string
+ *
+ * @example
+ * ```ts
+ * isNonEmptyString('hello') // true
+ * isNonEmptyString('  ') // false (whitespace only)
+ * isNonEmptyString(null) // false
+ * isNonEmptyString(undefined) // false
+ * isNonEmptyString('') // false
+ * ```
+ */
+export function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+/**
  * Average sentences per minute for interactive bilingual Arabic learning
  * Very conservative estimate accounting for:
  * - Arabic script reading speed (significantly slower for learners)

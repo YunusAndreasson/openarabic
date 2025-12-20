@@ -1,6 +1,15 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
+import { toUTCDateString } from '@/utils/dateTimeUtils';
+import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeQuery } from '@/utils/supabaseHelpers';
+
+const errorConfig = {
+  activity: createServiceErrorConfig('study_session_activity', 'load', {
+    toastMessage: STRINGS.ERROR_LOADING_DATA,
+    showToast: false,
+  }),
+};
 
 export interface ReadingStreak {
   currentStreak: number;
@@ -37,11 +46,7 @@ export class ReadingStreakService {
    */
   static calculateStreak(activities: DailyReadingActivity[]): ReadingStreak {
     const today = new Date();
-    const todayStr = new Date(
-      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
-    )
-      .toISOString()
-      .split('T')[0];
+    const todayStr = toUTCDateString(today);
 
     const activeDays = activities.filter(day => day.hasActivity);
 
@@ -62,11 +67,7 @@ export class ReadingStreakService {
     let currentStreak = 0;
     const yesterday = new Date();
     yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-    const yesterdayStr = new Date(
-      Date.UTC(yesterday.getUTCFullYear(), yesterday.getUTCMonth(), yesterday.getUTCDate()),
-    )
-      .toISOString()
-      .split('T')[0];
+    const yesterdayStr = toUTCDateString(yesterday);
 
     const hasRecentActivity =
       mostRecentDate && (mostRecentDate === todayStr || mostRecentDate === yesterdayStr);
@@ -76,15 +77,7 @@ export class ReadingStreakService {
       let currentDate = new Date(mostRecentDate);
 
       while (true) {
-        const dateStr = new Date(
-          Date.UTC(
-            currentDate.getUTCFullYear(),
-            currentDate.getUTCMonth(),
-            currentDate.getUTCDate(),
-          ),
-        )
-          .toISOString()
-          .split('T')[0];
+        const dateStr = toUTCDateString(currentDate);
         if (dateStr && activeDatesSet.has(dateStr)) {
           currentStreak++;
           currentDate.setUTCDate(currentDate.getUTCDate() - 1);
@@ -179,19 +172,11 @@ export class ReadingStreakService {
     if (periods.length > 0) {
       const lastPeriod = periods[periods.length - 1];
       const today = new Date();
-      const todayStr = new Date(
-        Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
-      )
-        .toISOString()
-        .split('T')[0];
+      const todayStr = toUTCDateString(today);
 
       const yesterday = new Date();
       yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-      const yesterdayStr = new Date(
-        Date.UTC(yesterday.getUTCFullYear(), yesterday.getUTCMonth(), yesterday.getUTCDate()),
-      )
-        .toISOString()
-        .split('T')[0];
+      const yesterdayStr = toUTCDateString(yesterday);
 
       if (lastPeriod && (lastPeriod.endDate === todayStr || lastPeriod.endDate === yesterdayStr)) {
         lastPeriod.isActive = true;
@@ -224,10 +209,8 @@ export class StudySessionStreakService {
     const data = await executeQuery(
       () => supabase.from('study_words').select('fsrs_last_review').eq('user_id', userId),
       {
-        toastMessage: STRINGS.ERROR_LOADING_DATA,
-        analyticsEventName: 'Study_Session_Activity_Load_Error',
+        ...errorConfig.activity,
         analyticsProperties: { userId, days },
-        showToast: false, // Silent for streak calculation
       },
     );
 

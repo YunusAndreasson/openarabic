@@ -2,8 +2,29 @@ import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { Article, ArticleRow } from '@/types/articles.types';
 import type { ArticleId, AuthorId, CategoryId } from '@/types/branded.types';
+import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeQuery } from '@/utils/supabaseHelpers';
 import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
+
+const errorConfig = {
+  load: createServiceErrorConfig('articles', 'load', {
+    toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
+  }),
+  loadWithStats: createServiceErrorConfig('articles', 'load', {
+    toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
+    analyticsEventName: 'Articles_With_Stats_Load_Error',
+  }),
+  loadById: createServiceErrorConfig('article', 'load', {
+    toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
+  }),
+  bulkLoad: createServiceErrorConfig('articles', 'load', {
+    toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
+    analyticsEventName: 'Articles_Bulk_Load_Error',
+  }),
+  loadCard: createServiceErrorConfig('article_card', 'load', {
+    toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
+  }),
+};
 
 // Define different column sets for different use cases
 const LIST_VIEW_COLUMNS = `
@@ -157,8 +178,7 @@ export const articlesService = {
     }
 
     const data = await executeQuery(() => query.returns<ArticleRow[]>(), {
-      toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
-      analyticsEventName: 'Articles_Load_Error',
+      ...errorConfig.load,
       analyticsProperties: {
         ...(categoryId !== undefined && { categoryId }),
         ...(authorId !== undefined && { authorId }),
@@ -182,10 +202,7 @@ export const articlesService = {
             ascending: false,
           })
           .returns<ArticleRow[]>(),
-      {
-        toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
-        analyticsEventName: 'Articles_With_Stats_Load_Error',
-      },
+      errorConfig.loadWithStats,
     );
 
     return mapToArticles(data ?? []);
@@ -202,8 +219,7 @@ export const articlesService = {
           .maybeSingle()
           .returns<ArticleRow>(),
       {
-        toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
-        analyticsEventName: 'Article_Load_Error',
+        ...errorConfig.loadById,
         analyticsProperties: { id },
       },
     );
@@ -230,8 +246,7 @@ export const articlesService = {
           .eq('published', true)
           .returns<ArticleRow[]>(),
       {
-        toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
-        analyticsEventName: 'Articles_Bulk_Load_Error',
+        ...errorConfig.bulkLoad,
         analyticsProperties: { count: ids.length },
       },
     );
@@ -251,8 +266,7 @@ export const articlesService = {
           .maybeSingle()
           .returns<ArticleRow>(),
       {
-        toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
-        analyticsEventName: 'Article_Card_Load_Error',
+        ...errorConfig.loadCard,
         analyticsProperties: { id },
       },
     );

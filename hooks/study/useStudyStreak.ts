@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { CACHE_TIMES, studyStreakQueries } from '@/constants/queries';
+import { studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { studySessionStreakService, type StudyStreak } from '@/services/studyStreak';
-import { handleError } from '@/utils/errorHandling';
+import type { StudyStreak } from '@/services/studyStreak';
 
 interface UseStudyStreakResult {
   streak: StudyStreak | null;
@@ -31,22 +30,8 @@ export function useStudyStreak(): UseStudyStreakResult {
     error,
     refetch,
   } = useQuery({
-    queryKey: user?.id ? studyStreakQueries.keys.streak(user.id) : ['study-streak', 'none'],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      try {
-        return await studySessionStreakService.getStudySessionStreak(user.id);
-      } catch (error) {
-        handleError(error as Error, { showToast: false });
-        throw error;
-      }
-    },
+    ...studyStreakQueries.streak(user?.id || ''),
     enabled: !!user?.id,
-    staleTime: CACHE_TIMES.CRITICAL.staleTime, // 30 seconds (fresher than reading streak)
-    gcTime: CACHE_TIMES.MEDIUM.gcTime, // 10 minutes
-    retry: 2,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
   });
 
   return { streak, isLoading, error: error as Error | null, refetch };

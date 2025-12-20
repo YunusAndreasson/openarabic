@@ -1,11 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
-import { createAndroidRipple } from '@/utils/layoutUtils';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 
 type ButtonSize = 'small' | 'medium' | 'large';
 
@@ -101,11 +100,12 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
     const config = SIZE_CONFIG[size];
     const finalHitSlop = hitSlop ? HIT_SLOP_MAP[hitSlop] : config.hitSlop;
 
-    // Handle press with haptic feedback
-    const handlePress = useCallback(() => {
-      selectionFeedback();
-      onPress();
-    }, [onPress]);
+    // Use shared button press hook (no animation for header buttons)
+    const { handlePress, rippleConfig } = useButtonPress({
+      onPress,
+      hapticType: 'selection',
+      rippleSize: size === 'small' ? 'small' : undefined,
+    });
 
     // Memoize dynamic button style
     const buttonStyle = useMemo(
@@ -133,12 +133,6 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
         withBorder,
         borderColor,
       ],
-    );
-
-    // Memoize ripple config
-    const rippleConfig = useMemo(
-      () => createAndroidRipple(colors, size === 'small' ? 'small' : undefined),
-      [colors, size],
     );
 
     const finalIconColor = iconColor ?? colors.text;

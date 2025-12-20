@@ -4,12 +4,10 @@
  * Displays practice session options using a scientifically-grounded 3-phase color system
  * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
  */
-import { BaseCard } from '@/components/common';
-import { Ionicons } from '@expo/vector-icons';
+import { MetricCard } from '@/components/common/MetricCard';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ICON_CONTAINER, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 import { MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
@@ -26,37 +24,6 @@ interface VocabularyStatCardsProps {
   onMasteredPress?: () => void;
   studyWords?: StudyWord[];
 }
-
-interface StatCardProps {
-  label: string;
-  value: number;
-  color: string;
-  icon: 'time' | 'flame' | 'trophy';
-  onPress?: () => void;
-  formatAsDecimal?: boolean;
-}
-
-function StatCard({ label, value, color, icon, onPress, formatAsDecimal = false }: StatCardProps) {
-  const displayValue = formatAsDecimal ? value.toFixed(1) : Math.round(value).toString();
-
-  return (
-    <BaseCard shadowSize="small" style={styles.statCard} onPress={onPress}>
-      <View style={styles.cardWrapper}>
-        <View style={[styles.iconContainer, { backgroundColor: `${color}14` }]}>
-          <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
-        </View>
-        <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
-          {displayValue}
-        </ThemedText>
-        <ThemedText type="caption" colorName="textTertiary" style={styles.statLabel}>
-          {label}
-        </ThemedText>
-      </View>
-    </BaseCard>
-  );
-}
-
-StatCard.displayName = 'StatCard';
 
 export function VocabularyStatCards({
   masteredWords = 0,
@@ -104,14 +71,13 @@ export function VocabularyStatCards({
       {/* Stats row below gauge */}
       <View style={styles.statsRow}>
         {stats.map(stat => (
-          <StatCard
+          <MetricCard
             key={stat.label}
-            label={stat.label}
-            value={stat.value}
-            color={stat.color}
             icon={stat.icon}
+            value={stat.value}
+            label={stat.label}
+            color={stat.color}
             onPress={stat.onPress}
-            formatAsDecimal={stat.formatAsDecimal}
           />
         ))}
       </View>
@@ -129,35 +95,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: LAYOUT.SPACING.SMALL,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  cardWrapper: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-  },
-  iconContainer: {
-    width: MIN_TOUCH_TARGET.SMALL,
-    height: MIN_TOUCH_TARGET.SMALL,
-    borderRadius: ICON_CONTAINER.SMALL_RADIUS,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    // Ensure perfect horizontal centering
-    alignSelf: 'center',
-  },
-  statValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    marginBottom: LAYOUT.SPACING.TINY,
-    textAlign: 'center',
-  },
-  statLabel: {
-    textAlign: 'center',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
 });

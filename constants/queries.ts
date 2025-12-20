@@ -27,10 +27,15 @@ import { queryOptions, type QueryClient } from '@tanstack/react-query';
 export const APP_SESSION_ID = Date.now();
 
 import { articlesService } from '@/services/articles';
+import { enhancedAudioService } from '@/services/audioPlaylist';
 import { authorsService } from '@/services/authors';
+import { bookmarkService } from '@/services/bookmark';
 import { categoriesService } from '@/services/categories';
+import { readingProgressService } from '@/services/readingProgress';
+import { studySessionStreakService } from '@/services/studyStreak';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { ArticleId } from '@/types/branded.types';
+import { TIMING_CONSTANTS } from './animation';
 
 /**
  * React Query configuration constants
@@ -271,13 +276,48 @@ export const articleQueries = {
 } as const;
 
 /**
- * Reading list and progress query keys
+ * Reading list and progress queries
  * Used for bookmarks and reading streaks
- * Note: These use direct service calls, not queryOptions
  */
 export const readingProgressQueries = {
   /**
-   * Query keys for reading progress data
+   * Reading list (bookmarks) for a user
+   * Used for bookmark management and audio playlists
+   */
+  readingList: (userId: string) =>
+    queryOptions({
+      queryKey: ['readingList', userId] as const,
+      queryFn: () => bookmarkService.getReadingList(userId),
+      enabled: !!userId,
+      staleTime: 5 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
+      gcTime: 10 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
+      retry: 2,
+      retryDelay: attemptIndex =>
+        Math.min(
+          TIMING_CONSTANTS.RETRY_DELAY_BASE * 2 ** attemptIndex,
+          TIMING_CONSTANTS.LONG_DELAY,
+        ),
+      placeholderData: [],
+    }),
+
+  /**
+   * Bulk reading progress for a user
+   * Single shared cache for all reading progress
+   */
+  bulk: (userId: string) =>
+    queryOptions({
+      queryKey: ['reading-progress-bulk', userId] as const,
+      queryFn: () => readingProgressService.getBulkProgress(userId, []),
+      enabled: !!userId,
+      staleTime: 10000, // 10 seconds
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      placeholderData: new Map(),
+    }),
+
+  /**
+   * Query keys for backward compatibility
    */
   keys: {
     readingList: (userId: string) => ['readingList', userId] as const,
@@ -302,13 +342,26 @@ export const readingProgressQueries = {
 } as const;
 
 /**
- * Audio query keys
+ * Audio queries
  * Used for audio playlists and playback
- * Note: These use direct service calls, not queryOptions
  */
 export const audioQueries = {
   /**
-   * Query keys for audio data
+   * Enhanced audio tracks for reading list
+   * Used for audio playback with language preference
+   */
+  tracks: (userId: string, audioPreference: 'arabic' | 'bilingual') =>
+    queryOptions({
+      queryKey: ['enhancedAudioTracks', userId, audioPreference] as const,
+      queryFn: () => enhancedAudioService.getReadingListEnhancedTracks(userId, audioPreference),
+      enabled: !!userId,
+      staleTime: 5 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
+      gcTime: 10 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
+      placeholderData: [],
+    }),
+
+  /**
+   * Query keys for backward compatibility
    */
   keys: {
     tracks: (userId: string, audioPreference: string) =>
@@ -325,12 +378,43 @@ export const audioQueries = {
 } as const;
 
 /**
- * Study streak query keys
+ * Study streak queries
  * Used for vocabulary practice streak tracking
  */
 export const studyStreakQueries = {
   /**
-   * Query keys for study streak data
+   * Current study streak metrics
+   * Used for displaying streak count and motivation
+   */
+  streak: (userId: string) =>
+    queryOptions({
+      queryKey: ['study-streak', userId] as const,
+      queryFn: () => studySessionStreakService.getStudySessionStreak(userId),
+      enabled: !!userId,
+      ...CACHE_TIMES.CRITICAL, // 30 seconds (time-sensitive)
+      retry: 2,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+    }),
+
+  /**
+   * Study streak history with daily activity data
+   * Used for visualization charts and detailed metrics
+   */
+  history: (userId: string, days: number = 40) =>
+    queryOptions({
+      queryKey: ['study-streak-history', userId, days, 'v2'] as const,
+      queryFn: () => studySessionStreakService.getStudySessionHistory(userId, days),
+      enabled: !!userId,
+      staleTime: QUERY_DEFAULTS.STALE_TIME, // 5 minutes (stable historical data)
+      gcTime: CACHE_TIMES.MEDIUM.gcTime, // 10 minutes
+      retry: 2,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+    }),
+
+  /**
+   * Query keys for backward compatibility
    */
   keys: {
     streak: (userId: string) => ['study-streak', userId] as const,
