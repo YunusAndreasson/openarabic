@@ -49,7 +49,7 @@ const CONTAINER_STYLE = [
       position: 'absolute' as const,
       left: LAYOUT.SCREEN_HORIZONTAL_PADDING,
       right: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-      zIndex: LAYOUT.Z_INDEX.OVERLAY,
+      zIndex: LAYOUT.Z_INDEX.HEADER, // Below modals (3) but above cards (1)
     },
   }).container,
   { bottom: LAYOUT.BOTTOM_BAR.HEIGHT - LAYOUT.SPACING.LARGE - LAYOUT.SPACING.TINY }, // Sits lower to cover tab bar icons

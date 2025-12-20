@@ -39,7 +39,7 @@ const STATIC_STYLES = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
+    zIndex: LAYOUT.Z_INDEX.CARD,
   } as ViewStyle,
   translationContainer: {
     position: 'absolute',

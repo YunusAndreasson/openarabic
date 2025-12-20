@@ -5,6 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { UiAction } from '@/types/enums';
@@ -58,6 +59,7 @@ export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
         android_ripple={rippleConfig}
       >
         <ThemedText

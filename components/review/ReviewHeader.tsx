@@ -21,7 +21,7 @@ const STATIC_STYLES = StyleSheet.create({
     height: LAYOUT.SPACING.XXLARGE, // Compact height for progress bar only (32px)
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
-    zIndex: 1,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
   },
   progressContainer: {
     flex: 1,

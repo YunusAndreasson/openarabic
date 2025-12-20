@@ -159,7 +159,11 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
       >
         <View style={styles.profileContent}>
           {/* Profile Photo */}
-          <Pressable onPress={handlePhotoPress} style={styles.photoContainer}>
+          <Pressable
+            onPress={handlePhotoPress}
+            style={styles.photoContainer}
+            hitSlop={LAYOUT.HIT_SLOP.SMALL}
+          >
             <Animated.View style={[styles.photoWrapper, photoAnimatedStyle]}>
               <View style={dynamicStyles.photoRing}>
                 {profilePhotoUri ? (

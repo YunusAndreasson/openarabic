@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.SMALL,
     width: '100%',
-    zIndex: 1,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
   },
   progressContainer: {
     flex: 1,
