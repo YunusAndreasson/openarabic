@@ -2,50 +2,33 @@
  * Edge case handlers for Arabic word analysis
  */
 
-import { GrammaticalRole } from '@/constants/arabicWordComponents';
-
-import { STANDALONE_PRONOUNS } from './constants';
 import type { AnalyzedComponent } from './types';
 
 /**
  * Check if this is a pure particle combination with no compositional root
  *
- * Pure particle combinations are conjunctions/particles + pronouns with no root-based word.
- * These provide no educational value when colored.
+ * UPDATED: This filter is now disabled.
  *
- * @param prefixes - Detected prefixes
- * @param remaining - Remaining text after removing components
- * @returns true if this is a pure particle combination that should not be colored
+ * Core principle: If there are 2 English words AND 2 Arabic parts, we SHOULD color it
+ * to show the composition, regardless of whether they're "particles" or not.
+ *
+ * Examples that SHOULD be colored:
+ *   - وهو "and he" - و (and) + هو (he) = 2 parts → COLOR IT ✓
+ *   - فهو "so it" - ف (so) + هو (it) = 2 parts → COLOR IT ✓
+ *   - ولا "and not" - و (and) + لا (not) = 2 parts → COLOR IT ✓
+ *
+ * The composition itself is educational, even if both parts are particles/pronouns.
+ *
+ * @param prefixes - Detected prefixes (unused now)
+ * @param remaining - Remaining text after removing components (unused now)
+ * @returns false - this filter is disabled
  */
 export function isPureParticleCombination(
-  prefixes: AnalyzedComponent[],
-  remaining: string,
+  _prefixes: AnalyzedComponent[],
+  _remaining: string,
 ): boolean {
-  // Only check if we have exactly 1 prefix and no suffix/infix
-  if (prefixes.length !== 1) {
-    return false;
-  }
-
-  const prefix = prefixes[0];
-  if (!prefix) {
-    return false;
-  }
-
-  // Check if remaining text is a standalone pronoun
-  const remainingNormalized = remaining.trim();
-  if (STANDALONE_PRONOUNS.includes(remainingNormalized)) {
-    // Check if prefix is a conjunction or particle (و، ف، etc.)
-    // These roles indicate pure particles, not prepositions
-    const isConjunctionOrParticle =
-      prefix.role === GrammaticalRole.CONJUNCTION || prefix.role === GrammaticalRole.PARTICLE;
-
-    if (isConjunctionOrParticle) {
-      // This is a pure particle combination (conjunction + pronoun)
-      // Example: و + هو = "and he" (no root-based word)
-      return true;
-    }
-  }
-
+  // DISABLED: Always return false to allow all compositions to be colored
+  // The core principle is: if there are 2 parts, show them with colors
   return false;
 }
 

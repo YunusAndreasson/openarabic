@@ -51,6 +51,7 @@ import {
   type AnalyzedComponent,
   type WordAnalysis,
 } from './arabicAnalysis';
+import { normalizeTranslation } from './arabicAnalysis/translationNormalization';
 
 // Re-export types and functions for backwards compatibility
 export type { AnalyzedComponent, WordAnalysis };
@@ -60,11 +61,14 @@ export { clearAnalysisCache, formatWordAnalysis, normalizeArabic, shouldInjectBr
  * Main function to analyze an Arabic word and its English translation for components
  */
 export function analyzeArabicWord(arabic: string, english: string): WordAnalysis {
-  // Create cache key from normalized Arabic and original English
-  // Note: Use original English to avoid cache collisions from punctuation removal
-  // e.g., "book, guide" and "book; guide" should be cached separately
+  // STEP 1: Apply translation normalization FIRST
+  // For specific Arabic words, always use consistent English translation
+  // This enables proper component detection and consistent coloring
+  const normalizedEnglish = normalizeTranslation(arabic, english);
+
+  // Create cache key from normalized Arabic and NORMALIZED English
   const normalized = normalizeArabic(arabic);
-  const cacheKey = `${normalized}|${english}`;
+  const cacheKey = `${normalized}|${normalizedEnglish}`;
 
   // Check cache first
   const cachedResult = ANALYSIS_CACHE.get(cacheKey);
@@ -74,22 +78,22 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
 
   // Check for bracket injection using shared logic FIRST
   // Bracket injection can turn single words into multi-word phrases
-  const hasBracketInjection = shouldInjectBracket(normalized, english);
+  const hasBracketInjection = shouldInjectBracket(normalized, normalizedEnglish);
 
   // CRITICAL: Single-word rule - no color-coding for educational clarity
   // This is the single source of truth for the single-word check
   // Expand contractions first (e.g., "it's" → "it is") before counting words
-  const expandedEnglish = expandContractions(english);
+  const expandedEnglish = expandContractions(normalizedEnglish);
   const wordCount = expandedEnglish.trim().split(/\s+/).length;
   if (wordCount === 1 && !hasBracketInjection) {
     // Only skip analysis if single word AND no bracket injection
     // If bracket injection is needed, callers will add "[the]" making it multi-word
     const singleWordResult: WordAnalysis = {
-      original: { arabic, english },
+      original: { arabic, english: normalizedEnglish },
       prefixes: [], // No prefixes for single words
       hasComponents: false,
       remainingArabic: normalized,
-      remainingEnglish: normalizeEnglish(english),
+      remainingEnglish: normalizeEnglish(normalizedEnglish),
       hasBracketInjection,
     };
 
@@ -101,7 +105,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // Detect multiple prefixes sequentially
   const { prefixes: detectedPrefixes, remainingArabic: remainingAfterPrefixes } = detectPrefixes(
     normalized,
-    english,
+    normalizedEnglish,
     arabic, // Pass original Arabic for shadda detection
   );
 
@@ -110,7 +114,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // This prevents validation from incorrectly flagging already-detected prefixes as "hidden"
   let suffix = findComponent(
     remainingAfterPrefixes,
-    english,
+    normalizedEnglish,
     ARABIC_SUFFIXES,
     ComponentType.SUFFIX,
   );
@@ -169,9 +173,9 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     if (remainingAfterSuffix.length < 3) {
       // Check if English contains subject pronouns (these belong to verb conjugation, not suffixes)
       // Only check for pronouns that match the high-risk suffix (he/she/it/i)
-      // Don't check "we" (נא suffix is almost always valid) or "you" (varied usage)
+      // Don't check "we" (נا suffix is almost always valid) or "you" (varied usage)
       const subjectPronouns = ['he', 'she', 'it', 'i'];
-      const englishWords = english.toLowerCase().split(/\s+/);
+      const englishWords = normalizedEnglish.toLowerCase().split(/\s+/);
       const hasSubjectPronoun = englishWords.some(word => subjectPronouns.includes(word));
 
       if (hasSubjectPronoun) {
@@ -195,7 +199,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   }
 
   // Check for diacritics in the original text (before normalization)
-  const diacritic = findDiacritic(arabic, english);
+  const diacritic = findDiacritic(arabic, normalizedEnglish);
 
   // Resolve overlaps between the last prefix and suffix (only last prefix can overlap with suffix)
   const lastPrefix =
@@ -215,7 +219,9 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
 
   // Look for infixes in the remaining text (pass all prefixes/suffix to filter false positives)
   const infix =
-    remaining.length > 2 ? findInfix(remaining, english, finalPrefixes, resolvedSuffix) : undefined;
+    remaining.length > 2
+      ? findInfix(remaining, normalizedEnglish, finalPrefixes, resolvedSuffix)
+      : undefined;
 
   // Smart diacritic resolution: filter, keep, or merge colors based on grammatical relationships
   let resolvedDiacritic: AnalyzedComponent | undefined;
@@ -266,7 +272,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   }
 
   // Calculate remaining English by removing matched component words
-  const remainingEnglish = calculateRemainingEnglish(english, {
+  const remainingEnglish = calculateRemainingEnglish(normalizedEnglish, {
     prefixes: finalPrefixes,
     suffix: resolvedSuffix,
     infix,
@@ -303,7 +309,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   const isPureParticles = isPureParticleCombination(finalPrefixes, remaining.trim());
 
   const result: WordAnalysis = {
-    original: { arabic, english },
+    original: { arabic, english: normalizedEnglish },
     prefixes: finalPrefixes, // Array of prefixes
     infix,
     suffix: resolvedSuffix,

@@ -65,6 +65,7 @@ export default function EditArticlePage() {
   const [summary, setSummary] = useState('');
   const [authorId, setAuthorId] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [difficultyLevel, setDifficultyLevel] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -94,6 +95,7 @@ export default function EditArticlePage() {
       setSummary(articleData.summary);
       setAuthorId(articleData.author_id.toString());
       setCategoryId(articleData.category_id.toString());
+      setDifficultyLevel(articleData.difficulty_level.toString());
       setImageUrl(articleData.image_url);
       setImagePreview(normalizeImageUrl(articleData.image_url));
     } catch (error) {
@@ -239,6 +241,7 @@ export default function EditArticlePage() {
           summary,
           author_id: parseInt(authorId),
           category_id: parseInt(categoryId),
+          difficulty_level: parseInt(difficultyLevel),
           image_url: finalImageUrl,
         })
         .eq('id', articleId);
@@ -330,7 +333,7 @@ export default function EditArticlePage() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="author">Author</Label>
             <Select value={authorId} onValueChange={setAuthorId} required>
@@ -359,6 +362,22 @@ export default function EditArticlePage() {
                     {category.name}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="difficulty">Difficulty</Label>
+            <Select value={difficultyLevel} onValueChange={setDifficultyLevel} required>
+              <SelectTrigger id="difficulty">
+                <SelectValue placeholder="Select difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 - Beginner</SelectItem>
+                <SelectItem value="2">2 - Elementary</SelectItem>
+                <SelectItem value="3">3 - Intermediate</SelectItem>
+                <SelectItem value="4">4 - Upper Intermediate</SelectItem>
+                <SelectItem value="5">5 - Advanced</SelectItem>
               </SelectContent>
             </Select>
           </div>

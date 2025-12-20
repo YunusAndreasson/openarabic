@@ -30,31 +30,31 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.14.0",
+    "@opennextjs/cloudflare": "^1.14.7",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@supabase/supabase-js": "^2.86.0",
-    "@tailwindcss/postcss": "^4.1.17",
-    "@types/node": "^24.10.1",
+    "@supabase/supabase-js": "^2.89.0",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^24.10.4",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.546.0",
-    "next": "^15.5.6",
+    "next": "^15.5.9",
     "postcss": "^8.5.6",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "tailwind-merge": "^3.4.0",
-    "tailwindcss": "^4.1.17",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "eslint": "^9.39.1",
-    "eslint-config-next": "^15.5.6",
-    "wrangler": "^4.51.0"
+    "eslint": "^9.39.2",
+    "eslint-config-next": "^15.5.9",
+    "wrangler": "^4.56.0"
   }
 }

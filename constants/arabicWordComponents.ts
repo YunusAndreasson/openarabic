@@ -427,6 +427,75 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
     type: ComponentType.SUFFIX,
   },
 
+  // Standalone subject pronouns (when appearing after prefixes like و، ف)
+  // These are treated as suffixes to enable coloring in combinations like وهو "and he"
+  {
+    arabic: 'هو',
+    english: ['he', 'it', 'him'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'هي',
+    english: ['she', 'it', 'her'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'هم',
+    english: ['they', 'them'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'هن',
+    english: ['they', 'them'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'هما',
+    english: ['they two', 'both of them', 'them'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'انت',
+    english: ['you'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'انتم',
+    english: ['you all', 'you'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'انتن',
+    english: ['you all', 'you'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'انتما',
+    english: ['you two', 'you both'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'نحن',
+    english: ['we', 'us'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'انا',
+    english: ['I', 'me'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+
   // Perfect tense subject endings
   {
     arabic: 'ت',

@@ -171,6 +171,7 @@ Guidelines:
 - Follow Core Rules: English-only in English fields; no Arabic terms or transliteration; expand morphology explicitly
 - Prefer explicit multi-word English phrases that reflect Arabic morphology; avoid condensed/archaic forms like 'therein', 'thereof', 'whereby'. Use 'in it', 'of it', 'by which', 'for him', etc.
 - Never omit functional words; if the Arabic token encodes a preposition+pronoun (e.g., فيه, له, منهم), the english must include both parts (e.g., "in it", "for him", "from them").
+- When a word begins with coordinating particles (wa=and, fa=so/then), treat them as distinct morphemes in your translation. Example: "وَقَالَ" translates to "and" + "said", not combined.
 
 - `essential` is a single Arabic token (no whitespace). Strip only affixes; preserve core diacritics.
   Example: "الْكِتَابُ" -> "كِتَابٌ" (OK); "مِنْ" -> "من" (NOT OK, do not strip diacritics from simple prepositions).

@@ -177,19 +177,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Improvement not found' }, { status: 404 });
     }
 
-    // If approving, apply changes to sentence_words table
+    // If approving, apply only the English translation to sentence_words table
     if (action === 'approve') {
       const englishToUpdate = suggested_english || improvement.suggested_english;
-      const grammarNoteToUpdate =
-        suggested_grammar_note !== undefined
-          ? suggested_grammar_note
-          : improvement.suggested_grammar_note;
 
       const { error: updateError } = await supabase
         .from('sentence_words')
         .update({
           english: englishToUpdate,
-          grammar_note: grammarNoteToUpdate,
         })
         .eq('id', improvement.sentence_word_id);
 
