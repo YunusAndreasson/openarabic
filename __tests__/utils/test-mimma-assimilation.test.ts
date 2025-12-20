@@ -1,5 +1,5 @@
 /**
- * Test for مِمَّا (mimma = from what/that which) assimilation bug
+ * Test for مِمَّا (mimma = for what/that which) assimilation bug
  *
  * Bug: The word was being analyzed as 3 segments with TWO meem prefixes:
  * - م (prefix, preposition)
@@ -7,7 +7,7 @@
  * - ا (root - only 1 letter, clearly wrong!)
  *
  * Correct analysis: مِمَّا is من + ما with assimilation
- * - من (min) = "from" - preposition
+ * - من (min) = "for/from" - preposition
  * - ما (ma) = "what/that which" - interrogative/relative particle
  *
  * The shadda (ّ) on the second م indicates the ن from من has assimilated:
@@ -26,11 +26,11 @@ import { describe, expect, test } from '@jest/globals';
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 import { GrammaticalRole } from '@/constants/arabicWordComponents';
 
-describe('مِمَّا (from what) assimilation bug', () => {
+describe('مِمَّا (for what) assimilation bug', () => {
   test('DEBUG: show what مِمَّا analysis produces', () => {
     const tests = [
-      { arabic: 'مِمَّا', english: 'from what' },
-      { arabic: 'مما', english: 'from what' },
+      { arabic: 'مِمَّا', english: 'for what' },
+      { arabic: 'مما', english: 'for what' },
       { arabic: 'مِمَّا', english: 'from the usage of' },
       { arabic: 'من', english: 'from' }, // Test من alone
       { arabic: 'ما', english: 'what' }, // Test ما alone
@@ -45,13 +45,13 @@ describe('مِمَّا (from what) assimilation bug', () => {
     });
   });
 
-  test('should detect components for multi-word translation "from what"', () => {
+  test('should detect components for multi-word translation "for what"', () => {
     const arabic = 'مِمَّا';
-    const english = 'from what';
+    const english = 'for what';
 
     const analysis = analyzeArabicWord(arabic, english);
 
-    // "from what" is 2 words, single-word rule should NOT apply
+    // "for what" is 2 words, single-word rule should NOT apply
     expect(analysis.hasComponents).toBe(true);
 
     // Should have at least one prefix detected
@@ -62,9 +62,9 @@ describe('مِمَّا (from what) assimilation bug', () => {
     expect(analysis.remainingArabic.length).toBeGreaterThan(0);
   });
 
-  test('should NOT detect two meem prefixes in مِمَّا (from what)', () => {
+  test('should NOT detect two meem prefixes in مِمَّا (for what)', () => {
     const arabic = 'مِمَّا';
-    const english = 'from what';
+    const english = 'for what';
 
     const analysis = analyzeArabicWord(arabic, english);
 
@@ -78,7 +78,7 @@ describe('مِمَّا (from what) assimilation bug', () => {
 
   test('should detect م prefix and leave ما as remaining', () => {
     const arabic = 'مِمَّا';
-    const english = 'from what';
+    const english = 'for what';
 
     const analysis = analyzeArabicWord(arabic, english);
 
@@ -92,7 +92,7 @@ describe('مِمَّا (from what) assimilation bug', () => {
 
   test('should NOT consume entire word as prefixes', () => {
     const arabic = 'مِمَّا';
-    const english = 'from what';
+    const english = 'for what';
 
     const analysis = analyzeArabicWord(arabic, english);
 
@@ -103,7 +103,7 @@ describe('مِمَّا (from what) assimilation bug', () => {
 
   test('should handle مِمَّا without diacritics', () => {
     const arabic = 'مما'; // Without diacritics
-    const english = 'from what';
+    const english = 'for what';
 
     const analysis = analyzeArabicWord(arabic, english);
 

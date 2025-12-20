@@ -268,15 +268,17 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       expect(analysis.remainingArabic).toBe('');
     });
 
-    test('should apply single-word rule to كما (as)', () => {
+    test('should normalize كما "as" → "as for" and detect components', () => {
       const analysis = analyzeArabicWord('كما', 'as');
 
-      // Single-word rule: 'as' is one word, so no color-coding
-      expect(analysis.hasComponents).toBe(false);
+      // Normalization changes "as" to "as for" (2 words)
+      // Now should detect components (ك + ما)
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.original.english).toBe('as for');
     });
 
     test('should match مما with multi-prefix detection (م from من)', () => {
-      const analysis = analyzeArabicWord('مما', 'from what');
+      const analysis = analyzeArabicWord('مما', 'for what');
 
       // Multi-prefix: م (shortened من) + ما
       expect(analysis.hasComponents).toBe(true);

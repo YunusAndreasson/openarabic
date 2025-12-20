@@ -110,7 +110,7 @@ const BASE_PREPOSITIONS = [
     role: GrammaticalRole.PREPOSITION,
   },
   { arabic: 'من', english: ['from', 'of', 'than', 'out of'], role: GrammaticalRole.PREPOSITION },
-  { arabic: 'م', english: ['from', 'of'], role: GrammaticalRole.PREPOSITION }, // Shortened form in contractions (من + من → مِمَّن → normalized: م + من)
+  { arabic: 'م', english: ['from', 'of', 'for'], role: GrammaticalRole.PREPOSITION }, // Shortened form in contractions (من + من → مِمَّن → normalized: م + من, مما → "for what")
   {
     arabic: 'على',
     english: ['on', 'upon', 'over', 'above', 'against', 'to', 'in'],

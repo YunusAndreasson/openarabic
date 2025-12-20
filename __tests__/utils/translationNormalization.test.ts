@@ -40,8 +40,8 @@ describe('Translation Normalization', () => {
         expect(normalizeTranslation('ولن', 'wa lan')).toBe('and will not');
       });
 
-      it('should normalize "mi ma" to "from what"', () => {
-        expect(normalizeTranslation('مما', 'mi ma')).toBe('from what');
+      it('should normalize "mi ma" to "for what"', () => {
+        expect(normalizeTranslation('مما', 'mi ma')).toBe('for what');
       });
 
       it('should normalize "fa in" to "so indeed"', () => {
@@ -314,12 +314,12 @@ describe('Translation Normalization', () => {
         // depending on the complexity of the word structure
       });
 
-      it('should normalize مما "mi ma" → "from what"', () => {
+      it('should normalize مما "mi ma" → "for what"', () => {
         const analysis = analyzeArabicWord('مما', 'mi ma');
 
         expect(analysis.hasComponents).toBe(true);
 
-        // Should detect من (from) + ما (what)
+        // Should detect من + ما - normalized to "for what"
         // Note: The actual component detection depends on arabicWordComponents.ts rules
         expect(analysis.prefixes.length).toBeGreaterThan(0);
       });

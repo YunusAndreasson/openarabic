@@ -179,7 +179,7 @@ describe('Standalone particle optimization', () => {
 
     test('should have hasComponents=true for prefix + infix', () => {
       // If we ever detect infix, hasComponents should be true
-      const analysis = analyzeArabicWord('مما', 'from what');
+      const analysis = analyzeArabicWord('مما', 'for what');
 
       // Should detect components
       expect(analysis.prefixes.length).toBeGreaterThan(0);

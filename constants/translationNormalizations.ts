@@ -85,8 +85,8 @@ export const TRANSLATION_NORMALIZATION_RULES: TranslationNormalizationRule[] = [
   },
   {
     arabic: 'مما',
-    normalizedEnglish: 'from what',
-    description: 'من (from) + ما (what)',
+    normalizedEnglish: 'for what',
+    description: 'من (from) + ما (what) - normalized to "for what"',
   },
   {
     arabic: 'فمن',
