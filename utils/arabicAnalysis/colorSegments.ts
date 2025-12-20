@@ -92,7 +92,10 @@ export function getDiacriticColorName(
 
   if (diacritic.inheritColorFrom === ComponentType.PREFIX && analysis?.prefixes) {
     // Match prefix color logic: also uses role-based colors
-    const prefix = analysis.prefixes[0]; // Get first prefix (most relevant for diacritic)
+    // Use LAST prefix for grammatical correctness (e.g., preposition → genitive kasra)
+    // In multi-prefix words like وَلِلْبَيْتِ (and for the house), the genitive ِ relates
+    // to the preposition ل (last prefix), not the conjunction و (first prefix)
+    const prefix = analysis.prefixes[analysis.prefixes.length - 1]; // Get last prefix (most grammatically relevant for diacritic)
     return getComponentColorName(prefix, ComponentType.PREFIX);
   }
 

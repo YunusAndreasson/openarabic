@@ -1,4 +1,5 @@
 import { CONTRACTION_EXPANSIONS, EXPANSION_TO_CONTRACTION } from '@/constants/contractions';
+import { COMPONENT_TYPES, POSITIONAL_SCORE } from '@/constants/positionalScoring';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import type { WordAnalysis } from '@/utils/arabicWordAnalysis';
@@ -8,10 +9,11 @@ type FormattedAnalysis = ReturnType<typeof formatWordAnalysis>;
 
 /**
  * Pre-compiled regex for word boundary detection
- * Matches lowercase ASCII letters a-z
- * Note: Intentionally limited to ASCII for English text matching (Arabic text handled separately)
+ * Matches any Unicode letter (including accented characters like é, ñ, ü)
+ * Uses Unicode property escapes to support international text (café, André, naïve, etc.)
+ * Note: Arabic text is handled separately in dedicated analysis functions
  */
-const LETTER_REGEX = /[a-z]/;
+const LETTER_REGEX = /\p{L}/u;
 
 /**
  * Check if a character is a non-letter (word boundary)
@@ -75,6 +77,12 @@ export const generateColorCodedSegments = ({
 
   // CRITICAL: Single-word rule - applies even if analysis is null (test scenario)
   // Single words should never have grammar color-coding for educational clarity
+  //
+  // CONSISTENCY NOTE: This check uses displayedText which includes "[the]" if bracket injection occurred.
+  // arabicWordAnalysis.ts checks BEFORE "[the]" is added but has explicit !hasBracketInjection guard.
+  // Both are logically equivalent:
+  //   - Here: Skip if displayedText is 1 word → displayedText is 2 words when bracket present
+  //   - There: Skip if (1 word AND no bracket) → Continue if bracket present
   if (!shouldApplyColorCoding(displayedText)) {
     return [{ text: displayedText, color: defaultColor, key: 'single-word' }];
   }
@@ -109,27 +117,34 @@ export const generateColorCodedSegments = ({
   /**
    * Score a match based on component type and position in text
    * Prefixes score higher at START, suffixes score higher at END
+   *
+   * Uses constants from constants/positionalScoring.ts for maintainability
    */
   const getPositionalScore = (
     match: { start: number; end: number; componentType?: string },
     textLength: number,
   ): number => {
-    // Bracket injection always has highest priority at start
-    if (match.componentType === 'bracket') return 2.0;
+    // Bracket injection always has highest priority
+    if (match.componentType === COMPONENT_TYPES.BRACKET) {
+      return POSITIONAL_SCORE.BRACKET_INJECTION;
+    }
 
-    if (!match.componentType || textLength === 0) return 0.5;
+    if (!match.componentType || textLength === 0) {
+      return POSITIONAL_SCORE.NEUTRAL;
+    }
 
     const relativePosition = match.start / textLength;
 
-    if (match.componentType === 'prefix') {
-      // Prefixes score higher at start: 1.0 at position 0 → 0.0 at end
-      return 1 - relativePosition;
-    } else if (match.componentType === 'suffix') {
-      // Suffixes score higher at end: 0.0 at position 0 → 1.0 at end
-      return relativePosition;
+    if (match.componentType === COMPONENT_TYPES.PREFIX) {
+      // Prefixes score higher at start: OPTIMAL_POSITION at position 0 → MIN at end
+      return POSITIONAL_SCORE.OPTIMAL_POSITION - relativePosition;
+    } else if (match.componentType === COMPONENT_TYPES.SUFFIX) {
+      // Suffixes score higher at end: MIN at position 0 → OPTIMAL_POSITION at end
+      return POSITIONAL_SCORE.MIN + relativePosition;
     }
+
     // Neutral score for infix/diacritic (can appear anywhere)
-    return 0.5;
+    return POSITIONAL_SCORE.NEUTRAL;
   };
 
   // Add bracket color coding for [the] injection
@@ -141,7 +156,7 @@ export const generateColorCodedSegments = ({
         start: 0,
         end: 5, // "[the]" length (5 characters including brackets)
         color: colors.tint, // Use tint color for definite article
-        componentType: 'bracket', // Special type for bracket injection
+        componentType: COMPONENT_TYPES.BRACKET, // Special type for bracket injection
         isBracketInjection: true, // Flag to remove brackets when displaying
       });
     }
@@ -189,10 +204,10 @@ export const generateColorCodedSegments = ({
 
   // Icon to component type mapping
   const iconToComponentType: Record<string, string> = {
-    '→': 'prefix',
-    '←': 'suffix',
-    '↔': 'infix',
-    '◌': 'diacritic',
+    '→': COMPONENT_TYPES.PREFIX,
+    '←': COMPONENT_TYPES.SUFFIX,
+    '↔': COMPONENT_TYPES.INFIX,
+    '◌': COMPONENT_TYPES.DIACRITIC,
   };
 
   // Process each component section
@@ -234,6 +249,11 @@ export const generateColorCodedSegments = ({
 
     // Expand candidates to include contracted forms
     // e.g., "do not" should also match "don't"
+    //
+    // CONTRACTION HANDLING: This bidirectional mapping ensures correct matching regardless of
+    // whether displayedText has contracted ("don't") or expanded ("do not") form.
+    // arabicWordAnalysis.ts expands contractions ONLY for word counting, not for component detection,
+    // so components reference the actual text structure (e.g., englishPart="do not" for وَلَا).
     const candidates: string[] = [];
     for (const candidate of baseCandidates) {
       candidates.push(candidate);

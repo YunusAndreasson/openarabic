@@ -13,9 +13,10 @@ describe('Fahuwa "so it is" Investigation', () => {
       console.log('\n📊 فهو + "fahuwa":');
       console.log('  Normalized to:', normalizeTranslation('فهو', 'fahuwa'));
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Our rule normalizes this to "so he"
       expect(normalizeTranslation('فهو', 'fahuwa')).toBe('so he');
@@ -26,13 +27,14 @@ describe('Fahuwa "so it is" Investigation', () => {
 
       console.log('\n📊 فهو + "so he":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Check what happened
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       console.log('  ف (so) detected:', hasFa);
@@ -44,12 +46,13 @@ describe('Fahuwa "so it is" Investigation', () => {
 
       console.log('\n📊 فهو + "so it":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       console.log('  ف (so) detected:', hasFa);
@@ -61,12 +64,13 @@ describe('Fahuwa "so it is" Investigation', () => {
       console.log('\n📊 فهو + "so it is":');
       console.log('  Normalization check:', normalizeTranslation('فهو', 'so it is'));
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       console.log('  ف (so) detected:', hasFa);
@@ -107,54 +111,61 @@ describe('Fahuwa "so it is" Investigation', () => {
       console.log('  Remaining English:', analysis.remainingEnglish);
     });
 
-    it('should understand why pure particle combinations are not colored', () => {
+    it('should understand that pure particle combinations ARE NOW colored', () => {
       const analysis = analyzeArabicWord('فهو', 'so it is');
 
-      console.log('\n💡 REASON:');
+      console.log('\n💡 CURRENT BEHAVIOR (UPDATED):');
       console.log('  فهو = ف (conjunction) + هو (pronoun)');
       console.log('  This is a PURE PARTICLE COMBINATION');
       console.log('  (No root word, just grammatical particles)');
       console.log('');
       console.log('  According to isPureParticleCombination():');
-      console.log('  - Checks if we have 1 prefix + standalone pronoun');
-      console.log('  - Checks if prefix is a conjunction/particle');
-      console.log('  - If yes: hasComponents = false (no coloring)');
+      console.log('  - This filter is now DISABLED (always returns false)');
+      console.log('  - Pure particle combinations ARE colored');
+      console.log('  - If there are 2 parts, we show them with colors');
       console.log('');
-      console.log('  Educational rationale:');
-      console.log('  - فهو has no root word to learn');
-      console.log('  - It\'s just ف + هو (so + he/it)');
-      console.log('  - No compositional educational value');
-      console.log('  - Same as English "and he" - just connecting words');
+      console.log('  Educational rationale for NEW behavior:');
+      console.log('  - فهو shows composition: ف + هو');
+      console.log('  - Composition itself is educational');
+      console.log('  - Shows how Arabic words are built from parts');
+      console.log('  - Examples: وهو "and he", فهو "so it", ولا "and not"');
 
-      // This is the expected behavior
-      expect(analysis.hasComponents).toBe(false);
+      // This is the NEW expected behavior (hasComponents should be TRUE)
+      expect(analysis.hasComponents).toBe(true);
     });
   });
 
-  describe('Solution: Add normalization for "so it is" variant?', () => {
-    it('should consider if we need to normalize "so it is"', () => {
-      console.log('\n🤔 SHOULD WE ADD NORMALIZATION FOR "so it is"?');
+  describe('Solution: Pure particle filter has been disabled', () => {
+    it('should verify that compositions are now colored', () => {
+      console.log('\n✅ SOLUTION IMPLEMENTED:');
       console.log('');
-      console.log('Option 1: Add normalization rule');
-      console.log('  فهو: "so it is" → "so he"');
-      console.log('  Pro: Enables component detection');
-      console.log('  Con: Changes meaning (loses "is")');
-      console.log('  Con: Still filtered by isPureParticleCombination');
+      console.log('The isPureParticleCombination filter has been DISABLED');
       console.log('');
-      console.log('Option 2: Keep current behavior');
-      console.log('  فهو "so it is" → not colored');
-      console.log('  Pro: Correct educational filtering (no root word)');
-      console.log('  Pro: Consistent with design (pure particles not colored)');
-      console.log('  Con: User might expect it to be colored');
+      console.log('New behavior:');
+      console.log('  فهو "so it is" → COLORED (shows ف + هو composition)');
+      console.log('  وهو "and he" → COLORED (shows و + هو composition)');
+      console.log('  ولا "and not" → COLORED (shows و + لا composition)');
       console.log('');
-      console.log('❓ QUESTION FOR USER:');
-      console.log('  Do you want فهو "so it is" to be colored?');
-      console.log('  Or is the current behavior (not colored) acceptable?');
+      console.log('Core principle:');
+      console.log('  If there are 2 Arabic parts, show them with colors');
+      console.log('  The composition itself is educational');
       console.log('');
-      console.log('  Note: Even if we detect components, it will be filtered');
-      console.log('  because فهو = conjunction + pronoun = pure particles');
+      console.log('Rationale:');
+      console.log('  - Shows how Arabic builds words from components');
+      console.log('  - Even "particle + particle" is a valuable pattern');
+      console.log('  - Consistent with educational goal of showing composition');
 
-      expect(true).toBe(true);
+      // Verify the fix works for various examples
+      const examples = [
+        { arabic: 'فهو', english: 'so it is' },
+        { arabic: 'وهو', english: 'and he' },
+        { arabic: 'ولا', english: 'and not' },
+      ];
+
+      examples.forEach(({ arabic, english }) => {
+        const analysis = analyzeArabicWord(arabic, english);
+        expect(analysis.hasComponents).toBe(true);
+      });
     });
   });
 });

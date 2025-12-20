@@ -57,14 +57,15 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // Root: و-ج-ه (w-j-h) = face, direction
       const analysis = analyzeArabicWord('وجه', 'he faced');
 
-      // CRITICAL BUG: If "he" appears in English, ה will be detected as suffix
-      // But ه is part of root و-ج-ه, NOT a pronoun!
+      // FIXED: With improved suffix validation, ה is no longer detected as suffix
+      // English has "he" (subject pronoun only, no object/possessive)
+      // Our validation correctly rejects ה as false positive
       if (analysis.suffix?.arabicMatch === 'ه') {
         console.warn('  ⚠️  FALSE POSITIVE: Root letter ה incorrectly identified as suffix!');
       }
 
-      // Current behavior: ه is now detected as suffix (test updated to match behavior)
-      expect(analysis.suffix?.arabicMatch).toBe('ه');
+      // NEW behavior: ה is correctly NOT detected (validation prevents false positive)
+      expect(analysis.suffix?.arabicMatch).not.toBe('ه');
     });
 
     test('should NOT color ه in سفيه (foolish) with "his" context', () => {
@@ -89,8 +90,8 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
         console.warn('  ⚠️  FALSE POSITIVE: Root ה colored as suffix!');
       }
 
-      // Current behavior: ه is now detected as suffix (test updated to match behavior)
-      expect(analysis.suffix?.arabicMatch).toBe('ه');
+      // NEW behavior: ه is correctly NOT detected (subject-only pronoun validation works!)
+      expect(analysis.suffix?.arabicMatch).not.toBe('ه');
     });
 
     test('should NOT color ه in نزه (integrity, purity)', () => {

@@ -51,6 +51,12 @@ import {
   type AnalyzedComponent,
   type WordAnalysis,
 } from './arabicAnalysis';
+import {
+  isCriticalLength,
+  MIN_REMAINING_LENGTH,
+  OVERLAP_REJECTION,
+  WORD_COUNT,
+} from './arabicAnalysis/validationConstants';
 import { normalizeTranslation } from './arabicAnalysis/translationNormalization';
 
 // Re-export types and functions for backwards compatibility
@@ -82,12 +88,21 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
 
   // CRITICAL: Single-word rule - no color-coding for educational clarity
   // This is the single source of truth for the single-word check
-  // Expand contractions first (e.g., "it's" → "it is") before counting words
+  //
+  // CONTRACTION HANDLING: Expand contractions ONLY for word counting (e.g., "it's" → "it is")
+  // Component detection still uses normalizedEnglish (unexpanded) to match actual text structure.
+  // colorCodedTextUtils.ts handles contraction matching via bidirectional mapping (CONTRACTION_EXPANSIONS).
   const expandedEnglish = expandContractions(normalizedEnglish);
   const wordCount = expandedEnglish.trim().split(/\s+/).length;
-  if (wordCount === 1 && !hasBracketInjection) {
+  if (wordCount === WORD_COUNT.SINGLE && !hasBracketInjection) {
     // Only skip analysis if single word AND no bracket injection
     // If bracket injection is needed, callers will add "[the]" making it multi-word
+    //
+    // CONSISTENCY NOTE: This check is intentionally done BEFORE "[the]" is added.
+    // colorCodedTextUtils.ts checks AFTER "[the]" is added (displayedText).
+    // Both are logically equivalent:
+    //   - Here: Skip if (1 word AND no bracket) → Continue if bracket present
+    //   - There: Skip if displayedText is 1 word → displayedText is 2 words when bracket present
     const singleWordResult: WordAnalysis = {
       original: { arabic, english: normalizedEnglish },
       prefixes: [], // No prefixes for single words
@@ -150,7 +165,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
       // Real case: "يكره" → ي(he) + كره, removing ה leaves "كر" (2 chars) - FALSE POSITIVE
       // Valid case: "يكتبه" → ي + كتبה, removing ה leaves "כתב" (3+ chars) - OK
       // EXCEPTION: Allow 0-1 chars (prefix+suffix compounds like מִנָּא = מן + נא with no root)
-      if (remainingAfterSuffix.length === 2) {
+      if (isCriticalLength(remainingAfterSuffix, OVERLAP_REJECTION.CRITICAL_LENGTH)) {
         suffix = undefined; // Reject this suffix as false positive
       }
       // If length is 0-1, it's a valid prefix+suffix compound (keep suffix)
@@ -164,37 +179,61 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // Valid case: "דמה" (his blood) → NO prefix, but "his" is possessive (valid suffix)
   // Valid case: "כנא" (we were) → NO prefix, "we" matches suffix נא (valid)
   // Only apply to high-risk suffixes (ה, הא, י, כ) that can be confused with root letters
-  if (suffix && detectedPrefixes.length === 0 && isHighRiskSuffix(suffix.arabicMatch)) {
+  // EXTENDED VALIDATION: Apply to ALL high-risk suffixes (with or without prefixes)
+  // Previously only checked when detectedPrefixes.length === 0, but false positives can occur with prefixes too
+  // Example: "يكره" = "he hates" has prefix ي, but suffix ه is still false positive
+  if (suffix && isHighRiskSuffix(suffix.arabicMatch)) {
     const remainingAfterSuffix = remainingAfterPrefixes.substring(
       0,
       remainingAfterPrefixes.length - suffix.arabicMatch.length,
     );
 
-    if (remainingAfterSuffix.length < 3) {
+    if (remainingAfterSuffix.length < MIN_REMAINING_LENGTH.HIGH_RISK_SUFFIX) {
       // Check if English contains subject pronouns (these belong to verb conjugation, not suffixes)
       // Only check for pronouns that match the high-risk suffix (he/she/it/i)
       // Don't check "we" (נا suffix is almost always valid) or "you" (varied usage)
-      const subjectPronouns = ['he', 'she', 'it', 'i'];
+      const subjectPronouns = ['he', 'she', 'it', 'i', 'we', 'you', 'they'];
+      const objectPossessivePronouns = [
+        'his',
+        'her',
+        'its',
+        'it', // Can be object pronoun: "he sees it"
+        'my',
+        'our',
+        'your',
+        'you', // Can be object pronoun: "I see you", "to you"
+        'their',
+        'him',
+        'me',
+        'us',
+        'them',
+      ];
       const englishWords = normalizedEnglish.toLowerCase().split(/\s+/);
       const hasSubjectPronoun = englishWords.some(word => subjectPronouns.includes(word));
+      const hasObjectPossessivePronoun = englishWords.some(word =>
+        objectPossessivePronouns.includes(word),
+      );
 
-      if (hasSubjectPronoun) {
-        // NEW FIX: Check if the pronoun is actually claimed by the suffix's English patterns
-        // Example: "رآها" = "he sees it" → "it" is in ها suffix's englishMatches → KEEP
-        // Example: "كره" = "he hates" → "he" is NOT in ه suffix's englishMatches → REJECT
+      if (hasSubjectPronoun && !hasObjectPossessivePronoun) {
+        // ONLY subject pronoun present → must be verb conjugation, not suffix
+        // Example: "كره" = "he hated" → only "he", no object → reject ה suffix
+        suffix = undefined;
+      } else if (hasSubjectPronoun && hasObjectPossessivePronoun) {
+        // Both subject and object pronouns → verify suffix claims the object pronoun
+        // Example: "رآها" = "he sees it" → "he" + "it" → keep ها if it claims "it"
         const suffixEnglishWords = suffix.englishMatches.flatMap(match =>
           match.toLowerCase().split(/\s+/),
         );
-        const pronounMatchesSuffix = englishWords.some(
-          word => subjectPronouns.includes(word) && suffixEnglishWords.includes(word),
+        const suffixClaimsObjectPronoun = englishWords.some(
+          word => objectPossessivePronouns.includes(word) && suffixEnglishWords.includes(word),
         );
 
-        if (!pronounMatchesSuffix) {
-          // Subject pronoun exists BUT suffix doesn't claim it → likely verb conjugation, not suffix
-          suffix = undefined; // Reject this suffix as false positive
+        if (!suffixClaimsObjectPronoun) {
+          // Suffix doesn't claim object/possessive → false positive
+          suffix = undefined;
         }
-        // If pronounMatchesSuffix is true, keep the suffix (it's a valid object/possessive pronoun)
       }
+      // If only object/possessive pronouns (no subject), keep suffix (e.g., "his blood")
     }
   }
 
@@ -219,7 +258,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
 
   // Look for infixes in the remaining text (pass all prefixes/suffix to filter false positives)
   const infix =
-    remaining.length > 2
+    remaining.length > MIN_REMAINING_LENGTH.INFIX_DETECTION
       ? findInfix(remaining, normalizedEnglish, finalPrefixes, resolvedSuffix)
       : undefined;
 

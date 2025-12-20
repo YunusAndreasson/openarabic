@@ -341,31 +341,31 @@ describe('Arabic Word Analysis - False Positive Fixes', () => {
     });
   });
 
-  describe('Pure Particle Combinations Should NOT Be Colored', () => {
-    test('وَهُوَ → "and he" - conjunction + pronoun should NOT be colored', () => {
+  describe('Pure Particle Combinations ARE NOW Colored (Filter Disabled)', () => {
+    test('وَهُوَ → "and he" - conjunction + pronoun IS colored to show composition', () => {
       const result = analyzeArabicWord('وَهُوَ', 'and he');
 
       // وَهُوَ = و (and) + هُوَ (he)
-      // BEFORE fix: System colored as prefix + root - WRONG (design violation)!
-      // AFTER fix: System recognizes as pure particle combination, hasComponents=false
-      // This is CORRECT - pure particles should NOT be colored
+      // NEW BEHAVIOR: Pure particle filter disabled
+      // These ARE colored to show composition (educational value in seeing parts)
+      // Core principle: If there are 2 parts, show them with colors
 
       // Should detect و as prefix
       expect(result.prefixes.some(p => p.arabicMatch === 'و')).toBe(true);
 
-      // Remaining should be هو (the pronoun)
-      expect(result.remainingArabic).toBe('هو');
+      // Remaining should be empty (both components detected)
+      expect(result.remainingArabic).toBe('');
 
-      // Should NOT be colored (pure particle combination)
-      expect(result.hasComponents).toBe(false);
+      // SHOULD be colored (shows composition of و + هو)
+      expect(result.hasComponents).toBe(true);
     });
 
-    test('فَهِيَ → "then she" - conjunction + pronoun should NOT be colored', () => {
+    test('فَهِيَ → "then she" - conjunction + pronoun IS colored to show composition', () => {
       const result = analyzeArabicWord('فَهِيَ', 'then she');
 
       expect(result.prefixes.some(p => p.arabicMatch === 'ف')).toBe(true);
-      expect(result.remainingArabic).toBe('هي');
-      expect(result.hasComponents).toBe(false);
+      expect(result.remainingArabic).toBe('');
+      expect(result.hasComponents).toBe(true);
     });
 
     test('بِهِ → "with him" - preposition + pronoun SHOULD be colored (not pure particles)', () => {
