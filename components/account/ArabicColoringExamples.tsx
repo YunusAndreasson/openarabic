@@ -157,7 +157,7 @@ export const ArabicColoringExamples = memo(() => {
       </View>
 
       {/* Note about single words */}
-      <View style={styles.noteContainer}>
+      <View style={[styles.noteContainer, { borderTopColor: colors.border }]}>
         <ThemedText type="caption" colorName="textTertiary" style={styles.noteText}>
           Note: Single words like "house" are not colored, only multi-word phrases where component
           analysis adds educational value.
@@ -216,7 +216,6 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.SMALL,
     paddingTop: LAYOUT.SPACING.MEDIUM,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(128, 128, 128, 0.2)',
   },
   noteText: {
     fontStyle: 'italic',

@@ -45,7 +45,7 @@ const createShadow = (elevation: number, opacity: number, radius: number) => ({
   shadowOffset: { width: 0, height: Math.ceil(elevation / 2) },
   shadowOpacity: opacity,
   shadowRadius: radius,
-  shadowColor: '#000', // Explicit shadow color for consistency
+  // shadowColor applied at usage site (e.g., { shadowColor: colors.shadow })
 });
 
 const createElevation = (level: number, opacity: number, radius: number) => ({
