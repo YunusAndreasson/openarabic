@@ -12,7 +12,7 @@ describe('Fahuwa Pattern Investigation', () => {
 
       // "fahuwa" is NOW normalized to "so he", so ف IS detected!
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       expect(hasFa).toBe(true);
@@ -27,7 +27,7 @@ describe('Fahuwa Pattern Investigation', () => {
 
       // Check if ف is detected
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       // فهو = "so he" is a conjunction + pronoun = pure particle combination
@@ -44,9 +44,19 @@ describe('Fahuwa Pattern Investigation', () => {
       { arabic: 'فهو', english: 'fahuwa', normalized: 'so he', description: 'ف (so) + هو (he)' },
       { arabic: 'وهو', english: 'wahuwa', normalized: 'and he', description: 'و (and) + هو (he)' },
       { arabic: 'فهي', english: 'fahiya', normalized: 'so she', description: 'ف (so) + هي (she)' },
-      { arabic: 'وهي', english: 'wahiya', normalized: 'and she', description: 'و (and) + هي (she)' },
+      {
+        arabic: 'وهي',
+        english: 'wahiya',
+        normalized: 'and she',
+        description: 'و (and) + هي (she)',
+      },
       { arabic: 'فهم', english: 'fahum', normalized: 'so they', description: 'ف (so) + هم (they)' },
-      { arabic: 'وهم', english: 'wahum', normalized: 'and they', description: 'و (and) + هم (they)' },
+      {
+        arabic: 'وهم',
+        english: 'wahum',
+        normalized: 'and they',
+        description: 'و (and) + هم (they)',
+      },
     ];
 
     patterns.forEach(pattern => {
@@ -108,7 +118,7 @@ describe('Fahuwa Pattern Investigation', () => {
       // After normalization, "fahuwa" → "so he"
       // ف (so) should be detected as a prefix
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       expect(hasFa).toBe(true);
@@ -120,7 +130,7 @@ describe('Fahuwa Pattern Investigation', () => {
       // After normalization, "wahuwa" → "and he"
       // و (and) should be detected as a prefix
       const hasWaw = analysis.prefixes.some(
-        p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+        p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
       expect(hasWaw).toBe(true);

@@ -30,19 +30,18 @@ describe('Faidha (فإذا) Normalization', () => {
       console.log('\n📊 فإذا + "faidha":');
       console.log('  Normalized to:', normalizeTranslation('فإذا', 'faidha'));
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  Prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  Prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Should detect ف as first prefix
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       // Should detect إذا as second prefix (compound detection)
-      const hasIdha = analysis.prefixes.some(
-        p => p.arabicMatch === 'إذا'
-      );
+      const hasIdha = analysis.prefixes.some(p => p.arabicMatch === 'إذا');
 
       console.log('  ف (so) detected:', hasFa);
       console.log('  إذا (when) detected:', hasIdha);
@@ -56,19 +55,18 @@ describe('Faidha (فإذا) Normalization', () => {
 
       console.log('\n📊 وإذا + "waidha":');
       console.log('  Normalized to:', normalizeTranslation('وإذا', 'waidha'));
-      console.log('  Prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  Prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Should detect و as first prefix
       const hasWaw = analysis.prefixes.some(
-        p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+        p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
       // Should detect إذا as second prefix
-      const hasIdha = analysis.prefixes.some(
-        p => p.arabicMatch === 'إذا'
-      );
+      const hasIdha = analysis.prefixes.some(p => p.arabicMatch === 'إذا');
 
       console.log('  و (and) detected:', hasWaw);
       console.log('  إذا (when) detected:', hasIdha);
@@ -82,9 +80,10 @@ describe('Faidha (فإذا) Normalization', () => {
 
       console.log('\n📊 فإذا + "so when" (already normalized):');
       console.log('  Total prefixes:', analysis.prefixes.length);
-      console.log('  Prefixes detected:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} → ${p.englishMatches.join('/')}`
-      ).join(' | '));
+      console.log(
+        '  Prefixes detected:',
+        analysis.prefixes.map(p => `${p.arabicMatch} → ${p.englishMatches.join('/')}`).join(' | '),
+      );
       console.log('  Remaining:', `"${analysis.remainingArabic}"`);
 
       // Should have detected prefixes

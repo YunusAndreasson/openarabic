@@ -71,7 +71,15 @@ SectionHeader.displayName = 'SectionHeader';
  * Uses existing article selection logic for consistency and efficiency.
  */
 export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
-  ({ currentArticleId, articlesData, filterType, filterId, filterName, maxArticles = 5, onVisible }) => {
+  ({
+    currentArticleId,
+    articlesData,
+    filterType,
+    filterId,
+    filterName,
+    maxArticles = 5,
+    onVisible,
+  }) => {
     const router = useRouter();
 
     // Filter articles by author or category, excluding current article

@@ -35,14 +35,13 @@ describe('Kama (كما) Normalization', () => {
       console.log('\n📊 كما + "kama":');
       console.log('  Normalized to:', normalizeTranslation('كما', 'kama'));
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  Prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  Prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Should detect ك as prefix
-      const hasKa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ك'
-      );
+      const hasKa = analysis.prefixes.some(p => p.arabicMatch === 'ك');
 
       console.log('  ك (as) detected:', hasKa);
 
@@ -55,19 +54,18 @@ describe('Kama (كما) Normalization', () => {
 
       console.log('\n📊 وكما + "wakama":');
       console.log('  Normalized to:', normalizeTranslation('وكما', 'wakama'));
-      console.log('  Prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  Prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Should detect و as first prefix
       const hasWaw = analysis.prefixes.some(
-        p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+        p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
       // Should detect ك as second prefix
-      const hasKa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ك'
-      );
+      const hasKa = analysis.prefixes.some(p => p.arabicMatch === 'ك');
 
       console.log('  و (and) detected:', hasWaw);
       console.log('  ك (as) detected:', hasKa);
@@ -82,19 +80,18 @@ describe('Kama (كما) Normalization', () => {
 
       console.log('\n📊 فكما + "fakama":');
       console.log('  Normalized to:', normalizeTranslation('فكما', 'fakama'));
-      console.log('  Prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  Prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Should detect ف as first prefix
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       // Should detect ك as second prefix
-      const hasKa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ك'
-      );
+      const hasKa = analysis.prefixes.some(p => p.arabicMatch === 'ك');
 
       console.log('  ف (so) detected:', hasFa);
       console.log('  ك (as) detected:', hasKa);

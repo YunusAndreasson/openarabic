@@ -38,7 +38,7 @@ const forestOKLCH = {
  * Hue range: 151-167° (subtle green tint)
  */
 const sageOKLCH = {
-  darkest: { l: 0.145, c: 0.020, h: 160.0 }, // Premium 2025: deeper + more chroma for visible tint
+  darkest: { l: 0.145, c: 0.02, h: 160.0 }, // Premium 2025: deeper + more chroma for visible tint
   dark: { l: 0.185, c: 0.022, h: 158.0 }, // Premium 2025: +4% L step
   mediumDark: { l: 0.225, c: 0.024, h: 156.0 }, // Premium 2025: +4% L step
   medium: { l: 0.265, c: 0.026, h: 155.0 }, // Premium 2025: +4% L step
@@ -127,7 +127,7 @@ const coralOKLCH = {
  */
 const pureOKLCH = {
   white: { l: 0.9965, c: 0.004, h: 157.0 }, // Sage-green brand tint
-  black: { l: 0.10, c: 0.012, h: 150.9 }, // Premium 2025: darker for proper shadows on deep backgrounds
+  black: { l: 0.1, c: 0.012, h: 150.9 }, // Premium 2025: darker for proper shadows on deep backgrounds
 } as const;
 
 /**

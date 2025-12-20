@@ -30,14 +30,15 @@ describe('Faqad (فقد) Normalization', () => {
       console.log('\n📊 فقد + "faqad":');
       console.log('  Normalized to:', normalizeTranslation('فقد', 'faqad'));
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  Prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  Prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
       console.log('  Suffix:', analysis.suffix?.arabicMatch || 'none');
 
       // Should detect ف as prefix
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       expect(hasFa).toBe(true);
@@ -49,12 +50,13 @@ describe('Faqad (فقد) Normalization', () => {
 
       console.log('\n📊 وقد + "waqad":');
       console.log('  Normalized to:', normalizeTranslation('وقد', 'waqad'));
-      console.log('  Prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  Prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       const hasWaw = analysis.prefixes.some(
-        p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+        p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
       expect(hasWaw).toBe(true);

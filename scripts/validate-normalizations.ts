@@ -75,11 +75,11 @@ async function validateNormalizations() {
     Array.from(translations.entries())
       .sort((a, b) => b[1] - a[1])
       .forEach(([english, count]) => {
-        const isInRule = rule.transliterations.some(t =>
-          t.toLowerCase() === english.toLowerCase()
-        );
+        const isInRule = rule.transliterations.some(t => t.toLowerCase() === english.toLowerCase());
         const marker = isInRule ? '✓' : '✗';
-        console.log(`     ${marker} "${english}" (${count}x) ${isInRule ? '- COVERED' : '- NOT IN RULE'}`);
+        console.log(
+          `     ${marker} "${english}" (${count}x) ${isInRule ? '- COVERED' : '- NOT IN RULE'}`,
+        );
       });
 
     // Check each transliteration

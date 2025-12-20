@@ -30,10 +30,7 @@ import { normalizeArabic } from './normalization';
  * normalizeTranslation('كتاب', 'book') // Returns: 'book'
  * ```
  */
-export function normalizeTranslation(
-  arabicWord: string,
-  englishTranslation: string,
-): string {
+export function normalizeTranslation(arabicWord: string, englishTranslation: string): string {
   // Normalize Arabic for rule lookup (removes diacritics, standardizes)
   const normalizedArabic = normalizeArabic(arabicWord);
 

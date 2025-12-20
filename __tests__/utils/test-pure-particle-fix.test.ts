@@ -11,13 +11,14 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
 
       console.log('\n📊 وهو + "and he":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Should detect و (and)
       const hasWaw = analysis.prefixes.some(
-        p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+        p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
       expect(hasWaw).toBe(true);
@@ -30,12 +31,13 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
 
       console.log('\n📊 وهو + "and it":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       const hasWaw = analysis.prefixes.some(
-        p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+        p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
       expect(hasWaw).toBe(true);
@@ -47,12 +49,13 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
 
       console.log('\n📊 فهو + "so he":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       expect(hasFa).toBe(true);
@@ -64,12 +67,13 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
 
       console.log('\n📊 فهو + "so it is":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       expect(hasFa).toBe(true);
@@ -84,14 +88,15 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
 
       console.log('\n📊 وهو + "wahuwa" (transliteration):');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // "wahuwa" → "and he" (via normalization)
       // و detected as prefix
       const hasWaw = analysis.prefixes.some(
-        p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+        p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
       expect(hasWaw).toBe(true);
@@ -103,12 +108,13 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
 
       console.log('\n📊 فهو + "fahuwa" (transliteration):');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       expect(hasFa).toBe(true);
@@ -144,9 +150,10 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
 
       console.log('\n📊 ولا + "and not":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Both و and لا should be detected
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(2);

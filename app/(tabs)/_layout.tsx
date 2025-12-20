@@ -53,32 +53,29 @@ export default function TabLayout(): JSX.Element {
 
   // Tab bar style with padding for proper icon spacing
   // Android needs explicit height to prevent label text clipping
-  const tabBarStyle = useMemo(
-    () => {
-      const baseStyle = {
-        borderTopWidth: 0,
-        backgroundColor: colors.elevation0,
-        paddingTop: LAYOUT.SPACING.SMALL, // 8px padding above icons
-      };
+  const tabBarStyle = useMemo(() => {
+    const baseStyle = {
+      borderTopWidth: 0,
+      backgroundColor: colors.elevation0,
+      paddingTop: LAYOUT.SPACING.SMALL, // 8px padding above icons
+    };
 
-      if (Platform.OS === 'android') {
-        // Android: Set explicit height to ensure labels have enough space
-        // 56px base height + safe area inset + extra padding for labels
-        return {
-          ...baseStyle,
-          height: 56 + insets.bottom + LAYOUT.SPACING.MEDIUM,
-          paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
-        };
-      }
-
-      // iOS: Just use padding for safe area
+    if (Platform.OS === 'android') {
+      // Android: Set explicit height to ensure labels have enough space
+      // 56px base height + safe area inset + extra padding for labels
       return {
         ...baseStyle,
-        paddingBottom: insets.bottom,
+        height: 56 + insets.bottom + LAYOUT.SPACING.MEDIUM,
+        paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
       };
-    },
-    [colors.elevation0, insets.bottom],
-  );
+    }
+
+    // iOS: Just use padding for safe area
+    return {
+      ...baseStyle,
+      paddingBottom: insets.bottom,
+    };
+  }, [colors.elevation0, insets.bottom]);
 
   // Label style to fix Android text rendering
   // Android adds extra font padding - disabling it ensures proper text rendering
@@ -125,8 +122,7 @@ export default function TabLayout(): JSX.Element {
           options={{
             title: screen.title,
             tabBarBadge: screen.name === 'study' && dueWordsCount > 0 ? dueWordsCount : undefined,
-            tabBarBadgeStyle:
-              screen.name === 'study' && dueWordsCount > 0 ? badgeStyle : undefined,
+            tabBarBadgeStyle: screen.name === 'study' && dueWordsCount > 0 ? badgeStyle : undefined,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons
                 name={focused ? screen.icon.filled : screen.icon.outline}

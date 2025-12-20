@@ -13,9 +13,10 @@ describe('Wahuwa "and it" Investigation', () => {
       console.log('\n📊 وهو + "wahuwa":');
       console.log('  Normalized to:', normalizeTranslation('وهو', 'wahuwa'));
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // "wahuwa" should be normalized to "and he"
       expect(normalizeTranslation('وهو', 'wahuwa')).toBe('and he');
@@ -26,13 +27,14 @@ describe('Wahuwa "and it" Investigation', () => {
 
       console.log('\n📊 وهو + "and he":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Should detect و (and)
       const hasWaw = analysis.prefixes.some(
-        p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+        p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
       expect(hasWaw).toBe(true);
     });
@@ -42,16 +44,19 @@ describe('Wahuwa "and it" Investigation', () => {
 
       console.log('\n📊 وهو + "and it":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
-      console.log('\n❓ ISSUE: "and it" is not a transliteration, so no normalization rule applies');
+      console.log(
+        '\n❓ ISSUE: "and it" is not a transliteration, so no normalization rule applies',
+      );
       console.log('   But "and it" is a valid translation - should components still be detected?');
 
       // Check if و is detected
       const hasWaw = analysis.prefixes.some(
-        p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+        p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
       console.log('  و (and) detected:', hasWaw);
@@ -70,9 +75,10 @@ describe('Wahuwa "and it" Investigation', () => {
       console.log('  prefixes detected:', analysis.prefixes.length);
 
       if (analysis.prefixes.length > 0) {
-        console.log('  Prefixes:', analysis.prefixes.map(p =>
-          `${p.arabicMatch} = ${p.englishMatches.join('/')}`
-        ));
+        console.log(
+          '  Prefixes:',
+          analysis.prefixes.map(p => `${p.arabicMatch} = ${p.englishMatches.join('/')}`),
+        );
       }
 
       console.log('\n💡 Likely reason for no coloring:');

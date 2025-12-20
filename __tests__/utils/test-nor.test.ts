@@ -17,13 +17,14 @@ describe('Nor (ولا) Normalization', () => {
     console.log('\n📊 ولا + "nor":');
     console.log('  Normalized to:', normalizeTranslation('ولا', 'nor'));
     console.log('  hasComponents:', analysis.hasComponents);
-    console.log('  Prefixes:', analysis.prefixes.map(p =>
-      `${p.arabicMatch} (${p.englishMatches.join('/')})`
-    ).join(', '));
+    console.log(
+      '  Prefixes:',
+      analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+    );
 
     // Should detect و as prefix
     const hasWaw = analysis.prefixes.some(
-      p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+      p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
     );
 
     console.log('  و (and) detected:', hasWaw);

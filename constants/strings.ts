@@ -133,12 +133,14 @@ export const STRINGS = {
   BOOKMARKS_EMPTY_TITLE: 'Your Playlist is empty',
   BOOKMARKS_EMPTY_CTA: 'Add 10 beginner texts',
   BOOKMARKS_EMPTY_CTA_SECONDARY: 'Browse',
-  BOOKMARKS_EMPTY_HINT: 'Tap the headset icon on any article to build your Playlist and listen anytime',
+  BOOKMARKS_EMPTY_HINT:
+    'Tap the headset icon on any article to build your Playlist and listen anytime',
   // Practice tab empty state - minimal one-tap start
   STUDY_LIST_EMPTY_TITLE: 'Your Practice list is empty',
   STUDY_LIST_EMPTY_CTA: 'Add 10 essential words',
   STUDY_LIST_EMPTY_CTA_SECONDARY: 'Browse',
-  STUDY_LIST_EMPTY_HINT: "Tap any word while reading to add it. We'll remind you at the perfect time so you remember it long-term",
+  STUDY_LIST_EMPTY_HINT:
+    "Tap any word while reading to add it. We'll remind you at the perfect time so you remember it long-term",
   STUDY_LIST_WORDS_ADDED: 'words added to practice',
   // Welcome toasts when navigating from empty states
   EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headset icon on any text to add it to your playlist',

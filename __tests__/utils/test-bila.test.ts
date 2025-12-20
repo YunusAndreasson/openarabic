@@ -21,11 +21,14 @@ describe('Bila Pattern Investigation (بلا)', () => {
 
       console.log('\n📊 بلا + "bila" (transliteration):');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p => ({
-        arabic: p.arabicMatch,
-        english: p.englishMatches,
-        role: p.role
-      })));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => ({
+          arabic: p.arabicMatch,
+          english: p.englishMatches,
+          role: p.role,
+        })),
+      );
 
       // Normalization rule exists: بلا → "with no"
       expect(analysis.original.english).toBe('with no');
@@ -36,21 +39,25 @@ describe('Bila Pattern Investigation (بلا)', () => {
 
       console.log('\n📊 بلا + "with no":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p => ({
-        arabic: p.arabicMatch,
-        english: p.englishMatches,
-        role: p.role
-      })));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => ({
+          arabic: p.arabicMatch,
+          english: p.englishMatches,
+          role: p.role,
+        })),
+      );
 
       // Check if ب is detected
       const hasBa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ب' && p.englishMatches.includes('with')
+        p => p.arabicMatch === 'ب' && p.englishMatches.includes('with'),
       );
 
       // Check if لا is detected
       const hasLa = analysis.prefixes.some(
-        p => p.arabicMatch === 'لا' &&
-        (p.englishMatches.includes('no') || p.englishMatches.includes('not'))
+        p =>
+          p.arabicMatch === 'لا' &&
+          (p.englishMatches.includes('no') || p.englishMatches.includes('not')),
       );
 
       console.log('  ب (with) detected:', hasBa);
@@ -65,11 +72,14 @@ describe('Bila Pattern Investigation (بلا)', () => {
 
       console.log('\n📊 بلا + "without":');
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  prefixes:', analysis.prefixes.map(p => ({
-        arabic: p.arabicMatch,
-        english: p.englishMatches,
-        role: p.role
-      })));
+      console.log(
+        '  prefixes:',
+        analysis.prefixes.map(p => ({
+          arabic: p.arabicMatch,
+          english: p.englishMatches,
+          role: p.role,
+        })),
+      );
 
       // New behavior: "without" gets normalized to "with no" (two words)
       // So it WILL be colored
@@ -80,10 +90,25 @@ describe('Bila Pattern Investigation (بلا)', () => {
 
   describe('Related patterns', () => {
     const patterns = [
-      { arabic: 'فبلا', english: 'fabilaa', normalized: 'so with no', description: 'ف (so) + ب (with) + لا (no)' },
-      { arabic: 'وبلا', english: 'wabilaa', normalized: 'and with no', description: 'و (and) + ب (with) + لا (no)' },
+      {
+        arabic: 'فبلا',
+        english: 'fabilaa',
+        normalized: 'so with no',
+        description: 'ف (so) + ب (with) + لا (no)',
+      },
+      {
+        arabic: 'وبلا',
+        english: 'wabilaa',
+        normalized: 'and with no',
+        description: 'و (and) + ب (with) + لا (no)',
+      },
       { arabic: 'بلا', english: 'bilaa', normalized: 'with no', description: 'ب (with) + لا (no)' },
-      { arabic: 'بلا', english: 'bi laa', normalized: 'with no', description: 'ب (with) + لا (no)' },
+      {
+        arabic: 'بلا',
+        english: 'bi laa',
+        normalized: 'with no',
+        description: 'ب (with) + لا (no)',
+      },
     ];
 
     patterns.forEach(pattern => {
@@ -94,9 +119,12 @@ describe('Bila Pattern Investigation (بلا)', () => {
         console.log('  Description:', pattern.description);
         console.log('  Suggested normalization:', pattern.normalized);
         console.log('  Components detected:', analysis.hasComponents);
-        console.log('  Prefixes:', analysis.prefixes.map(p =>
-          `${p.arabicMatch} (${p.englishMatches.join('/')})`
-        ).join(', ') || 'none');
+        console.log(
+          '  Prefixes:',
+          analysis.prefixes
+            .map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`)
+            .join(', ') || 'none',
+        );
 
         // Just for investigation
         expect(pattern.arabic).toBeTruthy();
@@ -136,7 +164,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
       const analysis = analyzeArabicWord('بلا', 'bila');
 
       const hasBa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ب' && p.englishMatches.includes('with')
+        p => p.arabicMatch === 'ب' && p.englishMatches.includes('with'),
       );
 
       expect(hasBa).toBe(true);
@@ -146,8 +174,9 @@ describe('Bila Pattern Investigation (بلا)', () => {
       const analysis = analyzeArabicWord('بلا', 'bila');
 
       const hasLa = analysis.prefixes.some(
-        p => p.arabicMatch === 'لا' &&
-        (p.englishMatches.includes('no') || p.englishMatches.includes('not'))
+        p =>
+          p.arabicMatch === 'لا' &&
+          (p.englishMatches.includes('no') || p.englishMatches.includes('not')),
       );
 
       expect(hasLa).toBe(true);
@@ -178,10 +207,10 @@ describe('Bila Pattern Investigation (بلا)', () => {
       console.log('Based on analysis, "bila" should be added to normalization rules:');
       console.log('');
       console.log('{');
-      console.log('  arabic: \'بلا\',');
-      console.log('  transliterations: [\'bila\', \'bi laa\', \'bilaa\', \'bi la\'],');
-      console.log('  normalizedEnglish: \'with no\',');
-      console.log('  description: \'ب (with) + لا (no)\',');
+      console.log("  arabic: 'بلا',");
+      console.log("  transliterations: ['bila', 'bi laa', 'bilaa', 'bi la'],");
+      console.log("  normalizedEnglish: 'with no',");
+      console.log("  description: 'ب (with) + لا (no)',");
       console.log('},');
       console.log('');
       console.log('This will enable:');

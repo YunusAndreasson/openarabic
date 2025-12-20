@@ -30,13 +30,14 @@ describe('Fama (فما) Normalization', () => {
       console.log('\n📊 فما + "fama":');
       console.log('  Normalized to:', normalizeTranslation('فما', 'fama'));
       console.log('  hasComponents:', analysis.hasComponents);
-      console.log('  Prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  Prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Should detect ف as prefix
       const hasFa = analysis.prefixes.some(
-        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+        p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
       console.log('  ف (so) detected:', hasFa);
@@ -50,13 +51,14 @@ describe('Fama (فما) Normalization', () => {
 
       console.log('\n📊 وما + "wama":');
       console.log('  Normalized to:', normalizeTranslation('وما', 'wama'));
-      console.log('  Prefixes:', analysis.prefixes.map(p =>
-        `${p.arabicMatch} (${p.englishMatches.join('/')})`
-      ).join(', '));
+      console.log(
+        '  Prefixes:',
+        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+      );
 
       // Should detect و as prefix
       const hasWaw = analysis.prefixes.some(
-        p => p.arabicMatch === 'و' && p.englishMatches.includes('and')
+        p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
       console.log('  و (and) detected:', hasWaw);

@@ -62,10 +62,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const rawEnglishText = word.root?.meaning || 'Unknown English';
 
     // Capitalize first letter of English text for display
-    const englishText = useMemo(
-      () => capitalizeFirstLetter(rawEnglishText),
-      [rawEnglishText],
-    );
+    const englishText = useMemo(() => capitalizeFirstLetter(rawEnglishText), [rawEnglishText]);
 
     // Get dot color based on stability level (error=red, warning=orange, success=green)
     const dotColorKey = useMemo(

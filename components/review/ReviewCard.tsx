@@ -114,10 +114,10 @@ export function ReviewCard({
       withOpacity(colors.success, 0),
       withOpacity(colors.success, GESTURE_CONSTANTS.FLASH_OPACITY),
     ] as [string, string],
-    warning: [
-      withOpacity(colors.warning, 0),
-      withOpacity(colors.warning, HINT_FLASH_OPACITY),
-    ] as [string, string],
+    warning: [withOpacity(colors.warning, 0), withOpacity(colors.warning, HINT_FLASH_OPACITY)] as [
+      string,
+      string,
+    ],
   };
 
   // ===== HINT FLASH ANIMATION =====

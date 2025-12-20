@@ -130,9 +130,7 @@ function hasArabicPhonetics(english: string): boolean {
 /**
  * Analyze Arabic word structure to suggest components
  */
-function analyzeStructure(
-  arabic: string,
-): { components: string[]; suggestedMeanings: string[] } {
+function analyzeStructure(arabic: string): { components: string[]; suggestedMeanings: string[] } {
   const normalized = normalizeArabic(arabic);
   const components: string[] = [];
   const suggestedMeanings: string[] = [];
@@ -172,7 +170,10 @@ function analyzeStructure(
 /**
  * Suggest normalized translation based on Arabic structure
  */
-function suggestTranslation(arabic: string, english: string): {
+function suggestTranslation(
+  arabic: string,
+  english: string,
+): {
   suggested: string;
   confidence: 'high' | 'medium' | 'low';
   reasoning: string;
@@ -366,9 +367,7 @@ function generateRules(candidates: TransliterationCandidate[]): NormalizationRul
 
   for (const [normalizedArabic, group] of ruleMap.entries()) {
     // Get all unique English transliterations for this Arabic word
-    const transliterations = [
-      ...new Set(group.map(c => c.english.toLowerCase().trim())),
-    ].sort();
+    const transliterations = [...new Set(group.map(c => c.english.toLowerCase().trim()))].sort();
 
     // Use the most common suggested translation
     const suggestedTranslation =

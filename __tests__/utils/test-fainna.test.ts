@@ -17,13 +17,14 @@ describe('Fainna (فإن) Normalization', () => {
     console.log('\n📊 فإن + "fainna":');
     console.log('  Normalized to:', normalizeTranslation('فإن', 'fainna'));
     console.log('  hasComponents:', analysis.hasComponents);
-    console.log('  Prefixes:', analysis.prefixes.map(p =>
-      `${p.arabicMatch} (${p.englishMatches.join('/')})`
-    ).join(', '));
+    console.log(
+      '  Prefixes:',
+      analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
+    );
 
     // Should detect ف as prefix
     const hasFa = analysis.prefixes.some(
-      p => p.arabicMatch === 'ف' && p.englishMatches.includes('so')
+      p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
     );
 
     expect(hasFa).toBe(true);
