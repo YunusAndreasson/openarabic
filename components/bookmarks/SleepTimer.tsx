@@ -87,7 +87,10 @@ export function SleepTimer({
       onChange={handleChange}
       onDismiss={onClose}
       backdropComponent={renderBackdrop}
-      backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
+      backgroundStyle={[
+        styles.background,
+        { backgroundColor: colors.elevation1, shadowColor: colors.shadow },
+      ]}
       handleIndicatorStyle={[styles.indicator, { backgroundColor: colors.modalIndicator }]}
     >
       <BottomSheetView style={styles.container}>

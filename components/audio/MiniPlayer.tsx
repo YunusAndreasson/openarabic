@@ -112,9 +112,10 @@ const MiniPlayerComponent = ({
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: withAlpha(colors.border, 0.5),
         ...LAYOUT.ELEVATION.MEDIUM,
+        shadowColor: colors.shadow,
       },
     ],
-    [colors.elevation2, colors.border],
+    [colors.elevation2, colors.border, colors.shadow],
   );
 
   // Memoize button colors - use subtle tinted background for visibility

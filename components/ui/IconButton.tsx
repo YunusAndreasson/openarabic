@@ -125,6 +125,7 @@ export const IconButton: FC<IconButtonProps> = ({
         style={[
           styles.button,
           !flat && LAYOUT.ELEVATION.SUBTLE,
+          !flat && { shadowColor: colors.shadow },
           animatedStyle as ViewStyle,
           {
             backgroundColor: resolvedBackgroundColor,
