@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
+import type { TextInput } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
@@ -25,6 +26,8 @@ import { useAuthForm } from '@/hooks/auth/useAuthForm';
  * - Error handling
  */
 export function SignUpForm(): JSX.Element {
+  const passwordInputRef = useRef<TextInput>(null);
+
   const {
     email,
     setEmail,
@@ -37,6 +40,10 @@ export function SignUpForm(): JSX.Element {
     validatePassword,
     signUpWithEmail,
   } = useAuthForm();
+
+  const focusPasswordInput = useCallback(() => {
+    passwordInputRef.current?.focus();
+  }, []);
 
   // Input handlers
   const handleEmailChange = useCallback(
@@ -77,6 +84,7 @@ export function SignUpForm(): JSX.Element {
         value={email}
         onChangeText={handleEmailChange}
         onBlur={handleEmailBlur}
+        onSubmitEditing={focusPasswordInput}
         error={emailError}
       />
 
@@ -84,8 +92,10 @@ export function SignUpForm(): JSX.Element {
         value={password}
         onChangeText={handlePasswordChange}
         onBlur={handlePasswordBlur}
+        onSubmitEditing={signUpWithEmail}
         error={passwordError}
         isSignUp
+        inputRef={passwordInputRef}
       >
         <PasswordStrengthMeter password={password} />
       </AuthPasswordInput>
@@ -107,6 +117,7 @@ export function SignUpForm(): JSX.Element {
         </ThemedText>
         <TouchableOpacity
           activeOpacity={LAYOUT.OPACITY.HIGH}
+          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           testID="navigate-to-sign-in-link"
           accessibilityRole="button"
           accessibilityLabel="Go to sign in"

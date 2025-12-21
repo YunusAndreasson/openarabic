@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
+import type { TextInput } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
@@ -24,6 +25,8 @@ import { useAuthForm } from '@/hooks/auth/useAuthForm';
  * - Error handling
  */
 export function SignInForm(): JSX.Element {
+  const passwordInputRef = useRef<TextInput>(null);
+
   const {
     email,
     setEmail,
@@ -41,6 +44,10 @@ export function SignInForm(): JSX.Element {
   const handleForgotPassword = useCallback(async () => {
     await resetPassword();
   }, [resetPassword]);
+
+  const focusPasswordInput = useCallback(() => {
+    passwordInputRef.current?.focus();
+  }, []);
 
   // Input handlers
   const handleEmailChange = useCallback(
@@ -77,6 +84,7 @@ export function SignInForm(): JSX.Element {
         value={email}
         onChangeText={handleEmailChange}
         onBlur={handleEmailBlur}
+        onSubmitEditing={focusPasswordInput}
         error={emailError}
       />
 
@@ -84,7 +92,9 @@ export function SignInForm(): JSX.Element {
         value={password}
         onChangeText={handlePasswordChange}
         onBlur={handlePasswordBlur}
+        onSubmitEditing={signInWithEmail}
         error={passwordError}
+        inputRef={passwordInputRef}
       />
 
       <ThemedButton
@@ -101,6 +111,7 @@ export function SignInForm(): JSX.Element {
       <View style={styles.forgotPasswordContainer}>
         <TouchableOpacity
           activeOpacity={LAYOUT.OPACITY.HIGH}
+          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           testID="forgot-password-button"
           accessibilityRole="button"
           accessibilityLabel="Forgot password"
@@ -119,6 +130,7 @@ export function SignInForm(): JSX.Element {
         </ThemedText>
         <TouchableOpacity
           activeOpacity={LAYOUT.OPACITY.HIGH}
+          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           testID="navigate-to-sign-up-link"
           accessibilityRole="button"
           accessibilityLabel="Go to create account"

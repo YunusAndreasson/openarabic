@@ -1,4 +1,6 @@
+import type { RefObject } from 'react';
 import { useCallback, useState } from 'react';
+import type { TextInput } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
 import { ThemedInput } from '@/components/ThemedInput';
@@ -9,6 +11,7 @@ interface AuthEmailInputProps {
   value: string;
   onChangeText: (text: string) => void;
   onBlur?: () => void;
+  onSubmitEditing?: () => void;
   error?: string;
   testID?: string;
 }
@@ -17,9 +20,11 @@ interface AuthPasswordInputProps {
   value: string;
   onChangeText: (text: string) => void;
   onBlur?: () => void;
+  onSubmitEditing?: () => void;
   error?: string;
   isSignUp?: boolean;
   testID?: string;
+  inputRef?: RefObject<TextInput | null>;
 }
 
 /**
@@ -35,6 +40,7 @@ export function AuthEmailInput({
   value,
   onChangeText,
   onBlur,
+  onSubmitEditing,
   error,
   testID = 'email-input',
 }: AuthEmailInputProps) {
@@ -55,8 +61,10 @@ export function AuthEmailInput({
         testID={testID}
         accessibilityLabel="Email address"
         accessibilityHint="Enter your email address"
+        blurOnSubmit={false}
         onBlur={onBlur}
         onChangeText={onChangeText}
+        onSubmitEditing={onSubmitEditing}
       />
     </View>
   );
@@ -75,9 +83,11 @@ export function AuthPasswordInput({
   value,
   onChangeText,
   onBlur,
+  onSubmitEditing,
   error,
   isSignUp = false,
   testID = 'password-input',
+  inputRef,
   children,
 }: AuthPasswordInputProps & { children?: React.ReactNode }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -88,6 +98,7 @@ export function AuthPasswordInput({
   return (
     <View style={styles.inputWrapper}>
       <ThemedInput
+        ref={inputRef}
         autoCapitalize="none"
         autoComplete={isSignUp ? 'password-new' : 'password'}
         error={error}
@@ -108,6 +119,7 @@ export function AuthPasswordInput({
         onBlur={onBlur}
         onChangeText={onChangeText}
         onRightIconPress={handleTogglePassword}
+        onSubmitEditing={onSubmitEditing}
       />
       {children}
     </View>
