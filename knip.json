@@ -23,6 +23,7 @@
     "!**/admin-dashboard/**"
   ],
   "ignore": [
+    "plugins/**",
     "patches/**",
     "docs/**",
     "translate/**",

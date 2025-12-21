@@ -4,6 +4,17 @@ import { useEffect, useState } from 'react';
 
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
 
+/** Type for dynamically imported Google Sign In module */
+interface GoogleSignInModule {
+  hasPlayServices: (options: { showPlayServicesUpdateDialog: boolean }) => Promise<void>;
+  signIn: () => Promise<{
+    data?: {
+      idToken?: string;
+      user?: { email?: string; name?: string };
+    };
+  }>;
+}
+
 /**
  * Hook return type for Google authentication
  */
@@ -105,12 +116,13 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       return GoogleSignin;
     },
 
-    executeSignIn: async (GoogleSignin: any): Promise<OAuthSignInResult> => {
+    executeSignIn: async (module: unknown): Promise<OAuthSignInResult> => {
+      const GoogleSignin = module as GoogleSignInModule;
       // Check Play Services availability (Android)
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
       // Sign in with retry logic for INTERNAL_ERROR
-      let userInfo;
+      let userInfo: Awaited<ReturnType<GoogleSignInModule['signIn']>> | undefined;
       let signInAttempt = 0;
       const maxRetries = 1;
 
@@ -169,7 +181,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         }
       }
 
-      if (!userInfo.data?.idToken) {
+      if (!userInfo?.data?.idToken) {
         throw new Error('No ID token returned from Google Sign In');
       }
 

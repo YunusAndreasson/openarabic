@@ -6,6 +6,36 @@ import { SUPABASE_URL } from '@/constants/supabase';
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
 import { supabase } from '@/services/supabase';
 
+/** Type for dynamically imported Apple Auth module */
+interface AppleAuthModule {
+  default: {
+    performRequest: (options: {
+      requestedOperation: unknown;
+      requestedScopes: unknown[];
+    }) => Promise<{
+      identityToken: string | null;
+      nonce: string | null;
+      email: string | null;
+      fullName: { givenName: string | null; familyName: string | null } | null;
+    }>;
+    Operation: { LOGIN: unknown };
+    Scope: { EMAIL: unknown; FULL_NAME: unknown };
+  };
+  appleAuthAndroid: {
+    configure: (options: {
+      clientId: string;
+      redirectUri: string;
+      responseType: unknown;
+      scope: unknown;
+      nonce: string;
+      state: string;
+    }) => void;
+    signIn: () => Promise<{ id_token: string | null }>;
+    ResponseType: { ALL: unknown };
+    Scope: { ALL: unknown };
+  };
+}
+
 /**
  * Hook return type for Apple authentication
  */
@@ -35,7 +65,8 @@ export function useAppleAuth(): UseAppleAuthReturn {
       return appleAuth;
     },
 
-    executeSignIn: async (appleAuth: any): Promise<OAuthSignInResult> => {
+    executeSignIn: async (module: unknown): Promise<OAuthSignInResult> => {
+      const appleAuth = module as AppleAuthModule;
       if (Platform.OS === 'ios') {
         // iOS: Native Apple Authentication
         Sentry.addBreadcrumb({
@@ -87,7 +118,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
         return {
           idToken: credential.identityToken,
           userInfo: {
-            email: credential.email,
+            email: credential.email ?? undefined,
             name: credential.fullName
               ? `${credential.fullName.givenName ?? ''} ${credential.fullName.familyName ?? ''}`.trim()
               : undefined,

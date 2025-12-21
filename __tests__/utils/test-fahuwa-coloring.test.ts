@@ -2,9 +2,7 @@
  * Investigation: Why isn't "huwa" colored in "fahuwa"?
  */
 
-import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
-import { computeColoredSegments } from '@/utils/arabicWordAnalysis';
-import { COLORS } from '@/constants/Colors';
+import { analyzeArabicWord, computeColoredSegments } from '@/utils/arabicWordAnalysis';
 
 describe('Fahuwa Coloring Investigation', () => {
   it('should show what components are detected in فهو "fahuwa"', () => {
