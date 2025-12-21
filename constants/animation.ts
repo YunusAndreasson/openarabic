@@ -1,33 +1,4 @@
-import { LayoutAnimation } from 'react-native';
 import { Easing } from 'react-native-reanimated';
-
-/**
- * LayoutAnimation configurations
- * Returns animation config or undefined if LayoutAnimation is not available (e.g., in tests)
- */
-export const getFAQExpandAnimation = () => {
-  if (!LayoutAnimation?.Types || !LayoutAnimation?.Properties) {
-    return undefined;
-  }
-
-  return {
-    duration: 300,
-    create: {
-      type: LayoutAnimation.Types.spring,
-      property: LayoutAnimation.Properties.opacity,
-      springDamping: 0.8,
-    },
-    update: {
-      type: LayoutAnimation.Types.spring,
-      springDamping: 0.8,
-    },
-    delete: {
-      type: LayoutAnimation.Types.spring,
-      property: LayoutAnimation.Properties.opacity,
-      springDamping: 0.8,
-    },
-  } as const;
-};
 
 /**
  * Timing configuration presets for animations

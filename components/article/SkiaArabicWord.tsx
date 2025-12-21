@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, type ComponentRef, type RefObject } from 'react';
 import type { LayoutRectangle } from 'react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,15 +9,24 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { Pressable } from 'react-native-gesture-handler';
 import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
 
+import { WORD_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
+import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
+
 import { useColors } from '@/hooks/theme/useColors';
 import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';
 import { useArabicWord } from '@/hooks/vocabulary';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { buildColoredParagraph, buildSimpleParagraph } from '@/utils/skiaParagraphBuilder';
 import { getSelectedStyle } from '@/utils/textStyleUtils';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// Shared timing for coordinated animations (word dim + tooltip fade)
+export const WORD_TOOLTIP_ANIMATION_DURATION = 150;
 
 interface SkiaArabicWordProps {
   word: SentenceWord;
@@ -27,6 +36,8 @@ interface SkiaArabicWordProps {
   testID?: string;
   /** When true, shows a pulsing highlight to draw attention (used for tutorial) */
   isHighlighted?: boolean;
+  /** When true, shows a static highlight indicating word is active (shown in tooltip) */
+  isActive?: boolean;
 }
 
 const SkiaArabicWordInternal = function SkiaArabicWord({
@@ -36,6 +47,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   wordRef,
   testID,
   isHighlighted = false,
+  isActive = false,
 }: SkiaArabicWordProps) {
   const colors = useColors();
   const { arabicFont, getArabicFont, fontFamily } = useSkiaFonts();
@@ -62,10 +74,29 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     opacity: highlightOpacity.value,
   }));
 
+  // Animated dim when word is active (shown in tooltip) - synced with tooltip fade
+  const activeOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    activeOpacity.value = withTiming(isActive ? 0.6 : 1, {
+      duration: WORD_TOOLTIP_ANIMATION_DURATION,
+    });
+  }, [isActive, activeOpacity]);
+
+  const activeStyle = useAnimatedStyle(() => ({
+    opacity: activeOpacity.value,
+  }));
+
   // Use our existing hook for word selection state
   const { isSelected } = useArabicWord({
     word,
     position,
+  });
+
+  // Press animation for tactile feedback
+  const { animatedStyle: pressAnimatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    type: 'custom',
+    scaleAmount: WORD_PRESS_SCALE,
   });
 
   // Use pre-computed colored segments from data loading (optimized for performance)
@@ -134,8 +165,8 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
     // Simple, robust sizing with minimal buffers for Arabic text + diacritics
     const width = Math.ceil(paragraph.getMaxIntrinsicWidth() * 1.05); // 5% extra for safety
-    const height = Math.ceil(fontSize * 2.1); // Reduced height for tighter lines
-    const yOffset = fontSize * 0.3; // Shift text up to preserve bottom diacritics
+    const height = Math.ceil(fontSize * 1.9); // Tighter line height for closer pairing with English
+    const yOffset = fontSize * 0.1; // Reduced shift to preserve descenders like ayn (ع)
 
     return { width, height, yOffset };
   }, [paragraph, arabicFont]);
@@ -156,14 +187,16 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     }
   };
 
-  // Word container styles - transparent underline reserves space to prevent layout jumps
-  const baseUnderlineStyle = { borderBottomWidth: 1, borderBottomColor: colors.transparent };
+  // Memoize styles that depend on state to prevent recreation
+  const containerStyle = useMemo(
+    () => [styles.wordContainer, styles.underlineReserve, getSelectedStyle(isSelected, colors.disabled)],
+    [isSelected, colors.disabled],
+  );
 
-  const containerStyle = [
-    styles.wordContainer,
-    baseUnderlineStyle,
-    getSelectedStyle(isSelected, colors.disabled),
-  ];
+  const canvasStyle = useMemo(
+    () => ({ width: canvasDimensions.width, height: canvasDimensions.height }),
+    [canvasDimensions.width, canvasDimensions.height],
+  );
 
   return (
     <View style={styles.wordWrapper}>
@@ -172,11 +205,15 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
           style={[styles.highlightOverlay, { backgroundColor: colors.tint }, highlightStyle]}
         />
       )}
-      <Pressable ref={wordRef} style={containerStyle} testID={testID} onPress={handlePress}>
-        <Canvas
-          style={{ width: canvasDimensions.width, height: canvasDimensions.height }}
-          pointerEvents="none"
-        >
+      <AnimatedPressable
+        ref={wordRef}
+        style={[containerStyle, pressAnimatedStyle, activeStyle]}
+        testID={testID}
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
+        <Canvas style={canvasStyle} pointerEvents="none">
           {paragraph && (
             <SkiaParagraph
               paragraph={paragraph}
@@ -186,7 +223,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
             />
           )}
         </Canvas>
-      </Pressable>
+      </AnimatedPressable>
     </View>
   );
 };
@@ -195,6 +232,10 @@ const styles = StyleSheet.create({
   highlightOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+  underlineReserve: {
+    borderBottomColor: 'transparent',
+    borderBottomWidth: 1,
   },
   wordContainer: {
     alignItems: 'center',

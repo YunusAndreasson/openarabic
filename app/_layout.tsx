@@ -13,7 +13,7 @@ import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, Platform, StyleSheet, UIManager, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -178,13 +178,6 @@ function AppContent() {
     'ScheherazadeNew-Regular': scheherazadeFont,
     'NotoNastaliqUrdu-Regular': nastaliqFont,
   });
-
-  // Enable LayoutAnimation on Android for FAQ expand/collapse
-  useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
 
   // Centralized system UI theme management
   useSystemUITheme();

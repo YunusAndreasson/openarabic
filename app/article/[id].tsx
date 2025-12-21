@@ -124,6 +124,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           onWordPress={handleWordPressWithTutorial}
           showTutorialCard={showTutorialCard}
           onDismissTutorial={handleDismissTutorial}
+          activeWordId={activeTooltip?.word.id}
         />
       );
     },
@@ -135,6 +136,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       showWordTapTutorial,
       isTutorialCardDismissed,
       handleDismissTutorial,
+      activeTooltip?.word.id,
     ],
   );
 

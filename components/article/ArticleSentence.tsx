@@ -29,6 +29,8 @@ interface ArticleSentenceProps {
   containerStyle?: StyleProp<ViewStyle>;
   showTutorialCard?: boolean;
   onDismissTutorial?: () => void;
+  /** ID of the word currently shown in the tooltip */
+  activeWordId?: string | number | null;
 }
 
 const ArticleSentenceInternal = function ArticleSentence({
@@ -40,6 +42,7 @@ const ArticleSentenceInternal = function ArticleSentence({
   containerStyle,
   showTutorialCard = false,
   onDismissTutorial,
+  activeWordId,
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
@@ -78,6 +81,9 @@ const ArticleSentenceInternal = function ArticleSentence({
       // Highlight the first word when tutorial is showing
       const isFirstWord = index === 0;
 
+      // Check if this word is currently active (shown in tooltip)
+      const isActive = activeWordId != null && word.id === activeWordId;
+
       return (
         <ArabicWord
           key={refKey}
@@ -86,10 +92,11 @@ const ArticleSentenceInternal = function ArticleSentence({
           wordRef={wordRef}
           position={index}
           isHighlighted={isFirstWord && showTutorialCard}
+          isActive={isActive}
         />
       );
     });
-  }, [words, onWordPress, sentence.id, showTutorialCard]);
+  }, [words, onWordPress, sentence.id, showTutorialCard, activeWordId]);
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -191,7 +198,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     minHeight: LAYOUT.SPACING.XLARGE * 1.5,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.TINY, // Tight coupling with English above
+    paddingTop: 0, // No gap - English and Arabic belong together
     paddingBottom: LAYOUT.SPACING.SMALL, // Minimal bottom, separation handled by next English's paddingTop
     width: '100%',
   },

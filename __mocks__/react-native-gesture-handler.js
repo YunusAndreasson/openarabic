@@ -12,7 +12,11 @@ function createChain() {
   return chain;
 }
 
+// Re-export Pressable from react-native for tests
+const { Pressable } = require('react-native');
+
 module.exports = {
+  Pressable,
   GestureHandlerRootView: 'GestureHandlerRootView',
   PanGestureHandler: 'PanGestureHandler',
   TapGestureHandler: 'TapGestureHandler',

@@ -1,7 +1,5 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { LayoutAnimation } from 'react-native';
 
-import { getFAQExpandAnimation } from '@/constants/animation';
 import { FAQ_DATA, type FAQCategoryData, type FAQItem } from '@/constants/faq';
 
 /** IDs of popular questions to show at the top */
@@ -94,12 +92,7 @@ export function useFAQSearch({
   }, [initialExpandedItem]);
 
   const handleToggleItem = useCallback((id: string) => {
-    // Use spring-based LayoutAnimation for natural expand/collapse feel
-    const animationConfig = getFAQExpandAnimation();
-    if (animationConfig && LayoutAnimation && typeof LayoutAnimation.configureNext === 'function') {
-      LayoutAnimation.configureNext(animationConfig);
-    }
-
+    // Animation now handled by Reanimated entering/exiting in the component
     setExpandedItems(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {

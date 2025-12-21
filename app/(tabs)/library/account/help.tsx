@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { memo, useCallback, useMemo, type FC } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -98,7 +99,11 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
           </View>
         </BaseCard>
         {isExpanded && (
-          <View style={answerContainerStyle}>
+          <Animated.View
+            entering={FadeIn.duration(200)}
+            exiting={FadeOut.duration(150)}
+            style={answerContainerStyle}
+          >
             {item.answer.split('\n\n').map((paragraph, index) => (
               <ThemedText
                 // eslint-disable-next-line react/no-array-index-key
@@ -112,7 +117,7 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
             ))}
             {/* Render colored examples for Arabic text coloring FAQ */}
             {item.id === 'arabic-text-coloring' && <ArabicColoringExamples />}
-          </View>
+          </Animated.View>
         )}
       </View>
     );
