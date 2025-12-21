@@ -1,11 +1,12 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
-import type { RootId, UserId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
+import type { FSRSWordUpdate, GetFSRSWordsOptions } from '@/types/fsrs.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { createBulkFSRSEntries, createInitialFSRSEntry } from '@/utils/fsrsInitializers';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeAuthenticatedQuery, executeQuery } from '@/utils/supabaseHelpers';
+import { mapToStudyWord } from '@/utils/typeMappers';
 
 const errorConfig = {
   load: createServiceErrorConfig('study_words_fsrs', 'load', {
@@ -51,40 +52,6 @@ const errorConfig = {
     showToast: false,
   }),
 };
-
-// Interface for FSRS-specific update fields - matches RPC function requirements
-interface FSRSWordUpdate {
-  fsrs_due: string;
-  fsrs_stability: number;
-  fsrs_difficulty: number;
-  fsrs_scheduled_days: number;
-  fsrs_reps: number;
-  fsrs_learning_steps: number;
-  fsrs_lapses: number;
-  fsrs_state: number;
-  fsrs_last_review: string; // Always provided during updates
-}
-
-// Define options for fetching FSRS words
-interface GetFSRSWordsOptions {
-  onlyDue?: boolean;
-  forStats?: boolean;
-  limit?: number;
-  sortByDifficultyAndStability?: boolean;
-  reviewedOnly?: boolean;
-  /**
-   * Session cooldown: Exclude words reviewed within this many hours.
-   * Useful to prevent words from appearing immediately after a study session.
-   * Default: 0 (no cooldown), common values: 1-24 hours
-   */
-  sessionCooldownHours?: number;
-  /**
-   * Server-side filter for vocabulary category.
-   * - "mastered": fsrs_state = 2 (Review) and fsrs_stability >= 5
-   * - "learning": fsrs_state in (0,1,3) or (fsrs_state = 2 and fsrs_stability < 5)
-   */
-  category?: 'learning' | 'mastered';
-}
 
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
@@ -191,23 +158,7 @@ export const studyWordsFSRSService = {
     });
 
     // Type-safe mapping from database rows to StudyWord interface
-    return (data || []).map(
-      (row): StudyWord => ({
-        root_id: row.root_id as RootId,
-        user_id: ('user_id' in row ? row.user_id : userId) as UserId, // Use passed userId for stats queries
-        fsrs_due: row.fsrs_due,
-        fsrs_stability: row.fsrs_stability,
-        fsrs_difficulty: row.fsrs_difficulty,
-        fsrs_scheduled_days: row.fsrs_scheduled_days,
-        fsrs_reps: row.fsrs_reps,
-        fsrs_learning_steps: row.fsrs_learning_steps,
-        fsrs_lapses: row.fsrs_lapses,
-        fsrs_state: row.fsrs_state,
-        fsrs_last_review: row.fsrs_last_review, // Always exists per database schema
-        created_at: row.created_at,
-        root: 'root' in row ? (row.root as Tables<'roots'> | null) : undefined,
-      }),
-    );
+    return (data || []).map(row => mapToStudyWord(row, userId));
   },
 
   // Update FSRS parameters for a study word

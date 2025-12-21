@@ -5,6 +5,25 @@
 export type WordConfidence = 'known' | 'unknown' | 'vague';
 
 /**
+ * Consolidated refs for time tracking during review sessions
+ */
+export interface ReviewTimeRefs {
+  lastVagueTime: number | null;
+  lastProgressUpdate: number;
+  lastProcessedWordId: string | null;
+}
+
+/**
+ * Consolidated refs for state tracking during review sessions
+ */
+export interface ReviewStateRefs {
+  maxProgress: number;
+  completionTriggered: boolean;
+  isUpdatingWord: boolean;
+  progressUpdatedForCompletion: boolean;
+}
+
+/**
  * Statistics about a review session such as counts of words reviewed and other metrics
  * Used by the review hook and completion screen to show session progress
  */

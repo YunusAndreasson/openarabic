@@ -20,24 +20,10 @@ import { useSessionMetrics } from './useSessionMetrics';
 import { useTimerCleanup } from '@/hooks/utils';
 import { useFSRS, useWordSizing } from '@/hooks/vocabulary';
 import { audioCache } from '@/services/audioCache';
-import type { SessionMetrics } from '@/types/review.types';
+import type { ReviewStateRefs, ReviewTimeRefs, SessionMetrics } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { generateStorageUrl } from '@/utils/storageUtils';
-
-// Consolidated refs for easier state management
-interface ReviewTimeRefs {
-  lastVagueTime: number | null;
-  lastProgressUpdate: number;
-  lastProcessedWordId: string | null;
-}
-
-interface ReviewStateRefs {
-  maxProgress: number;
-  completionTriggered: boolean;
-  isUpdatingWord: boolean;
-  progressUpdatedForCompletion: boolean;
-}
 
 interface UseReviewProps {
   fromRemember?: boolean;
