@@ -273,11 +273,7 @@ export default function ReadScreen(): JSX.Element {
     sections.push(
       <View key="length-wrapper">
         <SectionLabel title={STRINGS.SECTION_LENGTH} />
-        <FilterSection
-          items={lengthItems}
-          onSelect={handleSelectFilter}
-          filterType="length"
-        />
+        <FilterSection items={lengthItems} onSelect={handleSelectFilter} filterType="length" />
       </View>,
     );
 

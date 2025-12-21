@@ -8,7 +8,8 @@ import type { PriorityQueue } from '@/utils/priorityQueue';
 import { isStrugglingWord } from '@/utils/wordClassification';
 
 export interface SpacingState {
-  recentWords: number[];
+  recentWords: Set<number>;
+  recentWordsQueue: number[]; // FIFO queue for eviction order
   spacedWords: { word: StudyWord; remainingSpacing: number }[];
 }
 
@@ -52,7 +53,7 @@ export function getNextWordWithSpacing(
   let nextWord = queue.pop();
   const checked: StudyWord[] = [];
 
-  while (nextWord && spacingState.recentWords.includes(nextWord.root_id)) {
+  while (nextWord && spacingState.recentWords.has(nextWord.root_id)) {
     spacingState.spacedWords.push({ word: nextWord, remainingSpacing: minSpacing });
     checked.push(nextWord);
     nextWord = queue.pop();
@@ -69,15 +70,23 @@ export function updateSpacingCounters(
   processedWordId: number,
   minSpacing: number = MIN_WORD_SPACING,
 ) {
-  spacingState.recentWords.push(processedWordId);
-  if (spacingState.recentWords.length > minSpacing) {
-    spacingState.recentWords.shift();
+  // Add to Set and queue
+  spacingState.recentWords.add(processedWordId);
+  spacingState.recentWordsQueue.push(processedWordId);
+
+  // Evict oldest if over capacity (one at a time, matching original behavior)
+  if (spacingState.recentWordsQueue.length > minSpacing) {
+    const oldest = spacingState.recentWordsQueue.shift();
+    if (oldest !== undefined) {
+      spacingState.recentWords.delete(oldest);
+    }
   }
+
   spacingState.spacedWords.forEach(item => {
     item.remainingSpacing -= 1;
   });
 }
 
 export function createSpacingState(): SpacingState {
-  return { recentWords: [], spacedWords: [] };
+  return { recentWords: new Set(), recentWordsQueue: [], spacedWords: [] };
 }

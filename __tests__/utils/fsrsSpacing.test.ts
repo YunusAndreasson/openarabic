@@ -27,7 +27,8 @@ describe('fsrsSpacing', () => {
   describe('createSpacingState', () => {
     test('should create empty spacing state', () => {
       const state = createSpacingState();
-      expect(state.recentWords).toEqual([]);
+      expect(state.recentWords.size).toBe(0);
+      expect(state.recentWordsQueue).toEqual([]);
       expect(state.spacedWords).toEqual([]);
     });
 
@@ -228,7 +229,8 @@ describe('fsrsSpacing', () => {
       const state = createSpacingState();
       updateSpacingCounters(state, 1, MIN_WORD_SPACING);
 
-      expect(state.recentWords).toEqual([1]);
+      expect(state.recentWords.has(1)).toBe(true);
+      expect(state.recentWordsQueue).toEqual([1]);
     });
 
     test('should maintain max length of recentWords array', () => {
@@ -241,13 +243,16 @@ describe('fsrsSpacing', () => {
       updateSpacingCounters(state, 3, minSpacing);
       updateSpacingCounters(state, 4, minSpacing); // Should remove first
 
-      expect(state.recentWords).toEqual([2, 3, 4]);
-      expect(state.recentWords.length).toBe(minSpacing);
+      expect(state.recentWordsQueue).toEqual([2, 3, 4]);
+      expect(state.recentWords.size).toBe(minSpacing);
+      expect(state.recentWords.has(1)).toBe(false);
+      expect(state.recentWords.has(2)).toBe(true);
     });
 
     test('should decrement remainingSpacing for all spacedWords', () => {
       const state: SpacingState = {
-        recentWords: [],
+        recentWords: new Set(),
+        recentWordsQueue: [],
         spacedWords: [
           { word: createTestWord({ root_id: 1 }), remainingSpacing: 3 },
           { word: createTestWord({ root_id: 2 }), remainingSpacing: 2 },
@@ -267,7 +272,8 @@ describe('fsrsSpacing', () => {
 
     test('should allow negative remainingSpacing values', () => {
       const state: SpacingState = {
-        recentWords: [],
+        recentWords: new Set(),
+        recentWordsQueue: [],
         spacedWords: [{ word: createTestWord({ root_id: 1 }), remainingSpacing: 0 }],
       };
 
@@ -281,17 +287,20 @@ describe('fsrsSpacing', () => {
       const state = createSpacingState();
 
       updateSpacingCounters(state, 1, 1);
-      expect(state.recentWords).toEqual([1]);
+      expect(state.recentWordsQueue).toEqual([1]);
 
       updateSpacingCounters(state, 2, 1);
-      expect(state.recentWords).toEqual([2]); // Only keeps last 1
+      expect(state.recentWordsQueue).toEqual([2]); // Only keeps last 1
+      expect(state.recentWords.has(1)).toBe(false);
+      expect(state.recentWords.has(2)).toBe(true);
     });
 
     test('should work with minSpacing of 0', () => {
       const state = createSpacingState();
 
       updateSpacingCounters(state, 1, 0);
-      expect(state.recentWords).toEqual([]); // Immediately shifted out
+      expect(state.recentWordsQueue).toEqual([]); // Immediately shifted out
+      expect(state.recentWords.size).toBe(0);
     });
   });
 
@@ -317,7 +326,8 @@ describe('fsrsSpacing', () => {
       queue.push(word2, calculateWordPriority(word2));
 
       const state = createSpacingState();
-      state.recentWords = [1]; // Mark word1 as recent
+      state.recentWords.add(1); // Mark word1 as recent
+      state.recentWordsQueue.push(1);
 
       const nextWord = getNextWordWithSpacing(queue, state, MIN_WORD_SPACING);
 
@@ -341,7 +351,8 @@ describe('fsrsSpacing', () => {
       queue.push(word, calculateWordPriority(word));
 
       const state = createSpacingState();
-      state.recentWords = [1]; // Mark as recent
+      state.recentWords.add(1); // Mark as recent
+      state.recentWordsQueue.push(1);
 
       const nextWord = getNextWordWithSpacing(queue, state, 5);
 
@@ -358,7 +369,8 @@ describe('fsrsSpacing', () => {
       queue.push(word2, calculateWordPriority(word2));
 
       const state: SpacingState = {
-        recentWords: [],
+        recentWords: new Set(),
+        recentWordsQueue: [],
         spacedWords: [{ word: word1, remainingSpacing: 0 }], // Ready to be re-added
       };
 
@@ -375,16 +387,19 @@ describe('fsrsSpacing', () => {
     test('should handle iteration limit to prevent infinite loops', () => {
       // Create many words all marked as recent
       const queue = new PriorityQueue<StudyWord>();
-      const recentWords: number[] = [];
+      const recentWordsSet = new Set<number>();
+      const recentWordsQueue: number[] = [];
 
       for (let i = 1; i <= 100; i++) {
         const word = createTestWord({ root_id: i });
         queue.push(word, calculateWordPriority(word));
-        recentWords.push(i);
+        recentWordsSet.add(i);
+        recentWordsQueue.push(i);
       }
 
       const state: SpacingState = {
-        recentWords,
+        recentWords: recentWordsSet,
+        recentWordsQueue,
         spacedWords: [],
       };
 
@@ -402,7 +417,8 @@ describe('fsrsSpacing', () => {
       const queue = new PriorityQueue<StudyWord>();
 
       const state: SpacingState = {
-        recentWords: [],
+        recentWords: new Set(),
+        recentWordsQueue: [],
         spacedWords: [{ word: readyWord, remainingSpacing: 0 }],
       };
 
@@ -424,7 +440,8 @@ describe('fsrsSpacing', () => {
       queue.push(word3, calculateWordPriority(word3));
 
       const state: SpacingState = {
-        recentWords: [],
+        recentWords: new Set(),
+        recentWordsQueue: [],
         spacedWords: [
           { word: word1, remainingSpacing: -2 }, // Very ready
           { word: word2, remainingSpacing: 0 }, // Ready
@@ -449,7 +466,8 @@ describe('fsrsSpacing', () => {
       queue.push(queueWord, calculateWordPriority(queueWord));
 
       const state: SpacingState = {
-        recentWords: [],
+        recentWords: new Set(),
+        recentWordsQueue: [],
         spacedWords: [{ word: spacedWord, remainingSpacing: 5 }], // Not ready
       };
 
@@ -489,7 +507,8 @@ describe('fsrsSpacing', () => {
       queue.push(word, calculateWordPriority(word));
 
       const state: SpacingState = {
-        recentWords: [1], // Same word is recent
+        recentWords: new Set([1]), // Same word is recent
+        recentWordsQueue: [1],
         spacedWords: [],
       };
 

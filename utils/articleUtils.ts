@@ -116,6 +116,26 @@ export function getBeginnerArticles(articles: Article[], limit = 20): Article[] 
 }
 
 /**
+ * Build an index of article IDs to their root IDs for efficient lookups.
+ * This avoids O(articles × sentences × words) nested loops during filtering.
+ */
+function buildArticleRootIdIndex(articles: Article[]): Map<number, Set<RootId>> {
+  const index = new Map<number, Set<RootId>>();
+  for (const article of articles) {
+    const rootIds = new Set<RootId>();
+    article.article_sentences?.forEach(sentence => {
+      sentence.sentence_words?.forEach(word => {
+        if (word?.root_id) {
+          rootIds.add(word.root_id);
+        }
+      });
+    });
+    index.set(article.id, rootIds);
+  }
+  return index;
+}
+
+/**
  * Generic function to filter articles by a set of word root IDs
  * @param articles - The articles to filter and sort
  * @param wordRootIds - Set of root IDs to match against
@@ -127,24 +147,25 @@ function filterArticlesByWordSet(
   wordRootIds: Set<RootId>,
   limit: number,
 ): Article[] {
-  // Count unique matching words in each article
+  // Build index once: O(articles × sentences × words)
+  const articleRootIdIndex = buildArticleRootIdIndex(articles);
+
+  // Count matching words per article: O(articles × unique_roots_per_article)
   const articlesWithWordCount = articles.map(article => {
-    // Use a set to track unique root IDs in this article
-    const uniqueMatchingRootIds = new Set<RootId>();
+    const articleRootIds = articleRootIdIndex.get(article.id);
+    if (!articleRootIds) {
+      return { article, wordCount: 0 };
+    }
 
-    // Check each sentence in the article
-    article.article_sentences?.forEach(sentence => {
-      // Iterate through all sentence words
-      sentence.sentence_words?.forEach(word => {
-        const rootId: RootId | undefined = word?.root_id;
-        if (rootId && wordRootIds.has(rootId)) {
-          uniqueMatchingRootIds.add(rootId);
-        }
-      });
-    });
+    // Count matching root IDs using Set intersection
+    let matchCount = 0;
+    for (const rootId of articleRootIds) {
+      if (wordRootIds.has(rootId)) {
+        matchCount++;
+      }
+    }
 
-    // Return the count of unique root IDs
-    return { article, wordCount: uniqueMatchingRootIds.size };
+    return { article, wordCount: matchCount };
   });
 
   // Filter articles that actually have matching words
@@ -246,17 +267,20 @@ export function sortArticlesByProgress(
   articles: Article[],
   progressMap: Map<number, { last_sentence_read: number; total_sentences: number }>,
 ): Article[] {
-  return [...articles].sort((a, b) => {
-    // Calculate progress percentages from raw data
-    const dataA = progressMap.get(a.id);
-    const dataB = progressMap.get(b.id);
+  // Pre-calculate progress percentages for all articles (O(n) instead of O(n log n))
+  const progressCache = new Map<number, number>();
+  for (const article of articles) {
+    const data = progressMap.get(article.id);
+    progressCache.set(
+      article.id,
+      data ? calculateProgressPercentage(data.last_sentence_read, data.total_sentences) : 0,
+    );
+  }
 
-    const progressA = dataA
-      ? calculateProgressPercentage(dataA.last_sentence_read, dataA.total_sentences)
-      : 0;
-    const progressB = dataB
-      ? calculateProgressPercentage(dataB.last_sentence_read, dataB.total_sentences)
-      : 0;
+  return [...articles].sort((a, b) => {
+    // Use cached progress values
+    const progressA = progressCache.get(a.id) ?? 0;
+    const progressB = progressCache.get(b.id) ?? 0;
 
     // Articles with partial progress (1-94%) come first
     const aHasPartialProgress = progressA > 0 && progressA < COMPLETION_THRESHOLD;

@@ -423,9 +423,11 @@ export function useFSRS({
               spacingQueueRef.current.spacedWords = spacingQueueRef.current.spacedWords.filter(
                 w => w.word.root_id !== candidate.word.root_id,
               );
-              spacingQueueRef.current.recentWords = spacingQueueRef.current.recentWords.filter(
-                id => id !== candidate.word.root_id,
-              );
+              spacingQueueRef.current.recentWords.delete(candidate.word.root_id);
+              spacingQueueRef.current.recentWordsQueue =
+                spacingQueueRef.current.recentWordsQueue.filter(
+                  id => id !== candidate.word.root_id,
+                );
               nextItem = candidate.word;
             }
           }

@@ -142,23 +142,45 @@ export function calculateRetrievabilityTrend(
 }
 
 /**
- * Check if a word is due on a specific date
+ * Pre-computed word due data for efficient forecast calculations
  */
-function isWordDueOnDate(word: StudyWord, targetDate: Date): boolean {
-  const dueStr = normalizeTimestamp(word.fsrs_due);
-  const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
-  const isDue = Number.isFinite(dueMs) && dueMs <= targetDate.getTime();
+interface WordDueData {
+  dueMs: number;
+  lastReviewMs: number;
+}
 
-  const lastStr = normalizeTimestamp(word.fsrs_last_review);
-  const lastMs = lastStr ? Date.parse(lastStr) : 0;
-  const cooldownMs = targetDate.getTime() - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-  const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cooldownMs;
+/**
+ * Pre-compute due timestamps for all words (single pass)
+ */
+function precomputeWordDueData(words: StudyWord[]): WordDueData[] {
+  return words.map(word => {
+    const dueStr = normalizeTimestamp(word.fsrs_due);
+    const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
 
+    const lastStr = normalizeTimestamp(word.fsrs_last_review);
+    const lastMs = lastStr ? Date.parse(lastStr) : 0;
+
+    return { dueMs, lastReviewMs: lastMs };
+  });
+}
+
+/**
+ * Check if a word is due on a specific date using pre-computed data
+ */
+function isWordDueOnDateFast(
+  wordData: WordDueData,
+  targetDateMs: number,
+  cooldownMs: number,
+): boolean {
+  const isDue = Number.isFinite(wordData.dueMs) && wordData.dueMs <= targetDateMs;
+  const isRecentlyReviewed =
+    Number.isFinite(wordData.lastReviewMs) && wordData.lastReviewMs >= cooldownMs;
   return isDue && !isRecentlyReviewed;
 }
 
 /**
  * Calculate due words forecast for the next 7 days
+ * Optimized: Pre-computes word data once, then iterates dates
  */
 export function calculateDueWordsForecast(
   studyWords: StudyWord[],
@@ -167,20 +189,35 @@ export function calculateDueWordsForecast(
   // Filter to only include words that have FSRS data
   const validWords = studyWords.filter(w => w.fsrs_due != null);
 
+  // Pre-compute due data for all words (single pass)
+  const wordDueData = precomputeWordDueData(validWords);
+
   // Generate future dates for forecasting
   const dates = generateForecastDates(days);
 
-  return dates.map((date, index) => {
-    const dueWords = validWords.filter(word => isWordDueOnDate(word, date)).length;
+  // Pre-compute date timestamps and cooldowns
+  const dateData = dates.map(date => ({
+    date,
+    targetMs: date.getTime(),
+    cooldownMs: date.getTime() - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000,
+  }));
 
-    let newlyDue = dueWords;
-    if (index > 0) {
-      const previousDate = dates[index - 1];
-      if (previousDate) {
-        const previouslyDue = validWords.filter(word => isWordDueOnDate(word, previousDate)).length;
-        newlyDue = Math.max(0, dueWords - previouslyDue);
+  // Calculate due counts for each date
+  const dueCounts: number[] = dateData.map(({ targetMs, cooldownMs }) => {
+    let count = 0;
+    for (const data of wordDueData) {
+      if (isWordDueOnDateFast(data, targetMs, cooldownMs)) {
+        count++;
       }
     }
+    return count;
+  });
+
+  // Build forecast results
+  return dateData.map(({ date }, index) => {
+    const dueWords = dueCounts[index] ?? 0;
+    const previousDue = index > 0 ? (dueCounts[index - 1] ?? 0) : 0;
+    const newlyDue = index > 0 ? Math.max(0, dueWords - previousDue) : dueWords;
 
     return {
       date,

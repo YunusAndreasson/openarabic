@@ -163,7 +163,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
   describe('createSpacingState', () => {
     test('should create empty state', () => {
       const state = createSpacingState();
-      expect(state.recentWords).toEqual([]);
+      expect(state.recentWords.size).toBe(0);
+      expect(state.recentWordsQueue).toEqual([]);
       expect(state.spacedWords).toEqual([]);
     });
   });
@@ -175,15 +176,15 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       // Add words up to the limit
       for (let i = 1; i <= MIN_WORD_SPACING; i++) {
         updateSpacingCounters(state, i);
-        expect(state.recentWords).toHaveLength(i);
-        expect(state.recentWords[i - 1]).toBe(i);
+        expect(state.recentWordsQueue).toHaveLength(i);
+        expect(state.recentWordsQueue[i - 1]).toBe(i);
       }
 
       // Adding one more should remove the first
       updateSpacingCounters(state, MIN_WORD_SPACING + 1);
-      expect(state.recentWords).toHaveLength(MIN_WORD_SPACING);
-      expect(state.recentWords[0]).toBe(2); // First word (1) should be removed
-      expect(state.recentWords[MIN_WORD_SPACING - 1]).toBe(MIN_WORD_SPACING + 1);
+      expect(state.recentWordsQueue).toHaveLength(MIN_WORD_SPACING);
+      expect(state.recentWordsQueue[0]).toBe(2); // First word (1) should be removed
+      expect(state.recentWordsQueue[MIN_WORD_SPACING - 1]).toBe(MIN_WORD_SPACING + 1);
     });
 
     test('should decrement spacing counters for spaced words', () => {
@@ -211,8 +212,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
         updateSpacingCounters(state, i, customSpacing);
       }
 
-      expect(state.recentWords).toHaveLength(customSpacing);
-      expect(state.recentWords[0]).toBe(3); // First two should be removed
+      expect(state.recentWordsQueue).toHaveLength(customSpacing);
+      expect(state.recentWordsQueue[0]).toBe(3); // First two should be removed
     });
 
     test('should handle negative spacing without loops', () => {
@@ -220,10 +221,10 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
       for (let i = 1; i <= MIN_WORD_SPACING * 5; i++) {
         updateSpacingCounters(state, i, -5);
-        expect(state.recentWords.length).toBeLessThanOrEqual(MIN_WORD_SPACING);
+        expect(state.recentWords.size).toBeLessThanOrEqual(MIN_WORD_SPACING);
       }
 
-      expect(state.recentWords.length).toBeLessThanOrEqual(MIN_WORD_SPACING);
+      expect(state.recentWords.size).toBeLessThanOrEqual(MIN_WORD_SPACING);
     });
   });
 
@@ -255,7 +256,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       const state = createSpacingState();
 
       // Mark word 1 as recently processed
-      state.recentWords = [1];
+      state.recentWords.add(1);
+      state.recentWordsQueue.push(1);
 
       const result = getNextWordWithSpacing(queue, state);
       expect(result?.root_id).toBe(2);
@@ -286,7 +288,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       const state = createSpacingState();
 
       // Mark root_id 1 as recent
-      state.recentWords = [1];
+      state.recentWords.add(1);
+      state.recentWordsQueue.push(1);
 
       const result = getNextWordWithSpacing(queue, state);
 
@@ -421,7 +424,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
         updateSpacingCounters(state, i + 100);
       }
 
-      expect(state.recentWords).toHaveLength(MIN_WORD_SPACING);
+      expect(state.recentWordsQueue).toHaveLength(MIN_WORD_SPACING);
       expect(state.spacedWords[0].remainingSpacing).toBe(-5); // Should go negative
     });
 
@@ -471,7 +474,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
         operations.push(`updated-${word.root_id}`);
 
         // Verify state consistency
-        expect(state.recentWords.length).toBeLessThanOrEqual(MIN_WORD_SPACING);
+        expect(state.recentWords.size).toBeLessThanOrEqual(MIN_WORD_SPACING);
         expect(state.spacedWords.every(s => typeof s.remainingSpacing === 'number')).toBe(true);
 
         // Prevent infinite loops
@@ -516,7 +519,9 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       updateSpacingCounters(state, 2); // Decrements both: word1 to 1, word2 to 0
 
       // Verify state is still consistent
-      expect(state.recentWords).toEqual([1, 2]);
+      expect(state.recentWordsQueue).toEqual([1, 2]);
+      expect(state.recentWords.has(1)).toBe(true);
+      expect(state.recentWords.has(2)).toBe(true);
       expect(state.spacedWords).toHaveLength(2);
       expect(state.spacedWords[0].remainingSpacing).toBe(1); // 3 - 2 updates
       expect(state.spacedWords[1].remainingSpacing).toBe(0); // 1 - 1 update (only affected by second call)
@@ -605,7 +610,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       const word = createTestWord({ root_id: 1 });
       const queue = setupQueue([word]);
       const state: SpacingState = {
-        recentWords: [1, 2, 3, 1, 2], // Duplicates and inconsistent state
+        recentWords: new Set([1, 2, 3]), // Set handles duplicates automatically
+        recentWordsQueue: [1, 2, 3, 1, 2], // Duplicates in queue (inconsistent state)
         spacedWords: [
           { word, remainingSpacing: -5 }, // Negative spacing
           { word, remainingSpacing: 1000 }, // Very large spacing
