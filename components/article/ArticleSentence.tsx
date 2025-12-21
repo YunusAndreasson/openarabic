@@ -12,7 +12,6 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
-import { createPadding } from '@/utils/layoutUtils';
 
 interface ArticleSentenceProps {
   sentence: {
@@ -152,8 +151,8 @@ const styles = StyleSheet.create({
   },
   englishText: {
     fontFamily: FONTS.ENGLISH,
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.TINY, // Add breathing room below English text
+    paddingTop: LAYOUT.SPACING.XLARGE, // More separation from previous Arabic sentence
+    paddingBottom: 0, // Minimal gap to keep English close to its Arabic
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   tutorialContainer: {
@@ -184,11 +183,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row-reverse',
     flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.TINY,
+    gap: LAYOUT.SPACING.MICRO, // Minimal gap between words (1px)
     justifyContent: 'flex-start',
     minHeight: LAYOUT.SPACING.XLARGE * 1.5,
-    ...createPadding({ horizontal: 'MEDIUM', vertical: 'SMALL' }),
-    paddingBottom: LAYOUT.SPACING.MEDIUM, // Override for better sentence pair separation (12px)
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.TINY, // Tight coupling with English above
+    paddingBottom: LAYOUT.SPACING.SMALL, // Minimal bottom, separation handled by next English's paddingTop
     width: '100%',
   },
 });

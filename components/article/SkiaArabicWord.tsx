@@ -134,8 +134,8 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
     // Simple, robust sizing with minimal buffers for Arabic text + diacritics
     const width = Math.ceil(paragraph.getMaxIntrinsicWidth() * 1.05); // 5% extra for safety
-    const height = Math.ceil(fontSize * 2.4); // 2.4x font size for diacritics above/below
-    const yOffset = fontSize * 0.5; // Offset to create space for top diacritics
+    const height = Math.ceil(fontSize * 2.1); // Reduced height for tighter lines
+    const yOffset = fontSize * 0.3; // Shift text up to preserve bottom diacritics
 
     return { width, height, yOffset };
   }, [paragraph, arabicFont]);
