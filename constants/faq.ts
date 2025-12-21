@@ -119,6 +119,13 @@ export const FAQ_DATA: FAQCategoryData[] = [
           'Arabic text is color-coded to help you understand word structure and grammatical components. This makes it easier to see how words are built from smaller parts.\n\nPrefixes like و (and), ب (with), ل (to) appear in green. Suffixes like ي (my), ك (your), ه (his) appear in orange. Diacritics (case endings) appear in blue. Infixes (verb form markers) appear in purple.\n\nWhy only multi-word phrases? Single words like "house" aren\'t colored because there\'s no educational value in that context. But "and the house" shows how و (and) + ال (the) combine with the root word—this helps you understand Arabic grammar naturally through reading.\n\nSee colored examples below to understand how this works in practice.',
         category: FAQCategoryEnum.FEATURES,
       },
+      {
+        id: 'play-all-long-press',
+        question: 'How do I temporarily play Arabic-only audio?',
+        answer:
+          'Long-press the "Play all" button in your Playlist to start Arabic-only playback for the current session. Your audio language preference will return to normal after playback ends.\n\nThis is useful when you want to practice listening comprehension without English translations, even if your default setting includes English.',
+        category: FAQCategoryEnum.FEATURES,
+      },
     ],
   },
   {

@@ -219,6 +219,7 @@ const AccountScreen: FC = () => {
         options: THEME_OPTIONS,
         selectedValue: currentTheme,
         snapPoints: [440],
+        footerNote: undefined,
       },
       language: {
         title: STRINGS.DISPLAY_LANGUAGE,
@@ -238,6 +239,7 @@ const AccountScreen: FC = () => {
         ],
         selectedValue: currentLanguage,
         snapPoints: [320],
+        footerNote: undefined,
       },
       audioLanguage: {
         title: STRINGS.AUDIO_LANGUAGE,
@@ -256,7 +258,8 @@ const AccountScreen: FC = () => {
           },
         ],
         selectedValue: currentAudioLanguage,
-        snapPoints: [320],
+        snapPoints: [380],
+        footerNote: STRINGS.AUDIO_LANGUAGE_LONG_PRESS_TIP,
       },
       dailyWordLimit: {
         title: STRINGS.DAILY_WORD_LIMIT,
@@ -288,6 +291,7 @@ const AccountScreen: FC = () => {
         ],
         selectedValue: currentDailyWordLimit,
         snapPoints: [520],
+        footerNote: undefined,
       },
     }),
     [currentTheme, currentLanguage, currentAudioLanguage, currentDailyWordLimit],
@@ -511,6 +515,11 @@ const AccountScreen: FC = () => {
           activePicker
             ? pickerConfigs[activePicker as keyof typeof pickerConfigs].snapPoints
             : [320]
+        }
+        footerNote={
+          activePicker
+            ? pickerConfigs[activePicker as keyof typeof pickerConfigs].footerNote
+            : undefined
         }
       />
     </ThemedView>

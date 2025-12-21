@@ -15,7 +15,7 @@ import { ToastType } from '@/types/enums';
 import { setGlobalToastHandler } from '@/utils/errorHandling';
 
 interface ToastContextType {
-  showToast: (message: string, duration?: number, type?: ToastType) => void;
+  showToast: (message: string, duration?: number, type?: ToastType, position?: 'top' | 'bottom') => void;
   showImportantToast: (message: string, duration?: number) => void;
 }
 
@@ -35,20 +35,23 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
     message: string;
     duration: number | undefined;
     type: ToastType;
+    position: 'top' | 'bottom';
   }>({
     visible: false,
     message: '',
     duration: undefined,
     type: ToastType.INFO,
+    position: 'top',
   });
 
   const showToast = useCallback(
-    (message: string, duration?: number, type: ToastType = ToastType.INFO) => {
+    (message: string, duration?: number, type: ToastType = ToastType.INFO, position: 'top' | 'bottom' = 'top') => {
       setToastState({
         visible: true,
         message,
         duration,
         type,
+        position,
       });
     },
     [],
@@ -61,6 +64,7 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
         message,
         duration,
         type: ToastType.IMPORTANT,
+        position: 'top',
       });
     },
     [],
@@ -92,6 +96,7 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
         duration={toastState.duration}
         message={toastState.message}
         type={toastState.type}
+        position={toastState.position}
         visible={toastState.visible}
         onClose={handleClose}
       />

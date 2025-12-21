@@ -37,6 +37,8 @@ export interface SettingsPickerReduxProps<T> {
   onValueChange: (value: T) => { type: string; payload: T };
   snapPoints?: number[];
   supportsOptimisticUpdates?: boolean;
+  /** Optional footer note displayed below options */
+  footerNote?: string;
   /** Controlled mode is disabled when using Redux */
   selectedValue?: never;
   onSelect?: never;
@@ -56,6 +58,8 @@ export interface SettingsPickerControlledProps<T> {
   onSelect: (value: T) => void;
   snapPoints?: number[];
   supportsOptimisticUpdates?: boolean;
+  /** Optional footer note displayed below options */
+  footerNote?: string;
   /** Redux mode is disabled when using controlled mode */
   currentValueSelector?: never;
   onValueChange?: never;
@@ -74,6 +78,7 @@ export const SettingsPicker = <T,>({
   onSelect,
   snapPoints = DEFAULT_SNAP_POINTS,
   supportsOptimisticUpdates = false,
+  footerNote,
 }: SettingsPickerProps<T>) => {
   const colors = useColors();
   const dispatch = useAppDispatch();
@@ -234,6 +239,15 @@ export const SettingsPicker = <T,>({
             );
           })}
         </View>
+
+        {/* Footer note */}
+        {footerNote && (
+          <View style={[styles.footerNote, { borderTopColor: colors.cardBorder }]}>
+            <ThemedText type="caption" style={styles.footerNoteText}>
+              {footerNote}
+            </ThemedText>
+          </View>
+        )}
       </BottomSheetView>
     </BottomSheet>
   );
@@ -283,5 +297,14 @@ const styles = StyleSheet.create({
   },
   optionSubtitle: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+  },
+  footerNote: {
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
+  },
+  footerNoteText: {
+    lineHeight: 20,
   },
 });

@@ -127,6 +127,7 @@ export default function ListenScreen(): JSX.Element {
     sortedReadingList,
     isReadingListLoading,
     handlePlayAll,
+    handlePlayAllArabicOnly,
     handleArticlePlay,
     handleDelete,
     enhancedTracksError,
@@ -330,6 +331,7 @@ export default function ListenScreen(): JSX.Element {
             primaryLoading={isPlayAllLoading}
             primaryLabel={AudioAction.PLAY_ALL}
             onPrimaryPress={handlePlayAllStable}
+            onPrimaryLongPress={handlePlayAllArabicOnly}
           />
         </View>
       )}

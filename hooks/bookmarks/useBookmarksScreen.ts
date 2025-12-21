@@ -3,8 +3,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { TIMING_CONSTANTS } from '@/constants/animation';
+import { DEFAULT_TOAST_DURATION, TIMING_CONSTANTS } from '@/constants/animation';
 import { audioQueries, readingProgressQueries } from '@/constants/queries';
+import { STRINGS } from '@/constants/strings';
+import { useToast } from '@/components/providers';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 // Use direct service access to avoid frequent parent re-renders from time updates
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -15,6 +17,7 @@ import { bookmarkService } from '@/services/bookmark';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
 import type { ArticleId } from '@/types/branded.types';
+import { AudioLanguage, ToastType } from '@/types/enums';
 import {
   getCurrentArticleId,
   isAudioBusy,
@@ -22,7 +25,7 @@ import {
   stopAudioSafely,
 } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
+import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
 import { shuffleArray } from '@/utils/list';
 import { sortByCustomOrder, sortByDateDesc } from '@/utils/sortingUtils';
 
@@ -50,6 +53,7 @@ export const useBookmarksScreen = () => {
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
   const { prefetchArticle } = useAppPreloader();
+  const { showToast } = useToast();
 
   const customOrder = useAppSelector(state => state.playlist.customOrder);
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
@@ -128,78 +132,120 @@ export const useBookmarksScreen = () => {
   const isCurrentlyPlaying = simpleAudioService.getStatus().isPlaying;
 
   // STABILIZATION: Enhanced handlePlayAll with better state management
-  const handlePlayAll = useCallback(async () => {
-    // Clear playback mode timeout
-    if (playbackModeTimeoutRef.current) {
-      clearTimeout(playbackModeTimeoutRef.current);
-    }
-
-    // Get current values directly from audio service instead of relying on local state
-    const currentStatus = simpleAudioService.getStatus();
-    const currentPlaybackMode = playbackMode;
-    const currentTracks = sortedEnhancedTracks;
-
-    const isCurrentlyPlayingNow = currentStatus.isPlaying;
-
-    if (isAudioBusy()) {
-      return;
-    }
-
-    if (isCurrentlyPlayingNow && currentPlaybackMode === 'all') {
-      try {
-        selectionFeedback();
-        await simpleAudioService.stop();
-        // STABILIZATION: Debounce playback mode change
-        playbackModeTimeoutRef.current = setTimeout(() => {
-          setPlaybackMode('none');
-        }, TIMING_CONSTANTS.QUICK_DELAY);
-      } catch {
-        playbackModeTimeoutRef.current = setTimeout(() => {
-          setPlaybackMode('none');
-        }, TIMING_CONSTANTS.QUICK_DELAY);
+  const handlePlayAll = useCallback(
+    async (forceArabicOnly = false) => {
+      // Clear playback mode timeout
+      if (playbackModeTimeoutRef.current) {
+        clearTimeout(playbackModeTimeoutRef.current);
       }
-    } else if (currentTracks.length) {
-      try {
-        selectionFeedback();
-        // STABILIZATION: Set playback mode immediately for UI feedback
-        setPlaybackMode('all');
 
-        // Track Play All started
-        analytics.track(ANALYTICS_EVENTS.AUDIO_PLAY_ALL_STARTED, {
-          article_count: currentTracks.length,
-          source: 'listen_tab',
-          shuffle_enabled: audioShuffleEnabled,
-        });
+      // Get current values directly from audio service instead of relying on local state
+      const currentStatus = simpleAudioService.getStatus();
+      const currentPlaybackMode = playbackMode;
+      const currentTracks = sortedEnhancedTracks;
 
-        // PLAYLIST SUPPORT: Use the new playlist functionality instead of just playing the first track
-        const tracksToPlay = audioShuffleEnabled ? shuffleArray(currentTracks) : currentTracks;
+      const isCurrentlyPlayingNow = currentStatus.isPlaying;
 
-        const success = await simpleAudioService.playPlaylist(tracksToPlay, nextTrack => {
-          // Callback when a track completes and the next one starts
-          if (nextTrack?.articleId) {
-            // Prefetch the next article's data and image for smooth transitions
-            prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
-          } else {
-            // Playlist is complete, reset playback mode
-            playbackModeTimeoutRef.current = setTimeout(() => {
-              setPlaybackMode('none');
-            }, TIMING_CONSTANTS.QUICK_DELAY);
-          }
-        });
+      if (isAudioBusy()) {
+        return;
+      }
 
-        if (!success) {
+      if (isCurrentlyPlayingNow && currentPlaybackMode === 'all') {
+        try {
+          selectionFeedback();
+          await simpleAudioService.stop();
+          // STABILIZATION: Debounce playback mode change
+          playbackModeTimeoutRef.current = setTimeout(() => {
+            setPlaybackMode('none');
+          }, TIMING_CONSTANTS.QUICK_DELAY);
+        } catch {
           playbackModeTimeoutRef.current = setTimeout(() => {
             setPlaybackMode('none');
           }, TIMING_CONSTANTS.QUICK_DELAY);
         }
-      } catch (error) {
-        playbackModeTimeoutRef.current = setTimeout(() => {
-          setPlaybackMode('none');
-        }, TIMING_CONSTANTS.QUICK_DELAY);
-        handleError(error as Error);
+      } else if (currentTracks.length) {
+        try {
+          selectionFeedback();
+          // STABILIZATION: Set playback mode immediately for UI feedback
+          setPlaybackMode('all');
+
+          // Track Play All started
+          analytics.track(ANALYTICS_EVENTS.AUDIO_PLAY_ALL_STARTED, {
+            article_count: currentTracks.length,
+            source: 'listen_tab',
+            shuffle_enabled: audioShuffleEnabled,
+          });
+
+          // Use override preference if set (passed as parameter), otherwise use user's setting
+          const effectivePreference = forceArabicOnly ? AudioLanguage.ARABIC_ONLY : audioPreference;
+
+          // Fetch tracks with effective preference if override is active
+          const effectiveTracks =
+            forceArabicOnly && user?.id
+              ? await enhancedAudioService.getReadingListEnhancedTracks(
+                  user.id,
+                  effectivePreference,
+                )
+              : currentTracks;
+
+          // PLAYLIST SUPPORT: Use the new playlist functionality instead of just playing the first track
+          const tracksToPlay = audioShuffleEnabled
+            ? shuffleArray(effectiveTracks)
+            : effectiveTracks;
+
+          const success = await simpleAudioService.playPlaylist(tracksToPlay, nextTrack => {
+            // Callback when a track completes and the next one starts
+            if (nextTrack?.articleId) {
+              // Prefetch the next article's data and image for smooth transitions
+              prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
+            } else {
+              // Playlist is complete, reset playback mode
+              playbackModeTimeoutRef.current = setTimeout(() => {
+                setPlaybackMode('none');
+              }, TIMING_CONSTANTS.QUICK_DELAY);
+            }
+          });
+
+          if (!success) {
+            playbackModeTimeoutRef.current = setTimeout(() => {
+              setPlaybackMode('none');
+            }, TIMING_CONSTANTS.QUICK_DELAY);
+          }
+        } catch (error) {
+          playbackModeTimeoutRef.current = setTimeout(() => {
+            setPlaybackMode('none');
+          }, TIMING_CONSTANTS.QUICK_DELAY);
+          handleError(error as Error);
+        }
       }
-    }
-  }, [playbackMode, sortedEnhancedTracks, audioPreference, audioShuffleEnabled]);
+    },
+    [
+      playbackMode,
+      sortedEnhancedTracks,
+      audioPreference,
+      audioShuffleEnabled,
+      user?.id,
+      queryClient,
+      prefetchArticle,
+    ],
+  );
+
+  // Long-press handler for temporary Arabic-only playback
+  const handlePlayAllArabicOnly = useCallback(async () => {
+    // Trigger haptic feedback
+    mediumFeedback();
+
+    // Show toast notification at bottom (near Play All button)
+    showToast(
+      STRINGS.PLAYING_ARABIC_ONLY_THIS_SESSION,
+      DEFAULT_TOAST_DURATION,
+      ToastType.INFO,
+      'bottom',
+    );
+
+    // Start playback with Arabic-only override
+    await handlePlayAll(true);
+  }, [handlePlayAll, showToast]);
 
   // Sleep timer handlers are handled by useGlobalAudioState
 
@@ -330,6 +376,7 @@ export const useBookmarksScreen = () => {
     isReadingListLoading,
     playbackMode,
     handlePlayAll,
+    handlePlayAllArabicOnly,
     handleArticlePlay,
     handleDelete,
     enhancedTracksError,

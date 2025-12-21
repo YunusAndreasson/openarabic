@@ -28,10 +28,7 @@ function isValidNumber(value: unknown): value is number {
  * @param headerTitle - Optional header title
  * @returns true if navigation succeeded, false if validation failed
  */
-export function navigateToArticle(
-  id: ArticleId | null | undefined,
-  headerTitle?: string,
-): boolean {
+export function navigateToArticle(id: ArticleId | null | undefined, headerTitle?: string): boolean {
   if (!isDefined(id) || !isValidNumber(id)) {
     console.error('[Navigation] Invalid article ID:', id);
     return false;

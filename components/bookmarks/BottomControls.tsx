@@ -8,6 +8,7 @@ import { useColors } from '@/hooks/theme/useColors';
 export type BottomControlsProps = {
   primaryLabel: string;
   onPrimaryPress: () => void;
+  onPrimaryLongPress?: () => void;
   primaryDisabled?: boolean;
   primaryLoading?: boolean;
 
@@ -20,6 +21,7 @@ export const BottomControls = memo<BottomControlsProps>(
   ({
     primaryLabel,
     onPrimaryPress,
+    onPrimaryLongPress,
     primaryDisabled = false,
     primaryLoading = false,
     secondaryLabel,
@@ -78,6 +80,8 @@ export const BottomControls = memo<BottomControlsProps>(
               style={[styles.button, LAYOUT.ELEVATION.MEDIUM, dynamicStyles.primaryButton]}
               title={primaryLabel}
               onPress={onPrimaryPress}
+              onLongPress={onPrimaryLongPress}
+              delayLongPress={500}
               enableOptimisticLoading={primaryLabel === 'PLAY ALL'}
               testID="primary-action-button"
             />

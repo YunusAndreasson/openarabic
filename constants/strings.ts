@@ -12,6 +12,7 @@ export const STRINGS = {
   AUDIO_LANGUAGE_ARABIC: 'Arabic only',
   AUDIO_LANGUAGE_ARABIC_SUBTITLE: 'Arabic pronunciation only',
   AUDIO_LANGUAGE_BILINGUAL_SUBTITLE: 'English translation, then Arabic',
+  AUDIO_LANGUAGE_LONG_PRESS_TIP: 'Tip: Long-press "Play all" to temporarily play Arabic-only',
   AUDIO_SHUFFLE: 'Shuffle audio',
   AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order',
   HAPTICS: 'Haptic feedback',
@@ -354,6 +355,7 @@ export const STRINGS = {
   FAILED_TO_GENERATE_AUDIO_TRACK: "Couldn't generate track. " + tryAgain,
   FAILED_TO_GET_ENHANCED_AUDIO_TRACKS: "Couldn't get tracks. " + tryAgain,
   FAILED_TO_LOAD_AUDIO_TRACKS: "Couldn't load audio tracks. " + tryAgain,
+  PLAYING_ARABIC_ONLY_THIS_SESSION: 'Playing Arabic-only for this session',
   FAILED_TO_STOP_AUDIO_ON_CLOSE: "Couldn't stop audio on close. " + tryAgain,
   // Playlist errors
   FAILED_TO_LOAD_BOOKMARKS: "Couldn't load playlist. " + tryAgain,

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -16,6 +16,7 @@ interface ToastProps {
   duration?: number;
   onClose: () => void;
   type?: ToastType;
+  position?: 'top' | 'bottom';
 }
 
 const DEFAULT_DURATION = DEFAULT_TOAST_DURATION;
@@ -52,6 +53,7 @@ export function Toast({
   duration = DEFAULT_DURATION,
   onClose,
   type = ToastType.INFO,
+  position = 'top',
 }: ToastProps) {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
@@ -111,19 +113,31 @@ export function Toast({
   const screenWidth = SCREEN_WIDTH;
   const maxToastWidth = screenWidth * MAX_TOAST_WIDTH_RATIO;
 
-  // Position higher on screen for better visibility
+  // Position based on position prop
   const containerStyle = {
     ...styles.toastContainer,
-    top: insets.top + LAYOUT.SPACING.XLARGE * 2, // Position at top for prominence
+    ...(position === 'bottom'
+      ? { bottom: insets.bottom + LAYOUT.SPACING.LARGE } // Position at bottom
+      : { top: insets.top + LAYOUT.SPACING.XLARGE * 2 }), // Position at top for prominence
   };
 
   if (!visible) return null;
 
+  // Use different animations based on position
+  const enterAnimation =
+    position === 'bottom'
+      ? FadeInUp.duration(TIMING_CONFIG.FAST.duration)
+      : FadeInDown.duration(TIMING_CONFIG.FAST.duration);
+  const exitAnimation =
+    position === 'bottom'
+      ? FadeOutDown.duration(TIMING_CONFIG.FAST.duration)
+      : FadeOutUp.duration(TIMING_CONFIG.FAST.duration);
+
   return (
     <Animated.View
       pointerEvents="none"
-      entering={FadeInUp.duration(TIMING_CONFIG.FAST.duration)}
-      exiting={FadeOutUp.duration(TIMING_CONFIG.FAST.duration)}
+      entering={enterAnimation}
+      exiting={exitAnimation}
       style={containerStyle}
     >
       <View
