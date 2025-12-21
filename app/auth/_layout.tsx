@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { View } from 'react-native';
 
 import { DoneButton } from '@/components/ui';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { createNavigationOptions } from '@/utils/navigation';
@@ -14,7 +15,7 @@ export default function AuthLayout(): JSX.Element {
     title: ' ',
     headerShown: true,
     headerLeft: () => <DoneButton onPress={() => router.back()} />,
-    headerRight: () => <View style={{ width: 20, height: 44 }} />,
+    headerRight: () => <View style={{ width: 20, height: MIN_TOUCH_TARGET.MEDIUM }} />,
   });
 
   return (

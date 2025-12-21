@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, STATUS_INDICATOR } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
   todayDot: {
     position: 'absolute', // Don't affect text centering
     bottom: -7, // Position below the container
-    width: 5, // Small filled circle
-    height: 5,
-    borderRadius: 2.5, // Circular shape
+    width: STATUS_INDICATOR.DOT_SIZE,
+    height: STATUS_INDICATOR.DOT_SIZE,
+    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
     alignSelf: 'center', // Center dot horizontally
   },
   yAxisContainer: {

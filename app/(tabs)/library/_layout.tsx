@@ -4,6 +4,7 @@ import { View } from 'react-native';
 
 import { HeaderProfile } from '@/components/HeaderProfile';
 import { DoneButton } from '@/components/ui/DoneButton';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { createNavigationOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
@@ -47,7 +48,7 @@ const FilterHeaderLeft = () => {
 };
 
 // Minimal spacer to maintain layout balance
-const FilterHeaderRight = () => <View style={{ width: 20, height: 44 }} />;
+const FilterHeaderRight = () => <View style={{ width: 20, height: MIN_TOUCH_TARGET.MEDIUM }} />;
 
 export default function LibraryLayout(): JSX.Element {
   const colors = useColors();

@@ -195,6 +195,7 @@ export const LAYOUT = {
 
   BORDER_RADIUS: {
     NONE: 0, // No border radius
+    MICRO: 2, // For chart dots and small elements
     TINY: 3, // Perfect circles for 6px elements (STATUS_INDICATOR dots)
     SMALL_CIRCLE: 6, // Small rounded elements
     SMALL: BASE_UNIT * 2.5, // 10 - softer corners (2025 trend)
@@ -214,6 +215,10 @@ export const LAYOUT = {
     IMAGE: {
       MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // 48 + 8 = 56 (increased from 40 for better balance)
       MINI_PLAYER_ARTWORK: BASE_UNIT * 18, // 72 - MiniPlayer album artwork dimensions
+      THUMBNAIL: {
+        WIDTH: BASE_UNIT * 18, // 72 - bookmark/list thumbnails
+        HEIGHT: BASE_UNIT * 13.5, // 54 - 4:3 aspect ratio
+      },
     },
     WIDTH: {
       DICTIONARY_LEFT_SECTION: BASE_UNIT * 32, // 128 - more space for English text with badges
@@ -222,6 +227,7 @@ export const LAYOUT = {
 
   INPUT: {
     HEIGHT: TOUCH_TARGETS.LARGE + BASE_UNIT, // 52 - responsive to touch targets + padding
+    MULTILINE_HEIGHT: BASE_UNIT * 50, // 200 - standard height for multiline text areas
     BORDER_WIDTH: {
       DEFAULT: Math.round(BASE_UNIT * 0.375), // 1.5 rounded to 2 - prevents sub-pixel rendering
       FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
@@ -240,6 +246,7 @@ export const LAYOUT = {
       LARGE: SPACING_SCALE.XLARGE, // 24 - responsive to spacing scale
       XLARGE: BASE_UNIT * 7, // 28 - responsive to base unit
       XXLARGE: BASE_UNIT * 16, // 64 - responsive to base unit (for empty states)
+      HERO: BASE_UNIT * 24, // 96 - large icons for empty states and illustrations
     },
   },
 

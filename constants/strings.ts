@@ -269,7 +269,7 @@ export const STRINGS = {
   SIGN_IN_WITH_APPLE: 'Sign in with Apple',
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
   CONTINUE_WITH: 'or',
-  MEMORY_STRENGTH: 'Memory strength',
+  MEMORY_STRENGTH: 'Strength',
   WORD_MASTERY: 'Words mastered',
   // Practice bottom sheet subtitles (concise: what it shows + why it matters)
   MEMORY_STRENGTH_SUBTITLE: 'How likely you are to remember each word (aim for 75%+)',

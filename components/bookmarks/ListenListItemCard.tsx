@@ -16,8 +16,9 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 // Bookmarks thumbnail size with 4:3 ratio for optimal vertical space in portrait mobile
-const BOOKMARKS_IMAGE_WIDTH = 72;
-const BOOKMARKS_IMAGE_HEIGHT = 54; // 72 / (4/3) = 54px
+// Uses centralized constants from layout.ts for consistency
+const BOOKMARKS_IMAGE_WIDTH = LAYOUT.CARD.IMAGE.THUMBNAIL.WIDTH;
+const BOOKMARKS_IMAGE_HEIGHT = LAYOUT.CARD.IMAGE.THUMBNAIL.HEIGHT;
 
 interface ListenListItemCardProps {
   title: string;

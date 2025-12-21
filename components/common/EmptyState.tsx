@@ -16,7 +16,12 @@ interface EmptyStateProps {
  * Generic empty state component used across the app.
  * Displays an icon, title, and hint message with consistent styling.
  */
-export function EmptyState({ icon, title, hint, iconSize = 96 }: EmptyStateProps) {
+export function EmptyState({
+  icon,
+  title,
+  hint,
+  iconSize = LAYOUT.BUTTON.ICON_SIZE.HERO,
+}: EmptyStateProps) {
   const colors = useColors();
 
   return (

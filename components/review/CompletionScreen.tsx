@@ -7,12 +7,13 @@ import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { getThemeAwareElevation, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useEncouragingMetrics, useReviewCompletion } from '@/hooks/review';
 import { useStudyStreak } from '@/hooks/study';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { UiAction } from '@/types/enums';
 import type { SessionMetrics } from '@/types/review.types';
 import { createMargin, createPadding, COMMON_STYLES } from '@/utils/layoutUtils';
@@ -41,6 +42,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   fromRemember = false,
 }) => {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
   // Fetch current daily study streak
   const { streak } = useStudyStreak();
@@ -95,9 +97,10 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
                 style={[
                   styles.metricItem,
                   {
-                    backgroundColor: colors.elevation1,
-                    borderColor: colors.border,
+                    backgroundColor: colors.card,
+                    shadowColor: colors.shadow,
                   },
+                  getThemeAwareElevation('SUBTLE', isDarkMode),
                 ]}
               >
                 <View style={styles.metricContent}>
@@ -216,7 +219,6 @@ const styles = StyleSheet.create({
   metricItem: {
     ...COMMON_STYLES.roundedMedium,
     ...createPadding({ horizontal: 'LARGE', vertical: 'TINY' }),
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
   },
 
   metricContent: {

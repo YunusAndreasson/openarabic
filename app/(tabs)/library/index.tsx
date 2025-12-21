@@ -19,6 +19,7 @@ import {
   getAuthorFilterRoute,
   getCategoryFilterRoute,
   getDifficultyFilterRoute,
+  getLengthFilterRoute,
 } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -111,12 +112,13 @@ export default function ReadScreen(): JSX.Element {
 
   // Note: Categories are prioritized over authors since IDs overlap and categories are primary navigation
 
-  // OPTIMIZED: Single-pass count calculation for categories, authors, and difficulty
-  const { categoryCounts, authorCounts, difficultyCounts } = useMemo(() => {
+  // OPTIMIZED: Single-pass count calculation for categories, authors, difficulty, and length
+  const { categoryCounts, authorCounts, difficultyCounts, lengthCounts } = useMemo(() => {
     return articlesData.reduce<{
       categoryCounts: Record<number, number>;
       authorCounts: Record<number, number>;
       difficultyCounts: Record<number, number>;
+      lengthCounts: Record<number, number>;
     }>(
       (acc, article) => {
         // Every article has a category and author (guaranteed)
@@ -129,9 +131,14 @@ export default function ReadScreen(): JSX.Element {
         const diffBucket = diffLevel <= 2 ? 1 : diffLevel <= 4 ? 2 : 3;
         acc.difficultyCounts[diffBucket] = (acc.difficultyCounts[diffBucket] || 0) + 1;
 
+        // Length counts based on reading time (sentences / 4 = minutes)
+        const minutes = Math.ceil((article.article_sentences?.length ?? 0) / 4);
+        const lengthBucket = minutes <= 2 ? 1 : minutes <= 5 ? 2 : 3;
+        acc.lengthCounts[lengthBucket] = (acc.lengthCounts[lengthBucket] || 0) + 1;
+
         return acc;
       },
-      { categoryCounts: {}, authorCounts: {}, difficultyCounts: {} },
+      { categoryCounts: {}, authorCounts: {}, difficultyCounts: {}, lengthCounts: {} },
     );
   }, [articlesData]);
 
@@ -156,6 +163,17 @@ export default function ReadScreen(): JSX.Element {
         { id: 3, name: STRINGS.DIFFICULTY_ADVANCED, count: difficultyCounts[3] || 0 },
       ].filter(item => item.count > 0),
     [difficultyCounts],
+  );
+
+  // Build length items with counts (only show items with articles)
+  const lengthItems = useMemo(
+    () =>
+      [
+        { id: 1, name: STRINGS.LENGTH_SHORT, count: lengthCounts[1] || 0 },
+        { id: 2, name: STRINGS.LENGTH_MEDIUM, count: lengthCounts[2] || 0 },
+        { id: 3, name: STRINGS.LENGTH_LONG, count: lengthCounts[3] || 0 },
+      ].filter(item => item.count > 0),
+    [lengthCounts],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -199,6 +217,8 @@ export default function ReadScreen(): JSX.Element {
         }
       } else if (filterType === 'difficulty') {
         router.push(getDifficultyFilterRoute(id, name));
+      } else if (filterType === 'length') {
+        router.push(getLengthFilterRoute(id, name));
       }
     },
     [categoriesData, authorsData],
@@ -250,6 +270,17 @@ export default function ReadScreen(): JSX.Element {
       </View>,
     );
 
+    sections.push(
+      <View key="length-wrapper">
+        <SectionLabel title={STRINGS.SECTION_LENGTH} />
+        <FilterSection
+          items={lengthItems}
+          onSelect={handleSelectFilter}
+          filterType="length"
+        />
+      </View>,
+    );
+
     return sections;
   }, [
     articlesData,
@@ -257,6 +288,7 @@ export default function ReadScreen(): JSX.Element {
     categoriesWithArticles,
     authorsWithArticles,
     difficultyItems,
+    lengthItems,
     handleSelectFilter,
   ]);
 

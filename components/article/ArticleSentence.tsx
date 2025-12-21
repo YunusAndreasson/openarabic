@@ -128,7 +128,11 @@ const ArticleSentenceInternal = function ArticleSentence({
                 style={[styles.closeButton, { backgroundColor: `${colors.background}20` }]}
                 hitSlop={LAYOUT.SPACING.SMALL}
               >
-                <Ionicons name="close" size={18} color={colors.background} />
+                <Ionicons
+                  name="close"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  color={colors.background}
+                />
               </Pressable>
             )}
           </View>
@@ -173,9 +177,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: LAYOUT.SPACING.SMALL,
     right: LAYOUT.SPACING.SMALL,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
+    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
   },

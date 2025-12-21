@@ -15,7 +15,12 @@ import { ToastType } from '@/types/enums';
 import { setGlobalToastHandler } from '@/utils/errorHandling';
 
 interface ToastContextType {
-  showToast: (message: string, duration?: number, type?: ToastType, position?: 'top' | 'bottom') => void;
+  showToast: (
+    message: string,
+    duration?: number,
+    type?: ToastType,
+    position?: 'top' | 'bottom',
+  ) => void;
   showImportantToast: (message: string, duration?: number) => void;
 }
 
@@ -45,7 +50,12 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
   });
 
   const showToast = useCallback(
-    (message: string, duration?: number, type: ToastType = ToastType.INFO, position: 'top' | 'bottom' = 'top') => {
+    (
+      message: string,
+      duration?: number,
+      type: ToastType = ToastType.INFO,
+      position: 'top' | 'bottom' = 'top',
+    ) => {
       setToastState({
         visible: true,
         message,

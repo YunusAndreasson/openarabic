@@ -203,7 +203,11 @@ export const FeedbackForm = memo(() => {
                     { backgroundColor: colors.error, shadowColor: colors.shadow },
                   ]}
                 >
-                  <Ionicons name="close" size={20} color={colors.white} />
+                  <Ionicons
+                    name="close"
+                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    color={colors.white}
+                  />
                 </Pressable>
               </View>
             ) : (
@@ -211,7 +215,7 @@ export const FeedbackForm = memo(() => {
                 onPress={handleAddScreenshot}
                 style={[styles.addScreenshotButton, { borderColor: colors.border }]}
               >
-                <Ionicons name="image-outline" size={24} color={colors.tint} />
+                <Ionicons name="image" size={LAYOUT.BUTTON.ICON_SIZE.LARGE} color={colors.tint} />
                 <ThemedText type="body" colorName="tint" style={styles.addScreenshotText}>
                   Add Screenshot (Optional)
                 </ThemedText>
@@ -307,7 +311,7 @@ const styles = StyleSheet.create({
   },
   screenshotImage: {
     width: '100%',
-    height: 200,
+    height: LAYOUT.INPUT.MULTILINE_HEIGHT,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   removeButton: {

@@ -47,6 +47,14 @@ export default function FilterScreen(): JSX.Element {
         if (filterId === 3) return diffLevel >= 5;
         return false;
       }
+      if (filterType === 'length') {
+        // Map UI bucket (1-3) to reading time: Short (1-2min), Medium (3-5min), Long (6+min)
+        const minutes = Math.ceil((article.article_sentences?.length ?? 0) / 4);
+        if (filterId === 1) return minutes <= 2;
+        if (filterId === 2) return minutes >= 3 && minutes <= 5;
+        if (filterId === 3) return minutes >= 6;
+        return false;
+      }
       return article.category.id === filterId;
     });
   }, [allArticles, filterType, filterId]);
