@@ -40,7 +40,7 @@ export function WordDetailsBottomSheet({
   const hasShownFirstAddToast = useRef(false);
 
   // Calculate snap points - compact height to fit content without excess space
-  const snapPoints = useMemo(() => [380], []);
+  const snapPoints = useMemo(() => [LAYOUT.BOTTOM_SHEET.SNAP_POINTS.WORD_DETAILS], []);
 
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
     textAlign: 'center',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE, // 34 - larger than heading1 (28)
-    lineHeight: 60, // Adequate line height for Arabic text with diacritics
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE * 1.58, // 60 - adequate for Arabic text with diacritics
   },
   englishTranslation: {
     textAlign: 'center',

@@ -39,7 +39,11 @@ export function SleepTimer({
   const [selectedMinutes, setSelectedMinutes] = useState<number>(DEFAULT_SELECTED_MINUTES);
 
   // Configure snap points - fixed values for better performance
-  const snapPoints = [isTimerActive ? 280 : 380];
+  const snapPoints = [
+    isTimerActive
+      ? LAYOUT.BOTTOM_SHEET.SNAP_POINTS.TIMER_COLLAPSED
+      : LAYOUT.BOTTOM_SHEET.SNAP_POINTS.TIMER_EXPANDED,
+  ];
 
   // Handle visibility changes
   useEffect(() => {
@@ -172,6 +176,7 @@ const styles = StyleSheet.create({
   },
 
   optionButton: {
+    // +2px micro-adjustment for visual balance in timer option buttons
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + 2,
     paddingVertical: LAYOUT.SPACING.MEDIUM + 2,
     width: '100%',

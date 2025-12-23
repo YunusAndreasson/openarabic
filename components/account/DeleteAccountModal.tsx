@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   warningText: {
-    lineHeight: 22,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.375, // 22
   },
   dataList: {
     paddingLeft: LAYOUT.SPACING.SMALL,
@@ -147,16 +147,16 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
   },
   signedInLabel: {
-    lineHeight: 18,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.385, // 18
   },
   emailText: {
-    lineHeight: 22,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.375, // 22
   },
   inputContainer: {
     gap: LAYOUT.SPACING.SMALL,
   },
   inputLabel: {
-    lineHeight: 22,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.375, // 22
   },
   buttonContainer: {
     marginTop: LAYOUT.SPACING.SMALL,
@@ -167,6 +167,6 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   deleteButtonDisabled: {
-    opacity: 0.5,
+    opacity: LAYOUT.OPACITY.MEDIUM,
   },
 });

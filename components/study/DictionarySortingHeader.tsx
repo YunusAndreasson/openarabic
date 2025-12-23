@@ -28,7 +28,7 @@ const DictionarySortingHeaderComponent: FC<DictionarySortingHeaderProps> = ({
         style={({ pressed }) => [
           styles.sortButton,
           { backgroundColor: colors.elevation1, borderColor: colors.border },
-          pressed && { opacity: 0.7 },
+          pressed && { opacity: LAYOUT.OPACITY.HIGH },
         ]}
         onPress={onToggleDirection}
       >

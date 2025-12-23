@@ -947,7 +947,7 @@ const darkColors: ThemeColors = {
   // Interactive elements
   tint: basePalette.tint.primaryDark,
   tintBackground: withAlpha(basePalette.tint.primaryDark, opacity.medium),
-  tabIconDefault: basePalette.forest.medium,
+  tabIconDefault: basePalette.forest.light, // Increased from forest.medium for better dark mode visibility
   tabIconSelected: basePalette.tint.primaryDark,
   icon: textHierarchy.dark.metadata,
   disabled: basePalette.disabled.universal,
@@ -993,8 +993,8 @@ const darkColors: ThemeColors = {
   // Card gradients - pre-computed for performance
   cardGradient: [
     withAlpha(basePalette.sage.darkest, 0),
-    withAlpha(basePalette.sage.darkest, 0.5),
-    withAlpha(basePalette.sage.darkest, 0.9),
+    withAlpha(basePalette.sage.darkest, opacity.medium),
+    withAlpha(basePalette.sage.darkest, opacity.modal),
     basePalette.sage.dark,
   ] as const,
 

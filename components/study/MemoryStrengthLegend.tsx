@@ -57,7 +57,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
 
       {/* Label with sort toggle on right - tappable */}
       <Pressable
-        style={({ pressed }) => [styles.headerRow, pressed && { opacity: 0.7 }]}
+        style={({ pressed }) => [styles.headerRow, pressed && { opacity: LAYOUT.OPACITY.HIGH }]}
         onPress={() => {
           selectionFeedback();
           onToggleSort();

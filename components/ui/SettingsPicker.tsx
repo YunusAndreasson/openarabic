@@ -14,7 +14,7 @@ import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { lightFeedback } from '@/utils/haptics';
 
 // Default snap points for settings pickers
-const DEFAULT_SNAP_POINTS = [320];
+const DEFAULT_SNAP_POINTS = [LAYOUT.BOTTOM_SHEET.SNAP_POINTS.SETTINGS_PICKER];
 
 export interface SettingsPickerOption<T> {
   id: T;
@@ -305,6 +305,6 @@ const styles = StyleSheet.create({
     borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
   },
   footerNoteText: {
-    lineHeight: 20,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.25, // 20
   },
 });

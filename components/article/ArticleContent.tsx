@@ -53,8 +53,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5, // Tighter tracking for refined modern look
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE * 1.15, // Better multi-line spacing
     // textShadowColor applied inline via colors.textShadow for theme consistency
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowOffset: LAYOUT.TEXT_SHADOW.offset,
+    textShadowRadius: LAYOUT.TEXT_SHADOW.radius,
   },
   leftAlign: {
     textAlign: 'left',
@@ -178,9 +178,9 @@ const ArticleContentInternal = function ArticleContent({
   const dividerStyle = {
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
-    opacity: 0.5, // Increased from 0.4 for better definition
+    opacity: LAYOUT.OPACITY.MEDIUM,
     marginHorizontal: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.TINY, // Added top margin
+    marginTop: LAYOUT.SPACING.TINY,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   } as const;
 

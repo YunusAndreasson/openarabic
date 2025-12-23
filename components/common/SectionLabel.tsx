@@ -37,6 +37,6 @@ const styles = StyleSheet.create({
   label: {
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    opacity: 0.6,
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
 });

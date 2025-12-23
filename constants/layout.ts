@@ -315,6 +315,12 @@ export const LAYOUT = {
       WIDTH: BASE_UNIT * 9, // 36 - responsive to base unit
       HEIGHT: BASE_UNIT, // 4 - responsive to base unit
     },
+    SNAP_POINTS: {
+      WORD_DETAILS: 380,
+      TIMER_COLLAPSED: 280,
+      TIMER_EXPANDED: 380,
+      SETTINGS_PICKER: 320,
+    },
     HEADER: {
       paddingHorizontal: SPACING_SCALE.MEDIUM, // 12 - consistent with practice bottom sheets
       paddingBottom: SPACING_SCALE.TINY, // 4 - consistent with practice bottom sheets
@@ -481,6 +487,12 @@ export const LAYOUT = {
      * SMALLER value = button LOWER (closer to tab bar)
      */
     BOTTOM_POSITION: SPACING_SCALE.TINY, // 4px above tab bar (moved down)
+  },
+
+  /** Text shadow settings for overlaid text (e.g., article titles on images) */
+  TEXT_SHADOW: {
+    offset: { width: 0, height: 1 },
+    radius: 2,
   },
 };
 
