@@ -26,6 +26,12 @@ export interface OAuthSignInResult {
   idToken: string;
 
   /**
+   * Optional nonce for providers that require it (e.g., Apple on iOS)
+   * Must be passed to Supabase if the ID token contains a nonce
+   */
+  nonce?: string;
+
+  /**
    * Optional user info for analytics
    */
   userInfo?: {
@@ -201,9 +207,11 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
 
       let authResponse;
       try {
+        // Pass nonce only if provided (required for Apple iOS where token contains nonce)
         authResponse = await supabase.auth.signInWithIdToken({
           provider: config.provider,
           token: signInResult.idToken,
+          ...(signInResult.nonce ? { nonce: signInResult.nonce } : {}),
         });
       } catch (supabaseError) {
         Sentry.captureException(supabaseError, {

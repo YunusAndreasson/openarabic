@@ -117,6 +117,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
 
         return {
           idToken: credential.identityToken,
+          nonce: credential.nonce ?? undefined,
           userInfo: {
             email: credential.email ?? undefined,
             name: credential.fullName
@@ -162,6 +163,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
 
         return {
           idToken: response.id_token,
+          nonce: rawNonce,
         };
       } else {
         throw new Error('Apple Sign In not supported on this platform');
