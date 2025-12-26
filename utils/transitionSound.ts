@@ -20,11 +20,15 @@ export async function playTransitionSound(): Promise<void> {
       updateInterval: 100,
       keepAudioSessionActive: true,
     });
+
+    // Ensure volume is set (in case it defaults to 0)
+    player.volume = 1.0;
     player.play();
 
     // Wait for completion with timeout fallback
     await new Promise<void>(resolve => {
       let completed = false;
+      let hasStartedPlaying = false;
       let subscription: { remove: () => void } | null = null;
 
       const complete = () => {
@@ -39,7 +43,14 @@ export async function playTransitionSound(): Promise<void> {
         subscription = player.addListener(
           'playbackStatusUpdate',
           (status: { playing?: boolean }) => {
-            if (!status.playing) complete();
+            // Track when playback starts
+            if (status.playing) {
+              hasStartedPlaying = true;
+            }
+            // Only complete after playback has started AND stopped
+            if (hasStartedPlaying && !status.playing) {
+              complete();
+            }
           },
         );
       }
@@ -48,7 +59,7 @@ export async function playTransitionSound(): Promise<void> {
       setTimeout(complete, 2000);
     });
   } catch (error) {
-    // Transition sound is non-critical - don't send to Sentry but log for debugging
+    // Transition sound is non-critical - silent failure
     handleError(error as Error, {
       showToast: false,
       captureSentry: false,
