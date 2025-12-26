@@ -11,6 +11,8 @@ interface GoogleSignInModule {
     data?: {
       idToken?: string;
       user?: { email?: string; name?: string };
+      serverAuthCode?: string;
+      accessToken?: string;
     };
   }>;
 }
@@ -182,7 +184,23 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       }
 
       if (!userInfo?.data?.idToken) {
-        throw new Error('No ID token returned from Google Sign In');
+        // Log what we actually received for debugging
+        Sentry.captureException(new Error('Google Sign-In completed but no ID token returned'), {
+          tags: {
+            location: 'google_auth',
+            step: 'token_validation',
+          },
+          level: 'error',
+          extra: {
+            hasUser: !!userInfo?.data?.user,
+            hasServerAuthCode: !!userInfo?.data?.serverAuthCode,
+            userEmail: userInfo?.data?.user?.email,
+          },
+        });
+
+        throw new Error(
+          'Google Sign-In failed. Please try updating Google Play Services or clearing Google app data.',
+        );
       }
 
       return {

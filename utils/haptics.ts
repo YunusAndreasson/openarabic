@@ -17,8 +17,10 @@ const HAPTIC_DEBOUNCE_MS = 50; // Minimum time between haptic feedback calls
  */
 const shouldTriggerHaptic = (): boolean => {
   // Check if haptics are enabled in settings
+  // Use explicit false check to handle undefined (missing from old persisted state)
+  // When undefined, default to enabled (true) as per initialState
   const state = store.getState();
-  if (!state.settings.hapticsEnabled) {
+  if (state.settings.hapticsEnabled === false) {
     return false;
   }
 

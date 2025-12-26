@@ -166,7 +166,18 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
         if (config.handleProviderError) {
           const handledMessage = config.handleProviderError(signInError);
           if (handledMessage) {
-            throw new Error(handledMessage);
+            // Create error with formatted message but preserve original error code
+            // This ensures isCancellationError can correctly identify non-cancellation errors
+            const formattedError = new Error(handledMessage);
+            if (
+              typeof signInError === 'object' &&
+              signInError &&
+              'code' in signInError &&
+              signInError.code !== undefined
+            ) {
+              (formattedError as Error & { code: unknown }).code = signInError.code;
+            }
+            throw formattedError;
           }
         }
         throw signInError;
@@ -284,13 +295,27 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
     } catch (error: unknown) {
       if (!isMountedRef.current) return;
 
+      // Extract error details for diagnostic logging
+      const errorCode =
+        typeof error === 'object' && error && 'code' in error ? String(error.code) : 'none';
+      const errorMessage =
+        error instanceof Error ? error.message : String(error).substring(0, 200);
+      const isCancellation = isCancellationError(error);
+
+      // Add diagnostic breadcrumb BEFORE cancellation check for debugging
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: `${providerName} Sign In error caught`,
+        level: isCancellation ? 'info' : 'warning',
+        data: {
+          errorCode,
+          errorMessage: errorMessage.substring(0, 100),
+          isCancellation,
+        },
+      });
+
       // Handle user cancellation silently
-      if (isCancellationError(error)) {
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: `${providerName} Sign In cancelled by user`,
-          level: 'info',
-        });
+      if (isCancellation) {
         return;
       }
 

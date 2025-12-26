@@ -18,7 +18,11 @@ const CANCELLATION_KEYWORDS = ['cancel', 'cancelled', 'canceled', 'dismiss', 'di
 
 /**
  * Helper to detect if error is a user cancellation (not an actual error)
- * Checks both error codes and error messages for cancellation patterns
+ *
+ * Detection strategy:
+ * 1. If error has a code, rely ONLY on code-based detection
+ *    - This prevents false positives where error 1000 (unknown) has "cancelled" in message
+ * 2. Only use message-based detection as fallback when no code exists
  *
  * @param error - The error to check
  * @returns true if the error represents a user cancellation
@@ -28,11 +32,18 @@ export function isCancellationError(error: unknown): boolean {
 
   // Check error code (Google and Apple cancellation codes)
   const errorCode = 'code' in error ? String(error.code) : '';
-  if (CANCELLATION_ERROR_CODES.includes(errorCode as (typeof CANCELLATION_ERROR_CODES)[number])) {
-    return true;
+
+  // If we have a specific error code, rely ONLY on code-based detection
+  // This prevents false positives where error 1000 (ASAuthorizationError.unknown)
+  // might have "cancelled" in its message but is NOT a user cancellation
+  if (errorCode) {
+    return CANCELLATION_ERROR_CODES.includes(
+      errorCode as (typeof CANCELLATION_ERROR_CODES)[number],
+    );
   }
 
-  // Check error message for cancellation keywords
+  // Fallback: Check error message only when no error code exists
+  // This handles edge cases where providers throw without codes
   const errorMessage =
     error instanceof Error
       ? error.message.toLowerCase()

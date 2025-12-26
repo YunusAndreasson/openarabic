@@ -390,8 +390,9 @@ describe('useOAuthProvider', () => {
   });
 
   describe('User Cancellation', () => {
-    it('should handle user cancellation silently (code -1)', async () => {
-      const cancellationError = Object.assign(new Error('User cancelled'), { code: -1 });
+    it('should handle user cancellation silently (code -5 - Google iOS)', async () => {
+      // -5 is kGIDSignInErrorCodeCanceled (Google iOS user cancelled)
+      const cancellationError = Object.assign(new Error('User cancelled'), { code: -5 });
 
       const config: OAuthProviderConfig = {
         provider: 'google',
@@ -402,11 +403,14 @@ describe('useOAuthProvider', () => {
       const { result } = renderHook(() => useOAuthProvider(config));
       await result.current.signIn();
 
-      // Should add breadcrumb but not show error
+      // Should add diagnostic breadcrumb with isCancellation: true
       expect(mockSentryAddBreadcrumb).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Google Sign In cancelled by user',
+          message: 'Google Sign In error caught',
           level: 'info',
+          data: expect.objectContaining({
+            isCancellation: true,
+          }),
         }),
       );
 
@@ -414,7 +418,8 @@ describe('useOAuthProvider', () => {
       expect(mockHandleError).not.toHaveBeenCalled();
     });
 
-    it('should handle user cancellation silently (code 12501)', async () => {
+    it('should handle user cancellation silently (code 12501 - Google Android)', async () => {
+      // 12501 is SIGN_IN_CANCELLED (Google Android user cancelled)
       const cancellationError = Object.assign(new Error('User cancelled'), { code: 12501 });
 
       const config: OAuthProviderConfig = {
@@ -426,9 +431,13 @@ describe('useOAuthProvider', () => {
       const { result } = renderHook(() => useOAuthProvider(config));
       await result.current.signIn();
 
+      // Should add diagnostic breadcrumb with isCancellation: true
       expect(mockSentryAddBreadcrumb).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Google Sign In cancelled by user',
+          message: 'Google Sign In error caught',
+          data: expect.objectContaining({
+            isCancellation: true,
+          }),
         }),
       );
       expect(mockHandleError).not.toHaveBeenCalled();
