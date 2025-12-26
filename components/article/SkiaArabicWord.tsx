@@ -94,7 +94,11 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   });
 
   // Press animation for tactile feedback
-  const { animatedStyle: pressAnimatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+  const {
+    animatedStyle: pressAnimatedStyle,
+    handlePressIn,
+    handlePressOut,
+  } = usePressAnimation({
     type: 'custom',
     scaleAmount: WORD_PRESS_SCALE,
   });
@@ -189,7 +193,11 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
   // Memoize styles that depend on state to prevent recreation
   const containerStyle = useMemo(
-    () => [styles.wordContainer, styles.underlineReserve, getSelectedStyle(isSelected, colors.disabled)],
+    () => [
+      styles.wordContainer,
+      styles.underlineReserve,
+      getSelectedStyle(isSelected, colors.disabled),
+    ],
     [isSelected, colors.disabled],
   );
 
