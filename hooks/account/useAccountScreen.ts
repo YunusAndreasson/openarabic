@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useReminders } from '@/hooks/notifications/useReminders';
 import pkg from '@/package.json';
 import { analytics } from '@/services/analytics';
+import { simpleAudioService } from '@/services/audioPlayer';
 import { ReadingProgressService } from '@/services/readingProgress';
 import { supabase } from '@/services/supabase';
 import { UiAction } from '@/types/enums';
@@ -138,6 +139,8 @@ export const useAccountScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
+              // Stop audio before signing out to prevent stale audio state
+              await simpleAudioService.stop();
               await analytics.trackSignOut();
               const { error } = await supabase.auth.signOut();
               if (error) {

@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react-native';
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { AppState } from 'react-native';
 
+import { simpleAudioService } from '@/services/audioPlayer';
 import { supabase, setupSupabaseAppStateListener } from '@/services/supabase';
 import type { AuthResult, UserSession } from '@/types/auth.types';
 import { handleError } from '@/utils/errorHandling';
@@ -196,6 +197,8 @@ export function useProvideAuth(): AuthResult {
         });
 
         if (event === 'SIGNED_OUT') {
+          // Stop audio to prevent stale playback state
+          simpleAudioService.stop().catch(() => {});
           setSession(null);
           setIsLoading(false);
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {

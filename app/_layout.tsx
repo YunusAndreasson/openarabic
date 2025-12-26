@@ -49,6 +49,7 @@ import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { analytics } from '@/services/analytics';
+import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import * as Notifications from 'expo-notifications';
 import {
@@ -345,12 +346,16 @@ function AppContent() {
     handleColdStartNotification();
   }, [appReady, router]);
 
-  // Cleanup notifications, background tasks, and app badge on unmount
+  // Cleanup notifications, background tasks, audio, and app badge on unmount
   useEffect(() => {
     return () => {
       cleanupNotifications();
       unregisterBackgroundTasks().catch(() => {
         // Silently handle background task cleanup errors
+      });
+      // Cleanup audio service to release audio session
+      simpleAudioService.destroy().catch(() => {
+        // Silently handle audio cleanup errors during unmount
       });
       // Clear app badge when app is unmounted (async cleanup)
       clearAppBadge().catch(error => {
