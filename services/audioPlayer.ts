@@ -281,6 +281,7 @@ class SimpleAudioService {
   /**
    * Wait for player to be ready before playing
    * Uses native playbackStatusUpdate events to detect when player is initialized
+   * Includes timeout to prevent hanging on corrupted or failed audio files
    */
   private async waitForPlayerReady(): Promise<void> {
     const player = this.currentPlayer;
@@ -288,7 +289,14 @@ class SimpleAudioService {
       return;
     }
 
-    return new Promise<void>(resolve => {
+    const READY_TIMEOUT_MS = 5000; // 5 second timeout
+
+    return new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        readySubscription.remove();
+        reject(new Error('Player ready timeout - audio may be corrupted or unavailable'));
+      }, READY_TIMEOUT_MS);
+
       // Listen for first status update indicating player is ready
       const readySubscription = player.addListener(
         PLAYBACK_STATUS_UPDATE,
@@ -297,6 +305,7 @@ class SimpleAudioService {
           const isReady = status.isLoaded === true || status.playbackState === 'ready';
 
           if (isReady) {
+            clearTimeout(timeout);
             readySubscription.remove();
             resolve();
           }
