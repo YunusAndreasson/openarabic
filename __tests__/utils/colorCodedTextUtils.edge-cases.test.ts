@@ -13,7 +13,8 @@
 import { describe, expect, test } from '@jest/globals';
 
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
-import { generateColorCodedSegments, shouldApplyColorCoding } from '@/utils/colorCodedTextUtils';
+import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
+import { shouldApplyColorCoding } from '@/utils/colorResolution';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 

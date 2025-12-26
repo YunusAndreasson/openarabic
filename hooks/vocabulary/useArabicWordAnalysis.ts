@@ -7,6 +7,7 @@ import {
   normalizeArabic,
   shouldInjectBracket,
 } from '@/utils/arabicWordAnalysis';
+import { assertValidColorName, resolveColorName } from '@/utils/colorResolution';
 
 interface ColoredSegment {
   text: string;
@@ -23,76 +24,6 @@ interface UseArabicWordAnalysisResult {
   analysis: ReturnType<typeof analyzeArabicWord> | null;
   /** Formatted analysis for tooltip display */
   formattedAnalysis: ReturnType<typeof formatWordAnalysis> | null;
-}
-
-/**
- * Valid flat color names used by Arabic word analysis
- */
-type FlatColorName = 'tint' | 'warning' | 'accent' | 'violet' | 'arabicText' | 'text';
-
-/**
- * Valid grammar color names used for grammatical roles
- */
-type GrammarColorName =
-  | 'grammar.preposition'
-  | 'grammar.possessive'
-  | 'grammar.particle'
-  | 'grammar.interrogative'
-  | 'grammar.verbConjugation'
-  | 'grammar.negation'
-  | 'grammar.subjectPrefix'
-  | 'grammar.plural'
-  | 'grammar.demonstrative'
-  | 'grammar.conjunction'
-  | 'grammar.futureTense'
-  | 'grammar.definiteArticle';
-
-/**
- * All valid color names for Arabic word analysis
- */
-type ValidColorName = FlatColorName | GrammarColorName;
-
-/**
- * Type guard to validate color names
- * CRITICAL: This function throws an error if the color name is invalid
- * NO DEFAULT FALLBACK - we want to catch invalid color names immediately
- */
-function assertValidColorName(colorName: string): asserts colorName is ValidColorName {
-  const validFlatColors: FlatColorName[] = [
-    'tint',
-    'warning',
-    'accent',
-    'violet',
-    'arabicText',
-    'text',
-  ];
-  const validGrammarColors: GrammarColorName[] = [
-    'grammar.preposition',
-    'grammar.possessive',
-    'grammar.particle',
-    'grammar.interrogative',
-    'grammar.verbConjugation',
-    'grammar.negation',
-    'grammar.subjectPrefix',
-    'grammar.plural',
-    'grammar.demonstrative',
-    'grammar.conjunction',
-    'grammar.futureTense',
-    'grammar.definiteArticle',
-  ];
-
-  const isValid =
-    validFlatColors.includes(colorName as FlatColorName) ||
-    validGrammarColors.includes(colorName as GrammarColorName);
-
-  if (!isValid) {
-    throw new Error(
-      `Invalid color name "${colorName}" in Arabic word analysis. ` +
-        `Valid flat colors: ${validFlatColors.join(', ')}. ` +
-        `Valid grammar colors: ${validGrammarColors.join(', ')}. ` +
-        `This indicates a bug in the word analysis logic that must be fixed.`,
-    );
-  }
 }
 
 /**
@@ -153,47 +84,12 @@ export function useArabicWordAnalysis(
     const { segments } = formattedAnalysis.reconstructedArabic;
 
     return segments.map(segment => {
-      // CRITICAL: Validate color name with strict type guard
-      // This will throw an error if colorName is invalid - NO FALLBACK
+      // Validate color name - throws if invalid (catches bugs early)
       assertValidColorName(segment.colorName);
-
-      // Resolve color from color name
-      let color: string;
-      if (segment.colorName.startsWith('grammar.')) {
-        // Handle grammar colors (nested path like 'grammar.preposition')
-        const grammarKey = segment.colorName.split('.')[1] as keyof typeof colors.grammar;
-        color = colors.grammar[grammarKey];
-      } else {
-        // Handle flat colors - explicit property access for type safety
-        const flatColorName = segment.colorName as FlatColorName;
-        switch (flatColorName) {
-          case 'tint':
-            color = colors.tint;
-            break;
-          case 'warning':
-            color = colors.warning;
-            break;
-          case 'accent':
-            color = colors.accent;
-            break;
-          case 'violet':
-            color = colors.violet;
-            break;
-          case 'arabicText':
-            color = colors.arabicText;
-            break;
-          case 'text':
-            color = colors.text;
-            break;
-          default:
-            // This should never happen due to assertValidColorName
-            color = colors.text;
-        }
-      }
 
       return {
         text: segment.text,
-        color,
+        color: resolveColorName(segment.colorName, colors),
         type: segment.type as ColoredSegment['type'],
       };
     });

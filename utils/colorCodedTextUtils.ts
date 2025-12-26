@@ -3,6 +3,7 @@ import { COMPONENT_TYPES, POSITIONAL_SCORE } from '@/constants/positionalScoring
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import type { WordAnalysis } from '@/utils/arabicWordAnalysis';
+import { resolveColorName, shouldApplyColorCoding } from '@/utils/colorResolution';
 
 // Helper type for formatted analysis result
 type FormattedAnalysis = ReturnType<typeof formatWordAnalysis>;
@@ -19,18 +20,6 @@ const LETTER_REGEX = /\p{L}/u;
  * Check if a character is a non-letter (word boundary)
  */
 const isNonLetter = (ch: string): boolean => !LETTER_REGEX.test(ch);
-
-/**
- * Determine if color-coding should be applied to text
- * Single words should never have grammar color-coding
- *
- * @param text - The text to check
- * @returns true if color-coding should be applied
- */
-export const shouldApplyColorCoding = (text: string): boolean => {
-  const wordCount = text.trim().split(/\s+/).length;
-  return wordCount > 1;
-};
 
 export interface ColoredTextSegment {
   text: string;
@@ -75,14 +64,8 @@ export const generateColorCodedSegments = ({
     formattedAnalysis.sections.find((s: { type: string }) => s.type === 'original')?.content ||
     text;
 
-  // CRITICAL: Single-word rule - applies even if analysis is null (test scenario)
-  // Single words should never have grammar color-coding for educational clarity
-  //
-  // CONSISTENCY NOTE: This check uses displayedText which includes "[the]" if bracket injection occurred.
-  // arabicWordAnalysis.ts checks BEFORE "[the]" is added but has explicit !hasBracketInjection guard.
-  // Both are logically equivalent:
-  //   - Here: Skip if displayedText is 1 word → displayedText is 2 words when bracket present
-  //   - There: Skip if (1 word AND no bracket) → Continue if bracket present
+  // Single-word check: Don't try to color parts of single-word text
+  // This prevents incorrectly matching patterns inside words (e.g., "by" in "nearby")
   if (!shouldApplyColorCoding(displayedText)) {
     return [{ text: displayedText, color: defaultColor, key: 'single-word' }];
   }
@@ -162,46 +145,6 @@ export const generateColorCodedSegments = ({
     }
   }
 
-  // Build color mapping - includes all theme colors that might be referenced
-  const colorMapping: Record<string, string> = {
-    // Core UI colors
-    tint: colors.tint,
-    primary: colors.primary,
-    secondary: colors.secondary,
-    background: colors.background,
-    text: colors.text,
-    secondaryText: colors.secondaryText,
-    border: colors.border,
-
-    // Semantic colors
-    error: colors.error,
-    success: colors.success,
-    warning: colors.warning,
-    info: colors.info,
-    accent: colors.accent,
-    violet: colors.violet,
-    indigo: colors.indigo,
-    coral: colors.coral,
-
-    // Text colors
-    arabicText: colors.arabicText,
-    englishText: colors.englishText,
-
-    // Grammar colors - dedicated educational palette
-    'grammar.preposition': colors.grammar.preposition,
-    'grammar.possessive': colors.grammar.possessive,
-    'grammar.particle': colors.grammar.particle,
-    'grammar.interrogative': colors.grammar.interrogative,
-    'grammar.verbConjugation': colors.grammar.verbConjugation,
-    'grammar.negation': colors.grammar.negation,
-    'grammar.subjectPrefix': colors.grammar.subjectPrefix,
-    'grammar.plural': colors.grammar.plural,
-    'grammar.demonstrative': colors.grammar.demonstrative,
-    'grammar.conjunction': colors.grammar.conjunction,
-    'grammar.futureTense': colors.grammar.futureTense,
-    'grammar.definiteArticle': colors.grammar.definiteArticle,
-  };
-
   // Icon to component type mapping
   const iconToComponentType: Record<string, string> = {
     '→': COMPONENT_TYPES.PREFIX,
@@ -215,8 +158,9 @@ export const generateColorCodedSegments = ({
     if (!section.englishPart) continue;
 
     const searchText = displayedText.toLowerCase();
-    const colorKey = section.colorName as keyof typeof colorMapping;
-    const colorValue = colorMapping[colorKey] || colors.text;
+    const colorValue = section.colorName
+      ? resolveColorName(section.colorName, colors)
+      : colors.text;
 
     // Detect component type from icon (→ = prefix, ← = suffix, ↔ = infix, ◌ = diacritic)
     const componentType = section.icon ? iconToComponentType[section.icon] : undefined;
