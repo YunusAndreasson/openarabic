@@ -14,16 +14,8 @@ import type { AuthResponse } from '@supabase/supabase-js';
 // Mock dependencies BEFORE imports
 jest.mock('@/services/supabase');
 jest.mock('@/services/analytics');
-jest.mock('@/utils/authEventWaiter');
 jest.mock('@/utils/haptics');
 jest.mock('@/utils/errorHandling');
-jest.mock('expo-router', () => ({
-  router: {
-    replace: jest.fn(),
-    push: jest.fn(),
-    back: jest.fn(),
-  },
-}));
 jest.mock('@sentry/react-native', () => ({
   addBreadcrumb: jest.fn(),
   captureException: jest.fn(),
@@ -38,19 +30,15 @@ import {
 
 import { supabase } from '@/services/supabase';
 import { analytics } from '@/services/analytics';
-import { waitForAuthEvent } from '@/utils/authEventWaiter';
 import { successFeedback } from '@/utils/haptics';
 import { handleError } from '@/utils/errorHandling';
-import { router } from 'expo-router';
 import { addBreadcrumb, captureException } from '@sentry/react-native';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 
 const mockSupabase = jest.mocked(supabase);
 const mockAnalytics = jest.mocked(analytics);
-const mockWaitForAuthEvent = jest.mocked(waitForAuthEvent);
 const mockSuccessFeedback = jest.mocked(successFeedback);
 const mockHandleError = jest.mocked(handleError);
-const mockRouter = jest.mocked(router);
 const mockSentryAddBreadcrumb = jest.mocked(addBreadcrumb);
 const mockSentryCaptureException = jest.mocked(captureException);
 const mockUseMountSafety = jest.mocked(useMountSafety);
@@ -98,10 +86,8 @@ describe('useOAuthProvider', () => {
     mockAnalytics.trackSignIn = jest.fn().mockResolvedValue(undefined);
 
     // Default utility mocks
-    mockWaitForAuthEvent.mockResolvedValue(mockSession);
     mockSuccessFeedback.mockReturnValue(undefined);
     mockHandleError.mockReturnValue(undefined);
-    mockRouter.replace = jest.fn();
 
     // Sentry mocks are already defined via jest.mock factory
   });
@@ -112,11 +98,6 @@ describe('useOAuthProvider', () => {
 
   describe('Successful OAuth Flow', () => {
     it('should complete full OAuth flow successfully', async () => {
-      // Mock getSession to return null first (so waitForAuthEvent is called)
-      mockSupabase.auth.getSession = jest
-        .fn()
-        .mockResolvedValueOnce({ data: { session: null }, error: null });
-
       const mockModule = { signIn: jest.fn() };
       const signInResult: OAuthSignInResult = {
         idToken: 'test-id-token',
@@ -151,9 +132,8 @@ describe('useOAuthProvider', () => {
         }),
       );
       expect(mockAnalytics.trackSignIn).toHaveBeenCalledWith('google');
-      expect(mockWaitForAuthEvent).toHaveBeenCalledWith('SIGNED_IN', 5000);
+      // Navigation is now handled by root layout, not the hook
       expect(mockSuccessFeedback).toHaveBeenCalled();
-      expect(mockRouter.replace).toHaveBeenCalledWith('/(tabs)/library');
 
       // Should not be loading after completion
       expect(result.current.loading).toBe(false);
@@ -471,47 +451,6 @@ describe('useOAuthProvider', () => {
 
       // Loading state should not be updated after unmount
       // Note: In the actual hook, setLoading(false) is guarded by isMountedRef.current
-    });
-  });
-
-  describe('Session Waiting', () => {
-    it('should wait for session if not immediately available', async () => {
-      // First call returns no session, then session is available
-      mockSupabase.auth.getSession = jest
-        .fn()
-        .mockResolvedValueOnce({ data: { session: null }, error: null })
-        .mockResolvedValueOnce({ data: { session: mockSession }, error: null });
-
-      const config: OAuthProviderConfig = {
-        provider: 'google',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockResolvedValue({ idToken: 'token' }),
-      };
-
-      const { result } = renderHook(() => useOAuthProvider(config));
-      await result.current.signIn();
-
-      expect(mockWaitForAuthEvent).toHaveBeenCalledWith('SIGNED_IN', 5000);
-    });
-
-    it('should proceed even if waitForAuthEvent times out', async () => {
-      mockSupabase.auth.getSession = jest
-        .fn()
-        .mockResolvedValue({ data: { session: null }, error: null });
-      mockWaitForAuthEvent.mockRejectedValue(new Error('Timeout'));
-
-      const config: OAuthProviderConfig = {
-        provider: 'google',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockResolvedValue({ idToken: 'token' }),
-      };
-
-      const { result } = renderHook(() => useOAuthProvider(config));
-      await result.current.signIn();
-
-      // Should still complete flow successfully
-      expect(mockSuccessFeedback).toHaveBeenCalled();
-      expect(mockRouter.replace).toHaveBeenCalled();
     });
   });
 

@@ -9,7 +9,7 @@ import * as Sentry from '@sentry/react-native';
 import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
-import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
+import { Stack, useNavigationContainerRef, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
@@ -167,8 +167,9 @@ function AppContent() {
   const backgroundedTime = useRef<number | null>(null);
   const { isLoading: isAuthLoading, session } = useAuth();
   const navigationRef = useNavigationContainerRef();
-  const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
+  const initialNavigationDone = useRef(false);
   const router = useRouter();
+  const segments = useSegments();
 
   // Load fonts at runtime for Expo Go compatibility
   // PostScript names are used for cross-platform consistency (especially iOS)
@@ -408,27 +409,45 @@ function AppContent() {
   }, [appReady, preloadAppData]);
 
   // Perform session-based navigation after app is ready and navigation is mounted
+  // This effect handles both initial load AND subsequent auth state changes (sign in/out)
+  // Pattern follows Expo Router docs: https://docs.expo.dev/router/advanced/authentication/
   useEffect(() => {
-    if (appReady && !isAuthLoading && !hasAttemptedRedirect && navigationRef?.current) {
-      setHasAttemptedRedirect(true);
+    // Wait for auth to resolve and router to be ready
+    if (!appReady || isAuthLoading) return;
 
-      try {
-        if (session) {
+    // Determine current location from segments (always has at least 1 element when router is ready)
+    const inAuthGroup = segments[0] === 'auth';
+    const inTabsGroup = segments[0] === '(tabs)';
+
+    try {
+      if (!initialNavigationDone.current) {
+        // Initial navigation - only navigate if we're not already at the correct destination
+        initialNavigationDone.current = true;
+
+        if (session && !inTabsGroup) {
+          // User has session but not in tabs - navigate to main app
           router.replace(ROUTE_PATHS.EXPLORE_TAB);
-        } else {
+        } else if (!session && !inAuthGroup) {
+          // User has no session and not in auth - navigate to auth
           router.replace(ROUTE_PATHS.AUTH);
         }
-      } catch (err) {
-        Sentry.captureException(err, {
-          tags: {
-            location: 'app_layout',
-            action: 'session_redirect',
-          },
-        });
-        router.replace(ROUTE_PATHS.AUTH);
+        // Otherwise, already at correct destination - no navigation needed (no animation)
+      } else if (session && inAuthGroup) {
+        // Subsequent session change: user just signed in while on auth screen
+        // Navigate to main app when session becomes available
+        router.replace(ROUTE_PATHS.EXPLORE_TAB);
       }
+      // Note: Sign out is handled by the auth screen's own navigation
+    } catch (err) {
+      Sentry.captureException(err, {
+        tags: {
+          location: 'app_layout',
+          action: 'session_redirect',
+        },
+      });
+      router.replace(ROUTE_PATHS.AUTH);
     }
-  }, [appReady, isAuthLoading, hasAttemptedRedirect, session, router, navigationRef]);
+  }, [appReady, isAuthLoading, session, router, segments]);
 
   // Don't render Stack until app is ready to prevent slide animation on initial load
   if (!appReady) {
@@ -437,7 +456,10 @@ function AppContent() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        edges={['top', 'left', 'right']}
+      >
         <FSRSDataProvider userId={session?.user?.id}>
           <Stack screenOptions={{ headerShown: false, freezeOnBlur: true }}>
             <Stack.Screen

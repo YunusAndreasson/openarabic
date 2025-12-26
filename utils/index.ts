@@ -7,7 +7,6 @@
 export * from './arabicWordAnalysis';
 export * from './articleUtils';
 export * from './audioUtils';
-export * from './authEventWaiter';
 export * from './authUtils';
 export * from './benchmarkUtils';
 export * from './buttonStyleUtils';

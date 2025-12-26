@@ -101,7 +101,8 @@ export function useAppleAuth(): UseAppleAuthReturn {
           try {
             credential = await appleAuth.default.performRequest({
               requestedOperation: appleAuth.default.Operation.LOGIN,
-              requestedScopes: [appleAuth.default.Scope.EMAIL, appleAuth.default.Scope.FULL_NAME],
+              // IMPORTANT: FULL_NAME must be first per library docs (issue #293)
+              requestedScopes: [appleAuth.default.Scope.FULL_NAME, appleAuth.default.Scope.EMAIL],
             });
             break; // Success
           } catch (requestError) {
@@ -159,11 +160,9 @@ export function useAppleAuth(): UseAppleAuthReturn {
           const fullName =
             `${credential.fullName.givenName ?? ''} ${credential.fullName.familyName ?? ''}`.trim();
           if (fullName) {
-            supabase.auth
-              .updateUser({ data: { full_name: fullName } })
-              .catch(() => {
-                // Silently fail - not critical
-              });
+            supabase.auth.updateUser({ data: { full_name: fullName } }).catch(() => {
+              // Silently fail - not critical
+            });
           }
         }
 

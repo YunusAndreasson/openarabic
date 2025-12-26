@@ -1,12 +1,8 @@
 import * as Sentry from '@sentry/react-native';
-import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-
-import { ROUTE_PATHS } from '@/constants/routes';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
-import { waitForAuthEvent } from '@/utils/authEventWaiter';
 import { isCancellationError } from '@/utils/authUtils';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
@@ -279,27 +275,16 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
       });
       await analytics.trackSignIn(config.provider);
 
-      // STEP 5: Wait for session to be ready
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        try {
-          await waitForAuthEvent('SIGNED_IN', 5000);
-        } catch {
-          // Timeout is OK - session might be ready anyway
-        }
-      }
-
-      // STEP 6: Success handling
+      // STEP 5: Success handling - haptic feedback only
+      // Navigation is handled by root layout when session state updates
       successFeedback();
-      router.replace(ROUTE_PATHS.EXPLORE_TAB);
     } catch (error: unknown) {
       if (!isMountedRef.current) return;
 
       // Extract error details for diagnostic logging
       const errorCode =
         typeof error === 'object' && error && 'code' in error ? String(error.code) : 'none';
-      const errorMessage =
-        error instanceof Error ? error.message : String(error).substring(0, 200);
+      const errorMessage = error instanceof Error ? error.message : String(error).substring(0, 200);
       const isCancellation = isCancellationError(error);
 
       // Add diagnostic breadcrumb BEFORE cancellation check for debugging
