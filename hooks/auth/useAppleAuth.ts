@@ -48,28 +48,25 @@ export function useAppleAuth(): UseAppleAuthReturn {
 
   // Pre-load Apple Auth module on mount (matches Google pattern)
   // This ensures the native module is fully initialized before first use
+  // Note: require() is synchronous, so no async wrapper needed
   useEffect(() => {
-    const initialize = async () => {
-      try {
-        // Pre-load the native module to ensure it's ready
-        require('@invertase/react-native-apple-authentication');
-        setIsReady(true);
+    try {
+      // Pre-load the native module to ensure it's ready
+      require('@invertase/react-native-apple-authentication');
+      setIsReady(true);
 
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Apple Auth module pre-loaded successfully',
-          level: 'info',
-        });
-      } catch (error) {
-        Sentry.captureMessage('Apple Auth module not available', {
-          level: 'warning',
-          tags: { location: 'apple_auth_init' },
-          extra: { error: String(error) },
-        });
-      }
-    };
-
-    initialize();
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Apple Auth module pre-loaded successfully',
+        level: 'info',
+      });
+    } catch (error) {
+      Sentry.captureMessage('Apple Auth module not available', {
+        level: 'warning',
+        tags: { location: 'apple_auth_init' },
+        extra: { error: String(error) },
+      });
+    }
   }, []);
 
   // Use OAuth provider factory with Apple-specific configuration
@@ -157,21 +154,16 @@ export function useAppleAuth(): UseAppleAuthReturn {
         }
 
         // Save full name if provided (only available on first sign-in)
-        // This happens AFTER Supabase auth, so we do it as a side effect
+        // Fire-and-forget update - doesn't block auth flow, no mount safety concerns
         if (credential.fullName) {
           const fullName =
             `${credential.fullName.givenName ?? ''} ${credential.fullName.familyName ?? ''}`.trim();
           if (fullName) {
-            // Schedule profile update after auth completes
-            setTimeout(async () => {
-              try {
-                await supabase.auth.updateUser({
-                  data: { full_name: fullName },
-                });
-              } catch {
+            supabase.auth
+              .updateUser({ data: { full_name: fullName } })
+              .catch(() => {
                 // Silently fail - not critical
-              }
-            }, 100);
+              });
           }
         }
 

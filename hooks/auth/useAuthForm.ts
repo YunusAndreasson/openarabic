@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -50,6 +50,16 @@ export function useAuthForm(): UseAuthFormReturn {
   const [passwordError, setPasswordError] = useState('');
 
   const isMountedRef = useMountSafety();
+  const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timeout on unmount to prevent navigation race conditions
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const validateEmail = useCallback(
     (value: string) => {
@@ -162,7 +172,8 @@ export function useAuthForm(): UseAuthFormReturn {
         if (hasImmediateSession) {
           showSuccessToast(`${STRINGS.WELCOME_TITLE}! Let's start learning.`, 5000);
           // Navigate to library after brief delay to show toast
-          setTimeout(() => {
+          // Store ref for cleanup on unmount to prevent navigation race conditions
+          navigationTimeoutRef.current = setTimeout(() => {
             router.replace(ROUTE_PATHS.EXPLORE_TAB);
           }, 1000);
         } else {
