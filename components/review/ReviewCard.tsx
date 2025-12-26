@@ -83,6 +83,16 @@ export function ReviewCard({
 
   // Prevent tap from firing during swipe gestures
   const didMoveRef = useRef(false);
+  const didMoveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (didMoveTimerRef.current) {
+        clearTimeout(didMoveTimerRef.current);
+      }
+    };
+  }, []);
 
   // ===== SWIPE GESTURE HOOK (v2 OPTIMIZED) =====
   const { gesture: panGesture, translateX } = useSwipeGesture({
@@ -96,7 +106,10 @@ export function ReviewCard({
     },
     onSwipeComplete: () => {
       // Reset after animation completes
-      setTimeout(() => {
+      if (didMoveTimerRef.current) {
+        clearTimeout(didMoveTimerRef.current);
+      }
+      didMoveTimerRef.current = setTimeout(() => {
         didMoveRef.current = false;
       }, 100);
     },

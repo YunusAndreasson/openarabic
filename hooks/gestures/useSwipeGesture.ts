@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { PanGesture } from 'react-native-gesture-handler';
 import { Gesture } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
@@ -173,6 +173,16 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
       onGestureEnd,
     ],
   );
+
+  // Cleanup timer on unmount to prevent stale callbacks after app resume
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current) {
+        clearTimeout(resetTimerRef.current);
+        resetTimerRef.current = null;
+      }
+    };
+  }, []);
 
   return {
     gesture,
