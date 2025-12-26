@@ -11,7 +11,7 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
   return (
     <ThemedView
       scrollable
-      useSafeArea={true}
+      useSafeArea={false}
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
       scrollViewProps={{
@@ -38,6 +38,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingBottom: LAYOUT.SPACING.XXLARGE,
+    paddingTop: LAYOUT.SPACING.XLARGE,
   },
 });

@@ -437,7 +437,7 @@ function AppContent() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
         <FSRSDataProvider userId={session?.user?.id}>
           <Stack screenOptions={{ headerShown: false, freezeOnBlur: true }}>
             <Stack.Screen

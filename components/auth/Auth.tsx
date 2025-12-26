@@ -104,7 +104,6 @@ const styles = StyleSheet.create({
   headerContainer: {
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.XXLARGE, // Balanced separation to actions
-    marginTop: LAYOUT.SPACING.XXXLARGE, // Breathing room at top
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
   },

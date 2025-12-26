@@ -1,12 +1,12 @@
 import * as Sentry from '@sentry/react-native';
 import * as Application from 'expo-application';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
-import { SUPABASE_URL } from '@/constants/supabase';
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
 import { supabase } from '@/services/supabase';
 
-/** Type for dynamically imported Apple Auth module */
+/** Type for dynamically imported Apple Auth module (iOS only) */
 interface AppleAuthModule {
   default: {
     performRequest: (options: {
@@ -21,19 +21,6 @@ interface AppleAuthModule {
     Operation: { LOGIN: unknown };
     Scope: { EMAIL: unknown; FULL_NAME: unknown };
   };
-  appleAuthAndroid: {
-    configure: (options: {
-      clientId: string;
-      redirectUri: string;
-      responseType: unknown;
-      scope: unknown;
-      nonce: string;
-      state: string;
-    }) => void;
-    signIn: () => Promise<{ id_token: string | null }>;
-    ResponseType: { ALL: unknown };
-    Scope: { ALL: unknown };
-  };
 }
 
 /**
@@ -45,22 +32,54 @@ export interface UseAppleAuthReturn {
 }
 
 /**
- * Hook for Apple Sign In authentication using native Apple Authentication
- * Uses @invertase/react-native-apple-authentication for both iOS and Android
+ * Hook for Apple Sign In authentication using native Apple Authentication (iOS only)
+ * Uses @invertase/react-native-apple-authentication
  *
  * Implementation:
  * - iOS: Native Apple Sign In with AppleAuthentication
- * - Android: Web-based OAuth flow via Supabase
  * - Integrates with Supabase auth via signInWithIdToken (via useOAuthProvider)
  * - Tracks analytics events with method: 'apple'
  * - Handles errors gracefully with toast notifications
+ *
+ * Note: Apple Sign In is only supported on iOS. Android users use Google Sign In.
  */
 export function useAppleAuth(): UseAppleAuthReturn {
+  const [isReady, setIsReady] = useState(false);
+
+  // Pre-load Apple Auth module on mount (matches Google pattern)
+  // This ensures the native module is fully initialized before first use
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        // Pre-load the native module to ensure it's ready
+        require('@invertase/react-native-apple-authentication');
+        setIsReady(true);
+
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Apple Auth module pre-loaded successfully',
+          level: 'info',
+        });
+      } catch (error) {
+        Sentry.captureMessage('Apple Auth module not available', {
+          level: 'warning',
+          tags: { location: 'apple_auth_init' },
+          extra: { error: String(error) },
+        });
+      }
+    };
+
+    initialize();
+  }, []);
+
   // Use OAuth provider factory with Apple-specific configuration
   const { signIn, loading } = useOAuthProvider({
     provider: 'apple',
 
     loadModule: async () => {
+      if (!isReady) {
+        throw new Error('Apple Sign In is initializing. Please try again.');
+      }
       const appleAuth = require('@invertase/react-native-apple-authentication');
       return appleAuth;
     },
@@ -68,17 +87,58 @@ export function useAppleAuth(): UseAppleAuthReturn {
     executeSignIn: async (module: unknown): Promise<OAuthSignInResult> => {
       const appleAuth = module as AppleAuthModule;
       if (Platform.OS === 'ios') {
-        // iOS: Native Apple Authentication
+        // iOS: Native Apple Authentication with retry for error 1000
         Sentry.addBreadcrumb({
           category: 'auth',
           message: 'Starting iOS Apple Authentication flow',
           level: 'info',
         });
 
-        const credential = await appleAuth.default.performRequest({
-          requestedOperation: appleAuth.default.Operation.LOGIN,
-          requestedScopes: [appleAuth.default.Scope.EMAIL, appleAuth.default.Scope.FULL_NAME],
-        });
+        // Retry logic for ASAuthorizationError.unknown (1000)
+        // This error often occurs on first attempt when the module isn't fully ready
+        let credential;
+        let attempt = 0;
+        const maxRetries = 1;
+
+        while (attempt <= maxRetries) {
+          try {
+            credential = await appleAuth.default.performRequest({
+              requestedOperation: appleAuth.default.Operation.LOGIN,
+              requestedScopes: [appleAuth.default.Scope.EMAIL, appleAuth.default.Scope.FULL_NAME],
+            });
+            break; // Success
+          } catch (requestError) {
+            const errorCode =
+              typeof requestError === 'object' && requestError && 'code' in requestError
+                ? String(requestError.code)
+                : 'unknown';
+
+            // Retry only for error 1000 (ASAuthorizationError.unknown) on first attempt
+            const isUnknownError = errorCode === '1000';
+            const shouldRetry = isUnknownError && attempt < maxRetries;
+
+            Sentry.addBreadcrumb({
+              category: 'auth',
+              message: `Apple auth attempt ${attempt + 1} failed`,
+              level: shouldRetry ? 'warning' : 'error',
+              data: { errorCode, willRetry: shouldRetry },
+            });
+
+            if (shouldRetry) {
+              attempt++;
+              // Brief delay before retry
+              await new Promise(resolve => setTimeout(resolve, 500));
+              continue;
+            }
+
+            throw requestError;
+          }
+        }
+
+        // Safety check - should never happen due to throw above
+        if (!credential) {
+          throw new Error('Apple Sign In failed: no credential received');
+        }
 
         Sentry.addBreadcrumb({
           category: 'auth',
@@ -125,49 +185,10 @@ export function useAppleAuth(): UseAppleAuthReturn {
               : undefined,
           },
         };
-      } else if (Platform.OS === 'android') {
-        // Android: Web-based OAuth flow
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Starting Android Apple Authentication flow (web-based)',
-          level: 'info',
-        });
-
-        const { appleAuthAndroid } = appleAuth;
-
-        const rawNonce = Math.random().toString(36).substring(2, 10);
-        const state = Math.random().toString(36).substring(2, 10);
-
-        const appleServiceId = process.env.EXPO_PUBLIC_APPLE_SERVICE_ID;
-        if (!appleServiceId) {
-          throw new Error(
-            'EXPO_PUBLIC_APPLE_SERVICE_ID environment variable is not configured. ' +
-              'Please add it to your .env file for Apple Sign-In on Android to work.',
-          );
-        }
-
-        appleAuthAndroid.configure({
-          clientId: appleServiceId,
-          redirectUri: `${SUPABASE_URL}/auth/v1/callback`,
-          responseType: appleAuthAndroid.ResponseType.ALL,
-          scope: appleAuthAndroid.Scope.ALL,
-          nonce: rawNonce,
-          state,
-        });
-
-        const response = await appleAuthAndroid.signIn();
-
-        if (!response.id_token) {
-          throw new Error('No identity token returned from Apple');
-        }
-
-        return {
-          idToken: response.id_token,
-          nonce: rawNonce,
-        };
-      } else {
-        throw new Error('Apple Sign In not supported on this platform');
       }
+
+      // Apple Sign In is only supported on iOS
+      throw new Error('Apple Sign In is only available on iOS');
     },
 
     handleProviderError: (error: unknown) => {

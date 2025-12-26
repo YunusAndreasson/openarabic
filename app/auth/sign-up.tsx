@@ -22,7 +22,7 @@ const SignUpScreen = memo(function SignUpScreen(): JSX.Element {
   return (
     <ThemedView
       scrollable
-      useSafeArea={true}
+      useSafeArea={false}
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
       scrollViewProps={{
@@ -72,12 +72,14 @@ const styles = StyleSheet.create({
   headerContainer: {
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.XLARGE,
-    marginTop: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
   },
   scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingBottom: LAYOUT.SPACING.XXLARGE,
+    paddingTop: LAYOUT.SPACING.XLARGE,
   },
   subtitle: {
     marginTop: LAYOUT.SPACING.MEDIUM,

@@ -23,9 +23,6 @@ declare global {
       EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?: string;
       EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?: string;
 
-      // Apple Sign In configuration (Android)
-      EXPO_PUBLIC_APPLE_SERVICE_ID?: string;
-
       // Expo Updates configuration
       EXPO_PUBLIC_UPDATES_ENABLED?: string;
       EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY?: string;
