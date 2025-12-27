@@ -111,11 +111,11 @@ export default function ResetPasswordScreen(): JSX.Element {
   const validateConfirmPassword = useCallback(
     (value: string): boolean => {
       if (!value) {
-        setConfirmPasswordError('Please confirm your password');
+        setConfirmPasswordError(STRINGS.RESET_PASSWORD_CONFIRM_ERROR);
         return false;
       }
       if (value !== password) {
-        setConfirmPasswordError('Passwords do not match');
+        setConfirmPasswordError(STRINGS.RESET_PASSWORD_MISMATCH);
         return false;
       }
       setConfirmPasswordError('');
@@ -206,7 +206,7 @@ export default function ResetPasswordScreen(): JSX.Element {
           }}
         />
         <View style={styles.loadingContainer}>
-          <ThemedText type="body">Verifying reset link...</ThemedText>
+          <ThemedText type="body">{STRINGS.RESET_PASSWORD_VERIFYING}</ThemedText>
         </View>
       </ThemedView>
     );
@@ -235,10 +235,10 @@ export default function ResetPasswordScreen(): JSX.Element {
         {/* Header */}
         <View style={styles.headerContainer}>
           <ThemedText align="center" type="heading1" colorName="headingText">
-            Reset Password
+            {STRINGS.RESET_PASSWORD_TITLE}
           </ThemedText>
           <ThemedText align="center" type="body" variant="secondary" style={styles.subtitle}>
-            Enter your new password below
+            {STRINGS.RESET_PASSWORD_SUBTITLE}
           </ThemedText>
         </View>
 
@@ -251,7 +251,7 @@ export default function ResetPasswordScreen(): JSX.Element {
               error={passwordError}
               icon="lock-closed"
               importantForAutofill="yes"
-              placeholder="New password"
+              placeholder={STRINGS.RESET_PASSWORD_NEW_PLACEHOLDER}
               returnKeyType="next"
               rightIcon={showPassword ? 'eye-off' : 'eye'}
               secureTextEntry={!showPassword}
@@ -274,7 +274,7 @@ export default function ResetPasswordScreen(): JSX.Element {
               error={confirmPasswordError}
               icon="lock-closed"
               importantForAutofill="yes"
-              placeholder="Confirm new password"
+              placeholder={STRINGS.RESET_PASSWORD_CONFIRM_PLACEHOLDER}
               returnKeyType="done"
               rightIcon={showConfirmPassword ? 'eye-off' : 'eye'}
               secureTextEntry={!showConfirmPassword}
@@ -294,7 +294,7 @@ export default function ResetPasswordScreen(): JSX.Element {
             disabled={loading}
             loading={loading}
             style={styles.button}
-            title="Reset Password"
+            title={STRINGS.RESET_PASSWORD_BUTTON}
             testID="reset-password-button"
             accessibilityLabel="Reset password"
             onPress={handleResetPassword}

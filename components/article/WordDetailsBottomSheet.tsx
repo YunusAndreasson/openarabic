@@ -207,7 +207,7 @@ export function WordDetailsBottomSheet({
             <View style={styles.buttonSection}>
               <View style={styles.buttonContainer}>
                 <ThemedButton
-                  title="Play Audio"
+                  title={STRINGS.PLAY_AUDIO}
                   variant="outlined"
                   onPress={handlePlayAudio}
                   disabled={!word.audio_url}

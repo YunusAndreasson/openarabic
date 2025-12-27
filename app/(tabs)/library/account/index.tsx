@@ -157,28 +157,24 @@ const AccountScreen: FC = () => {
 
   // Reset tutorials handler
   const handleResetTutorials = useCallback(async () => {
-    Alert.alert(
-      'Reset Tutorials',
-      'This will show first-time help overlays again when you use features.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          onPress: async () => {
-            try {
-              await resetAllTutorials();
-              successFeedback();
-            } catch (error) {
-              errorFeedback();
-              handleError(error as Error, {
-                toastMessage: 'Failed to reset tutorials',
-                analyticsEventName: 'Reset_Tutorials_Failed',
-              });
-            }
-          },
+    Alert.alert(STRINGS.RESET_TUTORIALS_TITLE, STRINGS.RESET_TUTORIALS_MESSAGE, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        onPress: async () => {
+          try {
+            await resetAllTutorials();
+            successFeedback();
+          } catch (error) {
+            errorFeedback();
+            handleError(error as Error, {
+              toastMessage: 'Failed to reset tutorials',
+              analyticsEventName: 'Reset_Tutorials_Failed',
+            });
+          }
         },
-      ],
-    );
+      },
+    ]);
   }, [resetAllTutorials]);
 
   // Audio Shuffle toggle handler
@@ -453,7 +449,7 @@ const AccountScreen: FC = () => {
         <SocialMediaSection />
 
         {/* Storage & Account - Data management and session */}
-        <SettingsSection title="Storage & Account">
+        <SettingsSection title={STRINGS.STORAGE_ACCOUNT_SECTION}>
           <SettingsCard
             icon="archive-outline"
             label={STRINGS.CLEAR_CACHE}

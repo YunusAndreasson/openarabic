@@ -18,6 +18,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { FONT_WEIGHTS, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useScreenshotAttachment } from '@/hooks/account';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme';
@@ -48,14 +49,14 @@ export const FeedbackForm = memo(() => {
 
   const handleSubmit = useCallback(async () => {
     if (!message || message.trim().length === 0) {
-      Alert.alert('Empty Message', 'Please provide a description of the issue.');
+      Alert.alert(STRINGS.FEEDBACK_EMPTY_TITLE, STRINGS.FEEDBACK_EMPTY_MESSAGE);
       return;
     }
 
     if (message.trim().length < MIN_CHARACTERS) {
       Alert.alert(
-        'Message Too Short',
-        `Please provide more detail (at least ${MIN_CHARACTERS} characters).`,
+        STRINGS.FEEDBACK_SHORT_TITLE,
+        STRINGS.FEEDBACK_SHORT_MESSAGE.replace('{minCharacters}', String(MIN_CHARACTERS)),
       );
       return;
     }
@@ -131,10 +132,7 @@ export const FeedbackForm = memo(() => {
 
       // Show success message after navigating back
       setTimeout(() => {
-        Alert.alert(
-          'Thank You!',
-          "Your feedback has been sent. We'll review it and get back to you soon.",
-        );
+        Alert.alert(STRINGS.FEEDBACK_SUCCESS_TITLE, STRINGS.FEEDBACK_SUCCESS_MESSAGE);
       }, 300);
     } catch (error) {
       handleError(error as Error, {
@@ -142,17 +140,13 @@ export const FeedbackForm = memo(() => {
         analyticsEventName: 'Feedback_Capture_Error',
       });
 
-      Alert.alert(
-        'Error Sending Feedback',
-        'Could not send feedback. Please try again or contact us via email.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Retry',
-            onPress: () => setIsSubmitting(false),
-          },
-        ],
-      );
+      Alert.alert(STRINGS.FEEDBACK_ERROR_TITLE, STRINGS.FEEDBACK_ERROR_MESSAGE, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Retry',
+          onPress: () => setIsSubmitting(false),
+        },
+      ]);
     } finally {
       setIsSubmitting(false);
     }
@@ -180,7 +174,7 @@ export const FeedbackForm = memo(() => {
                   borderColor: colors.border,
                 },
               ]}
-              placeholder="What happened? How can we help?"
+              placeholder={STRINGS.FEEDBACK_PLACEHOLDER}
               placeholderTextColor={colors.textTertiary}
               value={message}
               onChangeText={setMessage}
@@ -215,7 +209,7 @@ export const FeedbackForm = memo(() => {
               >
                 <Ionicons name="image" size={LAYOUT.BUTTON.ICON_SIZE.LARGE} color={colors.tint} />
                 <ThemedText type="body" colorName="tint" style={styles.addScreenshotText}>
-                  Add Screenshot (Optional)
+                  {STRINGS.FEEDBACK_SCREENSHOT_LABEL}
                 </ThemedText>
               </Pressable>
             )}
@@ -233,7 +227,7 @@ export const FeedbackForm = memo(() => {
             </ThemedView>
 
             <ThemedButton
-              title={isSubmitting ? 'Sending...' : 'Send Feedback'}
+              title={isSubmitting ? STRINGS.FEEDBACK_SENDING : STRINGS.FEEDBACK_SUBMIT}
               onPress={handleSubmit}
               disabled={isSubmitting || characterCount < MIN_CHARACTERS}
               variant={characterCount < MIN_CHARACTERS ? 'outlined' : 'filled'}
