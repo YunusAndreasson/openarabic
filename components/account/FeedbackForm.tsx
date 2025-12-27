@@ -24,7 +24,6 @@ import { useColors } from '@/hooks/theme';
 import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback } from '@/utils/haptics';
 
 const MIN_CHARACTERS = 10;
 
@@ -128,7 +127,6 @@ export const FeedbackForm = memo(() => {
         message: feedbackMessage,
       });
 
-      lightFeedback();
       router.back();
 
       // Show success message after navigating back

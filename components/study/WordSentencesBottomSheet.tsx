@@ -1,11 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -86,20 +80,11 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
       >
         <View style={[styles.container, { backgroundColor: colors.background }]}>
           {/* Header */}
-          <View
-            style={[
-              styles.header,
-              { borderBottomColor: colors.border },
-            ]}
-          >
+          <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <DoneButton onPress={onClose} />
             <View style={styles.headerSpacer} />
             {word?.root?.audio_url && (
-              <HeaderIconButton
-                iconName="volume-high"
-                onPress={handlePlayAudio}
-                size="medium"
-              />
+              <HeaderIconButton iconName="volume-high" onPress={handlePlayAudio} size="medium" />
             )}
           </View>
 
@@ -124,11 +109,7 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
 
               <View style={styles.englishRow}>
                 <View style={[styles.memoryDot, { backgroundColor: colors[dotColorKey] }]} />
-                <ThemedText
-                  type="body"
-                  variant="secondary"
-                  style={styles.englishText}
-                >
+                <ThemedText type="body" variant="secondary" style={styles.englishText}>
                   {englishText}
                 </ThemedText>
               </View>
@@ -154,11 +135,7 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
             {!isLoading &&
               !isEmpty &&
               sentences.map(sentence => (
-                <BaseCard
-                  key={sentence.id}
-                  style={styles.sentenceCard}
-                  shadowSize="small"
-                >
+                <BaseCard key={sentence.id} style={styles.sentenceCard} shadowSize="small">
                   <ArticleSentence
                     sentence={{
                       id: sentence.id,

@@ -73,7 +73,6 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
   const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig } =
     useButtonPress({
       onPress: handlePressAction,
-      hapticType: 'selection',
       animationOptions: { type: 'card', includeOpacity: true },
     });
 

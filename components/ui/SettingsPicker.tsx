@@ -11,7 +11,6 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
-import { lightFeedback } from '@/utils/haptics';
 
 // Default snap points for settings pickers
 const DEFAULT_SNAP_POINTS = [LAYOUT.BOTTOM_SHEET.SNAP_POINTS.SETTINGS_PICKER];
@@ -143,8 +142,6 @@ export const SettingsPicker = <T,>({
       } else if (isControlledMode && onSelect) {
         onSelect(value);
       }
-
-      lightFeedback();
     },
     [dispatch, onValueChange, onSelect, setOptimisticValue, isReduxMode, isControlledMode],
   );

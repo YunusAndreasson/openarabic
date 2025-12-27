@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 interface UseScreenshotAttachmentOptions {
@@ -117,7 +116,6 @@ export function useScreenshotAttachment({
 
       if (!result.canceled && result.assets[0]) {
         setScreenshotUri(result.assets[0].uri);
-        selectionFeedback();
       }
     } catch (error) {
       handleError(error as Error, {
@@ -130,7 +128,6 @@ export function useScreenshotAttachment({
 
   const handleRemoveScreenshot = useCallback(() => {
     setScreenshotUri(null);
-    selectionFeedback();
   }, []);
 
   const clearScreenshot = useCallback(() => {

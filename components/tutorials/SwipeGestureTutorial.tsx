@@ -13,7 +13,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { ContextualHelpType, SwipeTutorialStep, TUTORIAL_STEP_HEIGHT } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
-import { lightFeedback, successFeedback } from '@/utils/haptics';
+import { successFeedback } from '@/utils/haptics';
 
 import {
   TutorialHintStep,
@@ -70,7 +70,6 @@ export function SwipeGestureTutorial({
 
   // All hooks must be called unconditionally
   const handleContextualDismiss = useCallback(() => {
-    lightFeedback();
     onDismiss();
   }, [onDismiss]);
 
@@ -80,7 +79,6 @@ export function SwipeGestureTutorial({
       setCurrentStep(SwipeTutorialStep.INTRO);
       onDismiss();
     } else {
-      lightFeedback();
       setCurrentStep(prev => (prev + 1) as SwipeTutorialStep);
     }
   }, [isLastStep, onDismiss]);

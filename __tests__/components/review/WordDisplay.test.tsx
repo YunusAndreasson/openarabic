@@ -100,10 +100,11 @@ describe('WordDisplay', () => {
       expect(getByText('W...')).toBeTruthy();
     });
 
-    test('triggers haptic feedback when hint appears', () => {
+    test('does not trigger haptic feedback when hint appears', () => {
       render(<WordDisplay word="كتب" showFirstLetterOnly englishTranslation="write" />);
 
-      expect(mockSelectionFeedback).toHaveBeenCalled();
+      // Haptics removed for minor UI interactions (2025 UX best practice)
+      expect(mockSelectionFeedback).not.toHaveBeenCalled();
     });
 
     test('does not show hint when showFirstLetterOnly is false', () => {
@@ -121,14 +122,14 @@ describe('WordDisplay', () => {
       expect(queryByText(/\.\.\./)).toBeNull();
     });
 
-    test('triggers haptic feedback when hint is pressed', () => {
+    test('hint is displayed as non-interactive element', () => {
       const { getByText } = render(
         <WordDisplay word="كتب" showFirstLetterOnly englishTranslation="write" />,
       );
 
-      fireEvent.press(getByText('W...'));
-
-      expect(mockLightFeedback).toHaveBeenCalled();
+      // Hint is now a View (non-pressable) - no haptic feedback
+      expect(getByText('W...')).toBeTruthy();
+      expect(mockLightFeedback).not.toHaveBeenCalled();
     });
   });
 
@@ -141,12 +142,13 @@ describe('WordDisplay', () => {
       expect(mockOnWordPress).toHaveBeenCalledTimes(1);
     });
 
-    test('triggers haptic feedback when word is pressed', () => {
+    test('does not trigger haptic feedback when word is pressed', () => {
       const { getByText } = render(<WordDisplay word="كتب" onWordPress={mockOnWordPress} />);
 
       fireEvent.press(getByText('كتب'));
 
-      expect(mockLightFeedback).toHaveBeenCalled();
+      // Haptics removed for review interactions (2025 UX best practice)
+      expect(mockLightFeedback).not.toHaveBeenCalled();
     });
 
     test('does not call onWordPress when not provided', () => {

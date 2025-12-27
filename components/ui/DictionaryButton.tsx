@@ -33,7 +33,6 @@ export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | nu
   // Use shared button press hook
   const { handlePress, rippleConfig } = useButtonPress({
     onPress: handlePressAction,
-    hapticType: 'selection',
   });
 
   // Hide button when hideWhenEmpty is true and there are no study words

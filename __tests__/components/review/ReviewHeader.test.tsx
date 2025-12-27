@@ -114,7 +114,7 @@ describe('ReviewHeader', () => {
       }
     });
 
-    test('triggers haptic feedback when closing', () => {
+    test('does not trigger haptic feedback when closing', () => {
       const { getByTestId } = render(
         <ReviewHeader progress={5} maxProgress={10} onClose={mockOnClose} />,
       );
@@ -124,7 +124,8 @@ describe('ReviewHeader', () => {
 
       if (pressable) {
         fireEvent.press(pressable);
-        expect(mockSelectionFeedback).toHaveBeenCalled();
+        // Haptics removed for modal close (2025 UX best practice)
+        expect(mockSelectionFeedback).not.toHaveBeenCalled();
       }
     });
   });

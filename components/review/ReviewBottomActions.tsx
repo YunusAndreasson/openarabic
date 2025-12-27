@@ -7,7 +7,6 @@ import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layo
 import { ContextualHelpType } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
 import { ReviewAction } from '@/types/enums';
-import { lightFeedback } from '@/utils/haptics';
 
 const BOTTOM_ACTIONS_CONSTANTS = {
   ICON_SIZE: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
@@ -80,12 +79,10 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
   const rightTextStyle = [STATIC_STYLES.indicatorText, { color: colors.success }];
 
   const handleLeftPress = () => {
-    lightFeedback();
     onShowContextualHelp?.(ContextualHelpType.SWIPE_LEFT);
   };
 
   const handleCenterPress = () => {
-    lightFeedback();
     // Show contextual help if handler exists, otherwise trigger vague action
     if (onShowContextualHelp) {
       onShowContextualHelp(ContextualHelpType.HINT);
@@ -95,7 +92,6 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
   };
 
   const handleRightPress = () => {
-    lightFeedback();
     onShowContextualHelp?.(ContextualHelpType.SWIPE_RIGHT);
   };
 

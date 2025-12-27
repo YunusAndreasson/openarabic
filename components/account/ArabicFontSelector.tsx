@@ -12,7 +12,6 @@ import {
 } from '@/hooks/account/useArabicFontSelector';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ArabicFontName } from '@/store/settingsSlice';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface FontPreviewCardProps {
   option: ArabicFontOption;
@@ -25,7 +24,6 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
   const colors = useColors();
 
   const handlePress = () => {
-    selectionFeedback();
     onSelect(option.name);
   };
 
@@ -91,7 +89,6 @@ export const ArabicFontSelector: FC = () => {
 
   const handleSlidingComplete = (value: number) => {
     setIsSliding(false);
-    selectionFeedback();
     setFontSize(value);
   };
 

@@ -1,11 +1,9 @@
-import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { UiAction } from '@/types/enums';
-import { errorFeedback } from '@/utils/haptics';
 
 // Define ErrorStateProps inline
 interface ErrorStateProps {
@@ -17,11 +15,6 @@ interface ErrorStateProps {
  * A component for displaying error messages
  */
 export function ErrorState({ message, onRetry }: ErrorStateProps) {
-  // Provide haptic feedback when error state is shown
-  useEffect(() => {
-    errorFeedback();
-  }, []);
-
   return (
     <View style={styles.container}>
       <View style={styles.textContainer}>

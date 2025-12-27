@@ -7,7 +7,6 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SortDirection } from '@/hooks/vocabulary/useDictionaryModal';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface MemoryStrengthLegendProps {
   sortDirection: SortDirection;
@@ -58,10 +57,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
       {/* Label with sort toggle on right - tappable */}
       <Pressable
         style={({ pressed }) => [styles.headerRow, pressed && { opacity: LAYOUT.OPACITY.HIGH }]}
-        onPress={() => {
-          selectionFeedback();
-          onToggleSort();
-        }}
+        onPress={onToggleSort}
       >
         <ThemedText type="caption" weight="semibold" style={styles.headerText}>
           {STRINGS.MEMORY_STRENGTH}

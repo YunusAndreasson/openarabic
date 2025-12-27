@@ -113,7 +113,7 @@ export interface UseButtonPressResult {
 export function useButtonPress({
   onPress,
   disabled = false,
-  hapticType = 'selection',
+  hapticType = 'none',
   debounce = false,
   debounceDuration = 300,
   animationOptions,

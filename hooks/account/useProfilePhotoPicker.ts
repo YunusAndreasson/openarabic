@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 interface UseProfilePhotoPickerOptions {
@@ -148,9 +147,6 @@ export function useProfilePhotoPicker({
 
         // Update state
         setProfilePhotoUri(selectedUri);
-
-        // Success feedback after selection completed
-        selectionFeedback();
       }
     } catch (error) {
       handleError(error as Error, {

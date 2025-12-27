@@ -6,7 +6,6 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setHapticsEnabled, setWordDetailsEnabled } from '@/store/settingsSlice';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface AppearanceSectionProps {
   /** Current theme display text */
@@ -40,7 +39,6 @@ export const AppearanceSection = memo<AppearanceSectionProps>(
 
     const handleHapticsToggle = useCallback(
       (enabled: boolean) => {
-        selectionFeedback();
         dispatch(setHapticsEnabled(enabled));
       },
       [dispatch],
@@ -48,7 +46,6 @@ export const AppearanceSection = memo<AppearanceSectionProps>(
 
     const handleWordDetailsToggle = useCallback(
       (enabled: boolean) => {
-        selectionFeedback();
         dispatch(setWordDetailsEnabled(enabled));
       },
       [dispatch],

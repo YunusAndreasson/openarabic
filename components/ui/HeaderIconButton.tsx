@@ -11,7 +11,7 @@ type ButtonSize = 'small' | 'medium' | 'large';
 export interface HeaderIconButtonProps {
   /** Icon name from Ionicons */
   iconName: keyof typeof Ionicons.glyphMap;
-  /** Press handler - haptic feedback is automatically added */
+  /** Press handler */
   onPress: () => void;
   /** Button size - determines width, height, and icon size */
   size?: ButtonSize;
@@ -62,7 +62,6 @@ const HIT_SLOP_MAP = {
  * Reusable circular icon button for headers
  *
  * Provides consistent styling and behavior:
- * - Automatic haptic feedback on press
  * - Android ripple effect
  * - Configurable size, colors, and border
  * - Optimized with memoization
@@ -103,7 +102,6 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
     // Use shared button press hook (no animation for header buttons)
     const { handlePress, rippleConfig } = useButtonPress({
       onPress,
-      hapticType: 'selection',
       rippleSize: size === 'small' ? 'small' : undefined,
     });
 

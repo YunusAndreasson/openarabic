@@ -42,7 +42,6 @@ export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
   const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig } =
     useButtonPress({
       onPress: handlePressAction,
-      hapticType: 'selection',
       animationOptions: { includeOpacity: true },
     });
 

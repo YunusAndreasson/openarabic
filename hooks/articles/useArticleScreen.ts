@@ -369,9 +369,6 @@ export function useArticleScreen({
             percentage.toString(),
           );
           showToast(message, 3000, ToastType.INFO);
-
-          // Haptic feedback
-          selectionFeedback();
         });
       });
     } else if (!hasScrolledToPositionRef.current && isFlashListReady) {

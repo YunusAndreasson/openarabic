@@ -6,7 +6,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
 
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====
 const CLOSE_BUTTON_CONSTANTS = {
@@ -48,10 +47,9 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({ progress, maxProgress, onC
 
   const displayProgress = Math.max(progress, maxProgress);
 
-  // Handle close with haptic feedback
+  // Handle close
   const handleClose = () => {
     if (onClose) {
-      selectionFeedback();
       onClose();
     }
   };

@@ -10,7 +10,6 @@ import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { selectionFeedback } from '@/utils/haptics';
 import { getStabilityProgressColor } from '@/utils/urgencyScore';
 
 interface DictionaryWordCardProps {
@@ -31,7 +30,6 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     // Handle card press - opens sentence examples bottom sheet
     const handleCardPress = useCallback(() => {
       if (editMode) return;
-      selectionFeedback();
       onPress?.(word);
     }, [editMode, word, onPress]);
 

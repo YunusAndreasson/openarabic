@@ -18,7 +18,6 @@ import { STRINGS } from '@/constants/strings';
 import { getFAQItemKey, useFAQSearch } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import { FAQCategory } from '@/types/enums';
-import { lightFeedback } from '@/utils/haptics';
 import { parseTextWithEmails } from '@/utils/textUtils';
 
 // Category icon mapping for visual categorization
@@ -202,7 +201,6 @@ const HelpScreen: FC = () => {
   } = useFAQSearch({ initialExpandedItem: params.expandItem });
 
   const handleClearSearch = useCallback(() => {
-    lightFeedback();
     clearSearch();
   }, [clearSearch]);
 

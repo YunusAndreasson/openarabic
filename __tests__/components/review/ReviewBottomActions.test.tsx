@@ -97,14 +97,15 @@ describe('ReviewBottomActions', () => {
       expect(mockOnShowContextualHelp).toHaveBeenCalledTimes(1);
     });
 
-    test('triggers haptic feedback when pressed', () => {
+    test('does not trigger haptic feedback when pressed', () => {
       const { getByText } = render(
         <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
       );
 
       fireEvent.press(getByText("Don't Know"));
 
-      expect(mockLightFeedback).toHaveBeenCalled();
+      // Haptics removed for review interactions (2025 UX best practice)
+      expect(mockLightFeedback).not.toHaveBeenCalled();
     });
   });
 
@@ -131,12 +132,13 @@ describe('ReviewBottomActions', () => {
       expect(mockOnVague).toHaveBeenCalledTimes(1);
     });
 
-    test('triggers haptic feedback when pressed', () => {
+    test('does not trigger haptic feedback when pressed', () => {
       const { getByText } = render(<ReviewBottomActions onVague={mockOnVague} />);
 
       fireEvent.press(getByText('Hint'));
 
-      expect(mockLightFeedback).toHaveBeenCalled();
+      // Haptics removed for review interactions (2025 UX best practice)
+      expect(mockLightFeedback).not.toHaveBeenCalled();
     });
   });
 
@@ -151,14 +153,15 @@ describe('ReviewBottomActions', () => {
       expect(mockOnShowContextualHelp).toHaveBeenCalledTimes(1);
     });
 
-    test('triggers haptic feedback when pressed', () => {
+    test('does not trigger haptic feedback when pressed', () => {
       const { getByText } = render(
         <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
       );
 
       fireEvent.press(getByText('Know'));
 
-      expect(mockLightFeedback).toHaveBeenCalled();
+      // Haptics removed for review interactions (2025 UX best practice)
+      expect(mockLightFeedback).not.toHaveBeenCalled();
     });
   });
 

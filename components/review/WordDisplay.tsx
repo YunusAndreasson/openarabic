@@ -9,7 +9,6 @@ import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
-import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { createTextStyle, type BatchedTextColors } from '@/utils/textStyleUtils';
 
@@ -102,9 +101,6 @@ export function WordDisplay({
   if (showFirstLetterOnly && englishTranslation && englishTranslation.length > 0) {
     const firstLetter = englishTranslation.charAt(0).toUpperCase();
     hesitationHint = `${firstLetter}...`;
-
-    // Trigger subtle haptic feedback when hint appears (only once)
-    selectionFeedback();
   }
 
   const arabicTextProps = {
@@ -130,13 +126,8 @@ export function WordDisplay({
 
   const handleWordPress = () => {
     if (onWordPress) {
-      lightFeedback();
       onWordPress();
     }
-  };
-
-  const handleHintPress = () => {
-    lightFeedback();
   };
 
   return (
@@ -154,12 +145,9 @@ export function WordDisplay({
         </Animated.View>
       )}
       {hesitationHint && (
-        <Pressable
-          style={[STATIC_STYLES.translationContainer, { marginTop: LAYOUT.SPACING.SMALL }]}
-          onPress={handleHintPress}
-        >
+        <View style={[STATIC_STYLES.translationContainer, { marginTop: LAYOUT.SPACING.SMALL }]}>
           <ThemedText {...hesitationHintProps} />
-        </Pressable>
+        </View>
       )}
     </View>
   );

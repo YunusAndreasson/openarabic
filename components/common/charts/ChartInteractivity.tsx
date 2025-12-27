@@ -6,7 +6,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface ChartTooltip {
   x: number;
@@ -79,7 +78,6 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
       return;
     }
 
-    selectionFeedback(); // Selection haptic feedback
     onPress(x, y, value, label);
   }, [x, y, value, label, onPress]);
 

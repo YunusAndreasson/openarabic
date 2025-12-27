@@ -11,7 +11,6 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface ArticleSentenceProps {
   sentence: {
@@ -135,10 +134,7 @@ const ArticleSentenceInternal = function ArticleSentence({
             {/* Close button */}
             {onDismissTutorial && (
               <Pressable
-                onPress={() => {
-                  selectionFeedback();
-                  onDismissTutorial();
-                }}
+                onPress={onDismissTutorial}
                 style={[styles.closeButton, { backgroundColor: `${colors.background}20` }]}
                 hitSlop={LAYOUT.SPACING.SMALL}
               >

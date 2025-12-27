@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { handleError } from '@/utils/errorHandling';
 import { generateWordAudioTrack, type WordAudioData } from '@/utils/audioUtils';
-import { selectionFeedback } from '@/utils/haptics';
 
 import { useSimpleAudioPlayer } from './useSimpleAudioPlayer';
 
@@ -15,8 +14,6 @@ export interface UseWordAudioPlaybackOptions {
   showErrorToast?: boolean;
   /** Custom error message */
   errorMessage?: string;
-  /** Whether to provide haptic feedback (default: true) */
-  enableHaptics?: boolean;
 }
 
 /**
@@ -30,7 +27,6 @@ export interface UseWordAudioPlaybackOptions {
  * ```typescript
  * const playWordAudio = useWordAudioPlayback({
  *   showErrorToast: false,
- *   enableHaptics: true,
  * });
  *
  * // Later...
@@ -38,18 +34,13 @@ export interface UseWordAudioPlaybackOptions {
  * ```
  */
 export function useWordAudioPlayback(options: UseWordAudioPlaybackOptions = {}) {
-  const { showErrorToast = false, errorMessage, enableHaptics = true } = options;
+  const { showErrorToast = false, errorMessage } = options;
   const isMountedRef = useMountSafety();
   const { play } = useSimpleAudioPlayer();
 
   const playWordAudio = useCallback(
     async (word: WordAudioData) => {
       if (!isMountedRef.current) return;
-
-      // Haptic feedback
-      if (enableHaptics) {
-        selectionFeedback();
-      }
 
       try {
         // Generate audio track using shared utility (now async to use cached paths)
@@ -70,7 +61,7 @@ export function useWordAudioPlayback(options: UseWordAudioPlaybackOptions = {}) 
         });
       }
     },
-    [showErrorToast, errorMessage, enableHaptics, isMountedRef, play],
+    [showErrorToast, errorMessage, isMountedRef, play],
   );
 
   return playWordAudio;
