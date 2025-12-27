@@ -25,11 +25,6 @@ jest.mock('@/hooks/common/useMountSafety', () => ({
   useMountSafety: () => ({ current: true }),
 }));
 
-const mockSelectionFeedback = jest.fn();
-jest.mock('@/utils/haptics', () => ({
-  selectionFeedback: () => mockSelectionFeedback(),
-}));
-
 const mockHandleError = jest.fn();
 jest.mock('@/utils/errorHandling', () => ({
   handleError: (...args: unknown[]) => mockHandleError(...args),
@@ -75,28 +70,6 @@ describe('useWordAudioPlayback', () => {
 
       expect(mockGenerateWordAudioTrack).toHaveBeenCalledWith(mockWord);
       expect(mockPlay).toHaveBeenCalledWith(mockTrack);
-    });
-  });
-
-  describe('Haptic Feedback', () => {
-    test('triggers haptic feedback by default', async () => {
-      const { result } = renderHook(() => useWordAudioPlayback());
-
-      await act(async () => {
-        await result.current(mockWord);
-      });
-
-      expect(mockSelectionFeedback).toHaveBeenCalled();
-    });
-
-    test('skips haptic feedback when disabled', async () => {
-      const { result } = renderHook(() => useWordAudioPlayback({ enableHaptics: false }));
-
-      await act(async () => {
-        await result.current(mockWord);
-      });
-
-      expect(mockSelectionFeedback).not.toHaveBeenCalled();
     });
   });
 
@@ -178,7 +151,6 @@ describe('useWordAudioPlayback', () => {
         useWordAudioPlayback({
           showErrorToast: true,
           errorMessage: 'Test error',
-          enableHaptics: false,
         }),
       );
 
