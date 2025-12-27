@@ -173,7 +173,8 @@ export function useFSRS({
 
       // Prioritize words by due date and FSRS metrics using heapify
       const items = effectiveDueWords;
-      const priorities = effectiveDueWords.map(w => calculateWordPriority(w));
+      const nowMs = Date.now(); // Single timestamp for entire batch
+      const priorities = effectiveDueWords.map(w => calculateWordPriority(w, nowMs));
       queueRef.current.heapify(items, priorities);
       const ordered = queueRef.current.toArray();
       setWordQueue(ordered);
@@ -394,8 +395,9 @@ export function useFSRS({
         );
 
         if (readySpacedWords.length > 0) {
+          const batchNowMs = Date.now(); // Single timestamp for batch
           readySpacedWords.forEach(item => {
-            const priority = calculateWordPriority(item.word);
+            const priority = calculateWordPriority(item.word, batchNowMs);
             queueRef.current.push(item.word, priority);
           });
 

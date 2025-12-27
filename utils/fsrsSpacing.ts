@@ -13,10 +13,9 @@ export interface SpacingState {
   spacedWords: { word: StudyWord; remainingSpacing: number }[];
 }
 
-export function calculateWordPriority(word: StudyWord): number {
-  const now = new Date();
-  const dueDate = word.fsrs_due ? new Date(word.fsrs_due) : now;
-  const hoursOverdue = (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60);
+export function calculateWordPriority(word: StudyWord, nowMs: number = Date.now()): number {
+  const dueMs = word.fsrs_due ? new Date(word.fsrs_due).getTime() : nowMs;
+  const hoursOverdue = (nowMs - dueMs) / (1000 * 60 * 60);
   const stability = word.fsrs_stability ?? 1;
   const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY;
   const difficultyFactor = (difficulty - 5) * 0.01;
@@ -44,8 +43,9 @@ export function getNextWordWithSpacing(
   const readySpaced = spacingState.spacedWords.filter(item => item.remainingSpacing <= 0);
   if (readySpaced.length > 0) {
     spacingState.spacedWords = spacingState.spacedWords.filter(item => item.remainingSpacing > 0);
+    const nowMs = Date.now(); // Single timestamp for batch
     readySpaced.forEach(item => {
-      const priority = calculateWordPriority(item.word);
+      const priority = calculateWordPriority(item.word, nowMs);
       queue.push(item.word, priority);
     });
   }
