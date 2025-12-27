@@ -300,6 +300,8 @@ export const STRINGS = {
   WORD_MASTERY_SUBTITLE: "Words you'll remember long-term",
   DUE_WORDS_FORECAST_SUBTITLE: 'Words to review each day (7 days)',
   DUE_WORDS_FORECAST: 'Due words forecast',
+  // Study Streak
+  STREAK_LABEL: 'Day streak', // Metric card label with unit context
   // Study Streak Bottom Sheet
   STUDY_STREAK_TITLE: 'Study streak',
   STUDY_STREAK_ACTIVE_SUBTITLE: 'Keep the momentum going',

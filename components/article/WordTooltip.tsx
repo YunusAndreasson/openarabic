@@ -68,15 +68,13 @@ const STATIC_STYLES = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
     minHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL +
-      LAYOUT.SPACING.SMALL,
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL + LAYOUT.SPACING.SMALL,
   },
   singleLineText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
     textAlign: 'center',
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     includeFontPadding: false,
     textAlignVertical: 'center',
     flexShrink: 0,
