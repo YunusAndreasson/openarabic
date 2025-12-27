@@ -1,0 +1,177 @@
+import type { FC } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { ThemedInput } from '@/components/ThemedInput';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
+import { useAccountDeletion } from '@/hooks/account/useAccountDeletion';
+import { router } from 'expo-router';
+
+const DeleteAccountScreen: FC = () => {
+  const {
+    userEmail,
+    confirmationText,
+    setConfirmationText,
+    loading,
+    confirmationError,
+    validateConfirmation,
+    deleteAccount,
+  } = useAccountDeletion();
+
+  const handleDeletePress = async () => {
+    if (!validateConfirmation(confirmationText)) {
+      return;
+    }
+
+    try {
+      await deleteAccount();
+      router.back();
+    } catch {
+      // Error is handled in the hook
+    }
+  };
+
+  return (
+    <ThemedView
+      includeBottomInset={false}
+      safeAreaEdges={['left', 'right']}
+      style={styles.container}
+    >
+      <ThemedView
+        includeBottomInset={true}
+        scrollable={true}
+        style={styles.content}
+        useSafeArea={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Warning Message */}
+        <View style={styles.warningContainer}>
+          <ThemedText type="body" style={styles.warningText}>
+            {STRINGS.DELETE_ACCOUNT_WARNING}
+          </ThemedText>
+
+          {/* Data List */}
+          <View style={styles.dataList}>
+            {STRINGS.DELETE_ACCOUNT_DATA_LIST.map(item => (
+              <View key={item} style={styles.dataItem}>
+                <ThemedText type="body" colorName="textTertiary">
+                  • {item}
+                </ThemedText>
+              </View>
+            ))}
+          </View>
+
+          {/* Permanent Warning */}
+          <ThemedText type="body" weight="semibold" colorName="error" style={styles.permanentText}>
+            {STRINGS.DELETE_ACCOUNT_PERMANENT}
+          </ThemedText>
+        </View>
+
+        {/* Show Current Email */}
+        <View style={styles.emailContainer}>
+          <ThemedText type="caption" colorName="textTertiary" style={styles.signedInLabel}>
+            {STRINGS.DELETE_ACCOUNT_SIGNED_IN_AS}
+          </ThemedText>
+          <ThemedText type="body" weight="medium" style={styles.emailText}>
+            {userEmail || 'Loading...'}
+          </ThemedText>
+        </View>
+
+        {/* DELETE Confirmation */}
+        <View style={styles.inputContainer}>
+          <ThemedText type="body" style={styles.inputLabel}>
+            {STRINGS.DELETE_ACCOUNT_ENTER_CONFIRMATION}
+          </ThemedText>
+          <ThemedInput
+            value={confirmationText}
+            onChangeText={setConfirmationText}
+            placeholder={STRINGS.DELETE_ACCOUNT_CONFIRMATION_PLACEHOLDER}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            editable={!loading}
+            error={confirmationError}
+            onSubmitEditing={handleDeletePress}
+            returnKeyType="done"
+          />
+        </View>
+
+        {/* Continue Button */}
+        <View style={styles.buttonContainer}>
+          <ThemedText
+            type="body"
+            weight="semibold"
+            colorName="error"
+            style={[
+              styles.deleteButton,
+              (!confirmationText || loading) && styles.deleteButtonDisabled,
+            ]}
+            onPress={!confirmationText || loading ? undefined : handleDeletePress}
+          >
+            {loading ? STRINGS.ACCOUNT_DELETION_IN_PROGRESS : STRINGS.DELETE_ACCOUNT}
+          </ThemedText>
+        </View>
+      </ThemedView>
+    </ThemedView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+  },
+  scrollContent: {
+    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
+    paddingTop: LAYOUT.SPACING.LARGE,
+    gap: LAYOUT.SPACING.LARGE,
+  },
+  warningContainer: {
+    gap: LAYOUT.SPACING.MEDIUM,
+  },
+  warningText: {
+    lineHeight: 22,
+  },
+  dataList: {
+    paddingLeft: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.TINY,
+  },
+  dataItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  permanentText: {
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+  emailContainer: {
+    gap: LAYOUT.SPACING.TINY,
+  },
+  signedInLabel: {
+    lineHeight: 18,
+  },
+  emailText: {
+    lineHeight: 22,
+  },
+  inputContainer: {
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  inputLabel: {
+    lineHeight: 22,
+  },
+  buttonContainer: {
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+  deleteButton: {
+    padding: LAYOUT.SPACING.MEDIUM,
+    textAlign: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+  deleteButtonDisabled: {
+    opacity: 0.5,
+  },
+});
+
+export default DeleteAccountScreen;
