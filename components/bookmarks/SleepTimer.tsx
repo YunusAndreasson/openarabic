@@ -101,7 +101,7 @@ export function SleepTimer({
         {/* Header - always show title */}
         <View style={styles.header}>
           <ThemedText type="heading3" weight="bold">
-            Sleep Timer
+            {STRINGS.SLEEP_TIMER}
           </ThemedText>
         </View>
 
@@ -124,7 +124,7 @@ export function SleepTimer({
             <View style={styles.buttonContainer}>
               <ThemedButton
                 style={styles.fullWidthButton}
-                title={SleepTimerAction.START}
+                title={SleepTimerAction.SET}
                 onPress={handleSetTimer}
               />
             </View>
@@ -136,11 +136,8 @@ export function SleepTimer({
                 {formatSecondsToClock(remainingTime)}
               </ThemedText>
             </View>
-            <ThemedText style={styles.activeDescription} variant="secondary">
-              {STRINGS.TIME_REMAINING}
-            </ThemedText>
             <View style={styles.buttonContainer}>
-              <ThemedButton title={STRINGS.STOP_TIMER} onPress={handleCancelTimer} />
+              <ThemedButton title={SleepTimerAction.CANCEL} onPress={handleCancelTimer} />
             </View>
           </View>
         )}
@@ -198,10 +195,6 @@ const styles = StyleSheet.create({
 
   timeText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.5,
-  },
-
-  activeDescription: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 
   buttonContainer: {

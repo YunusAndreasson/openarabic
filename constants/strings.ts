@@ -86,6 +86,8 @@ export const STRINGS = {
   AUDIO_READY: 'Audio ready',
   PREPARING_PRACTICE_SESSION: 'Preparing session…',
   // Timer controls
+  SLEEP_TIMER: 'Sleep timer',
+  SET_TIMER: 'Set timer',
   STOP_TIMER: 'Stop timer',
   TIME_REMAINING: 'Time remaining',
   // Welcome & onboarding

@@ -169,7 +169,7 @@ export type AudioAction = (typeof AudioAction)[keyof typeof AudioAction];
  * Sleep timer actions
  */
 export enum SleepTimerAction {
-  START = 'Start',
+  SET = 'Set timer',
   CANCEL = 'Cancel',
 }
 
