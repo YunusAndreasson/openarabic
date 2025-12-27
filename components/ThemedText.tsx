@@ -73,9 +73,9 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: FONT_WEIGHTS.MEDIUM,
-    letterSpacing: LETTER_SPACING.RELAXED,
+    letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE, // 0.1 - MD3 body-small standard for mixed-case
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.LOOSE,
-    opacity: TEXT_OPACITY.TERTIARY,
+    opacity: 0.7, // Secondary text best practice (~70%)
   },
   heading1: {
     fontFamily: FONTS.ENGLISH,
@@ -122,9 +122,9 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: FONT_WEIGHTS.SEMIBOLD,
-    letterSpacing: LETTER_SPACING.RELAXED,
+    letterSpacing: 1, // ~9% of font size - within 5-12% best practice for all-caps
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: TEXT_OPACITY.TERTIARY,
+    opacity: 0.8, // Auxiliary labels - visible but not competing with primary content
     textTransform: 'uppercase',
   },
 });

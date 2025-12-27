@@ -37,7 +37,7 @@ export const MetricCard = memo<MetricCardProps>(({ icon, value, label, color, on
         <ThemedText type="heading2" weight="bold" style={[styles.value, { color }]}>
           {displayValue}
         </ThemedText>
-        <ThemedText type="caption" colorName="textTertiary" style={styles.label} numberOfLines={1}>
+        <ThemedText type="caption" variant="secondary" style={styles.label} numberOfLines={1}>
           {label}
         </ThemedText>
       </View>

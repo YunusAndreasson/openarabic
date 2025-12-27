@@ -6,11 +6,13 @@ import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
+import { useAppleAuth } from '@/hooks/auth/useAppleAuth';
+import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 
 import { EmailAuthOptions } from './EmailAuthOptions';
 import { LegalLinks } from './LegalLinks';
 import { SocialAuthButtons } from './SocialAuthButtons';
-import { STRINGS } from '@/constants/strings';
 
 /**
  * Authentication Landing Component
@@ -25,6 +27,11 @@ import { STRINGS } from '@/constants/strings';
  */
 export function Auth(): JSX.Element {
   const [showEmailOptions, setShowEmailOptions] = useState(false);
+
+  // Auth hooks lifted here for unified loading state
+  const appleAuth = useAppleAuth();
+  const googleAuth = useGoogleAuth();
+  const isSocialAuthLoading = appleAuth.loading || googleAuth.loading;
 
   const handleToggleEmailOptions = useCallback(() => {
     setShowEmailOptions(prev => !prev);
@@ -52,7 +59,7 @@ export function Auth(): JSX.Element {
       {/* Content Container */}
       <View style={styles.contentContainer}>
         {/* Social Authentication Buttons - Primary action, top for visibility */}
-        <SocialAuthButtons />
+        <SocialAuthButtons appleAuth={appleAuth} googleAuth={googleAuth} />
 
         {/* Email Options Toggle Button - Secondary option */}
         <ThemedButton
@@ -61,6 +68,7 @@ export function Auth(): JSX.Element {
           icon="mail-outline"
           iconSize={20}
           uppercase={false}
+          disabled={isSocialAuthLoading}
           style={styles.emailToggleButton}
           testID="toggle-email-options-button"
           accessibilityLabel={

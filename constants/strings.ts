@@ -293,17 +293,18 @@ export const STRINGS = {
   SIGN_IN_WITH_APPLE: 'Sign in with Apple',
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
   CONTINUE_WITH: 'or',
-  MEMORY_STRENGTH: 'Memory strength',
-  WORD_MASTERY: 'Words mastered',
+  MEMORY_STRENGTH: 'Memory Strength',
+  WORD_MASTERY: 'Mastered Words',
   // Practice bottom sheet subtitles (concise: what it shows + why it matters)
-  MEMORY_STRENGTH_SUBTITLE: "Words you're likely to remember — stay above 75% before adding new",
+  MEMORY_STRENGTH_SUBTITLE:
+    "Amount of words you're likely to remember — stay above 75% before adding new",
   WORD_MASTERY_SUBTITLE: "Words you'll remember long-term",
-  DUE_WORDS_FORECAST_SUBTITLE: 'Words to review each day (7 days)',
-  DUE_WORDS_FORECAST: 'Due words forecast',
+  DUE_WORDS_FORECAST_SUBTITLE: 'Reviews per day based on your pace',
+  DUE_WORDS_FORECAST: 'Words Due',
   // Study Streak
-  STREAK_LABEL: 'Day streak', // Metric card label with unit context
+  STREAK_LABEL: 'Day Streak', // Metric card label with unit context
   // Study Streak Bottom Sheet
-  STUDY_STREAK_TITLE: 'Study streak',
+  STUDY_STREAK_TITLE: 'Day Streak',
   STUDY_STREAK_ACTIVE_SUBTITLE: 'Keep the momentum going',
   STUDY_STREAK_INACTIVE_SUBTITLE: 'Start your study habit',
   STUDY_STREAK_CHART_TITLE: 'Last 40 days',

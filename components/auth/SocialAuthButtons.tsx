@@ -5,11 +5,16 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useAppleAuth } from '@/hooks/auth/useAppleAuth';
-import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
+import type { UseAppleAuthReturn } from '@/hooks/auth/useAppleAuth';
+import type { UseGoogleAuthReturn } from '@/hooks/auth/useGoogleAuth';
 import { useColors } from '@/hooks/theme/useColors';
 
 const isIOS = Platform.OS === 'ios';
+
+interface SocialAuthButtonsProps {
+  appleAuth: UseAppleAuthReturn;
+  googleAuth: UseGoogleAuthReturn;
+}
 
 /**
  * Social Authentication Buttons Component
@@ -29,10 +34,9 @@ const isIOS = Platform.OS === 'ios';
  * - Error handling via hooks (toast notifications)
  * - Accessibility support
  */
-export function SocialAuthButtons(): JSX.Element {
-  // Call hooks unconditionally (React Rules of Hooks)
-  const { signInWithApple, loading: appleLoading } = useAppleAuth();
-  const { signInWithGoogle, loading: googleLoading } = useGoogleAuth();
+export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsProps): JSX.Element {
+  const { signInWithApple, loading: appleLoading } = appleAuth;
+  const { signInWithGoogle, loading: googleLoading } = googleAuth;
   const colors = useColors();
 
   return (

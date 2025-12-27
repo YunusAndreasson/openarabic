@@ -77,7 +77,7 @@ export enum AccountSection {
  * Vocabulary statistics categories
  */
 export enum VocabularyStatCategory {
-  DUE = 'Due',
+  DUE = 'Words Due',
   LEARNING = 'Learning',
   MASTERED = 'Mastered',
   TOTAL = 'Total words',
