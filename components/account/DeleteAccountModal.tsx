@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { GenericBottomSheet } from '@/components/common';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAccountDeletion } from '@/hooks/account/useAccountDeletion';
 
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   warningText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.375, // 22
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   dataList: {
     paddingLeft: LAYOUT.SPACING.SMALL,
@@ -147,16 +147,16 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
   },
   signedInLabel: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.385, // 18
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   emailText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.375, // 22
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   inputContainer: {
     gap: LAYOUT.SPACING.SMALL,
   },
   inputLabel: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.375, // 22
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   buttonContainer: {
     marginTop: LAYOUT.SPACING.SMALL,

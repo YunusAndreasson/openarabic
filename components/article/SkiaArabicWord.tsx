@@ -12,9 +12,8 @@ import Animated, {
 import { Pressable } from 'react-native-gesture-handler';
 import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
 
-import { WORD_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
+import { PRESS_ANIMATION_WORD, usePressAnimation } from '@/hooks/animations/usePressAnimation';
 
 import { useColors } from '@/hooks/theme/useColors';
 import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';
@@ -101,10 +100,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     animatedStyle: pressAnimatedStyle,
     handlePressIn,
     handlePressOut,
-  } = usePressAnimation({
-    type: 'custom',
-    scaleAmount: WORD_PRESS_SCALE,
-  });
+  } = usePressAnimation(PRESS_ANIMATION_WORD);
 
   // Use pre-computed colored segments from data loading (optimized for performance)
   const coloredSegments = word.coloredSegments || [];

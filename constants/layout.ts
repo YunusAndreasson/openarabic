@@ -141,6 +141,27 @@ export const TYPOGRAPHY_HIERARCHY = {
   },
 } as const;
 
+// ===== FLAT EXPORTS FOR SIMPLIFIED IMPORTS =====
+// These are top-level exports of TYPOGRAPHY_HIERARCHY for cleaner imports
+
+/** Font weight constants */
+export const FONT_WEIGHTS = TYPOGRAPHY_HIERARCHY.WEIGHTS;
+
+/** Line height multiplier constants */
+export const LINE_HEIGHT_MULTIPLIERS = TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS;
+
+/** Letter spacing constants */
+export const LETTER_SPACING = TYPOGRAPHY_HIERARCHY.LETTER_SPACING;
+
+/** Text opacity values for hierarchy */
+export const TEXT_OPACITY = TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY;
+
+/** Opacity boost values for theme adjustments */
+export const OPACITY_BOOST = TYPOGRAPHY_HIERARCHY.OPACITY_BOOST;
+
+/** Pre-computed text style configurations for content types */
+export const TEXT_STYLES = TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES;
+
 // Dynamic word area height based on screen proportions and touch targets
 export const WORD_AREA_MIN_HEIGHT = TOUCH_TARGETS.LARGE * 7.5; // ~360px, responsive to touch targets
 

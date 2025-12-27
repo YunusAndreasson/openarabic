@@ -7,7 +7,7 @@ import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT, TEXT_STYLES } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { withAlpha } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
@@ -203,7 +203,11 @@ const MiniPlayerComponent = ({
                     <ThemedText colorName="textTertiary" type="caption">
                       •
                     </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.queuePosition}
+                      type="caption"
+                    >
                       {queueDisplay}
                     </ThemedText>
                   </>
@@ -287,13 +291,13 @@ const styles = StyleSheet.create({
 
   title: {
     // Typography handled by type="heading3" (17px LARGE)
-    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
+    letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
     marginBottom: LAYOUT.SPACING.TINY,
   },
 
   artist: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+    fontWeight: FONT_WEIGHTS.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + LAYOUT.SPACING.HALF_TINY,
     marginBottom: LAYOUT.SPACING.TINY,
   },

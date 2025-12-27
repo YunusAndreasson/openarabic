@@ -1,6 +1,6 @@
 import type { TextStyle, ViewStyle } from 'react-native';
 
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, LETTER_SPACING, MIN_TOUCH_TARGET } from '@/constants/layout';
 
 /**
  * Shared header button container style
@@ -21,5 +21,5 @@ export const HEADER_BUTTON_STYLE: ViewStyle = {
  */
 export const HEADER_BUTTON_TEXT_STYLE: TextStyle = {
   fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-  letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
+  letterSpacing: LETTER_SPACING.TIGHT,
 };

@@ -20,9 +20,11 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TUTORIAL_VISUALS } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
+import { useAppSelector } from '@/store/hooks';
 
 export function TutorialHintStep() {
   const colors = useColors();
+  const arabicFont = useAppSelector(state => state.settings.arabicFont);
   const progress = useSharedValue(0);
   const handScale = useSharedValue(1);
 
@@ -76,7 +78,7 @@ export function TutorialHintStep() {
 
       {/* Word card with animated hint */}
       <View style={[styles.wordCard, { backgroundColor: colors.elevation1 }]}>
-        <ThemedText style={[styles.arabicWord, { color: colors.text }]}>
+        <ThemedText style={[styles.arabicWord, { color: colors.text, fontFamily: arabicFont }]}>
           {STRINGS.TUTORIAL_SAMPLE_WORD_ARABIC}
         </ThemedText>
         <Animated.View style={hintStyle}>
@@ -121,7 +123,6 @@ const styles = StyleSheet.create({
   arabicWord: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.ARABIC,
-    fontFamily: 'Amiri',
     textAlign: 'center',
   },
   handContainer: {

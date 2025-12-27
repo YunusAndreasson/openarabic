@@ -7,7 +7,13 @@
 // Export all animation hooks
 export { useDebounce } from './useDebounce';
 export { useOpacityAnimation } from './useOpacityAnimation';
-export { usePressAnimation } from './usePressAnimation';
+export {
+  PRESS_ANIMATION_BUTTON,
+  PRESS_ANIMATION_CARD,
+  PRESS_ANIMATION_DEFAULT,
+  PRESS_ANIMATION_WORD,
+  usePressAnimation,
+} from './usePressAnimation';
 export { useTransformAnimation } from './useTransformAnimation';
 
 export { useToggleAnimation } from './useToggleAnimation';

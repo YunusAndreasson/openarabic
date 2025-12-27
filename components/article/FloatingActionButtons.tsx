@@ -4,7 +4,7 @@ import { Pressable, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations';
+import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { createAndroidRipple } from '@/utils/layoutUtils';
 
@@ -22,9 +22,9 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
   ({ isInReadingList, onToggleReadingList, onClose }) => {
     const colors = useColors();
 
-    // Press animations for buttons
-    const closePressAnimation = usePressAnimation({ type: 'button' });
-    const bookmarkPressAnimation = usePressAnimation({ type: 'button' });
+    // Press animations for buttons - using shared preset for zero allocations
+    const closePressAnimation = usePressAnimation(PRESS_ANIMATION_BUTTON);
+    const bookmarkPressAnimation = usePressAnimation(PRESS_ANIMATION_BUTTON);
 
     // React 19: Use native useOptimistic for immediate UI feedback
     const [optimisticIsInReadingList, setOptimisticBookmark] = useOptimistic(

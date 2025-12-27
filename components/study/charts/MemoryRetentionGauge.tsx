@@ -14,7 +14,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT, LETTER_SPACING, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
@@ -207,9 +207,9 @@ const styles = StyleSheet.create({
   },
   retentionText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.MEDIUM,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.HEAVY,
+    fontWeight: FONT_WEIGHTS.HEAVY,
     includeFontPadding: false,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
+    letterSpacing: LETTER_SPACING.TIGHT,
     lineHeight: MIN_TOUCH_TARGET.MEDIUM,
     textAlign: 'center',
   },

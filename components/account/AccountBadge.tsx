@@ -13,7 +13,7 @@ import Animated, {
 
 import { ThemedText } from '@/components/ThemedText';
 import { PRESS_SCALE, SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { useProfilePhotoPicker } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import { getFirstNameFromEmail } from '@/utils/stringUtils';
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
   initialsText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   editIconContainer: {
     position: 'absolute',

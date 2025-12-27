@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 
 const PrivacyPolicyScreen: FC = () => {
@@ -178,10 +178,10 @@ const styles = StyleSheet.create({
   },
   paragraph: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    lineHeight: 22,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   lastParagraph: {
-    lineHeight: 22,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
 });
 

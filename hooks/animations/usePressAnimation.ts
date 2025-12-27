@@ -1,13 +1,35 @@
-import { useCallback, useRef } from 'react';
+import { useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { WithSpringConfig } from 'react-native-reanimated';
 import { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-import { CARD_PRESS_OPACITY, PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
-import { useMountSafety } from '@/hooks/common/useMountSafety';
+import {
+  CARD_PRESS_OPACITY,
+  PRESS_SCALE,
+  SPRING_CONFIG,
+  WORD_PRESS_SCALE,
+} from '@/constants/animation';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 export type PressAnimationType = 'button' | 'card' | 'custom';
+
+// ===== STATIC PRESETS - Zero per-render allocations =====
+// Use these instead of inline objects for optimal performance
+
+/** Button press animation preset - scale only, responsive spring */
+export const PRESS_ANIMATION_BUTTON = { type: 'button' } as const;
+
+/** Card press animation preset - scale + opacity, gentler spring */
+export const PRESS_ANIMATION_CARD = { type: 'card' } as const;
+
+/** Word press animation preset - custom scale for Arabic words */
+export const PRESS_ANIMATION_WORD = {
+  type: 'custom',
+  scaleAmount: WORD_PRESS_SCALE,
+} as const;
+
+/** Default/empty preset - uses button defaults */
+export const PRESS_ANIMATION_DEFAULT = {} as const;
 
 export interface PressAnimationOptions {
   /**
@@ -63,32 +85,35 @@ export interface PressAnimationResult {
 
 /**
  * Hook for press animations with scale and optional opacity effects
+ * Optimized for UI thread performance - all animations run as pure worklets
  * @param options - Configuration options for the press animation
  * @returns Animation controls and style for the pressable component
  */
 export const usePressAnimation = (options: PressAnimationOptions = {}): PressAnimationResult => {
   const { type = 'button', scaleAmount, opacityAmount, includeOpacity, springConfig } = options;
 
-  // Set defaults based on type
-  const defaultScaleAmount = type === 'card' ? PRESS_SCALE.CARD : PRESS_SCALE.BUTTON;
-  const finalScaleAmount = scaleAmount ?? defaultScaleAmount;
-  const finalOpacityAmount = opacityAmount ?? CARD_PRESS_OPACITY;
-  const finalIncludeOpacity = includeOpacity ?? type === 'card';
-  const finalSpringConfig = useRef(
-    springConfig ?? (type === 'card' ? SPRING_CONFIG.CARD : SPRING_CONFIG.BUTTON),
-  ).current;
+  // Memoize config to prevent recalculation - stable across renders
+  const config = useMemo(() => {
+    const defaultScaleAmount = type === 'card' ? PRESS_SCALE.CARD : PRESS_SCALE.BUTTON;
+    return {
+      scaleAmount: scaleAmount ?? defaultScaleAmount,
+      opacityAmount: opacityAmount ?? CARD_PRESS_OPACITY,
+      includeOpacity: includeOpacity ?? type === 'card',
+      springConfig: springConfig ?? (type === 'card' ? SPRING_CONFIG.CARD : SPRING_CONFIG.BUTTON),
+    };
+  }, [type, scaleAmount, opacityAmount, includeOpacity, springConfig]);
 
-  // Animation value
+  // Animation shared value - runs on UI thread
   const pressed = useSharedValue(0);
-  const isMountedRef = useMountSafety();
 
-  // Create animated style
+  // Animated style - pure worklet, no JS thread dependencies
+  // Note: shared values are auto-tracked by Reanimated, no need to include in deps
   const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
     'worklet';
-    const scale = interpolate(pressed.get(), [0, 1], [1, finalScaleAmount], 'clamp');
+    const scale = interpolate(pressed.value, [0, 1], [1, config.scaleAmount], 'clamp');
 
-    if (finalIncludeOpacity) {
-      const opacity = interpolate(pressed.get(), [0, 1], [1, finalOpacityAmount], 'clamp');
+    if (config.includeOpacity) {
+      const opacity = interpolate(pressed.value, [0, 1], [1, config.opacityAmount], 'clamp');
       return {
         transform: [{ scale }],
         opacity,
@@ -98,31 +123,27 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     return {
       transform: [{ scale }],
     };
-  }, [
-    pressed,
-    finalScaleAmount,
-    finalOpacityAmount,
-    finalIncludeOpacity,
-  ]) as AnimatedStyleProp<ViewStyle>;
+  }) as AnimatedStyleProp<ViewStyle>;
 
-  // Press handlers - direct worklets for optimal UI thread performance
-  const handlePressIn = useCallback(() => {
-    'worklet';
-    if (isMountedRef.current) {
-      pressed.value = withSpring(1, finalSpringConfig);
-    }
-  }, [pressed, finalSpringConfig, isMountedRef]);
-
-  const handlePressOut = useCallback(() => {
-    'worklet';
-    if (isMountedRef.current) {
-      pressed.value = withSpring(0, finalSpringConfig);
-    }
-  }, [pressed, finalSpringConfig, isMountedRef]);
+  // Memoize handlers - pure worklets for optimal UI thread performance
+  // No mount safety needed: shared values don't cause state updates
+  const handlers = useMemo(
+    () => ({
+      handlePressIn: () => {
+        'worklet';
+        pressed.value = withSpring(1, config.springConfig);
+      },
+      handlePressOut: () => {
+        'worklet';
+        pressed.value = withSpring(0, config.springConfig);
+      },
+    }),
+    [pressed, config.springConfig],
+  );
 
   return {
     animatedStyle,
-    handlePressIn,
-    handlePressOut,
+    handlePressIn: handlers.handlePressIn,
+    handlePressOut: handlers.handlePressOut,
   };
 };

@@ -4,7 +4,13 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import {
+  FONT_WEIGHTS,
+  LAYOUT,
+  LETTER_SPACING,
+  LINE_HEIGHT_MULTIPLIERS,
+  TEXT_STYLES,
+} from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -143,11 +149,11 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     marginBottom: 2,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    fontWeight: FONT_WEIGHTS.SEMIBOLD,
   },
   summaryValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     fontWeight: '400',
   },
   emptyContainer: {
@@ -159,7 +165,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
+    letterSpacing: LETTER_SPACING.WIDE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
     opacity: LAYOUT.OPACITY.HIGH,
     textAlign: 'center',
@@ -174,13 +180,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
-      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * TEXT_STYLES.SECTION_HEADER.lineHeightMultiplier,
     marginBottom: 0,
   },
   cardSubtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     marginBottom: LAYOUT.SPACING.MEDIUM,
     marginTop: LAYOUT.SPACING.MEDIUM,
   },

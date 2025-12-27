@@ -6,7 +6,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations';
+import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui/button.types';
@@ -76,9 +76,8 @@ export function ThemedButton({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'button', // Scale-only feedback for better accessibility and performance
-  });
+  const { animatedStyle, handlePressIn, handlePressOut } =
+    usePressAnimation(PRESS_ANIMATION_BUTTON);
 
   // Optimistic loading state - only when explicitly enabled
   const [optimisticLoading, setOptimisticLoading] = React.useState(false);

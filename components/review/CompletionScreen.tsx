@@ -7,7 +7,12 @@ import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { getThemeAwareElevation, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import {
+  FONT_WEIGHTS,
+  getThemeAwareElevation,
+  LAYOUT,
+  LINE_HEIGHT_MULTIPLIERS,
+} from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useEncouragingMetrics, useReviewCompletion } from '@/hooks/review';
@@ -207,7 +212,7 @@ const styles = StyleSheet.create({
   educationalText: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.LOOSE,
   },
 
   // Metrics section - separated from title group
@@ -241,9 +246,8 @@ const styles = StyleSheet.create({
 
   metricText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     textAlign: 'left',
   },
 

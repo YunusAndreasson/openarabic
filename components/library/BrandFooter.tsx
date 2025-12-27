@@ -3,7 +3,7 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import pkg from '@/package.json';
 
 export const BrandFooter = memo(() => {
@@ -42,14 +42,14 @@ const styles = StyleSheet.create({
   version: {
     opacity: LAYOUT.OPACITY.HIGH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
+    letterSpacing: LETTER_SPACING.WIDE,
     textAlign: 'center',
     marginBottom: LAYOUT.SPACING.TINY,
   },
   copyright: {
     opacity: LAYOUT.OPACITY.HIGH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
+    letterSpacing: LETTER_SPACING.WIDE,
     textAlign: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
   },

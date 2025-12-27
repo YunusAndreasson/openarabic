@@ -8,7 +8,7 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
-import { usePressAnimation } from '@/hooks/animations';
+import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
@@ -34,7 +34,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
   // Press animation for profile button
-  const profilePressAnimation = usePressAnimation({ type: 'button' });
+  const profilePressAnimation = usePressAnimation(PRESS_ANIMATION_BUTTON);
 
   const handlePress = useCallback(() => {
     router.push(ROUTE_PATHS.ACCOUNT);
@@ -87,6 +87,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
         onPressIn={profilePressAnimation.handlePressIn}
         onPressOut={profilePressAnimation.handlePressOut}
         style={styles.profileButton}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
       >
         <Animated.View style={profilePressAnimation.animatedStyle}>
           {profilePhotoUri ? (

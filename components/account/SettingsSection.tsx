@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { BaseCard } from '@/components/common';
 import { SectionTitle } from '@/components/common';
 import { OPACITY_HEX } from '@/constants/colors';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface SettingsSectionProps {
@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.TINY,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
+    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    letterSpacing: LETTER_SPACING.WIDE,
     opacity: LAYOUT.OPACITY.HIGH,
     paddingLeft: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },

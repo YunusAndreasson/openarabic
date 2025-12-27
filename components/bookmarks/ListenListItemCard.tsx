@@ -10,7 +10,13 @@ import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from './DeleteButton';
 import { DragHandle, type DragHandleProps } from './DragHandle';
 import { PlayButton } from './PlayButton';
-import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import {
+  FONT_WEIGHTS,
+  getEnhancedOpacity,
+  LAYOUT,
+  TEXT_OPACITY,
+  TEXT_STYLES,
+} from '@/constants/layout';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -65,11 +71,8 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = ({
   });
 
   // Enhanced title and secondary text styles with semantic colors
-  const titleOpacity = getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode);
-  const secondaryOpacity = getEnhancedOpacity(
-    TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
-    isDarkMode,
-  );
+  const titleOpacity = getEnhancedOpacity(TEXT_OPACITY.PRIMARY, isDarkMode);
+  const secondaryOpacity = getEnhancedOpacity(TEXT_OPACITY.SECONDARY, isDarkMode);
 
   // Dynamic styles
   const titleTextStyle = [styles.titleText, { opacity: titleOpacity }];
@@ -186,11 +189,11 @@ const styles = StyleSheet.create({
   },
   titleText: {
     marginBottom: LAYOUT.SPACING.TINY,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
+    letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
   },
   secondaryText: {
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
+    fontWeight: FONT_WEIGHTS.MEDIUM,
+    letterSpacing: TEXT_STYLES.AUTHOR_BYLINE.letterSpacing,
     flex: 1,
   },
   secondaryRow: {

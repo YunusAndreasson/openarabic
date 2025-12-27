@@ -1,10 +1,15 @@
+import { useMemo } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 import { StyleSheet, Text } from 'react-native';
 
 import {
   FONTS,
+  FONT_WEIGHTS,
   LAYOUT,
-  TYPOGRAPHY_HIERARCHY,
+  LETTER_SPACING,
+  LINE_HEIGHT_MULTIPLIERS,
+  TEXT_OPACITY,
+  TEXT_STYLES,
   getArabicTextStyle,
   getEnhancedOpacity,
 } from '@/constants/layout';
@@ -46,29 +51,98 @@ const getTextColor = (
   return !skipDefaultColor ? colors.text : undefined;
 };
 
-/**
- * Base style lookup map for text types
- * Extracted to constant for performance optimization
- */
-const BASE_STYLE_MAP: Record<string, TextStyle | null> = {
-  body: null, // Will be assigned after styles object is created
-  bodyBold: null,
-  caption: null,
-  heading1: null,
-  heading2: null,
-  heading3: null,
-  label: null,
-  link: null,
-  overline: null,
-};
+// Enhanced typography styles with micro-adjustments and semantic relationships
+const styles = StyleSheet.create({
+  body: {
+    fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: FONT_WEIGHTS.REGULAR,
+    letterSpacing: LETTER_SPACING.NORMAL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    opacity: TEXT_OPACITY.PRIMARY,
+  },
+  bodyBold: {
+    fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    letterSpacing: LETTER_SPACING.TIGHT,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    opacity: TEXT_OPACITY.PRIMARY,
+  },
+  caption: {
+    fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: FONT_WEIGHTS.MEDIUM,
+    letterSpacing: LETTER_SPACING.RELAXED,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.LOOSE,
+    opacity: TEXT_OPACITY.TERTIARY,
+  },
+  heading1: {
+    fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+    fontWeight: FONT_WEIGHTS.BOLD,
+    letterSpacing: LETTER_SPACING.TIGHT,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LINE_HEIGHT_MULTIPLIERS.TIGHT,
+    opacity: TEXT_OPACITY.PRIMARY,
+  },
+  heading2: {
+    fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+    fontWeight: FONT_WEIGHTS.BOLD,
+    letterSpacing: TEXT_STYLES.SECTION_HEADER.letterSpacing,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * TEXT_STYLES.SECTION_HEADER.lineHeightMultiplier,
+    opacity: TEXT_OPACITY.PRIMARY,
+  },
+  heading3: {
+    fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * TEXT_STYLES.CARD_TITLE.lineHeightMultiplier,
+    opacity: TEXT_OPACITY.PRIMARY,
+  },
+  label: {
+    fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    letterSpacing: LETTER_SPACING.RELAXED,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    opacity: TEXT_OPACITY.SECONDARY,
+  },
+  link: {
+    fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: FONT_WEIGHTS.MEDIUM,
+    letterSpacing: LETTER_SPACING.NORMAL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    opacity: TEXT_OPACITY.ACCENT,
+    textDecorationLine: 'underline',
+  },
+  overline: {
+    fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    letterSpacing: LETTER_SPACING.RELAXED,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    opacity: TEXT_OPACITY.TERTIARY,
+    textTransform: 'uppercase',
+  },
+});
 
-/**
- * Get base style for text type
- * Uses pre-computed lookup map for O(1) access
- */
-const getBaseStyle = (type: ThemedTextProps['type']) => {
-  return BASE_STYLE_MAP[type as keyof typeof BASE_STYLE_MAP] || BASE_STYLE_MAP['body'];
-};
+/** Immutable style lookup map - created once after styles */
+const BASE_STYLE_MAP = {
+  body: styles.body,
+  bodyBold: styles.bodyBold,
+  caption: styles.caption,
+  heading1: styles.heading1,
+  heading2: styles.heading2,
+  heading3: styles.heading3,
+  label: styles.label,
+  link: styles.link,
+  overline: styles.overline,
+} as const;
+
+type TextTypeName = keyof typeof BASE_STYLE_MAP;
 
 /**
  * ThemedText component provides consistent typography across the app
@@ -90,12 +164,12 @@ const getBaseStyle = (type: ThemedTextProps['type']) => {
  */
 export function ThemedText({
   style,
-  type = 'body', // Most common value - hardcoded
+  type = 'body',
   variant,
   weight,
   align,
   colorName,
-  skipDefaultColor = false, // Always false when not specified
+  skipDefaultColor = false,
   numberOfLines,
   ellipsizeMode,
   arabicFontSize,
@@ -107,40 +181,49 @@ export function ThemedText({
   // Only use debounced font size for Arabic text to prevent flickering during slider changes
   const debouncedArabicFontSize = useDebouncedArabicFontSize(type === 'arabic' ? 100 : 0);
 
-  // Consolidated style computation with enhanced opacity handling
-  const textColor = getTextColor(colors, variant, colorName, skipDefaultColor);
+  // Memoize style computation to prevent unnecessary recalculations
+  const finalStyle = useMemo((): StyleProp<TextStyle> => {
+    const textColor = getTextColor(colors, variant, colorName, skipDefaultColor);
 
-  let finalStyle: StyleProp<TextStyle>;
-
-  if (type === 'arabic') {
-    // Use debounced font size for smooth updates, fallback to prop, then default
-    const fontSize = debouncedArabicFontSize || arabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
-
-    finalStyle = [
-      getArabicTextStyle(fontSize, {}, selectedArabicFont),
-      textColor && { color: textColor },
-      weight && { fontWeight: weight },
-      align && { textAlign: align },
-      style,
-    ].filter(Boolean) as StyleProp<TextStyle>;
-  } else {
-    const baseStyle = getBaseStyle(type);
-
-    // Apply enhanced opacity for better contrast
-    let enhancedStyle: TextStyle = {};
-    if (baseStyle && 'opacity' in baseStyle && typeof baseStyle.opacity === 'number') {
-      enhancedStyle.opacity = getEnhancedOpacity(baseStyle.opacity, isDarkMode);
+    if (type === 'arabic') {
+      const fontSize = debouncedArabicFontSize || arabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
+      return [
+        getArabicTextStyle(fontSize, {}, selectedArabicFont),
+        textColor && { color: textColor },
+        weight && { fontWeight: weight },
+        align && { textAlign: align },
+        style,
+      ].filter(Boolean) as StyleProp<TextStyle>;
     }
 
-    finalStyle = [
+    const baseStyle = BASE_STYLE_MAP[type as TextTypeName] || BASE_STYLE_MAP.body;
+    const enhancedOpacity =
+      baseStyle && 'opacity' in baseStyle && typeof baseStyle.opacity === 'number'
+        ? getEnhancedOpacity(baseStyle.opacity, isDarkMode)
+        : undefined;
+
+    return [
       baseStyle,
-      enhancedStyle,
+      enhancedOpacity !== undefined && { opacity: enhancedOpacity },
       textColor && { color: textColor },
       weight && { fontWeight: weight },
       align && { textAlign: align },
       style,
     ].filter(Boolean) as StyleProp<TextStyle>;
-  }
+  }, [
+    colors,
+    variant,
+    colorName,
+    skipDefaultColor,
+    type,
+    debouncedArabicFontSize,
+    arabicFontSize,
+    selectedArabicFont,
+    weight,
+    align,
+    style,
+    isDarkMode,
+  ]);
 
   return (
     <Text
@@ -153,101 +236,3 @@ export function ThemedText({
 }
 
 ThemedText.displayName = 'ThemedText';
-
-// Enhanced typography styles with micro-adjustments and semantic relationships
-const styles = StyleSheet.create({
-  // Base text styles with enhanced micro-typography
-  body: {
-    fontFamily: FONTS.ENGLISH,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
-  },
-  bodyBold: {
-    fontFamily: FONTS.ENGLISH,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
-  },
-  caption: {
-    fontFamily: FONTS.ENGLISH,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
-    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
-  },
-  heading1: {
-    fontFamily: FONTS.ENGLISH,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.TIGHT,
-    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
-  },
-  heading2: {
-    fontFamily: FONTS.ENGLISH,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-    letterSpacing:
-      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.letterSpacing,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
-      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
-    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
-  },
-  heading3: {
-    fontFamily: FONTS.ENGLISH,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.LARGE *
-      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
-    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
-  },
-  label: {
-    fontFamily: FONTS.ENGLISH,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
-  },
-  link: {
-    fontFamily: FONTS.ENGLISH,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.ACCENT,
-    textDecorationLine: 'underline',
-  },
-  overline: {
-    fontFamily: FONTS.ENGLISH,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
-    textTransform: 'uppercase',
-  },
-});
-
-// Populate BASE_STYLE_MAP after styles are created
-BASE_STYLE_MAP['body'] = styles.body;
-BASE_STYLE_MAP['bodyBold'] = styles.bodyBold;
-BASE_STYLE_MAP['caption'] = styles.caption;
-BASE_STYLE_MAP['heading1'] = styles.heading1;
-BASE_STYLE_MAP['heading2'] = styles.heading2;
-BASE_STYLE_MAP['heading3'] = styles.heading3;
-BASE_STYLE_MAP['label'] = styles.label;
-BASE_STYLE_MAP['link'] = styles.link;
-BASE_STYLE_MAP['overline'] = styles.overline;

@@ -1,61 +1,64 @@
-import { type FC } from 'react';
+import { type FC, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { getThemeAwareElevation, LAYOUT } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
+import { PRESS_ANIMATION_CARD, usePressAnimation } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseCardProps } from '@/types/ui/card.types';
 import { createCardContentStyle } from '@/utils/textStyleUtils';
+
+// Static style extracted outside component - zero per-render allocations
+const PRESSABLE_STYLE = { flex: 1 } as const;
 
 export const BaseCard: FC<BaseCardProps> = ({
   children,
   style,
   onPress,
   onLongPress,
-  loading = false, // Always false when not specified
-  shadowSize = 'medium', // Most common value - hardcoded
+  loading = false,
+  shadowSize = 'medium',
   contentStyle,
-  disabled = false, // Always false when not specified
+  disabled = false,
   testID,
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Use sophisticated press animation for better feel and scroll compatibility
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'card',
-  });
+  // Press animation - using shared preset for zero allocations
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation(PRESS_ANIMATION_CARD);
 
-  // 2025 Dark Mode: Use theme-aware elevation (no shadows in dark mode)
-  let shadowStyles = {};
-  if (shadowSize !== 'none') {
-    const level =
-      shadowSize === 'subtle'
-        ? 'SUBTLE'
-        : shadowSize === 'small'
-          ? 'SMALL'
-          : shadowSize === 'large'
-            ? 'LARGE'
-            : 'MEDIUM';
-    shadowStyles = getThemeAwareElevation(level, isDarkMode);
-  }
+  // Memoize computed styles to prevent recreation on every render
+  const { baseCardStyle, combinedContentStyle } = useMemo(() => {
+    // Theme-aware elevation (no shadows in dark mode)
+    let shadowStyles = {};
+    if (shadowSize !== 'none') {
+      const level =
+        shadowSize === 'subtle'
+          ? 'SUBTLE'
+          : shadowSize === 'small'
+            ? 'SMALL'
+            : shadowSize === 'large'
+              ? 'LARGE'
+              : 'MEDIUM';
+      shadowStyles = getThemeAwareElevation(level, isDarkMode);
+    }
 
-  const combinedCardStyle = [
-    styles.card,
-    { backgroundColor: colors.card },
-    shadowStyles,
-    shadowSize !== 'none' && {
-      shadowColor: colors.shadow,
-    },
-    style,
-  ];
+    const cardStyle = [
+      styles.card,
+      { backgroundColor: colors.card },
+      shadowStyles,
+      shadowSize !== 'none' && { shadowColor: colors.shadow },
+      style,
+      disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
+    ];
 
-  const combinedContentStyle = [styles.content, contentStyle];
-
-  // Combine base card style with disabled state (animated style handled separately)
-  const baseCardStyle = [combinedCardStyle, disabled && { opacity: LAYOUT.OPACITY.MEDIUM }];
+    return {
+      baseCardStyle: cardStyle,
+      combinedContentStyle: [styles.content, contentStyle],
+    };
+  }, [colors.card, colors.shadow, isDarkMode, shadowSize, style, contentStyle, disabled]);
 
   if (loading) {
     return (
@@ -83,7 +86,7 @@ export const BaseCard: FC<BaseCardProps> = ({
           borderless: false,
           foreground: true,
         }}
-        style={{ flex: 1 }}
+        style={PRESSABLE_STYLE}
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}

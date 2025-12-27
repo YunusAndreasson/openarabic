@@ -9,7 +9,13 @@ import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { Pill } from '@/components/ui';
 import { SPRING_CONFIG } from '@/constants/animation';
-import { GOLDEN_RATIO, LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import {
+  GOLDEN_RATIO,
+  LAYOUT,
+  LETTER_SPACING,
+  SCREEN_WIDTH,
+  TEXT_STYLES,
+} from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -75,15 +81,15 @@ const styles = StyleSheet.create({
 
 // Static typography styles
 const TITLE_STYLE = {
-  letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
+  letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
 };
 
 const AUTHOR_STYLE = {
-  letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
+  letterSpacing: TEXT_STYLES.AUTHOR_BYLINE.letterSpacing,
 };
 
 const SUMMARY_STYLE = {
-  letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
+  letterSpacing: LETTER_SPACING.NORMAL,
 };
 
 /**

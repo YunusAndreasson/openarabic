@@ -12,7 +12,7 @@ import { FloatingActionButtons } from '@/components/article/FloatingActionButton
 import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import { SCROLL_EVENT_THROTTLE, TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TEXT_STYLES } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleScrollHandler } from '@/hooks/articles/useArticleScrollHandler';
 import type { Article } from '@/types/articles.types';
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   },
   authorText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
+    letterSpacing: TEXT_STYLES.AUTHOR_BYLINE.letterSpacing,
   },
 });
 

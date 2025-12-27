@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, LETTER_SPACING, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
@@ -80,6 +80,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
+    letterSpacing: LETTER_SPACING.TIGHT,
   },
 });

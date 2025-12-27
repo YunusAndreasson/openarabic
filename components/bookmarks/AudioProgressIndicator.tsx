@@ -4,7 +4,7 @@ import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { formatSecondsToClock } from '@/utils/dateTimeUtils';
@@ -102,8 +102,8 @@ const styles = StyleSheet.create({
 
   timeText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
+    fontWeight: FONT_WEIGHTS.BOLD,
+    letterSpacing: LETTER_SPACING.WIDE,
     opacity: LAYOUT.OPACITY.HOVER,
   },
 

@@ -17,7 +17,7 @@ import {
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useScreenshotAttachment } from '@/hooks/account';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme';
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   characterCount: {
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    fontWeight: FONT_WEIGHTS.SEMIBOLD,
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   addScreenshotButton: {

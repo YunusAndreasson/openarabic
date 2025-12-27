@@ -1,6 +1,12 @@
 import type { TextStyle, ViewStyle } from 'react-native';
 
-import { LAYOUT, TYPOGRAPHY_HIERARCHY, getArabicTextStyle } from '@/constants/layout';
+import {
+  FONT_WEIGHTS,
+  getArabicTextStyle,
+  LAYOUT,
+  LETTER_SPACING,
+  LINE_HEIGHT_MULTIPLIERS,
+} from '@/constants/layout';
 
 // ===== TEXT STYLE CONSTANTS =====
 export const TEXT_STYLE_CONSTANTS = {
@@ -81,7 +87,7 @@ export const createTextStyle = (fontSize: number, colors: BatchedTextColors): Te
 export const createTranslationTextStyle = (fontSize: number, color: string): TextStyle => ({
   // Use exact requested font size and ensure adequate lineHeight to prevent clipping
   fontSize,
-  lineHeight: Math.round(fontSize * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL),
+  lineHeight: Math.round(fontSize * LINE_HEIGHT_MULTIPLIERS.NORMAL),
   includeFontPadding: false,
   fontWeight: '400',
   opacity: LAYOUT.OPACITY.HIGH,
@@ -181,7 +187,7 @@ export const getSelectedStyle = (isSelected: boolean, color: string): ViewStyle 
  */
 export const createButtonTextStyle = (size: 'small' | 'medium' | 'large' = 'medium'): TextStyle => {
   const baseStyle: TextStyle = {
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.HEAVY,
+    fontWeight: FONT_WEIGHTS.HEAVY,
     textAlign: 'center',
   };
 
@@ -190,20 +196,20 @@ export const createButtonTextStyle = (size: 'small' | 'medium' | 'large' = 'medi
       return {
         ...baseStyle,
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-        letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
+        letterSpacing: LETTER_SPACING.WIDE,
       };
     case 'large':
       return {
         ...baseStyle,
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-        letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
+        letterSpacing: LETTER_SPACING.EXTRA_WIDE,
       };
     case 'medium':
     default:
       return {
         ...baseStyle,
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-        letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
+        letterSpacing: LETTER_SPACING.EXTRA_WIDE,
       };
   }
 };

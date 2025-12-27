@@ -3,7 +3,7 @@ import type { ComponentProps, FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ContextualHelpType } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
 import { ReviewAction } from '@/types/enums';
@@ -43,7 +43,7 @@ const STATIC_STYLES = StyleSheet.create({
   },
   indicatorText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+    fontWeight: FONT_WEIGHTS.MEDIUM,
     textAlign: 'center',
     lineHeight: BOTTOM_ACTIONS_CONSTANTS.TEXT_LINE_HEIGHT,
   },

@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { BaseCard } from '@/components/common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.TINY,
   },
   optionSubtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   footerNote: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
@@ -302,6 +302,6 @@ const styles = StyleSheet.create({
     borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
   },
   footerNoteText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.25, // 20
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.TIGHT,
   },
 });

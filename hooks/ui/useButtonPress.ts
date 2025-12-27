@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { useDebounce, usePressAnimation } from '@/hooks/animations';
+import { PRESS_ANIMATION_DEFAULT, useDebounce, usePressAnimation } from '@/hooks/animations';
 import type { PressAnimationOptions } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
@@ -121,9 +121,9 @@ export function useButtonPress({
 }: UseButtonPressOptions): UseButtonPressResult {
   const colors = useColors();
 
-  // Press animation
+  // Press animation - use provided options or default preset
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation(
-    animationOptions ?? {},
+    animationOptions ?? PRESS_ANIMATION_DEFAULT,
   );
 
   // Create the press handler with haptic feedback
