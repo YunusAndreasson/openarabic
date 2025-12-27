@@ -13,27 +13,6 @@ export const GRAPH_WIDTH =
   16 - // Reduced from 24 for more graph space
   X_AXIS_LABEL_PADDING;
 
-/**
- * Calculate data point positions across full chart width
- * Returns positions from 0 to GRAPH_WIDTH for proper line/fill rendering
- */
-export const calculateDataPointPositions = (dataCount: number): number[] => {
-  if (dataCount <= 1) {
-    return [GRAPH_WIDTH / 2]; // Center single point
-  }
-
-  const positions: number[] = [];
-  // Use full width for line and fill that extends to edges
-  const stepX = GRAPH_WIDTH / Math.max(1, dataCount - 1);
-
-  for (let i = 0; i < dataCount; i++) {
-    const x = i * stepX;
-    positions.push(x);
-  }
-
-  return positions;
-};
-
 // Golden ratio for optimal chart proportions
 const GOLDEN_RATIO = 1.618;
 export const GRAPH_HEIGHT_LARGE = Math.round(GRAPH_WIDTH / GOLDEN_RATIO); // Dynamic height following golden ratio
@@ -45,7 +24,31 @@ export const CHART_VISUAL = {
   LINE_WIDTH: 2.5, // Chart line stroke width
   CHART_TOP_PADDING: 20, // Top padding for visual balance
   CHART_BOTTOM_PADDING: 8, // Bottom padding to prevent dots from clipping at bottom edge
+  CHART_HORIZONTAL_PADDING: 4, // Horizontal padding to prevent edge dots from clipping
 } as const;
+
+/**
+ * Calculate data point positions with horizontal inset to prevent edge clipping.
+ * Data points are inset by CHART_HORIZONTAL_PADDING on each side so dots
+ * don't get clipped at the canvas boundaries.
+ */
+export const calculateDataPointPositions = (dataCount: number): number[] => {
+  if (dataCount <= 1) {
+    return [GRAPH_WIDTH / 2]; // Center single point
+  }
+
+  const positions: number[] = [];
+  const horizontalPadding = CHART_VISUAL.CHART_HORIZONTAL_PADDING;
+  const effectiveWidth = GRAPH_WIDTH - horizontalPadding * 2;
+  const stepX = effectiveWidth / Math.max(1, dataCount - 1);
+
+  for (let i = 0; i < dataCount; i++) {
+    const x = horizontalPadding + i * stepX;
+    positions.push(x);
+  }
+
+  return positions;
+};
 
 /**
  * Calculate effective chart height accounting for padding

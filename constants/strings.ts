@@ -269,10 +269,10 @@ export const STRINGS = {
   SIGN_IN_WITH_APPLE: 'Sign in with Apple',
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
   CONTINUE_WITH: 'or',
-  MEMORY_STRENGTH: 'Strength',
+  MEMORY_STRENGTH: 'Memory Strength',
   WORD_MASTERY: 'Words mastered',
   // Practice bottom sheet subtitles (concise: what it shows + why it matters)
-  MEMORY_STRENGTH_SUBTITLE: 'How likely you are to remember each word (aim for 75%+)',
+  MEMORY_STRENGTH_SUBTITLE: "Percent of words you're likely to remember — stay above 75% before adding new words",
   WORD_MASTERY_SUBTITLE: 'Words you’re likely to remember long-term',
   DUE_WORDS_FORECAST_SUBTITLE: 'Words to review each day (next 7 days)',
   DUE_WORDS_FORECAST: 'Due words forecast',

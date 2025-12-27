@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET, STATUS_INDICATOR } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -160,25 +160,15 @@ export const ChartAxes = memo<AxisLabelsProps>(
                   style={[
                     styles.xLabelText,
                     {
-                      color: isToday ? colors.tint : textColor, // Use tint color for current day
-                      fontWeight: isToday ? '700' : '500', // Bolder for current day
+                      color: isToday ? colors.tint : textColor,
+                      fontWeight: isToday ? '700' : '400', // More contrast: 700 vs 400
                       textAlign: 'center',
+                      opacity: isToday ? 1 : 0.6, // Today stands out more
                     },
                   ]}
                 >
-                  {label}
+                  {isToday ? 'Today' : label}
                 </ThemedText>
-                {/* Dot indicator below today's label */}
-                {isToday && (
-                  <View
-                    style={[
-                      styles.todayDot,
-                      {
-                        backgroundColor: colors.tint,
-                      },
-                    ]}
-                  />
-                )}
               </View>
             );
           })}
@@ -210,18 +200,9 @@ const styles = StyleSheet.create({
   },
   xLabelText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '500',
     includeFontPadding: false,
     lineHeight: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
-  },
-  todayDot: {
-    position: 'absolute', // Don't affect text centering
-    bottom: -7, // Position below the container
-    width: STATUS_INDICATOR.DOT_SIZE,
-    height: STATUS_INDICATOR.DOT_SIZE,
-    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
-    alignSelf: 'center', // Center dot horizontally
   },
   yAxisContainer: {
     left: 0,
