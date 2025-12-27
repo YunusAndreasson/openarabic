@@ -224,14 +224,11 @@ export function filterArticles(
   },
   filterDate: Date | null,
 ): Article[] {
-  if (!articles?.length) return [];
+  if (articles.length === 0) return [];
 
   return articles.filter(article => {
     // Filter by authors
-    if (
-      filters.authorIds.length > 0 &&
-      (!article.author || !filters.authorIds.includes(article.author.id))
-    ) {
+    if (filters.authorIds.length > 0 && !filters.authorIds.includes(article.author.id)) {
       return false;
     }
 

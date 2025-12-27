@@ -142,7 +142,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             const readingList = await bookmarkService.getReadingList(user.id);
             if (readingList.length > 0) {
               const imagePrefetches = readingList
-                .map(item => String(item.articles?.image_url))
+                .map(item => String(item.articles.image_url))
                 .filter(Boolean)
                 .map(url => Image.prefetch(url, { cachePolicy: 'memory-disk' }).catch(() => null));
 

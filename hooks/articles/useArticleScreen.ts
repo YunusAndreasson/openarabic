@@ -72,7 +72,7 @@ export function useArticleScreen({
       analytics.track(ANALYTICS_EVENTS.ARTICLE_VIEWED, {
         article_id: article.id,
         article_title: article.title,
-        category: article.category?.name,
+        category: article.category.name,
       });
     }
   }, [article]);

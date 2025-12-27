@@ -3,6 +3,7 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StreakHistoryData } from '@/services/studyStreak';
 
@@ -20,21 +21,21 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
         id: 'current',
         icon: 'flame' as const,
         value: metrics.currentStreak.toString(),
-        label: 'Current',
+        label: STRINGS.STUDY_STREAK_CURRENT,
         color: colors.warning,
       },
       {
         id: 'longest',
         icon: 'trophy' as const,
         value: metrics.longestStreak.toString(),
-        label: 'Longest',
+        label: STRINGS.STUDY_STREAK_LONGEST,
         color: colors.success, // Green for achievement (universal trophy semantics)
       },
       {
         id: 'total',
         icon: 'calendar' as const,
         value: metrics.totalReadingDays.toString(),
-        label: 'Total',
+        label: STRINGS.STUDY_STREAK_TOTAL,
         color: colors.success, // Green for total progress/growth
       },
     ],
@@ -48,18 +49,16 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.metricsRow}>
-        {metricData.map(metric => (
-          <MetricCard
-            key={metric.id}
-            icon={metric.icon}
-            value={metric.value}
-            label={metric.label}
-            color={metric.color}
-          />
-        ))}
-      </View>
+    <View style={styles.metricsRow}>
+      {metricData.map(metric => (
+        <MetricCard
+          key={metric.id}
+          icon={metric.icon}
+          value={metric.value}
+          label={metric.label}
+          color={metric.color}
+        />
+      ))}
     </View>
   );
 });
@@ -67,9 +66,6 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
 StreakMetrics.displayName = 'StreakMetrics';
 
 const styles = StyleSheet.create({
-  container: {
-    // No padding - handled by parent container for perfect alignment
-  },
   metricsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

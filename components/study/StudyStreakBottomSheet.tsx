@@ -66,7 +66,7 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
           {/* Streak Chart */}
           {streakHistory?.dailyActivity && streakHistory?.streakPeriods && (
             <>
-              <ThemedText type="heading3" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
+              <ThemedText type="heading3" weight="bold" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
                 {STRINGS.STUDY_STREAK_CHART_TITLE}
               </ThemedText>
               <ThemedText
