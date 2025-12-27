@@ -128,7 +128,7 @@ export const useAccountScreen = () => {
   const handleSignOut = useCallback(() => {
     Alert.alert(
       STRINGS.SIGN_OUT,
-      STRINGS.ARE_YOU_SURE_SIGN_OUT,
+      STRINGS.SIGN_OUT_CONFIRMATION,
       [
         {
           text: UiAction.CANCEL,
