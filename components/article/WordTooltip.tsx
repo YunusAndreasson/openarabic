@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
+import type { PressAnimationOptions } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
@@ -19,7 +20,16 @@ import {
 } from '@/utils/positioningUtils';
 import { cleanWordText } from '@/utils/stringUtils';
 
-// Static constants to prevent recreation
+// Module-level constants - zero per-render allocations
+const FADE_IN_ANIMATION = FadeIn.duration(WORD_TOOLTIP_ANIMATION_DURATION);
+
+// Disable opacity to avoid conflict with FadeIn layout animation
+const PRESS_ANIMATION_OPTIONS: PressAnimationOptions = {
+  type: 'card',
+  springConfig: SPRING_CONFIG.RESPONSIVE,
+  includeOpacity: false,
+} as const;
+
 const STATIC_STYLES = StyleSheet.create({
   overlay: {
     position: 'absolute',
@@ -35,9 +45,8 @@ const STATIC_STYLES = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     paddingHorizontal: TOOLTIP_CONSTANTS.MIN_PADDING,
-    paddingVertical: LAYOUT.SPACING.SMALL, // Tighter vertical padding
-    minWidth: Math.max(LAYOUT.CARD.HEIGHT.LIST_ITEM, 120), // Tighter minimum width
-    // Width is now calculated dynamically based on text length
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    minWidth: Math.max(LAYOUT.CARD.HEIGHT.LIST_ITEM, 120),
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
@@ -55,7 +64,7 @@ const STATIC_STYLES = StyleSheet.create({
     flex: 1,
     minHeight:
       LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL +
-      LAYOUT.SPACING.SMALL, // Tighter minimum height for compact appearance
+      LAYOUT.SPACING.SMALL,
   },
   singleLineText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -65,9 +74,7 @@ const STATIC_STYLES = StyleSheet.create({
       LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     includeFontPadding: false,
     textAlignVertical: 'center',
-    // CRITICAL: Allow text to expand tooltip width instead of truncating
-    // maxWidth removed to allow full text display - tooltip width is calculated dynamically
-    flexShrink: 0, // Prevent text from shrinking - tooltip should expand instead
+    flexShrink: 0,
   },
   chevronIcon: {
     marginLeft: LAYOUT.SPACING.SMALL,
@@ -77,13 +84,11 @@ const STATIC_STYLES = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    // Ensure text container can expand to show full text without truncation
-    minWidth: 0, // Allow flex shrinking if needed
-    flexShrink: 1, // Allow shrinking but prefer expanding
+    minWidth: 0,
+    flexShrink: 1,
   },
 });
 
-// Default dimensions for fallback
 const DEFAULT_DIMENSIONS = {
   tooltipLeft: 0,
   tooltipTop: 0,
@@ -103,11 +108,9 @@ export function WordTooltip({
 }: WordTooltipProps) {
   const colors = useColors();
 
-  // Press animation for better user feedback
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'card',
-    springConfig: SPRING_CONFIG.RESPONSIVE,
-  });
+  // Scale-only press animation (no opacity - handled by FadeIn)
+  const { animatedStyle, handlePressIn, handlePressOut } =
+    usePressAnimation(PRESS_ANIMATION_OPTIONS);
 
   // Clean text by removing punctuation for display
   const cleanedText = cleanWordText(text);
@@ -148,15 +151,15 @@ export function WordTooltip({
     );
   }, [layout, coloredSegments]);
 
-  // Memoize styles
-  const { containerStyle, tooltipStyle, arrowStyle } = useMemo(() => {
+  // Memoize dynamic styles - single object to reduce allocations
+  const dynamicStyles = useMemo(() => {
     const effectiveHeight = Math.max(dimensions.tooltipHeight, MIN_TOUCH_TARGET.MEDIUM);
     return {
-      containerStyle: {
+      container: {
         ...STATIC_STYLES.overlay,
         zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
       },
-      tooltipStyle: {
+      tooltip: {
         ...STATIC_STYLES.tooltip,
         top: dimensions.tooltipTop,
         left: dimensions.tooltipLeft,
@@ -168,7 +171,7 @@ export function WordTooltip({
         ...LAYOUT.ELEVATION.LARGE,
         shadowColor: colors.shadow,
       },
-      arrowStyle: {
+      arrow: {
         ...STATIC_STYLES.arrow,
         left: dimensions.arrowLeft,
         top: effectiveHeight,
@@ -182,10 +185,16 @@ export function WordTooltip({
     };
   }, [dimensions, zIndex, colors]);
 
+  // Memoize combined animated style array to prevent recreation
+  const tooltipAnimatedStyle = useMemo(
+    () => [dynamicStyles.tooltip, animatedStyle],
+    [dynamicStyles.tooltip, animatedStyle],
+  );
+
   if (!visible || !layout) return null;
 
   return (
-    <View style={containerStyle} pointerEvents="box-none">
+    <View style={dynamicStyles.container} pointerEvents="box-none">
       <Pressable
         onPress={onOpenWordDetails}
         onPressIn={handlePressIn}
@@ -194,11 +203,11 @@ export function WordTooltip({
         hitSlop={LAYOUT.HIT_SLOP.SMALL}
       >
         <Animated.View
-          entering={FadeIn.duration(WORD_TOOLTIP_ANIMATION_DURATION)}
-          style={[tooltipStyle, animatedStyle]}
+          entering={FADE_IN_ANIMATION}
+          style={tooltipAnimatedStyle}
           testID="word-tooltip"
         >
-          <View style={arrowStyle} />
+          <View style={dynamicStyles.arrow} />
           <View style={STATIC_STYLES.contentContainer}>
             <View style={STATIC_STYLES.textContainer}>
               <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText}>
