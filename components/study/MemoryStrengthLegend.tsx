@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { ThemedText } from '@/components/ThemedText';
+import { ColorDot } from '@/components/ui/ColorDot';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -31,7 +32,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
       <View style={styles.legendRow}>
         {/* Weak - Red */}
         <View style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: colors.error }]} />
+          <ColorDot color={colors.error} />
           <ThemedText type="caption" variant="secondary" style={styles.label}>
             Weak
           </ThemedText>
@@ -39,7 +40,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
 
         {/* Medium - Orange */}
         <View style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: colors.warning }]} />
+          <ColorDot color={colors.warning} />
           <ThemedText type="caption" variant="secondary" style={styles.label}>
             Medium
           </ThemedText>
@@ -47,7 +48,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
 
         {/* Strong - Green */}
         <View style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: colors.success }]} />
+          <ColorDot color={colors.success} />
           <ThemedText type="caption" variant="secondary" style={styles.label}>
             Strong
           </ThemedText>
@@ -91,11 +92,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.TINY, // 4px between dot and label
-  },
-  dot: {
-    width: LAYOUT.SPACING.SMALL, // 8px
-    height: LAYOUT.SPACING.SMALL, // 8px
-    borderRadius: LAYOUT.SPACING.TINY, // 4px (circular)
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

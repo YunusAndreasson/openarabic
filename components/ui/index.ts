@@ -3,6 +3,7 @@
  * Reusable UI primitives and form controls
  */
 
+export { ColorDot } from './ColorDot';
 export { DictionaryButton } from './DictionaryButton';
 export { DoneButton } from './DoneButton';
 export { EditModeButton } from './EditModeButton';

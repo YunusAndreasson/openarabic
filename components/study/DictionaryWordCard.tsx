@@ -5,6 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from '@/components/bookmarks';
+import { ColorDot } from '@/components/ui/ColorDot';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
@@ -64,7 +65,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
             <View style={styles.content}>
               {/* Memory dot and English text */}
               <View style={styles.leftSection}>
-                <View style={[styles.memoryDot, { backgroundColor: colors[dotColorKey] }]} />
+                <ColorDot color={colors[dotColorKey]} />
                 <ThemedText
                   type="body"
                   variant="secondary"
@@ -158,11 +159,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     includeFontPadding: false,
     lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1),
-  },
-  memoryDot: {
-    width: LAYOUT.SPACING.SMALL, // 8px
-    height: LAYOUT.SPACING.SMALL, // 8px
-    borderRadius: LAYOUT.SPACING.TINY, // 4px (circular)
   },
   rightSection: {
     flex: 1,

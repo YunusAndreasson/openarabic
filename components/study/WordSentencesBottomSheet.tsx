@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ArticleSentence } from '@/components/article/ArticleSentence';
 import { BaseCard } from '@/components/common';
-import { DoneButton, HeaderIconButton } from '@/components/ui';
+import { ColorDot, DoneButton, HeaderIconButton } from '@/components/ui';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
@@ -108,7 +108,7 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
               </ThemedText>
 
               <View style={styles.englishRow}>
-                <View style={[styles.memoryDot, { backgroundColor: colors[dotColorKey] }]} />
+                <ColorDot color={colors[dotColorKey]} />
                 <ThemedText type="body" variant="secondary" style={styles.englishText}>
                   {englishText}
                 </ThemedText>
@@ -198,11 +198,6 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     includeFontPadding: false,
     lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1),
-  },
-  memoryDot: {
-    width: LAYOUT.SPACING.SMALL,
-    height: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.SPACING.TINY,
   },
   centeredContainer: {
     paddingVertical: LAYOUT.SPACING.XLARGE,
