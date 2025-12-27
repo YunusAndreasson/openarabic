@@ -803,7 +803,7 @@ const elevation = {
 const lightColors: ThemeColors = {
   // Core brand colors
   primary: basePalette.forest.dark,
-  secondary: basePalette.forest.dark,
+  secondary: basePalette.forest.medium, // Distinct from primary for visual hierarchy
   background: basePalette.sage.lighter,
   text: basePalette.forest.darkest,
   secondaryText: basePalette.forest.medium,
@@ -817,10 +817,10 @@ const lightColors: ThemeColors = {
   success: basePalette.semantic.success,
   warning: basePalette.semantic.warning,
   info: basePalette.azure.light, // Blue for stable/good state - distinct from Mastered green
-  accent: basePalette.azure.light,
+  accent: basePalette.indigo.light, // Distinct from info - used for interactive accents (e.g., diacritics)
   violet: basePalette.violet.light,
   indigo: basePalette.indigo.light,
-  coral: basePalette.coral.light,
+  coral: basePalette.coral.light, // Reserved for future grammar concepts
 
   // Text hierarchy
   englishText: basePalette.forest.medium,
@@ -915,7 +915,7 @@ const lightColors: ThemeColors = {
 const darkColors: ThemeColors = {
   // Core brand colors
   primary: basePalette.tint.primaryDark,
-  secondary: basePalette.forest.light,
+  secondary: basePalette.forest.light, // Lower L = less contrast on dark bg = correctly less prominent
   background: basePalette.sage.darkest,
   text: basePalette.pure.white,
   secondaryText: textHierarchy.dark.subtitle,
@@ -929,10 +929,10 @@ const darkColors: ThemeColors = {
   success: basePalette.semantic.successDark,
   warning: basePalette.semantic.warningDark,
   info: basePalette.azure.dark, // Blue for stable/good state - distinct from Mastered green (dark mode)
-  accent: basePalette.azure.dark,
+  accent: basePalette.indigo.dark, // Distinct from info - used for interactive accents (e.g., diacritics)
   violet: basePalette.violet.dark,
   indigo: basePalette.indigo.dark,
-  coral: basePalette.coral.dark,
+  coral: basePalette.coral.dark, // Reserved for future grammar concepts
 
   // Text hierarchy
   englishText: textHierarchy.dark.subtitle,
@@ -949,7 +949,7 @@ const darkColors: ThemeColors = {
   tintBackground: withAlpha(basePalette.tint.primaryDark, opacity.medium),
   tabIconDefault: basePalette.forest.light, // Increased from forest.medium for better dark mode visibility
   tabIconSelected: basePalette.tint.primaryDark,
-  icon: textHierarchy.dark.metadata,
+  icon: basePalette.forest.lighter, // Palette-based for consistency (matches light/sepia pattern)
   disabled: basePalette.disabled.universal,
 
   // Overlays
@@ -1041,10 +1041,10 @@ const sepiaColors: ThemeColors = {
   success: basePalette.autumn.semantic.success,
   warning: basePalette.autumn.semantic.warning,
   info: basePalette.azure.sepia, // Blue-gray for stable/good state - distinct from Mastered (sepia mode)
-  accent: basePalette.azure.sepia,
+  accent: basePalette.indigo.sepia, // Distinct from info - used for interactive accents (e.g., diacritics)
   violet: basePalette.violet.sepia,
   indigo: basePalette.indigo.sepia,
-  coral: basePalette.coral.sepia,
+  coral: basePalette.coral.sepia, // Reserved for future grammar concepts
 
   // Text hierarchy
   englishText: basePalette.autumn.medium,
