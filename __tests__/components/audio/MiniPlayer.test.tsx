@@ -122,14 +122,14 @@ describe('MiniPlayer', () => {
       const { getByText } = render(
         <MiniPlayer {...defaultProps} queuePosition={{ current: 2, total: 5 }} />,
       );
-      expect(getByText('2 of 5')).toBeTruthy();
+      expect(getByText('2/5')).toBeTruthy();
     });
 
     test('does not render queue position when total is 1', () => {
       const { queryByText } = render(
         <MiniPlayer {...defaultProps} queuePosition={{ current: 1, total: 1 }} />,
       );
-      expect(queryByText(/of/)).toBeNull();
+      expect(queryByText('1/1')).toBeNull();
     });
   });
 

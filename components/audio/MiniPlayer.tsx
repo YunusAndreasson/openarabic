@@ -145,7 +145,7 @@ const MiniPlayerComponent = ({
   // Format queue position display
   const queueDisplay = useMemo(() => {
     if (queuePosition && queuePosition.total > 1) {
-      return `${queuePosition.current} of ${queuePosition.total}`;
+      return `${queuePosition.current}/${queuePosition.total}`;
     }
     return null;
   }, [queuePosition]);
@@ -199,9 +199,14 @@ const MiniPlayerComponent = ({
                   {timeDisplay}
                 </ThemedText>
                 {queueDisplay && (
-                  <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
-                    {queueDisplay}
-                  </ThemedText>
+                  <>
+                    <ThemedText colorName="textTertiary" type="caption">
+                      •
+                    </ThemedText>
+                    <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
+                      {queueDisplay}
+                    </ThemedText>
+                  </>
                 )}
               </View>
             </View>

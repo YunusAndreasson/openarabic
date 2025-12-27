@@ -265,11 +265,15 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
 
     // Determine which metadata to show based on filter context
     // When filtering by author, show "Category · Xm" (author is redundant)
+    // When filtering by category, show "Author · Xm" (category is redundant)
     // Otherwise show full "Author · Category · Xm"
+    const readingTime = calculateReadingTime(article.article_sentences?.length ?? 0);
     const secondaryText =
       filterType === 'author'
-        ? `${capitalizeFirstLetter(article.category.name)} · ${calculateReadingTime(article.article_sentences?.length ?? 0)}`
-        : getArticleMetadata(article);
+        ? `${capitalizeFirstLetter(article.category.name)} · ${readingTime}`
+        : filterType === 'category'
+          ? `${article.author.name} · ${readingTime}`
+          : getArticleMetadata(article);
 
     return (
       <ListenListItemCard
