@@ -8,6 +8,7 @@ import { MetricCard } from '@/components/common/MetricCard';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 import { MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
@@ -47,7 +48,7 @@ export function VocabularyStatCards({
       formatAsDecimal: false,
     },
     {
-      label: 'Streak',
+      label: STRINGS.STREAK_LABEL,
       value: currentStreak,
       color: colors.warning,
       icon: 'flame' as const,

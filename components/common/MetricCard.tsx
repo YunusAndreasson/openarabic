@@ -37,7 +37,7 @@ export const MetricCard = memo<MetricCardProps>(({ icon, value, label, color, on
         <ThemedText type="heading2" weight="bold" style={[styles.value, { color }]}>
           {displayValue}
         </ThemedText>
-        <ThemedText type="caption" colorName="textTertiary" style={styles.label}>
+        <ThemedText type="caption" colorName="textTertiary" style={styles.label} numberOfLines={1}>
           {label}
         </ThemedText>
       </View>
@@ -53,7 +53,6 @@ const styles = StyleSheet.create({
     // Note: borderRadius is applied by BaseCard wrapper
   },
   cardWrapper: {
-    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
@@ -66,7 +65,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,
-    alignSelf: 'center',
   },
   value: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
