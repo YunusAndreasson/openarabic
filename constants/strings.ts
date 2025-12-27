@@ -272,7 +272,8 @@ export const STRINGS = {
   MEMORY_STRENGTH: 'Memory Strength',
   WORD_MASTERY: 'Words mastered',
   // Practice bottom sheet subtitles (concise: what it shows + why it matters)
-  MEMORY_STRENGTH_SUBTITLE: "Percent of words you're likely to remember — stay above 75% before adding new words",
+  MEMORY_STRENGTH_SUBTITLE:
+    "Percent of words you're likely to remember — stay above 75% before adding new words",
   WORD_MASTERY_SUBTITLE: 'Words you’re likely to remember long-term',
   DUE_WORDS_FORECAST_SUBTITLE: 'Words to review each day (next 7 days)',
   DUE_WORDS_FORECAST: 'Due words forecast',
@@ -292,6 +293,12 @@ export const STRINGS = {
   EMPTY_STATE_RETRIEVABILITY: 'Study 5 words to see review timing',
   EMPTY_STATE_DUE_WORDS: 'Add words to see your forecast',
   EMPTY_STATE_GENERAL: 'Add words to start tracking progress',
+  // Word Sentences Bottom Sheet (dictionary sentence examples)
+  IN_SENTENCES: 'In sentences',
+  FOUND_IN_SENTENCES: 'Found in {count} sentence',
+  FOUND_IN_SENTENCES_PLURAL: 'Found in {count} sentences',
+  NO_SENTENCE_EXAMPLES: 'No sentence examples found',
+  PLAY_PRONUNCIATION: 'Listen',
   // Chart Dynamic Message Suffixes (concatenated with numbers)
   WORDS_NEED_URGENT_REVIEW: '% need review soon',
   WORDS_LIKELY_FORGOTTEN: ' words need review soon',
@@ -373,6 +380,7 @@ export const STRINGS = {
   FAILED_TO_LOAD_ALL_ROOTS: "Couldn't load roots. " + tryAgain,
   FAILED_TO_DELETE_STUDY_WORDS: "Couldn't delete practice words. " + tryAgain,
   FAILED_TO_LOAD_PRACTICE_DATA: "Couldn't load practice data. " + tryAgain,
+  FAILED_TO_LOAD_SENTENCES: "Couldn't load sentences. " + tryAgain,
   // Timer errors
   FAILED_TO_START_SLEEP_TIMER: "Couldn't start timer. " + tryAgain,
   FAILED_TO_CANCEL_SLEEP_TIMER: "Couldn't cancel timer. " + tryAgain,

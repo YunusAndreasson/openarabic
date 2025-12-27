@@ -1,13 +1,17 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { DictionaryWordCard, MemoryStrengthLegend } from '@/components/study';
+import {
+  DictionaryWordCard,
+  MemoryStrengthLegend,
+  WordSentencesBottomSheet,
+} from '@/components/study';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -24,6 +28,10 @@ export default function DictionaryScreen(): JSX.Element {
   const { editMode, reset } = useEditMode('dictionary');
   const insets = useSafeAreaInsets();
   const { preconfigureAudioSession } = useSimpleAudioPlayer();
+
+  // State for sentence examples bottom sheet
+  const [selectedWord, setSelectedWord] = useState<StudyWord | null>(null);
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
   // Preconfigure audio session on mount for instant audio playback
   useEffect(() => {
@@ -54,6 +62,19 @@ export default function DictionaryScreen(): JSX.Element {
 
   const hasWords = sortedWords.length > 0;
 
+  // Handle opening the sentence examples bottom sheet
+  const handleWordPress = useCallback((word: StudyWord) => {
+    setSelectedWord(word);
+    setIsBottomSheetVisible(true);
+  }, []);
+
+  // Handle closing the sentence examples bottom sheet
+  const handleCloseBottomSheet = useCallback(() => {
+    setIsBottomSheetVisible(false);
+    // Delay clearing selected word to allow close animation
+    setTimeout(() => setSelectedWord(null), 300);
+  }, []);
+
   const handleDeleteWord = useCallback(
     async (rootId: number) => {
       if (!user?.id) return;
@@ -76,9 +97,10 @@ export default function DictionaryScreen(): JSX.Element {
         word={props.item}
         editMode={editMode}
         onDelete={() => handleDeleteWord(props.item.root_id)}
+        onPress={handleWordPress}
       />
     ),
-    [editMode, handleDeleteWord],
+    [editMode, handleDeleteWord, handleWordPress],
   );
 
   return (
@@ -109,6 +131,13 @@ export default function DictionaryScreen(): JSX.Element {
           </ThemedText>
         </View>
       )}
+
+      {/* Sentence examples bottom sheet - uses RN Modal for guaranteed z-index */}
+      <WordSentencesBottomSheet
+        isVisible={isBottomSheetVisible}
+        onClose={handleCloseBottomSheet}
+        word={selectedWord}
+      />
     </ThemedView>
   );
 }

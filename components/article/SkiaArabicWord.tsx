@@ -38,6 +38,8 @@ interface SkiaArabicWordProps {
   isHighlighted?: boolean;
   /** When true, shows a static highlight indicating word is active (shown in tooltip) */
   isActive?: boolean;
+  /** When true, shows a subtle tint background to mark this as the target word (used for dictionary sentence examples) */
+  isTargetWord?: boolean;
 }
 
 const SkiaArabicWordInternal = function SkiaArabicWord({
@@ -48,6 +50,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   testID,
   isHighlighted = false,
   isActive = false,
+  isTargetWord = false,
 }: SkiaArabicWordProps) {
   const colors = useColors();
   const { arabicFont, getArabicFont, fontFamily } = useSkiaFonts();
@@ -208,10 +211,15 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
   return (
     <View style={styles.wordWrapper}>
+      {/* Pulsing highlight for tutorial */}
       {isHighlighted && (
         <Animated.View
           style={[styles.highlightOverlay, { backgroundColor: colors.tint }, highlightStyle]}
         />
+      )}
+      {/* Static subtle highlight for target word in sentence examples */}
+      {isTargetWord && !isHighlighted && (
+        <View style={[styles.targetWordOverlay, { backgroundColor: colors.tint }]} />
       )}
       <AnimatedPressable
         ref={wordRef}
@@ -240,6 +248,11 @@ const styles = StyleSheet.create({
   highlightOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+  targetWordOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    opacity: 0.2, // Subtle tint for target word indication
   },
   underlineReserve: {
     borderBottomColor: 'transparent',

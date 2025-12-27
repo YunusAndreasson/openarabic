@@ -8,6 +8,7 @@ export { PracticeEmptyState } from './PracticeEmptyState';
 export { RecommendationCard } from './RecommendationCard';
 export { StudyStreakBottomSheet } from './StudyStreakBottomSheet';
 export { VocabularyStatCards } from './VocabularyStatCards';
+export { WordSentencesBottomSheet } from './WordSentencesBottomSheet';
 export { WordsMasteredBottomSheet } from './WordsMasteredBottomSheet';
 
 // Chart exports

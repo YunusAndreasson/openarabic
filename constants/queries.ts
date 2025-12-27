@@ -33,8 +33,9 @@ import { bookmarkService } from '@/services/bookmark';
 import { categoriesService } from '@/services/categories';
 import { readingProgressService } from '@/services/readingProgress';
 import { studySessionStreakService } from '@/services/studyStreak';
+import { sentencesService } from '@/services/sentences';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import type { ArticleId } from '@/types/branded.types';
+import type { ArticleId, RootId } from '@/types/branded.types';
 import { TIMING_CONSTANTS } from './animation';
 
 /**
@@ -431,5 +432,31 @@ export const studyStreakQueries = {
       queryClient.invalidateQueries({ queryKey: ['study-streak', userId] }),
       queryClient.invalidateQueries({ queryKey: ['study-streak-history', userId] }),
     ]);
+  },
+} as const;
+
+/**
+ * Sentence queries
+ * Used for fetching sentences containing specific words
+ */
+export const sentenceQueries = {
+  /**
+   * Sentences containing a specific word (by root_id)
+   * Used for showing example sentences in dictionary
+   */
+  byRootId: (rootId: RootId, limit = 5) =>
+    queryOptions({
+      queryKey: ['sentences', 'by-root', rootId, limit] as const,
+      queryFn: () => sentencesService.getSentencesByRootId(rootId, limit),
+      ...CACHE_TIMES.ARTICLES, // Sentences never change (infinite staleTime)
+      enabled: !!rootId,
+      retry: 2,
+    }),
+
+  /**
+   * Query keys for backward compatibility
+   */
+  keys: {
+    byRootId: (rootId: RootId, limit = 5) => ['sentences', 'by-root', rootId, limit] as const,
   },
 } as const;

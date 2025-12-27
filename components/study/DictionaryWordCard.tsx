@@ -6,50 +6,34 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from '@/components/bookmarks';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { selectionFeedback } from '@/utils/haptics';
 import { getStabilityProgressColor } from '@/utils/urgencyScore';
 
 interface DictionaryWordCardProps {
   word: StudyWord;
   editMode: boolean;
   onDelete: () => void;
+  /** Called when card is pressed (opens sentence examples bottom sheet) */
+  onPress?: (word: StudyWord) => void;
 }
 
 export const DictionaryWordCard = memo<DictionaryWordCardProps>(
-  ({ word, editMode, onDelete }) => {
+  ({ word, editMode, onDelete, onPress }) => {
     const colors = useColors();
-
-    // Use consolidated word audio playback hook
-    const playWordAudio = useWordAudioPlayback({ showErrorToast: false });
 
     // Edit mode animation (scales down when in edit mode)
     const { animatedStyle } = useEditModeCardAnimation({ editMode });
 
-    // Handle audio playback for word pronunciation when card is pressed
-    const handleCardPress = useCallback(async () => {
+    // Handle card press - opens sentence examples bottom sheet
+    const handleCardPress = useCallback(() => {
       if (editMode) return;
-
-      // Play word audio using consolidated hook (includes haptics & error handling)
-      await playWordAudio({
-        id: word.root_id,
-        audio_url: word.root?.audio_url,
-        audio_url_en: word.root?.audio_url_en,
-        letters: word.root?.letters,
-        meaning: word.root?.meaning,
-      });
-    }, [
-      editMode,
-      word.root_id,
-      word.root?.audio_url,
-      word.root?.audio_url_en,
-      word.root?.letters,
-      word.root?.meaning,
-      playWordAudio,
-    ]);
+      selectionFeedback();
+      onPress?.(word);
+    }, [editMode, word, onPress]);
 
     // Handle delete button press
     const handleDeletePress = useCallback(() => {
@@ -80,8 +64,9 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
             contentStyle={styles.cardContent}
           >
             <View style={styles.content}>
-              {/* English text with colored dot indicator below */}
+              {/* Memory dot and English text */}
               <View style={styles.leftSection}>
+                <View style={[styles.memoryDot, { backgroundColor: colors[dotColorKey] }]} />
                 <ThemedText
                   type="body"
                   variant="secondary"
@@ -91,8 +76,6 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
                 >
                   {englishText}
                 </ThemedText>
-                {/* Memory strength dot indicator */}
-                <View style={[styles.memoryDot, { backgroundColor: colors[dotColorKey] }]} />
               </View>
 
               {/* Arabic text (vertically centered) */}
@@ -123,6 +106,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
   (prevProps, nextProps) => {
     return (
       prevProps.editMode === nextProps.editMode &&
+      prevProps.onPress === nextProps.onPress &&
       prevProps.word.root_id === nextProps.word.root_id &&
       prevProps.word.fsrs_state === nextProps.word.fsrs_state &&
       prevProps.word.fsrs_stability === nextProps.word.fsrs_stability &&
@@ -164,11 +148,11 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   leftSection: {
-    flex: 1, // Take available space
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingRight: LAYOUT.SPACING.MEDIUM,
-    justifyContent: 'center', // Vertically center content
-    alignItems: 'flex-start', // Keep left-aligned horizontally
-    gap: LAYOUT.SPACING.TINY, // 4px gap between text and dot
+    gap: LAYOUT.SPACING.SMALL,
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

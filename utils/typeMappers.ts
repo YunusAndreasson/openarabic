@@ -39,7 +39,7 @@ export type StudyWordQueryRow = Pick<
   root?: Tables<'roots'> | null;
 };
 
-function mapToSentenceWord(item: SentenceWordRow): SentenceWord {
+export function mapToSentenceWord(item: SentenceWordRow): SentenceWord {
   const base = item as Tables<'sentence_words'>;
   return {
     ...base,

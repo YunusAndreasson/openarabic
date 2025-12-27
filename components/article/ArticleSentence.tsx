@@ -31,6 +31,8 @@ interface ArticleSentenceProps {
   onDismissTutorial?: () => void;
   /** ID of the word currently shown in the tooltip */
   activeWordId?: string | number | null;
+  /** Root ID to highlight as target word (used in dictionary sentence examples) */
+  highlightRootId?: number | null;
 }
 
 const ArticleSentenceInternal = function ArticleSentence({
@@ -43,6 +45,7 @@ const ArticleSentenceInternal = function ArticleSentence({
   showTutorialCard = false,
   onDismissTutorial,
   activeWordId,
+  highlightRootId,
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
@@ -84,6 +87,9 @@ const ArticleSentenceInternal = function ArticleSentence({
       // Check if this word is currently active (shown in tooltip)
       const isActive = activeWordId != null && word.id === activeWordId;
 
+      // Check if this word is the target word (for dictionary sentence examples)
+      const isTargetWord = highlightRootId != null && word.root_id === highlightRootId;
+
       return (
         <ArabicWord
           key={refKey}
@@ -93,10 +99,11 @@ const ArticleSentenceInternal = function ArticleSentence({
           position={index}
           isHighlighted={isFirstWord && showTutorialCard}
           isActive={isActive}
+          isTargetWord={isTargetWord}
         />
       );
     });
-  }, [words, onWordPress, sentence.id, showTutorialCard, activeWordId]);
+  }, [words, onWordPress, sentence.id, showTutorialCard, activeWordId, highlightRootId]);
 
   return (
     <View style={[styles.container, containerStyle]}>
