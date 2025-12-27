@@ -224,14 +224,10 @@ class SimpleAudioService {
             }
           }
         } else if (nextAppState === 'active') {
-          // App is coming to foreground - ensure audio session is still active
-          if (this.status.isPlaying || this.isPlaylistMode) {
-            await this.safeActivateAudioSession({
-              location: 'AppState.active',
-              isPlaying: this.status.isPlaying,
-              isPlaylistMode: this.isPlaylistMode,
-            });
-          }
+          // App is coming to foreground - reconfigure audio session
+          // iOS may have invalidated the session while in background
+          this.audioSessionConfigured = false;
+          await this.configureAudioSession();
         }
       } catch (error) {
         // Don't log AppState listener errors to Sentry - they're often expected
