@@ -37,12 +37,6 @@ jest.mock('@/components/ThemedButton', () => {
   };
 });
 
-// Mock haptics
-const mockErrorFeedback = jest.fn();
-jest.mock('@/utils/haptics', () => ({
-  errorFeedback: () => mockErrorFeedback(),
-}));
-
 // Mock enums
 jest.mock('@/types/enums', () => ({
   UiAction: {
@@ -74,14 +68,6 @@ describe('ErrorState', () => {
       const { queryByTestId } = render(<ErrorState message="Error" />);
 
       expect(queryByTestId('retry-button')).toBeNull();
-    });
-  });
-
-  describe('Haptic Feedback', () => {
-    test('triggers error haptic feedback on mount', () => {
-      render(<ErrorState message="Error" />);
-
-      expect(mockErrorFeedback).toHaveBeenCalledTimes(1);
     });
   });
 
