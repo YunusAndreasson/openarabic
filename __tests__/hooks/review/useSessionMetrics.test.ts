@@ -79,7 +79,7 @@ describe('useSessionMetrics', () => {
           oldStability: 2.0,
           newStability: 3.5,
         });
-        result.current.updateMetrics('vague', {
+        result.current.updateMetrics('unknown', {
           rootId: 200,
           oldStability: 1.5,
           newStability: 2.0,
@@ -205,18 +205,18 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.masteredWords).toBe(2); // Only words 100 and 300
     });
 
-    test('should not count mastered on vague or unknown responses', () => {
+    test('should not count mastered on unknown responses', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
-        // Vague - crosses threshold but not "known"
-        result.current.updateMetrics('vague', {
+        // Unknown - crosses threshold but not "known"
+        result.current.updateMetrics('unknown', {
           rootId: 100,
           oldStability: 4.5,
           newStability: 5.5,
         });
 
-        // Unknown - crosses threshold but not "known"
+        // Another unknown - crosses threshold but not "known"
         result.current.updateMetrics('unknown', {
           rootId: 200,
           oldStability: 4.5,
@@ -256,7 +256,7 @@ describe('useSessionMetrics', () => {
         });
 
         // Word 2: +0.5 increase
-        result.current.updateMetrics('vague', {
+        result.current.updateMetrics('unknown', {
           rootId: 200,
           oldStability: 1.5,
           newStability: 2.0,
@@ -317,19 +317,6 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics.longestStreak).toBe(3);
     });
 
-    test('should reset streak on vague', () => {
-      const { result } = renderHook(() => useSessionMetrics());
-
-      act(() => {
-        result.current.updateMetrics('known', { rootId: 100 });
-        result.current.updateMetrics('known', { rootId: 200 });
-        result.current.updateMetrics('vague', { rootId: 300 });
-      });
-
-      expect(result.current.metrics.currentStreak).toBe(0);
-      expect(result.current.metrics.longestStreak).toBe(2);
-    });
-
     test('should reset streak on unknown', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
@@ -350,20 +337,19 @@ describe('useSessionMetrics', () => {
       act(() => {
         result.current.updateMetrics('known', { rootId: 100 });
         result.current.updateMetrics('known', { rootId: 200 });
-        result.current.updateMetrics('vague', { rootId: 300 });
+        result.current.updateMetrics('unknown', { rootId: 300 });
         result.current.updateMetrics('unknown', { rootId: 400 });
         result.current.updateMetrics('known', { rootId: 500 });
       });
 
       expect(result.current.metrics).toMatchObject({
         wordsKnown: 3,
-        wordsVague: 1,
-        wordsUnknown: 1,
+        wordsUnknown: 2,
       });
 
       // Totals should add up
-      const { wordsKnown, wordsVague, wordsUnknown } = result.current.metrics;
-      expect(wordsKnown + wordsVague + wordsUnknown).toBe(5);
+      const { wordsKnown, wordsUnknown } = result.current.metrics;
+      expect(wordsKnown + wordsUnknown).toBe(5);
     });
   });
 
@@ -396,7 +382,6 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics).toMatchObject({
         wordsReviewed: 0,
         wordsKnown: 0,
-        wordsVague: 0,
         wordsUnknown: 0,
         averageStabilityIncrease: 0,
         longestStreak: 0,
@@ -418,7 +403,7 @@ describe('useSessionMetrics', () => {
       const { result } = renderHook(() => useSessionMetrics());
 
       act(() => {
-        // Word 1: Unknown -> crosses threshold when reviewed again
+        // Word 1: Unknown -> reviewed again later
         result.current.updateMetrics('unknown', {
           rootId: 100,
           oldStability: 4.2,
@@ -439,8 +424,8 @@ describe('useSessionMetrics', () => {
           newStability: 5.1,
         });
 
-        // Word 3: Vague -> doesn't cross threshold
-        result.current.updateMetrics('vague', {
+        // Word 3: Unknown -> doesn't cross threshold
+        result.current.updateMetrics('unknown', {
           rootId: 300,
           oldStability: 3.0,
           newStability: 3.5,
@@ -450,10 +435,9 @@ describe('useSessionMetrics', () => {
       expect(result.current.metrics).toMatchObject({
         wordsReviewed: 3, // 3 unique words (100, 200, 300)
         wordsKnown: 2, // 2 known responses
-        wordsVague: 1, // 1 vague response
-        wordsUnknown: 1, // 1 unknown response
+        wordsUnknown: 2, // 2 unknown responses
         masteredWords: 2, // Words 100 and 200 crossed threshold
-        currentStreak: 0, // Reset by vague at end
+        currentStreak: 0, // Reset by unknown at end
         longestStreak: 2, // Word 200 (known) + Word 100 (known) = 2 consecutive known
       });
     });

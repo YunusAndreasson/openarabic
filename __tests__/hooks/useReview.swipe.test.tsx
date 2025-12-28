@@ -11,10 +11,8 @@
  * useReview Hook Tests - Swipe Gestures
  *
  * Tests user swipe interactions:
- * - Swipe right (no hesitation) → known
+ * - Swipe right → known
  * - Swipe left → unknown
- * - Vague button + swipe right → vague
- * - Hint visibility toggling
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
@@ -113,31 +111,19 @@ describe('useReview Hook - Swipe Gestures', () => {
   });
 
   describe('Swipe Gestures', () => {
-    // Parameterized test for basic swipe handling across all gesture types
+    // Parameterized test for basic swipe handling
     test.each([
       {
-        gesture: 'swipe right (no hesitation)',
+        gesture: 'swipe right',
         action: (result: any) => result.current.handleSwipeRight(),
         expectedConfidence: 'known',
         expectedStability: 5,
-        setupHesitation: false,
       },
       {
         gesture: 'swipe left',
         action: (result: any) => result.current.handleSwipeLeft(),
         expectedConfidence: 'unknown',
         expectedStability: 5,
-        setupHesitation: false,
-      },
-      {
-        gesture: 'swipe right with vague',
-        action: (result: any) => {
-          result.current.handleVague();
-          result.current.handleSwipeRight();
-        },
-        expectedConfidence: 'vague',
-        expectedStability: 5,
-        setupHesitation: false,
       },
     ])(
       'should handle $gesture → $expectedConfidence',
@@ -223,36 +209,6 @@ describe('useReview Hook - Swipe Gestures', () => {
       });
     });
 
-    describe('Vague Word Specific Behavior', () => {
-      test('should hide hint after swipe', async () => {
-        const word = createMockWord();
-        useFSRS.mockReturnValue({
-          currentWord: word,
-          wordQueue: [word],
-          isLoading: false,
-          isComplete: false,
-          progress: 0,
-          updateWord: mocks.mockUpdateWord,
-          invalidateQueries: mocks.mockInvalidateQueries,
-        });
-
-        const wrapper = createWrapper();
-        const { result } = renderHook(() => useReview(), { wrapper });
-
-        act(() => {
-          result.current.handleVague();
-        });
-
-        expect(result.current.showHint).toBe(true);
-
-        act(() => {
-          result.current.handleSwipeRight();
-        });
-
-        expect(result.current.showHint).toBe(false);
-      });
-    });
-
     describe('Unknown Word Specific Behavior', () => {
       // SKIP: Complex async timing issue with audioCache.getAudio promise resolution
       it.skip('should play English audio for unknown words', async () => {
@@ -296,55 +252,4 @@ describe('useReview Hook - Swipe Gestures', () => {
     });
   });
 
-  describe('Vague/Hint State', () => {
-    test('should handle vague button press (show hint)', () => {
-      const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useReview(), { wrapper });
-
-      act(() => {
-        result.current.handleVague();
-      });
-
-      expect(result.current.showHint).toBe(true);
-    });
-
-    test('should toggle hint visibility', () => {
-      const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useReview(), { wrapper });
-
-      expect(result.current.showHint).toBe(false);
-
-      act(() => {
-        result.current.handleToggleHint();
-      });
-      expect(result.current.showHint).toBe(true);
-
-      act(() => {
-        result.current.handleToggleHint();
-      });
-      expect(result.current.showHint).toBe(false);
-    });
-  });
 });

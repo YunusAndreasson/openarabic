@@ -31,7 +31,7 @@ export const STRINGS = {
   TUTORIAL_WORD_TAP_CTA: 'Tap the highlighted word to see its meaning and save it for practice',
   // Swipe tutorial - Intro
   TUTORIAL_INTRO_TITLE: 'How it works',
-  TUTORIAL_INTRO_DESCRIPTION: 'Rate each word by swiping. Tap for a hint if needed.',
+  TUTORIAL_INTRO_DESCRIPTION: 'Rate each word by swiping left or right.',
   // Swipe tutorial - action labels
   TUTORIAL_SWIPE_DONT_KNOW: 'Unknown',
   TUTORIAL_SWIPE_KNOW: 'Known',
@@ -44,7 +44,6 @@ export const STRINGS = {
   TUTORIAL_START_PRACTICING: 'Got it',
   // Swipe tutorial - Sample word
   TUTORIAL_SAMPLE_WORD_ARABIC: 'كِتَاب',
-  TUTORIAL_SAMPLE_WORD_HINT: 'B...',
   // Contextual help - Swipe left (Unknown)
   TUTORIAL_CONTEXT_LEFT_LINE1: "Don't know the word?",
   TUTORIAL_CONTEXT_LEFT_LINE2: 'Swipe left.',
@@ -53,10 +52,6 @@ export const STRINGS = {
   TUTORIAL_CONTEXT_RIGHT_LINE1: 'Know the word?',
   TUTORIAL_CONTEXT_RIGHT_LINE2: 'Swipe right.',
   TUTORIAL_CONTEXT_RIGHT_LINE3: 'It appears less often so you skip easy words.',
-  // Contextual help - Tap for hint
-  TUTORIAL_CONTEXT_HINT_LINE1: 'Need a hint?',
-  TUTORIAL_CONTEXT_HINT_LINE2: 'Tap the screen.',
-  TUTORIAL_CONTEXT_HINT_LINE3: 'It reveals the first letter of the translation.',
   // Contact email - single source of truth
   CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',
   // Feedback form

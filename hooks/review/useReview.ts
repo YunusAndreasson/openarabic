@@ -35,7 +35,6 @@ interface UseReviewReturn {
   currentMeaning: string;
   currentWord?: StudyWord | null;
   showTranslation: boolean;
-  isVagueMeaning: boolean;
   isComplete: boolean;
   isUpdating: boolean;
   isLoading: boolean;
@@ -46,13 +45,10 @@ interface UseReviewReturn {
   currentWordKey: string;
   handleSwipeLeft: () => void;
   handleSwipeRight: () => void;
-  handleVague: () => void; // NEW: explicit vague handler for center button
   handleClose: () => void;
   transparentStyle: ViewStyle;
   sessionMetrics: SessionMetrics;
   handleReplayAudio: () => Promise<void>;
-  showHint: boolean; // NEW: hint visibility state
-  handleToggleHint: () => void; // NEW: tap-to-reveal hint handler
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
   isAudioPreloadingComplete: boolean;
@@ -78,6 +74,7 @@ const TRANSITION_DELAYS = {
   fadeAnimation: TIMING_CONFIG.MEDIUM.duration, // Delay for fade animation
   meaningDisplay: 3000, // Display time for meaning overlay
 };
+
 
 export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
@@ -113,17 +110,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // UI state
   const [showTranslation, setShowTranslation] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
-  const [isVagueMeaning, setIsVagueMeaning] = useState(false);
   // Ensure UI re-renders when updating state changes so gestures re-enable
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
-  // NEW: Hint visibility state (tap-to-reveal instead of automatic timer)
-  const [showHint, setShowHint] = useState(false);
-  // NEW: Track if Vague button was pressed (affects swipe right behavior)
-  const vagueButtonPressedRef = useRef(false);
 
   // Consolidated time tracking refs
   const timeRefs = useRef<ReviewTimeRefs>({
-    lastVagueTime: null,
     lastProgressUpdate: Date.now(),
     lastProcessedWordId: null,
   });
@@ -195,16 +186,14 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentWordKeyRef.current = currentWordKey;
   }, [currentWord, currentWordKey]);
 
-  // Ensure translation and hint are hidden when advancing to a new word
+  // Ensure translation is hidden when advancing to a new word
   useEffect(() => {
     // Clear any pending translation timers
     clearTimer('meaningTimeout');
 
-    // Immediately hide translation, hint, and reset related flags
+    // Immediately hide translation and reset state
     setShowTranslation(false);
     setCurrentMeaning('');
-    setShowHint(false); // NEW: Hide hint when advancing to new word
-    vagueButtonPressedRef.current = false; // NEW: Reset vague button flag
     // Reset stale completion flag if a new word/session appears
     if (currentWordKey !== 'none' && stateRefs.current.completionTriggered) {
       stateRefs.current.completionTriggered = false;
@@ -213,9 +202,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Batch state updates for translation display
   const showTranslationWithTimeout = useCallback(
-    (meaning: string, isVague: boolean) => {
+    (meaning: string) => {
       setCurrentMeaning(meaning);
-      setIsVagueMeaning(isVague);
       setShowTranslation(true);
 
       setTimer(
@@ -229,20 +217,15 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     [setTimer],
   );
 
-  // Shows translation if needed
-  const displayMeaning = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown') => {
-      if (confidence === 'known') return;
-
-      const meaning = currentWord?.root?.meaning || 'No translation available';
-      showTranslationWithTimeout(meaning, confidence === 'vague');
-    },
-    [currentWord?.root?.meaning, showTranslationWithTimeout],
-  );
+  // Shows translation for unknown words
+  const displayMeaning = useCallback(() => {
+    const meaning = currentWord?.root?.meaning || 'No translation available';
+    showTranslationWithTimeout(meaning);
+  }, [currentWord?.root?.meaning, showTranslationWithTimeout]);
 
   // Process the word update in FSRS
   const processFeedback = useCallback(
-    async (confidence: 'known' | 'vague' | 'unknown', controller: AbortController) => {
+    async (confidence: 'known' | 'unknown', controller: AbortController) => {
       if (!currentWord?.root_id || controller.signal.aborted) {
         return;
       }
@@ -327,7 +310,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   }, []);
 
   const handleKnowledgeResponse = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown') => {
+    (confidence: 'known' | 'unknown') => {
       // Guard conditions: exit early if we're already in a processing state
       if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
         return;
@@ -356,21 +339,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           // Clean up any playing audio before proceeding
           stopAudioSafely();
 
-          // VAGUE WORDS: Very snappy transition with brief fade
-          if (confidence === 'vague') {
-            timeRefs.current.lastVagueTime = Date.now();
-            fadeOut();
-            setTimer(
-              'fadeAnimationVague',
-              () => {
-                if (controller.signal.aborted) return;
-                processFeedback(confidence, controller);
-              },
-              80, // Very snappy 80ms fade
-            );
-            return;
-          }
-
           // KNOWN WORDS: Fade out and proceed quickly
           if (confidence === 'known') {
             fadeOut();
@@ -386,38 +354,36 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           }
 
           // UNKNOWN WORDS: Show translation + play audio + delay before next word
-          if (confidence === 'unknown') {
-            setTimer(
-              'fadeAnimationUnknown',
-              () => {
-                if (controller.signal.aborted) return;
+          setTimer(
+            'fadeAnimationUnknown',
+            () => {
+              if (controller.signal.aborted) return;
 
-                // Show translation overlay with red text
-                displayMeaning(confidence);
+              // Show translation overlay with red text
+              displayMeaning();
 
-                // Play English feedback audio
-                if (currentWord?.root?.audio_url_en) {
-                  const englishAudioUrl = generateStorageUrl(
-                    'audio',
-                    currentWord.root.audio_url_en,
-                  );
-                  if (englishAudioUrl) {
-                    playAudio(englishAudioUrl);
-                  }
-                }
-
-                // Wait for meaning display before processing
-                setTimer(
-                  'meaningTimeout',
-                  () => {
-                    processFeedback(confidence, controller);
-                  },
-                  TRANSITION_DELAYS.meaningDisplay,
+              // Play English feedback audio
+              if (currentWord?.root?.audio_url_en) {
+                const englishAudioUrl = generateStorageUrl(
+                  'audio',
+                  currentWord.root.audio_url_en,
                 );
-              },
-              TRANSITION_DELAYS.fadeAnimation,
-            );
-          }
+                if (englishAudioUrl) {
+                  playAudio(englishAudioUrl);
+                }
+              }
+
+              // Wait for meaning display before processing
+              setTimer(
+                'meaningTimeout',
+                () => {
+                  processFeedback(confidence, controller);
+                },
+                TRANSITION_DELAYS.meaningDisplay,
+              );
+            },
+            TRANSITION_DELAYS.fadeAnimation,
+          );
         },
         TRANSITION_DELAYS.initial,
       );
@@ -574,38 +540,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   const handleSwipeLeft = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
-    // Hide hint immediately when swiping
-    setShowHint(false);
     handleKnowledgeResponse('unknown');
   }, [handleKnowledgeResponse, isComplete]);
 
   const handleSwipeRight = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
-    // Hide hint immediately when swiping
-    setShowHint(false);
-    // Check if Vague button was pressed - if so, swipe right = "vague", otherwise = "known"
-    const confidence = vagueButtonPressedRef.current ? 'vague' : 'known';
-    handleKnowledgeResponse(confidence);
+    handleKnowledgeResponse('known');
   }, [handleKnowledgeResponse, isComplete]);
-
-  // NEW: Vague button just shows hint and sets flag (user then swipes to proceed)
-  const handleVague = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
-    // Show hint and mark that vague was pressed (user will swipe to proceed)
-    setShowHint(true);
-    vagueButtonPressedRef.current = true;
-  }, [isComplete]);
-
-  // NEW: Toggle hint visibility (tap word to reveal/hide hint)
-  const handleToggleHint = useCallback(() => {
-    setShowHint(prev => {
-      // If hiding hint, also reset vague button flag
-      if (prev) {
-        vagueButtonPressedRef.current = false;
-      }
-      return !prev;
-    });
-  }, []);
 
   // Replay audio for current word (passed to WordDisplay via ReviewCard)
   // This callback is provided to ReviewContent via context and used in WordDisplay
@@ -724,7 +665,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       setIsUpdatingUI(false);
       stateRefs.current.maxProgress = 0;
       timeRefs.current.lastProcessedWordId = null;
-      timeRefs.current.lastVagueTime = null;
       timeRefs.current.lastProgressUpdate = Date.now();
 
       // Reset session tracking refs
@@ -739,7 +679,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentMeaning,
     currentWord,
     showTranslation,
-    isVagueMeaning,
     isComplete,
     isUpdating: isUpdatingUI,
     isLoading,
@@ -750,13 +689,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentWordKey,
     handleSwipeLeft,
     handleSwipeRight,
-    handleVague, // NEW: explicit vague handler
     handleClose,
     transparentStyle: opacityStyle,
     sessionMetrics,
     handleReplayAudio,
-    showHint, // NEW: hint visibility state
-    handleToggleHint, // NEW: tap-to-reveal hint handler
     isAudioPreloading,
     audioPreloadProgress,
     isAudioPreloadingComplete,

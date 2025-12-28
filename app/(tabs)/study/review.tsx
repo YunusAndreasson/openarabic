@@ -93,7 +93,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const {
     currentSentence,
     currentMeaning,
-    currentWord,
     showTranslation,
     isComplete,
     progress,
@@ -101,18 +100,17 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     currentWordKey,
     handleSwipeLeft,
     handleSwipeRight,
-    handleVague, // NEW: explicit vague handler (also used for tap-to-reveal hint)
     handleClose,
     isUpdating,
     transparentStyle,
     sessionMetrics,
-    showHint, // NEW: hint visibility state
     handleReplayAudio,
     isAudioPreloading,
     audioPreloadProgress,
     isAudioPreloadingComplete,
     isLoading,
     wordQueue,
+    currentWord,
   } = useReview({ fromRemember });
 
   // Track if review session is still initializing (first word not yet loaded)
@@ -210,7 +208,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         <ReviewCard
           key={currentWordKey}
           word={currentSentence.wordForm}
-          currentWord={currentWord}
           onSwipeLeft={handleSwipeLeft}
           onSwipeRight={handleSwipeRight}
           opacityStyle={transparentStyle}
@@ -218,9 +215,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           testID="review-card"
           translation={currentMeaning}
           showTranslation={showTranslation}
-          showHint={showHint}
-          onToggleHint={handleVague} // Tap anywhere on screen = Vague (shows hint + sets flag)
-          onReplayAudio={handleReplayAudio} // Tap word to replay audio
+          onReplayAudio={handleReplayAudio}
           fullScreenBackground={true}
         />
 
@@ -249,10 +244,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               right: LAYOUT.SPACING.LARGE,
             }}
           >
-            <ReviewBottomActions
-              onVague={handleVague}
-              onShowContextualHelp={handleShowContextualHelp}
-            />
+            <ReviewBottomActions onShowContextualHelp={handleShowContextualHelp} />
           </View>
         </View>
       </View>

@@ -1,7 +1,8 @@
 /**
  * ReviewBottomActions Component Tests
  *
- * Tests review action buttons (Don't Know, Hint, Know).
+ * Tests review action buttons (Don't Know, Know).
+ * Note: Hint button was removed - hesitation detection replaces tap-to-reveal.
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
@@ -28,7 +29,6 @@ jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory({
     error: '#F44336',
     success: '#4CAF50',
-    warning: '#FF9800',
   }),
 );
 
@@ -55,8 +55,15 @@ jest.mock('@/types/enums', () => ({
   },
 }));
 
+// Mock tutorials constant
+jest.mock('@/constants/tutorials', () => ({
+  ContextualHelpType: {
+    SWIPE_LEFT: 'swipe_left',
+    SWIPE_RIGHT: 'swipe_right',
+  },
+}));
+
 describe('ReviewBottomActions', () => {
-  const mockOnVague = jest.fn();
   const mockOnShowContextualHelp = jest.fn();
 
   beforeEach(() => {
@@ -64,11 +71,10 @@ describe('ReviewBottomActions', () => {
   });
 
   describe('Rendering', () => {
-    test('renders three action indicators', () => {
+    test('renders two action indicators (left and right)', () => {
       const { getByText } = render(<ReviewBottomActions />);
 
       expect(getByText("Don't Know")).toBeTruthy();
-      expect(getByText('Hint')).toBeTruthy();
       expect(getByText('Know')).toBeTruthy();
     });
 
@@ -77,12 +83,6 @@ describe('ReviewBottomActions', () => {
 
       expect(getByTestId('icon-chevron-back')).toBeTruthy();
       expect(getByTestId('icon-chevron-forward')).toBeTruthy();
-    });
-
-    test('renders fingerprint icon for hint action', () => {
-      const { getByTestId } = render(<ReviewBottomActions />);
-
-      expect(getByTestId('icon-finger-print')).toBeTruthy();
     });
   });
 
@@ -103,39 +103,6 @@ describe('ReviewBottomActions', () => {
       );
 
       fireEvent.press(getByText("Don't Know"));
-
-      // Haptics removed for review interactions (2025 UX best practice)
-      expect(mockLightFeedback).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Center Button (Hint)', () => {
-    test('calls onShowContextualHelp when pressed if available', () => {
-      const { getByText } = render(
-        <ReviewBottomActions
-          onVague={mockOnVague}
-          onShowContextualHelp={mockOnShowContextualHelp}
-        />,
-      );
-
-      fireEvent.press(getByText('Hint'));
-
-      expect(mockOnShowContextualHelp).toHaveBeenCalledTimes(1);
-      expect(mockOnVague).not.toHaveBeenCalled();
-    });
-
-    test('calls onVague when pressed if onShowContextualHelp not provided', () => {
-      const { getByText } = render(<ReviewBottomActions onVague={mockOnVague} />);
-
-      fireEvent.press(getByText('Hint'));
-
-      expect(mockOnVague).toHaveBeenCalledTimes(1);
-    });
-
-    test('does not trigger haptic feedback when pressed', () => {
-      const { getByText } = render(<ReviewBottomActions onVague={mockOnVague} />);
-
-      fireEvent.press(getByText('Hint'));
 
       // Haptics removed for review interactions (2025 UX best practice)
       expect(mockLightFeedback).not.toHaveBeenCalled();
@@ -171,7 +138,6 @@ describe('ReviewBottomActions', () => {
 
       // Should render without errors
       expect(getByText("Don't Know")).toBeTruthy();
-      expect(getByText('Hint')).toBeTruthy();
       expect(getByText('Know')).toBeTruthy();
     });
 
@@ -180,7 +146,6 @@ describe('ReviewBottomActions', () => {
 
       // Should not throw
       fireEvent.press(getByText("Don't Know"));
-      fireEvent.press(getByText('Hint'));
       fireEvent.press(getByText('Know'));
     });
   });

@@ -15,24 +15,24 @@ export type TutorialId = (typeof TutorialId)[keyof typeof TutorialId];
 
 /**
  * Swipe tutorial step indices (full tutorial flow)
+ * Note: HINT step was removed - hesitation detection replaced tap-to-reveal
  */
 export const SwipeTutorialStep = {
   INTRO: 0,
   SWIPE_LEFT: 1,
   SWIPE_RIGHT: 2,
-  HINT: 3,
-  SRS_EXPLAIN: 4,
+  SRS_EXPLAIN: 3,
 } as const;
 
 export type SwipeTutorialStep = (typeof SwipeTutorialStep)[keyof typeof SwipeTutorialStep];
 
 /**
  * Contextual help types (single-step help triggered by tapping icons)
+ * Note: HINT was removed - hesitation detection replaced tap-to-reveal
  */
 export const ContextualHelpType = {
   SWIPE_LEFT: 'swipe_left',
   SWIPE_RIGHT: 'swipe_right',
-  HINT: 'hint',
 } as const;
 
 export type ContextualHelpType = (typeof ContextualHelpType)[keyof typeof ContextualHelpType];

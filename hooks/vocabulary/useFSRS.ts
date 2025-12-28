@@ -265,12 +265,7 @@ export function useFSRS({
         const card = convertToFSRSCard(currentWord);
         const now = new Date();
 
-        const rating =
-          confidence === 'known'
-            ? Rating.Good
-            : confidence === 'vague'
-              ? Rating.Hard
-              : Rating.Again;
+        const rating = confidence === 'known' ? Rating.Good : Rating.Again;
 
         const result = fsrsInstance.next(card, now, rating);
         newCard = result.card;

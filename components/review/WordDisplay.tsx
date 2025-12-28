@@ -57,14 +57,7 @@ const STATIC_STYLES = StyleSheet.create({
 /**
  * Component to display a word with optimal styling and sizing
  */
-export function WordDisplay({
-  word,
-  style,
-  translation,
-  showFirstLetterOnly = false,
-  englishTranslation,
-  onWordPress,
-}: WordDisplayProps) {
+export function WordDisplay({ word, style, translation, onWordPress }: WordDisplayProps) {
   const colors = useColors();
 
   // Color batching
@@ -91,37 +84,18 @@ export function WordDisplay({
 
   const containerStyle = [STATIC_STYLES.container, style];
 
-  // Using regular ThemedText for translation; style handled by typography system
-
-  // Always show the full Arabic word - hint appears separately below
-  const displayWord = word;
-
-  // Get the hesitation hint (first letter of English translation with dots)
-  let hesitationHint = null;
-  if (showFirstLetterOnly && englishTranslation && englishTranslation.length > 0) {
-    const firstLetter = englishTranslation.charAt(0).toUpperCase();
-    hesitationHint = `${firstLetter}...`;
-  }
-
   const arabicTextProps = {
     skipDefaultColor: true,
     arabicFontSize: WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE,
     style: arabicTextStyle,
     type: 'arabic' as const,
-    children: displayWord,
+    children: word,
   };
 
   const translationTextProps = {
     variant: 'error' as const,
     type: 'heading2' as const,
     children: translation ? capitalizeFirstLetter(translation) : translation,
-  };
-
-  // Create props for hesitation hint (similar to translation but auto-shown)
-  const hesitationHintProps = {
-    variant: 'warning' as const, // Use warning variant for yellow/orange hesitation hint
-    type: 'heading2' as const,
-    children: hesitationHint,
   };
 
   const handleWordPress = () => {
@@ -143,11 +117,6 @@ export function WordDisplay({
         <Animated.View style={[STATIC_STYLES.translationContainer, translationAnimatedStyle]}>
           <ThemedText {...translationTextProps} />
         </Animated.View>
-      )}
-      {hesitationHint && (
-        <View style={[STATIC_STYLES.translationContainer, { marginTop: LAYOUT.SPACING.SMALL }]}>
-          <ThemedText {...hesitationHintProps} />
-        </View>
       )}
     </View>
   );

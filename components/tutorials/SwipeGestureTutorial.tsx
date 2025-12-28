@@ -1,7 +1,7 @@
 /**
  * Swipe gesture tutorial - supports both full onboarding and contextual help
  *
- * Full tutorial (first-time): 5 steps - Intro → Swipe Left → Swipe Right → Hint → Ready
+ * Full tutorial (first-time): 4 steps - Intro → Swipe Left → Swipe Right → Ready
  * Contextual help: Single step explaining specific action (reuses same step components)
  */
 
@@ -16,7 +16,6 @@ import { useColors } from '@/hooks/theme/useColors';
 import { successFeedback } from '@/utils/haptics';
 
 import {
-  TutorialHintStep,
   TutorialIntroStep,
   TutorialSRSStep,
   TutorialSwipeLeftStep,
@@ -37,14 +36,12 @@ const FULL_TUTORIAL_COMPONENTS = [
   TutorialIntroStep,
   TutorialSwipeLeftStep,
   TutorialSwipeRightStep,
-  TutorialHintStep,
   TutorialSRSStep,
 ];
 
 // Titles for full tutorial - null means no title (contextual screens already self-explanatory)
 const FULL_TUTORIAL_TITLES: (string | null)[] = [
   STRINGS.TUTORIAL_INTRO_TITLE,
-  null,
   null,
   null,
   STRINGS.TUTORIAL_SRS_TITLE,
@@ -54,7 +51,6 @@ const FULL_TUTORIAL_TITLES: (string | null)[] = [
 const CONTEXTUAL_COMPONENTS: Record<ContextualHelpType, React.ComponentType> = {
   [ContextualHelpType.SWIPE_LEFT]: TutorialSwipeLeftStep,
   [ContextualHelpType.SWIPE_RIGHT]: TutorialSwipeRightStep,
-  [ContextualHelpType.HINT]: TutorialHintStep,
 };
 
 export function SwipeGestureTutorial({

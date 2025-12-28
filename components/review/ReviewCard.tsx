@@ -1,15 +1,8 @@
-import { useEffect, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-reanimated';
-import Animated, {
-  cancelAnimation,
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
 import { SPRING_CONFIG } from '@/constants/animation';
 
@@ -18,7 +11,6 @@ import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
 import { useColors } from '@/hooks/theme/useColors';
 import type { AnimatedStyleProp as AppAnimatedStyleProp } from '@/types/ui/base.types';
-import type { StudyWord } from '@/types/vocabulary.types';
 import { withOpacity } from '@/utils/colorUtils';
 
 // ===== GESTURE CONSTANTS =====
@@ -47,7 +39,6 @@ const STATIC_STYLES = StyleSheet.create({
 
 interface ReviewCardProps {
   word: string;
-  currentWord?: StudyWord | null; // Current word object for accessing English translation
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   isUpdating: boolean;
@@ -56,9 +47,6 @@ interface ReviewCardProps {
   // Translation props
   translation?: string;
   showTranslation?: boolean;
-  // Hint props (tap-to-reveal)
-  showHint?: boolean; // Controlled from parent instead of timer
-  onToggleHint?: () => void; // Handler for tapping screen to reveal hint
   onReplayAudio?: () => void; // Handler for tapping word to replay audio
   // Background props
   fullScreenBackground?: boolean; // When true, renders background layer only for full-screen flash
@@ -66,7 +54,6 @@ interface ReviewCardProps {
 
 export function ReviewCard({
   word,
-  currentWord,
   onSwipeLeft,
   onSwipeRight,
   isUpdating,
@@ -74,25 +61,10 @@ export function ReviewCard({
   testID,
   translation,
   showTranslation = false,
-  showHint = false,
-  onToggleHint, // Handler for tapping screen (anywhere)
-  onReplayAudio, // Handler for tapping word specifically
+  onReplayAudio,
   fullScreenBackground = false,
 }: ReviewCardProps) {
   const colors = useColors();
-
-  // Prevent tap from firing during swipe gestures
-  const didMoveRef = useRef(false);
-  const didMoveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (didMoveTimerRef.current) {
-        clearTimeout(didMoveTimerRef.current);
-      }
-    };
-  }, []);
 
   // ===== SWIPE GESTURE HOOK (v2 OPTIMIZED) =====
   const { gesture: panGesture, translateX } = useSwipeGesture({
@@ -100,24 +72,9 @@ export function ReviewCard({
     onSwipeLeft,
     onSwipeRight,
     springConfig: SPRING_CONFIG.CARD,
-    onGestureBegin: () => {
-      // Track that gesture started (any movement)
-      didMoveRef.current = true;
-    },
-    onSwipeComplete: () => {
-      // Reset after animation completes
-      if (didMoveTimerRef.current) {
-        clearTimeout(didMoveTimerRef.current);
-      }
-      didMoveTimerRef.current = setTimeout(() => {
-        didMoveRef.current = false;
-      }, 100);
-    },
   });
 
   // ===== BACKGROUND FLASH COLORS =====
-  // Hint flash uses lower opacity since yellow appears brighter than red/green at same opacity
-  const HINT_FLASH_OPACITY = 0.18; // Reduced further to balance visual intensity with red/green
   const flashColors = {
     error: [
       withOpacity(colors.error, 0),
@@ -127,29 +84,7 @@ export function ReviewCard({
       withOpacity(colors.success, 0),
       withOpacity(colors.success, GESTURE_CONSTANTS.FLASH_OPACITY),
     ] as [string, string],
-    warning: [withOpacity(colors.warning, 0), withOpacity(colors.warning, HINT_FLASH_OPACITY)] as [
-      string,
-      string,
-    ],
   };
-
-  // ===== HINT FLASH ANIMATION =====
-  const hintFlashProgress = useSharedValue(0);
-
-  useEffect(() => {
-    if (showHint) {
-      // Cancel any existing animation and start fresh
-      cancelAnimation(hintFlashProgress);
-      hintFlashProgress.value = 0;
-      hintFlashProgress.value = withTiming(1, { duration: 150 }, () => {
-        hintFlashProgress.value = withTiming(0, { duration: 300 });
-      });
-    } else {
-      // Cancel animation and reset immediately when hint is hidden
-      cancelAnimation(hintFlashProgress);
-      hintFlashProgress.value = 0;
-    }
-  }, [showHint]);
 
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
@@ -157,12 +92,6 @@ export function ReviewCard({
     const progress = Math.min(Math.abs(translateX.value) / maxTranslation, 1);
     const t = 1 - Math.pow(1 - progress, 2); // Quadratic ease-out
 
-    // Hint flash (yellow)
-    if (hintFlashProgress.value > 0) {
-      return {
-        backgroundColor: interpolateColor(hintFlashProgress.value, [0, 1], flashColors.warning),
-      };
-    }
     // Left swipe (red)
     if (translateX.value < 0) {
       return { backgroundColor: interpolateColor(t, [0, 1], flashColors.error) };
@@ -172,7 +101,7 @@ export function ReviewCard({
       return { backgroundColor: interpolateColor(t, [0, 1], flashColors.success) };
     }
     return { backgroundColor: colors.transparent };
-  }, [flashColors.error, flashColors.success, flashColors.warning]);
+  }, [flashColors.error, flashColors.success]);
 
   // ===== COMBINED ANIMATED STYLE (SINGLE ANIMATED VIEW) =====
   const combinedAnimatedStyle = useAnimatedStyle(() => {
@@ -182,24 +111,10 @@ export function ReviewCard({
     };
   }, []);
 
-  // Get English translation for hint from root
-  const englishTranslation = currentWord?.root?.meaning || '';
-
-  // Handle tap on screen (but not during swipes)
-  const handleScreenTap = () => {
-    // If finger moved (swipe gesture), ignore the tap
-    if (didMoveRef.current) {
-      return;
-    }
-    onToggleHint?.();
-  };
-
   // Word display props
   const wordDisplayProps = {
     word,
     translation: showTranslation ? translation : undefined,
-    showFirstLetterOnly: showHint, // Controlled from parent (tap-to-reveal)
-    englishTranslation: englishTranslation || undefined, // Always pass English translation when available
     onWordPress: onReplayAudio, // Tapping word replays audio
   };
 
@@ -233,26 +148,15 @@ export function ReviewCard({
               bottom: 0,
             }}
           >
-            {/* Full-screen tap handler for hint toggle */}
-            <Pressable
-              style={{ flex: 1 }}
-              onPress={handleScreenTap}
-              onPressIn={() => {
-                // Reset movement flag when press starts
-                didMoveRef.current = false;
-              }}
-              disabled={!onToggleHint}
-            >
-              {/* Word content - centered in screen */}
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Animated.View
-                  style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
-                  testID={testID}
-                >
-                  <WordDisplayComponent {...wordDisplayProps} />
-                </Animated.View>
-              </View>
-            </Pressable>
+            {/* Word content - centered in screen */}
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <Animated.View
+                style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
+                testID={testID}
+              >
+                <WordDisplayComponent {...wordDisplayProps} />
+              </Animated.View>
+            </View>
           </Animated.View>
         </GestureDetector>
       </>
@@ -264,24 +168,14 @@ export function ReviewCard({
     <View style={STATIC_STYLES.swipeContainer}>
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[STATIC_STYLES.swipeContainer, swipeBackgroundStyle]}>
-          <Pressable
-            style={{ flex: 1 }}
-            onPress={handleScreenTap}
-            onPressIn={() => {
-              // Reset movement flag when press starts
-              didMoveRef.current = false;
-            }}
-            disabled={!onToggleHint}
-          >
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Animated.View
-                style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
-                testID={testID}
-              >
-                <WordDisplayComponent {...wordDisplayProps} />
-              </Animated.View>
-            </View>
-          </Pressable>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Animated.View
+              style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
+              testID={testID}
+            >
+              <WordDisplayComponent {...wordDisplayProps} />
+            </Animated.View>
+          </View>
         </Animated.View>
       </GestureDetector>
     </View>

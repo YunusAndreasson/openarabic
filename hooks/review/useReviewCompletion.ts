@@ -76,7 +76,6 @@ export const useReviewCompletion = (
     analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, {
       wordsReviewed: sessionMetrics.wordsReviewed,
       wordsKnown: sessionMetrics.wordsKnown,
-      wordsVague: sessionMetrics.wordsVague,
       wordsUnknown: sessionMetrics.wordsUnknown,
       sessionDuration,
       averageStabilityIncrease: sessionMetrics.averageStabilityIncrease,

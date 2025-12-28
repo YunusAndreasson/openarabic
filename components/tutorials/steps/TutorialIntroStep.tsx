@@ -24,7 +24,7 @@ export function TutorialIntroStep() {
         </ThemedText>
       </View>
 
-      {/* Icons showing the three actions */}
+      {/* Icons showing swipe left/right actions */}
       <View style={styles.iconRow}>
         <View style={styles.iconItem}>
           <View style={[styles.indicator, { backgroundColor: colors.error + '20' }]}>
@@ -32,16 +32,6 @@ export function TutorialIntroStep() {
               name="chevron-back"
               size={TUTORIAL_VISUALS.INDICATOR_ICON_SIZE}
               color={colors.error}
-            />
-          </View>
-        </View>
-
-        <View style={styles.iconItem}>
-          <View style={[styles.indicator, { backgroundColor: colors.warning + '20' }]}>
-            <Ionicons
-              name="finger-print"
-              size={TUTORIAL_VISUALS.INDICATOR_ICON_SIZE}
-              color={colors.warning}
             />
           </View>
         </View>

@@ -91,47 +91,8 @@ describe('WordDisplay', () => {
     });
   });
 
-  describe('Hesitation Hint', () => {
-    test('shows first letter hint when showFirstLetterOnly is true', () => {
-      const { getByText } = render(
-        <WordDisplay word="كتب" showFirstLetterOnly englishTranslation="write" />,
-      );
-
-      expect(getByText('W...')).toBeTruthy();
-    });
-
-    test('does not trigger haptic feedback when hint appears', () => {
-      render(<WordDisplay word="كتب" showFirstLetterOnly englishTranslation="write" />);
-
-      // Haptics removed for minor UI interactions (2025 UX best practice)
-      expect(mockSelectionFeedback).not.toHaveBeenCalled();
-    });
-
-    test('does not show hint when showFirstLetterOnly is false', () => {
-      const { queryByText } = render(
-        <WordDisplay word="كتب" showFirstLetterOnly={false} englishTranslation="write" />,
-      );
-
-      expect(queryByText('W...')).toBeNull();
-    });
-
-    test('does not show hint when no english translation', () => {
-      const { queryByText } = render(<WordDisplay word="كتب" showFirstLetterOnly />);
-
-      // Should not crash and no hint shown
-      expect(queryByText(/\.\.\./)).toBeNull();
-    });
-
-    test('hint is displayed as non-interactive element', () => {
-      const { getByText } = render(
-        <WordDisplay word="كتب" showFirstLetterOnly englishTranslation="write" />,
-      );
-
-      // Hint is now a View (non-pressable) - no haptic feedback
-      expect(getByText('W...')).toBeTruthy();
-      expect(mockLightFeedback).not.toHaveBeenCalled();
-    });
-  });
+  // Note: Hesitation hint tests removed - hint functionality was replaced by
+  // automatic hesitation detection (2-second threshold determines vague vs known)
 
   describe('Word Press Interaction', () => {
     test('calls onWordPress when word is pressed', () => {

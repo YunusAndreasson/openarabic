@@ -19,17 +19,17 @@ const BOTTOM_ACTIONS_CONSTANTS = {
 const STATIC_STYLES = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'flex-end',
     width: '100%',
     paddingBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.XLARGE,
     height: BOTTOM_ACTIONS_CONSTANTS.CONTAINER_HEIGHT,
   },
   indicatorContainer: {
     alignItems: 'center',
     justifyContent: 'flex-end',
     opacity: LAYOUT.OPACITY.MEDIUM,
-    flex: 1,
     maxWidth: BOTTOM_ACTIONS_CONSTANTS.MAX_INDICATOR_WIDTH,
     height: '100%',
   },
@@ -56,39 +56,23 @@ const createIconProps = (name: ComponentProps<typeof Ionicons>['name'], color: s
 });
 
 interface ReviewBottomActionsProps {
-  onVague?: () => void; // Handler for explicit Vague button press
-  onShowContextualHelp?: (helpType: ContextualHelpType) => void; // Handler to show contextual help
+  onShowContextualHelp?: (helpType: ContextualHelpType) => void;
 }
 
-export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
-  onVague,
-  onShowContextualHelp,
-}) => {
+export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({ onShowContextualHelp }) => {
   const colors = useColors();
 
   const tintError = colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
   const tintSuccess = colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
-  const tintWarning = colors.warning + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
 
   const leftIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintError }];
-  const centerIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintWarning }];
   const rightIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintSuccess }];
 
   const leftTextStyle = [STATIC_STYLES.indicatorText, { color: colors.error }];
-  const centerTextStyle = [STATIC_STYLES.indicatorText, { color: colors.warning }];
   const rightTextStyle = [STATIC_STYLES.indicatorText, { color: colors.success }];
 
   const handleLeftPress = () => {
     onShowContextualHelp?.(ContextualHelpType.SWIPE_LEFT);
-  };
-
-  const handleCenterPress = () => {
-    // Show contextual help if handler exists, otherwise trigger vague action
-    if (onShowContextualHelp) {
-      onShowContextualHelp(ContextualHelpType.HINT);
-    } else if (onVague) {
-      onVague();
-    }
   };
 
   const handleRightPress = () => {
@@ -103,14 +87,6 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
           <Ionicons {...createIconProps('chevron-back', colors.error)} />
         </View>
         <ThemedText style={leftTextStyle}>{ReviewAction.DONT_KNOW}</ThemedText>
-      </Pressable>
-
-      {/* Center button - Hint (tappable to show contextual help) */}
-      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleCenterPress}>
-        <View style={centerIndicatorStyle}>
-          <Ionicons {...createIconProps('finger-print', colors.warning)} />
-        </View>
-        <ThemedText style={centerTextStyle}>Hint</ThemedText>
       </Pressable>
 
       {/* Right indicator - Known (tappable to show contextual help) */}

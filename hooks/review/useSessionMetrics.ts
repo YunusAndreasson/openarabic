@@ -18,7 +18,6 @@ export const useSessionMetrics = () => {
   const metricsRef = useRef<SessionMetrics>({
     wordsReviewed: 0,
     wordsKnown: 0,
-    wordsVague: 0,
     wordsUnknown: 0,
     averageStabilityIncrease: 0,
     longestStreak: 0,
@@ -37,7 +36,7 @@ export const useSessionMetrics = () => {
    */
   const updateMetrics = useCallback(
     (
-      confidence: 'known' | 'vague' | 'unknown',
+      confidence: 'known' | 'unknown',
       wordData?: { rootId: number; oldStability?: number; newStability?: number },
     ) => {
       const metrics = metricsRef.current;
@@ -58,9 +57,6 @@ export const useSessionMetrics = () => {
         metrics.wordsKnown++;
         metrics.currentStreak++;
         metrics.longestStreak = Math.max(metrics.longestStreak, metrics.currentStreak);
-      } else if (confidence === 'vague') {
-        metrics.wordsVague++;
-        metrics.currentStreak = 0; // Reset streak on vague
       } else {
         metrics.wordsUnknown++;
         metrics.currentStreak = 0; // Reset streak on unknown
@@ -100,7 +96,6 @@ export const useSessionMetrics = () => {
     const metrics = metricsRef.current;
     metrics.wordsReviewed = 0;
     metrics.wordsKnown = 0;
-    metrics.wordsVague = 0;
     metrics.wordsUnknown = 0;
     metrics.averageStabilityIncrease = 0;
     metrics.longestStreak = 0;

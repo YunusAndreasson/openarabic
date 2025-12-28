@@ -2,13 +2,12 @@
  * Confidence level selected when answering a vocabulary prompt.
  * Centralized here to avoid repeating the union across hooks and services.
  */
-export type WordConfidence = 'known' | 'unknown' | 'vague';
+export type WordConfidence = 'known' | 'unknown';
 
 /**
  * Consolidated refs for time tracking during review sessions
  */
 export interface ReviewTimeRefs {
-  lastVagueTime: number | null;
   lastProgressUpdate: number;
   lastProcessedWordId: string | null;
 }
@@ -32,8 +31,6 @@ export interface SessionMetrics {
   wordsReviewed: number;
   /** Number of words marked as known */
   wordsKnown: number;
-  /** Number of words marked as vaguely known */
-  wordsVague: number;
   /** Number of words marked as unknown */
   wordsUnknown: number;
   /** Average increase in stability during the session */
