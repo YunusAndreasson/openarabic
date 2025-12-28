@@ -148,6 +148,25 @@ export function getArticleMetadata(article: {
 }
 
 /**
+ * Formats article metadata with author and reading time only (no category)
+ * Use when category is already shown via pill or other UI element
+ * @param article - Article object with author and article_sentences
+ * @returns Formatted string like "Author Name · 3 min"
+ * @example
+ * getArticleMetadataWithoutCategory(article)
+ * // Returns: 'Ibn Kathir · 4 min'
+ */
+export function getArticleMetadataWithoutCategory(article: {
+  author: { name: string };
+  article_sentences?: Array<unknown>;
+}): string {
+  const sentenceCount = article.article_sentences?.length || 0;
+  const readingTime = calculateReadingTime(sentenceCount);
+
+  return `${article.author.name} ${METADATA_SEPARATOR} ${readingTime}`;
+}
+
+/**
  * Extracts and formats the first name from an email address
  * @param email - The email address to extract the name from
  * @returns The formatted first name or 'User' as fallback

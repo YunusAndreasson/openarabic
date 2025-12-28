@@ -19,7 +19,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
 import { handleError } from '@/utils/errorHandling';
-import { capitalizeFirstLetter, getArticleMetadata } from '@/utils/stringUtils';
+import { capitalizeFirstLetter, getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
 // Extract constants outside component for better performance
 const MAX_TITLE_LINES = 2;
@@ -137,7 +137,7 @@ export function ArticleCard({
   const pillText = pillLabel ?? category;
   const capitalizedPillText = capitalizeFirstLetter(pillText);
 
-  const authorDisplayText = getArticleMetadata(article);
+  const authorDisplayText = getArticleMetadataWithoutCategory(article);
 
   // Generate article route with proper parameters
   // Featured articles should start from the beginning, not resume from saved position
