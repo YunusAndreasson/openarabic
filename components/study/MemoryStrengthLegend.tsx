@@ -60,7 +60,12 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
         style={({ pressed }) => [styles.headerRow, pressed && { opacity: LAYOUT.OPACITY.HIGH }]}
         onPress={onToggleSort}
       >
-        <ThemedText type="caption" colorName="subtleLabelText" weight="semibold" style={styles.headerText}>
+        <ThemedText
+          type="caption"
+          colorName="subtleLabelText"
+          weight="semibold"
+          style={styles.headerText}
+        >
           {STRINGS.MEMORY_STRENGTH}
         </ThemedText>
         <Ionicons

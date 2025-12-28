@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     position: 'relative',
+    overflow: 'hidden', // Clip absolute children (progress bars) to border radius
     zIndex: LAYOUT.Z_INDEX.CARD,
   },
   content: createCardContentStyle(),

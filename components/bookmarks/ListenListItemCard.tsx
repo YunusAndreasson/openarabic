@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   cardContent: {
     flexDirection: 'row',
     minHeight: LAYOUT.CARD.HEIGHT.LIST_ITEM,
-    padding: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.SMALL, // 2025: tighter padding for compact list items
     alignItems: 'center',
   },
   contentWrapper: {
@@ -205,6 +205,10 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   progressBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
     borderBottomLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -221,8 +225,8 @@ const styles = StyleSheet.create({
     paddingLeft: LAYOUT.SPACING.SMALL,
   },
   imageContainer: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
-    alignSelf: 'flex-start', // Align to top edge, matching 12px padding
+    marginRight: LAYOUT.SPACING.SMALL, // 2025: tighter gap between image and text
+    alignSelf: 'flex-start',
   },
   thumbnailImage: {
     height: BOOKMARKS_IMAGE_HEIGHT,

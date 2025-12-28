@@ -277,10 +277,11 @@ const styles = StyleSheet.create({
   },
 
   contentRow: {
+    flex: 1, // Fill available height for proper vertical centering
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.SMALL, // 8px - consistent with ListenListItemCard
+    paddingBottom: PROGRESS_HEIGHT, // Account for progress bar overlay
   },
 
   textColumn: {
@@ -342,7 +343,7 @@ const styles = StyleSheet.create({
   },
 
   artworkContainer: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginRight: LAYOUT.SPACING.MEDIUM, // 12px - breathing room for title text
   },
 
   artwork: {
