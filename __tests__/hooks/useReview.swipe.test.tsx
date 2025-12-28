@@ -251,5 +251,4 @@ describe('useReview Hook - Swipe Gestures', () => {
       });
     });
   });
-
 });

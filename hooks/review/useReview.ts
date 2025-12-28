@@ -75,7 +75,6 @@ const TRANSITION_DELAYS = {
   meaningDisplay: 3000, // Display time for meaning overlay
 };
 
-
 export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -364,10 +363,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
               // Play English feedback audio
               if (currentWord?.root?.audio_url_en) {
-                const englishAudioUrl = generateStorageUrl(
-                  'audio',
-                  currentWord.root.audio_url_en,
-                );
+                const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
                 if (englishAudioUrl) {
                   playAudio(englishAudioUrl);
                 }

@@ -159,60 +159,60 @@ export function ArticleCard({
 
   return (
     <BaseCard style={style} testID={testID} onPress={handlePress}>
-        <View style={imageContainerStyle}>
-          <EnhancedImage
-            style={styles.image}
-            source={imageUrl}
-            recyclingKey={`article-${article.id}`}
-            transition={150} // Fast transition for snappy list scrolling
-          />
-          {/* Skia gradient for Android stability and consistent rendering */}
-          <Canvas style={gradientContainerStyle} pointerEvents="none">
-            <Rect x={0} y={0} width={cardWidth} height={gradientHeight}>
-              <LinearGradient
-                start={vec(0, 0)}
-                end={vec(0, gradientHeight)}
-                colors={[...gradientColors]}
-              />
-            </Rect>
-          </Canvas>
+      <View style={imageContainerStyle}>
+        <EnhancedImage
+          style={styles.image}
+          source={imageUrl}
+          recyclingKey={`article-${article.id}`}
+          transition={150} // Fast transition for snappy list scrolling
+        />
+        {/* Skia gradient for Android stability and consistent rendering */}
+        <Canvas style={gradientContainerStyle} pointerEvents="none">
+          <Rect x={0} y={0} width={cardWidth} height={gradientHeight}>
+            <LinearGradient
+              start={vec(0, 0)}
+              end={vec(0, gradientHeight)}
+              colors={[...gradientColors]}
+            />
+          </Rect>
+        </Canvas>
+      </View>
+
+      <View style={styles.pillContainer}>
+        <Pill id={pillText} label={capitalizedPillText} variant="category" />
+      </View>
+
+      <View style={styles.contentContainer}>
+        <View style={styles.textContainer}>
+          <ThemedText
+            colorName="headingText"
+            numberOfLines={MAX_TITLE_LINES}
+            style={TITLE_STYLE}
+            type="heading3"
+          >
+            {title}
+          </ThemedText>
+
+          <ThemedText
+            colorName="authorText"
+            numberOfLines={MAX_AUTHOR_LINES}
+            style={AUTHOR_STYLE}
+            type="label"
+          >
+            {authorDisplayText}
+          </ThemedText>
+
+          <ThemedText
+            colorName="captionText"
+            type="caption"
+            style={SUMMARY_STYLE}
+            numberOfLines={5}
+          >
+            {summary}
+          </ThemedText>
         </View>
-
-        <View style={styles.pillContainer}>
-          <Pill id={pillText} label={capitalizedPillText} variant="category" />
-        </View>
-
-        <View style={styles.contentContainer}>
-          <View style={styles.textContainer}>
-            <ThemedText
-              colorName="headingText"
-              numberOfLines={MAX_TITLE_LINES}
-              style={TITLE_STYLE}
-              type="heading3"
-            >
-              {title}
-            </ThemedText>
-
-            <ThemedText
-              colorName="authorText"
-              numberOfLines={MAX_AUTHOR_LINES}
-              style={AUTHOR_STYLE}
-              type="label"
-            >
-              {authorDisplayText}
-            </ThemedText>
-
-            <ThemedText
-              colorName="captionText"
-              type="caption"
-              style={SUMMARY_STYLE}
-              numberOfLines={5}
-            >
-              {summary}
-            </ThemedText>
-          </View>
-        </View>
-      </BaseCard>
+      </View>
+    </BaseCard>
   );
 }
 
