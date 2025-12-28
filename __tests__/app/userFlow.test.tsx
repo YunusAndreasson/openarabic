@@ -149,12 +149,11 @@ describe('UI flow', () => {
   it('renders an article card', () => {
     const { getByTestId } = render(
       <ArticleCard
-        author="A"
         category="cat"
         imageUrl="img"
         summary="s"
         title="t"
-        article={{ id: 1, title: 't' } as any}
+        article={{ id: 1, title: 't', author: { name: 'A' }, category: { name: 'cat' } } as any}
         testID="article-1"
       />,
     );

@@ -37,7 +37,12 @@ export const MetricCard = memo<MetricCardProps>(({ icon, value, label, color, on
         <ThemedText type="heading2" weight="bold" style={[styles.value, { color }]}>
           {displayValue}
         </ThemedText>
-        <ThemedText type="caption" variant="secondary" style={styles.label} numberOfLines={1}>
+        <ThemedText
+          type="caption"
+          colorName="subtleLabelText"
+          style={styles.label}
+          numberOfLines={1}
+        >
           {label}
         </ThemedText>
       </View>
@@ -73,6 +78,5 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: 'center',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
 });

@@ -293,16 +293,30 @@ export const useAccountScreen = () => {
 
   const handleRequestReview = useCallback(async () => {
     try {
-      if (await StoreReview.hasAction()) {
-        await StoreReview.requestReview();
+      // isAvailableAsync checks platform capability and store URL config
+      const isAvailable = await StoreReview.isAvailableAsync();
+      if (!isAvailable) {
+        // Not available: TestFlight, missing store URL, or unsupported platform
+        handleError(new Error('StoreReview not available'), {
+          analyticsEventName: 'Store_Review_Not_Available',
+          sentryTags: { location: 'account', action: 'store_review' },
+          sentryExtra: { storeUrl: StoreReview.storeUrl() },
+          sentrySeverity: 'info',
+          showToast: false,
+        });
+        return;
       }
+
+      // Small delay to ensure app is fully in foreground (iOS window scene issue)
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await StoreReview.requestReview();
+      lightFeedback();
     } catch (error) {
       handleError(error as Error, {
         analyticsEventName: 'Store_Review_Request_Failed',
         sentryTags: { location: 'account', action: 'store_review' },
-        sentryExtra: { hasAction: await StoreReview.hasAction() },
-        showToast: false, // Silent failure for store review
-        sentrySeverity: 'info', // Not critical, just informational
+        showToast: true,
+        sentrySeverity: 'warning',
       });
     }
   }, []);

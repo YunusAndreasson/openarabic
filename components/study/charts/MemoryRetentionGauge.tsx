@@ -2,7 +2,7 @@ import { BaseChart } from '@/components/common/charts/BaseChart';
 import { useChartColors } from '@/components/common/charts/ChartColors';
 import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   cancelAnimation,
   useAnimatedReaction,
@@ -154,9 +154,9 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
 
   return (
     <BaseChart contentHeight={GAUGE_HEIGHT + 20} hasData={true} onCardPress={onInfoPress}>
-      <View style={styles.container}>
+      <View style={styles.container} pointerEvents="none">
         <View style={styles.gaugeContainer}>
-          <Canvas style={styles.canvas}>
+          <Canvas style={styles.canvas} pointerEvents="none">
             <Group>
               {/* Full background track - always shows complete arc from 0% to 100% */}
               <Path
@@ -178,19 +178,16 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
             </Group>
           </Canvas>
 
-          {/* Center percentage - positioned to not block touch events */}
-          <View style={styles.centerSection} pointerEvents="none">
+          {/* Center percentage */}
+          <View style={styles.centerSection}>
             <ThemedText style={[styles.retentionText, dynamicStyles.retentionText]}>
               {Math.round(animatedRetention)}%
             </ThemedText>
           </View>
-
-          {/* Transparent touch overlay to ensure entire gauge area is tappable */}
-          <Pressable style={styles.touchOverlay} onPress={onInfoPress} pointerEvents="box-only" />
         </View>
 
         {/* Memory Strength label below gauge */}
-        <ThemedText type="caption" variant="secondary" style={styles.memoryStrengthLabel}>
+        <ThemedText type="caption" colorName="subtleLabelText" style={styles.memoryStrengthLabel}>
           {STRINGS.MEMORY_STRENGTH}
         </ThemedText>
       </View>
@@ -232,15 +229,6 @@ const styles = StyleSheet.create({
   },
   memoryStrengthLabel: {
     textAlign: 'center',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Match legend labels (Weak, Medium, Strong)
     marginTop: LAYOUT.SPACING.SMALL,
-  },
-  touchOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'transparent',
   },
 });

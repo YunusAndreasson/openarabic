@@ -265,19 +265,22 @@ const textHierarchyOKLCH = {
     subtitle: { l: 0.3767, c: 0.0256, h: 164.7 }, // #35463E (unchanged)
     metadata: { l: 0.5229, c: 0.0276, h: 162.4 }, // #5C6F65 (unchanged)
     secondaryMetadata: { l: 0.6295, c: 0.0309, h: 158.2 }, // #7A8F82 (unchanged)
-    caption: { l: 0.5326, c: 0.0284, h: 163.7 }, // #5E7268 (unchanged)
+    caption: { l: 0.5326, c: 0.0284, h: 163.7 }, // #5E7268 - readable content
+    subtleLabel: { l: 0.62, c: 0.028, h: 160.0 }, // Subtle labels that should recede
   },
   dark: {
     subtitle: { l: 0.93, c: 0.014, h: 157.0 }, // Premium 2025: slightly more chroma for tint
     metadata: { l: 0.87, c: 0.014, h: 157.0 }, // Premium 2025: -6% L step
-    caption: { l: 0.81, c: 0.014, h: 157.0 }, // Premium 2025: -6% L step
+    caption: { l: 0.85, c: 0.014, h: 157.0 }, // Readable content (summaries, descriptions)
+    subtleLabel: { l: 0.72, c: 0.014, h: 157.0 }, // Subtle labels that should recede
     secondaryMetadata: { l: 0.75, c: 0.014, h: 157.0 }, // Premium 2025: -6% L step, most subtle
   },
   sepia: {
     subtitle: { l: 0.3337, c: 0.0476, h: 51.1 }, // #4A2F1F
     metadata: { l: 0.4287, c: 0.0619, h: 49.4 }, // #6B4530
     secondaryMetadata: { l: 0.5495, c: 0.0624, h: 65.0 }, // #8B6A4A
-    caption: { l: 0.4742, c: 0.0668, h: 51.9 }, // #7A5138
+    caption: { l: 0.4742, c: 0.0668, h: 51.9 }, // #7A5138 - readable content
+    subtleLabel: { l: 0.58, c: 0.055, h: 55.0 }, // Subtle labels that should recede
   },
 } as const;
 
@@ -674,6 +677,11 @@ const textHierarchy = {
       textHierarchyOKLCH.light.caption.c,
       textHierarchyOKLCH.light.caption.h,
     ),
+    subtleLabel: oklchToHex(
+      textHierarchyOKLCH.light.subtleLabel.l,
+      textHierarchyOKLCH.light.subtleLabel.c,
+      textHierarchyOKLCH.light.subtleLabel.h,
+    ),
   },
   dark: {
     subtitle: oklchToHex(
@@ -696,6 +704,11 @@ const textHierarchy = {
       textHierarchyOKLCH.dark.caption.c,
       textHierarchyOKLCH.dark.caption.h,
     ),
+    subtleLabel: oklchToHex(
+      textHierarchyOKLCH.dark.subtleLabel.l,
+      textHierarchyOKLCH.dark.subtleLabel.c,
+      textHierarchyOKLCH.dark.subtleLabel.h,
+    ),
   },
   sepia: {
     subtitle: oklchToHex(
@@ -717,6 +730,11 @@ const textHierarchy = {
       textHierarchyOKLCH.sepia.caption.l,
       textHierarchyOKLCH.sepia.caption.c,
       textHierarchyOKLCH.sepia.caption.h,
+    ),
+    subtleLabel: oklchToHex(
+      textHierarchyOKLCH.sepia.subtleLabel.l,
+      textHierarchyOKLCH.sepia.subtleLabel.c,
+      textHierarchyOKLCH.sepia.subtleLabel.h,
     ),
   },
 } as const;
@@ -831,6 +849,7 @@ const lightColors: ThemeColors = {
   metadataText: textHierarchy.light.metadata,
   secondaryMetadataText: textHierarchy.light.secondaryMetadata,
   captionText: textHierarchy.light.caption,
+  subtleLabelText: textHierarchy.light.subtleLabel,
 
   // Interactive elements
   tint: basePalette.tint.primary,
@@ -943,6 +962,7 @@ const darkColors: ThemeColors = {
   metadataText: textHierarchy.dark.metadata,
   secondaryMetadataText: textHierarchy.dark.secondaryMetadata,
   captionText: textHierarchy.dark.caption,
+  subtleLabelText: textHierarchy.dark.subtleLabel,
 
   // Interactive elements
   tint: basePalette.tint.primaryDark,
@@ -1055,6 +1075,7 @@ const sepiaColors: ThemeColors = {
   metadataText: textHierarchy.sepia.metadata,
   secondaryMetadataText: textHierarchy.sepia.secondaryMetadata,
   captionText: textHierarchy.sepia.caption,
+  subtleLabelText: textHierarchy.sepia.subtleLabel,
 
   // Interactive elements
   tint: basePalette.autumn.accent.primary,

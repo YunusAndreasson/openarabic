@@ -9,7 +9,6 @@ import { calculateProgressPercentage } from '@/utils/progressUtils';
  * This eliminates repetitive prop mapping across multiple components.
  */
 export interface ArticleCardBaseProps {
-  author: string;
   category: string;
   imageUrl: string;
   summary: string;
@@ -35,7 +34,6 @@ export interface ArticleCardBaseProps {
  */
 export function buildArticleCardProps(article: Article): ArticleCardBaseProps {
   return {
-    author: article.author.name,
     category: article.category.name,
     imageUrl: generateStorageUrl('images', article.image_url),
     summary: String(article.summary),

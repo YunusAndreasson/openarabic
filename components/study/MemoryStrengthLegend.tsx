@@ -33,7 +33,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
         {/* Weak - Red */}
         <View style={styles.legendItem}>
           <ColorDot color={colors.error} />
-          <ThemedText type="caption" variant="secondary" style={styles.label}>
+          <ThemedText type="caption" colorName="subtleLabelText" style={styles.label}>
             Weak
           </ThemedText>
         </View>
@@ -41,7 +41,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
         {/* Medium - Orange */}
         <View style={styles.legendItem}>
           <ColorDot color={colors.warning} />
-          <ThemedText type="caption" variant="secondary" style={styles.label}>
+          <ThemedText type="caption" colorName="subtleLabelText" style={styles.label}>
             Medium
           </ThemedText>
         </View>
@@ -49,7 +49,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
         {/* Strong - Green */}
         <View style={styles.legendItem}>
           <ColorDot color={colors.success} />
-          <ThemedText type="caption" variant="secondary" style={styles.label}>
+          <ThemedText type="caption" colorName="subtleLabelText" style={styles.label}>
             Strong
           </ThemedText>
         </View>
@@ -60,7 +60,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
         style={({ pressed }) => [styles.headerRow, pressed && { opacity: LAYOUT.OPACITY.HIGH }]}
         onPress={onToggleSort}
       >
-        <ThemedText type="caption" weight="semibold" style={styles.headerText}>
+        <ThemedText type="caption" colorName="subtleLabelText" weight="semibold" style={styles.headerText}>
           {STRINGS.MEMORY_STRENGTH}
         </ThemedText>
         <Ionicons
@@ -93,18 +93,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: LAYOUT.SPACING.TINY, // 4px between dot and label
   },
-  label: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-  },
+  label: {},
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.TINY, // 4px between text and icon
     marginLeft: LAYOUT.SPACING.MEDIUM, // 12px gap from dots
   },
-  headerText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Match legend labels (13px)
-  },
+  headerText: {},
   sortIcon: {
     marginTop: 1, // Optical alignment with text
   },

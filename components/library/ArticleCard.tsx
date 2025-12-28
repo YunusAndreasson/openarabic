@@ -3,12 +3,10 @@ import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { Pill } from '@/components/ui';
-import { SPRING_CONFIG } from '@/constants/animation';
 import {
   GOLDEN_RATIO,
   LAYOUT,
@@ -17,7 +15,6 @@ import {
   TEXT_STYLES,
 } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
-import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
@@ -47,15 +44,12 @@ const IMAGE_CONTAINER_STYLE = {
 
 // Enhanced interface for ArticleCard
 type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
-  author: string;
   category: string;
   pillLabel?: string; // Optional custom pill label (defaults to category)
   imageUrl: string;
   summary: string;
   title: string;
   article: Article; // Full article object for navigation
-  prefetch?: boolean; // Enable prefetching for better performance
-  isRelatedArticle?: boolean; // For related articles navigation
   isFeaturedArticle?: boolean; // For featured articles - disables auto-scroll to reading position
 };
 
@@ -98,7 +92,6 @@ const SUMMARY_STYLE = {
  */
 export function ArticleCard({
   title,
-  author: _author,
   imageUrl,
   category,
   pillLabel,
@@ -106,23 +99,11 @@ export function ArticleCard({
   style,
   testID,
   article,
-  prefetch: _prefetch = true,
-  isRelatedArticle: _isRelatedArticle = false,
   isFeaturedArticle = false,
 }: ArticleCardProps): JSX.Element {
   const colors = useColors();
   // For mobile-only apps, use constant screen width
   const screenWidth = SCREEN_WIDTH;
-
-  // Press animation
-  const { animatedStyle, setValue: _setValue } = useTransformAnimation({
-    type: 'scale',
-    initialValue: 1,
-    targetValue: 1,
-    useSpring: true,
-    damping: SPRING_CONFIG.RESPONSIVE.damping,
-    stiffness: SPRING_CONFIG.RESPONSIVE.stiffness,
-  });
 
   // Image height calculation - screenWidth is stable for mobile
   const imageHeight = Math.round(
@@ -177,8 +158,7 @@ export function ArticleCard({
   };
 
   return (
-    <Animated.View style={animatedStyle}>
-      <BaseCard style={style} testID={testID} onPress={handlePress}>
+    <BaseCard style={style} testID={testID} onPress={handlePress}>
         <View style={imageContainerStyle}>
           <EnhancedImage
             style={styles.image}
@@ -233,7 +213,6 @@ export function ArticleCard({
           </View>
         </View>
       </BaseCard>
-    </Animated.View>
   );
 }
 

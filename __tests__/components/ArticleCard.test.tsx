@@ -114,7 +114,6 @@ describe('ArticleCard Component', () => {
 
   const defaultProps = {
     title: 'Introduction to Arabic Grammar',
-    author: 'Dr. Ahmad',
     category: 'Grammar',
     imageUrl: 'https://example.com/image.jpg',
     summary: 'Learn the basics of Arabic grammar and sentence structure.',
@@ -319,7 +318,6 @@ describe('ArticleCard Component', () => {
       });
       const props = {
         ...defaultProps,
-        author: 'أحمد محمود',
         article: arabicArticle,
       };
 
@@ -329,30 +327,30 @@ describe('ArticleCard Component', () => {
     });
   });
 
-  describe('Related Articles', () => {
-    test('renders related article variant', () => {
+  describe('Featured Articles', () => {
+    test('renders featured article variant', () => {
       const props = {
         ...defaultProps,
-        isRelatedArticle: true,
+        isFeaturedArticle: true,
       };
 
-      const { getByTestId } = render(<ArticleCard {...props} testID="related-article" />);
+      const { getByTestId } = render(<ArticleCard {...props} testID="featured-article" />);
 
-      expect(getByTestId('related-article')).toBeTruthy();
+      expect(getByTestId('featured-article')).toBeTruthy();
     });
 
-    test('navigates correctly from related article', () => {
+    test('navigates correctly from featured article', () => {
       const mockPush = jest.fn();
       (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
 
       const props = {
         ...defaultProps,
-        isRelatedArticle: true,
+        isFeaturedArticle: true,
       };
 
-      const { getByTestId } = render(<ArticleCard {...props} testID="related-article" />);
+      const { getByTestId } = render(<ArticleCard {...props} testID="featured-article" />);
 
-      fireEvent.press(getByTestId('related-article'));
+      fireEvent.press(getByTestId('featured-article'));
 
       expect(mockPush).toHaveBeenCalled();
     });
@@ -365,7 +363,6 @@ describe('ArticleCard Component', () => {
       });
       const props = {
         ...defaultProps,
-        author: '',
         article,
       };
 
@@ -480,12 +477,7 @@ describe('ArticleCard Component', () => {
         category: { id: 2, name: 'Culture' },
       });
       const { getByText } = render(
-        <ArticleCard
-          {...defaultProps}
-          author="Jane Smith"
-          category="Culture"
-          article={customArticle}
-        />,
+        <ArticleCard {...defaultProps} category="Culture" article={customArticle} />,
       );
 
       // Should format as "Author · Category · X min"

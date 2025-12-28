@@ -20,6 +20,7 @@ export interface ThemeColors {
   metadataText: string;
   secondaryMetadataText: string;
   captionText: string;
+  subtleLabelText: string;
 
   tint: string;
   tintBackground: string;

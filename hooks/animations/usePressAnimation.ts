@@ -43,7 +43,7 @@ export interface PressAnimationOptions {
 
   /**
    * Amount to scale down on press
-   * @default 0.97 for button, 0.985 for card
+   * @default 0.96 for both button and card
    */
   scaleAmount?: number;
 
@@ -85,7 +85,7 @@ export interface PressAnimationResult {
 
 /**
  * Hook for press animations with scale and optional opacity effects
- * Optimized for UI thread performance - all animations run as pure worklets
+ * Optimized for UI thread performance - spring animations run on UI thread
  * @param options - Configuration options for the press animation
  * @returns Animation controls and style for the pressable component
  */
@@ -125,16 +125,13 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     };
   }) as AnimatedStyleProp<ViewStyle>;
 
-  // Memoize handlers - pure worklets for optimal UI thread performance
-  // No mount safety needed: shared values don't cause state updates
+  // Memoize handlers - shared value updates trigger UI thread animations
   const handlers = useMemo(
     () => ({
       handlePressIn: () => {
-        'worklet';
         pressed.value = withSpring(1, config.springConfig);
       },
       handlePressOut: () => {
-        'worklet';
         pressed.value = withSpring(0, config.springConfig);
       },
     }),

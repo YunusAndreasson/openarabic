@@ -26,8 +26,6 @@ const FeaturedSectionComponent: FC<FeaturedSectionProps> = ({ article }) => {
       {...buildArticleCardProps(article)}
       pillLabel={STRINGS.RECOMMENDED}
       style={styles.cardStyle}
-      prefetch={true}
-      isRelatedArticle={false}
       testID="featured-article-card"
     />
   );
