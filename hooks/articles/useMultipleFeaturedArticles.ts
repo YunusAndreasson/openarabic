@@ -28,8 +28,8 @@ interface CachedMultipleSelection {
   sessionId: number;
 }
 
-// Number of articles to return in the slider
-const MAX_FEATURED_ARTICLES = 5;
+// Number of articles to return in the featured carousel
+export const MAX_FEATURED_ARTICLES = 7;
 
 /**
  * Generic hook for multiple featured articles selection
@@ -130,9 +130,9 @@ export function useMultipleFeaturedArticles(
 
   // State to store the computed selection (only for refreshes)
   const [selectedArticles, setSelectedArticles] = useState<MultipleFeaturedArticlesResult>(() => {
-    // For initial load without cache, show first 5 articles immediately
+    // For initial load without cache, show first articles immediately
     if (articlesData.length > 0 && refreshKey === 0) {
-      const immediateArticles = articlesData.slice(0, 5);
+      const immediateArticles = articlesData.slice(0, MAX_FEATURED_ARTICLES);
       return {
         articles: immediateArticles,
         reason: STRINGS.RECOMMENDED,

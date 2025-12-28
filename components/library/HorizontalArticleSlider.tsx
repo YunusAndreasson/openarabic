@@ -1,125 +1,95 @@
-import { FlashList } from '@shopify/flash-list';
-import { memo, useCallback, useRef, type FC } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { memo, useMemo, type FC } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 import { ArticleCard } from './ArticleCard';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import { buildArticleCardProps } from '@/utils/articleUtils';
-// Haptics for scroll position changes are non-semantic; avoid to reduce noise
 
 interface HorizontalArticleSliderProps {
   articles: Article[];
 }
 
 // Calculate card width based on screen width and spacing
-const CARD_SPACING = LAYOUT.SPACING.SMALL; // 8px - consistent with Practice stat cards
+const CARD_SPACING = LAYOUT.SPACING.SMALL; // 8px
 const CARD_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width for better visibility
 // Fixed height for article cards in horizontal slider
-// Analysis: ArticleCard contains image (~40% of height) + title (2 lines) + author (1 line) + summary (5 lines) + padding
-const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 7; // Sized for summary with bottom padding
+const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 7;
 const CARD_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + BASE_CONTENT_HEIGHT;
 
-// Pure function for FlashList key extraction
-const keyExtractor = (item: Article) => `featured-${item.id}`;
-
 /**
- * Horizontal slider displaying multiple articles in a swipeable ScrollView
+ * Horizontal slider displaying multiple articles in a swipeable ScrollView.
+ * Uses ScrollView with snapToOffsets for precise snap behavior.
  */
 const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ articles }) => {
   const colors = useColors();
-  const lastVisibleCardIndex = useRef<number>(-1);
 
-  // Limit to 5 articles for the slider
-  const displayArticles = articles.slice(0, 5);
+  const displayArticles = articles.slice(0, MAX_FEATURED_ARTICLES);
 
-  // Note: Navigation is now handled by Link component in ArticleCard
-  // Note: No progress indicators in main library carousel - only in list views
+  // Compute snap offsets for each card position
+  const snapOffsets = useMemo(
+    () => displayArticles.map((_, index) => index * (CARD_WIDTH + CARD_SPACING)),
+    [displayArticles.length],
+  );
 
-  // Memoize the article cards to prevent unnecessary re-renders
-
-  // v2 handles layout automatically - no size estimates needed
-
-  const renderItem = useCallback(
-    (info: { item: Article; index: number }) => {
-      const containerStyle = [
-        styles.cardContainer,
-        {
-          height: CARD_HEIGHT,
-          marginLeft: info.index === 0 ? 0 : CARD_SPACING,
-        },
-      ];
-
-      const cardStyle = [
-        styles.card,
-        { backgroundColor: colors.card },
-        { ...LAYOUT.ELEVATION.SUBTLE, shadowColor: colors.shadow },
-      ];
-
-      return (
-        <View style={containerStyle}>
-          <ArticleCard
-            article={info.item}
-            {...buildArticleCardProps(info.item)}
-            style={cardStyle}
-            testID={`slider-article-${info.item.id}`}
-            isFeaturedArticle={true}
-          />
-        </View>
-      );
-    },
+  // Pre-compute card styles to avoid recreation on each render
+  const cardStyle = useMemo(
+    () => [
+      styles.card,
+      { backgroundColor: colors.card },
+      { ...LAYOUT.ELEVATION.SUBTLE, shadowColor: colors.shadow },
+    ],
     [colors.card, colors.shadow],
   );
 
-  // Skip rendering if no articles
   if (!articles.length) return null;
 
   return (
     <View style={styles.container}>
-      <FlashList
+      <ScrollView
         horizontal
-        data={displayArticles}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
-        removeClippedSubviews={true}
-        // v2 performance optimizations
-        maxItemsInRecyclePool={8} // Control memory usage for horizontal slider
         decelerationRate="fast"
+        snapToOffsets={snapOffsets}
         snapToAlignment="start"
-        snapToInterval={CARD_WIDTH + CARD_SPACING}
+        scrollEventThrottle={16}
         bounces={true}
         overScrollMode="always"
-        onViewableItemsChanged={({ viewableItems }) => {
-          const first = viewableItems[0]?.index ?? -1;
-          if (
-            first !== -1 &&
-            first !== lastVisibleCardIndex.current &&
-            lastVisibleCardIndex.current !== -1
-          ) {
-            // intentionally no haptic here; scrolling is non-semantic
-          }
-          lastVisibleCardIndex.current = first;
-        }}
-      />
+      >
+        {displayArticles.map((article, index) => (
+          <View
+            key={`featured-${article.id}`}
+            style={[
+              styles.cardContainer,
+              { height: CARD_HEIGHT, marginLeft: index === 0 ? 0 : CARD_SPACING },
+            ]}
+          >
+            <ArticleCard
+              article={article}
+              {...buildArticleCardProps(article)}
+              style={cardStyle}
+              testID={`slider-article-${article.id}`}
+              isFeaturedArticle={true}
+            />
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    // FilterSection provides its own marginTop for proper section spacing
-  },
+  container: {},
   scrollContainer: {
     paddingTop: LAYOUT.SPACING.TINY,
-    paddingRight: LAYOUT.SCREEN_HORIZONTAL_PADDING, // Ensure last card is fully visible
+    paddingRight: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   cardContainer: {
     width: CARD_WIDTH,
-    // height is set to constant CARD_HEIGHT in containerStyle
   },
   card: {
     width: '100%',

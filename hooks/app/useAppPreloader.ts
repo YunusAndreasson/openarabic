@@ -20,6 +20,7 @@ import { readingProgressService } from '@/services/readingProgress';
 import type { Article } from '@/types/articles.types';
 import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
+import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 interface AppPreloaderResult {
   isPreloading: boolean;
@@ -95,7 +96,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             }
 
             const articles = _articles as Article[];
-            const featured: Article[] = getRandomItems(articles, 5); // Get random 5 articles
+            const featured: Article[] = getRandomItems(articles, MAX_FEATURED_ARTICLES);
 
             // Cache featured articles immediately with consistent query key
             // Include APP_SESSION_ID to ensure fresh articles on each app launch
@@ -318,7 +319,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
           );
 
           if (dueWordArticles.length > 0) {
-            const selected = getRandomItems(dueWordArticles, 5);
+            const selected = getRandomItems(dueWordArticles, MAX_FEATURED_ARTICLES);
             return {
               articles: selected,
               reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
@@ -332,7 +333,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         if (!user?.id || !hasAnyStudyWords) {
           const beginnerArticles = getBeginnerArticles(allArticles);
           if (beginnerArticles.length > 0) {
-            const selected = getRandomItems(beginnerArticles, 5);
+            const selected = getRandomItems(beginnerArticles, MAX_FEATURED_ARTICLES);
             return {
               articles: selected,
               reason: STRINGS.RECOMMENDED,
@@ -344,7 +345,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
         // Final fallback: random selection
         return {
-          articles: getRandomItems(allArticles, 5),
+          articles: getRandomItems(allArticles, MAX_FEATURED_ARTICLES),
           reason: STRINGS.RECOMMENDED,
           type: 'random' as const,
           dueWordRootIds: new Set(),
