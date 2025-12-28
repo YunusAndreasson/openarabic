@@ -67,7 +67,9 @@ export default function VocabularyScreen(): JSX.Element {
       duration: TIMING_CONFIG.SLOW.duration,
     });
 
-  // Combine focus effects for better performance
+  // Prefetch vocabulary data on first focus (deduped via ref)
+  // Note: useReview.handleClose already invalidates queries when returning from review,
+  // so we don't need to refetch here - React Query's staleTime handles freshness
   useFocusEffect(
     useCallback(() => {
       if (!user?.id) return;
@@ -85,14 +87,10 @@ export default function VocabularyScreen(): JSX.Element {
         hasPrefetchedRef.current = true;
         InteractionManager.runAfterInteractions(() => {
           prefetchVocabularyData();
-          // Ensure due words are fresh when screen gains focus
-          queryClient.refetchQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
         });
       } else {
         // Mark as prefetched even if data exists to prevent future calls
         hasPrefetchedRef.current = true;
-        // Still force a lightweight refresh of due counts to avoid stale UI after app restarts
-        queryClient.refetchQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
       }
     }, [user?.id, prefetchVocabularyData, queryClient]),
   );
@@ -142,22 +140,16 @@ export default function VocabularyScreen(): JSX.Element {
   // - dueWords reflects immediate availability for study
   const hasAnyStudyWords = (allWords?.length ?? 0) > 0 || dueWordsCount > 0;
 
-  // FIXED: Calculate all word stats in single pass using optimized utility
-  // Uses calculateWordCategories for efficiency (1 pass vs 3 separate filter passes)
+  // Calculate all word stats in single pass using optimized utility
   const calculatedStats = useMemo(() => {
     if (!filteredStudyWords.length) {
       return { masteredWords: 0, learningPhaseWords: 0 };
     }
 
-    // Get mastered words count efficiently
-    const { masteredWords } = calculateWordCategories(filteredStudyWords, dueWordsCount);
-
-    // Learning phase words = States 1, 3, or State 2 with low stability - FOR RECOMMENDATION ENGINE
-    const learningPhaseWords = filteredStudyWords.filter(word => {
-      const state = word.fsrs_state;
-      const stability = word.fsrs_stability ?? 0;
-      return state === 1 || state === 3 || (state === 2 && stability < 5);
-    }).length;
+    const { masteredWords, learningPhaseWords } = calculateWordCategories(
+      filteredStudyWords,
+      dueWordsCount,
+    );
 
     return { masteredWords, learningPhaseWords };
   }, [filteredStudyWords, dueWordsCount]);

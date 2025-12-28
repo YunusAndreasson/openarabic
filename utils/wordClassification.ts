@@ -82,6 +82,18 @@ export function calculateMasteredWords(studyWords: StudyWord[]): number {
 }
 
 /**
+ * Calculate learning phase words for recommendation engine
+ * Learning phase = State 1 (Learning), State 3 (Relearning), or State 2 with low stability
+ */
+export function calculateLearningPhaseWords(studyWords: StudyWord[]): number {
+  return studyWords.filter(word => {
+    const state = word.fsrs_state;
+    const stability = word.fsrs_stability ?? 0;
+    return state === 1 || state === 3 || (state === 2 && stability < 5);
+  }).length;
+}
+
+/**
  * Calculate struggling words that have been reviewed (matching session logic)
  * This ensures the display count matches what users will actually practice
  */
@@ -114,17 +126,20 @@ export function calculateWordCategories(
   learnedWords: number;
   masteredWords: number;
   strugglingWords: number;
+  learningPhaseWords: number;
 } {
   const calculatedDueWords = calculateDueWords(studyWords);
   const learnedWords = calculateLearnedWords(studyWords);
   const masteredWords = calculateMasteredWords(studyWords);
   const strugglingWords = calculateStrugglingWords(studyWords);
+  const learningPhaseWords = calculateLearningPhaseWords(studyWords);
 
   return {
     dueWords: typeof dueWordsProp === 'number' ? dueWordsProp : calculatedDueWords,
     learnedWords,
     masteredWords,
     strugglingWords,
+    learningPhaseWords,
   };
 }
 

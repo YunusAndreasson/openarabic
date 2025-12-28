@@ -11,11 +11,27 @@ export class AudioCacheManager {
   // In-memory cache to reduce file system checks
   private memoryCache = new Map<string, { path: string; timestamp: number }>();
   private readonly MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly MAX_MEMORY_CACHE_SIZE = 50; // Limit to prevent unbounded growth
   // Track pending downloads to prevent duplicate requests for same file
   private pendingDownloads = new Map<string, Promise<string>>();
 
   private constructor() {
     this.ensureCacheDirectoryExists();
+  }
+
+  /**
+   * Evict oldest entries if memory cache exceeds max size
+   * Uses FIFO eviction since Map maintains insertion order
+   */
+  private evictIfNeeded(): void {
+    while (this.memoryCache.size > this.MAX_MEMORY_CACHE_SIZE) {
+      const oldestKey = this.memoryCache.keys().next().value;
+      if (oldestKey) {
+        this.memoryCache.delete(oldestKey);
+      } else {
+        break;
+      }
+    }
   }
 
   static getInstance(): AudioCacheManager {
@@ -74,6 +90,7 @@ export class AudioCacheManager {
       if (cachedFile.exists) {
         // Update memory cache
         this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
+        this.evictIfNeeded();
         return cachedFilePath;
       }
       // Ensure any stale memory entry is removed
@@ -116,6 +133,7 @@ export class AudioCacheManager {
         if (downloadResult.exists) {
           // Update memory cache
           this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
+          this.evictIfNeeded();
           return cachedFilePath;
         } else {
           throw new Error('Download failed - file does not exist after download');
