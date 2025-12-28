@@ -36,7 +36,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
         icon: 'calendar' as const,
         value: metrics.totalReadingDays.toString(),
         label: STRINGS.STUDY_STREAK_TOTAL,
-        color: colors.success, // Green for total progress/growth
+        color: colors.info, // Blue for informational/cumulative data
       },
     ],
     [
@@ -45,6 +45,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
       metrics.totalReadingDays,
       colors.warning,
       colors.success,
+      colors.info,
     ],
   );
 
