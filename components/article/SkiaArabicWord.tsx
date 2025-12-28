@@ -13,8 +13,6 @@ import { Pressable } from 'react-native-gesture-handler';
 import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
-import { PRESS_ANIMATION_WORD, usePressAnimation } from '@/hooks/animations/usePressAnimation';
-
 import { useColors } from '@/hooks/theme/useColors';
 import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';
 import { useArabicWord } from '@/hooks/vocabulary';
@@ -24,7 +22,7 @@ import { getSelectedStyle } from '@/utils/textStyleUtils';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// Shared timing for coordinated animations (word dim + tooltip fade)
+// Shared timing for tooltip fade animation (exported for WordTooltip)
 export const WORD_TOOLTIP_ANIMATION_DURATION = 150;
 
 interface SkiaArabicWordProps {
@@ -76,18 +74,13 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     opacity: highlightOpacity.value,
   }));
 
-  // Animated dim when word is active (shown in tooltip) - synced with tooltip fade
-  const activeOpacity = useSharedValue(1);
-
-  useEffect(() => {
-    activeOpacity.value = withTiming(isActive ? 0.6 : 1, {
-      duration: WORD_TOOLTIP_ANIMATION_DURATION,
-    });
-  }, [isActive, activeOpacity]);
-
-  const activeStyle = useAnimatedStyle(() => ({
-    opacity: activeOpacity.value,
-  }));
+  // Active word opacity - runs on UI thread, synced with React prop via dependency array
+  const activeStyle = useAnimatedStyle(
+    () => ({
+      opacity: isActive ? 0.7 : 1,
+    }),
+    [isActive],
+  );
 
   // Use our existing hook for word selection state
   const { isSelected } = useArabicWord({
@@ -95,12 +88,6 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     position,
   });
 
-  // Press animation for tactile feedback
-  const {
-    animatedStyle: pressAnimatedStyle,
-    handlePressIn,
-    handlePressOut,
-  } = usePressAnimation(PRESS_ANIMATION_WORD);
 
   // Use pre-computed colored segments from data loading (optimized for performance)
   const coloredSegments = word.coloredSegments || [];
@@ -219,11 +206,9 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
       )}
       <AnimatedPressable
         ref={wordRef}
-        style={[containerStyle, pressAnimatedStyle, activeStyle]}
+        style={[containerStyle, activeStyle]}
         testID={testID}
         onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
       >
         <Canvas style={canvasStyle} pointerEvents="none">
           {paragraph && (

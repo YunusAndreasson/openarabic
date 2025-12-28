@@ -5,15 +5,12 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { WORD_TOOLTIP_ANIMATION_DURATION } from '@/components/article/SkiaArabicWord';
 import { ThemedText } from '@/components/ThemedText';
-import { SPRING_CONFIG } from '@/constants/animation';
 import {
   LAYOUT,
   LINE_HEIGHT_MULTIPLIERS,
   MIN_TOUCH_TARGET,
   SCREEN_WIDTH,
 } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
-import type { PressAnimationOptions } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
@@ -27,13 +24,6 @@ import { cleanWordText } from '@/utils/stringUtils';
 
 // Module-level constants - zero per-render allocations
 const FADE_IN_ANIMATION = FadeIn.duration(WORD_TOOLTIP_ANIMATION_DURATION);
-
-// Disable opacity to avoid conflict with FadeIn layout animation
-const PRESS_ANIMATION_OPTIONS: PressAnimationOptions = {
-  type: 'card',
-  springConfig: SPRING_CONFIG.RESPONSIVE,
-  includeOpacity: false,
-} as const;
 
 const STATIC_STYLES = StyleSheet.create({
   overlay: {
@@ -111,10 +101,6 @@ export function WordTooltip({
 }: WordTooltipProps) {
   const colors = useColors();
 
-  // Scale-only press animation (no opacity - handled by FadeIn)
-  const { animatedStyle, handlePressIn, handlePressOut } =
-    usePressAnimation(PRESS_ANIMATION_OPTIONS);
-
   // Clean text by removing punctuation for display
   const cleanedText = cleanWordText(text);
   const cleanedArabicWord = cleanWordText(arabicWord || '');
@@ -188,26 +174,18 @@ export function WordTooltip({
     };
   }, [dimensions, zIndex, colors]);
 
-  // Memoize combined animated style array to prevent recreation
-  const tooltipAnimatedStyle = useMemo(
-    () => [dynamicStyles.tooltip, animatedStyle],
-    [dynamicStyles.tooltip, animatedStyle],
-  );
-
   if (!visible || !layout) return null;
 
   return (
     <View style={dynamicStyles.container} pointerEvents="box-none">
       <Pressable
         onPress={onOpenWordDetails}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
         disabled={!onOpenWordDetails}
         hitSlop={LAYOUT.HIT_SLOP.SMALL}
       >
         <Animated.View
           entering={FADE_IN_ANIMATION}
-          style={tooltipAnimatedStyle}
+          style={dynamicStyles.tooltip}
           testID="word-tooltip"
         >
           <View style={dynamicStyles.arrow} />
