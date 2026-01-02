@@ -45,11 +45,10 @@ export function ThemedView({
       ? undefined
       : ['top', 'left', 'right'];
 
-  const scrollableContent = (
+  // Only create ScrollView when needed
+  const content = scrollable ? (
     <ScrollView
       ref={scrollViewRef}
-      // iOS best practice: Allow natural bounce behavior for tactile feedback
-      // Users expect to be able to "pull" the screen even when no refresh is needed
       alwaysBounceVertical={true}
       automaticallyAdjustContentInsets={false}
       bounces={true}
@@ -57,25 +56,26 @@ export function ThemedView({
       contentInsetAdjustmentBehavior="never"
       removeClippedSubviews={true}
       showsVerticalScrollIndicator={false}
-      // Allow natural overscroll behavior on Android for consistency
       overScrollMode="always"
       {...scrollViewProps}
     >
       {children}
     </ScrollView>
+  ) : (
+    children
   );
 
   if (useSafeArea) {
     return (
       <SafeAreaView style={themedStyle} {...otherProps} edges={edges}>
-        {scrollable ? scrollableContent : children}
+        {content}
       </SafeAreaView>
     );
   }
 
   return (
     <View style={themedStyle} {...otherProps}>
-      {scrollable ? scrollableContent : children}
+      {content}
     </View>
   );
 }

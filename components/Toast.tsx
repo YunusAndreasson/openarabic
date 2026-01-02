@@ -22,6 +22,14 @@ interface ToastProps {
 const DEFAULT_DURATION = DEFAULT_TOAST_DURATION;
 const MAX_TOAST_WIDTH_RATIO = 0.9;
 
+// Static color lookup - avoids switch statement per render
+const TOAST_COLOR_MAP = {
+  success: 'success',
+  error: 'error',
+  important: 'warning',
+  info: null, // Uses elevation2 for info
+} as const;
+
 const styles = StyleSheet.create({
   toast: {
     alignSelf: 'center',
@@ -88,26 +96,11 @@ export function Toast({
   }, [visible, duration]);
 
   // Determine toast colors based on type
-  let backgroundColor: string;
-  let textColor: string;
-
-  switch (type) {
-    case 'success':
-      backgroundColor = colors.success || colors.tint;
-      textColor = colors.white;
-      break;
-    case 'error':
-      backgroundColor = colors.error;
-      textColor = colors.white;
-      break;
-    case 'important':
-      backgroundColor = colors.warning || colors.tint;
-      textColor = colors.white;
-      break;
-    default:
-      backgroundColor = colors.elevation2; // Darker, more visible toast in dark mode
-      textColor = colors.text;
-  }
+  const colorKey = TOAST_COLOR_MAP[type];
+  const backgroundColor = colorKey
+    ? (colors[colorKey] as string) || colors.tint
+    : colors.elevation2;
+  const textColor = colorKey ? colors.white : colors.text;
 
   // For mobile-only apps, use constant screen width
   const screenWidth = SCREEN_WIDTH;

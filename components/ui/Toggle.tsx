@@ -15,26 +15,16 @@ const TOUCHABLE_WRAPPER_STYLE = {
   justifyContent: 'center',
 } as const;
 
-function getToggleDimensions() {
-  const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL - LAYOUT.SPACING.TINY;
-  const TOGGLE_PADDING = LAYOUT.SPACING.TINY;
-  const HANDLE_SIZE = TOGGLE_HEIGHT - TOGGLE_PADDING * 2;
-  const TOGGLE_WIDTH = TOGGLE_HEIGHT * 1.75;
-  const TRAVEL_DISTANCE = TOGGLE_WIDTH - HANDLE_SIZE - TOGGLE_PADDING * 2;
-  return {
-    TOGGLE_HEIGHT,
-    TOGGLE_PADDING,
-    HANDLE_SIZE,
-    TOGGLE_WIDTH,
-    TRAVEL_DISTANCE,
-  };
-}
+// Static dimensions - computed once at module load
+const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL - LAYOUT.SPACING.TINY;
+const TOGGLE_PADDING = LAYOUT.SPACING.TINY;
+const HANDLE_SIZE = TOGGLE_HEIGHT - TOGGLE_PADDING * 2;
+const TOGGLE_WIDTH = TOGGLE_HEIGHT * 1.75;
+const TRAVEL_DISTANCE = TOGGLE_WIDTH - HANDLE_SIZE - TOGGLE_PADDING * 2;
 
 export function Toggle({ value, onValueChange, testID }: ToggleProps) {
   const colors = useColors();
   const isMounted = useRef(false);
-
-  const { TOGGLE_HEIGHT, HANDLE_SIZE, TOGGLE_WIDTH, TRAVEL_DISTANCE } = getToggleDimensions();
 
   const { containerAnimatedStyle, handleAnimatedStyle, forceAnimateToInitialState } =
     useToggleAnimation(value, TRAVEL_DISTANCE);
@@ -68,23 +58,15 @@ export function Toggle({ value, onValueChange, testID }: ToggleProps) {
     },
   ];
 
-  const shadowStyle = {
-    shadowColor: colors.shadow,
-    shadowOpacity: LAYOUT.OPACITY.SUBTLE,
-  };
-
   const handleStyle = [
     styles.handle,
     {
       width: HANDLE_SIZE,
       height: HANDLE_SIZE,
       borderRadius: HANDLE_SIZE / 2,
-      backgroundColor: value
-        ? colors.elevation3 // Floating elevated surface when active
-        : colors.elevation2, // Raised surface when inactive
-      ...shadowStyle,
+      backgroundColor: value ? colors.elevation3 : colors.elevation2,
+      shadowColor: colors.shadow,
     },
-    styles.shadow,
   ];
 
   return (
@@ -111,9 +93,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.TINY,
   },
   handle: {
-    position: 'relative',
-  },
-  shadow: {
     ...LAYOUT.ELEVATION.SUBTLE,
   },
   toggleTrack: {

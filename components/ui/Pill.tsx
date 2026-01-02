@@ -23,46 +23,41 @@ export function Pill({ id, label, isSelected = false, onSelect, variant = 'filte
   const isCategory = variant === 'category';
   const textType = isCategory ? 'overline' : 'label';
 
-  const containerStyle = (() => {
-    const baseStyle = {
-      alignItems: 'center' as const,
-      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-      justifyContent: 'center' as const,
-      minHeight: LAYOUT.SPACING.XLARGE,
-      shadowColor: colors.shadow,
-    };
+  const baseStyle = {
+    alignItems: 'center' as const,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    justifyContent: 'center' as const,
+    minHeight: LAYOUT.SPACING.XLARGE,
+    shadowColor: colors.shadow,
+  };
 
-    if (isCategory) {
-      return {
+  const containerStyle = isCategory
+    ? {
         ...baseStyle,
         backgroundColor: isSelected
-          ? `${colors.tint}${OPACITY_HEX.HIGH}` // 80%
+          ? `${colors.tint}${OPACITY_HEX.HIGH}`
           : isDarkMode
-            ? `${colors.elevation2}${OPACITY_HEX.MEDIUM}` // 60%
-            : `${colors.elevation1}${OPACITY_HEX.MEDIUM_HIGH}`, // 70%
+            ? `${colors.elevation2}${OPACITY_HEX.MEDIUM}`
+            : `${colors.elevation1}${OPACITY_HEX.MEDIUM_HIGH}`,
         paddingHorizontal: LAYOUT.SPACING.MEDIUM,
         paddingVertical: 0,
         ...LAYOUT.ELEVATION.SMALL,
+      }
+    : {
+        ...baseStyle,
+        backgroundColor: isSelected
+          ? colors.tint
+          : isDarkMode
+            ? colors.elevation2
+            : colors.elevation1,
+        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+        borderColor: isSelected ? colors.tint : colors.borderOverlay,
+        paddingHorizontal: LAYOUT.SPACING.LARGE,
+        paddingVertical: LAYOUT.SPACING.SMALL,
+        marginBottom: LAYOUT.SPACING.SMALL,
+        marginRight: LAYOUT.SPACING.SMALL,
+        ...LAYOUT.ELEVATION.SUBTLE,
       };
-    }
-
-    // Filter variant
-    return {
-      ...baseStyle,
-      backgroundColor: isSelected
-        ? colors.tint
-        : isDarkMode
-          ? colors.elevation2
-          : colors.elevation1,
-      borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-      borderColor: isSelected ? colors.tint : colors.borderOverlay,
-      paddingHorizontal: LAYOUT.SPACING.LARGE,
-      paddingVertical: LAYOUT.SPACING.SMALL,
-      marginBottom: LAYOUT.SPACING.SMALL,
-      marginRight: LAYOUT.SPACING.SMALL,
-      ...LAYOUT.ELEVATION.SUBTLE,
-    };
-  })();
 
   const pressedStyle = {
     backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
@@ -74,11 +69,7 @@ export function Pill({ id, label, isSelected = false, onSelect, variant = 'filte
   ];
 
   // Determine text color - ensure contrast for selected state
-  const textColorName = (() => {
-    if (!isSelected) return 'text';
-    // For selected state, use high-contrast color based on theme
-    return isDarkMode ? 'text' : 'background';
-  })();
+  const textColorName = !isSelected ? 'text' : isDarkMode ? 'text' : 'background';
 
   // Non-interactive category pill
   if (isCategory && !onSelect) {
