@@ -90,19 +90,19 @@ function formatNextDue(nextDue: Date | null): string {
 function getMilestoneMessage(masteredWords: number, currentStreak?: number): string | null {
   // Check word milestones (exact matches to avoid repeated messages)
   if (masteredWords === 10) {
-    return "🎉 10 words mastered! You've built a foundation. Each of these passed 4+ reviews, proving they're moving to long-term memory.";
+    return "🎉 10 words mastered! You've built a foundation for long-term memory.";
   }
   if (masteredWords === 25) {
-    return "🎉 25 words mastered! Research shows the first 25 words are the hardest—you've proven you can learn Arabic vocabulary consistently.";
+    return "🎉 25 words mastered! Building your first 25 takes real dedication—you've proven you can learn Arabic consistently.";
   }
   if (masteredWords === 50) {
     return '🎉 50 words mastered! This covers basic Arabic comprehension. Reviewing at increasing intervals moves words into long-term memory.';
   }
   if (masteredWords === 100) {
-    return "🎉 100 words mastered! Studies show this covers ~50% of everyday Arabic text. You're building real reading ability.";
+    return "🎉 100 words mastered! The 100 most common words appear in almost half of everyday Arabic text.";
   }
   if (masteredWords === 200) {
-    return '🎉 200 words mastered! You now recognize most common Arabic words. At this level, reading becomes genuinely enjoyable.';
+    return '🎉 200 words mastered! You now recognize many of the most frequent Arabic words. Reading becomes genuinely enjoyable.';
   }
   if (masteredWords === 300) {
     return "🎉 300 words mastered! You've reached intermediate vocabulary. Context clues now help you guess unfamiliar words.";
@@ -113,7 +113,7 @@ function getMilestoneMessage(masteredWords: number, currentStreak?: number): str
 
   // Check streak milestones
   if (currentStreak === 7) {
-    return "🔥 7-day streak! One week of consistency. Research shows habits form around day 21—you're 1/3 of the way there.";
+    return '🔥 7-day streak! One week of consistency—keep building this daily habit.';
   }
   if (currentStreak === 30) {
     return '🔥 30-day streak! A full month. Your brain has adapted to expect daily Arabic practice—this is now becoming automatic.';
@@ -122,7 +122,7 @@ function getMilestoneMessage(masteredWords: number, currentStreak?: number): str
     return "🔥 60-day streak! Two months of daily practice. At this point, skipping a day would feel wrong. That's habit formation at work.";
   }
   if (currentStreak === 100) {
-    return '🔥 100-day streak! This level of consistency puts you in the top 1% of language learners. Arabic is now part of your identity.';
+    return '🔥 100-day streak! This level of consistency is truly exceptional. Arabic is now part of your daily life.';
   }
   if (currentStreak === 365) {
     return "🔥 365-day streak! A full year of daily practice. You've proven extraordinary dedication to learning Arabic.";
@@ -173,39 +173,37 @@ export function useRecommendationEngine({
       }
     }
 
-    // State 1: No words - getting started with science context
+    // State 1: No words - getting started
     if (totalWords === 0) {
       return {
         message:
-          'Start by adding 10-15 words from articles. Your brain learns best in small batches — it consolidates them during sleep, turning short-term memories into lasting knowledge.',
+          'Start by adding 10-15 words from articles. Small batches work best for long-term memory.',
         type: 'start',
       };
     }
 
-    // State 2: Due words + low memory strength - urgent with hard words context
+    // State 2: Due words + low memory strength - urgent
     if (dueWordsCount > 0 && isLowRetention) {
       const hardWordsContext =
-        hardWordsCount >= 3
-          ? `, especially for ${hardWordsCount} difficult words that will repeat until they stick`
-          : '';
+        hardWordsCount >= 3 ? ` ${hardWordsCount} difficult words need extra attention.` : '';
       return {
-        message: `Your Memory Strength is at ${memoryStrength}% — below 50% means words are at risk of being forgotten. Each review rebuilds the memory trace${hardWordsContext}.`,
+        message: `Memory Strength at ${memoryStrength}% — words at risk of being forgotten. Review now to rebuild.${hardWordsContext}`,
         type: 'review',
       };
     }
 
     // State 3: Due words (normal) - review with upcoming load preview
     if (dueWordsCount > 0) {
-      const upcomingContext = tomorrowDue > 0 ? `, with ${tomorrowDue} more coming tomorrow` : '';
+      const upcomingContext = tomorrowDue > 0 ? ` ${tomorrowDue} more tomorrow.` : '';
 
       if (hasManyDue) {
         return {
-          message: `${dueWordsCount} words are due — reviewing now at ${memoryStrength}% Memory Strength prevents the forgetting curve from taking hold${upcomingContext}.`,
+          message: `${dueWordsCount} words due at ${memoryStrength}% Memory Strength — review now before the forgetting curve sets in.${upcomingContext}`,
           type: 'review',
         };
       }
       return {
-        message: `Just ${dueWordsCount} word${dueWordsCount === 1 ? '' : 's'} due. Quick review keeps your ${memoryStrength}% Memory Strength strong — timed right before you'd forget${upcomingContext}.`,
+        message: `Just ${dueWordsCount} word${dueWordsCount === 1 ? '' : 's'} due. Quick review keeps your ${memoryStrength}% Memory Strength strong.${upcomingContext}`,
         type: 'review',
       };
     }
@@ -213,7 +211,7 @@ export function useRecommendationEngine({
     // State 4a: Heavy learning load (>70%) - brain at capacity
     if (isHeavyLoad) {
       return {
-        message: `${learningWords} words are in active learning — your brain is forming new neural connections. Sleep consolidates these memories, so focus on reviews before adding more. Next batch due ${nextDueText}.`,
+        message: `${learningWords} words in active learning — focus on reviews before adding more. Next batch due ${nextDueText}.`,
         type: 'consolidate',
       };
     }
@@ -225,7 +223,7 @@ export function useRecommendationEngine({
           ? ` Just ${milestone.remaining} away from ${milestone.target} mastered!`
           : '';
       return {
-        message: `${learningWords} words are growing stronger with each review. You can add a few more, but prioritize reviews when they come due — consistency beats volume.${milestoneHint}`,
+        message: `${learningWords} words growing stronger. You can add a few more, but prioritize reviews when due.${milestoneHint}`,
         type: 'consolidate',
       };
     }
@@ -240,7 +238,7 @@ export function useRecommendationEngine({
         currentStreak && currentStreak > 0 ? ` ${currentStreak}-day streak going strong!` : '';
 
       return {
-        message: `All caught up! Your ${memoryStrength}% Memory Strength shows strong retention. With ${totalWords} words, you have room to grow — adding from articles you enjoy creates stronger memory connections.${milestoneHint}${streakContext}`,
+        message: `All caught up at ${memoryStrength}% Memory Strength! With ${totalWords} words, you have room to grow from articles you enjoy.${milestoneHint}${streakContext}`,
         type: 'add_words',
       };
     }
@@ -258,7 +256,7 @@ export function useRecommendationEngine({
           : '';
 
     return {
-      message: `All caught up with ${masteredWords} words mastered! Your Memory Strength may dip slightly before your next review ${nextDueText} — longer gaps build deeper memory.${milestoneHint}${streakContext}`,
+      message: `All caught up with ${masteredWords} words mastered! Next review ${nextDueText} — longer gaps build deeper memory.${milestoneHint}${streakContext}`,
       type: 'balanced',
     };
   }, [studyWords, dueWordsCount, currentRetention, learningWords, masteredWords, currentStreak]);

@@ -80,9 +80,9 @@ export const useEncouragingMetrics = (
         type: 'mastery',
       });
     } else {
-      // Clearer: this is about NEW mastery in this session, not total mastery
+      // Positive framing: focus on building toward mastery
       trafficLightMetrics.push({
-        text: 'No new words mastered',
+        text: 'Building toward mastery',
         icon: 'trophy',
         color: colors.success,
         type: 'mastery',

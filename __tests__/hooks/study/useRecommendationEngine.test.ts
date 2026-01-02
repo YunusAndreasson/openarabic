@@ -97,8 +97,8 @@ describe('useRecommendationEngine', () => {
       );
 
       expect(result.current.type).toBe('review');
-      expect(result.current.message).toContain('Memory Strength is at 40%');
-      expect(result.current.message).toContain('below 50%');
+      expect(result.current.message).toContain('Memory Strength at 40%');
+      expect(result.current.message).toContain('at risk of being forgotten');
     });
 
     test('mentions struggling words when retention is low and words are struggling', () => {
