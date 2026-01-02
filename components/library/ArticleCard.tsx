@@ -21,70 +21,65 @@ import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.t
 import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter, getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
-// Extract constants outside component for better performance
+// Static constants - computed once at module load
 const MAX_TITLE_LINES = 2;
 const MAX_AUTHOR_LINES = 1;
-const PILL_MAX_WIDTH_PERCENTAGE = '70%';
-
-// Static style objects to prevent recreation
-const IMAGE_STYLE = {
-  borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  height: '100%',
-  width: '100%',
-} as const;
-
-const IMAGE_CONTAINER_STYLE = {
-  borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  overflow: 'hidden',
-  position: 'relative',
-  width: '100%',
-} as const;
+const CARD_WIDTH = SCREEN_WIDTH - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
+const IMAGE_HEIGHT = Math.round(CARD_WIDTH / GOLDEN_RATIO);
+const GRADIENT_HEIGHT = Math.round(IMAGE_HEIGHT * 0.4);
 
 // Enhanced interface for ArticleCard
 type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
   category: string;
-  pillLabel?: string; // Optional custom pill label (defaults to category)
+  pillLabel?: string;
   imageUrl: string;
   summary: string;
   title: string;
-  article: Article; // Full article object for navigation
-  isFeaturedArticle?: boolean; // For featured articles - disables auto-scroll to reading position
+  article: Article;
+  isFeaturedArticle?: boolean;
 };
 
-// Static styles object to prevent recreation
 const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.TINY, // Minimal bottom space (summary capped at 5 lines)
+    paddingBottom: LAYOUT.SPACING.TINY,
+  },
+  gradientOverlay: {
+    bottom: 0,
+    height: GRADIENT_HEIGHT,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+  },
+  image: {
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    height: '100%',
+    width: '100%',
+  },
+  imageContainer: {
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    height: IMAGE_HEIGHT,
+    overflow: 'hidden',
+    position: 'relative',
+    width: '100%',
+  },
+  pillContainer: {
+    left: LAYOUT.SPACING.MEDIUM,
+    maxWidth: '70%',
+    position: 'absolute',
+    top: LAYOUT.SPACING.MEDIUM,
   },
   textContainer: {
     gap: LAYOUT.SPACING.SMALL,
   },
-  image: IMAGE_STYLE,
-  imageContainer: IMAGE_CONTAINER_STYLE,
-  pillContainer: {
-    left: LAYOUT.SPACING.MEDIUM,
-    maxWidth: PILL_MAX_WIDTH_PERCENTAGE,
-    position: 'absolute' as const,
-    top: LAYOUT.SPACING.MEDIUM,
-  },
 });
 
-// Static typography styles
-const TITLE_STYLE = {
-  letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
-};
-
-const AUTHOR_STYLE = {
-  letterSpacing: TEXT_STYLES.AUTHOR_BYLINE.letterSpacing,
-};
-
-const SUMMARY_STYLE = {
-  letterSpacing: LETTER_SPACING.NORMAL,
-};
+const TITLE_STYLE = { letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing };
+const AUTHOR_STYLE = { letterSpacing: TEXT_STYLES.AUTHOR_BYLINE.letterSpacing };
+const SUMMARY_STYLE = { letterSpacing: LETTER_SPACING.NORMAL };
 
 /**
  * High-performance article card component optimized for list rendering
@@ -102,48 +97,15 @@ export function ArticleCard({
   isFeaturedArticle = false,
 }: ArticleCardProps): JSX.Element {
   const colors = useColors();
-  // For mobile-only apps, use constant screen width
-  const screenWidth = SCREEN_WIDTH;
+  const router = useRouter();
 
-  // Image height calculation - screenWidth is stable for mobile
-  const imageHeight = Math.round(
-    (screenWidth - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2) / GOLDEN_RATIO,
-  );
-
-  // Use pre-computed gradient colors from theme for performance
-  const gradientColors = colors.cardGradient;
-
-  // Calculate actual card width (accounts for screen padding)
-  const cardWidth = screenWidth - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
-
-  // Computed values for child components
-  const imageContainerStyle = [styles.imageContainer, { height: imageHeight }];
-
-  // Calculate gradient overlay dimensions (40% of image height for bottom fade)
-  const gradientHeight = Math.round(imageHeight * 0.4);
-
-  // Gradient container style with pixel-perfect dimensions for Skia Canvas
-  const gradientContainerStyle = [
-    {
-      position: 'absolute' as const,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: gradientHeight,
-    },
-  ];
-
-  // Use pillLabel if provided, otherwise use category for the pill
   const pillText = pillLabel ?? category;
   const capitalizedPillText = capitalizeFirstLetter(pillText);
 
   const authorDisplayText = getArticleMetadataWithoutCategory(article);
 
-  // Generate article route with proper parameters
-  // Featured articles should start from the beginning, not resume from saved position
+  // Generate article route - featured articles start from beginning
   const articleHref = getArticleRoute(article.id, article.title, isFeaturedArticle);
-
-  const router = useRouter();
 
   // Handle navigation with router.push to avoid Link navigation errors
   const handlePress = () => {
@@ -159,20 +121,19 @@ export function ArticleCard({
 
   return (
     <BaseCard style={style} testID={testID} onPress={handlePress}>
-      <View style={imageContainerStyle}>
+      <View style={styles.imageContainer}>
         <EnhancedImage
           style={styles.image}
           source={imageUrl}
           recyclingKey={`article-${article.id}`}
-          transition={150} // Fast transition for snappy list scrolling
+          transition={150}
         />
-        {/* Skia gradient for Android stability and consistent rendering */}
-        <Canvas style={gradientContainerStyle} pointerEvents="none">
-          <Rect x={0} y={0} width={cardWidth} height={gradientHeight}>
+        <Canvas style={styles.gradientOverlay} pointerEvents="none">
+          <Rect x={0} y={0} width={CARD_WIDTH} height={GRADIENT_HEIGHT}>
             <LinearGradient
               start={vec(0, 0)}
-              end={vec(0, gradientHeight)}
-              colors={[...gradientColors]}
+              end={vec(0, GRADIENT_HEIGHT)}
+              colors={[...colors.cardGradient]}
             />
           </Rect>
         </Canvas>
