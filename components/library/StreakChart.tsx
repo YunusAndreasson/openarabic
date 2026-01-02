@@ -100,12 +100,16 @@ export const StreakChart = memo<StreakChartProps>(
         };
       });
 
+      // Border color for today's bar (subtle highlight)
+      const todayBorderColor = withOpacity(colors.text, 0.3);
+
       return {
         chartWidth,
         barWidth,
         bars,
+        todayBorderColor,
       };
-    }, [dailyActivity, streakPeriods, colors.warning, colors.tint, colors.textTertiary]);
+    }, [dailyActivity, streakPeriods, colors.warning, colors.tint, colors.textTertiary, colors.text]);
 
     return (
       <View style={[styles.container, { height }]}>
@@ -127,6 +131,19 @@ export const StreakChart = memo<StreakChartProps>(
                 color={bar.color}
               />
             ))}
+            {/* Subtle border for today's bar */}
+            {chartData.bars.length > 0 && (
+              <RoundedRect
+                x={chartData.bars[chartData.bars.length - 1]?.x ?? 0}
+                y={0}
+                width={chartData.barWidth}
+                height={BAR_HEIGHT}
+                r={BAR_RADIUS}
+                color={chartData.todayBorderColor}
+                style="stroke"
+                strokeWidth={1.5}
+              />
+            )}
           </Canvas>
         </View>
       </View>

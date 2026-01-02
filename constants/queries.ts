@@ -407,10 +407,9 @@ export const studyStreakQueries = {
       queryKey: ['study-streak-history', userId, days, 'v2'] as const,
       queryFn: () => studySessionStreakService.getStudySessionHistory(userId, days),
       enabled: !!userId,
-      staleTime: QUERY_DEFAULTS.STALE_TIME, // 5 minutes (stable historical data)
-      gcTime: CACHE_TIMES.MEDIUM.gcTime, // 10 minutes
+      ...CACHE_TIMES.CRITICAL, // 30 seconds (match streak counter for consistent UX)
       retry: 2,
-      refetchOnMount: false,
+      refetchOnMount: 'always', // Always refetch when chart opens to show fresh data
       refetchOnWindowFocus: false,
     }),
 

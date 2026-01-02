@@ -220,7 +220,7 @@ export class StudySessionStreakService {
     for (let i = 0; i < days; i++) {
       const date = new Date(startDate);
       date.setDate(date.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = toUTCDateString(date);
       if (dateStr) {
         activityMap.set(dateStr, false);
       }
@@ -231,7 +231,7 @@ export class StudySessionStreakService {
       const lastReview = record?.fsrs_last_review;
       if (lastReview) {
         const date = new Date(lastReview);
-        const dateKey = date.toISOString().split('T')[0];
+        const dateKey = toUTCDateString(date);
 
         // Only count activity within our specified date range
         if (date >= startDate && date <= endDate) {
@@ -295,7 +295,7 @@ export class StudySessionStreakService {
         const date = new Date();
         date.setDate(date.getDate() - (days - 1 - i));
         emptyActivity.push({
-          date: date.toISOString().split('T')[0] || '',
+          date: toUTCDateString(date),
           hasActivity: false,
         });
       }
