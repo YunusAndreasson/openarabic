@@ -29,7 +29,12 @@ const baseStyles = StyleSheet.create({
   container: {
     flex: 1,
   } as ViewStyle,
-
+  containerCentered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
+  } as ViewStyle,
   contentContainer: {
     flex: 1,
     width: '100%',
@@ -46,7 +51,48 @@ const baseStyles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.LARGE,
   } as ViewStyle,
+  loadingText: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    textAlign: 'center',
+  } as ViewStyle,
+  loadingSubtext: {
+    marginTop: LAYOUT.SPACING.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    textAlign: 'center',
+  } as ViewStyle,
 });
+
+/** Reusable loading state component for review screen */
+function ReviewLoadingState({
+  message,
+  progress,
+  successMessage,
+}: {
+  message: string;
+  progress?: number;
+  successMessage?: string;
+}) {
+  const colors = useColors();
+  return (
+    <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
+      <View style={baseStyles.containerCentered}>
+        <PulsatingLoader size={64} />
+        <ThemedText style={baseStyles.loadingText}>{message}</ThemedText>
+        {progress !== undefined && (
+          <ThemedText style={[baseStyles.loadingSubtext, { color: colors.secondaryText }]}>
+            {Math.round(progress)}% complete
+          </ThemedText>
+        )}
+        {successMessage && (
+          <ThemedText style={[baseStyles.loadingText, { color: colors.success }]}>
+            {successMessage}
+          </ThemedText>
+        )}
+      </View>
+    </View>
+  );
+}
 
 // Main review content component (only rendered after tutorial is dismissed)
 function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element {
@@ -131,73 +177,17 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // Show beautiful loader while practice session is loading words or initializing
   // This takes precedence over audio preloading during initial load
   if (isLoading || isInitializing) {
-    return (
-      <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
-        <View style={[baseStyles.contentContainer, { justifyContent: 'center' }]}>
-          <PulsatingLoader size={64} />
-          <ThemedText
-            style={{
-              marginTop: LAYOUT.SPACING.MEDIUM,
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-              textAlign: 'center',
-            }}
-          >
-            {STRINGS.PREPARING_PRACTICE_SESSION}
-          </ThemedText>
-        </View>
-      </View>
-    );
+    return <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />;
   }
 
   // Show audio preloading indicator (only when not in initial loading phase)
   if (isAudioPreloading) {
     return (
-      <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
-        <View
-          style={[
-            baseStyles.contentContainer,
-            {
-              paddingTop: insets.top + LAYOUT.SPACING.MEDIUM,
-              paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
-            },
-          ]}
-        >
-          <View style={[baseStyles.wordArea, { alignItems: 'center' }]}>
-            <PulsatingLoader size={64} />
-            <ThemedText
-              style={{
-                marginTop: LAYOUT.SPACING.MEDIUM,
-                fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-                textAlign: 'center',
-              }}
-            >
-              {STRINGS.LOADING_AUDIO_ELLIPSIS}
-            </ThemedText>
-            <ThemedText
-              style={{
-                marginTop: LAYOUT.SPACING.SMALL,
-                fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-                textAlign: 'center',
-                color: colors.secondaryText,
-              }}
-            >
-              {Math.round(audioPreloadProgress)}% complete
-            </ThemedText>
-            {isAudioPreloadingComplete && (
-              <ThemedText
-                style={{
-                  marginTop: LAYOUT.SPACING.MEDIUM,
-                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-                  textAlign: 'center',
-                  color: colors.success,
-                }}
-              >
-                {STRINGS.AUDIO_READY}
-              </ThemedText>
-            )}
-          </View>
-        </View>
-      </View>
+      <ReviewLoadingState
+        message={STRINGS.LOADING_AUDIO_ELLIPSIS}
+        progress={audioPreloadProgress}
+        successMessage={isAudioPreloadingComplete ? STRINGS.AUDIO_READY : undefined}
+      />
     );
   }
 
@@ -312,21 +302,10 @@ export default function ReviewScreen(): JSX.Element {
   // Show tutorial with simple background if needed (before session starts)
   if (!tutorialDismissed) {
     return (
-      <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
-        <View style={[baseStyles.contentContainer, { justifyContent: 'center' }]}>
-          <PulsatingLoader size={64} />
-          <ThemedText
-            style={{
-              marginTop: LAYOUT.SPACING.MEDIUM,
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-              textAlign: 'center',
-            }}
-          >
-            {STRINGS.PREPARING_PRACTICE_SESSION}
-          </ThemedText>
-        </View>
+      <>
+        <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />
         <SwipeGestureTutorial visible={swipeTutorial.isVisible} onDismiss={handleTutorialDismiss} />
-      </View>
+      </>
     );
   }
 

@@ -1,9 +1,12 @@
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BottomSheetStateHandler, GenericBottomSheet } from '@/components/common';
+import {
+  BottomSheetHeader,
+  BottomSheetStateHandler,
+  GenericBottomSheet,
+} from '@/components/common';
 import { StreakChart, StreakMetrics } from '@/components/library';
-import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyStreakHistory } from '@/hooks/study/useStudyStreakHistory';
@@ -42,19 +45,7 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
           errorMessage={STRINGS.FAILED_TO_LOAD_STREAK}
           emptyMessage={STRINGS.STUDY_STREAK_EMPTY_STATE}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <ThemedText type="heading3" weight="bold" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
-              {STRINGS.STUDY_STREAK_TITLE}
-            </ThemedText>
-            <ThemedText
-              type="body"
-              colorName="textTertiary"
-              style={LAYOUT.BOTTOM_SHEET.STYLES.subtitle}
-            >
-              {subtitle}
-            </ThemedText>
-          </View>
+          <BottomSheetHeader title={STRINGS.STUDY_STREAK_TITLE} subtitle={subtitle} />
 
           {/* Streak Metrics */}
           {streakHistory?.metrics && (
@@ -66,16 +57,10 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
           {/* Streak Chart */}
           {streakHistory?.dailyActivity && streakHistory?.streakPeriods && (
             <>
-              <ThemedText type="heading3" weight="bold" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
-                {STRINGS.STUDY_STREAK_CHART_TITLE}
-              </ThemedText>
-              <ThemedText
-                type="body"
-                colorName="textTertiary"
-                style={LAYOUT.BOTTOM_SHEET.STYLES.subtitle}
-              >
-                {STRINGS.STUDY_STREAK_CHART_DESCRIPTION}
-              </ThemedText>
+              <BottomSheetHeader
+                title={STRINGS.STUDY_STREAK_CHART_TITLE}
+                subtitle={STRINGS.STUDY_STREAK_CHART_DESCRIPTION}
+              />
               <StreakChart
                 dailyActivity={streakHistory.dailyActivity}
                 streakPeriods={streakHistory.streakPeriods}
@@ -91,13 +76,7 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
 StudyStreakBottomSheet.displayName = 'StudyStreakBottomSheet';
 
 const styles = StyleSheet.create({
-  // Section 1: Header (highest hierarchy)
-  header: {
-    ...LAYOUT.BOTTOM_SHEET.HEADER,
-    marginBottom: LAYOUT.SPACING.LARGE, // 16px - tighter grouping with metric cards
-  },
-  // Section 2: Streak Metrics (secondary hierarchy)
   streakMetricsContainer: {
-    marginBottom: LAYOUT.SPACING.XLARGE, // 24px - clear section separation
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
 });
