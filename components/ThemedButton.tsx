@@ -9,54 +9,24 @@ import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui/button.types';
+import type { ThemedButtonProps } from '@/types/ui/button.types';
 import { createPadding } from '@/utils/layoutUtils';
 import { createButtonTextStyle } from '@/utils/textStyleUtils';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-/**
- * A themed button component that supports different visual styles,
- * icons, loading states, and press animations.
- *
- * This component follows the design system using:
- * - Colors from colors.ts via useColors hook
- * - Layout constants from layout.ts
- * - Types from ui.types.ts
- * - Animations from hooks/animations
- */
-const getTextType = (size: ButtonSize, weight: ButtonTextWeight) => {
-  if (weight === 'normal') {
-    switch (size) {
-      case 'small':
-        return 'caption';
-      case 'large':
-        return 'heading3';
-      default:
-        return 'body';
-    }
-  }
-  switch (size) {
-    case 'small':
-      return 'label';
-    case 'large':
-      return 'heading3';
-    default:
-      return 'bodyBold';
-  }
-};
+// Static lookup maps - zero per-render allocations
+const TEXT_TYPE_MAP = {
+  small: { normal: 'caption', bold: 'label' },
+  medium: { normal: 'body', bold: 'bodyBold' },
+  large: { normal: 'heading3', bold: 'heading3' },
+} as const;
 
-const getIconSize = (size: ButtonSize, customSize?: number) => {
-  if (customSize) return customSize;
-  switch (size) {
-    case 'small':
-      return LAYOUT.BUTTON.ICON_SIZE.SMALL + 2; // closest predefined size
-    case 'large':
-      return LAYOUT.BUTTON.ICON_SIZE.XLARGE;
-    default:
-      return LAYOUT.BUTTON.ICON_SIZE.LARGE;
-  }
-};
+const ICON_SIZE_MAP = {
+  small: LAYOUT.BUTTON.ICON_SIZE.SMALL + 2,
+  medium: LAYOUT.BUTTON.ICON_SIZE.LARGE,
+  large: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
+} as const;
 
 export function ThemedButton({
   variant = 'filled', // Most common value - hardcoded
@@ -106,7 +76,7 @@ export function ThemedButton({
         ? colors.black // Dark text on sage tint background in dark mode
         : colors.white // White text on sage tint background in light mode
       : colors.tint;
-  const iconSize = getIconSize(size, customIconSize);
+  const iconSize = customIconSize ?? ICON_SIZE_MAP[size];
 
   // Button styles
   const buttonStyle = [
@@ -132,8 +102,6 @@ export function ThemedButton({
   ];
 
   const iconContainerStyle = [styles.iconContainer, size === 'small' && styles.iconContainerSmall];
-
-  const textOpacityStyle = isActuallyLoading && !icon ? styles.hiddenText : null;
 
   return (
     <AnimatedPressable
@@ -174,8 +142,8 @@ export function ThemedButton({
                       : 'white'
                     : 'tint'
               }
-              style={[buttonTextStyle, textOpacityStyle]}
-              type={getTextType(size, textWeight)}
+              style={[buttonTextStyle, isActuallyLoading && !icon && styles.hiddenText]}
+              type={TEXT_TYPE_MAP[size][textWeight]}
             >
               {uppercase ? title?.toUpperCase() : title}
             </ThemedText>

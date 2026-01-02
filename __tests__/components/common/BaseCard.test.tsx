@@ -31,11 +31,6 @@ jest.mock('@/hooks/animations', () =>
   require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
 );
 
-jest.mock('@/utils/textStyleUtils', () => ({
-  createCardContentStyle: () => ({
-    padding: 16,
-  }),
-}));
 
 describe('BaseCard', () => {
   const mockOnPress = jest.fn();

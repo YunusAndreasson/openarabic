@@ -7,10 +7,16 @@ import { PRESS_ANIMATION_CARD, usePressAnimation } from '@/hooks/animations/useP
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseCardProps } from '@/types/ui/card.types';
-import { createCardContentStyle } from '@/utils/textStyleUtils';
 
-// Static style extracted outside component - zero per-render allocations
+// Static constants extracted outside component - zero per-render allocations
 const PRESSABLE_STYLE = { flex: 1 } as const;
+
+const SHADOW_LEVEL_MAP = {
+  subtle: 'SUBTLE',
+  small: 'SMALL',
+  medium: 'MEDIUM',
+  large: 'LARGE',
+} as const;
 
 export const BaseCard: FC<BaseCardProps> = ({
   children,
@@ -30,20 +36,10 @@ export const BaseCard: FC<BaseCardProps> = ({
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation(PRESS_ANIMATION_CARD);
 
   // Memoize computed styles to prevent recreation on every render
-  const { baseCardStyle, combinedContentStyle } = useMemo(() => {
+  const { baseCardStyle } = useMemo(() => {
     // Theme-aware elevation (no shadows in dark mode)
-    let shadowStyles = {};
-    if (shadowSize !== 'none') {
-      const level =
-        shadowSize === 'subtle'
-          ? 'SUBTLE'
-          : shadowSize === 'small'
-            ? 'SMALL'
-            : shadowSize === 'large'
-              ? 'LARGE'
-              : 'MEDIUM';
-      shadowStyles = getThemeAwareElevation(level, isDarkMode);
-    }
+    const shadowStyles =
+      shadowSize !== 'none' ? getThemeAwareElevation(SHADOW_LEVEL_MAP[shadowSize], isDarkMode) : {};
 
     const cardStyle = [
       styles.card,
@@ -54,25 +50,23 @@ export const BaseCard: FC<BaseCardProps> = ({
       disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
     ];
 
-    return {
-      baseCardStyle: cardStyle,
-      combinedContentStyle: [styles.content, contentStyle],
-    };
-  }, [colors.card, colors.shadow, isDarkMode, shadowSize, style, contentStyle, disabled]);
+    return { baseCardStyle: cardStyle };
+  }, [colors.card, colors.shadow, isDarkMode, shadowSize, style, disabled]);
 
+  // Non-pressable paths use plain View (no animation overhead)
   if (loading) {
     return (
-      <Animated.View style={[baseCardStyle, animatedStyle]} testID={testID}>
-        <View style={combinedContentStyle} />
-      </Animated.View>
+      <View style={baseCardStyle} testID={testID}>
+        <View style={contentStyle} />
+      </View>
     );
   }
 
   if (!onPress && !onLongPress) {
     return (
-      <Animated.View style={[baseCardStyle, animatedStyle]} testID={testID}>
-        <View style={combinedContentStyle}>{children}</View>
-      </Animated.View>
+      <View style={baseCardStyle} testID={testID}>
+        <View style={contentStyle}>{children}</View>
+      </View>
     );
   }
 
@@ -92,7 +86,7 @@ export const BaseCard: FC<BaseCardProps> = ({
         onPressOut={handlePressOut}
         onLongPress={onLongPress}
       >
-        <View style={combinedContentStyle}>{children}</View>
+        <View style={contentStyle}>{children}</View>
       </Pressable>
     </Animated.View>
   );
@@ -101,11 +95,8 @@ export const BaseCard: FC<BaseCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    position: 'relative',
     overflow: 'hidden', // Clip absolute children (progress bars) to border radius
-    zIndex: LAYOUT.Z_INDEX.CARD,
   },
-  content: createCardContentStyle(),
 });
 
 BaseCard.displayName = 'BaseCard';

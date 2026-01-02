@@ -197,14 +197,10 @@ export function ThemedText({
     }
 
     const baseStyle = BASE_STYLE_MAP[type as TextTypeName] || BASE_STYLE_MAP.body;
-    const enhancedOpacity =
-      baseStyle && 'opacity' in baseStyle && typeof baseStyle.opacity === 'number'
-        ? getEnhancedOpacity(baseStyle.opacity, isDarkMode)
-        : undefined;
 
     return [
       baseStyle,
-      enhancedOpacity !== undefined && { opacity: enhancedOpacity },
+      { opacity: getEnhancedOpacity(baseStyle.opacity as number, isDarkMode) },
       textColor && { color: textColor },
       weight && { fontWeight: weight },
       align && { textAlign: align },

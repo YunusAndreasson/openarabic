@@ -214,16 +214,3 @@ export const createButtonTextStyle = (size: 'small' | 'medium' | 'large' = 'medi
   }
 };
 
-// ===== CARD CONTENT CONTAINER UTILITIES =====
-
-/**
- * Creates consistent card content container styling
- * @returns ViewStyle object for card content
- */
-export const createCardContentStyle = (): ViewStyle => {
-  return {
-    overflow: 'hidden',
-    position: 'relative',
-    zIndex: LAYOUT.Z_INDEX.BASE,
-  };
-};
