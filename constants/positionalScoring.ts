@@ -42,15 +42,7 @@ export const POSITIONAL_SCORE = {
 } as const;
 
 /**
- * Component types for positional scoring
- * Maps component icons to their semantic types
+ * Special component type for bracket injection ([the])
+ * Only used in positional scoring - other types use ComponentType enum directly
  */
-export const COMPONENT_TYPES = {
-  PREFIX: 'prefix',
-  SUFFIX: 'suffix',
-  INFIX: 'infix',
-  DIACRITIC: 'diacritic',
-  BRACKET: 'bracket', // Special type for bracket injection ([the])
-} as const;
-
-export type ComponentTypeForScoring = (typeof COMPONENT_TYPES)[keyof typeof COMPONENT_TYPES];
+export const BRACKET_TYPE = 'bracket' as const;

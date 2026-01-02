@@ -1,5 +1,6 @@
+import { ComponentType, ICON_TO_COMPONENT_TYPE } from '@/constants/arabicWordComponents';
 import { CONTRACTION_EXPANSIONS, EXPANSION_TO_CONTRACTION } from '@/constants/contractions';
-import { COMPONENT_TYPES, POSITIONAL_SCORE } from '@/constants/positionalScoring';
+import { BRACKET_TYPE, POSITIONAL_SCORE } from '@/constants/positionalScoring';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import type { WordAnalysis } from '@/utils/arabicWordAnalysis';
@@ -108,7 +109,7 @@ export const generateColorCodedSegments = ({
     textLength: number,
   ): number => {
     // Bracket injection always has highest priority
-    if (match.componentType === COMPONENT_TYPES.BRACKET) {
+    if (match.componentType === BRACKET_TYPE) {
       return POSITIONAL_SCORE.BRACKET_INJECTION;
     }
 
@@ -118,10 +119,10 @@ export const generateColorCodedSegments = ({
 
     const relativePosition = match.start / textLength;
 
-    if (match.componentType === COMPONENT_TYPES.PREFIX) {
+    if (match.componentType === ComponentType.PREFIX) {
       // Prefixes score higher at start: OPTIMAL_POSITION at position 0 → MIN at end
       return POSITIONAL_SCORE.OPTIMAL_POSITION - relativePosition;
-    } else if (match.componentType === COMPONENT_TYPES.SUFFIX) {
+    } else if (match.componentType === ComponentType.SUFFIX) {
       // Suffixes score higher at end: MIN at position 0 → OPTIMAL_POSITION at end
       return POSITIONAL_SCORE.MIN + relativePosition;
     }
@@ -139,19 +140,11 @@ export const generateColorCodedSegments = ({
         start: 0,
         end: 5, // "[the]" length (5 characters including brackets)
         color: colors.tint, // Use tint color for definite article
-        componentType: COMPONENT_TYPES.BRACKET, // Special type for bracket injection
+        componentType: BRACKET_TYPE, // Special type for bracket injection
         isBracketInjection: true, // Flag to remove brackets when displaying
       });
     }
   }
-
-  // Icon to component type mapping
-  const iconToComponentType: Record<string, string> = {
-    '→': COMPONENT_TYPES.PREFIX,
-    '←': COMPONENT_TYPES.SUFFIX,
-    '↔': COMPONENT_TYPES.INFIX,
-    '◌': COMPONENT_TYPES.DIACRITIC,
-  };
 
   // Process each component section
   for (const section of componentSections) {
@@ -163,7 +156,8 @@ export const generateColorCodedSegments = ({
       : colors.text;
 
     // Detect component type from icon (→ = prefix, ← = suffix, ↔ = infix, ◌ = diacritic)
-    const componentType = section.icon ? iconToComponentType[section.icon] : undefined;
+    // Uses ICON_TO_COMPONENT_TYPE from arabicWordComponents.ts (single source of truth)
+    const componentType = section.icon ? ICON_TO_COMPONENT_TYPE[section.icon] : undefined;
 
     // Split possible multiple english matches like "his / its / it"
     // Also split compound patterns like "and the" into individual words

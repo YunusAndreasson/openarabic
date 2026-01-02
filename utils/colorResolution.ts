@@ -3,7 +3,18 @@
  * Single source of truth for resolving color names to hex values
  */
 
+import { GRAMMATICAL_ROLE_COLORS } from '@/constants/arabicWordComponents';
 import type { GrammarColorName, ThemeColors } from '@/types/ui/theme.types';
+
+/**
+ * Valid grammar color keys - derived from GRAMMATICAL_ROLE_COLORS (single source of truth)
+ * Uses Set to deduplicate (some roles share colors via fallback)
+ */
+const validGrammarKeys = [
+  ...new Set(
+    Object.values(GRAMMATICAL_ROLE_COLORS).map(colorName => colorName.replace('grammar.', '')),
+  ),
+] as GrammarColorName[];
 
 /**
  * Determine if color-coding should be applied to text
@@ -81,20 +92,6 @@ export function resolveColorName(colorName: string, colors: ThemeColors): string
 export function assertValidColorName(colorName: string): asserts colorName is ValidColorName {
   if (colorName.startsWith('grammar.')) {
     const grammarKey = colorName.slice(8);
-    const validGrammarKeys: GrammarColorName[] = [
-      'preposition',
-      'possessive',
-      'particle',
-      'interrogative',
-      'verbConjugation',
-      'negation',
-      'subjectPrefix',
-      'plural',
-      'demonstrative',
-      'conjunction',
-      'futureTense',
-      'definiteArticle',
-    ];
     if (!validGrammarKeys.includes(grammarKey as GrammarColorName)) {
       throw new Error(
         `Invalid grammar color name "${colorName}". ` +
