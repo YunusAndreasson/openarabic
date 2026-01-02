@@ -43,7 +43,7 @@ export function VocabularyStatCards({
       label: VocabularyStatCategory.DUE,
       value: dueWords,
       color: colors.error,
-      icon: 'time' as const,
+      icon: 'hourglass' as const,
       onPress: onDuePress,
       formatAsDecimal: false,
     },
