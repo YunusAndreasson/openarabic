@@ -8,12 +8,10 @@ import type { EnhancedImageProps } from '@/types/ui/image.types';
 // Optimized constants - most common values are hardcoded as defaults
 const IMAGE_SIZE = '100%' as const;
 
-// Static styles object to prevent recreation
 const styles = StyleSheet.create({
   container: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    overflow: 'hidden' as const,
-    position: 'relative' as const,
+    overflow: 'hidden',
   },
   image: {
     height: IMAGE_SIZE,
@@ -52,38 +50,27 @@ export function EnhancedImage({
 }: EnhancedImageProps) {
   const colors = useColors();
 
-  const containerStyle = [styles.container, { backgroundColor: colors.elevation2 }, style];
-
-  const imageProps = {
-    cachePolicy,
-    contentFit,
-    contentPosition,
-    priority,
-    transition,
-    recyclingKey,
-    source,
-    style: styles.image,
-    allowDownscaling, // Always set explicitly (default true for performance)
-    ...(placeholder ? { placeholder } : {}),
-    ...(placeholder ? { placeholderContentFit } : {}),
-    ...(testID ? { testID } : {}),
-  };
-
-  const eventHandlers = {
-    ...(onLoad ? { onLoad } : {}),
-    ...(onError ? { onError } : {}),
-  };
-
-  // Accessibility props - only set if provided
-  const accessibilityProps = {
-    ...(accessibilityLabel ? { accessibilityLabel } : {}),
-    ...(typeof accessible === 'boolean' ? { accessible } : {}),
-    ...(accessibilityHint ? { accessibilityHint } : {}),
-  };
-
   return (
-    <View style={containerStyle}>
-      <Image {...imageProps} {...eventHandlers} {...accessibilityProps} />
+    <View style={[styles.container, { backgroundColor: colors.elevation2 }, style]}>
+      <Image
+        accessibilityHint={accessibilityHint}
+        accessibilityLabel={accessibilityLabel}
+        accessible={accessible}
+        allowDownscaling={allowDownscaling}
+        cachePolicy={cachePolicy}
+        contentFit={contentFit}
+        contentPosition={contentPosition}
+        onError={onError}
+        onLoad={onLoad}
+        placeholder={placeholder}
+        placeholderContentFit={placeholderContentFit}
+        priority={priority}
+        recyclingKey={recyclingKey}
+        source={source}
+        style={styles.image}
+        testID={testID}
+        transition={transition}
+      />
     </View>
   );
 }
