@@ -55,15 +55,15 @@ export async function stopAudioSafely(throwOnError: boolean = false): Promise<vo
  * @param prefetchArticle - Optional prefetch function for full article data
  */
 export async function prefetchArticleWithImage(
-  articleId: number,
+  articleId: ArticleId,
   queryClient: QueryClient,
-  prefetchArticle?: (id: number) => Promise<boolean | void>,
+  prefetchArticle?: (id: ArticleId) => Promise<boolean | void>,
 ): Promise<void> {
   // Prefetch article data
   queryClient
     .prefetchQuery({
       queryKey: ['article', articleId],
-      queryFn: () => articlesService.getArticleById(articleId as ArticleId),
+      queryFn: () => articlesService.getArticleById(articleId),
     })
     .catch(() => {
       // Silent failure

@@ -4,11 +4,12 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { readingProgressQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { readingProgressService } from '@/services/readingProgress';
+import type { ArticleId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 
 interface UseReadingProgressOptions {
-  articleId: number;
+  articleId: ArticleId;
   totalSentences: number;
   currentSentenceIndex: number;
   isActive: boolean; // Only track when article is actually being read
@@ -273,7 +274,7 @@ export function useReadingProgress({
   };
 }
 
-export function useBulkReadingProgress(articleIds: number[]) {
+export function useBulkReadingProgress(articleIds: ArticleId[]) {
   const { user } = useAuth();
 
   const query = useQuery({
@@ -327,7 +328,7 @@ export function useBulkReadingProgress(articleIds: number[]) {
 }
 
 // Safe wrapper hook for bulk reading progress that handles missing AuthProvider
-export function useSafeBulkReadingProgress(articleIds: number[]) {
+export function useSafeBulkReadingProgress(articleIds: ArticleId[]) {
   try {
     const result = useBulkReadingProgress(articleIds);
     // Ensure data is always a Map, even if the query returns undefined

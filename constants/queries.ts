@@ -213,10 +213,10 @@ export const articleQueries = {
    * Single article details by ID
    * Used for article reader and prefetching
    */
-  detail: (articleId: number) =>
+  detail: (articleId: ArticleId) =>
     queryOptions({
       queryKey: ['article', articleId] as const,
-      queryFn: () => articlesService.getArticleById(articleId as ArticleId),
+      queryFn: () => articlesService.getArticleById(articleId),
       ...CACHE_TIMES.ARTICLES, // Infinity staleTime
       enabled: !!articleId,
       retry: 2,
@@ -322,7 +322,7 @@ export const readingProgressQueries = {
    */
   keys: {
     readingList: (userId: string) => ['readingList', userId] as const,
-    readingListDetail: (userId: string, articleId: number) =>
+    readingListDetail: (userId: string, articleId: ArticleId) =>
       ['readingList', userId, articleId] as const,
     bulk: (userId: string) => ['reading-progress-bulk', userId] as const,
     streak: (userId: string) => ['reading-streak', userId] as const,

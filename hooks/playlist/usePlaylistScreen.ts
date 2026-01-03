@@ -250,11 +250,11 @@ export const usePlaylistScreen = () => {
   // Sleep timer handlers are handled by useGlobalAudioState
 
   const handleDelete = useCallback(
-    async (articleId: number) => {
+    async (articleId: ArticleId) => {
       if (!user?.id) return;
       try {
         selectionFeedback();
-        await bookmarkService.removeFromReadingList(user.id, articleId as ArticleId);
+        await bookmarkService.removeFromReadingList(user.id, articleId);
         dispatch(removeFromCustomOrder(articleId));
 
         // Immediately update the specific article's reading list status
@@ -275,7 +275,7 @@ export const usePlaylistScreen = () => {
   );
 
   const handleArticlePlay = useCallback(
-    async (articleId: number) => {
+    async (articleId: ArticleId) => {
       if (isAudioBusy()) return;
 
       const currentArticleId = getCurrentArticleId();

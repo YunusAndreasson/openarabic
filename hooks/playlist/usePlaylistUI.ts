@@ -29,13 +29,13 @@ export const usePlaylistUI = ({ sortedReadingList, editMode }: ListenUIParams) =
   }, []);
 
   const handleArticlePress = useCallback(
-    (articleId: number) => {
+    (articleId: ArticleId) => {
       if (editMode) return;
 
       const article = sortedReadingList.find(item => item.article_id === articleId)?.articles;
       if (article) {
         InteractionManager.runAfterInteractions(() => prefetchArticle(articleId));
-        router.push(getArticleRoute(articleId as ArticleId, article.title));
+        router.push(getArticleRoute(articleId, article.title));
       }
     },
     [prefetchArticle, sortedReadingList, editMode],

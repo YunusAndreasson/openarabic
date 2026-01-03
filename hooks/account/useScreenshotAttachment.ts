@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
-import { handleError } from '@/utils/errorHandling';
+import { handleError, toError } from '@/utils/errorHandling';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 interface UseScreenshotAttachmentOptions {
@@ -118,7 +118,7 @@ export function useScreenshotAttachment({
         setScreenshotUri(result.assets[0].uri);
       }
     } catch (error) {
-      handleError(error as Error, {
+      handleError(toError(error), {
         showToast: false,
         analyticsEventName: 'Screenshot_Picker_Error',
       });

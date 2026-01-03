@@ -142,7 +142,7 @@ export function useArticleScreen({
   const isActive = Boolean(article) && !isLoadingArticle;
   const { updateProgress, initialLastSentenceRead, hadExistingProgressOnMount } =
     useReadingProgress({
-      articleId: articleId ?? 0,
+      articleId: articleId ?? (0 as ArticleId),
       totalSentences: sortedSentences?.length ?? 0,
       currentSentenceIndex: currentSentenceIndexForProgress,
       isActive,

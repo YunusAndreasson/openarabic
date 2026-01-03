@@ -4,7 +4,7 @@ import { scheduleReminder } from '@/services/notificationService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setReminderTime } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/types/notifications.types';
-import { handleError } from '@/utils/errorHandling';
+import { handleError, toError } from '@/utils/errorHandling';
 
 export interface UseRemindersResult {
   reminderTime: ReminderTime;
@@ -25,7 +25,7 @@ export function useReminders(): UseRemindersResult {
         // Update the store
         dispatch(setReminderTime(newReminderTime));
       } catch (error) {
-        handleError(error as Error, { showToast: false });
+        handleError(toError(error), { showToast: false });
       }
     },
     [dispatch],

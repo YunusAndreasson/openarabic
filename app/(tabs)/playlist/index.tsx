@@ -19,6 +19,7 @@ import { useColors } from '@/hooks/theme';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
 import type { BookmarkItem } from '@/types/bookmark.types';
+import type { ArticleId } from '@/types/branded.types';
 import { AudioAction, ToastType } from '@/types/enums';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadata } from '@/utils/stringUtils';
@@ -52,19 +53,19 @@ const PlaylistListItem = memo(
   }: {
     item: BookmarkItem;
     editMode: boolean;
-    onDelete: (id: number) => void;
-    onArticlePress: (articleId: number, title: string) => void;
+    onDelete: (id: ArticleId) => void;
+    onArticlePress: (articleId: ArticleId, title: string) => void;
     drag?: () => void;
     _isBeingDragged?: boolean;
   }) => {
     // Memoize event handlers to prevent inline function creation
     const handleDelete = useCallback(() => {
-      onDelete(item.article_id);
+      onDelete(item.article_id as ArticleId);
     }, [onDelete, item.article_id]);
 
     const handlePress = useCallback(() => {
       if (!editMode) {
-        onArticlePress(item.article_id, item.articles.title);
+        onArticlePress(item.article_id as ArticleId, item.articles.title);
       }
     }, [editMode, onArticlePress, item.article_id, item.articles.title]);
 
@@ -239,7 +240,7 @@ export default function PlaylistScreen(): JSX.Element {
 
   // Create the article press handler - plays audio in miniplayer
   const handleArticlePress = useCallback(
-    (articleId: number, _title: string) => {
+    (articleId: ArticleId, _title: string) => {
       handleArticlePlay(articleId);
     },
     [handleArticlePlay],

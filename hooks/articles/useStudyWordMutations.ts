@@ -30,13 +30,13 @@ interface StudyWordMutationsResult {
   toggleWordMutation: UseMutationResult<
     boolean,
     Error,
-    { userId: string; wordId?: RootId; rootId?: number },
+    { userId: string; wordId?: RootId; rootId?: RootId },
     StudyWordContext
   >;
   toggleRootMutation: UseMutationResult<
     boolean,
     Error,
-    { userId: string; wordId?: RootId; rootId?: number },
+    { userId: string; wordId?: RootId; rootId?: RootId },
     StudyWordContext
   >;
 }
@@ -126,9 +126,9 @@ export const useStudyWordMutations = (
       }: {
         userId: string;
         wordId?: RootId;
-        rootId?: number;
+        rootId?: RootId;
       }) => {
-        const id = (wordId ?? rootId) as number;
+        const id = (wordId ?? rootId) as RootId;
         return studyWordsFSRSService.toggleFSRSStudyRoot(userId, id);
       },
       onMutate: async ({
@@ -138,7 +138,7 @@ export const useStudyWordMutations = (
       }: {
         userId: string;
         wordId?: RootId;
-        rootId?: number;
+        rootId?: RootId;
       }): Promise<StudyWordContext> => {
         // CRITICAL: Use fsrsQueries.all() to match what UI components read
         // This ensures optimistic updates are immediately visible in both underlines and buttons
@@ -175,7 +175,7 @@ export const useStudyWordMutations = (
       },
       onSuccess: (
         _: boolean,
-        { userId, wordId, rootId }: { userId: string; wordId?: RootId; rootId?: number },
+        { userId, wordId, rootId }: { userId: string; wordId?: RootId; rootId?: RootId },
         context?: StudyWordContext,
       ) => {
         // Track word added/removed (fire and forget - don't block UI)
@@ -213,13 +213,13 @@ export const useStudyWordMutations = (
   const toggleWordMutation = useMutation<
     boolean,
     Error,
-    { userId: string; wordId?: RootId; rootId?: number },
+    { userId: string; wordId?: RootId; rootId?: RootId },
     StudyWordContext
   >(toggleStudyOptions);
   const toggleRootMutation = useMutation<
     boolean,
     Error,
-    { userId: string; wordId?: RootId; rootId?: number },
+    { userId: string; wordId?: RootId; rootId?: RootId },
     StudyWordContext
   >(toggleStudyOptions);
 
@@ -328,7 +328,7 @@ export const useStudyWordMutations = (
         // Always use the user ID from the session directly
         const result = await toggleRootMutation.mutateAsync({
           userId: currentUserId,
-          rootId: rootId as number,
+          rootId,
         });
         return result;
       } catch (error) {

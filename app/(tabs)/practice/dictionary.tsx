@@ -20,6 +20,7 @@ import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useDictionaryModal, useFSRSQueries } from '@/hooks/vocabulary';
+import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
@@ -76,7 +77,7 @@ export default function DictionaryScreen(): JSX.Element {
   }, []);
 
   const handleDeleteWord = useCallback(
-    async (rootId: number) => {
+    async (rootId: RootId) => {
       if (!user?.id) return;
       try {
         await toggleRootMutation.mutateAsync({ userId: user.id, rootId });

@@ -36,7 +36,7 @@ const selectAudioUrl = (
 
 // Helper function to create enhanced audio track
 const createEnhancedTrack = async (
-  articleId: number,
+  articleId: ArticleId,
   article: { title: string; image_url: string },
   audioUrl: string,
 ): Promise<EnhancedAudioTrack> => {
@@ -44,7 +44,7 @@ const createEnhancedTrack = async (
   const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl || audioUrl);
 
   return {
-    id: generateTrackId(articleId as ArticleId),
+    id: generateTrackId(articleId),
     articleId,
     audioUrl: cachedAudioUrl,
     title: article.title,
@@ -93,7 +93,11 @@ export const enhancedAudioService = {
       for (const item of readingList) {
         const article = item.articles;
         const selectedAudioUrl = selectAudioUrl(article, audioPreference);
-        const track = await createEnhancedTrack(item.article_id, article, selectedAudioUrl);
+        const track = await createEnhancedTrack(
+          item.article_id as ArticleId,
+          article,
+          selectedAudioUrl,
+        );
         allTracks.push(track);
       }
 

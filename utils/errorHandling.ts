@@ -4,6 +4,14 @@ import { DEFAULT_TOAST_DURATION } from '@/constants/animation';
 import { analytics } from '@/services/analytics';
 import { ToastType } from '@/types/enums';
 
+/**
+ * Safely converts an unknown error to an Error object.
+ * Useful for catch blocks where the error type is unknown.
+ */
+export function toError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
+}
+
 // Store toast handler globally - updated to support types
 let globalToastHandler: ((message: string, duration?: number, type?: ToastType) => void) | null =
   null;

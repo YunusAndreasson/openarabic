@@ -9,6 +9,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
@@ -43,8 +44,8 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
     staleTime: Infinity,
   });
 
-  // Get root IDs
-  const rootIds = useMemo(() => commonWords.map(w => w.id), [commonWords]);
+  // Get root IDs (cast from database number to branded RootId)
+  const rootIds = useMemo(() => commonWords.map(w => w.id as RootId), [commonWords]);
 
   const mutation = useMutation({
     mutationFn: async () => {

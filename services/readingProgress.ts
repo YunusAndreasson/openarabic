@@ -1,5 +1,6 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
+import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
@@ -82,7 +83,7 @@ export function toSafeReadingProgress(
 
 interface UpdateReadingProgressParams {
   userId: string;
-  articleId: number;
+  articleId: ArticleId;
   lastSentenceRead: number;
   totalSentences: number;
 }
@@ -121,7 +122,7 @@ export class ReadingProgressService {
   /**
    * Get reading progress for a specific article
    */
-  static async getProgress(userId: string, articleId: number): Promise<ReadingProgress | null> {
+  static async getProgress(userId: string, articleId: ArticleId): Promise<ReadingProgress | null> {
     const data = await executeQuery(
       () =>
         supabase
@@ -144,7 +145,7 @@ export class ReadingProgressService {
    */
   static async getSafeProgress(
     userId: string,
-    articleId: number,
+    articleId: ArticleId,
   ): Promise<SafeReadingProgress | null> {
     const progress = await this.getProgress(userId, articleId);
     return toSafeReadingProgress(progress);
@@ -157,8 +158,8 @@ export class ReadingProgressService {
    */
   static async getBulkProgress(
     userId: string,
-    articleIds: number[],
-  ): Promise<Map<number, ReadingProgress>> {
+    articleIds: ArticleId[],
+  ): Promise<Map<ArticleId, ReadingProgress>> {
     // Build query
     let query = supabase.from('reading_progress').select('*').eq('user_id', userId);
 
@@ -173,9 +174,9 @@ export class ReadingProgressService {
     });
 
     // Convert to Map for easy lookup
-    const progressMap = new Map<number, ReadingProgress>();
+    const progressMap = new Map<ArticleId, ReadingProgress>();
     (data as Tables<'reading_progress'>[]).forEach(progress => {
-      progressMap.set(progress.article_id, progress as ReadingProgress);
+      progressMap.set(progress.article_id as ArticleId, progress as ReadingProgress);
     });
 
     return progressMap;
@@ -186,10 +187,10 @@ export class ReadingProgressService {
    */
   static async getBulkSafeProgress(
     userId: string,
-    articleIds: number[],
-  ): Promise<Map<number, SafeReadingProgress>> {
+    articleIds: ArticleId[],
+  ): Promise<Map<ArticleId, SafeReadingProgress>> {
     const progressMap = await this.getBulkProgress(userId, articleIds);
-    const safeProgressMap = new Map<number, SafeReadingProgress>();
+    const safeProgressMap = new Map<ArticleId, SafeReadingProgress>();
 
     progressMap.forEach((progress, articleId) => {
       const safeProgress = toSafeReadingProgress(progress);

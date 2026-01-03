@@ -27,7 +27,7 @@ interface ArticleDataResult {
  * @param userId - The current user ID
  */
 export const useArticleData = (
-  articleId: number | undefined,
+  articleId: ArticleId | undefined,
   userId: string | undefined,
 ): ArticleDataResult => {
   // Get theme colors for pre-computing word color analysis
@@ -35,7 +35,7 @@ export const useArticleData = (
 
   // Fetch article data with optimized caching
   const { data: article, isLoading: isLoadingArticle } = useQuery({
-    ...articleQueries.detail(articleId || 0),
+    ...articleQueries.detail(articleId ?? (0 as ArticleId)),
     refetchOnMount: false, // Don't refetch on mount if we have data
   });
 
@@ -47,7 +47,7 @@ export const useArticleData = (
         : (['readingList', 'none'] as const),
     queryFn: () => {
       if (!userId || !articleId) throw new Error('User ID and Article ID are required');
-      return bookmarkService.isInReadingList(userId, articleId as ArticleId);
+      return bookmarkService.isInReadingList(userId, articleId);
     },
     enabled: !!userId && !!articleId,
     ...CACHE_TIMES.MEDIUM, // 3 minutes - reading list changes moderately

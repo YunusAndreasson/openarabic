@@ -1,5 +1,6 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
+import type { RootId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import type { FSRSWordUpdate, GetFSRSWordsOptions } from '@/types/fsrs.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -164,7 +165,7 @@ export const studyWordsFSRSService = {
   // Update FSRS parameters for a study word
   async updateWordAndReview(
     userId: string,
-    rootId: number,
+    rootId: RootId,
     update: FSRSWordUpdate,
   ): Promise<boolean> {
     // Direct UPDATE - simpler than RPC, no database migration needed
@@ -198,7 +199,7 @@ export const studyWordsFSRSService = {
   },
 
   // Toggle FSRS study for roots
-  async toggleFSRSStudyRoot(userId: string, rootId: number): Promise<boolean> {
+  async toggleFSRSStudyRoot(userId: string, rootId: RootId): Promise<boolean> {
     // Check if a study entry already exists for this root
     // Using maybeSingle() returns null instead of throwing PGRST116 error
     const existing = await executeAuthenticatedQuery(
@@ -264,7 +265,7 @@ export const studyWordsFSRSService = {
    * Add multiple roots to the user's study list at once.
    * Skips roots that are already in the study list.
    */
-  async addMultipleRoots(userId: string, rootIds: number[]): Promise<number> {
+  async addMultipleRoots(userId: string, rootIds: RootId[]): Promise<number> {
     if (rootIds.length === 0) return 0;
 
     // Get existing study words to avoid duplicates

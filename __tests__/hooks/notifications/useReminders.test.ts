@@ -23,8 +23,13 @@ jest.mock('../../../store/hooks', () => ({
   useAppSelector: jest.fn(),
 }));
 
+// Re-export actual toError since it's a pure function with no side effects
+const actualErrorHandling = jest.requireActual('../../../utils/errorHandling');
+
 jest.mock('../../../utils/errorHandling', () => ({
   handleError: jest.fn(),
+  toError: (error: unknown) =>
+    error instanceof Error ? error : new Error(String(error)),
 }));
 
 const { scheduleReminder, hasPermissions } = require('../../../services/notificationService');

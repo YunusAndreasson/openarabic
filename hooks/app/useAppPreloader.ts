@@ -18,15 +18,16 @@ import { articlesService } from '@/services/articles';
 import { bookmarkService } from '@/services/bookmark';
 import { readingProgressService } from '@/services/readingProgress';
 import type { Article } from '@/types/articles.types';
+import type { ArticleId } from '@/types/branded.types';
 import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
-import { handleError } from '@/utils/errorHandling';
+import { handleError, toError } from '@/utils/errorHandling';
 import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 interface AppPreloaderResult {
   isPreloading: boolean;
   isLoaded: boolean;
   preloadAppData: () => Promise<void>;
-  prefetchArticle: (articleId: number) => Promise<boolean>;
+  prefetchArticle: (articleId: ArticleId) => Promise<boolean>;
   prefetchVocabularyData: () => Promise<boolean>;
   prefetchFeaturedArticles: () => Promise<boolean>;
   preloadProgress: number; // 0-100 percentage
@@ -245,7 +246,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
   }, [preloadCriticalData]);
 
   const prefetchArticle = useCallback(
-    async (articleId: number) => {
+    async (articleId: ArticleId) => {
       try {
         await queryClient.prefetchQuery(articleQueries.detail(articleId));
         return true;
@@ -266,7 +267,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       ]);
       return true;
     } catch (error) {
-      handleError(error as Error, { showToast: false });
+      handleError(toError(error), { showToast: false });
       return false;
     }
   }, [queryClient, user?.id]);

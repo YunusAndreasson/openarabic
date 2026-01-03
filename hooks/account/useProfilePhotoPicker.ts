@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
-import { handleError } from '@/utils/errorHandling';
+import { handleError, toError } from '@/utils/errorHandling';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 interface UseProfilePhotoPickerOptions {
@@ -73,7 +73,7 @@ export function useProfilePhotoPicker({
           setProfilePhotoUri(savedUri);
         }
       } catch (error) {
-        handleError(error as Error, { showToast: false });
+        handleError(toError(error), { showToast: false });
       } finally {
         setIsLoaded(true);
         onPhotoLoaded?.();
@@ -149,7 +149,7 @@ export function useProfilePhotoPicker({
         setProfilePhotoUri(selectedUri);
       }
     } catch (error) {
-      handleError(error as Error, {
+      handleError(toError(error), {
         toastMessage: 'Failed to select profile photo',
         showToast: true,
       });
@@ -162,7 +162,7 @@ export function useProfilePhotoPicker({
       await storage.removeItem(storageKey);
       setProfilePhotoUri(null);
     } catch (error) {
-      handleError(error as Error, { showToast: false });
+      handleError(toError(error), { showToast: false });
     }
   }, [storageKey]);
 
