@@ -7,6 +7,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { SavedEmptyState } from '@/components/playlist';
@@ -107,6 +108,7 @@ const PlaylistListItem = memo(
 PlaylistListItem.displayName = 'PlaylistListItem';
 
 export default function PlaylistScreen(): JSX.Element {
+  const insets = useSafeAreaInsets();
   const { editMode, reset } = useEditMode('playlist');
   const { showToast } = useToast();
 
@@ -240,10 +242,7 @@ export default function PlaylistScreen(): JSX.Element {
   const memoizedKeyExtractor = useCallback(keyExtractor, []);
 
   return (
-    <ThemedView
-      useSafeArea={false}
-      style={styles.container}
-    >
+    <ThemedView useSafeArea={false} style={styles.container}>
       <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
         {editMode ? (
           <DraggableFlatList<BookmarkItem>
@@ -294,6 +293,7 @@ export default function PlaylistScreen(): JSX.Element {
           onPress={handlePlayAllStable}
           onLongPress={handlePlayAllArabicOnly}
           disabled={isPlayAllLoading}
+          bottomInset={insets.bottom}
         />
       )}
     </ThemedView>

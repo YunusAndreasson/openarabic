@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 import { Fragment, useEffect } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { Platform } from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
@@ -9,8 +9,6 @@ import { router } from 'expo-router';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
-import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
-import { HeaderProfile } from '@/components/HeaderProfile';
 import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
@@ -37,7 +35,13 @@ export default function TabLayout(): JSX.Element {
   // Note: NativeTabs is iOS-only (uses UITabBarController) - Android uses JavaScript tabs
   if (Platform.OS === 'ios') {
     return (
-      <NativeTabs>
+      <NativeTabs
+        tintColor={colors.tint}
+        iconColor={{
+          default: colors.tabIconDefault,
+          selected: colors.tint,
+        }}
+      >
         {TAB_SCREENS.map(screen => (
           <NativeTabs.Trigger key={screen.name} name={screen.name}>
             <Icon sf={screen.icon.sf} />
@@ -51,16 +55,18 @@ export default function TabLayout(): JSX.Element {
     );
   }
 
-  // Android: Use regular JavaScript tabs
+  // Android: Use regular JavaScript tabs with labels
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
+        tabBarShowLabel: true,
         tabBarStyle: {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
         },
+        headerShown: false, // Headers are handled by nested Stack navigators
       }}
     >
       {TAB_SCREENS.map(screen => (
@@ -69,48 +75,19 @@ export default function TabLayout(): JSX.Element {
           name={screen.name}
           options={{
             title: screen.title,
-            ...(screen.name === 'explore' ? {
-              headerShown: true,
-              headerShadowVisible: false,
-              headerStyle: Platform.select({
-                android: {
-                  backgroundColor: colors.background,
-                  paddingTop: 24,
-                },
-                default: {
-                  backgroundColor: colors.background,
-                },
-              }),
-              headerTintColor: colors.tint,
-              headerTitleAlign: 'left',
-              headerTitle: () => (
-                <View style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  backgroundColor: 'transparent',
-                }}>
-                  <Text style={{
-                    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-                    fontWeight: FONT_WEIGHTS.BOLD,
-                    color: colors.headingText,
-                    backgroundColor: 'transparent',
-                  }}>
-                    Explore
-                  </Text>
-                </View>
-              ),
-              headerRight: () => <HeaderProfile size={32} />,
-            } : {}),
             tabBarIcon: ({ focused, color }) => (
               <Ionicons
                 name={
-                  (focused ? screen.icon.filled : screen.icon.outline) as keyof typeof Ionicons.glyphMap
+                  (focused
+                    ? screen.icon.filled
+                    : screen.icon.outline) as keyof typeof Ionicons.glyphMap
                 }
                 size={24}
                 color={color}
               />
             ),
-            tabBarBadge: screen.name === 'practice' && dueWordsCount > 0 ? dueWordsCount : undefined,
+            tabBarBadge:
+              screen.name === 'practice' && dueWordsCount > 0 ? dueWordsCount : undefined,
           }}
         />
       ))}

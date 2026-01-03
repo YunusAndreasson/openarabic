@@ -6,6 +6,7 @@ import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { InteractionManager, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState } from '@/components/common';
@@ -16,7 +17,7 @@ import { RecommendationCard } from '@/components/practice';
 import { StudyStreakBottomSheet } from '@/components/practice';
 import { PracticeStatCards } from '@/components/practice';
 import { WordsMasteredBottomSheet } from '@/components/practice';
-import { FloatingGlassButton, PulsatingLoader } from '@/components/ui';
+import { FloatingGlassButton } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { fsrsQueries } from '@/constants/queries';
@@ -35,6 +36,7 @@ import { calculateWordCategories } from '@/utils/wordClassification';
 type BottomSheetKey = 'memory' | 'due' | 'streak' | 'mastered';
 
 export default function PracticeScreen(): JSX.Element {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -50,14 +52,7 @@ export default function PracticeScreen(): JSX.Element {
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
 
-  // Smooth spring animations for loading and content transitions
-  // Always call hooks unconditionally at the top level
-  const { animatedStyle: loadingAnimatedStyle, startAnimation: startLoadingAnimation } =
-    useOpacityAnimation({
-      initialOpacity: 0,
-      duration: TIMING_CONFIG.FAST.duration,
-    });
-
+  // Smooth content fade-in animation
   const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
     useOpacityAnimation({
       initialOpacity: 0,
@@ -93,13 +88,7 @@ export default function PracticeScreen(): JSX.Element {
   );
 
   // Use the FSRS queries hook for data fetching
-  const {
-    allWords,
-    dueWords,
-    isLoading: isDataLoading,
-    isFetching,
-    error,
-  } = useFSRSQueries({
+  const { allWords, dueWords, error } = useFSRSQueries({
     userId: user?.id,
     limit: 100,
   });
@@ -156,32 +145,16 @@ export default function PracticeScreen(): JSX.Element {
     ? LAYOUT.SPACING.XXXLARGE // Space for floating button
     : LAYOUT.SPACING.MEDIUM;
 
-  // Calculate loading and content states (needed for animations before any early returns)
-  const isLoadingState = isDataLoading || isFetching;
-  const isDataCached = !!(user?.id && queryClient.getQueryData(fsrsQueries.all(user.id).queryKey));
-  const shouldShowMainContent = !isLoadingState || (isLoadingState && isDataCached);
-
-  // Track animation states to prevent restarts
-  const hasStartedLoadingAnimation = useRef(false);
+  // Track animation state to prevent restarts
   const hasStartedContentAnimation = useRef(false);
 
-  // Trigger animations at the right times (with guards to prevent restarts)
+  // Trigger content animation on mount
   useEffect(() => {
-    const shouldShowLoading = isLoadingState && !isDataCached;
-    if (shouldShowLoading && !hasStartedLoadingAnimation.current) {
-      hasStartedLoadingAnimation.current = true;
-      startLoadingAnimation();
-    } else if (!shouldShowLoading) {
-      hasStartedLoadingAnimation.current = false; // Reset for next loading state
-    }
-  }, [isLoadingState, isDataCached, startLoadingAnimation]);
-
-  useEffect(() => {
-    if (shouldShowMainContent && !hasStartedContentAnimation.current) {
+    if (!hasStartedContentAnimation.current) {
       hasStartedContentAnimation.current = true;
       startContentAnimation();
     }
-  }, [shouldShowMainContent, startContentAnimation]);
+  }, [startContentAnimation]);
 
   // Show error message if there was an error loading data
   if (shouldShowError) {
@@ -204,10 +177,7 @@ export default function PracticeScreen(): JSX.Element {
 
   // Main content
   return (
-    <ThemedView
-      useSafeArea={false}
-      style={styles.container}
-    >
+    <ThemedView useSafeArea={false} style={styles.container}>
       <ThemedView
         scrollable={true}
         useSafeArea={false}
@@ -225,56 +195,51 @@ export default function PracticeScreen(): JSX.Element {
           contentInsetAdjustmentBehavior: 'never' as const,
         }}
       >
-        {/* Subtle loading indicator with smooth animation */}
-        {isLoadingState && !isDataCached && (
-          <Animated.View style={[styles.loadingContainer, loadingAnimatedStyle]}>
-            <PulsatingLoader size={32} />
-          </Animated.View>
-        )}
+        {/* PRIMARY SECTION: Learning Overview */}
+        <Animated.View
+          style={[
+            styles.vocabularySection,
+            contentAnimatedStyle,
+            // Required for empty state centering due to wrapper hierarchy
+            !hasAnyStudyWords && { flex: 1 },
+          ]}
+        >
+          {hasAnyStudyWords ? (
+            <>
+              <PracticeStatCards
+                dueWords={dueWordsCount}
+                currentStreak={currentStreak}
+                masteredWords={calculatedStats.masteredWords}
+                studyWords={filteredStudyWords}
+                onInfoPress={handleMemoryStrengthInfo}
+                onDuePress={handleDuePress}
+                onStreakPress={handleStreakPress}
+                onMasteredPress={handleMasteredPress}
+              />
 
-        {/* PRIMARY SECTION: Learning Overview with smooth animation */}
-        {shouldShowMainContent && (
-          <Animated.View
-            style={[
-              styles.vocabularySection,
-              contentAnimatedStyle,
-              // Required for empty state centering due to wrapper hierarchy
-              !hasAnyStudyWords && { flex: 1 },
-            ]}
-          >
-            {hasAnyStudyWords ? (
-              <>
-                <PracticeStatCards
-                  dueWords={dueWordsCount}
-                  currentStreak={currentStreak}
-                  masteredWords={calculatedStats.masteredWords}
-                  studyWords={filteredStudyWords}
-                  onInfoPress={handleMemoryStrengthInfo}
-                  onDuePress={handleDuePress}
-                  onStreakPress={handleStreakPress}
-                  onMasteredPress={handleMasteredPress}
-                />
-
-                {/* Recommendation Card - placed below stat cards */}
-                <RecommendationCard
-                  studyWords={filteredStudyWords}
-                  dueWordsCount={dueWordsCount}
-                  currentRetention={chartData.insights.currentRetrievability}
-                  learningWords={calculatedStats.learningPhaseWords}
-                  masteredWords={calculatedStats.masteredWords}
-                  currentStreak={currentStreak}
-                />
-              </>
-            ) : (
-              <PracticeEmptyState />
-            )}
-          </Animated.View>
-        )}
+              {/* Recommendation Card - placed below stat cards */}
+              <RecommendationCard
+                studyWords={filteredStudyWords}
+                dueWordsCount={dueWordsCount}
+                currentRetention={chartData.insights.currentRetrievability}
+                learningWords={calculatedStats.learningPhaseWords}
+                masteredWords={calculatedStats.masteredWords}
+                currentStreak={currentStreak}
+              />
+            </>
+          ) : (
+            <PracticeEmptyState />
+          )}
+        </Animated.View>
       </ThemedView>
 
       {/* Floating glass button - iOS 26 style */}
       {hasAnyStudyWords && dueWordsCount > 0 && (
-        <FloatingGlassButton iconName="flash" onPress={handleStartReview} />
+        <FloatingGlassButton
+          iconName="flash"
+          onPress={handleStartReview}
+          bottomInset={insets.bottom}
+        />
       )}
 
       {/* Coordinated Bottom Sheets - only one can be visible at a time */}
@@ -293,12 +258,6 @@ export const options: NativeStackNavigationOptions = {
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
   contentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-  loadingContainer: {
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    opacity: LAYOUT.OPACITY.HIGH,
-    paddingVertical: LAYOUT.SPACING.TINY, // Subtle loading indicator
-  },
   vocabularySection: {
     gap: LAYOUT.SPACING.SMALL, // 8px gap for perfect consistency with stat cards
   },

@@ -10,24 +10,32 @@ interface FloatingActionButtonProps {
   onPress: () => void;
   onLongPress?: () => void;
   disabled?: boolean;
+  /** Safe area bottom inset for proper positioning above tab bar */
+  bottomInset?: number;
 }
 
 // Standard FAB dimensions
 const FAB_SIZE = 56;
 const ICON_SIZE = 24;
-// Position just above tab bar
-const BOTTOM_OFFSET = 70;
+
+/**
+ * Calculate FAB bottom offset based on safe area insets
+ * Formula: tab bar height + safe area + margin
+ */
+const getBottomOffset = (bottomInset: number = 0) =>
+  LAYOUT.BOTTOM_BAR.HEIGHT + bottomInset + LAYOUT.SPACING.MEDIUM;
 
 /**
  * Classic floating action button with prominent colored background
  * Works consistently on iOS and Android
  */
 export const FloatingGlassButton = memo<FloatingActionButtonProps>(
-  ({ iconName, onPress, onLongPress, disabled = false }) => {
+  ({ iconName, onPress, onLongPress, disabled = false, bottomInset = 0 }) => {
     const colors = useColors();
+    const bottomOffset = getBottomOffset(bottomInset);
 
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { bottom: bottomOffset }]}>
         <Pressable
           onPress={onPress}
           onLongPress={onLongPress}
@@ -54,7 +62,7 @@ FloatingGlassButton.displayName = 'FloatingGlassButton';
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: BOTTOM_OFFSET,
+    // bottom is applied dynamically via inline style based on bottomInset prop
     right: LAYOUT.SPACING.MEDIUM,
     zIndex: 100,
   },
