@@ -1,9 +1,8 @@
+import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
 import type { FC } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-
-import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
 
 interface SectionLabelProps {
   /** The label text (will be uppercased automatically) */

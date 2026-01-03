@@ -1,16 +1,12 @@
 import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
-import { View } from 'react-native';
 
-import { HeaderProfile } from '@/components/HeaderProfile';
-import { DoneButton } from '@/components/ui/DoneButton';
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
+import { CloseButton } from '@/components/ui';
 import { STRINGS } from '@/constants/strings';
 import { createNavigationOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
-import { AppTab, UiAction } from '@/types/enums';
+import { UiAction } from '@/types/enums';
 import type { FilterParams } from '@/types/navigation.types';
-import { createTabHeaderOptions } from '@/utils/navigation/createTabHeaderOptions';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 /**
@@ -42,14 +38,6 @@ function getFilterTitle(params: FilterParams): string {
   return UiAction.FILTER;
 }
 
-const FilterHeaderLeft = () => {
-  // Always show Done button on the left for all filter screens
-  return <DoneButton onPress={() => router.back()} />;
-};
-
-// Minimal spacer to maintain layout balance
-const FilterHeaderRight = () => <View style={{ width: 20, height: MIN_TOUCH_TARGET.MEDIUM }} />;
-
 export default function LibraryLayout(): JSX.Element {
   const colors = useColors();
 
@@ -57,11 +45,9 @@ export default function LibraryLayout(): JSX.Element {
     <Stack>
       <Stack.Screen
         name="index"
-        options={createTabHeaderOptions({
-          title: AppTab.EXPLORE,
-          rightComponent: () => <HeaderProfile size={32} />,
-          colors,
-        })}
+        options={{
+          headerShown: false, // Header handled by parent Tabs layout
+        }}
       />
       <Stack.Screen
         name="account"
@@ -77,8 +63,7 @@ export default function LibraryLayout(): JSX.Element {
 
           return createNavigationOptions(colors, {
             title: getFilterTitle(params),
-            headerLeft: () => <FilterHeaderLeft />,
-            headerRight: () => <FilterHeaderRight />,
+            headerLeft: () => <CloseButton onPress={() => router.back()} />,
           });
         }}
       />

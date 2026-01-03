@@ -1,7 +1,7 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
-import { FONT_WEIGHTS, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
 import type { AppTab } from '@/types/enums';
 
 interface TabHeaderOptions {
@@ -10,60 +10,52 @@ interface TabHeaderOptions {
   readonly colors: {
     background: string;
     headingText: string;
+    tint: string;
   };
 }
 
 /**
  * Creates consistent header options for tab screens
- * Handles iOS/Android platform differences automatically
+ * Uses native header with left-aligned title
+ * Note: headerLargeTitle conflicts with NativeTabs - using custom title instead
  */
 export function createTabHeaderOptions({
   title,
   rightComponent,
   colors,
 }: TabHeaderOptions): NativeStackNavigationOptions {
-  const backgroundColor = colors.background;
-  const textColor = colors.headingText;
-
-  // Pre-computed styles for better performance
-  const headerStyles = {
-    headerContainer: {
-      backgroundColor,
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'space-between' as const,
-      paddingHorizontal: LAYOUT.SPACING.LARGE,
-      paddingBottom: LAYOUT.SPACING.HALF_TINY, // Reduced bottom padding for tighter spacing
-      minHeight: MIN_TOUCH_TARGET.MEDIUM, // Consistent header height even when right button is hidden
-    },
-    titleText: {
-      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-      fontWeight: FONT_WEIGHTS.SEMIBOLD,
-      color: textColor,
-      textAlign: 'left' as const,
-      flex: 1,
-    },
-    rightContainer: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'flex-end' as const,
-    },
-  };
-
   return {
     headerShown: true,
     headerShadowVisible: false,
-    // Remove redundant properties since we're using custom header
-    headerStyle: undefined,
-    headerTintColor: undefined,
-    headerTitle: undefined,
-    header: () => (
-      <View style={headerStyles.headerContainer}>
-        <Text style={headerStyles.titleText} numberOfLines={1}>
-          {title}
-        </Text>
-        {rightComponent && <View style={headerStyles.rightContainer}>{rightComponent()}</View>}
+    headerStyle: Platform.select({
+      android: {
+        backgroundColor: colors.background,
+        paddingTop: 24,
+      },
+      default: {
+        backgroundColor: colors.background,
+      },
+    }),
+    headerTintColor: colors.tint,
+    headerTitleAlign: 'left',
+    headerTitle: () => (
+      <View style={styles.titleContainer}>
+        <Text style={[styles.title, { color: colors.headingText }]}>{title}</Text>
       </View>
     ),
+    headerRight: rightComponent,
   };
 }
+
+const styles = StyleSheet.create({
+  titleContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  title: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+    fontWeight: FONT_WEIGHTS.BOLD,
+    backgroundColor: 'transparent',
+  },
+});

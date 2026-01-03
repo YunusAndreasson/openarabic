@@ -255,15 +255,14 @@ async function main() {
   if (tsFiles.length > 0) {
     if (process.env.DEBUG_VALIDATE) {
       console.log(
-        `${colors.cyan}DEBUG: Running tsc-files on ${tsFiles.length} files${colors.reset}`,
+        `${colors.cyan}DEBUG: Running tsc --noEmit for ${tsFiles.length} changed files${colors.reset}`,
       );
       console.log(`${colors.cyan}Files: ${tsFiles.join(', ')}${colors.reset}`);
     }
-    // Include types/env.d.ts to ensure environment variable type declarations are loaded
-    const filesToCheck = ['types/env.d.ts', ...tsFiles];
+    // Use full tsc --noEmit instead of tsc-files to avoid module resolution issues
     tasks.push(
       Promise.resolve().then(() =>
-        runCommand('npx', ['tsc-files', '--noEmit', ...filesToCheck], 'TypeScript'),
+        runCommand('yarn', ['tsc', '--noEmit'], 'TypeScript'),
       ),
     );
   }

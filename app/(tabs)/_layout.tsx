@@ -1,49 +1,27 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
 import type { JSX } from 'react';
-import React, { Fragment, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Fragment, useEffect } from 'react';
+import { Platform, Text, View } from 'react-native';
 
-import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { LAYOUT } from '@/constants/layout';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Tabs } from 'expo-router';
+import { Badge, Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
+import { router } from 'expo-router';
+
 import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
+import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
+import { HeaderProfile } from '@/components/HeaderProfile';
 import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { analytics } from '@/services/analytics';
-import { router } from 'expo-router';
 
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const previousScreen = useRef<string | null>(null);
 
   // Get due words count using the same hook as the practice screen
   const { dueWords } = useFSRSQueries({ userId: session?.user?.id });
   const dueWordsCount = dueWords?.length ?? 0;
-
-  // Track screen views on tab change
-  const handleTabStateChange = useCallback(
-    (e: { data: { state: { routes: Array<{ name: string }>; index: number } } }) => {
-      const state = e.data.state;
-      if (state?.routes && typeof state.index === 'number') {
-        const currentRoute = state.routes[state.index];
-        const screenName = currentRoute?.name;
-
-        if (screenName && screenName !== previousScreen.current) {
-          analytics.track(ANALYTICS_EVENTS.SCREEN_VIEWED, {
-            screen_name: screenName,
-            previous_screen: previousScreen.current,
-          });
-          previousScreen.current = screenName;
-        }
-      }
-    },
-    [],
-  );
 
   useEffect(() => {
     if (!isLoading && !session?.user) {
@@ -51,68 +29,38 @@ export default function TabLayout(): JSX.Element {
     }
   }, [session, isLoading]);
 
-  // Tab bar style with padding for proper icon spacing
-  // Android needs explicit height to prevent label text clipping
-  const tabBarStyle = useMemo(() => {
-    const baseStyle = {
-      borderTopWidth: 0,
-      backgroundColor: colors.elevation0,
-      paddingTop: LAYOUT.SPACING.SMALL, // 8px padding above icons
-    };
-
-    if (Platform.OS === 'android') {
-      // Android: Set explicit height to ensure labels have enough space
-      // 56px base height + safe area inset + extra padding for labels
-      return {
-        ...baseStyle,
-        height: 56 + insets.bottom + LAYOUT.SPACING.MEDIUM,
-        paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
-      };
-    }
-
-    // iOS: Just use padding for safe area
-    return {
-      ...baseStyle,
-      paddingBottom: insets.bottom,
-    };
-  }, [colors.elevation0, insets.bottom]);
-
-  // Label style to fix Android text rendering
-  // Android adds extra font padding - disabling it ensures proper text rendering
-  const tabBarLabelStyle = useMemo(
-    () => ({
-      ...(Platform.OS === 'android' && {
-        includeFontPadding: false,
-      }),
-    }),
-    [],
-  );
-
-  // Badge style for perfect circle
-  const badgeStyle = {
-    minWidth: LAYOUT.SPACING.XLARGE, // 24px minimum for circle
-    minHeight: LAYOUT.SPACING.XLARGE, // 24px minimum for circle
-    borderRadius: LAYOUT.BORDER_RADIUS.PILL, // Perfect circle
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px for better readability
-    lineHeight: LAYOUT.SPACING.XLARGE, // Center text vertically
-  };
-
   if (!colors || !session?.user) {
     return <Fragment />;
   }
 
+  // Use NativeTabs on iOS for native tab bar with liquid glass effect
+  // Note: NativeTabs is iOS-only (uses UITabBarController) - Android uses JavaScript tabs
+  if (Platform.OS === 'ios') {
+    return (
+      <NativeTabs>
+        {TAB_SCREENS.map(screen => (
+          <NativeTabs.Trigger key={screen.name} name={screen.name}>
+            <Icon sf={screen.icon.sf} />
+            <Label>{screen.title}</Label>
+            {screen.name === 'practice' && dueWordsCount > 0 && (
+              <Badge>{String(dueWordsCount)}</Badge>
+            )}
+          </NativeTabs.Trigger>
+        ))}
+      </NativeTabs>
+    );
+  }
+
+  // Android: Use regular JavaScript tabs
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
-        tabBarShowLabel: true,
-        tabBarStyle: tabBarStyle,
-        tabBarLabelStyle: tabBarLabelStyle,
-      }}
-      screenListeners={{
-        state: handleTabStateChange,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
+        },
       }}
     >
       {TAB_SCREENS.map(screen => (
@@ -121,17 +69,48 @@ export default function TabLayout(): JSX.Element {
           name={screen.name}
           options={{
             title: screen.title,
-            tabBarBadge:
-              screen.name === 'practice' && dueWordsCount > 0 ? dueWordsCount : undefined,
-            tabBarBadgeStyle:
-              screen.name === 'practice' && dueWordsCount > 0 ? badgeStyle : undefined,
-            tabBarIcon: ({ color, focused }) => (
+            ...(screen.name === 'explore' ? {
+              headerShown: true,
+              headerShadowVisible: false,
+              headerStyle: Platform.select({
+                android: {
+                  backgroundColor: colors.background,
+                  paddingTop: 24,
+                },
+                default: {
+                  backgroundColor: colors.background,
+                },
+              }),
+              headerTintColor: colors.tint,
+              headerTitleAlign: 'left',
+              headerTitle: () => (
+                <View style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  backgroundColor: 'transparent',
+                }}>
+                  <Text style={{
+                    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+                    fontWeight: FONT_WEIGHTS.BOLD,
+                    color: colors.headingText,
+                    backgroundColor: 'transparent',
+                  }}>
+                    Explore
+                  </Text>
+                </View>
+              ),
+              headerRight: () => <HeaderProfile size={32} />,
+            } : {}),
+            tabBarIcon: ({ focused, color }) => (
               <Ionicons
-                name={focused ? screen.icon.filled : screen.icon.outline}
-                size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
+                name={
+                  (focused ? screen.icon.filled : screen.icon.outline) as keyof typeof Ionicons.glyphMap
+                }
+                size={24}
                 color={color}
               />
             ),
+            tabBarBadge: screen.name === 'practice' && dueWordsCount > 0 ? dueWordsCount : undefined,
           }}
         />
       ))}

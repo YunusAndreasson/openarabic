@@ -10,13 +10,14 @@ import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter, useSegments } from 'expo-router';
+import * as NavigationBar from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, StyleSheet, View } from 'react-native';
+import { AppState, Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
@@ -34,10 +35,10 @@ import {
   ToastProvider,
   TutorialProvider,
 } from '@/components/providers';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { QUERY_DEFAULTS } from '@/constants/queries';
-import { createNavigationOptions } from '@/utils/navigation';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
@@ -47,11 +48,9 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
-import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
-import * as Notifications from 'expo-notifications';
 import {
   cleanupNotifications,
   clearAppBadge,
@@ -64,7 +63,9 @@ import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
+import { createNavigationOptions } from '@/utils/navigation';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
+import * as Notifications from 'expo-notifications';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -207,6 +208,12 @@ function AppContent() {
 
   useEffect(() => {
     if (!appReady || isAuthLoading) return;
+
+    // Configure Android navigation bar for proper safe area handling
+    if (Platform.OS === 'android') {
+      NavigationBar.setBackgroundColorAsync(colors.background);
+      NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
+    }
 
     // Pre-configure audio session for background playback
     globalAudioState.preconfigureAudioSession?.();
@@ -456,16 +463,20 @@ function AppContent() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        edges={['top', 'left', 'right']}
-      >
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <FSRSDataProvider userId={session?.user?.id}>
-          <Stack screenOptions={{ headerShown: false, freezeOnBlur: true }}>
+          <Stack screenOptions={{
+            headerShown: false,
+            headerTitle: '',
+            headerShadowVisible: false,
+            freezeOnBlur: true
+          }}>
             <Stack.Screen
               name="(tabs)"
               options={{
                 headerShown: false,
+                headerTitle: '',
+                headerShadowVisible: false,
                 animation: 'none', // FIXED: Disable animation to prevent black screen
                 freezeOnBlur: false, // Keep tabs active
               }}
@@ -492,9 +503,13 @@ function AppContent() {
           {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
           <AudioOverlays />
 
-          <StatusBar style={isDark ? 'light' : 'dark'} />
+          <StatusBar
+            style={isDark ? 'light' : 'dark'}
+            backgroundColor={Platform.OS === 'ios' ? colors.background : 'transparent'}
+            translucent={Platform.OS === 'android'}
+          />
         </FSRSDataProvider>
-      </SafeAreaView>
+      </View>
     </NavigationThemeProvider>
   );
 }
