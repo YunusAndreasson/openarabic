@@ -1,21 +1,17 @@
 module.exports = {
   preset: 'jest-expo',
+  setupFilesAfterEnv: ['./jest.setup.js'],
 
-  // Performance optimizations for AI agent workflows
-  // maxWorkers moved to CLI for flexibility
-  cache: true, // Enable caching for faster subsequent runs
-  cacheDirectory: '<rootDir>/.jest-cache',
-
-  // AI agent optimization flags
-  detectOpenHandles: false, // Faster for AI agents
-  forceExit: true, // Clean exit for automated workflows
-
-  // Transform patterns optimized for common React Native + Expo patterns
+  // Transform ES modules that Jest can't handle
   transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@shopify/react-native-skia|@tanstack/.*)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@shopify/react-native-skia|@tanstack/.*|immer))',
   ],
 
-  setupFilesAfterEnv: ['./jest.setup.js'],
+  // Mock problematic modules
+  moduleNameMapper: {
+    '^immer$': '<rootDir>/__mocks__/immer.js',
+    '^immer/(.*)$': '<rootDir>/__mocks__/immer.js',
+  },
 
   // Optimized timeouts for AI agent efficiency
   testTimeout: 15000, // Reduced from 30s - AI agents don't need long timeouts
@@ -31,8 +27,7 @@ module.exports = {
   // Disable watch mode - AI agents run tests programmatically
   watchman: false,
 
-  // Optimized test environment
-  testEnvironment: 'node',
+  // Use jest-expo default environment
 
   // Enhanced path ignoring for AI focus
   testPathIgnorePatterns: [

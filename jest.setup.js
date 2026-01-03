@@ -5,6 +5,29 @@ if (typeof global.jest === 'undefined') {
   global.jest = jest;
 }
 
+// Mock Expo winter runtime globals to prevent import scope errors
+if (typeof global.__ExpoImportMetaRegistry === 'undefined') {
+  global.__ExpoImportMetaRegistry = {};
+}
+
+// Mock structuredClone if not available
+if (typeof global.structuredClone === 'undefined') {
+  global.structuredClone = value => JSON.parse(JSON.stringify(value));
+}
+
+// Mock other potential missing globals
+if (typeof global.performance === 'undefined') {
+  global.performance = {
+    now: () => Date.now(),
+    mark: jest.fn(),
+    measure: jest.fn(),
+  };
+}
+
+if (typeof global.queueMicrotask === 'undefined') {
+  global.queueMicrotask = callback => setTimeout(callback, 0);
+}
+
 // Enhanced animation frame mocking for consistent timing
 global.requestAnimationFrame = function (callback) {
   return global.setTimeout(callback, 16); // 60fps simulation
