@@ -1,4 +1,5 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { Text, View } from 'react-native';
 
 import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
 
@@ -27,22 +28,37 @@ export function createNavigationOptions(
     isRegularScreen?: boolean;
   } & Partial<NativeStackNavigationOptions> = {},
 ): NativeStackNavigationOptions {
-  const { isRegularScreen, ...overrides } = options;
+  const { isRegularScreen, title, ...restOverrides } = options;
 
   // Use native header elements to enable iOS 26 liquid glass
   const baseOptions: NativeStackNavigationOptions = {
     headerStyle: {
       backgroundColor: colors.background,
     },
-    headerTitleStyle: {
-      color: colors.headingText,
-      fontWeight: FONT_WEIGHTS.SEMIBOLD,
-      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    },
+    headerTitleAlign: 'left',
+    // Custom headerTitle for left-aligned large title on both platforms
+    ...(title
+      ? {
+          headerTitle: () => (
+            <View style={{ flex: 1, alignItems: 'flex-start' }}>
+              <Text
+                style={{
+                  color: colors.headingText,
+                  fontWeight: FONT_WEIGHTS.BOLD,
+                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+                }}
+                numberOfLines={1}
+              >
+                {title}
+              </Text>
+            </View>
+          ),
+        }
+      : {}),
     headerTintColor: colors.headingText,
     headerBackVisible: false, // Prevent default back button on Android when using custom headerLeft
     headerShadowVisible: false,
-    ...overrides,
+    ...restOverrides,
   };
 
   if (isRegularScreen) {
@@ -51,7 +67,7 @@ export function createNavigationOptions(
 
   // Native modal behavior - unified across platforms with glass support
   return {
-    presentation: 'modal',
+    presentation: 'modal', // Standard modal with backdrop
     animation: 'slide_from_bottom', // Android: Slide up from bottom like iOS
     gestureEnabled: true,
     fullScreenGestureEnabled: true, // iOS: Allow full-screen swipe to dismiss

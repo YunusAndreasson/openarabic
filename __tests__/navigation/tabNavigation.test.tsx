@@ -1,5 +1,26 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import * as React from 'react';
+import { Platform } from 'react-native';
+
+// Force Android platform in tests to use Tabs instead of NativeTabs
+jest.spyOn(Platform, 'select').mockImplementation(obj => obj.android ?? obj.default);
+Object.defineProperty(Platform, 'OS', { get: () => 'android' });
+
+// Mock expo-router/unstable-native-tabs before it's imported by TabLayout
+jest.mock('expo-router/unstable-native-tabs', () => {
+  const React = require('react');
+  const NativeTabs = ({ children }: { children: React.ReactNode }) =>
+    React.createElement('View', null, children);
+  NativeTabs.Trigger = ({ children }: { children: React.ReactNode }) =>
+    React.createElement('View', null, children);
+  return {
+    NativeTabs,
+    Icon: () => null,
+    Label: () => null,
+    Badge: () => null,
+  };
+});
+
 jest.mock('@react-navigation/native', () => {
   const React = require('react');
   return {

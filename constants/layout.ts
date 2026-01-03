@@ -300,11 +300,6 @@ export const LAYOUT = {
     TOP_OVERLAY: 9999, // Maximum z-index for critical overlays that must be above everything
   },
 
-  WIDTH_RATIOS: {
-    ALMOST_HALF: 0.48,
-    THIRD: 0.3333,
-  },
-
   CHART: {
     Y_AXIS_WIDTH: BASE_UNIT * 8, // 32 - adjusted for "100%" label visibility
     CURSOR_WIDTH: 2, // Chart interaction cursor width
@@ -323,11 +318,6 @@ export const LAYOUT = {
   /** Standard height for thin progress bars */
   PROGRESS_BAR: {
     HEIGHT: BASE_UNIT, // 4 - responsive to base unit (changed from 0.75 to avoid fractional pixels)
-  },
-
-  /** Common component dimensions */
-  COMPONENT: {
-    PROGRESS_BAR_WIDTH: BASE_UNIT * 10, // 40 - standard progress bar width
   },
 
   /** Common sizes for bottom sheet UI elements */
@@ -377,11 +367,6 @@ export const LAYOUT = {
     },
   },
 
-  /** Height for individual sentence items */
-  SENTENCE_ITEM: {
-    HEIGHT: BASE_UNIT * 17.5, // 70 - responsive to base unit
-  },
-
   HEADER: {
     HEIGHT: {
       EXPANDED: TOUCH_TARGETS.LARGE * 8, // ~384 - restored for proper article and calendar display
@@ -414,20 +399,6 @@ export const LAYOUT = {
       ICON_DEFAULT_SIZE: BASE_UNIT * 25, // 100 - responsive to base unit
       ICON_CONTAINER_HEIGHT: BASE_UNIT * 30, // 120 - responsive to base unit
       CONTENT_MAX_WIDTH: BASE_UNIT * 87.5, // 350 - responsive to base unit
-    },
-  },
-
-  CALENDAR: {
-    EVENT_RIGHT_SECTION: {
-      MAX_WIDTH: BASE_UNIT * 37.5, // 150 - responsive to base unit
-      MIN_WIDTH: BASE_UNIT * 32.5, // 130 - responsive to base unit
-    },
-  },
-
-  ANIMATION: {
-    DURATION: {
-      FAST: BASE_UNIT * 50, // 200ms - responsive to base unit
-      SLOW: BASE_UNIT * 125, // 500ms - responsive to base unit
     },
   },
 

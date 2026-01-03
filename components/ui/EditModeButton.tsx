@@ -42,8 +42,8 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
   const derivedCount = type === 'playlist' ? sortedReadingList.length : undefined;
   const effectiveCount = itemCount ?? derivedCount ?? undefined;
 
-  // Create press handler with optimistic state logic
-  const handlePressAction = useCallback((): void => {
+  // Simple toggle handler - single action, no menu needed
+  const handleToggle = useCallback((): void => {
     const newEditMode = !optimisticEditMode;
 
     // React 19: Optimistic update in transition for immediate UI feedback
@@ -67,7 +67,7 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
   return (
     <HeaderIconButton
       iconName={iconName}
-      onPress={handlePressAction}
+      onPress={handleToggle}
       size="medium"
       iconColor={colors.tint}
       backgroundColor={colors.transparent}

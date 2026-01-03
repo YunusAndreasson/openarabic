@@ -58,6 +58,9 @@ module.exports = {
     'expo-image': '<rootDir>/__mocks__/expo-image.js',
     '@expo/vector-icons': '<rootDir>/__mocks__/@expo/vector-icons.js',
 
+    // Expo Router native tabs mock
+    'expo-router/unstable-native-tabs': '<rootDir>/__mocks__/expo-router-native-tabs.js',
+
     // Enhanced mocks for critical dependencies
     'expo-haptics': '<rootDir>/__mocks__/expo-haptics.js',
     'expo-notifications': '<rootDir>/__mocks__/expo-notifications.js',

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { type JSX } from 'react';
 import type { GestureResponderEvent } from 'react-native';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -78,6 +78,25 @@ export function ThemedButton({
       : colors.tint;
   const iconSize = customIconSize ?? ICON_SIZE_MAP[size];
 
+  // Android Material Design 3 ripple config (must be a prop, not style)
+  const androidRipple =
+    Platform.OS === 'android'
+      ? {
+          color:
+            variant === 'filled'
+              ? 'rgba(255, 255, 255, 0.12)' // White ripple on colored background
+              : `rgba(${
+                  colors.tint
+                    .replace('#', '')
+                    .match(/.{2}/g)
+                    ?.map(x => parseInt(x, 16))
+                    .join(', ') || '86, 128, 102'
+                }, 0.12)`, // Tint color ripple
+          borderless: false,
+          radius: LAYOUT.ANDROID.TOUCH_TARGET.RIPPLE_RADIUS,
+        }
+      : undefined;
+
   // Button styles
   const buttonStyle = [
     styles.button,
@@ -86,12 +105,12 @@ export function ThemedButton({
     variant === 'filled' && {
       backgroundColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint,
       borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-      borderColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint, // Transparent border matching background
+      borderColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint,
     },
     variant === 'outlined' && {
       borderWidth: LAYOUT.BORDER.WIDTH.THIN,
       borderColor: isActuallyLoading || disabled ? colors.border : colors.tint,
-      backgroundColor: 'transparent', // Explicit transparent background
+      backgroundColor: 'transparent',
     },
   ];
 
@@ -110,6 +129,7 @@ export function ThemedButton({
       onPressOut={handlePressOut}
       disabled={disabled || isActuallyLoading}
       onPress={pressHandler}
+      android_ripple={androidRipple}
       {...props}
     >
       <View style={styles.innerContainer}>

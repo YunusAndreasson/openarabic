@@ -95,3 +95,25 @@ export const errorFeedback = (): void => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   }
 };
+
+/**
+ * Android-specific ripple feedback for Material Design interactions
+ * Provides light haptic feedback with Android ripple effects
+ */
+export const androidRippleFeedback = (): void => {
+  if (shouldTriggerHaptic()) {
+    // Android gets lighter feedback to complement ripple effects
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
+};
+
+/**
+ * Android-specific press feedback for primary actions
+ * Stronger feedback for important interactions on Android
+ */
+export const androidPressFeedback = (): void => {
+  if (shouldTriggerHaptic()) {
+    // Android gets medium feedback for primary actions
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }
+};

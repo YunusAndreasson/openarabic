@@ -298,10 +298,7 @@ export default function ExploreScreen(): JSX.Element {
   );
 
   return (
-    <ThemedView
-      useSafeArea={false}
-      style={styles.container}
-    >
+    <ThemedView useSafeArea={false} style={styles.container}>
       <ArticleList
         ref={scrollViewRef}
         contentContainerStyle={contentContainerStyle}

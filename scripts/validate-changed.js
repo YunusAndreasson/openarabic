@@ -260,11 +260,7 @@ async function main() {
       console.log(`${colors.cyan}Files: ${tsFiles.join(', ')}${colors.reset}`);
     }
     // Use full tsc --noEmit instead of tsc-files to avoid module resolution issues
-    tasks.push(
-      Promise.resolve().then(() =>
-        runCommand('yarn', ['tsc', '--noEmit'], 'TypeScript'),
-      ),
-    );
+    tasks.push(Promise.resolve().then(() => runCommand('yarn', ['tsc', '--noEmit'], 'TypeScript')));
   }
 
   // ESLint - only non-excluded code files

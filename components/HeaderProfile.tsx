@@ -15,8 +15,8 @@ import { handleError } from '@/utils/errorHandling';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 // iOS 26 UIBarButton has fixed 36pt glass container
+// Profile fills the glass container completely
 const IOS_GLASS_SIZE = 36;
-const IOS_PROFILE_SIZE = 28; // Profile inside the glass
 
 interface HeaderProfileProps {
   size?: number;
@@ -38,8 +38,8 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
   const isIOS = Platform.OS === 'ios';
-  // Use smaller size on iOS to fit within 36pt glass container
-  const effectiveSize = isIOS ? IOS_PROFILE_SIZE : size;
+  // On iOS, profile fills the glass container; on Android use the provided size
+  const effectiveSize = isIOS ? IOS_GLASS_SIZE : size;
 
   // Press animation for profile button
   const profilePressAnimation = usePressAnimation(PRESS_ANIMATION_BUTTON);
