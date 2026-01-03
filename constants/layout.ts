@@ -490,30 +490,21 @@ export const LAYOUT = {
      * Tab bar auto-adjusts for safe area, so just add small buffer
      */
     bottomDefault: SPACING_SCALE.SMALL, // 8px buffer above tab bar
-
-    /**
-     * Bottom padding for screens with persistent bottom controls (floating buttons)
-     * Needs space so bottom card isn't hidden behind button
-     */
-    bottomWithControls: SPACING_SCALE.XXXLARGE + SPACING_SCALE.MEDIUM, // 48px + 12px = 60px
-  },
-
-  /**
-   * Floating controls positioning (PLAY ALL, REVIEW DUE WORDS buttons)
-   * Positions floating buttons above tab bar consistently
-   */
-  FLOATING_CONTROLS: {
-    /**
-     * Distance from bottom of screen to floating button
-     * SMALLER value = button LOWER (closer to tab bar)
-     */
-    BOTTOM_POSITION: SPACING_SCALE.TINY, // 4px above tab bar (moved down)
   },
 
   /** Text shadow settings for overlaid text (e.g., article titles on images) */
   TEXT_SHADOW: {
     offset: { width: 0, height: 1 },
     radius: 2,
+  },
+
+  /** Android Material Design 3 touch targets */
+  ANDROID: {
+    TOUCH_TARGET: {
+      MIN_SIZE: 48, // MD3 minimum touch target
+      PREFERRED_SIZE: 56, // MD3 preferred touch target
+      RIPPLE_RADIUS: 20, // For ripple effects
+    },
   },
 };
 
