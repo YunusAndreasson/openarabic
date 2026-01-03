@@ -2,8 +2,9 @@ import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
 
 import { CloseButton } from '@/components/ui';
+import { HeaderProfile } from '@/components/HeaderProfile';
 import { STRINGS } from '@/constants/strings';
-import { createNavigationOptions } from '@/utils/navigation';
+import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
 import { UiAction } from '@/types/enums';
 import type { FilterParams } from '@/types/navigation.types';
@@ -45,9 +46,11 @@ export default function LibraryLayout(): JSX.Element {
     <Stack>
       <Stack.Screen
         name="index"
-        options={{
-          headerShown: false, // Header handled by parent Tabs layout
-        }}
+        options={createTabHeaderOptions({
+          title: 'Explore',
+          rightComponent: () => <HeaderProfile size={32} />,
+          colors,
+        })}
       />
       <Stack.Screen
         name="account"
