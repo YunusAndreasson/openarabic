@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -20,14 +20,17 @@ const ICON_SIZE = 24;
 
 /**
  * Calculate FAB bottom offset based on safe area insets
- * Formula: tab bar height + safe area + margin
- * - iOS: 50 + ~34 + 8 = ~92px (above tab bar + home indicator)
- * - Android: 50 + 0 + 8 = 58px (above tab bar)
+ * Platform-specific positioning for visual consistency:
+ * - iOS: tab bar + safe area + margin (needs safe area for home indicator)
+ * - Android: smaller fixed offset (edge-to-edge mode, no safe area needed)
  */
 const TAB_BAR_HEIGHT = 50;
-const FAB_MARGIN = 8;
+const FAB_MARGIN_IOS = 8;
+
 const getBottomOffset = (bottomInset: number = 0) =>
-  TAB_BAR_HEIGHT + bottomInset + FAB_MARGIN;
+  Platform.OS === 'android'
+    ? 8 // Android: small margin (container already ends at tab bar)
+    : TAB_BAR_HEIGHT + bottomInset + FAB_MARGIN_IOS; // iOS: ~92px
 
 /**
  * Classic floating action button with prominent colored background
