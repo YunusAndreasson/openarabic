@@ -46,9 +46,9 @@ jest.mock('expo-router', () => {
   const React = require('react');
   const { Text, TouchableOpacity } = require('react-native');
   const screens = {
-    library: require('../../app/(tabs)/library/index.tsx').default,
-    bookmarks: require('../../app/(tabs)/bookmarks/index.tsx').default,
-    study: require('../../app/(tabs)/study/index.tsx').default,
+    explore: require('../../app/(tabs)/explore/index.tsx').default,
+    playlist: require('../../app/(tabs)/playlist/index.tsx').default,
+    practice: require('../../app/(tabs)/practice/index.tsx').default,
   };
 
   const Tabs = ({
@@ -123,7 +123,7 @@ jest.mock('expo-router', () => {
 
 // expo-blur is not installed, so we skip the mock - tests using it should mock inline if needed
 
-jest.mock('../../app/(tabs)/library/index.tsx', () => {
+jest.mock('../../app/(tabs)/explore/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
@@ -132,7 +132,7 @@ jest.mock('../../app/(tabs)/library/index.tsx', () => {
   };
 });
 
-jest.mock('../../app/(tabs)/bookmarks/index.tsx', () => {
+jest.mock('../../app/(tabs)/playlist/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
@@ -141,7 +141,7 @@ jest.mock('../../app/(tabs)/bookmarks/index.tsx', () => {
   };
 });
 
-jest.mock('../../app/(tabs)/study/index.tsx', () => {
+jest.mock('../../app/(tabs)/practice/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
@@ -204,28 +204,28 @@ const createWrapper = () => {
 };
 
 describe('Tab navigation', () => {
-  it('renders default Library tab and navigates between tabs', () => {
+  it('renders default Explore tab and navigates between tabs', () => {
     const { getByText, getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
     expect(getByText('READ_MOCK')).toBeTruthy();
 
-    fireEvent.press(getByTestId('tab-bookmarks'));
+    fireEvent.press(getByTestId('tab-playlist'));
     expect(getByText('LISTEN_MOCK')).toBeTruthy();
 
-    fireEvent.press(getByTestId('tab-study'));
+    fireEvent.press(getByTestId('tab-practice'));
     expect(getByText('PRACTICE_MOCK')).toBeTruthy();
   });
 
-  it('shows memory capacity badge on study tab when due words exist (red phase)', async () => {
+  it('shows memory capacity badge on practice tab when due words exist (red phase)', async () => {
     const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
     // Wait for the component to render
     await waitFor(() => {
-      expect(getByTestId('tab-study')).toBeTruthy();
+      expect(getByTestId('tab-practice')).toBeTruthy();
     });
 
-    // Verify the study tab renders correctly
-    expect(getByTestId('tab-study')).toBeTruthy();
+    // Verify the practice tab renders correctly
+    expect(getByTestId('tab-practice')).toBeTruthy();
   });
 
   it('does not show memory capacity badge when only struggling words exist (orange phase)', async () => {
@@ -233,10 +233,10 @@ describe('Tab navigation', () => {
 
     // Wait for the component to render
     await waitFor(() => {
-      expect(getByTestId('tab-study')).toBeTruthy();
+      expect(getByTestId('tab-practice')).toBeTruthy();
     });
 
-    // Verify the study tab renders correctly
-    expect(getByTestId('tab-study')).toBeTruthy();
+    // Verify the practice tab renders correctly
+    expect(getByTestId('tab-practice')).toBeTruthy();
   });
 });

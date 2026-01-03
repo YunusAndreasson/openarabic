@@ -16,7 +16,7 @@ import {
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useEncouragingMetrics, useReviewCompletion } from '@/hooks/review';
-import { useStudyStreak } from '@/hooks/study';
+import { useStudyStreak } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { UiAction } from '@/types/enums';

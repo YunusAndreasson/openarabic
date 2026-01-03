@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 
-import { getArticleRoute, getStudyReviewRoute } from '@/constants/routes';
+import { getArticleRoute, getPracticeReviewRoute } from '@/constants/routes';
 import type { ArticleId, RootId } from '@/types/branded.types';
 
 /**
@@ -60,7 +60,7 @@ export function navigateToStudyReview(params?: {
       return false;
     }
 
-    const route = getStudyReviewRoute(params);
+    const route = getPracticeReviewRoute(params);
     router.push(route);
     return true;
   } catch (error) {

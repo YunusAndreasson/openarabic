@@ -45,7 +45,7 @@ describe('navigation', () => {
 
     test('should call router.push with filter modal route and params', () => {
       typedPush({
-        pathname: '/(tabs)/library/filterModal',
+        pathname: '/(tabs)/explore/filterModal',
         params: {
           selectedCategoryIds: [1, 2],
           selectedAuthorIds: [3],
@@ -54,7 +54,7 @@ describe('navigation', () => {
       });
 
       expect(router.push).toHaveBeenCalledWith({
-        pathname: '/(tabs)/library/filterModal',
+        pathname: '/(tabs)/explore/filterModal',
         params: {
           selectedCategoryIds: [1, 2],
           selectedAuthorIds: [3],
@@ -65,23 +65,23 @@ describe('navigation', () => {
 
     test('should call router.push with review route and params', () => {
       typedPush({
-        pathname: '/study/review',
+        pathname: '/practice/review',
         params: { mode: 'practice' },
       });
 
       expect(router.push).toHaveBeenCalledWith({
-        pathname: '/study/review',
+        pathname: '/practice/review',
         params: { mode: 'practice' },
       });
     });
 
     test('should call router.push with route without params', () => {
       typedPush({
-        pathname: '/(tabs)/study',
+        pathname: '/(tabs)/practice',
       });
 
       expect(router.push).toHaveBeenCalledWith({
-        pathname: '/(tabs)/study',
+        pathname: '/(tabs)/practice',
         params: undefined,
       });
     });
@@ -110,7 +110,7 @@ describe('navigation', () => {
 
     test('should call router.replace with filter modal route and params', () => {
       typedReplace({
-        pathname: '/(tabs)/library/filterModal',
+        pathname: '/(tabs)/explore/filterModal',
         params: {
           selectedCategoryIds: [4, 5],
           selectedAuthorIds: [],
@@ -119,7 +119,7 @@ describe('navigation', () => {
       });
 
       expect(router.replace).toHaveBeenCalledWith({
-        pathname: '/(tabs)/library/filterModal',
+        pathname: '/(tabs)/explore/filterModal',
         params: {
           selectedCategoryIds: [4, 5],
           selectedAuthorIds: [],
@@ -130,23 +130,23 @@ describe('navigation', () => {
 
     test('should call router.replace with review route and params', () => {
       typedReplace({
-        pathname: '/study/review',
+        pathname: '/practice/review',
         params: { mode: 'review' },
       });
 
       expect(router.replace).toHaveBeenCalledWith({
-        pathname: '/study/review',
+        pathname: '/practice/review',
         params: { mode: 'review' },
       });
     });
 
     test('should call router.replace with route without params', () => {
       typedReplace({
-        pathname: '/(tabs)/bookmarks',
+        pathname: '/(tabs)/playlist',
       });
 
       expect(router.replace).toHaveBeenCalledWith({
-        pathname: '/(tabs)/bookmarks',
+        pathname: '/(tabs)/playlist',
         params: undefined,
       });
     });

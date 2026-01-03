@@ -7,6 +7,7 @@ export { ColorDot } from './ColorDot';
 export { DictionaryButton } from './DictionaryButton';
 export { DoneButton } from './DoneButton';
 export { EditModeButton } from './EditModeButton';
+export { EnhancedImage } from './EnhancedImage';
 export { HeaderIconButton } from './HeaderIconButton';
 export { IconButton } from './IconButton';
 export { Pill } from './Pill';
@@ -16,5 +17,7 @@ export {
   type SettingsPickerOption,
   type SettingsPickerProps,
 } from './SettingsPicker';
+export { THEME_OPTIONS } from './ThemePicker';
 export { TimePicker } from './TimePicker';
+export { Toast } from './Toast';
 export { Toggle } from './Toggle';

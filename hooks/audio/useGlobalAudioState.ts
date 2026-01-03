@@ -5,7 +5,7 @@ import { AUDIO_STATES } from '@/constants/audio';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useBookmarksScreen } from '@/hooks/bookmarks/useBookmarksScreen';
+import { usePlaylistScreen } from '@/hooks/playlist/usePlaylistScreen';
 import { simpleAudioService } from '@/services/audioPlayer';
 import type { Article } from '@/types/articles.types';
 import type { BookmarkItem } from '@/types/bookmark.types';
@@ -62,7 +62,7 @@ export function useGlobalAudioState(): GlobalAudioState {
   const [showSleepTimerModal, setShowSleepTimerModal] = useState(false);
 
   // Get reading list for queue tracking
-  const { sortedEnhancedTracks } = useBookmarksScreen();
+  const { sortedEnhancedTracks } = usePlaylistScreen();
 
   // FIXED: Store timeout ID in ref for cleanup to prevent memory leak
   const forceStopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

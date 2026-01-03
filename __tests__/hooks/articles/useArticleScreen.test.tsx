@@ -391,7 +391,7 @@ describe('useArticleScreen Hook', () => {
 
       expect(stopAudioSafely).toHaveBeenCalledWith(true);
       expect(router.back).not.toHaveBeenCalled();
-      expect(router.push).toHaveBeenCalledWith('/(tabs)/library');
+      expect(router.push).toHaveBeenCalledWith('/(tabs)/explore');
     });
 
     test('handles audio stop error gracefully', async () => {

@@ -4,9 +4,9 @@ import React from 'react';
 
 import { Text, TouchableOpacity, View } from 'react-native';
 import { SkiaArabicWord as ArabicWord } from '../../components/article/SkiaArabicWord';
-import { ArticleCard } from '../../components/library/ArticleCard';
+import { ArticleCard } from '../../components/explore/ArticleCard';
 import { CompletionScreen } from '../../components/review/CompletionScreen';
-import { VocabularyStatCards } from '../../components/study/VocabularyStatCards';
+import { PracticeStatCards } from '../../components/practice/PracticeStatCards';
 import { useReview } from '../../hooks/review';
 
 // Keep inline for hoisting - expo-router is imported by dependencies
@@ -36,7 +36,7 @@ jest.mock('../../components/ThemedButton', () => {
   return { __esModule: true, ThemedButton };
 });
 
-jest.mock('../../components/library/ArticleCard', () => {
+jest.mock('../../components/explore/ArticleCard', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
   return {
@@ -69,12 +69,12 @@ jest.mock('../../components/review/CompletionScreen', () => {
   };
 });
 
-jest.mock('../../components/study/VocabularyStatCards', () => {
+jest.mock('../../components/practice/PracticeStatCards', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    VocabularyStatCards: ({ onStartReview }: { onStartReview: () => void }) => (
+    PracticeStatCards: ({ onStartReview }: { onStartReview: () => void }) => (
       <TouchableOpacity onPress={onStartReview} testID="start-review-due" />
     ),
   };
@@ -177,7 +177,7 @@ describe('UI flow', () => {
     const onStartReview = jest.fn();
     const studyWord = { root_id: 1 } as any;
     const { getByTestId } = render(
-      <VocabularyStatCards studyWords={[studyWord]} dueWords={1} onStartReview={onStartReview} />,
+      <PracticeStatCards studyWords={[studyWord]} dueWords={1} onStartReview={onStartReview} />,
     );
 
     fireEvent.press(getByTestId('start-review-due'));
@@ -193,7 +193,7 @@ describe('UI flow', () => {
       const handleStart = async () => {
         try {
           await startReview();
-          router.push('/study/review');
+          router.push('/practice/review');
         } catch {
           setError(true);
         }
@@ -208,7 +208,7 @@ describe('UI flow', () => {
       }
 
       return (
-        <VocabularyStatCards
+        <PracticeStatCards
           studyWords={[{ root_id: 1 } as any]}
           dueWords={1}
           onStartReview={handleStart}

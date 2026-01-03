@@ -4,7 +4,7 @@ import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reani
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 
-import { EnhancedImage } from '@/components/EnhancedImage';
+import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { SCREEN_WIDTH } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';

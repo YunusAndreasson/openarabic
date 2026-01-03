@@ -3,7 +3,7 @@ import React, { memo, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ListenListItemCard } from '@/components/bookmarks';
+import { PlaylistItemCard } from '@/components/playlist';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
@@ -164,7 +164,7 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
 
         return (
           <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
-            <ListenListItemCard
+            <PlaylistItemCard
               title={article.title}
               secondaryText={getArticleMetadata(article)}
               imageUrl={generateStorageUrl('images', article.image_url)}

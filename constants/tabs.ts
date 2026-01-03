@@ -17,7 +17,7 @@ export type TabIconConfig = (typeof TAB_ICONS)[keyof typeof TAB_ICONS];
  * Defines the structure and properties of each tab
  */
 export interface TabScreenConfig {
-  readonly name: 'library' | 'bookmarks' | 'study';
+  readonly name: 'explore' | 'playlist' | 'practice';
   readonly title: AppTab;
   readonly icon: TabIconConfig;
 }
@@ -28,17 +28,17 @@ export interface TabScreenConfig {
  */
 export const TAB_SCREENS: readonly TabScreenConfig[] = [
   {
-    name: 'library',
+    name: 'explore',
     title: 'Explore' as AppTab,
     icon: TAB_ICONS.EXPLORE,
   },
   {
-    name: 'bookmarks',
+    name: 'playlist',
     title: 'Playlist' as AppTab,
     icon: TAB_ICONS.PLAYLIST,
   },
   {
-    name: 'study',
+    name: 'practice',
     title: 'Practice' as AppTab,
     icon: TAB_ICONS.PRACTICE,
   },

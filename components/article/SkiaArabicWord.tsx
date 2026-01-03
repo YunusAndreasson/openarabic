@@ -88,7 +88,6 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     position,
   });
 
-
   // Use pre-computed colored segments from data loading (optimized for performance)
   const coloredSegments = word.coloredSegments || [];
 

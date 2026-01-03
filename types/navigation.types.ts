@@ -46,9 +46,9 @@ export interface ArticleParams {
  */
 export type Route =
   | { pathname: '/article/[id]'; params: ArticleParams }
-  | { pathname: '/(tabs)/library/filterModal'; params: FiltersParams }
-  | { pathname: '/study/review'; params?: ReviewParams }
+  | { pathname: '/(tabs)/explore/filterModal'; params: FiltersParams }
+  | { pathname: '/practice/review'; params?: ReviewParams }
   | { pathname: '/'; params?: Record<string, never> }
   | { pathname: '/(tabs)'; params?: Record<string, never> }
-  | { pathname: '/(tabs)/study'; params?: Record<string, never> }
-  | { pathname: '/(tabs)/bookmarks'; params?: Record<string, never> };
+  | { pathname: '/(tabs)/practice'; params?: Record<string, never> }
+  | { pathname: '/(tabs)/playlist'; params?: Record<string, never> };

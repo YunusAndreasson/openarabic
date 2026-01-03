@@ -130,7 +130,7 @@ describe('Word Count Consistency Validation', () => {
     it('should show same struggling word count in UI as session would provide', () => {
       // This test catches the double filtering + cooldown inconsistency bug
 
-      // UI Display Logic (what VocabularyStatCards shows)
+      // UI Display Logic (what PracticeStatCards shows)
       const uiStrugglingCount = calculateStrugglingWords(mockStudyWords);
 
       // Session Logic (uses same calculateStrugglingWords function)

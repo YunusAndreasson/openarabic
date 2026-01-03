@@ -27,7 +27,7 @@ import notoSansFont from '@/assets/fonts/NotoSans.ttf';
 import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import { ThemedText } from '@/components/ThemedText';
 import { MiniPlayer } from '@/components/audio';
-import { SleepTimer } from '@/components/bookmarks';
+import { SleepTimer } from '@/components/playlist';
 import {
   AuthProvider,
   FSRSDataProvider,

@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { Toast } from '@/components/Toast';
+import { Toast } from '@/components/ui/Toast';
 import { DEFAULT_TOAST_DURATION } from '@/constants/animation';
 import { ToastType } from '@/types/enums';
 import { setGlobalToastHandler } from '@/utils/errorHandling';

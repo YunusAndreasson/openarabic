@@ -27,7 +27,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
-import { ArticleCard } from '@/components/library/ArticleCard';
+import { ArticleCard } from '@/components/explore/ArticleCard';
 import type { Article } from '@/types/articles.types';
 
 // Mock dependencies
@@ -53,7 +53,7 @@ jest.mock('react-native-reanimated', () =>
   require('@/__tests__/helpers/componentMocks').createReanimatedMock(),
 );
 
-jest.mock('@/components/EnhancedImage', () => {
+jest.mock('@/components/ui/EnhancedImage', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {

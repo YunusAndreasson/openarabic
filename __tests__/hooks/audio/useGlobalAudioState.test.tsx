@@ -19,7 +19,7 @@
 jest.mock('@/hooks/auth/useAuth');
 jest.mock('@/hooks/audio/useSimpleAudioPlayer');
 jest.mock('@/hooks/audio/useSleepTimer');
-jest.mock('@/hooks/bookmarks/useBookmarksScreen');
+jest.mock('@/hooks/playlist/usePlaylistScreen');
 jest.mock('@/services/audioPlayer');
 jest.mock('@/utils/haptics');
 jest.mock('@tanstack/react-query');
@@ -34,7 +34,7 @@ import { AUDIO_STATES } from '@/constants/audio';
 const { useAuth } = require('@/hooks/auth/useAuth');
 const { useSimpleAudioPlayer } = require('@/hooks/audio/useSimpleAudioPlayer');
 const { useSleepTimer } = require('@/hooks/audio/useSleepTimer');
-const { useBookmarksScreen } = require('@/hooks/bookmarks/useBookmarksScreen');
+const { usePlaylistScreen } = require('@/hooks/playlist/usePlaylistScreen');
 const { simpleAudioService } = require('@/services/audioPlayer');
 const { successFeedback } = require('@/utils/haptics');
 const { useQueryClient } = require('@tanstack/react-query');
@@ -86,8 +86,8 @@ describe('useGlobalAudioState Hook', () => {
         }) as any,
     );
 
-    // Mock useBookmarksScreen
-    jest.mocked(useBookmarksScreen).mockReturnValue({
+    // Mock usePlaylistScreen
+    jest.mocked(usePlaylistScreen).mockReturnValue({
       sortedEnhancedTracks: [],
     } as any);
 
@@ -540,7 +540,7 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      jest.mocked(useBookmarksScreen).mockReturnValue({
+      jest.mocked(usePlaylistScreen).mockReturnValue({
         sortedEnhancedTracks: [{ articleId: 1 }, { articleId: 2 }, { articleId: 3 }],
       } as any);
 
@@ -563,7 +563,7 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      jest.mocked(useBookmarksScreen).mockReturnValue({
+      jest.mocked(usePlaylistScreen).mockReturnValue({
         sortedEnhancedTracks: [{ articleId: 1 }, { articleId: 2 }, { articleId: 3 }],
       } as any);
 
@@ -860,7 +860,7 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('handles empty reading list', () => {
-      jest.mocked(useBookmarksScreen).mockReturnValue({
+      jest.mocked(usePlaylistScreen).mockReturnValue({
         sortedEnhancedTracks: [],
       } as any);
 
@@ -883,7 +883,7 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      jest.mocked(useBookmarksScreen).mockReturnValue({
+      jest.mocked(usePlaylistScreen).mockReturnValue({
         sortedEnhancedTracks: [{ articleId: 1 }],
       } as any);
 

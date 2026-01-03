@@ -21,7 +21,7 @@ export const getArticleRoute = (
 };
 
 export const getCategoryFilterRoute = (categoryId: CategoryId, name?: string): string => {
-  const base = `/(tabs)/library/filter`;
+  const base = `/(tabs)/explore/filter`;
   const params = [`type=category`, `id=${categoryId}`];
   if (name) params.push(`name=${encodeURIComponent(name)}`);
   const query = params.join('&');
@@ -29,7 +29,7 @@ export const getCategoryFilterRoute = (categoryId: CategoryId, name?: string): s
 };
 
 export const getAuthorFilterRoute = (authorId: AuthorId, name?: string): string => {
-  const base = `/(tabs)/library/filter`;
+  const base = `/(tabs)/explore/filter`;
   const params = [`type=author`, `id=${authorId}`];
   if (name) params.push(`name=${encodeURIComponent(name)}`);
   const query = params.join('&');
@@ -37,7 +37,7 @@ export const getAuthorFilterRoute = (authorId: AuthorId, name?: string): string 
 };
 
 export const getDifficultyFilterRoute = (difficultyId: number, name?: string): string => {
-  const base = `/(tabs)/library/filter`;
+  const base = `/(tabs)/explore/filter`;
   const params = [`type=difficulty`, `id=${difficultyId}`];
   if (name) params.push(`name=${encodeURIComponent(name)}`);
   const query = params.join('&');
@@ -45,7 +45,7 @@ export const getDifficultyFilterRoute = (difficultyId: number, name?: string): s
 };
 
 export const getLengthFilterRoute = (lengthId: number, name?: string): string => {
-  const base = `/(tabs)/library/filter`;
+  const base = `/(tabs)/explore/filter`;
   const params = [`type=length`, `id=${lengthId}`];
   if (name) params.push(`name=${encodeURIComponent(name)}`);
   const query = params.join('&');
@@ -57,23 +57,23 @@ export const ROUTE_PATHS = {
   AUTH_TERMS: '/auth/terms',
   AUTH_PRIVACY: '/auth/privacy',
   TABS: '/(tabs)',
-  EXPLORE_TAB: '/(tabs)/library',
-  PRACTICE_TAB: '/(tabs)/study',
-  SAVED_TAB: '/(tabs)/bookmarks',
-  ACCOUNT: '/(tabs)/library/account',
-  ACCOUNT_HELP: '/(tabs)/library/account/help',
-  ACCOUNT_FONT_SELECTOR: '/(tabs)/library/account/FontSelector',
-  ACCOUNT_DELETE_ACCOUNT: '/(tabs)/library/account/DeleteAccount',
-  ACCOUNT_FEEDBACK: '/(tabs)/library/account/feedback',
-  TERMS: '/(tabs)/library/account/terms',
-  PRIVACY: '/(tabs)/library/account/privacy',
-  LEGAL: '/(tabs)/library/account/legal',
+  EXPLORE_TAB: '/(tabs)/explore',
+  PRACTICE_TAB: '/(tabs)/practice',
+  PLAYLIST_TAB: '/(tabs)/playlist',
+  ACCOUNT: '/(tabs)/explore/account',
+  ACCOUNT_HELP: '/(tabs)/explore/account/help',
+  ACCOUNT_FONT_SELECTOR: '/(tabs)/explore/account/FontSelector',
+  ACCOUNT_DELETE_ACCOUNT: '/(tabs)/explore/account/DeleteAccount',
+  ACCOUNT_FEEDBACK: '/(tabs)/explore/account/feedback',
+  TERMS: '/(tabs)/explore/account/terms',
+  PRIVACY: '/(tabs)/explore/account/privacy',
+  LEGAL: '/(tabs)/explore/account/legal',
 
-  STUDY_REVIEW: '/study/review',
-  STUDY_DICTIONARY: '/(tabs)/study/dictionary',
+  PRACTICE_REVIEW: '/practice/review',
+  PRACTICE_DICTIONARY: '/(tabs)/practice/dictionary',
 } as const;
 
-export const getStudyReviewRoute = (
+export const getPracticeReviewRoute = (
   params?: Partial<{
     rootId: RootId;
     mode: 'new' | 'random' | 'spaced';
@@ -88,5 +88,5 @@ export const getStudyReviewRoute = (
   if (params?.fromRemember)
     queryParts.push(`fromRemember=${encodeURIComponent(params.fromRemember)}`);
   const query = queryParts.join('&');
-  return query ? `${ROUTE_PATHS.STUDY_REVIEW}?${query}` : ROUTE_PATHS.STUDY_REVIEW;
+  return query ? `${ROUTE_PATHS.PRACTICE_REVIEW}?${query}` : ROUTE_PATHS.PRACTICE_REVIEW;
 };

@@ -3,7 +3,7 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
-import { EnhancedImage } from '@/components/EnhancedImage';
+import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     flex: 1, // Fill available height for proper vertical centering
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.SMALL, // 8px - consistent with ListenListItemCard
+    paddingHorizontal: LAYOUT.SPACING.SMALL, // 8px - consistent with PlaylistItemCard
     paddingBottom: PROGRESS_HEIGHT, // Account for progress bar overlay
   },
 

@@ -11,14 +11,14 @@ export * from './theme';
 export * from './review';
 export * from './vocabulary';
 
-// Study hooks
-export * from './study';
+// Practice hooks
+export * from './practice';
 
 // Media hooks
 export * from './audio';
 
-// Bookmarks hooks
-export * from './bookmarks';
+// Playlist hooks
+export * from './playlist';
 
 // App hooks
 export * from './app';

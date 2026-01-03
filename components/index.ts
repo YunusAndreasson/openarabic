@@ -4,8 +4,5 @@ export { ThemedInput } from './ThemedInput';
 export { ThemedText } from './ThemedText';
 export { ThemedView } from './ThemedView';
 
-// UI components
-export { EnhancedImage } from './EnhancedImage';
+// Feature components
 export { HeaderProfile } from './HeaderProfile';
-export { THEME_OPTIONS } from './ThemePicker';
-export { Toast } from './Toast';

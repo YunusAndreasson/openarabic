@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { EnhancedImage } from '@/components/EnhancedImage';
+import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';

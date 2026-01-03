@@ -121,8 +121,10 @@ export default function TabLayout(): JSX.Element {
           name={screen.name}
           options={{
             title: screen.title,
-            tabBarBadge: screen.name === 'study' && dueWordsCount > 0 ? dueWordsCount : undefined,
-            tabBarBadgeStyle: screen.name === 'study' && dueWordsCount > 0 ? badgeStyle : undefined,
+            tabBarBadge:
+              screen.name === 'practice' && dueWordsCount > 0 ? dueWordsCount : undefined,
+            tabBarBadgeStyle:
+              screen.name === 'practice' && dueWordsCount > 0 ? badgeStyle : undefined,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons
                 name={focused ? screen.icon.filled : screen.icon.outline}

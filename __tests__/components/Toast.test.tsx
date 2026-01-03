@@ -21,7 +21,7 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
 
-import { Toast } from '@/components/Toast';
+import { Toast } from '@/components/ui/Toast';
 import { ToastType } from '@/types/enums';
 
 // Use shared mock factories from componentMocks.tsx

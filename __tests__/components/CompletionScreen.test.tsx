@@ -67,7 +67,7 @@ jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
 
-jest.mock('@/hooks/study', () => ({
+jest.mock('@/hooks/practice', () => ({
   useStudyStreak: () => ({
     streak: { currentStreak: 0, longestStreak: 0, lastReadingDate: null, totalReadingDays: 0 },
     isLoading: false,

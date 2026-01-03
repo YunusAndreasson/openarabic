@@ -31,7 +31,6 @@ jest.mock('@/hooks/animations', () =>
   require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
 );
 
-
 describe('BaseCard', () => {
   const mockOnPress = jest.fn();
   const mockOnLongPress = jest.fn();

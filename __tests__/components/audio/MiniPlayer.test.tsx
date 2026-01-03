@@ -43,7 +43,7 @@ jest.mock('@/utils/layoutUtils', () => ({
 }));
 
 // Mock EnhancedImage
-jest.mock('@/components/EnhancedImage', () => ({
+jest.mock('@/components/ui/EnhancedImage', () => ({
   EnhancedImage: ({ style }: { style: object }) => {
     const { View } = require('react-native');
     return <View testID="enhanced-image" style={style} />;

@@ -27,7 +27,7 @@ export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | nu
   const effectiveCount = itemCount ?? studyWordsCount;
 
   const handlePressAction = (): void => {
-    router.push(ROUTE_PATHS.STUDY_DICTIONARY);
+    router.push(ROUTE_PATHS.PRACTICE_DICTIONARY);
   };
 
   // Use shared button press hook
