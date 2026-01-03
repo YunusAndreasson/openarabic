@@ -53,7 +53,7 @@ export function ThemedView({
       automaticallyAdjustContentInsets={false}
       bounces={true}
       contentContainerStyle={contentContainerStyle}
-      contentInsetAdjustmentBehavior="never"
+      contentInsetAdjustmentBehavior="automatic"
       removeClippedSubviews={true}
       showsVerticalScrollIndicator={false}
       overScrollMode="always"

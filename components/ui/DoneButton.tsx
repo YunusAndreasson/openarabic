@@ -1,15 +1,10 @@
 import { router } from 'expo-router';
 import type { FC } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { useCallback } from 'react';
 
-import { ThemedText } from '@/components/ThemedText';
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { useButtonPress } from '@/hooks/ui/useButtonPress';
-import { UiAction } from '@/types/enums';
-import { HEADER_BUTTON_STYLE, HEADER_BUTTON_TEXT_STYLE } from '@/utils/buttonStyleUtils';
 
 interface DoneButtonProps {
   /**
@@ -18,8 +13,6 @@ interface DoneButtonProps {
   onPress?: () => void;
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 // Small delay to let press animation complete before navigation
 const NAVIGATION_DELAY = TIMING_CONFIG.FAST.duration / 2; // 60ms
 
@@ -27,7 +20,7 @@ export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
   const colors = useColors();
 
   // Create press handler with navigation delay
-  const handlePressAction = () => {
+  const handlePressAction = useCallback(() => {
     if (onPress) {
       onPress();
     } else {
@@ -36,53 +29,15 @@ export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
         router.back();
       }, NAVIGATION_DELAY);
     }
-  };
-
-  // Use shared button press hook
-  const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig } =
-    useButtonPress({
-      onPress: handlePressAction,
-      animationOptions: { includeOpacity: true },
-    });
+  }, [onPress]);
 
   return (
-    <View style={styles.container}>
-      <AnimatedPressable
-        style={[
-          styles.button,
-          {
-            backgroundColor: colors.transparent,
-          },
-          animatedStyle,
-        ]}
-        onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-        android_ripple={rippleConfig}
-      >
-        <ThemedText
-          type="body"
-          weight="semibold"
-          style={[
-            styles.buttonText,
-            {
-              color: colors.tint,
-            },
-          ]}
-        >
-          {UiAction.CLOSE}
-        </ThemedText>
-      </AnimatedPressable>
-    </View>
+    <HeaderIconButton
+      iconName="checkmark-circle"
+      onPress={handlePressAction}
+      size="medium"
+      iconColor={colors.tint}
+      backgroundColor={colors.transparent}
+    />
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  button: HEADER_BUTTON_STYLE,
-  buttonText: HEADER_BUTTON_TEXT_STYLE,
-});

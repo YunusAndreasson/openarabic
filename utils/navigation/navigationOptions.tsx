@@ -1,10 +1,10 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { Text, View } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
 
 /**
  * Centralized navigation configuration for consistent styling across the app
+ * Uses native header elements to enable iOS 26 liquid glass effects
  *
  * @example Modal screen (default)
  * <Stack.Screen name="example" options={createNavigationOptions(colors, { title: 'Example' })} />
@@ -15,7 +15,7 @@ import { LAYOUT } from '@/constants/layout';
 
 /**
  * Universal navigation options for all screens and modals
- * Defaults to modal presentation with enhanced backdrop for better focus
+ * Defaults to modal presentation with native header elements for iOS glass effects
  */
 export function createNavigationOptions(
   colors: {
@@ -29,109 +29,33 @@ export function createNavigationOptions(
 ): NativeStackNavigationOptions {
   const { isRegularScreen, ...overrides } = options;
 
+  // Use native header elements to enable iOS 26 liquid glass
   const baseOptions: NativeStackNavigationOptions = {
     headerStyle: {
       backgroundColor: colors.background,
     },
+    headerTitleStyle: {
+      color: colors.headingText,
+      fontWeight: FONT_WEIGHTS.SEMIBOLD,
+      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    },
     headerTintColor: colors.headingText,
-    headerTransparent: false,
     headerBackVisible: false, // Prevent default back button on Android when using custom headerLeft
+    headerShadowVisible: false,
     ...overrides,
   };
-
-  // Create custom header component to avoid menu item styling entirely
-  if (overrides.title && typeof overrides.title === 'string') {
-    baseOptions.headerTitle = () => (
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 0,
-        }}
-      >
-        {/* Left side - headerLeft if exists */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            flex: 1,
-          }}
-        >
-          {overrides.headerLeft &&
-            (typeof overrides.headerLeft === 'function'
-              ? overrides.headerLeft({})
-              : overrides.headerLeft)}
-        </View>
-
-        {/* Center - title */}
-        <View
-          style={{
-            flex: 2,
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: LAYOUT.SPACING.SMALL,
-            paddingVertical: 0,
-            minHeight: LAYOUT.HEADER.NAV_HEADER_HEIGHT,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-              fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
-              color: colors.headingText,
-              textAlign: 'center',
-              lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
-              paddingVertical: 0,
-            }}
-            numberOfLines={2}
-            adjustsFontSizeToFit={true}
-            minimumFontScale={0.9}
-            ellipsizeMode="tail"
-          >
-            {overrides.title}
-          </Text>
-        </View>
-
-        {/* Right side - headerRight if exists */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            flex: 1,
-          }}
-        >
-          {overrides.headerRight &&
-            (typeof overrides.headerRight === 'function'
-              ? overrides.headerRight({})
-              : overrides.headerRight)}
-        </View>
-      </View>
-    );
-
-    // Remove the original properties to avoid conflicts
-    delete baseOptions.title;
-    delete baseOptions.headerLeft;
-    delete baseOptions.headerRight;
-  }
 
   if (isRegularScreen) {
     return baseOptions;
   }
 
-  // Native modal behavior (minimal customization) - unified across platforms
+  // Native modal behavior - unified across platforms with glass support
   return {
     presentation: 'modal',
     animation: 'slide_from_bottom', // Android: Slide up from bottom like iOS
     gestureEnabled: true,
     fullScreenGestureEnabled: true, // iOS: Allow full-screen swipe to dismiss
     contentStyle: {
-      backgroundColor: colors.background,
-    },
-    headerStyle: {
       backgroundColor: colors.background,
     },
     ...baseOptions,

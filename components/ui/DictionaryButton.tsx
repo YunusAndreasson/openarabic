@@ -1,15 +1,12 @@
 import { router } from 'expo-router';
 import type { JSX } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { useCallback } from 'react';
 
-import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, LETTER_SPACING, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
-import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { UiAction } from '@/types/enums';
 
 interface DictionaryButtonProps {
   hideWhenEmpty?: boolean;
@@ -26,14 +23,9 @@ export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | nu
   const studyWordsCount = (allWords?.length ?? 0) + (dueWords?.length ?? 0);
   const effectiveCount = itemCount ?? studyWordsCount;
 
-  const handlePressAction = (): void => {
+  const handlePressAction = useCallback((): void => {
     router.push(ROUTE_PATHS.PRACTICE_DICTIONARY);
-  };
-
-  // Use shared button press hook
-  const { handlePress, rippleConfig } = useButtonPress({
-    onPress: handlePressAction,
-  });
+  }, []);
 
   // Hide button when hideWhenEmpty is true and there are no study words
   if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {
@@ -41,45 +33,12 @@ export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | nu
   }
 
   return (
-    <Pressable
-      style={[
-        styles.button,
-        {
-          backgroundColor: colors.transparent,
-        },
-      ]}
-      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-      onPress={handlePress}
-      android_ripple={rippleConfig}
-    >
-      <ThemedText
-        type="body"
-        weight="semibold"
-        style={[
-          styles.buttonText,
-          {
-            color: colors.tint,
-          },
-        ]}
-        numberOfLines={1}
-      >
-        {UiAction.ALL_WORDS}
-      </ThemedText>
-    </Pressable>
+    <HeaderIconButton
+      iconName="book"
+      onPress={handlePressAction}
+      size="medium"
+      iconColor={colors.tint}
+      backgroundColor={colors.transparent}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET.MEDIUM,
-    minWidth: 70,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-  buttonText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    letterSpacing: LETTER_SPACING.TIGHT,
-  },
-});

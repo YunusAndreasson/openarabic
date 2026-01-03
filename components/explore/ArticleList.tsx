@@ -115,6 +115,8 @@ export function ArticleList({
       scrollEventThrottle={16}
       keyboardShouldPersistTaps="handled"
       onScroll={onScroll}
+      // Required for iOS native large title collapse on scroll
+      contentInsetAdjustmentBehavior="automatic"
     >
       {renderHeader()}
       {renderFooter()}

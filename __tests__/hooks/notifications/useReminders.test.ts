@@ -2,7 +2,7 @@
  * Hook Tests
  *
  * Modern Jest 29 Patterns:
- * - ✅ @jest/globals explicit imports
+ * - @jest/globals explicit imports
  * - Note: No test.concurrent() - hook tests use renderHook
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
@@ -28,8 +28,7 @@ const actualErrorHandling = jest.requireActual('../../../utils/errorHandling');
 
 jest.mock('../../../utils/errorHandling', () => ({
   handleError: jest.fn(),
-  toError: (error: unknown) =>
-    error instanceof Error ? error : new Error(String(error)),
+  toError: (error: unknown) => (error instanceof Error ? error : new Error(String(error))),
 }));
 
 const { scheduleReminder, hasPermissions } = require('../../../services/notificationService');

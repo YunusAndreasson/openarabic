@@ -1,29 +1,29 @@
+import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { ListSeparator } from '@/components/common';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 
 import { ThemedView } from '@/components/ThemedView';
-import { BottomControls, SavedEmptyState } from '@/components/playlist';
+import { SavedEmptyState } from '@/components/playlist';
 import { PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
+import { FloatingGlassButton } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { usePlaylistScreen, usePlaylistUI } from '@/hooks/playlist';
-import { useColors } from '@/hooks/theme';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
-import { AudioAction, ToastType } from '@/types/enums';
+import { ToastType } from '@/types/enums';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadata } from '@/utils/stringUtils';
-// v2 handles layout automatically - no overrideFixedHeight needed
 
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
@@ -109,7 +109,6 @@ PlaylistListItem.displayName = 'PlaylistListItem';
 export default function PlaylistScreen(): JSX.Element {
   const { editMode, reset } = useEditMode('playlist');
   const { showToast } = useToast();
-  const colors = useColors();
 
   // Reset edit mode when screen loses focus
   useFocusEffect(
@@ -190,47 +189,15 @@ export default function PlaylistScreen(): JSX.Element {
   const listContainerStyle = useMemo(
     () => ({
       ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-      // No paddingTop needed - content should be directly under header
-      // Account for BottomControls height + tab bar when controls are visible
-      paddingBottom: stableHasArticles
-        ? LAYOUT.SCREEN_PADDING.bottomWithControls
-        : LAYOUT.SPACING.MEDIUM,
+      paddingBottom: LAYOUT.SPACING.XXXLARGE, // Space for floating button
       // Enable vertical centering when empty
       ...(shouldShowEmpty ? { flexGrow: 1 } : {}),
     }),
-    [stableHasArticles, shouldShowEmpty],
+    [shouldShowEmpty],
   );
 
-  // Show bottom controls only when has articles
-  const showBottomControls = stableHasArticles;
-
-  // Bottom controls positioned above tab bar
-  const bottomControlsStyle = useMemo(
-    () => ({
-      position: 'absolute' as const,
-      bottom: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION,
-      left: 0,
-      right: 0,
-      overflow: 'visible' as const,
-      zIndex: 2, // Above the gradient
-    }),
-    [],
-  );
-
-  // Solid overlay below button to cover gap to tab bar
-  const bottomOverlayStyle = useMemo(
-    () => ({
-      position: 'absolute' as const,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      height: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION, // Just cover the gap (4px)
-      pointerEvents: 'none' as const,
-      zIndex: 1, // Behind the button controls
-      backgroundColor: colors.elevation0,
-    }),
-    [colors.elevation0],
-  );
+  // Show floating button only when has articles
+  const showFloatingButton = stableHasArticles;
 
   // Memoize shared components to prevent recreation
   const EmptyStateComponent = useMemo(
@@ -274,8 +241,7 @@ export default function PlaylistScreen(): JSX.Element {
 
   return (
     <ThemedView
-      includeBottomInset={false}
-      safeAreaEdges={['left', 'right']}
+      useSafeArea={false}
       style={styles.container}
     >
       <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
@@ -321,21 +287,19 @@ export default function PlaylistScreen(): JSX.Element {
         )}
       </ThemedView>
 
-      {/* Solid overlay below button */}
-      {showBottomControls && <View style={bottomOverlayStyle} />}
-
-      {/* Bottom controls - shows Play All when has articles */}
-      {showBottomControls && (
-        <View style={bottomControlsStyle}>
-          <BottomControls
-            primaryDisabled={isPlayAllLoading}
-            primaryLoading={isPlayAllLoading}
-            primaryLabel={AudioAction.PLAY_ALL}
-            onPrimaryPress={handlePlayAllStable}
-            onPrimaryLongPress={handlePlayAllArabicOnly}
-          />
-        </View>
+      {/* Floating glass button - iOS 26 style */}
+      {showFloatingButton && (
+        <FloatingGlassButton
+          iconName="play"
+          onPress={handlePlayAllStable}
+          onLongPress={handlePlayAllArabicOnly}
+          disabled={isPlayAllLoading}
+        />
       )}
     </ThemedView>
   );
 }
+
+export const options: NativeStackNavigationOptions = {
+  headerShown: false,
+};

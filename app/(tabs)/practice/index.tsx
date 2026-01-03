@@ -1,13 +1,13 @@
 import { useFocusEffect } from '@react-navigation/native';
+import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { InteractionManager, StyleSheet, View } from 'react-native';
+import { InteractionManager, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
-import { BottomControls } from '@/components/playlist';
 import { ErrorState } from '@/components/common';
 import { DueWordsBottomSheet } from '@/components/practice';
 import { MemoryRetentionBottomSheet } from '@/components/practice';
@@ -16,7 +16,7 @@ import { RecommendationCard } from '@/components/practice';
 import { StudyStreakBottomSheet } from '@/components/practice';
 import { PracticeStatCards } from '@/components/practice';
 import { WordsMasteredBottomSheet } from '@/components/practice';
-import { PulsatingLoader } from '@/components/ui';
+import { FloatingGlassButton, PulsatingLoader } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { fsrsQueries } from '@/constants/queries';
@@ -26,11 +26,9 @@ import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
-import { useColors } from '@/hooks/theme';
 import { useBottomSheetManager } from '@/hooks/ui';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
-import { ReviewAction } from '@/types/enums';
 import { mediumFeedback } from '@/utils/haptics';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
@@ -41,7 +39,6 @@ export default function PracticeScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { prefetchVocabularyData } = useAppPreloader();
-  const colors = useColors();
 
   // Bottom sheet visibility management (only one sheet visible at a time)
   const { showSheet, hideSheet, isVisible } = useBottomSheetManager<BottomSheetKey>();
@@ -154,25 +151,10 @@ export default function PracticeScreen(): JSX.Element {
     return { masteredWords, learningPhaseWords };
   }, [filteredStudyWords, dueWordsCount]);
 
-  // Bottom padding for content with floating buttons above tab bar
+  // Bottom padding for content with floating button
   const contentPaddingBottom = hasAnyStudyWords
-    ? LAYOUT.SCREEN_PADDING.bottomWithControls
+    ? LAYOUT.SPACING.XXXLARGE // Space for floating button
     : LAYOUT.SPACING.MEDIUM;
-
-  // Solid overlay below button to cover gap to tab bar
-  const bottomOverlayStyle = useMemo(
-    () => ({
-      position: 'absolute' as const,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      height: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION, // Just cover the gap (4px)
-      pointerEvents: 'none' as const,
-      zIndex: 1, // Behind the button controls
-      backgroundColor: colors.elevation0,
-    }),
-    [colors.elevation0],
-  );
 
   // Calculate loading and content states (needed for animations before any early returns)
   const isLoadingState = isDataLoading || isFetching;
@@ -223,8 +205,7 @@ export default function PracticeScreen(): JSX.Element {
   // Main content
   return (
     <ThemedView
-      includeBottomInset={false}
-      safeAreaEdges={['left', 'right']}
+      useSafeArea={false}
       style={styles.container}
     >
       <ThemedView
@@ -291,27 +272,9 @@ export default function PracticeScreen(): JSX.Element {
         )}
       </ThemedView>
 
-      {/* Solid overlay below button */}
-      {hasAnyStudyWords && <View style={bottomOverlayStyle} />}
-
-      {/* Bottom fixed action button - shows Practice Due when has words */}
-      {hasAnyStudyWords && (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: LAYOUT.FLOATING_CONTROLS.BOTTOM_POSITION,
-            left: 0,
-            right: 0,
-            zIndex: 2, // Above the gap filler
-          }}
-        >
-          <BottomControls
-            primaryLabel={ReviewAction.STUDY_DUE_WORDS}
-            onPrimaryPress={handleStartReview}
-            primaryDisabled={dueWordsCount === 0}
-            primaryLoading={false}
-          />
-        </View>
+      {/* Floating glass button - iOS 26 style */}
+      {hasAnyStudyWords && dueWordsCount > 0 && (
+        <FloatingGlassButton iconName="flash" onPress={handleStartReview} />
       )}
 
       {/* Coordinated Bottom Sheets - only one can be visible at a time */}
@@ -322,6 +285,10 @@ export default function PracticeScreen(): JSX.Element {
     </ThemedView>
   );
 }
+
+export const options: NativeStackNavigationOptions = {
+  headerShown: false,
+};
 
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,

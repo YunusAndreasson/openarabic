@@ -42,10 +42,10 @@ export const SPRING_CONFIG = {
     energyThreshold: 0.01,
   },
   CARD: {
-    damping: 18, // Higher damping for smoother feel
-    stiffness: 140, // Higher stiffness for more responsive feel
-    mass: 0.7, // Lighter mass for snappier response
-    overshootClamping: false,
+    damping: 20, // High damping - no bounce
+    stiffness: 400, // Very high stiffness - instant response
+    mass: 0.4, // Light mass - snappy
+    overshootClamping: true, // No overshoot
     energyThreshold: 0.01,
   },
   TOGGLE: {

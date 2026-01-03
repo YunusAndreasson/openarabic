@@ -5,7 +5,6 @@ import type { JSX } from 'react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { SectionLabel } from '@/components/common';
@@ -50,7 +49,6 @@ function buildEntitiesWithCounts<T extends { id: number; name: string }>(
 export default function ExploreScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const insets = useSafeAreaInsets();
   const { showToast } = useToast();
   const { from } = useLocalSearchParams<{ from?: string }>();
 
@@ -295,16 +293,13 @@ export default function ExploreScreen(): JSX.Element {
   const contentContainerStyle = useMemo(
     () => ({
       ...styles.listContentContainer,
-      paddingTop: 0,
-      paddingBottom: insets.bottom,
     }),
-    [insets.bottom],
+    [],
   );
 
   return (
     <ThemedView
-      includeBottomInset={false}
-      safeAreaEdges={['left', 'right']}
+      useSafeArea={false}
       style={styles.container}
     >
       <ArticleList

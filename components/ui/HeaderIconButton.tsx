@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Platform, Pressable, StyleSheet } from 'react-native';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -30,6 +30,9 @@ export interface HeaderIconButtonProps {
   /** Hit slop size - defaults based on button size */
   hitSlop?: 'small' | 'medium' | 'large';
 }
+
+// iOS 26 UIBarButton has fixed 36pt width - use this for header buttons to ensure circular glass
+const IOS_BAR_BUTTON_SIZE = 36;
 
 const SIZE_CONFIG = {
   small: {
@@ -106,15 +109,23 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
     });
 
     // Memoize dynamic button style
+    const finalBackgroundColor = backgroundColor ?? colors.elevation1;
+    const isTransparent = finalBackgroundColor === colors.transparent;
+    // iOS 26 header buttons: use 36pt to match native UIBarButton for circular glass
+    const isIOSHeaderButton = Platform.OS === 'ios' && isTransparent;
+    const buttonDimension = isIOSHeaderButton ? IOS_BAR_BUTTON_SIZE : config.dimension;
+    const buttonRadius = isIOSHeaderButton ? IOS_BAR_BUTTON_SIZE / 2 : config.borderRadius;
+
     const buttonStyle = useMemo(
       () => [
         styles.button,
         {
-          width: config.dimension,
-          height: config.dimension,
-          borderRadius: config.borderRadius,
-          backgroundColor: backgroundColor ?? colors.elevation1,
-          opacity,
+          width: buttonDimension,
+          height: buttonDimension,
+          borderRadius: buttonRadius,
+          backgroundColor: finalBackgroundColor,
+          // Use full opacity for transparent buttons (native header icons), otherwise apply provided opacity
+          opacity: isTransparent ? LAYOUT.OPACITY.FULL : opacity,
           ...(withBorder && {
             borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
             borderColor: borderColor ?? colors.border,
@@ -122,18 +133,20 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
         },
       ],
       [
-        config.dimension,
-        config.borderRadius,
-        backgroundColor,
-        colors.elevation1,
+        buttonDimension,
+        buttonRadius,
+        finalBackgroundColor,
         colors.border,
         opacity,
+        isTransparent,
         withBorder,
         borderColor,
       ],
     );
 
     const finalIconColor = iconColor ?? colors.text;
+    // Use medium icon for iOS header buttons - fits nicely in 36pt glass
+    const iconSize = isIOSHeaderButton ? LAYOUT.BUTTON.ICON_SIZE.MEDIUM : config.iconSize;
 
     return (
       <Pressable
@@ -143,7 +156,7 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
         android_ripple={rippleConfig}
         testID={testID}
       >
-        <Ionicons name={iconName} size={config.iconSize} color={finalIconColor} />
+        <Ionicons name={iconName} size={iconSize} color={finalIconColor} />
       </Pressable>
     );
   },
@@ -153,7 +166,6 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: LAYOUT.SPACING.SMALL,
   },
 });
 

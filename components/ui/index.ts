@@ -3,10 +3,12 @@
  * Reusable UI primitives and form controls
  */
 
+export { CloseButton } from './CloseButton';
 export { ColorDot } from './ColorDot';
 export { DictionaryButton } from './DictionaryButton';
 export { DoneButton } from './DoneButton';
 export { EditModeButton } from './EditModeButton';
+export { FloatingGlassButton } from './FloatingGlassButton';
 export { EnhancedImage } from './EnhancedImage';
 export { HeaderIconButton } from './HeaderIconButton';
 export { IconButton } from './IconButton';

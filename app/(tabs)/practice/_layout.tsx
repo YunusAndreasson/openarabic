@@ -1,7 +1,7 @@
 import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
 
-import { DictionaryButton, DoneButton, EditModeButton } from '@/components/ui';
+import { CloseButton, DictionaryButton, EditModeButton } from '@/components/ui';
 import { useColors } from '@/hooks/theme/useColors';
 import { createNavigationOptions } from '@/utils/navigation';
 import { useEditMode } from '@/hooks/ui/useEditMode';
@@ -26,8 +26,8 @@ export default function StudyLayout(): JSX.Element {
         name="dictionary"
         options={createNavigationOptions(colors, {
           title: UiAction.ALL_WORDS,
-          // Only show DoneButton when NOT in edit mode to avoid duplicate "Done" buttons
-          headerLeft: editMode ? undefined : () => <DoneButton onPress={() => router.back()} />,
+          // Only show CloseButton when NOT in edit mode to avoid duplicate buttons
+          headerLeft: editMode ? undefined : () => <CloseButton onPress={() => router.back()} />,
           headerRight: () => <EditModeButton type="dictionary" hideWhenEmpty={false} />,
         })}
       />

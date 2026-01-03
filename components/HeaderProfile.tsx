@@ -2,7 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -13,6 +13,10 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
+
+// iOS 26 UIBarButton has fixed 36pt glass container
+const IOS_GLASS_SIZE = 36;
+const IOS_PROFILE_SIZE = 28; // Profile inside the glass
 
 interface HeaderProfileProps {
   size?: number;
@@ -33,6 +37,10 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   const { user } = useAuth();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
+  const isIOS = Platform.OS === 'ios';
+  // Use smaller size on iOS to fit within 36pt glass container
+  const effectiveSize = isIOS ? IOS_PROFILE_SIZE : size;
+
   // Press animation for profile button
   const profilePressAnimation = usePressAnimation(PRESS_ANIMATION_BUTTON);
 
@@ -41,8 +49,11 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   }, []);
 
   const profilePhotoStyle = useMemo(
-    () => [styles.baseProfilePhoto, { width: size, height: size, borderRadius: size / 2 }],
-    [size],
+    () => [
+      styles.baseProfilePhoto,
+      { width: effectiveSize, height: effectiveSize, borderRadius: effectiveSize / 2 },
+    ],
+    [effectiveSize],
   );
 
   // Load saved profile photo
@@ -79,15 +90,20 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   const firstName = getFirstNameFromEmail(user.email || '');
   const initials = getInitials(firstName);
 
+  // iOS: Use 36pt container to match glass, Android: use content size
+  const containerStyle = isIOS
+    ? [styles.container, { width: IOS_GLASS_SIZE, height: IOS_GLASS_SIZE }]
+    : styles.container;
+
   return (
-    <View style={styles.container}>
+    <View style={containerStyle}>
       {/* Profile Button */}
       <Pressable
         onPress={handlePress}
         onPressIn={profilePressAnimation.handlePressIn}
         onPressOut={profilePressAnimation.handlePressOut}
         style={styles.profileButton}
-        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        hitSlop={isIOS ? undefined : { top: 12, bottom: 12, left: 12, right: 12 }}
       >
         <Animated.View style={profilePressAnimation.animatedStyle}>
           {profilePhotoUri ? (
@@ -105,9 +121,9 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
                 styles.initialsContainer,
                 {
                   backgroundColor: colors.tint,
-                  width: size,
-                  height: size,
-                  borderRadius: size / 2,
+                  width: effectiveSize,
+                  height: effectiveSize,
+                  borderRadius: effectiveSize / 2,
                 },
               ]}
             >
@@ -116,7 +132,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
                 weight="bold"
                 style={[
                   styles.baseInitialsText,
-                  { fontSize: size * 0.45, color: colors.background },
+                  { fontSize: effectiveSize * 0.45, color: colors.background },
                 ]}
               >
                 {initials}

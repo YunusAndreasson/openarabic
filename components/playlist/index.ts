@@ -4,7 +4,6 @@
  */
 
 export { AudioProgressIndicator } from './AudioProgressIndicator';
-export { BottomControls } from './BottomControls';
 export { DeleteButton } from './DeleteButton';
 export { DragHandle, type DragHandleProps } from './DragHandle';
 export { PlaylistHeader } from './PlaylistHeader';
