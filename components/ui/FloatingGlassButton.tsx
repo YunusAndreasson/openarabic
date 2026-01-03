@@ -20,10 +20,11 @@ const ICON_SIZE = 24;
 
 /**
  * Calculate FAB bottom offset based on safe area insets
- * Formula: tab bar height + safe area + margin
+ * Positions FAB just above tab bar with minimal margin
  */
+const FAB_MARGIN_ABOVE_TAB = 16; // Small margin above tab bar
 const getBottomOffset = (bottomInset: number = 0) =>
-  LAYOUT.BOTTOM_BAR.HEIGHT + bottomInset + LAYOUT.SPACING.MEDIUM;
+  FAB_MARGIN_ABOVE_TAB + bottomInset;
 
 /**
  * Classic floating action button with prominent colored background

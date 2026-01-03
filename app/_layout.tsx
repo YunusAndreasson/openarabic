@@ -209,9 +209,8 @@ function AppContent() {
   useEffect(() => {
     if (!appReady || isAuthLoading) return;
 
-    // Configure Android navigation bar for proper safe area handling
+    // Configure Android navigation bar button style (background is transparent in edge-to-edge mode)
     if (Platform.OS === 'android') {
-      NavigationBar.setBackgroundColorAsync(colors.background);
       NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
     }
 
@@ -465,12 +464,14 @@ function AppContent() {
     <NavigationThemeProvider value={navigationTheme}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <FSRSDataProvider userId={session?.user?.id}>
-          <Stack screenOptions={{
-            headerShown: false,
-            headerTitle: '',
-            headerShadowVisible: false,
-            freezeOnBlur: true
-          }}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              headerTitle: '',
+              headerShadowVisible: false,
+              freezeOnBlur: true,
+            }}
+          >
             <Stack.Screen
               name="(tabs)"
               options={{
@@ -505,8 +506,8 @@ function AppContent() {
 
           <StatusBar
             style={isDark ? 'light' : 'dark'}
-            backgroundColor={Platform.OS === 'ios' ? colors.background : 'transparent'}
-            translucent={Platform.OS === 'android'}
+            backgroundColor={colors.background}
+            translucent={false}
           />
         </FSRSDataProvider>
       </View>
