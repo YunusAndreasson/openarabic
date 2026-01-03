@@ -81,7 +81,7 @@ export function useAddBeginnerArticles(
       });
 
       // Reset edit mode in case it was persisted from previous session
-      dispatch(resetEditMode('listen'));
+      dispatch(resetEditMode('playlist'));
 
       // Invalidate queries in background (UI updates when ready)
       queryClient.invalidateQueries({ queryKey: ['readingList', user.id] });

@@ -52,7 +52,7 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
   );
   // Derive count internally for listen type when not provided
   const { sortedReadingList } = usePlaylistScreen();
-  const derivedCount = type === 'listen' ? sortedReadingList.length : undefined;
+  const derivedCount = type === 'playlist' ? sortedReadingList.length : undefined;
   const effectiveCount = itemCount ?? derivedCount ?? undefined;
 
   // Create press handler with optimistic state logic
@@ -83,7 +83,7 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
 
   const buttonText = optimisticEditMode
     ? UiAction.DONE
-    : type === 'listen'
+    : type === 'playlist'
       ? UiAction.MANAGE
       : type === 'dictionary'
         ? UiAction.MANAGE

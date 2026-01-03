@@ -106,7 +106,7 @@ const PlaylistListItem = memo(
 PlaylistListItem.displayName = 'PlaylistListItem';
 
 export default function PlaylistScreen(): JSX.Element {
-  const { editMode, reset } = useEditMode('listen');
+  const { editMode, reset } = useEditMode('playlist');
   const { showToast } = useToast();
   const colors = useColors();
 

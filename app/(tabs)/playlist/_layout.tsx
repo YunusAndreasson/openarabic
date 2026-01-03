@@ -15,7 +15,7 @@ export default function BookmarksLayout(): JSX.Element {
         name="index"
         options={createTabHeaderOptions({
           title: AppTab.PLAYLIST,
-          rightComponent: () => <EditModeButton type="listen" />,
+          rightComponent: () => <EditModeButton type="playlist" />,
           colors,
         })}
       />

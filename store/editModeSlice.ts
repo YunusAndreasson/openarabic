@@ -1,15 +1,15 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
-export type EditModeType = 'listen' | 'dictionary';
+export type EditModeType = 'playlist' | 'dictionary';
 
 export interface EditModeState {
-  listen: boolean;
+  playlist: boolean;
   dictionary: boolean;
 }
 
 const initialState: EditModeState = {
-  listen: false,
+  playlist: false,
   dictionary: false,
 };
 

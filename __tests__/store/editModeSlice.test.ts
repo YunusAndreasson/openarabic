@@ -19,91 +19,91 @@ describe('editModeSlice reducers', () => {
 
   beforeEach(() => {
     initialState = {
-      listen: false,
+      playlist: false,
       dictionary: false,
     };
   });
 
   describe('toggleEditMode', () => {
-    test('toggles listen mode from false to true', () => {
-      const state = reducer(initialState, toggleEditMode('listen'));
-      expect(state.listen).toBe(true);
+    test('toggles playlist mode from false to true', () => {
+      const state = reducer(initialState, toggleEditMode('playlist'));
+      expect(state.playlist).toBe(true);
       expect(state.dictionary).toBe(false);
     });
 
-    test('toggles listen mode from true to false', () => {
-      const modifiedState: EditModeState = { listen: true, dictionary: false };
-      const state = reducer(modifiedState, toggleEditMode('listen'));
-      expect(state.listen).toBe(false);
+    test('toggles playlist mode from true to false', () => {
+      const modifiedState: EditModeState = { playlist: true, dictionary: false };
+      const state = reducer(modifiedState, toggleEditMode('playlist'));
+      expect(state.playlist).toBe(false);
       expect(state.dictionary).toBe(false);
     });
 
     test('toggles dictionary mode from false to true', () => {
       const state = reducer(initialState, toggleEditMode('dictionary'));
       expect(state.dictionary).toBe(true);
-      expect(state.listen).toBe(false);
+      expect(state.playlist).toBe(false);
     });
 
     test('toggles dictionary mode from true to false', () => {
-      const modifiedState: EditModeState = { listen: false, dictionary: true };
+      const modifiedState: EditModeState = { playlist: false, dictionary: true };
       const state = reducer(modifiedState, toggleEditMode('dictionary'));
       expect(state.dictionary).toBe(false);
-      expect(state.listen).toBe(false);
+      expect(state.playlist).toBe(false);
     });
 
     test('does not affect other mode when toggling', () => {
-      const modifiedState: EditModeState = { listen: true, dictionary: false };
+      const modifiedState: EditModeState = { playlist: true, dictionary: false };
       const state = reducer(modifiedState, toggleEditMode('dictionary'));
-      expect(state.listen).toBe(true);
+      expect(state.playlist).toBe(true);
       expect(state.dictionary).toBe(true);
     });
   });
 
   describe('resetEditMode', () => {
-    test('resets listen mode to false', () => {
-      const modifiedState: EditModeState = { listen: true, dictionary: false };
-      const state = reducer(modifiedState, resetEditMode('listen'));
-      expect(state.listen).toBe(false);
+    test('resets playlist mode to false', () => {
+      const modifiedState: EditModeState = { playlist: true, dictionary: false };
+      const state = reducer(modifiedState, resetEditMode('playlist'));
+      expect(state.playlist).toBe(false);
       expect(state.dictionary).toBe(false);
     });
 
     test('resets dictionary mode to false', () => {
-      const modifiedState: EditModeState = { listen: false, dictionary: true };
+      const modifiedState: EditModeState = { playlist: false, dictionary: true };
       const state = reducer(modifiedState, resetEditMode('dictionary'));
       expect(state.dictionary).toBe(false);
-      expect(state.listen).toBe(false);
+      expect(state.playlist).toBe(false);
     });
 
     test('does not affect other mode when resetting', () => {
-      const modifiedState: EditModeState = { listen: true, dictionary: true };
-      const state = reducer(modifiedState, resetEditMode('listen'));
-      expect(state.listen).toBe(false);
+      const modifiedState: EditModeState = { playlist: true, dictionary: true };
+      const state = reducer(modifiedState, resetEditMode('playlist'));
+      expect(state.playlist).toBe(false);
       expect(state.dictionary).toBe(true);
     });
 
     test('is idempotent (resetting already false mode stays false)', () => {
-      const state = reducer(initialState, resetEditMode('listen'));
-      expect(state.listen).toBe(false);
+      const state = reducer(initialState, resetEditMode('playlist'));
+      expect(state.playlist).toBe(false);
       expect(state.dictionary).toBe(false);
     });
   });
 
   describe('complex state transitions', () => {
     test('handles multiple operations correctly', () => {
-      let state = reducer(initialState, toggleEditMode('listen'));
-      expect(state).toEqual({ listen: true, dictionary: false });
+      let state = reducer(initialState, toggleEditMode('playlist'));
+      expect(state).toEqual({ playlist: true, dictionary: false });
 
       state = reducer(state, toggleEditMode('dictionary'));
-      expect(state).toEqual({ listen: true, dictionary: true });
+      expect(state).toEqual({ playlist: true, dictionary: true });
 
-      state = reducer(state, resetEditMode('listen'));
-      expect(state).toEqual({ listen: false, dictionary: true });
+      state = reducer(state, resetEditMode('playlist'));
+      expect(state).toEqual({ playlist: false, dictionary: true });
 
-      state = reducer(state, toggleEditMode('listen'));
-      expect(state).toEqual({ listen: true, dictionary: true });
+      state = reducer(state, toggleEditMode('playlist'));
+      expect(state).toEqual({ playlist: true, dictionary: true });
 
       state = reducer(state, toggleEditMode('dictionary'));
-      expect(state).toEqual({ listen: true, dictionary: false });
+      expect(state).toEqual({ playlist: true, dictionary: false });
     });
   });
 });
