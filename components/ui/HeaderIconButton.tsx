@@ -13,6 +13,8 @@ export interface HeaderIconButtonProps {
   iconName: keyof typeof Ionicons.glyphMap;
   /** Press handler */
   onPress: () => void;
+  /** Long press handler */
+  onLongPress?: () => void;
   /** Button size - determines width, height, and icon size */
   size?: ButtonSize;
   /** Icon color - defaults to theme text color */
@@ -25,6 +27,8 @@ export interface HeaderIconButtonProps {
   borderColor?: string;
   /** Opacity - defaults to LAYOUT.OPACITY.HOVER */
   opacity?: number;
+  /** Whether the button is disabled */
+  disabled?: boolean;
   /** Test ID for testing */
   testID?: string;
   /** Hit slop size - defaults based on button size */
@@ -88,12 +92,14 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
   ({
     iconName,
     onPress,
+    onLongPress,
     size = 'medium',
     iconColor,
     backgroundColor,
     withBorder = false,
     borderColor,
     opacity = LAYOUT.OPACITY.HOVER,
+    disabled = false,
     testID,
     hitSlop,
   }) => {
@@ -150,10 +156,13 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
 
     return (
       <Pressable
-        style={buttonStyle}
+        style={[buttonStyle, disabled && { opacity: LAYOUT.OPACITY.MEDIUM }]}
         onPress={handlePress}
+        onLongPress={onLongPress}
+        delayLongPress={500}
         hitSlop={finalHitSlop}
         android_ripple={rippleConfig}
+        disabled={disabled}
         testID={testID}
       >
         <Ionicons name={iconName} size={iconSize} color={finalIconColor} />

@@ -1,12 +1,10 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { InteractionManager, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState } from '@/components/common';
@@ -17,11 +15,9 @@ import { RecommendationCard } from '@/components/practice';
 import { StudyStreakBottomSheet } from '@/components/practice';
 import { PracticeStatCards } from '@/components/practice';
 import { WordsMasteredBottomSheet } from '@/components/practice';
-import { FloatingGlassButton } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { fsrsQueries } from '@/constants/queries';
-import { getPracticeReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -30,16 +26,13 @@ import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { useBottomSheetManager } from '@/hooks/ui';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
-import { mediumFeedback } from '@/utils/haptics';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
 type BottomSheetKey = 'memory' | 'due' | 'streak' | 'mastered';
 
 export default function PracticeScreen(): JSX.Element {
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const router = useRouter();
   const { prefetchVocabularyData } = useAppPreloader();
 
   // Bottom sheet visibility management (only one sheet visible at a time)
@@ -104,13 +97,6 @@ export default function PracticeScreen(): JSX.Element {
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
 
-  // Handle starting review - only for due words now
-  const handleStartReview = useCallback(() => {
-    if (!user) return;
-    mediumFeedback();
-    router.push(getPracticeReviewRoute());
-  }, [user, router]);
-
   // Bottom sheet press handlers
   const handleMemoryStrengthInfo = useCallback(() => showSheet('memory'), [showSheet]);
   const handleDuePress = useCallback(() => showSheet('due'), [showSheet]);
@@ -140,10 +126,8 @@ export default function PracticeScreen(): JSX.Element {
     return { masteredWords, learningPhaseWords };
   }, [filteredStudyWords, dueWordsCount]);
 
-  // Bottom padding for content with floating button
-  const contentPaddingBottom = hasAnyStudyWords
-    ? LAYOUT.SPACING.XXXLARGE // Space for floating button
-    : LAYOUT.SPACING.MEDIUM;
+  // Bottom padding for content
+  const contentPaddingBottom = LAYOUT.SPACING.MEDIUM;
 
   // Track animation state to prevent restarts
   const hasStartedContentAnimation = useRef(false);
@@ -232,15 +216,6 @@ export default function PracticeScreen(): JSX.Element {
           )}
         </Animated.View>
       </ThemedView>
-
-      {/* Floating glass button - iOS 26 style */}
-      {hasAnyStudyWords && dueWordsCount > 0 && (
-        <FloatingGlassButton
-          iconName="flash"
-          onPress={handleStartReview}
-          bottomInset={insets.bottom}
-        />
-      )}
 
       {/* Coordinated Bottom Sheets - only one can be visible at a time */}
       <MemoryRetentionBottomSheet isVisible={isVisible('memory')} onClose={hideSheet} />

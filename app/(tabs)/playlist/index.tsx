@@ -3,7 +3,7 @@ import { ListSeparator } from '@/components/common';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
@@ -13,13 +13,11 @@ import { ThemedView } from '@/components/ThemedView';
 import { SavedEmptyState } from '@/components/playlist';
 import { PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
-import { FloatingGlassButton } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { usePlaylistScreen, usePlaylistUI } from '@/hooks/playlist';
 import { useEditMode } from '@/hooks/ui/useEditMode';
-import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
@@ -128,8 +126,6 @@ export default function PlaylistScreen(): JSX.Element {
   const {
     sortedReadingList,
     isReadingListLoading,
-    handlePlayAll,
-    handlePlayAllArabicOnly,
     handleArticlePlay,
     handleDelete,
     enhancedTracksError,
@@ -140,13 +136,8 @@ export default function PlaylistScreen(): JSX.Element {
     editMode,
   });
 
-  // STABILIZATION: Add local loading state for PLAY ALL button
-  const [isPlayAllLoading, setIsPlayAllLoading] = useState(false);
-  const playAllTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // STABILIZATION: Debounced button state to prevent flickering
+  // Check if there are articles for UI state
   const hasArticles = sortedReadingList.length > 0;
-  const stableHasArticles = useStableBoolean(hasArticles, 100);
 
   useEffect(() => {
     if (enhancedTracksError) {
@@ -154,53 +145,18 @@ export default function PlaylistScreen(): JSX.Element {
     }
   }, [enhancedTracksError, showToast]);
 
-  // STABILIZATION: handled by useStableBoolean
-
-  // STABILIZATION: Enhanced handlePlayAll with loading state and debouncing
-  const handlePlayAllStable = useCallback(async () => {
-    // Prevent multiple rapid presses
-    if (isPlayAllLoading) return;
-
-    // Clear existing timeout
-    if (playAllTimeoutRef.current) {
-      clearTimeout(playAllTimeoutRef.current);
-    }
-
-    try {
-      setIsPlayAllLoading(true);
-      await handlePlayAll();
-    } finally {
-      // Add minimum loading time to prevent flickering
-      playAllTimeoutRef.current = setTimeout(() => {
-        setIsPlayAllLoading(false);
-      }, 500);
-    }
-  }, [handlePlayAll, isPlayAllLoading]);
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (playAllTimeoutRef.current) {
-        clearTimeout(playAllTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const shouldShowEmpty = !stableHasArticles && canShowEmpty && !isReadingListLoading;
+  const shouldShowEmpty = !hasArticles && canShowEmpty && !isReadingListLoading;
 
   const listContainerStyle = useMemo(
     () => ({
       ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-      // Space for floating button + tab bar + safe area
-      paddingBottom: LAYOUT.SPACING.XXXLARGE * 2 + insets.bottom,
+      // Standard padding - no FAB clearance needed
+      paddingBottom: LAYOUT.SPACING.LARGE + insets.bottom,
       // Enable vertical centering when empty
       ...(shouldShowEmpty ? { flexGrow: 1 } : {}),
     }),
     [shouldShowEmpty, insets.bottom],
   );
-
-  // Show floating button only when has articles
-  const showFloatingButton = stableHasArticles;
 
   // Memoize shared components to prevent recreation
   const EmptyStateComponent = useMemo(
@@ -287,16 +243,6 @@ export default function PlaylistScreen(): JSX.Element {
         )}
       </ThemedView>
 
-      {/* Floating glass button - iOS 26 style */}
-      {showFloatingButton && (
-        <FloatingGlassButton
-          iconName="play"
-          onPress={handlePlayAllStable}
-          onLongPress={handlePlayAllArabicOnly}
-          disabled={isPlayAllLoading}
-          bottomInset={insets.bottom}
-        />
-      )}
     </ThemedView>
   );
 }

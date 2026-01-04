@@ -1,7 +1,7 @@
 import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
 
-import { CloseButton, DictionaryButton, EditModeButton } from '@/components/ui';
+import { CloseButton, DictionaryButton, EditModeButton, PracticeHeaderButtons } from '@/components/ui';
 import { useColors } from '@/hooks/theme/useColors';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
 import { useEditMode } from '@/hooks/ui/useEditMode';
@@ -17,7 +17,11 @@ export default function StudyLayout(): JSX.Element {
         name="index"
         options={createTabHeaderOptions({
           title: AppTab.PRACTICE,
-          rightComponent: () => <DictionaryButton />,
+          rightComponent: () => (
+            <PracticeHeaderButtons
+              DictionaryComponent={<DictionaryButton />}
+            />
+          ),
           colors,
         })}
       />
