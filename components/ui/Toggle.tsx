@@ -16,10 +16,11 @@ const TOUCHABLE_WRAPPER_STYLE = {
 } as const;
 
 // Static dimensions - computed once at module load
+// Modern 2:1 aspect ratio for horizontal pill-shaped toggle (2025+ design trend)
 const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL - LAYOUT.SPACING.TINY;
 const TOGGLE_PADDING = LAYOUT.SPACING.TINY;
 const HANDLE_SIZE = TOGGLE_HEIGHT - TOGGLE_PADDING * 2;
-const TOGGLE_WIDTH = TOGGLE_HEIGHT * 1.75;
+const TOGGLE_WIDTH = TOGGLE_HEIGHT * 2; // 2:1 ratio for modern horizontal look
 const TRAVEL_DISTANCE = TOGGLE_WIDTH - HANDLE_SIZE - TOGGLE_PADDING * 2;
 
 export function Toggle({ value, onValueChange, testID }: ToggleProps) {

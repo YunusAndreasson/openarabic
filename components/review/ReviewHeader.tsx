@@ -1,5 +1,6 @@
 import { ProgressBar } from '@/components/common';
 import { Ionicons } from '@expo/vector-icons';
+import { GlassView } from 'expo-glass-effect';
 import type { FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -10,7 +11,6 @@ import { useColors } from '@/hooks/theme/useColors';
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====
 const CLOSE_BUTTON_CONSTANTS = {
   SIZE: MIN_TOUCH_TARGET.SMALL, // 32px - matches bottom action buttons
-  TINT_OPACITY: '20', // 12.5% opacity - matches bottom buttons
 } as const;
 
 const STATIC_STYLES = StyleSheet.create({
@@ -33,6 +33,7 @@ const STATIC_STYLES = StyleSheet.create({
     borderRadius: CLOSE_BUTTON_CONSTANTS.SIZE / 2, // Circular
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
 });
 
@@ -54,10 +55,11 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({ progress, maxProgress, onC
     }
   };
 
-  const closeButtonStyle = [
-    STATIC_STYLES.closeButton,
-    { backgroundColor: colors.textTertiary + CLOSE_BUTTON_CONSTANTS.TINT_OPACITY },
-  ];
+  // Fallback background for non-iOS-26 platforms
+  const fallbackButtonStyle = {
+    backgroundColor: colors.elevation1,
+    opacity: LAYOUT.OPACITY.PRESSED,
+  };
 
   return (
     <View style={STATIC_STYLES.header}>
@@ -69,12 +71,14 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({ progress, maxProgress, onC
         />
       </View>
       {onClose && (
-        <Pressable style={closeButtonStyle} onPress={handleClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM}>
-          <Ionicons
-            name="close"
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={colors.textTertiary}
-          />
+        <Pressable onPress={handleClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM}>
+          <GlassView style={[STATIC_STYLES.closeButton, fallbackButtonStyle]} isInteractive>
+            <Ionicons
+              name="close"
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color={colors.secondaryText}
+            />
+          </GlassView>
         </Pressable>
       )}
     </View>

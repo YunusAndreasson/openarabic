@@ -323,8 +323,8 @@ export const LAYOUT = {
   /** Common sizes for bottom sheet UI elements */
   BOTTOM_SHEET: {
     INDICATOR: {
-      WIDTH: BASE_UNIT * 9, // 36 - responsive to base unit
-      HEIGHT: BASE_UNIT, // 4 - responsive to base unit
+      WIDTH: BASE_UNIT * 11, // 44 - more prominent gesture cue (2026 trend)
+      HEIGHT: BASE_UNIT * 1.25, // 5 - slightly taller for visibility
     },
     SNAP_POINTS: {
       WORD_DETAILS: 380,

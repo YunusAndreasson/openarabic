@@ -259,67 +259,71 @@ const ArticleContentInternal = function ArticleContent({
   };
 
   return (
-    <Animated.View style={[styles.flexOne, animatedStyle]}>
-      {sortedSentences && sortedSentences.length > 0 ? (
-        <View style={listContainerStyle}>
-          {/* Sticky Parallax Header behind content - using Skia gradients for Android stability */}
-          <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
-          <AnimatedFlashList
-            /**
-             * TypeScript limitation with Reanimated's createAnimatedComponent:
-             * When FlashList is wrapped with Animated.createAnimatedComponent, the ref type
-             * becomes AnimatedRef<FlashListRef> instead of FlashListRef. However, at runtime,
-             * the ref works correctly and exposes all FlashList methods (scrollToOffset, etc.).
-             *
-             * This is a known issue: https://github.com/software-mansion/react-native-reanimated/issues/4995
-             * The workaround is to use @ts-expect-error since the runtime behavior is correct.
-             *
-             * Alternative solutions considered but rejected:
-             * - Using 'any' type for ref: Loses all type safety
-             * - Separate ref types: Requires maintaining two ref definitions
-             * - Not using Animated component: Loses UI-thread scroll performance
-             */
-            // @ts-expect-error - AnimatedFlashList ref type incompatible with FlashListRef (runtime behavior is correct)
-            ref={scrollViewRef}
-            data={sortedSentences}
-            renderItem={renderSentenceItem}
-            keyExtractor={sentenceKeyExtractor}
-            contentContainerStyle={contentContainerStyle}
-            ListHeaderComponent={headerComponent}
-            ListFooterComponent={footerComponent}
-            onScroll={
-              onScrollAnimated as unknown as (
-                event: NativeSyntheticEvent<NativeScrollEvent>,
-              ) => void
-            }
-            onScrollBeginDrag={handleScrollBegin}
-            onViewableItemsChanged={handleViewableItemsChanged}
-            onMomentumScrollEnd={handleScrollEnd}
-            onEndReached={handleEndReached}
-            onEndReachedThreshold={10}
-            viewabilityConfig={viewabilityConfig}
-            scrollEventThrottle={SCROLL_THROTTLE}
-            showsVerticalScrollIndicator={true}
-            removeClippedSubviews={true}
-            alwaysBounceVertical={true}
-            bounces={true}
-            overScrollMode="always"
-            extraData={{
-              showEnglish, // Track English visibility for proper recycling
-              themeMode: colors.text, // Track theme changes via stable color value
-            }}
-            onLoad={onFlashListLoad}
-          />
+    <>
+      <Animated.View style={[styles.flexOne, animatedStyle]}>
+        {sortedSentences && sortedSentences.length > 0 ? (
+          <View style={listContainerStyle}>
+            {/* Sticky Parallax Header behind content - using Skia gradients for Android stability */}
+            <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
+            <AnimatedFlashList
+              /**
+               * TypeScript limitation with Reanimated's createAnimatedComponent:
+               * When FlashList is wrapped with Animated.createAnimatedComponent, the ref type
+               * becomes AnimatedRef<FlashListRef> instead of FlashListRef. However, at runtime,
+               * the ref works correctly and exposes all FlashList methods (scrollToOffset, etc.).
+               *
+               * This is a known issue: https://github.com/software-mansion/react-native-reanimated/issues/4995
+               * The workaround is to use @ts-expect-error since the runtime behavior is correct.
+               *
+               * Alternative solutions considered but rejected:
+               * - Using 'any' type for ref: Loses all type safety
+               * - Separate ref types: Requires maintaining two ref definitions
+               * - Not using Animated component: Loses UI-thread scroll performance
+               */
+              // @ts-expect-error - AnimatedFlashList ref type incompatible with FlashListRef (runtime behavior is correct)
+              ref={scrollViewRef}
+              data={sortedSentences}
+              renderItem={renderSentenceItem}
+              keyExtractor={sentenceKeyExtractor}
+              contentContainerStyle={contentContainerStyle}
+              ListHeaderComponent={headerComponent}
+              ListFooterComponent={footerComponent}
+              onScroll={
+                onScrollAnimated as unknown as (
+                  event: NativeSyntheticEvent<NativeScrollEvent>,
+                ) => void
+              }
+              onScrollBeginDrag={handleScrollBegin}
+              onViewableItemsChanged={handleViewableItemsChanged}
+              onMomentumScrollEnd={handleScrollEnd}
+              onEndReached={handleEndReached}
+              onEndReachedThreshold={10}
+              viewabilityConfig={viewabilityConfig}
+              scrollEventThrottle={SCROLL_THROTTLE}
+              showsVerticalScrollIndicator={true}
+              removeClippedSubviews={true}
+              alwaysBounceVertical={true}
+              bounces={true}
+              overScrollMode="always"
+              extraData={{
+                showEnglish, // Track English visibility for proper recycling
+                themeMode: colors.text, // Track theme changes via stable color value
+              }}
+              onLoad={onFlashListLoad}
+            />
+          </View>
+        ) : null}
+      </Animated.View>
 
-          {/* Floating action buttons */}
-          <FloatingActionButtons
-            isInReadingList={isInReadingList}
-            onToggleReadingList={onToggleReadingList}
-            onClose={onClose}
-          />
-        </View>
-      ) : null}
-    </Animated.View>
+      {/* Floating action buttons - completely outside Animated.View to avoid gesture conflicts */}
+      {sortedSentences && sortedSentences.length > 0 && (
+        <FloatingActionButtons
+          isInReadingList={isInReadingList}
+          onToggleReadingList={onToggleReadingList}
+          onClose={onClose}
+        />
+      )}
+    </>
   );
 };
 

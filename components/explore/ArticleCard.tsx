@@ -1,32 +1,26 @@
 import { BaseCard } from '@/components/common';
 import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
-import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
+import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { Pill } from '@/components/ui';
-import {
-  GOLDEN_RATIO,
-  LAYOUT,
-  LETTER_SPACING,
-  SCREEN_WIDTH,
-  TEXT_STYLES,
-} from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT, SCREEN_WIDTH, TEXT_STYLES } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
 import { handleError } from '@/utils/errorHandling';
-import { capitalizeFirstLetter, getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
+import {
+  capitalizeFirstLetter,
+  getArticleMetadataWithoutCategory,
+} from '@/utils/stringUtils';
 
 // Static constants - computed once at module load
-const MAX_TITLE_LINES = 2;
-const MAX_AUTHOR_LINES = 1;
 const CARD_WIDTH = SCREEN_WIDTH - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
-const IMAGE_HEIGHT = Math.round(CARD_WIDTH / GOLDEN_RATIO);
-const GRADIENT_HEIGHT = Math.round(IMAGE_HEIGHT * 0.4);
+const IMAGE_HEIGHT = Math.round(CARD_WIDTH / 1.618); // Golden ratio
+const GRADIENT_HEIGHT = Math.round(IMAGE_HEIGHT * 0.6);
 
 // Enhanced interface for ArticleCard
 type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
@@ -41,9 +35,9 @@ type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
 
 const styles = StyleSheet.create({
   contentContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.TINY,
+    paddingHorizontal: LAYOUT.SPACING.LARGE, // 16px - consistent with image overlay
+    paddingTop: LAYOUT.SPACING.TINY, // 4px - tight proximity to overlay meta (Gestalt)
+    paddingBottom: LAYOUT.SPACING.LARGE, // 16px - breathing room at card bottom
   },
   gradientOverlay: {
     bottom: 0,
@@ -53,8 +47,6 @@ const styles = StyleSheet.create({
     right: 0,
   },
   image: {
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: '100%',
     width: '100%',
   },
@@ -66,25 +58,32 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
   },
+  overlayTextContainer: {
+    bottom: 0,
+    gap: LAYOUT.SPACING.TINY, // 4px - tight title/author grouping
+    left: 0,
+    paddingBottom: LAYOUT.SPACING.SMALL, // 8px - closer to summary below
+    paddingHorizontal: LAYOUT.SPACING.LARGE, // 16px - consistent horizontal padding
+    position: 'absolute',
+    right: 0,
+  },
   pillContainer: {
-    left: LAYOUT.SPACING.MEDIUM,
+    left: LAYOUT.SPACING.LARGE, // 16px - consistent with overlay text
     maxWidth: '70%',
     position: 'absolute',
-    top: LAYOUT.SPACING.MEDIUM,
-  },
-  textContainer: {
-    gap: LAYOUT.SPACING.SMALL,
+    top: LAYOUT.SPACING.LARGE, // 16px - consistent spacing
   },
 });
 
-const TITLE_STYLE = { letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing };
-const AUTHOR_STYLE = { letterSpacing: TEXT_STYLES.AUTHOR_BYLINE.letterSpacing };
-const SUMMARY_STYLE = { letterSpacing: LETTER_SPACING.NORMAL };
+// Typography style for title using constants (2026: bolder, larger headlines)
+const TITLE_STYLE = {
+  fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, // 24px - larger for hero card prominence
+  fontWeight: FONT_WEIGHTS.BOLD, // Bolder for 2026 trend
+  letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
+  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+};
 
-/**
- * High-performance article card component optimized for list rendering
- * Now with Expo Router v6 Link integration for better performance and native feel
- */
+/** Article card component optimized for list rendering */
 export function ArticleCard({
   title,
   imageUrl,
@@ -95,7 +94,7 @@ export function ArticleCard({
   testID,
   article,
   isFeaturedArticle = false,
-}: ArticleCardProps): JSX.Element {
+}: ArticleCardProps) {
   const colors = useColors();
   const router = useRouter();
 
@@ -137,6 +136,24 @@ export function ArticleCard({
             />
           </Rect>
         </Canvas>
+
+        <View style={styles.overlayTextContainer}>
+          <ThemedText
+            colorName="cardOverlayHeading"
+            numberOfLines={2}
+            style={TITLE_STYLE}
+          >
+            {title}
+          </ThemedText>
+
+          <ThemedText
+            colorName="cardOverlayAuthor"
+            numberOfLines={1}
+            type="label"
+          >
+            {authorDisplayText}
+          </ThemedText>
+        </View>
       </View>
 
       <View style={styles.pillContainer}>
@@ -144,37 +161,10 @@ export function ArticleCard({
       </View>
 
       <View style={styles.contentContainer}>
-        <View style={styles.textContainer}>
-          <ThemedText
-            colorName="headingText"
-            numberOfLines={MAX_TITLE_LINES}
-            style={TITLE_STYLE}
-            type="heading3"
-          >
-            {title}
-          </ThemedText>
-
-          <ThemedText
-            colorName="authorText"
-            numberOfLines={MAX_AUTHOR_LINES}
-            style={AUTHOR_STYLE}
-            type="label"
-          >
-            {authorDisplayText}
-          </ThemedText>
-
-          <ThemedText
-            colorName="captionText"
-            type="caption"
-            style={SUMMARY_STYLE}
-            numberOfLines={5}
-          >
-            {summary}
-          </ThemedText>
-        </View>
+        <ThemedText colorName="captionText" type="caption" numberOfLines={4}>
+          {summary}
+        </ThemedText>
       </View>
     </BaseCard>
   );
 }
-
-ArticleCard.displayName = 'ArticleCard';

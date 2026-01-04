@@ -160,7 +160,7 @@ ThemedInput.displayName = 'ThemedInput';
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // Modern 16px for softer 2026 aesthetic
     borderWidth: LAYOUT.INPUT.BORDER_WIDTH.DEFAULT,
     flexDirection: 'row',
     height: LAYOUT.INPUT.HEIGHT,

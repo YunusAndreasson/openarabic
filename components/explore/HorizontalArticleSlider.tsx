@@ -17,7 +17,8 @@ interface HorizontalArticleSliderProps {
 const CARD_SPACING = LAYOUT.SPACING.SMALL; // 8px
 const CARD_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width for better visibility
 // Fixed height for article cards in horizontal slider
-const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 7;
+// Reduced since title/author now overlay the image
+const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 5.5;
 const CARD_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + BASE_CONTENT_HEIGHT;
 
 /**

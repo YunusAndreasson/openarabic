@@ -191,11 +191,12 @@ export default function PlaylistScreen(): JSX.Element {
   const listContainerStyle = useMemo(
     () => ({
       ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-      paddingBottom: LAYOUT.SPACING.XXXLARGE, // Space for floating button
+      // Space for floating button + tab bar + safe area
+      paddingBottom: LAYOUT.SPACING.XXXLARGE * 2 + insets.bottom,
       // Enable vertical centering when empty
       ...(shouldShowEmpty ? { flexGrow: 1 } : {}),
     }),
-    [shouldShowEmpty],
+    [shouldShowEmpty, insets.bottom],
   );
 
   // Show floating button only when has articles

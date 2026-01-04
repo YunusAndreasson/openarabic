@@ -16,6 +16,8 @@ export interface ThemeColors {
   authorText: string;
 
   headingText: string;
+  cardOverlayHeading: string;
+  cardOverlayAuthor: string;
   subtitleText: string;
   metadataText: string;
   secondaryMetadataText: string;

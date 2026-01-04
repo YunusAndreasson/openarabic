@@ -897,13 +897,17 @@ const lightColors: ThemeColors = {
   chartGrid: basePalette.charts.ui.grid,
   chartThreshold: basePalette.charts.ui.threshold,
 
-  // Card gradients - pre-computed for performance
+  // Card gradients - pre-computed for performance (dark gradient for text readability on images)
   cardGradient: [
-    basePalette.pure.transparent,
-    basePalette.pure.transparent,
-    basePalette.pure.transparent,
-    basePalette.pure.transparent,
+    withAlpha(basePalette.sage.darkest, 0),
+    withAlpha(basePalette.sage.darkest, opacity.medium),
+    withAlpha(basePalette.sage.darkest, opacity.modal),
+    basePalette.sage.dark,
   ] as const,
+
+  // Card overlay text colors (always light for readability on gradient)
+  cardOverlayHeading: basePalette.pure.white,
+  cardOverlayAuthor: withAlpha(basePalette.pure.white, opacity.shadow),
 
   // Utility colors
   textOverlay: withAlpha(basePalette.tint.primary, opacity.subtle),
@@ -1018,6 +1022,10 @@ const darkColors: ThemeColors = {
     basePalette.sage.dark,
   ] as const,
 
+  // Card overlay text colors (always light for readability on gradient)
+  cardOverlayHeading: basePalette.pure.white,
+  cardOverlayAuthor: withAlpha(basePalette.pure.white, opacity.shadow),
+
   // Utility colors
   textOverlay: withAlpha(basePalette.tint.primaryDark, opacity.subtle),
   textShadowDark: withAlpha(basePalette.pure.black, opacity.shadow),
@@ -1123,13 +1131,17 @@ const sepiaColors: ThemeColors = {
   chartGrid: basePalette.charts.ui.gridSepia,
   chartThreshold: basePalette.charts.ui.thresholdSepia,
 
-  // Card gradients - pre-computed for performance
+  // Card gradients - pre-computed for performance (dark gradient for text readability on images)
   cardGradient: [
-    basePalette.pure.transparent,
-    basePalette.pure.transparent,
-    basePalette.pure.transparent,
-    basePalette.pure.transparent,
+    withAlpha(basePalette.autumn.darkest, 0),
+    withAlpha(basePalette.autumn.darkest, opacity.medium),
+    withAlpha(basePalette.autumn.darkest, opacity.modal),
+    basePalette.autumn.dark,
   ] as const,
+
+  // Card overlay text colors (always light for readability on gradient)
+  cardOverlayHeading: basePalette.sepiaPure.white,
+  cardOverlayAuthor: withAlpha(basePalette.sepiaPure.white, opacity.shadow),
 
   // Utility colors
   textOverlay: withAlpha(basePalette.autumn.accent.primary, opacity.subtle),
