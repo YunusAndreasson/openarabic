@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
 import { useToast } from '@/components/providers';
@@ -22,31 +22,33 @@ const NO_ARTICLES_MESSAGE = 'No articles to play';
 
 /**
  * Hook for playlist header actions (Play All button)
- * Uses cached data from React Query - relies on playlist screen to fetch data
+ * Subscribes to React Query cache - updates when playlist screen fetches data
  */
 export function usePlaylistHeaderActions() {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
   const audioShuffleEnabled = useAppSelector(state => state.settings.audioShuffleEnabled);
 
-  // Get cached tracks from React Query
-  const getCachedTracks = useCallback((): EnhancedAudioTrack[] => {
-    if (!user?.id) return [];
-    const cached = queryClient.getQueryData<EnhancedAudioTrack[]>(
-      audioQueries.tracks(user.id, audioPreference).queryKey,
-    );
-    return cached ?? [];
-  }, [user?.id, queryClient, audioPreference]);
+  // Subscribe to cache updates - doesn't fetch, just watches for changes
+  const { data: cachedTracks = [] } = useQuery({
+    ...audioQueries.tracks(user?.id ?? '', audioPreference),
+    enabled: !!user?.id,
+    staleTime: Infinity, // Never refetch - just subscribe to cache
+  });
+
+  // Get tracks for playback (uses cached data)
+  const getTracks = useCallback((): EnhancedAudioTrack[] => {
+    return cachedTracks;
+  }, [cachedTracks]);
 
   const handlePlayAll = useCallback(
     async (forceArabicOnly = false) => {
       if (isLoading || isAudioBusy()) return;
 
-      const tracks = getCachedTracks();
+      const tracks = getTracks();
       if (!tracks.length) {
         showToast(NO_ARTICLES_MESSAGE, DEFAULT_TOAST_DURATION, ToastType.INFO);
         return;
@@ -80,7 +82,7 @@ export function usePlaylistHeaderActions() {
         setIsLoading(false);
       }
     },
-    [isLoading, getCachedTracks, showToast, audioShuffleEnabled, audioPreference, user?.id],
+    [isLoading, getTracks, showToast, audioShuffleEnabled, audioPreference, user?.id],
   );
 
   const handlePlayAllArabicOnly = useCallback(async () => {
@@ -89,8 +91,8 @@ export function usePlaylistHeaderActions() {
     await handlePlayAll(true);
   }, [handlePlayAll, showToast]);
 
-  // Check if there are any tracks available
-  const hasArticles = getCachedTracks().length > 0;
+  // Check if there are any tracks available (reactive to cache updates)
+  const hasArticles = cachedTracks.length > 0;
 
   return {
     handlePlayAll: () => handlePlayAll(false),

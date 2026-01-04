@@ -1,6 +1,6 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
@@ -9,7 +9,6 @@ import { fsrsQueries } from '@/constants/queries';
 import { getPracticeReviewRoute } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import type { StudyWord } from '@/types/vocabulary.types';
 import { mediumFeedback } from '@/utils/haptics';
 
 /**
@@ -25,16 +24,15 @@ export const StartReviewButton = memo(function StartReviewButton({
   const colors = useColors();
   const router = useRouter();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
 
-  // Check for due words from cache
-  const dueWordsCount = useMemo(() => {
-    if (!user?.id) return 0;
-    const cached = queryClient.getQueryData<StudyWord[]>(
-      fsrsQueries.due(user.id).queryKey,
-    );
-    return cached?.length ?? 0;
-  }, [user?.id, queryClient]);
+  // Subscribe to cache updates - doesn't fetch, just watches for changes
+  const { data: dueWords = [] } = useQuery({
+    ...fsrsQueries.due(user?.id ?? ''),
+    enabled: !!user?.id,
+    staleTime: Infinity, // Never refetch - just subscribe to cache
+  });
+
+  const dueWordsCount = dueWords.length;
 
   const handleStartReview = useCallback(() => {
     if (!user) return;
