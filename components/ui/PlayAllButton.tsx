@@ -54,6 +54,6 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.MEDIUM, // 12px - more distinguishable
   },
 });

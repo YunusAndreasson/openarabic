@@ -151,8 +151,8 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
     );
 
     const finalIconColor = iconColor ?? colors.text;
-    // Use medium icon for iOS header buttons - fits nicely in 36pt glass
-    const iconSize = isIOSHeaderButton ? LAYOUT.BUTTON.ICON_SIZE.MEDIUM : config.iconSize;
+    // Use large icon for iOS header buttons - better visibility in 36pt glass
+    const iconSize = isIOSHeaderButton ? LAYOUT.BUTTON.ICON_SIZE.LARGE : config.iconSize;
 
     return (
       <Pressable
