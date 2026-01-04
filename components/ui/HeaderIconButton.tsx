@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -29,6 +30,8 @@ export interface HeaderIconButtonProps {
   opacity?: number;
   /** Whether the button is disabled */
   disabled?: boolean;
+  /** Additional style for the button container */
+  style?: StyleProp<ViewStyle>;
   /** Test ID for testing */
   testID?: string;
   /** Hit slop size - defaults based on button size */
@@ -100,6 +103,7 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
     borderColor,
     opacity = LAYOUT.OPACITY.HOVER,
     disabled = false,
+    style,
     testID,
     hitSlop,
   }) => {
@@ -156,7 +160,7 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
 
     return (
       <Pressable
-        style={[buttonStyle, disabled && { opacity: LAYOUT.OPACITY.MEDIUM }]}
+        style={[buttonStyle, disabled && { opacity: LAYOUT.OPACITY.MEDIUM }, style]}
         onPress={handlePress}
         onLongPress={onLongPress}
         delayLongPress={500}

@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { LAYOUT } from '@/constants/layout';
@@ -17,7 +17,11 @@ import { mediumFeedback } from '@/utils/haptics';
  * Navigates to vocabulary review when tapped
  * Only visible when there are due words
  */
-export const StartReviewButton = memo(function StartReviewButton() {
+export const StartReviewButton = memo(function StartReviewButton({
+  withMargin = false,
+}: {
+  withMargin?: boolean;
+}) {
   const colors = useColors();
   const router = useRouter();
   const { user } = useAuth();
@@ -48,13 +52,14 @@ export const StartReviewButton = memo(function StartReviewButton() {
       iconColor={colors.tint}
       backgroundColor={colors.transparent}
       testID="start-review-button"
+      style={withMargin ? styles.withMargin : undefined}
     />
   );
 });
 
 /**
  * Combined header buttons for Practice tab (Dictionary + Review)
- * Review button on right (primary action, closest to thumb)
+ * Uses Fragment to let iOS render separate glass containers for each button
  */
 export const PracticeHeaderButtons = memo(function PracticeHeaderButtons({
   DictionaryComponent,
@@ -62,17 +67,15 @@ export const PracticeHeaderButtons = memo(function PracticeHeaderButtons({
   DictionaryComponent: React.ReactNode;
 }) {
   return (
-    <View style={styles.container}>
+    <>
       {DictionaryComponent}
-      <StartReviewButton />
-    </View>
+      <StartReviewButton withMargin />
+    </>
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.MEDIUM, // 12px - more distinguishable
+  withMargin: {
+    marginLeft: LAYOUT.SPACING.MEDIUM, // 12px gap between buttons
   },
 });

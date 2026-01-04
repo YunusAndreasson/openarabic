@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { LAYOUT } from '@/constants/layout';
@@ -12,7 +12,11 @@ import { usePlaylistHeaderActions } from '@/hooks/playlist/usePlaylistHeaderActi
  * - Long press: Play Arabic only (one-time override)
  * Uses native iOS glass effect via transparent background
  */
-export const PlayAllButton = memo(function PlayAllButton() {
+export const PlayAllButton = memo(function PlayAllButton({
+  withMargin = false,
+}: {
+  withMargin?: boolean;
+}) {
   const colors = useColors();
   const { handlePlayAll, handlePlayAllArabicOnly, isLoading, hasArticles } =
     usePlaylistHeaderActions();
@@ -29,13 +33,14 @@ export const PlayAllButton = memo(function PlayAllButton() {
       backgroundColor={colors.transparent}
       disabled={isLoading}
       testID="play-all-button"
+      style={withMargin ? styles.withMargin : undefined}
     />
   );
 });
 
 /**
  * Combined header buttons for Playlist tab (Edit + Play)
- * Play button on right (primary action, closest to thumb)
+ * Uses Fragment to let iOS render separate glass containers for each button
  */
 export const PlaylistHeaderButtons = memo(function PlaylistHeaderButtons({
   EditModeComponent,
@@ -43,17 +48,15 @@ export const PlaylistHeaderButtons = memo(function PlaylistHeaderButtons({
   EditModeComponent: React.ReactNode;
 }) {
   return (
-    <View style={styles.container}>
+    <>
       {EditModeComponent}
-      <PlayAllButton />
-    </View>
+      <PlayAllButton withMargin />
+    </>
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.MEDIUM, // 12px - more distinguishable
+  withMargin: {
+    marginLeft: LAYOUT.SPACING.MEDIUM, // 12px gap between buttons
   },
 });
