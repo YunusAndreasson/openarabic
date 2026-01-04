@@ -9,6 +9,7 @@ import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuthForm } from '@/hooks/auth/useAuthForm';
 
@@ -71,7 +72,7 @@ export function SignUpForm(): JSX.Element {
   }, [password, validatePassword]);
 
   const handleSignIn = useCallback(() => {
-    router.push('/auth/sign-in');
+    router.push(ROUTE_PATHS.AUTH_SIGN_IN);
   }, []);
 
   const handleCreateAccount = useCallback(() => {

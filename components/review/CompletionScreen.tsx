@@ -6,7 +6,7 @@ import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 import {
   FONT_WEIGHTS,
   getThemeAwareElevation,
@@ -70,14 +70,22 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
 
       {/* Title Group - Closely grouped for Gestalt proximity */}
       <View style={styles.titleGroup}>
-        <Animated.View entering={FadeInUp.delay(50).duration(TIMING_CONFIG.FAST.duration)}>
+        <Animated.View
+          entering={FadeInUp.delay(TIMING_CONSTANTS.STAGGER.BASE).duration(
+            TIMING_CONFIG.FAST.duration,
+          )}
+        >
           <ThemedText colorName="headingText" style={styles.titleText} type="heading1">
             {title}
           </ThemedText>
         </Animated.View>
 
         {subtitle && (
-          <Animated.View entering={FadeInUp.delay(100).duration(TIMING_CONFIG.FAST.duration)}>
+          <Animated.View
+            entering={FadeInUp.delay(TIMING_CONSTANTS.STAGGER.FAST).duration(
+              TIMING_CONFIG.FAST.duration,
+            )}
+          >
             <ThemedText colorName="subtitleText" style={styles.subtitleText} type="heading3">
               {subtitle}
             </ThemedText>
@@ -85,7 +93,11 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
         )}
 
         {/* Educational text - grouped with title for clarity */}
-        <Animated.View entering={FadeInUp.delay(120).duration(TIMING_CONFIG.FAST.duration)}>
+        <Animated.View
+          entering={FadeInUp.delay(TIMING_CONSTANTS.STAGGER.MEDIUM).duration(
+            TIMING_CONFIG.FAST.duration,
+          )}
+        >
           <ThemedText colorName="secondary" style={styles.educationalText} type="body">
             {STRINGS.SESSION_COMPLETE_EDUCATIONAL}
           </ThemedText>
@@ -98,7 +110,9 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
           {encouragingMetrics.map((metric, index) => (
             <Fragment key={metric.type + metric.text}>
               <Animated.View
-                entering={FadeInUp.delay(180 + index * 40).duration(TIMING_CONFIG.FAST.duration)}
+                entering={FadeInUp.delay(
+                  TIMING_CONSTANTS.STAGGER.SLOW + index * TIMING_CONSTANTS.STAGGER.INCREMENT,
+                ).duration(TIMING_CONFIG.FAST.duration)}
                 style={[
                   styles.metricItem,
                   {
@@ -135,9 +149,11 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
 
       {/* Action Button - Anchored to bottom */}
       <Animated.View
-        entering={FadeIn.delay(encouragingMetrics ? 320 : 220).duration(
-          TIMING_CONFIG.FAST.duration,
-        )}
+        entering={FadeIn.delay(
+          encouragingMetrics
+            ? TIMING_CONSTANTS.STAGGER.BUTTON_WITH_METRICS
+            : TIMING_CONSTANTS.STAGGER.BUTTON_WITHOUT_METRICS,
+        ).duration(TIMING_CONFIG.FAST.duration)}
         style={styles.buttonContainer}
       >
         {fromRemember ? (

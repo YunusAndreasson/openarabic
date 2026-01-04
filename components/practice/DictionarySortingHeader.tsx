@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SortDirection } from '@/hooks/vocabulary/useDictionaryModal';
 
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   },
   sortText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
+    fontWeight: FONT_WEIGHTS.MEDIUM,
   },
 });
 

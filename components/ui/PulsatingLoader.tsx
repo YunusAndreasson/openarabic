@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { TIMING_CONSTANTS } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -42,7 +43,7 @@ const BORDER_WIDTH_SCALE = 0.06; // Border width as percentage of loader size
 export function PulsatingLoader({
   size = DEFAULT_LOADER_SIZE,
   colorName = 'tint',
-  duration = 1500,
+  duration = TIMING_CONSTANTS.PULSATE_DURATION,
 }: PulsatingLoaderProps) {
   const colors = useColors();
 

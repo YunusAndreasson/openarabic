@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { TIMING_CONSTANTS } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TUTORIAL_ANIMATION, TUTORIAL_VISUALS } from '@/constants/tutorials';
@@ -28,10 +29,10 @@ export function TutorialSwipeRightStep() {
     // Animate hand swiping right only
     handTranslateX.value = withRepeat(
       withSequence(
-        withDelay(500, withTiming(0)),
+        withDelay(TIMING_CONSTANTS.TUTORIAL_DELAY_SHORT, withTiming(0)),
         withTiming(70, { duration: TUTORIAL_ANIMATION.BOUNCE_DURATION / 2 }),
         withTiming(0, { duration: TUTORIAL_ANIMATION.BOUNCE_DURATION / 2 }),
-        withDelay(800, withTiming(0)),
+        withDelay(TIMING_CONSTANTS.TUTORIAL_DELAY_LONG, withTiming(0)),
       ),
       -1,
       false,

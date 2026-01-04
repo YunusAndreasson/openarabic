@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from './DeleteButton';
 import { DragHandle, type DragHandleProps } from './DragHandle';
 import { PlayButton } from './PlayButton';
+import { TIMING_CONSTANTS } from '@/constants/animation';
 import {
   FONT_WEIGHTS,
   getEnhancedOpacity,
@@ -100,7 +101,7 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
                 <EnhancedImage
                   source={imageUrl}
                   style={styles.thumbnailImage}
-                  transition={150}
+                  transition={TIMING_CONSTANTS.TRANSITION_DELAY}
                   recyclingKey={articleId ? `article-${articleId}` : imageUrl}
                 />
               </View>

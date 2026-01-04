@@ -1,5 +1,5 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import NetInfo from '@react-native-community/netinfo';
+import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import {
   DarkTheme,
   DefaultTheme,
@@ -71,12 +71,12 @@ import * as Notifications from 'expo-notifications';
 SplashScreen.preventAutoHideAsync();
 
 // Sync React Query online status with device connectivity
-onlineManager.setEventListener(setOnline => {
-  return NetInfo.addEventListener(state => {
+onlineManager.setEventListener((setOnline: (online: boolean) => void) => {
+  return NetInfo.addEventListener((state: NetInfoState) => {
     setOnline(Boolean(state.isConnected));
   });
 });
-NetInfo.fetch().then(state => onlineManager.setOnline(Boolean(state.isConnected)));
+NetInfo.fetch().then((state: NetInfoState) => onlineManager.setOnline(Boolean(state.isConnected)));
 
 // Optimized retry logic that stops when offline
 const createRetryFunction = (maxRetries: number) => (failureCount: number, error: unknown) => {

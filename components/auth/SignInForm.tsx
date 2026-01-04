@@ -8,6 +8,7 @@ import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuthForm } from '@/hooks/auth/useAuthForm';
 
@@ -75,7 +76,7 @@ export function SignInForm(): JSX.Element {
   }, [password, validatePassword]);
 
   const handleCreateAccount = useCallback(() => {
-    router.push('/auth/sign-up');
+    router.push(ROUTE_PATHS.AUTH_SIGN_UP);
   }, []);
 
   return (

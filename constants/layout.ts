@@ -331,6 +331,7 @@ export const LAYOUT = {
       TIMER_COLLAPSED: 280,
       TIMER_EXPANDED: 380,
       SETTINGS_PICKER: 320,
+      TIME_PICKER: 500,
     },
     HEADER: {
       paddingHorizontal: SPACING_SCALE.MEDIUM, // 12 - consistent with practice bottom sheets

@@ -54,6 +54,8 @@ export const getLengthFilterRoute = (lengthId: number, name?: string): string =>
 
 export const ROUTE_PATHS = {
   AUTH: '/auth',
+  AUTH_SIGN_IN: '/auth/sign-in',
+  AUTH_SIGN_UP: '/auth/sign-up',
   AUTH_TERMS: '/auth/terms',
   AUTH_PRIVACY: '/auth/privacy',
   TABS: '/(tabs)',

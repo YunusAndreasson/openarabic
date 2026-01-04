@@ -25,6 +25,7 @@ export const PlayAllButton = memo(function PlayAllButton() {
       iconName="play-circle"
       onPress={handlePlayAll}
       onLongPress={handlePlayAllArabicOnly}
+      size="large"
       iconColor={colors.tint}
       backgroundColor={colors.transparent}
       disabled={isLoading}

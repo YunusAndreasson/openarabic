@@ -3,6 +3,7 @@ import { memo, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 
+import { TIMING_CONSTANTS } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
@@ -163,7 +164,7 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
         style={[buttonStyle, disabled && { opacity: LAYOUT.OPACITY.MEDIUM }, style]}
         onPress={handlePress}
         onLongPress={onLongPress}
-        delayLongPress={500}
+        delayLongPress={TIMING_CONSTANTS.LONG_PRESS_DELAY}
         hitSlop={finalHitSlop}
         android_ripple={rippleConfig}
         disabled={disabled}

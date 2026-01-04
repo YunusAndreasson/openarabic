@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { Pill } from '@/components/ui';
+import { TIMING_CONSTANTS } from '@/constants/animation';
 import { FONT_WEIGHTS, LAYOUT, SCREEN_WIDTH, TEXT_STYLES } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useColors } from '@/hooks/theme/useColors';
@@ -125,7 +126,7 @@ export function ArticleCard({
           style={styles.image}
           source={imageUrl}
           recyclingKey={`article-${article.id}`}
-          transition={150}
+          transition={TIMING_CONSTANTS.TRANSITION_DELAY}
         />
         <Canvas style={styles.gradientOverlay} pointerEvents="none">
           <Rect x={0} y={0} width={CARD_WIDTH} height={GRADIENT_HEIGHT}>

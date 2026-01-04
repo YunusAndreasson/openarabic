@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
 /**
@@ -20,11 +21,11 @@ import { STRINGS } from '@/constants/strings';
  */
 export function EmailAuthOptions(): JSX.Element {
   const handleSignIn = useCallback(() => {
-    router.push('/auth/sign-in');
+    router.push(ROUTE_PATHS.AUTH_SIGN_IN);
   }, []);
 
   const handleSignUp = useCallback(() => {
-    router.push('/auth/sign-up');
+    router.push(ROUTE_PATHS.AUTH_SIGN_UP);
   }, []);
 
   return (

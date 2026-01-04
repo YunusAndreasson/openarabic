@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { FONT_WEIGHTS, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -161,7 +161,7 @@ export const ChartAxes = memo<AxisLabelsProps>(
                     styles.xLabelText,
                     {
                       color: isToday ? colors.tint : textColor,
-                      fontWeight: isToday ? '700' : '400', // More contrast: 700 vs 400
+                      fontWeight: isToday ? FONT_WEIGHTS.BOLD : FONT_WEIGHTS.REGULAR,
                       textAlign: 'center',
                       opacity: isToday ? 1 : 0.6, // Today stands out more
                     },
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   },
   yLabelText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '500',
+    fontWeight: FONT_WEIGHTS.MEDIUM,
     includeFontPadding: false,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     textAlign: 'right',

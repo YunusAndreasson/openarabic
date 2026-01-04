@@ -6,6 +6,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { WORD_TOOLTIP_ANIMATION_DURATION } from '@/components/article/SkiaArabicWord';
 import { ThemedText } from '@/components/ThemedText';
 import {
+  FONT_WEIGHTS,
   LAYOUT,
   LINE_HEIGHT_MULTIPLIERS,
   MIN_TOUCH_TARGET,
@@ -62,7 +63,7 @@ const STATIC_STYLES = StyleSheet.create({
   },
   singleLineText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '500',
+    fontWeight: FONT_WEIGHTS.MEDIUM,
     textAlign: 'center',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     includeFontPadding: false,

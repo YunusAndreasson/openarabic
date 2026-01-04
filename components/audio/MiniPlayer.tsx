@@ -6,7 +6,7 @@ import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 import { FONT_WEIGHTS, LAYOUT, TEXT_STYLES } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { withAlpha } from '@/utils/colorUtils';
@@ -152,8 +152,10 @@ const MiniPlayerComponent = ({
 
   return (
     <Animated.View
-      entering={FadeInUp.delay(150).duration(TIMING_CONFIG.GENTLE.duration)}
-      exiting={FadeOutDown.duration(200)}
+      entering={FadeInUp.delay(TIMING_CONSTANTS.TRANSITION_DELAY).duration(
+        TIMING_CONFIG.GENTLE.duration,
+      )}
+      exiting={FadeOutDown.duration(TIMING_CONFIG.MEDIUM.duration)}
       style={CONTAINER_STYLE}
     >
       <View style={cardStyle}>
@@ -166,7 +168,7 @@ const MiniPlayerComponent = ({
               <EnhancedImage
                 source={imageUrl}
                 style={styles.artwork}
-                transition={150}
+                transition={TIMING_CONSTANTS.TRANSITION_DELAY}
                 recyclingKey={`miniplayer-${article.id}`}
               />
             </View>

@@ -19,7 +19,7 @@ export interface TimePickerProps {
   initialMinute?: number;
 }
 
-const SNAP_POINTS = [500];
+const SNAP_POINTS = [LAYOUT.BOTTOM_SHEET.SNAP_POINTS.TIME_PICKER];
 
 export function TimePicker({
   isVisible,

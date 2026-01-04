@@ -142,4 +142,28 @@ export const TIMING_CONSTANTS = {
   /** Help/FAQ animation delays */
   FAQ_EXPAND_DURATION: 300,
   FAQ_SCROLL_DELAY: 350,
+
+  /** Animation transition delays */
+  TRANSITION_DELAY: 150,
+  TUTORIAL_DELAY_SHORT: 500,
+  TUTORIAL_DELAY_LONG: 800,
+
+  /** Touch interaction delays */
+  LONG_PRESS_DELAY: 500,
+
+  /** Pulsating animation duration */
+  PULSATE_DURATION: 1500,
+
+  /** Stagger animation delays for sequential reveals */
+  STAGGER: {
+    BASE: 50,
+    INCREMENT: 40,
+    FAST: 100,
+    MEDIUM: 120,
+    SLOW: 180,
+    /** Completion screen button delay with metrics shown */
+    BUTTON_WITH_METRICS: 320,
+    /** Completion screen button delay without metrics */
+    BUTTON_WITHOUT_METRICS: 220,
+  },
 } as const;
