@@ -149,7 +149,7 @@ export function getArticleMetadata(article: {
 
 /**
  * Formats article metadata with author and reading time only (no category)
- * Use when category is already shown via pill or other UI element
+ * Use when category is shown elsewhere in the UI
  * @param article - Article object with author and article_sentences
  * @returns Formatted string like "Author Name · 3 min"
  * @example
@@ -164,6 +164,24 @@ export function getArticleMetadataWithoutCategory(article: {
   const readingTime = calculateReadingTime(sentenceCount);
 
   return `${article.author.name} ${METADATA_SEPARATOR} ${readingTime}`;
+}
+
+/**
+ * Generates a formatted metadata string for an article, excluding the author.
+ * Used when the author is already shown (e.g., Author in Focus section).
+ *
+ * @example
+ * getArticleMetadataWithoutAuthor(article)
+ * // Returns: 'Tafsir · 4 min'
+ */
+export function getArticleMetadataWithoutAuthor(article: {
+  category: { name: string };
+  article_sentences?: Array<unknown>;
+}): string {
+  const sentenceCount = article.article_sentences?.length || 0;
+  const readingTime = calculateReadingTime(sentenceCount);
+
+  return `${capitalizeFirstLetter(article.category.name)} ${METADATA_SEPARATOR} ${readingTime}`;
 }
 
 /**

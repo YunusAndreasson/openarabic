@@ -25,10 +25,6 @@ export interface ArticleCardProps extends BaseCardProps {
   imageUrl: string;
   /** Title text to display in the card */
   title: string;
-  /** Category name (used in author line, and pill if pillLabel not provided) */
-  category: string;
-  /** Optional custom label for the pill (defaults to category if not provided) */
-  pillLabel?: string;
   /** Summary text to display in the card */
   summary: string;
 }

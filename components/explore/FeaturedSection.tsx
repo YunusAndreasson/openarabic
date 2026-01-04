@@ -4,7 +4,6 @@ import { StyleSheet } from 'react-native';
 import { LAYOUT } from '@/constants/layout';
 
 import { ArticleCard } from './ArticleCard';
-import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
 import { buildArticleCardProps } from '@/utils/articleUtils';
 
@@ -24,7 +23,6 @@ const FeaturedSectionComponent: FC<FeaturedSectionProps> = ({ article }) => {
     <ArticleCard
       article={article}
       {...buildArticleCardProps(article)}
-      pillLabel={STRINGS.RECOMMENDED}
       style={styles.cardStyle}
       testID="featured-article-card"
     />

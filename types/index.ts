@@ -28,7 +28,6 @@ export * from './ui/image.types';
 export * from './ui/layout.types';
 export * from './ui/loader.types';
 export * from './ui/modal.types';
-export * from './ui/pill.types';
 export * from './ui/review.types';
 export * from './ui/text.types';
 export * from './ui/theme.types';

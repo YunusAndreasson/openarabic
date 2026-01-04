@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: -LAYOUT.SPACING.MEDIUM, // Extend beyond ScrollView content padding
     paddingTop: LAYOUT.SPACING.XLARGE, // 24px - tighter spacing
-    paddingBottom: LAYOUT.SPACING.SMALL, // 8px - tighter spacing
+    paddingBottom: LAYOUT.SPACING.XLARGE, // 24px - breathing room below logo
   },
   version: {
     opacity: LAYOUT.OPACITY.HIGH,

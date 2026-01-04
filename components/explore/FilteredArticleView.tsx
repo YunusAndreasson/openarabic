@@ -14,7 +14,7 @@ import {
   SCROLL_EVENT_THROTTLE,
   TIMING_CONFIG,
 } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { COMPLETION_THRESHOLD, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
@@ -25,9 +25,6 @@ import {
   capitalizeFirstLetter,
   getArticleMetadata,
 } from '@/utils/stringUtils';
-
-// Completion threshold matches articleUtils.ts
-const COMPLETION_THRESHOLD = 95;
 
 // List item types
 type SectionHeaderItem = {

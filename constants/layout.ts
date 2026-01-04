@@ -182,6 +182,12 @@ export const ICON_CONTAINER = {
   MEDIUM_RADIUS: TOUCH_TARGETS.MEDIUM / 2, // 22 - half for perfect circle
 } as const;
 
+/**
+ * Progress threshold for considering an article completed (95%)
+ * Provides leeway for users who read to the last sentence or two
+ */
+export const COMPLETION_THRESHOLD = 95;
+
 export const LAYOUT = {
   /** Left/right screen edge padding for all content (12px) */
   SCREEN_HORIZONTAL_PADDING: SPACING_SCALE.MEDIUM,

@@ -1,15 +1,15 @@
+import { COMPLETION_THRESHOLD } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { generateStorageUrl } from '@/utils/storageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
+import { generateStorageUrl } from '@/utils/storageUtils';
 
 /**
  * Common props extracted from an Article for use with ArticleCard component.
  * This eliminates repetitive prop mapping across multiple components.
  */
 export interface ArticleCardBaseProps {
-  category: string;
   imageUrl: string;
   summary: string;
   title: string;
@@ -27,14 +27,11 @@ export interface ArticleCardBaseProps {
  * <ArticleCard
  *   article={article}
  *   {...buildArticleCardProps(article)}
- *   // Add component-specific props
- *   pillLabel={STRINGS.RECOMMENDED}
  * />
  * ```
  */
 export function buildArticleCardProps(article: Article): ArticleCardBaseProps {
   return {
-    category: article.category.name,
     imageUrl: generateStorageUrl('images', article.image_url),
     summary: String(article.summary),
     title: article.title,
@@ -247,12 +244,6 @@ export function filterArticles(
     return true;
   });
 }
-
-/**
- * Completion threshold for articles (95% or higher is considered completed)
- * This provides leeway for users who read to the last sentence or two
- */
-const COMPLETION_THRESHOLD = 95;
 
 /**
  * Sort articles by progress: articles with progress (partially read) first,

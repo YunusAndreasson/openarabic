@@ -9,9 +9,13 @@ import type { ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { SectionLabel } from '@/components/common';
 import { ArticleList } from '@/components/explore';
+import { AuthorInFocusSection } from '@/components/explore';
 import { BrandFooter } from '@/components/explore';
+import { ContinueReadingSection } from '@/components/explore';
+import { DiscoverWordsSection } from '@/components/explore';
 import { FilterSection } from '@/components/explore';
 import { IntelligentArticleSection } from '@/components/explore';
+import { MoreFiltersSection } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import {
@@ -226,7 +230,12 @@ export default function ExploreScreen(): JSX.Element {
   const headerSections = useMemo(() => {
     const sections = [];
 
-    // Articles, categories, and authors are guaranteed to exist
+    // Continue Reading / Getting Started section (adaptive based on user progress)
+    sections.push(
+      <ContinueReadingSection key="continue-reading" articlesData={articlesData} />,
+    );
+
+    // Featured articles (intelligent selection of unread articles)
     sections.push(
       <IntelligentArticleSection
         key="featured"
@@ -235,6 +244,7 @@ export default function ExploreScreen(): JSX.Element {
       />,
     );
 
+    // Categories section
     sections.push(
       <View key="categories-wrapper">
         <SectionLabel title={STRINGS.SECTION_CATEGORIES} />
@@ -246,6 +256,13 @@ export default function ExploreScreen(): JSX.Element {
       </View>,
     );
 
+    // Author in Focus section (highlights one author with most unread content)
+    // Placed before Authors list to create "try this one → browse all" flow
+    sections.push(
+      <AuthorInFocusSection key="author-in-focus" articlesData={articlesData} />,
+    );
+
+    // Authors section
     sections.push(
       <View key="authors-wrapper">
         <SectionLabel title={STRINGS.SECTION_AUTHORS} />
@@ -257,23 +274,18 @@ export default function ExploreScreen(): JSX.Element {
       </View>,
     );
 
+    // Collapsible More Filters section (Difficulty + Length)
     sections.push(
-      <View key="difficulty-wrapper">
-        <SectionLabel title={STRINGS.SECTION_DIFFICULTY} />
-        <FilterSection
-          items={difficultyItems}
-          onSelect={handleSelectFilter}
-          filterType="difficulty"
-        />
-      </View>,
+      <MoreFiltersSection
+        key="more-filters"
+        difficultyItems={difficultyItems}
+        lengthItems={lengthItems}
+        onSelect={handleSelectFilter}
+      />,
     );
 
-    sections.push(
-      <View key="length-wrapper">
-        <SectionLabel title={STRINGS.SECTION_LENGTH} />
-        <FilterSection items={lengthItems} onSelect={handleSelectFilter} filterType="length" />
-      </View>,
-    );
+    // Discover Words section (tap words to add to Practice)
+    sections.push(<DiscoverWordsSection key="discover-words" />);
 
     return sections;
   }, [

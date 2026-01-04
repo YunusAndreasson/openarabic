@@ -63,22 +63,6 @@ jest.mock('@/components/ui/EnhancedImage', () => {
   };
 });
 
-jest.mock('@/components/ui/Pill', () => {
-  const React = require('react');
-  const { Text } = require('react-native');
-  return {
-    Pill: ({
-      children,
-      label,
-      testID,
-    }: {
-      children?: React.ReactNode;
-      label?: string;
-      testID?: string;
-    }) => <Text testID={testID}>{label || children}</Text>,
-  };
-});
-
 jest.mock('@/components/ThemedText', () => {
   const React = require('react');
   const { Text } = require('react-native');
@@ -114,7 +98,6 @@ describe('ArticleCard Component', () => {
 
   const defaultProps = {
     title: 'Introduction to Arabic Grammar',
-    category: 'Grammar',
     imageUrl: 'https://example.com/image.jpg',
     summary: 'Learn the basics of Arabic grammar and sentence structure.',
     article: createMockArticle(),
@@ -138,10 +121,11 @@ describe('ArticleCard Component', () => {
       expect(getByText(/Dr. Ahmad/)).toBeTruthy();
     });
 
-    test('renders category pill', () => {
+    test('renders metadata with author, category, and reading time', () => {
       const { getByText } = render(<ArticleCard {...defaultProps} />);
 
-      expect(getByText('Grammar')).toBeTruthy();
+      // Metadata string format: "Dr. Ahmad · Grammar · 1 min"
+      expect(getByText(/Dr\. Ahmad · Grammar · \d+ min/)).toBeTruthy();
     });
 
     test('renders summary text', () => {
@@ -194,26 +178,25 @@ describe('ArticleCard Component', () => {
     });
   });
 
-  describe('Custom Pill Label', () => {
-    test('uses category by default for pill', () => {
-      const { getByText } = render(<ArticleCard {...defaultProps} category="Culture" />);
+  describe('Category in Metadata', () => {
+    test('displays category from article object in metadata', () => {
+      const article = createMockArticle({
+        category: { id: 2, name: 'Culture' },
+      });
+      const { getByText } = render(<ArticleCard {...defaultProps} article={article} />);
 
-      expect(getByText('Culture')).toBeTruthy();
+      // Category is shown in metadata string
+      expect(getByText(/Culture/)).toBeTruthy();
     });
 
-    test('uses custom pillLabel when provided', () => {
-      const { getByText } = render(
-        <ArticleCard {...defaultProps} category="Grammar" pillLabel="Beginner" />,
-      );
-
-      expect(getByText('Beginner')).toBeTruthy();
-    });
-
-    test('capitalizes pill text', () => {
-      const { getByText } = render(<ArticleCard {...defaultProps} category="advanced topics" />);
+    test('capitalizes category in metadata', () => {
+      const article = createMockArticle({
+        category: { id: 3, name: 'advanced topics' },
+      });
+      const { getByText } = render(<ArticleCard {...defaultProps} article={article} />);
 
       // Should capitalize first letter
-      expect(getByText('Advanced topics')).toBeTruthy();
+      expect(getByText(/Advanced topics/)).toBeTruthy();
     });
   });
 
@@ -287,13 +270,13 @@ describe('ArticleCard Component', () => {
       });
       const props = {
         ...defaultProps,
-        category: 'Basics',
         article,
       };
 
       const { getByText } = render(<ArticleCard {...props} />);
 
-      expect(getByText('Basics')).toBeTruthy();
+      // Category shown in metadata
+      expect(getByText(/Basics/)).toBeTruthy();
     });
 
     test('renders advanced article correctly', () => {
@@ -303,13 +286,13 @@ describe('ArticleCard Component', () => {
       });
       const props = {
         ...defaultProps,
-        category: 'Advanced',
         article,
       };
 
       const { getByText } = render(<ArticleCard {...props} />);
 
-      expect(getByText('Advanced')).toBeTruthy();
+      // Category shown in metadata
+      expect(getByText(/Advanced/)).toBeTruthy();
     });
 
     test('renders article with Arabic author name', () => {
@@ -375,7 +358,6 @@ describe('ArticleCard Component', () => {
       });
       const props = {
         ...defaultProps,
-        category: '',
         article,
       };
 
@@ -449,8 +431,8 @@ describe('ArticleCard Component', () => {
 
       // All key information should be accessible
       expect(getByText('Introduction to Arabic Grammar')).toBeTruthy();
-      expect(getByText(/Dr. Ahmad/)).toBeTruthy();
-      expect(getByText('Grammar')).toBeTruthy();
+      // Metadata contains author, category, and reading time
+      expect(getByText(/Dr\. Ahmad · Grammar · \d+ min/)).toBeTruthy();
       expect(getByText('Learn the basics of Arabic grammar and sentence structure.')).toBeTruthy();
     });
   });
@@ -476,13 +458,10 @@ describe('ArticleCard Component', () => {
         author: { id: 2, name: 'Jane Smith' },
         category: { id: 2, name: 'Culture' },
       });
-      const { getByText } = render(
-        <ArticleCard {...defaultProps} category="Culture" article={customArticle} />,
-      );
+      const { getByText } = render(<ArticleCard {...defaultProps} article={customArticle} />);
 
       // Should format as "Author · Category · X min"
-      const authorText = getByText(/Jane Smith/);
-      expect(authorText).toBeTruthy();
+      expect(getByText(/Jane Smith · Culture · \d+ min/)).toBeTruthy();
     });
   });
 });

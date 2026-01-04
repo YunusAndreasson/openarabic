@@ -1,5 +1,8 @@
 import type { JSX } from 'react';
+import { View } from 'react-native';
 
+import { SectionLabel } from '@/components/common';
+import { STRINGS } from '@/constants/strings';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 import { HorizontalArticleSlider } from './HorizontalArticleSlider';
@@ -32,7 +35,12 @@ export function HorizontalFeaturedSection({
 
   const selectedArticles = featuredArticles.articles;
 
-  return <HorizontalArticleSlider articles={selectedArticles} />;
+  return (
+    <View>
+      <SectionLabel title={STRINGS.SECTION_FEATURED} />
+      <HorizontalArticleSlider articles={selectedArticles} />
+    </View>
+  );
 }
 
 HorizontalFeaturedSection.displayName = 'HorizontalFeaturedSection';

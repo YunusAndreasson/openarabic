@@ -120,6 +120,11 @@ export const STRINGS = {
   SECTION_AUTHORS: 'Authors',
   SECTION_DIFFICULTY: 'Difficulty',
   SECTION_LENGTH: 'Reading time',
+  SECTION_MORE_FILTERS: 'More filters',
+  SECTION_GETTING_STARTED: 'Getting started',
+  SECTION_FEATURED: 'Featured',
+  SECTION_AUTHOR_IN_FOCUS: 'Featured author',
+  SECTION_DISCOVER_WORDS: 'Words to practice',
   // Difficulty levels
   DIFFICULTY_BEGINNER: 'Beginner',
   DIFFICULTY_INTERMEDIATE: 'Intermediate',

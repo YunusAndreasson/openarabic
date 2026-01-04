@@ -13,7 +13,6 @@ export { HeaderIconButton } from './HeaderIconButton';
 export { PlayAllButton, PlaylistHeaderButtons } from './PlayAllButton';
 export { StartReviewButton, PracticeHeaderButtons } from './StartReviewButton';
 export { IconButton } from './IconButton';
-export { Pill } from './Pill';
 export { PulsatingLoader } from './PulsatingLoader';
 export {
   SettingsPicker,
