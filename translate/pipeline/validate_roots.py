@@ -32,32 +32,18 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Load API keys at startup (before other imports to avoid circular dependencies)
 try:
-    # Direct import of set_keys module
-    import importlib.util
+    from utils.set_keys import load_api_keys_safely
 
-    set_keys_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "utils",
-        "set_keys.py",
-    )
-    if os.path.exists(set_keys_path):
-        spec = importlib.util.spec_from_file_location("set_keys", set_keys_path)
-        if spec and spec.loader:
-            set_keys_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(set_keys_module)
-            logging.getLogger(__name__).info("API keys loaded from set_keys.py")
-    else:
-        logging.getLogger(__name__).warning(
-            "set_keys.py not found, using environment variables"
-        )
-except Exception as e:
+    load_api_keys_safely()
+except ImportError:
     logging.getLogger(__name__).warning(
-        f"Failed to load set_keys.py: {e}, using environment variables"
+        "Could not import load_api_keys_safely, using environment variables"
     )
+
+from itertools import batched  # Python 3.12+
 
 from tqdm import tqdm
 
-from data.config import VALIDATION_MAX_RETRIES
 from data.validation_models import RootValidationBatchResponse
 from utils.openrouter_client import OpenRouterClient
 from utils.validation_db import (
@@ -65,6 +51,7 @@ from utils.validation_db import (
     get_all_root_ids,
     save_root_validation_improvements,
 )
+from utils.validation_utils import validate_with_retry
 
 # Configure logging - suppress all except errors during progress bar
 logging.basicConfig(
@@ -116,7 +103,7 @@ def validate_root_batch(
             client = OpenRouterClient()
 
         # Validate roots with retry logic
-        validation_response = _validate_with_retry(client, roots_data, verbose)
+        validation_response = _validate_roots_with_retry(client, roots_data, verbose)
 
         if not validation_response:
             if verbose:
@@ -184,47 +171,11 @@ def validate_root_batch(
         return 0, 0
 
 
-def _validate_with_retry(
+def _validate_roots_with_retry(
     client: OpenRouterClient, roots_data: list[dict], verbose: bool = False
 ) -> dict | None:
-    """Validate roots with retry logic for parse errors.
-
-    Args:
-        client: OpenRouter client
-        roots_data: List of root dictionaries
-        verbose: Enable verbose logging
-
-    Returns:
-        dict: Parsed validation response or None if all retries fail
-    """
-    for retry_count in range(VALIDATION_MAX_RETRIES):
-        try:
-            # Call API with current retry count (affects prompt strictness)
-            response = client.validate_roots_batch(roots_data, retry_count)
-            return response
-
-        except ValueError as e:
-            # Parse error - retry with stricter prompt
-            if retry_count < VALIDATION_MAX_RETRIES - 1:
-                if verbose:
-                    logger.warning(
-                        f"Parse error on attempt {retry_count + 1}, retrying: {e}"
-                    )
-                continue
-            else:
-                if verbose:
-                    logger.error(
-                        f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}"
-                    )
-                return None
-
-        except Exception as e:
-            # Other errors (API errors, etc.) - log and fail
-            if verbose:
-                logger.error(f"Validation API call failed: {e}")
-            return None
-
-    return None
+    """Validate roots with retry logic for parse errors."""
+    return validate_with_retry(client.validate_roots_batch, roots_data, verbose)
 
 
 def validate_all_roots(
@@ -275,12 +226,11 @@ def validate_all_roots(
         total_correct = 0
         total_processed = 0
 
-        # Split into batches
-        batches = [
-            root_ids[i : i + batch_size] for i in range(0, len(root_ids), batch_size)
-        ]
+        # Split into batches using itertools.batched (Python 3.12+)
+        batches = list(batched(root_ids, batch_size))
 
-        for batch in tqdm(batches, desc="Validating root batches", unit="batch"):
+        for batch_tuple in tqdm(batches, desc="Validating root batches", unit="batch"):
+            batch = list(batch_tuple)
             try:
                 saved, correct = validate_root_batch(batch, client, verbose)
                 total_saved += saved

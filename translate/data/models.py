@@ -1,8 +1,8 @@
-# Literal import removed - no longer using "unknown" fallbacks
+# Python 3.12+ modernization: using field_validator (Pydantic v2) and match/case
 
 from typing import Any
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from .enums import (
     DifficultyLevel,
@@ -33,41 +33,40 @@ class Uncertainty(BaseModel):
     )
     reason: str = Field(description="Reason for uncertainty")
 
-    @validator("type", pre=True)
+    @field_validator("type", mode="before")
     @classmethod
     def _normalize_uncertainty_type(cls, v: Any) -> UncertaintyType:
-        """Normalize uncertainty type enum values."""
+        """Normalize uncertainty type enum values using match/case (Python 3.10+)."""
         if isinstance(v, str):
-            # Handle case-insensitive matching for common variations
             v_lower = v.lower()
-            if v_lower in ["grammar", "grammatical"]:
-                return UncertaintyType.GRAMMAR
-            elif v_lower in ["vocabulary", "vocab"]:
-                return UncertaintyType.VOCABULARY
-            elif v_lower in ["context", "contextual"]:
-                return UncertaintyType.CONTEXT
-            elif v_lower in ["tashkeel", "diacritic", "diacritical"]:
-                return UncertaintyType.TASHKEEL
-            elif v_lower in ["translation", "translate"]:
-                return UncertaintyType.TRANSLATION
-            elif v_lower in ["cultural", "culture"]:
-                return UncertaintyType.CULTURAL
-            elif v_lower in ["technical", "tech"]:
-                return UncertaintyType.TECHNICAL
-            elif v_lower in ["ambiguity", "ambiguous"]:
-                return UncertaintyType.AMBIGUITY
-            else:
-                # Try exact match
-                try:
-                    return UncertaintyType(v)
-                except ValueError:
-                    import logging
-
-                    logger = logging.getLogger(__name__)
-                    logger.warning(
-                        f"Unknown uncertainty type '{v}', defaulting to TRANSLATION"
-                    )
+            match v_lower:
+                case "grammar" | "grammatical":
+                    return UncertaintyType.GRAMMAR
+                case "vocabulary" | "vocab":
+                    return UncertaintyType.VOCABULARY
+                case "context" | "contextual":
+                    return UncertaintyType.CONTEXT
+                case "tashkeel" | "diacritic" | "diacritical":
+                    return UncertaintyType.TASHKEEL
+                case "translation" | "translate":
                     return UncertaintyType.TRANSLATION
+                case "cultural" | "culture":
+                    return UncertaintyType.CULTURAL
+                case "technical" | "tech":
+                    return UncertaintyType.TECHNICAL
+                case "ambiguity" | "ambiguous":
+                    return UncertaintyType.AMBIGUITY
+                case _:
+                    try:
+                        return UncertaintyType(v)
+                    except ValueError:
+                        import logging
+
+                        logger = logging.getLogger(__name__)
+                        logger.warning(
+                            f"Unknown uncertainty type '{v}', defaulting to TRANSLATION"
+                        )
+                        return UncertaintyType.TRANSLATION
         return v
 
     # Resolution fields - simplified
@@ -164,7 +163,7 @@ class WordTranslation(BaseModel):
         )
 
     # --- Validators ---
-    @validator("arabic")
+    @field_validator("arabic")
     @classmethod
     def _strip_arabic(cls, v: str) -> str:
         v = v.strip()
@@ -172,56 +171,57 @@ class WordTranslation(BaseModel):
             raise ValueError("arabic must be a non-empty string")
         return v
 
-    @validator("pos", pre=True)
+    @field_validator("pos", mode="before")
     @classmethod
     def _normalize_part_of_speech(cls, v: Any) -> PartOfSpeech:
-        """Normalize part of speech enum values."""
+        """Normalize part of speech enum values using match/case (Python 3.10+)."""
         if isinstance(v, str):
-            # Handle case-insensitive matching and common variations
             v_lower = v.lower()
-            if v_lower in ["noun", "n"]:
-                return PartOfSpeech.NOUN
-            elif v_lower in ["verb", "v"]:
-                return PartOfSpeech.VERB
-            elif v_lower in ["adjective", "adj", "adj."]:
-                return PartOfSpeech.ADJECTIVE
-            elif v_lower in ["adverb", "adv", "adv."]:
-                return PartOfSpeech.ADVERB
-            elif v_lower in ["pronoun", "pron", "pro"]:
-                return PartOfSpeech.PRONOUN
-            elif v_lower in ["preposition", "prep", "pre"]:
-                return PartOfSpeech.PREPOSITION
-            elif v_lower in ["conjunction", "conj", "con"]:
-                return PartOfSpeech.CONJUNCTION
-            elif v_lower in ["interjection", "interj", "int"]:
-                return PartOfSpeech.INTERJECTION
-            elif v_lower in ["particle", "part", "pt"]:
-                return PartOfSpeech.PARTICLE
-            elif v_lower in ["numeral", "num", "number"]:
-                return PartOfSpeech.NUMERAL
-            elif v_lower in ["proper_noun", "proper noun", "propernoun"]:
-                return PartOfSpeech.PROPER_NOUN
-            elif v_lower in [
-                "demonstrative_pronoun",
-                "demonstrative pronoun",
-                "demonstrativepronoun",
-            ]:
-                return PartOfSpeech.DEMONSTRATIVE_PRONOUN
-            elif v_lower in ["relative_pronoun", "relative pronoun", "relativepronoun"]:
-                return PartOfSpeech.RELATIVE_PRONOUN
-            else:
-                # Try exact match
-                try:
-                    return PartOfSpeech(v)
-                except ValueError:
-                    import logging
-
-                    logger = logging.getLogger(__name__)
-                    logger.warning(f"Unknown part of speech '{v}', defaulting to NOUN")
+            match v_lower:
+                case "noun" | "n":
                     return PartOfSpeech.NOUN
+                case "verb" | "v":
+                    return PartOfSpeech.VERB
+                case "adjective" | "adj" | "adj.":
+                    return PartOfSpeech.ADJECTIVE
+                case "adverb" | "adv" | "adv.":
+                    return PartOfSpeech.ADVERB
+                case "pronoun" | "pron" | "pro":
+                    return PartOfSpeech.PRONOUN
+                case "preposition" | "prep" | "pre":
+                    return PartOfSpeech.PREPOSITION
+                case "conjunction" | "conj" | "con":
+                    return PartOfSpeech.CONJUNCTION
+                case "interjection" | "interj" | "int":
+                    return PartOfSpeech.INTERJECTION
+                case "particle" | "part" | "pt":
+                    return PartOfSpeech.PARTICLE
+                case "numeral" | "num" | "number":
+                    return PartOfSpeech.NUMERAL
+                case "proper_noun" | "proper noun" | "propernoun":
+                    return PartOfSpeech.PROPER_NOUN
+                case (
+                    "demonstrative_pronoun"
+                    | "demonstrative pronoun"
+                    | "demonstrativepronoun"
+                ):
+                    return PartOfSpeech.DEMONSTRATIVE_PRONOUN
+                case "relative_pronoun" | "relative pronoun" | "relativepronoun":
+                    return PartOfSpeech.RELATIVE_PRONOUN
+                case _:
+                    try:
+                        return PartOfSpeech(v)
+                    except ValueError:
+                        import logging
+
+                        logger = logging.getLogger(__name__)
+                        logger.warning(
+                            f"Unknown part of speech '{v}', defaulting to NOUN"
+                        )
+                        return PartOfSpeech.NOUN
         return v
 
-    @validator("notes")
+    @field_validator("notes")
     @classmethod
     def _strip_notes(cls, v: str | None) -> str | None:
         if v is None:
@@ -231,7 +231,7 @@ class WordTranslation(BaseModel):
             return None  # Convert empty string to None
         return v
 
-    @validator("english")
+    @field_validator("english")
     @classmethod
     def _validate_english(cls, v: str | list[str]) -> str | list[str]:
         if isinstance(v, list):
@@ -251,7 +251,7 @@ class WordTranslation(BaseModel):
             raise ValueError("english must be a non-empty string")
         return v
 
-    @validator("essential_translation")
+    @field_validator("essential_translation")
     @classmethod
     def _validate_essential_translation(cls, v: str | list[str]) -> str | list[str]:
         if isinstance(v, list):
@@ -272,7 +272,7 @@ class WordTranslation(BaseModel):
             raise ValueError("essential_translation must be a non-empty string")
         return v
 
-    @validator("essential")
+    @field_validator("essential")
     @classmethod
     def _validate_essential_token(cls, v: str) -> str:
         v = v.strip()
@@ -284,7 +284,7 @@ class WordTranslation(BaseModel):
         # Diacritics are preferred but not enforced at this stage; enforced at refinement.
         return v
 
-    @validator("uncertainties")
+    @field_validator("uncertainties")
     @classmethod
     def _ensure_uncertainties_present(cls, v: list[Uncertainty]) -> list[Uncertainty]:
         return v or []
@@ -318,7 +318,7 @@ class TashkeelResult(BaseModel):
         description="Uncertainties in tashkeel addition (may be empty)"
     )
 
-    @validator("tashkeel")
+    @field_validator("tashkeel")
     @classmethod
     def validate_arabic_text(cls, v: str) -> str:
         """Validate that tashkeel text is not empty"""
@@ -335,7 +335,7 @@ class WordTranslationResult(BaseModel):
         description="Word-by-word translations - REQUIRED field"
     )
 
-    @validator("word_translations")
+    @field_validator("word_translations")
     @classmethod
     def _validate_word_translations(
         cls, v: list[WordTranslation]
@@ -389,35 +389,34 @@ class SentenceTranslation(BaseModel):
         description="Issues found during verification (may be empty)"
     )
 
-    @validator("verification_status", pre=True)
+    @field_validator("verification_status", mode="before")
     @classmethod
     def _normalize_verification_status(cls, v: Any) -> VerificationStatus:
-        """Normalize verification status enum values."""
+        """Normalize verification status enum values using match/case (Python 3.10+)."""
         if isinstance(v, str):
-            # Handle case-insensitive matching for common variations
             v_lower = v.lower()
-            if v_lower in ["pending", "pend"]:
-                return VerificationStatus.PENDING
-            elif v_lower in ["success", "successful", "succeeded"]:
-                return VerificationStatus.SUCCESS
-            elif v_lower in ["failed", "failure", "fail"]:
-                return VerificationStatus.FAILED
-            elif v_lower in ["partial", "partially"]:
-                return VerificationStatus.PARTIAL
-            elif v_lower in ["needs_review", "needs review", "needsreview", "review"]:
-                return VerificationStatus.NEEDS_REVIEW
-            else:
-                # Try exact match
-                try:
-                    return VerificationStatus(v)
-                except ValueError:
-                    import logging
-
-                    logger = logging.getLogger(__name__)
-                    logger.warning(
-                        f"Unknown verification status '{v}', defaulting to PENDING"
-                    )
+            match v_lower:
+                case "pending" | "pend":
                     return VerificationStatus.PENDING
+                case "success" | "successful" | "succeeded":
+                    return VerificationStatus.SUCCESS
+                case "failed" | "failure" | "fail":
+                    return VerificationStatus.FAILED
+                case "partial" | "partially":
+                    return VerificationStatus.PARTIAL
+                case "needs_review" | "needs review" | "needsreview" | "review":
+                    return VerificationStatus.NEEDS_REVIEW
+                case _:
+                    try:
+                        return VerificationStatus(v)
+                    except ValueError:
+                        import logging
+
+                        logger = logging.getLogger(__name__)
+                        logger.warning(
+                            f"Unknown verification status '{v}', defaulting to PENDING"
+                        )
+                        return VerificationStatus.PENDING
         return v
 
 
@@ -435,22 +434,21 @@ class TextMetadata(BaseModel):
     difficulty_level: DifficultyLevel = Field(description="Difficulty rating (1–5)")
     total_units: int = Field(default=0, description="Total number of units", ge=0)
 
-    @validator("difficulty_level", pre=True)
+    @field_validator("difficulty_level", mode="before")
     @classmethod
     def _normalize_difficulty_level(cls, v: Any) -> DifficultyLevel:
-        """Normalize difficulty level enum values."""
-        if isinstance(v, str):
-            # Handle string representations
-            try:
-                return DifficultyLevel(int(v))
-            except (ValueError, TypeError):
-                pass
-        elif isinstance(v, int):
-            # Handle integer values
-            try:
-                return DifficultyLevel(v)
-            except ValueError:
-                pass
+        """Normalize difficulty level enum values using match/case (Python 3.10+)."""
+        match v:
+            case str():
+                try:
+                    return DifficultyLevel(int(v))
+                except (ValueError, TypeError):
+                    pass
+            case int():
+                try:
+                    return DifficultyLevel(v)
+                except ValueError:
+                    pass
 
         # Default fallback
         import logging
@@ -470,7 +468,7 @@ class SplitResult(TextMetadata):
         default="aqeedah", description="Detected Islamic text category"
     )
 
-    @validator("category")
+    @field_validator("category")
     @classmethod
     def _validate_category(cls, v: str) -> str:
         """Validate that category is one of the valid Islamic text categories"""

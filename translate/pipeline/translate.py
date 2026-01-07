@@ -1,6 +1,7 @@
 """Translation pipeline for processing Arabic text files."""
 
 import logging
+from itertools import batched  # Python 3.12+
 from typing import Any
 
 from data.models import (
@@ -35,12 +36,15 @@ def create_batches(
     batch_size: int,
     context_cache: ContextCache | None = None,
 ) -> list[TranslationBatch]:
-    """Create batches of sentences for parallel processing."""
+    """Create batches of sentences for parallel processing.
+
+    Uses itertools.batched (Python 3.12+) for efficient chunking.
+    """
     batches: list[TranslationBatch] = []
 
-    for i in range(0, len(sentences), batch_size):
-        batch_sentences = sentences[i : i + batch_size]
-        batch_start_index = start_index + i
+    for batch_num, batch_tuple in enumerate(batched(sentences, batch_size)):
+        batch_sentences = list(batch_tuple)
+        batch_start_index = start_index + batch_num * batch_size
         batch_indices = list(
             range(batch_start_index, batch_start_index + len(batch_sentences))
         )

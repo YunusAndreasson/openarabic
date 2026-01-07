@@ -50,27 +50,31 @@ def find_input_files_in_inbox() -> list[tuple[str, str, str]]:
     Find all input files in the inbox directory.
     Returns list of tuples: (input_file_path, author_folder, author_name)
     Excludes files that have already been processed and archived.
+
+    Uses Path.walk() (Python 3.12+) for efficient directory traversal.
     """
     input_files: list[tuple[str, str, str]] = []
+    inbox_path = Path(INBOX_DIR)
 
-    if not os.path.exists(INBOX_DIR):
+    if not inbox_path.exists():
         return input_files
 
-    for author_folder in os.listdir(INBOX_DIR):
-        author_folder_path = os.path.join(INBOX_DIR, author_folder)
-
-        if not os.path.isdir(author_folder_path):
+    # Use Path.walk() (Python 3.12+) for efficient directory traversal
+    for root, _dirs, files in inbox_path.walk():
+        # Only process direct subdirectories of inbox (author folders)
+        if root.parent != inbox_path:
             continue
 
+        author_folder = root.name
         if author_folder not in AUTHOR_FOLDER_MAPPING:
             continue
 
         author_name = AUTHOR_FOLDER_MAPPING[author_folder]
 
         # Look for .txt files in the author folder
-        for file_name in os.listdir(author_folder_path):
-            if file_name.endswith(".txt"):
-                input_file_path = os.path.join(author_folder_path, file_name)
+        for file_path in files:
+            if file_path.suffix == ".txt":
+                input_file_path = str(root / file_path)
 
                 # Check if this file has already been processed
                 if _is_file_already_processed(input_file_path):

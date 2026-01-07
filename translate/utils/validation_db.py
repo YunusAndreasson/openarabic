@@ -5,6 +5,7 @@ Handles fetching words from database and saving validation improvements.
 """
 
 import logging
+from itertools import batched  # Python 3.12+
 from typing import Any
 
 from utils.storage_utils import get_supabase_client
@@ -261,9 +262,9 @@ def fetch_roots_for_validation(
         all_roots = []
 
         if root_ids and len(root_ids) > CHUNK_SIZE:
-            # Process in chunks
-            for i in range(0, len(root_ids), CHUNK_SIZE):
-                chunk = root_ids[i : i + CHUNK_SIZE]
+            # Process in chunks using itertools.batched (Python 3.12+)
+            for chunk_tuple in batched(root_ids, CHUNK_SIZE):
+                chunk = list(chunk_tuple)
                 chunk_response = (
                     client.table("roots")
                     .select("id, letters, meaning")

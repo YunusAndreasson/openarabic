@@ -2,6 +2,7 @@
 
 import os
 import time
+from itertools import batched  # Python 3.12+
 from typing import Any
 
 from google.cloud import translate_v3
@@ -104,12 +105,16 @@ class GoogleTranslateService:
         batch_size: int = 100,
         max_retries: int = TRANSLATION_RETRY_ATTEMPTS,
     ) -> list[dict]:
-        """Translate multiple Arabic root words in batches for efficiency."""
+        """Translate multiple Arabic root words in batches for efficiency.
+
+        Uses itertools.batched (Python 3.12+) for efficient chunking.
+        """
         results = []
 
-        # Process words in batches
-        for i in range(0, len(root_words), batch_size):
-            batch = root_words[i : i + batch_size]
+        # Process words in batches using itertools.batched (Python 3.12+)
+        for batch_num, batch_tuple in enumerate(batched(root_words, batch_size)):
+            batch = list(batch_tuple)
+            batch_start_index = batch_num * batch_size
 
             # Retry logic for each batch
             for attempt in range(max_retries):
@@ -124,7 +129,7 @@ class GoogleTranslateService:
 
                     if not response.translations:
                         raise TranslationError(
-                            f"No translations returned for batch starting at index {i}"
+                            f"No translations returned for batch starting at index {batch_start_index}"
                         )
 
                     # Process each translation in the batch
@@ -164,7 +169,7 @@ class GoogleTranslateService:
                 except Exception as e:
                     if attempt == max_retries - 1:
                         raise TranslationError(
-                            f"Failed to translate batch starting at index {i} after {max_retries} attempts: {e}"
+                            f"Failed to translate batch starting at index {batch_start_index} after {max_retries} attempts: {e}"
                         ) from e
                     time.sleep(2**attempt)  # Exponential backoff
 

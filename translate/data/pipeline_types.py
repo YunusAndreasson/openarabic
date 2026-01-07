@@ -1,6 +1,8 @@
 """
 Type aliases for pipeline data structures to improve type safety.
 These match the existing schema structures exactly.
+
+Python 3.12+ modernization: using `type` statement (PEP 695) for type aliases.
 """
 
 from typing import Any, NotRequired, TypedDict
@@ -82,13 +84,13 @@ class WordData(TypedDict):
     root: str  # Required in schema
 
 
-# Type aliases for common collections
+# Type aliases for common collections (Python 3.12+ type statement - PEP 695)
 # These are used for internal processing and MUST contain Pydantic models
-TranslationResults = list[TranslationResult]
-TashkeelResults = list[TashkeelResult]
-WordTranslationResults = list[WordTranslationResult]
-RefinementResults = list[RefinementResult]
+type TranslationResults = list[TranslationResult]
+type TashkeelResults = list[TashkeelResult]
+type WordTranslationResults = list[WordTranslationResult]
+type RefinementResults = list[RefinementResult]
 
 # Internal processing types (TypedDict for performance)
-RefinementInputs = list[RefinementInput]
-SplitResults = list[str]  # List of split units
+type RefinementInputs = list[RefinementInput]
+type SplitResults = list[str]  # List of split units
