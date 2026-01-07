@@ -72,5 +72,3 @@ def get_table_record(
 
     result = safe_database_operation(operation, error_context, True)
     return result if isinstance(result, dict) else None
-
-

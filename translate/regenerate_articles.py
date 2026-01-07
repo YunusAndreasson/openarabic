@@ -29,9 +29,11 @@ from elevenlabs import VoiceSettings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Load API keys
+# Load API keys (imported for side effects)
 try:
-    import utils.set_keys
+    import utils.set_keys as _set_keys  # noqa: F401
+
+    del _set_keys  # Cleanup namespace, import was for side effects only
 except ImportError:
     pass
 
@@ -45,7 +47,9 @@ from data.config import (
 from utils.responses_api import load_api_keys
 from utils.storage_utils import generate_audio_filename, get_supabase_client
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 load_api_keys()
@@ -55,7 +59,7 @@ os.makedirs(AUDIO_TEMP_DIR, exist_ok=True)
 def download_audio_from_url(audio_url: str) -> bytes | None:
     """Download audio file from Supabase storage URL."""
     try:
-        if not audio_url.startswith('http'):
+        if not audio_url.startswith("http"):
             supabase_url = os.getenv("SUPABASE_URL")
             if not supabase_url:
                 raise ValueError("SUPABASE_URL environment variable not set")
@@ -73,7 +77,9 @@ def upload_audio_to_storage(audio_data: bytes, filename: str) -> str | None:
     """Upload audio data to Supabase storage."""
     try:
         client = get_supabase_client()
-        client.storage.from_("audio").upload(filename, audio_data, file_options={"content-type": "audio/mpeg"})
+        client.storage.from_("audio").upload(
+            filename, audio_data, file_options={"content-type": "audio/mpeg"}
+        )
         logger.info(f"Uploaded audio: {filename}")
         return filename
     except Exception as e:
@@ -81,7 +87,9 @@ def upload_audio_to_storage(audio_data: bytes, filename: str) -> str | None:
         return None
 
 
-def regenerate_article_audio(article_id: int, article_title: str | None = None) -> str | None:
+def regenerate_article_audio(
+    article_id: int, article_title: str | None = None
+) -> str | None:
     """
     Regenerate article-level bilingual audio by downloading existing audio.
     Only generates title audio via ElevenLabs.
@@ -92,11 +100,13 @@ def regenerate_article_audio(article_id: int, article_title: str | None = None) 
         client = get_supabase_client()
 
         # Query ALL sentences for this article
-        response = client.table("article_sentences") \
-            .select("id, audio_url, audio_url_english, position") \
-            .eq("article_id", article_id) \
-            .order("position") \
+        response = (
+            client.table("article_sentences")
+            .select("id, audio_url, audio_url_english, position")
+            .eq("article_id", article_id)
+            .order("position")
             .execute()
+        )
 
         sentences = response.data
 
@@ -131,13 +141,17 @@ def regenerate_article_audio(article_id: int, article_title: str | None = None) 
             # Download English audio (newly generated for corrected sentences, existing for others)
             english_audio = download_audio_from_url(english_audio_url)
             if not english_audio:
-                logger.warning(f"Failed to download English audio for sentence {idx + 1}")
+                logger.warning(
+                    f"Failed to download English audio for sentence {idx + 1}"
+                )
                 continue
 
             # Download Arabic audio (existing)
             arabic_audio = download_audio_from_url(arabic_audio_url)
             if not arabic_audio:
-                logger.warning(f"Failed to download Arabic audio for sentence {idx + 1}")
+                logger.warning(
+                    f"Failed to download Arabic audio for sentence {idx + 1}"
+                )
                 continue
 
             # Add English then Arabic
@@ -192,12 +206,14 @@ def main() -> None:
 
         # Get all affected articles
         logger.info("Finding affected articles...")
-        articles_response = client.table("article_sentences") \
-            .select("article_id") \
-            .eq("english_repeat", True) \
+        articles_response = (
+            client.table("article_sentences")
+            .select("article_id")
+            .eq("english_repeat", True)
             .execute()
+        )
 
-        article_ids = list(set(s['article_id'] for s in articles_response.data))
+        article_ids = list(set(s["article_id"] for s in articles_response.data))
 
         if not article_ids:
             logger.info("No articles to regenerate")
@@ -210,16 +226,22 @@ def main() -> None:
         failed = 0
 
         for idx, article_id in enumerate(sorted(article_ids)):
-            logger.info(f"\n[{idx + 1}/{len(article_ids)}] Processing article {article_id}...")
+            logger.info(
+                f"\n[{idx + 1}/{len(article_ids)}] Processing article {article_id}..."
+            )
 
             # Get article title
-            article_response = client.table("articles") \
-                .select("title") \
-                .eq("id", article_id) \
-                .single() \
+            article_response = (
+                client.table("articles")
+                .select("title")
+                .eq("id", article_id)
+                .single()
                 .execute()
+            )
 
-            article_title = article_response.data.get("title") if article_response.data else None
+            article_title = (
+                article_response.data.get("title") if article_response.data else None
+            )
 
             # Regenerate article audio
             article_filename = regenerate_article_audio(article_id, article_title)
@@ -227,10 +249,9 @@ def main() -> None:
             if article_filename:
                 # Update database
                 try:
-                    client.table("articles") \
-                        .update({'audio_url_bilingual': article_filename}) \
-                        .eq('id', article_id) \
-                        .execute()
+                    client.table("articles").update(
+                        {"audio_url_bilingual": article_filename}
+                    ).eq("id", article_id).execute()
                     logger.info(f"✓ Updated article {article_id}")
                     successful += 1
                 except Exception as e:

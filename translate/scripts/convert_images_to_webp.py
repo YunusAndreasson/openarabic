@@ -82,9 +82,7 @@ class ConversionStats:
 class ImageConverter:
     """Handle image conversion from JPG/PNG to WebP with UUID filenames."""
 
-    def __init__(
-        self, dry_run: bool = True, quality: int = 80, uuid_length: int = 8
-    ):
+    def __init__(self, dry_run: bool = True, quality: int = 80, uuid_length: int = 8):
         """
         Initialize converter.
 
@@ -103,9 +101,7 @@ class ImageConverter:
 
     def get_public_url(self, filename: str) -> str:
         """Get public URL for a file in the images bucket."""
-        return (
-            f"{self.supabase_url}/storage/v1/object/public/{self.bucket_name}/{filename}"
-        )
+        return f"{self.supabase_url}/storage/v1/object/public/{self.bucket_name}/{filename}"
 
     def generate_unique_uuid_filename(self, existing_files: set[str]) -> str:
         """
@@ -308,9 +304,9 @@ class ImageConverter:
                     full_url = article["image_url"]
                     filename = full_url.split("/")[-1]
 
-                    self.client.table("articles").update(
-                        {"image_url": filename}
-                    ).eq("id", article["id"]).execute()
+                    self.client.table("articles").update({"image_url": filename}).eq(
+                        "id", article["id"]
+                    ).execute()
 
                     logger.info(
                         f"Cleaned article {article['id']}: {full_url} → {filename}"
@@ -424,7 +420,7 @@ class ImageConverter:
 
             size_reduction = (1 - len(webp_data) / len(image_data)) * 100
             logger.info(
-                f"  Size: {len(image_data)/1024:.1f}KB → {len(webp_data)/1024:.1f}KB "
+                f"  Size: {len(image_data) / 1024:.1f}KB → {len(webp_data) / 1024:.1f}KB "
                 f"({size_reduction:.1f}% reduction)"
             )
             logger.info(f"  New filename: {old_filename} → {new_webp_filename}")
@@ -457,7 +453,9 @@ class ImageConverter:
         if cleanup_only:
             logger.info("Starting Database URL Cleanup")
         else:
-            logger.info(f"Starting WebP conversion with UUID filenames (dry_run={self.dry_run})")
+            logger.info(
+                f"Starting WebP conversion with UUID filenames (dry_run={self.dry_run})"
+            )
             logger.info(f"Quality: {self.quality}")
             logger.info(f"UUID length: {self.uuid_length} characters")
         logger.info(f"Time: {datetime.now().isoformat()}")
@@ -505,8 +503,12 @@ class ImageConverter:
             logger.info(f"Total images:     {self.stats.total_images}")
             logger.info(f"Converted:        {self.stats.converted}")
             logger.info(f"Errors:           {self.stats.errors}")
-            logger.info(f"Original size:    {self.stats.original_size_bytes / (1024*1024):.2f} MB")
-            logger.info(f"WebP size:        {self.stats.webp_size_bytes / (1024*1024):.2f} MB")
+            logger.info(
+                f"Original size:    {self.stats.original_size_bytes / (1024 * 1024):.2f} MB"
+            )
+            logger.info(
+                f"WebP size:        {self.stats.webp_size_bytes / (1024 * 1024):.2f} MB"
+            )
             logger.info(f"Space saved:      {self.stats.space_saved_mb:.2f} MB")
             logger.info(f"Compression:      {self.stats.compression_ratio:.1f}%")
             logger.info("=" * 80)

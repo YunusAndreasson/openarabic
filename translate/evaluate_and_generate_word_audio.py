@@ -35,12 +35,11 @@ from tqdm import tqdm
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import set_keys to configure environment variables
-from utils import set_keys  # noqa: F401
-
 from audio.audio_utils import (
     generate_arabic_word_audio,
     generate_english_word_audio,
 )
+from utils import set_keys  # noqa: F401
 from utils.storage_utils import get_supabase_client
 
 # Configure logging - only show errors
@@ -107,7 +106,9 @@ def evaluate_empty_audio(table: str | None = None) -> dict[str, Any]:
         sample_result = (
             client.table("roots")
             .select("id, letters, meaning")
-            .or_("audio_url.eq.,audio_url.is.null,audio_url_en.eq.,audio_url_en.is.null")
+            .or_(
+                "audio_url.eq.,audio_url.is.null,audio_url_en.eq.,audio_url_en.is.null"
+            )
             .limit(5)
             .execute()
         )
@@ -154,7 +155,9 @@ def generate_audio_for_sentence_word(
     # Generate audio using existing helper function (pass force flag)
     try:
         voice_name = voice or "Enceladus"
-        audio_result = generate_arabic_word_audio(word_form, filename, voice_name, force)
+        audio_result = generate_arabic_word_audio(
+            word_form, filename, voice_name, force
+        )
 
         if audio_result and audio_result.get("url"):
             # Update database
@@ -182,7 +185,9 @@ def generate_audio_for_sentence_word(
         return {"success": False, "word_id": word_id, "error": str(e)}
 
 
-def generate_audio_for_root(root_id: int, voice: str | None = None, force: bool = False) -> dict[str, Any]:
+def generate_audio_for_root(
+    root_id: int, voice: str | None = None, force: bool = False
+) -> dict[str, Any]:
     """
     Generate audio for a specific root word.
 
@@ -219,7 +224,9 @@ def generate_audio_for_root(root_id: int, voice: str | None = None, force: bool 
         filename = f"root_{root_id}_ar.mp3"
 
         try:
-            audio_result = generate_arabic_word_audio(letters, filename, voice_name, force)
+            audio_result = generate_arabic_word_audio(
+                letters, filename, voice_name, force
+            )
 
             if audio_result and audio_result.get("url"):
                 client.table("roots").update({"audio_url": audio_result["url"]}).eq(
@@ -251,7 +258,9 @@ def generate_audio_for_root(root_id: int, voice: str | None = None, force: bool 
         filename = f"root_{root_id}_en.mp3"
 
         try:
-            audio_result = generate_english_word_audio(meaning, filename, voice_name, force)
+            audio_result = generate_english_word_audio(
+                meaning, filename, voice_name, force
+            )
 
             if audio_result and audio_result.get("url"):
                 client.table("roots").update({"audio_url_en": audio_result["url"]}).eq(
@@ -308,9 +317,18 @@ def generate_audio_batch(
         # Get words with NULL audio_url (or all if force)
         while True:
             if force:
-                query = client.table("sentence_words").select("id").range(offset, offset + page_size - 1)
+                query = (
+                    client.table("sentence_words")
+                    .select("id")
+                    .range(offset, offset + page_size - 1)
+                )
             else:
-                query = client.table("sentence_words").select("id").is_("audio_url", "null").range(offset, offset + page_size - 1)
+                query = (
+                    client.table("sentence_words")
+                    .select("id")
+                    .is_("audio_url", "null")
+                    .range(offset, offset + page_size - 1)
+                )
 
             result = query.execute()
 
@@ -345,12 +363,18 @@ def generate_audio_batch(
         # Get roots with empty audio URLs (or all if force)
         while True:
             if force:
-                query = client.table("roots").select("id").range(offset, offset + page_size - 1)
+                query = (
+                    client.table("roots")
+                    .select("id")
+                    .range(offset, offset + page_size - 1)
+                )
             else:
                 query = (
                     client.table("roots")
                     .select("id")
-                    .or_("audio_url.eq.,audio_url.is.null,audio_url_en.eq.,audio_url_en.is.null")
+                    .or_(
+                        "audio_url.eq.,audio_url.is.null,audio_url_en.eq.,audio_url_en.is.null"
+                    )
                     .range(offset, offset + page_size - 1)
                 )
 
@@ -387,7 +411,7 @@ def generate_audio_batch(
     return stats
 
 
-def main():
+def main() -> int:
     """Main function."""
     parser = argparse.ArgumentParser(
         description="Evaluate and generate audio for single words using Chirp 3: HD"
@@ -432,7 +456,9 @@ def main():
         print("\n=== Audio Evaluation Results ===\n")
 
         if "sentence_words_empty" in stats:
-            print(f"Sentence Words with NULL audio_url: {stats['sentence_words_empty']}")
+            print(
+                f"Sentence Words with NULL audio_url: {stats['sentence_words_empty']}"
+            )
             if stats.get("sentence_words_sample"):
                 print("\nSample sentence words:")
                 for word in stats["sentence_words_sample"]:
@@ -456,7 +482,9 @@ def main():
     # Generate audio for specific word ID
     if args.word_id:
         if args.table == "sentence_words":
-            result = generate_audio_for_sentence_word(args.word_id, args.voice, args.force)
+            result = generate_audio_for_sentence_word(
+                args.word_id, args.voice, args.force
+            )
         elif args.table == "roots":
             result = generate_audio_for_root(args.word_id, args.voice, args.force)
         else:
@@ -478,7 +506,7 @@ def main():
                     )
             print("\n=============================\n")
         else:
-            print(f"\n=== Generation Failed ===\n")
+            print("\n=== Generation Failed ===\n")
             print(f"Error: {result.get('error') or result.get('errors')}")
             print("\n=========================\n")
             return 1

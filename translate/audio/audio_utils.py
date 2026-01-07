@@ -934,9 +934,9 @@ def process_word_audio_for_latest_articles() -> bool:
             return False
 
         # Process word audio for latest articles
-
+        articles: list[dict[str, int | str]] = result.data
         success_count = 0
-        for article in result.data:
+        for article in articles:
             article_id = article["id"]
             _article_title = article[
                 "title"

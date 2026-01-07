@@ -49,9 +49,7 @@ ENGLISH_VOICE_ID = "NFG5qt843uXKj4pFvR7C"  # Adam - Clear, natural English voice
 ENGLISH_VOICE_ID_FALLBACK = "21m00Tcm4TlvDq8ikWAM"  # Rachel - Backup option
 
 # ElevenLabs TTS - Premium Configuration
-ELEVENLABS_TTS_MODEL_ID = (
-    "eleven_v3"  # Latest multilingual model for best quality
-)
+ELEVENLABS_TTS_MODEL_ID = "eleven_v3"  # Latest multilingual model for best quality
 
 # Voice settings for ElevenLabs API compatibility
 DEFAULT_VOICE_SETTINGS = {
@@ -61,10 +59,10 @@ DEFAULT_VOICE_SETTINGS = {
 
 # English voice settings for bilingual audio - Optimized for quality and stability
 ENGLISH_VOICE_SETTINGS = {
-    "stability": 0.5,            # Natural stability (must be 0.0, 0.5, or 1.0 per ElevenLabs API)
-    "similarity_boost": 1.0,     # Maximum similarity to original voice
-    "use_speaker_boost": True,   # Enhanced speaker clarity
-    "speed": 0.90,               # Slower for better clarity
+    "stability": 0.5,  # Natural stability (must be 0.0, 0.5, or 1.0 per ElevenLabs API)
+    "similarity_boost": 1.0,  # Maximum similarity to original voice
+    "use_speaker_boost": True,  # Enhanced speaker clarity
+    "speed": 0.90,  # Slower for better clarity
 }
 
 # Audio pause configuration for bilingual audio
@@ -128,5 +126,7 @@ DEFAULT_CATEGORY = "aqeedah"
 # OpenRouter configuration for validation
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEEPSEEK_MODEL = "deepseek/deepseek-v3.1-terminus"  # Latest DeepSeek v3.1 Terminus model
+DEEPSEEK_MODEL = (
+    "deepseek/deepseek-v3.1-terminus"  # Latest DeepSeek v3.1 Terminus model
+)
 VALIDATION_MAX_RETRIES = 3

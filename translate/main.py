@@ -139,7 +139,10 @@ def run_translation(
 ) -> None:
     """Run the full translation pipeline."""
     if not translate_text(
-        input_file, output_file, batch_size, use_conversation_continuity=use_conversation_continuity
+        input_file,
+        output_file,
+        batch_size,
+        use_conversation_continuity=use_conversation_continuity,
     ):
         logger.error("❌ Translation failed.")
         raise RuntimeError("Translation failed.")

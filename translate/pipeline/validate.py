@@ -216,7 +216,9 @@ def _validate_with_retry(
                 continue
             else:
                 if verbose:
-                    logger.error(f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}")
+                    logger.error(
+                        f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}"
+                    )
                 return None
 
         except Exception as e:
@@ -285,7 +287,9 @@ def validate_all_articles(verbose: bool = False, start_from: int = 1) -> int:
                 continue
 
         # Always show final summary
-        print(f"\n✅ Validation complete: {success_count} succeeded, {failed_count} failed")
+        print(
+            f"\n✅ Validation complete: {success_count} succeeded, {failed_count} failed"
+        )
         return success_count
 
     except Exception as e:

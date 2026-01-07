@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Clear old incorrect improvements from the recent test run."""
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Load API keys
 try:
     import importlib.util
+
     set_keys_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "utils",
@@ -30,23 +31,29 @@ client = get_supabase_client()
 print("\nDeleting old improvements from test run...")
 
 # Get all improvements
-response = client.table('root_translation_improvements') \
-    .select('id, root_id') \
-    .order('created_at', desc=True) \
-    .limit(50) \
+response = (
+    client.table("root_translation_improvements")
+    .select("id, root_id")
+    .order("created_at", desc=True)
+    .limit(50)
     .execute()
+)
 
 if response.data:
-    ids_to_delete = [item['id'] for item in response.data]
+    ids_to_delete = [item["id"] for item in response.data]
     print(f"Found {len(ids_to_delete)} improvements to delete")
 
     # Delete them
-    delete_response = client.table('root_translation_improvements') \
-        .delete() \
-        .in_('id', ids_to_delete) \
+    delete_response = (
+        client.table("root_translation_improvements")
+        .delete()
+        .in_("id", ids_to_delete)
         .execute()
+    )
 
-    print(f"Deleted {len(delete_response.data) if delete_response.data else 0} improvements")
+    print(
+        f"Deleted {len(delete_response.data) if delete_response.data else 0} improvements"
+    )
 else:
     print("No improvements found")
 

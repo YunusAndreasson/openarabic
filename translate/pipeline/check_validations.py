@@ -41,12 +41,14 @@ response = (
 
 print("\n📊 Latest Validation Improvements (showing first 10):\n")
 for i, row in enumerate(response.data, 1):
-    print(f'{i}. Word ID: {row["sentence_word_id"]} | Status: {row["status"]}')
+    print(f"{i}. Word ID: {row['sentence_word_id']} | Status: {row['status']}")
     eng = row.get("suggested_english", "N/A")
     print(f"   English: {eng[:80]}")
     note = row.get("suggested_grammar_note")
     if note:
-        print(f"   Grammar: {note[:100]}..." if len(note) > 100 else f"   Grammar: {note}")
+        print(
+            f"   Grammar: {note[:100]}..." if len(note) > 100 else f"   Grammar: {note}"
+        )
     reason = row.get("reviewer_notes")
     if reason:
         print(f"   AI Reasoning: {reason[:120]}...")

@@ -3,10 +3,11 @@
 import os
 from typing import Any
 
+from supabase import create_client
+
 from data.config import (
     ARABIC_VOICE_ID,
 )
-from supabase import create_client
 
 
 def get_voice_config(voice_type: str) -> dict[str, Any]:

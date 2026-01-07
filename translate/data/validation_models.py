@@ -79,7 +79,9 @@ class RootValidationRequest(BaseModel):
     """Request data for validating a root translation."""
 
     root_id: int = Field(description="Database ID of the root record")
-    current_letters: str = Field(description="Current Arabic root letters with tashkeel")
+    current_letters: str = Field(
+        description="Current Arabic root letters with tashkeel"
+    )
     current_meaning: str = Field(description="Current English translation/meaning")
     examples: list[RootExampleSentence] = Field(
         default_factory=list,

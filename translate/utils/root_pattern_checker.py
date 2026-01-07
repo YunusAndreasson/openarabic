@@ -8,7 +8,11 @@ import re
 from typing import Literal
 
 
-def check_root_pattern(arabic_word: str) -> tuple[Literal["definite_derived", "likely_derived", "uncertain", "likely_correct"], str]:
+def check_root_pattern(
+    arabic_word: str,
+) -> tuple[
+    Literal["definite_derived", "likely_derived", "uncertain", "likely_correct"], str
+]:
     """Check if an Arabic word is likely a derived form or a proper root.
 
     Args:
@@ -22,20 +26,20 @@ def check_root_pattern(arabic_word: str) -> tuple[Literal["definite_derived", "l
             - "likely_correct": Probably a correct root form
     """
     # Remove tashkeel for pattern matching (keep structure)
-    base_word = re.sub(r'[ًٌٍَُِّْ]', '', arabic_word)
+    base_word = re.sub(r"[ًٌٍَُِّْ]", "", arabic_word)
 
     # DEFINITE DERIVED: Ends with ة (taa marbuta)
-    if base_word.endswith('ة'):
+    if base_word.endswith("ة"):
         return ("definite_derived", f"Ends with ة (taa marbuta): {arabic_word}")
 
     # DEFINITE DERIVED: Starts with Form patterns
     # Form II-X verbal nouns: تَفْعِيلٌ, مُفَاعَلَةٌ, إِفْعَالٌ, etc.
     form_patterns = [
-        (r'^ت.{2,3}ي[لن]', "Form II تَفْعِيلٌ pattern"),
-        (r'^م.{2,3}[ةه]', "Form III مُفَاعَلَةٌ pattern"),
-        (r'^إ.{2,3}[لن]', "Form IV إِفْعَالٌ pattern"),
-        (r'^ت.{2,3}[لن]', "Form V تَفَعُّلٌ pattern"),
-        (r'^م.{2,3}ة', "Derived noun with م prefix"),
+        (r"^ت.{2,3}ي[لن]", "Form II تَفْعِيلٌ pattern"),
+        (r"^م.{2,3}[ةه]", "Form III مُفَاعَلَةٌ pattern"),
+        (r"^إ.{2,3}[لن]", "Form IV إِفْعَالٌ pattern"),
+        (r"^ت.{2,3}[لن]", "Form V تَفَعُّلٌ pattern"),
+        (r"^م.{2,3}ة", "Derived noun with م prefix"),
     ]
 
     for pattern, desc in form_patterns:
@@ -45,10 +49,10 @@ def check_root_pattern(arabic_word: str) -> tuple[Literal["definite_derived", "l
     # LIKELY DERIVED: Verbal noun patterns (فَعَالٌ, فُعُولٌ, فَعَالَةٌ)
     # These have long vowels in middle indicating noun pattern
     noun_patterns = [
-        (r'^.َ.َا.', "فَعَالٌ pattern (verbal noun)"),
-        (r'^.ُ.ُو.', "فُعُولٌ pattern (verbal noun)"),
-        (r'^.َ.َا.', "فَعَال pattern (masdar)"),
-        (r'^.َ.ْ.َا.', "فَعْلَاء pattern"),
+        (r"^.َ.َا.", "فَعَالٌ pattern (verbal noun)"),
+        (r"^.ُ.ُو.", "فُعُولٌ pattern (verbal noun)"),
+        (r"^.َ.َا.", "فَعَال pattern (masdar)"),
+        (r"^.َ.ْ.َا.", "فَعْلَاء pattern"),
     ]
 
     for pattern, desc in noun_patterns:
@@ -58,9 +62,9 @@ def check_root_pattern(arabic_word: str) -> tuple[Literal["definite_derived", "l
     # LIKELY CORRECT: Simple trilateral verb patterns (فَعَلَ, فَعِلَ, فَعُلَ)
     # Past tense Form I verbs - the standard root form
     verb_patterns = [
-        r'^.َ.َ.$',  # فَعَلَ
-        r'^.َ.ِ.$',  # فَعِلَ
-        r'^.َ.ُ.$',  # فَعُلَ
+        r"^.َ.َ.$",  # فَعَلَ
+        r"^.َ.ِ.$",  # فَعِلَ
+        r"^.َ.ُ.$",  # فَعُلَ
     ]
 
     for pattern in verb_patterns:
@@ -69,7 +73,7 @@ def check_root_pattern(arabic_word: str) -> tuple[Literal["definite_derived", "l
 
     # LIKELY CORRECT: Simple nouns without obvious derived markers
     # Words like قَلْبٌ (heart), رَأْيٌ (opinion) - basic nominal roots
-    if len(base_word) <= 4 and 'ا' not in base_word[1:] and 'و' not in base_word[1:]:
+    if len(base_word) <= 4 and "ا" not in base_word[1:] and "و" not in base_word[1:]:
         return ("likely_correct", f"Simple noun pattern: {arabic_word}")
 
     # UNCERTAIN: Needs AI review
@@ -85,7 +89,7 @@ def batch_check_roots(roots_data: list[dict]) -> dict[str, list[dict]]:
     Returns:
         dict: Categorized roots by classification
     """
-    categorized = {
+    categorized: dict[str, list[tuple[str, str]]] = {
         "definite_derived": [],
         "likely_derived": [],
         "uncertain": [],
@@ -93,7 +97,7 @@ def batch_check_roots(roots_data: list[dict]) -> dict[str, list[dict]]:
     }
 
     for root in roots_data:
-        classification, reason = check_root_pattern(root['current_letters'])
+        classification, reason = check_root_pattern(root["current_letters"])
         root_info = {
             **root,
             "classification": classification,

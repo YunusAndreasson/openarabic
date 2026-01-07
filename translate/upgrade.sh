@@ -14,7 +14,7 @@ PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Get the absolute path to the translate directory
-TRANSLATE_DIR="/home/yunus/Desktop/oa3/translate"
+TRANSLATE_DIR="/home/yunus/Work/open-arabic/translate"
 
 echo -e "${BLUE}🚀 Starting Python package upgrade for translation pipeline${NC}"
 echo -e "${PURPLE}Using uv package manager for lightning-fast updates${NC}"

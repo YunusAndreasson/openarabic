@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Test specific roots to verify CAMeL analysis and AI suggestions."""
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Load API keys
 try:
     import importlib.util
+
     set_keys_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "utils",
@@ -22,10 +23,10 @@ try:
 except Exception:
     pass
 
-from utils.camel_analyzer import CamelRootAnalyzer
-from utils.validation_db import fetch_roots_for_validation
-from utils.openrouter_client import OpenRouterClient
 from data.validation_models import RootValidationBatchResponse
+from utils.camel_analyzer import CamelRootAnalyzer
+from utils.openrouter_client import OpenRouterClient
+from utils.validation_db import fetch_roots_for_validation
 
 # Test specific problematic roots
 test_root_ids = [
@@ -35,9 +36,9 @@ test_root_ids = [
     5200,  # تَوْفِيقٌ = "success" (our fixed example)
 ]
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("TESTING SPECIFIC ROOTS")
-print("="*80 + "\n")
+print("=" * 80 + "\n")
 
 # Fetch roots
 roots_data = fetch_roots_for_validation(test_root_ids)
@@ -70,9 +71,9 @@ for root in roots_data:
         print("  No CAMeL analysis available")
 
 # Run AI validation
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("AI VALIDATION RESULTS")
-print("="*80 + "\n")
+print("=" * 80 + "\n")
 
 client = OpenRouterClient()
 response = client.validate_roots_batch(roots_data, retry_count=0)

@@ -30,8 +30,11 @@ from elevenlabs import VoiceSettings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Load API keys (imported for side effects)
 try:
-    import utils.set_keys
+    import utils.set_keys as _set_keys  # noqa: F401
+
+    del _set_keys  # Cleanup namespace, import was for side effects only
 except ImportError:
     pass
 
@@ -44,7 +47,9 @@ from data.config import (
 from utils.responses_api import load_api_keys
 from utils.storage_utils import generate_audio_filename, get_supabase_client
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 load_api_keys()
@@ -53,11 +58,11 @@ os.makedirs(AUDIO_TEMP_DIR, exist_ok=True)
 
 # OPTIMAL QUALITY SETTINGS (discovered through testing)
 OPTIMAL_SETTINGS = {
-    "stability": 1.0,            # Robust stability (must be 0.0, 0.5, or 1.0 per ElevenLabs API)
-    "similarity_boost": 1.0,     # Maximum similarity to original voice
-    "style": 0.0,                # No exaggeration, pure neutral
-    "use_speaker_boost": True,   # Enhanced clarity
-    "speed": 0.85,               # Slower for better clarity
+    "stability": 1.0,  # Robust stability (must be 0.0, 0.5, or 1.0 per ElevenLabs API)
+    "similarity_boost": 1.0,  # Maximum similarity to original voice
+    "style": 0.0,  # No exaggeration, pure neutral
+    "use_speaker_boost": True,  # Enhanced clarity
+    "speed": 0.85,  # Slower for better clarity
 }
 
 
@@ -67,21 +72,21 @@ def clean_text_for_tts(text: str) -> str:
     Removes problematic punctuation and formatting.
     """
     # Remove multiple dots (...)
-    text = re.sub(r'\.{2,}', '.', text)
+    text = re.sub(r"\.{2,}", ".", text)
 
     # Remove excessive exclamation/question marks
-    text = re.sub(r'!{2,}', '!', text)
-    text = re.sub(r'\?{2,}', '?', text)
+    text = re.sub(r"!{2,}", "!", text)
+    text = re.sub(r"\?{2,}", "?", text)
 
     # Remove question+exclamation combos that can confuse TTS
-    text = re.sub(r'\?\!+', '?', text)
-    text = re.sub(r'\!\?+', '!', text)
+    text = re.sub(r"\?\!+", "?", text)
+    text = re.sub(r"\!\?+", "!", text)
 
     # Clean up spaces
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"\s+", " ", text).strip()
 
     # Ensure single space after punctuation
-    text = re.sub(r'([.!?])\s*([A-Z])', r'\1 \2', text)
+    text = re.sub(r"([.!?])\s*([A-Z])", r"\1 \2", text)
 
     return text
 
@@ -89,7 +94,7 @@ def clean_text_for_tts(text: str) -> str:
 def download_audio_from_url(audio_url: str) -> bytes | None:
     """Download audio from Supabase storage."""
     try:
-        if not audio_url.startswith('http'):
+        if not audio_url.startswith("http"):
             supabase_url = os.getenv("SUPABASE_URL")
             audio_url = f"{supabase_url}/storage/v1/object/public/audio/{audio_url}"
 
@@ -106,8 +111,7 @@ def upload_audio_to_storage(audio_data: bytes, filename: str) -> str | None:
     try:
         client = get_supabase_client()
         client.storage.from_("audio").upload(
-            filename, audio_data,
-            file_options={"content-type": "audio/mpeg"}
+            filename, audio_data, file_options={"content-type": "audio/mpeg"}
         )
         logger.info(f"✓ Uploaded: {filename}")
         return filename
@@ -117,16 +121,14 @@ def upload_audio_to_storage(audio_data: bytes, filename: str) -> str | None:
 
 
 def regenerate_sentence(
-    sentence_id: int,
-    english_text: str,
-    arabic_audio_url: str
+    sentence_id: int, english_text: str, arabic_audio_url: str
 ) -> dict[str, str | None]:
     """
     Regenerate sentence audio with optimal quality settings.
     """
     logger.info(f"Processing sentence {sentence_id}")
 
-    result = {'english_url': None, 'bilingual_url': None}
+    result = {"english_url": None, "bilingual_url": None}
 
     try:
         # Clean the text for TTS
@@ -168,14 +170,14 @@ def regenerate_sentence(
         if not english_url:
             return result
 
-        result['english_url'] = english_filename
+        result["english_url"] = english_filename
 
         # Upload bilingual audio
         bilingual_filename = generate_audio_filename()
         bilingual_url = upload_audio_to_storage(bilingual_audio, bilingual_filename)
 
         if bilingual_url:
-            result['bilingual_url'] = bilingual_filename
+            result["bilingual_url"] = bilingual_filename
             logger.info(f"✓ Sentence {sentence_id} completed successfully")
 
         return result
@@ -185,7 +187,7 @@ def regenerate_sentence(
         return result
 
 
-def main():
+def main() -> None:
     logger.info("=" * 80)
     logger.info("Sentence Audio Regeneration - OPTIMAL QUALITY")
     logger.info("Settings:")
@@ -200,10 +202,12 @@ def main():
         client = get_supabase_client()
 
         # Get sentences with english_repeat = TRUE
-        response = client.table("article_sentences") \
-            .select("id, english, audio_url") \
-            .eq("english_repeat", True) \
+        response = (
+            client.table("article_sentences")
+            .select("id, english, audio_url")
+            .eq("english_repeat", True)
             .execute()
+        )
 
         sentences = response.data
 
@@ -221,21 +225,20 @@ def main():
             logger.info(f"  Text: {sentence['english'][:80]}...")
 
             result = regenerate_sentence(
-                sentence_id=sentence['id'],
-                english_text=sentence['english'],
-                arabic_audio_url=sentence['audio_url']
+                sentence_id=sentence["id"],
+                english_text=sentence["english"],
+                arabic_audio_url=sentence["audio_url"],
             )
 
-            if result['english_url'] and result['bilingual_url']:
+            if result["english_url"] and result["bilingual_url"]:
                 # Update database
                 try:
-                    client.table("article_sentences") \
-                        .update({
-                            'audio_url_english': result['english_url'],
-                            'audio_url_bilingual': result['bilingual_url'],
-                        }) \
-                        .eq('id', sentence['id']) \
-                        .execute()
+                    client.table("article_sentences").update(
+                        {
+                            "audio_url_english": result["english_url"],
+                            "audio_url_bilingual": result["bilingual_url"],
+                        }
+                    ).eq("id", sentence["id"]).execute()
                     successful += 1
                 except Exception as e:
                     logger.error(f"Database update failed: {e}")

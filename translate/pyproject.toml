@@ -111,6 +111,18 @@ known-first-party = ["translate"]
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/**/*" = ["B011", "S101", "ARG001", "ARG005"]
+# CLI scripts and utilities where print is appropriate
+"check_recent_improvements.py" = ["T201", "S110"]
+"clear_old_improvements.py" = ["T201", "S110"]
+"evaluate_and_generate_word_audio.py" = ["T201"]
+"test_specific_roots.py" = ["T201", "S110"]
+"regenerate_sentences.py" = ["T201", "F401"]
+"regenerate_articles.py" = ["F401", "C401"]
+"scripts/convert_images_to_webp.py" = ["DTZ005"]
+"pipeline/validate*.py" = ["T201", "S110"]
+"pipeline/check_validations.py" = ["T201"]
+"utils/root_pattern_checker.py" = ["T201"]
+"utils/validation_db.py" = ["T201", "N806", "F841"]
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.

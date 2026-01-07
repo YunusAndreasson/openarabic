@@ -4,8 +4,8 @@ CAMeL Tools morphological analyzer for Arabic roots.
 Provides linguistic analysis to improve AI validation accuracy.
 """
 
-from camel_tools.morphology.database import MorphologyDB
 from camel_tools.morphology.analyzer import Analyzer
+from camel_tools.morphology.database import MorphologyDB
 
 
 class CamelRootAnalyzer:
@@ -23,7 +23,7 @@ class CamelRootAnalyzer:
         "{": "ؤ",  # hamza on waw
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize CAMeL Tools analyzer."""
         self.db = MorphologyDB.builtin_db()
         self.analyzer = Analyzer(self.db)
@@ -131,7 +131,9 @@ class CamelRootAnalyzer:
             "مُتَ1َ2ِّ3",  # Form V active participle: مُتَفَعِّل
         ]
 
-        all_derived_patterns = form_i_patterns + higher_form_patterns + participle_patterns
+        all_derived_patterns = (
+            form_i_patterns + higher_form_patterns + participle_patterns
+        )
 
         # If it's a noun with a derived pattern, likely derived
         if "noun" in pos.lower():
@@ -179,7 +181,9 @@ class CamelRootAnalyzer:
             return None
 
 
-def batch_analyze_roots(roots_data: list[dict], analyzer: CamelRootAnalyzer | None = None) -> list[dict]:
+def batch_analyze_roots(
+    roots_data: list[dict], analyzer: CamelRootAnalyzer | None = None
+) -> list[dict]:
     """Add CAMeL Tools analysis to roots data.
 
     Args:

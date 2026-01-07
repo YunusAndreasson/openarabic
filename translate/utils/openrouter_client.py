@@ -19,9 +19,7 @@ logger = logging.getLogger(__name__)
 class OpenRouterClient:
     """Client for OpenRouter API using DeepSeek model."""
 
-    def __init__(
-        self, api_key: str | None = None, model: str | None = None
-    ) -> None:
+    def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
         """Initialize OpenRouter client.
 
         Args:
@@ -87,7 +85,9 @@ class OpenRouterClient:
             raise
         except requests.exceptions.HTTPError as e:
             logger.error(f"OpenRouter API HTTP error: {e}")
-            logger.error(f"Response: {e.response.text if e.response else 'No response'}")
+            logger.error(
+                f"Response: {e.response.text if e.response else 'No response'}"
+            )
             raise
         except Exception as e:
             logger.error(f"OpenRouter API call failed: {e}")

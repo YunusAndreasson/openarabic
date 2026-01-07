@@ -101,12 +101,14 @@ def validate_root_batch(
 
         if verbose:
             logger.info(f"Fetched {len(roots_data)} roots with example sentences")
-            print("\n" + "="*80)
+            print("\n" + "=" * 80)
             print("VALIDATION INPUT:")
-            print("="*80)
+            print("=" * 80)
             for root in roots_data:
                 print(f"\nRoot ID {root['root_id']}:")
-                print(f"  Current: {root['current_letters']} = \"{root['current_meaning']}\"")
+                print(
+                    f'  Current: {root["current_letters"]} = "{root["current_meaning"]}"'
+                )
                 print(f"  Examples: {len(root['examples'])} sentences")
 
         # Create client if not provided
@@ -127,28 +129,38 @@ def validate_root_batch(
 
         # Log validation results
         if verbose:
-            print("\n" + "="*80)
+            print("\n" + "=" * 80)
             print("VALIDATION RESULTS:")
-            print("="*80)
+            print("=" * 80)
             for validation in validations:
-                root_data = next((r for r in roots_data if r['root_id'] == validation['root_id']), {})
+                root_data = next(
+                    (r for r in roots_data if r["root_id"] == validation["root_id"]), {}
+                )
                 print(f"\nRoot ID {validation['root_id']}:")
-                print(f"  Current: {root_data.get('current_letters')} = \"{root_data.get('current_meaning')}\"")
+                print(
+                    f'  Current: {root_data.get("current_letters")} = "{root_data.get("current_meaning")}"'
+                )
                 print(f"  Is Correct: {validation['is_correct']}")
 
-                if not validation['is_correct']:
-                    if validation.get('suggested_english'):
-                        print(f"  ❌ English: \"{root_data.get('current_meaning')}\" → \"{validation['suggested_english']}\"")
-                    if validation.get('suggested_tashkeel'):
-                        print(f"  ❌ Tashkeel: {root_data.get('current_letters')} → {validation['suggested_tashkeel']}")
+                if not validation["is_correct"]:
+                    if validation.get("suggested_english"):
+                        print(
+                            f'  ❌ English: "{root_data.get("current_meaning")}" → "{validation["suggested_english"]}"'
+                        )
+                    if validation.get("suggested_tashkeel"):
+                        print(
+                            f"  ❌ Tashkeel: {root_data.get('current_letters')} → {validation['suggested_tashkeel']}"
+                        )
                     print(f"  Issues: {', '.join(validation['issues'])}")
                 else:
-                    print(f"  ✅ Accepted as correct")
+                    print("  ✅ Accepted as correct")
 
                 # Show reasoning (first 200 chars)
-                reasoning = validation.get('reasoning', '')
-                print(f"  Reasoning: {reasoning[:200]}{'...' if len(reasoning) > 200 else ''}")
-            print("="*80 + "\n")
+                reasoning = validation.get("reasoning", "")
+                print(
+                    f"  Reasoning: {reasoning[:200]}{'...' if len(reasoning) > 200 else ''}"
+                )
+            print("=" * 80 + "\n")
 
         # Save validations to database
         saved_count, skipped_count = save_root_validation_improvements(
@@ -201,7 +213,9 @@ def _validate_with_retry(
                 continue
             else:
                 if verbose:
-                    logger.error(f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}")
+                    logger.error(
+                        f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}"
+                    )
                 return None
 
         except Exception as e:

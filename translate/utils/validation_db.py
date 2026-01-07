@@ -81,12 +81,14 @@ def fetch_article_words_for_validation(article_id: int) -> list[dict[str, Any]]:
                 words_data.append(word_dict)
 
             if words_data:  # Only include sentences that have words
-                sentences_with_words.append({
-                    "sentence_id": sentence_id,
-                    "sentence_arabic": sentence_data["arabic"],
-                    "sentence_english": sentence_data["english"],
-                    "words_data": words_data,
-                })
+                sentences_with_words.append(
+                    {
+                        "sentence_id": sentence_id,
+                        "sentence_arabic": sentence_data["arabic"],
+                        "sentence_english": sentence_data["english"],
+                        "words_data": words_data,
+                    }
+                )
 
         total_words = sum(len(s["words_data"]) for s in sentences_with_words)
         logger.info(
@@ -160,13 +162,15 @@ def save_validation_improvements(
             records_to_insert.append(record)
 
         if not records_to_insert:
-            logger.info(f"No improvements needed - all {skipped_count} words are correct")
+            logger.info(
+                f"No improvements needed - all {skipped_count} words are correct"
+            )
             return 0, skipped_count
 
         # Bulk insert into translation_improvements
-        response = client.table("translation_improvements").insert(
-            records_to_insert
-        ).execute()
+        response = (
+            client.table("translation_improvements").insert(records_to_insert).execute()
+        )
 
         saved_count = len(response.data) if response.data else 0
 
@@ -220,7 +224,9 @@ def get_article_title(article_id: int) -> str | None:
     try:
         client = get_supabase_client()
 
-        response = client.table("articles").select("title").eq("id", article_id).execute()
+        response = (
+            client.table("articles").select("title").eq("id", article_id).execute()
+        )
 
         if response.data and len(response.data) > 0:
             return response.data[0]["title"]
@@ -231,7 +237,9 @@ def get_article_title(article_id: int) -> str | None:
         return None
 
 
-def fetch_roots_for_validation(root_ids: list[int] | None = None) -> list[dict[str, Any]]:
+def fetch_roots_for_validation(
+    root_ids: list[int] | None = None,
+) -> list[dict[str, Any]]:
     """Fetch roots with example sentences for validation.
 
     Args:
@@ -255,7 +263,7 @@ def fetch_roots_for_validation(root_ids: list[int] | None = None) -> list[dict[s
         if root_ids and len(root_ids) > CHUNK_SIZE:
             # Process in chunks
             for i in range(0, len(root_ids), CHUNK_SIZE):
-                chunk = root_ids[i:i+CHUNK_SIZE]
+                chunk = root_ids[i : i + CHUNK_SIZE]
                 chunk_response = (
                     client.table("roots")
                     .select("id, letters, meaning")
@@ -299,11 +307,13 @@ def fetch_roots_for_validation(root_ids: list[int] | None = None) -> list[dict[s
                             if isinstance(example["sentence"], list)
                             else example["sentence"]
                         )
-                        examples.append({
-                            "word_form": example["word_form"],
-                            "sentence_arabic": sentence["arabic"],
-                            "sentence_english": sentence["english"],
-                        })
+                        examples.append(
+                            {
+                                "word_form": example["word_form"],
+                                "sentence_arabic": sentence["arabic"],
+                                "sentence_english": sentence["english"],
+                            }
+                        )
 
             root_data = {
                 "root_id": root_id,
@@ -389,13 +399,17 @@ def save_root_validation_improvements(
             records_to_insert.append(record)
 
         if not records_to_insert:
-            logger.info(f"No improvements needed - all {skipped_count} roots are correct")
+            logger.info(
+                f"No improvements needed - all {skipped_count} roots are correct"
+            )
             return 0, skipped_count
 
         # Bulk insert into root_translation_improvements
-        response = client.table("root_translation_improvements").insert(
-            records_to_insert
-        ).execute()
+        response = (
+            client.table("root_translation_improvements")
+            .insert(records_to_insert)
+            .execute()
+        )
 
         saved_count = len(response.data) if response.data else 0
 
