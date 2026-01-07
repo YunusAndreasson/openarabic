@@ -9,9 +9,7 @@ from .config_common import (
     validate_required_config,
 )
 from .database_common import (
-    check_record_exists,
     get_table_record,
-    get_table_records,
     insert_table_record,
     update_table_record,
 )
@@ -67,9 +65,7 @@ __all__ = [
     "get_voice_config",
     "validate_required_config",
     # Database common utilities
-    "check_record_exists",
     "get_table_record",
-    "get_table_records",
     "insert_table_record",
     "update_table_record",
     # Database utilities

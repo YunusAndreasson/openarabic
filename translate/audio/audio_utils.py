@@ -32,7 +32,6 @@ from data.config import (
     ENGLISH_VOICE_SETTINGS,
     GOOGLE_CLOUD_CREDENTIALS_PATH,
 )
-from data.models import AudioResult
 from utils.arabic_text import clean_text_for_tts
 from utils.config_common import get_storage_url
 from utils.exceptions import AudioGenerationError
@@ -476,77 +475,6 @@ def generate_english_word_audio(
         return None
 
 
-def generate_sentence_audio(
-    text: str,
-    filename: str,
-    tashkeel_text: str | None = None,
-) -> AudioResult | None:
-    """
-    Generate audio for a sentence using ElevenLabs, with optional tashkeel.
-    Returns an AudioResult object with URL.
-    """
-    try:
-        # Check if audio already exists in storage to avoid duplicate generation
-        if check_file_exists("audio", filename):
-            url = get_storage_url(filename)
-            return AudioResult(
-                url=url,
-                filename=filename,
-                duration=0.0,  # Duration not available without generating
-            )
-
-        # Prefer tashkeel text if available
-        tts_text = tashkeel_text if tashkeel_text else text
-        # Use the main voice for sentences
-        voice_id = ARABIC_VOICE_ID
-
-        # Generate audio using unified function
-        response = generate_speech(
-            text=tts_text,
-            voice_id=voice_id,
-            voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
-        )
-        # Extract audio data
-        audio_data = response.get("audio") if response else None
-        if not audio_data:
-            logger.error("No audio data returned from TTS API")
-            return None
-        # Validate and save audio
-        if not validate_mp3(audio_data):
-            logger.error("Invalid MP3 data returned from TTS API")
-            return None
-        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
-        with open(temp_audio_path, "wb") as f:
-            f.write(audio_data)
-
-        # Upload to Supabase storage (double-check existence to prevent duplicates)
-        if not check_file_exists("audio", filename):
-            with open(temp_audio_path, "rb") as f:
-                get_supabase_client().storage.from_("audio").upload(
-                    filename,
-                    f,
-                    file_options={"content-type": "audio/mpeg"},
-                )
-            # Audio file uploaded successfully
-        else:
-            logger.info(
-                f"Sentence audio file {filename} already exists in storage, skipping upload"
-            )
-
-        url = get_storage_url(filename)
-        if os.path.exists(temp_audio_path):
-            os.remove(temp_audio_path)
-
-        return AudioResult(
-            url=url,
-            filename=filename,
-            duration=response.get("duration") if response else 0.0,
-        )
-    except Exception as e:
-        logger.error(f"Error generating sentence audio: {str(e)}")
-        return None
-
-
 def create_bilingual_audio(
     english_audio: bytes,
     arabic_audio: bytes,
@@ -986,7 +914,6 @@ def process_word_audio_for_latest_articles() -> bool:
         import os
 
         from dotenv import load_dotenv
-
         from supabase import create_client
 
         load_dotenv()

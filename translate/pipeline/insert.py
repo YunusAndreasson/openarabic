@@ -5,7 +5,6 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -61,104 +60,6 @@ except Exception as e:
 logger = logging.getLogger(__name__)
 
 load_api_keys()
-
-
-def generate_article_audio(
-    article_id: int,
-    translations: list[SentenceTranslation],
-    progress_tracker: Any = None,
-) -> None:
-    """Generate article-level audio files in one streamlined pass."""
-    if not AUDIO_AVAILABLE:
-        logger.warning(
-            "Audio generation not available - skipping article audio generation"
-        )
-        return
-
-    use_progress = progress_tracker is not None
-    temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_audio")
-    os.makedirs(temp_dir, exist_ok=True)
-
-    try:
-        # Prepare sentence data for the new streamlined function
-        sentences = []
-        for i, translation in enumerate(translations):
-            if use_progress:
-                progress_tracker.set_description(
-                    f"Preparing sentence {i + 1}/{len(translations)} for audio generation"
-                )
-                progress_tracker.update(1)
-
-            sentences.append(
-                {
-                    "arabic_text": translation.tashkeel or translation.original,
-                    "english_text": translation.full_translation,
-                    "tashkeel": translation.tashkeel,
-                }
-            )
-
-        # Get article metadata for bilingual audio intro
-        try:
-            article_data = (
-                get_supabase_client()
-                .table("articles")
-                .select("title, summary")
-                .eq("id", article_id)
-                .execute()
-            )
-            if article_data.data:
-                article_title = article_data.data[0].get("title")
-                article_summary = article_data.data[0].get("summary")
-            else:
-                article_title = None
-                article_summary = None
-        except Exception as e:
-            logger.warning(f"Could not fetch article metadata: {e}")
-            article_title = None
-            article_summary = None
-
-        # Create article audio files in one pass
-        # Create article audio files
-        audio_urls = create_article_audio(
-            sentences=sentences,
-            article_title=article_title,
-            article_summary=article_summary,
-            output_dir=temp_dir,
-        )
-
-        if not audio_urls:
-            logger.warning("Failed to create article audio files")
-            return
-
-        # Update database with article-level audio URLs and timestamps
-        try:
-            update_data = {
-                "audio_url": audio_urls["arabic_url"],
-                "audio_url_bilingual": audio_urls["bilingual_url"],
-            }
-
-            get_supabase_client().table("articles").update(update_data).eq(
-                "id", article_id
-            ).execute()
-
-            logger.info(
-                "Article audio URLs and timestamps updated in database successfully"
-            )
-
-        except Exception as e:
-            logger.error(f"Failed to update article audio URLs: {e}")
-            # Don't raise exception - continue without updating audio URLs
-
-        # Clean up temporary directory
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-
-    except Exception as e:
-        # Clean up on error
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
-        logger.error(f"Failed to generate article audio: {e}")
-        # Don't raise exception - return gracefully
 
 
 def detect_author_from_file_path(file_path: str) -> tuple[str, int]:

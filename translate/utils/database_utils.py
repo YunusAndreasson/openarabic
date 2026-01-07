@@ -229,22 +229,6 @@ def insert_sentence_words(
     }
 
 
-def get_adjacent_texts(
-    translations: list[dict],
-    idx: int,
-) -> tuple[str | None, str | None]:
-    """Return previous and next sentence text for context."""
-    prev_text = None
-    next_text = None
-    if idx > 0:
-        prev = translations[idx - 1]
-        prev_text = prev.get("tashkeel", prev.get("original"))
-    if idx < len(translations) - 1:
-        nxt = translations[idx + 1]
-        next_text = nxt.get("tashkeel", nxt.get("original"))
-    return prev_text, next_text
-
-
 def cleanup_temp_files(files: list[str], temp_dir: str) -> None:
     """Remove temporary files and directory if possible."""
     for file in files:

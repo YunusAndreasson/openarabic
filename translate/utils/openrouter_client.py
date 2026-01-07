@@ -1006,12 +1006,3 @@ You are ONLY checking: (1) Is tashkeel missing? (2) Is English translation bad?
 Return ONLY the JSON object. No markdown, no code blocks, no extra text."""
 
         return prompt
-
-
-def create_validation_client() -> OpenRouterClient:
-    """Create a configured OpenRouter client for validation.
-
-    Returns:
-        OpenRouterClient: Configured client
-    """
-    return OpenRouterClient()

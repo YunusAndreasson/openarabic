@@ -139,26 +139,10 @@ def run_translation(
 ) -> None:
     """Run the full translation pipeline."""
     if not translate_text(
-        input_file, output_file, batch_size, use_conversation_continuity=True
+        input_file, output_file, batch_size, use_conversation_continuity=use_conversation_continuity
     ):
         logger.error("❌ Translation failed.")
         raise RuntimeError("Translation failed.")
-
-
-def run_insert_only() -> None:
-    """Run only the database insertion step."""
-
-    # Load API keys to ensure environment variables are set
-    from utils.responses_api import load_api_keys
-
-    load_api_keys()
-
-    # Run the insertion step using the subprocess utility
-    run_pipeline_step(
-        script_path="pipeline/insert.py",
-        description="database insertion",
-        cwd=os.path.dirname(os.path.abspath(__file__)),
-    )
 
 
 def run_split_file_for_all(input_files: list[tuple[str, str, str]]) -> None:
