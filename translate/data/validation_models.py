@@ -5,11 +5,13 @@ These models define the structure for validation requests and responses
 when using the DeepSeek API through OpenRouter.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class WordValidationRequest(BaseModel):
     """Request data for validating a single word translation."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
 
     word_id: int = Field(description="Database ID of the sentence_word record")
     arabic_word: str = Field(description="Arabic word form to validate")
@@ -23,6 +25,8 @@ class WordValidationRequest(BaseModel):
 
 class WordValidationResponse(BaseModel):
     """Response data from validating a single word translation."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
 
     word_id: int = Field(description="Database ID of the sentence_word record")
     is_correct: bool = Field(
@@ -48,6 +52,8 @@ class WordValidationResponse(BaseModel):
 class ValidationBatchResponse(BaseModel):
     """Response containing validation results for a batch of words."""
 
+    model_config = ConfigDict(strict=True, extra="forbid")
+
     validations: list[WordValidationResponse] = Field(
         description="List of validation results, one per input word"
     )
@@ -55,6 +61,8 @@ class ValidationBatchResponse(BaseModel):
 
 class ValidationImprovement(BaseModel):
     """Model for saving validation improvements to database."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
 
     sentence_word_id: int = Field(description="Foreign key to sentence_words table")
     original_english: str = Field(description="Original English translation")
@@ -70,6 +78,8 @@ class ValidationImprovement(BaseModel):
 class RootExampleSentence(BaseModel):
     """Example sentence showing a root in use."""
 
+    model_config = ConfigDict(strict=True, extra="forbid")
+
     word_form: str = Field(description="Derived word form using this root")
     sentence_arabic: str = Field(description="Arabic sentence containing the word")
     sentence_english: str = Field(description="English translation of sentence")
@@ -77,6 +87,8 @@ class RootExampleSentence(BaseModel):
 
 class RootValidationRequest(BaseModel):
     """Request data for validating a root translation."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
 
     root_id: int = Field(description="Database ID of the root record")
     current_letters: str = Field(
@@ -91,6 +103,8 @@ class RootValidationRequest(BaseModel):
 
 class RootValidationResponse(BaseModel):
     """Response data from validating a single root translation."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
 
     root_id: int = Field(description="Database ID of the root record")
     is_correct: bool = Field(
@@ -115,6 +129,8 @@ class RootValidationResponse(BaseModel):
 
 class RootValidationBatchResponse(BaseModel):
     """Response containing validation results for a batch of roots."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
 
     validations: list[RootValidationResponse] = Field(
         description="List of validation results, one per input root"

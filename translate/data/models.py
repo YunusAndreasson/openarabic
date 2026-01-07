@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .enums import (
     DifficultyLevel,
@@ -15,11 +15,12 @@ from .enums import (
 class Uncertainty(BaseModel):
     """Unified uncertainty model that handles all types of uncertainties in the translation pipeline"""
 
-    model_config = {
-        "use_enum_values": True,
-        "extra": "forbid",
-        "validate_assignment": True,
-    }
+    model_config = ConfigDict(
+        strict=True,
+        use_enum_values=True,
+        extra="forbid",
+        validate_assignment=True,
+    )
 
     # Core uncertainty fields - simplified since database handles constraints
     text: str = Field(
@@ -110,11 +111,12 @@ RemainingUncertainty = Uncertainty
 class WordTranslation(BaseModel):
     """Unified word-level translation model that handles both single translations and translation options"""
 
-    model_config = {
-        "use_enum_values": True,
-        "extra": "forbid",
-        "validate_assignment": True,
-    }
+    model_config = ConfigDict(
+        strict=True,
+        use_enum_values=True,
+        extra="forbid",
+        validate_assignment=True,
+    )
 
     arabic: str = Field(description="Original Arabic word. Preserve exact formatting.")
     english: str | list[str] = Field(
@@ -423,11 +425,12 @@ class SentenceTranslation(BaseModel):
 class TextMetadata(BaseModel):
     """Base metadata about text content"""
 
-    model_config = {
-        "use_enum_values": True,
-        "extra": "forbid",
-        "validate_assignment": True,
-    }
+    model_config = ConfigDict(
+        strict=True,
+        use_enum_values=True,
+        extra="forbid",
+        validate_assignment=True,
+    )
 
     title: str = Field(description="Concise English title (3–7 words)")
     summary: str = Field(description="One-sentence summary of main content")
@@ -513,11 +516,12 @@ class BilingualAudioResult(BaseModel):
 class ArticleData(BaseModel):
     """Data structure for article insertion"""
 
-    model_config = {
-        "use_enum_values": True,
-        "extra": "forbid",
-        "validate_assignment": True,
-    }
+    model_config = ConfigDict(
+        strict=True,
+        use_enum_values=True,
+        extra="forbid",
+        validate_assignment=True,
+    )
 
     title: str = Field(description="Article title")
     summary: str = Field(description="Article summary")
