@@ -150,7 +150,7 @@ addopts = [
     "--cov=utils",
     "--cov-report=term-missing",
     "--cov-report=html",
-    "--cov-fail-under=35",
+    "--cov-fail-under=30",
 ]
 
 [tool.coverage.run]

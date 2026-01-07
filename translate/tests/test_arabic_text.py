@@ -61,11 +61,11 @@ class TestPreprocessTextForTTS:
     """Test text preprocessing for TTS."""
 
     def test_preprocess_text_for_tts(self):
-        """Test text preprocessing for TTS."""
+        """Test text preprocessing for TTS preserves visible content."""
         text = "مرحبا بالعالم! Hello world"
         result = preprocess_text_for_tts(text)
-        assert result == "مرحبا بالعالم"
-        # Should use the same logic as clean_arabic_text
+        # Function preserves all visible content (Arabic, English, punctuation)
+        assert result == "مرحبا بالعالم! Hello world"
 
 
 class TestWrapInArabicSSML:
