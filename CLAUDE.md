@@ -1,7 +1,5 @@
 # OpenArabic - Claude Code Development Guide
 
-**Version**: `1447.4.19+151` (Islamic Calendar Versioning)
-
 React Native Arabic language learning app with spaced repetition, audio features, and intelligent article filtering.
 
 ## Codebase Scope
@@ -12,8 +10,6 @@ This CLAUDE.md applies to the **React Native mobile app only**.
 - `admin-dashboard/` - Next.js admin panel
 - `translate/` - Python translation pipeline
 - `publish/` - Python social media scripts
-
-When searching, exclude: `--exclude-dir=admin-dashboard --exclude-dir=translate --exclude-dir=publish`
 
 ## Core Principles
 
@@ -52,13 +48,16 @@ When searching, exclude: `--exclude-dir=admin-dashboard --exclude-dir=translate 
 ### Critical Constants Files
 
 - **[database.types.ts](types/database.types.ts)** - Supabase table types
-- **[Colors.ts](constants/Colors.ts)** - Theme system, semantic colors
+- **[colors.ts](constants/colors.ts)** - Theme system, semantic colors
 - **[layout.ts](constants/layout.ts)** - Typography, spacing, shadows
 - **[strings.ts](constants/strings.ts)** - All user-facing text
 - **[fsrs.ts](constants/fsrs.ts)** - Spaced repetition constants
 - **[routes.ts](constants/routes.ts)** - Route path constants
 - **[animation.ts](constants/animation.ts)** - Timing configurations
 - **[arabicWordComponents.ts](constants/arabicWordComponents.ts)** - Arabic language rules
+- **[queries.ts](constants/queries.ts)** - TanStack Query factories and cache config
+- **[analytics.ts](constants/analytics.ts)** - Mixpanel event names
+- **[tabs.ts](constants/tabs.ts)** - Tab navigation configuration
 
 ### Required Usage
 
@@ -72,7 +71,7 @@ When searching, exclude: `--exclude-dir=admin-dashboard --exclude-dir=translate 
 
 - **React Native**: 0.81.5 with React 19.1.0
 - **Expo SDK**: 54 with New Architecture enabled
-- **Navigation**: Expo Router v5.1.5
+- **Navigation**: Expo Router v6
 - **State**: Redux Toolkit + TanStack Query + React Context
 - **UI**: @shopify/flash-list, @gorhom/bottom-sheet, react-native-reanimated
 - **Backend**: Supabase JS client
@@ -90,11 +89,11 @@ When searching, exclude: `--exclude-dir=admin-dashboard --exclude-dir=translate 
 ```
 app/
 ├── (tabs)/              # Main tab navigation
-│   ├── listen/          # Audio playback
-│   ├── practice/        # Vocabulary practice
-│   └── read/            # Reading + account
+│   ├── explore/         # Article discovery + reading
+│   ├── playlist/        # Audio playlists
+│   └── practice/        # Vocabulary practice + review
 ├── auth/                # Authentication
-└── study/review.tsx     # Vocabulary review
+└── article/             # Article detail screens
 
 hooks/                   # Custom React hooks
 components/              # Reusable UI components
@@ -123,7 +122,7 @@ Single English words should **NEVER** have grammar color-coding applied. Color-c
 
 ## Navigation
 
-- **CRITICAL**: Always use `/(tabs)` prefix: `/(tabs)/read/article/[id]` not `/article/[id]`
+- **CRITICAL**: Always use `/(tabs)` prefix: `/(tabs)/explore/article/[id]` not `/article/[id]`
 - Use `ROUTE_PATHS` constants from routes.ts
 
 ## Success Criteria
