@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo, useRef } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { RelatedArticlesByFilter } from '@/components/article/RelatedArticlesByFilter';

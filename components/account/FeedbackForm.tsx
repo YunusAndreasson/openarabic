@@ -141,9 +141,9 @@ export const FeedbackForm = memo(() => {
       });
 
       Alert.alert(STRINGS.FEEDBACK_ERROR_TITLE, STRINGS.FEEDBACK_ERROR_MESSAGE, [
-        { text: 'Cancel', style: 'cancel' },
+        { text: STRINGS.CANCEL, style: 'cancel' },
         {
-          text: 'Retry',
+          text: STRINGS.RETRY,
           onPress: () => setIsSubmitting(false),
         },
       ]);

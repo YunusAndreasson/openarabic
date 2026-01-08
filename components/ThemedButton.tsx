@@ -110,7 +110,7 @@ export function ThemedButton({
     variant === 'outlined' && {
       borderWidth: LAYOUT.BORDER.WIDTH.THIN,
       borderColor: isActuallyLoading || disabled ? colors.border : colors.tint,
-      backgroundColor: 'transparent',
+      backgroundColor: colors.transparent,
     },
   ];
 

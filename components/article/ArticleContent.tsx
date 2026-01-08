@@ -12,7 +12,13 @@ import { FloatingActionButtons } from '@/components/article/FloatingActionButton
 import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import { SCROLL_EVENT_THROTTLE, TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET, TEXT_STYLES } from '@/constants/layout';
+import {
+  LAYOUT,
+  LETTER_SPACING,
+  LINE_HEIGHT_MULTIPLIERS,
+  MIN_TOUCH_TARGET,
+  TEXT_STYLES,
+} from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleScrollHandler } from '@/hooks/articles/useArticleScrollHandler';
 import type { Article } from '@/types/articles.types';
@@ -73,8 +79,8 @@ const styles = StyleSheet.create({
   summaryText: {
     textAlign: 'left',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    letterSpacing: 0.2,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4, // Increased from NORMAL for better breathing
+    letterSpacing: LETTER_SPACING.WIDE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL, // Increased from TIGHT for better breathing
   },
   authorText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

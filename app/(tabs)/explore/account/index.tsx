@@ -158,9 +158,9 @@ const AccountScreen: FC = () => {
   // Reset tutorials handler
   const handleResetTutorials = useCallback(async () => {
     Alert.alert(STRINGS.RESET_TUTORIALS_TITLE, STRINGS.RESET_TUTORIALS_MESSAGE, [
-      { text: 'Cancel', style: 'cancel' },
+      { text: STRINGS.CANCEL, style: 'cancel' },
       {
-        text: 'Reset',
+        text: STRINGS.RESET,
         onPress: async () => {
           try {
             await resetAllTutorials();

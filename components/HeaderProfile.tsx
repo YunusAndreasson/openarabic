@@ -103,7 +103,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
         onPressIn={profilePressAnimation.handlePressIn}
         onPressOut={profilePressAnimation.handlePressOut}
         style={styles.profileButton}
-        hitSlop={isIOS ? undefined : { top: 12, bottom: 12, left: 12, right: 12 }}
+        hitSlop={isIOS ? undefined : LAYOUT.HIT_SLOP.MEDIUM}
       >
         <Animated.View style={profilePressAnimation.animatedStyle}>
           {profilePhotoUri ? (

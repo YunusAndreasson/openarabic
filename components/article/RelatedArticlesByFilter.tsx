@@ -1,14 +1,16 @@
 import { useRouter } from 'expo-router';
-import React, { memo, useCallback, useMemo, useRef } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { PlaylistItemCard } from '@/components/playlist';
 import { LAYOUT } from '@/constants/layout';
+import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
+import type { ArticleId } from '@/types/branded.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 import { getArticleMetadata, capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -135,20 +137,14 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     // Navigation handler - dismiss current modal then push new one
     // This ensures clean modal transitions without state synchronization issues
     const handleArticlePress = useCallback(
-      (articleId: number, title: string) => {
+      (articleId: ArticleId, title: string) => {
         // Dismiss current article modal
         router.back();
 
         // Wait for dismiss animation to start, then push new article
         // This prevents modal stacking while giving smooth transition
         setTimeout(() => {
-          router.push({
-            pathname: '/article/[id]',
-            params: {
-              id: articleId.toString(),
-              headerTitle: title,
-            },
-          });
+          router.push(getArticleRoute(articleId, title));
         }, 100); // Brief delay for dismiss animation to start
       },
       [router],

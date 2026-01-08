@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   },
 
   progressBar: {
-    borderRadius: 0,
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
   },
 
   artworkContainer: {

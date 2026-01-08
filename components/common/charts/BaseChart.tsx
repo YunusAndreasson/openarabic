@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    fontWeight: '400',
+    fontWeight: FONT_WEIGHTS.REGULAR,
   },
   emptyContainer: {
     alignItems: 'center',

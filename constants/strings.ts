@@ -1,6 +1,10 @@
 // Helper functions for consistent messaging
 const tryAgain = 'Try again';
 export const STRINGS = {
+  // Common actions
+  CANCEL: 'Cancel',
+  RETRY: 'Retry',
+  RESET: 'Reset',
   // Settings & preferences
   STUDY_REMINDERS: 'Practice reminders',
   TIME: 'Time',
