@@ -49,9 +49,8 @@ class CamelToolsService:
                 # Get the first result with diacritics
                 for result in results:
                     if "diac" in result and result["diac"]:
-                        suggested_tashkeel = result["diac"]
                         # Tashkeel generated successfully
-                        return suggested_tashkeel
+                        return str(result["diac"])
 
                 # If no diacritics found, try with different POS
                 if pos != "verb":

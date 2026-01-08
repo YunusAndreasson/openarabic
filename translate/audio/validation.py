@@ -31,8 +31,9 @@ def validate_mp3(audio_data: bytes, is_cached_file: bool = False) -> bool:
             if audio.info is None:
                 logger.warning("Invalid audio: no info available")
                 return False
-            if audio.info.length <= 0 or audio.info.length > 3600:  # 1 hour max
-                logger.warning(f"Invalid audio duration: {audio.info.length}")
+            info = audio.info  # type: ignore[unreachable]
+            if info.length <= 0 or info.length > 3600:  # 1 hour max
+                logger.warning(f"Invalid audio duration: {info.length}")
                 return False
             return True
     except Exception as e:

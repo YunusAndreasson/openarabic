@@ -50,7 +50,7 @@ def get_or_generate_root_audio(
             logger.info(f"Generated Arabic audio URL: {audio_url}")
 
     # Generate English audio if we have a valid English translation
-    if english_translation:
+    if english_translation and cache_key_en:
         audio_url_en = get_cached_audio_url(cache_key_en, "english")
         if not audio_url_en:
             logger.info(f"Generating new audio for English word: {english_translation}")

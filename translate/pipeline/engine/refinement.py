@@ -66,10 +66,10 @@ def batch_refine_translations(
                     essential = word_opts.essential
                     pos = word_opts.pos
                     notes = word_opts.notes
-                elif isinstance(word_opts, dict):
+                elif isinstance(word_opts, dict):  # type: ignore[unreachable]
                     # Dictionary format (defensive for runtime flexibility)
                     # Type ignored: dict branch is unreachable with current types but kept for safety
-                    arabic = word_opts.get("arabic", "")
+                    arabic = word_opts.get("arabic", "")  # type: ignore[unreachable]
                     english_options = word_opts.get("english_options", ["N/A"])
                     essential_translation_options = word_opts.get(
                         "essential_translation_options", ["N/A"]
@@ -117,17 +117,14 @@ def batch_refine_translations(
                     word_uncertainties = word_opts.uncertainties
                     arabic = word_opts.arabic
                 else:
-                    # Dict format (for backwards compatibility)
-                    word_uncertainties = word_opts.get("uncertainties", [])  # type: ignore[union-attr]
-                    arabic = word_opts.get("arabic", "")  # type: ignore[union-attr]
+                    # Dict format (for backwards compatibility) - unreachable with current types
+                    word_uncertainties = word_opts.get("uncertainties", [])  # type: ignore[attr-defined]
+                    arabic = word_opts.get("arabic", "")  # type: ignore[attr-defined]
 
                 if isinstance(word_uncertainties, list):
                     for u in word_uncertainties:
-                        if isinstance(u, dict):
-                            all_uncertainties.append(
-                                f"Word ({arabic}): {u.get('text', '')} ({u.get('reason', 'No reason')})",
-                            )
-                        elif hasattr(u, "text"):
+                        # u is Uncertainty, format it
+                        if hasattr(u, "text"):
                             all_uncertainties.append(
                                 f"Word ({arabic}): {getattr(u, 'text', '')} ({getattr(u, 'reason', 'No reason')})",
                             )

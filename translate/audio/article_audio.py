@@ -58,7 +58,7 @@ def create_article_audio(
             title_response = generate_speech(
                 text=article_title.strip(),
                 voice_id=ENGLISH_VOICE_ID,
-                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
+                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),  # type: ignore[arg-type]
             )
             if title_response and title_response.get("audio"):
                 bilingual_segments.append(title_response["audio"])
@@ -90,7 +90,7 @@ def create_article_audio(
                 arabic_response = generate_speech(
                     text=tashkeel_text,
                     voice_id=ARABIC_VOICE_ID,
-                    voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
+                    voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),  # type: ignore[arg-type]
                 )
 
                 if not arabic_response or not arabic_response.get("audio"):
@@ -122,7 +122,7 @@ def create_article_audio(
                 english_response = generate_speech(
                     text=english_text,
                     voice_id=ENGLISH_VOICE_ID,
-                    voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
+                    voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),  # type: ignore[arg-type]
                 )
                 if not english_response or not english_response.get("audio"):
                     logger.warning(

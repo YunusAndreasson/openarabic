@@ -5,7 +5,7 @@ This provides fast pre-filtering before expensive AI validation.
 """
 
 import re
-from typing import Literal
+from typing import Any, Literal
 
 
 def check_root_pattern(
@@ -89,7 +89,7 @@ def batch_check_roots(roots_data: list[dict]) -> dict[str, list[dict]]:
     Returns:
         dict: Categorized roots by classification
     """
-    categorized: dict[str, list[tuple[str, str]]] = {
+    categorized: dict[str, list[dict[str, Any]]] = {
         "definite_derived": [],
         "likely_derived": [],
         "uncertain": [],

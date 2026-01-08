@@ -4,32 +4,6 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-# Audio utilities - import real implementations (conditional to avoid import-time validation)
-try:
-    from elevenlabs import VoiceSettings
-
-    from audio import (
-        create_article_audio,
-        generate_speech,
-    )
-    from audio.root_audio import get_or_generate_root_audio
-    from data.config import (
-        ARABIC_VOICE_ID,
-        ARABIC_VOICE_SETTINGS,
-        ENGLISH_VOICE_ID,
-        ENGLISH_VOICE_SETTINGS,
-    )
-except (ImportError, OSError):
-    # Import failed, but we'll handle this gracefully in the functions
-    create_article_audio = None
-    generate_speech = None
-    get_or_generate_root_audio = None
-    VoiceSettings = None
-    ARABIC_VOICE_ID = None
-    ARABIC_VOICE_SETTINGS = None
-    ENGLISH_VOICE_ID = None
-    ENGLISH_VOICE_SETTINGS = None
-# Import common database utilities
 from audio.storage import generate_audio_filename
 from data.config import ARCHIVE_DIR
 from data.enums import DifficultyLevel
@@ -45,6 +19,44 @@ from utils.storage import (
     get_supabase_client,
     get_word_type_id,
 )
+
+# Audio utilities - import real implementations (conditional to avoid import-time validation)
+# Type annotations for conditional imports
+_create_article_audio: Any = None
+_generate_speech: Any = None
+_get_or_generate_root_audio: Any = None
+_VoiceSettings: Any = None
+_ARABIC_VOICE_ID: str | None = None
+_ARABIC_VOICE_SETTINGS: dict[str, float] | None = None
+_ENGLISH_VOICE_ID: str | None = None
+_ENGLISH_VOICE_SETTINGS: dict[str, float] | None = None
+
+try:
+    from elevenlabs import VoiceSettings
+
+    from audio import (
+        create_article_audio,
+        generate_speech,
+    )
+    from audio.root_audio import get_or_generate_root_audio
+    from data.config import (
+        ARABIC_VOICE_ID,
+        ARABIC_VOICE_SETTINGS,
+        ENGLISH_VOICE_ID,
+        ENGLISH_VOICE_SETTINGS,
+    )
+
+    _create_article_audio = create_article_audio
+    _generate_speech = generate_speech
+    _get_or_generate_root_audio = get_or_generate_root_audio
+    _VoiceSettings = VoiceSettings
+    _ARABIC_VOICE_ID = ARABIC_VOICE_ID
+    _ARABIC_VOICE_SETTINGS = ARABIC_VOICE_SETTINGS
+    _ENGLISH_VOICE_ID = ENGLISH_VOICE_ID
+    _ENGLISH_VOICE_SETTINGS = ENGLISH_VOICE_SETTINGS
+except (ImportError, OSError):
+    # Import failed, variables remain None
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -106,12 +118,12 @@ def get_or_create_root(
     )
 
     if root:
-        root_id = root["id"]
+        root_id: int = root["id"]
         # Generate missing audio if needed - since fields are non-nullable, we can be more direct
         if not root["audio_url"] or not root["audio_url_en"]:
             # For existing roots with missing audio, we need to regenerate
             try:
-                audio_urls = get_or_generate_root_audio(letters, english_translation)
+                audio_urls = _get_or_generate_root_audio(letters, english_translation)
                 if (
                     audio_urls
                     and audio_urls.get("audio_url")
@@ -140,9 +152,9 @@ def get_or_create_root(
 
     # CRITICAL: Generate audio BEFORE creating the root to satisfy NOT NULL constraints
     audio_urls = None
-    if get_or_generate_root_audio:
+    if _get_or_generate_root_audio:
         try:
-            audio_urls = get_or_generate_root_audio(letters, english_translation)
+            audio_urls = _get_or_generate_root_audio(letters, english_translation)
         except Exception as e:
             logger.error(f"Failed to generate root audio for '{letters}': {e}")
             # Since audio generation is mandatory, we cannot proceed
@@ -171,11 +183,11 @@ def get_or_create_root(
     new_root = insert_table_record("roots", root_data, f"root creation for '{letters}'")
 
     if new_root:
-        root_id = new_root["id"]
+        new_root_id: int = new_root["id"]
         logger.info(
-            f"Successfully created root '{letters}' with ID {root_id} and audio URLs"
+            f"Successfully created root '{letters}' with ID {new_root_id} and audio URLs"
         )
-        return root_id
+        return new_root_id
 
     # Fail loudly – cannot proceed without a valid root
     raise RuntimeError(f"Failed to create root for '{letters}'")
@@ -309,11 +321,11 @@ def insert_article_sentences(
             arabic_audio_url = None
 
             try:
-                arabic_response = generate_speech(
+                arabic_response = _generate_speech(
                     text=arabic_text,
-                    voice_id=ARABIC_VOICE_ID,
-                    voice_settings=VoiceSettings(**ARABIC_VOICE_SETTINGS)
-                    if VoiceSettings
+                    voice_id=_ARABIC_VOICE_ID,
+                    voice_settings=_VoiceSettings(**_ARABIC_VOICE_SETTINGS)
+                    if _VoiceSettings and _ARABIC_VOICE_SETTINGS
                     else None,
                 )
 
@@ -348,10 +360,12 @@ def insert_article_sentences(
             english_audio_url = None
 
             try:
-                english_response = generate_speech(
+                english_response = _generate_speech(
                     text=english_text,
-                    voice_id=ENGLISH_VOICE_ID,
-                    voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
+                    voice_id=_ENGLISH_VOICE_ID,
+                    voice_settings=_VoiceSettings(**_ENGLISH_VOICE_SETTINGS)
+                    if _VoiceSettings and _ENGLISH_VOICE_SETTINGS
+                    else None,
                 )
 
                 if english_response and english_response.get("audio"):
@@ -471,7 +485,7 @@ def insert_article_sentences(
             )
 
         # Create streamlined article audio files
-        if create_article_audio:
+        if _create_article_audio:
             logger.info("Creating streamlined article audio files...")
 
             # Prepare sentence data for audio generation
@@ -507,7 +521,7 @@ def insert_article_sentences(
                 article_summary = None
 
             # Create article audio files in one pass
-            audio_urls = create_article_audio(
+            audio_urls = _create_article_audio(
                 sentences=sentences,
                 article_title=article_title,
                 article_summary=article_summary,

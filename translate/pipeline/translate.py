@@ -1,9 +1,11 @@
 """Translation pipeline for processing Arabic text files."""
 
 import logging
+import os
 from itertools import batched  # Python 3.12+
 from typing import Any
 
+from data.config import TRANSLATE_DIR
 from data.models import (
     SentenceTranslation,
     SplitResult,
@@ -11,18 +13,25 @@ from data.models import (
     TranslationValidationError,
 )
 from data.pipeline_types import (
+    TashkeelResults,
     TranslationBatch,
+    TranslationResults,
+    WordTranslationResults,
 )
-from utils.context_cache import ContextCache
-from utils.error_handling import safe_file_operation
-from utils.file_utils import read_json_file, write_json_file
-from utils.responses_api import ResponsesAPIManager
-from utils.translation_processor import (
+from pipeline.translation_processor import (
     apply_tashkeel,
     refine_translations,
     run_full_translation,
     translate_words,
 )
+from utils.context_cache import ContextCache
+from utils.error_handling import safe_file_operation
+from utils.file_utils import (
+    generate_translate_filename,
+    read_json_file,
+    write_json_file,
+)
+from utils.responses_api import ResponsesAPIManager
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +90,10 @@ def load_split_data(input_file: str) -> SplitResult | None:
         return None
 
     if data is None:
+        return None
+
+    # Ensure data is a dict before unpacking
+    if not isinstance(data, dict):
         return None
 
     # Instantiate SplitResult from loaded data
@@ -167,20 +180,20 @@ def _run_translation_step(
     batch_sentences: list[str],
     batch_contexts: list[str | None],
     conversation_manager: ResponsesAPIManager | None,
-) -> list[Any]:
+) -> TranslationResults:
     """Run the full translation step for a batch."""
     return run_full_translation(batch_sentences, batch_contexts, conversation_manager)
 
 
 def _run_tashkeel_step(
     batch_sentences: list[str],
-    translations: list[Any],
+    translations: TranslationResults,
     all_sentences: list[str] | None,
     batch_indices: list[int],
     context_cache: Any,
     conversation_manager: ResponsesAPIManager | None,
     start_index: int,
-) -> list[dict[str, Any]]:
+) -> TashkeelResults:
     """Run the tashkeel step for a batch."""
     return apply_tashkeel(
         batch_sentences,
@@ -194,14 +207,14 @@ def _run_tashkeel_step(
 
 def _run_word_translation_step(
     batch_sentences: list[str],
-    tashkeel: list[dict[str, Any]],
-    translations: list[Any],
+    tashkeel: TashkeelResults,
+    translations: TranslationResults,
     all_sentences: list[str] | None,
     batch_indices: list[int],
     context_cache: Any,
     conversation_manager: ResponsesAPIManager | None,
     start_index: int,
-) -> list[dict[str, Any]]:
+) -> WordTranslationResults:
     """Run the word translation step for a batch."""
     return translate_words(
         batch_sentences,
@@ -223,12 +236,12 @@ def process_batches(
     results: list[SentenceTranslation] = []
     errors: list[str] = []
 
-    # Convert to list of strings if needed using pattern matching
-    match all_units:
-        case [{"text": _text, **_rest}, *_] if isinstance(all_units[0], dict):
-            sentences = [unit.get("text", "") for unit in all_units]
-        case _:
-            sentences = all_units
+    # Convert to list of strings if needed
+    sentences: list[str]
+    if all_units and isinstance(all_units[0], dict):
+        sentences = [unit.get("text", "") for unit in all_units if isinstance(unit, dict)]
+    else:
+        sentences = [s for s in all_units if isinstance(s, str)]
 
     # Create context cache for efficiency
     context_cache = ContextCache(sentences)
@@ -243,8 +256,8 @@ def process_batches(
             batch_results = process_batch(
                 batch["sentences"],
                 batch["start_index"],
-                batch["contexts"],
-                all_units,
+                batch["contexts"],  # type: ignore[arg-type]  # list[str] is compatible
+                sentences,
                 batch["indices"],
                 context_cache,
                 conversation_manager,
@@ -331,10 +344,13 @@ def translate_file(
             conversation_manager = ResponsesAPIManager()
 
             # Start document-level conversation with full text
-            sentences = [
-                unit.get("text", "") if isinstance(unit, dict) else unit
-                for unit in all_units
-            ]
+            sentences: list[str] = []
+            for unit in all_units:
+                # Handle union type: list[str] | list[dict[str, Any]]
+                if isinstance(unit, str):
+                    sentences.append(unit)
+                else:
+                    sentences.append(unit.get("text", ""))  # type: ignore[unreachable]
 
             conversation_manager.start_document_conversation(sentences)
 
@@ -379,6 +395,31 @@ def translate_file(
     except Exception as e:
         logger.error(f"Translation failed: {e}")
         return False
+
+
+def translate_files(
+    split_files: list[tuple[str, str, str]],
+    batch_size: int = MAX_BATCH_SIZE,
+) -> None:
+    """
+    Translate all split files.
+
+    Args:
+        split_files: List of tuples (split_file_path, author_number, author_name).
+        batch_size: Batch size for translation processing.
+
+    Raises:
+        RuntimeError: If translation fails for any file.
+    """
+    # Ensure translate directory exists
+    os.makedirs(TRANSLATE_DIR, exist_ok=True)
+
+    for split_file_path, _author_number, _author_name in split_files:
+        output_file = generate_translate_filename(split_file_path, TRANSLATE_DIR)
+
+        if not translate_file(split_file_path, output_file, batch_size):
+            logger.error(f"Translation failed for: {split_file_path}")
+            raise RuntimeError(f"Translation failed for: {split_file_path}")
 
 
 def main() -> None:

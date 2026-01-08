@@ -280,15 +280,17 @@ class ResponsesAPIManager:
         usage_obj = response.usage
         try:
             if hasattr(usage_obj, "to_dict"):
-                return usage_obj.to_dict()
+                result: dict[str, Any] = usage_obj.to_dict()
+                return result
             if hasattr(usage_obj, "model_dump"):
-                return usage_obj.model_dump()  # pydantic-style
+                result = usage_obj.model_dump()  # pydantic-style
+                return result
             if isinstance(usage_obj, dict):
                 return usage_obj
         except Exception:
             return {}
         # Fallback: try to read common attributes
-        result: dict[str, Any] = {}
+        fallback_result: dict[str, Any] = {}
         for key in (
             "prompt_tokens",
             "completion_tokens",
@@ -297,8 +299,8 @@ class ResponsesAPIManager:
             "completion_tokens_details",
         ):
             if hasattr(usage_obj, key):
-                result[key] = getattr(usage_obj, key)
-        return result
+                fallback_result[key] = getattr(usage_obj, key)
+        return fallback_result
 
     def start_conversation(
         self,
@@ -322,7 +324,7 @@ class ResponsesAPIManager:
                 # Use Response API with Pydantic model structured parsing
                 response = self.client.responses.parse(
                     model=self.model,
-                    input=messages,
+                    input=messages,  # type: ignore[arg-type]
                     text_format=response_model,
                 )
 
@@ -342,32 +344,32 @@ class ResponsesAPIManager:
 
                 return {
                     "response_id": response.id,
-                    "data": response.output_parsed.model_dump(),
+                    "data": response.output_parsed.model_dump() if response.output_parsed else {},
                     "success": True,
                 }
             else:
                 # Regular text response
-                response = self.client.responses.create(
+                text_response = self.client.responses.create(
                     model=self.model,
-                    input=messages,
+                    input=messages,  # type: ignore[arg-type]
                 )
 
-                self.current_response_id = response.id
+                self.current_response_id = text_response.id
 
                 # Track usage if present
-                usage_dict = self._extract_usage(response)
+                usage_dict = self._extract_usage(text_response)
                 if usage_dict:
                     token_tracker.update(
                         usage_data=usage_dict,
                         model=self.model,
                         phase=token_tracker.current_phase,
-                        response_id=response.id,
+                        response_id=text_response.id,
                     )
                     token_tracker.successful_calls += 1
 
                 return {
-                    "response_id": response.id,
-                    "text": response.output_text,
+                    "response_id": text_response.id,
+                    "text": text_response.output_text,
                     "success": True,
                 }
 
@@ -422,33 +424,33 @@ class ResponsesAPIManager:
 
                 return {
                     "response_id": response.id,
-                    "data": response.output_parsed.model_dump(),
+                    "data": response.output_parsed.model_dump() if response.output_parsed else {},
                     "success": True,
                 }
             else:
                 # Regular text response
-                response = self.client.responses.create(
+                text_response = self.client.responses.create(
                     input=message,
                     previous_response_id=response_id,
                     model=self.model,
                 )
 
-                self.current_response_id = response.id
+                self.current_response_id = text_response.id
 
                 # Track usage if present
-                usage_dict = self._extract_usage(response)
+                usage_dict = self._extract_usage(text_response)
                 if usage_dict:
                     token_tracker.update(
                         usage_data=usage_dict,
                         model=self.model,
                         phase=token_tracker.current_phase,
-                        response_id=response.id,
+                        response_id=text_response.id,
                     )
                     token_tracker.successful_calls += 1
 
                 return {
-                    "response_id": response.id,
-                    "text": response.output_text,
+                    "response_id": text_response.id,
+                    "text": text_response.output_text,
                     "success": True,
                 }
 

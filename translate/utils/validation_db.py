@@ -231,7 +231,8 @@ def get_article_title(article_id: int) -> str | None:
         )
 
         if response.data and len(response.data) > 0:
-            return response.data[0]["title"]
+            title: str = response.data[0]["title"]
+            return title
 
         return None
 

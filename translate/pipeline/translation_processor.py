@@ -189,19 +189,8 @@ def create_sentence_translation(
     final_word_translations: list[WordTranslation] = []
 
     if refined_words_data and isinstance(refined_words_data, list):
-        for word_data in refined_words_data:
-            if not isinstance(word_data, dict):
-                continue
-            final_word_translations.append(
-                WordTranslation(
-                    arabic=word_data.get("arabic", ""),
-                    english=word_data.get("english", ""),
-                    pos=word_data.get("pos"),
-                    essential=word_data.get("essential"),
-                    essential_translation=word_data.get("essential_translation", ""),
-                    notes=word_data.get("notes"),
-                ),
-            )
+        # refined_words_data is list[WordTranslation] - use directly
+        final_word_translations = list(refined_words_data)
     else:
         # Use word translations from the result
         word_opts_list = word_options_result.word_translations

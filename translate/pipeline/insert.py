@@ -87,7 +87,7 @@ def detect_author_from_file_path(file_path: str) -> tuple[str, int]:
     )
 
 
-def process_json_file(file_path: str, category_id: int = None) -> int:
+def process_json_file(file_path: str, category_id: int | None = None) -> int:
     """Process the JSON file and insert data into Supabase."""
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
@@ -238,7 +238,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
             .insert(article_data.model_dump())
             .execute()
         )
-        article_id = result.data[0]["id"]
+        article_id: int = result.data[0]["id"]
     except Exception as e:
         logger.error(f"Failed to insert article: {e}")
         raise

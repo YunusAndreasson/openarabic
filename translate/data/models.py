@@ -542,8 +542,9 @@ class ArticleData(BaseModel):
         pattern=r"^[a-f0-9]{64}$",
     )
     image_url: str = Field(description="URL to article image")
-    audio_url: str = Field(
-        description="URL to article audio. Required for database insertion."
+    audio_url: str | None = Field(
+        default=None,
+        description="URL to article audio. None if audio generation failed."
     )
 
 

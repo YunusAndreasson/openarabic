@@ -171,7 +171,7 @@ def batch_translate_words(
                                 arabic=word_data["arabic"],
                                 english=english_value,
                                 pos=word_data["pos"],
-                                essential=word_data.get("essential"),
+                                essential=word_data.get("essential", ""),
                                 essential_translation=essential_translation_value,
                                 notes=word_data.get("notes", ""),
                                 uncertainties=uncertainties_value,

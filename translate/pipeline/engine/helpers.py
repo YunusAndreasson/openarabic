@@ -4,7 +4,7 @@ import logging
 import unicodedata
 from typing import Any
 
-from data.enums import PartOfSpeech
+from data.enums import PartOfSpeech, UncertaintyType
 from data.models import Uncertainty, WordTranslation
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ def _extract_tashkeel_data(response: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
-def _validate_word_data(word_data: dict[str, Any]) -> dict[str, Any]:
+def _validate_word_data(word_data: Any) -> dict[str, Any]:
     """Validate and clean word data from API response."""
     if not isinstance(word_data, dict):
         return {}
@@ -225,7 +225,7 @@ def _validate_uncertainties(uncertainties: list[Any]) -> list[Uncertainty]:
                     text="unknown",
                     reason=item,
                     word="unknown",
-                    type="unknown",
+                    type=UncertaintyType.TRANSLATION,
                     step="unknown",
                     resolution="unknown",
                     explanation="unknown",

@@ -78,7 +78,8 @@ class OpenRouterClient:
             )
             response.raise_for_status()
 
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result
 
         except requests.exceptions.Timeout:
             logger.error("OpenRouter API request timed out")
@@ -106,7 +107,8 @@ class OpenRouterClient:
             ValueError: If response structure is invalid
         """
         try:
-            return response["choices"][0]["message"]["content"]
+            content: str = response["choices"][0]["message"]["content"]
+            return content
         except (KeyError, IndexError) as e:
             logger.error(f"Failed to extract content from response: {e}")
             logger.error(f"Response structure: {response}")
@@ -140,7 +142,8 @@ class OpenRouterClient:
                 end = content.find("```", start)
                 content = content[start:end].strip()
 
-            return json.loads(content)
+            result: dict[str, Any] = json.loads(content)
+            return result
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON from response: {e}")
