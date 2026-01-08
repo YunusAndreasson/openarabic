@@ -10,7 +10,7 @@ from pipeline.translation_engine import batch_translate_root_words_with_google_c
 class TestGoogleTranslateIntegration:
     """Integration tests for Google Cloud Translate pipeline integration."""
 
-    @patch("pipeline.translation_engine.GoogleTranslateService")
+    @patch("pipeline.engine.google_cloud.GoogleTranslateService")
     def test_batch_translate_root_words_with_google_cloud_success(
         self, mock_service_class
     ):
@@ -43,7 +43,7 @@ class TestGoogleTranslateIntegration:
         assert results[0].word_translations[0].arabic == "مرحبا"
         assert results[0].word_translations[0].english == ["Hello"]
 
-    @patch("pipeline.translation_engine.GoogleTranslateService")
+    @patch("pipeline.engine.google_cloud.GoogleTranslateService")
     def test_batch_translate_root_words_with_google_cloud_translation_error(
         self, mock_service_class
     ):

@@ -5,12 +5,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from audio.utils import (
-    generate_arabic_word_audio,
-    generate_english_word_audio,
-    get_cache_key,
-    get_cached_audio_url,
-)
+from audio.caching import get_cache_key, get_cached_audio_url
+from audio.word_audio import generate_arabic_word_audio, generate_english_word_audio
 from utils.config_common import get_storage_url
 from utils.storage import check_file_exists
 

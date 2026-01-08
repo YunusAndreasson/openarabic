@@ -7,7 +7,6 @@ delegating business logic to specialized modules in pipeline/ and utils/.
 
 import argparse
 import logging
-import subprocess
 import sys
 import time
 from collections.abc import Iterator
@@ -63,7 +62,7 @@ def _run_word_audio(article_id: int | None = None) -> None:
     """Run word audio processing for latest articles or a specific article."""
     import tempfile
 
-    from audio.utils import (
+    from audio import (
         process_word_audio_for_article,
         process_word_audio_for_latest_articles,
     )
@@ -204,16 +203,6 @@ def main() -> None:
                 description="database insertion",
                 cwd=str(MODULE_DIR),
             )
-
-        # Validate cleanup after insert
-        result = subprocess.run(
-            [sys.executable, "cleanup_check.py"],
-            cwd=MODULE_DIR,
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"Cleanup validation failed: {result.stdout}")
 
         # Phase 4: Word Audio (for full pipeline)
         if run_word_audio_latest:

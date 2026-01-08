@@ -8,11 +8,11 @@ from typing import Any
 try:
     from elevenlabs import VoiceSettings
 
-    from audio.root_audio import get_or_generate_root_audio
-    from audio.utils import (
+    from audio import (
         create_article_audio,
         generate_speech,
     )
+    from audio.root_audio import get_or_generate_root_audio
     from data.config import (
         ARABIC_VOICE_ID,
         ARABIC_VOICE_SETTINGS,
@@ -390,7 +390,7 @@ def insert_article_sentences(
                 and arabic_response.get("audio")
             ):
                 try:
-                    from audio.utils import create_multi_audio_with_delays
+                    from audio import create_multi_audio_with_delays
                     from data.config import BILINGUAL_AUDIO_PAUSE_MS
 
                     # Create bilingual audio with 500ms delay between English and Arabic

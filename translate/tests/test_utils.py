@@ -526,7 +526,7 @@ def test_article_audio_summary_exclusion():
                 mock_url.return_value = "https://fake-url.com/audio.mp3"
 
                 # Import and call the function
-                from audio.utils import create_article_audio
+                from audio import create_article_audio
 
                 with tempfile.TemporaryDirectory() as temp_dir:
                     _result = create_article_audio(
