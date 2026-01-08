@@ -145,6 +145,7 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
+    "--cov=audio",
     "--cov=data",
     "--cov=pipeline",
     "--cov=utils",
@@ -205,6 +206,7 @@ disable_error_code = [
     "truthy-function", # Function boolean context issues
     "union-attr",     # Union type attribute access
     "misc",           # Miscellaneous complex type issues
+    "import-untyped", # External libraries without type stubs (pydub, camel_tools)
 ]
 
 [[tool.mypy.overrides]]

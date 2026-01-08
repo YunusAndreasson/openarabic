@@ -33,3 +33,57 @@ def temp_dir():
     """Create a temporary directory for tests."""
     with tempfile.TemporaryDirectory() as temp_dir:
         yield temp_dir
+
+
+@pytest.fixture
+def mock_conversation_manager():
+    """Create a mock ResponsesAPIManager with current_response_id set."""
+    from unittest.mock import MagicMock
+
+    manager = MagicMock()
+    manager.current_response_id = "test-response-id-12345"
+    manager.continue_with_stage.return_value = {
+        "success": True,
+        "data": {},
+    }
+    return manager
+
+
+@pytest.fixture
+def sample_translation_result():
+    """Create a sample TranslationResult for testing."""
+    from data.models import TranslationResult
+
+    return TranslationResult(
+        translation="Hello world",
+        notes="A greeting",
+        uncertainties=[],
+        word_by_word=[],
+    )
+
+
+@pytest.fixture
+def sample_tashkeel_result():
+    """Create a sample TashkeelResult for testing."""
+    from data.models import TashkeelResult
+
+    return TashkeelResult(
+        tashkeel="مَرْحَبًا بِالْعَالَمِ",
+        uncertainties=[],
+    )
+
+
+@pytest.fixture
+def sample_word_translation():
+    """Create a sample WordTranslation for testing."""
+    from data.models import WordTranslation
+
+    return WordTranslation(
+        arabic="مَرْحَبًا",
+        english="hello",
+        pos="interjection",
+        essential="مرحبا",
+        essential_translation="hello",
+        notes="A common greeting",
+        uncertainties=[],
+    )
