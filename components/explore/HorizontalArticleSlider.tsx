@@ -49,7 +49,7 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
   if (!articles.length) return null;
 
   return (
-    <View style={styles.container}>
+    <View>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -84,7 +84,6 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
 };
 
 const styles = StyleSheet.create({
-  container: {},
   scrollContainer: {
     paddingTop: LAYOUT.SPACING.TINY,
     paddingRight: LAYOUT.SCREEN_HORIZONTAL_PADDING,

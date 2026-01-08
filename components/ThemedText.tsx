@@ -38,13 +38,8 @@ const getTextColor = (
   if (variant) {
     const variantColorMap = {
       error: colors.error,
-      warning: colors.warning,
-      success: colors.success,
-      info: colors.info,
       primary: colors.text,
       secondary: colors.secondaryText,
-      subtle: colors.textTertiary,
-      disabled: colors.disabled,
     } as const;
     return variantColorMap[variant];
   }

@@ -6,7 +6,6 @@
 export { AudioProgressIndicator } from './AudioProgressIndicator';
 export { DeleteButton } from './DeleteButton';
 export { DragHandle, type DragHandleProps } from './DragHandle';
-export { PlaylistHeader } from './PlaylistHeader';
 export { PlaylistItemCard } from './PlaylistItemCard';
 export { PlayButton } from './PlayButton';
 export { SavedEmptyState } from './SavedEmptyState';

@@ -103,19 +103,13 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     );
   },
   (prevProps, nextProps) => {
+    // Only compare values actually used in render output
     return (
       prevProps.editMode === nextProps.editMode &&
-      prevProps.onPress === nextProps.onPress &&
       prevProps.word.root_id === nextProps.word.root_id &&
-      prevProps.word.fsrs_state === nextProps.word.fsrs_state &&
       prevProps.word.fsrs_stability === nextProps.word.fsrs_stability &&
-      prevProps.word.fsrs_difficulty === nextProps.word.fsrs_difficulty &&
-      prevProps.word.fsrs_lapses === nextProps.word.fsrs_lapses &&
-      prevProps.word.fsrs_due === nextProps.word.fsrs_due &&
-      prevProps.word.fsrs_last_review === nextProps.word.fsrs_last_review &&
       prevProps.word.root?.letters === nextProps.word.root?.letters &&
-      prevProps.word.root?.meaning === nextProps.word.root?.meaning &&
-      prevProps.word.root?.audio_url === nextProps.word.root?.audio_url
+      prevProps.word.root?.meaning === nextProps.word.root?.meaning
     );
   },
 );

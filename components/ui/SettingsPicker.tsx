@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { startTransition, useCallback, useEffect, useMemo, useOptimistic, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BaseCard } from '@/components/common/BaseCard';
@@ -8,8 +8,6 @@ import { BaseCard } from '@/components/common/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import type { RootState } from '@/store/store';
 import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 // Default snap points for settings pickers
@@ -22,93 +20,36 @@ export interface SettingsPickerOption<T> {
   icon: keyof typeof Ionicons.glyphMap;
 }
 
-/**
- * Props for SettingsPicker with Redux integration
- */
-export interface SettingsPickerReduxProps<T> {
+export interface SettingsPickerProps<T> {
   isVisible: boolean;
   onClose: () => void;
   title: string;
   options: SettingsPickerOption<T>[];
-  /** Redux selector for current value - mutually exclusive with selectedValue */
-  currentValueSelector: (state: RootState) => T;
-  /** Redux action creator - mutually exclusive with onSelect */
-  onValueChange: (value: T) => { type: string; payload: T };
-  snapPoints?: number[];
-  supportsOptimisticUpdates?: boolean;
-  /** Optional footer note displayed below options */
-  footerNote?: string;
-  /** Controlled mode is disabled when using Redux */
-  selectedValue?: never;
-  onSelect?: never;
-}
-
-/**
- * Props for SettingsPicker in controlled mode (without Redux)
- */
-export interface SettingsPickerControlledProps<T> {
-  isVisible: boolean;
-  onClose: () => void;
-  title: string;
-  options: SettingsPickerOption<T>[];
-  /** Currently selected value - mutually exclusive with currentValueSelector */
+  /** Currently selected value */
   selectedValue?: T;
-  /** Selection callback - mutually exclusive with onValueChange */
+  /** Selection callback */
   onSelect: (value: T) => void;
-  snapPoints?: number[];
-  supportsOptimisticUpdates?: boolean;
-  /** Optional footer note displayed below options */
-  footerNote?: string;
-  /** Redux mode is disabled when using controlled mode */
-  currentValueSelector?: never;
-  onValueChange?: never;
 }
-
-export type SettingsPickerProps<T> = SettingsPickerReduxProps<T> | SettingsPickerControlledProps<T>;
 
 export const SettingsPicker = <T,>({
   isVisible,
   onClose,
   title,
   options,
-  currentValueSelector,
-  onValueChange,
   selectedValue,
   onSelect,
-  snapPoints = DEFAULT_SNAP_POINTS,
-  supportsOptimisticUpdates = false,
-  footerNote,
 }: SettingsPickerProps<T>) => {
   const colors = useColors();
-  const dispatch = useAppDispatch();
-
-  // Determine if we're in Redux mode or controlled mode
-  const isReduxMode = Boolean(currentValueSelector && onValueChange);
-  const isControlledMode = Boolean(onSelect);
-
-  // Get current value from Redux (always call hook, but provide fallback)
-  const reduxValue = useAppSelectorShallow(currentValueSelector || (() => undefined as T));
 
   // Get the current value - with proper fallback to first option if undefined
-  const rawCurrentValue = isReduxMode ? reduxValue : selectedValue;
   const currentValue = useMemo(() => {
-    // If we have a value, use it
-    if (rawCurrentValue !== undefined && rawCurrentValue !== null) {
-      return rawCurrentValue;
+    if (selectedValue !== undefined && selectedValue !== null) {
+      return selectedValue;
     }
-    // Otherwise, fall back to the first option's id
     return options[0]?.id;
-  }, [rawCurrentValue, options]);
+  }, [selectedValue, options]);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
-
-  // React 19: Use native useOptimistic for immediate visual feedback
-  const [optimisticValue, setOptimisticValue] = useOptimistic(
-    currentValue,
-    (_currentState, newValue: T) => newValue,
-  );
-  // Conditional optimistic behavior - only show optimistic value when enabled
-  const displayValue = supportsOptimisticUpdates ? optimisticValue : currentValue;
 
   // Show/hide modal based on isVisible prop
   useEffect(() => {
@@ -131,19 +72,9 @@ export const SettingsPicker = <T,>({
 
   const handleValueSelect = useCallback(
     (value: T) => {
-      // React 19: Optimistic update in transition for immediate UI feedback
-      startTransition(() => {
-        setOptimisticValue(value);
-      });
-
-      // Execute other operations immediately (not in transition)
-      if (isReduxMode && onValueChange) {
-        dispatch(onValueChange(value));
-      } else if (isControlledMode && onSelect) {
-        onSelect(value);
-      }
+      onSelect(value);
     },
-    [dispatch, onValueChange, onSelect, setOptimisticValue, isReduxMode, isControlledMode],
+    [onSelect],
   );
 
   // Use common backdrop component
@@ -161,7 +92,7 @@ export const SettingsPicker = <T,>({
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
-      snapPoints={snapPoints}
+      snapPoints={DEFAULT_SNAP_POINTS}
       enablePanDownToClose
       enableOverDrag={false}
       enableDynamicSizing={false}
@@ -184,7 +115,7 @@ export const SettingsPicker = <T,>({
         {/* Options */}
         <View style={styles.optionsContainer}>
           {options.map(option => {
-            const isSelected = displayValue === option.id;
+            const isSelected = currentValue === option.id;
 
             return (
               <BaseCard
@@ -236,15 +167,6 @@ export const SettingsPicker = <T,>({
             );
           })}
         </View>
-
-        {/* Footer note */}
-        {footerNote && (
-          <View style={[styles.footerNote, { borderTopColor: colors.cardBorder }]}>
-            <ThemedText type="caption" style={styles.footerNoteText}>
-              {footerNote}
-            </ThemedText>
-          </View>
-        )}
       </BottomSheetView>
     </BottomSheet>
   );
@@ -294,14 +216,5 @@ const styles = StyleSheet.create({
   },
   optionSubtitle: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-  },
-  footerNote: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
-  },
-  footerNoteText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.TIGHT,
   },
 });

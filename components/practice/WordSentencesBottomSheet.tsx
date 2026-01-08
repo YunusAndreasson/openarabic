@@ -40,10 +40,7 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
     });
 
     // Use consolidated word audio playback hook
-    const playWordAudio = useWordAudioPlayback({
-      showErrorToast: true,
-      errorMessage: 'Word audio playback failed',
-    });
+    const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
 
     // Handle play audio
     const handlePlayAudio = useCallback(async () => {

@@ -12,15 +12,7 @@ export type TextTypeName =
   | 'heading3'
   | 'label'
   | 'overline';
-export type TextVariant =
-  | 'disabled'
-  | 'error'
-  | 'info'
-  | 'primary'
-  | 'secondary'
-  | 'subtle'
-  | 'success'
-  | 'warning';
+export type TextVariant = 'error' | 'primary' | 'secondary';
 export type TextWeight = 'bold' | 'medium' | 'normal' | 'semibold';
 export type TextAlign = 'center' | 'justify' | 'left' | 'right';
 

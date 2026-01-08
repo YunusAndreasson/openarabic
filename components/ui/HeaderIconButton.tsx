@@ -23,10 +23,6 @@ export interface HeaderIconButtonProps {
   iconColor?: string;
   /** Background color - defaults to theme elevation1 */
   backgroundColor?: string;
-  /** Whether to show border - defaults to false */
-  withBorder?: boolean;
-  /** Border color - only used if withBorder is true */
-  borderColor?: string;
   /** Opacity - defaults to LAYOUT.OPACITY.HOVER */
   opacity?: number;
   /** Whether the button is disabled */
@@ -74,7 +70,7 @@ const HIT_SLOP_MAP = {
  *
  * Provides consistent styling and behavior:
  * - Android ripple effect
- * - Configurable size, colors, and border
+ * - Configurable size and colors
  * - Optimized with memoization
  *
  * @example
@@ -82,14 +78,6 @@ const HIT_SLOP_MAP = {
  *   iconName="close"
  *   onPress={handleClose}
  *   size="medium"
- * />
- *
- * @example
- * <HeaderIconButton
- *   iconName="chevron-up"
- *   onPress={toggleSort}
- *   size="small"
- *   withBorder
  * />
  */
 export const HeaderIconButton = memo<HeaderIconButtonProps>(
@@ -100,8 +88,6 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
     size = 'medium',
     iconColor,
     backgroundColor,
-    withBorder = false,
-    borderColor,
     opacity = LAYOUT.OPACITY.HOVER,
     disabled = false,
     style,
@@ -137,22 +123,9 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
           backgroundColor: finalBackgroundColor,
           // Use full opacity for transparent buttons (native header icons), otherwise apply provided opacity
           opacity: isTransparent ? LAYOUT.OPACITY.FULL : opacity,
-          ...(withBorder && {
-            borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-            borderColor: borderColor ?? colors.border,
-          }),
         },
       ],
-      [
-        buttonDimension,
-        buttonRadius,
-        finalBackgroundColor,
-        colors.border,
-        opacity,
-        isTransparent,
-        withBorder,
-        borderColor,
-      ],
+      [buttonDimension, buttonRadius, finalBackgroundColor, opacity, isTransparent],
     );
 
     const finalIconColor = iconColor ?? colors.text;

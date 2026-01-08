@@ -9,7 +9,6 @@ import { ThemedText } from '@/components/ThemedText';
 
 import { DeleteButton } from './DeleteButton';
 import { DragHandle, type DragHandleProps } from './DragHandle';
-import { PlayButton } from './PlayButton';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import {
   FONT_WEIGHTS,
@@ -35,8 +34,6 @@ interface PlaylistItemCardProps {
   onDelete?: () => void;
   dragHandleProps?: DragHandleProps;
   isBeingDragged?: boolean;
-  // Play button props
-  onPlayPress?: () => void;
   // Image for bookmarks-style display
   imageUrl?: string;
   // Unique article ID for recycling key
@@ -55,7 +52,6 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
   onDelete,
   dragHandleProps,
   isBeingDragged = false,
-  onPlayPress,
   imageUrl,
   articleId,
   progressPercentage,
@@ -132,13 +128,6 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
                 </View>
               </View>
             </View>
-
-            {/* Right side content: play button (if available) */}
-            {!editMode && onPlayPress && (
-              <View style={styles.playButtonContainer}>
-                <PlayButton onPress={onPlayPress} />
-              </View>
-            )}
           </View>
 
           {/* Reading Progress Indicator - at bottom edge (media app style) */}
@@ -201,9 +190,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
-  },
-  playButtonContainer: {
-    marginLeft: LAYOUT.SPACING.SMALL,
   },
   progressBar: {
     position: 'absolute',

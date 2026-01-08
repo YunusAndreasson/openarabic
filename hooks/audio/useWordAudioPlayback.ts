@@ -12,8 +12,6 @@ export type { WordAudioData };
 export interface UseWordAudioPlaybackOptions {
   /** Whether to show toast on error (default: false for inline playback) */
   showErrorToast?: boolean;
-  /** Custom error message */
-  errorMessage?: string;
 }
 
 /**
@@ -34,7 +32,7 @@ export interface UseWordAudioPlaybackOptions {
  * ```
  */
 export function useWordAudioPlayback(options: UseWordAudioPlaybackOptions = {}) {
-  const { showErrorToast = false, errorMessage } = options;
+  const { showErrorToast = false } = options;
   const isMountedRef = useMountSafety();
   const { play } = useSimpleAudioPlayer();
 
@@ -57,11 +55,11 @@ export function useWordAudioPlayback(options: UseWordAudioPlaybackOptions = {}) 
 
         handleError(error instanceof Error ? error : new Error(String(error)), {
           showToast: showErrorToast,
-          toastMessage: errorMessage || 'Word audio playback failed',
+          toastMessage: 'Word audio playback failed',
         });
       }
     },
-    [showErrorToast, errorMessage, isMountedRef, play],
+    [showErrorToast, isMountedRef, play],
   );
 
   return playWordAudio;

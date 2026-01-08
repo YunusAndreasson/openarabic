@@ -34,8 +34,5 @@ export function useAudioSubscription() {
     return unsubscribe;
   }, [isMountedRef]);
 
-  return {
-    status,
-    isMounted: isMountedRef.current,
-  };
+  return { status };
 }

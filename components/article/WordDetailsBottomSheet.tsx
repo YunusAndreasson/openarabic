@@ -43,10 +43,7 @@ export function WordDetailsBottomSheet({
   const snapPoints = useMemo(() => [LAYOUT.BOTTOM_SHEET.SNAP_POINTS.WORD_DETAILS], []);
 
   // Use consolidated word audio playback hook
-  const playWordAudio = useWordAudioPlayback({
-    showErrorToast: true,
-    errorMessage: 'Word audio playback failed',
-  });
+  const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
 
   // Control sheet visibility using imperative methods with proper lifecycle
   useEffect(() => {
