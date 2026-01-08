@@ -65,23 +65,7 @@ export function useSentencesByWord({
       sentence_words: sentence.sentence_words.map(
         (word): SentenceWord => ({
           ...word,
-          coloredSegments: computeColoredSegments(word.word_form, word.english || '', {
-            tint: colors.tint,
-            primary: colors.primary,
-            secondary: colors.secondary,
-            secondaryText: colors.secondaryText,
-            warning: colors.warning,
-            error: colors.error,
-            success: colors.success,
-            info: colors.info,
-            accent: colors.accent,
-            violet: colors.violet,
-            indigo: colors.indigo,
-            coral: colors.coral,
-            text: colors.text,
-            arabicText: colors.arabicText,
-            grammar: colors.grammar,
-          }),
+          coloredSegments: computeColoredSegments(word.word_form, word.english || '', colors),
         }),
       ),
     }));

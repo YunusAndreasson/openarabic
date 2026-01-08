@@ -757,8 +757,8 @@ export const GRAMMATICAL_ROLE_COLORS = {
   [GrammaticalRole.CONJUNCTION]: 'grammar.conjunction' as const, // Blue-sage (165°) [4 uses]
   [GrammaticalRole.FUTURE_TENSE]: 'grammar.futureTense' as const, // Cool cyan (188°) [2 uses]
   [GrammaticalRole.DEFINITE_ARTICLE]: 'grammar.definiteArticle' as const, // Golden (65°) [1 use]
-  [GrammaticalRole.CASE_ENDING]: 'grammar.particle' as const, // Fallback: teal (unused)
-  [GrammaticalRole.GENERIC]: 'grammar.verbConjugation' as const, // Fallback: core sage (unused)
+  [GrammaticalRole.CASE_ENDING]: 'grammar.particle' as const, // Diacritic case markers (ُ, َ, ِ)
+  [GrammaticalRole.GENERIC]: 'grammar.verbConjugation' as const, // Standalone pronouns (هو, هي, هم, etc.)
 } as const;
 
 /**

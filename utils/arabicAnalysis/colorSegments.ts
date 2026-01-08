@@ -108,6 +108,40 @@ export function getDiacriticColorName(
   return COMPONENT_TYPE_CONFIG[ComponentType.DIACRITIC].colorName;
 }
 
+/** Segment type for internal use */
+interface Segment {
+  text: string;
+  colorName: string;
+  type: string;
+}
+
+/**
+ * Helper to split text and optionally extract a trailing diacritic.
+ * Returns array of segments: [main segment] or [main segment, diacritic segment].
+ * Handles the common pattern of checking for diacritic at end of text and splitting.
+ */
+function splitWithDiacritic(
+  text: string,
+  mainColorName: string,
+  mainType: string,
+  analysis: WordAnalysis,
+): Segment[] {
+  if (analysis.diacritic && text.endsWith(analysis.diacritic.arabicMatch)) {
+    const mainText = text.substring(0, text.length - analysis.diacritic.arabicMatch.length);
+    const segments: Segment[] = [];
+    if (mainText) {
+      segments.push({ text: mainText, colorName: mainColorName, type: mainType });
+    }
+    segments.push({
+      text: analysis.diacritic.arabicMatch,
+      colorName: getDiacriticColorName(analysis.diacritic, analysis),
+      type: 'diacritic',
+    });
+    return segments;
+  }
+  return [{ text, colorName: mainColorName, type: mainType }];
+}
+
 /**
  * Optimized reconstruction for coloring with infix and diacritic support
  */
@@ -202,33 +236,16 @@ export function reconstructWithColors(analysis: WordAnalysis) {
       processed = suffixOriginalStart;
     }
 
-    // Add suffix segment (handle diacritic separately if it exists)
-    let suffixText = arabic.substring(suffixOriginalStart);
-    if (analysis.diacritic && suffixText.endsWith(analysis.diacritic.arabicMatch)) {
-      // Split suffix to separate the diacritic
-      const suffixWithoutDiacritic = suffixText.substring(
-        0,
-        suffixText.length - analysis.diacritic.arabicMatch.length,
-      );
-      if (suffixWithoutDiacritic) {
-        segments.push({
-          text: suffixWithoutDiacritic,
-          colorName: getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
-          type: 'suffix',
-        });
-      }
-      segments.push({
-        text: analysis.diacritic.arabicMatch,
-        colorName: getDiacriticColorName(analysis.diacritic, analysis),
-        type: 'diacritic',
-      });
-    } else {
-      segments.push({
-        text: suffixText,
-        colorName: getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
-        type: 'suffix',
-      });
-    }
+    // Add suffix segment (with diacritic split if needed)
+    const suffixText = arabic.substring(suffixOriginalStart);
+    segments.push(
+      ...splitWithDiacritic(
+        suffixText,
+        getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
+        'suffix',
+        analysis,
+      ),
+    );
   } else if (analysis.infix) {
     // Simpler case: infix without suffix
     const remainingText = arabic.substring(processed);
@@ -257,34 +274,10 @@ export function reconstructWithColors(analysis: WordAnalysis) {
       type: 'infix',
     });
 
-    // Add post-infix root segment if there's remaining text
+    // Add post-infix root segment if there's remaining text (with diacritic split if needed)
     if (infixEnd < remainingText.length) {
-      let postInfixText = remainingText.substring(infixEnd);
-      // Handle diacritic separately if it exists
-      if (analysis.diacritic && postInfixText.endsWith(analysis.diacritic.arabicMatch)) {
-        const rootWithoutDiacritic = postInfixText.substring(
-          0,
-          postInfixText.length - analysis.diacritic.arabicMatch.length,
-        );
-        if (rootWithoutDiacritic) {
-          segments.push({
-            text: rootWithoutDiacritic,
-            colorName: 'arabicText',
-            type: 'root',
-          });
-        }
-        segments.push({
-          text: analysis.diacritic.arabicMatch,
-          colorName: getDiacriticColorName(analysis.diacritic, analysis),
-          type: 'diacritic',
-        });
-      } else {
-        segments.push({
-          text: postInfixText,
-          colorName: 'arabicText',
-          type: 'root',
-        });
-      }
+      const postInfixText = remainingText.substring(infixEnd);
+      segments.push(...splitWithDiacritic(postInfixText, 'arabicText', 'root', analysis));
     }
   } else if (analysis.suffix) {
     // Original suffix-only logic
@@ -299,81 +292,26 @@ export function reconstructWithColors(analysis: WordAnalysis) {
       });
     }
 
-    // Add suffix segment (handle diacritic separately if it exists)
-    let suffixText = arabic.substring(originalStart);
-    if (analysis.diacritic && suffixText.endsWith(analysis.diacritic.arabicMatch)) {
-      // Split suffix to separate the diacritic
-      const suffixWithoutDiacritic = suffixText.substring(
-        0,
-        suffixText.length - analysis.diacritic.arabicMatch.length,
-      );
-      if (suffixWithoutDiacritic) {
-        segments.push({
-          text: suffixWithoutDiacritic,
-          colorName: getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
-          type: 'suffix',
-        });
-      }
-      segments.push({
-        text: analysis.diacritic.arabicMatch,
-        colorName: getDiacriticColorName(analysis.diacritic, analysis),
-        type: 'diacritic',
-      });
-    } else {
-      segments.push({
-        text: suffixText,
-        colorName: getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
-        type: 'suffix',
-      });
-    }
+    // Add suffix segment (with diacritic split if needed)
+    const suffixText = arabic.substring(originalStart);
+    segments.push(
+      ...splitWithDiacritic(
+        suffixText,
+        getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
+        'suffix',
+        analysis,
+      ),
+    );
   } else if (processed < arabic.length && analysis.remainingArabic) {
     // Add remaining text as root ONLY if analysis detected a root
     // (Don't add phantom roots when all text is consumed by prefixes)
-    let remainingText = arabic.substring(processed);
-    if (analysis.diacritic && remainingText.endsWith(analysis.diacritic.arabicMatch)) {
-      const rootWithoutDiacritic = remainingText.substring(
-        0,
-        remainingText.length - analysis.diacritic.arabicMatch.length,
-      );
-      if (rootWithoutDiacritic) {
-        segments.push({
-          text: rootWithoutDiacritic,
-          colorName: 'arabicText',
-          type: 'root',
-        });
-      }
-      segments.push({
-        text: analysis.diacritic.arabicMatch,
-        colorName: getDiacriticColorName(analysis.diacritic, analysis),
-        type: 'diacritic',
-      });
-    } else {
-      segments.push({
-        text: remainingText,
-        colorName: 'arabicText',
-        type: 'root',
-      });
-    }
+    const remainingText = arabic.substring(processed);
+    segments.push(...splitWithDiacritic(remainingText, 'arabicText', 'root', analysis));
   }
 
   // Handle diacritic-only case (no other components)
   if (analysis.diacritic && segments.length === 0) {
-    const rootWithoutDiacritic = arabic.substring(
-      0,
-      arabic.length - analysis.diacritic.arabicMatch.length,
-    );
-    if (rootWithoutDiacritic) {
-      segments.push({
-        text: rootWithoutDiacritic,
-        colorName: 'arabicText',
-        type: 'root',
-      });
-    }
-    segments.push({
-      text: analysis.diacritic.arabicMatch,
-      colorName: COMPONENT_TYPE_CONFIG[ComponentType.DIACRITIC].colorName,
-      type: 'diacritic',
-    });
+    segments.push(...splitWithDiacritic(arabic, 'arabicText', 'root', analysis));
   }
 
   // Fallback: if no segments, add whole word

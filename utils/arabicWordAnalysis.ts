@@ -5,19 +5,51 @@
  * colored segments for educational display. It coordinates functionality from
  * specialized sub-modules in @/utils/arabicAnalysis/.
  *
- * Public API:
+ * ## Data Flow (Color Resolution)
+ *
+ * ```
+ * Arabic Word + English Translation
+ *           ↓
+ *     analyzeArabicWord() [this file]
+ *           ↓
+ *     WordAnalysis {
+ *       prefixes: AnalyzedComponent[],  // each has role?: GrammaticalRole
+ *       suffix, infix, diacritic        // each has role?: GrammaticalRole
+ *     }
+ *           ↓
+ *     formatWordAnalysis() [colorSegments.ts]
+ *       → getComponentColorName() resolves role → 'grammar.*' or type → flat color name
+ *           ↓
+ *     { reconstructedArabic: { segments: [{text, colorName, type}] } }
+ *           ↓
+ *     resolveColorName(colorName, themeColors) [colorResolution.ts]
+ *       → Maps 'grammar.preposition' → colors.grammar.preposition (hex)
+ *       → Maps 'tint' → colors.tint (hex)
+ *           ↓
+ *     Final hex color for rendering
+ * ```
+ *
+ * ## Key Files
+ * - constants/arabicWordComponents.ts - Rules, GrammaticalRole enum, GRAMMATICAL_ROLE_COLORS
+ * - constants/colors.ts - createGrammarColors() factory for theme variants
+ * - utils/colorResolution.ts - resolveColorName() single source of truth
+ * - utils/arabicAnalysis/colorSegments.ts - Segment reconstruction with colors
+ *
+ * ## Public API
  * - analyzeArabicWord(arabic, english) - Analyze word for grammatical components
  * - computeColoredSegments(arabic, english, colors) - Generate colored segments for display
  * - formatWordAnalysis(analysis) - Format analysis for tooltip display
  * - clearAnalysisCache() - Clear caches (useful for testing)
  *
- * Types:
+ * ## Types
  * - AnalyzedComponent - A detected grammatical component
  * - WordAnalysis - Complete analysis result
  */
 
 import { ARABIC_SUFFIXES, ComponentType, GrammaticalRole } from '@/constants/arabicWordComponents';
 import type { ColoredSegment } from '@/types/vocabulary.types';
+import type { ThemeColors } from '@/types/ui/theme.types';
+import { resolveColorName } from '@/utils/colorResolution';
 
 // Import from sub-modules
 import {
@@ -377,36 +409,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
 export function computeColoredSegments(
   arabicWord: string,
   englishTranslation: string,
-  colors: {
-    tint: string;
-    primary: string;
-    secondary: string;
-    secondaryText: string;
-    warning: string;
-    error: string;
-    success: string;
-    info: string;
-    accent: string;
-    violet: string;
-    indigo: string;
-    coral: string;
-    text: string;
-    arabicText: string;
-    grammar: {
-      preposition: string;
-      possessive: string;
-      particle: string;
-      interrogative: string;
-      verbConjugation: string;
-      negation: string;
-      subjectPrefix: string;
-      plural: string;
-      demonstrative: string;
-      conjunction: string;
-      futureTense: string;
-      definiteArticle: string;
-    };
-  },
+  colors: ThemeColors,
 ): ColoredSegment[] {
   // Apply bracket injection if needed
   const normalizedArabic = normalizeArabic(arabicWord);
@@ -427,38 +430,10 @@ export function computeColoredSegments(
     return [{ text: arabicWord, color: colors.arabicText, type: 'root' as const }];
   }
 
-  const colorMap: Record<string, string> = {
-    tint: colors.tint,
-    primary: colors.primary,
-    secondary: colors.secondary,
-    secondaryText: colors.secondaryText,
-    warning: colors.warning,
-    error: colors.error,
-    success: colors.success,
-    info: colors.info,
-    accent: colors.accent,
-    violet: colors.violet,
-    indigo: colors.indigo,
-    coral: colors.coral,
-    text: colors.text,
-    arabicText: colors.arabicText,
-    'grammar.preposition': colors.grammar.preposition,
-    'grammar.possessive': colors.grammar.possessive,
-    'grammar.particle': colors.grammar.particle,
-    'grammar.interrogative': colors.grammar.interrogative,
-    'grammar.verbConjugation': colors.grammar.verbConjugation,
-    'grammar.negation': colors.grammar.negation,
-    'grammar.subjectPrefix': colors.grammar.subjectPrefix,
-    'grammar.plural': colors.grammar.plural,
-    'grammar.demonstrative': colors.grammar.demonstrative,
-    'grammar.conjunction': colors.grammar.conjunction,
-    'grammar.futureTense': colors.grammar.futureTense,
-    'grammar.definiteArticle': colors.grammar.definiteArticle,
-  };
-
+  // Use resolveColorName for single source of truth color resolution
   return formatted.reconstructedArabic.segments.map(segment => ({
     text: segment.text,
-    color: colorMap[segment.colorName] || colors.text,
+    color: resolveColorName(segment.colorName, colors),
     type: segment.type as ColoredSegment['type'],
   }));
 }

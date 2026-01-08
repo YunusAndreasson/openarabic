@@ -815,6 +815,43 @@ const elevation = {
 } as const;
 
 // =============================================================================
+// GRAMMAR COLORS FACTORY
+// =============================================================================
+
+/**
+ * Factory function to create grammar color palette for any theme variant.
+ * Single source of truth for grammar role → color mapping.
+ *
+ * Frequency-based assignment with maximum hue separation for roles that appear together:
+ *   - preposition: amber (90°) - High frequency (15 uses)
+ *   - possessive: sage (155°) - High frequency (13 uses) - 65° from prep
+ *   - particle: lime (110°) - Medium-high frequency (9 uses) - 20° from prep
+ *   - interrogative: seafoam (185°) - Medium frequency (8 uses) - 75° from particle
+ *   - verbConjugation: mintGreen (170°) - Medium frequency (5 uses)
+ *   - negation: olive (125°) - Medium frequency (5 uses)
+ *   - subjectPrefix: skyBlue (225°) - Low frequency (4 uses) - 135° from amber
+ *   - plural: yellowGreen (140°) - Low frequency (4 uses)
+ *   - demonstrative: teal (200°) - Low frequency (4 uses)
+ *   - conjunction: periwinkle (250°) - Low frequency (4 uses) - 25° from subjectPrefix
+ *   - futureTense: violet (270°) - Very low frequency (2 uses)
+ *   - definiteArticle: golden (65°) - Rare (1 use) - 25° from prep
+ */
+const createGrammarColors = (variant: 'light' | 'dark' | 'sepia') => ({
+  preposition: basePalette.grammar.amber[variant],
+  possessive: basePalette.grammar.sage[variant],
+  particle: basePalette.grammar.lime[variant],
+  interrogative: basePalette.grammar.seafoam[variant],
+  verbConjugation: basePalette.grammar.mintGreen[variant],
+  negation: basePalette.grammar.olive[variant],
+  subjectPrefix: basePalette.grammar.skyBlue[variant],
+  plural: basePalette.grammar.yellowGreen[variant],
+  demonstrative: basePalette.grammar.teal[variant],
+  conjunction: basePalette.grammar.periwinkle[variant],
+  futureTense: basePalette.grammar.violet[variant],
+  definiteArticle: basePalette.grammar.golden[variant],
+});
+
+// =============================================================================
 // THEME COLOR DEFINITIONS (Unchanged structure from original)
 // =============================================================================
 
@@ -917,22 +954,8 @@ const lightColors: ThemeColors = {
   white: basePalette.pure.white,
   black: basePalette.pure.black,
 
-  // Grammar color palette - dedicated educational colors for grammar concepts
-  // Frequency-based assignment with maximum hue separation for roles that appear together
-  grammar: {
-    preposition: basePalette.grammar.amber.light, // 90° - High frequency (15 uses)
-    possessive: basePalette.grammar.sage.light, // 155° - High frequency (13 uses) - 65° from prep
-    particle: basePalette.grammar.lime.light, // 110° - Medium-high frequency (9 uses) - 20° from prep
-    interrogative: basePalette.grammar.seafoam.light, // 185° - Medium frequency (8 uses) - 75° from particle
-    verbConjugation: basePalette.grammar.mintGreen.light, // 170° - Medium frequency (5 uses)
-    negation: basePalette.grammar.olive.light, // 125° - Medium frequency (5 uses)
-    subjectPrefix: basePalette.grammar.skyBlue.light, // 225° - Low frequency (4 uses) - 135° from amber, 25° from conjunction
-    plural: basePalette.grammar.yellowGreen.light, // 140° - Low frequency (4 uses)
-    demonstrative: basePalette.grammar.teal.light, // 200° - Low frequency (4 uses)
-    conjunction: basePalette.grammar.periwinkle.light, // 250° - Low frequency (4 uses) - 95° from sage, 25° from subjectPrefix
-    futureTense: basePalette.grammar.violet.light, // 270° - Very low frequency (2 uses)
-    definiteArticle: basePalette.grammar.golden.light, // 65° - Rare (1 use) - 25° from prep
-  },
+  // Grammar color palette - see createGrammarColors() for role/color documentation
+  grammar: createGrammarColors('light'),
 } as const;
 
 const darkColors: ThemeColors = {
@@ -1034,22 +1057,8 @@ const darkColors: ThemeColors = {
   white: basePalette.pure.white,
   black: basePalette.pure.black,
 
-  // Grammar color palette - dedicated educational colors for grammar concepts (dark mode)
-  // Same hue assignments as light mode, adjusted lightness for dark background contrast
-  grammar: {
-    preposition: basePalette.grammar.amber.dark, // 90° - High frequency (15 uses)
-    possessive: basePalette.grammar.sage.dark, // 155° - High frequency (13 uses) - 65° from prep
-    particle: basePalette.grammar.lime.dark, // 110° - Medium-high frequency (9 uses) - 20° from prep
-    interrogative: basePalette.grammar.seafoam.dark, // 185° - Medium frequency (8 uses) - 75° from particle
-    verbConjugation: basePalette.grammar.mintGreen.dark, // 170° - Medium frequency (5 uses)
-    negation: basePalette.grammar.olive.dark, // 125° - Medium frequency (5 uses)
-    subjectPrefix: basePalette.grammar.skyBlue.dark, // 225° - Low frequency (4 uses) - 135° from amber, 25° from conjunction
-    plural: basePalette.grammar.yellowGreen.dark, // 140° - Low frequency (4 uses)
-    demonstrative: basePalette.grammar.teal.dark, // 200° - Low frequency (4 uses)
-    conjunction: basePalette.grammar.periwinkle.dark, // 250° - Low frequency (4 uses) - 95° from sage, 25° from subjectPrefix
-    futureTense: basePalette.grammar.violet.dark, // 270° - Very low frequency (2 uses)
-    definiteArticle: basePalette.grammar.golden.dark, // 65° - Rare (1 use) - 25° from prep
-  },
+  // Grammar color palette - see createGrammarColors() for role/color documentation
+  grammar: createGrammarColors('dark'),
 } as const;
 
 const sepiaColors: ThemeColors = {
@@ -1151,22 +1160,8 @@ const sepiaColors: ThemeColors = {
   white: basePalette.sepiaPure.white,
   black: basePalette.sepiaPure.black,
 
-  // Grammar color palette - dedicated educational colors for grammar concepts (sepia mode)
-  // Same hue assignments as other modes, adjusted for sepia background warmth
-  grammar: {
-    preposition: basePalette.grammar.amber.sepia, // 90° - High frequency (15 uses)
-    possessive: basePalette.grammar.sage.sepia, // 155° - High frequency (13 uses) - 65° from prep
-    particle: basePalette.grammar.lime.sepia, // 110° - Medium-high frequency (9 uses) - 20° from prep
-    interrogative: basePalette.grammar.seafoam.sepia, // 185° - Medium frequency (8 uses) - 75° from particle
-    verbConjugation: basePalette.grammar.mintGreen.sepia, // 170° - Medium frequency (5 uses)
-    negation: basePalette.grammar.olive.sepia, // 125° - Medium frequency (5 uses)
-    subjectPrefix: basePalette.grammar.skyBlue.sepia, // 225° - Low frequency (4 uses) - 135° from amber, 25° from conjunction
-    plural: basePalette.grammar.yellowGreen.sepia, // 140° - Low frequency (4 uses)
-    demonstrative: basePalette.grammar.teal.sepia, // 200° - Low frequency (4 uses)
-    conjunction: basePalette.grammar.periwinkle.sepia, // 250° - Low frequency (4 uses) - 95° from sage, 25° from subjectPrefix
-    futureTense: basePalette.grammar.violet.sepia, // 270° - Very low frequency (2 uses)
-    definiteArticle: basePalette.grammar.golden.sepia, // 65° - Rare (1 use) - 25° from prep
-  },
+  // Grammar color palette - see createGrammarColors() for role/color documentation
+  grammar: createGrammarColors('sepia'),
 } as const;
 
 /**
