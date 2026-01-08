@@ -24,7 +24,7 @@ try:
 except Exception as e:
     print(f"Warning: Failed to load set_keys.py: {e}")
 
-from utils.storage_utils import get_supabase_client
+from utils.storage import get_supabase_client
 
 client = get_supabase_client()
 

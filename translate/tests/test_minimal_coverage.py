@@ -296,7 +296,7 @@ class TestStorageUtils:
 
     def test_generate_content_hash(self):
         """Test generate_content_hash function."""
-        from utils.storage_utils import generate_content_hash
+        from utils.storage import generate_content_hash
 
         data = {"title": "Test", "content": "Hello"}
         hash1 = generate_content_hash(data)
@@ -307,7 +307,7 @@ class TestStorageUtils:
 
     def test_generate_content_hash_different_data(self):
         """Test generate_content_hash with different data."""
-        from utils.storage_utils import generate_content_hash
+        from utils.storage import generate_content_hash
 
         data1 = {"title": "Test", "content": "Hello"}
         data2 = {"title": "Test", "content": "World"}
@@ -319,7 +319,7 @@ class TestStorageUtils:
 
     def test_generate_audio_filename(self):
         """Test generate_audio_filename function."""
-        from utils.storage_utils import generate_audio_filename
+        from audio.storage import generate_audio_filename
 
         filename = generate_audio_filename()
         assert filename.endswith(".mp3")
@@ -328,7 +328,7 @@ class TestStorageUtils:
     def test_get_word_type_id_valid(self):
         """Test get_word_type_id with valid POS."""
         from data.enums import PartOfSpeech
-        from utils.storage_utils import get_word_type_id
+        from utils.storage import get_word_type_id
 
         # Test with valid POS
         result = get_word_type_id(PartOfSpeech.NOUN.value)
@@ -336,34 +336,34 @@ class TestStorageUtils:
 
     def test_get_word_type_id_invalid(self):
         """Test get_word_type_id with invalid POS now raises."""
-        from utils.storage_utils import get_word_type_id
+        from utils.storage import get_word_type_id
 
         with pytest.raises(ValueError):
             get_word_type_id("invalid_pos")
 
     def test_get_word_type_id_case_insensitive(self):
         """Test get_word_type_id with different cases."""
-        from utils.storage_utils import get_word_type_id
+        from utils.storage import get_word_type_id
 
         # Test case insensitivity
         result1 = get_word_type_id("VERB")
         result2 = get_word_type_id("verb")
         assert result1 == result2 == 1
 
-    @patch("utils.storage_utils.get_supabase_client")
+    @patch("utils.storage.get_supabase_client")
     def test_check_file_exists_true(self, mock_client):
         """Test check_file_exists when file exists."""
-        from utils.storage_utils import check_file_exists
+        from utils.storage import check_file_exists
 
         mock_client.return_value.storage.from_.return_value.create_signed_url.return_value = "url"
 
         result = check_file_exists("bucket", "file.mp3")
         assert result is True
 
-    @patch("utils.storage_utils.get_supabase_client")
+    @patch("utils.storage.get_supabase_client")
     def test_check_file_exists_false(self, mock_client):
         """Test check_file_exists when file doesn't exist."""
-        from utils.storage_utils import check_file_exists
+        from utils.storage import check_file_exists
 
         mock_client.return_value.storage.from_.return_value.create_signed_url.side_effect = Exception(
             "Object not found"
@@ -379,11 +379,11 @@ class TestTranslationProcessor:
     def test_run_full_translation_validation(self):
         """Test run_full_translation with validation."""
         from data.models import TranslationResult
-        from utils.translation_processor import run_full_translation
+        from pipeline.translation_processor import run_full_translation
 
         # Mock the translation engine function
         with patch(
-            "utils.translation_processor._get_translation_engine_functions"
+            "pipeline.translation_processor._get_translation_engine_functions"
         ) as mock_get:
             mock_translate = MagicMock()
             mock_translate.return_value = [
@@ -421,11 +421,11 @@ class TestTranslationProcessor:
     def test_apply_tashkeel_validation(self):
         """Test apply_tashkeel with validation."""
         from data.models import TashkeelResult, TranslationResult
-        from utils.translation_processor import apply_tashkeel
+        from pipeline.translation_processor import apply_tashkeel
 
         # Mock the translation engine function
         with patch(
-            "utils.translation_processor._get_translation_engine_functions"
+            "pipeline.translation_processor._get_translation_engine_functions"
         ) as mock_get:
             mock_tashkeel = MagicMock()
             mock_tashkeel.return_value = [
@@ -469,11 +469,11 @@ class TestTranslationProcessor:
             TranslationResult,
             WordTranslationResult,
         )
-        from utils.translation_processor import translate_words
+        from pipeline.translation_processor import translate_words
 
         # Mock the translation engine function
         with patch(
-            "utils.translation_processor._get_translation_engine_functions"
+            "pipeline.translation_processor._get_translation_engine_functions"
         ) as mock_get:
             mock_words = MagicMock()
             mock_words.return_value = [

@@ -18,7 +18,7 @@ except ImportError:
         "set_keys.py not found, using environment variables"
     )
 
-from audio.audio_utils import (
+from audio.utils import (
     create_article_audio,
 )
 from data.config import (
@@ -29,11 +29,11 @@ from data.models import ArticleData, SentenceTranslation
 from utils import load_api_keys
 
 # Cache utilities removed - using Supabase Storage as single source of truth
-from utils.database_utils import (
+from utils.database import (
     archive_files,
     insert_article_sentences,
 )
-from utils.storage_utils import (
+from utils.storage import (
     check_article_exists,
     generate_content_hash,
     get_author_id,
@@ -47,7 +47,7 @@ from utils.validation import (
 
 # Import audio utilities for final phase
 try:
-    from audio.audio_utils import (
+    from audio.utils import (
         create_article_audio,
     )
 
@@ -140,7 +140,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         return existing_article_id
 
     # Get a random image URL for the article
-    from utils.storage_utils import get_random_article_image_url
+    from utils.storage import get_random_article_image_url
 
     image_url = get_random_article_image_url()
     if not image_url:
@@ -203,8 +203,8 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
                 audio_generation_success = True
                 logger.info("Article audio generation completed successfully")
             else:
-                logger.warning(
-                    "Article audio generation failed, continuing without audio"
+                logger.error(
+                    "ARTICLE AUDIO FAILED: Audio generation returned no URLs, inserting without audio"
                 )
 
             # Clean up temporary directory
@@ -212,10 +212,8 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
                 shutil.rmtree(temp_dir)
 
         except Exception as e:
-            logger.error(f"Audio generation failed: {e}")
-            logger.info(
-                "Continuing with article insertion despite audio generation failure"
-            )
+            logger.error(f"ARTICLE AUDIO FAILED: {e}")
+            logger.error("Inserting article WITHOUT AUDIO due to generation failure")
             # Don't raise exception - continue without audio
 
     # Create ArticleData object with audio_url and timestamps

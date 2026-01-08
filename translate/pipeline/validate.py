@@ -32,34 +32,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Load API keys at startup (before other imports to avoid circular dependencies)
 try:
-    # Direct import of set_keys module
-    import importlib.util
+    from utils.set_keys import load_api_keys_safely
 
-    set_keys_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "utils",
-        "set_keys.py",
-    )
-    if os.path.exists(set_keys_path):
-        spec = importlib.util.spec_from_file_location("set_keys", set_keys_path)
-        if spec and spec.loader:
-            set_keys_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(set_keys_module)
-            logging.getLogger(__name__).info("API keys loaded from set_keys.py")
-    else:
-        logging.getLogger(__name__).warning(
-            "set_keys.py not found, using environment variables"
-        )
-except Exception as e:
+    load_api_keys_safely()
+except ImportError:
     logging.getLogger(__name__).warning(
-        f"Failed to load set_keys.py: {e}, using environment variables"
+        "Could not import load_api_keys_safely, using environment variables"
     )
 
 from tqdm import tqdm
 
-from data.config import VALIDATION_MAX_RETRIES
 from data.validation_models import ValidationBatchResponse
 from utils.openrouter_client import OpenRouterClient
+from utils.validation import validate_with_retry
 from utils.validation_db import (
     fetch_article_words_for_validation,
     get_all_article_ids,
@@ -129,7 +114,9 @@ def validate_article_translations(
 
             try:
                 # Validate sentence with retry logic
-                validation_response = _validate_with_retry(client, words_data, verbose)
+                validation_response = _validate_words_with_retry(
+                    client, words_data, verbose
+                )
 
                 if not validation_response:
                     if verbose:
@@ -187,47 +174,11 @@ def validate_article_translations(
         return False
 
 
-def _validate_with_retry(
+def _validate_words_with_retry(
     client: OpenRouterClient, words_data: list[dict], verbose: bool = False
 ) -> dict | None:
-    """Validate words with retry logic for parse errors.
-
-    Args:
-        client: OpenRouter client
-        words_data: List of word dictionaries
-        verbose: Enable verbose logging
-
-    Returns:
-        dict: Parsed validation response or None if all retries fail
-    """
-    for retry_count in range(VALIDATION_MAX_RETRIES):
-        try:
-            # Call API with current retry count (affects prompt strictness)
-            response = client.validate_words_batch(words_data, retry_count)
-            return response
-
-        except ValueError as e:
-            # Parse error - retry with stricter prompt
-            if retry_count < VALIDATION_MAX_RETRIES - 1:
-                if verbose:
-                    logger.warning(
-                        f"Parse error on attempt {retry_count + 1}, retrying: {e}"
-                    )
-                continue
-            else:
-                if verbose:
-                    logger.error(
-                        f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}"
-                    )
-                return None
-
-        except Exception as e:
-            # Other errors (API errors, etc.) - log and fail
-            if verbose:
-                logger.error(f"Validation API call failed: {e}")
-            return None
-
-    return None
+    """Validate words with retry logic for parse errors."""
+    return validate_with_retry(client.validate_words_batch, words_data, verbose)
 
 
 def validate_all_articles(verbose: bool = False, start_from: int = 1) -> int:

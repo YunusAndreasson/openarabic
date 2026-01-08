@@ -1,6 +1,6 @@
 """Context caching utility to avoid recalculating contexts multiple times."""
 
-from utils.text_utils import get_optimized_context
+from utils.text import get_optimized_context
 
 
 class ContextCache:

@@ -8,7 +8,7 @@ import logging
 from itertools import batched  # Python 3.12+
 from typing import Any
 
-from utils.storage_utils import get_supabase_client
+from utils.storage import get_supabase_client
 
 logger = logging.getLogger(__name__)
 

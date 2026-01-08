@@ -46,12 +46,12 @@ from tqdm import tqdm
 
 from data.validation_models import RootValidationBatchResponse
 from utils.openrouter_client import OpenRouterClient
+from utils.validation import validate_with_retry
 from utils.validation_db import (
     fetch_roots_for_validation,
     get_all_root_ids,
     save_root_validation_improvements,
 )
-from utils.validation_utils import validate_with_retry
 
 # Configure logging - suppress all except errors during progress bar
 logging.basicConfig(

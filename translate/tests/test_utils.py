@@ -9,7 +9,7 @@ from data.models import (
     WordTranslation,
     WordTranslationResult,
 )
-from utils.text_utils import (
+from utils.text import (
     filter_arabic_words,
     get_optimized_context,
 )
@@ -519,14 +519,14 @@ def test_article_audio_summary_exclusion():
         }
 
     # Mock the generate_speech function
-    with patch("audio.audio_utils.generate_speech", side_effect=mock_generate_speech):
+    with patch("audio.article_audio.generate_speech", side_effect=mock_generate_speech):
         # Mock the storage operations to avoid actual file operations
-        with patch("audio.audio_utils.get_supabase_client") as _mock_client:
-            with patch("audio.audio_utils.get_storage_url") as mock_url:
+        with patch("audio.article_audio.get_supabase_client") as _mock_client:
+            with patch("audio.article_audio.get_storage_url") as mock_url:
                 mock_url.return_value = "https://fake-url.com/audio.mp3"
 
                 # Import and call the function
-                from audio.audio_utils import create_article_audio
+                from audio.utils import create_article_audio
 
                 with tempfile.TemporaryDirectory() as temp_dir:
                     _result = create_article_audio(

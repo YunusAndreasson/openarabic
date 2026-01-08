@@ -3,8 +3,10 @@ Validation utilities for translation pipeline results.
 """
 
 import logging
+from collections.abc import Callable
 
 from data import TRANSLATION_ERROR_MARKERS
+from data.config import VALIDATION_MAX_RETRIES
 from data.models import SentenceTranslation, TranslationValidationError
 from data.pipeline_types import (
     TashkeelResults,
@@ -425,3 +427,49 @@ def validate_batch_no_placeholder_data(translations: list[SentenceTranslation]) 
             raise TranslationValidationError(
                 f"Translation {i} (index {translation.index}) contains placeholder data: {str(e)}"
             ) from e
+
+
+def validate_with_retry(
+    validation_func: Callable[[list[dict], int], dict],
+    data: list[dict],
+    verbose: bool = False,
+) -> dict | None:
+    """
+    Execute a validation function with retry logic for parse errors.
+
+    Args:
+        validation_func: Function that takes (data, retry_count) and returns a dict
+        data: List of data dictionaries to validate
+        verbose: Enable verbose logging
+
+    Returns:
+        dict: Parsed validation response or None if all retries fail
+    """
+    for retry_count in range(VALIDATION_MAX_RETRIES):
+        try:
+            # Call validation function with current retry count (affects prompt strictness)
+            response = validation_func(data, retry_count)
+            return response
+
+        except ValueError as e:
+            # Parse error - retry with stricter prompt
+            if retry_count < VALIDATION_MAX_RETRIES - 1:
+                if verbose:
+                    logger.warning(
+                        f"Parse error on attempt {retry_count + 1}, retrying: {e}"
+                    )
+                continue
+            else:
+                if verbose:
+                    logger.error(
+                        f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}"
+                    )
+                return None
+
+        except Exception as e:
+            # Other errors (API errors, etc.) - log and fail
+            if verbose:
+                logger.error(f"Validation API call failed: {e}")
+            return None
+
+    return None

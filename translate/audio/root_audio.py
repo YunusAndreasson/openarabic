@@ -5,14 +5,14 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from audio.audio_utils import (
+from audio.utils import (
     generate_arabic_word_audio,
     generate_english_word_audio,
     get_cache_key,
     get_cached_audio_url,
 )
 from utils.config_common import get_storage_url
-from utils.storage_utils import check_file_exists
+from utils.storage import check_file_exists
 
 logger = logging.getLogger(__name__)
 

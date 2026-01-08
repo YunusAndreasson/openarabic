@@ -1,12 +1,14 @@
 """Storage utilities for Supabase integration."""
 
 import logging
-import uuid
 from typing import Any
 
 from data.enums import PartOfSpeech
 
 from .config_common import get_storage_url, get_supabase_client
+
+# Re-export for backwards compatibility
+__all__ = ["get_storage_url", "get_supabase_client"]
 
 logger = logging.getLogger(__name__)
 
@@ -76,11 +78,6 @@ def check_article_exists(content_hash: str) -> tuple[int | None, str | None]:
         if "content_hash" in str(e):
             return None, None
         raise e
-
-
-def generate_audio_filename() -> str:
-    """Generate a unique filename for the audio file."""
-    return f"{uuid.uuid4()}.mp3"
 
 
 def get_category_id(name: str = "aqeedah") -> int:
