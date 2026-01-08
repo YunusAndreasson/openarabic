@@ -1,6 +1,10 @@
+import functools
 import re
 
 CONTEXT_WINDOW_SIZE: int = 2
+
+# Pre-compiled regex for Arabic character detection
+_ARABIC_PATTERN = re.compile(r"[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]")
 
 
 def get_sentence_context(sentences: list[str], index: int) -> str:
@@ -64,12 +68,13 @@ def get_optimized_context(
         return get_sentence_context(sentences, index)
 
 
+@functools.lru_cache(maxsize=1024)
 def is_arabic_word(word: str) -> bool:
     """
     Check if a word contains Arabic characters.
     Returns True if the word contains at least one Arabic character.
     """
-    return bool(re.search(r"[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]", word))
+    return bool(_ARABIC_PATTERN.search(word))
 
 
 def filter_arabic_words(text: str) -> list[str]:

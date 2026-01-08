@@ -5,6 +5,7 @@ Handles fetching words from database and saving validation improvements.
 """
 
 import logging
+from collections import defaultdict
 from itertools import batched  # Python 3.12+
 from typing import Any
 
@@ -55,18 +56,18 @@ def fetch_article_words_for_validation(article_id: int) -> list[dict[str, Any]]:
         if not words_response.data:
             raise ValueError(f"No words found for article {article_id}")
 
-        # Create a mapping of sentence_id to sentence data
-        sentence_map = {s["id"]: s for s in sentences_response.data}
+        # Pre-build word lookup map (O(n) instead of O(n²))
+        words_by_sentence: dict[int, list[dict[str, Any]]] = defaultdict(list)
+        for w in words_response.data:
+            words_by_sentence[w["sentence_id"]].append(w)
 
         # Group words by sentence
         sentences_with_words = []
         for sentence_data in sentences_response.data:
             sentence_id = sentence_data["id"]
 
-            # Get words for this sentence
-            sentence_words = [
-                w for w in words_response.data if w["sentence_id"] == sentence_id
-            ]
+            # Get words for this sentence (O(1) lookup instead of O(n) scan)
+            sentence_words = words_by_sentence.get(sentence_id, [])
 
             # Transform to validation request format
             words_data = []
@@ -284,43 +285,42 @@ def fetch_roots_for_validation(
         if not all_roots:
             raise ValueError("No roots found in database")
 
+        # Batch fetch all examples for all roots in one query (fixes N+1 problem)
+        all_root_ids = [r["id"] for r in all_roots]
+        examples_response = (
+            client.table("sentence_words")
+            .select("root_id, word_form, sentence:article_sentences(arabic, english)")
+            .in_("root_id", all_root_ids)
+            .execute()
+        )
+
+        # Group examples by root_id
+        examples_by_root: dict[int, list[dict[str, Any]]] = defaultdict(list)
+        for example in examples_response.data or []:
+            if example.get("sentence"):
+                # Handle both list and single object from Supabase
+                sentence = (
+                    example["sentence"][0]
+                    if isinstance(example["sentence"], list)
+                    else example["sentence"]
+                )
+                examples_by_root[example["root_id"]].append(
+                    {
+                        "word_form": example["word_form"],
+                        "sentence_arabic": sentence["arabic"],
+                        "sentence_english": sentence["english"],
+                    }
+                )
+
+        # Build roots_data using pre-fetched examples (limit to 5 per root)
         roots_data = []
         for root in all_roots:
             root_id = root["id"]
-
-            # Fetch 3-5 example sentences showing this root in use
-            examples_response = (
-                client.table("sentence_words")
-                .select("word_form, sentence:article_sentences(arabic, english)")
-                .eq("root_id", root_id)
-                .limit(5)
-                .execute()
-            )
-
-            # Format examples
-            examples = []
-            if examples_response.data:
-                for example in examples_response.data:
-                    if example.get("sentence"):
-                        # Handle both list and single object from Supabase
-                        sentence = (
-                            example["sentence"][0]
-                            if isinstance(example["sentence"], list)
-                            else example["sentence"]
-                        )
-                        examples.append(
-                            {
-                                "word_form": example["word_form"],
-                                "sentence_arabic": sentence["arabic"],
-                                "sentence_english": sentence["english"],
-                            }
-                        )
-
             root_data = {
                 "root_id": root_id,
                 "current_letters": root["letters"],
                 "current_meaning": root["meaning"],
-                "examples": examples,
+                "examples": examples_by_root.get(root_id, [])[:5],
             }
             roots_data.append(root_data)
 

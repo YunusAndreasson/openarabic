@@ -3,6 +3,8 @@
 import io
 import logging
 
+from utils.exceptions import AudioGenerationError
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,14 +44,13 @@ def create_bilingual_audio(
 
         return output.read()
 
-    except ImportError:
-        logger.error("pydub not available for audio concatenation")
-        # Fallback: simple concatenation without pause
-        return english_audio + arabic_audio
+    except ImportError as e:
+        raise AudioGenerationError(
+            "pydub required for audio combining - install with: pip install pydub"
+        ) from e
     except Exception as e:
         logger.error(f"Error creating bilingual audio: {e}")
-        # Fallback: simple concatenation
-        return english_audio + arabic_audio
+        raise AudioGenerationError(f"Audio combining failed: {e}") from e
 
 
 def create_multi_audio_with_delays(
@@ -113,14 +114,13 @@ def create_multi_audio_with_delays(
         )
         return output.getvalue()
 
-    except ImportError:
-        logger.error("pydub not available for multi-segment audio creation")
-        # Fallback: simple concatenation without delays
-        return b"".join(audio_segments)
+    except ImportError as e:
+        raise AudioGenerationError(
+            "pydub required for audio combining - install with: pip install pydub"
+        ) from e
     except Exception as e:
         logger.error(f"Error creating multi-segment audio: {e}")
-        # Fallback: simple concatenation
-        return b"".join(audio_segments)
+        raise AudioGenerationError(f"Multi-segment audio creation failed: {e}") from e
 
 
 __all__ = ["create_bilingual_audio", "create_multi_audio_with_delays"]
