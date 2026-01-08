@@ -16,7 +16,6 @@ import type { ThemeColors } from '@/types/ui/theme.types';
 import {
   COMMON_STYLES,
   createAndroidRipple,
-  createContainerStyle,
   createMargin,
   createPadding,
 } from '@/utils/layoutUtils';
@@ -161,73 +160,6 @@ describe('layoutUtils', () => {
         horizontal: 'LARGE', // Should be ignored
       });
       expect(result).toEqual({ margin: LAYOUT.SPACING.MEDIUM });
-    });
-  });
-
-  describe('createContainerStyle', () => {
-    test('should create empty style with no options', () => {
-      const result = createContainerStyle({});
-      expect(result).toEqual({});
-    });
-
-    test('should create style with padding', () => {
-      const result = createContainerStyle({
-        padding: { all: 'MEDIUM' },
-      });
-      expect(result).toEqual({ padding: LAYOUT.SPACING.MEDIUM });
-    });
-
-    test('should create style with margin', () => {
-      const result = createContainerStyle({
-        margin: { horizontal: 'LARGE' },
-      });
-      expect(result).toEqual({ marginHorizontal: LAYOUT.SPACING.LARGE });
-    });
-
-    test('should create centered container', () => {
-      const result = createContainerStyle({
-        centered: true,
-      });
-      expect(result).toEqual({
-        alignItems: 'center',
-        justifyContent: 'center',
-      });
-    });
-
-    test('should create full width container', () => {
-      const result = createContainerStyle({
-        fullWidth: true,
-      });
-      expect(result).toEqual({ width: '100%' });
-    });
-
-    test('should combine all options', () => {
-      const result = createContainerStyle({
-        padding: { all: 'MEDIUM' },
-        margin: { horizontal: 'LARGE' },
-        centered: true,
-        fullWidth: true,
-      });
-      expect(result).toEqual({
-        padding: LAYOUT.SPACING.MEDIUM,
-        marginHorizontal: LAYOUT.SPACING.LARGE,
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
-      });
-    });
-
-    test('should handle complex padding and margin options', () => {
-      const result = createContainerStyle({
-        padding: { horizontal: 'MEDIUM', vertical: 'SMALL' },
-        margin: { top: 'LARGE', bottom: 'TINY' },
-      });
-      expect(result).toEqual({
-        paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-        paddingVertical: LAYOUT.SPACING.SMALL,
-        marginTop: LAYOUT.SPACING.LARGE,
-        marginBottom: LAYOUT.SPACING.TINY,
-      });
     });
   });
 

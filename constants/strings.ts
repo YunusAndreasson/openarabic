@@ -16,7 +16,6 @@ export const STRINGS = {
   AUDIO_LANGUAGE_ARABIC: 'Arabic only',
   AUDIO_LANGUAGE_ARABIC_SUBTITLE: 'Arabic pronunciation only',
   AUDIO_LANGUAGE_BILINGUAL_SUBTITLE: 'English translation, then Arabic',
-  AUDIO_LANGUAGE_LONG_PRESS_TIP: 'Tip: Long-press "Play all" to temporarily play Arabic-only',
   AUDIO_SHUFFLE: 'Shuffle audio',
   AUDIO_SHUFFLE_DESCRIPTION: 'Plays articles in random order',
   HAPTICS: 'Haptic feedback',
@@ -46,8 +45,6 @@ export const STRINGS = {
   // Swipe tutorial navigation
   TUTORIAL_NEXT: 'Got it',
   TUTORIAL_START_PRACTICING: 'Got it',
-  // Swipe tutorial - Sample word
-  TUTORIAL_SAMPLE_WORD_ARABIC: 'كِتَاب',
   // Contextual help - Swipe left (Unknown)
   TUTORIAL_CONTEXT_LEFT_LINE1: "Don't know the word?",
   TUTORIAL_CONTEXT_LEFT_LINE2: 'Swipe left.',
@@ -74,8 +71,6 @@ export const STRINGS = {
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
   APPEARANCE_SECTION: 'Appearance',
-  DATA_SECTION: 'Storage',
-  DATA_ACCOUNT_SECTION: 'Account',
   STORAGE_ACCOUNT_SECTION: 'Storage & Account',
   DANGER_ZONE_SECTION: 'Danger zone',
   RESET_READING_PROGRESS_DESCRIPTION: 'Clear reading history, streaks, and progress',
@@ -102,9 +97,6 @@ export const STRINGS = {
   PREPARING_PRACTICE_SESSION: 'Preparing session…',
   // Timer controls
   SLEEP_TIMER: 'Sleep timer',
-  SET_TIMER: 'Set timer',
-  STOP_TIMER: 'Stop timer',
-  TIME_REMAINING: 'Time remaining',
   // Welcome & onboarding
   WELCOME_TITLE: 'OpenArabic',
   WELCOME_SUBTITLE: 'Read, listen, and memorize',
@@ -139,8 +131,6 @@ export const STRINGS = {
   LENGTH_LONG: 'Long',
   RESUMED_READING_TEMPLATE: 'Resuming at {percent}%',
   // Article & content actions - shortened and action-oriented
-  BROWSE_ARTICLES: 'Explore articles',
-  PULL_TO_REFRESH: 'Pull to refresh',
   PREPARING_ARTICLES: 'Preparing articles…',
   // Article section headings (for progress-based sorting)
   CONTINUE_READING: 'Continue reading',
@@ -150,11 +140,9 @@ export const STRINGS = {
   COMPLETED: 'Completed',
   SET_TIME: 'Set time',
   // Empty states & hints - more actionable
-  TRY_ADJUSTING_FILTERS: 'Try different filters',
   NO_ARTICLES_FOUND: 'No articles match your filters',
   // Playlist tab empty state - minimal one-tap start
   BOOKMARKS_EMPTY_TITLE: 'Your playlist is empty',
-  BOOKMARKS_EMPTY_CTA: 'Add 10 beginner texts',
   BOOKMARKS_EMPTY_CTA_SECONDARY: 'Browse',
   BOOKMARKS_EMPTY_HINT: 'Tap the headset on any article to add it here',
   // Practice tab empty state - minimal one-tap start
@@ -162,7 +150,6 @@ export const STRINGS = {
   STUDY_LIST_EMPTY_CTA: 'Add 10 essential words',
   STUDY_LIST_EMPTY_CTA_SECONDARY: 'Browse',
   STUDY_LIST_EMPTY_HINT: 'Tap any word while reading to save it for practice',
-  STUDY_LIST_WORDS_ADDED: 'words added to practice',
   // Welcome toasts when navigating from empty states
   EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headset on any article to add it to your playlist',
   EXPLORE_WELCOME_FROM_PRACTICE: 'Tap any word while reading to save it for practice',
@@ -341,8 +328,6 @@ export const STRINGS = {
   CONTACT_SUPPORT: 'Contact support',
   // Account - About section
   ABOUT_SECTION: 'About',
-  APP_VERSION_LABEL: 'Version',
-  COPYRIGHT_SYMBOL: '\u00A9',
   NO_EMAIL: 'No email',
   BYTE_UNITS: ['Bytes', 'KB', 'MB', 'GB'] as const,
   ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',

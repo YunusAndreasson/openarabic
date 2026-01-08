@@ -63,12 +63,9 @@ export enum DailyWordLimitStatus {
  * Account section categories for organization
  */
 export enum AccountSection {
-  READING_EXPERIENCE = 'Reading experience',
   AUDIO_PLAYBACK = 'Audio',
   LEARNING = 'Learning',
   SUPPORT = 'Support',
-  ABOUT = 'About',
-  DATA_ACCOUNT = 'Account',
 }
 
 // ===== PRACTICE SYSTEM =====
@@ -78,9 +75,7 @@ export enum AccountSection {
  */
 export enum VocabularyStatCategory {
   DUE = 'Words Due',
-  LEARNING = 'Learning',
   MASTERED = 'Mastered',
-  TOTAL = 'Total words',
 }
 
 // ===== FONT OPTIONS =====

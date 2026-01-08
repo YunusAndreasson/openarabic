@@ -99,47 +99,6 @@ export const createMargin = (options: SpacingOptions): ViewStyle => {
 };
 
 /**
- * Creates common container styles for layouts
- * @param options - Container configuration
- * @returns ViewStyle for container
- */
-export const createContainerStyle = (options: {
-  padding?: {
-    horizontal?: SpacingScale;
-    vertical?: SpacingScale;
-    all?: SpacingScale;
-  };
-  margin?: {
-    horizontal?: SpacingScale;
-    vertical?: SpacingScale;
-    all?: SpacingScale;
-  };
-  centered?: boolean;
-  fullWidth?: boolean;
-}): ViewStyle => {
-  const style: ViewStyle = {};
-
-  if (options.padding) {
-    Object.assign(style, createPadding(options.padding));
-  }
-
-  if (options.margin) {
-    Object.assign(style, createMargin(options.margin));
-  }
-
-  if (options.centered) {
-    style.alignItems = 'center';
-    style.justifyContent = 'center';
-  }
-
-  if (options.fullWidth) {
-    style.width = '100%';
-  }
-
-  return style;
-};
-
-/**
  * Ripple size map for consistent Android ripple sizing
  */
 const RIPPLE_SIZE_MAP = {
