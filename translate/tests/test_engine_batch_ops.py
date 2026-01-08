@@ -1,6 +1,6 @@
 """Tests for pipeline/engine/batch_ops.py batch sentence translation."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 

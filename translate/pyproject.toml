@@ -110,7 +110,7 @@ known-first-party = ["translate"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**/*" = ["B011", "S101", "ARG001", "ARG005"]
+"tests/**/*" = ["B011", "B017", "S101", "ARG001", "ARG002", "ARG005"]
 # CLI scripts and utilities where print is appropriate
 "check_recent_improvements.py" = ["T201", "S110"]
 "clear_old_improvements.py" = ["T201", "S110"]
@@ -193,19 +193,9 @@ exclude = [
     ".*_test\\.py$",
     "test_.*\\.py$",
 ]
-# Ignore complex external library issues
+# Only disable error codes for genuinely unavoidable external library issues
 disable_error_code = [
-    "call-overload",  # OpenAI API complex overloads
-    "no-any-return",  # External library returns
-    "attr-defined",   # External library attributes
-    "unreachable",    # External library control flow
-    "arg-type",       # Complex function argument types
-    "dict-item",      # Complex dictionary type issues
-    "assignment",     # Complex assignment type issues
-    "return-value",   # Complex return type mismatches
-    "truthy-function", # Function boolean context issues
-    "union-attr",     # Union type attribute access
-    "misc",           # Miscellaneous complex type issues
+    "call-overload",  # OpenAI API complex overloads (external library)
     "import-untyped", # External libraries without type stubs (pydub, camel_tools)
 ]
 

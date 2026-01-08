@@ -2,14 +2,11 @@
 
 from unittest.mock import patch
 
-import pytest
-
 from data.models import (
     RefinementResult,
     TashkeelResult,
     TranslationResult,
     WordTranslation,
-    WordTranslationResult,
 )
 
 

@@ -12,12 +12,14 @@ class PipelineProgressTracker:
     """Tracks progress across the entire translation pipeline with clean logging."""
 
     def __init__(self) -> None:
-        self.current_phase = None
+        self.current_phase: str | None = None
         self.current_total = 0
         self.current_count = 0
         self._finished = False
 
-    def start_phase(self, phase_name: str, total: int, description: str = None) -> None:
+    def start_phase(
+        self, phase_name: str, total: int, description: str | None = None
+    ) -> None:
         """Start a new pipeline phase with logging."""
         if self.current_phase:
             self.finish_phase()
@@ -31,7 +33,7 @@ class PipelineProgressTracker:
         if description:
             logger.info(f"   {description}")
 
-    def update(self, n: int = 1, _description: str = None) -> None:
+    def update(self, n: int = 1, _description: str | None = None) -> None:
         """Update the current progress counter."""
         self.current_count += n
 

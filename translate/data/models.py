@@ -38,6 +38,8 @@ class Uncertainty(BaseModel):
     @classmethod
     def _normalize_uncertainty_type(cls, v: Any) -> UncertaintyType:
         """Normalize uncertainty type enum values using match/case (Python 3.10+)."""
+        if isinstance(v, UncertaintyType):
+            return v
         if isinstance(v, str):
             v_lower = v.lower()
             match v_lower:
@@ -68,7 +70,8 @@ class Uncertainty(BaseModel):
                             f"Unknown uncertainty type '{v}', defaulting to TRANSLATION"
                         )
                         return UncertaintyType.TRANSLATION
-        return v
+        # Fallback for unexpected types
+        return UncertaintyType.TRANSLATION
 
     # Resolution fields - simplified
     step: str = Field(description="Processing step where uncertainty was resolved")
@@ -177,6 +180,8 @@ class WordTranslation(BaseModel):
     @classmethod
     def _normalize_part_of_speech(cls, v: Any) -> PartOfSpeech:
         """Normalize part of speech enum values using match/case (Python 3.10+)."""
+        if isinstance(v, PartOfSpeech):
+            return v
         if isinstance(v, str):
             v_lower = v.lower()
             match v_lower:
@@ -221,7 +226,8 @@ class WordTranslation(BaseModel):
                             f"Unknown part of speech '{v}', defaulting to NOUN"
                         )
                         return PartOfSpeech.NOUN
-        return v
+        # Fallback for unexpected types
+        return PartOfSpeech.NOUN
 
     @field_validator("notes")
     @classmethod
@@ -395,6 +401,8 @@ class SentenceTranslation(BaseModel):
     @classmethod
     def _normalize_verification_status(cls, v: Any) -> VerificationStatus:
         """Normalize verification status enum values using match/case (Python 3.10+)."""
+        if isinstance(v, VerificationStatus):
+            return v
         if isinstance(v, str):
             v_lower = v.lower()
             match v_lower:
@@ -419,7 +427,8 @@ class SentenceTranslation(BaseModel):
                             f"Unknown verification status '{v}', defaulting to PENDING"
                         )
                         return VerificationStatus.PENDING
-        return v
+        # Fallback for unexpected types
+        return VerificationStatus.PENDING
 
 
 class TextMetadata(BaseModel):

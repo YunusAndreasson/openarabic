@@ -11,9 +11,7 @@ class TestBatchTranslateWords:
     """Tests for batch_translate_words function."""
 
     @patch("utils.responses_api.token_tracker")
-    def test_successful_word_translation(
-        self, mock_tracker, mock_conversation_manager
-    ):
+    def test_successful_word_translation(self, mock_tracker, mock_conversation_manager):
         """Test successful word-by-word translation with conversation manager."""
         from pipeline.engine.word_translation import batch_translate_words
 
@@ -34,9 +32,7 @@ class TestBatchTranslateWords:
             },
         }
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="Hello",
@@ -83,9 +79,7 @@ class TestBatchTranslateWords:
             },
         }
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="الْكِتَابِ", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="الْكِتَابِ", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="The book",
@@ -119,15 +113,11 @@ class TestBatchTranslateWords:
 
     @patch("pipeline.engine.word_translation.time.sleep")
     @patch("utils.responses_api.token_tracker")
-    def test_missing_conversation_manager_raises_error(
-        self, mock_tracker, mock_sleep
-    ):
+    def test_missing_conversation_manager_raises_error(self, mock_tracker, mock_sleep):
         """Test that missing conversation manager raises error after retries."""
         from pipeline.engine.word_translation import batch_translate_words
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="Hello",
@@ -156,9 +146,7 @@ class TestBatchTranslateWords:
 
         mock_conversation_manager.current_response_id = None
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="Hello",
@@ -207,9 +195,7 @@ class TestBatchTranslateWords:
             },
         ]
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="Hello",
@@ -243,9 +229,7 @@ class TestBatchTranslateWords:
             "Persistent failure"
         )
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="Hello",
@@ -287,9 +271,7 @@ class TestBatchTranslateWords:
             },
         }
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="Hello",
@@ -332,9 +314,7 @@ class TestBatchTranslateWords:
             },
         }
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="فِي", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="فِي", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="In",
@@ -366,9 +346,7 @@ class TestBatchTranslateWords:
             "data": {"word_translations": []},
         }
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="Hello",
@@ -445,9 +423,7 @@ class TestBatchTranslateWords:
             )
 
     @patch("utils.responses_api.token_tracker")
-    def test_english_options_list_format(
-        self, mock_tracker, mock_conversation_manager
-    ):
+    def test_english_options_list_format(self, mock_tracker, mock_conversation_manager):
         """Test handling of english_options as a list."""
         from pipeline.engine.word_translation import batch_translate_words
 
@@ -468,9 +444,7 @@ class TestBatchTranslateWords:
             },
         }
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="كِتَاب", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="كِتَاب", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="Book",
@@ -492,9 +466,7 @@ class TestBatchTranslateWords:
         assert result[0].word_translations[0].english == ["book", "tome"]
 
     @patch("utils.responses_api.token_tracker")
-    def test_token_tracker_phase_set(
-        self, mock_tracker, mock_conversation_manager
-    ):
+    def test_token_tracker_phase_set(self, mock_tracker, mock_conversation_manager):
         """Test that token_tracker.set_phase is called correctly."""
         from pipeline.engine.word_translation import batch_translate_words
 
@@ -515,9 +487,7 @@ class TestBatchTranslateWords:
             },
         }
 
-        tashkeel_results = [
-            TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])
-        ]
+        tashkeel_results = [TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[])]
         translation_results = [
             TranslationResult(
                 translation="Hello",

@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 from typing import Any
 
@@ -6,13 +7,16 @@ from data.config import (
     DEFAULT_INPUT_FILE,
     DEFAULT_SPLIT_OUTPUT_FILE,
     MODEL_ANALYSIS,
+    SPLIT_DIR,
 )
+from data.enums import DifficultyLevel
 from data.models import SplitResult
 from data.schemas import (
     GENERAL_SYSTEM_PROMPT,
     SENTENCE_SPLITTING_USER_PROMPT,
 )
 from utils.file_utils import (
+    generate_pipeline_filename,
     generate_split_filename,
     read_text_file,
     write_json_file,
@@ -38,7 +42,7 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
             units=[],
             title="unknown",
             summary=response["error"],
-            difficulty_level="unknown",
+            difficulty_level=DifficultyLevel.ELEMENTARY,
             category="aqeedah",
             total_units=0,
         )
@@ -58,7 +62,7 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
             units=[],
             title="unknown",
             summary="unknown",
-            difficulty_level="unknown",
+            difficulty_level=DifficultyLevel.ELEMENTARY,
             category="aqeedah",
             total_units=0,
         )
@@ -113,9 +117,39 @@ def split_file(input_file: str, output_file: str) -> SplitResult:
         raise RuntimeError(f"Text splitting failed: {str(e)}") from e
 
 
+def split_files(input_files: list[tuple[str, str, str]]) -> list[str]:
+    """
+    Split all input files and return output paths.
+
+    Args:
+        input_files: List of tuples (input_file_path, author_folder, author_name).
+
+    Returns:
+        List of output file paths.
+
+    Raises:
+        RuntimeError: If a split file is not created successfully.
+    """
+    # Ensure split directory exists
+    os.makedirs(SPLIT_DIR, exist_ok=True)
+
+    output_files: list[str] = []
+    for input_file, author_folder, _author_name in input_files:
+        output_file = generate_pipeline_filename(
+            input_file, author_folder, "_split", SPLIT_DIR
+        )
+        split_file(input_file, output_file)
+        if not os.path.exists(output_file):
+            raise RuntimeError(f"Split file not created: {output_file}")
+        output_files.append(output_file)
+
+    return output_files
+
+
 __all__ = [
     "split_text_into_sentences",
     "split_file",
+    "split_files",
     "build_split_messages",
     "parse_split_response",
 ]

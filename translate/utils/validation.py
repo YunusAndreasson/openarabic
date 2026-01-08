@@ -278,7 +278,12 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
         for i, word_trans in enumerate(translation.word_by_word):
             if not word_trans.arabic.strip():
                 issues.append(f"Word {i}: Missing Arabic text")
-            if not word_trans.english.strip():
+            # Handle english which can be str or list[str]
+            english = word_trans.english
+            if isinstance(english, str):
+                if not english.strip():
+                    issues.append(f"Word {i}: Missing English translation")
+            elif not english:  # Empty list
                 issues.append(f"Word {i}: Missing English translation")
             if not word_trans.essential.strip():
                 issues.append(f"Word {i}: Missing essential letters")
@@ -294,7 +299,12 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
                 issues.append(f"Word {i}: {diacritic_reason}")
 
             # Check for error markers in word translations
-            if any(err in word_trans.english for err in TRANSLATION_ERROR_MARKERS):
+            english_to_check = [english] if isinstance(english, str) else english
+            if any(
+                err in eng
+                for eng in english_to_check
+                for err in TRANSLATION_ERROR_MARKERS
+            ):
                 issues.append(f"Word {i}: Contains error marker in translation")
 
     # Check verification status if present

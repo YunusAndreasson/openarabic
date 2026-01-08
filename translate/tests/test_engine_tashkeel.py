@@ -13,9 +13,7 @@ class TestBatchAddTashkeel:
     @patch("pipeline.engine.tashkeel.generate_tashkeel_suggestions_with_context")
     @patch("pipeline.engine.tashkeel.call_response_api")
     @patch("utils.responses_api.token_tracker")
-    def test_successful_tashkeel_generation(
-        self, mock_tracker, mock_api, mock_camel
-    ):
+    def test_successful_tashkeel_generation(self, mock_tracker, mock_api, mock_camel):
         """Test successful tashkeel generation without conversation manager."""
         from pipeline.engine.tashkeel import batch_add_tashkeel
 
@@ -86,9 +84,7 @@ class TestBatchAddTashkeel:
     @patch("pipeline.engine.tashkeel.generate_tashkeel_suggestions_with_context")
     @patch("pipeline.engine.tashkeel.call_response_api")
     @patch("utils.responses_api.token_tracker")
-    def test_camel_tools_suggestions_applied(
-        self, mock_tracker, mock_api, mock_camel
-    ):
+    def test_camel_tools_suggestions_applied(self, mock_tracker, mock_api, mock_camel):
         """Test that camel_tools suggestions are substituted in sentence."""
         from pipeline.engine.tashkeel import batch_add_tashkeel
 
@@ -123,9 +119,7 @@ class TestBatchAddTashkeel:
     @patch("pipeline.engine.tashkeel.generate_tashkeel_suggestions_with_context")
     @patch("pipeline.engine.tashkeel.call_response_api")
     @patch("utils.responses_api.token_tracker")
-    def test_context_cache_used_when_provided(
-        self, mock_tracker, mock_api, mock_camel
-    ):
+    def test_context_cache_used_when_provided(self, mock_tracker, mock_api, mock_camel):
         """Test that ContextCache provides context for tashkeel."""
         from pipeline.engine.tashkeel import batch_add_tashkeel
 
@@ -240,9 +234,7 @@ class TestBatchAddTashkeel:
     @patch("pipeline.engine.tashkeel.generate_tashkeel_suggestions_with_context")
     @patch("pipeline.engine.tashkeel.call_response_api")
     @patch("utils.responses_api.token_tracker")
-    def test_empty_context_handled(
-        self, mock_tracker, mock_api, mock_camel
-    ):
+    def test_empty_context_handled(self, mock_tracker, mock_api, mock_camel):
         """Test handling when context_cache returns empty/None context."""
         from pipeline.engine.tashkeel import batch_add_tashkeel
 
@@ -280,9 +272,7 @@ class TestBatchAddTashkeel:
     @patch("pipeline.engine.tashkeel.generate_tashkeel_suggestions_with_context")
     @patch("pipeline.engine.tashkeel.call_response_api")
     @patch("utils.responses_api.token_tracker")
-    def test_indices_passed_to_camel_tools(
-        self, mock_tracker, mock_api, mock_camel
-    ):
+    def test_indices_passed_to_camel_tools(self, mock_tracker, mock_api, mock_camel):
         """Test that sentence indices are passed to camel_tools."""
         from pipeline.engine.tashkeel import batch_add_tashkeel
 
@@ -317,9 +307,7 @@ class TestBatchAddTashkeel:
     @patch("pipeline.engine.tashkeel.generate_tashkeel_suggestions_with_context")
     @patch("pipeline.engine.tashkeel.call_response_api")
     @patch("utils.responses_api.token_tracker")
-    def test_token_tracker_phase_set(
-        self, mock_tracker, mock_api, mock_camel
-    ):
+    def test_token_tracker_phase_set(self, mock_tracker, mock_api, mock_camel):
         """Test that token_tracker.set_phase is called correctly."""
         from pipeline.engine.tashkeel import batch_add_tashkeel
 

@@ -7,7 +7,7 @@ from data.models import (
     RefinementResult,
     TashkeelResult,
     TranslationResult,
-    WordTranslationResult,
+    WordTranslation,
 )
 from data.pipeline_types import RefinementInput, RefinementInputs, RefinementResults
 from data.schemas import FINAL_VERIFICATION_USER_PROMPT, GENERAL_SYSTEM_PROMPT
@@ -38,7 +38,7 @@ def batch_refine_translations(
             original = refinement_data["original"]
             translation_data: TranslationResult = refinement_data["translation"]
             tashkeel_data: TashkeelResult = refinement_data["tashkeel"]
-            word_translations_options: list[WordTranslationResult] = refinement_data[
+            word_translations_options: list[WordTranslation] = refinement_data[
                 "word_translations_options"
             ]
             previous_uncertainties = refinement_data["previous_uncertainties"]
@@ -67,7 +67,8 @@ def batch_refine_translations(
                     pos = word_opts.pos
                     notes = word_opts.notes
                 elif isinstance(word_opts, dict):
-                    # Dictionary format
+                    # Dictionary format (defensive for runtime flexibility)
+                    # Type ignored: dict branch is unreachable with current types but kept for safety
                     arabic = word_opts.get("arabic", "")
                     english_options = word_opts.get("english_options", ["N/A"])
                     essential_translation_options = word_opts.get(
@@ -116,8 +117,9 @@ def batch_refine_translations(
                     word_uncertainties = word_opts.uncertainties
                     arabic = word_opts.arabic
                 else:
-                    word_uncertainties = word_opts.get("uncertainties", [])
-                    arabic = word_opts.get("arabic", "")
+                    # Dict format (for backwards compatibility)
+                    word_uncertainties = word_opts.get("uncertainties", [])  # type: ignore[union-attr]
+                    arabic = word_opts.get("arabic", "")  # type: ignore[union-attr]
 
                 if isinstance(word_uncertainties, list):
                     for u in word_uncertainties:
