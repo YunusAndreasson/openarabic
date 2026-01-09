@@ -735,38 +735,6 @@ describe('audioPlayer service', () => {
     });
   });
 
-  describe('Background Audio Handling', () => {
-    // Skipped: Test isolation issue - AppState mock conflicts with other test files
-    test.skip('should setup AppState listener on audio session configuration', async () => {
-      await audioService.play(testTrack);
-
-      expect(mockAppStateAddEventListener).toHaveBeenCalledWith('change', expect.any(Function));
-    });
-
-    // Skipped: Test isolation issue - AppState mock conflicts with other test files
-    test.skip('should maintain audio session when app goes to background', async () => {
-      await audioService.play(testTrack);
-
-      const appStateListener = mockAppStateAddEventListener.mock.calls[0][1];
-
-      await appStateListener('background');
-
-      expect(mockSetIsAudioActiveAsync).toHaveBeenCalledWith(true);
-      expect(mockSetAudioModeAsync).toHaveBeenCalled();
-    });
-
-    // Skipped: Test isolation issue - AppState mock conflicts with other test files
-    test.skip('should maintain audio session when app returns to foreground', async () => {
-      await audioService.play(testTrack);
-
-      const appStateListener = mockAppStateAddEventListener.mock.calls[0][1];
-
-      await appStateListener('active');
-
-      expect(mockSetIsAudioActiveAsync).toHaveBeenCalledWith(true);
-    });
-  });
-
   describe('Memory Cleanup', () => {
     test('should cleanup resources on destroy', async () => {
       await audioService.play(testTrack);
@@ -790,19 +758,6 @@ describe('audioPlayer service', () => {
 
       // Listener should not receive events after destroy
       expect(listener).not.toHaveBeenCalled();
-    });
-
-    // Skipped: Test isolation issue - AppState mock conflicts with other test files
-    test.skip('should remove AppState listener on destroy', async () => {
-      const mockRemove = jest.fn();
-      mockAppStateAddEventListener.mockReturnValueOnce({
-        remove: mockRemove,
-      });
-
-      await audioService.play(testTrack);
-      await audioService.destroy();
-
-      expect(mockRemove).toHaveBeenCalled();
     });
   });
 

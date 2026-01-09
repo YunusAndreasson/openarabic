@@ -85,12 +85,12 @@ export const createAudioPreloaderMock = (
   overrides: Partial<{
     isPreloading: boolean;
     progress: number;
-    preloadUrls: jest.Mock;
+    isComplete: boolean;
   }> = {},
 ) => ({
   isPreloading: false,
   progress: 100,
-  preloadUrls: jest.fn().mockResolvedValue(undefined),
+  isComplete: true,
   ...overrides,
 });
 
