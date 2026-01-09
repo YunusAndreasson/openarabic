@@ -68,13 +68,6 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
     test('يَوْمَكَ → "your day" should detect ك suffix for "your"', () => {
       const result = analyzeArabicWord('يَوْمَكَ', 'your day');
 
-      console.log('DEBUG يَوْمَكَ:', {
-        hasComponents: result.hasComponents,
-        suffix: result.suffix?.arabicMatch,
-        suffixEnglish: result.suffix?.englishMatches,
-        prefixes: result.prefixes.map(p => p.arabicMatch),
-      });
-
       expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ك');
