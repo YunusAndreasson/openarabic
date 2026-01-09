@@ -136,11 +136,11 @@ export function useReadingProgress({
       if (user?.id) {
         // Invalidate bulk progress query (single source of truth)
         queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.keys.bulk(user.id),
+          queryKey: readingProgressQueries.bulk(user.id).queryKey,
         });
         // Invalidate streak query to update streak immediately after reading
         queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.keys.streak(user.id),
+          queryKey: ['reading-streak', user.id] as const,
         });
       }
     },
@@ -279,7 +279,7 @@ export function useBulkReadingProgress(articleIds: ArticleId[]) {
 
   const query = useQuery({
     queryKey: user?.id
-      ? readingProgressQueries.keys.bulk(user.id)
+      ? readingProgressQueries.bulk(user.id).queryKey
       : (['reading-progress-bulk', undefined] as const),
     queryFn: async () => {
       // TypeScript guard - should never happen due to enabled check

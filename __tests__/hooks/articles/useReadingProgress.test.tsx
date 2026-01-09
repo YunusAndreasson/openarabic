@@ -107,7 +107,7 @@ describe('useReadingProgress', () => {
       // Get the query from the cache to inspect its configuration
       const queries = queryClient
         .getQueryCache()
-        .findAll({ queryKey: readingProgressQueries.keys.bulk(testUserId) });
+        .findAll({ queryKey: readingProgressQueries.bulk(testUserId).queryKey });
 
       expect(queries).toHaveLength(1);
       const query = queries[0];
@@ -145,7 +145,7 @@ describe('useReadingProgress', () => {
       // Get the query from the cache to inspect its configuration
       const queries = queryClient
         .getQueryCache()
-        .findAll({ queryKey: readingProgressQueries.keys.bulk(testUserId) });
+        .findAll({ queryKey: readingProgressQueries.bulk(testUserId).queryKey });
 
       expect(queries).toHaveLength(1);
       const query = queries[0];
@@ -200,11 +200,11 @@ describe('useReadingProgress', () => {
 
       // Verify cache invalidation happened with correct query keys
       expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-        queryKey: readingProgressQueries.keys.bulk(testUserId),
+        queryKey: readingProgressQueries.bulk(testUserId).queryKey,
       });
 
       expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-        queryKey: readingProgressQueries.keys.streak(testUserId),
+        queryKey: ['reading-streak', testUserId] as const,
       });
 
       // Should have been called exactly twice (once for bulk, once for streak)

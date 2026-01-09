@@ -24,7 +24,6 @@ import {
   isHardWord,
   isLearnedWord,
   isMasteredWord,
-  isStrugglingWord,
   isUnstableWord,
 } from '@/utils/wordClassification';
 
@@ -72,24 +71,6 @@ describe('wordClassification', () => {
       });
 
       expect(isHardWord(wordWithNullLapses)).toBeFalsy();
-    });
-  });
-
-  describe('isStrugglingWord (deprecated, delegates to isHardWord)', () => {
-    test('should identify struggling words (lapses >= 2)', () => {
-      const strugglingWord = createStudyWord({
-        fsrs_lapses: 2,
-      });
-
-      expect(isStrugglingWord(strugglingWord)).toBeTruthy();
-    });
-
-    test('should not identify normal words as struggling', () => {
-      const normalWord = createStudyWord({
-        fsrs_lapses: 0,
-      });
-
-      expect(isStrugglingWord(normalWord)).toBeFalsy();
     });
   });
 

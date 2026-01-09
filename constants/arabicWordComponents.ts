@@ -45,8 +45,8 @@ export interface WordComponent {
   english: string[];
   /** Type of component */
   type: ComponentType;
-  /** Grammatical role for color assignment and educational clarity (optional for backward compatibility during transition) */
-  role?: GrammaticalRole;
+  /** Grammatical role for color assignment and educational clarity */
+  role: GrammaticalRole;
 }
 
 /**
@@ -268,6 +268,7 @@ export const ARABIC_INFIXES: WordComponent[] = [
     arabic: 'ت',
     english: ['self', 'each other', 'mutually', 'reciprocally', 'together'],
     type: ComponentType.INFIX,
+    role: GrammaticalRole.VERB_CONJUGATION,
   },
 
   // Form VII passive/reflexive infix ن
@@ -275,6 +276,7 @@ export const ARABIC_INFIXES: WordComponent[] = [
     arabic: 'ن',
     english: ['self', 'itself', 'automatically', 'spontaneously'],
     type: ComponentType.INFIX,
+    role: GrammaticalRole.VERB_CONJUGATION,
   },
 
   // Form X seeking/requesting infix ست
@@ -282,6 +284,7 @@ export const ARABIC_INFIXES: WordComponent[] = [
     arabic: 'ست',
     english: ['seek', 'sought', 'request', 'ask for', 'try to', 'attempt to'],
     type: ComponentType.INFIX,
+    role: GrammaticalRole.VERB_CONJUGATION,
   },
 
   // Form IV causative infix أ (when internal)
@@ -289,6 +292,7 @@ export const ARABIC_INFIXES: WordComponent[] = [
     arabic: 'أ',
     english: ['make', 'cause', 'let', 'allow', 'enable'],
     type: ComponentType.INFIX,
+    role: GrammaticalRole.VERB_CONJUGATION,
   },
 
   // Intensive/repetitive infix patterns (Form II: doubled middle radical)
@@ -296,26 +300,31 @@ export const ARABIC_INFIXES: WordComponent[] = [
     arabic: 'رر',
     english: ['repeatedly', 'again and again', 'continuously'],
     type: ComponentType.INFIX,
+    role: GrammaticalRole.VERB_CONJUGATION,
   },
   {
     arabic: 'لل',
     english: ['repeatedly', 'continuously', 'persistently'],
     type: ComponentType.INFIX,
+    role: GrammaticalRole.VERB_CONJUGATION,
   },
   {
     arabic: 'مم',
     english: ['make', 'cause to', 'intensify', 'thoroughly'],
     type: ComponentType.INFIX,
+    role: GrammaticalRole.VERB_CONJUGATION,
   },
   {
     arabic: 'كك',
     english: ['intensely', 'repeatedly', 'thoroughly'],
     type: ComponentType.INFIX,
+    role: GrammaticalRole.VERB_CONJUGATION,
   },
   {
     arabic: 'دد',
     english: ['repeatedly', 'intensify', 'multiply'],
     type: ComponentType.INFIX,
+    role: GrammaticalRole.VERB_CONJUGATION,
   },
 
   // Comparative/superlative infix أ (when internal, different from causative)
@@ -326,6 +335,7 @@ export const ARABIC_INFIXES: WordComponent[] = [
     arabic: 'أع',
     english: ['more', 'most', 'greater', 'superior'],
     type: ComponentType.INFIX,
+    role: GrammaticalRole.VERB_CONJUGATION,
   },
 ];
 
@@ -633,6 +643,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'َ', // Fatha at end of word
     english: ['he', 'a', 'an', 'as'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // Kasra (ــِ) - short "i" vowel, often indicates genitive case
@@ -640,6 +651,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'ِ', // Kasra at end of word
     english: ['in', 'of', 'with'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // Damma (ــُ) - short "u" vowel, often indicates nominative case
@@ -647,6 +659,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'ُ', // Damma at end of word
     english: ['he', 'it', 'they', 'of'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // Tanween Fath (ــًا) - nunation with fatha, indicates indefinite accusative
@@ -654,6 +667,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'ًا',
     english: ['an', 'as', 'a', 'one'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // Standalone Tanween Fath (ــً) - without alif, common on taa marboota
@@ -661,6 +675,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'ً',
     english: ['a', 'an', 'one'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // Tanween Kasr (ــٍ) - nunation with kasra, indicates indefinite genitive
@@ -668,6 +683,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'ٍ',
     english: ['of', 'in', 'at', 'a', 'something'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // Tanween Damm (ــٌ) - nunation with damma, indicates indefinite nominative
@@ -675,6 +691,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'ٌ',
     english: ['a', 'an', 'is', 'one'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // Dual Nominative (ــانِ) - dual form in nominative case
@@ -682,6 +699,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'انِ',
     english: ['two', 'both', 'dual'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // Dual Accusative/Genitive (ــينِ) - dual form in accusative or genitive case
@@ -689,6 +707,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'ينِ',
     english: ['two', 'both', 'dual'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // Taa Marboota (ــتْ) - feminine past tense / passive marker
@@ -696,6 +715,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'تْ',
     english: ['was', 'did', 'has', 'have been', 'take', 'takes', 'becomes', 'is', 'it'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // First person plural past tense (ــنَا) - "we did"
@@ -703,6 +723,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'نَا',
     english: ['we', 'we were', 'we did'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 
   // Dual subject marker (ــَا) - "they two" / dual
@@ -710,6 +731,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     arabic: 'َا',
     english: ['they', 'both', 'they said', 'they two'],
     type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.CASE_ENDING,
   },
 ];
 

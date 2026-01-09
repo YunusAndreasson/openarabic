@@ -318,18 +318,6 @@ export const readingProgressQueries = {
     }),
 
   /**
-   * Query keys for backward compatibility
-   */
-  keys: {
-    readingList: (userId: string) => ['readingList', userId] as const,
-    readingListDetail: (userId: string, articleId: ArticleId) =>
-      ['readingList', userId, articleId] as const,
-    bulk: (userId: string) => ['reading-progress-bulk', userId] as const,
-    streak: (userId: string) => ['reading-streak', userId] as const,
-    streakHistory: (userId: string, days: number) => ['streak-history', userId, days] as const,
-  },
-
-  /**
    * Invalidate all reading-related queries for a user
    * Use after: adding/removing bookmarks, completing articles
    */
@@ -360,14 +348,6 @@ export const audioQueries = {
       gcTime: 10 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
       placeholderData: [],
     }),
-
-  /**
-   * Query keys for backward compatibility
-   */
-  keys: {
-    tracks: (userId: string, audioPreference: string) =>
-      ['enhancedAudioTracks', userId, audioPreference] as const,
-  },
 
   /**
    * Invalidate audio tracks
@@ -414,15 +394,6 @@ export const studyStreakQueries = {
     }),
 
   /**
-   * Query keys for backward compatibility
-   */
-  keys: {
-    streak: (userId: string) => ['study-streak', userId] as const,
-    history: (userId: string, days: number = 365) =>
-      ['study-streak-history', userId, days] as const,
-  },
-
-  /**
    * Invalidate all study streak queries for a user
    * Use after: completing practice session, manual streak updates
    */
@@ -451,11 +422,4 @@ export const sentenceQueries = {
       enabled: !!rootId,
       retry: 2,
     }),
-
-  /**
-   * Query keys for backward compatibility
-   */
-  keys: {
-    byRootId: (rootId: RootId, limit = 5) => ['sentences', 'by-root', rootId, limit] as const,
-  },
 } as const;

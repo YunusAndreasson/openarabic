@@ -62,7 +62,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // This prevents race condition where filtered view renders before progress data is available
       const readingProgressPromise = user?.id
         ? queryClient.prefetchQuery({
-            queryKey: readingProgressQueries.keys.bulk(user.id),
+            queryKey: readingProgressQueries.bulk(user.id).queryKey,
             queryFn: () => readingProgressService.getBulkProgress(user.id, []),
             staleTime: 0, // CRITICAL: Always fetch fresh data on app startup to prevent stale cache from blocking updates
             gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
@@ -194,7 +194,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
           const backgroundPromises = [
             queryClient.ensureQueryData(articleQueries.authors()),
             queryClient.prefetchQuery({
-              queryKey: readingProgressQueries.keys.readingList(user.id),
+              queryKey: readingProgressQueries.readingList(user.id).queryKey,
               queryFn: () => bookmarkService.getReadingList(user.id),
               ...CACHE_TIMES.MEDIUM,
               retry: 2,

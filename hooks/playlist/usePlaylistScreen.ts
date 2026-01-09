@@ -97,7 +97,9 @@ export const usePlaylistScreen = () => {
   }, [readingList, customOrder]);
 
   const isDataCached = useMemo(() => {
-    return Boolean(user?.id && queryClient.getQueryData(['readingList', user.id]));
+    return Boolean(
+      user?.id && queryClient.getQueryData(readingProgressQueries.readingList(user.id).queryKey),
+    );
   }, [user?.id, queryClient]);
 
   const enhancedTracksQuery = useQuery(
@@ -262,10 +264,10 @@ export const usePlaylistScreen = () => {
 
         // Then invalidate related queries to ensure consistency
         queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.keys.readingList(user.id),
+          queryKey: readingProgressQueries.readingList(user.id).queryKey,
         });
         queryClient.invalidateQueries({
-          queryKey: audioQueries.keys.tracks(user.id, audioPreference),
+          queryKey: audioQueries.tracks(user.id, audioPreference).queryKey,
         });
       } catch (error) {
         handleError(error as Error);

@@ -188,18 +188,18 @@ export const useAccountScreen = () => {
               // Completely remove all reading progress queries from cache
               // Using removeQueries instead of invalidate to force complete cache clear
               await queryClient.removeQueries({
-                queryKey: readingProgressQueries.keys.bulk(user.id),
+                queryKey: readingProgressQueries.bulk(user.id).queryKey,
               });
               await queryClient.removeQueries({
-                queryKey: readingProgressQueries.keys.streak(user.id),
+                queryKey: ['reading-streak', user.id] as const,
               });
               await queryClient.removeQueries({
-                queryKey: readingProgressQueries.keys.readingList(user.id),
+                queryKey: readingProgressQueries.readingList(user.id).queryKey,
               });
 
               // Refetch to populate cache with fresh (empty or reset) data
               await queryClient.refetchQueries({
-                queryKey: readingProgressQueries.keys.bulk(user.id),
+                queryKey: readingProgressQueries.bulk(user.id).queryKey,
               });
 
               lightFeedback();

@@ -20,16 +20,6 @@ export function isHardWord(word: StudyWord): boolean {
 }
 
 /**
- * @deprecated Use isHardWord for article recommendations.
- * This complex version is kept for backwards compatibility with stat cards
- * but will be removed in a future cleanup.
- */
-export function isStrugglingWord(word: StudyWord): boolean {
-  // Now delegates to the simplified isHardWord
-  return isHardWord(word);
-}
-
-/**
  * Calculate due words from study words
  * Uses FSRS due date logic to determine which words are currently due for review
  */
@@ -110,7 +100,7 @@ export function calculateStrugglingWords(studyWords: StudyWord[]): number {
     const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
     if (isRecentlyReviewed) return false;
 
-    return isStrugglingWord(word);
+    return isHardWord(word);
   }).length;
 }
 

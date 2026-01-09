@@ -55,18 +55,15 @@ export const useReadingListMutations = (
         });
 
         // Immediately update cache to reflect the bookmark was added
-        queryClient.setQueryData(
-          readingProgressQueries.keys.readingListDetail(userId, articleId),
-          true,
-        );
+        queryClient.setQueryData(['readingList', userId, articleId] as const, true);
 
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.keys.readingList(userId),
+          queryKey: readingProgressQueries.readingList(userId).queryKey,
         });
         queryClient.invalidateQueries({
-          queryKey: audioQueries.keys.tracks(userId, audioPreference),
+          queryKey: audioQueries.tracks(userId, audioPreference).queryKey,
         });
       },
       onError: (error: Error) => {
@@ -100,18 +97,15 @@ export const useReadingListMutations = (
         });
 
         // Immediately update cache to reflect the bookmark was removed
-        queryClient.setQueryData(
-          readingProgressQueries.keys.readingListDetail(userId, articleId),
-          false,
-        );
+        queryClient.setQueryData(['readingList', userId, articleId] as const, false);
 
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.keys.readingList(userId),
+          queryKey: readingProgressQueries.readingList(userId).queryKey,
         });
         queryClient.invalidateQueries({
-          queryKey: audioQueries.keys.tracks(userId, audioPreference),
+          queryKey: audioQueries.tracks(userId, audioPreference).queryKey,
         });
       },
       onError: (error: Error) => {

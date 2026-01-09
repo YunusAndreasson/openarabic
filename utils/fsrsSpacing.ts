@@ -5,7 +5,7 @@ import {
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { PriorityQueue } from '@/utils/priorityQueue';
-import { isStrugglingWord } from '@/utils/wordClassification';
+import { isHardWord } from '@/utils/wordClassification';
 
 export interface SpacingState {
   recentWords: Set<number>;
@@ -23,7 +23,7 @@ export function calculateWordPriority(word: StudyWord, nowMs: number = Date.now(
 
   const basePriority = 10; // Start with a high base value
   const stabilityFactor = Math.max(0, 10 - stability) * 0.1; // Lower stability = more urgent (lower number)
-  const strugglingFactor = isStrugglingWord(word) ? -10.0 : 0; // Struggling words get much higher priority (lower number)
+  const hardWordFactor = isHardWord(word) ? -10.0 : 0; // Hard words get much higher priority (lower number)
 
   return (
     basePriority -
@@ -31,7 +31,7 @@ export function calculateWordPriority(word: StudyWord, nowMs: number = Date.now(
     stabilityFactor -
     lapseFactor + // More lapses = lower priority (more urgent)
     difficultyFactor +
-    strugglingFactor
+    hardWordFactor
   );
 }
 
