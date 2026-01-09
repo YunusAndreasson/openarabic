@@ -29,6 +29,15 @@ yarn validate:full
    - Fix the issues
    - Re-run validation to confirm
 
+## Pre-Validation Checklist
+
+Before running validation, verify these issues ESLint won't catch:
+
+1. **Dead code** - Remove unused exports, unreachable code, obsolete logic
+2. **Constants** - Use defined constants, not hardcoded values
+3. **DRY** - No duplicated logic; use existing utilities and patterns
+4. **Modern patterns** - Use latest APIs, avoid deprecated methods
+
 ## Notes
 
 - Never run validation during development - only at the end
