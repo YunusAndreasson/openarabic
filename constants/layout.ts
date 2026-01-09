@@ -8,10 +8,12 @@ import { Dimensions } from 'react-native';
 const SCREEN_DIMENSIONS = Dimensions.get('window');
 export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375; // Default fallback for test environments
 
-export const FONTS = {
-  ENGLISH: 'System', // Use platform system font (SF Pro on iOS, Roboto on Android)
-  ARABIC: 'NotoSansArabic-Regular', // Default Arabic font
-} as const;
+/**
+ * @deprecated Import from '@/constants/fonts' instead.
+ * Re-exported for backwards compatibility.
+ */
+import { FONTS } from '@/constants/fonts';
+export { FONTS };
 
 // Base scale for systematic sizing
 const BASE_UNIT = 4;
@@ -29,6 +31,7 @@ const SPACING_SCALE = {
   LARGE: BASE_UNIT * 4, // 16
   XLARGE: BASE_UNIT * 6, // 24
   XXLARGE: BASE_UNIT * 8, // 32
+  HUGE: BASE_UNIT * 10, // 40 - fills gap between XXLARGE and XXXLARGE
   XXXLARGE: BASE_UNIT * 12, // 48
 } as const;
 
@@ -40,24 +43,22 @@ const TOUCH_TARGETS = {
   ICON_PADDING: BASE_UNIT * 3, // 12
 } as const;
 
-// Unified shadow/elevation system - uses iOS-style shadows on both platforms
+/**
+ * Unified shadow/elevation system - uses iOS-style shadows on both platforms.
+ * Creates shadow configuration object (shadowColor applied at usage site).
+ */
 const createShadow = (elevation: number, opacity: number, radius: number) => ({
   shadowOffset: { width: 0, height: Math.ceil(elevation / 2) },
   shadowOpacity: opacity,
   shadowRadius: radius,
-  // shadowColor applied at usage site (e.g., { shadowColor: colors.shadow })
-});
-
-const createElevation = (level: number, opacity: number, radius: number) => ({
-  ...createShadow(level, opacity, radius),
 });
 
 const ELEVATION_SYSTEM = {
-  NONE: createElevation(0, 0, 0),
-  SUBTLE: createElevation(2, 0.12, 3),
-  SMALL: createElevation(4, 0.16, 6),
-  MEDIUM: createElevation(6, 0.2, 8),
-  LARGE: createElevation(10, 0.25, 12),
+  NONE: createShadow(0, 0, 0),
+  SUBTLE: createShadow(2, 0.12, 3),
+  SMALL: createShadow(4, 0.16, 6),
+  MEDIUM: createShadow(6, 0.2, 8),
+  LARGE: createShadow(10, 0.25, 12),
 } as const;
 
 export const TYPOGRAPHY_HIERARCHY = {

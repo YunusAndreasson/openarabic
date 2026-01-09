@@ -8,6 +8,7 @@ import { BaseCard } from '@/components/common/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
 import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 // Default snap points for settings pickers
@@ -31,14 +32,14 @@ export interface SettingsPickerProps<T> {
   onSelect: (value: T) => void;
 }
 
-export const SettingsPicker = <T,>({
+function SettingsPickerComponent<T>({
   isVisible,
   onClose,
   title,
   options,
   selectedValue,
   onSelect,
-}: SettingsPickerProps<T>) => {
+}: SettingsPickerProps<T>) {
   const colors = useColors();
 
   // Get the current value - with proper fallback to first option if undefined
@@ -80,13 +81,8 @@ export const SettingsPicker = <T,>({
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
 
-  const dynamicStyles = useMemo(
-    () => ({
-      bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
-      indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
-    }),
-    [colors.elevation1, colors.modalIndicator],
-  );
+  // Use shared dynamic styles hook for theme-aware styling
+  const dynamicStyles = useBottomSheetDynamicStyles();
 
   return (
     <BottomSheet
@@ -170,7 +166,10 @@ export const SettingsPicker = <T,>({
       </BottomSheetView>
     </BottomSheet>
   );
-};
+}
+
+// Export component (memo not used for generic components)
+export const SettingsPicker = SettingsPickerComponent;
 
 const styles = StyleSheet.create({
   bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,

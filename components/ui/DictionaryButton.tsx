@@ -2,10 +2,9 @@ import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback } from 'react';
 
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth';
-import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 
 interface DictionaryButtonProps {
@@ -15,7 +14,6 @@ interface DictionaryButtonProps {
 
 export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | null {
   const { hideWhenEmpty = true, itemCount } = props;
-  const colors = useColors();
   const { session } = useAuth();
 
   // Get study words count to determine if button should be shown
@@ -32,13 +30,5 @@ export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | nu
     return null;
   }
 
-  return (
-    <HeaderIconButton
-      iconName="book"
-      onPress={handlePressAction}
-      size="medium"
-      iconColor={colors.tint}
-      backgroundColor={colors.transparent}
-    />
-  );
+  return <TransparentHeaderButton iconName="book" onPress={handlePressAction} size="medium" />;
 }

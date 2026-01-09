@@ -70,40 +70,66 @@ export const MIN_OPACITY_DURATION = 1;
 /** Slight delay used when mounting components to avoid flashes */
 export const MIN_MOUNT_DELAY = 5;
 
-/** Default scale amounts used for press animations */
+/**
+ * Unified press scale constants for all interactive elements.
+ * Values closer to 1.0 = subtler feedback, values further from 1.0 = stronger feedback.
+ */
 export const PRESS_SCALE = {
-  BUTTON: 0.96, // Subtle feedback for buttons
-  CARD: 0.96, // Subtle feedback for cards
+  /** Default press feedback for buttons and cards (subtle) */
+  DEFAULT: 0.96,
+  /** Alias for DEFAULT - buttons use subtle feedback */
+  BUTTON: 0.96,
+  /** Alias for DEFAULT - cards use subtle feedback */
+  CARD: 0.96,
+  /** Moderate press for toggles and interactive words */
+  MODERATE: 0.95,
+  /** Strong press for icon buttons */
+  STRONG: 0.9,
+  /** Scale up for drag feedback */
+  DRAG_UP: 1.05,
 } as const;
 
-/** Scale amount for icon button press animations */
-export const ICON_BUTTON_PRESS_SCALE = 0.9;
+// Backward compatibility exports - these reference the unified PRESS_SCALE
+/** @deprecated Use PRESS_SCALE.STRONG instead */
+export const ICON_BUTTON_PRESS_SCALE = PRESS_SCALE.STRONG;
+/** @deprecated Use PRESS_SCALE.MODERATE instead */
+export const TOGGLE_PRESS_SCALE = PRESS_SCALE.MODERATE;
+/** @deprecated Use PRESS_SCALE.MODERATE instead */
+export const WORD_PRESS_SCALE = PRESS_SCALE.MODERATE;
+/** @deprecated Use PRESS_SCALE.DRAG_UP instead */
+export const CARD_DRAG_SCALE = PRESS_SCALE.DRAG_UP;
 
 /** Default opacity reduction for card press animations */
 export const CARD_PRESS_OPACITY = 0.97;
 
-/** Scale value for toggle press feedback */
-export const TOGGLE_PRESS_SCALE = 0.95;
-
-/** Scale value used when pressing individual Arabic words */
-export const WORD_PRESS_SCALE = 0.95;
-
-/** Scale value applied when dragging cards */
-export const CARD_DRAG_SCALE = 1.05;
-
-/** Multiplier applied to list item height for overscroll draw distance */
+/**
+ * Multiplier for FlashList draw distance (overscroll rendering).
+ * Value of 3 = render items up to 3x viewport height above/below visible area.
+ * Higher values = smoother scrolling but more memory usage.
+ * 3 is a balanced default for most list sizes.
+ */
 export const LIST_DRAW_DISTANCE_MULTIPLIER = 3;
 
-/** Default scroll event throttle for smooth animations (16ms = 60fps, 8ms = 120fps) */
+/**
+ * Scroll event throttle in milliseconds.
+ * 8ms = 120fps (matches ProMotion displays on iPhone 13+).
+ * Use 16ms (60fps) if performance is a concern on older devices.
+ */
 export const SCROLL_EVENT_THROTTLE = 8;
 
-/** Default toast visibility duration */
+/**
+ * Default toast notification visibility duration in milliseconds.
+ * 4 seconds provides adequate reading time for most messages.
+ */
 export const DEFAULT_TOAST_DURATION = 4000;
 
 /**
  * General timing constants for delays, timeouts, and intervals
  */
 export const TIMING_CONSTANTS = {
+  /** Delay before navigation to allow press animation to complete */
+  NAVIGATION_DELAY: 60, // TIMING_CONFIG.FAST.duration / 2
+
   /** Quick delays for UI feedback */
   QUICK_DELAY: 100,
 

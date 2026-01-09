@@ -1,8 +1,7 @@
 import { memo, startTransition, useCallback, useOptimistic, type FC } from 'react';
 
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
 import { usePlaylistScreen } from '@/hooks/playlist/usePlaylistScreen';
-import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { EditModeType } from '@/store/editModeSlice';
 
@@ -17,7 +16,6 @@ interface EditModeButtonProps {
 }
 
 const EditModeButtonComponent: FC<EditModeButtonProps> = ({ type, hideWhenEmpty = true }) => {
-  const colors = useColors();
   const { editMode, toggle } = useEditMode(type);
 
   // React 19: Use native useOptimistic for immediate visual feedback
@@ -49,15 +47,7 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({ type, hideWhenEmpty 
   // Icon: checkmark-circle when in edit mode, pencil when not
   const iconName = optimisticEditMode ? 'checkmark-circle' : 'pencil';
 
-  return (
-    <HeaderIconButton
-      iconName={iconName}
-      onPress={handleToggle}
-      size="medium"
-      iconColor={colors.tint}
-      backgroundColor={colors.transparent}
-    />
-  );
+  return <TransparentHeaderButton iconName={iconName} onPress={handleToggle} size="medium" />;
 };
 
 export const EditModeButton = memo(EditModeButtonComponent);

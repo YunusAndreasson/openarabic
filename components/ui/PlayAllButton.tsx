@@ -1,9 +1,7 @@
 import { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
 
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
+import { HeaderButtonGroup } from '@/components/ui/HeaderButtonGroup';
+import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
 import { usePlaylistHeaderActions } from '@/hooks/playlist/usePlaylistHeaderActions';
 
 /**
@@ -13,7 +11,6 @@ import { usePlaylistHeaderActions } from '@/hooks/playlist/usePlaylistHeaderActi
  * Uses native iOS glass effect via transparent background
  */
 export const PlayAllButton = memo(function PlayAllButton() {
-  const colors = useColors();
   const { handlePlayAll, handlePlayAllArabicOnly, isLoading, hasArticles } =
     usePlaylistHeaderActions();
 
@@ -21,13 +18,11 @@ export const PlayAllButton = memo(function PlayAllButton() {
   if (!hasArticles) return null;
 
   return (
-    <HeaderIconButton
+    <TransparentHeaderButton
       iconName="play-circle"
       onPress={handlePlayAll}
       onLongPress={handlePlayAllArabicOnly}
       size="large"
-      iconColor={colors.tint}
-      backgroundColor={colors.transparent}
       disabled={isLoading}
       testID="play-all-button"
     />
@@ -44,17 +39,9 @@ export const PlaylistHeaderButtons = memo(function PlaylistHeaderButtons({
   EditModeComponent: React.ReactNode;
 }) {
   return (
-    <View style={styles.container}>
+    <HeaderButtonGroup>
       {EditModeComponent}
       <PlayAllButton />
-    </View>
+    </HeaderButtonGroup>
   );
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL, // 8px gap between buttons
-  },
 });

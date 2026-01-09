@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { memo, useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
 
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { LAYOUT } from '@/constants/layout';
+import { HeaderButtonGroup } from '@/components/ui/HeaderButtonGroup';
+import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
 import { fsrsQueries } from '@/constants/queries';
 import { getPracticeReviewRoute } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useColors } from '@/hooks/theme/useColors';
 import { mediumFeedback } from '@/utils/haptics';
 
 /**
@@ -17,7 +15,6 @@ import { mediumFeedback } from '@/utils/haptics';
  * Only visible when there are due words
  */
 export const StartReviewButton = memo(function StartReviewButton() {
-  const colors = useColors();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -40,11 +37,9 @@ export const StartReviewButton = memo(function StartReviewButton() {
   if (dueWordsCount === 0) return null;
 
   return (
-    <HeaderIconButton
+    <TransparentHeaderButton
       iconName="flash"
       onPress={handleStartReview}
-      iconColor={colors.tint}
-      backgroundColor={colors.transparent}
       testID="start-review-button"
     />
   );
@@ -60,17 +55,9 @@ export const PracticeHeaderButtons = memo(function PracticeHeaderButtons({
   DictionaryComponent: React.ReactNode;
 }) {
   return (
-    <View style={styles.container}>
+    <HeaderButtonGroup>
       {DictionaryComponent}
       <StartReviewButton />
-    </View>
+    </HeaderButtonGroup>
   );
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL, // 8px gap between buttons
-  },
 });

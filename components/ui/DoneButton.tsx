@@ -1,10 +1,6 @@
-import { router } from 'expo-router';
 import type { FC } from 'react';
-import { useCallback } from 'react';
 
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { TIMING_CONFIG } from '@/constants/animation';
-import { useColors } from '@/hooks/theme/useColors';
+import { NavigationHeaderButton } from '@/components/ui/NavigationHeaderButton';
 
 interface DoneButtonProps {
   /**
@@ -13,31 +9,10 @@ interface DoneButtonProps {
   onPress?: () => void;
 }
 
-// Small delay to let press animation complete before navigation
-const NAVIGATION_DELAY = TIMING_CONFIG.FAST.duration / 2; // 60ms
-
+/**
+ * Done button for confirming actions and dismissing screens.
+ * Uses checkmark-circle icon - distinct from CloseButton which uses X.
+ */
 export const DoneButton: FC<DoneButtonProps> = ({ onPress }) => {
-  const colors = useColors();
-
-  // Create press handler with navigation delay
-  const handlePressAction = useCallback(() => {
-    if (onPress) {
-      onPress();
-    } else {
-      // Default behavior: navigate back with slight delay for better UX
-      setTimeout(() => {
-        router.back();
-      }, NAVIGATION_DELAY);
-    }
-  }, [onPress]);
-
-  return (
-    <HeaderIconButton
-      iconName="checkmark-circle"
-      onPress={handlePressAction}
-      size="medium"
-      iconColor={colors.tint}
-      backgroundColor={colors.transparent}
-    />
-  );
+  return <NavigationHeaderButton action="done" onPress={onPress} />;
 };

@@ -83,3 +83,104 @@ export function withOpacity(hex: string, opacity: number): string {
 
   return `rgba(${r},${g},${b},${validOpacity})`;
 }
+
+// =============================================================================
+// OKLCH PALETTE CONVERSION UTILITIES
+// =============================================================================
+
+/** Type for a single OKLCH color definition */
+type OKLCHColor = { readonly l: number; readonly c: number; readonly h: number };
+
+/** Type for a palette with theme variants (light/dark/sepia) */
+type ThemedOKLCHColor = {
+  readonly light: OKLCHColor;
+  readonly dark: OKLCHColor;
+  readonly sepia: OKLCHColor;
+};
+
+/**
+ * Convert a flat OKLCH palette to hex values.
+ * Handles palettes like forestOKLCH, sageOKLCH, tintOKLCH.
+ *
+ * @example
+ * const forestOKLCH = { darkest: { l: 0.27, c: 0.03, h: 164 }, ... };
+ * const forest = convertFlatPalette(forestOKLCH);
+ * // Result: { darkest: "#1A2B23", ... }
+ */
+export function convertFlatPalette<T extends Record<string, OKLCHColor>>(
+  palette: T,
+): { [K in keyof T]: string } {
+  const result = {} as { [K in keyof T]: string };
+  for (const key of Object.keys(palette) as (keyof T)[]) {
+    const color = palette[key] as OKLCHColor;
+    result[key] = oklchToHex(color.l, color.c, color.h);
+  }
+  return result;
+}
+
+/**
+ * Convert a themed OKLCH palette (with light/dark/sepia variants) to hex values.
+ * Handles palettes like grammarOKLCH where each color has theme variants.
+ *
+ * @example
+ * const grammarOKLCH = {
+ *   golden: { light: {...}, dark: {...}, sepia: {...} },
+ *   amber: { light: {...}, dark: {...}, sepia: {...} },
+ * };
+ * const grammar = convertThemedPalette(grammarOKLCH);
+ * // Result: { golden: { light: "#...", dark: "#...", sepia: "#..." }, ... }
+ */
+export function convertThemedPalette<T extends Record<string, ThemedOKLCHColor>>(
+  palette: T,
+): { [K in keyof T]: { light: string; dark: string; sepia: string } } {
+  const result = {} as { [K in keyof T]: { light: string; dark: string; sepia: string } };
+  for (const key of Object.keys(palette) as (keyof T)[]) {
+    const themed = palette[key] as ThemedOKLCHColor;
+    result[key] = {
+      light: oklchToHex(themed.light.l, themed.light.c, themed.light.h),
+      dark: oklchToHex(themed.dark.l, themed.dark.c, themed.dark.h),
+      sepia: oklchToHex(themed.sepia.l, themed.sepia.c, themed.sepia.h),
+    };
+  }
+  return result;
+}
+
+/**
+ * Convert a text hierarchy palette (light/dark/sepia → text levels) to hex values.
+ * Preserves key types from the input palette for proper type inference.
+ *
+ * @example
+ * const textHierarchyOKLCH = {
+ *   light: { subtitle: {...}, metadata: {...} },
+ *   dark: { subtitle: {...}, metadata: {...} },
+ *   sepia: { subtitle: {...}, metadata: {...} },
+ * };
+ * const textHierarchy = convertTextHierarchyPalette(textHierarchyOKLCH);
+ */
+export function convertTextHierarchyPalette<
+  TLight extends Record<string, OKLCHColor>,
+  TDark extends Record<string, OKLCHColor>,
+  TSepia extends Record<string, OKLCHColor>,
+>(palette: {
+  readonly light: TLight;
+  readonly dark: TDark;
+  readonly sepia: TSepia;
+}): {
+  light: { [K in keyof TLight]: string };
+  dark: { [K in keyof TDark]: string };
+  sepia: { [K in keyof TSepia]: string };
+} {
+  const result = {
+    light: {} as { [K in keyof TLight]: string },
+    dark: {} as { [K in keyof TDark]: string },
+    sepia: {} as { [K in keyof TSepia]: string },
+  };
+  for (const theme of ['light', 'dark', 'sepia'] as const) {
+    const levels = palette[theme];
+    for (const level of Object.keys(levels)) {
+      const color = levels[level] as OKLCHColor;
+      (result[theme] as Record<string, string>)[level] = oklchToHex(color.l, color.c, color.h);
+    }
+  }
+  return result;
+}

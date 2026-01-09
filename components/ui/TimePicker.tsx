@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
 import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 export interface TimePickerProps {
@@ -89,10 +90,8 @@ export function TimePicker({
   // Use common backdrop component
   const renderBackdrop = useBottomSheetBackdrop(onClose);
 
-  const dynamicStyles = {
-    bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
-    indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
-  };
+  // Use shared dynamic styles hook for theme-aware styling
+  const dynamicStyles = useBottomSheetDynamicStyles();
 
   // Unified bottom sheet with native picker for both platforms
   return (

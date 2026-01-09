@@ -61,3 +61,135 @@
 - **Colors**: Use semantic color names from Colors.ts
 - **Strings**: Use `STRINGS.*` constants for all user-facing text
 - **Animations**: Use `TIMING_CONFIG` and `SPRING_CONFIG` presets
+
+## Flex Layout Patterns
+
+Use constants from `utils/layoutUtils.ts` for common flex patterns:
+
+```typescript
+import { COMMON_STYLES } from '@/utils/layoutUtils';
+
+// Flex container
+<View style={COMMON_STYLES.flex1}>
+
+// Row with centered items
+<View style={COMMON_STYLES.row}>
+
+// Centered row
+<View style={COMMON_STYLES.centeredRow}>
+```
+
+## TEXT_STYLES Usage
+
+Use pre-computed text styles from `layout.ts` for consistent typography:
+
+```typescript
+import { TEXT_STYLES } from '@/constants/layout';
+
+// Card titles
+<ThemedText style={{ ...TEXT_STYLES.CARD_TITLE }}>
+
+// Section headers
+<ThemedText style={{ ...TEXT_STYLES.SECTION_HEADER }}>
+
+// Metadata text
+<ThemedText style={{ ...TEXT_STYLES.METADATA }}>
+
+// Author bylines
+<ThemedText style={{ ...TEXT_STYLES.AUTHOR_BYLINE }}>
+```
+
+## Theme-Aware Shadows
+
+Use `getThemeAwareElevation()` for shadows that adapt to dark mode:
+
+```typescript
+import { getThemeAwareElevation } from '@/constants/layout';
+import { useColorScheme } from '@/hooks/theme/useColorScheme';
+
+const { isDarkMode } = useColorScheme();
+const elevation = getThemeAwareElevation('MEDIUM', isDarkMode);
+
+<View style={[styles.card, elevation, { shadowColor: colors.shadow }]}>
+```
+
+Dark mode relies on elevation background colors for hierarchy (shadows are nearly invisible).
+
+## Press Scale Constants
+
+Use unified `PRESS_SCALE` from `animation.ts`:
+
+```typescript
+import { PRESS_SCALE } from '@/constants/animation';
+
+// Default press (buttons, cards)
+withTiming(PRESS_SCALE.DEFAULT)  // 0.96
+
+// Moderate press (toggles, interactive words)
+withTiming(PRESS_SCALE.MODERATE)  // 0.95
+
+// Strong press (icon buttons)
+withTiming(PRESS_SCALE.STRONG)  // 0.9
+
+// Drag feedback (scale up)
+withTiming(PRESS_SCALE.DRAG_UP)  // 1.05
+```
+
+## Header Button Components
+
+Use shared header button abstractions from `components/ui/`:
+
+```typescript
+// Transparent header buttons (iOS glass effect)
+import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
+<TransparentHeaderButton iconName="close" onPress={handleClose} />
+
+// Navigation buttons (close/done with router.back())
+import { CloseButton, DoneButton } from '@/components/ui';
+<CloseButton onPress={optionalHandler} />
+<DoneButton />
+
+// Button groups in headers
+import { HeaderButtonGroup } from '@/components/ui/HeaderButtonGroup';
+<HeaderButtonGroup>
+  <DictionaryButton />
+  <StartReviewButton />
+</HeaderButtonGroup>
+```
+
+## Bottom Sheet Dynamic Styles
+
+Use `useBottomSheetDynamicStyles` hook for consistent theming:
+
+```typescript
+import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
+
+const dynamicStyles = useBottomSheetDynamicStyles();
+
+<BottomSheet
+  backgroundStyle={dynamicStyles.bottomSheet}
+  handleIndicatorStyle={dynamicStyles.indicator}
+  ...
+/>
+```
+
+## StyleSheet Best Practices
+
+- Use `StyleSheet.create()` for static styles
+- Use `useMemo` when styles depend on dynamic values (colors, state)
+- Prefer shared style objects over inline styles for better performance
+
+```typescript
+// Static styles
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+});
+
+// Dynamic styles with useMemo
+const dynamicStyles = useMemo(
+  () => ({
+    card: [styles.card, { backgroundColor: colors.elevation1 }],
+  }),
+  [colors.elevation1],
+);
+```
