@@ -31,19 +31,19 @@ describe('useEncouragingMetrics', () => {
   };
 
   describe('Returns null for invalid inputs', () => {
-    it('should return null when sessionMetrics is undefined', () => {
+    test('should return null when sessionMetrics is undefined', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(undefined, mockColors as ThemeColors, 5),
       );
       expect(result.current).toBeNull();
     });
 
-    it('should return null when colors is undefined', () => {
+    test('should return null when colors is undefined', () => {
       const { result } = renderHook(() => useEncouragingMetrics(baseMetrics, undefined, 5));
       expect(result.current).toBeNull();
     });
 
-    it('should return null when wordsReviewed is 0', () => {
+    test('should return null when wordsReviewed is 0', () => {
       const emptyMetrics: SessionMetrics = { ...baseMetrics, wordsReviewed: 0 };
       const { result } = renderHook(() =>
         useEncouragingMetrics(emptyMetrics, mockColors as ThemeColors, 5),
@@ -53,7 +53,7 @@ describe('useEncouragingMetrics', () => {
   });
 
   describe('Traffic light metrics structure', () => {
-    it('should return exactly 3 metrics in traffic light order', () => {
+    test('should return exactly 3 metrics in traffic light order', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 5),
       );
@@ -64,7 +64,7 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.[2].type).toBe('mastery');
     });
 
-    it('should use correct colors for each metric type', () => {
+    test('should use correct colors for each metric type', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 5),
       );
@@ -76,7 +76,7 @@ describe('useEncouragingMetrics', () => {
   });
 
   describe('Due words metric (RED)', () => {
-    it('should show singular "word" for 1 word reviewed', () => {
+    test('should show singular "word" for 1 word reviewed', () => {
       const singleWordMetrics: SessionMetrics = { ...baseMetrics, wordsReviewed: 1 };
       const { result } = renderHook(() =>
         useEncouragingMetrics(singleWordMetrics, mockColors as ThemeColors, 0),
@@ -85,7 +85,7 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.[0].text).toBe('1 word reviewed');
     });
 
-    it('should show plural "words" for multiple words reviewed', () => {
+    test('should show plural "words" for multiple words reviewed', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
@@ -93,7 +93,7 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.[0].text).toBe('5 words reviewed');
     });
 
-    it('should have time icon for due metric', () => {
+    test('should have time icon for due metric', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
@@ -103,7 +103,7 @@ describe('useEncouragingMetrics', () => {
   });
 
   describe('Daily streak metric (YELLOW)', () => {
-    it('should show "Start your streak" when dailyStreak is 0', () => {
+    test('should show "Start your streak" when dailyStreak is 0', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
@@ -111,7 +111,7 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.[1].text).toBe('Start your streak');
     });
 
-    it('should show "Streak started!" when dailyStreak is 1', () => {
+    test('should show "Streak started!" when dailyStreak is 1', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 1),
       );
@@ -119,7 +119,7 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.[1].text).toBe('Streak started!');
     });
 
-    it('should show "X day streak" when dailyStreak is greater than 1', () => {
+    test('should show "X day streak" when dailyStreak is greater than 1', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 7),
       );
@@ -127,7 +127,7 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.[1].text).toBe('7 day streak');
     });
 
-    it('should have flame icon for streak metric', () => {
+    test('should have flame icon for streak metric', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 5),
       );
@@ -137,7 +137,7 @@ describe('useEncouragingMetrics', () => {
   });
 
   describe('Mastery metric (GREEN)', () => {
-    it('should show "Building toward mastery" when no words mastered', () => {
+    test('should show "Building toward mastery" when no words mastered', () => {
       const noMasteryMetrics: SessionMetrics = { ...baseMetrics, masteredWords: 0 };
       const { result } = renderHook(() =>
         useEncouragingMetrics(noMasteryMetrics, mockColors as ThemeColors, 0),
@@ -146,7 +146,7 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.[2].text).toBe('Building toward mastery');
     });
 
-    it('should show singular "word mastered" for 1 word', () => {
+    test('should show singular "word mastered" for 1 word', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
@@ -154,7 +154,7 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.[2].text).toBe('1 word mastered');
     });
 
-    it('should show plural "words mastered" for multiple words', () => {
+    test('should show plural "words mastered" for multiple words', () => {
       const multiMasteryMetrics: SessionMetrics = { ...baseMetrics, masteredWords: 3 };
       const { result } = renderHook(() =>
         useEncouragingMetrics(multiMasteryMetrics, mockColors as ThemeColors, 0),
@@ -163,7 +163,7 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.[2].text).toBe('3 words mastered');
     });
 
-    it('should have trophy icon for mastery metric', () => {
+    test('should have trophy icon for mastery metric', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
@@ -173,7 +173,7 @@ describe('useEncouragingMetrics', () => {
   });
 
   describe('Memoization', () => {
-    it('should return same reference when inputs unchanged', () => {
+    test('should return same reference when inputs unchanged', () => {
       const { result, rerender } = renderHook(
         ({ metrics, colors, streak }) => useEncouragingMetrics(metrics, colors, streak),
         {

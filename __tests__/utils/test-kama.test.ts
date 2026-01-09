@@ -7,29 +7,29 @@ import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormaliz
 
 describe('Kama (كما) Normalization', () => {
   describe('Normalization', () => {
-    it('should normalize "kama" to "as for"', () => {
+    test('should normalize "kama" to "as for"', () => {
       const result = normalizeTranslation('كما', 'kama');
       expect(result).toBe('as for');
     });
 
-    it('should normalize "ka ma" (with space) to "as for"', () => {
+    test('should normalize "ka ma" (with space) to "as for"', () => {
       const result = normalizeTranslation('كما', 'ka ma');
       expect(result).toBe('as for');
     });
 
-    it('should normalize "wakama" to "and as for"', () => {
+    test('should normalize "wakama" to "and as for"', () => {
       const result = normalizeTranslation('وكما', 'wakama');
       expect(result).toBe('and as for');
     });
 
-    it('should normalize "fakama" to "so as for"', () => {
+    test('should normalize "fakama" to "so as for"', () => {
       const result = normalizeTranslation('فكما', 'fakama');
       expect(result).toBe('so as for');
     });
   });
 
   describe('Component detection after normalization', () => {
-    it('should detect ك in كما "kama"', () => {
+    test('should detect ك in كما "kama"', () => {
       const analysis = analyzeArabicWord('كما', 'kama');
 
       console.log('\n📊 كما + "kama":');
@@ -49,7 +49,7 @@ describe('Kama (كما) Normalization', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should detect و and ك in وكما "wakama"', () => {
+    test('should detect و and ك in وكما "wakama"', () => {
       const analysis = analyzeArabicWord('وكما', 'wakama');
 
       console.log('\n📊 وكما + "wakama":');
@@ -75,7 +75,7 @@ describe('Kama (كما) Normalization', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should detect ف and ك in فكما "fakama"', () => {
+    test('should detect ف and ك in فكما "fakama"', () => {
       const analysis = analyzeArabicWord('فكما', 'fakama');
 
       console.log('\n📊 فكما + "fakama":');
@@ -103,7 +103,7 @@ describe('Kama (كما) Normalization', () => {
   });
 
   describe('Summary', () => {
-    it('should document the complete behavior', () => {
+    test('should document the complete behavior', () => {
       console.log('\n✅ KAMA NORMALIZATION COMPLETE:');
       console.log('');
       console.log('  كما "kama" → "as for"');

@@ -155,7 +155,7 @@ describe('useFSRS', () => {
   });
 
   describe('Initial state', () => {
-    it('should return initial state when no user', () => {
+    test('should return initial state when no user', () => {
       const { result } = renderHook(() =>
         useFSRS({
           userId: undefined,
@@ -171,7 +171,7 @@ describe('useFSRS', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    it('should return initial state with empty due words', () => {
+    test('should return initial state with empty due words', () => {
       const { result } = renderHook(() =>
         useFSRS({
           userId: 'user-123',
@@ -185,7 +185,7 @@ describe('useFSRS', () => {
   });
 
   describe('Word queue initialization', () => {
-    it('should initialize queue with due words', async () => {
+    test('should initialize queue with due words', async () => {
       const mockWords = [createMockStudyWord(1), createMockStudyWord(2), createMockStudyWord(3)];
 
       mockUseQuery.mockReturnValue({
@@ -209,7 +209,7 @@ describe('useFSRS', () => {
   });
 
   describe('Return value structure', () => {
-    it('should return all expected properties', () => {
+    test('should return all expected properties', () => {
       const { result } = renderHook(() =>
         useFSRS({
           userId: 'user-123',
@@ -227,7 +227,7 @@ describe('useFSRS', () => {
       expect(result.current).toHaveProperty('invalidateQueries');
     });
 
-    it('should return updateWord as a function', () => {
+    test('should return updateWord as a function', () => {
       const { result } = renderHook(() =>
         useFSRS({
           userId: 'user-123',
@@ -238,7 +238,7 @@ describe('useFSRS', () => {
       expect(typeof result.current.updateWord).toBe('function');
     });
 
-    it('should return resetQueue as a function', () => {
+    test('should return resetQueue as a function', () => {
       const { result } = renderHook(() =>
         useFSRS({
           userId: 'user-123',
@@ -251,7 +251,7 @@ describe('useFSRS', () => {
   });
 
   describe('Loading state', () => {
-    it('should be loading when query is loading', () => {
+    test('should be loading when query is loading', () => {
       mockUseQuery.mockReturnValue({
         data: undefined,
         isLoading: true,
@@ -269,7 +269,7 @@ describe('useFSRS', () => {
       expect(result.current.isLoading).toBe(true);
     });
 
-    it('should not be loading when query completes', () => {
+    test('should not be loading when query completes', () => {
       mockUseQuery.mockReturnValue({
         data: [],
         isLoading: false,
@@ -289,7 +289,7 @@ describe('useFSRS', () => {
   });
 
   describe('Reset queue', () => {
-    it('should reset state when resetQueue is called', async () => {
+    test('should reset state when resetQueue is called', async () => {
       const mockWords = [createMockStudyWord(1)];
 
       mockUseQuery.mockReturnValue({
@@ -323,7 +323,7 @@ describe('useFSRS', () => {
   });
 
   describe('Completion callback', () => {
-    it('should provide onComplete callback option', () => {
+    test('should provide onComplete callback option', () => {
       const customOnComplete = jest.fn();
 
       const { result } = renderHook(() =>
@@ -339,7 +339,7 @@ describe('useFSRS', () => {
   });
 
   describe('Cleanup', () => {
-    it('should cleanup on unmount', () => {
+    test('should cleanup on unmount', () => {
       const { unmount } = renderHook(() =>
         useFSRS({
           userId: 'user-123',

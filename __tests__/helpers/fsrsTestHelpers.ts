@@ -523,7 +523,7 @@ export const testUtils = {
 };
 
 describe('fsrsTestHelpers factories', () => {
-  it('createLargeWordSet returns the correct number of varied words', () => {
+  test('createLargeWordSet returns the correct number of varied words', () => {
     const words = createLargeWordSet(5);
 
     expect(words).toHaveLength(5);
@@ -537,7 +537,7 @@ describe('fsrsTestHelpers factories', () => {
     expect(uniqueDifficulty).toBeGreaterThan(1);
   });
 
-  it('createEdgeCaseWords provides words with edge conditions', () => {
+  test('createEdgeCaseWords provides words with edge conditions', () => {
     const edgeCases = createEdgeCaseWords();
 
     expect(edgeCases.corruptedDates.fsrs_due).toBe('invalid-date');

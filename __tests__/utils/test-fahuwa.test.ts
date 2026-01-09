@@ -7,7 +7,7 @@ import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormaliz
 
 describe('Fahuwa Pattern Investigation', () => {
   describe('Current behavior WITH normalization', () => {
-    it('should analyze فهو with "fahuwa" - components NOW detected after normalization', () => {
+    test('should analyze فهو with "fahuwa" - components NOW detected after normalization', () => {
       const analysis = analyzeArabicWord('فهو', 'fahuwa');
 
       // "fahuwa" is NOW normalized to "so he", so ف IS detected!
@@ -19,7 +19,7 @@ describe('Fahuwa Pattern Investigation', () => {
       expect(analysis.original.english).toBe('so he'); // Normalized to "so he"
     });
 
-    it('should analyze فهو with "so he" - components SHOULD be detected', () => {
+    test('should analyze فهو with "so he" - components SHOULD be detected', () => {
       const analysis = analyzeArabicWord('فهو', 'so he');
 
       // With proper translation, we expect ف (so) to be detected
@@ -75,44 +75,44 @@ describe('Fahuwa Pattern Investigation', () => {
   });
 
   describe('Normalization rules for pronoun combinations', () => {
-    it('should normalize "fahuwa" to "so he"', () => {
+    test('should normalize "fahuwa" to "so he"', () => {
       const result = normalizeTranslation('فهو', 'fahuwa');
       expect(result).toBe('so he');
     });
 
-    it('should normalize "fa huwa" (with space) to "so he"', () => {
+    test('should normalize "fa huwa" (with space) to "so he"', () => {
       const result = normalizeTranslation('فهو', 'fa huwa');
       expect(result).toBe('so he');
     });
 
-    it('should normalize "wahuwa" to "and he"', () => {
+    test('should normalize "wahuwa" to "and he"', () => {
       const result = normalizeTranslation('وهو', 'wahuwa');
       expect(result).toBe('and he');
     });
 
-    it('should normalize "fahiya" to "so she"', () => {
+    test('should normalize "fahiya" to "so she"', () => {
       const result = normalizeTranslation('فهي', 'fahiya');
       expect(result).toBe('so she');
     });
 
-    it('should normalize "wahiya" to "and she"', () => {
+    test('should normalize "wahiya" to "and she"', () => {
       const result = normalizeTranslation('وهي', 'wahiya');
       expect(result).toBe('and she');
     });
 
-    it('should normalize "fahum" to "so they"', () => {
+    test('should normalize "fahum" to "so they"', () => {
       const result = normalizeTranslation('فهم', 'fahum');
       expect(result).toBe('so they');
     });
 
-    it('should normalize "wahum" to "and they"', () => {
+    test('should normalize "wahum" to "and they"', () => {
       const result = normalizeTranslation('وهم', 'wahum');
       expect(result).toBe('and they');
     });
   });
 
   describe('Component detection after normalization', () => {
-    it('should detect components for فهو after normalizing "fahuwa"', () => {
+    test('should detect components for فهو after normalizing "fahuwa"', () => {
       const analysis = analyzeArabicWord('فهو', 'fahuwa');
 
       // After normalization, "fahuwa" → "so he"
@@ -124,7 +124,7 @@ describe('Fahuwa Pattern Investigation', () => {
       expect(hasFa).toBe(true);
     });
 
-    it('should detect components for وهو after normalizing "wahuwa"', () => {
+    test('should detect components for وهو after normalizing "wahuwa"', () => {
       const analysis = analyzeArabicWord('وهو', 'wahuwa');
 
       // After normalization, "wahuwa" → "and he"

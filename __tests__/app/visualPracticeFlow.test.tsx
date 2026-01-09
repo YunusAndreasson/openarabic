@@ -195,7 +195,7 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
     );
   }
 
-  it('should render review session with real hook', async () => {
+  test('should render review session with real hook', async () => {
     const { getByTestId, queryByTestId } = render(<ReviewTestComponent />, { wrapper });
 
     // Wait for loading to finish
@@ -207,7 +207,7 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
     expect(getByTestId('review-screen')).toBeTruthy();
   });
 
-  it('should handle swipe left (unknown word) with real hook', async () => {
+  test('should handle swipe left (unknown word) with real hook', async () => {
     const { getByTestId, queryByTestId } = render(<ReviewTestComponent />, { wrapper });
 
     // Wait for loading to finish and review screen to appear
@@ -230,7 +230,7 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
     });
   });
 
-  it('should show completion when no words are due', async () => {
+  test('should show completion when no words are due', async () => {
     // Mock empty word list BEFORE rendering
     studyWordsFSRSService.getFSRSWords.mockResolvedValueOnce([]);
 

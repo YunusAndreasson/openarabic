@@ -7,7 +7,7 @@ import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormaliz
 
 describe('Wahuwa "and it" Investigation', () => {
   describe('Testing different translations of وهو', () => {
-    it('should test وهو with "wahuwa" (transliteration)', () => {
+    test('should test وهو with "wahuwa" (transliteration)', () => {
       const analysis = analyzeArabicWord('وهو', 'wahuwa');
 
       console.log('\n📊 وهو + "wahuwa":');
@@ -22,7 +22,7 @@ describe('Wahuwa "and it" Investigation', () => {
       expect(normalizeTranslation('وهو', 'wahuwa')).toBe('and he');
     });
 
-    it('should test وهو with "and he" (proper translation)', () => {
+    test('should test وهو with "and he" (proper translation)', () => {
       const analysis = analyzeArabicWord('وهو', 'and he');
 
       console.log('\n📊 وهو + "and he":');
@@ -39,7 +39,7 @@ describe('Wahuwa "and it" Investigation', () => {
       expect(hasWaw).toBe(true);
     });
 
-    it('should test وهو with "and it" (alternative translation)', () => {
+    test('should test وهو with "and it" (alternative translation)', () => {
       const analysis = analyzeArabicWord('وهو', 'and it');
 
       console.log('\n📊 وهو + "and it":');
@@ -67,7 +67,7 @@ describe('Wahuwa "and it" Investigation', () => {
   });
 
   describe('Understanding the issue', () => {
-    it('should check if وهو "and it" is a pure particle combination', () => {
+    test('should check if وهو "and it" is a pure particle combination', () => {
       const analysis = analyzeArabicWord('وهو', 'and it');
 
       console.log('\n🔍 Analysis of وهو + "and it":');
@@ -91,7 +91,7 @@ describe('Wahuwa "and it" Investigation', () => {
       // Even if components are detected, hasComponents should be false
     });
 
-    it('should verify behavior matches والله "and by Allah" (kept)', () => {
+    test('should verify behavior matches والله "and by Allah" (kept)', () => {
       const analysis1 = analyzeArabicWord('وهو', 'and it');
       const analysis2 = analyzeArabicWord('والله', 'and by Allah');
 
@@ -106,7 +106,7 @@ describe('Wahuwa "and it" Investigation', () => {
   });
 
   describe('Solution options', () => {
-    it('should document why this is correct behavior', () => {
+    test('should document why this is correct behavior', () => {
       console.log('\n✅ CURRENT BEHAVIOR IS CORRECT:');
       console.log('');
       console.log('وهو "and it" is NOT colored because:');

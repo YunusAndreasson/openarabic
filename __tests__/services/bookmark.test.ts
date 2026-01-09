@@ -60,7 +60,7 @@ describe('bookmarkService', () => {
       );
     });
 
-    it('avoids duplicate entries when called twice', async () => {
+    test('avoids duplicate entries when called twice', async () => {
       const data: Array<{ user_id: string; article_id: number }> = [];
       const upsert = jest.fn(async ({ user_id, article_id }) => {
         if (!data.find(d => d.user_id === user_id && d.article_id === article_id)) {

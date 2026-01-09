@@ -315,7 +315,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('Debug: SRS Mock Logic', () => {
-    it('should debug the basic SRS logic', () => {
+    test('should debug the basic SRS logic', () => {
       // Create a simple SRS mock with just one word
       const srsMock = createSRSMock(['single-word'], 12);
 
@@ -335,7 +335,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.isComplete).toBe(true);
     });
 
-    it('should debug step by step what happens when processing a word', () => {
+    test('should debug step by step what happens when processing a word', () => {
       const srsMock = createSRSMock(['single-word'], 12);
 
       // Step 1: Check initial state
@@ -355,7 +355,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('Single Word Due Scenarios', () => {
-    it('should NOT complete immediately when only 1 word is due - should wait for review', async () => {
+    test('should NOT complete immediately when only 1 word is due - should wait for review', async () => {
       // This is the critical test that should catch the issue
       const srsMock = createSRSMock(['single-word'], 12); // 12 hour cooldown
 
@@ -374,7 +374,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.processedWords.size).toBe(0);
     });
 
-    it('should complete only after reviewing the single word', async () => {
+    test('should complete only after reviewing the single word', async () => {
       const srsMock = createSRSMock(['single-word'], 12);
 
       const { getByTestId, queryByTestId, rerender } = render(<SRSFlow />);
@@ -397,7 +397,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.processedWords.size).toBe(1);
     });
 
-    it('should complete after marking single word as unknown (goes into cooldown)', async () => {
+    test('should complete after marking single word as unknown (goes into cooldown)', async () => {
       const srsMock = createSRSMock(['single-word'], 12);
 
       const { getByTestId, queryByTestId, rerender } = render(<SRSFlow />);
@@ -420,7 +420,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.cooldownWords.has('single-word')).toBe(true);
     });
 
-    it('should NOT complete immediately when multiple words are due', async () => {
+    test('should NOT complete immediately when multiple words are due', async () => {
       const srsMock = createSRSMock(['word1', 'word2', 'word3'], 12);
 
       const { getByTestId, queryByTestId, rerender } = render(<SRSFlow />);
@@ -445,7 +445,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('Session Cooldown Logic', () => {
-    it('should respect session cooldown hours', () => {
+    test('should respect session cooldown hours', () => {
       const shortCooldown = createSRSMock(['word1', 'word2'], 1); // 1 hour cooldown
       const longCooldown = createSRSMock(['word1', 'word2'], 24); // 24 hour cooldown
 
@@ -466,7 +466,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(longCooldown.getNextAvailableWord()).toBe('word2');
     });
 
-    it('should NOT allow starting session when all words are in cooldown', async () => {
+    test('should NOT allow starting session when all words are in cooldown', async () => {
       const srsMock = createSRSMock(['word1', 'word2'], 12);
 
       // Put all words in cooldown before starting session
@@ -487,7 +487,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(queryByTestId('start')).toBeNull();
     });
 
-    it('should complete session when all words go into cooldown during review', async () => {
+    test('should complete session when all words go into cooldown during review', async () => {
       const srsMock = createSRSMock(['word1', 'word2'], 12);
 
       const { getByTestId, queryByTestId, rerender } = render(<SRSFlow />);
@@ -519,7 +519,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('Word Repetition Prevention', () => {
-    it('should not repeat words immediately after processing', async () => {
+    test('should not repeat words immediately after processing', async () => {
       const srsMock = createSRSMock(['word1', 'word2'], 12);
 
       const { getByTestId, queryByTestId, rerender } = render(<SRSFlow />);
@@ -545,7 +545,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.processedWords.has(firstWord)).toBe(true);
     });
 
-    it('should handle mixed known/unknown responses correctly', async () => {
+    test('should handle mixed known/unknown responses correctly', async () => {
       const srsMock = createSRSMock(['word1', 'word2', 'word3'], 12);
 
       const { getByTestId, queryByTestId, rerender } = render(<SRSFlow />);
@@ -577,7 +577,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('Progress Calculation', () => {
-    it('should calculate progress correctly for single word sessions', async () => {
+    test('should calculate progress correctly for single word sessions', async () => {
       const srsMock = createSRSMock(['single-word'], 12);
 
       const { getByTestId, queryByTestId, rerender } = render(<SRSFlow />);
@@ -604,7 +604,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.processedWords.size).toBe(1);
     });
 
-    it('should calculate progress correctly for multiple word sessions', async () => {
+    test('should calculate progress correctly for multiple word sessions', async () => {
       const srsMock = createSRSMock(['word1', 'word2', 'word3'], 12);
 
       const { getByTestId, rerender } = render(<SRSFlow />);
@@ -638,7 +638,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('Session State Management', () => {
-    it('should maintain session state across multiple sessions', async () => {
+    test('should maintain session state across multiple sessions', async () => {
       const srsMock = createSRSMock(['word1', 'word2'], 12);
 
       const { getByTestId, queryByTestId, rerender } = render(<SRSFlow />);
@@ -674,7 +674,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('SRS Mock Logic', () => {
-    it('should verify each step of the SRS logic individually', () => {
+    test('should verify each step of the SRS logic individually', () => {
       const srsMock = createSRSMock(['single-word'], 12);
 
       // Test 1: Initial state
@@ -696,7 +696,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('Cooldown Verification (Direct SRS Logic)', () => {
-    it('should verify cooldown prevents session start when all words are in cooldown', () => {
+    test('should verify cooldown prevents session start when all words are in cooldown', () => {
       // Create SRS with 2 words
       const srsMock = createSRSMock(['word1', 'word2'], 12);
 
@@ -711,7 +711,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.isComplete).toBe(true);
     });
 
-    it('should verify session completes when all words go into cooldown during review', () => {
+    test('should verify session completes when all words go into cooldown during review', () => {
       const srsMock = createSRSMock(['word1', 'word2'], 12);
 
       // Start with words available
@@ -733,7 +733,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.isComplete).toBe(true);
     });
 
-    it('should verify cooldown timing works correctly', () => {
+    test('should verify cooldown timing works correctly', () => {
       const srsMock = createSRSMock(['word1'], 1); // 1 hour cooldown
 
       // Put word in cooldown
@@ -762,7 +762,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.isComplete).toBe(true);
     });
 
-    it('should verify no test starts when all word categories are in cooldown', () => {
+    test('should verify no test starts when all word categories are in cooldown', () => {
       // Create SRS with multiple word categories
       const srsMock = createSRSMock(
         ['due-word1', 'due-word2', 'struggling-word1', 'all-word1'],
@@ -798,7 +798,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('Bug 1: Progress Bar Broken - Total Words Consistency', () => {
-    it('should calculate progress based on total session words, not unique words', () => {
+    test('should calculate progress based on total session words, not unique words', () => {
       // This test catches the bug where progress used uniqueWords instead of totalWordsInSession
       const srsMock = createSRSMock(['word1', 'word2', 'word3', 'word4', 'word5'], 12);
 
@@ -829,7 +829,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(correctProgress).toBe(60);
     });
 
-    it('should validate that totalWords counter is properly initialized', () => {
+    test('should validate that totalWords counter is properly initialized', () => {
       // This ensures the fix for totalWords initialization works
       const srsMock = createSRSMock(['word1', 'word2', 'word3'], 12);
 
@@ -852,7 +852,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('Bug 4: Infinite Loop Guards - Session State Management', () => {
-    it('should prevent session reinitialization after completion', () => {
+    test('should prevent session reinitialization after completion', () => {
       // This test validates the infinite loop prevention fixes
       const srsMock = createSRSMock(['word1', 'word2'], 12);
 
@@ -875,7 +875,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(shouldPreventUpdate).toBe(true);
     });
 
-    it('should validate completion state guards work correctly', () => {
+    test('should validate completion state guards work correctly', () => {
       // Test the specific guard conditions from useFSRS
       const guards = [
         { isComplete: true, completionTriggered: false, isProcessingUpdate: false },
@@ -891,7 +891,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       });
     });
 
-    it('should not allow word updates when session is complete', () => {
+    test('should not allow word updates when session is complete', () => {
       // This tests the infinite loop prevention in updateWord
       const srsMock = createSRSMock(['word1'], 12);
 
@@ -907,7 +907,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.isComplete).toBe(true);
     });
 
-    it('should prevent multiple completion callbacks', () => {
+    test('should prevent multiple completion callbacks', () => {
       // This tests the completionTriggered guard
       const srsMock = createSRSMock(['word1'], 12);
 
@@ -937,7 +937,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   });
 
   describe('Race Condition Tests - Last Word Duplication', () => {
-    it('should NOT repeat the last word when session completes', async () => {
+    test('should NOT repeat the last word when session completes', async () => {
       // This test specifically catches the race condition where the last word appears twice
       const srsMock = createSRSMock(['last-word'], 12);
 
@@ -972,7 +972,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.processedWords.size).toBe(1);
     });
 
-    it('should handle completion timing correctly to prevent word duplication', async () => {
+    test('should handle completion timing correctly to prevent word duplication', async () => {
       // This test verifies that completion timing doesn't cause race conditions
       const srsMock = createSRSMock(['word1', 'word2'], 12);
 

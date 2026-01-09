@@ -7,12 +7,12 @@ import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('Database Translation Normalizations', () => {
   describe('فإن (fa + in)', () => {
-    it('should normalize "for" to "so indeed"', () => {
+    test('should normalize "for" to "so indeed"', () => {
       const result = normalizeTranslation('فإن', 'for');
       expect(result).toBe('so indeed');
     });
 
-    it('should detect ف in فإن "for"', () => {
+    test('should detect ف in فإن "for"', () => {
       const analysis = analyzeArabicWord('فإن', 'for');
       expect(analysis.hasComponents).toBe(true);
       const hasFa = analysis.prefixes.some(p => p.arabicMatch === 'ف');
@@ -57,17 +57,17 @@ describe('Database Translation Normalizations', () => {
   });
 
   describe('ولا (wa + la)', () => {
-    it('should normalize "nor" to "and not"', () => {
+    test('should normalize "nor" to "and not"', () => {
       const result = normalizeTranslation('ولا', 'nor');
       expect(result).toBe('and not');
     });
 
-    it('should normalize "and not" to "and not"', () => {
+    test('should normalize "and not" to "and not"', () => {
       const result = normalizeTranslation('ولا', 'and not');
       expect(result).toBe('and not');
     });
 
-    it('should detect و in ولا "nor"', () => {
+    test('should detect و in ولا "nor"', () => {
       const analysis = analyzeArabicWord('ولا', 'nor');
       expect(analysis.hasComponents).toBe(true);
       const hasWaw = analysis.prefixes.some(p => p.arabicMatch === 'و');

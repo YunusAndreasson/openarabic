@@ -5,7 +5,7 @@
 import { analyzeArabicWord, computeColoredSegments } from '@/utils/arabicWordAnalysis';
 
 describe('Fahuwa Coloring Investigation', () => {
-  it('should show what components are detected in فهو "fahuwa"', () => {
+  test('should show what components are detected in فهو "fahuwa"', () => {
     const analysis = analyzeArabicWord('فهو', 'fahuwa');
 
     console.log('\n📊 فهو + "fahuwa" DETAILED ANALYSIS:');
@@ -50,7 +50,7 @@ describe('Fahuwa Coloring Investigation', () => {
     console.log('  - Only detected components get colored, not remaining text');
   });
 
-  it('should show colored segments for فهو "fahuwa"', () => {
+  test('should show colored segments for فهو "fahuwa"', () => {
     const colors = {
       text: '#000000',
       background: '#FFFFFF',
@@ -84,7 +84,7 @@ describe('Fahuwa Coloring Investigation', () => {
     console.log('  2. "هو" = "he" (remaining - NO COLOR)');
   });
 
-  it('should explain why هو is not a component', () => {
+  test('should explain why هو is not a component', () => {
     console.log('\n💡 WHY هو IS NOT COLORED:');
     console.log('');
     console.log('  هو (he/it) is a STANDALONE PRONOUN');
@@ -103,7 +103,7 @@ describe('Fahuwa Coloring Investigation', () => {
     console.log("  2. Color remaining text when it's a known pronoun");
   });
 
-  it('should show the same issue with وهو "and he"', () => {
+  test('should show the same issue with وهو "and he"', () => {
     const analysis = analyzeArabicWord('وهو', 'and he');
 
     console.log('\n📊 وهو + "and he":');

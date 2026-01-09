@@ -18,13 +18,13 @@ import {
 
 describe('useReviewToast', () => {
   describe('Context validation', () => {
-    it('should throw error when used outside ReviewContent', () => {
+    test('should throw error when used outside ReviewContent', () => {
       expect(() => renderHook(() => useReviewToast())).toThrow(
         'useReviewToast must be used within ReviewContent',
       );
     });
 
-    it('should return context when inside ReviewToastContext.Provider', () => {
+    test('should return context when inside ReviewToastContext.Provider', () => {
       const mockShowToast = jest.fn();
       const mockContext: ReviewToastContextType = {
         showToast: mockShowToast,
@@ -42,7 +42,7 @@ describe('useReviewToast', () => {
   });
 
   describe('showToast function', () => {
-    it('should expose showToast function from context', () => {
+    test('should expose showToast function from context', () => {
       const mockShowToast = jest.fn();
       const mockContext: ReviewToastContextType = {
         showToast: mockShowToast,
@@ -59,7 +59,7 @@ describe('useReviewToast', () => {
       expect(mockShowToast).toHaveBeenCalledWith('Test message');
     });
 
-    it('should pass through duration and type arguments', () => {
+    test('should pass through duration and type arguments', () => {
       const mockShowToast = jest.fn();
       const mockContext: ReviewToastContextType = {
         showToast: mockShowToast,

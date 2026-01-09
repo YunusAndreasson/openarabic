@@ -59,7 +59,7 @@ describe('useAudioPreloader', () => {
   });
 
   describe('Initial state', () => {
-    it('should return initial state with empty word queue', () => {
+    test('should return initial state with empty word queue', () => {
       const { result } = renderHook(() => useAudioPreloader([], false));
 
       expect(result.current.isPreloading).toBe(false);
@@ -67,14 +67,14 @@ describe('useAudioPreloader', () => {
       expect(result.current.isComplete).toBe(false);
     });
 
-    it('should not crash with empty array', () => {
+    test('should not crash with empty array', () => {
       const { result } = renderHook(() => useAudioPreloader([], false));
       expect(result.current).toBeDefined();
     });
   });
 
   describe('Return value structure', () => {
-    it('should return all expected properties', () => {
+    test('should return all expected properties', () => {
       const { result } = renderHook(() => useAudioPreloader([], false));
 
       expect(result.current).toHaveProperty('isPreloading');
@@ -82,19 +82,19 @@ describe('useAudioPreloader', () => {
       expect(result.current).toHaveProperty('isComplete');
     });
 
-    it('should return boolean for isPreloading', () => {
+    test('should return boolean for isPreloading', () => {
       const { result } = renderHook(() => useAudioPreloader([], false));
       expect(typeof result.current.isPreloading).toBe('boolean');
     });
 
-    it('should return number for progress', () => {
+    test('should return number for progress', () => {
       const { result } = renderHook(() => useAudioPreloader([], false));
       expect(typeof result.current.progress).toBe('number');
     });
   });
 
   describe('Session complete behavior', () => {
-    it('should not attempt preload when session is already complete', () => {
+    test('should not attempt preload when session is already complete', () => {
       const words = [createMockWord(1, 'audio1.mp3')];
 
       renderHook(() => useAudioPreloader(words, true));
@@ -105,7 +105,7 @@ describe('useAudioPreloader', () => {
   });
 
   describe('Cleanup', () => {
-    it('should cleanup on unmount', () => {
+    test('should cleanup on unmount', () => {
       const words = [createMockWord(1, 'audio1.mp3')];
 
       const { unmount } = renderHook(() => useAudioPreloader(words, false));

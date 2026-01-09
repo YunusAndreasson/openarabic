@@ -47,10 +47,10 @@ describe('StudyStreakService', () => {
       hasActivity,
     });
 
-    const today = new Date().toISOString().split('T')[0] as string;
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0] as string;
-    const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0] as string;
-    const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0] as string;
+    const today = new Date().toISOString().spltest('T')[0] as string;
+    const yesterday = new Date(Date.now() - 86400000).toISOString().spltest('T')[0] as string;
+    const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().spltest('T')[0] as string;
+    const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString().spltest('T')[0] as string;
 
     test('should return zero streak for no activity', () => {
       const activities: DailyReadingActivity[] = [];
@@ -206,8 +206,8 @@ describe('StudyStreakService', () => {
       hasActivity,
     });
 
-    const today = new Date().toISOString().split('T')[0] as string;
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0] as string;
+    const today = new Date().toISOString().spltest('T')[0] as string;
+    const yesterday = new Date(Date.now() - 86400000).toISOString().spltest('T')[0] as string;
 
     test('should return empty array for no activity', () => {
       const result = ReadingStreakService.calculateStreakPeriods([]);
@@ -278,7 +278,7 @@ describe('StudyStreakService', () => {
     });
 
     test('should mark most recent period as active if ends yesterday', () => {
-      const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0] as string;
+      const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().spltest('T')[0] as string;
       const activities = [createActivity(twoDaysAgo), createActivity(yesterday)];
 
       const result = ReadingStreakService.calculateStreakPeriods(activities);

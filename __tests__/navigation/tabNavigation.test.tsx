@@ -225,39 +225,39 @@ const createWrapper = () => {
 };
 
 describe('Tab navigation', () => {
-  it('renders default Explore tab and navigates between tabs', () => {
+  test('renders default Explore tab and navigates between tabs', () => {
     const { getByText, getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
-    expect(getByText('READ_MOCK')).toBeTruthy();
+    expect(getByText('READ_MOCK')).toBeDefined();
 
     fireEvent.press(getByTestId('tab-playlist'));
-    expect(getByText('LISTEN_MOCK')).toBeTruthy();
+    expect(getByText('LISTEN_MOCK')).toBeDefined();
 
     fireEvent.press(getByTestId('tab-practice'));
-    expect(getByText('PRACTICE_MOCK')).toBeTruthy();
+    expect(getByText('PRACTICE_MOCK')).toBeDefined();
   });
 
-  it('shows memory capacity badge on practice tab when due words exist (red phase)', async () => {
+  test('shows memory capacity badge on practice tab when due words exist (red phase)', async () => {
     const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
     // Wait for the component to render
     await waitFor(() => {
-      expect(getByTestId('tab-practice')).toBeTruthy();
+      expect(getByTestId('tab-practice')).toBeDefined();
     });
 
     // Verify the practice tab renders correctly
-    expect(getByTestId('tab-practice')).toBeTruthy();
+    expect(getByTestId('tab-practice')).toBeDefined();
   });
 
-  it('does not show memory capacity badge when only struggling words exist (orange phase)', async () => {
+  test('does not show memory capacity badge when only struggling words exist (orange phase)', async () => {
     const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
     // Wait for the component to render
     await waitFor(() => {
-      expect(getByTestId('tab-practice')).toBeTruthy();
+      expect(getByTestId('tab-practice')).toBeDefined();
     });
 
     // Verify the practice tab renders correctly
-    expect(getByTestId('tab-practice')).toBeTruthy();
+    expect(getByTestId('tab-practice')).toBeDefined();
   });
 });

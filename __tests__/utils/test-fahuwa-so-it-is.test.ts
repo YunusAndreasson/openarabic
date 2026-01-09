@@ -7,7 +7,7 @@ import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormaliz
 
 describe('Fahuwa "so it is" Investigation', () => {
   describe('Different translations of فهو', () => {
-    it('should test فهو with "fahuwa" (transliteration)', () => {
+    test('should test فهو with "fahuwa" (transliteration)', () => {
       const analysis = analyzeArabicWord('فهو', 'fahuwa');
 
       console.log('\n📊 فهو + "fahuwa":');
@@ -22,7 +22,7 @@ describe('Fahuwa "so it is" Investigation', () => {
       expect(normalizeTranslation('فهو', 'fahuwa')).toBe('so he');
     });
 
-    it('should test فهو with "so he" (2 words)', () => {
+    test('should test فهو with "so he" (2 words)', () => {
       const analysis = analyzeArabicWord('فهو', 'so he');
 
       console.log('\n📊 فهو + "so he":');
@@ -41,7 +41,7 @@ describe('Fahuwa "so it is" Investigation', () => {
       console.log('  Reason if not colored: Pure particle combination (conjunction + pronoun)');
     });
 
-    it('should test فهو with "so it" (2 words, different pronoun)', () => {
+    test('should test فهو with "so it" (2 words, different pronoun)', () => {
       const analysis = analyzeArabicWord('فهو', 'so it');
 
       console.log('\n📊 فهو + "so it":');
@@ -58,7 +58,7 @@ describe('Fahuwa "so it is" Investigation', () => {
       console.log('  ف (so) detected:', hasFa);
     });
 
-    it('should test فهو with "so it is" (3 words - THE PROBLEM)', () => {
+    test('should test فهو with "so it is" (3 words - THE PROBLEM)', () => {
       const analysis = analyzeArabicWord('فهو', 'so it is');
 
       console.log('\n📊 فهو + "so it is":');
@@ -90,7 +90,7 @@ describe('Fahuwa "so it is" Investigation', () => {
   });
 
   describe('Understanding the root cause', () => {
-    it('should check if ف matches "so" in "so it is"', () => {
+    test('should check if ف matches "so" in "so it is"', () => {
       const analysis = analyzeArabicWord('فهو', 'so it is');
 
       console.log('\n🔍 Deep dive into component detection:');
@@ -111,7 +111,7 @@ describe('Fahuwa "so it is" Investigation', () => {
       console.log('  Remaining English:', analysis.remainingEnglish);
     });
 
-    it('should understand that pure particle combinations ARE NOW colored', () => {
+    test('should understand that pure particle combinations ARE NOW colored', () => {
       const analysis = analyzeArabicWord('فهو', 'so it is');
 
       console.log('\n💡 CURRENT BEHAVIOR (UPDATED):');
@@ -136,7 +136,7 @@ describe('Fahuwa "so it is" Investigation', () => {
   });
 
   describe('Solution: Pure particle filter has been disabled', () => {
-    it('should verify that compositions are now colored', () => {
+    test('should verify that compositions are now colored', () => {
       console.log('\n✅ SOLUTION IMPLEMENTED:');
       console.log('');
       console.log('The isPureParticleCombination filter has been DISABLED');

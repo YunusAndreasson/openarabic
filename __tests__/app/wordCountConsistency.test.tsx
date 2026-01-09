@@ -93,7 +93,7 @@ describe('Word Count Consistency Validation', () => {
   ];
 
   describe('Bug 1: Progress Bar Broken - Total Words Consistency', () => {
-    it('should calculate total words correctly for progress bar', () => {
+    test('should calculate total words correctly for progress bar', () => {
       // This test catches the bug where progress used uniqueWords instead of totalWordsInSession
       const totalWords = mockStudyWords.length;
       const processedWords = 3;
@@ -115,7 +115,7 @@ describe('Word Count Consistency Validation', () => {
       expect(wrongProgress).toBe(100);
     });
 
-    it('should validate that totalWords counter is properly initialized', () => {
+    test('should validate that totalWords counter is properly initialized', () => {
       // This ensures the fix for totalWords initialization works
       const totalWords = mockStudyWords.length;
       expect(totalWords).toBe(6);
@@ -127,7 +127,7 @@ describe('Word Count Consistency Validation', () => {
   });
 
   describe('Bug 2: Struggling Words Session Issues - Count Consistency', () => {
-    it('should show same struggling word count in UI as session would provide', () => {
+    test('should show same struggling word count in UI as session would provide', () => {
       // This test catches the double filtering + cooldown inconsistency bug
 
       // UI Display Logic (what PracticeStatCards shows)
@@ -169,7 +169,7 @@ describe('Word Count Consistency Validation', () => {
       expect(uiStrugglingCount).toBe(1); // Only Word 2 (reviewed)
     });
 
-    it('should apply consistent cooldown filtering in UI and service', () => {
+    test('should apply consistent cooldown filtering in UI and service', () => {
       // This ensures both UI and service use the same cooldown logic
       const dueWordsWithCooldown = calculateDueWords(mockStudyWords);
 
@@ -195,7 +195,7 @@ describe('Word Count Consistency Validation', () => {
   });
 
   describe('Bug 3: Study All Words Session Finishes Immediately - Eligible Count Consistency', () => {
-    it('should include never-reviewed words in eligible count', () => {
+    test('should include never-reviewed words in eligible count', () => {
       // This test catches the bug where never-reviewed words were excluded
 
       // Words that have never been reviewed
@@ -220,7 +220,7 @@ describe('Word Count Consistency Validation', () => {
       expect(eligibleCount).toBeGreaterThanOrEqual(neverReviewedWords.length);
     });
 
-    it('should apply same cooldown filtering as service for Study All Words', () => {
+    test('should apply same cooldown filtering as service for Study All Words', () => {
       // This ensures UI count matches service query result
       const uiEligibleCount = mockStudyWords.filter(word => {
         if (word.fsrs_last_review == null) return true;
@@ -244,7 +244,7 @@ describe('Word Count Consistency Validation', () => {
   });
 
   describe('Bug 4: Infinite Loop Guards - Session State Management', () => {
-    it('should prevent session reinitialization after completion', () => {
+    test('should prevent session reinitialization after completion', () => {
       // This test validates the infinite loop prevention fixes
 
       // Simulate session completion state
@@ -266,7 +266,7 @@ describe('Word Count Consistency Validation', () => {
       expect(shouldPreventUpdate).toBe(true);
     });
 
-    it('should validate completion state guards work correctly', () => {
+    test('should validate completion state guards work correctly', () => {
       // Test the specific guard conditions from useFSRS
       const guards = [
         { isComplete: true, completionTriggered: false, isProcessingUpdate: false },
@@ -284,7 +284,7 @@ describe('Word Count Consistency Validation', () => {
   });
 
   describe('Integration: Word Categories Consistency', () => {
-    it('should calculate all word categories consistently', () => {
+    test('should calculate all word categories consistently', () => {
       // This ensures the fix for single source of truth works
       const categories = calculateWordCategories(mockStudyWords); // Let it calculate due words
 
@@ -299,7 +299,7 @@ describe('Word Count Consistency Validation', () => {
       expect(categories.masteredWords).toBe(1); // Word 5
     });
 
-    it('should use same logic for mastered words as server-side filters', () => {
+    test('should use same logic for mastered words as server-side filters', () => {
       // This validates mastered word consistency with server-side logic
       const masteredWords = calculateMasteredWords(mockStudyWords);
 
@@ -316,7 +316,7 @@ describe('Word Count Consistency Validation', () => {
   });
 
   describe('Real useFSRS Hook Bug Detection', () => {
-    it('should detect the progress calculation bug in useFSRS hook', () => {
+    test('should detect the progress calculation bug in useFSRS hook', () => {
       // This test simulates the actual bug in the useFSRS hook
       // where progress calculation uses uniqueWords instead of totalWords
 
@@ -363,7 +363,7 @@ describe('Word Count Consistency Validation', () => {
   });
 
   describe('Critical UI/Session Consistency Requirements', () => {
-    it('should ensure UI word count exactly matches session word count', () => {
+    test('should ensure UI word count exactly matches session word count', () => {
       // CRITICAL REQUIREMENT: If UI shows X words, session must have exactly X words
       const uiDueWordsCount = 2; // Based on actual mockStudyWords data
       const uiStrugglingWordsCount = 1; // Based on actual mockStudyWords data
@@ -380,7 +380,7 @@ describe('Word Count Consistency Validation', () => {
       expect(sessionStudyAllWords.length).toBe(uiStudyAllWordsCount);
     });
 
-    it('should ensure session ends exactly after processing all shown words', () => {
+    test('should ensure session ends exactly after processing all shown words', () => {
       // CRITICAL REQUIREMENT: If UI shows 7 words, session must end after exactly 7 swipes
       const totalWordsInSession = 7;
       let processedWords = 0;
@@ -404,7 +404,7 @@ describe('Word Count Consistency Validation', () => {
       expect(isSessionComplete).toBe(true);
     });
 
-    it('should ensure progress bar accuracy throughout the session', () => {
+    test('should ensure progress bar accuracy throughout the session', () => {
       // CRITICAL REQUIREMENT: Progress bar must accurately reflect words processed vs total
       const totalWords = 6;
       const progressSteps: number[] = [];

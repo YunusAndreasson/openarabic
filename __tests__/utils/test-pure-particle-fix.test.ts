@@ -6,7 +6,7 @@ import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('Pure Particle Combinations - NOW COLORED', () => {
   describe('Pronoun combinations should be colored', () => {
-    it('should color وهو "and he" (2 parts)', () => {
+    test('should color وهو "and he" (2 parts)', () => {
       const analysis = analyzeArabicWord('وهو', 'and he');
 
       console.log('\n📊 وهو + "and he":');
@@ -26,7 +26,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should color وهو "and it" (2 parts)', () => {
+    test('should color وهو "and it" (2 parts)', () => {
       const analysis = analyzeArabicWord('وهو', 'and it');
 
       console.log('\n📊 وهو + "and it":');
@@ -44,7 +44,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should color فهو "so he" (2 parts)', () => {
+    test('should color فهو "so he" (2 parts)', () => {
       const analysis = analyzeArabicWord('فهو', 'so he');
 
       console.log('\n📊 فهو + "so he":');
@@ -62,7 +62,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should color فهو "so it is" (3 English words, 2 Arabic parts)', () => {
+    test('should color فهو "so it is" (3 English words, 2 Arabic parts)', () => {
       const analysis = analyzeArabicWord('فهو', 'so it is');
 
       console.log('\n📊 فهو + "so it is":');
@@ -83,7 +83,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
   });
 
   describe('Transliterations with normalization', () => {
-    it('should color "wahuwa" after normalization to "and he"', () => {
+    test('should color "wahuwa" after normalization to "and he"', () => {
       const analysis = analyzeArabicWord('وهو', 'wahuwa');
 
       console.log('\n📊 وهو + "wahuwa" (transliteration):');
@@ -103,7 +103,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should color "fahuwa" after normalization to "so he"', () => {
+    test('should color "fahuwa" after normalization to "so he"', () => {
       const analysis = analyzeArabicWord('فهو', 'fahuwa');
 
       console.log('\n📊 فهو + "fahuwa" (transliteration):');
@@ -123,7 +123,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
   });
 
   describe('Single components should still NOT be colored', () => {
-    it('should NOT color single component "لا" alone', () => {
+    test('should NOT color single component "لا" alone', () => {
       const analysis = analyzeArabicWord('لا', 'no');
 
       console.log('\n📊 لا + "no" (single component):');
@@ -133,7 +133,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
       expect(analysis.hasComponents).toBe(false);
     });
 
-    it('should NOT color single component "ف" alone', () => {
+    test('should NOT color single component "ف" alone', () => {
       const analysis = analyzeArabicWord('ف', 'so');
 
       console.log('\n📊 ف + "so" (single component):');
@@ -145,7 +145,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
   });
 
   describe('Multi-part compositions should be colored', () => {
-    it('should color ولا "and not" (2 detected prefixes)', () => {
+    test('should color ولا "and not" (2 detected prefixes)', () => {
       const analysis = analyzeArabicWord('ولا', 'and not');
 
       console.log('\n📊 ولا + "and not":');

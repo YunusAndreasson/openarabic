@@ -6,12 +6,12 @@ import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormaliz
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('Fainna (فإن) Normalization', () => {
-  it('should normalize "fainna" to "so indeed"', () => {
+  test('should normalize "fainna" to "so indeed"', () => {
     const result = normalizeTranslation('فإن', 'fainna');
     expect(result).toBe('so indeed');
   });
 
-  it('should detect ف in فإن "fainna"', () => {
+  test('should detect ف in فإن "fainna"', () => {
     const analysis = analyzeArabicWord('فإن', 'fainna');
 
     console.log('\n📊 فإن + "fainna":');
@@ -31,7 +31,7 @@ describe('Fainna (فإن) Normalization', () => {
     expect(analysis.hasComponents).toBe(true);
   });
 
-  it('should display "so indeed" in UI', () => {
+  test('should display "so indeed" in UI', () => {
     const analysis = analyzeArabicWord('فإن', 'fainna');
     expect(analysis.original.english).toBe('so indeed');
   });

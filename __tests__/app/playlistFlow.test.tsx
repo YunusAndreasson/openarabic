@@ -98,7 +98,7 @@ describe('bookmarks flow', () => {
     jest.clearAllMocks();
   });
 
-  it('adds article to list and plays all', () => {
+  test('adds article to list and plays all', () => {
     const TestApp = () => {
       const [screen, setScreen] = React.useState<'home' | 'article' | 'bookmarks'>('home');
       return (
@@ -135,7 +135,7 @@ describe('bookmarks flow', () => {
     expect(queryByTestId('stop-playback-button')).toBeTruthy();
   });
 
-  it('disables play all when list is empty', () => {
+  test('disables play all when list is empty', () => {
     (global as any).bookmarkItems = [];
 
     const { queryByTestId } = render(<ListenScreen />);
@@ -149,7 +149,7 @@ describe('bookmarks flow', () => {
     expect((global as any).handlePlayAllMock).not.toHaveBeenCalled();
   });
 
-  it('disables play all after removing last item', () => {
+  test('disables play all after removing last item', () => {
     (global as any).bookmarkItems = [1];
 
     const { queryByTestId, rerender } = render(<ListenScreen />);

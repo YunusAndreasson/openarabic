@@ -62,13 +62,13 @@ describe('useAudioSubscription', () => {
   });
 
   describe('Initialization', () => {
-    it('should return initial status from audio service', () => {
+    test('should return initial status from audio service', () => {
       const { result } = renderHook(() => useAudioSubscription());
 
       expect(result.current.status).toEqual(mockInitialStatus);
     });
 
-    it('should subscribe to audio service on mount', () => {
+    test('should subscribe to audio service on mount', () => {
       renderHook(() => useAudioSubscription());
 
       expect(mockSimpleAudioService.subscribe).toHaveBeenCalledTimes(1);
@@ -77,7 +77,7 @@ describe('useAudioSubscription', () => {
   });
 
   describe('Status updates', () => {
-    it('should update status when isPlaying changes', () => {
+    test('should update status when isPlaying changes', () => {
       const { result } = renderHook(() => useAudioSubscription());
 
       const newStatus: AudioStatus = {
@@ -92,7 +92,7 @@ describe('useAudioSubscription', () => {
       expect(result.current.status.isPlaying).toBe(true);
     });
 
-    it('should update status when isLoading changes', () => {
+    test('should update status when isLoading changes', () => {
       const { result } = renderHook(() => useAudioSubscription());
 
       const newStatus: AudioStatus = {
@@ -107,7 +107,7 @@ describe('useAudioSubscription', () => {
       expect(result.current.status.isLoading).toBe(true);
     });
 
-    it('should update status when currentTime changes by >= 0.1', () => {
+    test('should update status when currentTime changes by >= 0.1', () => {
       const { result } = renderHook(() => useAudioSubscription());
 
       const newStatus: AudioStatus = {
@@ -122,7 +122,7 @@ describe('useAudioSubscription', () => {
       expect(result.current.status.currentTime).toBe(0.5);
     });
 
-    it('should NOT update status when currentTime changes by < 0.1', () => {
+    test('should NOT update status when currentTime changes by < 0.1', () => {
       mockSimpleAudioService.getStatus.mockReturnValue({
         ...mockInitialStatus,
         currentTime: 1.0,
@@ -146,7 +146,7 @@ describe('useAudioSubscription', () => {
       expect(result.current.status.currentTime).toBe(initialTime);
     });
 
-    it('should update status when track changes', () => {
+    test('should update status when track changes', () => {
       const { result } = renderHook(() => useAudioSubscription());
 
       const newStatus: AudioStatus = {
@@ -167,7 +167,7 @@ describe('useAudioSubscription', () => {
   });
 
   describe('Mount safety', () => {
-    it('should not update status when component is unmounted', () => {
+    test('should not update status when component is unmounted', () => {
       const mountedRef = { current: true };
       mockUseMountSafety.mockReturnValue(mountedRef);
 
@@ -191,7 +191,7 @@ describe('useAudioSubscription', () => {
   });
 
   describe('Cleanup', () => {
-    it('should unsubscribe on unmount', () => {
+    test('should unsubscribe on unmount', () => {
       const { unmount } = renderHook(() => useAudioSubscription());
 
       unmount();
@@ -201,7 +201,7 @@ describe('useAudioSubscription', () => {
   });
 
   describe('Change detection optimization', () => {
-    it('should not trigger re-render when status is unchanged', () => {
+    test('should not trigger re-render when status is unchanged', () => {
       const { result } = renderHook(() => useAudioSubscription());
 
       const initialStatus = result.current.status;

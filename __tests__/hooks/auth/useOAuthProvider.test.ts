@@ -97,7 +97,7 @@ describe('useOAuthProvider', () => {
   });
 
   describe('Successful OAuth Flow', () => {
-    it('should complete full OAuth flow successfully', async () => {
+    test('should complete full OAuth flow successfully', async () => {
       const mockModule = { signIn: jest.fn() };
       const signInResult: OAuthSignInResult = {
         idToken: 'test-id-token',
@@ -139,7 +139,7 @@ describe('useOAuthProvider', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    it('should add Sentry breadcrumbs throughout the flow', async () => {
+    test('should add Sentry breadcrumbs throughout the flow', async () => {
       const config: OAuthProviderConfig = {
         provider: 'apple',
         loadModule: jest.fn().mockResolvedValue({}),
@@ -176,7 +176,7 @@ describe('useOAuthProvider', () => {
   });
 
   describe('Module Loading Errors', () => {
-    it('should handle module not available error', async () => {
+    test('should handle module not available error', async () => {
       const config: OAuthProviderConfig = {
         provider: 'google',
         loadModule: jest.fn().mockRejectedValue(new Error('Module not found')),
@@ -204,7 +204,7 @@ describe('useOAuthProvider', () => {
       );
     });
 
-    it('should use custom module not available message', async () => {
+    test('should use custom module not available message', async () => {
       const config: OAuthProviderConfig = {
         provider: 'google',
         loadModule: jest.fn().mockRejectedValue(new Error('Module not found')),
@@ -225,7 +225,7 @@ describe('useOAuthProvider', () => {
   });
 
   describe('Sign-In Errors', () => {
-    it('should handle sign-in errors', async () => {
+    test('should handle sign-in errors', async () => {
       const signInError = new Error('Network connection failed');
 
       const config: OAuthProviderConfig = {
@@ -245,7 +245,7 @@ describe('useOAuthProvider', () => {
       );
     });
 
-    it('should use custom error handler if provided', async () => {
+    test('should use custom error handler if provided', async () => {
       const customError = new Error('Custom error');
 
       const config: OAuthProviderConfig = {
@@ -267,7 +267,7 @@ describe('useOAuthProvider', () => {
       );
     });
 
-    it('should skip custom error handler if it returns undefined', async () => {
+    test('should skip custom error handler if it returns undefined', async () => {
       const config: OAuthProviderConfig = {
         provider: 'google',
         loadModule: jest.fn().mockResolvedValue({}),
@@ -289,7 +289,7 @@ describe('useOAuthProvider', () => {
   });
 
   describe('Token Validation', () => {
-    it('should throw error if no ID token returned', async () => {
+    test('should throw error if no ID token returned', async () => {
       const config: OAuthProviderConfig = {
         provider: 'google',
         loadModule: jest.fn().mockResolvedValue({}),
@@ -314,7 +314,7 @@ describe('useOAuthProvider', () => {
   });
 
   describe('Supabase Exchange Errors', () => {
-    it('should handle Supabase signInWithIdToken errors', async () => {
+    test('should handle Supabase signInWithIdToken errors', async () => {
       const supabaseError = new Error('Network error');
       mockSupabase.auth.signInWithIdToken = jest.fn().mockRejectedValue(supabaseError);
 
@@ -338,7 +338,7 @@ describe('useOAuthProvider', () => {
       );
     });
 
-    it('should handle Supabase auth response errors', async () => {
+    test('should handle Supabase auth response errors', async () => {
       const authError = {
         message: 'Invalid credentials',
         name: 'AuthError',
@@ -370,7 +370,7 @@ describe('useOAuthProvider', () => {
   });
 
   describe('User Cancellation', () => {
-    it('should handle user cancellation silently (code -5 - Google iOS)', async () => {
+    test('should handle user cancellation silently (code -5 - Google iOS)', async () => {
       // -5 is kGIDSignInErrorCodeCanceled (Google iOS user cancelled)
       const cancellationError = Object.assign(new Error('User cancelled'), { code: -5 });
 
@@ -398,7 +398,7 @@ describe('useOAuthProvider', () => {
       expect(mockHandleError).not.toHaveBeenCalled();
     });
 
-    it('should handle user cancellation silently (code 12501 - Google Android)', async () => {
+    test('should handle user cancellation silently (code 12501 - Google Android)', async () => {
       // 12501 is SIGN_IN_CANCELLED (Google Android user cancelled)
       const cancellationError = Object.assign(new Error('User cancelled'), { code: 12501 });
 
@@ -425,7 +425,7 @@ describe('useOAuthProvider', () => {
   });
 
   describe('Mount Safety', () => {
-    it('should not update state if component unmounted', async () => {
+    test('should not update state if component unmounted', async () => {
       const mountedRef = { current: true };
       mockUseMountSafety.mockReturnValue(mountedRef);
 
@@ -455,7 +455,7 @@ describe('useOAuthProvider', () => {
   });
 
   describe('Analytics Tracking', () => {
-    it('should track sign-in with correct provider', async () => {
+    test('should track sign-in with correct provider', async () => {
       const config: OAuthProviderConfig = {
         provider: 'apple',
         loadModule: jest.fn().mockResolvedValue({}),

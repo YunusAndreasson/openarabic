@@ -5,7 +5,7 @@
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('Pronoun Suffix Detection', () => {
-  it('should detect هو as suffix in فهو "fahuwa"', () => {
+  test('should detect هو as suffix in فهو "fahuwa"', () => {
     const analysis = analyzeArabicWord('فهو', 'fahuwa');
 
     console.log('\n📊 فهو + "fahuwa":');
@@ -22,7 +22,7 @@ describe('Pronoun Suffix Detection', () => {
     expect(analysis.suffix?.arabicMatch).toBe('هو');
   });
 
-  it('should detect هو as suffix in وهو "and he"', () => {
+  test('should detect هو as suffix in وهو "and he"', () => {
     const analysis = analyzeArabicWord('وهو', 'and he');
 
     console.log('\n📊 وهو + "and he":');
@@ -38,7 +38,7 @@ describe('Pronoun Suffix Detection', () => {
     expect(analysis.suffix?.arabicMatch).toBe('هو');
   });
 
-  it('should color BOTH parts: ف AND هو', () => {
+  test('should color BOTH parts: ف AND هو', () => {
     const analysis = analyzeArabicWord('فهو', 'so he');
 
     console.log('\n🎨 فهو + "so he" - BOTH PARTS COLORED:');
@@ -55,7 +55,7 @@ describe('Pronoun Suffix Detection', () => {
     expect(analysis.remainingArabic).toBe('');
   });
 
-  it('should detect هي as suffix in فهي "so she"', () => {
+  test('should detect هي as suffix in فهي "so she"', () => {
     const analysis = analyzeArabicWord('فهي', 'so she');
 
     console.log('\n📊 فهي + "so she":');
@@ -64,7 +64,7 @@ describe('Pronoun Suffix Detection', () => {
     expect(analysis.suffix?.arabicMatch).toBe('هي');
   });
 
-  it('should detect هم as suffix in وهم "and they"', () => {
+  test('should detect هم as suffix in وهم "and they"', () => {
     const analysis = analyzeArabicWord('وهم', 'and they');
 
     console.log('\n📊 وهم + "and they":');

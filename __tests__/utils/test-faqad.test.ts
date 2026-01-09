@@ -7,24 +7,24 @@ import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormaliz
 
 describe('Faqad (فقد) Normalization', () => {
   describe('Normalization', () => {
-    it('should normalize "faqad" to "so indeed"', () => {
+    test('should normalize "faqad" to "so indeed"', () => {
       const result = normalizeTranslation('فقد', 'faqad');
       expect(result).toBe('so indeed');
     });
 
-    it('should normalize "fa qad" (with space) to "so indeed"', () => {
+    test('should normalize "fa qad" (with space) to "so indeed"', () => {
       const result = normalizeTranslation('فقد', 'fa qad');
       expect(result).toBe('so indeed');
     });
 
-    it('should normalize "waqad" to "and indeed"', () => {
+    test('should normalize "waqad" to "and indeed"', () => {
       const result = normalizeTranslation('وقد', 'waqad');
       expect(result).toBe('and indeed');
     });
   });
 
   describe('Component detection after normalization', () => {
-    it('should detect ف in فقد "faqad"', () => {
+    test('should detect ف in فقد "faqad"', () => {
       const analysis = analyzeArabicWord('فقد', 'faqad');
 
       console.log('\n📊 فقد + "faqad":');
@@ -45,7 +45,7 @@ describe('Faqad (فقد) Normalization', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should detect و in وقد "waqad"', () => {
+    test('should detect و in وقد "waqad"', () => {
       const analysis = analyzeArabicWord('وقد', 'waqad');
 
       console.log('\n📊 وقد + "waqad":');
@@ -63,7 +63,7 @@ describe('Faqad (فقد) Normalization', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should color فقد "so indeed" - both parts', () => {
+    test('should color فقد "so indeed" - both parts', () => {
       const analysis = analyzeArabicWord('فقد', 'so indeed');
 
       console.log('\n📊 فقد + "so indeed" (already normalized):');
@@ -80,7 +80,7 @@ describe('Faqad (فقد) Normalization', () => {
   });
 
   describe('Summary', () => {
-    it('should document the complete behavior', () => {
+    test('should document the complete behavior', () => {
       console.log('\n✅ FAQAD NORMALIZATION COMPLETE:');
       console.log('');
       console.log('  فقد "faqad" → "so indeed"');

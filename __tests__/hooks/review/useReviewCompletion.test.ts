@@ -103,21 +103,21 @@ describe('useReviewCompletion', () => {
   };
 
   describe('Initial state', () => {
-    it('should return completion functions', () => {
+    test('should return completion functions', () => {
       const { result } = renderHook(() => useReviewCompletion(mockSessionMetrics, false));
 
       expect(result.current).toHaveProperty('invalidateReviewQueries');
       expect(result.current).toHaveProperty('trackCompletion');
     });
 
-    it('should not crash with undefined metrics', () => {
+    test('should not crash with undefined metrics', () => {
       const { result } = renderHook(() => useReviewCompletion(undefined, false));
       expect(result.current).toBeDefined();
     });
   });
 
   describe('Return value structure', () => {
-    it('should return functions', () => {
+    test('should return functions', () => {
       const { result } = renderHook(() => useReviewCompletion(mockSessionMetrics, false));
       expect(typeof result.current.invalidateReviewQueries).toBe('function');
       expect(typeof result.current.trackCompletion).toBe('function');
@@ -125,7 +125,7 @@ describe('useReviewCompletion', () => {
   });
 
   describe('Cleanup', () => {
-    it('should cleanup on unmount', () => {
+    test('should cleanup on unmount', () => {
       const { unmount } = renderHook(() => useReviewCompletion(mockSessionMetrics, false));
 
       // Should unmount without errors

@@ -208,7 +208,7 @@ describe('audioPlayer service', () => {
       );
     });
 
-    it('should set loading state when playing new track', async () => {
+    test('should set loading state when playing new track', async () => {
       let loadingStateSeen = false;
       audioService.subscribe(status => {
         if (status.isLoading) {
@@ -221,7 +221,7 @@ describe('audioPlayer service', () => {
       expect(loadingStateSeen).toBe(true);
     });
 
-    it('should skip loading state when skipLoadingState option is true', async () => {
+    test('should skip loading state when skipLoadingState option is true', async () => {
       let loadingStateSeen = false;
       audioService.subscribe(status => {
         if (status.isLoading) {
@@ -465,7 +465,7 @@ describe('audioPlayer service', () => {
   });
 
   describe('Playlist Mode', () => {
-    it('should start playlist with first track', async () => {
+    test('should start playlist with first track', async () => {
       const success = await audioService.playPlaylist([testTrack, testTrack2, testTrack3]);
 
       expect(success).toBe(true);
@@ -479,7 +479,7 @@ describe('audioPlayer service', () => {
       expect(status.currentTrack).toEqual(testTrack);
     });
 
-    it('should skip loading state for playlist start', async () => {
+    test('should skip loading state for playlist start', async () => {
       let loadingStateSeen = false;
       audioService.subscribe(status => {
         if (status.isLoading) {
@@ -492,7 +492,7 @@ describe('audioPlayer service', () => {
       expect(loadingStateSeen).toBe(false);
     });
 
-    it('should return false for empty playlist', async () => {
+    test('should return false for empty playlist', async () => {
       const success = await audioService.playPlaylist([]);
 
       expect(success).toBe(false);
@@ -501,7 +501,7 @@ describe('audioPlayer service', () => {
       expect(playlistInfo.isPlaylistMode).toBe(false);
     });
 
-    it('should call onTrackComplete callback when advancing tracks', async () => {
+    test('should call onTrackComplete callback when advancing tracks', async () => {
       const onTrackComplete = jest.fn();
 
       await audioService.playPlaylist([testTrack, testTrack2], onTrackComplete);
@@ -521,7 +521,7 @@ describe('audioPlayer service', () => {
       expect(onTrackComplete).toHaveBeenCalledWith(testTrack2);
     });
 
-    it('should play transition sound between tracks', async () => {
+    test('should play transition sound between tracks', async () => {
       await audioService.playPlaylist([testTrack, testTrack2]);
 
       // Trigger track completion
@@ -533,7 +533,7 @@ describe('audioPlayer service', () => {
       expect(mockPlayTransitionSound).toHaveBeenCalled();
     });
 
-    it('should not play transition sound for single-track playlist', async () => {
+    test('should not play transition sound for single-track playlist', async () => {
       await audioService.playPlaylist([testTrack]);
 
       // Trigger track completion
@@ -546,7 +546,7 @@ describe('audioPlayer service', () => {
       expect(mockPlayTransitionSound).not.toHaveBeenCalled();
     });
 
-    it('should stop playlist when all tracks complete', async () => {
+    test('should stop playlist when all tracks complete', async () => {
       await audioService.playPlaylist([testTrack]);
 
       // Trigger track completion
@@ -562,7 +562,7 @@ describe('audioPlayer service', () => {
       expect(status.isPlaying).toBe(false);
     });
 
-    it('should prevent duplicate track advancement from race conditions', async () => {
+    test('should prevent duplicate track advancement from race conditions', async () => {
       await audioService.playPlaylist([testTrack, testTrack2, testTrack3]);
 
       const eventHandler = mockPlayer.addListener.mock.calls[0][1];
@@ -591,7 +591,7 @@ describe('audioPlayer service', () => {
       expect(audioService.isSleepTimerExpired()).toBe(false);
     });
 
-    it('should stop playlist when sleep timer expires', async () => {
+    test('should stop playlist when sleep timer expires', async () => {
       await audioService.playPlaylist([testTrack, testTrack2]);
 
       audioService.markSleepTimerExpired();
@@ -610,7 +610,7 @@ describe('audioPlayer service', () => {
       expect(status.isPlaying).toBe(false);
     });
 
-    it('should reset sleep timer when starting new playlist', async () => {
+    test('should reset sleep timer when starting new playlist', async () => {
       audioService.markSleepTimerExpired();
       expect(audioService.isSleepTimerExpired()).toBe(true);
 
@@ -621,7 +621,7 @@ describe('audioPlayer service', () => {
   });
 
   describe('Status Updates and Subscriptions', () => {
-    it('should notify subscribers of status changes', async () => {
+    test('should notify subscribers of status changes', async () => {
       const listener = jest.fn();
       const unsubscribe = audioService.subscribe(listener);
 
@@ -635,7 +635,7 @@ describe('audioPlayer service', () => {
       unsubscribe();
     });
 
-    it('should allow multiple subscribers', async () => {
+    test('should allow multiple subscribers', async () => {
       const listener1 = jest.fn();
       const listener2 = jest.fn();
 
@@ -648,7 +648,7 @@ describe('audioPlayer service', () => {
       expect(listener2).toHaveBeenCalled();
     });
 
-    it('should unsubscribe correctly', async () => {
+    test('should unsubscribe correctly', async () => {
       const listener = jest.fn();
       const unsubscribe = audioService.subscribe(listener);
 
@@ -664,7 +664,7 @@ describe('audioPlayer service', () => {
       expect(callCountAfter).toBe(callCountBefore);
     });
 
-    it('should handle listener errors gracefully', async () => {
+    test('should handle listener errors gracefully', async () => {
       const badListener = jest.fn(() => {
         throw new Error('Listener error');
       });
@@ -679,7 +679,7 @@ describe('audioPlayer service', () => {
       expect(goodListener).toHaveBeenCalled();
     });
 
-    it('should update status from native playback events', async () => {
+    test('should update status from native playback events', async () => {
       await audioService.play(testTrack);
 
       const eventHandler = mockPlayer.addListener.mock.calls[0][1];
@@ -702,7 +702,7 @@ describe('audioPlayer service', () => {
       expect(status.playbackState).toBe('ready');
     });
 
-    it('should handle invalid time values in native events', async () => {
+    test('should handle invalid time values in native events', async () => {
       await audioService.play(testTrack);
 
       const eventHandler = mockPlayer.addListener.mock.calls[0][1];
@@ -718,7 +718,7 @@ describe('audioPlayer service', () => {
       expect(status.duration).toBe(0);
     });
 
-    it('should detect track completion from didJustFinish', async () => {
+    test('should detect track completion from didJustFinish', async () => {
       await audioService.play(testTrack);
 
       const eventHandler = mockPlayer.addListener.mock.calls[0][1];

@@ -131,7 +131,7 @@ describe('useGlobalAudioState', () => {
   });
 
   describe('Initial state', () => {
-    it('should return initial audio state', () => {
+    test('should return initial audio state', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
       expect(result.current.isPlaying).toBe(false);
@@ -141,13 +141,13 @@ describe('useGlobalAudioState', () => {
       expect(result.current.duration).toBe(0);
     });
 
-    it('should return null currentArticle when no track is playing', () => {
+    test('should return null currentArticle when no track is playing', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
       expect(result.current.currentArticle).toBeNull();
     });
 
-    it('should return initial sleep timer state', () => {
+    test('should return initial sleep timer state', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
       expect(result.current.showSleepTimerModal).toBe(false);
@@ -157,7 +157,7 @@ describe('useGlobalAudioState', () => {
   });
 
   describe('Queue position', () => {
-    it('should return correct queue position', () => {
+    test('should return correct queue position', () => {
       mockSimpleAudioService.getPlaylistInfo.mockReturnValue({
         isPlaylistMode: true,
         currentIndex: 2,
@@ -172,13 +172,13 @@ describe('useGlobalAudioState', () => {
   });
 
   describe('Actions', () => {
-    it('should provide onPlayPause action', () => {
+    test('should provide onPlayPause action', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
       expect(typeof result.current.onPlayPause).toBe('function');
     });
 
-    it('should provide onTimerPress action that opens modal', () => {
+    test('should provide onTimerPress action that opens modal', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
       act(() => {
@@ -188,7 +188,7 @@ describe('useGlobalAudioState', () => {
       expect(result.current.showSleepTimerModal).toBe(true);
     });
 
-    it('should provide onSleepTimerClose action that closes modal', () => {
+    test('should provide onSleepTimerClose action that closes modal', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
       // Open modal first
@@ -206,7 +206,7 @@ describe('useGlobalAudioState', () => {
       expect(result.current.showSleepTimerModal).toBe(false);
     });
 
-    it('should provide onSleepTimerSet action', () => {
+    test('should provide onSleepTimerSet action', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
       act(() => {
@@ -216,7 +216,7 @@ describe('useGlobalAudioState', () => {
       expect(mockSleepTimer.actions.startTimer).toHaveBeenCalledWith(30);
     });
 
-    it('should provide onSleepTimerCancel action', () => {
+    test('should provide onSleepTimerCancel action', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
       act(() => {
@@ -226,7 +226,7 @@ describe('useGlobalAudioState', () => {
       expect(mockSleepTimer.actions.cancelTimer).toHaveBeenCalled();
     });
 
-    it('should provide preconfigureAudioSession action', async () => {
+    test('should provide preconfigureAudioSession action', async () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
       await act(async () => {
@@ -238,7 +238,7 @@ describe('useGlobalAudioState', () => {
   });
 
   describe('Current article mapping', () => {
-    it('should map currentTrack to MiniPlayer format', () => {
+    test('should map currentTrack to MiniPlayer format', () => {
       const mockTrack = {
         id: 'track-1',
         articleId: 123,
@@ -266,7 +266,7 @@ describe('useGlobalAudioState', () => {
   });
 
   describe('Sleep timer integration', () => {
-    it('should reflect sleep timer active state', () => {
+    test('should reflect sleep timer active state', () => {
       mockUseSleepTimer.mockReturnValue({
         state: {
           isActive: true,
@@ -283,7 +283,7 @@ describe('useGlobalAudioState', () => {
   });
 
   describe('Cleanup', () => {
-    it('should cleanup timeout on unmount', () => {
+    test('should cleanup timeout on unmount', () => {
       const { unmount } = renderHook(() => useGlobalAudioState());
 
       unmount();

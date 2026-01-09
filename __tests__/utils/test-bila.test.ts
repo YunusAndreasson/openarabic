@@ -7,7 +7,7 @@ import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormaliz
 
 describe('Bila Pattern Investigation (بلا)', () => {
   describe('Analyzing Arabic structure', () => {
-    it('should break down بلا as ب + لا', () => {
+    test('should break down بلا as ب + لا', () => {
       // بلا = ب (with) + لا (no/not) = "with no" or "without"
       const arabic = 'بلا';
       console.log(`\n📊 Analyzing: ${arabic}`);
@@ -16,7 +16,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
   });
 
   describe('Current behavior', () => {
-    it('should test بلا with transliteration "bila"', () => {
+    test('should test بلا with transliteration "bila"', () => {
       const analysis = analyzeArabicWord('بلا', 'bila');
 
       console.log('\n📊 بلا + "bila" (transliteration):');
@@ -34,7 +34,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
       expect(analysis.original.english).toBe('with no');
     });
 
-    it('should test بلا with "with no"', () => {
+    test('should test بلا with "with no"', () => {
       const analysis = analyzeArabicWord('بلا', 'with no');
 
       console.log('\n📊 بلا + "with no":');
@@ -67,7 +67,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
       expect(hasBa).toBe(true);
     });
 
-    it('should test بلا with "without"', () => {
+    test('should test بلا with "without"', () => {
       const analysis = analyzeArabicWord('بلا', 'without');
 
       console.log('\n📊 بلا + "without":');
@@ -133,34 +133,34 @@ describe('Bila Pattern Investigation (بلا)', () => {
   });
 
   describe('Normalization rules', () => {
-    it('should normalize "bila" to "with no"', () => {
+    test('should normalize "bila" to "with no"', () => {
       const result = normalizeTranslation('بلا', 'bila');
       expect(result).toBe('with no');
     });
 
-    it('should normalize "bilaa" to "with no"', () => {
+    test('should normalize "bilaa" to "with no"', () => {
       const result = normalizeTranslation('بلا', 'bilaa');
       expect(result).toBe('with no');
     });
 
-    it('should normalize "bi laa" to "with no"', () => {
+    test('should normalize "bi laa" to "with no"', () => {
       const result = normalizeTranslation('بلا', 'bi laa');
       expect(result).toBe('with no');
     });
 
-    it('should normalize "fabilaa" to "so with no"', () => {
+    test('should normalize "fabilaa" to "so with no"', () => {
       const result = normalizeTranslation('فبلا', 'fabilaa');
       expect(result).toBe('so with no');
     });
 
-    it('should normalize "wabilaa" to "and with no"', () => {
+    test('should normalize "wabilaa" to "and with no"', () => {
       const result = normalizeTranslation('وبلا', 'wabilaa');
       expect(result).toBe('and with no');
     });
   });
 
   describe('Component detection after normalization', () => {
-    it('should detect ب (with) after normalizing "bila"', () => {
+    test('should detect ب (with) after normalizing "bila"', () => {
       const analysis = analyzeArabicWord('بلا', 'bila');
 
       const hasBa = analysis.prefixes.some(
@@ -170,7 +170,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
       expect(hasBa).toBe(true);
     });
 
-    it('should detect لا (no) after normalizing "bila"', () => {
+    test('should detect لا (no) after normalizing "bila"', () => {
       const analysis = analyzeArabicWord('بلا', 'bila');
 
       const hasLa = analysis.prefixes.some(
@@ -182,7 +182,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
       expect(hasLa).toBe(true);
     });
 
-    it('should detect separate components for بلا', () => {
+    test('should detect separate components for بلا', () => {
       const analysis = analyzeArabicWord('بلا', 'bila');
 
       // Should have at least 2 prefixes: ب and لا
@@ -201,7 +201,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
   });
 
   describe('Recommendation', () => {
-    it('should document recommendation for bila pattern', () => {
+    test('should document recommendation for bila pattern', () => {
       console.log('\n💡 RECOMMENDATION:');
       console.log('');
       console.log('Based on analysis, "bila" should be added to normalization rules:');

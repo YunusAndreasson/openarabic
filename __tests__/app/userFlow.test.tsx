@@ -184,7 +184,7 @@ interface TestStudyWord {
 }
 
 describe('UI flow', () => {
-  it('renders an article card', () => {
+  test('renders an article card', () => {
     const testArticle: TestArticle = {
       id: 1,
       title: 't',
@@ -205,7 +205,7 @@ describe('UI flow', () => {
     expect(getByTestId('article-1')).toBeTruthy();
   });
 
-  it('opens word tooltip on press', () => {
+  test('opens word tooltip on press', () => {
     const onPress = jest.fn();
     const onTooltipOpen = jest.fn();
     const word: TestWord = { id: 1, word_form: 'w', english: 'w', root_id: 1 };
@@ -222,7 +222,7 @@ describe('UI flow', () => {
     expect(onPress).toHaveBeenCalledWith(word);
   });
 
-  it('starts practice session', () => {
+  test('starts practice session', () => {
     const onStartReview = jest.fn();
     const studyWord: TestStudyWord = { root_id: 1 };
     const { getByTestId } = render(
@@ -237,7 +237,7 @@ describe('UI flow', () => {
     expect(onStartReview).toHaveBeenCalled();
   });
 
-  it('shows error when review session fails to start', async () => {
+  test('shows error when review session fails to start', async () => {
     const startReview = jest.fn().mockRejectedValue(new Error('fail'));
 
     function ReviewStarter(): JSX.Element {
@@ -281,7 +281,7 @@ describe('UI flow', () => {
     expect(queryByTestId('error-message')).toBeTruthy();
   });
 
-  it('completes review after swipe', () => {
+  test('completes review after swipe', () => {
     const { getByTestId, queryByTestId, rerender } = render(<DummyReview />);
     expect(queryByTestId('completion-screen')).toBeNull();
 

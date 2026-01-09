@@ -7,24 +7,24 @@ import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormaliz
 
 describe('Fama (فما) Normalization', () => {
   describe('Normalization', () => {
-    it('should normalize "fama" to "so what"', () => {
+    test('should normalize "fama" to "so what"', () => {
       const result = normalizeTranslation('فما', 'fama');
       expect(result).toBe('so what');
     });
 
-    it('should normalize "fa ma" (with space) to "so what"', () => {
+    test('should normalize "fa ma" (with space) to "so what"', () => {
       const result = normalizeTranslation('فما', 'fa ma');
       expect(result).toBe('so what');
     });
 
-    it('should normalize "wama" to "and what"', () => {
+    test('should normalize "wama" to "and what"', () => {
       const result = normalizeTranslation('وما', 'wama');
       expect(result).toBe('and what');
     });
   });
 
   describe('Component detection after normalization', () => {
-    it('should detect ف in فما "fama"', () => {
+    test('should detect ف in فما "fama"', () => {
       const analysis = analyzeArabicWord('فما', 'fama');
 
       console.log('\n📊 فما + "fama":');
@@ -46,7 +46,7 @@ describe('Fama (فما) Normalization', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should detect و in وما "wama"', () => {
+    test('should detect و in وما "wama"', () => {
       const analysis = analyzeArabicWord('وما', 'wama');
 
       console.log('\n📊 وما + "wama":');
@@ -67,7 +67,7 @@ describe('Fama (فما) Normalization', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should color فما "so what" after normalization', () => {
+    test('should color فما "so what" after normalization', () => {
       const analysis = analyzeArabicWord('فما', 'so what');
 
       console.log('\n📊 فما + "so what" (already normalized):');
@@ -82,7 +82,7 @@ describe('Fama (فما) Normalization', () => {
   });
 
   describe('Summary', () => {
-    it('should document the complete behavior', () => {
+    test('should document the complete behavior', () => {
       console.log('\n✅ FAMA NORMALIZATION COMPLETE:');
       console.log('');
       console.log('  فما "fama" → "so what"');

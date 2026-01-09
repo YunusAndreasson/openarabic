@@ -59,7 +59,7 @@ describe('Toast', () => {
       <Toast visible={true} message="Test message" onClose={mockOnClose} />,
     );
 
-    expect(getByText('Test message')).toBeTruthy();
+    expect(getByText('Test message')).toBeDefined();
   });
 
   test('should not render when visible is false', () => {
@@ -158,7 +158,7 @@ describe('Toast', () => {
       <Toast visible={true} message={expectedContent} type={type} onClose={mockOnClose} />,
     );
 
-    expect(getByText(expectedContent)).toBeTruthy();
+    expect(getByText(expectedContent)).toBeDefined();
   });
 
   test('should handle long messages with ellipsis', () => {
@@ -170,7 +170,7 @@ describe('Toast', () => {
     );
 
     const textElement = getByText(longMessage);
-    expect(textElement).toBeTruthy();
+    expect(textElement).toBeDefined();
     expect(textElement.props.numberOfLines).toBe(3);
     expect(textElement.props.ellipsizeMode).toBe('tail');
   });
@@ -193,7 +193,7 @@ describe('Toast', () => {
       <Toast visible={true} message="Default type message" onClose={mockOnClose} />,
     );
 
-    expect(getByText('Default type message')).toBeTruthy();
+    expect(getByText('Default type message')).toBeDefined();
   });
 
   test('should handle rapid visibility toggles', () => {

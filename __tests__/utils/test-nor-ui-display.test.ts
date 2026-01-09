@@ -5,7 +5,7 @@
 import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 
 describe('Nor UI Display', () => {
-  it('should return normalized English in original.english for UI display', () => {
+  test('should return normalized English in original.english for UI display', () => {
     const analysis = analyzeArabicWord('ولا', 'nor');
 
     console.log('\n📊 UI Display Test for ولا + "nor":');
@@ -17,7 +17,7 @@ describe('Nor UI Display', () => {
     expect(analysis.original.english).toBe('and not');
   });
 
-  it('should work for all normalization patterns', () => {
+  test('should work for all normalization patterns', () => {
     const tests = [
       { arabic: 'ولا', input: 'nor', expected: 'and not' },
       { arabic: 'ولا', input: 'wa la', expected: 'and not' },

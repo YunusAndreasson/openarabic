@@ -6,12 +6,12 @@ import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormalization';
 
 describe('Nor (ولا) Normalization', () => {
-  it('should normalize "nor" to "and not"', () => {
+  test('should normalize "nor" to "and not"', () => {
     const result = normalizeTranslation('ولا', 'nor');
     expect(result).toBe('and not');
   });
 
-  it('should detect و in ولا "nor"', () => {
+  test('should detect و in ولا "nor"', () => {
     const analysis = analyzeArabicWord('ولا', 'nor');
 
     console.log('\n📊 ولا + "nor":');
@@ -33,7 +33,7 @@ describe('Nor (ولا) Normalization', () => {
     expect(analysis.hasComponents).toBe(true);
   });
 
-  it('should color ولا "nor" after normalization', () => {
+  test('should color ولا "nor" after normalization', () => {
     const analysis = analyzeArabicWord('ولا', 'nor');
 
     console.log('\n📊 ولا + "nor" coloring:');

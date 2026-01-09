@@ -7,24 +7,24 @@ import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormaliz
 
 describe('Faidha (فإذا) Normalization', () => {
   describe('Normalization', () => {
-    it('should normalize "faidha" to "so when"', () => {
+    test('should normalize "faidha" to "so when"', () => {
       const result = normalizeTranslation('فإذا', 'faidha');
       expect(result).toBe('so when');
     });
 
-    it('should normalize "fa idha" (with space) to "so when"', () => {
+    test('should normalize "fa idha" (with space) to "so when"', () => {
       const result = normalizeTranslation('فإذا', 'fa idha');
       expect(result).toBe('so when');
     });
 
-    it('should normalize "waidha" to "and when"', () => {
+    test('should normalize "waidha" to "and when"', () => {
       const result = normalizeTranslation('وإذا', 'waidha');
       expect(result).toBe('and when');
     });
   });
 
   describe('Component detection after normalization', () => {
-    it('should detect BOTH ف and إذا in فإذا "faidha"', () => {
+    test('should detect BOTH ف and إذا in فإذا "faidha"', () => {
       const analysis = analyzeArabicWord('فإذا', 'faidha');
 
       console.log('\n📊 فإذا + "faidha":');
@@ -50,7 +50,7 @@ describe('Faidha (فإذا) Normalization', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should detect BOTH و and إذا in وإذا "waidha"', () => {
+    test('should detect BOTH و and إذا in وإذا "waidha"', () => {
       const analysis = analyzeArabicWord('وإذا', 'waidha');
 
       console.log('\n📊 وإذا + "waidha":');
@@ -75,7 +75,7 @@ describe('Faidha (فإذا) Normalization', () => {
       expect(analysis.hasComponents).toBe(true);
     });
 
-    it('should color فإذا "so when" - sequential detection', () => {
+    test('should color فإذا "so when" - sequential detection', () => {
       const analysis = analyzeArabicWord('فإذا', 'so when');
 
       console.log('\n📊 فإذا + "so when" (already normalized):');
@@ -97,7 +97,7 @@ describe('Faidha (فإذا) Normalization', () => {
   });
 
   describe('Summary', () => {
-    it('should document the complete behavior', () => {
+    test('should document the complete behavior', () => {
       console.log('\n✅ FAIDHA NORMALIZATION COMPLETE:');
       console.log('');
       console.log('  فإذا "faidha" → "so when"');

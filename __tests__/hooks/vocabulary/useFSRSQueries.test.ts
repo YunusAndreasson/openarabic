@@ -84,7 +84,7 @@ describe('useFSRSQueries', () => {
   });
 
   describe('Query configuration', () => {
-    it('should not enable queries when userId is undefined', () => {
+    test('should not enable queries when userId is undefined', () => {
       renderHook(() => useFSRSQueries({ userId: undefined }));
 
       // Check that useQuery was called with enabled: false
@@ -95,7 +95,7 @@ describe('useFSRSQueries', () => {
       );
     });
 
-    it('should enable queries when userId is provided', () => {
+    test('should enable queries when userId is provided', () => {
       renderHook(() => useFSRSQueries({ userId: 'user-123' }));
 
       // Check that useQuery was called with enabled: true
@@ -108,7 +108,7 @@ describe('useFSRSQueries', () => {
   });
 
   describe('Return value', () => {
-    it('should return allWords, dueWords, isLoading, isFetching, and error', () => {
+    test('should return allWords, dueWords, isLoading, isFetching, and error', () => {
       mockUseQuery
         .mockReturnValueOnce({
           data: [mockStudyWord],
@@ -138,7 +138,7 @@ describe('useFSRSQueries', () => {
       expect(result.current).toHaveProperty('error');
     });
 
-    it('should return loading true when either query is loading', () => {
+    test('should return loading true when either query is loading', () => {
       mockUseQuery
         .mockReturnValueOnce({
           data: undefined,
@@ -164,7 +164,7 @@ describe('useFSRSQueries', () => {
       expect(result.current.isLoading).toBe(true);
     });
 
-    it('should return fetching true when either query is fetching', () => {
+    test('should return fetching true when either query is fetching', () => {
       mockUseQuery
         .mockReturnValueOnce({
           data: [mockStudyWord],
@@ -190,7 +190,7 @@ describe('useFSRSQueries', () => {
       expect(result.current.isFetching).toBe(true);
     });
 
-    it('should return error if either query has an error', () => {
+    test('should return error if either query has an error', () => {
       const testError = new Error('Test error');
       mockUseQuery
         .mockReturnValueOnce({
@@ -219,7 +219,7 @@ describe('useFSRSQueries', () => {
   });
 
   describe('Data handling', () => {
-    it('should return undefined for allWords and dueWords when no data', () => {
+    test('should return undefined for allWords and dueWords when no data', () => {
       mockUseQuery
         .mockReturnValueOnce({
           data: undefined,
@@ -246,7 +246,7 @@ describe('useFSRSQueries', () => {
       expect(result.current.dueWords).toBeUndefined();
     });
 
-    it('should return word data when available', () => {
+    test('should return word data when available', () => {
       const mockWords = [mockStudyWord];
       mockUseQuery
         .mockReturnValueOnce({
@@ -276,7 +276,7 @@ describe('useFSRSQueries', () => {
   });
 
   describe('Limit option', () => {
-    it('should pass limit to queries when provided', () => {
+    test('should pass limit to queries when provided', () => {
       renderHook(() => useFSRSQueries({ userId: 'user-123', limit: 10 }));
 
       // The limit is passed to the query function, verify useQuery was called 3 times (all, due, stats)

@@ -54,14 +54,14 @@ describe('Listen Screen Play Button Visibility', () => {
     jest.clearAllMocks();
   });
 
-  it('shows individual play buttons when audio is idle', () => {
+  test('shows individual play buttons when audio is idle', () => {
     const { getAllByTestId } = render(<MockListenScreen audioState={AUDIO_STATES.IDLE} />);
 
     const playButtons = getAllByTestId('individual-play-button');
     expect(playButtons).toHaveLength(3); // Should show play button for each article
   });
 
-  it('hides individual play buttons when audio is playing', () => {
+  test('hides individual play buttons when audio is playing', () => {
     const { queryAllByTestId } = render(<MockListenScreen audioState={AUDIO_STATES.PLAYING} />);
 
     const playButtons = queryAllByTestId('individual-play-button');
@@ -70,14 +70,14 @@ describe('Listen Screen Play Button Visibility', () => {
     // Note: App navigates to modal instead of showing in-screen card
   });
 
-  it('shows individual play buttons when audio is stopped', () => {
+  test('shows individual play buttons when audio is stopped', () => {
     const { getAllByTestId } = render(<MockListenScreen audioState={AUDIO_STATES.STOPPED} />);
 
     const playButtons = getAllByTestId('individual-play-button');
     expect(playButtons).toHaveLength(3); // Should show play buttons again when stopped
   });
 
-  it('shows individual play buttons when audio is loading (only PLAYING hides them)', () => {
+  test('shows individual play buttons when audio is loading (only PLAYING hides them)', () => {
     const { getAllByTestId } = render(<MockListenScreen audioState={AUDIO_STATES.LOADING} />);
 
     const playButtons = getAllByTestId('individual-play-button');
@@ -86,7 +86,7 @@ describe('Listen Screen Play Button Visibility', () => {
 });
 
 describe('Play Button State Transitions', () => {
-  it('simulates the flow: idle -> playing (navigates to modal) -> stopped', () => {
+  test('simulates the flow: idle -> playing (navigates to modal) -> stopped', () => {
     const TestComponent = ({ audioState }: { audioState: string }) => (
       <MockListenScreen audioState={audioState} />
     );
@@ -109,7 +109,7 @@ describe('Play Button State Transitions', () => {
 });
 
 describe('Integration with Audio Control Requirements', () => {
-  it('validates that individual play buttons are hidden during playback to avoid conflicting controls', () => {
+  test('validates that individual play buttons are hidden during playback to avoid conflicting controls', () => {
     const { queryAllByTestId } = render(<MockListenScreen audioState={AUDIO_STATES.PLAYING} />);
 
     // When playing, should not have individual play buttons (avoids conflicting with modal controls)
