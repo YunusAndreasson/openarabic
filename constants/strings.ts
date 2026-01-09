@@ -44,7 +44,6 @@ export const STRINGS = {
   TUTORIAL_SRS_CTA: "Let's go!",
   // Swipe tutorial navigation
   TUTORIAL_NEXT: 'Got it',
-  TUTORIAL_START_PRACTICING: 'Got it',
   // Contextual help - Swipe left (Unknown)
   TUTORIAL_CONTEXT_LEFT_LINE1: "Don't know the word?",
   TUTORIAL_CONTEXT_LEFT_LINE2: 'Swipe left.',
@@ -130,8 +129,6 @@ export const STRINGS = {
   LENGTH_MEDIUM: 'Medium',
   LENGTH_LONG: 'Long',
   RESUMED_READING_TEMPLATE: 'Resuming at {percent}%',
-  // Article & content actions - shortened and action-oriented
-  PREPARING_ARTICLES: 'Preparing articles…',
   // Article section headings (for progress-based sorting)
   CONTINUE_READING: 'Continue reading',
   MORE_FROM_AUTHOR: 'More from {author}',
@@ -139,20 +136,14 @@ export const STRINGS = {
   UNREAD: 'Unread',
   COMPLETED: 'Completed',
   SET_TIME: 'Set time',
-  // Empty states & hints - more actionable
-  NO_ARTICLES_FOUND: 'No articles match your filters',
   // Playlist tab empty state - minimal one-tap start
   BOOKMARKS_EMPTY_TITLE: 'Your playlist is empty',
-  BOOKMARKS_EMPTY_CTA_SECONDARY: 'Browse',
   BOOKMARKS_EMPTY_HINT: 'Tap the headset on any article to add it here',
   // Practice tab empty state - minimal one-tap start
   STUDY_LIST_EMPTY_TITLE: 'Your practice list is empty',
-  STUDY_LIST_EMPTY_CTA: 'Add 10 essential words',
-  STUDY_LIST_EMPTY_CTA_SECONDARY: 'Browse',
   STUDY_LIST_EMPTY_HINT: 'Tap any word while reading to save it for practice',
   // Welcome toasts when navigating from empty states
   EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headset on any article to add it to your playlist',
-  EXPLORE_WELCOME_FROM_PRACTICE: 'Tap any word while reading to save it for practice',
   // Success toasts for empty state actions
   WORDS_ADDED_SUCCESS: 'Ready for your first practice session',
   ARTICLES_ADDED_SUCCESS: 'Ready for your first listen',
@@ -293,11 +284,10 @@ export const STRINGS = {
   DUE_WORDS_FORECAST_SUBTITLE: 'Reviews per day based on your pace',
   DUE_WORDS_FORECAST: 'Words Due',
   // Study Streak
-  STREAK_LABEL: 'Day Streak', // Metric card label with unit context
+  STREAK_LABEL: 'Day Streak',
   // Study Streak Bottom Sheet
-  STUDY_STREAK_TITLE: 'Day Streak',
   STUDY_STREAK_ACTIVE_SUBTITLE: 'Keep the momentum going',
-  STUDY_STREAK_INACTIVE_SUBTITLE: 'Start your study habit',
+  STUDY_STREAK_INACTIVE_SUBTITLE: 'Start your practice habit',
   STUDY_STREAK_CURRENT: 'Current',
   STUDY_STREAK_LONGEST: 'Longest',
   STUDY_STREAK_TOTAL: 'Total',
@@ -314,11 +304,7 @@ export const STRINGS = {
   EMPTY_STATE_DUE_WORDS: 'Add words to see your upcoming reviews',
   EMPTY_STATE_GENERAL: 'Add words to start tracking your progress',
   // Word Sentences Bottom Sheet (dictionary sentence examples)
-  IN_SENTENCES: 'In sentences',
-  FOUND_IN_SENTENCES: 'Found in {count} sentence',
-  FOUND_IN_SENTENCES_PLURAL: 'Found in {count} sentences',
   NO_SENTENCE_EXAMPLES: 'No sentence examples found',
-  PLAY_PRONUNCIATION: 'Listen',
   PLAY_AUDIO: 'Play audio',
   // Chart Dynamic Message Suffixes (concatenated with numbers)
   WORDS_NEED_URGENT_REVIEW: '% due for review',
@@ -392,7 +378,6 @@ export const STRINGS = {
   FAILED_TO_LOAD_STUDY_WORDS: "Couldn't load practice words. " + tryAgain,
   FAILED_TO_UPDATE_WORD_AND_REVIEW: "Couldn't save review. " + tryAgain,
   FAILED_TO_TOGGLE_STUDY_WORD: "Couldn't update word. " + tryAgain,
-  FAILED_TO_LOAD_COMMON_WORDS: "Couldn't load common words. " + tryAgain,
   FAILED_TO_ADD_COMMON_WORDS: "Couldn't add words. " + tryAgain,
   FAILED_TO_ADD_BEGINNER_ARTICLES: "Couldn't add articles. " + tryAgain,
   FAILED_TO_DELETE_WORD: "Couldn't delete word. " + tryAgain,
@@ -442,7 +427,6 @@ export const STRINGS = {
   HELP_NO_RESULTS_DESCRIPTION: 'Try different keywords or browse topics below',
   HELP_POPULAR_QUESTIONS: 'Popular questions',
   HELP_STILL_NEED_HELP_TITLE: 'Still need help?',
-  HELP_STILL_NEED_HELP_DESCRIPTION: 'Contact support',
   // Chart empty states
   CHART_EMPTY_STATE: 'Add 10 or more words to see your progress chart',
   // Legal & Attributions

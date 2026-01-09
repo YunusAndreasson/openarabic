@@ -45,7 +45,7 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
           errorMessage={STRINGS.FAILED_TO_LOAD_STREAK}
           emptyMessage={STRINGS.STUDY_STREAK_EMPTY_STATE}
         >
-          <BottomSheetHeader title={STRINGS.STUDY_STREAK_TITLE} subtitle={subtitle} />
+          <BottomSheetHeader title={STRINGS.STREAK_LABEL} subtitle={subtitle} />
 
           {/* Streak Metrics */}
           {streakHistory?.metrics && (

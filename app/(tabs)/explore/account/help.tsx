@@ -342,7 +342,7 @@ const HelpScreen: FC = () => {
                   colorName="textTertiary"
                   style={styles.helpFooterDescription}
                 >
-                  {STRINGS.HELP_STILL_NEED_HELP_DESCRIPTION}
+                  {STRINGS.CONTACT_SUPPORT}
                 </ThemedText>
                 <ThemedButton
                   title={STRINGS.CONTACT_SUPPORT}

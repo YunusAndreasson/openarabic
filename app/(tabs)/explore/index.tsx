@@ -57,7 +57,7 @@ export default function ExploreScreen(): JSX.Element {
       if (from === 'playlist') {
         showToast(STRINGS.EXPLORE_WELCOME_FROM_PLAYLIST, 4000);
       } else if (from === 'practice') {
-        showToast(STRINGS.EXPLORE_WELCOME_FROM_PRACTICE, 4000);
+        showToast(STRINGS.STUDY_LIST_EMPTY_HINT, 4000);
       }
     }
   }, [from, showToast]);
