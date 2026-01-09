@@ -201,7 +201,7 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Text Truncation', () => {
-    test('handles very long titles', () => {
+    test('handles very long titles and still renders title', () => {
       const longTitle = 'A'.repeat(200);
       const props = {
         ...defaultProps,
@@ -210,11 +210,12 @@ describe('ArticleCard Component', () => {
 
       const { getByText } = render(<ArticleCard {...props} />);
 
-      // Should render without crashing
-      expect(getByText(longTitle)).toBeTruthy();
+      // Verify the long title is rendered in the component
+      const titleElement = getByText(longTitle);
+      expect(titleElement.props.children).toBe(longTitle);
     });
 
-    test('handles very long summaries', () => {
+    test('handles very long summaries and preserves content', () => {
       const longSummary = 'B'.repeat(500);
       const props = {
         ...defaultProps,
@@ -223,16 +224,21 @@ describe('ArticleCard Component', () => {
 
       const { getByText } = render(<ArticleCard {...props} />);
 
-      expect(getByText(longSummary)).toBeTruthy();
+      const summaryElement = getByText(longSummary);
+      expect(summaryElement.props.children).toBe(longSummary);
     });
 
-    test('handles empty summary', () => {
+    test('handles empty summary by still rendering card with other content', () => {
       const props = {
         ...defaultProps,
         summary: '',
       };
 
-      expect(() => render(<ArticleCard {...props} />)).not.toThrow();
+      const { getByText, getByTestId } = render(<ArticleCard {...props} testID="card" />);
+
+      // Card should render with title still visible
+      expect(getByTestId('card')).toBeDefined();
+      expect(getByText(defaultProps.title)).toBeDefined();
     });
   });
 
@@ -240,25 +246,34 @@ describe('ArticleCard Component', () => {
     test('renders with valid image URL', () => {
       const { getByTestId } = render(<ArticleCard {...defaultProps} />);
 
-      expect(getByTestId('article-image')).toBeTruthy();
+      const imageElement = getByTestId('article-image');
+      expect(imageElement).toBeDefined();
     });
 
-    test('handles missing image URL gracefully', () => {
+    test('handles missing image URL by still rendering card', () => {
       const props = {
         ...defaultProps,
         imageUrl: '',
       };
 
-      expect(() => render(<ArticleCard {...props} />)).not.toThrow();
+      const { getByText, getByTestId } = render(<ArticleCard {...props} testID="card" />);
+
+      // Card should still render with title visible
+      expect(getByTestId('card')).toBeDefined();
+      expect(getByText(defaultProps.title)).toBeDefined();
     });
 
-    test('handles invalid image URL', () => {
+    test('handles invalid image URL by rendering card with title', () => {
       const props = {
         ...defaultProps,
         imageUrl: 'not-a-valid-url',
       };
 
-      expect(() => render(<ArticleCard {...props} />)).not.toThrow();
+      const { getByText, getByTestId } = render(<ArticleCard {...props} testID="card" />);
+
+      // Card should still render functional
+      expect(getByTestId('card')).toBeDefined();
+      expect(getByText(defaultProps.title)).toBeDefined();
     });
   });
 
@@ -340,7 +355,7 @@ describe('ArticleCard Component', () => {
   });
 
   describe('Edge Cases', () => {
-    test('handles article with no author', () => {
+    test('handles article with no author by rendering card without author in metadata', () => {
       const article = createMockArticle({
         author: { id: 1, name: '' },
       });
@@ -349,10 +364,14 @@ describe('ArticleCard Component', () => {
         article,
       };
 
-      expect(() => render(<ArticleCard {...props} />)).not.toThrow();
+      const { getByTestId, getByText } = render(<ArticleCard {...props} testID="card" />);
+
+      // Card renders with title visible
+      expect(getByTestId('card')).toBeDefined();
+      expect(getByText(defaultProps.title)).toBeDefined();
     });
 
-    test('handles article with no category', () => {
+    test('handles article with no category by rendering card with title', () => {
       const article = createMockArticle({
         category: { id: 1, name: '' },
       });
@@ -361,45 +380,54 @@ describe('ArticleCard Component', () => {
         article,
       };
 
-      expect(() => render(<ArticleCard {...props} />)).not.toThrow();
+      const { getByTestId, getByText } = render(<ArticleCard {...props} testID="card" />);
+
+      expect(getByTestId('card')).toBeDefined();
+      expect(getByText(defaultProps.title)).toBeDefined();
     });
 
     test('handles special characters in title', () => {
+      const specialTitle = 'Arabic & Grammar: A Comprehensive Guide (2024)';
       const props = {
         ...defaultProps,
-        title: 'Arabic & Grammar: A Comprehensive Guide (2024)',
+        title: specialTitle,
       };
 
       const { getByText } = render(<ArticleCard {...props} />);
 
-      expect(getByText('Arabic & Grammar: A Comprehensive Guide (2024)')).toBeTruthy();
+      const titleElement = getByText(specialTitle);
+      expect(titleElement.props.children).toBe(specialTitle);
     });
 
     test('handles RTL text in title', () => {
+      const arabicTitle = 'النحو العربي للمبتدئين';
       const props = {
         ...defaultProps,
-        title: 'النحو العربي للمبتدئين',
+        title: arabicTitle,
       };
 
       const { getByText } = render(<ArticleCard {...props} />);
 
-      expect(getByText('النحو العربي للمبتدئين')).toBeTruthy();
+      const titleElement = getByText(arabicTitle);
+      expect(titleElement.props.children).toBe(arabicTitle);
     });
 
     test('handles mixed LTR and RTL text', () => {
+      const mixedTitle = 'Arabic Grammar - النحو العربي';
       const props = {
         ...defaultProps,
-        title: 'Arabic Grammar - النحو العربي',
+        title: mixedTitle,
       };
 
       const { getByText } = render(<ArticleCard {...props} />);
 
-      expect(getByText('Arabic Grammar - النحو العربي')).toBeTruthy();
+      const titleElement = getByText(mixedTitle);
+      expect(titleElement.props.children).toBe(mixedTitle);
     });
   });
 
   describe('Performance', () => {
-    test('renders 10 cards without performance degradation', () => {
+    test('renders 10 cards within acceptable time', () => {
       const articles = Array.from({ length: 10 }, (_, i) =>
         createMockArticle({
           id: i + 1,
@@ -413,8 +441,8 @@ describe('ArticleCard Component', () => {
       });
       const elapsed = Date.now() - start;
 
-      // Should render 10 cards in < 500ms
-      expect(elapsed).toBeLessThan(500);
+      // Tightened threshold: 10 simple cards should render in < 200ms in test env
+      expect(elapsed).toBeLessThan(200);
     });
   });
 

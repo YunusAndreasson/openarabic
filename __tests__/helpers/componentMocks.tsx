@@ -18,6 +18,7 @@
  */
 
 import React from 'react';
+import type { ImageProps, ScrollViewProps, TextProps, ViewProps } from 'react-native';
 import { View, Text, ScrollView, Image } from 'react-native';
 
 // ============================================================================
@@ -152,21 +153,21 @@ export const createReanimatedMock = () => {
   return {
     __esModule: true,
     default: {
-      View: React.forwardRef((props: any, ref: any) =>
+      View: React.forwardRef<View, ViewProps>((props, ref) =>
         React.createElement(View, { ...props, ref }),
       ),
-      Text: React.forwardRef((props: any, ref: any) =>
+      Text: React.forwardRef<Text, TextProps>((props, ref) =>
         React.createElement(Text, { ...props, ref }),
       ),
-      ScrollView: React.forwardRef((props: any, ref: any) =>
+      ScrollView: React.forwardRef<ScrollView, ScrollViewProps>((props, ref) =>
         React.createElement(ScrollView, { ...props, ref }),
       ),
-      Image: React.forwardRef((props: any, ref: any) =>
+      Image: React.forwardRef<Image, ImageProps>((props, ref) =>
         React.createElement(Image, { ...props, ref }),
       ),
-      createAnimatedComponent: (component: any) =>
-        React.forwardRef((props: any, ref: any) =>
-          React.createElement(component, { ...props, ref }),
+      createAnimatedComponent: <T extends React.ComponentType<P>, P extends object>(component: T) =>
+        React.forwardRef<React.ComponentRef<T>, React.ComponentProps<T>>((props, ref) =>
+          React.createElement(component, { ...props, ref } as React.ComponentProps<T>),
         ),
     },
     Easing: mockEasing,
@@ -182,40 +183,40 @@ export const createReanimatedMock = () => {
     ZoomIn: mockAnimation,
     ZoomOut: mockAnimation,
     // Hooks
-    useSharedValue: (initialValue: any = 0) => {
+    useSharedValue: <T,>(initialValue: T = 0 as T) => {
       let currentValue = initialValue;
       return {
         value: initialValue,
         get: () => currentValue,
-        set: (newValue: any) => {
-          currentValue = typeof newValue === 'function' ? newValue(currentValue) : newValue;
+        set: (newValue: T | ((prev: T) => T)) => {
+          currentValue = typeof newValue === 'function' ? (newValue as (prev: T) => T)(currentValue) : newValue;
         },
         modify: jest.fn(),
       };
     },
-    useAnimatedStyle: (styleCallback: () => any) => {
+    useAnimatedStyle: <T extends Record<string, unknown>>(styleCallback: () => T): T => {
       try {
-        return styleCallback() || {};
+        return styleCallback() || ({} as T);
       } catch {
-        return {};
+        return {} as T;
       }
     },
-    useDerivedValue: (derivation: () => any) => ({
+    useDerivedValue: <T,>(derivation: () => T) => ({
       value: derivation(),
     }),
-    useAnimatedProps: (propsCallback: () => any) => {
+    useAnimatedProps: <T extends Record<string, unknown>>(propsCallback: () => T): T => {
       try {
-        return propsCallback() || {};
+        return propsCallback() || ({} as T);
       } catch {
-        return {};
+        return {} as T;
       }
     },
     // Animation functions
-    withTiming: (value: any) => value,
-    withSpring: (value: any) => value,
-    withDelay: (_delay: number, value: any) => value,
-    withSequence: (...values: any[]) => values[values.length - 1],
-    withRepeat: (value: any) => value,
+    withTiming: <T,>(value: T) => value,
+    withSpring: <T,>(value: T) => value,
+    withDelay: <T,>(_delay: number, value: T) => value,
+    withSequence: <T,>(...values: T[]) => values[values.length - 1],
+    withRepeat: <T,>(value: T) => value,
     // Utilities
     runOnJS: (fn: Function) => fn,
     runOnUI: (fn: Function) => fn,
@@ -226,8 +227,10 @@ export const createReanimatedMock = () => {
       IDENTITY: 'identity',
     },
     // Component creator
-    createAnimatedComponent: (component: any) =>
-      React.forwardRef((props: any, ref: any) => React.createElement(component, { ...props, ref })),
+    createAnimatedComponent: <T extends React.ComponentType<P>, P extends object>(component: T) =>
+      React.forwardRef<React.ComponentRef<T>, React.ComponentProps<T>>((props, ref) =>
+        React.createElement(component, { ...props, ref } as React.ComponentProps<T>),
+      ),
   };
 };
 

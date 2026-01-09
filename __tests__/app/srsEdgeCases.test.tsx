@@ -192,13 +192,17 @@ jest.mock('../../hooks/review', () => {
   };
 });
 
-// Mock components
+// Mock components with proper types
 jest.mock('../../components/review/ReviewCard', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');
+  interface MockReviewCardProps {
+    onSwipeLeft?: () => void;
+    onSwipeRight?: () => void;
+  }
   return {
     __esModule: true,
-    default: ({ onSwipeLeft, onSwipeRight }: any) => (
+    default: ({ onSwipeLeft, onSwipeRight }: MockReviewCardProps) => (
       <>
         <TouchableOpacity testID="swipe-left" onPress={onSwipeLeft} />
         <TouchableOpacity testID="swipe-right" onPress={onSwipeRight} />
@@ -211,9 +215,13 @@ jest.mock('../../components/review/ReviewCard', () => {
 jest.mock('../../components/review/CompletionScreen', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
+  interface MockCompletionScreenProps {
+    onClose?: () => void;
+    testID?: string;
+  }
   return {
     __esModule: true,
-    default: ({ onClose, testID = 'completion-screen' }: any) => (
+    default: ({ onClose, testID = 'completion-screen' }: MockCompletionScreenProps) => (
       <TouchableOpacity testID={testID} onPress={onClose} />
     ),
   };
@@ -293,6 +301,17 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
   beforeEach(() => {
     // Reset mocks before each test
     jest.clearAllMocks();
+    // Reset the SRS mock state to default values for test isolation
+    const defaultMock = createSRSMock(['word1', 'word2', 'word3']);
+    defaultMock.reset();
+  });
+
+  afterEach(() => {
+    // Ensure cleanup of any mock state after each test
+    const currentMock = getCurrentSRSMock();
+    if (currentMock) {
+      currentMock.reset();
+    }
   });
 
   describe('Debug: SRS Mock Logic', () => {

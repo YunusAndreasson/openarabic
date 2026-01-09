@@ -96,18 +96,23 @@ describe('ArabicWord Component', () => {
   });
 
   describe('Basic Rendering', () => {
-    test('renders Skia Canvas for Arabic text', () => {
+    test('renders pressable container for Arabic text', () => {
       const word = createMockWord({ word_form: 'كتاب' });
       const { getByTestId } = render(<ArabicWord word={word} testID="arabic-word-1" />);
 
-      expect(getByTestId('arabic-word-1')).toBeTruthy();
+      const element = getByTestId('arabic-word-1');
+      expect(element).toBeDefined();
+      // Verify component is interactive
+      expect(element.props.onPress).toBeDefined();
     });
 
-    test('renders with testID for testing', () => {
+    test('renders with testID and is queryable', () => {
       const word = createMockWord();
       const { getByTestId } = render(<ArabicWord word={word} testID="arabic-word-1" />);
 
-      expect(getByTestId('arabic-word-1')).toBeTruthy();
+      const element = getByTestId('arabic-word-1');
+      expect(element).toBeDefined();
+      expect(element.props.testID).toBe('arabic-word-1');
     });
 
     test('renders without colored segments when none provided', () => {
@@ -118,8 +123,10 @@ describe('ArabicWord Component', () => {
 
       const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
 
-      // Should render successfully (text is in Canvas, not React tree)
-      expect(getByTestId('word')).toBeTruthy();
+      // Should render successfully with interactive behavior
+      const element = getByTestId('word');
+      expect(element).toBeDefined();
+      expect(element.props.onPress).toBeDefined();
     });
   });
 
@@ -292,46 +299,57 @@ describe('ArabicWord Component', () => {
   });
 
   describe('Edge Cases', () => {
-    test('handles empty word_form', () => {
+    test('handles empty word_form by rendering pressable container', () => {
       const word = createMockWord({ word_form: '' });
 
-      expect(() => render(<ArabicWord word={word} />)).not.toThrow();
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      // Component should render a pressable element even with empty word
+      expect(getByTestId('word')).toBeDefined();
     });
 
-    test('handles very long Arabic text', () => {
+    test('handles very long Arabic text by rendering without truncation error', () => {
       const longText = 'والكتاب'.repeat(20);
       const word = createMockWord({ word_form: longText });
 
       const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
-      expect(getByTestId('word')).toBeTruthy();
+      const element = getByTestId('word');
+      expect(element).toBeDefined();
+      // Verify component is pressable (functional)
+      expect(element.props.onPress).toBeDefined();
     });
 
-    test('handles word with only diacritics', () => {
-      const word = createMockWord({ word_form: '\u064E\u064F\u0650' });
+    test('handles word with only diacritics by rendering container', () => {
+      const diacriticsOnly = '\u064E\u064F\u0650';
+      const word = createMockWord({ word_form: diacriticsOnly });
 
-      expect(() => render(<ArabicWord word={word} />)).not.toThrow();
+      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      expect(getByTestId('word')).toBeDefined();
     });
 
     test('handles mixed Arabic and non-Arabic text', () => {
-      const word = createMockWord({ word_form: 'كتابbook123' });
+      const mixedText = 'كتابbook123';
+      const word = createMockWord({ word_form: mixedText });
 
       const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
-      expect(getByTestId('word')).toBeTruthy();
+      const element = getByTestId('word');
+      expect(element).toBeDefined();
     });
 
-    test('handles empty coloredSegments array', () => {
+    test('handles empty coloredSegments array by rendering plain text', () => {
       const word = createMockWord({
         word_form: 'كتاب',
         coloredSegments: [],
       });
 
       const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
-      expect(getByTestId('word')).toBeTruthy();
+      const element = getByTestId('word');
+      expect(element).toBeDefined();
+      expect(element.props.onPress).toBeDefined();
     });
   });
 
   describe('Performance', () => {
-    test('renders 100 words without performance degradation', () => {
+    test('renders 100 words within acceptable time', () => {
       const words = Array.from({ length: 100 }, (_, i) =>
         createMockWord({
           id: i,
@@ -349,8 +367,8 @@ describe('ArabicWord Component', () => {
       });
       const elapsed = Date.now() - start;
 
-      // Should render 100 words in < 1 second
-      expect(elapsed).toBeLessThan(1000);
+      // Tightened threshold: 100 mocked components should render in < 300ms in test env
+      expect(elapsed).toBeLessThan(300);
     });
   });
 

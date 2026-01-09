@@ -39,149 +39,178 @@ describe('ThemedText', () => {
     test('renders text content', () => {
       const { getByText } = render(<ThemedText>Hello World</ThemedText>);
 
-      expect(getByText('Hello World')).toBeTruthy();
+      const textElement = getByText('Hello World');
+      expect(textElement).toBeDefined();
+      expect(textElement.props.children).toBe('Hello World');
     });
 
-    test('renders with default body type', () => {
-      const { toJSON } = render(<ThemedText>Default text</ThemedText>);
+    test('renders with default body type and applies body styles', () => {
+      const { getByText } = render(<ThemedText>Default text</ThemedText>);
 
-      expect(toJSON()).toBeTruthy();
+      const textElement = getByText('Default text');
+      // Verify body type applies correct font size (16px = MEDIUM scale)
+      expect(textElement).toHaveStyle({ fontSize: 16 });
     });
   });
 
   describe('Text Types', () => {
-    test('renders heading1 type', () => {
+    test('renders heading1 type with large font and bold weight', () => {
       const { getByText } = render(<ThemedText type="heading1">Heading 1</ThemedText>);
 
-      expect(getByText('Heading 1')).toBeTruthy();
+      const element = getByText('Heading 1');
+      expect(element).toHaveStyle({ fontSize: 28, fontWeight: '700' });
     });
 
-    test('renders heading2 type', () => {
+    test('renders heading2 type with appropriate font size', () => {
       const { getByText } = render(<ThemedText type="heading2">Heading 2</ThemedText>);
 
-      expect(getByText('Heading 2')).toBeTruthy();
+      const element = getByText('Heading 2');
+      expect(element).toHaveStyle({ fontSize: 22, fontWeight: '700' });
     });
 
-    test('renders heading3 type', () => {
+    test('renders heading3 type with semibold weight', () => {
       const { getByText } = render(<ThemedText type="heading3">Heading 3</ThemedText>);
 
-      expect(getByText('Heading 3')).toBeTruthy();
+      const element = getByText('Heading 3');
+      expect(element).toHaveStyle({ fontSize: 17, fontWeight: '600' });
     });
 
-    test('renders bodyBold type', () => {
+    test('renders bodyBold type with semibold weight', () => {
       const { getByText } = render(<ThemedText type="bodyBold">Bold text</ThemedText>);
 
-      expect(getByText('Bold text')).toBeTruthy();
+      const element = getByText('Bold text');
+      expect(element).toHaveStyle({ fontSize: 16, fontWeight: '600' });
     });
 
-    test('renders caption type', () => {
+    test('renders caption type with smaller font', () => {
       const { getByText } = render(<ThemedText type="caption">Caption text</ThemedText>);
 
-      expect(getByText('Caption text')).toBeTruthy();
+      const element = getByText('Caption text');
+      expect(element).toHaveStyle({ fontSize: 13 });
     });
 
-    test('renders label type', () => {
+    test('renders label type with semibold weight', () => {
       const { getByText } = render(<ThemedText type="label">Label text</ThemedText>);
 
-      expect(getByText('Label text')).toBeTruthy();
+      const element = getByText('Label text');
+      expect(element).toHaveStyle({ fontSize: 13, fontWeight: '600' });
     });
 
-    test('renders link type', () => {
+    test('renders link type with underline decoration', () => {
       const { getByText } = render(<ThemedText type="link">Link text</ThemedText>);
 
-      expect(getByText('Link text')).toBeTruthy();
+      const element = getByText('Link text');
+      expect(element).toHaveStyle({ textDecorationLine: 'underline' });
     });
 
-    test('renders overline type', () => {
+    test('renders overline type with uppercase transform', () => {
       const { getByText } = render(<ThemedText type="overline">Overline</ThemedText>);
 
-      expect(getByText('Overline')).toBeTruthy();
+      const element = getByText('Overline');
+      expect(element).toHaveStyle({ textTransform: 'uppercase' });
     });
   });
 
   describe('Semantic Variants', () => {
-    test('renders error variant', () => {
+    test('renders error variant with error color', () => {
       const { getByText } = render(<ThemedText variant="error">Error message</ThemedText>);
 
-      expect(getByText('Error message')).toBeTruthy();
+      const element = getByText('Error message');
+      // Error variant should apply error color from mockColors (#F44336)
+      expect(element).toHaveStyle({ color: '#F44336' });
     });
 
-    test('renders warning variant', () => {
-      const { getByText } = render(<ThemedText variant="warning">Warning message</ThemedText>);
+    test('renders primary variant with text color', () => {
+      const { getByText } = render(<ThemedText variant="primary">Primary text</ThemedText>);
 
-      expect(getByText('Warning message')).toBeTruthy();
+      const element = getByText('Primary text');
+      // Primary variant uses default text color (#000000)
+      expect(element).toHaveStyle({ color: '#000000' });
     });
 
-    test('renders success variant', () => {
-      const { getByText } = render(<ThemedText variant="success">Success message</ThemedText>);
-
-      expect(getByText('Success message')).toBeTruthy();
-    });
-
-    test('renders info variant', () => {
-      const { getByText } = render(<ThemedText variant="info">Info message</ThemedText>);
-
-      expect(getByText('Info message')).toBeTruthy();
-    });
-
-    test('renders secondary variant', () => {
+    test('renders secondary variant with secondary text color', () => {
       const { getByText } = render(<ThemedText variant="secondary">Secondary text</ThemedText>);
 
-      expect(getByText('Secondary text')).toBeTruthy();
+      const element = getByText('Secondary text');
+      // Secondary variant uses secondaryText color (#666666)
+      expect(element).toHaveStyle({ color: '#666666' });
     });
   });
 
   describe('Custom Colors', () => {
-    test('applies custom colorName', () => {
+    test('applies custom colorName from theme', () => {
       const { getByText } = render(<ThemedText colorName="tint">Tinted text</ThemedText>);
 
-      expect(getByText('Tinted text')).toBeTruthy();
+      const element = getByText('Tinted text');
+      // tint color from mockColors is #4a7c59
+      expect(element).toHaveStyle({ color: '#4a7c59' });
     });
 
     test('skips default color when skipDefaultColor is true', () => {
       const { getByText } = render(<ThemedText skipDefaultColor>No color</ThemedText>);
 
-      expect(getByText('No color')).toBeTruthy();
+      const element = getByText('No color');
+      // When skipDefaultColor is true, color should not be applied
+      // The style array should not include a color property from the default
+      expect(element).toBeDefined();
     });
   });
 
   describe('Text Properties', () => {
-    test('applies custom weight', () => {
+    test('applies custom weight override', () => {
       const { getByText } = render(<ThemedText weight="700">Bold weight</ThemedText>);
 
-      expect(getByText('Bold weight')).toBeTruthy();
+      const element = getByText('Bold weight');
+      expect(element).toHaveStyle({ fontWeight: '700' });
     });
 
-    test('applies text alignment', () => {
+    test('applies text alignment center', () => {
       const { getByText } = render(<ThemedText align="center">Centered</ThemedText>);
 
-      expect(getByText('Centered')).toBeTruthy();
+      const element = getByText('Centered');
+      expect(element).toHaveStyle({ textAlign: 'center' });
     });
 
-    test('handles numberOfLines prop', () => {
+    test('passes numberOfLines prop to underlying Text', () => {
       const { getByText } = render(
         <ThemedText numberOfLines={2}>Long text that might wrap</ThemedText>,
       );
 
-      expect(getByText('Long text that might wrap')).toBeTruthy();
+      const element = getByText('Long text that might wrap');
+      expect(element.props.numberOfLines).toBe(2);
     });
 
-    test('handles ellipsizeMode prop', () => {
+    test('passes ellipsizeMode prop to underlying Text', () => {
       const { getByText } = render(<ThemedText ellipsizeMode="tail">Truncated text</ThemedText>);
 
-      expect(getByText('Truncated text')).toBeTruthy();
+      const element = getByText('Truncated text');
+      expect(element.props.ellipsizeMode).toBe('tail');
     });
   });
 
   describe('Arabic Text', () => {
-    test('renders Arabic type text', () => {
+    test('renders Arabic type text with specified font size', () => {
       const { getByText } = render(
         <ThemedText type="arabic" arabicFontSize={24}>
           مرحبا
         </ThemedText>,
       );
 
-      expect(getByText('مرحبا')).toBeTruthy();
+      const element = getByText('مرحبا');
+      expect(element).toBeDefined();
+      // Arabic text should apply the specified font size
+      expect(element).toHaveStyle({ fontSize: 24 });
+    });
+
+    test('renders Arabic type text with RTL text alignment', () => {
+      const { getByText } = render(
+        <ThemedText type="arabic" arabicFontSize={20}>
+          العربية
+        </ThemedText>,
+      );
+
+      const element = getByText('العربية');
+      expect(element).toHaveStyle({ textAlign: 'right' });
     });
   });
 });

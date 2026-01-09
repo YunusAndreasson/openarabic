@@ -28,7 +28,13 @@ jest.mock('expo-image', () => {
 jest.mock('../../components/ThemedButton', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');
-  const ThemedButton = ({ title, onPress, disabled, testID }: any) => (
+  interface MockThemedButtonProps {
+    title?: string;
+    onPress?: () => void;
+    disabled?: boolean;
+    testID?: string;
+  }
+  const ThemedButton = ({ title, onPress, disabled, testID }: MockThemedButtonProps) => (
     <TouchableOpacity onPress={onPress} disabled={disabled} testID={testID}>
       <Text>{title}</Text>
     </TouchableOpacity>
@@ -39,9 +45,13 @@ jest.mock('../../components/ThemedButton', () => {
 jest.mock('../../components/explore/ArticleCard', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
+  interface MockArticleCardProps {
+    onPress?: () => void;
+    testID?: string;
+  }
   return {
     __esModule: true,
-    ArticleCard: ({ onPress, testID }: any) => (
+    ArticleCard: ({ onPress, testID }: MockArticleCardProps) => (
       <TouchableOpacity onPress={onPress} testID={testID} />
     ),
   };
@@ -50,10 +60,19 @@ jest.mock('../../components/explore/ArticleCard', () => {
 jest.mock('../../components/article/SkiaArabicWord', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
+  interface MockWord {
+    id: number;
+    word_form: string;
+  }
+  interface MockSkiaArabicWordProps {
+    onPress?: (word: MockWord) => void;
+    testID?: string;
+    word: MockWord;
+  }
   return {
     __esModule: true,
-    SkiaArabicWord: ({ onPress, testID, word }: any) => (
-      <TouchableOpacity testID={testID} onPress={() => onPress(word)} />
+    SkiaArabicWord: ({ onPress, testID, word }: MockSkiaArabicWordProps) => (
+      <TouchableOpacity testID={testID} onPress={() => onPress?.(word)} />
     ),
   };
 });
@@ -145,15 +164,40 @@ function DummyReview(): JSX.Element {
   );
 }
 
+// Minimal test types for mocked components
+interface TestArticle {
+  id: number;
+  title: string;
+  author: { name: string };
+  category: { name: string };
+}
+
+interface TestWord {
+  id: number;
+  word_form: string;
+  english: string;
+  root_id: number;
+}
+
+interface TestStudyWord {
+  root_id: number;
+}
+
 describe('UI flow', () => {
   it('renders an article card', () => {
+    const testArticle: TestArticle = {
+      id: 1,
+      title: 't',
+      author: { name: 'A' },
+      category: { name: 'cat' },
+    };
     const { getByTestId } = render(
       <ArticleCard
         category="cat"
         imageUrl="img"
         summary="s"
         title="t"
-        article={{ id: 1, title: 't', author: { name: 'A' }, category: { name: 'cat' } } as any}
+        article={testArticle as Parameters<typeof ArticleCard>[0]['article']}
         testID="article-1"
       />,
     );
@@ -164,9 +208,14 @@ describe('UI flow', () => {
   it('opens word tooltip on press', () => {
     const onPress = jest.fn();
     const onTooltipOpen = jest.fn();
-    const word = { id: 1, word_form: 'w', english: 'w', root_id: 1 } as any;
+    const word: TestWord = { id: 1, word_form: 'w', english: 'w', root_id: 1 };
     const { getByTestId } = render(
-      <ArabicWord word={word} onPress={onPress} onTooltipOpen={onTooltipOpen} testID="word-1" />,
+      <ArabicWord
+        word={word as Parameters<typeof ArabicWord>[0]['word']}
+        onPress={onPress}
+        onTooltipOpen={onTooltipOpen}
+        testID="word-1"
+      />,
     );
 
     fireEvent.press(getByTestId('word-1'));
@@ -175,9 +224,13 @@ describe('UI flow', () => {
 
   it('starts practice session', () => {
     const onStartReview = jest.fn();
-    const studyWord = { root_id: 1 } as any;
+    const studyWord: TestStudyWord = { root_id: 1 };
     const { getByTestId } = render(
-      <PracticeStatCards studyWords={[studyWord]} dueWords={1} onStartReview={onStartReview} />,
+      <PracticeStatCards
+        studyWords={[studyWord] as Parameters<typeof PracticeStatCards>[0]['studyWords']}
+        dueWords={1}
+        onStartReview={onStartReview}
+      />,
     );
 
     fireEvent.press(getByTestId('start-review-due'));
@@ -207,9 +260,10 @@ describe('UI flow', () => {
         );
       }
 
+      const studyWord: TestStudyWord = { root_id: 1 };
       return (
         <PracticeStatCards
-          studyWords={[{ root_id: 1 } as any]}
+          studyWords={[studyWord] as Parameters<typeof PracticeStatCards>[0]['studyWords']}
           dueWords={1}
           onStartReview={handleStart}
         />
