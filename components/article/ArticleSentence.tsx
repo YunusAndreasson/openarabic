@@ -6,7 +6,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
-import { FONTS, LAYOUT } from '@/constants/layout';
+import { FONTS } from '@/constants/fonts';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';

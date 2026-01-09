@@ -1,19 +1,14 @@
 import type { TextStyle } from 'react-native';
 import { Dimensions } from 'react-native';
 
+import { FONTS } from '@/constants/fonts';
+
 // Removed platform-specific constants - using unified values for simplicity
 
 // For mobile-only apps, screen width doesn't change during runtime
 // Use static width instead of dynamic useWindowDimensions
 const SCREEN_DIMENSIONS = Dimensions.get('window');
 export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375; // Default fallback for test environments
-
-/**
- * @deprecated Import from '@/constants/fonts' instead.
- * Re-exported for backwards compatibility.
- */
-import { FONTS } from '@/constants/fonts';
-export { FONTS };
 
 // Base scale for systematic sizing
 const BASE_UNIT = 4;

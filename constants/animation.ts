@@ -89,16 +89,6 @@ export const PRESS_SCALE = {
   DRAG_UP: 1.05,
 } as const;
 
-// Backward compatibility exports - these reference the unified PRESS_SCALE
-/** @deprecated Use PRESS_SCALE.STRONG instead */
-export const ICON_BUTTON_PRESS_SCALE = PRESS_SCALE.STRONG;
-/** @deprecated Use PRESS_SCALE.MODERATE instead */
-export const TOGGLE_PRESS_SCALE = PRESS_SCALE.MODERATE;
-/** @deprecated Use PRESS_SCALE.MODERATE instead */
-export const WORD_PRESS_SCALE = PRESS_SCALE.MODERATE;
-/** @deprecated Use PRESS_SCALE.DRAG_UP instead */
-export const CARD_DRAG_SCALE = PRESS_SCALE.DRAG_UP;
-
 /** Default opacity reduction for card press animations */
 export const CARD_PRESS_OPACITY = 0.97;
 

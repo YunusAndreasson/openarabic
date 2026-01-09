@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 import { StyleSheet, Text } from 'react-native';
 
+import { FONTS } from '@/constants/fonts';
 import {
-  FONTS,
   FONT_WEIGHTS,
   LAYOUT,
   LETTER_SPACING,

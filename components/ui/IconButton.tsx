@@ -4,7 +4,7 @@ import type { TextStyle, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
+import { PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -93,7 +93,7 @@ export const IconButton: FC<IconButtonProps> = ({
       hapticType,
       debounce,
       debounceDuration: DEBOUNCE_DURATION_MS,
-      animationOptions: { scaleAmount: ICON_BUTTON_PRESS_SCALE },
+      animationOptions: { scaleAmount: PRESS_SCALE.STRONG },
     });
 
   // Determine colors with theme-aware defaults

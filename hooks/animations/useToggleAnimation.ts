@@ -9,7 +9,7 @@ import {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { SPRING_CONFIG, TIMING_CONFIG, TOGGLE_PRESS_SCALE } from '@/constants/animation';
+import { PRESS_SCALE, SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 
 interface ToggleAnimationResult {
   containerAnimatedStyle: { transform: { scale: number }[] };
@@ -43,7 +43,7 @@ export const useToggleAnimation = (
       // Add subtle scale animation for better feedback
       toggleScale.set(
         withSequence(
-          withTiming(TOGGLE_PRESS_SCALE, {
+          withTiming(PRESS_SCALE.MODERATE, {
             duration: TIMING_CONFIG.FAST.duration,
             easing: TIMING_CONFIG.FAST.easing,
           }),

@@ -3,12 +3,7 @@ import type { ViewStyle } from 'react-native';
 import type { WithSpringConfig } from 'react-native-reanimated';
 import { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-import {
-  CARD_PRESS_OPACITY,
-  PRESS_SCALE,
-  SPRING_CONFIG,
-  WORD_PRESS_SCALE,
-} from '@/constants/animation';
+import { CARD_PRESS_OPACITY, PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 export type PressAnimationType = 'button' | 'card' | 'custom';
@@ -25,7 +20,7 @@ export const PRESS_ANIMATION_CARD = { type: 'card' } as const;
 /** Word press animation preset - custom scale for Arabic words */
 export const PRESS_ANIMATION_WORD = {
   type: 'custom',
-  scaleAmount: WORD_PRESS_SCALE,
+  scaleAmount: PRESS_SCALE.MODERATE,
 } as const;
 
 /** Default/empty preset - uses button defaults */

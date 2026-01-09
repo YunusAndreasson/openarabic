@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
 
-import { CARD_DRAG_SCALE, SPRING_CONFIG, WORD_PRESS_SCALE } from '@/constants/animation';
+import { PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
 import { useTransformAnimation } from '@/hooks/animations';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
@@ -23,8 +23,8 @@ interface EditModeCardAnimationResult {
  * Hook for managing card edit mode animations.
  *
  * Consolidates the common pattern of scaling cards during:
- * - Edit mode (scales to WORD_PRESS_SCALE)
- * - Drag operations (scales to CARD_DRAG_SCALE)
+ * - Edit mode (scales to PRESS_SCALE.MODERATE)
+ * - Drag operations (scales to PRESS_SCALE.DRAG_UP)
  * - Mount animations (animates from initial to target scale)
  *
  * @example
@@ -58,9 +58,9 @@ export function useEditModeCardAnimation({
 
   useEffect(() => {
     if (isBeingDragged) {
-      setValue(CARD_DRAG_SCALE);
+      setValue(PRESS_SCALE.DRAG_UP);
     } else if (editMode) {
-      setValue(WORD_PRESS_SCALE);
+      setValue(PRESS_SCALE.MODERATE);
     } else if (shouldAnimateOnMount) {
       startAnimation();
     } else {
