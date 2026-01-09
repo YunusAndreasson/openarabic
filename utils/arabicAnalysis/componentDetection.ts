@@ -271,7 +271,7 @@ export function shouldInjectBracket(normalizedArabic: string, englishTranslation
  */
 export function analyzeDiacriticMatches(
   diacriticMatches: string[],
-  otherComponents: Array<AnalyzedComponent | undefined>,
+  otherComponents: (AnalyzedComponent | undefined)[],
 ): {
   hasUnique: boolean;
   overlappingComponent: AnalyzedComponent | undefined;

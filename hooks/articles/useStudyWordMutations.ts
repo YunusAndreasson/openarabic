@@ -20,9 +20,9 @@ import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
 
-type StudyWordContext = {
+interface StudyWordContext {
   previousStudyWords: StudyWord[];
-};
+}
 
 interface StudyWordMutationsResult {
   handleWordPress: (wordId: RootId) => void;

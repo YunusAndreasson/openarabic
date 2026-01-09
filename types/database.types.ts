@@ -1,6 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export type Database = {
+export interface Database {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
@@ -485,14 +485,10 @@ export type Database = {
       // Note: Trigger functions appear in this list but are NOT exposed via .rpc()
       // They are internal database functions attached to table triggers
     };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+    Enums: Record<never, never>;
+    CompositeTypes: Record<never, never>;
   };
-};
+}
 
 type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
 

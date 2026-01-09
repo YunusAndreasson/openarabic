@@ -10,8 +10,7 @@ import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
-import { SavedEmptyState } from '@/components/playlist';
-import { PlaylistItemCard } from '@/components/playlist';
+import { SavedEmptyState , PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
@@ -36,6 +35,7 @@ const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
 
 // Memoized separator component for both DraggableFlatList and FlashList
 const ItemSeparator = memo(() => <ListSeparator height={LAYOUT.SPACING.SMALL} />);
+ItemSeparator.displayName = 'ItemSeparator';
 
 // Memoized key extractor to prevent inline function creation
 const keyExtractor = (item: BookmarkItem) => `${item.article_id}`;

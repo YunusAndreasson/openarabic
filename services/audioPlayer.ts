@@ -48,7 +48,7 @@ const RESET_AUDIO_STATUS = {
 class SimpleAudioService {
   private currentPlayer: AudioPlayer | null = null;
   private currentTrack: EnhancedAudioTrack | null = null;
-  private listeners: Set<(status: AudioStatus) => void> = new Set();
+  private listeners = new Set<(status: AudioStatus) => void>();
   private eventSubscription: { remove: () => void } | null = null;
   private audioSessionConfigured = false;
 

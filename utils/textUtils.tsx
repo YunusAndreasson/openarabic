@@ -28,8 +28,8 @@ const EMAIL_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
 export const parseTextWithEmails = (
   text: string,
   type: 'body' | 'caption' = 'body',
-): string | Array<string | React.ReactElement> => {
-  const parts: Array<string | { email: string; key: string }> = [];
+): string | (string | React.ReactElement)[] => {
+  const parts: (string | { email: string; key: string })[] = [];
   let lastIndex = 0;
   let match;
 

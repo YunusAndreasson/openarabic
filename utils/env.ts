@@ -18,6 +18,7 @@ export const getEnvVar = (
   fallback?: string,
   warnIfMissing = false,
 ): string | undefined => {
+   
   const value = process.env[key] || fallback;
 
   if (warnIfMissing && !value && __DEV__) {
@@ -35,6 +36,7 @@ export const getEnvVar = (
  * @returns The environment variable value
  */
 export const getRequiredEnvVar = (key: string, errorMessage?: string): string => {
+  // eslint-disable-next-line expo/no-dynamic-env-var -- Dynamic access is intentional for this utility
   const value = process.env[key];
 
   if (!value) {
@@ -52,6 +54,7 @@ export const getRequiredEnvVar = (key: string, errorMessage?: string): string =>
  * @returns True if variable exists and has a value
  */
 export const hasEnvVar = (key: string): boolean => {
+  // eslint-disable-next-line expo/no-dynamic-env-var -- Dynamic access is intentional for this utility
   const value = process.env[key];
   return Boolean(value?.trim());
 };

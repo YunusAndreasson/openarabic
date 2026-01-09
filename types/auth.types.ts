@@ -2,7 +2,7 @@
  * Supabase user session structure
  * Contains user information and session expiry
  */
-export type UserSession = {
+export interface UserSession {
   user: {
     /** Unique user ID (UUID) */
     id: string;
@@ -23,13 +23,13 @@ export type UserSession = {
   } | null;
   /** Unix timestamp when session expires */
   expires_at?: number;
-};
+}
 
 /**
  * Authentication hook result
  * Provides auth state and session management functions
  */
-export type AuthResult = {
+export interface AuthResult {
   /** Current user session (null if not authenticated) */
   session: UserSession | null;
   /** Current user object (null if not authenticated) */
@@ -42,4 +42,4 @@ export type AuthResult = {
   refreshSession: () => Promise<UserSession | null>;
   /** Computed boolean - true if user is authenticated */
   isAuthenticated: boolean;
-};
+}

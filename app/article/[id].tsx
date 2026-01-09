@@ -6,8 +6,7 @@ import type { LayoutRectangle } from 'react-native';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ArticleSentence, WordDetailsBottomSheet, WordTooltip } from '@/components/article';
-import { ArticleContent } from '@/components/article';
+import { ArticleSentence, WordDetailsBottomSheet, WordTooltip , ArticleContent } from '@/components/article';
 import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
 import { PulsatingLoader } from '@/components/ui';
 import { TutorialId } from '@/constants/tutorials';
@@ -216,6 +215,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     </>
   );
 }, ArticleScreenContentComparison);
+
+ArticleScreenContent.displayName = 'ArticleScreenContent';
 
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();

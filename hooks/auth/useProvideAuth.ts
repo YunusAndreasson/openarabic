@@ -151,8 +151,7 @@ export function useProvideAuth(): AuthResult {
   useEffect(() => {
     const removeSupabaseListener = setupSupabaseAppStateListener();
     let isMounted = true;
-    let appStateSubscription: ReturnType<typeof AppState.addEventListener>;
-    let authSubscriptionUnsubscribe: () => void = () => {};
+    let authSubscriptionUnsubscribe: () => void = () => undefined;
 
     // Global ref to track current app state
     const appState = { current: AppState.currentState };
@@ -161,7 +160,7 @@ export function useProvideAuth(): AuthResult {
     initAuth();
 
     // Handle app state changes
-    appStateSubscription = AppState.addEventListener('change', nextAppState => {
+    const appStateSubscription = AppState.addEventListener('change', nextAppState => {
       const isActivating = appState.current !== 'active' && nextAppState === 'active';
 
       appState.current = nextAppState;
@@ -198,7 +197,7 @@ export function useProvideAuth(): AuthResult {
 
         if (event === 'SIGNED_OUT') {
           // Stop audio to prevent stale playback state
-          simpleAudioService.stop().catch(() => {});
+          simpleAudioService.stop().catch(() => undefined);
           setSession(null);
           setIsLoading(false);
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {

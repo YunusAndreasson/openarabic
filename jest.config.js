@@ -7,12 +7,6 @@ module.exports = {
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@shopify/react-native-skia|@tanstack/.*|immer))',
   ],
 
-  // Mock problematic modules
-  moduleNameMapper: {
-    '^immer$': '<rootDir>/__mocks__/immer.js',
-    '^immer/(.*)$': '<rootDir>/__mocks__/immer.js',
-  },
-
   // Optimized timeouts for AI agent efficiency
   testTimeout: 15000, // Reduced from 30s - AI agents don't need long timeouts
 
@@ -43,6 +37,10 @@ module.exports = {
   moduleNameMapper: {
     // Static file imports (mobile-only optimized)
     '\\.(jpg|jpeg|png|gif|otf|svg|ttf|mp4|wav|mp3|m4a|aac|oga)$': '<rootDir>/__mocks__/fileMock.js',
+
+    // Immer mocks
+    '^immer$': '<rootDir>/__mocks__/immer.js',
+    '^immer/(.*)$': '<rootDir>/__mocks__/immer.js',
 
     // Core React Native mocks
     '@shopify/react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',

@@ -4,7 +4,7 @@ import type { ArticleId } from './branded.types';
  * Enhanced audio track type for article-level audio playback
  * Used by the enhanced audio player for managing article audio state
  */
-export type EnhancedAudioTrack = {
+export interface EnhancedAudioTrack {
   /** Composite ID for the track, e.g., "article-123" */
   id: string;
   /** ID of the article this track belongs to */
@@ -18,4 +18,4 @@ export type EnhancedAudioTrack = {
   imageUrl?: string;
   /** Duration of the audio track in seconds (optional until loaded) */
   duration?: number;
-};
+}

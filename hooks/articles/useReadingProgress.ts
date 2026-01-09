@@ -53,7 +53,7 @@ export function useReadingProgress({
     if (!rawProgress || totalSentences <= 0) return rawProgress;
 
     let needsSanitization = false;
-    let sanitized = { ...rawProgress };
+    const sanitized = { ...rawProgress };
 
     // Ensure last_sentence_read is within valid bounds (0-based indexing)
     const maxValidSentence = totalSentences - 1;

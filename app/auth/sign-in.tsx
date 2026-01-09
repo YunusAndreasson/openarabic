@@ -4,8 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LegalLinks } from '@/components/auth';
-import { SignInForm } from '@/components/auth';
+import { LegalLinks , SignInForm } from '@/components/auth';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 

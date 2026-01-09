@@ -52,7 +52,7 @@ export interface UseFSRSOptions {
   sessionCooldownHours?: number;
 }
 
-export type UseFSRSResult = {
+export interface UseFSRSResult {
   currentWord: StudyWord | null;
   wordQueue: StudyWord[];
   isLoading: boolean;
@@ -61,10 +61,10 @@ export type UseFSRSResult = {
   updateWord: (rootId: RootId, confidence: WordConfidence) => Promise<number | undefined>;
   invalidateQueries: () => void;
   resetQueue: () => void;
-};
+}
 
-export type FSRSStateTracking = {
+export interface FSRSStateTracking {
   isProcessingUpdate: boolean;
   completionTriggered: boolean;
   queueInitialized: boolean;
-};
+}

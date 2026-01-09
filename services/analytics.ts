@@ -36,9 +36,7 @@
 // Minimal interface for analytics properties
 import { MIXPANEL_TOKEN } from '@/constants/analytics';
 
-interface AnalyticsProperties {
-  [key: string]: string | number | boolean | null | undefined;
-}
+type AnalyticsProperties = Record<string, string | number | boolean | null | undefined>;
 
 // Minimal interface for Mixpanel instance
 interface MixpanelInstance {

@@ -139,7 +139,7 @@ export function formatArticleMetadata(
 export function getArticleMetadata(article: {
   author: { name: string };
   category: { name: string };
-  article_sentences?: Array<unknown>;
+  article_sentences?: unknown[];
 }): string {
   const sentenceCount = article.article_sentences?.length || 0;
   const readingTime = calculateReadingTime(sentenceCount);
@@ -158,7 +158,7 @@ export function getArticleMetadata(article: {
  */
 export function getArticleMetadataWithoutCategory(article: {
   author: { name: string };
-  article_sentences?: Array<unknown>;
+  article_sentences?: unknown[];
 }): string {
   const sentenceCount = article.article_sentences?.length || 0;
   const readingTime = calculateReadingTime(sentenceCount);
@@ -176,7 +176,7 @@ export function getArticleMetadataWithoutCategory(article: {
  */
 export function getArticleMetadataWithoutAuthor(article: {
   category: { name: string };
-  article_sentences?: Array<unknown>;
+  article_sentences?: unknown[];
 }): string {
   const sentenceCount = article.article_sentences?.length || 0;
   const readingTime = calculateReadingTime(sentenceCount);

@@ -70,7 +70,7 @@ export const FeedbackForm = memo(() => {
       if (screenshotUri) {
         try {
           const filename = `feedback/${user?.id || 'anonymous'}/${Date.now()}.jpg`;
-          // eslint-disable-next-line no-undef
+           
           const response = await fetch(screenshotUri);
           const blob = await response.blob();
 

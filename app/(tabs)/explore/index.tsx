@@ -8,14 +8,7 @@ import type { ScrollView } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
 import { SectionLabel } from '@/components/common';
-import { ArticleList } from '@/components/explore';
-import { AuthorInFocusSection } from '@/components/explore';
-import { BrandFooter } from '@/components/explore';
-import { ContinueReadingSection } from '@/components/explore';
-import { DiscoverWordsSection } from '@/components/explore';
-import { FilterSection } from '@/components/explore';
-import { IntelligentArticleSection } from '@/components/explore';
-import { MoreFiltersSection } from '@/components/explore';
+import { ArticleList , AuthorInFocusSection , BrandFooter , ContinueReadingSection , DiscoverWordsSection , FilterSection , IntelligentArticleSection , MoreFiltersSection } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import {

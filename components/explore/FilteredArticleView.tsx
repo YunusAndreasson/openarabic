@@ -27,17 +27,17 @@ import {
 } from '@/utils/stringUtils';
 
 // List item types
-type SectionHeaderItem = {
+interface SectionHeaderItem {
   type: 'header';
   id: string;
   title: string;
-};
+}
 
-type ArticleItem = {
+interface ArticleItem {
   type: 'article';
   id: string;
   data: Article;
-};
+}
 
 type ListItem = SectionHeaderItem | ArticleItem;
 
@@ -165,7 +165,7 @@ interface FilteredArticleViewProps {
 }
 
 // Static empty functions to avoid infinite render loops
-const noop = () => {};
+const noop = () => undefined;
 
 /**
  * A specialized component for displaying filtered articles in modal contexts

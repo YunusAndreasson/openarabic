@@ -3,9 +3,8 @@ import { Fragment, useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Tabs } from 'expo-router';
+import { Tabs , router } from 'expo-router';
 import { Badge, Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
-import { router } from 'expo-router';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';

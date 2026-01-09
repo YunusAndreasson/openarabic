@@ -17,11 +17,9 @@ interface ReadingListMutationsResult {
     articleId: ArticleId | undefined,
     isInReadingList: boolean,
   ) => Promise<void>;
-  addToReadingListMutation: UseMutationResult<
-    void,
-    Error,
-    { userId: string; articleId: ArticleId }
-  >;
+   
+  addToReadingListMutation: UseMutationResult<void, Error, { userId: string; articleId: ArticleId }>;
+   
   removeFromReadingListMutation: UseMutationResult<
     void,
     Error,
@@ -47,7 +45,8 @@ export const useReadingListMutations = (
     () => ({
       mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
         bookmarkService.addToReadingList(userId, articleId),
-      onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
+      // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- void is correct for mutations with no return value
+      onSuccess: (_data: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
         // Track bookmark added
         analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
           article_id: articleId,
@@ -89,7 +88,8 @@ export const useReadingListMutations = (
     () => ({
       mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
         bookmarkService.removeFromReadingList(userId, articleId),
-      onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
+      // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- void is correct for mutations with no return value
+      onSuccess: (_data: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
         // Track bookmark removed
         analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
           article_id: articleId,
@@ -117,16 +117,14 @@ export const useReadingListMutations = (
   );
 
   // Initialize mutations with memoized options
-  const addToReadingListMutation = useMutation<
-    void,
-    Error,
-    { userId: string; articleId: ArticleId }
-  >(addToReadingListOptions);
-  const removeFromReadingListMutation = useMutation<
-    void,
-    Error,
-    { userId: string; articleId: ArticleId }
-  >(removeFromReadingListOptions);
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- void is correct for mutations with no return value
+  const addToReadingListMutation = useMutation<void, Error, { userId: string; articleId: ArticleId }>(
+    addToReadingListOptions,
+  );
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- void is correct for mutations with no return value
+  const removeFromReadingListMutation = useMutation<void, Error, { userId: string; articleId: ArticleId }>(
+    removeFromReadingListOptions,
+  );
 
   // Handle toggling reading list with session refresh
   const handleToggleReadingList = useCallback(

@@ -2,8 +2,7 @@ import { ComponentType, ICON_TO_COMPONENT_TYPE } from '@/constants/arabicWordCom
 import { CONTRACTION_EXPANSIONS, EXPANSION_TO_CONTRACTION } from '@/constants/contractions';
 import { BRACKET_TYPE, POSITIONAL_SCORE } from '@/constants/positionalScoring';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import type { formatWordAnalysis } from '@/utils/arabicWordAnalysis';
-import type { WordAnalysis } from '@/utils/arabicWordAnalysis';
+import type { formatWordAnalysis , WordAnalysis } from '@/utils/arabicWordAnalysis';
 import { resolveColorName, shouldApplyColorCoding } from '@/utils/colorResolution';
 
 // Helper type for formatted analysis result

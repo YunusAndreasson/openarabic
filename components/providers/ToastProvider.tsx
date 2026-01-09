@@ -90,7 +90,7 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
     return () => {
       // Use an empty function to clear the handler
-      setGlobalToastHandler(() => {});
+      setGlobalToastHandler(() => () => undefined);
     };
   }, [showToast]);
 

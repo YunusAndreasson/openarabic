@@ -57,7 +57,7 @@ export async function stopAudioSafely(throwOnError: boolean = false): Promise<vo
 export async function prefetchArticleWithImage(
   articleId: ArticleId,
   queryClient: QueryClient,
-  prefetchArticle?: (id: ArticleId) => Promise<boolean | void>,
+  prefetchArticle?: (id: ArticleId) => Promise<boolean | undefined>,
 ): Promise<void> {
   // Prefetch article data
   queryClient

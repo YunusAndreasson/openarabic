@@ -23,7 +23,7 @@ const SPACING_MAP: Record<SpacingScale, number> = {
 /**
  * Spacing options type for padding and margin
  */
-type SpacingOptions = {
+interface SpacingOptions {
   horizontal?: SpacingScale;
   vertical?: SpacingScale;
   top?: SpacingScale;
@@ -31,7 +31,7 @@ type SpacingOptions = {
   left?: SpacingScale;
   right?: SpacingScale;
   all?: SpacingScale;
-};
+}
 
 /**
  * Generic helper to create spacing styles (padding or margin)

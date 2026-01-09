@@ -74,7 +74,7 @@ export class ReadingStreakService {
 
     if (hasRecentActivity) {
       const activeDatesSet = new Set(sortedActiveDays.map(a => a.date));
-      let currentDate = new Date(mostRecentDate);
+      const currentDate = new Date(mostRecentDate);
 
       while (true) {
         const dateStr = toUTCDateString(currentDate);
