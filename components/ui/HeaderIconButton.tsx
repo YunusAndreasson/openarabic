@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 
 import { TIMING_CONSTANTS } from '@/constants/animation';
@@ -23,16 +22,10 @@ export interface HeaderIconButtonProps {
   iconColor?: string;
   /** Background color - defaults to theme elevation1 */
   backgroundColor?: string;
-  /** Opacity - defaults to LAYOUT.OPACITY.HOVER */
-  opacity?: number;
   /** Whether the button is disabled */
   disabled?: boolean;
-  /** Additional style for the button container */
-  style?: StyleProp<ViewStyle>;
   /** Test ID for testing */
   testID?: string;
-  /** Hit slop size - defaults based on button size */
-  hitSlop?: 'small' | 'medium' | 'large';
 }
 
 // iOS 26 UIBarButton has fixed 36pt width - use this for header buttons to ensure circular glass
@@ -59,11 +52,6 @@ const SIZE_CONFIG = {
   },
 } as const;
 
-const HIT_SLOP_MAP = {
-  small: LAYOUT.HIT_SLOP.SMALL,
-  medium: LAYOUT.HIT_SLOP.MEDIUM,
-  large: LAYOUT.HIT_SLOP.LARGE,
-} as const;
 
 /**
  * Reusable circular icon button for headers
@@ -88,16 +76,12 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
     size = 'medium',
     iconColor,
     backgroundColor,
-    opacity = LAYOUT.OPACITY.HOVER,
     disabled = false,
-    style,
     testID,
-    hitSlop,
   }) => {
     const colors = useColors();
 
     const config = SIZE_CONFIG[size];
-    const finalHitSlop = hitSlop ? HIT_SLOP_MAP[hitSlop] : config.hitSlop;
 
     // Use shared button press hook (no animation for header buttons)
     const { handlePress, rippleConfig } = useButtonPress({
@@ -121,11 +105,11 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
           height: buttonDimension,
           borderRadius: buttonRadius,
           backgroundColor: finalBackgroundColor,
-          // Use full opacity for transparent buttons (native header icons), otherwise apply provided opacity
-          opacity: isTransparent ? LAYOUT.OPACITY.FULL : opacity,
+          // Use full opacity for transparent buttons (native header icons), otherwise apply hover opacity
+          opacity: isTransparent ? LAYOUT.OPACITY.FULL : LAYOUT.OPACITY.HOVER,
         },
       ],
-      [buttonDimension, buttonRadius, finalBackgroundColor, opacity, isTransparent],
+      [buttonDimension, buttonRadius, finalBackgroundColor, isTransparent],
     );
 
     const finalIconColor = iconColor ?? colors.text;
@@ -134,11 +118,11 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
 
     return (
       <Pressable
-        style={[buttonStyle, disabled && { opacity: LAYOUT.OPACITY.MEDIUM }, style]}
+        style={[buttonStyle, disabled && { opacity: LAYOUT.OPACITY.MEDIUM }]}
         onPress={handlePress}
         onLongPress={onLongPress}
         delayLongPress={TIMING_CONSTANTS.LONG_PRESS_DELAY}
-        hitSlop={finalHitSlop}
+        hitSlop={config.hitSlop}
         android_ripple={rippleConfig}
         disabled={disabled}
         testID={testID}

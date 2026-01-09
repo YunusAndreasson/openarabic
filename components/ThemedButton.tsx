@@ -17,9 +17,9 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // Static lookup maps - zero per-render allocations
 const TEXT_TYPE_MAP = {
-  small: { normal: 'caption', bold: 'label' },
-  medium: { normal: 'body', bold: 'bodyBold' },
-  large: { normal: 'heading3', bold: 'heading3' },
+  small: 'label',
+  medium: 'bodyBold',
+  large: 'heading3',
 } as const;
 
 const ICON_SIZE_MAP = {
@@ -35,10 +35,8 @@ export function ThemedButton({
   loading = false, // Always false when not specified
   style,
   disabled = false, // Always false when not specified
-  iconSize: customIconSize = LAYOUT.BUTTON.ICON_SIZE.LARGE, // Most common value - hardcoded
   onPress,
   size = 'medium', // Most common value - hardcoded
-  textWeight = 'bold', // Most common value - hardcoded
   enableOptimisticLoading = false, // Only enable when explicitly requested
   uppercase = true, // Default to uppercase for most buttons
   ...props
@@ -76,7 +74,7 @@ export function ThemedButton({
         ? colors.black // Dark text on sage tint background in dark mode
         : colors.white // White text on sage tint background in light mode
       : colors.tint;
-  const iconSize = customIconSize ?? ICON_SIZE_MAP[size];
+  const iconSize = ICON_SIZE_MAP[size];
 
   // Android Material Design 3 ripple config (must be a prop, not style)
   const androidRipple =
@@ -163,7 +161,7 @@ export function ThemedButton({
                     : 'tint'
               }
               style={[buttonTextStyle, isActuallyLoading && !icon && styles.hiddenText]}
-              type={TEXT_TYPE_MAP[size][textWeight]}
+              type={TEXT_TYPE_MAP[size]}
             >
               {uppercase ? title?.toUpperCase() : title}
             </ThemedText>

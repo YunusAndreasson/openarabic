@@ -6,8 +6,6 @@ import type { StyleProp, ViewStyle } from 'react-native';
 export interface WordDisplayProps {
   /** The Arabic word to display */
   word: string;
-  /** The font size for the word */
-  fontSize?: number;
   /** Translation of the word */
   translation?: string;
   /** Additional style for the container */

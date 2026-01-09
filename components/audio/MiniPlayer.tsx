@@ -227,7 +227,6 @@ const MiniPlayerComponent = ({
                 iconColor={timerIconColor}
                 iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                 hapticType="light"
-                flat
               />
 
               {/* Stop button - fully stops playback and clears player state */}
@@ -238,7 +237,6 @@ const MiniPlayerComponent = ({
                 iconColor={colors.tint}
                 iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                 hapticType="light"
-                flat
               />
             </View>
           </View>

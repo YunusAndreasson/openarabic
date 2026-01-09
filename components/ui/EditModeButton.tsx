@@ -12,23 +12,11 @@ interface EditModeButtonProps {
    */
   type: EditModeType;
 
-  /**
-   * Optional callback when edit mode changes
-   */
-  onEditModeChange?: (editMode: boolean) => void;
-
-  /** If provided, hides the button when count is 0 */
-  itemCount?: number;
   /** Convenience flag to hide when empty without passing count explicitly */
   hideWhenEmpty?: boolean;
 }
 
-const EditModeButtonComponent: FC<EditModeButtonProps> = ({
-  type,
-  onEditModeChange,
-  itemCount,
-  hideWhenEmpty = true,
-}) => {
+const EditModeButtonComponent: FC<EditModeButtonProps> = ({ type, hideWhenEmpty = true }) => {
   const colors = useColors();
   const { editMode, toggle } = useEditMode(type);
 
@@ -37,10 +25,9 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
     editMode,
     (_currentState, newValue: boolean) => newValue,
   );
-  // Derive count internally for listen type when not provided
+  // Derive count internally for playlist type
   const { sortedReadingList } = usePlaylistScreen();
-  const derivedCount = type === 'playlist' ? sortedReadingList.length : undefined;
-  const effectiveCount = itemCount ?? derivedCount ?? undefined;
+  const effectiveCount = type === 'playlist' ? sortedReadingList.length : undefined;
 
   // Simple toggle handler - single action, no menu needed
   const handleToggle = useCallback((): void => {
@@ -51,10 +38,8 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({
       setOptimisticEditMode(newEditMode);
     });
 
-    // Execute other operations immediately (not in transition)
     toggle();
-    onEditModeChange?.(newEditMode);
-  }, [toggle, optimisticEditMode, onEditModeChange, setOptimisticEditMode]);
+  }, [toggle, optimisticEditMode, setOptimisticEditMode]);
 
   // Guard early return only after all hooks and callbacks above have been created
   if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {

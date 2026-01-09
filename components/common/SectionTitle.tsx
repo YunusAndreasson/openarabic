@@ -10,7 +10,6 @@ interface SectionTitleProps {
   subtitle?: string;
   containerStyle?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
-  isFirstSection?: boolean;
 }
 
 export const SectionTitle: FC<SectionTitleProps> = ({
@@ -18,7 +17,6 @@ export const SectionTitle: FC<SectionTitleProps> = ({
   subtitle,
   containerStyle,
   textStyle,
-  isFirstSection = false,
 }) => {
   const titleStyle = useMemo(
     () => ({
@@ -36,7 +34,7 @@ export const SectionTitle: FC<SectionTitleProps> = ({
   );
 
   return (
-    <View style={[styles.container, isFirstSection && styles.firstSection, containerStyle]}>
+    <View style={[styles.container, containerStyle]}>
       <View style={styles.titleGroup}>
         <ThemedText colorName="headingText" style={titleStyle} type="heading3">
           {title}
@@ -60,10 +58,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: LAYOUT.SPACING.SMALL,
     marginTop: LAYOUT.SPACING.LARGE,
-  },
-  firstSection: {
-    marginTop: LAYOUT.SPACING.XLARGE,
-    marginBottom: LAYOUT.SPACING.SMALL,
   },
   titleGroup: {
     flex: 1,

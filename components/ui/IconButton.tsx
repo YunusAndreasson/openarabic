@@ -54,11 +54,6 @@ interface IconButtonProps {
   debounce?: boolean;
 
   /**
-   * Debounce duration in ms
-   */
-  debounceDuration?: number;
-
-  /**
    * Type of haptic feedback
    * - 'light': Light haptic feedback (play buttons)
    * - 'selection': Selection haptic feedback (delete/action buttons)
@@ -70,13 +65,10 @@ interface IconButtonProps {
    * Additional icon style offset (e.g., for play icon alignment)
    */
   iconStyle?: TextStyle;
-
-  /**
-   * Whether to use flat design (no shadow/elevation)
-   * @default false
-   */
-  flat?: boolean;
 }
+
+// Internal constant for debounce duration
+const DEBOUNCE_DURATION_MS = 300;
 
 export const IconButton: FC<IconButtonProps> = ({
   icon,
@@ -87,10 +79,8 @@ export const IconButton: FC<IconButtonProps> = ({
   iconSize = LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
   variant = 'default',
   debounce = false,
-  debounceDuration = 300,
   hapticType = 'selection',
   iconStyle,
-  flat = false,
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -102,7 +92,7 @@ export const IconButton: FC<IconButtonProps> = ({
       disabled,
       hapticType,
       debounce,
-      debounceDuration,
+      debounceDuration: DEBOUNCE_DURATION_MS,
       animationOptions: { scaleAmount: ICON_BUTTON_PRESS_SCALE },
     });
 
@@ -124,8 +114,8 @@ export const IconButton: FC<IconButtonProps> = ({
       <Animated.View
         style={[
           styles.button,
-          !flat && LAYOUT.ELEVATION.SUBTLE,
-          !flat && { shadowColor: colors.shadow },
+          LAYOUT.ELEVATION.SUBTLE,
+          { shadowColor: colors.shadow },
           animatedStyle as ViewStyle,
           {
             backgroundColor: resolvedBackgroundColor,

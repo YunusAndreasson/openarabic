@@ -17,11 +17,13 @@ interface AxisLabelsProps {
   xLabelPositions: number[];
   yMax?: number; // Maximum value for y-axis (default 100 for percentages)
   showYAxis?: boolean;
-  yAxisLines?: number;
   topPadding?: number;
   yLabelFormatter?: (value: number) => string;
   isFuturePrediction?: boolean; // Whether this chart shows future predictions (today = index 0)
 }
+
+// Number of horizontal lines/labels on y-axis
+const Y_AXIS_LINES = 5;
 
 /**
  * Comprehensive axis labels component for charts with proper padding and alignment
@@ -39,7 +41,6 @@ export const ChartAxes = memo<AxisLabelsProps>(
     xLabelPositions,
     yMax = 100,
     showYAxis = true,
-    yAxisLines = 5,
     topPadding = 0,
     yLabelFormatter,
     isFuturePrediction = false,
@@ -63,13 +64,13 @@ export const ChartAxes = memo<AxisLabelsProps>(
     const yLabels = useMemo(() => {
       const chartHeight = height - topPadding;
       const labels = [] as { value: number; y: number }[];
-      for (let i = 0; i < yAxisLines; i++) {
-        const value = (yMax * i) / (yAxisLines - 1);
-        const y = topPadding + chartHeight - (i * chartHeight) / (yAxisLines - 1);
+      for (let i = 0; i < Y_AXIS_LINES; i++) {
+        const value = (yMax * i) / (Y_AXIS_LINES - 1);
+        const y = topPadding + chartHeight - (i * chartHeight) / (Y_AXIS_LINES - 1);
         labels.push({ value: Math.round(value), y });
       }
       return labels;
-    }, [height, topPadding, yAxisLines, yMax]);
+    }, [height, topPadding, Y_AXIS_LINES, yMax]);
 
     // Center each weekday exactly under its tick (no edge constraints to avoid misalignment)
     const labelPositions = useMemo(() => {

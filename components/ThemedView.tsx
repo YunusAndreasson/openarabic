@@ -24,7 +24,6 @@ export function ThemedView({
   includeBottomInset = true,
   safeAreaEdges,
   scrollViewProps,
-  scrollViewRef,
   ...otherProps
 }: ThemedViewProps): JSX.Element {
   const colors = useColors();
@@ -48,7 +47,6 @@ export function ThemedView({
   // Only create ScrollView when needed
   const content = scrollable ? (
     <ScrollView
-      ref={scrollViewRef}
       alwaysBounceVertical={true}
       automaticallyAdjustContentInsets={false}
       bounces={true}

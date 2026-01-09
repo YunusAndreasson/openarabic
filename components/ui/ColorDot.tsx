@@ -5,25 +5,20 @@ import { LAYOUT } from '@/constants/layout';
 
 interface ColorDotProps {
   color: string;
-  size?: 'small' | 'medium';
 }
 
 /**
  * A simple colored dot indicator.
  * Used for memory strength indicators and status dots.
- *
- * Sizes:
- * - small: 8px (default) - used in card indicators
- * - medium: 12px - used in larger contexts
+ * Size: 8px (LAYOUT.SPACING.SMALL)
  */
-export const ColorDot: FC<ColorDotProps> = memo(({ color, size = 'small' }) => {
-  const dotSize = size === 'small' ? LAYOUT.SPACING.SMALL : LAYOUT.SPACING.MEDIUM;
+export const ColorDot: FC<ColorDotProps> = memo(({ color }) => {
   return (
     <View
       style={{
-        width: dotSize,
-        height: dotSize,
-        borderRadius: dotSize / 2,
+        width: LAYOUT.SPACING.SMALL,
+        height: LAYOUT.SPACING.SMALL,
+        borderRadius: LAYOUT.SPACING.SMALL / 2,
         backgroundColor: color,
       }}
     />

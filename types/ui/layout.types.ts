@@ -1,5 +1,4 @@
 import type { ScrollView, StyleProp, ViewProps, ViewStyle } from 'react-native';
-import type { RefObject } from 'react';
 
 /**
  * ThemedView is a flexible container component that automatically applies theme colors
@@ -21,8 +20,6 @@ export interface ThemedViewProps extends ViewProps {
   safeAreaEdges?: ('bottom' | 'left' | 'right' | 'top')[];
   /** Optional ScrollView props */
   scrollViewProps?: Omit<React.ComponentProps<typeof ScrollView>, 'children'>;
-  /** Optional ref to the ScrollView (only applies when scrollable=true) */
-  scrollViewRef?: RefObject<ScrollView | null>;
   /** Children to render inside the view */
   children?: React.ReactNode;
 }

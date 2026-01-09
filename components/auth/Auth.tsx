@@ -66,7 +66,6 @@ export function Auth(): JSX.Element {
           variant="outlined"
           title={showEmailOptions ? STRINGS.HIDE_EMAIL_OPTIONS : STRINGS.CONTINUE_WITH_EMAIL_OPTION}
           icon="mail-outline"
-          iconSize={20}
           uppercase={false}
           disabled={isSocialAuthLoading}
           style={styles.emailToggleButton}

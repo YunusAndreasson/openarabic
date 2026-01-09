@@ -13,11 +13,6 @@ export type ButtonVariant = 'filled' | 'outlined';
 export type ButtonSize = 'large' | 'medium' | 'small';
 
 /**
- * Button text weight options
- */
-export type ButtonTextWeight = 'bold' | 'normal';
-
-/**
  * Base button props shared across all button variants
  */
 export interface BaseButtonProps extends Omit<PressableProps, 'style'>, BaseAnimatedStyleProps {
@@ -25,12 +20,8 @@ export interface BaseButtonProps extends Omit<PressableProps, 'style'>, BaseAnim
   title: string;
   /** Whether the button is in a loading state */
   loading?: boolean;
-  /** Size of the icon in pixels */
-  iconSize?: number;
   /** Size variant of the button */
   size?: ButtonSize;
-  /** Text weight for the button text */
-  textWeight?: ButtonTextWeight;
   /** Enable optimistic loading - immediately show loading when pressed */
   enableOptimisticLoading?: boolean;
   /** Whether to transform text to uppercase (default: true) */
