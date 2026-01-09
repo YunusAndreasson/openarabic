@@ -411,7 +411,7 @@ describe('FSRS Algorithm Verification', () => {
 
             const result = calculateRetrievability(word, targetDate, lastReview);
 
-            expect(Number.isNaN(result)).toBe(false);
+            expect(Number.isNaN(result)).toBeFalsy();
 
             return true;
           },

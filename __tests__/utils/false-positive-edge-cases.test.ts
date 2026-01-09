@@ -108,8 +108,8 @@ describe('False Positive Edge Cases', () => {
       tests.forEach(({ arabic, english, expectedPrefix, description }) => {
         const analysis = analyzeArabicWord(arabic, english);
 
-        expect(analysis.hasComponents).toBe(true);
-        expect(analysis.prefixes.some(p => p.arabicMatch === expectedPrefix)).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
+        expect(analysis.prefixes.some(p => p.arabicMatch === expectedPrefix)).toBeTruthy();
       });
     });
   });
@@ -194,7 +194,7 @@ describe('False Positive Edge Cases', () => {
         const analysis = analyzeArabicWord(arabic, english);
 
         // Single-word rule: Should NOT have components
-        expect(analysis.hasComponents).toBe(false);
+        expect(analysis.hasComponents).toBeFalsy();
       });
     });
 
@@ -220,10 +220,10 @@ describe('False Positive Edge Cases', () => {
       tests.forEach(({ arabic, english, expectedPrefix, expectedSuffix }) => {
         const analysis = analyzeArabicWord(arabic, english);
 
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
 
         if (expectedPrefix) {
-          expect(analysis.prefixes.some(p => p.arabicMatch === expectedPrefix)).toBe(true);
+          expect(analysis.prefixes.some(p => p.arabicMatch === expectedPrefix)).toBeTruthy();
         }
         if (expectedSuffix) {
           expect(analysis.suffix?.arabicMatch).toBe(expectedSuffix);
@@ -258,7 +258,7 @@ describe('False Positive Edge Cases', () => {
           // Based on single-word rule, should NOT have components
           const wordCount = english.trim().split(/\s+/).length;
           if (wordCount === 1) {
-            expect(analysis.hasComponents).toBe(false);
+            expect(analysis.hasComponents).toBeFalsy();
           }
         }
       });
@@ -282,7 +282,7 @@ describe('False Positive Edge Cases', () => {
       const analysis = analyzeArabicWord(validWord, 'he was writing');
 
       // SHOULD detect ي prefix because remaining is 3 chars (كتب)
-      expect(analysis.prefixes.some(p => p.arabicMatch === 'ي')).toBe(true);
+      expect(analysis.prefixes.some(p => p.arabicMatch === 'ي')).toBeTruthy();
     });
 
     test('should require English match for component detection', () => {
@@ -308,7 +308,7 @@ describe('False Positive Edge Cases', () => {
           analysis.prefixes.some(p => p.arabicMatch === shouldNotDetect) ||
           analysis.suffix?.arabicMatch === shouldNotDetect;
 
-        expect(hasComponent).toBe(false);
+        expect(hasComponent).toBeFalsy();
       });
     });
   });

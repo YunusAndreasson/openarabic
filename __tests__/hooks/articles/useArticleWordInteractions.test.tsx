@@ -87,9 +87,9 @@ describe('useArticleWordInteractions', () => {
     );
 
     expect(result.current.activeTooltip).toBeNull();
-    expect(result.current.wordDetailsModal.isVisible).toBe(false);
+    expect(result.current.wordDetailsModal.isVisible).toBeFalsy();
     expect(result.current.wordDetailsModal.data).toBeNull();
-    expect(result.current.isInStudyList).toBe(false);
+    expect(result.current.isInStudyList).toBeFalsy();
   });
 
   describe('handleWordPress', () => {
@@ -290,7 +290,7 @@ describe('useArticleWordInteractions', () => {
       });
 
       expect(result.current.activeTooltip).not.toBeNull();
-      expect(result.current.wordDetailsModal.isVisible).toBe(false);
+      expect(result.current.wordDetailsModal.isVisible).toBeFalsy();
 
       // Open word details
       act(() => {
@@ -298,7 +298,7 @@ describe('useArticleWordInteractions', () => {
       });
 
       expect(result.current.activeTooltip).toBeNull();
-      expect(result.current.wordDetailsModal.isVisible).toBe(true);
+      expect(result.current.wordDetailsModal.isVisible).toBeTruthy();
       expect(result.current.wordDetailsModal.data).toEqual(word);
     });
 
@@ -316,7 +316,7 @@ describe('useArticleWordInteractions', () => {
         result.current.handleOpenWordDetails();
       });
 
-      expect(result.current.wordDetailsModal.isVisible).toBe(false);
+      expect(result.current.wordDetailsModal.isVisible).toBeFalsy();
     });
   });
 
@@ -361,7 +361,7 @@ describe('useArticleWordInteractions', () => {
         result.current.wordDetailsModal.open(word);
       });
 
-      expect(result.current.isInStudyList).toBe(false);
+      expect(result.current.isInStudyList).toBeFalsy();
 
       // Close modal before adding
       act(() => {
@@ -378,7 +378,7 @@ describe('useArticleWordInteractions', () => {
       });
 
       // Should be true after adding
-      expect(result.current.isInStudyList).toBe(true);
+      expect(result.current.isInStudyList).toBeTruthy();
     });
 
     test('removes word from study when toggled off', async () => {
@@ -406,7 +406,7 @@ describe('useArticleWordInteractions', () => {
         result.current.wordDetailsModal.open(word);
       });
 
-      expect(result.current.isInStudyList).toBe(true);
+      expect(result.current.isInStudyList).toBeTruthy();
 
       // Now remove it
       mockHandleRootPress.mockResolvedValue(false);
@@ -414,7 +414,7 @@ describe('useArticleWordInteractions', () => {
         await result.current.handleAddWordToStudy(word);
       });
 
-      expect(result.current.isInStudyList).toBe(false);
+      expect(result.current.isInStudyList).toBeFalsy();
     });
 
     test('refetches study words after mutation', async () => {
@@ -542,7 +542,7 @@ describe('useArticleWordInteractions', () => {
       });
 
       // Should use local state
-      expect(result.current.isInStudyList).toBe(true);
+      expect(result.current.isInStudyList).toBeTruthy();
     });
 
     test('falls back to query cache when no local state', () => {
@@ -583,7 +583,7 @@ describe('useArticleWordInteractions', () => {
       });
 
       // Should find word in query cache
-      expect(result.current.isInStudyList).toBe(true);
+      expect(result.current.isInStudyList).toBeTruthy();
     });
 
     test('returns false when word not in study list', () => {
@@ -604,7 +604,7 @@ describe('useArticleWordInteractions', () => {
         result.current.wordDetailsModal.open(word);
       });
 
-      expect(result.current.isInStudyList).toBe(false);
+      expect(result.current.isInStudyList).toBeFalsy();
     });
 
     test('returns false when modal has no data', () => {
@@ -617,7 +617,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      expect(result.current.isInStudyList).toBe(false);
+      expect(result.current.isInStudyList).toBeFalsy();
     });
   });
 

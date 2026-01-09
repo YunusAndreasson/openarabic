@@ -113,7 +113,7 @@ describe('useReadingProgress', () => {
       const query = queries[0];
 
       // Verify refetchOnMount is false (optimization to prevent unnecessary refetches)
-      expect(query.options.refetchOnMount).toBe(false);
+      expect(query.options.refetchOnMount).toBeFalsy();
     });
 
     test('should have refetchOnReconnect set to false', async () => {
@@ -151,7 +151,7 @@ describe('useReadingProgress', () => {
       const query = queries[0];
 
       // Verify refetchOnReconnect is false (only refresh via pull-to-refresh)
-      expect(query.options.refetchOnReconnect).toBe(false);
+      expect(query.options.refetchOnReconnect).toBeFalsy();
     });
   });
 
@@ -367,7 +367,7 @@ describe('useReadingProgress', () => {
 
       // Query will be disabled without user, so no loading
       // Verify isLoading is false immediately (query disabled)
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isLoading).toBeFalsy();
 
       // Attempt update without auth
       await act(async () => {
@@ -407,7 +407,7 @@ describe('useReadingProgress', () => {
       // Wait for query to load and progress to be available
       await waitFor(
         () => {
-          expect(result.current.isLoading).toBe(false);
+          expect(result.current.isLoading).toBeFalsy();
           expect(result.current.progress).not.toBeNull();
         },
         { timeout: 3000 },

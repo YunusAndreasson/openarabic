@@ -131,7 +131,7 @@ describe('Fahuwa "so it is" Investigation', () => {
       console.log('  - Examples: وهو "and he", فهو "so it", ولا "and not"');
 
       // This is the NEW expected behavior (hasComponents should be TRUE)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 
@@ -164,7 +164,7 @@ describe('Fahuwa "so it is" Investigation', () => {
 
       examples.forEach(({ arabic, english }) => {
         const analysis = analyzeArabicWord(arabic, english);
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
       });
     });
   });

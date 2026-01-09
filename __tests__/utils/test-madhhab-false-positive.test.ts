@@ -44,7 +44,7 @@ describe('False positive م detection in morphological patterns', () => {
 
       // Should NOT detect م as a separate prefix
       const hasMimPrefix = analysis.prefixes.some(p => p.arabicMatch === 'م');
-      expect(hasMimPrefix).toBe(false);
+      expect(hasMimPrefix).toBeFalsy();
 
       // Remaining should be "مذهب" (school of thought), NOT "ذهب" (gold)
       expect(analysis.remainingArabic).toBe('مذهب');
@@ -111,7 +111,7 @@ describe('False positive م detection in morphological patterns', () => {
       // "of" is between "school" and "thought" - not a standalone preposition
       // Should NOT match م prefix
       const hasMimPrefix = analysis.prefixes.some(p => p.arabicMatch === 'م');
-      expect(hasMimPrefix).toBe(false);
+      expect(hasMimPrefix).toBeFalsy();
     });
 
     test('should handle multi-word translations without false positives', () => {

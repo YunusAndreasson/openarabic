@@ -39,7 +39,7 @@ describe('wordClassification', () => {
         fsrs_lapses: 2,
       });
 
-      expect(isHardWord(hardWord)).toBe(true);
+      expect(isHardWord(hardWord)).toBeTruthy();
     });
 
     test('should identify very hard words (lapses > 2)', () => {
@@ -47,7 +47,7 @@ describe('wordClassification', () => {
         fsrs_lapses: 5,
       });
 
-      expect(isHardWord(veryHardWord)).toBe(true);
+      expect(isHardWord(veryHardWord)).toBeTruthy();
     });
 
     test('should not identify words with 1 lapse as hard', () => {
@@ -55,7 +55,7 @@ describe('wordClassification', () => {
         fsrs_lapses: 1,
       });
 
-      expect(isHardWord(normalWord)).toBe(false);
+      expect(isHardWord(normalWord)).toBeFalsy();
     });
 
     test('should not identify words with 0 lapses as hard', () => {
@@ -63,7 +63,7 @@ describe('wordClassification', () => {
         fsrs_lapses: 0,
       });
 
-      expect(isHardWord(easyWord)).toBe(false);
+      expect(isHardWord(easyWord)).toBeFalsy();
     });
 
     test('should handle null lapses as 0', () => {
@@ -71,7 +71,7 @@ describe('wordClassification', () => {
         fsrs_lapses: null,
       });
 
-      expect(isHardWord(wordWithNullLapses)).toBe(false);
+      expect(isHardWord(wordWithNullLapses)).toBeFalsy();
     });
   });
 
@@ -81,7 +81,7 @@ describe('wordClassification', () => {
         fsrs_lapses: 2,
       });
 
-      expect(isStrugglingWord(strugglingWord)).toBe(true);
+      expect(isStrugglingWord(strugglingWord)).toBeTruthy();
     });
 
     test('should not identify normal words as struggling', () => {
@@ -89,7 +89,7 @@ describe('wordClassification', () => {
         fsrs_lapses: 0,
       });
 
-      expect(isStrugglingWord(normalWord)).toBe(false);
+      expect(isStrugglingWord(normalWord)).toBeFalsy();
     });
   });
 
@@ -219,7 +219,7 @@ describe('wordClassification', () => {
         fsrs_difficulty: 8, // >= 7.5 threshold
       });
 
-      expect(isUnstableWord(unstableWord)).toBe(true);
+      expect(isUnstableWord(unstableWord)).toBeTruthy();
     });
 
     test('should not mark stable words as unstable', () => {
@@ -228,7 +228,7 @@ describe('wordClassification', () => {
         fsrs_difficulty: 8,
       });
 
-      expect(isUnstableWord(stableWord)).toBe(false);
+      expect(isUnstableWord(stableWord)).toBeFalsy();
     });
 
     test('should not mark low difficulty words as unstable', () => {
@@ -237,7 +237,7 @@ describe('wordClassification', () => {
         fsrs_difficulty: 5, // < 7.5 threshold
       });
 
-      expect(isUnstableWord(easyWord)).toBe(false);
+      expect(isUnstableWord(easyWord)).toBeFalsy();
     });
 
     test('should handle null values with defaults', () => {
@@ -247,14 +247,14 @@ describe('wordClassification', () => {
       });
 
       // Default stability is 0 (<= 7), default difficulty is 6.5 (< 7.5)
-      expect(isUnstableWord(wordWithNulls)).toBe(false);
+      expect(isUnstableWord(wordWithNulls)).toBeFalsy();
     });
   });
 
   describe('isDueWord', () => {
     test('should return true for new words (state 0)', () => {
       const newWord = createStudyWord({ fsrs_state: 0 });
-      expect(isDueWord(newWord)).toBe(true);
+      expect(isDueWord(newWord)).toBeTruthy();
     });
 
     test('should return true for words past due date', () => {
@@ -267,7 +267,7 @@ describe('wordClassification', () => {
         fsrs_last_review: null,
       });
 
-      expect(isDueWord(dueWord)).toBe(true);
+      expect(isDueWord(dueWord)).toBeTruthy();
     });
 
     test('should return false for words not yet due', () => {
@@ -279,7 +279,7 @@ describe('wordClassification', () => {
         fsrs_due: futureDate,
       });
 
-      expect(isDueWord(notDueWord)).toBe(false);
+      expect(isDueWord(notDueWord)).toBeFalsy();
     });
 
     test('should return false for recently reviewed words', () => {
@@ -293,24 +293,24 @@ describe('wordClassification', () => {
         fsrs_last_review: recentReview,
       });
 
-      expect(isDueWord(recentlyReviewedWord)).toBe(false);
+      expect(isDueWord(recentlyReviewedWord)).toBeFalsy();
     });
   });
 
   describe('isLearnedWord', () => {
     test('should return true for state 2 words', () => {
       const learnedWord = createStudyWord({ fsrs_state: 2 });
-      expect(isLearnedWord(learnedWord)).toBe(true);
+      expect(isLearnedWord(learnedWord)).toBeTruthy();
     });
 
     test('should return false for state 0 words', () => {
       const newWord = createStudyWord({ fsrs_state: 0 });
-      expect(isLearnedWord(newWord)).toBe(false);
+      expect(isLearnedWord(newWord)).toBeFalsy();
     });
 
     test('should return false for state 1 words', () => {
       const learningWord = createStudyWord({ fsrs_state: 1 });
-      expect(isLearnedWord(learningWord)).toBe(false);
+      expect(isLearnedWord(learningWord)).toBeFalsy();
     });
   });
 
@@ -320,7 +320,7 @@ describe('wordClassification', () => {
         fsrs_state: 2,
         fsrs_stability: 5,
       });
-      expect(isMasteredWord(masteredWord)).toBe(true);
+      expect(isMasteredWord(masteredWord)).toBeTruthy();
     });
 
     test('should return false for state 2 with stability < 5', () => {
@@ -328,7 +328,7 @@ describe('wordClassification', () => {
         fsrs_state: 2,
         fsrs_stability: 4.9,
       });
-      expect(isMasteredWord(notMasteredWord)).toBe(false);
+      expect(isMasteredWord(notMasteredWord)).toBeFalsy();
     });
 
     test('should return false for non-state-2 words even with high stability', () => {
@@ -336,7 +336,7 @@ describe('wordClassification', () => {
         fsrs_state: 1,
         fsrs_stability: 10,
       });
-      expect(isMasteredWord(learningWord)).toBe(false);
+      expect(isMasteredWord(learningWord)).toBeFalsy();
     });
 
     test('should handle null stability as 0', () => {
@@ -344,30 +344,30 @@ describe('wordClassification', () => {
         fsrs_state: 2,
         fsrs_stability: null,
       });
-      expect(isMasteredWord(wordWithNullStability)).toBe(false);
+      expect(isMasteredWord(wordWithNullStability)).toBeFalsy();
     });
   });
 
   describe('isExtraHardWord', () => {
     test('should return true for difficulty > 8.0', () => {
       const hardWord = createStudyWord({ fsrs_difficulty: 8.5 });
-      expect(isExtraHardWord(hardWord)).toBe(true);
+      expect(isExtraHardWord(hardWord)).toBeTruthy();
     });
 
     test('should return false for difficulty <= 8.0', () => {
       const normalWord = createStudyWord({ fsrs_difficulty: 8.0 });
-      expect(isExtraHardWord(normalWord)).toBe(false);
+      expect(isExtraHardWord(normalWord)).toBeFalsy();
     });
 
     test('should return false for difficulty at default (6.5)', () => {
       const defaultWord = createStudyWord({ fsrs_difficulty: 6.5 });
-      expect(isExtraHardWord(defaultWord)).toBe(false);
+      expect(isExtraHardWord(defaultWord)).toBeFalsy();
     });
 
     test('should handle null difficulty with default value', () => {
       const wordWithNullDifficulty = createStudyWord({ fsrs_difficulty: null });
       // Default is 6.5, which is <= 8.0
-      expect(isExtraHardWord(wordWithNullDifficulty)).toBe(false);
+      expect(isExtraHardWord(wordWithNullDifficulty)).toBeFalsy();
     });
   });
 });

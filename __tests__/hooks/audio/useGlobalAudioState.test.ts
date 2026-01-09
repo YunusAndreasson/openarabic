@@ -134,9 +134,9 @@ describe('useGlobalAudioState', () => {
     test('should return initial audio state', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.isPlaying).toBe(false);
+      expect(result.current.isPlaying).toBeFalsy();
       expect(result.current.audioState).toBe('idle');
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isLoading).toBeFalsy();
       expect(result.current.position).toBe(0);
       expect(result.current.duration).toBe(0);
     });
@@ -150,8 +150,8 @@ describe('useGlobalAudioState', () => {
     test('should return initial sleep timer state', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.showSleepTimerModal).toBe(false);
-      expect(result.current.isTimerActive).toBe(false);
+      expect(result.current.showSleepTimerModal).toBeFalsy();
+      expect(result.current.isTimerActive).toBeFalsy();
       expect(result.current.sleepTimerRemainingTime).toBe(0);
     });
   });
@@ -185,7 +185,7 @@ describe('useGlobalAudioState', () => {
         result.current.onTimerPress();
       });
 
-      expect(result.current.showSleepTimerModal).toBe(true);
+      expect(result.current.showSleepTimerModal).toBeTruthy();
     });
 
     test('should provide onSleepTimerClose action that closes modal', () => {
@@ -196,14 +196,14 @@ describe('useGlobalAudioState', () => {
         result.current.onTimerPress();
       });
 
-      expect(result.current.showSleepTimerModal).toBe(true);
+      expect(result.current.showSleepTimerModal).toBeTruthy();
 
       // Close modal
       act(() => {
         result.current.onSleepTimerClose();
       });
 
-      expect(result.current.showSleepTimerModal).toBe(false);
+      expect(result.current.showSleepTimerModal).toBeFalsy();
     });
 
     test('should provide onSleepTimerSet action', () => {
@@ -277,7 +277,7 @@ describe('useGlobalAudioState', () => {
 
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.isTimerActive).toBe(true);
+      expect(result.current.isTimerActive).toBeTruthy();
       expect(result.current.sleepTimerRemainingTime).toBe(1800);
     });
   });

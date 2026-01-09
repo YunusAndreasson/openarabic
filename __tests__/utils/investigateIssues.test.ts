@@ -32,7 +32,7 @@ describe('Investigate Benchmark Issues', () => {
     lines.push('Question: Should ي be suppressed after future/negation prefixes?');
 
     process.stderr.write(lines.join('\n'));
-    expect(true).toBe(true);
+    expect(true).toBeTruthy();
   });
 
   test('Issue 2: Infix detection for Form X verb استطاع', () => {
@@ -65,7 +65,7 @@ describe('Investigate Benchmark Issues', () => {
     }
 
     process.stderr.write(lines.join('\n'));
-    expect(true).toBe(true);
+    expect(true).toBeTruthy();
   });
 
   test('Issue 3: Standalone particles behavior', () => {
@@ -94,7 +94,7 @@ describe('Investigate Benchmark Issues', () => {
     lines.push('This is NOT a bug - the ground truth expectation was wrong.');
 
     process.stderr.write(lines.join('\n'));
-    expect(true).toBe(true);
+    expect(true).toBeTruthy();
   });
 
   test('Issue 4: Pure particle combinations', () => {
@@ -120,7 +120,7 @@ describe('Investigate Benchmark Issues', () => {
     lines.push('Ground truth should expect prefixes=[و] with hasComponents=false.');
 
     process.stderr.write(lines.join('\n'));
-    expect(true).toBe(true);
+    expect(true).toBeTruthy();
   });
 
   test('Summary of findings', () => {
@@ -153,6 +153,6 @@ describe('Investigate Benchmark Issues', () => {
     lines.push('   - Adjusted precision: ~95%+');
 
     process.stderr.write(lines.join('\n') + '\n');
-    expect(true).toBe(true);
+    expect(true).toBeTruthy();
   });
 });

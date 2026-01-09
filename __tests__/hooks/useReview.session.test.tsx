@@ -169,7 +169,7 @@ describe('useReview Hook - Session Management', () => {
 
       rerender();
 
-      expect(result.current.showTranslation).toBe(false);
+      expect(result.current.showTranslation).toBeFalsy();
       expect(result.current.currentMeaning).toBe('');
     });
   });
@@ -191,7 +191,7 @@ describe('useReview Hook - Session Management', () => {
 
       expect(result.current.currentWord).toBeNull();
       expect(result.current.wordQueue).toEqual([]);
-      expect(result.current.isComplete).toBe(true);
+      expect(result.current.isComplete).toBeTruthy();
     });
 
     test('should not process swipes when session complete', async () => {
@@ -494,9 +494,9 @@ describe('useReview Hook - Session Management', () => {
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
 
-      expect(result.current.isAudioPreloading).toBe(true);
+      expect(result.current.isAudioPreloading).toBeTruthy();
       expect(result.current.audioPreloadProgress).toBe(65);
-      expect(result.current.isAudioPreloadingComplete).toBe(false);
+      expect(result.current.isAudioPreloadingComplete).toBeFalsy();
     });
   });
 });

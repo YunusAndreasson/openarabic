@@ -100,7 +100,7 @@ describe('Subject Marker Semantic Validation', () => {
       // "it" can be subject pronoun for inanimate objects
       // ي is legitimate for 3rd person singular
       expect(analysis.prefixes).toBeDefined();
-      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ي')).toBe(true);
+      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ي')).toBeTruthy();
     });
 
     test('تصبح → "you become" SHOULD detect ت prefix (2nd person)', () => {
@@ -108,7 +108,7 @@ describe('Subject Marker Semantic Validation', () => {
 
       // "you" is subject pronoun matching ت prefix
       expect(analysis.prefixes).toBeDefined();
-      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ت')).toBe(true);
+      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ت')).toBeTruthy();
     });
   });
 
@@ -120,8 +120,8 @@ describe('Subject Marker Semantic Validation', () => {
       // ي = "he" (subject marker)
       expect(analysis.prefixes).toBeDefined();
       expect(analysis.prefixes?.length).toBe(2);
-      expect(analysis.prefixes?.some(p => p.arabicMatch === 'و')).toBe(true);
-      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ي')).toBe(true);
+      expect(analysis.prefixes?.some(p => p.arabicMatch === 'و')).toBeTruthy();
+      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ي')).toBeTruthy();
     });
 
     // Note: Some word combinations may not match due to specific validation rules

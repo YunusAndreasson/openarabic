@@ -15,7 +15,7 @@ describe('Pronoun Suffix Detection', () => {
 
     // Should detect ف as prefix
     const hasFa = analysis.prefixes.some(p => p.arabicMatch === 'ف');
-    expect(hasFa).toBe(true);
+    expect(hasFa).toBeTruthy();
 
     // Should detect هو as suffix (NEW!)
     expect(analysis.suffix).toBeDefined();
@@ -31,7 +31,7 @@ describe('Pronoun Suffix Detection', () => {
 
     // Should detect و as prefix
     const hasWaw = analysis.prefixes.some(p => p.arabicMatch === 'و');
-    expect(hasWaw).toBe(true);
+    expect(hasWaw).toBeTruthy();
 
     // Should detect هو as suffix (NEW!)
     expect(analysis.suffix).toBeDefined();
@@ -49,7 +49,7 @@ describe('Pronoun Suffix Detection', () => {
     // Both components detected
     expect(analysis.prefixes.length).toBeGreaterThan(0);
     expect(analysis.suffix).toBeDefined();
-    expect(analysis.hasComponents).toBe(true);
+    expect(analysis.hasComponents).toBeTruthy();
 
     // Remaining should be empty (all consumed by components)
     expect(analysis.remainingArabic).toBe('');

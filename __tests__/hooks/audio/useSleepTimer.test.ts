@@ -34,7 +34,7 @@ describe('useSleepTimer', () => {
       result.current.actions.startTimer(1);
     });
 
-    expect(result.current.state.isActive).toBe(true);
+    expect(result.current.state.isActive).toBeTruthy();
     expect(result.current.state.remainingTime).toBe(60);
 
     act(() => {
@@ -47,7 +47,7 @@ describe('useSleepTimer', () => {
       jest.advanceTimersByTime(59 * 1000);
     });
 
-    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.isActive).toBeFalsy();
     expect(result.current.state.remainingTime).toBe(0);
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
@@ -65,7 +65,7 @@ describe('useSleepTimer', () => {
       result.current.actions.cancelTimer();
     });
 
-    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.isActive).toBeFalsy();
     expect(result.current.state.remainingTime).toBe(0);
 
     act(() => {
@@ -82,26 +82,26 @@ describe('useSleepTimer', () => {
       result.current.actions.startTimer(5);
     });
 
-    expect(result.current.state.isActive).toBe(true);
+    expect(result.current.state.isActive).toBeTruthy();
 
     act(() => {
       result.current.actions.autoCancel();
     });
 
-    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.isActive).toBeFalsy();
     expect(result.current.state.remainingTime).toBe(0);
   });
 
   test('auto-cancel does nothing when timer is not active', () => {
     const { result } = renderHook(() => useSleepTimer());
 
-    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.isActive).toBeFalsy();
 
     act(() => {
       result.current.actions.autoCancel();
     });
 
-    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.isActive).toBeFalsy();
     expect(result.current.state.remainingTime).toBe(0);
   });
 
@@ -150,7 +150,7 @@ describe('useSleepTimer', () => {
       jest.advanceTimersByTime(60 * 1000);
     });
 
-    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.isActive).toBeFalsy();
     expect(result.current.state.remainingTime).toBe(0);
     expect(onComplete).toHaveBeenCalledTimes(1);
 
@@ -158,14 +158,14 @@ describe('useSleepTimer', () => {
       result.current.actions.startTimer(1);
     });
 
-    expect(result.current.state.isActive).toBe(true);
+    expect(result.current.state.isActive).toBeTruthy();
     expect(result.current.state.remainingTime).toBe(60);
 
     act(() => {
       jest.advanceTimersByTime(60 * 1000);
     });
 
-    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.isActive).toBeFalsy();
     expect(result.current.state.remainingTime).toBe(0);
     expect(onComplete).toHaveBeenCalledTimes(2);
   });

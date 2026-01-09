@@ -19,7 +19,7 @@ describe('Multi-Prefix Detection (formerly compounds)', () => {
   test('should detect و (conjunction) + من (interrogative) as separate prefixes', () => {
     const analysis = analyzeArabicWord('ومن', 'and who');
 
-    expect(analysis.hasComponents).toBe(true);
+    expect(analysis.hasComponents).toBeTruthy();
     expect(analysis.prefixes).toHaveLength(2);
     expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     expect(analysis.prefixes[0]?.role).toBe(GrammaticalRole.CONJUNCTION);

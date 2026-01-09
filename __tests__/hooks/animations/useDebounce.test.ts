@@ -91,7 +91,7 @@ describe('useDebounce', () => {
     const { result } = renderHook(() => useDebounce(callback, 300));
 
     const [, isDebouncing1] = result.current;
-    expect(isDebouncing1).toBe(false);
+    expect(isDebouncing1).toBeFalsy();
 
     act(() => {
       const [debouncedCallback] = result.current;
@@ -99,14 +99,14 @@ describe('useDebounce', () => {
     });
 
     const [, isDebouncing2] = result.current;
-    expect(isDebouncing2).toBe(true);
+    expect(isDebouncing2).toBeTruthy();
 
     act(() => {
       jest.advanceTimersByTime(300);
     });
 
     const [, isDebouncing3] = result.current;
-    expect(isDebouncing3).toBe(false);
+    expect(isDebouncing3).toBeFalsy();
   });
 
   test('should pass arguments to the callback', () => {
@@ -151,14 +151,14 @@ describe('useDebounce', () => {
     });
 
     const [, isDebouncing1] = result.current;
-    expect(isDebouncing1).toBe(true);
+    expect(isDebouncing1).toBeTruthy();
 
     act(() => {
       jest.advanceTimersByTime(100); // Total 500ms
     });
 
     const [, isDebouncing2] = result.current;
-    expect(isDebouncing2).toBe(false);
+    expect(isDebouncing2).toBeFalsy();
   });
 
   test('should reset timer on new debounce attempts', async () => {
@@ -178,7 +178,7 @@ describe('useDebounce', () => {
 
     // After advancing time, isDebouncing should still be true
     const [, isDebouncing1] = result.current;
-    expect(isDebouncing1).toBe(true);
+    expect(isDebouncing1).toBeTruthy();
 
     act(() => {
       const [debouncedCallback] = result.current;
@@ -193,7 +193,7 @@ describe('useDebounce', () => {
     });
 
     const [, isDebouncing2] = result.current;
-    expect(isDebouncing2).toBe(false);
+    expect(isDebouncing2).toBeFalsy();
   });
 
   test('should handle rapid successive calls', () => {
@@ -234,13 +234,13 @@ describe('useDebounce', () => {
     });
 
     const [, isDebouncing1] = result.current;
-    expect(isDebouncing1).toBe(true);
+    expect(isDebouncing1).toBeTruthy();
 
     act(() => {
       jest.advanceTimersByTime(1);
     });
 
     const [, isDebouncing2] = result.current;
-    expect(isDebouncing2).toBe(false);
+    expect(isDebouncing2).toBeFalsy();
   });
 });

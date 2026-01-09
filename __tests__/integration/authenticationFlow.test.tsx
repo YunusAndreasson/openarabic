@@ -113,7 +113,7 @@ describe('Authentication Flow', () => {
     test('starts in loading state', () => {
       const { result } = renderHook(() => useProvideAuth());
 
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isLoading).toBeTruthy();
     });
 
     test('retrieves existing session on mount', async () => {
@@ -125,12 +125,12 @@ describe('Authentication Flow', () => {
       const { result } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       expect(result.current.session).toEqual(mockSession);
       expect(result.current.user).toEqual(mockSession.user);
-      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.isAuthenticated).toBeTruthy();
     });
 
     test('handles no existing session gracefully', async () => {
@@ -142,12 +142,12 @@ describe('Authentication Flow', () => {
       const { result } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       expect(result.current.session).toBeNull();
       expect(result.current.user).toBeNull();
-      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.isAuthenticated).toBeFalsy();
     });
 
     test('handles session retrieval errors', async () => {
@@ -160,7 +160,7 @@ describe('Authentication Flow', () => {
       const { result } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       expect(result.current.session).toBeNull();
@@ -176,7 +176,7 @@ describe('Authentication Flow', () => {
       const { result } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       let refreshResult: unknown;
@@ -199,7 +199,7 @@ describe('Authentication Flow', () => {
       const { result } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       let refreshResult: unknown;
@@ -209,7 +209,7 @@ describe('Authentication Flow', () => {
 
       expect(refreshResult).toEqual(mockSession);
       expect(result.current.session).toEqual(mockSession);
-      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.isAuthenticated).toBeTruthy();
     });
 
     test('refreshSession retries on error up to max attempts', async () => {
@@ -223,7 +223,7 @@ describe('Authentication Flow', () => {
       const { result } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       // Call refreshSession - it will retry with exponential backoff
@@ -255,7 +255,7 @@ describe('Authentication Flow', () => {
       const { result } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       expect(result.current.session).toBeNull();
@@ -273,7 +273,7 @@ describe('Authentication Flow', () => {
         expect(result.current.session).toEqual(mockSession);
       });
 
-      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.isAuthenticated).toBeTruthy();
     });
 
     test('clears session on SIGNED_OUT event', async () => {
@@ -300,7 +300,7 @@ describe('Authentication Flow', () => {
         expect(result.current.session).toBeNull();
       });
 
-      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.isAuthenticated).toBeFalsy();
     });
 
     test('updates session on TOKEN_REFRESHED event', async () => {
@@ -347,7 +347,7 @@ describe('Authentication Flow', () => {
       const { result } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       // Clear the initial call
@@ -373,7 +373,7 @@ describe('Authentication Flow', () => {
       const { result } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       mockGetSession.mockClear();
@@ -397,7 +397,7 @@ describe('Authentication Flow', () => {
       const { result } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       expect(typeof result.current.refreshSession).toBe('function');
@@ -409,7 +409,7 @@ describe('Authentication Flow', () => {
       const { result, rerender } = renderHook(() => useProvideAuth());
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       const firstResult = result.current;

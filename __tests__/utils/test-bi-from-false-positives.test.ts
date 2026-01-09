@@ -28,7 +28,7 @@ describe('Potential false positives if "from" added to ب', () => {
     const analysis = analyzeArabicWord('بعيد', 'far from');
 
     // Currently: ب does NOT match "from"
-    expect(analysis.prefixes.some(p => p.arabicMatch === 'ب')).toBe(false);
+    expect(analysis.prefixes.some(p => p.arabicMatch === 'ب')).toBeFalsy();
 
     // If we add "from" to ب patterns: ب WOULD match "from"
     // This would be WRONG because:
@@ -41,7 +41,7 @@ describe('Potential false positives if "from" added to ب', () => {
     const analysis = analyzeArabicWord('بدأ', 'started from');
 
     // Currently: ب does NOT match
-    expect(analysis.prefixes.some(p => p.arabicMatch === 'ب')).toBe(false);
+    expect(analysis.prefixes.some(p => p.arabicMatch === 'ب')).toBeFalsy();
 
     // If "from" added: Would incorrectly detect ب as prefix
     // But "from" is actually من (the next word), not ب
@@ -53,7 +53,7 @@ describe('Potential false positives if "from" added to ب', () => {
     const analysis = analyzeArabicWord('بالله', 'from Allah');
 
     // Currently: Does not detect ب because "from" not in patterns
-    expect(analysis.prefixes.some(p => p.arabicMatch === 'ب')).toBe(false);
+    expect(analysis.prefixes.some(p => p.arabicMatch === 'ب')).toBeFalsy();
 
     // If we add "from": Would detect ب
     // Question: Is this semantically correct?
@@ -66,7 +66,7 @@ describe('Potential false positives if "from" added to ب', () => {
     const analysis = analyzeArabicWord('بمرأى', 'visible from');
 
     // Currently: Does not detect ب
-    expect(analysis.prefixes.some(p => p.arabicMatch === 'ب')).toBe(false);
+    expect(analysis.prefixes.some(p => p.arabicMatch === 'ب')).toBeFalsy();
 
     // If "from" added: Would detect ب
     // But "visible from" is idiomatic - literal is "in sight"

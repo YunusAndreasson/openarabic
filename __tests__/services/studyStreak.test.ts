@@ -274,7 +274,7 @@ describe('StudyStreakService', () => {
       const result = ReadingStreakService.calculateStreakPeriods(activities);
 
       expect(result).toHaveLength(1);
-      expect(result[0]?.isActive).toBe(true);
+      expect(result[0]?.isActive).toBeTruthy();
     });
 
     test('should mark most recent period as active if ends yesterday', () => {
@@ -284,7 +284,7 @@ describe('StudyStreakService', () => {
       const result = ReadingStreakService.calculateStreakPeriods(activities);
 
       expect(result).toHaveLength(1);
-      expect(result[0]?.isActive).toBe(true);
+      expect(result[0]?.isActive).toBeTruthy();
     });
 
     test('should mark old period as inactive', () => {
@@ -293,7 +293,7 @@ describe('StudyStreakService', () => {
       const result = ReadingStreakService.calculateStreakPeriods(activities);
 
       expect(result).toHaveLength(1);
-      expect(result[0]?.isActive).toBe(false);
+      expect(result[0]?.isActive).toBeFalsy();
     });
 
     test('should handle single day period', () => {
@@ -450,7 +450,7 @@ describe('StudySessionStreakService', () => {
       const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
 
       expect(result).toHaveLength(7);
-      expect(result.every(day => !day.hasActivity)).toBe(true);
+      expect(result.every(day => !day.hasActivity)).toBeTruthy();
     });
   });
 

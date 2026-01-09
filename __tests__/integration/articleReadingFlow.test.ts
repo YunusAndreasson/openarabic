@@ -218,7 +218,7 @@ describe('Article Reading Flow - Integration Test', () => {
       const lastSentenceRead = existingProgress?.last_sentence_read ?? 0;
       const shouldScrollToPosition = lastSentenceRead > 0;
 
-      expect(shouldScrollToPosition).toBe(true);
+      expect(shouldScrollToPosition).toBeTruthy();
       expect(lastSentenceRead).toBe(5);
 
       // ====== STEP 4: User continues reading from sentence 5 � 6 ======

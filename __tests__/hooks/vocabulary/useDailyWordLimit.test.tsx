@@ -123,7 +123,7 @@ describe('useDailyWordLimit', () => {
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
 
       const success = await result.current.incrementDailyWordCount();
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
     });
 
     test('returns true when unlimited (dailyWordLimit = 0)', async () => {
@@ -134,7 +134,7 @@ describe('useDailyWordLimit', () => {
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper: unlimitedWrapper });
 
       const success = await result.current.incrementDailyWordCount();
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
     });
   });
 
@@ -147,14 +147,14 @@ describe('useDailyWordLimit', () => {
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper: unlimitedWrapper });
 
       const canAdd = await result.current.canAddWord();
-      expect(canAdd).toBe(true);
+      expect(canAdd).toBeTruthy();
     });
 
     test('returns true when under limit', async () => {
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
 
       const canAdd = await result.current.canAddWord();
-      expect(canAdd).toBe(true);
+      expect(canAdd).toBeTruthy();
     });
   });
 
@@ -176,14 +176,14 @@ describe('useDailyWordLimit', () => {
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper: unlimitedWrapper });
 
       const approaching = await result.current.isApproachingLimit();
-      expect(approaching).toBe(false);
+      expect(approaching).toBeFalsy();
     });
 
     test('returns false when under 80% threshold', async () => {
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
 
       const approaching = await result.current.isApproachingLimit();
-      expect(approaching).toBe(false);
+      expect(approaching).toBeFalsy();
     });
   });
 

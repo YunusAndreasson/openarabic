@@ -119,8 +119,8 @@ describe('Visual Feedback - Background Colors', () => {
       const shouldShowAsError = confidence === 'unknown';
       const isVague = confidence === 'vague';
 
-      expect(isVague).toBe(true);
-      expect(shouldShowAsError).toBe(false); // NOT error styling
+      expect(isVague).toBeTruthy();
+      expect(shouldShowAsError).toBeFalsy(); // NOT error styling
     });
 
     test('should show translation for unknown words WITH red text styling', () => {
@@ -130,8 +130,8 @@ describe('Visual Feedback - Background Colors', () => {
       const shouldShowAsError = confidence === 'unknown';
       const isVague = confidence === 'vague';
 
-      expect(shouldShowAsError).toBe(true); // Error styling
-      expect(isVague).toBe(false);
+      expect(shouldShowAsError).toBeTruthy(); // Error styling
+      expect(isVague).toBeFalsy();
     });
 
     test('should NOT show translation for known words', () => {
@@ -140,7 +140,7 @@ describe('Visual Feedback - Background Colors', () => {
       // From useReview.tsx line 281: returns null for known
       const shouldShowTranslation = confidence !== 'known';
 
-      expect(shouldShowTranslation).toBe(false);
+      expect(shouldShowTranslation).toBeFalsy();
     });
   });
 

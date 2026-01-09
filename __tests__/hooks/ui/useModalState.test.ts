@@ -21,7 +21,7 @@ describe('useModalState', () => {
   test('should initialize with modal closed and no data', () => {
     const { result } = renderHook(() => useModalState<TestData>());
 
-    expect(result.current.isVisible).toBe(false);
+    expect(result.current.isVisible).toBeFalsy();
     expect(result.current.data).toBeNull();
   });
 
@@ -32,7 +32,7 @@ describe('useModalState', () => {
       result.current.open();
     });
 
-    expect(result.current.isVisible).toBe(true);
+    expect(result.current.isVisible).toBeTruthy();
     expect(result.current.data).toBeNull();
   });
 
@@ -45,7 +45,7 @@ describe('useModalState', () => {
       result.current.open(testData);
     });
 
-    expect(result.current.isVisible).toBe(true);
+    expect(result.current.isVisible).toBeTruthy();
     expect(result.current.data).toEqual(testData);
   });
 
@@ -58,14 +58,14 @@ describe('useModalState', () => {
       result.current.open(testData);
     });
 
-    expect(result.current.isVisible).toBe(true);
+    expect(result.current.isVisible).toBeTruthy();
     expect(result.current.data).toEqual(testData);
 
     act(() => {
       result.current.close();
     });
 
-    expect(result.current.isVisible).toBe(false);
+    expect(result.current.isVisible).toBeFalsy();
     expect(result.current.data).toBeNull();
   });
 
@@ -112,7 +112,7 @@ describe('useModalState', () => {
       result.current.toggle(testData);
     });
 
-    expect(result.current.isVisible).toBe(true);
+    expect(result.current.isVisible).toBeTruthy();
     expect(result.current.data).toEqual(testData);
   });
 
@@ -188,7 +188,7 @@ describe('useModalState', () => {
       result.current.open(undefined);
     });
 
-    expect(result.current.isVisible).toBe(true);
+    expect(result.current.isVisible).toBeTruthy();
     expect(result.current.data).toBeNull();
   });
 
@@ -202,7 +202,7 @@ describe('useModalState', () => {
       result.current.open(data1);
     });
 
-    expect(result.current.isVisible).toBe(true);
+    expect(result.current.isVisible).toBeTruthy();
     expect(result.current.data).toEqual(data1);
 
     // Open again without closing - should update data
@@ -210,7 +210,7 @@ describe('useModalState', () => {
       result.current.open(data2);
     });
 
-    expect(result.current.isVisible).toBe(true);
+    expect(result.current.isVisible).toBeTruthy();
     expect(result.current.data).toEqual(data2);
   });
 

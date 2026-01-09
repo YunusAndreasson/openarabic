@@ -108,7 +108,7 @@ describe('Complete Practice Session Flow - Integration Test', () => {
         },
       );
 
-      expect(word1Review).toBe(true);
+      expect(word1Review).toBeTruthy();
       expect(mockService.updateWordAndReview).toHaveBeenCalledWith(
         userId,
         101,
@@ -136,7 +136,7 @@ describe('Complete Practice Session Flow - Integration Test', () => {
         },
       );
 
-      expect(word2Review).toBe(true);
+      expect(word2Review).toBeTruthy();
 
       // ====== STEP 4: Review third word (KNOWN) ======
       const word3Review = await studyWordsFSRSService.updateWordAndReview(
@@ -155,7 +155,7 @@ describe('Complete Practice Session Flow - Integration Test', () => {
         },
       );
 
-      expect(word3Review).toBe(true);
+      expect(word3Review).toBeTruthy();
 
       // ====== STEP 5: Vague word reappears ======
       // Simulate spacing algorithm bringing back word 2
@@ -176,13 +176,13 @@ describe('Complete Practice Session Flow - Integration Test', () => {
         },
       );
 
-      expect(word2SecondReview).toBe(true);
+      expect(word2SecondReview).toBeTruthy();
 
       // ====== STEP 6: Session completion check ======
       // All words reviewed and marked as known
       const sessionComplete = true; // Logic: knownWords === totalWords
 
-      expect(sessionComplete).toBe(true);
+      expect(sessionComplete).toBeTruthy();
 
       // ====== STEP 7: Calculate session metrics ======
       const sessionMetrics = {

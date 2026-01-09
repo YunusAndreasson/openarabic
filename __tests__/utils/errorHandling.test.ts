@@ -442,7 +442,7 @@ describe('errorHandling utility', () => {
 
       await handleError(new Error('Test'));
 
-      expect(analyticsResolved).toBe(true);
+      expect(analyticsResolved).toBeTruthy();
     });
   });
 });

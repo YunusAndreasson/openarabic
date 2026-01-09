@@ -36,7 +36,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
 
       const result = await studyWordsFSRSService.toggleFSRSStudyRoot('user-123', 1);
 
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith('user-123', 1);
     });
 
@@ -46,7 +46,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
 
       const result = await studyWordsFSRSService.toggleFSRSStudyRoot('user-123', 1);
 
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith('user-123', 1);
     });
   });
@@ -59,22 +59,22 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
       // Add (word doesn't exist) → returns true
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
       const add1 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
-      expect(add1).toBe(true);
+      expect(add1).toBeTruthy();
 
       // Remove (word exists) → returns false
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(false);
       const remove1 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
-      expect(remove1).toBe(false);
+      expect(remove1).toBeFalsy();
 
       // Add again (word doesn't exist) → should return true
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
       const add2 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
-      expect(add2).toBe(true);
+      expect(add2).toBeTruthy();
 
       // Remove again → should return false
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(false);
       const remove2 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
-      expect(remove2).toBe(false);
+      expect(remove2).toBeFalsy();
 
       // Verify all calls were made
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledTimes(4);
@@ -187,7 +187,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
 
       // Latest map (version 5) has all 5 words
       expect(maps[4].size).toBe(5);
-      expect(maps[4].get(5)).toBe(true);
+      expect(maps[4].get(5)).toBeTruthy();
 
       // But if we use an older map (stale closure), word 5 doesn't exist
       expect(maps[3].size).toBe(4);

@@ -109,13 +109,13 @@ describe('useArticlesByDueWords', () => {
     test('articles is an array', () => {
       const { result } = renderHook(() => useArticlesByDueWords(mockUserId));
 
-      expect(Array.isArray(result.current.articles)).toBe(true);
+      expect(Array.isArray(result.current.articles)).toBeTruthy();
     });
 
     test('dueWordRootIds is a Set', () => {
       const { result } = renderHook(() => useArticlesByDueWords(mockUserId));
 
-      expect(result.current.dueWordRootIds instanceof Set).toBe(true);
+      expect(result.current.dueWordRootIds instanceof Set).toBeTruthy();
     });
   });
 
@@ -125,7 +125,7 @@ describe('useArticlesByDueWords', () => {
 
       expect(result.current.articles).toEqual([]);
       expect(result.current.dueWordsCount).toBe(0);
-      expect(result.current.hasEnoughArticles).toBe(false);
+      expect(result.current.hasEnoughArticles).toBeFalsy();
     });
 
     test('returns empty dueWordRootIds when userId is undefined', () => {
@@ -150,9 +150,9 @@ describe('useArticlesByDueWords', () => {
       const { result } = renderHook(() => useArticlesByDueWords(mockUserId));
 
       expect(result.current.dueWordRootIds.size).toBe(3);
-      expect(result.current.dueWordRootIds.has(1)).toBe(true);
-      expect(result.current.dueWordRootIds.has(2)).toBe(true);
-      expect(result.current.dueWordRootIds.has(3)).toBe(true);
+      expect(result.current.dueWordRootIds.has(1)).toBeTruthy();
+      expect(result.current.dueWordRootIds.has(2)).toBeTruthy();
+      expect(result.current.dueWordRootIds.has(3)).toBeTruthy();
     });
 
     test('returns due words count', () => {
@@ -238,13 +238,13 @@ describe('useArticlesByDueWords', () => {
 
       const { result } = renderHook(() => useArticlesByDueWords(mockUserId));
 
-      expect(result.current.hasEnoughArticles).toBe(true);
+      expect(result.current.hasEnoughArticles).toBeTruthy();
     });
 
     test('returns false when no articles', () => {
       const { result } = renderHook(() => useArticlesByDueWords(mockUserId));
 
-      expect(result.current.hasEnoughArticles).toBe(false);
+      expect(result.current.hasEnoughArticles).toBeFalsy();
     });
   });
 
@@ -260,7 +260,7 @@ describe('useArticlesByDueWords', () => {
 
       const { result } = renderHook(() => useArticlesByDueWords(mockUserId));
 
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isLoading).toBeTruthy();
     });
 
     test('isLoading false when all loaded', () => {
@@ -268,7 +268,7 @@ describe('useArticlesByDueWords', () => {
 
       const { result } = renderHook(() => useArticlesByDueWords(mockUserId));
 
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isLoading).toBeFalsy();
     });
   });
 
@@ -290,7 +290,7 @@ describe('useArticlesByDueWords', () => {
       const { result } = renderHook(() => useArticlesByDueWords(mockUserId, 0));
 
       expect(result.current.articles).toEqual([]);
-      expect(result.current.hasEnoughArticles).toBe(false);
+      expect(result.current.hasEnoughArticles).toBeFalsy();
     });
   });
 });

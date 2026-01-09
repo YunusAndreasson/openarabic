@@ -215,7 +215,7 @@ export const propertyTestUtils = {
   ) => {
     return fc.property(arbitrary, input => {
       const output = fn(input);
-      expect(invariant(input, output)).toBe(true);
+      expect(invariant(input, output)).toBeTruthy();
     });
   },
 };

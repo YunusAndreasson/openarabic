@@ -321,18 +321,18 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // Step 1: Check initial state
       expect(srsMock.words).toEqual(['single-word']);
-      expect(srsMock.isComplete).toBe(false);
+      expect(srsMock.isComplete).toBeFalsy();
       expect(srsMock.getNextAvailableWord()).toBe('single-word');
 
       // Step 2: Manually call processWord to see what happens
       srsMock.processWord('single-word', false);
 
       // Step 3: Check the state after processing
-      expect(srsMock.processedWords.has('single-word')).toBe(true);
+      expect(srsMock.processedWords.has('single-word')).toBeTruthy();
       expect(srsMock.getNextAvailableWord()).toBeNull();
 
       // Step 4: Check if completion was triggered
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
     });
 
     test('should debug step by step what happens when processing a word', () => {
@@ -340,17 +340,17 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // Step 1: Check initial state
       expect(srsMock.getNextAvailableWord()).toBe('single-word');
-      expect(srsMock.isComplete).toBe(false);
+      expect(srsMock.isComplete).toBeFalsy();
 
       // Step 2: Process word as known
       srsMock.processWord('single-word', false);
 
       // Step 3: Check what happened
-      expect(srsMock.processedWords.has('single-word')).toBe(true);
+      expect(srsMock.processedWords.has('single-word')).toBeTruthy();
       expect(srsMock.getNextAvailableWord()).toBeNull();
 
       // Step 4: Check completion state
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
     });
   });
 
@@ -370,7 +370,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(getByTestId('current-word').props.children).toBe('single-word');
 
       // Session should NOT complete until word is actually reviewed
-      expect(srsMock.isComplete).toBe(false);
+      expect(srsMock.isComplete).toBeFalsy();
       expect(srsMock.processedWords.size).toBe(0);
     });
 
@@ -393,7 +393,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       });
 
       // Session should complete after reviewing the only word
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
       expect(srsMock.processedWords.size).toBe(1);
     });
 
@@ -416,8 +416,8 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       });
 
       // Session should complete because word is in cooldown
-      expect(srsMock.isComplete).toBe(true);
-      expect(srsMock.cooldownWords.has('single-word')).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
+      expect(srsMock.cooldownWords.has('single-word')).toBeTruthy();
     });
 
     test('should NOT complete immediately when multiple words are due', async () => {
@@ -439,7 +439,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // Should still be in session, not complete
       expect(queryByTestId('completion-screen')).toBeNull();
-      expect(srsMock.isComplete).toBe(false);
+      expect(srsMock.isComplete).toBeFalsy();
       expect(srsMock.processedWords.size).toBe(1);
     });
   });
@@ -458,8 +458,8 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       longCooldown.updateCooldown('word1');
 
       // Both should now have word1 in cooldown
-      expect(shortCooldown.cooldownWords.has('word1')).toBe(true);
-      expect(longCooldown.cooldownWords.has('word1')).toBe(true);
+      expect(shortCooldown.cooldownWords.has('word1')).toBeTruthy();
+      expect(longCooldown.cooldownWords.has('word1')).toBeTruthy();
 
       // Next available word should be word2
       expect(shortCooldown.getNextAvailableWord()).toBe('word2');
@@ -481,7 +481,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       // FIXED: Session should show completion screen immediately because no words available
       // No need to press start - it should already be complete
       expect(queryByTestId('completion-screen')).toBeTruthy();
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
 
       // FIXED: Start button should not be visible when session is complete
       expect(queryByTestId('start')).toBeNull();
@@ -513,7 +513,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
         expect(queryByTestId('completion-screen')).toBeTruthy();
       });
 
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
       expect(srsMock.cooldownWords.size).toBe(2);
     });
   });
@@ -542,7 +542,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       });
 
       // Verify first word was processed
-      expect(srsMock.processedWords.has(firstWord)).toBe(true);
+      expect(srsMock.processedWords.has(firstWord)).toBeTruthy();
     });
 
     test('should handle mixed known/unknown responses correctly', async () => {
@@ -572,7 +572,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       // Verify processing
       expect(srsMock.processedWords.size).toBe(2);
       expect(srsMock.cooldownWords.size).toBe(1);
-      expect(srsMock.cooldownWords.has('word2')).toBe(true);
+      expect(srsMock.cooldownWords.has('word2')).toBeTruthy();
     });
   });
 
@@ -600,7 +600,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // FIXED: Session should complete immediately after single word is known
       // No need to wait for progress element since session completes
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
       expect(srsMock.processedWords.size).toBe(1);
     });
 
@@ -668,7 +668,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       });
 
       // FIXED: Session should complete after all words are known
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
       expect(srsMock.processedWords.size).toBe(2);
     });
   });
@@ -682,16 +682,16 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // Test 2: After adding word to processed
       srsMock.processedWords.add('single-word');
-      expect(srsMock.processedWords.has('single-word')).toBe(true);
+      expect(srsMock.processedWords.has('single-word')).toBeTruthy();
 
       // Test 3: Check if getNextAvailableWord now returns null
       expect(srsMock.getNextAvailableWord()).toBeNull();
 
       // Test 4: Check if checkCompletion returns true
-      expect(srsMock.checkCompletion()).toBe(true);
+      expect(srsMock.checkCompletion()).toBeTruthy();
 
       // Test 5: Check if isComplete was set to true
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
     });
   });
 
@@ -708,7 +708,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.getNextAvailableWord()).toBeNull();
 
       // Verify session is complete
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
     });
 
     test('should verify session completes when all words go into cooldown during review', () => {
@@ -716,21 +716,21 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // Start with words available
       expect(srsMock.getNextAvailableWord()).toBe('word1');
-      expect(srsMock.isComplete).toBe(false);
+      expect(srsMock.isComplete).toBeFalsy();
 
       // Process first word as unknown (goes into cooldown)
       srsMock.processWord('word1', true);
 
       // Should still have word2 available
       expect(srsMock.getNextAvailableWord()).toBe('word2');
-      expect(srsMock.isComplete).toBe(false);
+      expect(srsMock.isComplete).toBeFalsy();
 
       // Process second word as unknown (goes into cooldown)
       srsMock.processWord('word2', true);
 
       // Now no words available, session should complete
       expect(srsMock.getNextAvailableWord()).toBeNull();
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
     });
 
     test('should verify cooldown timing works correctly', () => {
@@ -738,7 +738,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // Put word in cooldown
       srsMock.updateCooldown('word1');
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
 
       // Mock time passing (1 hour + 1 minute)
       const mockTime = Date.now() + 1 * 60 * 60 * 1000 + 1 * 60 * 1000;
@@ -749,7 +749,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // Word should now be available again
       expect(srsMock.getNextAvailableWord()).toBe('word1');
-      expect(srsMock.isComplete).toBe(false);
+      expect(srsMock.isComplete).toBeFalsy();
 
       // Restore Date.now and verify word goes back into cooldown
       jest.restoreAllMocks();
@@ -759,7 +759,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // Word should be in cooldown again with current time
       expect(srsMock.getNextAvailableWord()).toBeNull();
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
     });
 
     test('should verify no test starts when all word categories are in cooldown', () => {
@@ -779,7 +779,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(srsMock.getNextAvailableWord()).toBeNull();
 
       // Verify session is complete and cannot start
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
 
       // Verify that even if we try to start a session, it immediately completes
       const testSession = createSRSMock(
@@ -792,7 +792,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       testSession.updateCooldown('all-word1');
 
       // Session should be complete before any interaction
-      expect(testSession.isComplete).toBe(true);
+      expect(testSession.isComplete).toBeTruthy();
       expect(testSession.getNextAvailableWord()).toBeNull();
     });
   });
@@ -864,7 +864,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       const shouldPreventReinit = isComplete && dueWordsLength === 0;
 
       // This should be true when session is complete and no words available
-      expect(shouldPreventReinit).toBe(true);
+      expect(shouldPreventReinit).toBeTruthy();
 
       // The completionTriggered guard should also work
       const completionTriggered = true;
@@ -872,7 +872,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // These conditions should prevent further processing
       const shouldPreventUpdate = isComplete || completionTriggered || isProcessingUpdate;
-      expect(shouldPreventUpdate).toBe(true);
+      expect(shouldPreventUpdate).toBeTruthy();
     });
 
     test('should validate completion state guards work correctly', () => {
@@ -887,7 +887,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       guards.forEach(guard => {
         const shouldPreventUpdate =
           guard.isComplete || guard.completionTriggered || guard.isProcessingUpdate;
-        expect(shouldPreventUpdate).toBe(true);
+        expect(shouldPreventUpdate).toBeTruthy();
       });
     });
 
@@ -897,14 +897,14 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // Complete the session
       srsMock.processWord('word1', false);
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
 
       // Try to process another word - should be prevented by guards
       const canProcessMore = !srsMock.isComplete;
-      expect(canProcessMore).toBe(false);
+      expect(canProcessMore).toBeFalsy();
 
       // The session should remain complete
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
     });
 
     test('should prevent multiple completion callbacks', () => {
@@ -913,7 +913,7 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
 
       // Complete the session
       srsMock.processWord('word1', false);
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
 
       // Simulate the completionTriggered guard
       let completionCallCount = 0;
@@ -963,12 +963,12 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       });
 
       // Session should complete after reviewing the only word
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
       expect(srsMock.processedWords.size).toBe(1);
 
       // CRITICAL: The word should only appear once in the session
       // This prevents the "last word repeated twice" bug
-      expect(srsMock.processedWords.has('last-word')).toBe(true);
+      expect(srsMock.processedWords.has('last-word')).toBeTruthy();
       expect(srsMock.processedWords.size).toBe(1);
     });
 
@@ -1003,10 +1003,10 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       });
 
       // Session should complete with exactly 2 words processed
-      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.isComplete).toBeTruthy();
       expect(srsMock.processedWords.size).toBe(2);
-      expect(srsMock.processedWords.has('word1')).toBe(true);
-      expect(srsMock.processedWords.has('word2')).toBe(true);
+      expect(srsMock.processedWords.has('word1')).toBeTruthy();
+      expect(srsMock.processedWords.has('word2')).toBeTruthy();
 
       // CRITICAL: No word should appear more than once
       const processedArray = Array.from(srsMock.processedWords);

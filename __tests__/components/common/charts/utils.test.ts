@@ -29,7 +29,7 @@ describe('charts/utils', () => {
         // State 0 + reps 0 = minimal score
         expect(score).toBeGreaterThanOrEqual(0);
         expect(score).toBeLessThanOrEqual(100);
-        expect(Number.isNaN(score)).toBe(false);
+        expect(Number.isNaN(score)).toBeFalsy();
       });
 
       test('should handle undefined StudyWord fields', () => {
@@ -56,7 +56,7 @@ describe('charts/utils', () => {
         // Should detect NaN and use defaults
         expect(score).toBeGreaterThanOrEqual(0);
         expect(score).toBeLessThanOrEqual(100);
-        expect(Number.isNaN(score)).toBe(false);
+        expect(Number.isNaN(score)).toBeFalsy();
       });
     });
 
@@ -264,7 +264,7 @@ describe('charts/utils', () => {
 
         // Should still be valid and capped
         expect(score).toBe(100);
-        expect(Number.isFinite(score)).toBe(true);
+        expect(Number.isFinite(score)).toBeTruthy();
       });
     });
 

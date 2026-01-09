@@ -131,7 +131,7 @@ describe('Translation Normalization', () => {
       test('should detect components for "wa la" → "and not"', () => {
         const analysis = analyzeArabicWord('ولا', 'wa la');
 
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
         expect(analysis.prefixes.length).toBeGreaterThan(0);
       });
 
@@ -141,7 +141,7 @@ describe('Translation Normalization', () => {
         const hasWaw = analysis.prefixes.some(
           p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
         );
-        expect(hasWaw).toBe(true);
+        expect(hasWaw).toBeTruthy();
       });
 
       test('should detect لا (not) as second prefix', () => {
@@ -150,13 +150,13 @@ describe('Translation Normalization', () => {
         const hasLa = analysis.prefixes.some(
           p => p.arabicMatch === 'لا' && p.englishMatches.includes('not'),
         );
-        expect(hasLa).toBe(true);
+        expect(hasLa).toBeTruthy();
       });
 
       test('should detect components for "fa la" → "so not"', () => {
         const analysis = analyzeArabicWord('فلا', 'fa la');
 
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
 
         const hasFa = analysis.prefixes.some(
           p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
@@ -165,14 +165,14 @@ describe('Translation Normalization', () => {
           p => p.arabicMatch === 'لا' && p.englishMatches.includes('not'),
         );
 
-        expect(hasFa).toBe(true);
-        expect(hasLa).toBe(true);
+        expect(hasFa).toBeTruthy();
+        expect(hasLa).toBeTruthy();
       });
 
       test('should detect components for "wa lam" → "and did not"', () => {
         const analysis = analyzeArabicWord('ولم', 'wa lam');
 
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
 
         const hasWaw = analysis.prefixes.some(
           p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
@@ -181,8 +181,8 @@ describe('Translation Normalization', () => {
           p => p.arabicMatch === 'لم' && p.englishMatches.some(m => m.includes('not')),
         );
 
-        expect(hasWaw).toBe(true);
-        expect(hasLam).toBe(true);
+        expect(hasWaw).toBeTruthy();
+        expect(hasLam).toBeTruthy();
       });
     });
 
@@ -263,8 +263,8 @@ describe('Translation Normalization', () => {
         const analysis2 = analyzeArabicWord('ولا', 'and not');
 
         // Both should detect components
-        expect(analysis1.hasComponents).toBe(true);
-        expect(analysis2.hasComponents).toBe(true);
+        expect(analysis1.hasComponents).toBeTruthy();
+        expect(analysis2.hasComponents).toBeTruthy();
 
         // Components should be the same
         expect(analysis1.prefixes.length).toBe(analysis2.prefixes.length);
@@ -284,7 +284,7 @@ describe('Translation Normalization', () => {
         const analysis = analyzeArabicWord('كتاب', 'book');
 
         // Single word should not have components
-        expect(analysis.hasComponents).toBe(false);
+        expect(analysis.hasComponents).toBeFalsy();
       });
 
       test('should not break words without transliterations', () => {
@@ -294,7 +294,7 @@ describe('Translation Normalization', () => {
         const hasWaw = analysis.prefixes.some(
           p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
         );
-        expect(hasWaw).toBe(true);
+        expect(hasWaw).toBeTruthy();
       });
     });
 
@@ -302,14 +302,14 @@ describe('Translation Normalization', () => {
       test('should normalize three-component combinations: "wa bi al"', () => {
         const analysis = analyzeArabicWord('وبال', 'wa bi al');
 
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
 
         // Should detect و (and) at minimum
         const hasWaw = analysis.prefixes.some(
           p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
         );
 
-        expect(hasWaw).toBe(true);
+        expect(hasWaw).toBeTruthy();
         // Note: Three-component detection may not detect all components
         // depending on the complexity of the word structure
       });
@@ -317,7 +317,7 @@ describe('Translation Normalization', () => {
       test('should normalize مما "mi ma" → "for what"', () => {
         const analysis = analyzeArabicWord('مما', 'mi ma');
 
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
 
         // Should detect من + ما - normalized to "for what"
         // Note: The actual component detection depends on arabicWordComponents.ts rules

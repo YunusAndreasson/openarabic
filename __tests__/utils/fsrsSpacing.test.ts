@@ -101,7 +101,7 @@ describe('fsrsSpacing', () => {
 
       const priority = calculateWordPriority(word);
       expect(typeof priority).toBe('number');
-      expect(isNaN(priority)).toBe(false);
+      expect(isNaN(priority)).toBeFalsy();
     });
 
     test('should calculate different priorities for different stability values', () => {
@@ -154,7 +154,7 @@ describe('fsrsSpacing', () => {
 
       const priority = calculateWordPriority(word);
       expect(typeof priority).toBe('number');
-      expect(isNaN(priority)).toBe(false);
+      expect(isNaN(priority)).toBeFalsy();
     });
 
     test('should handle null difficulty with default value', () => {
@@ -165,7 +165,7 @@ describe('fsrsSpacing', () => {
 
       const priority = calculateWordPriority(word);
       expect(typeof priority).toBe('number');
-      expect(isNaN(priority)).toBe(false);
+      expect(isNaN(priority)).toBeFalsy();
     });
 
     test('should handle null lapses with default value', () => {
@@ -176,7 +176,7 @@ describe('fsrsSpacing', () => {
 
       const priority = calculateWordPriority(word);
       expect(typeof priority).toBe('number');
-      expect(isNaN(priority)).toBe(false);
+      expect(isNaN(priority)).toBeFalsy();
     });
 
     test('should handle words not yet due (future due date)', () => {
@@ -220,7 +220,7 @@ describe('fsrsSpacing', () => {
 
       const priority = calculateWordPriority(newWord);
       expect(typeof priority).toBe('number');
-      expect(isNaN(priority)).toBe(false);
+      expect(isNaN(priority)).toBeFalsy();
     });
   });
 
@@ -229,7 +229,7 @@ describe('fsrsSpacing', () => {
       const state = createSpacingState();
       updateSpacingCounters(state, 1, MIN_WORD_SPACING);
 
-      expect(state.recentWords.has(1)).toBe(true);
+      expect(state.recentWords.has(1)).toBeTruthy();
       expect(state.recentWordsQueue).toEqual([1]);
     });
 
@@ -245,8 +245,8 @@ describe('fsrsSpacing', () => {
 
       expect(state.recentWordsQueue).toEqual([2, 3, 4]);
       expect(state.recentWords.size).toBe(minSpacing);
-      expect(state.recentWords.has(1)).toBe(false);
-      expect(state.recentWords.has(2)).toBe(true);
+      expect(state.recentWords.has(1)).toBeFalsy();
+      expect(state.recentWords.has(2)).toBeTruthy();
     });
 
     test('should decrement remainingSpacing for all spacedWords', () => {
@@ -291,8 +291,8 @@ describe('fsrsSpacing', () => {
 
       updateSpacingCounters(state, 2, 1);
       expect(state.recentWordsQueue).toEqual([2]); // Only keeps last 1
-      expect(state.recentWords.has(1)).toBe(false);
-      expect(state.recentWords.has(2)).toBe(true);
+      expect(state.recentWords.has(1)).toBeFalsy();
+      expect(state.recentWords.has(2)).toBeTruthy();
     });
 
     test('should work with minSpacing of 0', () => {

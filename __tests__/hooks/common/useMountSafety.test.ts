@@ -16,17 +16,17 @@ describe('useMountSafety', () => {
   test('should return a ref that is true when mounted', () => {
     const { result } = renderHook(() => useMountSafety());
 
-    expect(result.current.current).toBe(true);
+    expect(result.current.current).toBeTruthy();
   });
 
   test('should set ref to false when component unmounts', () => {
     const { result, unmount } = renderHook(() => useMountSafety());
 
-    expect(result.current.current).toBe(true);
+    expect(result.current.current).toBeTruthy();
 
     unmount();
 
-    expect(result.current.current).toBe(false);
+    expect(result.current.current).toBeFalsy();
   });
 
   test('should maintain same ref instance across re-renders', () => {
@@ -37,14 +37,14 @@ describe('useMountSafety', () => {
     rerender();
 
     expect(result.current).toBe(firstRef);
-    expect(result.current.current).toBe(true);
+    expect(result.current.current).toBeTruthy();
   });
 
   test('should be true immediately after mount', () => {
     const { result } = renderHook(() => useMountSafety());
 
     // Should be true right away, not waiting for effect
-    expect(result.current.current).toBe(true);
+    expect(result.current.current).toBeTruthy();
   });
 
   test('should prevent state updates after unmount (practical example)', () => {
@@ -67,7 +67,7 @@ describe('useMountSafety', () => {
     unmount();
 
     // Verify ref is now false
-    expect(isMountedRef.current).toBe(false);
+    expect(isMountedRef.current).toBeFalsy();
     expect(updateResult).toBe(''); // Not set yet because timeout hasn't run
   });
 
@@ -77,27 +77,27 @@ describe('useMountSafety', () => {
     const isMountedRef = result.current;
 
     // Component is still mounted, ref should be true
-    expect(isMountedRef.current).toBe(true);
+    expect(isMountedRef.current).toBeTruthy();
 
     // Simulate checking before state update
     const shouldUpdate = isMountedRef.current;
 
     // Should allow update because component is still mounted
-    expect(shouldUpdate).toBe(true);
+    expect(shouldUpdate).toBeTruthy();
   });
 
   test('should handle multiple mount/unmount cycles', () => {
     const { result, unmount, rerender } = renderHook(() => useMountSafety());
 
-    expect(result.current.current).toBe(true);
+    expect(result.current.current).toBeTruthy();
 
     unmount();
-    expect(result.current.current).toBe(false);
+    expect(result.current.current).toBeFalsy();
 
     // Re-render after unmount doesn't remount in this test setup
     // This just verifies ref state is stable after unmount
     rerender();
-    expect(result.current.current).toBe(false);
+    expect(result.current.current).toBeFalsy();
   });
 
   test('should work correctly in cleanup scenarios', () => {
@@ -109,10 +109,10 @@ describe('useMountSafety', () => {
       return ref;
     });
 
-    expect(isMountedRef?.current).toBe(true);
+    expect(isMountedRef?.current).toBeTruthy();
 
     unmount();
 
-    expect(isMountedRef?.current).toBe(false);
+    expect(isMountedRef?.current).toBeFalsy();
   });
 });

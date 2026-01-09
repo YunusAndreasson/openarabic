@@ -44,15 +44,15 @@ describe('Session Completion Flow - Integration Test', () => {
       // Process all words as known
       session.knownWords = 1;
       session.isComplete = session.knownWords >= session.totalWords;
-      expect(session.isComplete).toBe(false);
+      expect(session.isComplete).toBeFalsy();
 
       session.knownWords = 2;
       session.isComplete = session.knownWords >= session.totalWords;
-      expect(session.isComplete).toBe(false);
+      expect(session.isComplete).toBeFalsy();
 
       session.knownWords = 3;
       session.isComplete = session.knownWords >= session.totalWords;
-      expect(session.isComplete).toBe(true);
+      expect(session.isComplete).toBeTruthy();
     });
 
     test('should NOT complete when vague words remain in spacing queue', () => {
@@ -69,8 +69,8 @@ describe('Session Completion Flow - Integration Test', () => {
       // Correct logic: complete when all words known
       const correctComplete = session.knownWords >= session.totalWords;
 
-      expect(buggyComplete).toBe(true); // Would complete (wrong)
-      expect(correctComplete).toBe(false); // Should NOT complete (correct)
+      expect(buggyComplete).toBeTruthy(); // Would complete (wrong)
+      expect(correctComplete).toBeFalsy(); // Should NOT complete (correct)
     });
 
     test('should eventually complete when vague words are re-reviewed as known', () => {
@@ -82,7 +82,7 @@ describe('Session Completion Flow - Integration Test', () => {
 
       // Initial state: not complete
       let isComplete = session.knownWords >= session.totalWords;
-      expect(isComplete).toBe(false);
+      expect(isComplete).toBeFalsy();
 
       // Vague word re-presented and marked known
       session.knownWords += 1;
@@ -90,7 +90,7 @@ describe('Session Completion Flow - Integration Test', () => {
 
       // Now complete
       isComplete = session.knownWords >= session.totalWords;
-      expect(isComplete).toBe(true);
+      expect(isComplete).toBeTruthy();
       expect(session.vagueWordsInSpacing).toBe(0);
     });
 
@@ -106,7 +106,7 @@ describe('Session Completion Flow - Integration Test', () => {
       session.unknownWordsInSpacing = 0;
 
       const isComplete = session.knownWords >= session.totalWords;
-      expect(isComplete).toBe(true);
+      expect(isComplete).toBeTruthy();
     });
   });
 
@@ -340,7 +340,7 @@ describe('Session Completion Flow - Integration Test', () => {
       };
 
       const isComplete = session.knownWords >= session.totalWords;
-      expect(isComplete).toBe(true); // Vacuously true
+      expect(isComplete).toBeTruthy(); // Vacuously true
     });
 
     test('should handle session with all words immediately known', () => {
@@ -351,7 +351,7 @@ describe('Session Completion Flow - Integration Test', () => {
       };
 
       const isComplete = session.knownWords >= session.totalWords;
-      expect(isComplete).toBe(true);
+      expect(isComplete).toBeTruthy();
 
       // Should have perfect metrics
       const metrics = {
@@ -387,7 +387,7 @@ describe('Session Completion Flow - Integration Test', () => {
       session.knownWords = 1;
 
       const isComplete = session.knownWords >= session.totalWords;
-      expect(isComplete).toBe(true);
+      expect(isComplete).toBeTruthy();
       expect(session.reviewCount).toBe(3); // Took 3 reviews
     });
   });

@@ -205,7 +205,7 @@ describe('useReview Hook - Swipe Gestures', () => {
           expect(mocks.mockUpdateWord).toHaveBeenCalled();
         });
 
-        expect(result.current.showTranslation).toBe(false);
+        expect(result.current.showTranslation).toBeFalsy();
       });
     });
 

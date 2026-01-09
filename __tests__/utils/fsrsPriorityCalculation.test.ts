@@ -131,7 +131,7 @@ describe('FSRS Priority Calculation Logic', () => {
       // fsrs_difficulty: null -> should default to 6.5
       const priority = calculateWordPriority(wordWithNulls);
       expect(typeof priority).toBe('number');
-      expect(isFinite(priority)).toBe(true);
+      expect(isFinite(priority)).toBeTruthy();
     });
 
     test('handles extreme values correctly', () => {
@@ -144,7 +144,7 @@ describe('FSRS Priority Calculation Logic', () => {
 
       const priority = calculateWordPriority(extremeWord);
       expect(priority).toBeLessThan(0);
-      expect(isFinite(priority)).toBe(true);
+      expect(isFinite(priority)).toBeTruthy();
     });
 
     test('handles invalid date strings', () => {
@@ -156,7 +156,7 @@ describe('FSRS Priority Calculation Logic', () => {
       });
 
       const priority = calculateWordPriority(invalidDateWord);
-      expect(isNaN(priority)).toBe(true);
+      expect(isNaN(priority)).toBeTruthy();
     });
   });
 
@@ -203,7 +203,7 @@ describe('FSRS Priority Calculation Logic', () => {
 
       const priorities = largeWordSet.map(calculateWordPriority);
 
-      expect(priorities.every(p => typeof p === 'number')).toBe(true);
+      expect(priorities.every(p => typeof p === 'number')).toBeTruthy();
       expect(priorities).toHaveLength(1000);
     });
   });
@@ -318,7 +318,7 @@ describe('Priority Queue Integration', () => {
     queue.push(validLate, calculateWordPriority(validLate));
 
     const priorityInvalid = calculateWordPriority(invalidWord);
-    expect(isNaN(priorityInvalid)).toBe(true);
+    expect(isNaN(priorityInvalid)).toBeTruthy();
 
     const order: number[] = [];
     while (!queue.isEmpty()) {

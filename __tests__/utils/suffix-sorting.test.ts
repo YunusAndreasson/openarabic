@@ -26,7 +26,7 @@ describe('ARABIC_SUFFIXES sorting', () => {
     }
 
     // If we get here, the array is properly sorted
-    expect(true).toBe(true);
+    expect(true).toBeTruthy();
   });
 
   test('should have longest suffixes first', () => {

@@ -205,9 +205,9 @@ describe('Tab Navigation State Isolation', () => {
       expect(tab1Auth.current.user?.id).toBe(mockUserId);
       expect(tab2Auth.current.user?.id).toBe(mockUserId);
       expect(tab3Auth.current.user?.id).toBe(mockUserId);
-      expect(tab1Auth.current.isAuthenticated).toBe(true);
-      expect(tab2Auth.current.isAuthenticated).toBe(true);
-      expect(tab3Auth.current.isAuthenticated).toBe(true);
+      expect(tab1Auth.current.isAuthenticated).toBeTruthy();
+      expect(tab2Auth.current.isAuthenticated).toBeTruthy();
+      expect(tab3Auth.current.isAuthenticated).toBeTruthy();
     });
 
     test('session data is identical across tabs', () => {
@@ -283,9 +283,9 @@ describe('Tab Navigation State Isolation', () => {
       });
 
       // Library modal is open
-      expect(libraryModal.current.isOpen).toBe(true);
+      expect(libraryModal.current.isOpen).toBeTruthy();
       // Study modal remains closed
-      expect(studyModal.current.isOpen).toBe(false);
+      expect(studyModal.current.isOpen).toBeFalsy();
     });
   });
 

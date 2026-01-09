@@ -41,8 +41,8 @@ describe('Faqad (فقد) Normalization', () => {
         p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
-      expect(hasFa).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasFa).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should detect و in وقد "waqad"', () => {
@@ -59,8 +59,8 @@ describe('Faqad (فقد) Normalization', () => {
         p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
-      expect(hasWaw).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasWaw).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should color فقد "so indeed" - both parts', () => {
@@ -72,10 +72,10 @@ describe('Faqad (فقد) Normalization', () => {
 
       // ف should be detected
       const hasFa = analysis.prefixes.some(p => p.arabicMatch === 'ف');
-      expect(hasFa).toBe(true);
+      expect(hasFa).toBeTruthy();
 
       // قد should remain (it's not a component, it's a particle word)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 
@@ -91,7 +91,7 @@ describe('Faqad (فقد) Normalization', () => {
       console.log('    - و (and) → GREEN (conjunction)');
       console.log('    - قد (indeed) → remaining text');
 
-      expect(true).toBe(true);
+      expect(true).toBeTruthy();
     });
   });
 });

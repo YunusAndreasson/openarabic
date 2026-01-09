@@ -14,9 +14,9 @@ describe('Database Translation Normalizations', () => {
 
     test('should detect ف in فإن "for"', () => {
       const analysis = analyzeArabicWord('فإن', 'for');
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       const hasFa = analysis.prefixes.some(p => p.arabicMatch === 'ف');
-      expect(hasFa).toBe(true);
+      expect(hasFa).toBeTruthy();
     });
   });
 
@@ -31,9 +31,9 @@ describe('Database Translation Normalizations', () => {
 
       it(`should detect ف in فقد "${translation}"`, () => {
         const analysis = analyzeArabicWord('فقد', translation);
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
         const hasFa = analysis.prefixes.some(p => p.arabicMatch === 'ف');
-        expect(hasFa).toBe(true);
+        expect(hasFa).toBeTruthy();
       });
     });
   });
@@ -49,9 +49,9 @@ describe('Database Translation Normalizations', () => {
 
       it(`should detect ف in فما "${translation}"`, () => {
         const analysis = analyzeArabicWord('فما', translation);
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
         const hasFa = analysis.prefixes.some(p => p.arabicMatch === 'ف');
-        expect(hasFa).toBe(true);
+        expect(hasFa).toBeTruthy();
       });
     });
   });
@@ -69,9 +69,9 @@ describe('Database Translation Normalizations', () => {
 
     test('should detect و in ولا "nor"', () => {
       const analysis = analyzeArabicWord('ولا', 'nor');
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       const hasWaw = analysis.prefixes.some(p => p.arabicMatch === 'و');
-      expect(hasWaw).toBe(true);
+      expect(hasWaw).toBeTruthy();
     });
   });
 });

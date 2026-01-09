@@ -43,7 +43,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('بل');
 
       // hasComponents should be FALSE - no composition to show
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
 
       // Remaining should be empty (word consumed by prefix)
       expect(analysis.remainingArabic).toBe('');
@@ -58,7 +58,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لا');
 
       // hasComponents should be FALSE - single component, no Arabic composition
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
 
       // Remaining should be empty
       expect(analysis.remainingArabic).toBe('');
@@ -73,7 +73,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('من');
 
       // hasComponents should be FALSE - no composition to show
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
 
       // Remaining should be empty
       expect(analysis.remainingArabic).toBe('');
@@ -88,7 +88,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
 
       // hasComponents should be true (shows composition)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should have hasComponents=true for والله (and by Allah) - prefix + remaining', () => {
@@ -103,7 +103,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.remainingArabic).not.toBe('');
 
       // hasComponents should be true (shows composition)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should have hasComponents=true for فقال (so he said) - prefix + remaining', () => {
@@ -118,7 +118,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.remainingArabic).not.toBe('');
 
       // hasComponents should be true (shows composition)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 
@@ -130,7 +130,7 @@ describe('Standalone particle optimization', () => {
       // Only test IF a diacritic was actually detected
       // (diacritic detection depends on the word and system configuration)
       if (analysis.diacritic) {
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
       } else {
         // If no diacritic detected, this test doesn't apply
         // Just verify the analysis ran without error
@@ -145,7 +145,7 @@ describe('Standalone particle optimization', () => {
       // May or may not detect specific components, but if diacritic detected...
       if (analysis.diacritic) {
         // hasComponents should be true
-        expect(analysis.hasComponents).toBe(true);
+        expect(analysis.hasComponents).toBeTruthy();
       }
     });
   });
@@ -159,7 +159,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.suffix?.arabicMatch).toBe('ه');
 
       // hasComponents should be true (shows composition)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 
@@ -174,7 +174,7 @@ describe('Standalone particle optimization', () => {
 
       // hasComponents should be FALSE - single component, no composition
       // (diacritics are normalized away, not detected as separate component)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
     });
 
     test('should have hasComponents=true for prefix + infix', () => {
@@ -185,7 +185,7 @@ describe('Standalone particle optimization', () => {
       expect(analysis.prefixes.length).toBeGreaterThan(0);
 
       // hasComponents should be true (shows composition)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 });

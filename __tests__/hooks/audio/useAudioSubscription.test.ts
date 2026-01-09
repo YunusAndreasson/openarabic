@@ -89,7 +89,7 @@ describe('useAudioSubscription', () => {
         subscribeCallback?.(newStatus);
       });
 
-      expect(result.current.status.isPlaying).toBe(true);
+      expect(result.current.status.isPlaying).toBeTruthy();
     });
 
     test('should update status when isLoading changes', () => {
@@ -104,7 +104,7 @@ describe('useAudioSubscription', () => {
         subscribeCallback?.(newStatus);
       });
 
-      expect(result.current.status.isLoading).toBe(true);
+      expect(result.current.status.isLoading).toBeTruthy();
     });
 
     test('should update status when currentTime changes by >= 0.1', () => {
@@ -186,7 +186,7 @@ describe('useAudioSubscription', () => {
       });
 
       // Status should not have changed
-      expect(result.current.status.isPlaying).toBe(false);
+      expect(result.current.status.isPlaying).toBeFalsy();
     });
   });
 

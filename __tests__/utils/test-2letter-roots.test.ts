@@ -27,7 +27,7 @@ describe('2-letter Arabic roots with suffixes', () => {
     test('should detect suffix in ربه (his Lord)', () => {
       const analysis = analyzeArabicWord('ربه', 'his Lord');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ه');
       expect(analysis.suffix?.role).toBe(GrammaticalRole.POSSESSIVE);
@@ -37,7 +37,7 @@ describe('2-letter Arabic roots with suffixes', () => {
     test('should detect suffix in ربي (my Lord)', () => {
       const analysis = analyzeArabicWord('ربي', 'my Lord');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ي');
       expect(analysis.remainingArabic).toBe('رب');
@@ -46,7 +46,7 @@ describe('2-letter Arabic roots with suffixes', () => {
     test('should detect suffix in ربك (your Lord)', () => {
       const analysis = analyzeArabicWord('ربك', 'your Lord');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ك');
       expect(analysis.remainingArabic).toBe('رب');
@@ -57,7 +57,7 @@ describe('2-letter Arabic roots with suffixes', () => {
     test('should detect suffix in يده (his hand)', () => {
       const analysis = analyzeArabicWord('يده', 'his hand');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ه');
       expect(analysis.remainingArabic).toBe('يد');
@@ -66,7 +66,7 @@ describe('2-letter Arabic roots with suffixes', () => {
     test('should detect suffix in يدي (my hand)', () => {
       const analysis = analyzeArabicWord('يدي', 'my hand');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ي');
       expect(analysis.remainingArabic).toBe('يد');
@@ -77,7 +77,7 @@ describe('2-letter Arabic roots with suffixes', () => {
     test('should detect suffix in دمه (his blood)', () => {
       const analysis = analyzeArabicWord('دمه', 'his blood');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ه');
       expect(analysis.remainingArabic).toBe('دم');
@@ -86,7 +86,7 @@ describe('2-letter Arabic roots with suffixes', () => {
     test('should detect suffix in فمه (his mouth)', () => {
       const analysis = analyzeArabicWord('فمه', 'his mouth');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ه');
       expect(analysis.remainingArabic).toBe('فم');
@@ -95,7 +95,7 @@ describe('2-letter Arabic roots with suffixes', () => {
     test('should detect suffix in أبي (my father)', () => {
       const analysis = analyzeArabicWord('أبي', 'my father');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ي');
       expect(analysis.remainingArabic).toBe('أب');

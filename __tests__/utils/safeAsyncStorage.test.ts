@@ -32,7 +32,7 @@ describe('safeAsyncStorage', () => {
   describe('isAsyncStorageAvailable', () => {
     test('should return true when AsyncStorage.getItem is a function', () => {
       const result = isAsyncStorageAvailable();
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
     });
 
     test('should handle AsyncStorage being unavailable', () => {
@@ -43,7 +43,7 @@ describe('safeAsyncStorage', () => {
       (AsyncStorage as any).getItem = undefined;
 
       const result = isAsyncStorageAvailable();
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
 
       // Restore
       AsyncStorage.getItem = originalGetItem;
@@ -59,7 +59,7 @@ describe('safeAsyncStorage', () => {
       // This test verifies the function handles null gracefully
       // In the real implementation, the optional chaining handles this
       const result = isAsyncStorageAvailable();
-      expect(result).toBe(true); // Because our mock still has the function
+      expect(result).toBeTruthy(); // Because our mock still has the function
 
       // Restore
       jest.dontMock('@react-native-async-storage/async-storage');

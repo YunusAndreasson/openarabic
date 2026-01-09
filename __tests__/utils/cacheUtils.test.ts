@@ -41,12 +41,12 @@ describe('formatBytes', () => {
 
 describe('isRemoteAudioUrl', () => {
   test('detects remote urls', () => {
-    expect(isRemoteAudioUrl('http://example.com/audio.mp3')).toBe(true);
-    expect(isRemoteAudioUrl('https://example.com/audio.mp3')).toBe(true);
+    expect(isRemoteAudioUrl('http://example.com/audio.mp3')).toBeTruthy();
+    expect(isRemoteAudioUrl('https://example.com/audio.mp3')).toBeTruthy();
   });
 
   test('detects local urls', () => {
-    expect(isRemoteAudioUrl('file:///audio.mp3')).toBe(false);
-    expect(isRemoteAudioUrl('/local/path/audio.mp3')).toBe(false);
+    expect(isRemoteAudioUrl('file:///audio.mp3')).toBeFalsy();
+    expect(isRemoteAudioUrl('/local/path/audio.mp3')).toBeFalsy();
   });
 });

@@ -52,7 +52,7 @@ describe('مِمَّا (for what) assimilation bug', () => {
     const analysis = analyzeArabicWord(arabic, english);
 
     // "for what" is 2 words, single-word rule should NOT apply
-    expect(analysis.hasComponents).toBe(true);
+    expect(analysis.hasComponents).toBeTruthy();
 
     // Should have at least one prefix detected
     expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
@@ -84,7 +84,7 @@ describe('مِمَّا (for what) assimilation bug', () => {
 
     // Should detect م (shortened من due to assimilation) as prefix
     const hasMeemPrefix = analysis.prefixes.some(p => p.arabicMatch === 'م');
-    expect(hasMeemPrefix).toBe(true);
+    expect(hasMeemPrefix).toBeTruthy();
 
     // Should leave ما (what) as remaining root
     expect(analysis.remainingArabic).toBe('ما');

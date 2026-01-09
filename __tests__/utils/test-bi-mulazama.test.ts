@@ -46,7 +46,7 @@ describe('ب detection patterns', () => {
     // ب should NOT match because "to" is not in its patterns
     // and adding "to" would cause false positives with infinitives
     expect(analysis.prefixes).toHaveLength(0);
-    expect(analysis.hasComponents).toBe(false);
+    expect(analysis.hasComponents).toBeFalsy();
   });
 
   test('should detect ب with "by adhering to"', () => {
@@ -67,7 +67,7 @@ describe('ب detection patterns', () => {
     // ب = "with/by", so "with Allah" or "by Allah" would match
     // "from Allah" is idiomatic (e.g., "seek refuge from evil BY invoking Allah")
     expect(analysis.prefixes).toHaveLength(0);
-    expect(analysis.hasComponents).toBe(false);
+    expect(analysis.hasComponents).toBeFalsy();
   });
 
   test('should detect ب with literal "with Allah" but preserve Allah as divine name', () => {

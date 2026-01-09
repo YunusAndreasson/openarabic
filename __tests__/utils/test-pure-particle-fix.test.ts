@@ -21,9 +21,9 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
         p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
-      expect(hasWaw).toBe(true);
+      expect(hasWaw).toBeTruthy();
       // With filter disabled, this should now have components
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should color وهو "and it" (2 parts)', () => {
@@ -40,8 +40,8 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
         p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
-      expect(hasWaw).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasWaw).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should color فهو "so he" (2 parts)', () => {
@@ -58,8 +58,8 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
         p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
-      expect(hasFa).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasFa).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should color فهو "so it is" (3 English words, 2 Arabic parts)', () => {
@@ -76,9 +76,9 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
         p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
-      expect(hasFa).toBe(true);
+      expect(hasFa).toBeTruthy();
       // 2 Arabic parts → should be colored
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 
@@ -99,8 +99,8 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
         p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
-      expect(hasWaw).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasWaw).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should color "fahuwa" after normalization to "so he"', () => {
@@ -117,8 +117,8 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
         p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
-      expect(hasFa).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasFa).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 
@@ -130,7 +130,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
       console.log('  hasComponents:', analysis.hasComponents);
 
       // Single word → no composition to show
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
     });
 
     test('should NOT color single component "ف" alone', () => {
@@ -140,7 +140,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
       console.log('  hasComponents:', analysis.hasComponents);
 
       // Single word → no composition to show
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
     });
   });
 
@@ -157,7 +157,7 @@ describe('Pure Particle Combinations - NOW COLORED', () => {
 
       // Both و and لا should be detected
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(2);
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 });

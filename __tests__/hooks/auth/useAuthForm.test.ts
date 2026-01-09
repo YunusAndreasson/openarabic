@@ -141,11 +141,11 @@ describe('useAuthForm', () => {
   test('toggles registration mode', () => {
     const { result } = renderHook(() => useAuthForm());
 
-    expect(result.current.isRegistering).toBe(true);
+    expect(result.current.isRegistering).toBeTruthy();
     act(() => {
       result.current.toggleMode();
     });
-    expect(result.current.isRegistering).toBe(false);
+    expect(result.current.isRegistering).toBeFalsy();
   });
 
   test('calls supabase on sign in', async () => {

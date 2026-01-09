@@ -86,14 +86,14 @@ describe('Recent Grammar Pattern Additions', () => {
       const analysis = analyzeArabicWord('ف', 'for this');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "for" as one of the ف alternatives
       const forMatch = analysis.prefixes[0]?.englishMatches.some(m =>
         m.toLowerCase().includes('for'),
       );
-      expect(forMatch).toBe(true);
+      expect(forMatch).toBeTruthy();
     });
 
     test('should color-code "for" when it\'s a ف prefix', () => {
@@ -120,14 +120,14 @@ describe('Recent Grammar Pattern Additions', () => {
       const analysis = analyzeArabicWord('والله', 'by Allah');
       const formatted = formatWordAnalysis(analysis);
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "by" as one of the و alternatives
       const byMatch = analysis.prefixes[0]?.englishMatches.some(m =>
         m.toLowerCase().includes('by'),
       );
-      expect(byMatch).toBe(true);
+      expect(byMatch).toBeTruthy();
     });
 
     test('should color-code "by" in "by Allah"', () => {
@@ -188,27 +188,27 @@ describe('Recent Grammar Pattern Additions', () => {
     test.skip('should detect "concerning" in "concerning what"', () => {
       const analysis = analyzeArabicWord('بما', 'concerning what');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "concerning" as one of the ב alternatives
       const concerningMatch = analysis.prefixes[0]?.englishMatches.some(m =>
         m.toLowerCase().includes('concerning'),
       );
-      expect(concerningMatch).toBe(true);
+      expect(concerningMatch).toBeTruthy();
     });
 
     test('should detect "based" in "based on"', () => {
       const analysis = analyzeArabicWord('بمقتضى', 'based on');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "based" as one of the ب alternatives
       const basedMatch = analysis.prefixes[0]?.englishMatches.some(m =>
         m.toLowerCase().includes('based'),
       );
-      expect(basedMatch).toBe(true);
+      expect(basedMatch).toBeTruthy();
     });
   });
 
@@ -217,14 +217,14 @@ describe('Recent Grammar Pattern Additions', () => {
       const analysis = analyzeArabicWord('إلا', 'none but');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "none" as one of the إلا alternatives
       const noneMatch = analysis.prefixes[0]?.englishMatches.some(m =>
         m.toLowerCase().includes('none'),
       );
-      expect(noneMatch).toBe(true);
+      expect(noneMatch).toBeTruthy();
     });
   });
 
@@ -233,20 +233,20 @@ describe('Recent Grammar Pattern Additions', () => {
       const analysis = analyzeArabicWord('لم', 'does not');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "does not" as one of the لم alternatives
       const doesNotMatch = analysis.prefixes[0]?.englishMatches.some(
         m => m.toLowerCase() === 'does not' || m.toLowerCase() === "doesn't",
       );
-      expect(doesNotMatch).toBe(true);
+      expect(doesNotMatch).toBeTruthy();
     });
 
     test('should detect multi-prefix ولا (and not)', () => {
       const analysis = analyzeArabicWord('ولا', 'and not');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Multi-prefix: و (and) + لا (not)
@@ -260,28 +260,28 @@ describe('Recent Grammar Pattern Additions', () => {
       const analysis = analyzeArabicWord('كم', 'how much');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "how much" as one of the كم alternatives
       const howMuchMatch = analysis.prefixes[0]?.englishMatches.some(
         m => m.toLowerCase().includes('how') && m.toLowerCase().includes('much'),
       );
-      expect(howMuchMatch).toBe(true);
+      expect(howMuchMatch).toBeTruthy();
     });
 
     test('should detect "how many" for كم', () => {
       const analysis = analyzeArabicWord('كم', 'how many');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match "how many" as one of the كم alternatives
       const howManyMatch = analysis.prefixes[0]?.englishMatches.some(
         m => m.toLowerCase().includes('how') && m.toLowerCase().includes('many'),
       );
-      expect(howManyMatch).toBe(true);
+      expect(howManyMatch).toBeTruthy();
     });
   });
 });

@@ -95,22 +95,22 @@ describe('colorCodedTextUtils', () => {
 
   describe('shouldApplyColorCoding', () => {
     test('should return false for single words', () => {
-      expect(shouldApplyColorCoding('house')).toBe(false);
-      expect(shouldApplyColorCoding('book')).toBe(false);
-      expect(shouldApplyColorCoding('school')).toBe(false);
+      expect(shouldApplyColorCoding('house')).toBeFalsy();
+      expect(shouldApplyColorCoding('book')).toBeFalsy();
+      expect(shouldApplyColorCoding('school')).toBeFalsy();
     });
 
     test('should return true for multi-word phrases', () => {
-      expect(shouldApplyColorCoding('and house')).toBe(true);
-      expect(shouldApplyColorCoding('his book')).toBe(true);
-      expect(shouldApplyColorCoding('in the house')).toBe(true);
-      expect(shouldApplyColorCoding('the big house')).toBe(true);
+      expect(shouldApplyColorCoding('and house')).toBeTruthy();
+      expect(shouldApplyColorCoding('his book')).toBeTruthy();
+      expect(shouldApplyColorCoding('in the house')).toBeTruthy();
+      expect(shouldApplyColorCoding('the big house')).toBeTruthy();
     });
 
     test('should handle whitespace correctly', () => {
-      expect(shouldApplyColorCoding('  house  ')).toBe(false);
-      expect(shouldApplyColorCoding('  the house  ')).toBe(true);
-      expect(shouldApplyColorCoding('house   book')).toBe(true);
+      expect(shouldApplyColorCoding('  house  ')).toBeFalsy();
+      expect(shouldApplyColorCoding('  the house  ')).toBeTruthy();
+      expect(shouldApplyColorCoding('house   book')).toBeTruthy();
     });
   });
 

@@ -139,15 +139,15 @@ describe('notificationService', () => {
     test('should initialize successfully', async () => {
       // Service is initialized in beforeAll, just verify it returns true when called again
       const success = await notificationService.initializeNotifications();
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
     });
 
     test('should be idempotent (only initialize once)', async () => {
       // Service already initialized, calling again should return true without re-initializing
       const success1 = await notificationService.initializeNotifications();
       const success2 = await notificationService.initializeNotifications();
-      expect(success1).toBe(true);
-      expect(success2).toBe(true);
+      expect(success1).toBeTruthy();
+      expect(success2).toBeTruthy();
     });
   });
 
@@ -157,7 +157,7 @@ describe('notificationService', () => {
 
       const hasPerms = await notificationService.hasPermissions();
 
-      expect(hasPerms).toBe(true);
+      expect(hasPerms).toBeTruthy();
       expect(mockGetPermissionsAsync).toHaveBeenCalled();
     });
 
@@ -166,7 +166,7 @@ describe('notificationService', () => {
 
       const hasPerms = await notificationService.hasPermissions();
 
-      expect(hasPerms).toBe(false);
+      expect(hasPerms).toBeFalsy();
     });
 
     test('should handle permission check errors', async () => {
@@ -174,7 +174,7 @@ describe('notificationService', () => {
 
       const hasPerms = await notificationService.hasPermissions();
 
-      expect(hasPerms).toBe(false);
+      expect(hasPerms).toBeFalsy();
       expect(handleError).toHaveBeenCalled();
     });
 
@@ -183,7 +183,7 @@ describe('notificationService', () => {
 
       const granted = await notificationService.ensurePermissions();
 
-      expect(granted).toBe(true);
+      expect(granted).toBeTruthy();
       expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
     });
 
@@ -193,7 +193,7 @@ describe('notificationService', () => {
 
       const granted = await notificationService.ensurePermissions();
 
-      expect(granted).toBe(true);
+      expect(granted).toBeTruthy();
       expect(mockRequestPermissionsAsync).toHaveBeenCalledWith({
         ios: {
           allowAlert: true,
@@ -216,7 +216,7 @@ describe('notificationService', () => {
 
       const granted = await notificationService.ensurePermissions();
 
-      expect(granted).toBe(false);
+      expect(granted).toBeFalsy();
     });
 
     test('should handle iOS provisional authorization as granted', async () => {
@@ -228,7 +228,7 @@ describe('notificationService', () => {
 
       const granted = await notificationService.ensurePermissions();
 
-      expect(granted).toBe(true);
+      expect(granted).toBeTruthy();
     });
 
     test('should not request if iOS status is DENIED', async () => {
@@ -240,7 +240,7 @@ describe('notificationService', () => {
 
       const granted = await notificationService.ensurePermissions();
 
-      expect(granted).toBe(false);
+      expect(granted).toBeFalsy();
       expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
     });
 
@@ -266,7 +266,7 @@ describe('notificationService', () => {
 
       const canBadge = await notificationService.canUseBadge();
 
-      expect(canBadge).toBe(true);
+      expect(canBadge).toBeTruthy();
     });
 
     test('should return false for badge if iOS badge permission denied', async () => {
@@ -278,7 +278,7 @@ describe('notificationService', () => {
 
       const canBadge = await notificationService.canUseBadge();
 
-      expect(canBadge).toBe(false);
+      expect(canBadge).toBeFalsy();
     });
 
     test('should allow badge on Android if notification permission granted', async () => {
@@ -289,7 +289,7 @@ describe('notificationService', () => {
 
       const canBadge = await notificationService.canUseBadge();
 
-      expect(canBadge).toBe(true);
+      expect(canBadge).toBeTruthy();
     });
   });
 
@@ -390,7 +390,7 @@ describe('notificationService', () => {
     test('should set app badge count', async () => {
       const success = await notificationService.setAppBadgeCount(5);
 
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
       expect(mockSetBadgeCountAsync).toHaveBeenCalledWith(5);
     });
 
@@ -411,14 +411,14 @@ describe('notificationService', () => {
 
       const success = await notificationService.setAppBadgeCount(5);
 
-      expect(success).toBe(false);
+      expect(success).toBeFalsy();
       expect(handleError).toHaveBeenCalled();
     });
 
     test('should clear app badge', async () => {
       const success = await notificationService.clearAppBadge();
 
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
       expect(mockSetBadgeCountAsync).toHaveBeenCalledWith(0);
     });
 
@@ -427,7 +427,7 @@ describe('notificationService', () => {
 
       const success = await notificationService.clearAppBadge();
 
-      expect(success).toBe(false);
+      expect(success).toBeFalsy();
       expect(handleError).toHaveBeenCalled();
     });
 
@@ -480,7 +480,7 @@ describe('notificationService', () => {
     test('should clear last notification response', async () => {
       const success = await notificationService.clearLastNotificationResponse();
 
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
       expect(mockClearLastNotificationResponseAsync).toHaveBeenCalled();
     });
 
@@ -489,7 +489,7 @@ describe('notificationService', () => {
 
       const success = await notificationService.clearLastNotificationResponse();
 
-      expect(success).toBe(false);
+      expect(success).toBeFalsy();
       expect(handleError).toHaveBeenCalled();
     });
   });

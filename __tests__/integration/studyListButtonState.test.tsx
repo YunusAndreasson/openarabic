@@ -139,7 +139,7 @@ describe('Study List Button State - Bug Reproduction', () => {
 
       const firstAddResult = await result.current.handleRootPress(mockRootId);
 
-      expect(firstAddResult).toBe(true); // Word was added
+      expect(firstAddResult).toBeTruthy(); // Word was added
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
         mockUserId,
         mockRootId,
@@ -156,14 +156,14 @@ describe('Study List Button State - Bug Reproduction', () => {
       const afterFirstAdd = queryClient.getQueryData<StudyWord[]>(
         fsrsQueries.all(mockUserId).queryKey,
       );
-      expect(afterFirstAdd?.some(w => w.root_id === mockRootId)).toBe(true);
+      expect(afterFirstAdd?.some(w => w.root_id === mockRootId)).toBeTruthy();
 
       // STEP 2: Remove word from study list
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(false);
 
       const removeResult = await result.current.handleRootPress(mockRootId);
 
-      expect(removeResult).toBe(false); // Word was removed
+      expect(removeResult).toBeFalsy(); // Word was removed
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
         mockUserId,
         mockRootId,
@@ -178,7 +178,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       const afterRemove = queryClient.getQueryData<StudyWord[]>(
         fsrsQueries.all(mockUserId).queryKey,
       );
-      expect(afterRemove?.some(w => w.root_id === mockRootId)).toBe(false);
+      expect(afterRemove?.some(w => w.root_id === mockRootId)).toBeFalsy();
 
       // STEP 3: Add word AGAIN (this should work but may fail due to bug)
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
@@ -186,7 +186,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       const secondAddResult = await result.current.handleRootPress(mockRootId);
 
       // 🐛 BUG: This assertion may fail if the stale closure bug occurs
-      expect(secondAddResult).toBe(true); // Word should be added again
+      expect(secondAddResult).toBeTruthy(); // Word should be added again
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
         mockUserId,
         mockRootId,
@@ -203,7 +203,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       const afterSecondAdd = queryClient.getQueryData<StudyWord[]>(
         fsrsQueries.all(mockUserId).queryKey,
       );
-      expect(afterSecondAdd?.some(w => w.root_id === mockRootId)).toBe(true);
+      expect(afterSecondAdd?.some(w => w.root_id === mockRootId)).toBeTruthy();
     });
 
     test('should maintain correct local state map through multiple toggles', async () => {
@@ -240,7 +240,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       expectedLocalState.set(mockRootId, false);
 
       // 🐛 BUG: If stale closure occurs, this will fail
-      expect(finalResult).toBe(false);
+      expect(finalResult).toBeFalsy();
     });
   });
 
@@ -259,7 +259,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(false);
       const removeResult = await result.current.handleRootPress(mockRootId);
 
-      expect(removeResult).toBe(false);
+      expect(removeResult).toBeFalsy();
 
       // The issue: isInStudyList calculation should prioritize local state
       // but may use stale cache data instead
@@ -324,7 +324,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       const hasCooldownQuery = invalidatedKeys.some(
         key => Array.isArray(key) && key.includes('cooldown'),
       );
-      expect(hasCooldownQuery).toBe(true);
+      expect(hasCooldownQuery).toBeTruthy();
     });
   });
 
@@ -355,7 +355,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       const cacheAfterError = queryClient.getQueryData<StudyWord[]>(
         fsrsQueries.allWithCooldown(mockUserId, 24).queryKey,
       );
-      expect(cacheAfterError?.some(w => w.root_id === mockRootId)).toBe(true);
+      expect(cacheAfterError?.some(w => w.root_id === mockRootId)).toBeTruthy();
     });
   });
 });

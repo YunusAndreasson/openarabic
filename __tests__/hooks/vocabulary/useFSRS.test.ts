@@ -167,8 +167,8 @@ describe('useFSRS', () => {
       expect(result.current.wordQueue).toEqual([]);
       expect(result.current.progress).toBe(0);
       // With no user, queue is empty so isComplete is true
-      expect(result.current.isComplete).toBe(true);
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isComplete).toBeTruthy();
+      expect(result.current.isLoading).toBeFalsy();
     });
 
     test('should return initial state with empty due words', () => {
@@ -266,7 +266,7 @@ describe('useFSRS', () => {
         }),
       );
 
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isLoading).toBeTruthy();
     });
 
     test('should not be loading when query completes', () => {
@@ -284,7 +284,7 @@ describe('useFSRS', () => {
         }),
       );
 
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isLoading).toBeFalsy();
     });
   });
 

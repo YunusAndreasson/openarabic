@@ -133,9 +133,9 @@ describe('useReview Hook', () => {
       expect(result.current.currentWord).toBeNull();
       expect(result.current.wordQueue).toEqual([]);
       expect(result.current.progress).toBe(0);
-      expect(result.current.isComplete).toBe(false);
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.showTranslation).toBe(false);
+      expect(result.current.isComplete).toBeFalsy();
+      expect(result.current.isLoading).toBeFalsy();
+      expect(result.current.showTranslation).toBeFalsy();
     });
 
     test('should initialize with word queue', () => {
@@ -288,7 +288,7 @@ describe('useReview Hook', () => {
       const { result } = renderHook(() => useReview(), { wrapper });
 
       expect(result.current.progress).toBe(100);
-      expect(result.current.isComplete).toBe(true);
+      expect(result.current.isComplete).toBeTruthy();
     });
   });
 

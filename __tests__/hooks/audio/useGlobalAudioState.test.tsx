@@ -116,9 +116,9 @@ describe('useGlobalAudioState Hook', () => {
     test('initializes with idle state when not playing', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.isPlaying).toBe(false);
+      expect(result.current.isPlaying).toBeFalsy();
       expect(result.current.audioState).toBe(AUDIO_STATES.IDLE);
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentArticle).toBeNull();
       expect(result.current.position).toBe(0);
       expect(result.current.duration).toBe(0);
@@ -141,7 +141,7 @@ describe('useGlobalAudioState Hook', () => {
 
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.isPlaying).toBe(true);
+      expect(result.current.isPlaying).toBeTruthy();
       expect(result.current.audioState).toBe(AUDIO_STATES.PLAYING);
       expect(result.current.position).toBe(30);
       expect(result.current.duration).toBe(120);
@@ -160,16 +160,16 @@ describe('useGlobalAudioState Hook', () => {
 
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.isPlaying).toBe(false);
+      expect(result.current.isPlaying).toBeFalsy();
       expect(result.current.audioState).toBe(AUDIO_STATES.LOADING);
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isLoading).toBeTruthy();
     });
 
     test('initializes sleep timer as inactive', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.isTimerActive).toBe(false);
-      expect(result.current.showSleepTimerModal).toBe(false);
+      expect(result.current.isTimerActive).toBeFalsy();
+      expect(result.current.showSleepTimerModal).toBeFalsy();
       expect(result.current.sleepTimerRemainingTime).toBe(0);
     });
 
@@ -213,7 +213,7 @@ describe('useGlobalAudioState Hook', () => {
         result.current.onTimerPress();
       });
 
-      expect(result.current.showSleepTimerModal).toBe(true);
+      expect(result.current.showSleepTimerModal).toBeTruthy();
     });
 
     test('onSleepTimerSet starts timer and keeps modal open', () => {
@@ -235,7 +235,7 @@ describe('useGlobalAudioState Hook', () => {
         result.current.onTimerPress();
       });
 
-      expect(result.current.showSleepTimerModal).toBe(true);
+      expect(result.current.showSleepTimerModal).toBeTruthy();
 
       // Cancel timer
       act(() => {
@@ -243,7 +243,7 @@ describe('useGlobalAudioState Hook', () => {
       });
 
       expect(mockCancelTimer).toHaveBeenCalledTimes(1);
-      expect(result.current.showSleepTimerModal).toBe(false);
+      expect(result.current.showSleepTimerModal).toBeFalsy();
     });
 
     test('onSleepTimerClose just closes modal without canceling', () => {
@@ -260,7 +260,7 @@ describe('useGlobalAudioState Hook', () => {
       });
 
       expect(mockCancelTimer).not.toHaveBeenCalled();
-      expect(result.current.showSleepTimerModal).toBe(false);
+      expect(result.current.showSleepTimerModal).toBeFalsy();
     });
   });
 

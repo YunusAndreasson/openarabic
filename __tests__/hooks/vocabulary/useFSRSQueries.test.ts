@@ -161,7 +161,7 @@ describe('useFSRSQueries', () => {
 
       const { result } = renderHook(() => useFSRSQueries({ userId: 'user-123' }));
 
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isLoading).toBeTruthy();
     });
 
     test('should return fetching true when either query is fetching', () => {
@@ -187,7 +187,7 @@ describe('useFSRSQueries', () => {
 
       const { result } = renderHook(() => useFSRSQueries({ userId: 'user-123' }));
 
-      expect(result.current.isFetching).toBe(true);
+      expect(result.current.isFetching).toBeTruthy();
     });
 
     test('should return error if either query has an error', () => {

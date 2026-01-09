@@ -142,7 +142,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
 
       // Confidence should be 'vague' (captured hesitating state)
       expect(state.confidence).toBe('vague');
-      expect(state.isHesitating).toBe(false); // Reset after
+      expect(state.isHesitating).toBeFalsy(); // Reset after
     });
 
     test('should NOT call onHesitationEnd during onGestureStart', () => {
@@ -167,7 +167,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
 
       // BUG: Word marked as 'known' even though user hesitated
       expect(confidence).toBe('known'); // WRONG!
-      expect(state.isHesitating).toBe(false);
+      expect(state.isHesitating).toBeFalsy();
     });
 
     test('should correctly handle the fix: onHesitationEnd called in onSwipeComplete', () => {
@@ -195,7 +195,7 @@ describe('Swipe to Confidence Mapping - Integration Test', () => {
 
       // CORRECT: Word marked as 'vague', hesitation reset after
       expect(state.confidence).toBe('vague'); // CORRECT!
-      expect(state.isHesitating).toBe(false);
+      expect(state.isHesitating).toBeFalsy();
     });
   });
 

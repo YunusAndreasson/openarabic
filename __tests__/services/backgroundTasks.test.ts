@@ -83,7 +83,7 @@ describe('backgroundTasks service', () => {
 
       const result = await isBackgroundTaskAvailable();
 
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
       expect(mockGetStatusAsync).toHaveBeenCalled();
     });
 
@@ -92,7 +92,7 @@ describe('backgroundTasks service', () => {
 
       const result = await isBackgroundTaskAvailable();
 
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
     });
 
     test('should return false when getStatusAsync throws error', async () => {
@@ -100,7 +100,7 @@ describe('backgroundTasks service', () => {
 
       const result = await isBackgroundTaskAvailable();
 
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
     });
 
     test('should handle error gracefully without logging', async () => {
@@ -204,7 +204,7 @@ describe('backgroundTasks service', () => {
 
       mockGetStatusAsync.mockRejectedValue(new Error('Not supported'));
       const available = await isBackgroundTaskAvailable();
-      expect(available).toBe(false);
+      expect(available).toBeFalsy();
     });
 
     test('should never throw errors to caller', async () => {

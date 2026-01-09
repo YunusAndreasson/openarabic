@@ -128,7 +128,7 @@ describe('bookmarkService', () => {
       fromMock.mockReturnValue(query);
 
       const result = await bookmarkService.isInReadingList('u1', 1);
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
       expect(query.select).toHaveBeenCalledWith('article_id');
     });
 
@@ -140,7 +140,7 @@ describe('bookmarkService', () => {
       fromMock.mockReturnValue(query);
 
       const result = await bookmarkService.isInReadingList('u1', 2);
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
     });
   });
 

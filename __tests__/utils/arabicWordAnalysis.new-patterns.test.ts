@@ -21,7 +21,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should detect هما suffix in بِهِمَا (by which)', () => {
       const analysis = analyzeArabicWord('بهما', 'by which');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ب');
       expect(analysis.suffix?.arabicMatch).toBe('هما');
       expect(analysis.remainingArabic).toBe(''); // Both components detected, no remaining
@@ -30,7 +30,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should detect هما suffix in فِيهِمَا (in them)', () => {
       const analysis = analyzeArabicWord('فيهما', 'in them');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('في');
       expect(analysis.suffix?.arabicMatch).toBe('هما');
       expect(analysis.remainingArabic).toBe('');
@@ -60,7 +60,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('لئلا', 'to not');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لئلا');
       expect(analysis.remainingArabic).toBe(''); // Full word is the compound
     });
@@ -69,14 +69,14 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('لئلا', 'lest');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
     });
 
     test('should match "so that not" translation', () => {
       const analysis = analyzeArabicWord('لئلا', 'so that not');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لئلا');
     });
   });
@@ -94,7 +94,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('ومن', 'And those');
 
       // و matches "And" (case-insensitive), من doesn't match "those"
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
@@ -102,7 +102,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('ومن', 'And whoever');
 
       // و matches "And"
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
@@ -110,7 +110,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('ومن', 'And for those');
 
       // و matches "And"
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
@@ -118,7 +118,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('ومن', 'and whoever');
 
       // و matches "and"
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
   });
@@ -164,7 +164,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('أما', 'do you not');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
       expect(analysis.remainingArabic).toBe(''); // Full word is the compound
     });
@@ -173,7 +173,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('أما', 'are you not');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
     });
 
@@ -181,7 +181,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('أما', 'have you not');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
     });
 
@@ -189,7 +189,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('أما', 'as for');
 
       // Single component → hasComponents=false (no composition)
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('أما');
     });
   });
@@ -202,7 +202,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should split بهذا into ب (in) + هذا (this)', () => {
       const analysis = analyzeArabicWord('بهذا', 'in this');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ب');
       expect(analysis.suffix?.arabicMatch).toBe('هذا');
     });
@@ -210,7 +210,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should split لهذا into ل (for) + هذا (this)', () => {
       const analysis = analyzeArabicWord('لهذا', 'for this');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ل');
       expect(analysis.suffix?.arabicMatch).toBe('هذا');
     });
@@ -218,7 +218,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should split وهذا into و (and) + هذا (this)', () => {
       const analysis = analyzeArabicWord('وهذا', 'and this');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
       expect(analysis.suffix?.arabicMatch).toBe('هذا');
     });
@@ -226,7 +226,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should split فهذا into ف (then) + هذا (this)', () => {
       const analysis = analyzeArabicWord('فهذا', 'then this');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
       expect(analysis.suffix?.arabicMatch).toBe('هذا');
     });
@@ -240,7 +240,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should split فيما into في (in) + ما (root)', () => {
       const analysis = analyzeArabicWord('فيما', 'in what');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('في');
       // ما remains as root (can't be prefix after prefix removed)
       expect(analysis.prefixes).toHaveLength(2);
@@ -251,7 +251,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should split بما into ب (with) + ما (root)', () => {
       const analysis = analyzeArabicWord('بما', 'with what');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ب');
       expect(analysis.prefixes).toHaveLength(2);
       expect(analysis.prefixes[1]?.arabicMatch).toBe('ما');
@@ -261,7 +261,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should split لما into ل (for) + ما (root)', () => {
       const analysis = analyzeArabicWord('لما', 'for what');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ل');
       expect(analysis.prefixes).toHaveLength(2);
       expect(analysis.prefixes[1]?.arabicMatch).toBe('ما');
@@ -273,7 +273,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
 
       // Normalization changes "as" to "as for" (2 words)
       // Now should detect components (ك + ما)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.original.english).toBe('as for');
     });
 
@@ -281,7 +281,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
       const analysis = analyzeArabicWord('مما', 'for what');
 
       // Multi-prefix: م (shortened من) + ما
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -290,7 +290,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
 
       // عما is contracted, different from standalone عن pattern
       // Compound pattern removed to avoid multi-word English matching
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
     });
   });
 
@@ -301,7 +301,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should split وما into و + ما (and what)', () => {
       const analysis = analyzeArabicWord('وما', 'and what');
       // Compound removed - now و matches "and", ما is in remaining
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
       expect(analysis.prefixes).toHaveLength(2);
       expect(analysis.prefixes[1]?.arabicMatch).toBe('ما');
@@ -311,7 +311,7 @@ describe('Arabic Word Analysis: New Patterns (2025)', () => {
     test('should partially match فمن (so whoever)', () => {
       const analysis = analyzeArabicWord('فمن', 'so whoever');
       // ف matches "so", من doesn't match "whoever"
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
     });
 

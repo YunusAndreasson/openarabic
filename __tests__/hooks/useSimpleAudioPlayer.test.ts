@@ -104,8 +104,8 @@ describe('useSimpleAudioPlayer Hook', () => {
     test('should initialize with default status', () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBe(false);
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isPlaying).toBeFalsy();
+      expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentTime).toBe(0);
       expect(result.current.duration).toBe(0);
       expect(result.current.currentTrack).toBeNull();
@@ -144,7 +144,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       });
 
       expect(simpleAudioService.play).toHaveBeenCalledWith(track);
-      expect(playResult).toBe(true);
+      expect(playResult).toBeTruthy();
     });
 
     test('should return false when component unmounted', async () => {
@@ -159,7 +159,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       });
 
       expect(simpleAudioService.play).not.toHaveBeenCalled();
-      expect(playResult).toBe(false);
+      expect(playResult).toBeFalsy();
     });
 
     test('should handle play errors', async () => {
@@ -314,7 +314,7 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBe(true);
+      expect(result.current.isPlaying).toBeTruthy();
     });
 
     test('should reflect loading status', () => {
@@ -325,7 +325,7 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isLoading).toBeTruthy();
     });
 
     test('should update current time', () => {
@@ -370,8 +370,8 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBe(false);
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isPlaying).toBeFalsy();
+      expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentTime).toBe(0);
       expect(result.current.duration).toBe(0);
       expect(result.current.currentTrack).toBeNull();
@@ -386,7 +386,7 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       const { result, rerender } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBe(false);
+      expect(result.current.isPlaying).toBeFalsy();
       expect(result.current.currentTime).toBe(0);
 
       // Update status
@@ -398,7 +398,7 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       rerender();
 
-      expect(result.current.isPlaying).toBe(true);
+      expect(result.current.isPlaying).toBeTruthy();
       expect(result.current.currentTime).toBe(30);
     });
   });
@@ -559,8 +559,8 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBe(true);
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isPlaying).toBeTruthy();
+      expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentTime).toBe(45);
       expect(result.current.duration).toBe(180);
       expect(result.current.currentTrack).toEqual(fullStatus.currentTrack);
@@ -580,8 +580,8 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBe(true);
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isPlaying).toBeTruthy();
+      expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentTime).toBe(0);
     });
   });
@@ -600,7 +600,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       }
 
       // Should not crash or throw
-      expect(true).toBe(true);
+      expect(true).toBeTruthy();
     });
 
     test('should handle concurrent operations', async () => {

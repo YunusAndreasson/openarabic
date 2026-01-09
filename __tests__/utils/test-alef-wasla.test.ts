@@ -48,13 +48,13 @@ describe('Alef wasla normalization', () => {
     const analysis = analyzeArabicWord(wordWithWasla, 'lessons');
 
     // Should recognize as definite article and set bracket injection flag
-    expect(analysis.hasBracketInjection).toBe(true);
+    expect(analysis.hasBracketInjection).toBeTruthy();
   });
 
   test('should detect ال prefix with alef wasla in ٱلْعِبَرِ', () => {
     // Single-word "lessons" triggers bracket injection flag
     const singleWordAnalysis = analyzeArabicWord('ٱلعبر', 'lessons');
-    expect(singleWordAnalysis.hasBracketInjection).toBe(true);
+    expect(singleWordAnalysis.hasBracketInjection).toBeTruthy();
 
     // With bracket injection applied ("[the] lessons"), it becomes multi-word
     // and component detection should work
@@ -87,9 +87,9 @@ describe('Alef wasla normalization', () => {
     const analysis2 = analyzeArabicWord('ٱلعبر', 'the lessons');
 
     // Should inject "[the]" for "lessons" (no "the" in English)
-    expect(analysis1.hasBracketInjection).toBe(true);
+    expect(analysis1.hasBracketInjection).toBeTruthy();
 
     // Should NOT inject for "the lessons" (already has "the")
-    expect(analysis2.hasBracketInjection).toBe(false);
+    expect(analysis2.hasBracketInjection).toBeFalsy();
   });
 });

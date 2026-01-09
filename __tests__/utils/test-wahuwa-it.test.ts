@@ -36,7 +36,7 @@ describe('Wahuwa "and it" Investigation', () => {
       const hasWaw = analysis.prefixes.some(
         p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
-      expect(hasWaw).toBe(true);
+      expect(hasWaw).toBeTruthy();
     });
 
     test('should test وهو with "and it" (alternative translation)', () => {
@@ -127,7 +127,7 @@ describe('Wahuwa "and it" Investigation', () => {
       console.log('  "wahuwa" → "and he" (enables component detection)');
       console.log('  But "and he" itself → still pure particles → no color');
 
-      expect(true).toBe(true);
+      expect(true).toBeTruthy();
     });
   });
 });

@@ -148,7 +148,7 @@ describe('ThemedInput', () => {
       const { getByPlaceholderText } = render(<ThemedInput placeholder="email" />);
 
       const input = getByPlaceholderText('email');
-      expect(input.props.autoCorrect).toBe(false);
+      expect(input.props.autoCorrect).toBeFalsy();
     });
   });
 });

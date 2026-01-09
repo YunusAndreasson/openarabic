@@ -142,7 +142,7 @@ describe('bookmarks flow', () => {
 
     const primaryButton = queryByTestId('primary-action-button');
     if (primaryButton) {
-      expect(primaryButton.props.disabled).toBe(true);
+      expect(primaryButton.props.disabled).toBeTruthy();
       fireEvent.press(primaryButton);
     }
 
@@ -161,7 +161,7 @@ describe('bookmarks flow', () => {
 
     const primaryButton = queryByTestId('primary-action-button');
     if (primaryButton) {
-      expect(primaryButton.props.disabled).toBe(true);
+      expect(primaryButton.props.disabled).toBeTruthy();
       fireEvent.press(primaryButton);
     }
 

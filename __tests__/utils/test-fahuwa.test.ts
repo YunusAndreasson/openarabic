@@ -15,7 +15,7 @@ describe('Fahuwa Pattern Investigation', () => {
         p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
-      expect(hasFa).toBe(true);
+      expect(hasFa).toBeTruthy();
       expect(analysis.original.english).toBe('so he'); // Normalized to "so he"
     });
 
@@ -34,7 +34,7 @@ describe('Fahuwa Pattern Investigation', () => {
       // According to isPureParticleCombination, this should have hasComponents=false
       // BUT we should still detect ف as a prefix
 
-      expect(hasFa).toBe(true); // ف should be detected
+      expect(hasFa).toBeTruthy(); // ف should be detected
       expect(analysis.original.arabic).toBe('فهو');
     });
   });
@@ -121,7 +121,7 @@ describe('Fahuwa Pattern Investigation', () => {
         p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
 
-      expect(hasFa).toBe(true);
+      expect(hasFa).toBeTruthy();
     });
 
     test('should detect components for وهو after normalizing "wahuwa"', () => {
@@ -133,7 +133,7 @@ describe('Fahuwa Pattern Investigation', () => {
         p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
       );
 
-      expect(hasWaw).toBe(true);
+      expect(hasWaw).toBeTruthy();
     });
   });
 });

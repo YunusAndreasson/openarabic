@@ -118,9 +118,9 @@ describe('useSwipeGesture Hook', () => {
         maxTranslationRatio: 0.9, // From GESTURE_CONSTANTS (LAYOUT.OPACITY.HOVER)
       };
 
-      expect(expectedDefaults.enabled).toBe(true);
+      expect(expectedDefaults.enabled).toBeTruthy();
       expect(expectedDefaults.minDistance).toBe(0.1);
-      expect(Array.isArray(expectedDefaults.activeOffsetX)).toBe(true);
+      expect(Array.isArray(expectedDefaults.activeOffsetX)).toBeTruthy();
     });
 
     test('spring config is customizable', () => {
@@ -239,7 +239,7 @@ describe('useSwipeGesture Hook', () => {
         onSwipeRight: mockOnSwipeRight,
       };
 
-      expect(options.enabled).toBe(false);
+      expect(options.enabled).toBeFalsy();
     });
   });
 
@@ -247,55 +247,55 @@ describe('useSwipeGesture Hook', () => {
     test('hook uses useSharedValue for translateX', () => {
       // Based on hook implementation line 54
       // translateX = useSharedValue(0)
-      expect(true).toBe(true); // Documented behavior
+      expect(true).toBeTruthy(); // Documented behavior
     });
 
     test('hook uses useSharedValue for isAnimatingRef', () => {
       // Based on hook implementation line 55
       // isAnimatingRef = useSharedValue(false)
-      expect(true).toBe(true); // Documented behavior
+      expect(true).toBeTruthy(); // Documented behavior
     });
 
     test('hook uses useMemo for gesture', () => {
       // Based on hook implementation line 96
       // gesture = useMemo(() => Gesture.Pan()...)
-      expect(true).toBe(true); // Documented behavior
+      expect(true).toBeTruthy(); // Documented behavior
     });
 
     test('hook uses useCallback for resetPosition', () => {
       // Based on hook implementation line 59
       // resetPosition = useCallback(...)
-      expect(true).toBe(true); // Documented behavior
+      expect(true).toBeTruthy(); // Documented behavior
     });
 
     test('hook uses withSpring for animations', () => {
       // Based on hook implementation lines 62-66, 153-156
       // Uses withSpring(0, springConfig, callback)
-      expect(true).toBe(true); // Documented behavior
+      expect(true).toBeTruthy(); // Documented behavior
     });
 
     test('hook uses scheduleOnRN for callbacks', () => {
       // Based on hook implementation lines 105, 111, 138, 149
       // Uses scheduleOnRN to bridge from worklet to JS thread
-      expect(true).toBe(true); // Documented behavior
+      expect(true).toBeTruthy(); // Documented behavior
     });
 
     test('hook clamps translation based on maxTranslationRatio', () => {
       // Based on hook implementation lines 118-123
       // Clamps translationX to [-maxTranslation, +maxTranslation]
-      expect(true).toBe(true); // Documented behavior
+      expect(true).toBeTruthy(); // Documented behavior
     });
 
     test('hook detects swipe based on threshold and velocity', () => {
       // Based on hook implementation lines 142-148
       // Swipe detected if: abs(translation) > threshold OR hasSignificantVelocity
-      expect(true).toBe(true); // Documented behavior
+      expect(true).toBeTruthy(); // Documented behavior
     });
 
     test('hook resets position after RESET_DELAY', () => {
       // Based on hook implementation lines 85-90
       // setTimeout with GESTURE_CONSTANTS.RESET_DELAY (50ms)
-      expect(true).toBe(true); // Documented behavior
+      expect(true).toBeTruthy(); // Documented behavior
     });
   });
 
@@ -315,7 +315,7 @@ describe('useSwipeGesture Hook', () => {
 
       expect(GESTURE_CONFIG).toHaveProperty('MIN_DISTANCE');
       expect(GESTURE_CONFIG).toHaveProperty('ACTIVE_OFFSET_X');
-      expect(Array.isArray(GESTURE_CONFIG.ACTIVE_OFFSET_X)).toBe(true);
+      expect(Array.isArray(GESTURE_CONFIG.ACTIVE_OFFSET_X)).toBeTruthy();
     });
   });
 

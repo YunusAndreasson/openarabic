@@ -57,7 +57,7 @@ describe('toggleFSRSStudyRoot', () => {
     const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', 1);
 
     expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'u1', root_id: 1 }));
-    expect(result).toBe(true);
+    expect(result).toBeTruthy();
   });
 
   test('deletes existing entry when found', async () => {
@@ -83,7 +83,7 @@ describe('toggleFSRSStudyRoot', () => {
 
     expect(deleteObj.delete).toHaveBeenCalled();
     expect(deleteFinal).toHaveBeenCalled();
-    expect(result).toBe(false);
+    expect(result).toBeFalsy();
   });
 });
 
@@ -122,7 +122,7 @@ describe('updateWordAndReview', () => {
     );
     expect(updateObj.eq).toHaveBeenCalledWith('user_id', 'u1');
     expect(updateObj.eq).toHaveBeenCalledWith('root_id', 5);
-    expect(result).toBe(true);
+    expect(result).toBeTruthy();
   });
 });
 

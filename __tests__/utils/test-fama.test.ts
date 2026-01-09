@@ -42,8 +42,8 @@ describe('Fama (فما) Normalization', () => {
 
       console.log('  ف (so) detected:', hasFa);
 
-      expect(hasFa).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasFa).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should detect و in وما "wama"', () => {
@@ -63,8 +63,8 @@ describe('Fama (فما) Normalization', () => {
 
       console.log('  و (and) detected:', hasWaw);
 
-      expect(hasWaw).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasWaw).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should color فما "so what" after normalization', () => {
@@ -76,8 +76,8 @@ describe('Fama (فما) Normalization', () => {
 
       // ف should be detected
       const hasFa = analysis.prefixes.some(p => p.arabicMatch === 'ف');
-      expect(hasFa).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasFa).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 
@@ -93,7 +93,7 @@ describe('Fama (فما) Normalization', () => {
       console.log('    - و (and) → GREEN (conjunction)');
       console.log('    - ما (what) → remaining text');
 
-      expect(true).toBe(true);
+      expect(true).toBeTruthy();
     });
   });
 });

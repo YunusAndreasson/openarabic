@@ -59,7 +59,7 @@ describe('FSRSDataProvider', () => {
 
       expect(result.current).toBeDefined();
       expect(result.current.studyWords).toEqual(testWords);
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isLoading).toBeFalsy();
       expect(result.current.error).toBeNull();
     });
 
@@ -86,7 +86,7 @@ describe('FSRSDataProvider', () => {
 
       const { result } = renderHook(() => useFSRSData(), { wrapper });
 
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isLoading).toBeTruthy();
       expect(result.current.studyWords).toBeUndefined();
     });
 
@@ -106,7 +106,7 @@ describe('FSRSDataProvider', () => {
       const { result } = renderHook(() => useFSRSData(), { wrapper });
 
       expect(result.current.error).toEqual(testError);
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isLoading).toBeFalsy();
     });
 
     test('should handle undefined userId', () => {

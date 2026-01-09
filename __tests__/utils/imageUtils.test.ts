@@ -40,23 +40,23 @@ beforeEach(() => {
 describe('storageUtils', () => {
   describe('isValidStoragePath', () => {
     test('should return false for null/undefined', () => {
-      expect(isValidStoragePath(null)).toBe(false);
-      expect(isValidStoragePath(undefined)).toBe(false);
+      expect(isValidStoragePath(null)).toBeFalsy();
+      expect(isValidStoragePath(undefined)).toBeFalsy();
     });
 
     test('should return false for non-string input', () => {
-      expect(isValidStoragePath(123)).toBe(false);
-      expect(isValidStoragePath({})).toBe(false);
+      expect(isValidStoragePath(123)).toBeFalsy();
+      expect(isValidStoragePath({})).toBeFalsy();
     });
 
     test('should return false for empty strings', () => {
-      expect(isValidStoragePath('')).toBe(false);
-      expect(isValidStoragePath('   ')).toBe(false);
+      expect(isValidStoragePath('')).toBeFalsy();
+      expect(isValidStoragePath('   ')).toBeFalsy();
     });
 
     test('should return true for valid paths', () => {
-      expect(isValidStoragePath('test.jpg')).toBe(true);
-      expect(isValidStoragePath('folder/file.mp3')).toBe(true);
+      expect(isValidStoragePath('test.jpg')).toBeTruthy();
+      expect(isValidStoragePath('folder/file.mp3')).toBeTruthy();
     });
   });
 

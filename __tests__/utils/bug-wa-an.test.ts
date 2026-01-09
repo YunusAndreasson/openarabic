@@ -18,7 +18,7 @@ describe('Bug Report: wa-an and fa-idha WITH DIACRITICS', () => {
     test('should analyze وَمِنْ with diacritics', () => {
       const analysis = analyzeArabicWord('وَمِنْ', 'and from');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       // Now detects as multi-prefix: و + من
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
@@ -53,7 +53,7 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
     test('should analyze ومن (and from)', () => {
       const analysis = analyzeArabicWord('ومن', 'and from');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       // Multi-prefix: و + من
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
@@ -82,7 +82,7 @@ describe('Bug Report: wa-an and fa-idha (without diacritics)', () => {
       const analysis = analyzeArabicWord('فإذا', 'so when');
 
       // Multi-prefix: ف (conjunction) + إذا (particle) - both prefixes
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(2);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
       expect(analysis.prefixes[1]?.arabicMatch).toBe('إذا');

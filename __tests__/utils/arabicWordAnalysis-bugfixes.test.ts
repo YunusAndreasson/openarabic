@@ -20,7 +20,7 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
     test('رَآهَا → "he sees it" should detect ها suffix for "it"', () => {
       const result = analyzeArabicWord('رَآهَا', 'he sees it');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ها');
       expect(result.suffix?.englishMatches).toContain('it');
@@ -29,7 +29,7 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
     test('رَدَّهَا → "He rejects it" should detect ها suffix for "it"', () => {
       const result = analyzeArabicWord('رَدَّهَا', 'He rejects it');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ها');
     });
@@ -38,9 +38,9 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
       // Note: ب means "with/by/in", not "from". Adjusted translation to match.
       const result = analyzeArabicWord('بِهِ', 'in it');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.prefixes.length).toBeGreaterThan(0);
-      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBe(true);
+      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ه');
     });
@@ -48,7 +48,7 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
     test('نَواها → "its seeds" should detect ها suffix for "its"', () => {
       const result = analyzeArabicWord('نَواها', 'its seeds');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ها');
       expect(result.suffix?.englishMatches).toContain('its');
@@ -57,7 +57,7 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
     test('نَواهُ → "its seeds" should detect ه suffix for "its"', () => {
       const result = analyzeArabicWord('نَواهُ', 'its seeds');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ه');
       expect(result.suffix?.englishMatches).toContain('its');
@@ -75,7 +75,7 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
         prefixes: result.prefixes.map(p => p.arabicMatch),
       });
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ك');
       expect(result.suffix?.englishMatches).toContain('your');
@@ -92,13 +92,13 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
         expect(result.suffix.englishMatches).toContain('you');
       }
       // Accept either detection or non-detection for this complex particle
-      expect(true).toBe(true); // Pass regardless
+      expect(true).toBeTruthy(); // Pass regardless
     });
 
     test('يَوْمِي → "my day" should detect ي suffix for "my"', () => {
       const result = analyzeArabicWord('يَوْمِي', 'my day');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ي');
       expect(result.suffix?.englishMatches).toContain('my');
@@ -108,7 +108,7 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
       // نفس = soul/self, ك = your (possessive)
       const result = analyzeArabicWord('نَفْسَكَ', 'your soul');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ك');
       expect(result.suffix?.englishMatches).toContain('your');
@@ -117,7 +117,7 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
     test('وَيَدَكَ → "your hands" should detect ك suffix', () => {
       const result = analyzeArabicWord('وَيَدَكَ', 'your hands');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ك');
     });
@@ -127,7 +127,7 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
     test('قُدْهَا → "guide it" should detect ها suffix', () => {
       const result = analyzeArabicWord('قُدْهَا', 'guide it');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ها');
     });
@@ -135,7 +135,7 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
     test('رَدِّهَا → "restrain it" should detect ها suffix', () => {
       const result = analyzeArabicWord('رَدِّهَا', 'restrain it');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ها');
     });
@@ -164,7 +164,7 @@ describe('Arabic Word Analysis - Prefix False Positives', () => {
 
       // Should NOT detect ب as a prefix
       const hasBalamPrefix = result.prefixes.some(p => p.arabicMatch === 'ب');
-      expect(hasBalamPrefix).toBe(false);
+      expect(hasBalamPrefix).toBeFalsy();
     });
 
     test('بُنَيَّ → "my son" - ب is root letter of ابن (son)', () => {
@@ -174,7 +174,7 @@ describe('Arabic Word Analysis - Prefix False Positives', () => {
 
       // Should NOT detect ب as prefix
       const hasBalamPrefix = result.prefixes.some(p => p.arabicMatch === 'ب');
-      expect(hasBalamPrefix).toBe(false);
+      expect(hasBalamPrefix).toBeFalsy();
 
       // Should detect suffix for "my" (either ي or ني is acceptable)
       expect(result.suffix).toBeDefined();
@@ -185,21 +185,21 @@ describe('Arabic Word Analysis - Prefix False Positives', () => {
       const result = analyzeArabicWord('بَصَرِ', 'eyes of');
 
       const hasBalamPrefix = result.prefixes.some(p => p.arabicMatch === 'ب');
-      expect(hasBalamPrefix).toBe(false);
+      expect(hasBalamPrefix).toBeFalsy();
     });
 
     test('بَعْضِ → "some of" - ب is root letter ب-ع-ض (part/some)', () => {
       const result = analyzeArabicWord('بَعْضِ', 'some of');
 
       const hasBalamPrefix = result.prefixes.some(p => p.arabicMatch === 'ب');
-      expect(hasBalamPrefix).toBe(false);
+      expect(hasBalamPrefix).toBeFalsy();
     });
 
     test('بَلَدِ → "of the land" - ب is root letter ب-ل-د (land/country)', () => {
       const result = analyzeArabicWord('بَلَدِ', 'of the land');
 
       const hasBalamPrefix = result.prefixes.some(p => p.arabicMatch === 'ب');
-      expect(hasBalamPrefix).toBe(false);
+      expect(hasBalamPrefix).toBeFalsy();
     });
   });
 
@@ -209,19 +209,19 @@ describe('Arabic Word Analysis - Prefix False Positives', () => {
       const result = analyzeArabicWord('بِاِسْمٍ', 'as a noun');
 
       expect(result.prefixes.length).toBeGreaterThan(0);
-      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBe(true);
+      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBeTruthy();
     });
 
     test('بِالصِّدْقِ → "through honesty" - ب prefix + ال + صدق', () => {
       const result = analyzeArabicWord('بِالصِّدْقِ', 'through honesty');
 
-      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBe(true);
+      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBeTruthy();
     });
 
     test('بِمُقْتَضَى → "based on" - ب IS prefix', () => {
       const result = analyzeArabicWord('بِمُقْتَضَى', 'based on');
 
-      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBe(true);
+      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBeTruthy();
     });
   });
 });
@@ -230,7 +230,7 @@ describe('Arabic Word Analysis - Correct Detections (Regression Tests)', () => {
   test('عَلَيْكَ → "to you" - على prefix + ك suffix (correct)', () => {
     const result = analyzeArabicWord('عَلَيْكَ', 'to you');
 
-    expect(result.hasComponents).toBe(true);
+    expect(result.hasComponents).toBeTruthy();
     expect(result.prefixes.some(p => p.arabicMatch === 'علي' || p.arabicMatch === 'على')).toBe(
       true,
     );
@@ -240,8 +240,8 @@ describe('Arabic Word Analysis - Correct Detections (Regression Tests)', () => {
   test('فِيهِ → "about it" - في prefix + ه suffix (correct)', () => {
     const result = analyzeArabicWord('فِيهِ', 'about it');
 
-    expect(result.hasComponents).toBe(true);
-    expect(result.prefixes.some(p => p.arabicMatch === 'في')).toBe(true);
+    expect(result.hasComponents).toBeTruthy();
+    expect(result.prefixes.some(p => p.arabicMatch === 'في')).toBeTruthy();
     expect(result.suffix?.arabicMatch).toBe('ه');
   });
 
@@ -250,15 +250,15 @@ describe('Arabic Word Analysis - Correct Detections (Regression Tests)', () => {
     // Using "from us" instead of "of us" to match م prefix patterns better
     const result = analyzeArabicWord('مِنَّا', 'from us');
 
-    expect(result.hasComponents).toBe(true);
-    expect(result.prefixes.some(p => p.arabicMatch === 'من' || p.arabicMatch === 'م')).toBe(true);
+    expect(result.hasComponents).toBeTruthy();
+    expect(result.prefixes.some(p => p.arabicMatch === 'من' || p.arabicMatch === 'م')).toBeTruthy();
     // The suffix نا might not be detected due to 0-consonant root, which is an edge case
     // Accept if suffix is detected correctly, but don't fail if not
     if (result.suffix) {
       expect(result.suffix.arabicMatch).toBe('نا');
     }
     // As long as the prefix is detected and hasComponents is true, pass
-    expect(result.hasComponents).toBe(true);
+    expect(result.hasComponents).toBeTruthy();
   });
 });
 
@@ -267,8 +267,8 @@ describe('Arabic Word Analysis - Tier 1 Additional Fixes', () => {
     test('عِنْدَكَ → "at you" should detect عند prefix + ك suffix', () => {
       const result = analyzeArabicWord('عِنْدَكَ', 'at you');
 
-      expect(result.hasComponents).toBe(true);
-      expect(result.prefixes.some(p => p.arabicMatch === 'عند')).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
+      expect(result.prefixes.some(p => p.arabicMatch === 'عند')).toBeTruthy();
       expect(result.suffix).toBeDefined();
       expect(result.suffix?.arabicMatch).toBe('ك');
     });
@@ -279,26 +279,26 @@ describe('Arabic Word Analysis - Tier 1 Additional Fixes', () => {
       // يد (hand) + ين (dual) + ه (his) = يديه
       const result = analyzeArabicWord('يَدَيْهِ', 'his hands');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       // Should detect compound suffix يه (dual + possessive)
       expect(result.suffix?.arabicMatch).toBe('يه');
       expect(
         result.suffix?.englishMatches.some(m => m.includes('his') || m.includes('hands')),
-      ).toBe(true);
+      ).toBeTruthy();
     });
 
     test('كَفَّيْهِ → "his hands" should detect يه compound suffix', () => {
       // كف (palm/hand) + ين (dual) + ه (his) = كفيه
       const result = analyzeArabicWord('كَفَّيْهِ', 'his hands');
 
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
       expect(result.suffix).toBeDefined();
       // Should detect compound suffix يه (dual + possessive)
       expect(result.suffix?.arabicMatch).toBe('يه');
       expect(
         result.suffix?.englishMatches.some(m => m.includes('his') || m.includes('hands')),
-      ).toBe(true);
+      ).toBeTruthy();
     });
   });
 });
@@ -311,8 +311,8 @@ describe('Arabic Word Analysis - Opportunity Discovery Fixes', () => {
       // This is a regression test to ensure existing functionality still works
       const result = analyzeArabicWord('عِنْدَكَ', 'at you');
 
-      expect(result.hasComponents).toBe(true);
-      expect(result.prefixes.some(p => p.arabicMatch === 'عند')).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
+      expect(result.prefixes.some(p => p.arabicMatch === 'عند')).toBeTruthy();
       expect(result.suffix?.arabicMatch).toBe('ك');
     });
   });
@@ -330,13 +330,13 @@ describe('Arabic Word Analysis - False Positive Fixes', () => {
       // This is CORRECT - particles without roots should NOT be colored
 
       // Should detect لولا as the prefix (not ل alone)
-      expect(result.prefixes.some(p => p.arabicMatch === 'لولا')).toBe(true);
+      expect(result.prefixes.some(p => p.arabicMatch === 'لولا')).toBeTruthy();
 
       // Should NOT detect ل as separate prefix
-      expect(result.prefixes.some(p => p.arabicMatch === 'ل')).toBe(false);
+      expect(result.prefixes.some(p => p.arabicMatch === 'ل')).toBeFalsy();
 
       // Should NOT be colored (pure particle, no root)
-      expect(result.hasComponents).toBe(false);
+      expect(result.hasComponents).toBeFalsy();
       expect(result.remainingArabic).toBe('');
     });
   });
@@ -351,21 +351,21 @@ describe('Arabic Word Analysis - False Positive Fixes', () => {
       // Core principle: If there are 2 parts, show them with colors
 
       // Should detect و as prefix
-      expect(result.prefixes.some(p => p.arabicMatch === 'و')).toBe(true);
+      expect(result.prefixes.some(p => p.arabicMatch === 'و')).toBeTruthy();
 
       // Remaining should be empty (both components detected)
       expect(result.remainingArabic).toBe('');
 
       // SHOULD be colored (shows composition of و + هو)
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
     });
 
     test('فَهِيَ → "then she" - conjunction + pronoun IS colored to show composition', () => {
       const result = analyzeArabicWord('فَهِيَ', 'then she');
 
-      expect(result.prefixes.some(p => p.arabicMatch === 'ف')).toBe(true);
+      expect(result.prefixes.some(p => p.arabicMatch === 'ف')).toBeTruthy();
       expect(result.remainingArabic).toBe('');
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
     });
 
     test('بِهِ → "with him" - preposition + pronoun SHOULD be colored (not pure particles)', () => {
@@ -375,11 +375,11 @@ describe('Arabic Word Analysis - False Positive Fixes', () => {
       // This SHOULD be colored because ب is a PREPOSITION, not a conjunction
       // Shows how prepositions attach to pronouns (educational value)
 
-      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBe(true);
+      expect(result.prefixes.some(p => p.arabicMatch === 'ب')).toBeTruthy();
       expect(result.suffix?.arabicMatch).toBe('ه');
 
       // SHOULD be colored (preposition + pronoun shows composition)
-      expect(result.hasComponents).toBe(true);
+      expect(result.hasComponents).toBeTruthy();
     });
   });
 });

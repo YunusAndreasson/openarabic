@@ -125,7 +125,7 @@ describe('useMasteryChart', () => {
 
       const { result } = renderHook(() => useMasteryChart([]));
 
-      expect(result.current.hasData).toBe(false);
+      expect(result.current.hasData).toBeFalsy();
     });
 
     test('handles undefined study words', () => {
@@ -180,7 +180,7 @@ describe('useMasteryChart', () => {
     test('returns milestones array', () => {
       const { result } = renderHook(() => useMasteryChart([]));
 
-      expect(Array.isArray(result.current.milestones)).toBe(true);
+      expect(Array.isArray(result.current.milestones)).toBeTruthy();
       expect(result.current.milestones.length).toBeGreaterThan(0);
       expect(result.current.milestones[0]).toHaveProperty('achieved');
     });
@@ -188,7 +188,7 @@ describe('useMasteryChart', () => {
     test('returns points for chart rendering', () => {
       const { result } = renderHook(() => useMasteryChart([]));
 
-      expect(Array.isArray(result.current.points)).toBe(true);
+      expect(Array.isArray(result.current.points)).toBeTruthy();
       expect(result.current.points[0]).toHaveProperty('x');
       expect(result.current.points[0]).toHaveProperty('y');
       expect(result.current.points[0]).toHaveProperty('count');
@@ -197,7 +197,7 @@ describe('useMasteryChart', () => {
     test('returns x-axis labels', () => {
       const { result } = renderHook(() => useMasteryChart([]));
 
-      expect(Array.isArray(result.current.xLabels)).toBe(true);
+      expect(Array.isArray(result.current.xLabels)).toBeTruthy();
       expect(result.current.xLabels.length).toBeGreaterThan(0);
     });
   });

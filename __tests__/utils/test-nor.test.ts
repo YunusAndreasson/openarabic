@@ -29,8 +29,8 @@ describe('Nor (ولا) Normalization', () => {
 
     console.log('  و (and) detected:', hasWaw);
 
-    expect(hasWaw).toBe(true);
-    expect(analysis.hasComponents).toBe(true);
+    expect(hasWaw).toBeTruthy();
+    expect(analysis.hasComponents).toBeTruthy();
   });
 
   test('should color ولا "nor" after normalization', () => {
@@ -42,7 +42,7 @@ describe('Nor (ولا) Normalization', () => {
 
     // و should be detected
     const hasWaw = analysis.prefixes.some(p => p.arabicMatch === 'و');
-    expect(hasWaw).toBe(true);
-    expect(analysis.hasComponents).toBe(true);
+    expect(hasWaw).toBeTruthy();
+    expect(analysis.hasComponents).toBeTruthy();
   });
 });

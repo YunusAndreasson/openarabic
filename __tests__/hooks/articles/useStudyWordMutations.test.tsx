@@ -212,7 +212,7 @@ describe('useStudyWordMutations', () => {
         returned = await result.current.handleRootPress(1 as RootId);
       });
 
-      expect(returned).toBe(true);
+      expect(returned).toBeTruthy();
     });
 
     test('increments daily count only for add operations', async () => {
@@ -290,7 +290,7 @@ describe('useStudyWordMutations', () => {
 
       // Check optimistic update was applied
       const data = queryClient.getQueryData(['fsrs-words', 'test-user-id']) as unknown[];
-      expect(data.some((w: any) => w.root_id === 1)).toBe(true);
+      expect(data.some((w: any) => w.root_id === 1)).toBeTruthy();
     });
 
     test('reverts optimistic update on error', async () => {

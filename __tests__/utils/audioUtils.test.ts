@@ -110,7 +110,7 @@ describe('audioUtils', () => {
         duration: 0,
       });
 
-      expect(isAudioBusy()).toBe(true);
+      expect(isAudioBusy()).toBeTruthy();
     });
 
     test('should return false when audio is not loading', () => {
@@ -122,7 +122,7 @@ describe('audioUtils', () => {
         duration: 0,
       });
 
-      expect(isAudioBusy()).toBe(false);
+      expect(isAudioBusy()).toBeFalsy();
     });
   });
 

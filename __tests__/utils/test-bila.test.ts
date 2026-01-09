@@ -64,7 +64,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
       console.log('  لا (no) detected:', hasLa);
 
       // At least ب should be detected
-      expect(hasBa).toBe(true);
+      expect(hasBa).toBeTruthy();
     });
 
     test('should test بلا with "without"', () => {
@@ -83,7 +83,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
 
       // New behavior: "without" gets normalized to "with no" (two words)
       // So it WILL be colored
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.original.english).toBe('with no');
     });
   });
@@ -167,7 +167,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
         p => p.arabicMatch === 'ب' && p.englishMatches.includes('with'),
       );
 
-      expect(hasBa).toBe(true);
+      expect(hasBa).toBeTruthy();
     });
 
     test('should detect لا (no) after normalizing "bila"', () => {
@@ -179,7 +179,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
           (p.englishMatches.includes('no') || p.englishMatches.includes('not')),
       );
 
-      expect(hasLa).toBe(true);
+      expect(hasLa).toBeTruthy();
     });
 
     test('should detect separate components for بلا', () => {
@@ -218,7 +218,7 @@ describe('Bila Pattern Investigation (بلا)', () => {
       console.log('  - لا (no) detected as NEGATION (olive)');
       console.log('  - Educational coloring showing the composition');
 
-      expect(true).toBe(true);
+      expect(true).toBeTruthy();
     });
   });
 });

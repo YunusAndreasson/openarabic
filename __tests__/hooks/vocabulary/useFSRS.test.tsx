@@ -75,8 +75,8 @@ describe('useFSRS Hook', () => {
       expect(result.current.currentWord).toBeNull();
       expect(result.current.wordQueue).toEqual([]);
       expect(result.current.progress).toBe(0);
-      expect(result.current.isComplete).toBe(false);
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isComplete).toBeFalsy();
+      expect(result.current.isLoading).toBeFalsy();
     });
 
     test('initializes with loading state when fetching due words', async () => {
@@ -86,7 +86,7 @@ describe('useFSRS Hook', () => {
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isLoading).toBeTruthy();
       expect(result.current.currentWord).toBeNull();
     });
 
@@ -107,13 +107,13 @@ describe('useFSRS Hook', () => {
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       expect(result.current.currentWord).not.toBeNull();
       expect(result.current.wordQueue.length).toBeGreaterThan(0);
       expect(result.current.progress).toBe(0);
-      expect(result.current.isComplete).toBe(false);
+      expect(result.current.isComplete).toBeFalsy();
     });
 
     test('calls onComplete when no due words available', async () => {
@@ -172,7 +172,7 @@ describe('useFSRS Hook', () => {
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       // First word should be the one due soonest (root_id: 1)
@@ -324,7 +324,7 @@ describe('useFSRS Hook', () => {
 
         if (expectComplete) {
           await waitFor(() => {
-            expect(result.current.isComplete).toBe(true);
+            expect(result.current.isComplete).toBeTruthy();
           });
         }
 
@@ -413,7 +413,7 @@ describe('useFSRS Hook', () => {
       await result.current.updateWord(1, 'known');
 
       await waitFor(() => {
-        expect(result.current.isComplete).toBe(true);
+        expect(result.current.isComplete).toBeTruthy();
       });
 
       expect(onComplete).toHaveBeenCalledTimes(1);
@@ -436,7 +436,7 @@ describe('useFSRS Hook', () => {
       await result.current.updateWord(1, 'known');
 
       await waitFor(() => {
-        expect(result.current.isComplete).toBe(true);
+        expect(result.current.isComplete).toBeTruthy();
       });
 
       await waitFor(() => {
@@ -470,7 +470,7 @@ describe('useFSRS Hook', () => {
       await result.current.updateWord(2, 'known');
 
       await waitFor(() => {
-        expect(result.current.isComplete).toBe(true);
+        expect(result.current.isComplete).toBeTruthy();
       });
 
       expect(result.current.progress).toBe(100);
@@ -578,7 +578,7 @@ describe('useFSRS Hook', () => {
       // Wait for loading to start then finish
       await waitFor(
         () => {
-          expect(result.current.isLoading).toBe(false);
+          expect(result.current.isLoading).toBeFalsy();
         },
         { timeout: 5000 },
       );
@@ -586,7 +586,7 @@ describe('useFSRS Hook', () => {
       // Should handle error gracefully with empty state
       expect(result.current.currentWord).toBeNull();
       expect(result.current.wordQueue).toEqual([]);
-      expect(result.current.isComplete).toBe(false);
+      expect(result.current.isComplete).toBeFalsy();
     });
   });
 
@@ -610,7 +610,7 @@ describe('useFSRS Hook', () => {
 
       expect(result.current.wordQueue).toEqual([]);
       expect(result.current.progress).toBe(0);
-      expect(result.current.isComplete).toBe(false);
+      expect(result.current.isComplete).toBeFalsy();
     });
 
     test('invalidateQueries resets queue state', async () => {
@@ -658,7 +658,7 @@ describe('useFSRS Hook', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.isComplete).toBe(true);
+        expect(result.current.isComplete).toBeTruthy();
       });
 
       expect(result.current.currentWord).toBeNull();
@@ -669,7 +669,7 @@ describe('useFSRS Hook', () => {
     test('handles undefined userId', () => {
       const { result } = renderHook(() => useFSRS({ userId: undefined }), { wrapper });
 
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentWord).toBeNull();
       expect(result.current.wordQueue).toEqual([]);
     });
@@ -688,7 +688,7 @@ describe('useFSRS Hook', () => {
       await result.current.updateWord(1, 'known');
 
       await waitFor(() => {
-        expect(result.current.isComplete).toBe(true);
+        expect(result.current.isComplete).toBeTruthy();
       });
 
       const callCount = jest.mocked(studyWordsFSRSService.updateWordAndReview).mock.calls.length;
@@ -740,7 +740,7 @@ describe('useFSRS Hook', () => {
       rerender();
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.isLoading).toBeFalsy();
       });
 
       // Should maintain same state (not re-initialize)

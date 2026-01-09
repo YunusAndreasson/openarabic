@@ -78,7 +78,7 @@ describe('useCountBasedChart', () => {
       const { result } = renderHook(() => useCountBasedChart([], config));
 
       // Should return safe defaults, no crash
-      expect(result.current.hasData).toBe(false);
+      expect(result.current.hasData).toBeFalsy();
       expect(result.current.insights.currentCount).toBe(0);
       expect(result.current.insights.trend).toBe('stable');
       expect(result.current.insights.totalCount).toBe(0);
@@ -115,7 +115,7 @@ describe('useCountBasedChart', () => {
       const { result } = renderHook(() => useCountBasedChart(words, config));
 
       // Should not crash, should use default values (state=0, stability=0)
-      expect(result.current.hasData).toBe(true);
+      expect(result.current.hasData).toBeTruthy();
       expect(result.current.insights).toBeDefined();
     });
   });
@@ -291,7 +291,7 @@ describe('useCountBasedChart', () => {
       expect(milestoneCounts).not.toContain(100);
 
       // All milestones should be marked as achieved
-      expect(milestones.every(m => m.achieved)).toBe(true);
+      expect(milestones.every(m => m.achieved)).toBeTruthy();
     });
 
     test('should return empty milestones array when no thresholds reached', () => {
@@ -450,7 +450,7 @@ describe('useCountBasedChart', () => {
 
       // Should not crash, should handle division by zero gracefully
       expect(result.current.insights.totalCount).toBe(0);
-      expect(result.current.hasData).toBe(true); // Has words, just none counted
+      expect(result.current.hasData).toBeTruthy(); // Has words, just none counted
     });
   });
 });

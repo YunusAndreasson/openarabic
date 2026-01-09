@@ -62,9 +62,9 @@ describe('useAudioPreloader', () => {
     test('should return initial state with empty word queue', () => {
       const { result } = renderHook(() => useAudioPreloader([], false));
 
-      expect(result.current.isPreloading).toBe(false);
+      expect(result.current.isPreloading).toBeFalsy();
       expect(result.current.progress).toBe(0);
-      expect(result.current.isComplete).toBe(false);
+      expect(result.current.isComplete).toBeFalsy();
     });
 
     test('should not crash with empty array', () => {

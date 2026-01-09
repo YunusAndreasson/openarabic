@@ -200,7 +200,7 @@ describe('Reading to Dictionary Flow', () => {
       const { result } = renderHook(() => useArticleData(1, mockUserId), { wrapper });
 
       await waitFor(() => {
-        expect(result.current.isLoadingArticle).toBe(false);
+        expect(result.current.isLoadingArticle).toBeFalsy();
       });
 
       expect(result.current.article).toBeDefined();
@@ -228,10 +228,10 @@ describe('Reading to Dictionary Flow', () => {
       const { result } = renderHook(() => useArticleData(1, mockUserId), { wrapper });
 
       await waitFor(() => {
-        expect(result.current.isLoadingArticle).toBe(false);
+        expect(result.current.isLoadingArticle).toBeFalsy();
       });
 
-      expect(result.current.selectedWordIds.has(501)).toBe(true);
+      expect(result.current.selectedWordIds.has(501)).toBeTruthy();
     });
   });
 
@@ -301,7 +301,7 @@ describe('Reading to Dictionary Flow', () => {
 
       // Tooltip should be closed, modal should have word data
       expect(result.current.activeTooltip).toBeNull();
-      expect(result.current.wordDetailsModal.isVisible).toBe(true);
+      expect(result.current.wordDetailsModal.isVisible).toBeTruthy();
       expect(result.current.wordDetailsModal.data?.id).toBe(mockWord.id);
     });
 
@@ -347,7 +347,7 @@ describe('Reading to Dictionary Flow', () => {
         addResult = await result.current.handleAddWordToStudy(mockWord);
       });
 
-      expect(addResult!).toBe(true);
+      expect(addResult!).toBeTruthy();
       expect(mockSelectionFeedback).toHaveBeenCalled();
       expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id);
     });
@@ -394,7 +394,7 @@ describe('Reading to Dictionary Flow', () => {
         result.current.wordDetailsModal.open(mockWord);
       });
 
-      expect(result.current.isInStudyList).toBe(true);
+      expect(result.current.isInStudyList).toBeTruthy();
     });
 
     test('calls refetchStudyWords callback after adding', async () => {
@@ -427,7 +427,7 @@ describe('Reading to Dictionary Flow', () => {
         toggleResult = await result.current.handleRootPress(501 as RootId);
       });
 
-      expect(toggleResult).toBe(true);
+      expect(toggleResult).toBeTruthy();
       expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith(mockUserId, 501);
     });
 
@@ -484,7 +484,7 @@ describe('Reading to Dictionary Flow', () => {
         result.current.handleOpenWordDetails();
       });
 
-      expect(result.current.wordDetailsModal.isVisible).toBe(true);
+      expect(result.current.wordDetailsModal.isVisible).toBeTruthy();
 
       // Step 3: Add word to study list
       await act(async () => {
@@ -492,7 +492,7 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id);
-      expect(result.current.isInStudyList).toBe(true);
+      expect(result.current.isInStudyList).toBeTruthy();
     });
 
     test('flow handles word already in study list', async () => {
@@ -515,7 +515,7 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       // Should show as already in study list (from cache)
-      expect(result.current.isInStudyList).toBe(true);
+      expect(result.current.isInStudyList).toBeTruthy();
 
       // Toggle should remove it
       await act(async () => {
@@ -523,7 +523,7 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       // After removal, local optimistic state should show as not in study list
-      expect(result.current.isInStudyList).toBe(false);
+      expect(result.current.isInStudyList).toBeFalsy();
     });
   });
 });

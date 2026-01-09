@@ -19,7 +19,7 @@ describe('Database Example Grammar Rules', () => {
       const analysis = analyzeArabicWord('فمن', 'so whoever');
 
       // Multi-prefix: ف (so) + من (who/from)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
@@ -40,7 +40,7 @@ describe('Database Example Grammar Rules', () => {
       const formatted = formatWordAnalysis(analysis);
 
       // ف="so" + من="who" should both match
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 
@@ -63,7 +63,7 @@ describe('Database Example Grammar Rules', () => {
 
       // فإن compound removed - now splits into ف (conjunction) + إن (particle)
       // Both components match English translation and get different colors
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes).toHaveLength(2);
 
       // First prefix: ف (conjunction) - "so" - Conjunction with consequential meaning
@@ -86,7 +86,7 @@ describe('Database Example Grammar Rules', () => {
       // New behavior: ف + إن + ما detected as three separate prefixes
       // فإن compound removed - now splits into ف (conjunction) + إن (particle)
       // All three components match when translation is complete
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes).toHaveLength(3);
 
       // First prefix: ف (conjunction) - "so"
@@ -111,7 +111,7 @@ describe('Database Example Grammar Rules', () => {
       // When إن has no English equivalent in translation, only ف is detected
       // ما cannot be detected because it's a prefix (must be at start of remaining)
       // and it comes after إن which blocks it
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes).toHaveLength(1);
 
       // Only prefix: ف (conjunction) - "so"
@@ -126,7 +126,7 @@ describe('Database Example Grammar Rules', () => {
       const analysis = analyzeArabicWord('إنما', 'indeed only');
 
       // إنما is now detected as إن + ما (two separate prefixes)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes).toHaveLength(2);
 
       // First prefix: إن
@@ -161,7 +161,7 @@ describe('Database Example Grammar Rules', () => {
       const hasWhoMeaning = manEntries.some(entry =>
         entry.english.some(e => e.includes('who') || e.includes('whoever')),
       );
-      expect(hasWhoMeaning).toBe(true);
+      expect(hasWhoMeaning).toBeTruthy();
     });
   });
 
@@ -169,7 +169,7 @@ describe('Database Example Grammar Rules', () => {
     test('should detect وعن as multi-prefix (and from)', () => {
       const analysis = analyzeArabicWord('وعن', 'and from');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
       // Multi-prefix: و (and) + عن (from/about)
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
@@ -179,7 +179,7 @@ describe('Database Example Grammar Rules', () => {
     test('should detect ومن as multi-prefix (and from)', () => {
       const analysis = analyzeArabicWord('ومن', 'and from');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
       // Multi-prefix: و (and) + من (from)
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
@@ -191,7 +191,7 @@ describe('Database Example Grammar Rules', () => {
     test('should detect والله (by Allah / and by Allah)', () => {
       const analysisByAllah = analyzeArabicWord('والله', 'by Allah');
 
-      expect(analysisByAllah.hasComponents).toBe(true);
+      expect(analysisByAllah.hasComponents).toBeTruthy();
       expect(analysisByAllah.prefixes[0]).toBeDefined();
       expect(analysisByAllah.prefixes[0]?.arabicMatch).toBe('و');
 
@@ -199,20 +199,20 @@ describe('Database Example Grammar Rules', () => {
       const byMatch = analysisByAllah.prefixes[0]?.englishMatches.some(m =>
         m.toLowerCase().includes('by'),
       );
-      expect(byMatch).toBe(true);
+      expect(byMatch).toBeTruthy();
     });
 
     test('should detect والسماء (and by the sky)', () => {
       const analysis = analyzeArabicWord('والسماء', 'and by the sky');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should detect compound و+ال
       const hasWaOrAl =
         analysis.prefixes[0]?.arabicMatch.includes('و') ||
         analysis.prefixes[0]?.arabicMatch.includes('ال');
-      expect(hasWaOrAl).toBe(true);
+      expect(hasWaOrAl).toBeTruthy();
     });
   });
 
@@ -220,18 +220,18 @@ describe('Database Example Grammar Rules', () => {
     test('should detect بما (concerning what)', () => {
       const analysis = analyzeArabicWord('بما', 'concerning what');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match compound ب+ما
       const hasB = analysis.prefixes[0]?.arabicMatch.includes('ب');
-      expect(hasB).toBe(true);
+      expect(hasB).toBeTruthy();
     });
 
     test('should detect بمقتضى (based on)', () => {
       const analysis = analyzeArabicWord('بمقتضى', 'based on');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ب');
 
@@ -239,7 +239,7 @@ describe('Database Example Grammar Rules', () => {
       const basedMatch = analysis.prefixes[0]?.englishMatches.some(m =>
         m.toLowerCase().includes('based'),
       );
-      expect(basedMatch).toBe(true);
+      expect(basedMatch).toBeTruthy();
     });
   });
 
@@ -248,7 +248,7 @@ describe('Database Example Grammar Rules', () => {
       const analysis = analyzeArabicWord('لم', 'does not');
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]).toBeDefined();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لم');
 
@@ -256,19 +256,19 @@ describe('Database Example Grammar Rules', () => {
       const doesNotMatch = analysis.prefixes[0]?.englishMatches.some(
         m => m.toLowerCase().includes('does') && m.toLowerCase().includes('not'),
       );
-      expect(doesNotMatch).toBe(true);
+      expect(doesNotMatch).toBeTruthy();
     });
 
     test('should detect ولا (and not)', () => {
       const analysis = analyzeArabicWord('ولا', 'and not');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match compound و+لا (may be "ولا" or just "و" depending on priority)
       const hasWaOrWaLa =
         analysis.prefixes[0]?.arabicMatch === 'ولا' || analysis.prefixes[0]?.arabicMatch === 'و';
-      expect(hasWaOrWaLa).toBe(true);
+      expect(hasWaOrWaLa).toBeTruthy();
     });
   });
 
@@ -277,7 +277,7 @@ describe('Database Example Grammar Rules', () => {
       const analysis = analyzeArabicWord('كم', 'how much');
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]).toBeDefined();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('كم');
 
@@ -285,13 +285,13 @@ describe('Database Example Grammar Rules', () => {
       const howMuchMatch = analysis.prefixes[0]?.englishMatches.some(
         m => m.toLowerCase().includes('how') && m.toLowerCase().includes('much'),
       );
-      expect(howMuchMatch).toBe(true);
+      expect(howMuchMatch).toBeTruthy();
     });
 
     test('should detect وكم (and how many)', () => {
       const analysis = analyzeArabicWord('وكم', 'and how many');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
 
       // Should match compound و+كم (may be "وكم" compound or separate components)
@@ -299,7 +299,7 @@ describe('Database Example Grammar Rules', () => {
         analysis.prefixes[0]?.arabicMatch === 'وكم' ||
         analysis.prefixes[0]?.arabicMatch === 'و' ||
         analysis.prefixes[0]?.englishMatches.some(m => m.toLowerCase().includes('how'));
-      expect(hasWaOrCompound).toBe(true);
+      expect(hasWaOrCompound).toBeTruthy();
     });
   });
 });

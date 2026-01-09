@@ -157,8 +157,8 @@ describe('audioPlayer service', () => {
     test('should initialize with idle state', () => {
       const status = audioService.getStatus();
 
-      expect(status.isPlaying).toBe(false);
-      expect(status.isLoading).toBe(false);
+      expect(status.isPlaying).toBeFalsy();
+      expect(status.isLoading).toBeFalsy();
       expect(status.currentTime).toBe(0);
       expect(status.duration).toBe(0);
       expect(status.currentTrack).toBeNull();
@@ -168,7 +168,7 @@ describe('audioPlayer service', () => {
     test('should initialize playlist mode as false', () => {
       const playlistInfo = audioService.getPlaylistInfo();
 
-      expect(playlistInfo.isPlaylistMode).toBe(false);
+      expect(playlistInfo.isPlaylistMode).toBeFalsy();
       expect(playlistInfo.currentIndex).toBe(0);
       expect(playlistInfo.totalTracks).toBe(0);
     });
@@ -184,7 +184,7 @@ describe('audioPlayer service', () => {
     test('should play audio track successfully', async () => {
       const success = await audioService.play(testTrack);
 
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
       expect(mockCreateAudioPlayer).toHaveBeenCalledWith(
         testTrack.audioUrl,
         expect.objectContaining({ updateInterval: 500 }),
@@ -192,7 +192,7 @@ describe('audioPlayer service', () => {
       expect(mockPlayer.play).toHaveBeenCalled();
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBe(true);
+      expect(status.isPlaying).toBeTruthy();
       expect(status.currentTrack).toEqual(testTrack);
     });
 
@@ -218,7 +218,7 @@ describe('audioPlayer service', () => {
 
       await audioService.play(testTrack);
 
-      expect(loadingStateSeen).toBe(true);
+      expect(loadingStateSeen).toBeTruthy();
     });
 
     test('should skip loading state when skipLoadingState option is true', async () => {
@@ -231,7 +231,7 @@ describe('audioPlayer service', () => {
 
       await audioService.play(testTrack, { skipLoadingState: true });
 
-      expect(loadingStateSeen).toBe(false);
+      expect(loadingStateSeen).toBeFalsy();
     });
 
     test('should clean up previous player when switching tracks', async () => {
@@ -282,11 +282,11 @@ describe('audioPlayer service', () => {
 
       const success = await audioService.play(testTrack);
 
-      expect(success).toBe(false);
+      expect(success).toBeFalsy();
       expect(mockHandleError).toHaveBeenCalled();
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBe(false);
+      expect(status.isPlaying).toBeFalsy();
     });
 
     test('should wait for player readiness before playing', async () => {
@@ -351,7 +351,7 @@ describe('audioPlayer service', () => {
 
       const success = await audioService.play(testTrack);
 
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
       expect(mockPlayerWithListener.play).toHaveBeenCalled();
     });
 
@@ -378,7 +378,7 @@ describe('audioPlayer service', () => {
 
       const success = await audioService.play(testTrack);
 
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
       expect(mockPlayerWithListener.play).toHaveBeenCalled();
     });
 
@@ -395,7 +395,7 @@ describe('audioPlayer service', () => {
 
       // Should have tried twice (initial + retry after reset)
       expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(2);
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
     });
   });
 
@@ -408,7 +408,7 @@ describe('audioPlayer service', () => {
       expect(mockPlayer.remove).toHaveBeenCalled();
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBe(false);
+      expect(status.isPlaying).toBeFalsy();
       expect(status.currentTrack).toBeNull();
       expect(status.currentTime).toBe(0);
       expect(status.duration).toBe(0);
@@ -419,7 +419,7 @@ describe('audioPlayer service', () => {
       await audioService.stop();
 
       const playlistInfo = audioService.getPlaylistInfo();
-      expect(playlistInfo.isPlaylistMode).toBe(false);
+      expect(playlistInfo.isPlaylistMode).toBeFalsy();
       expect(playlistInfo.totalTracks).toBe(0);
     });
 
@@ -434,7 +434,7 @@ describe('audioPlayer service', () => {
 
       // State should be reset even if pause failed
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBe(false);
+      expect(status.isPlaying).toBeFalsy();
       expect(status.currentTrack).toBeNull();
     });
   });
@@ -468,10 +468,10 @@ describe('audioPlayer service', () => {
     test('should start playlist with first track', async () => {
       const success = await audioService.playPlaylist([testTrack, testTrack2, testTrack3]);
 
-      expect(success).toBe(true);
+      expect(success).toBeTruthy();
 
       const playlistInfo = audioService.getPlaylistInfo();
-      expect(playlistInfo.isPlaylistMode).toBe(true);
+      expect(playlistInfo.isPlaylistMode).toBeTruthy();
       expect(playlistInfo.currentIndex).toBe(0);
       expect(playlistInfo.totalTracks).toBe(3);
 
@@ -489,16 +489,16 @@ describe('audioPlayer service', () => {
 
       await audioService.playPlaylist([testTrack, testTrack2]);
 
-      expect(loadingStateSeen).toBe(false);
+      expect(loadingStateSeen).toBeFalsy();
     });
 
     test('should return false for empty playlist', async () => {
       const success = await audioService.playPlaylist([]);
 
-      expect(success).toBe(false);
+      expect(success).toBeFalsy();
 
       const playlistInfo = audioService.getPlaylistInfo();
-      expect(playlistInfo.isPlaylistMode).toBe(false);
+      expect(playlistInfo.isPlaylistMode).toBeFalsy();
     });
 
     test('should call onTrackComplete callback when advancing tracks', async () => {
@@ -556,10 +556,10 @@ describe('audioPlayer service', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const playlistInfo = audioService.getPlaylistInfo();
-      expect(playlistInfo.isPlaylistMode).toBe(false);
+      expect(playlistInfo.isPlaylistMode).toBeFalsy();
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBe(false);
+      expect(status.isPlaying).toBeFalsy();
     });
 
     test('should prevent duplicate track advancement from race conditions', async () => {
@@ -582,13 +582,13 @@ describe('audioPlayer service', () => {
 
   describe('Sleep Timer Integration', () => {
     test('should track sleep timer expired state', () => {
-      expect(audioService.isSleepTimerExpired()).toBe(false);
+      expect(audioService.isSleepTimerExpired()).toBeFalsy();
 
       audioService.markSleepTimerExpired();
-      expect(audioService.isSleepTimerExpired()).toBe(true);
+      expect(audioService.isSleepTimerExpired()).toBeTruthy();
 
       audioService.resetSleepTimerExpired();
-      expect(audioService.isSleepTimerExpired()).toBe(false);
+      expect(audioService.isSleepTimerExpired()).toBeFalsy();
     });
 
     test('should stop playlist when sleep timer expires', async () => {
@@ -604,19 +604,19 @@ describe('audioPlayer service', () => {
 
       // Should stop instead of advancing to next track
       const playlistInfo = audioService.getPlaylistInfo();
-      expect(playlistInfo.isPlaylistMode).toBe(false);
+      expect(playlistInfo.isPlaylistMode).toBeFalsy();
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBe(false);
+      expect(status.isPlaying).toBeFalsy();
     });
 
     test('should reset sleep timer when starting new playlist', async () => {
       audioService.markSleepTimerExpired();
-      expect(audioService.isSleepTimerExpired()).toBe(true);
+      expect(audioService.isSleepTimerExpired()).toBeTruthy();
 
       await audioService.playPlaylist([testTrack, testTrack2]);
 
-      expect(audioService.isSleepTimerExpired()).toBe(false);
+      expect(audioService.isSleepTimerExpired()).toBeFalsy();
     });
   });
 
@@ -629,7 +629,7 @@ describe('audioPlayer service', () => {
 
       expect(listener).toHaveBeenCalled();
       const lastCall = listener.mock.calls[listener.mock.calls.length - 1][0];
-      expect(lastCall.isPlaying).toBe(true);
+      expect(lastCall.isPlaying).toBeTruthy();
       expect(lastCall.currentTrack).toEqual(testTrack);
 
       unsubscribe();
@@ -698,7 +698,7 @@ describe('audioPlayer service', () => {
       const status = audioService.getStatus();
       expect(status.currentTime).toBe(10);
       expect(status.duration).toBe(120);
-      expect(status.isLoaded).toBe(true);
+      expect(status.isLoaded).toBeTruthy();
       expect(status.playbackState).toBe('ready');
     });
 
@@ -729,8 +729,8 @@ describe('audioPlayer service', () => {
       });
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBe(false);
-      expect(status.didJustFinish).toBe(true);
+      expect(status.isPlaying).toBeFalsy();
+      expect(status.didJustFinish).toBeTruthy();
       expect(status.currentTime).toBe(120);
     });
   });
@@ -849,7 +849,7 @@ describe('audioPlayer service', () => {
 
       // playPlaylist returns false when play() fails
       const success = await audioService.playPlaylist([testTrack, testTrack2]);
-      expect(success).toBe(false);
+      expect(success).toBeFalsy();
 
       // Note: Playlist state is NOT reset when play() returns false (only when exception is thrown)
       // This is the actual behavior - playlist state remains until stop() is called

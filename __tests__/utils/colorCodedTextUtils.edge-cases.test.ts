@@ -181,7 +181,7 @@ describe('Color-Coding Edge Cases', () => {
   describe('Whitespace Handling', () => {
     test('should handle multiple spaces: "and    from" (4 spaces)', () => {
       // Verify that multiple spaces are treated as multi-word
-      expect(shouldApplyColorCoding('and    from')).toBe(true);
+      expect(shouldApplyColorCoding('and    from')).toBeTruthy();
 
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
@@ -222,15 +222,15 @@ describe('Color-Coding Edge Cases', () => {
     });
 
     test('should handle tabs: "and\\t\\tfrom"', () => {
-      expect(shouldApplyColorCoding('and\t\tfrom')).toBe(true);
+      expect(shouldApplyColorCoding('and\t\tfrom')).toBeTruthy();
     });
 
     test('should handle newlines: "and\\n\\nfrom"', () => {
-      expect(shouldApplyColorCoding('and\n\nfrom')).toBe(true);
+      expect(shouldApplyColorCoding('and\n\nfrom')).toBeTruthy();
     });
 
     test('should handle leading/trailing spaces: "  and from  "', () => {
-      expect(shouldApplyColorCoding('  and from  ')).toBe(true);
+      expect(shouldApplyColorCoding('  and from  ')).toBeTruthy();
     });
   });
 

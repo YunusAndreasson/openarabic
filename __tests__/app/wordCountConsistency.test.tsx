@@ -203,7 +203,7 @@ describe('Word Count Consistency Validation', () => {
 
       // Word 3 should be included (never reviewed)
       expect(neverReviewedWords.length).toBeGreaterThan(0);
-      expect(neverReviewedWords.some(w => w.root_id === 3)).toBe(true);
+      expect(neverReviewedWords.some(w => w.root_id === 3)).toBeTruthy();
 
       // These should count toward "Study All Words" eligibility
       const eligibleCount = mockStudyWords.filter(word => {
@@ -255,7 +255,7 @@ describe('Word Count Consistency Validation', () => {
       const shouldPreventReinit = isComplete && dueWordsLength === 0;
 
       // This should be true when session is complete and no words available
-      expect(shouldPreventReinit).toBe(true);
+      expect(shouldPreventReinit).toBeTruthy();
 
       // The completionTriggered guard should also work
       const completionTriggered = true;
@@ -263,7 +263,7 @@ describe('Word Count Consistency Validation', () => {
 
       // These conditions should prevent further processing
       const shouldPreventUpdate = isComplete || completionTriggered || isProcessingUpdate;
-      expect(shouldPreventUpdate).toBe(true);
+      expect(shouldPreventUpdate).toBeTruthy();
     });
 
     test('should validate completion state guards work correctly', () => {
@@ -278,7 +278,7 @@ describe('Word Count Consistency Validation', () => {
       guards.forEach(guard => {
         const shouldPreventUpdate =
           guard.isComplete || guard.completionTriggered || guard.isProcessingUpdate;
-        expect(shouldPreventUpdate).toBe(true);
+        expect(shouldPreventUpdate).toBeTruthy();
       });
     });
   });
@@ -401,7 +401,7 @@ describe('Word Count Consistency Validation', () => {
 
       // Session should end exactly here, not before, not after
       const isSessionComplete = processedWords >= totalWordsInSession;
-      expect(isSessionComplete).toBe(true);
+      expect(isSessionComplete).toBeTruthy();
     });
 
     test('should ensure progress bar accuracy throughout the session', () => {

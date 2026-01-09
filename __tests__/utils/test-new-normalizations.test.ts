@@ -15,7 +15,7 @@ describe('New Normalization Rules', () => {
     test('should detect ف prefix', () => {
       const analysis = analyzeArabicWord('فمن', 'anything');
       const hasFa = analysis.prefixes.some(p => p.arabicMatch === 'ف');
-      expect(hasFa).toBe(true);
+      expect(hasFa).toBeTruthy();
     });
   });
 
@@ -28,7 +28,7 @@ describe('New Normalization Rules', () => {
     test('should detect و prefix', () => {
       const analysis = analyzeArabicWord('ومن', 'anything');
       const hasWaw = analysis.prefixes.some(p => p.arabicMatch === 'و');
-      expect(hasWaw).toBe(true);
+      expect(hasWaw).toBeTruthy();
     });
   });
 
@@ -41,7 +41,7 @@ describe('New Normalization Rules', () => {
     test('should detect ب prefix', () => {
       const analysis = analyzeArabicWord('بما', 'anything');
       const hasBa = analysis.prefixes.some(p => p.arabicMatch === 'ب');
-      expect(hasBa).toBe(true);
+      expect(hasBa).toBeTruthy();
     });
   });
 });

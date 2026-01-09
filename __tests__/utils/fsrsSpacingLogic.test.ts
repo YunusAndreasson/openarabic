@@ -156,7 +156,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       expect(() => calculateWordPriority(wordWithNulls)).not.toThrow();
       const priority = calculateWordPriority(wordWithNulls);
       expect(typeof priority).toBe('number');
-      expect(isFinite(priority)).toBe(true);
+      expect(isFinite(priority)).toBeTruthy();
     });
   });
 
@@ -475,7 +475,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
         // Verify state consistency
         expect(state.recentWords.size).toBeLessThanOrEqual(MIN_WORD_SPACING);
-        expect(state.spacedWords.every(s => typeof s.remainingSpacing === 'number')).toBe(true);
+        expect(state.spacedWords.every(s => typeof s.remainingSpacing === 'number')).toBeTruthy();
 
         // Prevent infinite loops
         if (operations.length > 50) break;
@@ -501,8 +501,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
         const priority = calculateWordPriority(word);
 
         expect(typeof priority).toBe('number');
-        expect(isFinite(priority)).toBe(true);
-        expect(isNaN(priority)).toBe(false);
+        expect(isFinite(priority)).toBeTruthy();
+        expect(isNaN(priority)).toBeFalsy();
       });
     });
 
@@ -520,8 +520,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
       // Verify state is still consistent
       expect(state.recentWordsQueue).toEqual([1, 2]);
-      expect(state.recentWords.has(1)).toBe(true);
-      expect(state.recentWords.has(2)).toBe(true);
+      expect(state.recentWords.has(1)).toBeTruthy();
+      expect(state.recentWords.has(2)).toBeTruthy();
       expect(state.spacedWords).toHaveLength(2);
       expect(state.spacedWords[0].remainingSpacing).toBe(1); // 3 - 2 updates
       expect(state.spacedWords[1].remainingSpacing).toBe(0); // 1 - 1 update (only affected by second call)
@@ -565,7 +565,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
       const priority = calculateWordPriority(word);
       expect(typeof priority).toBe('number');
-      expect(isFinite(priority)).toBe(true);
+      expect(isFinite(priority)).toBeTruthy();
 
       const queue = setupQueue([word]);
       const state = createSpacingState();
@@ -641,7 +641,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       extremeWords.forEach(word => {
         const priority = calculateWordPriority(word);
         expect(typeof priority).toBe('number');
-        expect(isFinite(priority)).toBe(true);
+        expect(isFinite(priority)).toBeTruthy();
       });
 
       const queue = setupQueue(extremeWords);

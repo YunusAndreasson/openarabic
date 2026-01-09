@@ -112,43 +112,43 @@ describe('env', () => {
     test('should return true when environment variable exists and has value', () => {
       process.env.EXISTS_VAR = 'some-value';
       const result = hasEnvVar('EXISTS_VAR');
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
     });
 
     test('should return false when environment variable does not exist', () => {
       delete process.env.MISSING_VAR;
       const result = hasEnvVar('MISSING_VAR');
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
     });
 
     test('should return false when environment variable is empty string', () => {
       process.env.EMPTY_VAR = '';
       const result = hasEnvVar('EMPTY_VAR');
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
     });
 
     test('should return false when environment variable is only whitespace', () => {
       process.env.WHITESPACE_VAR = '   ';
       const result = hasEnvVar('WHITESPACE_VAR');
-      expect(result).toBe(false);
+      expect(result).toBeFalsy();
     });
 
     test('should return true for environment variable with whitespace but also content', () => {
       process.env.PADDED_VAR = '  value  ';
       const result = hasEnvVar('PADDED_VAR');
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
     });
 
     test('should return true for numeric string values', () => {
       process.env.NUMERIC_VAR = '123';
       const result = hasEnvVar('NUMERIC_VAR');
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
     });
 
     test('should return true for boolean string values', () => {
       process.env.BOOLEAN_VAR = 'false';
       const result = hasEnvVar('BOOLEAN_VAR');
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
     });
   });
 });

@@ -93,7 +93,7 @@ describe('useDueWordsChart', () => {
 
       // Should return safe defaults
       expect(result.current.dueWordsData).toEqual([]);
-      expect(result.current.chartData.hasData).toBe(false);
+      expect(result.current.chartData.hasData).toBeFalsy();
       expect(result.current.chartData.dueWordsPath).toBe('');
       expect(result.current.chartData.dataPoints).toEqual([]);
       expect(result.current.chartData.insights).toEqual({
@@ -125,7 +125,7 @@ describe('useDueWordsChart', () => {
 
       // All words filtered out, should return empty forecast
       expect(result.current.dueWordsData).toEqual([]);
-      expect(result.current.chartData.hasData).toBe(false);
+      expect(result.current.chartData.hasData).toBeFalsy();
       expect(result.current.chartData.insights.currentDue).toBe(0);
     });
 
@@ -267,7 +267,7 @@ describe('useDueWordsChart', () => {
       // Current implementation: hasData is false when dueWordsData is empty (early return)
       // This is technically a limitation - ideally should check studyWords.length
       // But testing current behavior: when all words filtered, hasData = false
-      expect(result.current.chartData.hasData).toBe(false);
+      expect(result.current.chartData.hasData).toBeFalsy();
       expect(result.current.dueWordsData).toEqual([]);
     });
 
@@ -275,7 +275,7 @@ describe('useDueWordsChart', () => {
       const { result } = renderHook(() => useDueWordsChart([]));
 
       // No words at all
-      expect(result.current.chartData.hasData).toBe(false);
+      expect(result.current.chartData.hasData).toBeFalsy();
     });
 
     test('should be true with valid due words', () => {
@@ -285,7 +285,7 @@ describe('useDueWordsChart', () => {
       const { result } = renderHook(() => useDueWordsChart(words));
 
       // Has words
-      expect(result.current.chartData.hasData).toBe(true);
+      expect(result.current.chartData.hasData).toBeTruthy();
     });
   });
 
@@ -306,7 +306,7 @@ describe('useDueWordsChart', () => {
       expect(chartData).toHaveProperty('dataPoints');
       expect(chartData).toHaveProperty('insights');
 
-      expect(Array.isArray(chartData.dataPoints)).toBe(true);
+      expect(Array.isArray(chartData.dataPoints)).toBeTruthy();
       expect(typeof chartData.dueWordsPath).toBe('string');
       expect(typeof chartData.hasData).toBe('boolean');
     });

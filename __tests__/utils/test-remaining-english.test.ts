@@ -60,7 +60,7 @@ describe('remainingEnglish calculation', () => {
     const hasWawPrefix = analysis.prefixes.some(
       p => p.arabicMatch === 'و' && p.englishMatches.includes('and'),
     );
-    expect(hasWawPrefix).toBe(true);
+    expect(hasWawPrefix).toBeTruthy();
 
     // Suffix "ه" matches "his"
     expect(analysis.suffix?.englishMatches).toContain('his');

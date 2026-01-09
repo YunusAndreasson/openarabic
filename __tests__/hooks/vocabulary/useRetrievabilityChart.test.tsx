@@ -71,7 +71,7 @@ describe('useRetrievabilityChart', () => {
       const { result } = renderHook(() => useRetrievabilityChart([]));
 
       expect(result.current.retrievabilityData).toEqual([]);
-      expect(result.current.chartData.hasData).toBe(false);
+      expect(result.current.chartData.hasData).toBeFalsy();
       expect(result.current.chartData.retrievabilityPath).toBe('');
       expect(result.current.chartData.dataPoints).toEqual([]);
     });
@@ -97,7 +97,7 @@ describe('useRetrievabilityChart', () => {
       const { result } = renderHook(() => useRetrievabilityChart(words));
 
       expect(result.current.retrievabilityData.length).toBeGreaterThan(0);
-      expect(result.current.chartData.hasData).toBe(true);
+      expect(result.current.chartData.hasData).toBeTruthy();
     });
 
     test('generates chart path for valid data', () => {

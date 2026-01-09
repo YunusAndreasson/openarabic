@@ -46,8 +46,8 @@ describe('Faidha (فإذا) Normalization', () => {
       console.log('  ف (so) detected:', hasFa);
       console.log('  إذا (when) detected:', hasIdha);
 
-      expect(hasFa).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasFa).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should detect BOTH و and إذا in وإذا "waidha"', () => {
@@ -71,8 +71,8 @@ describe('Faidha (فإذا) Normalization', () => {
       console.log('  و (and) detected:', hasWaw);
       console.log('  إذا (when) detected:', hasIdha);
 
-      expect(hasWaw).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasWaw).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should color فإذا "so when" - sequential detection', () => {
@@ -88,11 +88,11 @@ describe('Faidha (فإذا) Normalization', () => {
 
       // Should have detected prefixes
       expect(analysis.prefixes.length).toBeGreaterThan(0);
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
 
       // ف should definitely be detected
       const hasFa = analysis.prefixes.some(p => p.arabicMatch === 'ف');
-      expect(hasFa).toBe(true);
+      expect(hasFa).toBeTruthy();
     });
   });
 
@@ -110,7 +110,7 @@ describe('Faidha (فإذا) Normalization', () => {
       console.log('    1. و (and) → GREEN (conjunction)');
       console.log('    2. إذا (when) → detected as prefix/particle');
 
-      expect(true).toBe(true);
+      expect(true).toBeTruthy();
     });
   });
 });

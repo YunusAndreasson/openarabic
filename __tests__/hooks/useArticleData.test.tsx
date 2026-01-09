@@ -134,13 +134,13 @@ describe('useArticleData', () => {
 
     // Wait for queries to resolve
     await waitFor(() => {
-      expect(result.current.isLoadingArticle).toBe(false);
-      expect(result.current.isLoadingStudyWords).toBe(false);
+      expect(result.current.isLoadingArticle).toBeFalsy();
+      expect(result.current.isLoadingStudyWords).toBeFalsy();
     });
 
     // Test real article processing
     expect(result.current.article).toEqual(mockArticle);
-    expect(result.current.isInReadingList).toBe(true);
+    expect(result.current.isInReadingList).toBeTruthy();
 
     // Test real memoized processing - selectedWordIds
     expect([...result.current.selectedWordIds]).toEqual([1, 2]);
@@ -174,7 +174,7 @@ describe('useArticleData', () => {
     expect(result.current.sortedSentences).toEqual([]);
     expect(result.current.sentenceWordsMap.size).toBe(0);
     expect(result.current.selectedWordIds.size).toBe(0);
-    expect(result.current.isInReadingList).toBe(false);
+    expect(result.current.isInReadingList).toBeFalsy();
   });
 
   test('uses real React Query caching - second render should use cache', async () => {
@@ -226,7 +226,7 @@ describe('useArticleData', () => {
     // With retry disabled, the query should fail immediately and stop loading
     await waitFor(
       () => {
-        expect(result.current.isLoadingArticle).toBe(false);
+        expect(result.current.isLoadingArticle).toBeFalsy();
       },
       { timeout: 5000 },
     ); // Increased timeout for async query settling

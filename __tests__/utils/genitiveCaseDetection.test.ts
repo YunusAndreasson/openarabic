@@ -50,7 +50,7 @@ describe('Genitive Case Detection', () => {
       // "by" is a legitimate ب preposition meaning
       // ب is a prefix, not part of root
       expect(analysis.prefixes).toBeDefined();
-      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ب')).toBe(true);
+      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ب')).toBeTruthy();
     });
 
     test('بكم → "with you" SHOULD detect ب prefix (preposition "with")', () => {
@@ -58,7 +58,7 @@ describe('Genitive Case Detection', () => {
 
       // "with" is a legitimate ب preposition meaning
       expect(analysis.prefixes).toBeDefined();
-      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ب')).toBe(true);
+      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ب')).toBeTruthy();
     });
 
     test('بهذا → "in this" SHOULD detect ب prefix (preposition "in")', () => {
@@ -66,7 +66,7 @@ describe('Genitive Case Detection', () => {
 
       // "in" is a legitimate ب preposition meaning
       expect(analysis.prefixes).toBeDefined();
-      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ب')).toBe(true);
+      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ب')).toBeTruthy();
     });
   });
 
@@ -77,7 +77,7 @@ describe('Genitive Case Detection', () => {
       // Contains both "by" (preposition) and "of" (genitive)
       // "by" indicates ب is legitimate preposition
       expect(analysis.prefixes).toBeDefined();
-      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ب')).toBe(true);
+      expect(analysis.prefixes?.some(p => p.arabicMatch === 'ب')).toBeTruthy();
     });
   });
 

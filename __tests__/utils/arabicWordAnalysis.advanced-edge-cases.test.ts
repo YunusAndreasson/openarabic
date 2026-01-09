@@ -43,7 +43,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('لا', "don't go");
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لا');
       // Should still match "not" even though token count changed
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
@@ -54,7 +54,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('لا', "I don't know");
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
 
@@ -63,7 +63,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('لم', "didn't");
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('لم');
     });
 
@@ -72,7 +72,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // "والبيت" should NOT match if translation is just "and the house"
       const analysis = analyzeArabicWord('والبيت', 'and the house');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       // Should detect "و" or "وال" prefix, not reject all components
       expect(analysis.prefixes[0]).toBeDefined();
     });
@@ -82,7 +82,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('لا', "won't don't");
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       // Should match "not" from either contraction
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
@@ -99,7 +99,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('لا', "he's won't go");
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
 
@@ -108,7 +108,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('لا', "don't can't");
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
 
@@ -116,7 +116,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('و', "I'm and you");
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
       expect(analysis.prefixes[0]?.englishMatches).toContain('and');
     });
@@ -125,7 +125,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('و', "don't and won't");
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
@@ -133,7 +133,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('لا', "I've don't won't");
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.englishMatches).toContain('not');
     });
   });
@@ -147,7 +147,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
     test('should handle empty Arabic string gracefully', () => {
       const analysis = analyzeArabicWord('', 'test');
 
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.original.arabic).toBe('');
       expect(analysis.remainingArabic).toBe('');
     });
@@ -155,14 +155,14 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
     test('should handle empty English string gracefully', () => {
       const analysis = analyzeArabicWord('test', '');
 
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.original.english).toBe('');
     });
 
     test('should handle both empty strings', () => {
       const analysis = analyzeArabicWord('', '');
 
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.original.arabic).toBe('');
       expect(analysis.original.english).toBe('');
     });
@@ -185,7 +185,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('و', '   and   ');
 
       // Single-word rule: 'and' (after trim) is one word, so no color-coding
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
     });
   });
 
@@ -235,7 +235,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // 'كه' where prefix 'ك' (like) and suffix 'ه' (his/it) both 1 char
       const analysis = analyzeArabicWord('كه', 'like it');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       // Should consistently choose one (likely prefix due to >= in code)
       const hasPrefix = !!analysis.prefixes[0];
       const hasSuffix = !!analysis.suffix;
@@ -253,7 +253,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // Create scenario where both 2-char components overlap
       const analysis = analyzeArabicWord('فيه', 'in it');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       // في (2 chars) + ه (1 char) = 3 chars, so no overlap in 'فيه'
       // Both can coexist without overlapping
       if (analysis.prefixes[0] && analysis.suffix) {
@@ -290,7 +290,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
     test('should handle text with diacritics at every position', () => {
       const analysis = analyzeArabicWord('وَهَ', 'and it');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       // Should handle diacritics between every character
     });
 
@@ -369,7 +369,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('و', 'and\tthe');
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
@@ -377,14 +377,14 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('و', 'and\nthe');
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
     test('should handle mixed whitespace types', () => {
       const analysis = analyzeArabicWord('والكتاب', 'and \t\n the book');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes).toHaveLength(2);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
       expect(analysis.prefixes[1]?.arabicMatch).toBe('ال');
@@ -400,14 +400,14 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
     test('should handle Title Case in English', () => {
       const analysis = analyzeArabicWord('والكتاب', 'And The Book');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
     });
 
     test('should handle ALL CAPS in English', () => {
       const analysis = analyzeArabicWord('والكتاب', 'AND THE BOOK');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
     });
 
@@ -415,7 +415,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('و', 'AnD the');
 
       // Single component → hasComponents=false
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
   });
@@ -460,19 +460,19 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('الكتاب', 'in the house');
 
       // Has definite article, but translation has "the"
-      expect(analysis.hasBracketInjection).toBe(false);
+      expect(analysis.hasBracketInjection).toBeFalsy();
     });
 
     test('should not inject when "the" is at the end', () => {
       const analysis = analyzeArabicWord('الكتاب', 'inside the');
 
-      expect(analysis.hasBracketInjection).toBe(false);
+      expect(analysis.hasBracketInjection).toBeFalsy();
     });
 
     test('should not inject when "the" is at the start', () => {
       const analysis = analyzeArabicWord('الكتاب', 'the book');
 
-      expect(analysis.hasBracketInjection).toBe(false);
+      expect(analysis.hasBracketInjection).toBeFalsy();
     });
 
     test('should inject when "the" is part of another word', () => {
@@ -480,7 +480,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('الكتاب', 'then book');
 
       // Should inject because "the" as a whole word is not present
-      expect(analysis.hasBracketInjection).toBe(true);
+      expect(analysis.hasBracketInjection).toBeTruthy();
     });
   });
 
@@ -503,8 +503,8 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis2 = analyzeArabicWord('و', 'and');
 
       // Single-word rule: both should have no components for educational clarity
-      expect(analysis1.hasComponents).toBe(false);
-      expect(analysis2.hasComponents).toBe(false);
+      expect(analysis1.hasComponents).toBeFalsy();
+      expect(analysis2.hasComponents).toBeFalsy();
       // Should be cached consistently
       expect(analysis1).toEqual(analysis2);
     });
@@ -513,7 +513,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // Definite article "ال" without anchor should match anywhere
       const analysis = analyzeArabicWord('والكتاب', 'and the book');
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 
@@ -536,7 +536,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('و\u200Bكتاب', 'and book');
 
       // Should still detect "و" despite zero-width character (now stripped)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
     });
 
@@ -545,7 +545,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('\u200Fو', 'and');
 
       // Single-word rule: 'and' is one word, so no color-coding
-      expect(analysis.hasComponents).toBe(false);
+      expect(analysis.hasComponents).toBeFalsy();
     });
   });
 
@@ -558,7 +558,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
     test('should handle contraction + multiple components + diacritics', () => {
       const analysis = analyzeArabicWord('وَلَمْ', "and didn't");
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       // Should detect compound or individual components
       expect(analysis.prefixes[0]).toBeDefined();
     });
@@ -566,7 +566,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
     test('should handle ALL CAPS + contractions + whitespace', () => {
       const analysis = analyzeArabicWord('ولا', "  AND  DON'T  ");
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
     });
 
@@ -574,7 +574,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       const analysis = analyzeArabicWord('ه', "it's");
 
       // "ه" suffix with contracted "it's" (it is)
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.suffix?.arabicMatch).toBe('ه');
     });
 
@@ -582,7 +582,7 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       // All caps + contraction + extra whitespace + possessive
       const analysis = analyzeArabicWord('والكتاب', "  AND  JOHN'S  DON'T  ");
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]).toBeDefined();
     });
   });

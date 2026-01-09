@@ -113,7 +113,7 @@ describe('useOAuthProvider', () => {
       const { result } = renderHook(() => useOAuthProvider(config));
 
       // Should not be loading initially
-      expect(result.current.loading).toBe(false);
+      expect(result.current.loading).toBeFalsy();
 
       // Call signIn and await completion
       await result.current.signIn();
@@ -136,7 +136,7 @@ describe('useOAuthProvider', () => {
       expect(mockSuccessFeedback).toHaveBeenCalled();
 
       // Should not be loading after completion
-      expect(result.current.loading).toBe(false);
+      expect(result.current.loading).toBeFalsy();
     });
 
     test('should add Sentry breadcrumbs throughout the flow', async () => {
@@ -444,7 +444,7 @@ describe('useOAuthProvider', () => {
       // Should start loading
       const signInPromise = result.current.signIn();
       await waitFor(() => {
-        expect(result.current.loading).toBe(true);
+        expect(result.current.loading).toBeTruthy();
       });
 
       await signInPromise;

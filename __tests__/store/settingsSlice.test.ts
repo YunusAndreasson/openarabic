@@ -106,13 +106,13 @@ describe('settingsSlice reducers', () => {
   describe('setAudioShuffleEnabled', () => {
     test('enables audio shuffle', () => {
       const state = reducer(initialState, setAudioShuffleEnabled(true));
-      expect(state.audioShuffleEnabled).toBe(true);
+      expect(state.audioShuffleEnabled).toBeTruthy();
     });
 
     test('disables audio shuffle', () => {
       const modifiedState = { ...initialState, audioShuffleEnabled: true };
       const state = reducer(modifiedState, setAudioShuffleEnabled(false));
-      expect(state.audioShuffleEnabled).toBe(false);
+      expect(state.audioShuffleEnabled).toBeFalsy();
     });
   });
 

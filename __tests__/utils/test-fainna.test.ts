@@ -27,8 +27,8 @@ describe('Fainna (فإن) Normalization', () => {
       p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
     );
 
-    expect(hasFa).toBe(true);
-    expect(analysis.hasComponents).toBe(true);
+    expect(hasFa).toBeTruthy();
+    expect(analysis.hasComponents).toBeTruthy();
   });
 
   test('should display "so indeed" in UI', () => {

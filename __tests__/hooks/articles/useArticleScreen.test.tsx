@@ -206,7 +206,7 @@ describe('useArticleScreen Hook', () => {
         }),
       );
 
-      expect(result.current.isLoadingArticle).toBe(true);
+      expect(result.current.isLoadingArticle).toBeTruthy();
       expect(result.current.article).toBeNull();
     });
 
@@ -231,7 +231,7 @@ describe('useArticleScreen Hook', () => {
       );
 
       expect(result.current.article).toBe(mockArticle);
-      expect(result.current.isInReadingList).toBe(true);
+      expect(result.current.isInReadingList).toBeTruthy();
       expect(result.current.sortedSentences).toHaveLength(5);
     });
 
@@ -665,7 +665,7 @@ describe('useArticleScreen Hook', () => {
 
       expect(result.current.activeTooltip).toEqual({ rootId: 123, position: { x: 0, y: 0 } });
       expect(result.current.wordDetailsModal).toEqual({ isOpen: true, rootId: 456 });
-      expect(result.current.wordDetailsEnabled).toBe(false);
+      expect(result.current.wordDetailsEnabled).toBeFalsy();
     });
   });
 

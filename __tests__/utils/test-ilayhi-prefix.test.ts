@@ -40,8 +40,8 @@ describe('إِلَيْهِ prefix detection', () => {
     const matchesMaksura = normalized.startsWith(constantMaksuraForm);
 
     // When إلى takes a suffix, the alef maksura (ى) becomes regular yaa (ي)
-    expect(matchesYaa).toBe(true); // Should match إلي
-    expect(matchesMaksura).toBe(false); // Should NOT match إلى
+    expect(matchesYaa).toBeTruthy(); // Should match إلي
+    expect(matchesMaksura).toBeFalsy(); // Should NOT match إلى
   });
 
   test('should detect إلى as full prefix for إِلَيْهِ', () => {

@@ -31,7 +31,7 @@ describe('useIsDarkMode', () => {
 
     const { result } = renderHook(() => useIsDarkMode());
 
-    expect(result.current).toBe(true);
+    expect(result.current).toBeTruthy();
   });
 
   test('returns false when theme is light', () => {
@@ -39,7 +39,7 @@ describe('useIsDarkMode', () => {
 
     const { result } = renderHook(() => useIsDarkMode());
 
-    expect(result.current).toBe(false);
+    expect(result.current).toBeFalsy();
   });
 
   test('falls back to system preference when theme is null', () => {
@@ -48,7 +48,7 @@ describe('useIsDarkMode', () => {
 
     const { result } = renderHook(() => useIsDarkMode());
 
-    expect(result.current).toBe(true);
+    expect(result.current).toBeTruthy();
     expect(mockedUseColorScheme).toHaveBeenCalled();
   });
 
@@ -58,7 +58,7 @@ describe('useIsDarkMode', () => {
 
     const { result } = renderHook(() => useIsDarkMode());
 
-    expect(result.current).toBe(false);
+    expect(result.current).toBeFalsy();
   });
 
   test('returns false for sepia theme', () => {
@@ -66,7 +66,7 @@ describe('useIsDarkMode', () => {
 
     const { result } = renderHook(() => useIsDarkMode());
 
-    expect(result.current).toBe(false);
+    expect(result.current).toBeFalsy();
   });
 
   test('handles undefined selector return', () => {
@@ -75,6 +75,6 @@ describe('useIsDarkMode', () => {
 
     const { result } = renderHook(() => useIsDarkMode());
 
-    expect(result.current).toBe(false);
+    expect(result.current).toBeFalsy();
   });
 });

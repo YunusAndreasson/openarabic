@@ -45,8 +45,8 @@ describe('Kama (كما) Normalization', () => {
 
       console.log('  ك (as) detected:', hasKa);
 
-      expect(hasKa).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasKa).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should detect و and ك in وكما "wakama"', () => {
@@ -70,9 +70,9 @@ describe('Kama (كما) Normalization', () => {
       console.log('  و (and) detected:', hasWaw);
       console.log('  ك (as) detected:', hasKa);
 
-      expect(hasWaw).toBe(true);
-      expect(hasKa).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasWaw).toBeTruthy();
+      expect(hasKa).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should detect ف and ك in فكما "fakama"', () => {
@@ -96,9 +96,9 @@ describe('Kama (كما) Normalization', () => {
       console.log('  ف (so) detected:', hasFa);
       console.log('  ك (as) detected:', hasKa);
 
-      expect(hasFa).toBe(true);
-      expect(hasKa).toBe(true);
-      expect(analysis.hasComponents).toBe(true);
+      expect(hasFa).toBeTruthy();
+      expect(hasKa).toBeTruthy();
+      expect(analysis.hasComponents).toBeTruthy();
     });
   });
 
@@ -120,7 +120,7 @@ describe('Kama (كما) Normalization', () => {
       console.log('    - ك (as) → COLORED (preposition)');
       console.log('    - ما (for) → remaining text');
 
-      expect(true).toBe(true);
+      expect(true).toBeTruthy();
     });
   });
 });

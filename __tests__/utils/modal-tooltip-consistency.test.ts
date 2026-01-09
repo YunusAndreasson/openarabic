@@ -31,7 +31,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
     test('should have components detected', () => {
       const analysis = analyzeArabicWord(arabic, english);
 
-      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.hasComponents).toBeTruthy();
       // Now detects as multi-prefix: و (and) + من (from)
       expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
@@ -76,7 +76,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
 
       // English should be colored
       const hasColoredSegment = coloredSegments.some(seg => seg.color !== COLORS.text);
-      expect(hasColoredSegment).toBe(true);
+      expect(hasColoredSegment).toBeTruthy();
     });
 
     test('CONSISTENCY CHECK: Arabic and English should both be colored or both be white', () => {
@@ -99,7 +99,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
 
       // BUG: If English is colored, Arabic MUST also be colored
       if (englishIsColored) {
-        expect(arabicIsColored).toBe(true);
+        expect(arabicIsColored).toBeTruthy();
       }
     });
   });
@@ -125,7 +125,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
       const englishIsColored = englishSegments.some(seg => seg.color !== COLORS.text);
 
       if (englishIsColored) {
-        expect(arabicIsColored).toBe(true);
+        expect(arabicIsColored).toBeTruthy();
       }
     });
   });
