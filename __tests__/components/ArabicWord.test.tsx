@@ -75,8 +75,8 @@ describe('ArabicWord Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useArabicWord as jest.Mock).mockReturnValue({ isSelected: false });
-    (useSkiaFonts as jest.Mock).mockReturnValue({
+    jest.mocked(useArabicWord).mockReturnValue({ isSelected: false });
+    jest.mocked(useSkiaFonts).mockReturnValue({
       arabicFont: {
         getSize: () => 17,
         getTypeface: () => ({
@@ -198,7 +198,7 @@ describe('ArabicWord Component', () => {
 
   describe('Selection State', () => {
     test('applies selected style when word is selected', () => {
-      (useArabicWord as jest.Mock).mockReturnValue({ isSelected: true });
+      jest.mocked(useArabicWord).mockReturnValue({ isSelected: true });
 
       const word = createMockWord();
       const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
@@ -211,7 +211,7 @@ describe('ArabicWord Component', () => {
     });
 
     test('does not apply selected style by default', () => {
-      (useArabicWord as jest.Mock).mockReturnValue({ isSelected: false });
+      jest.mocked(useArabicWord).mockReturnValue({ isSelected: false });
 
       const word = createMockWord();
       const { getByTestId } = render(<ArabicWord word={word} testID="word" />);

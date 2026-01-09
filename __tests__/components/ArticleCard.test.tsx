@@ -151,7 +151,7 @@ describe('ArticleCard Component', () => {
   describe('Navigation', () => {
     test('navigates to article on press', () => {
       const mockPush = jest.fn();
-      (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+      jest.mocked(useRouter).mockReturnValue({ push: mockPush });
 
       const { getByTestId } = render(<ArticleCard {...defaultProps} testID="article-card" />);
 
@@ -165,7 +165,7 @@ describe('ArticleCard Component', () => {
 
     test('includes article ID in navigation path', () => {
       const mockPush = jest.fn();
-      (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+      jest.mocked(useRouter).mockReturnValue({ push: mockPush });
 
       const article = createMockArticle({ id: 42 });
       const props = { ...defaultProps, article };
@@ -339,7 +339,7 @@ describe('ArticleCard Component', () => {
 
     test('navigates correctly from featured article', () => {
       const mockPush = jest.fn();
-      (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+      jest.mocked(useRouter).mockReturnValue({ push: mockPush });
 
       const props = {
         ...defaultProps,
@@ -468,7 +468,7 @@ describe('ArticleCard Component', () => {
   describe('Regression Tests', () => {
     test('should navigate to correct article detail route', () => {
       const mockPush = jest.fn();
-      (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+      jest.mocked(useRouter).mockReturnValue({ push: mockPush });
 
       const article = createMockArticle({ id: 123 });
       const props = { ...defaultProps, article };

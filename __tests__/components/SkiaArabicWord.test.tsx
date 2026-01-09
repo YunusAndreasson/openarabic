@@ -74,8 +74,8 @@ describe('SkiaArabicWord Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useArabicWord as jest.Mock).mockReturnValue({ isSelected: false });
-    (useSkiaFonts as jest.Mock).mockReturnValue({
+    jest.mocked(useArabicWord).mockReturnValue({ isSelected: false });
+    jest.mocked(useSkiaFonts).mockReturnValue({
       arabicFont: {
         getSize: () => 17,
         getTypeface: () => ({
@@ -192,8 +192,8 @@ describe('SkiaArabicWord Component', () => {
         }),
       }));
 
-      (useArabicWord as jest.Mock).mockReturnValue({ isSelected: true });
-      (useSkiaFonts as jest.Mock).mockReturnValue({
+      jest.mocked(useArabicWord).mockReturnValue({ isSelected: true });
+      jest.mocked(useSkiaFonts).mockReturnValue({
         arabicFont: {
           getSize: () => 17,
           getTypeface: () => ({
@@ -220,8 +220,8 @@ describe('SkiaArabicWord Component', () => {
         }),
       }));
 
-      (useArabicWord as jest.Mock).mockReturnValue({ isSelected: false });
-      (useSkiaFonts as jest.Mock).mockReturnValue({
+      jest.mocked(useArabicWord).mockReturnValue({ isSelected: false });
+      jest.mocked(useSkiaFonts).mockReturnValue({
         arabicFont: {
           getSize: () => 17,
           getTypeface: () => ({
@@ -336,7 +336,7 @@ describe('SkiaArabicWord Component', () => {
 
     test('handles paragraph build failure gracefully', () => {
       // Mock getArabicFont to return null (simulating build failure)
-      (useSkiaFonts as jest.Mock).mockReturnValue({
+      jest.mocked(useSkiaFonts).mockReturnValue({
         arabicFont: {
           getSize: () => 17,
           getTypeface: () => ({
