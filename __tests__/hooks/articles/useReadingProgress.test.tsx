@@ -203,12 +203,8 @@ describe('useReadingProgress', () => {
         queryKey: readingProgressQueries.bulk(testUserId).queryKey,
       });
 
-      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-        queryKey: ['reading-streak', testUserId] as const,
-      });
-
-      // Should have been called exactly twice (once for bulk, once for streak)
-      expect(invalidateQueriesSpy).toHaveBeenCalledTimes(2);
+      // Should have been called exactly once (for bulk progress)
+      expect(invalidateQueriesSpy).toHaveBeenCalledTimes(1);
 
       invalidateQueriesSpy.mockRestore();
     });

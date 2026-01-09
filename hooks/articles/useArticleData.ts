@@ -1,9 +1,8 @@
 import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { articleQueries, fsrsQueries, CACHE_TIMES } from '@/constants/queries';
+import { articleQueries, fsrsQueries, readingProgressQueries } from '@/constants/queries';
 import { useColors } from '@/hooks/theme/useColors';
-import { bookmarkService } from '@/services/bookmark';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
@@ -39,20 +38,10 @@ export const useArticleData = (
     refetchOnMount: false, // Don't refetch on mount if we have data
   });
 
-  // Check if article is in user's reading list - optimized caching
-  const { data: isInReadingList = false, refetch: refetchReadingListStatus } = useQuery({
-    queryKey:
-      userId && articleId
-        ? (['readingList', userId, articleId] as const)
-        : (['readingList', 'none'] as const),
-    queryFn: () => {
-      if (!userId || !articleId) throw new Error('User ID and Article ID are required');
-      return bookmarkService.isInReadingList(userId, articleId);
-    },
-    enabled: !!userId && !!articleId,
-    ...CACHE_TIMES.MEDIUM, // 3 minutes - reading list changes moderately
-    refetchOnMount: false,
-  });
+  // Check if article is in user's reading list
+  const { data: isInReadingList = false, refetch: refetchReadingListStatus } = useQuery(
+    readingProgressQueries.isInReadingList(userId || '', articleId ?? (0 as ArticleId)),
+  );
 
   // Fetch study words with optimized caching
   // CRITICAL: Use same query as useArabicWord and useArticleWordInteractions for DRY consistency

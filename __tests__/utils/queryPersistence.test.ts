@@ -159,11 +159,6 @@ describe('Query Persistence', () => {
         const query = createMockQuery(['enhancedAudioTracks', 1]);
         expect(shouldDehydrateQuery(query)).toBeFalsy();
       });
-
-      test('should NOT persist struggling-words query', () => {
-        const query = createMockQuery(['struggling-words', 'user-123']);
-        expect(shouldDehydrateQuery(query)).toBeFalsy();
-      });
     });
 
     describe('excluded patterns', () => {

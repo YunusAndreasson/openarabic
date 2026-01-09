@@ -36,7 +36,6 @@ import { studySessionStreakService } from '@/services/studyStreak';
 import { sentencesService } from '@/services/sentences';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { ArticleId, RootId } from '@/types/branded.types';
-import { TIMING_CONSTANTS } from './animation';
 
 /**
  * React Query configuration constants
@@ -73,11 +72,6 @@ export const CACHE_TIMES = {
   ARTICLES: {
     staleTime: Infinity, // Articles never change once written
     gcTime: 86400000, // 24 hours
-  },
-  // For data that rarely changes
-  LONG: {
-    staleTime: QUERY_DEFAULTS.STALE_TIME, // Use default 5 minutes
-    gcTime: 900000, // 15 minutes
   },
   // For categories and authors (never change)
   STATIC: {
@@ -162,10 +156,7 @@ export const fsrsQueries = {
    * Use after: completing practice session, adding/removing words
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
-    return Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['fsrs-words', userId] }),
-      queryClient.invalidateQueries({ queryKey: ['struggling-words', userId] }),
-    ]);
+    return queryClient.invalidateQueries({ queryKey: ['fsrs-words', userId] });
   },
 
   /**
@@ -290,14 +281,8 @@ export const readingProgressQueries = {
       queryKey: ['readingList', userId] as const,
       queryFn: () => bookmarkService.getReadingList(userId),
       enabled: !!userId,
-      staleTime: 5 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
-      gcTime: 10 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
+      ...CACHE_TIMES.MEDIUM,
       retry: 2,
-      retryDelay: attemptIndex =>
-        Math.min(
-          TIMING_CONSTANTS.RETRY_DELAY_BASE * 2 ** attemptIndex,
-          TIMING_CONSTANTS.LONG_DELAY,
-        ),
       placeholderData: [],
     }),
 
@@ -318,12 +303,24 @@ export const readingProgressQueries = {
     }),
 
   /**
+   * Check if a specific article is in user's reading list
+   * Used for bookmark status in article detail views
+   */
+  isInReadingList: (userId: string, articleId: ArticleId) =>
+    queryOptions({
+      queryKey: ['readingList', userId, articleId] as const,
+      queryFn: () => bookmarkService.isInReadingList(userId, articleId),
+      enabled: !!userId && !!articleId,
+      ...CACHE_TIMES.MEDIUM,
+      refetchOnMount: false,
+    }),
+
+  /**
    * Invalidate all reading-related queries for a user
    * Use after: adding/removing bookmarks, completing articles
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
     return Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['reading-streak', userId] }),
       queryClient.invalidateQueries({ queryKey: ['readingList', userId] }),
       queryClient.invalidateQueries({ queryKey: ['reading-progress-bulk', userId] }),
     ]);
@@ -344,8 +341,7 @@ export const audioQueries = {
       queryKey: ['enhancedAudioTracks', userId, audioPreference] as const,
       queryFn: () => enhancedAudioService.getReadingListEnhancedTracks(userId, audioPreference),
       enabled: !!userId,
-      staleTime: 5 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
-      gcTime: 10 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
+      ...CACHE_TIMES.MEDIUM,
       placeholderData: [],
     }),
 

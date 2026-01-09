@@ -191,9 +191,6 @@ export const useAccountScreen = () => {
                 queryKey: readingProgressQueries.bulk(user.id).queryKey,
               });
               await queryClient.removeQueries({
-                queryKey: ['reading-streak', user.id] as const,
-              });
-              await queryClient.removeQueries({
                 queryKey: readingProgressQueries.readingList(user.id).queryKey,
               });
 

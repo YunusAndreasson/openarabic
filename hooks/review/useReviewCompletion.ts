@@ -46,9 +46,8 @@ export const useReviewCompletion = (
     // Invalidate all FSRS word queries
     queryClient.invalidateQueries({
       predicate: query => {
-        // FIXED: Add null check for robustness
         const key = query.queryKey?.[0];
-        return typeof key === 'string' && (key === 'fsrs-words' || key === 'struggling-words');
+        return key === 'fsrs-words';
       },
     });
 

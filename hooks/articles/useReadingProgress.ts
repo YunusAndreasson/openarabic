@@ -138,10 +138,6 @@ export function useReadingProgress({
         queryClient.invalidateQueries({
           queryKey: readingProgressQueries.bulk(user.id).queryKey,
         });
-        // Invalidate streak query to update streak immediately after reading
-        queryClient.invalidateQueries({
-          queryKey: ['reading-streak', user.id] as const,
-        });
       }
     },
     onError: error => {
