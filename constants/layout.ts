@@ -48,6 +48,9 @@ const createShadow = (elevation: number, opacity: number, radius: number) => ({
   shadowRadius: radius,
 });
 
+/** Creates symmetric hit slop for touch targets */
+const createHitSlop = (size: number) => ({ top: size, bottom: size, left: size, right: size });
+
 const ELEVATION_SYSTEM = {
   NONE: createShadow(0, 0, 0),
   SUBTLE: createShadow(2, 0.12, 3),
@@ -92,23 +95,6 @@ export const TYPOGRAPHY_HIERARCHY = {
     LOOSE: 1.6,
     ARABIC: 2.2, // Moved from LAYOUT.TYPOGRAPHY for consistency
   },
-
-  SEMANTIC_COLORS: {
-    PRIMARY_CONTENT: 'text',
-    SECONDARY_CONTENT: 'secondaryText',
-    TERTIARY_CONTENT: 'textTertiary',
-    ACCENT_CONTENT: 'tint',
-    AUTHOR_CONTENT: 'authorText',
-    ENGLISH_CONTENT: 'englishText',
-    ARABIC_CONTENT: 'arabicText',
-    SUCCESS_CONTENT: 'success',
-    WARNING_CONTENT: 'warning',
-    INFO_CONTENT: 'info',
-    HEADING_CONTENT: 'headingText',
-    SUBTITLE_CONTENT: 'subtitleText',
-    METADATA_CONTENT: 'metadataText',
-    CAPTION_CONTENT: 'captionText',
-  } as const,
 
   MICRO_ADJUSTMENTS: {
     CONTENT_TYPES: {
@@ -281,8 +267,8 @@ export const LAYOUT = {
       LARGE: BASE_UNIT * 4.25, // 17 - Apple HIG minimum for body text
       XLARGE: BASE_UNIT * 5.5, // 22 - bolder heading (2025 trend)
       XXLARGE: BASE_UNIT * 6, // 24 - bolder heading (2025 trend)
-      DEFAULT_ARABIC: BASE_UNIT * 8, // 32 - larger Arabic font (2025 trend)
       HUGE: BASE_UNIT * 8, // 32 - bolder heading (2025 trend)
+      DEFAULT_ARABIC: BASE_UNIT * 8, // 32 - alias for HUGE, used for Arabic text settings
       XXHUGE: BASE_UNIT * 9.5, // 38 - bolder heading (2025 trend)
       MASSIVE: BASE_UNIT * 11, // 44 - bolder heading (2025 trend)
     },
@@ -324,10 +310,6 @@ export const LAYOUT = {
 
   /** Common sizes for bottom sheet UI elements */
   BOTTOM_SHEET: {
-    INDICATOR: {
-      WIDTH: BASE_UNIT * 11, // 44 - more prominent gesture cue (2026 trend)
-      HEIGHT: BASE_UNIT * 1.25, // 5 - slightly taller for visibility
-    },
     HEADER: {
       paddingHorizontal: SPACING_SCALE.MEDIUM, // 12 - consistent with practice bottom sheets
       paddingBottom: SPACING_SCALE.TINY, // 4 - consistent with practice bottom sheets
@@ -354,30 +336,6 @@ export const LAYOUT = {
     },
   },
 
-  HEADER: {
-    HEIGHT: {
-      EXPANDED: TOUCH_TARGETS.LARGE * 8, // ~384 - restored for proper article and calendar display
-      COLLAPSED: 0,
-    },
-    NAV_HEIGHT: TOUCH_TARGETS.LARGE, // 48 - Unified navigation height for both platforms
-    NAV_HEADER_HEIGHT: TOUCH_TARGETS.LARGE + SPACING_SCALE.TINY, // 52 - Accommodate multi-line titles
-
-    TITLE: {
-      MAIN: {
-        fontSize: BASE_UNIT * 7, // 28 - responsive to base unit
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-        marginLeft: -BASE_UNIT, // -4 - responsive negative margin
-      },
-      SECONDARY: {
-        fontSize: BASE_UNIT * 5, // 20 - responsive to base unit (consistent with XLARGE)
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-      },
-      COMPACT: {
-        fontSize: BASE_UNIT * 4.25, // 17 - responsive to base unit
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-      },
-    },
-  },
 
   REVIEW: {
     BOTTOM_ACTIONS_HEIGHT: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // Same as CARD.HEIGHT.LIST_ITEM
@@ -390,24 +348,9 @@ export const LAYOUT = {
   },
 
   HIT_SLOP: {
-    SMALL: {
-      top: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
-      bottom: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
-      left: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
-      right: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
-    },
-    MEDIUM: {
-      top: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
-      bottom: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
-      left: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
-      right: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
-    },
-    LARGE: {
-      top: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
-      bottom: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
-      left: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
-      right: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
-    },
+    SMALL: createHitSlop(SPACING_SCALE.SMALL), // 8
+    MEDIUM: createHitSlop(SPACING_SCALE.MEDIUM), // 12
+    LARGE: createHitSlop(SPACING_SCALE.LARGE), // 16
   },
 
   BORDER: {
@@ -415,7 +358,6 @@ export const LAYOUT = {
       NONE: 0,
       THIN: Math.round(BASE_UNIT * 0.125), // 0.5 rounded to 1 - prevents sub-pixel rendering
       NORMAL: BASE_UNIT * 0.25, // 1 - responsive to base unit
-      THICK: BASE_UNIT * 0.5, // 2 - responsive to base unit
       FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
     },
     STYLE: {
