@@ -3,7 +3,7 @@
  * Provides single source of truth for all tutorial completion states
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { TutorialId } from '@/constants/tutorials';
 import {
@@ -102,10 +102,13 @@ export function useTutorialManager() {
     });
   }, []);
 
-  return {
-    shouldShowTutorial,
-    completeTutorial,
-    resetAllTutorials,
-    isLoaded: state.isLoaded,
-  };
+  return useMemo(
+    () => ({
+      shouldShowTutorial,
+      completeTutorial,
+      resetAllTutorials,
+      isLoaded: state.isLoaded,
+    }),
+    [shouldShowTutorial, completeTutorial, resetAllTutorials, state.isLoaded],
+  );
 }

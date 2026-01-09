@@ -77,18 +77,6 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
           staleTime: 0, // Always fetch fresh
           gcTime: CACHE_TIMES.SHORT.gcTime, // 5 minutes cache
         }),
-
-        // Refresh stats for accurate counts
-        queryClient.fetchQuery({
-          queryKey: fsrsQueries.stats(user.id).queryKey,
-          queryFn: () =>
-            studyWordsFSRSService.getFSRSWords(user.id, {
-              forStats: true,
-              limit: 1000,
-            }),
-          staleTime: 0, // Always fetch fresh
-          gcTime: CACHE_TIMES.SHORT.gcTime, // 5 minutes cache
-        }),
       ];
 
       // Execute all refreshes in parallel for better performance

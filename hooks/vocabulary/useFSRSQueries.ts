@@ -98,19 +98,11 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     },
   });
 
-  // Query for stats - can use longer cache times since stats update less frequently
-  const statsQuery = useQuery({
-    ...fsrsQueries.stats(userId || ''),
-    enabled: !!userId, // Only enable when we have userId
-  });
-
   return {
     allWords: allWordsQuery?.data,
     dueWords: dueWordsQuery?.data,
-    isLoading:
-      allWordsQuery?.isLoading || dueWordsQuery?.isLoading || statsQuery?.isLoading || false,
-    isFetching:
-      allWordsQuery?.isFetching || dueWordsQuery?.isFetching || statsQuery?.isFetching || false,
-    error: allWordsQuery?.error || dueWordsQuery?.error || statsQuery?.error || null,
+    isLoading: allWordsQuery?.isLoading || dueWordsQuery?.isLoading || false,
+    isFetching: allWordsQuery?.isFetching || dueWordsQuery?.isFetching || false,
+    error: allWordsQuery?.error || dueWordsQuery?.error || null,
   };
 }

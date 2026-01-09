@@ -131,10 +131,7 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
         {articles.map(({ article, progress }, index) => (
           <View
             key={`continue-${article.id}`}
-            style={[
-              styles.cardContainer,
-              { marginLeft: index === 0 ? 0 : CARD_SPACING },
-            ]}
+            style={index === 0 ? styles.cardContainerFirst : styles.cardContainer}
           >
             <PlaylistItemCard
               title={article.title}
@@ -163,8 +160,12 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingRight: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
+  cardContainerFirst: {
+    width: CARD_WIDTH,
+  },
   cardContainer: {
     width: CARD_WIDTH,
+    marginLeft: CARD_SPACING,
   },
 });
 

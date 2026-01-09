@@ -70,7 +70,7 @@ export const ChartAxes = memo<AxisLabelsProps>(
         labels.push({ value: Math.round(value), y });
       }
       return labels;
-    }, [height, topPadding, Y_AXIS_LINES, yMax]);
+    }, [height, topPadding, yMax]);
 
     // Center each weekday exactly under its tick (no edge constraints to avoid misalignment)
     const labelPositions = useMemo(() => {

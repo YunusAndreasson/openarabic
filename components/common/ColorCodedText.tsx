@@ -58,24 +58,32 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
     );
 
     // Generate color-coded segments based on text type
+    // Pre-compute styles to avoid creating inline objects during render
     const coloredSegments = useMemo(() => {
+      let segments: { text: string; color: string; key: string }[];
       if (isArabic) {
         // Use precomputed segments if available, otherwise use dynamic analysis
         const sourceSegments = precomputedSegments || dynamicSegments;
-        return sourceSegments.map(segment => ({
+        segments = sourceSegments.map(segment => ({
           text: segment.text,
           color: segment.color,
           key: `${segment.type}-${segment.text}`,
         }));
+      } else {
+        // For English text, use generateColorCodedSegments (includes [the] if appropriate)
+        segments = generateColorCodedSegments({
+          text: deferredText,
+          formattedAnalysis,
+          analysis,
+          colors,
+          defaultColor: defaultColor || colors.text,
+        });
       }
-      // For English text, use generateColorCodedSegments (includes [the] if appropriate)
-      return generateColorCodedSegments({
-        text: deferredText,
-        formattedAnalysis,
-        analysis,
-        colors,
-        defaultColor: defaultColor || colors.text,
-      });
+      // Pre-compute segment styles to avoid inline object creation in render
+      return segments.map(segment => ({
+        ...segment,
+        style: style ? [style, { color: segment.color }] : { color: segment.color },
+      }));
     }, [
       isArabic,
       precomputedSegments,
@@ -85,6 +93,7 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
       analysis,
       colors,
       defaultColor,
+      style,
     ]);
 
     // Check if any segment has a non-default color
@@ -113,7 +122,7 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
             type={type}
             weight={weight}
             skipDefaultColor
-            style={[style, { color: segment.color }]}
+            style={segment.style}
           >
             {segment.text}
           </ThemedText>

@@ -64,10 +64,7 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
         {displayArticles.map((article, index) => (
           <View
             key={`featured-${article.id}`}
-            style={[
-              styles.cardContainer,
-              { height: CARD_HEIGHT, marginLeft: index === 0 ? 0 : CARD_SPACING },
-            ]}
+            style={index === 0 ? styles.cardContainerFirst : styles.cardContainer}
           >
             <ArticleCard
               article={article}
@@ -88,8 +85,14 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.TINY,
     paddingRight: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
+  cardContainerFirst: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+  },
   cardContainer: {
     width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    marginLeft: CARD_SPACING,
   },
   card: {
     width: '100%',

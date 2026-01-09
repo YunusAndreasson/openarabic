@@ -17,8 +17,12 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useAppSelector } from '@/store/hooks';
+import type { RootState } from '@/store/store';
 import type { ThemedTextProps } from '@/types/ui/text.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
+
+// Extract selector outside component to avoid recreation on every render
+const selectArabicFont = (state: RootState) => state.settings.arabicFont;
 
 /**
  * Enhanced text color function with semantic color support
@@ -172,7 +176,7 @@ export function ThemedText({
 }: ThemedTextProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  const selectedArabicFont = useAppSelector(state => state.settings.arabicFont);
+  const selectedArabicFont = useAppSelector(selectArabicFont);
   // Only use debounced font size for Arabic text to prevent flickering during slider changes
   const debouncedArabicFontSize = useDebouncedArabicFontSize(type === 'arabic' ? 100 : 0);
 
