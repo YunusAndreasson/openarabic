@@ -328,8 +328,8 @@ const AccountScreen: FC = () => {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: LAYOUT.SPACING.XLARGE, // Restore normal top padding
-            paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM, // Reduced from LARGE to fix excessive padding
+            paddingTop: LAYOUT.SPACING.XLARGE,
+            paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.LARGE,
           },
         ]}
         scrollViewProps={{
@@ -513,7 +513,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
   scrollView: {
     flex: 1,

@@ -1,6 +1,7 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ColorCodedText } from '@/components/common/ColorCodedText';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -35,12 +36,10 @@ export function WordDetailsBottomSheet({
   isInStudyList = false,
 }: WordDetailsBottomSheetProps) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const { showToast } = useToast();
   const bottomSheetRef = useRef<BottomSheet>(null);
   const hasShownFirstAddToast = useRef(false);
-
-  // Calculate snap points - compact height to fit content without excess space
-  const snapPoints = useMemo(() => [LAYOUT.BOTTOM_SHEET.SNAP_POINTS.WORD_DETAILS], []);
 
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
@@ -154,16 +153,17 @@ export function WordDetailsBottomSheet({
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
-      snapPoints={snapPoints}
       enablePanDownToClose={true}
       enableOverDrag={false}
-      enableDynamicSizing={false}
+      enableDynamicSizing={true}
       onChange={handleSheetChange}
       backdropComponent={renderBackdrop}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
       handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
     >
-      <BottomSheetView style={styles.container}>
+      <BottomSheetView
+        style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
+      >
         {!word ? null : (
           <>
             {/* Arabic Word Title */}
@@ -232,10 +232,8 @@ WordDetailsBottomSheet.displayName = 'WordDetailsBottomSheet';
 const styles = StyleSheet.create({
   background: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
   container: {
-    ...LAYOUT.BOTTOM_SHEET.STYLES.container,
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM, // Tighter padding at bottom
   },
   titleSection: {
     alignItems: 'center',

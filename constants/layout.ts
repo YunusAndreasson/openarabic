@@ -328,13 +328,6 @@ export const LAYOUT = {
       WIDTH: BASE_UNIT * 11, // 44 - more prominent gesture cue (2026 trend)
       HEIGHT: BASE_UNIT * 1.25, // 5 - slightly taller for visibility
     },
-    SNAP_POINTS: {
-      WORD_DETAILS: 380,
-      TIMER_COLLAPSED: 280,
-      TIMER_EXPANDED: 380,
-      SETTINGS_PICKER: 320,
-      TIME_PICKER: 500,
-    },
     HEADER: {
       paddingHorizontal: SPACING_SCALE.MEDIUM, // 12 - consistent with practice bottom sheets
       paddingBottom: SPACING_SCALE.TINY, // 4 - consistent with practice bottom sheets
@@ -349,15 +342,6 @@ export const LAYOUT = {
       indicator: {
         width: BASE_UNIT * 9, // 36 - consistent indicator width
         height: BASE_UNIT, // 4 - consistent indicator height
-      },
-      // Shared container styles for consistent bottom sheet padding (DRY)
-      container: {
-        paddingBottom: SPACING_SCALE.SMALL, // 8px - minimal consistent bottom spacing
-      },
-      containerWithPadding: {
-        paddingHorizontal: SPACING_SCALE.MEDIUM, // 12px
-        paddingTop: SPACING_SCALE.MEDIUM, // 12px
-        paddingBottom: SPACING_SCALE.SMALL, // 8px - minimal consistent bottom spacing
       },
       // Shared text styles for bottom sheet headers (DRY)
       title: {

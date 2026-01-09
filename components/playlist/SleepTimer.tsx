@@ -1,6 +1,7 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -34,16 +35,10 @@ export function SleepTimer({
 }: SleepTimerProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const colors = useColors();
+  const insets = useSafeAreaInsets();
 
   // Pre-select 15 minutes as default
   const [selectedMinutes, setSelectedMinutes] = useState<number>(DEFAULT_SELECTED_MINUTES);
-
-  // Configure snap points - fixed values for better performance
-  const snapPoints = [
-    isTimerActive
-      ? LAYOUT.BOTTOM_SHEET.SNAP_POINTS.TIMER_COLLAPSED
-      : LAYOUT.BOTTOM_SHEET.SNAP_POINTS.TIMER_EXPANDED,
-  ];
 
   // Handle visibility changes
   useEffect(() => {
@@ -84,20 +79,22 @@ export function SleepTimer({
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
-      snapPoints={snapPoints}
-      enableDynamicSizing={false}
+      enableDynamicSizing={true}
       enablePanDownToClose={true}
       enableOverDrag={false}
       onChange={handleChange}
       onDismiss={onClose}
       backdropComponent={renderBackdrop}
+      containerStyle={styles.modalContainer}
       backgroundStyle={[
         styles.background,
         { backgroundColor: colors.elevation1, shadowColor: colors.shadow },
       ]}
       handleIndicatorStyle={[styles.indicator, { backgroundColor: colors.modalIndicator }]}
     >
-      <BottomSheetView style={styles.container}>
+      <BottomSheetView
+        style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
+      >
         {/* Header - always show title */}
         <View style={styles.header}>
           <ThemedText type="heading3" weight="bold">
@@ -147,13 +144,15 @@ export function SleepTimer({
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    zIndex: LAYOUT.Z_INDEX.MODAL, // Ensure modal appears above MiniPlayer
+  },
   background: {
     ...LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
     ...LAYOUT.ELEVATION.LARGE,
   },
   indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   container: {
-    ...LAYOUT.BOTTOM_SHEET.STYLES.container,
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
   },

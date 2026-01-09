@@ -3,6 +3,7 @@ import type { DateTimePickerEvent } from '@react-native-community/datetimepicker
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -20,8 +21,6 @@ export interface TimePickerProps {
   initialMinute?: number;
 }
 
-const SNAP_POINTS = [LAYOUT.BOTTOM_SHEET.SNAP_POINTS.TIME_PICKER];
-
 export function TimePicker({
   isVisible,
   onClose,
@@ -30,6 +29,7 @@ export function TimePicker({
   initialMinute = 0,
 }: TimePickerProps) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Create initial date from hour and minute
@@ -98,10 +98,9 @@ export function TimePicker({
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
-      snapPoints={SNAP_POINTS}
       enablePanDownToClose
       enableOverDrag={false}
-      enableDynamicSizing={false}
+      enableDynamicSizing={true}
       animateOnMount={true}
       activeOffsetY={[-10, 10]}
       onChange={handleChange}
@@ -110,7 +109,9 @@ export function TimePicker({
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={renderBackdrop}
     >
-      <BottomSheetView style={styles.container}>
+      <BottomSheetView
+        style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
+      >
         {/* Time Display */}
         <View style={styles.timeDisplay}>
           <ThemedText
@@ -151,10 +152,9 @@ export function TimePicker({
 TimePicker.displayName = 'TimePicker';
 
 const styles = StyleSheet.create({
-  bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
-  indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
-  container: LAYOUT.BOTTOM_SHEET.STYLES.container,
-
+  container: {
+    paddingTop: LAYOUT.SPACING.SMALL,
+  },
   actions: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     marginTop: LAYOUT.SPACING.LARGE,

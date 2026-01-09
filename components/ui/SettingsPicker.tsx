@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BaseCard } from '@/components/common/BaseCard';
 
@@ -10,9 +11,6 @@ import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/l
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
 import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
-
-// Default snap points for settings pickers
-const DEFAULT_SNAP_POINTS = [LAYOUT.BOTTOM_SHEET.SNAP_POINTS.SETTINGS_PICKER];
 
 export interface SettingsPickerOption<T> {
   id: T;
@@ -41,14 +39,11 @@ function SettingsPickerComponent<T>({
   onSelect,
 }: SettingsPickerProps<T>) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
 
   // Get the current value - with proper fallback to first option if undefined
-  const currentValue = useMemo(() => {
-    if (selectedValue !== undefined && selectedValue !== null) {
-      return selectedValue;
-    }
-    return options[0]?.id;
-  }, [selectedValue, options]);
+  const currentValue =
+    selectedValue !== undefined && selectedValue !== null ? selectedValue : options[0]?.id;
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -88,10 +83,9 @@ function SettingsPickerComponent<T>({
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
-      snapPoints={DEFAULT_SNAP_POINTS}
       enablePanDownToClose
       enableOverDrag={false}
-      enableDynamicSizing={false}
+      enableDynamicSizing={true}
       animateOnMount={true}
       activeOffsetY={[-10, 10]}
       onChange={handleChange}
@@ -100,7 +94,7 @@ function SettingsPickerComponent<T>({
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={renderBackdrop}
     >
-      <BottomSheetView style={styles.container}>
+      <BottomSheetView>
         {/* Header */}
         <View style={styles.header}>
           <ThemedText type="heading3" weight="bold" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
@@ -109,7 +103,12 @@ function SettingsPickerComponent<T>({
         </View>
 
         {/* Options */}
-        <View style={styles.optionsContainer}>
+        <View
+          style={[
+            styles.optionsContainer,
+            { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE },
+          ]}
+        >
           {options.map(option => {
             const isSelected = currentValue === option.id;
 
@@ -172,9 +171,6 @@ function SettingsPickerComponent<T>({
 export const SettingsPicker = SettingsPickerComponent;
 
 const styles = StyleSheet.create({
-  bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
-  indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
-  container: LAYOUT.BOTTOM_SHEET.STYLES.container,
   header: {
     ...LAYOUT.BOTTOM_SHEET.HEADER,
     marginBottom: LAYOUT.SPACING.MEDIUM,
