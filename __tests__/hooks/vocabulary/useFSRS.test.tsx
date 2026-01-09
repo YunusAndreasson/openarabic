@@ -747,4 +747,108 @@ describe('useFSRS Hook', () => {
       expect(result.current.currentWord).toBe(firstCurrentWord);
     });
   });
+
+  describe('Boundary Conditions', () => {
+    test('handles large dataset (100+ words)', async () => {
+      const manyWords = Array.from({ length: 100 }, (_, i) =>
+        createMockStudyWord({
+          root_id: (i + 1) as RootId,
+          fsrs_due: new Date(Date.now() - i * 1000).toISOString(),
+        }),
+      );
+
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(manyWords);
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      expect(result.current.wordQueue.length).toBe(100);
+      expect(result.current.progress).toBe(0);
+    });
+
+    test('handles words with identical due dates (ordering stability)', async () => {
+      const sameTime = new Date('2024-01-01T12:00:00Z').toISOString();
+      const wordsWithSameDue = [
+        createMockStudyWord({ root_id: 1 as RootId, fsrs_due: sameTime }),
+        createMockStudyWord({ root_id: 2 as RootId, fsrs_due: sameTime }),
+        createMockStudyWord({ root_id: 3 as RootId, fsrs_due: sameTime }),
+      ];
+
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(wordsWithSameDue);
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      // All words should be in queue regardless of same due date
+      expect(result.current.wordQueue.length).toBe(3);
+    });
+
+    test('handles very old unpracticed words (past due by 1+ year)', async () => {
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+      const oldWord = createMockStudyWord({
+        root_id: 1 as RootId,
+        fsrs_due: oneYearAgo.toISOString(),
+        fsrs_state: State.Review,
+        fsrs_stability: 30,
+        fsrs_reps: 5,
+      });
+
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([oldWord]);
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      // Old words should still be processed normally
+      await expect(result.current.updateWord(1, 'known')).resolves.toBeDefined();
+    });
+
+    test('handles update for wrong root_id gracefully', async () => {
+      const word = createMockStudyWord({ root_id: 1 as RootId });
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      // Try to update a non-existent word
+      await result.current.updateWord(999, 'known');
+
+      // Should not crash and should not update anything
+      expect(result.current.currentWord?.root_id).toBe(1);
+    });
+
+    test('handles service error during update gracefully', async () => {
+      const word = createMockStudyWord({ root_id: 1 as RootId });
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.updateWordAndReview = jest
+        .fn()
+        .mockRejectedValue(new Error('Network error'));
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      // Hook handles errors internally and still returns a value (FSRS calculation)
+      const stability = await result.current.updateWord(1, 'known');
+
+      // Should still return a stability value despite service error
+      expect(typeof stability).toBe('number');
+      expect(stability).toBeGreaterThan(0);
+    });
+  });
 });

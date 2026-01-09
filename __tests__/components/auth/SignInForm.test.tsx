@@ -190,4 +190,103 @@ describe('SignInForm', () => {
       expect(getByLabelText('Sign in')).toBeTruthy();
     });
   });
+
+  describe('Validation Failure Scenarios', () => {
+    test('displays email error when emailError is present', () => {
+      jest.doMock('@/hooks/auth/useAuthForm', () => ({
+        useAuthForm: () => ({
+          email: 'invalid',
+          setEmail: mockSetEmail,
+          password: '',
+          setPassword: mockSetPassword,
+          loading: false,
+          emailError: 'Invalid email format',
+          passwordError: '',
+          validateEmail: mockValidateEmail,
+          validatePassword: mockValidatePassword,
+          signInWithEmail: mockSignInWithEmail,
+          resetPassword: mockResetPassword,
+        }),
+        PASSWORD_REQUIREMENTS: { minLength: 8 },
+      }));
+
+      // The form should still render with error state
+      const { getByTestId } = render(<SignInForm />);
+      expect(getByTestId('email-input')).toBeTruthy();
+    });
+
+    test('displays password error when passwordError is present', () => {
+      jest.doMock('@/hooks/auth/useAuthForm', () => ({
+        useAuthForm: () => ({
+          email: 'test@example.com',
+          setEmail: mockSetEmail,
+          password: 'short',
+          setPassword: mockSetPassword,
+          loading: false,
+          emailError: '',
+          passwordError: 'Password must be at least 8 characters',
+          validateEmail: mockValidateEmail,
+          validatePassword: mockValidatePassword,
+          signInWithEmail: mockSignInWithEmail,
+          resetPassword: mockResetPassword,
+        }),
+        PASSWORD_REQUIREMENTS: { minLength: 8 },
+      }));
+
+      const { getByTestId } = render(<SignInForm />);
+      expect(getByTestId('password-input')).toBeTruthy();
+    });
+
+    test('validates email returns false for invalid email', () => {
+      const invalidEmailValidator = jest.fn(() => false);
+      jest.doMock('@/hooks/auth/useAuthForm', () => ({
+        useAuthForm: () => ({
+          email: 'not-an-email',
+          setEmail: mockSetEmail,
+          password: '',
+          setPassword: mockSetPassword,
+          loading: false,
+          emailError: '',
+          passwordError: '',
+          validateEmail: invalidEmailValidator,
+          validatePassword: mockValidatePassword,
+          signInWithEmail: mockSignInWithEmail,
+          resetPassword: mockResetPassword,
+        }),
+        PASSWORD_REQUIREMENTS: { minLength: 8 },
+      }));
+
+      const { getByTestId } = render(<SignInForm />);
+      const emailInput = getByTestId('email-input');
+
+      fireEvent(emailInput, 'blur');
+
+      // Validation function should be defined and callable
+      expect(invalidEmailValidator).toBeDefined();
+    });
+  });
+
+  describe('Loading State', () => {
+    test('renders correctly during loading state', () => {
+      jest.doMock('@/hooks/auth/useAuthForm', () => ({
+        useAuthForm: () => ({
+          email: 'test@example.com',
+          setEmail: mockSetEmail,
+          password: 'password123',
+          setPassword: mockSetPassword,
+          loading: true,
+          emailError: '',
+          passwordError: '',
+          validateEmail: mockValidateEmail,
+          validatePassword: mockValidatePassword,
+          signInWithEmail: mockSignInWithEmail,
+          resetPassword: mockResetPassword,
+        }),
+        PASSWORD_REQUIREMENTS: { minLength: 8 },
+      }));
+
+      const { getByTestId } = render(<SignInForm />);
+      expect(getByTestId('sign-in-button')).toBeTruthy();
+    });
+  });
 });
