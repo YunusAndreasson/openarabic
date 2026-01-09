@@ -1,6 +1,8 @@
 export { BaseCard } from './BaseCard';
+export { BottomSheetErrorBoundary } from './BottomSheetErrorBoundary';
 export { BottomSheetHeader } from './BottomSheetHeader';
 export { BottomSheetStateHandler } from './BottomSheetStateHandler';
+export { ComponentErrorBoundary } from './ComponentErrorBoundary';
 export { ColorCodedText } from './ColorCodedText';
 export { EmailLink } from './EmailLink';
 export { EmptyState } from './EmptyState';

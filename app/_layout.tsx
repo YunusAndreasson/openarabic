@@ -27,7 +27,7 @@ import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
 import notoSansFont from '@/assets/fonts/NotoSans.ttf';
 import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import { ThemedText } from '@/components/ThemedText';
-import { MiniPlayer } from '@/components/audio';
+import { AudioErrorBoundary, MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/playlist';
 import {
   AuthProvider,
@@ -590,7 +590,7 @@ const AudioOverlays = memo(function AudioOverlays() {
   }, [rawShouldShow]);
 
   return (
-    <>
+    <AudioErrorBoundary>
       {shouldShowMiniPlayer && globalAudioState.currentArticle && (
         <MiniPlayer
           article={globalAudioState.currentArticle}
@@ -612,7 +612,7 @@ const AudioOverlays = memo(function AudioOverlays() {
         onTimerSet={handleSleepTimerSet}
         onTimerCancel={globalAudioState.onSleepTimerCancel}
       />
-    </>
+    </AudioErrorBoundary>
   );
 });
 

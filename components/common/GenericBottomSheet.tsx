@@ -5,6 +5,7 @@ import { StyleSheet } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 
+import { BottomSheetErrorBoundary } from './BottomSheetErrorBoundary';
 import { BottomSheetHeader } from './BottomSheetHeader';
 import { useColors } from '@/hooks/theme/useColors';
 import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
@@ -24,6 +25,8 @@ export interface GenericBottomSheetProps {
   children: ReactNode;
   /** Optional snap points - uses dynamic sizing if not provided */
   snapPoints?: number[];
+  /** Name for error boundary tracking - defaults to title or 'Generic' */
+  sheetName?: string;
 }
 
 /**
@@ -73,7 +76,9 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
   customHeader,
   children,
   snapPoints,
+  sheetName,
 }) => {
+  const effectiveSheetName = sheetName || title || 'Generic';
   const colors = useColors();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
@@ -129,15 +134,17 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
       {...bottomSheetProps}
     >
       <BottomSheetView style={styles.container}>
-        {/* Render custom header OR standard title/subtitle header */}
-        {customHeader ? (
-          customHeader
-        ) : title ? (
-          <BottomSheetHeader title={title} subtitle={subtitle || ''} />
-        ) : null}
+        <BottomSheetErrorBoundary sheetName={effectiveSheetName}>
+          {/* Render custom header OR standard title/subtitle header */}
+          {customHeader ? (
+            customHeader
+          ) : title ? (
+            <BottomSheetHeader title={title} subtitle={subtitle || ''} />
+          ) : null}
 
-        {/* Content */}
-        {children}
+          {/* Content */}
+          {children}
+        </BottomSheetErrorBoundary>
       </BottomSheetView>
     </BottomSheetModal>
   );

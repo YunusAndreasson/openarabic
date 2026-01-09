@@ -30,7 +30,6 @@ function isValidNumber(value: unknown): value is number {
  */
 export function navigateToArticle(id: ArticleId | null | undefined, headerTitle?: string): boolean {
   if (!isDefined(id) || !isValidNumber(id)) {
-    console.error('[Navigation] Invalid article ID:', id);
     return false;
   }
 
@@ -38,8 +37,7 @@ export function navigateToArticle(id: ArticleId | null | undefined, headerTitle?
     const route = getArticleRoute(id, headerTitle);
     router.push(route);
     return true;
-  } catch (error) {
-    console.error('[Navigation] Failed to navigate to article:', error);
+  } catch {
     return false;
   }
 }
@@ -56,15 +54,13 @@ export function navigateToStudyReview(params?: {
 }): boolean {
   try {
     if (params?.rootId && !isValidNumber(params.rootId)) {
-      console.error('[Navigation] Invalid root ID:', params.rootId);
       return false;
     }
 
     const route = getPracticeReviewRoute(params);
     router.push(route);
     return true;
-  } catch (error) {
-    console.error('[Navigation] Failed to navigate to review:', error);
+  } catch {
     return false;
   }
 }
@@ -79,11 +75,9 @@ export function navigateBack(): boolean {
       router.back();
       return true;
     } else {
-      console.warn('[Navigation] Cannot go back - at root');
       return false;
     }
-  } catch (error) {
-    console.error('[Navigation] Failed to navigate back:', error);
+  } catch {
     return false;
   }
 }
@@ -95,15 +89,13 @@ export function navigateBack(): boolean {
  */
 export function navigateReplace(href: string): boolean {
   if (!isDefined(href) || href.trim() === '') {
-    console.error('[Navigation] Invalid href:', href);
     return false;
   }
 
   try {
     router.replace(href);
     return true;
-  } catch (error) {
-    console.error('[Navigation] Failed to replace route:', error);
+  } catch {
     return false;
   }
 }
@@ -116,18 +108,15 @@ export function validateAndNavigate<T extends Record<string, unknown>>(
   params: T,
   validator: (p: T) => boolean,
   onValid: () => void,
-  errorContext: string = 'Navigation',
 ): boolean {
   if (!validator(params)) {
-    console.error(`[${errorContext}] Invalid navigation params:`, params);
     return false;
   }
 
   try {
     onValid();
     return true;
-  } catch (error) {
-    console.error(`[${errorContext}] Navigation failed:`, error);
+  } catch {
     return false;
   }
 }
