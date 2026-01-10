@@ -151,7 +151,6 @@ The pipeline supports the following arguments:
 - `--split` - Split input files from 0_inbox into sentences
 - `--translate` - Translate split files
 - `--insert` - Process through ElevenLabs and insert into database
-- `--batch-size` / `-b` - Batch size for translation (default: 12, max: 15)
 
 ## Author Mapping
 
@@ -251,7 +250,6 @@ Split units are classified into types:
 
 ## Configuration
 
-- **Batch size**: Default 12, maximum 15, configurable with `--batch-size`
 - **AI Models**:
   - GPT-4o-mini for high-volume phases (analysis, translation)
   - GPT-4o for quality-critical verification phase

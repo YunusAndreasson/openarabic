@@ -8,7 +8,6 @@ from .config import (
     ARABIC_VOICE_ID,
     ARCHIVE_DIR,
     AUDIO_TEMP_DIR,
-    DEFAULT_BATCH_SIZE,
     DEFAULT_INPUT_FILE,
     DEFAULT_OUTPUT_FILE,
     DEFAULT_SPLIT_OUTPUT_FILE,
@@ -41,7 +40,6 @@ from .schemas import (
 )
 
 __all__ = [
-    "DEFAULT_BATCH_SIZE",
     "DEFAULT_INPUT_FILE",
     "DEFAULT_OUTPUT_FILE",
     "DEFAULT_SPLIT_OUTPUT_FILE",

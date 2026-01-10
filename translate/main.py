@@ -13,9 +13,10 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from data.config import DEFAULT_BATCH_SIZE, INBOX_DIR, SPLIT_DIR
+from data.config import INBOX_DIR, SPLIT_DIR
 from pipeline.split_file import split_files
 from pipeline.translate import translate_files
+from utils.cli_style import print_logo
 from utils.file_discovery import find_input_files_in_inbox, find_split_files
 from utils.progress_tracker import suppress_verbose_logging
 from utils.responses_api import load_api_keys, token_tracker
@@ -41,7 +42,8 @@ def _setup_logging() -> None:
     """Configure logging for the pipeline."""
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
+        format="%(asctime)s %(message)s",
+        datefmt="%H:%M:%S",
     )
     suppress_verbose_logging()
 
@@ -126,15 +128,6 @@ Examples:
         help="Process through ElevenLabs and insert into database",
     )
     parser.add_argument(
-        "--batch-size",
-        "-b",
-        type=int,
-        default=DEFAULT_BATCH_SIZE,
-        choices=range(1, 16),
-        metavar="N",
-        help=f"Batch size for translation, 1-15 (default: {DEFAULT_BATCH_SIZE})",
-    )
-    parser.add_argument(
         "--process-word-audio",
         type=int,
         metavar="ID",
@@ -153,8 +146,8 @@ Examples:
 
 def main() -> None:
     """Main entry point for the Arabic translation pipeline."""
+    print_logo()
     _setup_logging()
-    _load_api_keys()
 
     parser = _create_parser()
     args = parser.parse_args()
@@ -169,6 +162,9 @@ def main() -> None:
     if not any((run_split, run_translate, run_insert, run_word_audio_specific)):
         parser.print_help()
         sys.exit(1)
+
+    # Load API keys only when actually running pipeline phases
+    _load_api_keys()
 
     if args.full:
         logger.info(
@@ -191,7 +187,7 @@ def main() -> None:
             split_file_list = find_split_files()
             if not split_file_list:
                 raise FileNotFoundError(f"No split files found in: {SPLIT_DIR}")
-            translate_files(split_file_list, args.batch_size)
+            translate_files(split_file_list)
 
     # Phase 3: Insert
     if run_insert:

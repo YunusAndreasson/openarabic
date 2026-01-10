@@ -10,10 +10,6 @@ MODEL_TRANSLATION = "gpt-5-mini"
 MODEL_OTHER = "gpt-4o"
 MODEL_VERIFICATION = "gpt-5-mini"
 
-# Batch processing defaults
-DEFAULT_BATCH_SIZE = 12
-MAX_BATCH_SIZE = 12
-
 # Directory structure
 ROOT_DIR = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."),
