@@ -382,10 +382,7 @@ class TestTranslationProcessor:
         from pipeline.translation_processor import run_full_translation
 
         # Mock the translation engine function
-        with patch(
-            "pipeline.translation_processor._get_translation_engine_functions"
-        ) as mock_get:
-            mock_translate = MagicMock()
+        with patch("pipeline.engine.batch_translate_full_sentences") as mock_translate:
             mock_translate.return_value = [
                 TranslationResult(
                     translation="Hello world",
@@ -404,12 +401,6 @@ class TestTranslationProcessor:
                     ],
                 )
             ]
-            mock_get.return_value = (
-                MagicMock(),
-                MagicMock(),
-                mock_translate,
-                MagicMock(),
-            )
 
             sentences = ["مرحبا بالعالم"]
             contexts = ["test context"]
@@ -424,19 +415,10 @@ class TestTranslationProcessor:
         from pipeline.translation_processor import apply_tashkeel
 
         # Mock the translation engine function
-        with patch(
-            "pipeline.translation_processor._get_translation_engine_functions"
-        ) as mock_get:
-            mock_tashkeel = MagicMock()
+        with patch("pipeline.engine.batch_add_tashkeel") as mock_tashkeel:
             mock_tashkeel.return_value = [
                 TashkeelResult(tashkeel="مَرْحَبًا بِالْعَالَمِ", uncertainties=[])
             ]
-            mock_get.return_value = (
-                mock_tashkeel,
-                MagicMock(),
-                MagicMock(),
-                MagicMock(),
-            )
 
             sentences = ["مرحبا بالعالم"]
             translations = [
@@ -472,10 +454,7 @@ class TestTranslationProcessor:
         from pipeline.translation_processor import translate_words
 
         # Mock the translation engine function
-        with patch(
-            "pipeline.translation_processor._get_translation_engine_functions"
-        ) as mock_get:
-            mock_words = MagicMock()
+        with patch("pipeline.engine.batch_translate_words") as mock_words:
             mock_words.return_value = [
                 WordTranslationResult(
                     word_translations=[
@@ -491,7 +470,6 @@ class TestTranslationProcessor:
                     ]
                 )
             ]
-            mock_get.return_value = (MagicMock(), MagicMock(), MagicMock(), mock_words)
 
             sentences = ["مرحبا بالعالم"]
             tashkeel_results = [
