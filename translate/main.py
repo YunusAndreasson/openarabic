@@ -16,7 +16,7 @@ from pathlib import Path
 from data.config import INBOX_DIR, SPLIT_DIR
 from pipeline.split_file import split_files
 from pipeline.translate import translate_files
-from utils.cli_style import print_logo
+from utils.cli_style import print_logo, print_rule
 from utils.file_discovery import find_input_files_in_inbox, find_split_files
 from utils.progress_tracker import suppress_verbose_logging
 from utils.responses_api import load_api_keys, token_tracker
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 @contextmanager
 def timed_phase(phase_name: str) -> Iterator[None]:
     """Context manager for timing and logging pipeline phases."""
-    logger.info("─" * 50)
+    print_rule()
     logger.info(phase_name)
     start = time.perf_counter()
     yield
@@ -234,7 +234,7 @@ def main() -> None:
             logger.error(f"❌ Error processing word audio: {e}")
 
     # Final summary
-    logger.info("─" * 50)
+    print_rule()
     total_elapsed = time.perf_counter() - total_start
     if args.full:
         logger.info("🎉 FULL PIPELINE COMPLETED!")

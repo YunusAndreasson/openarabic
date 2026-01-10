@@ -76,18 +76,19 @@ class PipelineStats:
         if not any([self.retries, self.corrections, self.needs_review]):
             return
 
-        logger.info("  ─────────────────────────────")
-        logger.info("  📊 Pipeline Summary")
+        from utils.cli_style import print_summary
+
+        lines = []
 
         if self.retries:
             sentences_str = ", ".join(str(s) for s in sorted(self.retry_sentences)[:5])
             if len(self.retry_sentences) > 5:
                 sentences_str += f" (+{len(self.retry_sentences) - 5} more)"
-            logger.info(f"     Retries: {self.retries} (sentences {sentences_str})")
+            lines.append(f"⚠️  Retries: {self.retries} (sentences {sentences_str})")
 
         if self.corrections:
-            logger.info(
-                f"     DeepSeek fixes: {self.corrections} across "
+            lines.append(
+                f"🔧 DeepSeek fixes: {self.corrections} across "
                 f"{self.sentences_corrected} sentences"
             )
 
@@ -95,9 +96,9 @@ class PipelineStats:
             sentences_str = ", ".join(str(s) for s in sorted(self.review_sentences)[:5])
             if len(self.review_sentences) > 5:
                 sentences_str += f" (+{len(self.review_sentences) - 5} more)"
-            logger.info(
-                f"     Needs review: {self.needs_review} sentences ({sentences_str})"
-            )
+            lines.append(f"👀 Needs review: {self.needs_review} ({sentences_str})")
+
+        print_summary(lines, title="📊 Translation Summary")
 
     def reset(self) -> None:
         """Reset all statistics."""
