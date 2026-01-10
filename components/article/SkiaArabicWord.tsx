@@ -28,7 +28,6 @@ export const WORD_TOOLTIP_ANIMATION_DURATION = 150;
 interface SkiaArabicWordProps {
   word: SentenceWord;
   onTooltipOpen?: (word: SentenceWord, layout: LayoutRectangle) => void;
-  position?: number;
   wordRef?: RefObject<ComponentRef<typeof Pressable>>;
   testID?: string;
   /** When true, shows a pulsing highlight to draw attention (used for tutorial) */
@@ -42,7 +41,6 @@ interface SkiaArabicWordProps {
 const SkiaArabicWordInternal = function SkiaArabicWord({
   word,
   onTooltipOpen,
-  position,
   wordRef,
   testID,
   isHighlighted = false,
@@ -83,10 +81,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   );
 
   // Use our existing hook for word selection state
-  const { isSelected } = useArabicWord({
-    word,
-    position,
-  });
+  const { isSelected } = useArabicWord({ word });
 
   // Use pre-computed colored segments from data loading (optimized for performance)
   const coloredSegments = word.coloredSegments || [];

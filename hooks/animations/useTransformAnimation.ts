@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
-import type {
-  BaseAnimationBuilder,
-  SharedValue,
-  WithSpringConfig,
-  WithTimingConfig,
-} from 'react-native-reanimated';
+import type { BaseAnimationBuilder, SharedValue } from 'react-native-reanimated';
 import {
   cancelAnimation,
   SlideInLeft,
@@ -83,15 +78,6 @@ export interface TransformAnimationOptions {
   damping?: number;
   stiffness?: number;
 
-  /**
-   * Spring configuration for withSpring
-   */
-  springConfig?: WithSpringConfig;
-
-  /**
-   * Timing configuration for withTiming
-   */
-  timingConfig?: WithTimingConfig;
 }
 
 interface TransformAnimationResult {

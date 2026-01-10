@@ -278,7 +278,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       fadeIn,
       isComplete,
       triggerCompletionTransition,
-      setTimer,
       clearTimer,
     ],
   );

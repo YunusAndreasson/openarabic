@@ -467,7 +467,6 @@ export function useFSRS({
       onComplete,
       getNextWordWithSpacing,
       updateSpacingCounters,
-      _sessionCooldownHours,
     ],
   );
 

@@ -8,7 +8,6 @@ import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 
 export interface UseArabicWordProps {
   word: SentenceWord;
-  position?: number;
 }
 
 export interface UseArabicWordReturn {
@@ -19,10 +18,7 @@ export interface UseArabicWordReturn {
  * Hook to manage the state and behavior of an Arabic word in the UI
  * IMPORTANT: Uses same query as WordDetailsBottomSheet button state for consistency
  */
-export function useArabicWord({
-  word,
-  position: _position,
-}: UseArabicWordProps): UseArabicWordReturn {
+export function useArabicWord({ word }: UseArabicWordProps): UseArabicWordReturn {
   const { user } = useAuth();
 
   // Get due words data - we use 0 as limit since we only need the due word IDs

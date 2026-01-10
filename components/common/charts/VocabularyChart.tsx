@@ -1,14 +1,15 @@
+import { getChartColors } from '@/constants/chartColors';
+import { CHART_VISUAL, GRAPH_HEIGHT_LARGE } from '@/constants/chartConstants';
+
 import { BaseChart } from './BaseChart';
 import { ChartAreaFill } from './ChartAreaFill';
 import { ChartAxes, Y_AXIS_WIDTH } from './ChartAxes';
 import { ChartCanvas, type DataPoint } from './ChartCanvas';
-import { getChartColors } from './ChartColors';
 import { ChartDataPoint } from './ChartDataPoint';
 import { ChartGrid } from './ChartGrid';
 import { ChartMainLine } from './ChartMainLine';
 import { ChartPerformanceZones } from './ChartPerformanceZones';
 import { ChartReferenceLine } from './ChartReferenceLine';
-import { GRAPH_HEIGHT_LARGE , CHART_VISUAL } from './constants';
 import { Group } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -141,12 +142,6 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
     const colors = useColors();
     const chartColors = useMemo(() => getChartColors(colors), [colors]);
 
-    // Automatically set todayIndex based on chart type
-    // Future prediction charts (like RetrievabilityChart) have today at index 0
-    // Historical charts (like EfficiencyChart) have today at the last index
-    const todayIndex =
-      xLabels.length > 0 ? (isFuturePrediction ? 0 : xLabels.length - 1) : undefined;
-
     // Memoized chart data calculations for better performance
     const contentHeight = useMemo(
       () => GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING + CONTENT_HEIGHT_OFFSET,
@@ -277,9 +272,9 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
       dataPointKeys,
       milestones,
       milestoneKeys,
-      todayIndex,
       chartColors,
       colors,
+      showAreaFill,
     ]);
 
     // Memoized axes component

@@ -17,7 +17,7 @@ interface ErrorFallbackProps {
 const DefaultErrorFallback = memo(function DefaultErrorFallback({
   error,
   componentName,
-}: ErrorFallbackProps) {
+}: Omit<ErrorFallbackProps, 'resetError'>) {
   const errorMessage = error.message || STRINGS.UNKNOWN_ERROR_OCCURRED;
   return (
     <View style={styles.errorContainer}>
@@ -108,7 +108,6 @@ export class ComponentErrorBoundary extends Component<
       return (
         <DefaultErrorFallback
           error={error}
-          resetError={this.resetError}
           componentName={componentName}
         />
       );

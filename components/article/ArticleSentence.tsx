@@ -96,7 +96,6 @@ const ArticleSentenceInternal = function ArticleSentence({
           word={word}
           onTooltipOpen={onWordPress}
           wordRef={wordRef}
-          position={index}
           isHighlighted={isFirstWord && showTutorialCard}
           isActive={isActive}
           isTargetWord={isTargetWord}
