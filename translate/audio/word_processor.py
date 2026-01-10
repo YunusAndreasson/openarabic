@@ -127,15 +127,15 @@ def process_word_audio_for_latest_articles() -> bool:
             return False
 
         # Process word audio for latest articles
+        logger.info("  → Processing word clips...")
         articles = result.data
         success_count = 0
         for article in articles:
             if not isinstance(article, dict):
                 continue
             article_id = article["id"]
-            _article_title = article["title"]  # Unused but kept for potential future use
-
-            # Process word audio for article
+            article_title = article["title"]
+            logger.info(f"    📄 {article_title[:50]}")
 
             try:
                 import tempfile

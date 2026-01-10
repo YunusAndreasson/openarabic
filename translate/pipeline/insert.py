@@ -153,6 +153,7 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
     translations = [SentenceTranslation(**t) for t in data["translations"]]
 
     # Validate translations before processing
+    logger.info("  → Validating translations...")
     try:
         validate_batch_before_processing(translations)
     except Exception as e:
@@ -175,7 +176,7 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
         try:
             # Create temporary directory for audio processing
             temp_dir = tempfile.mkdtemp()
-            logger.info("Starting audio generation process...")
+            logger.info("  → Generating article audio...")
 
             # Prepare sentence data for the new streamlined function
             sentences = []
@@ -199,9 +200,7 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
             if audio_urls:
                 # Get the Arabic audio URL for the article
                 article_audio_url = audio_urls["arabic_url"]
-
                 audio_generation_success = True
-                logger.info("Article audio generation completed successfully")
             else:
                 logger.error(
                     "ARTICLE AUDIO FAILED: Audio generation returned no URLs, inserting without audio"
@@ -231,6 +230,7 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
         audio_url=final_audio_url,  # None if audio generation failed
     )
 
+    logger.info("  → Inserting into Supabase...")
     try:
         result = (
             get_supabase_client()
@@ -297,9 +297,12 @@ def main() -> int:
     error_count = 0
 
     for json_path in translation_files:
+        article_name = Path(json_path).stem.replace("_translated", "")
+        logger.info(f"  📄 {article_name}")
         try:
             process_json_file(json_path)
         except Exception:
+            logger.error(f"  ✗ Failed: {article_name}")
             error_count += 1
 
     if error_count > 0:
