@@ -11,7 +11,6 @@ export {
   PRESS_ANIMATION_BUTTON,
   PRESS_ANIMATION_CARD,
   PRESS_ANIMATION_DEFAULT,
-  PRESS_ANIMATION_WORD,
   usePressAnimation,
 } from './usePressAnimation';
 export { useTransformAnimation } from './useTransformAnimation';

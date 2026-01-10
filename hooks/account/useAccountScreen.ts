@@ -362,5 +362,3 @@ export const useAccountScreen = () => {
 
   return result;
 };
-
-export type UseAccountScreenReturn = ReturnType<typeof useAccountScreen>;

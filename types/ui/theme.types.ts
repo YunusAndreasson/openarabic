@@ -94,5 +94,4 @@ export interface ThemeColors {
   };
 }
 
-export type ThemeColorName = keyof ThemeColors;
 export type GrammarColorName = keyof ThemeColors['grammar'];

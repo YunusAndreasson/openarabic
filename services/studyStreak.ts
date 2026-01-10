@@ -312,8 +312,7 @@ export class StudySessionStreakService {
   }
 }
 
-// Export type aliases for study streaks (same structure as reading streaks)
+// Export type alias for study streaks (same structure as reading streaks)
 export type StudyStreak = ReadingStreak;
-export type DailyStudyActivity = DailyReadingActivity;
 
 export const studySessionStreakService = StudySessionStreakService;

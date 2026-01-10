@@ -166,5 +166,3 @@ export const vocabularyStatsService = {
     };
   },
 };
-
-export type VocabularyStatsService = typeof vocabularyStatsService;

@@ -1,7 +1,6 @@
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
-import type { ColorValue } from 'react-native';
 
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
@@ -34,15 +33,3 @@ export function useSystemUITheme(): void {
   }, [colors.background]);
 }
 
-/**
- * Get the current system UI background color
- * Useful for debugging or conditional styling
- */
-export async function getSystemUIBackgroundColor(): Promise<ColorValue | null> {
-  try {
-    return await SystemUI.getBackgroundColorAsync();
-  } catch (error) {
-    handleError(error as Error, { showToast: false, captureSentry: false });
-    return null;
-  }
-}

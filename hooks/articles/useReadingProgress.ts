@@ -15,14 +15,6 @@ interface UseReadingProgressOptions {
   isActive: boolean; // Only track when article is actually being read
 }
 
-export interface ReadingProgressData {
-  articleId: number;
-  lastSentenceRead: number;
-  totalSentences: number;
-  progressPercentage: number;
-  updatedAt: string;
-}
-
 const DEBOUNCE_DELAY = 500; // Reduced from 2000ms to 500ms for more responsive tracking
 
 export function useReadingProgress({

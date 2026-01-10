@@ -125,13 +125,6 @@ export const COMPONENT_COUNT = {
 } as const;
 
 /**
- * Helper function to check if remaining text meets minimum length requirement
- */
-export function meetsMinimumLength(remaining: string, threshold: number): boolean {
-  return remaining.length >= threshold;
-}
-
-/**
  * Helper function to check if text is exactly a critical length
  */
 export function isCriticalLength(text: string, criticalLength: number): boolean {

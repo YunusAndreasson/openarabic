@@ -17,12 +17,6 @@ export const PRESS_ANIMATION_BUTTON = { type: 'button' } as const;
 /** Card press animation preset - scale + opacity, gentler spring */
 export const PRESS_ANIMATION_CARD = { type: 'card' } as const;
 
-/** Word press animation preset - custom scale for Arabic words */
-export const PRESS_ANIMATION_WORD = {
-  type: 'custom',
-  scaleAmount: PRESS_SCALE.MODERATE,
-} as const;
-
 /** Default/empty preset - uses button defaults */
 export const PRESS_ANIMATION_DEFAULT = {} as const;
 

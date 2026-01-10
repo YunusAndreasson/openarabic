@@ -112,10 +112,3 @@ export function mapToStudyWord(row: StudyWordQueryRow, fallbackUserId: string): 
   };
 }
 
-/**
- * Maps an array of raw study word rows to StudyWord[]
- */
-export function mapToStudyWords(rows: StudyWordQueryRow[], fallbackUserId: string): StudyWord[] {
-  if (!Array.isArray(rows)) return [];
-  return rows.map(row => mapToStudyWord(row, fallbackUserId));
-}

@@ -16,10 +16,8 @@ import {
   calculateDynamicPadding,
   createTextStyle,
   createTextStyleBase,
-  determineTextColor,
   getSelectedStyle,
   type BatchedTextColors,
-  type MeaningOverlayColors,
 } from '@/utils/textStyleUtils';
 
 describe('textStyleUtils', () => {
@@ -28,11 +26,6 @@ describe('textStyleUtils', () => {
     arabicText: '#000000',
     shadow: '#666666',
     englishText: '#333333',
-  };
-  const mockMeaningOverlayColors: MeaningOverlayColors = {
-    warning: '#FFA500',
-    error: '#FF0000',
-    text: '#000000',
   };
   const mockUnderlineColor = '#9AB5A4'; // Soft disabled color for all underlines
 
@@ -78,23 +71,6 @@ describe('textStyleUtils', () => {
       expect(result).toHaveProperty('fontWeight', '700');
       expect(result).toHaveProperty('textAlign', 'center');
       expect(result).toHaveProperty('shadowColor', mockColors.shadow);
-    });
-  });
-
-  describe('determineTextColor', () => {
-    test('should return warning color for vague meaning', () => {
-      const result = determineTextColor(true, false, false, mockMeaningOverlayColors);
-      expect(result).toBe(mockMeaningOverlayColors.warning);
-    });
-
-    test('should return error color for struggling word', () => {
-      const result = determineTextColor(false, false, true, mockMeaningOverlayColors);
-      expect(result).toBe(mockMeaningOverlayColors.error);
-    });
-
-    test('should return default text color for normal state', () => {
-      const result = determineTextColor(false, false, false, mockMeaningOverlayColors);
-      expect(result).toBe(mockMeaningOverlayColors.text);
     });
   });
 

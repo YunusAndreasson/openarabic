@@ -14,16 +14,3 @@ export interface WordDisplayProps {
   onWordPress?: () => void;
 }
 
-/**
- * Props for the ErrorMessage component in vocabulary
- */
-export interface ErrorMessageProps {
-  /** Screen name to navigate to on retry */
-  screenName?: string;
-  /** Custom error message to display */
-  customMessage?: string;
-  /** Error message to display */
-  message?: string;
-  /** Function to retry the action */
-  onRetry?: () => void;
-}

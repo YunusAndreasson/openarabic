@@ -18,7 +18,7 @@ export { VocabularyChart } from './VocabularyChart';
 // Types
 export type { DataPoint } from './ChartCanvas';
 
-// Constants and utilities
+// Constants and utilities - re-exported from canonical locations for backward compatibility
 export {
   GRAPH_WIDTH,
   GRAPH_HEIGHT_LARGE,
@@ -29,25 +29,23 @@ export {
   calculateDataPointPositions,
   getEffectiveChartHeight,
   useGraphWidth,
-} from './constants';
+} from '@/constants/chartConstants';
 
 export {
   generateDateRange,
-  getUTCDateString,
-  isSameDay,
   calculateEfficiencyScore,
   createStandardizedPerformanceZones,
   createAreaFillPath,
   formatWeekdayUTC,
   formatMonthDayUTC,
   calculateSevenDayAverage,
-} from './utils';
+} from '@/utils/chartDataUtils';
 
-export { buildSmoothChartPath } from './pathBuilder';
-export type { BuildPathOptions, BuildPathResult } from './pathBuilder';
+export { buildSmoothChartPath } from '@/utils/chartPathBuilder';
+export type { BuildPathOptions, BuildPathResult } from '@/utils/chartPathBuilder';
 
-export { CHART_OPACITY, getChartColors, useChartColors } from './ChartColors';
+export { CHART_OPACITY, getChartColors, useChartColors } from '@/constants/chartColors';
 
-export { CHART_LABELS, EMPTY_STATE_MESSAGES, generateChartSubtitle } from './ChartMessages';
+export { CHART_LABELS, EMPTY_STATE_MESSAGES, generateChartSubtitle } from '@/constants/chartMessages';
 
 // Other shared components (keep existing exports)

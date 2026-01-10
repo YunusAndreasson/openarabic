@@ -40,16 +40,3 @@ export interface StudyWord extends Omit<Tables<'study_words'>, 'root_id' | 'user
   root?: Tables<'roots'> | null;
 }
 
-/**
- * Category types for vocabulary statistics and filtering
- */
-export type StatCategory =
-  | 'difficultyEasy'
-  | 'difficultyHard'
-  | 'difficultyMedium'
-  | 'due'
-  | 'learning'
-  | 'mastered'
-  | 'needsAttention'
-  | 'struggling'
-  | 'total';

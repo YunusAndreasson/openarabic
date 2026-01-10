@@ -54,7 +54,6 @@ export enum DailyWordLimitDescription {
  */
 export enum DailyWordLimitStatus {
   REACHED = 'Daily limit reached. You can increase it in Account settings.',
-  APPROACHING = 'Approaching daily limit',
 }
 
 // ===== ACCOUNT SECTIONS =====

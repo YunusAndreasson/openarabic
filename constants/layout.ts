@@ -138,9 +138,6 @@ export const LETTER_SPACING = TYPOGRAPHY_HIERARCHY.LETTER_SPACING;
 /** Text opacity values for hierarchy */
 export const TEXT_OPACITY = TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY;
 
-/** Opacity boost values for theme adjustments */
-export const OPACITY_BOOST = TYPOGRAPHY_HIERARCHY.OPACITY_BOOST;
-
 /** Pre-computed text style configurations for content types */
 export const TEXT_STYLES = TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES;
 
