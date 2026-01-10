@@ -106,6 +106,29 @@ def clean_word_for_matching(word: str) -> str:
     return word
 
 
+@functools.cache
+def strip_arabic_diacritics(text: str) -> str:
+    """
+    Remove Arabic diacritics (tashkeel) from text for matching purposes.
+
+    This removes: fathah, dammah, kasrah, sukun, shaddah, tanwin, etc.
+    Unicode range: U+064B to U+065F (Arabic combining marks)
+
+    Args:
+        text: Arabic text with diacritics
+
+    Returns:
+        Text without diacritics
+    """
+    if not text:
+        return text
+
+    # Arabic diacritics range: U+064B to U+065F
+    # This includes: fathah, dammah, kasrah, sukun, shaddah, tanwin forms, etc.
+    diacritics_pattern = r"[\u064B-\u065F]"
+    return re.sub(diacritics_pattern, "", text)
+
+
 def has_arabic_diacritics(text: str) -> bool:
     """
     Check if Arabic text contains basic diacritics (kesra, fetha, damma).

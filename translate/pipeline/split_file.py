@@ -107,6 +107,10 @@ def split_file(input_file: str, output_file: str) -> SplitResult:
 
         split_result = split_text_into_sentences(full_text)
 
+        # Log sentence count
+        sentence_count = len(split_result.units)
+        logger.info(f"Split complete: {sentence_count} sentences extracted")
+
         # Convert to dict for JSON serialization
         split_dict = split_result.model_dump()
         write_json_file(output_file, split_dict)
@@ -114,7 +118,7 @@ def split_file(input_file: str, output_file: str) -> SplitResult:
         return split_result
 
     except Exception as e:
-        raise RuntimeError(f"Text splitting failed: {str(e)}") from e
+        raise RuntimeError(f"Text splitting failed: {e!s}") from e
 
 
 def split_files(input_files: list[tuple[str, str, str]]) -> list[str]:
@@ -147,11 +151,11 @@ def split_files(input_files: list[tuple[str, str, str]]) -> list[str]:
 
 
 __all__ = [
-    "split_text_into_sentences",
-    "split_file",
-    "split_files",
     "build_split_messages",
     "parse_split_response",
+    "split_file",
+    "split_files",
+    "split_text_into_sentences",
 ]
 
 

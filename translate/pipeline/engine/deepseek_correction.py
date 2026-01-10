@@ -17,6 +17,7 @@ from data.deepseek_correction_models import (
 )
 from data.enums import VerificationStatus
 from data.models import SentenceTranslation, WordTranslation
+from utils.arabic_text import strip_arabic_diacritics
 from utils.batch_context import get_batch_prefix, pipeline_stats
 
 if TYPE_CHECKING:
@@ -26,6 +27,28 @@ logger = logging.getLogger(__name__)
 
 # Configuration
 CORRECTION_BATCH_SIZE = 5  # Sentences per API call
+
+# Condensed forms that should be expanded to multi-word phrases
+# Used for logging when DeepSeek detects and corrects these
+CONDENSED_FORMS = {
+    "therein",
+    "thereof",
+    "therewith",
+    "therefrom",
+    "thereupon",
+    "thereby",
+    "thereto",
+    "wherein",
+    "whereby",
+    "whereof",
+    "whereto",
+    "whereupon",
+    "herein",
+    "hereof",
+    "herewith",
+    "hereafter",
+    "heretofore",
+}
 
 
 def _get_str_value(value: str | list[str]) -> str:
@@ -144,16 +167,31 @@ def _prepare_sentence_data(translation: SentenceTranslation) -> dict:
     }
 
 
+def _detect_condensed_forms(text: str) -> list[str]:
+    """Detect any condensed forms in the text."""
+    words = text.lower().split()
+    return [w for w in words if w in CONDENSED_FORMS]
+
+
 def _apply_corrections(
     translation: SentenceTranslation, correction: SentenceCorrectionResponse
 ) -> None:
     """Apply DeepSeek corrections to a translation."""
     corrections_applied = 0
+    idx = translation.index
 
     # Apply full translation correction
     if correction.corrected_full_translation != translation.full_translation:
-        old, new = translation.full_translation, correction.corrected_full_translation
-        logger.info(f"Sentence {translation.index}: translation: '{old}' → '{new}'")
+        old = translation.full_translation
+        new = correction.corrected_full_translation
+
+        # Check for condensed form expansion
+        old_condensed = _detect_condensed_forms(old)
+        new_condensed = _detect_condensed_forms(new)
+        if old_condensed and not new_condensed:
+            logger.info(f"    [Sentence {idx}] Expanded condensed: {old_condensed}")
+
+        logger.info(f"    [Sentence {idx}] translation: '{old}' → '{new}'")
         translation.full_translation = new
         corrections_applied += 1
 
@@ -164,13 +202,13 @@ def _apply_corrections(
     ):
         old = translation.tashkeel
         new = correction.corrected_tashkeel
-        logger.info(f"Sentence {translation.index}: tashkeel: '{old}' → '{new}'")
+        logger.info(f"    [Sentence {idx}] tashkeel: '{old}' → '{new}'")
         translation.tashkeel = new
         corrections_applied += 1
 
     # Apply word-by-word corrections
     corrections_applied += _apply_word_corrections(
-        translation.word_by_word, correction.word_corrections
+        translation.word_by_word, correction.word_corrections, idx
     )
 
     # Update verification status based on quality score
@@ -181,8 +219,9 @@ def _apply_corrections(
 
     # Log summary
     log_fn = logger.info if corrections_applied else logger.debug
-    n, q = corrections_applied, correction.overall_quality
-    log_fn(f"Sentence {translation.index}: {n} fixes, q={q:.2f}")
+    log_fn(
+        f"    [Sentence {idx}] {corrections_applied} fixes, q={correction.overall_quality:.2f}"
+    )
 
 
 def _update_verification_status(
@@ -208,24 +247,47 @@ def _update_verification_status(
 
 
 def _apply_word_corrections(
-    words: list[WordTranslation], corrections: list[WordCorrection]
+    words: list[WordTranslation], corrections: list[WordCorrection], sentence_idx: int
 ) -> int:
     """Apply word-level corrections. Returns count of corrections applied."""
-    # Build index map for O(1) lookup
+    # Build index maps for O(1) lookup
+    # Primary: exact match by Arabic text
     words_by_arabic = {w.arabic: w for w in words}
+    # Secondary: normalized match (stripped diacritics) for fuzzy matching
+    words_by_normalized = {strip_arabic_diacritics(w.arabic): w for w in words}
     corrections_applied = 0
 
     for wc in corrections:
         if not wc.was_corrected:
             continue
 
-        if not (word := words_by_arabic.get(wc.arabic)):
-            logger.warning(f"Could not find word to correct: {wc.arabic}")
+        # Try exact match first, then normalized match
+        word = words_by_arabic.get(wc.arabic)
+        if word is None:
+            normalized_key = strip_arabic_diacritics(wc.arabic)
+            word = words_by_normalized.get(normalized_key)
+
+        if word is None:
+            logger.warning(
+                f"      [Sentence {sentence_idx}] Word not found: {wc.arabic}"
+            )
             continue
 
         old_english = _get_str_value(word.english)
         if wc.corrected_english != old_english:
-            logger.debug(f"  '{wc.arabic}': '{old_english}' → '{wc.corrected_english}'")
+            # Check for condensed form expansion in word translation
+            old_condensed = _detect_condensed_forms(old_english)
+            new_condensed = _detect_condensed_forms(wc.corrected_english)
+            if old_condensed and not new_condensed:
+                logger.info(
+                    f"      [Sentence {sentence_idx}] Word '{wc.arabic}': "
+                    f"expanded '{old_english}' → '{wc.corrected_english}'"
+                )
+            else:
+                logger.debug(
+                    f"      [Sentence {sentence_idx}] Word '{wc.arabic}': "
+                    f"'{old_english}' → '{wc.corrected_english}'"
+                )
             word.english = wc.corrected_english
             corrections_applied += 1
 

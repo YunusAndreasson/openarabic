@@ -1,9 +1,11 @@
 """Translation refinement and verification operations."""
 
 import logging
+from typing import Any
 
 from data.config import MODEL_VERIFICATION
 from data.models import (
+    BatchRefinementResult,
     RefinementResult,
     TashkeelResult,
     TranslationResult,
@@ -143,19 +145,29 @@ def batch_refine_translations(
             # Reference specific sentences from uploaded document
             message = "Refine translations for sentences from the uploaded document. Use the provided refinement data to select best options."
             response = conversation_manager.continue_with_stage(
-                message, response_model=RefinementResult
+                message, response_model=BatchRefinementResult
             )
         else:
             # Use standard implementation when no conversation manager
             response = call_response_api(
                 messages=messages,
-                response_model=RefinementResult,
+                response_model=BatchRefinementResult,
                 model=MODEL_VERIFICATION,
             )
 
-        if "refinements" in response and isinstance(response["refinements"], list):
+        # Extract refinements from Response API format
+        refinements_data: list[Any] | None = None
+        if response.get("success") and "data" in response:
+            resp_data: Any = response["data"]
+            if isinstance(resp_data, dict) and "refinements" in resp_data:
+                refinements_data = resp_data["refinements"]
+        # Fallback for legacy format
+        elif "refinements" in response and isinstance(response["refinements"], list):
+            refinements_data = response["refinements"]
+
+        if refinements_data is not None:
             results: RefinementResults = []
-            for item in response["refinements"]:
+            for item in refinements_data:
                 try:
                     if isinstance(item, dict):
                         # Sanitize and validate the data before creating RefinementResult
@@ -181,18 +193,9 @@ def batch_refine_translations(
                             )
                         )
                     else:
-                        # Skip non-dict items in response
-                        # Create empty refinement result if response is malformed
-                        results.append(
-                            RefinementResult(
-                                improved_tashkeel="",
-                                improved_translation="",
-                                improved_word_translations=[],
-                                resolved_uncertainties=[],
-                                remaining_uncertainties=[],
-                                changes_made=["Response format error"],
-                            )
-                        )
+                        # Handle non-dict items (unexpected format)
+                        logger.warning(f"Unexpected refinement item type: {type(item)}")
+                        continue
                 except Exception as e:
                     logger.error(f"Error creating RefinementResult from item: {e}")
                     # Create fallback result with error information
@@ -203,18 +206,21 @@ def batch_refine_translations(
                             improved_word_translations=[],
                             resolved_uncertainties=[],
                             remaining_uncertainties=[],
-                            changes_made=[f"Processing error: {str(e)}"],
+                            changes_made=[f"Processing error: {e!s}"],
                         )
                     )
             return results
-        elif "error" in response:
+        if "error" in response:
             logger.error(
                 f"REFINEMENT FAILED: API returned error - {response.get('error', 'unknown error')}"
             )
             return []
-        else:
-            logger.error("REFINEMENT FAILED: Unexpected response format from API")
-            return []
+        # Log what we actually received for debugging
+        logger.error(
+            f"REFINEMENT FAILED: Unexpected response format. "
+            f"Keys: {list(response.keys()) if isinstance(response, dict) else 'not a dict'}"
+        )
+        return []
     except Exception as e:
         logger.error(
             f"REFINEMENT FAILED: Exception during batch_refine_translations - {e}"

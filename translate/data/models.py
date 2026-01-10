@@ -368,6 +368,14 @@ class RefinementResult(BaseModel):
     )
 
 
+class BatchRefinementResult(BaseModel):
+    """Batch result containing multiple refinements for batch processing."""
+
+    refinements: list[RefinementResult] = Field(
+        description="List of refinement results, one per input sentence"
+    )
+
+
 class SentenceTranslation(BaseModel):
     """Complete sentence translation with all components"""
 

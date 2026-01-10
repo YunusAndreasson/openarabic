@@ -196,15 +196,16 @@ class TestBatchRefineTranslations:
             ]
         }
 
-        # Word as dict format
-        word_dict = {
-            "arabic": "كِتَاب",
-            "english_options": ["book", "tome"],
-            "pos": "noun",
-            "essential": "كتاب",
-            "essential_translation_options": ["book"],
-            "notes": "",
-        }
+        # WordTranslation object format (typed input)
+        word_translation = WordTranslation(
+            arabic="كِتَاب",
+            english=["book", "tome"],
+            pos="noun",
+            essential="كتاب",
+            essential_translation=["book"],
+            notes="",
+            uncertainties=[],
+        )
 
         refinement_input = [
             {
@@ -219,7 +220,7 @@ class TestBatchRefineTranslations:
                     tashkeel="كِتَاب",
                     uncertainties=[],
                 ),
-                "word_translations_options": [word_dict],
+                "word_translations_options": [word_translation],
                 "previous_uncertainties": {"translation": [], "tashkeel": []},
             }
         ]
@@ -315,22 +316,26 @@ class TestBatchRefineTranslations:
 
     @patch("pipeline.engine.refinement.call_response_api")
     @patch("utils.responses_api.token_tracker")
-    def test_non_dict_refinement_item_creates_fallback(self, mock_tracker, mock_api):
-        """Test that non-dict items in refinements create fallback results."""
+    def test_non_dict_refinement_item_is_skipped(self, mock_tracker, mock_api):
+        """Test that non-dict items in refinements are skipped with warning."""
         from pipeline.engine.refinement import batch_refine_translations
 
+        # Use new Response API format with success and data keys
         mock_api.return_value = {
-            "refinements": [
-                {
-                    "improved_tashkeel": "مَرْحَبًا",
-                    "improved_translation": "Hello",
-                    "improved_word_translations": [],
-                    "resolved_uncertainties": [],
-                    "remaining_uncertainties": [],
-                    "changes_made": [],
-                },
-                "invalid_string_item",  # Non-dict item
-            ]
+            "success": True,
+            "data": {
+                "refinements": [
+                    {
+                        "improved_tashkeel": "مَرْحَبًا",
+                        "improved_translation": "Hello",
+                        "improved_word_translations": [],
+                        "resolved_uncertainties": [],
+                        "remaining_uncertainties": [],
+                        "changes_made": [],
+                    },
+                    "invalid_string_item",  # Non-dict item - will be skipped
+                ]
+            },
         }
 
         word_translation = WordTranslation(
@@ -378,9 +383,10 @@ class TestBatchRefineTranslations:
 
         result = batch_refine_translations(refinement_input)
 
-        # Second item should have fallback with error
-        assert len(result) == 2
-        assert "Response format error" in result[1].changes_made
+        # Only 1 result - valid dict processed, invalid string skipped
+        # Downstream code handles count mismatch by creating fallbacks
+        assert len(result) == 1
+        assert result[0].improved_translation == "Hello"
 
     @patch("pipeline.engine.refinement.call_response_api")
     @patch("utils.responses_api.token_tracker")
