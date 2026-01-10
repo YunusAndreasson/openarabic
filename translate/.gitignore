@@ -152,6 +152,9 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# Ruff cache
+.ruff_cache/
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be added to the global gitignore or merged into this project gitignore.  For a PyCharm
@@ -162,12 +165,10 @@ cython_debug/
 #  *.iws
 
 # Project specific
-article/
-archive/
-# Audio cache removed - using Supabase Storage as single source of truth
-reports/
-temp_audio/
 *.env
+
+# Generated directories
+archive/
 
 # Pipeline directories - generated content
 0_inbox/

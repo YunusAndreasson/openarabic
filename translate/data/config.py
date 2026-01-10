@@ -1,6 +1,7 @@
 """Central configuration for the translation tools."""
 
 import os
+import tempfile
 
 # OpenAI model configuration - Valid model names per project standards
 
@@ -19,10 +20,8 @@ ROOT_DIR = os.path.abspath(
 )
 ARTICLE_DIR = os.path.join(ROOT_DIR, "article")
 ARCHIVE_DIR = os.path.join(ROOT_DIR, "archive")
-# Audio directories - consolidated to use Supabase Storage as single source of truth
-AUDIO_TEMP_DIR = os.path.join(
-    ROOT_DIR, "temp_audio"
-)  # Temporary files during generation only
+# Temporary audio files (system temp dir, auto-cleaned by OS)
+AUDIO_TEMP_DIR = os.path.join(tempfile.gettempdir(), "openarabic-audio")
 
 # Pipeline directory structure
 INBOX_DIR = os.path.join(ROOT_DIR, "0_inbox")
@@ -126,7 +125,5 @@ DEFAULT_CATEGORY = "aqeedah"
 # OpenRouter configuration for validation
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEEPSEEK_MODEL = (
-    "deepseek/deepseek-v3.1-terminus"  # Latest DeepSeek v3.1 Terminus model
-)
+DEEPSEEK_MODEL = "deepseek/deepseek-v3.2"  # Latest DeepSeek v3.2 model
 VALIDATION_MAX_RETRIES = 3

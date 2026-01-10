@@ -1,4 +1,4 @@
-from constants.error_markers import (
+from .error_markers import (
     CRITICAL_ERROR_MARKERS,
     FALLBACK_ERROR_MARKERS,
     TRANSLATION_ERROR_MARKERS,
