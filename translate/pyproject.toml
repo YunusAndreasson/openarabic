@@ -113,10 +113,6 @@ known-first-party = ["translate"]
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/**/*" = ["B011", "B017", "S101", "ARG001", "ARG002", "ARG005"]
-"pipeline/validate*.py" = ["T201", "S110"]
-"pipeline/check_validations.py" = ["T201"]
-"utils/root_pattern_checker.py" = ["T201"]
-"utils/validation_db.py" = ["T201", "N806", "F841"]
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.
