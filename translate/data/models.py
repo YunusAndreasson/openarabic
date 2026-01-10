@@ -36,7 +36,7 @@ class Uncertainty(BaseModel):
 
     @field_validator("type", mode="before")
     @classmethod
-    def _normalize_uncertainty_type(cls, v: Any) -> UncertaintyType:
+    def _normalize_uncertainty_type(_cls, v: Any) -> UncertaintyType:
         """Normalize uncertainty type enum values using match/case (Python 3.10+)."""
         if isinstance(v, UncertaintyType):
             return v
@@ -170,7 +170,7 @@ class WordTranslation(BaseModel):
     # --- Validators ---
     @field_validator("arabic")
     @classmethod
-    def _strip_arabic(cls, v: str) -> str:
+    def _strip_arabic(_cls, v: str) -> str:
         v = v.strip()
         if not v:
             raise ValueError("arabic must be a non-empty string")
@@ -178,7 +178,7 @@ class WordTranslation(BaseModel):
 
     @field_validator("pos", mode="before")
     @classmethod
-    def _normalize_part_of_speech(cls, v: Any) -> PartOfSpeech:
+    def _normalize_part_of_speech(_cls, v: Any) -> PartOfSpeech:
         """Normalize part of speech enum values using match/case (Python 3.10+)."""
         if isinstance(v, PartOfSpeech):
             return v
@@ -231,7 +231,7 @@ class WordTranslation(BaseModel):
 
     @field_validator("notes")
     @classmethod
-    def _strip_notes(cls, v: str | None) -> str | None:
+    def _strip_notes(_cls, v: str | None) -> str | None:
         if v is None:
             return None
         v = v.strip()
@@ -241,7 +241,7 @@ class WordTranslation(BaseModel):
 
     @field_validator("english")
     @classmethod
-    def _validate_english(cls, v: str | list[str]) -> str | list[str]:
+    def _validate_english(_cls, v: str | list[str]) -> str | list[str]:
         if isinstance(v, list):
             if not v:
                 raise ValueError("english options list cannot be empty")
@@ -261,7 +261,7 @@ class WordTranslation(BaseModel):
 
     @field_validator("essential_translation")
     @classmethod
-    def _validate_essential_translation(cls, v: str | list[str]) -> str | list[str]:
+    def _validate_essential_translation(_cls, v: str | list[str]) -> str | list[str]:
         if isinstance(v, list):
             if not v:
                 raise ValueError("essential_translation options list cannot be empty")
@@ -280,21 +280,9 @@ class WordTranslation(BaseModel):
             raise ValueError("essential_translation must be a non-empty string")
         return v
 
-    @field_validator("essential")
-    @classmethod
-    def _validate_essential_token(cls, v: str) -> str:
-        v = v.strip()
-        if not v:
-            raise ValueError("essential must be a non-empty string")
-        # Enforce single token (no whitespace) — regex already applied via Field, double-safeguard here
-        if any(ch.isspace() for ch in v):
-            raise ValueError("essential must be exactly one token without whitespace")
-        # Diacritics are preferred but not enforced at this stage; enforced at refinement.
-        return v
-
     @field_validator("uncertainties")
     @classmethod
-    def _ensure_uncertainties_present(cls, v: list[Uncertainty]) -> list[Uncertainty]:
+    def _ensure_uncertainties_present(_cls, v: list[Uncertainty]) -> list[Uncertainty]:
         return v or []
 
 
@@ -328,7 +316,7 @@ class TashkeelResult(BaseModel):
 
     @field_validator("tashkeel")
     @classmethod
-    def validate_arabic_text(cls, v: str) -> str:
+    def validate_arabic_text(_cls, v: str) -> str:
         """Validate that tashkeel text is not empty"""
         v = v.strip()
         if not v:
@@ -346,7 +334,7 @@ class WordTranslationResult(BaseModel):
     @field_validator("word_translations")
     @classmethod
     def _validate_word_translations(
-        cls, v: list[WordTranslation]
+        _cls, v: list[WordTranslation]
     ) -> list[WordTranslation]:
         # Require at least one word translation
         if not v:
@@ -399,7 +387,7 @@ class SentenceTranslation(BaseModel):
 
     @field_validator("verification_status", mode="before")
     @classmethod
-    def _normalize_verification_status(cls, v: Any) -> VerificationStatus:
+    def _normalize_verification_status(_cls, v: Any) -> VerificationStatus:
         """Normalize verification status enum values using match/case (Python 3.10+)."""
         if isinstance(v, VerificationStatus):
             return v
@@ -448,7 +436,7 @@ class TextMetadata(BaseModel):
 
     @field_validator("difficulty_level", mode="before")
     @classmethod
-    def _normalize_difficulty_level(cls, v: Any) -> DifficultyLevel:
+    def _normalize_difficulty_level(_cls, v: Any) -> DifficultyLevel:
         """Normalize difficulty level enum values using match/case (Python 3.10+)."""
         match v:
             case str():
@@ -482,7 +470,7 @@ class SplitResult(TextMetadata):
 
     @field_validator("category")
     @classmethod
-    def _validate_category(cls, v: str) -> str:
+    def _validate_category(_cls, v: str) -> str:
         """Validate that category is one of the valid Islamic text categories"""
         from .config import VALID_CATEGORIES
 
@@ -493,33 +481,6 @@ class SplitResult(TextMetadata):
             logger.warning(f"Invalid category '{v}', defaulting to 'aqeedah'")
             return "aqeedah"
         return v
-
-
-class AudioResult(BaseModel):
-    """Result from audio generation"""
-
-    url: str = Field(description="Audio file URL in storage")
-    filename: str = Field(description="Generated filename")
-    duration: float = Field(description="Audio duration in seconds", ge=0.0)
-
-
-class BilingualAudioResult(BaseModel):
-    """Result from bilingual audio generation (English + Arabic)"""
-
-    url: str = Field(description="Bilingual audio file URL in storage")
-    filename: str = Field(description="Generated filename")
-    duration: float = Field(description="Total audio duration in seconds", ge=0.0)
-    english_duration: float = Field(
-        description="English audio duration in seconds", ge=0.0
-    )
-    arabic_duration: float = Field(
-        description="Arabic audio duration in seconds", ge=0.0
-    )
-    pause_duration: float = Field(
-        description="Pause duration between English and Arabic in seconds",
-        default=0.5,
-        ge=0.0,
-    )
 
 
 class ArticleData(BaseModel):
@@ -542,13 +503,8 @@ class ArticleData(BaseModel):
         pattern=r"^[a-f0-9]{64}$",
     )
     image_url: str = Field(description="URL to article image")
-    audio_url: str | None = Field(
-        default=None,
-        description="URL to article audio. None if audio generation failed."
-    )
+    audio_url: str = Field(description="URL to article audio (required by database)")
 
 
 class TranslationValidationError(Exception):
     """Custom exception for translation validation errors"""
-
-    pass

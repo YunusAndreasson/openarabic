@@ -175,52 +175,22 @@ def create_sentence_translation(
         word_opts_list = word_options_result.word_translations
 
         for word_opts in word_opts_list:
-            # Get translation options - require valid data
+            # Extract fields - Pydantic validation already ensures these are valid
             english = word_opts.english
             essential_translation = word_opts.essential_translation
 
-            # Require valid translation options
-            if not english:
-                raise ValueError(
-                    f"Missing English translation options for word: {word_opts.arabic}"
-                )
-            if not essential_translation:
-                raise ValueError(
-                    f"Missing essential translation options for word: {word_opts.arabic}"
-                )
+            # Handle both single values and lists - extract first option
+            english_final = english[0] if isinstance(english, list) else english
+            essential_trans_final = (
+                essential_translation[0]
+                if isinstance(essential_translation, list)
+                else essential_translation
+            )
 
-            # Handle both single values and lists
-            english_final: str
-            if isinstance(english, list):
-                english_final = english[0]
-            else:
-                english_final = english
-
-            essential_trans_final: str
-            if isinstance(essential_translation, list):
-                essential_trans_final = essential_translation[0]
-            else:
-                essential_trans_final = essential_translation
-
-            # Get other fields from word_opts
             arabic = word_opts.arabic
             pos = word_opts.pos
             essential = word_opts.essential
             notes = word_opts.notes
-
-            # Validate essential field - must be present and different from arabic
-            if not essential:
-                raise ValueError(
-                    f"Missing 'essential' field for word '{arabic}'. "
-                    f"The AI must provide a stripped root form without complex affixes/case endings. "
-                    f"Expected: root form (e.g., 'كَتَبَ' from 'يَكْتُبُ'), "
-                    f"Got: missing field"
-                )
-
-            # Note: Essential field validation (identical to arabic) is handled in early pipeline stage
-            # to fail fast and avoid redundant checks
-
-            # Preserve uncertainties from the original word translation
             word_uncertainties = word_opts.uncertainties
 
             # Validate uncertainties to ensure they're in the correct format

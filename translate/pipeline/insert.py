@@ -98,7 +98,7 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
     token_tracker.set_phase("Insert")
 
     # Detect author from file path
-    author_name, author_id = detect_author_from_file_path(file_path)
+    _author_name, author_id = detect_author_from_file_path(file_path)
 
     try:
         with open(file_path, encoding="utf-8") as f:
@@ -168,9 +168,8 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
         raise
 
     # Generate audio BEFORE inserting the article
-    # This ensures audio_url is available when the article is inserted
-    article_audio_url = None
-    audio_generation_success = False
+    # audio_url is required by the database - will fail if audio generation fails
+    article_audio_url: str | None = None
 
     if AUDIO_AVAILABLE:
         try:
@@ -200,11 +199,8 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
             if audio_urls:
                 # Get the Arabic audio URL for the article
                 article_audio_url = audio_urls["arabic_url"]
-                audio_generation_success = True
             else:
-                logger.error(
-                    "ARTICLE AUDIO FAILED: Audio generation returned no URLs, inserting without audio"
-                )
+                raise RuntimeError("Article audio generation failed: no URLs returned")
 
             # Clean up temporary directory
             if os.path.exists(temp_dir):
@@ -212,12 +208,13 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
 
         except Exception as e:
             logger.error(f"ARTICLE AUDIO FAILED: {e}")
-            logger.error("Inserting article WITHOUT AUDIO due to generation failure")
-            # Don't raise exception - continue without audio
+            raise RuntimeError(f"Article audio generation failed: {e}") from e
 
-    # Create ArticleData object with audio_url and timestamps
-    # Handle the case where audio generation failed gracefully
-    final_audio_url = article_audio_url if audio_generation_success else None
+    # audio_url is required by database - fail if not available
+    if not article_audio_url:
+        raise RuntimeError(
+            "Cannot insert article: audio_url is required but audio generation was skipped or failed"
+        )
 
     article_data = ArticleData(
         title=data["metadata"]["title"],
@@ -227,7 +224,7 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
         author_id=author_id,
         content_hash=content_hash,
         image_url=image_url,
-        audio_url=final_audio_url,  # None if audio generation failed
+        audio_url=article_audio_url,
     )
 
     logger.info("  → Inserting into Supabase...")
