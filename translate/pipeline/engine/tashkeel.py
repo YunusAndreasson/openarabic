@@ -7,6 +7,7 @@ from data.config import MODEL_OTHER
 from data.models import TashkeelResult
 from data.pipeline_types import TashkeelResults, TranslationResults
 from data.schemas import GENERAL_SYSTEM_PROMPT, TASHKEEL_USER_PROMPT
+from utils.batch_context import get_batch_prefix
 from utils.camel_tools_service import generate_tashkeel_suggestions_with_context
 from utils.context_cache import ContextCache
 from utils.responses_api import ResponsesAPIManager, call_response_api
@@ -29,6 +30,7 @@ def batch_add_tashkeel(
     from utils.responses_api import token_tracker
 
     token_tracker.set_phase("Tashkeel Generation")
+    logger.info(f"  → {get_batch_prefix()}Generating tashkeel...")
     results: TashkeelResults = []
 
     # Use conversation continuity if available

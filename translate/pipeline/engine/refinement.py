@@ -11,6 +11,7 @@ from data.models import (
 )
 from data.pipeline_types import RefinementInput, RefinementInputs, RefinementResults
 from data.schemas import FINAL_VERIFICATION_USER_PROMPT, GENERAL_SYSTEM_PROMPT
+from utils.batch_context import get_batch_prefix
 from utils.responses_api import ResponsesAPIManager, call_response_api
 
 from .helpers import (
@@ -32,6 +33,7 @@ def batch_refine_translations(
         from utils.responses_api import token_tracker
 
         token_tracker.set_phase("Verification")
+        logger.info(f"  → {get_batch_prefix()}Refining translations...")
         formatted_inputs = []
         for i, data in enumerate(refinement_input):
             refinement_data: RefinementInput = data
@@ -45,46 +47,25 @@ def batch_refine_translations(
 
             word_trans_formatted = []
             for word_opts in word_translations_options:
-                # Handle both WordTranslation objects and dictionaries
-                if hasattr(word_opts, "arabic") and hasattr(word_opts, "english"):
-                    # WordTranslation object
-                    arabic = word_opts.arabic
-                    english_options = (
-                        word_opts.english
-                        if isinstance(word_opts.english, list)
-                        else [word_opts.english]
+                # WordTranslation objects - type enforced by Pydantic
+                arabic = word_opts.arabic
+                english_options = (
+                    word_opts.english
+                    if isinstance(word_opts.english, list)
+                    else [word_opts.english]
+                )
+                essential_translation_options = (
+                    (
+                        word_opts.essential_translation
+                        if isinstance(word_opts.essential_translation, list)
+                        else [word_opts.essential_translation]
                     )
-                    essential_translation_options = (
-                        (
-                            word_opts.essential_translation
-                            if isinstance(word_opts.essential_translation, list)
-                            else [word_opts.essential_translation]
-                        )
-                        if word_opts.essential_translation
-                        else ["N/A"]
-                    )
-                    essential = word_opts.essential
-                    pos = word_opts.pos
-                    notes = word_opts.notes
-                elif isinstance(word_opts, dict):  # type: ignore[unreachable]
-                    # Dictionary format (defensive for runtime flexibility)
-                    # Type ignored: dict branch is unreachable with current types but kept for safety
-                    arabic = word_opts.get("arabic", "")  # type: ignore[unreachable]
-                    english_options = word_opts.get("english_options", ["N/A"])
-                    essential_translation_options = word_opts.get(
-                        "essential_translation_options", ["N/A"]
-                    )
-                    essential = word_opts.get("essential", "N/A")
-                    pos = word_opts.get("pos")
-                    notes = word_opts.get("notes")
-                else:
-                    # Fallback for unknown format
-                    arabic = str(word_opts) if word_opts else ""
-                    english_options = ["N/A"]
-                    essential_translation_options = ["N/A"]
-                    essential = "N/A"
-                    pos = None
-                    notes = None
+                    if word_opts.essential_translation
+                    else ["N/A"]
+                )
+                essential = word_opts.essential
+                pos = word_opts.pos
+                notes = word_opts.notes
 
                 entry = f"{arabic}:"
                 eng_opts_str = ", ".join(english_options)

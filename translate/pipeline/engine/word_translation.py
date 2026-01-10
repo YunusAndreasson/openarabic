@@ -10,6 +10,7 @@ from data.pipeline_types import (
     WordTranslationResults,
 )
 from data.schemas import WORD_BY_WORD_USER_PROMPT
+from utils.batch_context import get_batch_prefix, pipeline_stats
 from utils.responses_api import ResponsesAPIManager
 from utils.text import filter_arabic_words
 
@@ -36,6 +37,7 @@ def batch_translate_words(
     from utils.responses_api import token_tracker
 
     token_tracker.set_phase("Word-by-Word Translation")
+    logger.info(f"  → {get_batch_prefix()}Word-by-word translation...")
     processed_results: WordTranslationResults = []
     max_retries = 3
 
@@ -239,6 +241,10 @@ def batch_translate_words(
                         f"Translation failed for sentence {i} after {max_retries} attempts. "
                         f"Placeholder data creation is not allowed. Error: {str(err)}"
                     ) from err
+                pipeline_stats.record_retry(i)
+                logger.warning(
+                    f"  ⚠ Sentence {i} failed (attempt {attempt}/{max_retries}): {err}"
+                )
                 time.sleep(1)
 
     # Basic validation - ensure we have results for all sentences

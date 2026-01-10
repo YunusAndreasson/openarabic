@@ -7,6 +7,7 @@ from data.config import MODEL_TRANSLATION
 from data.models import TranslationResult
 from data.pipeline_types import TranslationResults
 from data.schemas import GENERAL_SYSTEM_PROMPT, SENTENCE_TRANSLATION_USER_PROMPT
+from utils.batch_context import get_batch_prefix
 from utils.responses_api import ResponsesAPIManager, call_response_api
 
 from .helpers import _extract_response_data
@@ -24,6 +25,7 @@ def batch_translate_full_sentences(
     from utils.responses_api import token_tracker
 
     token_tracker.set_phase("Sentence Translation")
+    logger.info(f"  → {get_batch_prefix()}Sentence translation...")
     results: TranslationResults = []
 
     def try_translation(

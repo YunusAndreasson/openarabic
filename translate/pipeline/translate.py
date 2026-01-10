@@ -21,9 +21,11 @@ from data.pipeline_types import (
 from pipeline.translation_processor import (
     apply_tashkeel,
     refine_translations,
+    run_deepseek_correction,
     run_full_translation,
     translate_words,
 )
+from utils.batch_context import clear_batch, pipeline_stats, set_batch
 from utils.context_cache import ContextCache
 from utils.error_handling import safe_file_operation
 from utils.file_utils import (
@@ -157,7 +159,7 @@ def process_batch(
         )
 
         # Step 4: Refine translations
-        return refine_translations(
+        results = refine_translations(
             batch_sentences,
             start_index,
             translations,
@@ -165,6 +167,11 @@ def process_batch(
             word_options,
             conversation_manager,
         )
+
+        # Step 5: Correct with DeepSeek (auto-fix morpheme alignment issues)
+        results = run_deepseek_correction(results)
+
+        return results
     except Exception as e:
         logger.error(
             f"Batch processing failed for batch starting at {start_index}: {e}"
@@ -239,7 +246,9 @@ def process_batches(
     # Convert to list of strings if needed
     sentences: list[str]
     if all_units and isinstance(all_units[0], dict):
-        sentences = [unit.get("text", "") for unit in all_units if isinstance(unit, dict)]
+        sentences = [
+            unit.get("text", "") for unit in all_units if isinstance(unit, dict)
+        ]
     else:
         sentences = [s for s in all_units if isinstance(s, str)]
 
@@ -248,10 +257,10 @@ def process_batches(
     batches = create_batches(sentences, 0, batch_size, context_cache)
 
     # Process batches sequentially to avoid conversation manager conflicts
-    # max_workers = max(1, min(3, len(batches)))  # Ensure at least 1 worker, limit to 3
-
-    # Process batches sequentially to avoid conversation manager conflicts
-    for batch in batches:
+    total_batches = len(batches)
+    for batch_num, batch in enumerate(batches, start=1):
+        # Set batch context for logging
+        set_batch(batch_num, total_batches)
         try:
             batch_results = process_batch(
                 batch["sentences"],
@@ -263,6 +272,10 @@ def process_batches(
                 conversation_manager,
             )
             results.extend(batch_results)
+            logger.info(
+                f"  ✓ Batch {batch_num}/{total_batches} complete "
+                f"({len(batch['sentences'])} sentences)"
+            )
         except TranslationValidationError as e:
             error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed validation: {str(e)}"
             errors.append(error_msg)
@@ -273,6 +286,10 @@ def process_batches(
             error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed with unexpected error: {str(e)}"
             errors.append(error_msg)
 
+    # Clear batch context and print summary
+    clear_batch()
+    pipeline_stats.print_summary()
+    pipeline_stats.reset()
     return results, errors
 
 
