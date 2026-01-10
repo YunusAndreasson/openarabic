@@ -7,7 +7,6 @@ including the ASCII logo, styled headers, and Rich console integration.
 import pyfiglet
 from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
 
 # Shared Rich console instance
 console = Console()
@@ -18,29 +17,20 @@ ACCENT_COLOR = "cyan"
 
 
 def print_logo() -> None:
-    """Display the OpenArabic ASCII art logo in a styled panel."""
-    # Generate ASCII art using the 'slant' font for a clean, professional look
-    ascii_art = pyfiglet.figlet_format("OpenArabic", font="slant")
+    """Display the OpenArabic ASCII art logo with gradient effect."""
+    # Generate ASCII art using 'ansi_shadow' for authentic BBS block style
+    ascii_art = pyfiglet.figlet_format("OpenArabic", font="ansi_shadow")
 
-    # Create styled text with brand color
-    logo_text = Text(ascii_art.rstrip(), style=f"bold {BRAND_COLOR}")
+    # Apply gradient from green to cyan (top to bottom)
+    gradient = ["bright_green", "green", "cyan", "dark_cyan", "blue", "dark_blue"]
+    lines = ascii_art.rstrip().split("\n")
 
-    # Add tagline
-    tagline = Text("Arabic Translation Pipeline", style=f"italic {ACCENT_COLOR}")
+    for i, line in enumerate(lines):
+        color = gradient[min(i, len(gradient) - 1)]
+        console.print(f"[bold {color}]{line}[/]")
 
-    # Combine logo and tagline
-    combined = Text()
-    combined.append(logo_text)
-    combined.append("\n")
-    combined.append(tagline)
-
-    # Display in a panel
-    panel = Panel(
-        combined,
-        border_style=BRAND_COLOR,
-        padding=(0, 2),
-    )
-    console.print(panel)
+    # Tagline
+    console.print(f"[italic {ACCENT_COLOR}]Arabic Translation Pipeline[/]")
     console.print()  # Add spacing after logo
 
 
