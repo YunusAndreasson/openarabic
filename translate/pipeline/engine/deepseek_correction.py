@@ -188,10 +188,13 @@ def _apply_corrections(
         # Check for condensed form expansion
         old_condensed = _detect_condensed_forms(old)
         new_condensed = _detect_condensed_forms(new)
-        if old_condensed and not new_condensed:
-            logger.info(f"    [Sentence {idx}] Expanded condensed: {old_condensed}")
 
-        logger.info(f"    [Sentence {idx}] translation: '{old}' → '{new}'")
+        logger.info(f"    [Sentence {idx}] Translation corrected:")
+        logger.info(f"      ✗ {old}")
+        logger.info(f"      ✓ {new}")
+        if old_condensed and not new_condensed:
+            logger.info(f"      → Expanded: {old_condensed}")
+
         translation.full_translation = new
         corrections_applied += 1
 
@@ -202,7 +205,9 @@ def _apply_corrections(
     ):
         old = translation.tashkeel
         new = correction.corrected_tashkeel
-        logger.info(f"    [Sentence {idx}] tashkeel: '{old}' → '{new}'")
+        logger.info(f"    [Sentence {idx}] Tashkeel corrected:")
+        logger.info(f"      ✗ {old}")
+        logger.info(f"      ✓ {new}")
         translation.tashkeel = new
         corrections_applied += 1
 
@@ -278,16 +283,14 @@ def _apply_word_corrections(
             # Check for condensed form expansion in word translation
             old_condensed = _detect_condensed_forms(old_english)
             new_condensed = _detect_condensed_forms(wc.corrected_english)
+
+            # Log word correction with clear formatting
+            logger.info(f"      [Sentence {sentence_idx}] Word '{wc.arabic}':")
+            logger.info(f"        ✗ {old_english}")
+            logger.info(f"        ✓ {wc.corrected_english}")
             if old_condensed and not new_condensed:
-                logger.info(
-                    f"      [Sentence {sentence_idx}] Word '{wc.arabic}': "
-                    f"expanded '{old_english}' → '{wc.corrected_english}'"
-                )
-            else:
-                logger.debug(
-                    f"      [Sentence {sentence_idx}] Word '{wc.arabic}': "
-                    f"'{old_english}' → '{wc.corrected_english}'"
-                )
+                logger.info(f"        → Expanded: {old_condensed}")
+
             word.english = wc.corrected_english
             corrections_applied += 1
 
