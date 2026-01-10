@@ -113,16 +113,19 @@ Examples:
     )
 
     parser.add_argument(
+        "-s",
         "--split",
         action="store_true",
         help="Split input files from 0_inbox into sentences",
     )
     parser.add_argument(
+        "-t",
         "--translate",
         action="store_true",
         help="Translate split files",
     )
     parser.add_argument(
+        "-i",
         "--insert",
         action="store_true",
         help="Process through ElevenLabs and insert into database",
@@ -134,10 +137,9 @@ Examples:
         help="Process word-level audio for a specific article ID",
     )
     parser.add_argument(
+        "-f",
         "--full",
-        "--auto",
         action="store_true",
-        dest="full",
         help="Run the complete pipeline: split -> translate -> insert -> word-audio",
     )
 
@@ -156,7 +158,7 @@ def main() -> None:
     run_split = args.split or args.full
     run_translate = args.translate or args.full
     run_insert = args.insert or args.full
-    run_word_audio_latest = args.full and args.insert
+    run_word_audio_latest = args.full
     run_word_audio_specific = args.process_word_audio
 
     if not any((run_split, run_translate, run_insert, run_word_audio_specific)):
