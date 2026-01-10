@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 @contextmanager
 def timed_phase(phase_name: str) -> Iterator[None]:
     """Context manager for timing and logging pipeline phases."""
+    logger.info("─" * 50)
     logger.info(phase_name)
     start = time.perf_counter()
     yield
@@ -170,8 +171,20 @@ def main() -> None:
 
     if args.full:
         logger.info(
-            "🚀 Starting FULL PIPELINE (split -> translate -> insert -> word-audio)"
+            "🚀 Starting FULL PIPELINE (split → translate → insert → word-audio)"
         )
+    else:
+        phases = []
+        if run_split:
+            phases.append("Split")
+        if run_translate:
+            phases.append("Translate")
+        if run_insert:
+            phases.append("Insert")
+        if run_word_audio_specific:
+            phases.append("Word Audio")
+        if phases:
+            logger.info(f"🚀 Running: {' → '.join(phases)}")
 
     total_start = time.perf_counter()
 
@@ -221,10 +234,10 @@ def main() -> None:
             logger.error(f"❌ Error processing word audio: {e}")
 
     # Final summary
+    logger.info("─" * 50)
     total_elapsed = time.perf_counter() - total_start
     if args.full:
-        logger.info("🎉 FULL PIPELINE COMPLETED SUCCESSFULLY!")
-        logger.info("   📄 Split → 🌍 Translate → 💾 Insert → 🎵 Word Audio")
+        logger.info("🎉 FULL PIPELINE COMPLETED!")
     logger.info(f"⏱️  Total time: {total_elapsed:.1f}s")
 
     if token_tracker.api_calls > 0:
