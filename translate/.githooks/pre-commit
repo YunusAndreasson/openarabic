@@ -1,0 +1,16 @@
+#!/bin/bash
+# Pre-commit hook to catch issues before they enter the codebase
+
+echo "🔍 Running pre-commit validation..."
+
+# Run the full validation suite
+./validate.sh
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Pre-commit validation failed. Fix the issues above before committing."
+    echo "   To skip this check (not recommended): git commit --no-verify"
+    exit 1
+fi
+
+echo "✅ Pre-commit validation passed"
