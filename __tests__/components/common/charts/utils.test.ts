@@ -8,7 +8,7 @@
  */
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
-import { calculateEfficiencyScore } from '@/components/common/charts/utils';
+import { calculateEfficiencyScore } from '@/utils/chartDataUtils';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 describe('charts/utils', () => {

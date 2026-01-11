@@ -279,8 +279,8 @@ describe('useFSRSQueries', () => {
     test('should pass limit to queries when provided', () => {
       renderHook(() => useFSRSQueries({ userId: 'user-123', limit: 10 }));
 
-      // The limit is passed to the query function, verify useQuery was called 3 times (all, due, stats)
-      expect(mockUseQuery).toHaveBeenCalledTimes(3);
+      // The limit is passed to the query function, verify useQuery was called 2 times (all, due)
+      expect(mockUseQuery).toHaveBeenCalledTimes(2);
     });
   });
 });

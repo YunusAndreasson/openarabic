@@ -19,7 +19,7 @@ export const PlayAllButton = memo(function PlayAllButton() {
 
   return (
     <TransparentHeaderButton
-      iconName="play-circle"
+      iconName="play"
       onPress={handlePlayAll}
       onLongPress={handlePlayAllArabicOnly}
       size="large"

@@ -753,10 +753,33 @@ jest.mock('@tanstack/react-query', () => {
 
 // AI-optimized console configuration (selective logging)
 const originalConsole = global.console;
+
+// Patterns to suppress (known non-actionable warnings)
+const suppressedPatterns = [
+  /not wrapped in act/,
+  /Warning: ReactDOM.render is no longer supported/,
+  /Warning: An update to .* inside a test was not wrapped in act/,
+  /Warning: You called act/,
+  /Warning: The current testing environment is not configured to support act/,
+  /Query data cannot be undefined/,
+  /Affected query key/,
+];
+
+const shouldSuppress = message => {
+  if (typeof message !== 'string') return false;
+  return suppressedPatterns.some(pattern => pattern.test(message));
+};
+
 global.console = {
   ...originalConsole,
   log: process.env.NODE_ENV === 'test' ? jest.fn() : originalConsole.log,
-  error: originalConsole.error, // Keep errors visible for AI debugging
+  error: (...args) => {
+    // Filter out known React testing warnings
+    if (args.length > 0 && shouldSuppress(args[0])) {
+      return;
+    }
+    originalConsole.error(...args);
+  },
   warn: process.env.NODE_ENV === 'test' ? jest.fn() : originalConsole.warn,
   info: process.env.NODE_ENV === 'test' ? jest.fn() : originalConsole.info,
   debug: jest.fn(), // Always suppress debug

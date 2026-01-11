@@ -1,9 +1,9 @@
 import { memo, useMemo } from 'react';
 
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
-import { CHART_LABELS, generateChartSubtitle } from '@/components/common/charts/ChartMessages';
-import { calculateDataPointPositions, useGraphWidth } from '@/components/common/charts/constants';
-import { formatMonthDayUTC, formatWeekdayUTC } from '@/components/common/charts/utils';
+import { CHART_LABELS, generateChartSubtitle } from '@/constants/chartMessages';
+import { calculateDataPointPositions, useGraphWidth } from '@/constants/chartConstants';
+import { formatMonthDayUTC, formatWeekdayUTC } from '@/utils/chartDataUtils';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';

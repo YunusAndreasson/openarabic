@@ -1,9 +1,9 @@
 import { memo, useMemo } from 'react';
 
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
-import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/common/charts/ChartMessages';
-import { calculateDataPointPositions, useGraphWidth } from '@/components/common/charts/constants';
-import { formatMonthDayUTC, formatWeekdayUTC } from '@/components/common/charts/utils';
+import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/constants/chartMessages';
+import { calculateDataPointPositions, useGraphWidth } from '@/constants/chartConstants';
+import { formatMonthDayUTC, formatWeekdayUTC } from '@/utils/chartDataUtils';
 import { useDueWordsChart } from '@/hooks/vocabulary/useDueWordsChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 

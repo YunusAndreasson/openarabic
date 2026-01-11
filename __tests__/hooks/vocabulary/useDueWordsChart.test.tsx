@@ -16,7 +16,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import type { DueWordsForecast } from '@/utils/fsrsUtils';
 
 // Chart mocks - inline jest.mock() for hoisting (uses shared mock implementations via require)
-jest.mock('@/components/common/charts/pathBuilder', () => ({
+jest.mock('@/utils/chartPathBuilder', () => ({
   buildSmoothChartPath: (params: {
     data: unknown[];
     buildPoint: (x: number, y: number, d: unknown) => unknown;
@@ -34,8 +34,8 @@ jest.mock('@/components/common/charts/pathBuilder', () => ({
   },
 }));
 
-jest.mock('@/components/common/charts/constants', () => {
-  const actualConstants = jest.requireActual('@/components/common/charts/constants');
+jest.mock('@/constants/chartConstants', () => {
+  const actualConstants = jest.requireActual('@/constants/chartConstants');
   return {
     ...actualConstants,
     calculateDataPointPositions: (length: number) => Array.from({ length }, (_, i) => i * 10),

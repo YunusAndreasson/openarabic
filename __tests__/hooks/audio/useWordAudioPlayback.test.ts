@@ -110,13 +110,11 @@ describe('useWordAudioPlayback', () => {
       );
     });
 
-    test('uses custom error message when provided', async () => {
+    test('uses default error message', async () => {
       const error = new Error('Playback failed');
       mockPlay.mockRejectedValueOnce(error);
 
-      const { result } = renderHook(() =>
-        useWordAudioPlayback({ errorMessage: 'Custom error message' }),
-      );
+      const { result } = renderHook(() => useWordAudioPlayback());
 
       await act(async () => {
         await result.current(mockWord);
@@ -125,7 +123,7 @@ describe('useWordAudioPlayback', () => {
       expect(mockHandleError).toHaveBeenCalledWith(
         error,
         expect.objectContaining({
-          toastMessage: 'Custom error message',
+          toastMessage: 'Word audio playback failed',
         }),
       );
     });
@@ -146,11 +144,10 @@ describe('useWordAudioPlayback', () => {
   });
 
   describe('Options', () => {
-    test('accepts all configuration options', () => {
+    test('accepts showErrorToast option', () => {
       const { result } = renderHook(() =>
         useWordAudioPlayback({
           showErrorToast: true,
-          errorMessage: 'Test error',
         }),
       );
 

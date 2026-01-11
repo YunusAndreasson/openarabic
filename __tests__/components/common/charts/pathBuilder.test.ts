@@ -27,7 +27,7 @@ jest.mock('@shopify/react-native-skia', () => ({
   },
 }));
 
-import { buildSmoothChartPath } from '@charts/pathBuilder';
+import { buildSmoothChartPath } from '@/utils/chartPathBuilder';
 
 describe('buildSmoothChartPath', () => {
   interface TestDataItem {

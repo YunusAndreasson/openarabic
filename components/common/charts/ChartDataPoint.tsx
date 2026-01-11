@@ -1,4 +1,4 @@
-import { CHART_VISUAL } from './constants';
+import { CHART_VISUAL } from '@/constants/chartConstants';
 import { Circle, Group } from '@shopify/react-native-skia';
 import { memo } from 'react';
 

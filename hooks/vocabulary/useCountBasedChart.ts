@@ -1,15 +1,15 @@
 import { useMemo } from 'react';
 
 import type { DataPoint } from '@/components/common/charts';
-import { generateChartSubtitle } from '@/components/common/charts/ChartMessages';
+import { generateChartSubtitle } from '@/constants/chartMessages';
 import {
   calculateDataPointPositions,
   CHART_VISUAL,
   DAYS_7,
   getEffectiveChartHeight,
-} from '@/components/common/charts/constants';
-import { buildSmoothChartPath } from '@/components/common/charts/pathBuilder';
-import { generateDateRange } from '@/components/common/charts/utils';
+} from '@/constants/chartConstants';
+import { buildSmoothChartPath } from '@/utils/chartPathBuilder';
+import { generateDateRange } from '@/utils/chartDataUtils';
 import { MASTERY_TREND_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';

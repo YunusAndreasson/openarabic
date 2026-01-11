@@ -17,11 +17,11 @@ import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChar
 import type { StudyWord } from '@/types/vocabulary.types';
 
 // Chart mocks - using shared mock values but inline jest.mock() for hoisting
-jest.mock('@/components/common/charts/ChartColors', () => ({
+jest.mock('@/constants/chartColors', () => ({
   useChartColors: () => require('@/__tests__/helpers/chartMocks').mockChartColors,
 }));
 
-jest.mock('@/components/common/charts/constants', () => ({
+jest.mock('@/constants/chartConstants', () => ({
   CHART_VISUAL: { CHART_TOP_PADDING: 10 },
   DAYS_7: 7,
   GRAPH_HEIGHT_LARGE: 200,
@@ -30,14 +30,14 @@ jest.mock('@/components/common/charts/constants', () => ({
     Array.from({ length: count }, (_, i) => (i / (count - 1 || 1)) * 300),
 }));
 
-jest.mock('@/components/common/charts/pathBuilder', () => ({
+jest.mock('@/utils/chartPathBuilder', () => ({
   buildSmoothChartPath: ({ data, buildPoint }: any) => ({
     path: data.length > 0 ? 'M0,0 L100,100' : '',
     points: data.map((d: any, i: number) => buildPoint(i * 50, 100, d)),
   }),
 }));
 
-jest.mock('@/components/common/charts/utils', () => ({
+jest.mock('@/utils/chartDataUtils', () => ({
   createStandardizedPerformanceZones: () =>
     require('@/__tests__/helpers/chartMocks').mockPerformanceZones,
 }));

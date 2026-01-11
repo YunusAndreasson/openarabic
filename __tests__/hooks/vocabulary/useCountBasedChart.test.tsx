@@ -19,15 +19,15 @@ import {
 } from '@/hooks/vocabulary/useCountBasedChart';
 
 // Chart mocks - inline jest.mock() for hoisting
-jest.mock('@/components/common/charts/constants', () => {
-  const actualConstants = jest.requireActual('@/components/common/charts/constants');
+jest.mock('@/constants/chartConstants', () => {
+  const actualConstants = jest.requireActual('@/constants/chartConstants');
   return {
     ...actualConstants,
     calculateDataPointPositions: (length: number) => Array.from({ length }, (_, i) => i * 10),
   };
 });
 
-jest.mock('@/components/common/charts/pathBuilder', () => ({
+jest.mock('@/utils/chartPathBuilder', () => ({
   buildSmoothChartPath: (params: {
     data: unknown[];
     buildPoint: (x: number, y: number, d: unknown) => unknown;
@@ -48,7 +48,7 @@ jest.mock('@/components/common/charts/pathBuilder', () => ({
   },
 }));
 
-jest.mock('@/components/common/charts/ChartMessages', () => ({
+jest.mock('@/constants/chartMessages', () => ({
   generateChartSubtitle: {
     mastery: jest.fn((count, trend, change) => `${count} words • ${trend} • ${change}`),
   },

@@ -7,8 +7,9 @@ import { FONT_WEIGHTS, LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DataPoint } from '@/types/ui/chart.types';
 
+import { CHART_VISUAL, GRAPH_HEIGHT_LARGE, useGraphWidth } from '@/constants/chartConstants';
+
 import { ChartTooltipData, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
-import { CHART_VISUAL, GRAPH_HEIGHT_LARGE, useGraphWidth } from './constants';
 
 interface ChartCanvasProps {
   children: ReactNode;

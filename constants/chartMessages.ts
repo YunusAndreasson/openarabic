@@ -7,7 +7,7 @@
 
 import { STRINGS } from '@/constants/strings';
 
-import { PERFORMANCE_THRESHOLDS } from './constants';
+import { PERFORMANCE_THRESHOLDS } from './chartConstants';
 
 // Standardized terminology
 export const CHART_LABELS = {

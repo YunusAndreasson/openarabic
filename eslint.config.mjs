@@ -1,6 +1,6 @@
 import { defineConfig } from 'eslint/config';
 import expoConfig from 'eslint-config-expo/flat.js';
-import tseslint from 'typescript-eslint';
+import { configs as tseslintConfigs } from 'typescript-eslint';
 import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals';
@@ -10,8 +10,8 @@ export default defineConfig([
   expoConfig,
 
   // TypeScript strict + stylistic rules
-  tseslint.configs.strict,
-  tseslint.configs.stylistic,
+  tseslintConfigs.strict,
+  tseslintConfigs.stylistic,
 
   // Project-specific TypeScript rules
   {
@@ -35,8 +35,8 @@ export default defineConfig([
       ],
       // Type imports
       '@typescript-eslint/consistent-type-imports': 'error',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'error',
       // Relax strict rules that don't fit project style
       '@typescript-eslint/no-inferrable-types': 'off',
       '@typescript-eslint/no-redeclare': 'off', // Enums with same name as const allowed

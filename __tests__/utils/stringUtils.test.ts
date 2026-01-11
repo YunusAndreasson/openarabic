@@ -119,7 +119,7 @@ describe('stringUtils', () => {
     test('should use middle dot separator consistently', () => {
       const result = formatArticleMetadata('Author', 'category', '5m');
       expect(result).toContain('·');
-      expect(result.spltest('·')).toHaveLength(3);
+      expect(result.split('·')).toHaveLength(3);
     });
   });
 });

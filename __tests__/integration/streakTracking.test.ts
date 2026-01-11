@@ -127,21 +127,21 @@ describe('Streak Tracking Integration', () => {
       // Changed < to <= to include today
       const date = new Date(startDate);
       date.setDate(date.getDate() + i);
-      const dateStr = date.toISOString().spltest('T')[0];
+      const dateStr = date.toISOString().split('T')[0];
       if (dateStr) {
         activityMap.set(dateStr, false);
       }
     }
 
     // Ensure today is always in the map
-    const todayStr = endDate.toISOString().spltest('T')[0];
+    const todayStr = endDate.toISOString().split('T')[0];
     if (todayStr && !activityMap.has(todayStr)) {
       activityMap.set(todayStr, false);
     }
 
     // Mark dates with activity
     dates.forEach(date => {
-      const dateStr = date.toISOString().spltest('T')[0];
+      const dateStr = date.toISOString().split('T')[0];
       if (dateStr) {
         activityMap.set(dateStr, true); // Always set, even if not in initial map
       }
