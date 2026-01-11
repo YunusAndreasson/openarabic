@@ -35,8 +35,8 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.LARGE, // 16px - breathing room at card bottom
   },
   gradientOverlay: {
-    bottom: 0,
-    height: GRADIENT_HEIGHT,
+    bottom: -2, // Extend past container to prevent sub-pixel gap
+    height: GRADIENT_HEIGHT + 2,
     left: 0,
     position: 'absolute',
     right: 0,
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: IMAGE_HEIGHT,
-    overflow: 'hidden',
+    overflow: 'visible', // Allow gradient to extend slightly past bottom
     position: 'relative',
     width: '100%',
   },
@@ -113,7 +113,7 @@ export function ArticleCard({
           transition={TIMING_CONSTANTS.TRANSITION_DELAY}
         />
         <Canvas style={styles.gradientOverlay} pointerEvents="none">
-          <Rect x={0} y={0} width={CARD_WIDTH} height={GRADIENT_HEIGHT}>
+          <Rect x={0} y={0} width={CARD_WIDTH} height={GRADIENT_HEIGHT + 2}>
             <LinearGradient
               start={vec(0, 0)}
               end={vec(0, GRADIENT_HEIGHT)}

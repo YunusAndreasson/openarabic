@@ -11,5 +11,6 @@ export { HorizontalArticleSlider } from './HorizontalArticleSlider';
 export { HorizontalFeaturedSection } from './HorizontalFeaturedSection';
 export { IntelligentArticleSection } from './IntelligentArticleSection';
 export { MoreFiltersSection } from './MoreFiltersSection';
+export { QuickReadsSection } from './QuickReadsSection';
 export { StreakChart } from './StreakChart';
 export { StreakMetrics } from './StreakMetrics';

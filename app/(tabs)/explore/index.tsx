@@ -8,7 +8,7 @@ import type { ScrollView } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
 import { SectionLabel } from '@/components/common';
-import { ArticleList , AuthorInFocusSection , BrandFooter , ContinueReadingSection , DiscoverWordsSection , FilterSection , IntelligentArticleSection , MoreFiltersSection } from '@/components/explore';
+import { ArticleList , AuthorInFocusSection , BrandFooter , ContinueReadingSection , DiscoverWordsSection , FilterSection , IntelligentArticleSection , MoreFiltersSection , QuickReadsSection } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import {
@@ -137,15 +137,21 @@ export default function ExploreScreen(): JSX.Element {
     );
   }, [articlesData]);
 
-  // Build categories list with counts (only show categories with articles)
+  // Build categories list with counts (only show categories with articles, sorted by popularity)
   const categoriesWithArticles = useMemo(
-    () => buildEntitiesWithCounts(categoriesData, categoryCounts).filter(c => c.count > 0),
+    () =>
+      buildEntitiesWithCounts(categoriesData, categoryCounts)
+        .filter(c => c.count > 0)
+        .sort((a, b) => b.count - a.count),
     [categoriesData, categoryCounts],
   );
 
-  // Build authors list with counts (only show authors with articles)
+  // Build authors list with counts (only show authors with articles, sorted by popularity)
   const authorsWithArticles = useMemo(
-    () => buildEntitiesWithCounts(authorsData, authorCounts).filter(a => a.count > 0),
+    () =>
+      buildEntitiesWithCounts(authorsData, authorCounts)
+        .filter(a => a.count > 0)
+        .sort((a, b) => b.count - a.count),
     [authorsData, authorCounts],
   );
 
@@ -276,6 +282,9 @@ export default function ExploreScreen(): JSX.Element {
         onSelect={handleSelectFilter}
       />,
     );
+
+    // Quick Reads section (short articles ≤2 min)
+    sections.push(<QuickReadsSection key="quick-reads" articlesData={articlesData} />);
 
     // Discover Words section (tap words to add to Practice)
     sections.push(<DiscoverWordsSection key="discover-words" />);

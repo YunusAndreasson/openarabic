@@ -473,7 +473,7 @@ const AccountScreen: FC = () => {
         <DangerZoneSection onResetReadingProgress={handleResetReadingProgress} />
 
         {/* App Footer */}
-        <BrandFooter />
+        <BrandFooter showDetails />
       </ThemedView>
 
       {/* Time Picker Modal */}

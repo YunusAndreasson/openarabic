@@ -6,7 +6,12 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import pkg from '@/package.json';
 
-export const BrandFooter = memo(() => {
+interface BrandFooterProps {
+  /** Show version and copyright info (default: false, use true for Settings page) */
+  showDetails?: boolean;
+}
+
+export const BrandFooter = memo(({ showDetails = false }: BrandFooterProps) => {
   const currentYear = new Date().getFullYear();
 
   // Use pkg.version directly to ensure build number is included (format: "1447.5.37+188")
@@ -16,9 +21,11 @@ export const BrandFooter = memo(() => {
 
   return (
     <View style={styles.container}>
-      <ThemedText type="caption" colorName="textTertiary" style={styles.version}>
-        {versionDisplay}
-      </ThemedText>
+      {showDetails && (
+        <ThemedText type="caption" colorName="textTertiary" style={styles.version}>
+          {versionDisplay}
+        </ThemedText>
+      )}
       <ThemedText type="caption" colorName="textTertiary" style={styles.copyright}>
         © {currentYear} OpenArabic
       </ThemedText>
@@ -36,8 +43,8 @@ BrandFooter.displayName = 'BrandFooter';
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: -LAYOUT.SPACING.MEDIUM, // Extend beyond ScrollView content padding
-    paddingTop: LAYOUT.SPACING.XLARGE, // 24px - tighter spacing
-    paddingBottom: LAYOUT.SPACING.XLARGE, // 24px - breathing room below logo
+    paddingTop: LAYOUT.SPACING.XXXLARGE, // 48px - clear separation from content
+    paddingBottom: LAYOUT.SPACING.XXXLARGE, // 48px - breathing room below logo
   },
   version: {
     opacity: LAYOUT.OPACITY.HIGH,

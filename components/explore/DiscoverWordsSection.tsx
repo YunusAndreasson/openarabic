@@ -74,7 +74,7 @@ const WordChip = memo<WordChipProps>(({ root, onPress }) => {
       {/* Add icon */}
       <View style={styles.iconContainer}>
         <Ionicons
-          name="add-circle-outline"
+          name="add-circle"
           size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
           color={colors.tint}
         />

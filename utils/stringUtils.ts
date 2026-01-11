@@ -185,6 +185,22 @@ export function getArticleMetadataWithoutAuthor(article: {
 }
 
 /**
+ * Formats article metadata with author and category only (no reading time)
+ * Use when reading time is implied by context (e.g., Quick Reads section)
+ * @param article - Article object with author and category
+ * @returns Formatted string like "Author Name · Category Name"
+ * @example
+ * getArticleMetadataWithoutTime(article)
+ * // Returns: 'Ibn Kathir · Tafsir'
+ */
+export function getArticleMetadataWithoutTime(article: {
+  author: { name: string };
+  category: { name: string };
+}): string {
+  return `${article.author.name} ${METADATA_SEPARATOR} ${capitalizeFirstLetter(article.category.name)}`;
+}
+
+/**
  * Extracts and formats the first name from an email address
  * @param email - The email address to extract the name from
  * @returns The formatted first name or 'User' as fallback
