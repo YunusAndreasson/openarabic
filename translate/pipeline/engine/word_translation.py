@@ -146,76 +146,75 @@ def batch_translate_words(
                     raise RuntimeError(
                         f"No word translations returned for sentence {i}"
                     )
-                else:
-                    for word_data in raw_word_translations:
-                        if isinstance(word_data, dict):
-                            # Build model directly; let it raise if invalid
-                            # Support both final and options formats via WordTranslation model
-                            if "english_options" in word_data:
-                                english_value = word_data["english_options"]
-                            else:
-                                english_value = word_data["english"]
+                for word_data in raw_word_translations:
+                    if isinstance(word_data, dict):
+                        # Build model directly; let it raise if invalid
+                        # Support both final and options formats via WordTranslation model
+                        if "english_options" in word_data:
+                            english_value = word_data["english_options"]
+                        else:
+                            english_value = word_data["english"]
 
-                            if "essential_translation_options" in word_data:
-                                essential_translation_value = word_data[
-                                    "essential_translation_options"
-                                ]
-                            else:
-                                essential_translation_value = word_data.get(
-                                    "essential_translation", "unknown"
-                                )
-
-                            uncertainties_value = _validate_uncertainties(
-                                word_data.get("uncertainties", [])
+                        if "essential_translation_options" in word_data:
+                            essential_translation_value = word_data[
+                                "essential_translation_options"
+                            ]
+                        else:
+                            essential_translation_value = word_data.get(
+                                "essential_translation", "unknown"
                             )
 
-                            word_option = WordTranslation(
-                                arabic=word_data["arabic"],
-                                english=english_value,
-                                pos=word_data["pos"],
-                                essential=word_data.get("essential", ""),
-                                essential_translation=essential_translation_value,
-                                notes=word_data.get("notes", ""),
-                                uncertainties=uncertainties_value,
+                        uncertainties_value = _validate_uncertainties(
+                            word_data.get("uncertainties", [])
+                        )
+
+                        word_option = WordTranslation(
+                            arabic=word_data["arabic"],
+                            english=english_value,
+                            pos=word_data["pos"],
+                            essential=word_data.get("essential", ""),
+                            essential_translation=essential_translation_value,
+                            notes=word_data.get("notes", ""),
+                            uncertainties=uncertainties_value,
+                        )
+
+                        # Validate essential field - must be present and different from arabic
+                        if not word_option.essential:
+                            raise ValueError(
+                                f"Missing 'essential' field for word '{word_data['arabic']}'. "
+                                f"The AI must provide a stripped root form without complex affixes/case endings. "
+                                f"Expected: root form (e.g., 'كَتَبَ' from 'يَكْتُبُ'), "
+                                f"Got: missing field"
                             )
 
-                            # Validate essential field - must be present and different from arabic
-                            if not word_option.essential:
-                                raise ValueError(
-                                    f"Missing 'essential' field for word '{word_data['arabic']}'. "
-                                    f"The AI must provide a stripped root form without complex affixes/case endings. "
-                                    f"Expected: root form (e.g., 'كَتَبَ' from 'يَكْتُبُ'), "
-                                    f"Got: missing field"
-                                )
+                        if word_option.essential == word_option.arabic:
+                            # Check if this is a word type where identical fields are allowed
+                            pos = word_option.pos.lower()
+                            if pos in [
+                                "preposition",
+                                "particle",
+                                "conjunction",
+                                "pronoun",
+                                "demonstrative_pronoun",
+                                "relative_pronoun",
+                                "interjection",
+                                "numeral",
+                                "proper_noun",
+                            ]:
+                                # For these word types, identical fields are correct
+                                pass
+                            elif pos in ["noun", "adjective"]:
+                                # For nouns/adjectives, check if they're already in root form
+                                pass
+                            elif pos == "verb":
+                                # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
+                                # No warning needed - this is acceptable
+                                pass
+                            else:
+                                # For other parts of speech, allow identical fields without warning
+                                pass
 
-                            if word_option.essential == word_option.arabic:
-                                # Check if this is a word type where identical fields are allowed
-                                pos = word_option.pos.lower()
-                                if pos in [
-                                    "preposition",
-                                    "particle",
-                                    "conjunction",
-                                    "pronoun",
-                                    "demonstrative_pronoun",
-                                    "relative_pronoun",
-                                    "interjection",
-                                    "numeral",
-                                    "proper_noun",
-                                ]:
-                                    # For these word types, identical fields are correct
-                                    pass
-                                elif pos in ["noun", "adjective"]:
-                                    # For nouns/adjectives, check if they're already in root form
-                                    pass
-                                elif pos == "verb":
-                                    # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
-                                    # No warning needed - this is acceptable
-                                    pass
-                                else:
-                                    # For other parts of speech, allow identical fields without warning
-                                    pass
-
-                            word_translations_options.append(word_option)
+                        word_translations_options.append(word_option)
 
                 # Require valid word translations - no fallbacks allowed
                 if word_translations_options:
@@ -226,12 +225,11 @@ def batch_translate_words(
                         )
                     )
                     break
-                else:
-                    # CRITICAL: Fail completely instead of creating placeholder data
-                    raise Exception(
-                        f"Translation failed for sentence {i} after {max_retries} attempts. "
-                        f"Placeholder data creation is not allowed."
-                    )
+                # CRITICAL: Fail completely instead of creating placeholder data
+                raise Exception(
+                    f"Translation failed for sentence {i} after {max_retries} attempts. "
+                    f"Placeholder data creation is not allowed."
+                )
 
             except Exception as err:
                 attempt += 1
@@ -239,7 +237,7 @@ def batch_translate_words(
                     # CRITICAL: Fail completely instead of creating placeholder data
                     raise Exception(
                         f"Translation failed for sentence {i} after {max_retries} attempts. "
-                        f"Placeholder data creation is not allowed. Error: {str(err)}"
+                        f"Placeholder data creation is not allowed. Error: {err!s}"
                     ) from err
                 pipeline_stats.record_retry(i)
                 logger.warning(

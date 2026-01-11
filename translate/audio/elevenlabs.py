@@ -7,17 +7,29 @@ from typing import Any
 from elevenlabs import VoiceSettings
 from elevenlabs.client import ElevenLabs
 
-from audio.retry import retry_operation
 from audio.validation import validate_mp3
 from data.config import (
     DEFAULT_VOICE_SETTINGS,
     ELEVENLABS_API_KEY,
     ELEVENLABS_TTS_MODEL_ID,
+    VoiceSettingsDict,
 )
 from utils.arabic_text import clean_text_for_tts
 from utils.exceptions import AudioGenerationError
+from utils.retry import retry_operation
 
 logger = logging.getLogger(__name__)
+
+
+def _create_voice_settings(settings: VoiceSettingsDict) -> VoiceSettings:
+    """Create VoiceSettings from typed dict configuration."""
+    return VoiceSettings(
+        stability=settings.get("stability"),
+        similarity_boost=settings.get("similarity_boost"),
+        use_speaker_boost=settings.get("use_speaker_boost"),
+        speed=settings.get("speed"),
+    )
+
 
 # Initialize ElevenLabs client lazily to avoid import-time failures
 eleven_labs = None
@@ -68,7 +80,7 @@ def generate_speech(
 
         # Use default voice settings if none provided
         if voice_settings is None:
-            voice_settings = VoiceSettings(**DEFAULT_VOICE_SETTINGS)  # type: ignore[arg-type]
+            voice_settings = _create_voice_settings(DEFAULT_VOICE_SETTINGS)
 
         # Generate speech
         response = client.text_to_speech.convert(
@@ -96,10 +108,9 @@ def generate_speech(
                         # The chunk is raw audio data
                         chunk_data = audio_chunk
                     else:
-                        logger.error(
+                        raise AudioGenerationError(
                             f"No audio data found in chunk. Available attributes: {[attr for attr in dir(audio_chunk) if not attr.startswith('_')]}"
                         )
-                        return None
 
                     audio_chunks.append(chunk_data)
 
@@ -107,28 +118,29 @@ def generate_speech(
                 if audio_chunks:
                     audio_data = b"".join(audio_chunks)
                 else:
-                    logger.error("No audio chunks collected")
-                    return None
+                    raise AudioGenerationError(
+                        "No audio chunks collected from ElevenLabs"
+                    )
 
+            except AudioGenerationError:
+                raise
             except Exception as e:
-                logger.error(f"Error processing generator response: {e}")
-                return None
+                raise AudioGenerationError(
+                    f"Error processing ElevenLabs generator response: {e}"
+                ) from e
         else:
             # Handle old response format
             if hasattr(response, "audio"):
                 if response.audio:
                     audio_data = response.audio
                 else:
-                    logger.error("No audio data in response")
-                    return None
+                    raise AudioGenerationError("No audio data in ElevenLabs response")
             else:
-                logger.error("No audio data in response")
-                return None
+                raise AudioGenerationError("No audio data in ElevenLabs response")
 
         # Validate the audio data
         if not validate_mp3(audio_data):
-            logger.error("Invalid MP3 data received")
-            return None
+            raise AudioGenerationError("Invalid MP3 data received from ElevenLabs")
 
         return {
             "audio": audio_data,
@@ -137,9 +149,10 @@ def generate_speech(
             "text": text,
         }
 
+    except AudioGenerationError:
+        raise
     except Exception as e:
-        logger.error(f"SPEECH GENERATION FAILED: {e}")
-        return None
+        raise AudioGenerationError(f"ElevenLabs speech generation failed: {e}") from e
 
 
-__all__ = ["generate_speech", "_get_eleven_labs_client"]
+__all__ = ["_get_eleven_labs_client", "generate_speech"]

@@ -33,23 +33,6 @@ class DifficultyLevel(int, Enum):
     EXPERT = 5
 
 
-class PipelinePhase(Enum):
-    """Phases of the translation pipeline."""
-
-    SPLIT = "split"
-    TRANSLATION = "translation"
-    TASHKEEL = "tashkeel"
-    WORD_ANALYSIS = "word_analysis"
-    REFINEMENT = "refinement"
-    AUDIO = "audio"
-    DATABASE = "database"
-
-    @classmethod
-    def values(cls) -> list[str]:
-        """Get all valid pipeline phase values as a list."""
-        return [phase.value for phase in cls]
-
-
 class UncertaintyType(str, Enum):
     """Type of uncertainty in translation"""
 
@@ -71,19 +54,3 @@ class VerificationStatus(str, Enum):
     FAILED = "failed"
     PARTIAL = "partial"
     NEEDS_REVIEW = "needs_review"
-
-
-class ErrorType(Enum):
-    """Types of errors in the translation process."""
-
-    API_ERROR = "api_error"
-    VALIDATION_ERROR = "validation_error"
-    DATABASE_ERROR = "database_error"
-    AUDIO_ERROR = "audio_error"
-    FORMAT_ERROR = "format_error"
-    TRANSLATION_ERROR = "translation_error"
-
-    @classmethod
-    def values(cls) -> list[str]:
-        """Get all valid error type values as a list."""
-        return [error_type.value for error_type in cls]

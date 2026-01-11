@@ -12,6 +12,7 @@ from typing import Any
 from openai import OpenAI
 
 from data.config import MODEL_OTHER
+from utils.retry import retry_operation
 
 logger = logging.getLogger(__name__)
 
@@ -208,36 +209,6 @@ class TokenUsageTracker:
             summary += f"  {phase}: {calls:,} calls\n"
         return summary.rstrip()
 
-    def get_cost_breakdown(self) -> str:
-        """Detailed cost/token breakdown by phase and model, incl. cached tokens."""
-        lines: list[str] = []
-        lines.append(f"Cached Prompt Tokens: {self.cached_prompt_tokens:,}")
-        if self.phase_totals:
-            lines.append("Per-Phase Tokens/Cost:")
-            for phase, b in self.phase_totals.items():
-                lines.append(
-                    f"  {phase}: prompt={int(b['prompt']):,}, completion={int(b['completion']):,}, "
-                    f"cached={int(b['cached_prompt']):,}, total={int(b['total']):,}, cost=${float(b['cost']):.2f}"
-                )
-        if self.model_totals:
-            lines.append("Per-Model Tokens/Cost:")
-            for model, b in self.model_totals.items():
-                lines.append(
-                    f"  {model}: calls={int(b['calls']):,}, prompt={int(b['prompt']):,}, completion={int(b['completion']):,}, "
-                    f"cached={int(b['cached_prompt']):,}, total={int(b['total']):,}, cost=${float(b['cost']):.2f}"
-                )
-        if self.top_calls:
-            lines.append("Top Calls by Cost:")
-            for i, c in enumerate(self.top_calls, start=1):
-                usage = c.get("usage", {})
-                lines.append(
-                    f"  {i}. ${c.get('cost', 0.0):.2f} | model={c.get('model')} | phase={c.get('phase')} | "
-                    f"pt={usage.get('prompt_tokens', 0):,} ct={usage.get('completion_tokens', 0):,} "
-                    f"cached={usage.get('cached_prompt_tokens', 0):,} total={usage.get('total_tokens', 0):,} "
-                    f"id={c.get('response_id')}"
-                )
-        return "\n".join(lines) if lines else "No cost breakdown available"
-
     def __str__(self) -> str:
         success_rate = self.get_success_rate()
         return (
@@ -272,6 +243,16 @@ class ResponsesAPIManager:
         self.model = model
         self.current_response_id: str | None = None
         self.logger = logging.getLogger(__name__)
+
+    @retry_operation(max_attempts=3, delay=2, backoff=2)
+    def _call_parse(self, **kwargs: Any) -> Any:
+        """Call responses.parse with retry."""
+        return self.client.responses.parse(**kwargs)
+
+    @retry_operation(max_attempts=3, delay=2, backoff=2)
+    def _call_create(self, **kwargs: Any) -> Any:
+        """Call responses.create with retry."""
+        return self.client.responses.create(**kwargs)
 
     def _extract_usage(self, response: Any) -> dict[str, Any]:
         """Best-effort extraction of usage dict from Response API objects."""
@@ -322,9 +303,9 @@ class ResponsesAPIManager:
         try:
             if use_structured_output and response_model:
                 # Use Response API with Pydantic model structured parsing
-                response = self.client.responses.parse(
+                response = self._call_parse(
                     model=self.model,
-                    input=messages,  # type: ignore[arg-type]
+                    input=messages,
                     text_format=response_model,
                 )
 
@@ -344,37 +325,38 @@ class ResponsesAPIManager:
 
                 return {
                     "response_id": response.id,
-                    "data": response.output_parsed.model_dump() if response.output_parsed else {},
+                    "data": response.output_parsed.model_dump()
+                    if response.output_parsed
+                    else {},
                     "success": True,
                 }
-            else:
-                # Regular text response
-                text_response = self.client.responses.create(
+            # Regular text response
+            text_response = self._call_create(
+                model=self.model,
+                input=messages,
+            )
+
+            self.current_response_id = text_response.id
+
+            # Track usage if present
+            usage_dict = self._extract_usage(text_response)
+            if usage_dict:
+                token_tracker.update(
+                    usage_data=usage_dict,
                     model=self.model,
-                    input=messages,  # type: ignore[arg-type]
+                    phase=token_tracker.current_phase,
+                    response_id=text_response.id,
                 )
+                token_tracker.successful_calls += 1
 
-                self.current_response_id = text_response.id
-
-                # Track usage if present
-                usage_dict = self._extract_usage(text_response)
-                if usage_dict:
-                    token_tracker.update(
-                        usage_data=usage_dict,
-                        model=self.model,
-                        phase=token_tracker.current_phase,
-                        response_id=text_response.id,
-                    )
-                    token_tracker.successful_calls += 1
-
-                return {
-                    "response_id": text_response.id,
-                    "text": text_response.output_text,
-                    "success": True,
-                }
+            return {
+                "response_id": text_response.id,
+                "text": text_response.output_text,
+                "success": True,
+            }
 
         except Exception as e:
-            self.logger.error(f"Error in start_conversation: {str(e)}")
+            self.logger.error(f"Error in start_conversation: {e!s}")
             self.current_response_id = None
             token_tracker.failed_calls += 1
             return {"response_id": None, "error": str(e), "success": False}
@@ -401,7 +383,7 @@ class ResponsesAPIManager:
         try:
             if use_structured_output and response_model:
                 # Use Response API with Pydantic model structured parsing
-                response = self.client.responses.parse(
+                response = self._call_parse(
                     input=message,
                     previous_response_id=response_id,
                     model=self.model,
@@ -424,38 +406,39 @@ class ResponsesAPIManager:
 
                 return {
                     "response_id": response.id,
-                    "data": response.output_parsed.model_dump() if response.output_parsed else {},
+                    "data": response.output_parsed.model_dump()
+                    if response.output_parsed
+                    else {},
                     "success": True,
                 }
-            else:
-                # Regular text response
-                text_response = self.client.responses.create(
-                    input=message,
-                    previous_response_id=response_id,
+            # Regular text response
+            text_response = self._call_create(
+                input=message,
+                previous_response_id=response_id,
+                model=self.model,
+            )
+
+            self.current_response_id = text_response.id
+
+            # Track usage if present
+            usage_dict = self._extract_usage(text_response)
+            if usage_dict:
+                token_tracker.update(
+                    usage_data=usage_dict,
                     model=self.model,
+                    phase=token_tracker.current_phase,
+                    response_id=text_response.id,
                 )
+                token_tracker.successful_calls += 1
 
-                self.current_response_id = text_response.id
-
-                # Track usage if present
-                usage_dict = self._extract_usage(text_response)
-                if usage_dict:
-                    token_tracker.update(
-                        usage_data=usage_dict,
-                        model=self.model,
-                        phase=token_tracker.current_phase,
-                        response_id=text_response.id,
-                    )
-                    token_tracker.successful_calls += 1
-
-                return {
-                    "response_id": text_response.id,
-                    "text": text_response.output_text,
-                    "success": True,
-                }
+            return {
+                "response_id": text_response.id,
+                "text": text_response.output_text,
+                "success": True,
+            }
 
         except Exception as e:
-            self.logger.error(f"Error in continue_conversation: {str(e)}")
+            self.logger.error(f"Error in continue_conversation: {e!s}")
             token_tracker.failed_calls += 1
             return {"response_id": response_id, "error": str(e), "success": False}
 
@@ -524,15 +507,14 @@ Please translate all sentences now."""
                 # Ensure current_response_id is set
                 self.current_response_id = response.get("response_id")
                 return self.current_response_id
-            else:
-                self.logger.warning(
-                    f"Document conversation error: {response.get('error', 'Unknown error')}"
-                )
-                # Don't return response_id on error - let it be None
-                return None
+            self.logger.warning(
+                f"Document conversation error: {response.get('error', 'Unknown error')}"
+            )
+            # Don't return response_id on error - let it be None
+            return None
 
         except Exception as e:
-            self.logger.error(f"Error starting document conversation: {str(e)}")
+            self.logger.error(f"Error starting document conversation: {e!s}")
             return None
 
     def continue_with_stage(
@@ -586,4 +568,4 @@ def call_response_api(
         }
 
 
-__all__ = ["token_tracker", "call_response_api", "ResponsesAPIManager", "load_api_keys"]
+__all__ = ["ResponsesAPIManager", "call_response_api", "load_api_keys", "token_tracker"]

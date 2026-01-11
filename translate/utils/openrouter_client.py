@@ -8,12 +8,18 @@ similar to responses_api.py but using direct HTTP requests instead of OpenAI SDK
 import json
 import logging
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import requests
 
 from data.config import DEEPSEEK_MODEL, OPENROUTER_BASE_URL
 from utils.retry import retry_operation
+
+if TYPE_CHECKING:
+    from data.deepseek_correction_models import (
+        ArticleContext,
+        SentenceCorrectionInput,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +161,10 @@ class OpenRouterClient:
             raise ValueError(f"Invalid JSON in response: {e}") from e
 
     def correct_translations_batch(
-        self, sentences_data: list[dict[str, Any]], retry_count: int = 0
+        self,
+        sentences_data: list["SentenceCorrectionInput"],
+        retry_count: int = 0,
+        article_context: "ArticleContext | None" = None,
     ) -> dict[str, Any]:
         """Correct a batch of sentence translations using DeepSeek.
 
@@ -163,8 +172,9 @@ class OpenRouterClient:
         focusing on morpheme-to-word alignment issues that OpenAI sometimes misses.
 
         Args:
-            sentences_data: List of sentence dictionaries with full translation data
+            sentences_data: List of SentenceCorrectionInput models with full translation data
             retry_count: Current retry attempt (used for progressively clearer prompts)
+            article_context: Optional ArticleContext with title/summary for context
 
         Returns:
             dict: Parsed correction results with corrected translations
@@ -173,7 +183,9 @@ class OpenRouterClient:
             ValueError: If correction fails after retries
         """
         system_prompt = self._build_correction_system_prompt(retry_count)
-        user_prompt = self._build_correction_user_prompt(sentences_data)
+        user_prompt = self._build_correction_user_prompt(
+            sentences_data, article_context
+        )
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -196,22 +208,45 @@ class OpenRouterClient:
         Returns:
             str: System prompt
         """
-        base_prompt = """You are an expert Arabic linguist reviewing and CORRECTING Arabic-to-English translations of classical Islamic texts.
+        base_prompt = """You are an expert Arabic linguist reviewing Arabic-to-English translations of classical Islamic texts.
 
-Your task is to FIX translation errors, not just flag them. You will receive translations from another AI and must provide CORRECTED versions.
+GOLDEN RULE: ONLY FIX CLEAR ERRORS
 
-GOLDEN RULE: DO NO HARM
-- Only change what is actually WRONG
-- If the original translation is grammatically correct and conveys the meaning, KEEP IT
-- Never make a "correction" that breaks natural English flow
-- The corrected text MUST be valid, fluent English
-- Bad correction example: "This is what I tell you" → "He is what I say to you" (WRONG - breaks grammar)
+You must be CONSERVATIVE. Only make corrections when you find CLEAR, OBVIOUS issues.
 
-CONTEXT: ISLAMIC TEXTS
-- These are classical Islamic scholarly texts (aqeedah, fiqh, tafsir, etc.)
-- Maintain appropriate religious terminology (e.g., "slave" for عبد when referring to servant of Allah)
-- Preserve the scholarly tone and precision of the original
-- Common terms: Allah, Prophet, Messenger, scholars, predecessors (salaf), innovator, etc.
+TWO DIFFERENT STANDARDS:
+
+FOR WORD-BY-WORD TRANSLATIONS (word_translations[].english):
+✅ FIX:
+- Condensed forms: "therein" → "in it", "thereof" → "of it"
+- Missing morphemes: وَقَالَ as "said" → "and said"
+- Each Arabic morpheme must map to separate English word(s)
+
+FOR FULL SENTENCE TRANSLATIONS (full_translation):
+✅ FIX only:
+- Obvious mistranslations (wrong meaning)
+- Broken grammar
+✓ KEEP as-is:
+- Natural English phrasing (prioritize fluency for audio)
+- Style choices, word order, synonyms
+
+WHEN IN DOUBT, KEEP THE ORIGINAL.
+
+A bad correction is WORSE than no correction. If the translation:
+- Is grammatically correct English
+- Conveys the Arabic meaning accurately
+- Flows naturally when read aloud
+→ Then KEEP IT UNCHANGED, even if you might phrase it differently.
+
+Bad correction example: "This is what I tell you" → "He is what I say to you" (WRONG - broke grammar)
+
+CONTEXT: ISLAMIC TEXTS FOR AUDIO
+- Classical Islamic scholarly texts (aqeedah, fiqh, tafsir, etc.)
+- All translations will be converted to audio (text-to-speech)
+- Ensure translations sound natural when read aloud
+- Preserve religious terminology (e.g., "slave" for عبد when referring to servant of Allah)
+- Maintain scholarly tone and precision
+- Common terms: Allah, Prophet, Messenger, scholars, predecessors (salaf), etc.
 
 CRITICAL FOCUS: MORPHEME-TO-WORD ALIGNMENT
 
@@ -270,35 +305,46 @@ RULES FOR MORPHEME-TO-WORD ALIGNMENT:
    - Passive voice → MUST use "was/is" + past participle
      * كُتِبَ → "was written" (NOT "written")
 
+PRIMARY FOCUS: SPLITTING SINGLE-WORD TRANSLATIONS
+
+Your #1 job is finding English words that should be split into multiple words:
+
+SINGLE WORD → MULTIPLE WORDS (always fix):
+- "therein" → "in it"
+- "thereof" → "of it"
+- "thereby" → "by it"
+- "therefrom" → "from it"
+- "wherein" → "in which"
+- "himself" → "his self" (when translating نَفْسِهِ)
+- "themselves" → "their selves" (when translating أَنْفُسِهِمْ)
+
 WHAT TO CORRECT:
 
-1. FULL TRANSLATION (full_translation field):
-   - Fix any condensed forms (therein → in it)
-   - Ensure all morphemes are represented
-   - MUST remain natural, fluent English - read it aloud to check
-   - If your "fix" sounds awkward, keep the original
+1. WORD-BY-WORD (word_translations[].english):
+   - Split condensed forms into multiple words
+   - Each Arabic morpheme = separate English word
+   - Example: فِيهِ → "in it" (2 words), not "therein"
+   - Purpose: vocabulary learning requires explicit morpheme mapping
 
-2. WORD-BY-WORD TRANSLATIONS (word_by_word.english field):
-   - Each Arabic word's English MUST include ALL morphemes
-   - Prefixes AND suffixes must be explicit
-   - Example: فِيهِ (fiihi) english must be "in it" (2 words), not "therein"
+2. FULL TRANSLATION (full_translation):
+   - Fix only: wrong meaning, broken grammar
+   - Keep: natural English phrasing suitable for audio
+   - Purpose: fluent listening experience
 
-3. TASHKEEL (only if clearly wrong):
-   - Only fix obvious diacritic errors
-   - Keep same Arabic letters
+3. TASHKEEL:
+   - Fix only obviously wrong diacritics
+   - When uncertain, keep original
 
-QUALITY CHECK BEFORE SUBMITTING:
-- Read your corrected_full_translation aloud - does it sound like natural English?
-- Is every sentence grammatically complete and correct?
-- Did you preserve the original meaning?
-- If unsure, keep the original - do not guess
+QUALITY CHECK:
+- Word-by-word: Are condensed forms split into separate words?
+- Full translation: Correct meaning? Correct grammar? Sounds natural when read aloud?
 
 RESPONSE FORMAT:
-For each sentence, provide CORRECTED versions of all fields that need fixing.
-If a field is already correct, return it unchanged.
-Set was_corrected=true for any word that was changed.
+- Return unchanged fields as-is
+- Set was_corrected=true ONLY for words you actually changed
+- High overall_quality (0.9+) if only minor word-splitting needed
 
-IMPORTANT: You are CORRECTING, not just validating. But a bad correction is worse than no correction."""
+REMEMBER: Only fix what is CLEARLY wrong. When uncertain, keep original."""
 
         if retry_count > 0:
             base_prompt += f"""
@@ -310,19 +356,40 @@ Start with {{ and end with }}. Nothing else."""
         return base_prompt
 
     def _build_correction_user_prompt(
-        self, sentences_data: list[dict[str, Any]]
+        self,
+        sentences_data: list["SentenceCorrectionInput"],
+        article_context: "ArticleContext | None" = None,
     ) -> str:
         """Build user prompt with sentences data for correction.
 
         Args:
-            sentences_data: List of sentence dictionaries
+            sentences_data: List of SentenceCorrectionInput models
+            article_context: Optional ArticleContext model
 
         Returns:
-            str: User prompt
+            str: User prompt with serialized JSON data
         """
-        sentences_json = json.dumps(sentences_data, ensure_ascii=False, indent=2)
+        # Serialize Pydantic models to JSON (model_dump for Pydantic v2)
+        sentences_dicts = [s.model_dump(exclude_none=True) for s in sentences_data]
+        sentences_json = json.dumps(sentences_dicts, ensure_ascii=False, indent=2)
+
+        # Build article context section if available and non-empty
+        context_section = ""
+        if article_context and not article_context.is_empty():
+            context_section = f"""
+ARTICLE CONTEXT:
+- Title: {article_context.title}
+- Summary: {article_context.summary}
+
+Use this context to ensure translations are consistent with the article's topic and terminology.
+
+"""
 
         prompt = f"""Review and CORRECT these Arabic-to-English translations.
+{context_section}
+SURROUNDING CONTEXT: Each sentence includes 'previous_sentence' and 'next_sentence'.
+Use these to ensure your corrections maintain flow and consistency with surrounding text.
+This is especially important for pronouns, references, and maintaining scholarly tone.
 
 INPUT SENTENCES:
 {sentences_json}

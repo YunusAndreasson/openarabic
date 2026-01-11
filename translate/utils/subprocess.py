@@ -5,6 +5,8 @@ import os
 import subprocess
 import sys
 
+from utils.cli_style import print_error
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,11 +45,11 @@ def run_pipeline_step(
     )
 
     if result.returncode != 0:
-        logger.error(f"❌ {description} failed.")
+        print_error(f"{description} failed")
         if result.stdout:
             logger.error(f"stdout: {result.stdout}")
         if result.stderr:
             logger.error(f"stderr: {result.stderr}")
-        raise RuntimeError(f"{description} failed.")
+        raise RuntimeError(f"{description} failed")
 
     # Pipeline step completed

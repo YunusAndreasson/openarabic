@@ -8,18 +8,17 @@ from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from main import (
-    run_split_file,
-    run_translation,
-)
+from pipeline.split_file import split_file
+from pipeline.translate import translate_file
+from utils.file_utils import generate_pipeline_filename
 
 
-class TestMainWorkflow:
-    """Test the main workflow functions."""
+class TestPipelineModules:
+    """Test the pipeline module functions."""
 
-    @patch("main.split_text")
-    def test_run_split_file_success(self, mock_split_text):
-        """Test run_split_file success."""
+    @patch("pipeline.split_file.split_text_into_sentences")
+    def test_split_file_success(self, mock_split_text):
+        """Test split_file success."""
         input_file = None
         output_file = None
 
@@ -30,16 +29,25 @@ class TestMainWorkflow:
                 f.write("مرحبا بالعالم. هذا نص تجريبي.")
                 input_file = f.name
 
-            # Mock the split_text function to actually create the output file
-            def mock_split_text_side_effect(input_file, output_file):
-                with open(output_file, "w") as f:
-                    f.write('{"units": []}')
+            # Create output filename using the utility function
+            output_file = generate_pipeline_filename(
+                input_file, "01_test_author", "_split", tempfile.gettempdir()
+            )
 
-            mock_split_text.side_effect = mock_split_text_side_effect
+            # Mock the split_text_into_sentences function
+            from data.models import SplitResult
 
-            result = run_split_file(input_file, "test_author")
-            output_file = result
-            assert result.endswith("_split.json")
+            mock_split_text.return_value = SplitResult(
+                units=[],
+                title="Test",
+                summary="Test summary",
+                difficulty_level="beginner",
+                category="aqeedah",
+                total_units=0,
+            )
+
+            split_file(input_file, output_file)
+            assert os.path.exists(output_file)
             mock_split_text.assert_called_once()
 
         finally:
@@ -49,9 +57,10 @@ class TestMainWorkflow:
             if output_file and os.path.exists(output_file):
                 Path(output_file).unlink(missing_ok=True)
 
-    @patch("main.translate_text")
-    def test_run_translation_success(self, mock_translate_text):
-        """Test run_translation success."""
+    @patch("pipeline.translate.process_batches")
+    @patch("pipeline.translate.load_split_data")
+    def test_translate_file_success(self, mock_load_split, mock_process_batches):
+        """Test translate_file success."""
         input_file = None
         output_file = None
 
@@ -59,18 +68,34 @@ class TestMainWorkflow:
             with tempfile.NamedTemporaryFile(
                 mode="w", suffix=".json", delete=False
             ) as f:
-                f.write('{"units": []}')
+                f.write(
+                    '{"units": [], "title": "Test", "summary": "Test", "difficulty_level": "beginner", "category": "aqeedah", "total_units": 0}'
+                )
                 input_file = f.name
 
-            output_file = input_file.replace("_split.json", "_translated.json")
+            output_file = input_file.replace(".json", "_translated.json")
 
-            # Mock the translate_text function
-            mock_translate_text.return_value = True
+            # Mock the load_split_data function
+            from data.models import SplitResult
 
-            run_translation(input_file, output_file, batch_size=2)
-            mock_translate_text.assert_called_once_with(
-                input_file, output_file, 2, use_conversation_continuity=True
+            mock_load_split.return_value = SplitResult(
+                units=[],
+                title="Test",
+                summary="Test summary",
+                difficulty_level="beginner",
+                category="aqeedah",
+                total_units=0,
             )
+
+            # Mock the process_batches function
+            mock_process_batches.return_value = ([], [])
+
+            # Disable conversation continuity to avoid API calls
+            result = translate_file(
+                input_file, output_file, batch_size=2, use_conversation_continuity=False
+            )
+            assert result is True
+            mock_load_split.assert_called_once()
 
         finally:
             # Clean up all created files
@@ -83,9 +108,12 @@ class TestMainWorkflow:
 class TestEndToEndWorkflow:
     """Test end-to-end workflow with mocked components."""
 
-    @patch("main.split_text")
-    @patch("main.translate_text")
-    def test_full_workflow_mocked(self, mock_translate_text, mock_split_text):
+    @patch("pipeline.translate.process_batches")
+    @patch("pipeline.translate.load_split_data")
+    @patch("pipeline.split_file.split_text_into_sentences")
+    def test_full_workflow_mocked(
+        self, mock_split_text, mock_load_split, mock_process_batches
+    ):
         """Test full workflow with mocked components."""
         input_file = None
         split_file_path = None
@@ -99,33 +127,50 @@ class TestEndToEndWorkflow:
                 f.write("مرحبا بالعالم. هذا نص تجريبي.")
                 input_file = f.name
 
-            split_file_path = input_file.replace(".txt", "_split.json")
-            output_file = input_file.replace(".txt", "_translated.json")
+            split_file_path = generate_pipeline_filename(
+                input_file, "01_test_author", "_split", tempfile.gettempdir()
+            )
+            output_file = split_file_path.replace("_split.json", "_translated.json")
 
-            # Mock the functions to actually create output files
-            def mock_split_text_side_effect(input_file, output_file):
-                with open(output_file, "w") as f:
-                    f.write('{"units": []}')
+            # Mock the split_text_into_sentences function
+            from data.models import SplitResult
 
-            def mock_translate_text_side_effect(
-                input_file, output_file, batch_size, use_conversation_continuity=True
-            ):
-                with open(output_file, "w") as f:
-                    f.write('{"translations": []}')
-                return True
+            mock_split_text.return_value = SplitResult(
+                units=[],
+                title="Test",
+                summary="Test summary",
+                difficulty_level="beginner",
+                category="aqeedah",
+                total_units=0,
+            )
 
-            mock_split_text.side_effect = mock_split_text_side_effect
-            mock_translate_text.side_effect = mock_translate_text_side_effect
+            # Mock the load_split_data function
+            mock_load_split.return_value = SplitResult(
+                units=[],
+                title="Test",
+                summary="Test summary",
+                difficulty_level="beginner",
+                category="aqeedah",
+                total_units=0,
+            )
+
+            # Mock the process_batches function
+            mock_process_batches.return_value = ([], [])
 
             # Test split phase
-            result = run_split_file(input_file, "test_author")
-            split_file_path = result  # Update with actual path
-            assert result.endswith("_split.json")
+            split_file(input_file, split_file_path)
+            assert os.path.exists(split_file_path)
             mock_split_text.assert_called_once()
 
-            # Test translation phase
-            run_translation(split_file_path, output_file, batch_size=2)
-            mock_translate_text.assert_called_once()
+            # Test translation phase (disable conversation continuity to avoid API calls)
+            result = translate_file(
+                split_file_path,
+                output_file,
+                batch_size=2,
+                use_conversation_continuity=False,
+            )
+            assert result is True
+            mock_load_split.assert_called_once()
 
         finally:
             # Clean up all created files

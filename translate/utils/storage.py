@@ -48,7 +48,7 @@ def check_file_exists(bucket: str, file_path: str) -> bool:
         ):
             return False
 
-        logging.error(f"check_file_exists failed for {file_path}: {msg}")
+        logger.error(f"check_file_exists failed for {file_path}: {msg}")
         return False
 
 

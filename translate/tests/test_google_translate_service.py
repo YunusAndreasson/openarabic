@@ -14,7 +14,6 @@ class TestGoogleTranslateService:
     def setup_method(self):
         """Set up test fixtures."""
         # Don't create service here - create it in each test with proper mocking
-        pass
 
     @patch("utils.google_translate_service.translate_v3.TranslationServiceClient")
     def test_init_with_project_id(self, mock_client_class):

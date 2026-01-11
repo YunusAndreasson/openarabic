@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from audio.storage import generate_audio_filename
-from data.config import ARCHIVE_DIR
+from data.config import ARCHIVE_DIR, VoiceSettingsDict
 from data.enums import DifficultyLevel
 from data.pipeline_types import WordData
 from utils.arabic_text import clean_arabic_text
@@ -15,6 +15,7 @@ from utils.database_common import (
     insert_table_record,
     update_table_record,
 )
+from utils.error_handling import handle_speech_generation_error
 from utils.storage import (
     get_supabase_client,
     get_word_type_id,
@@ -27,9 +28,9 @@ _generate_speech: Any = None
 _get_or_generate_root_audio: Any = None
 _VoiceSettings: Any = None
 _ARABIC_VOICE_ID: str | None = None
-_ARABIC_VOICE_SETTINGS: dict[str, float] | None = None
+_ARABIC_VOICE_SETTINGS: VoiceSettingsDict | None = None
 _ENGLISH_VOICE_ID: str | None = None
-_ENGLISH_VOICE_SETTINGS: dict[str, float] | None = None
+_ENGLISH_VOICE_SETTINGS: VoiceSettingsDict | None = None
 
 try:
     from elevenlabs import VoiceSettings
@@ -59,24 +60,6 @@ except (ImportError, OSError):
     pass
 
 logger = logging.getLogger(__name__)
-
-
-def handle_speech_generation_error(e: Exception, language: str, idx: int) -> None:
-    """
-    Handle speech generation errors with appropriate logging.
-
-    Args:
-        e: The exception that occurred
-        language: The language being processed (e.g., "Arabic", "English")
-        idx: The sentence index (0-based)
-    """
-    error_msg = str(e).lower()
-    if "content_against_policy" in error_msg or "terms of service" in error_msg:
-        logger.warning(
-            f"Skipping {language} audio for sentence {idx + 1} due to content policy violation"
-        )
-    else:
-        logger.warning(f"Error generating {language} audio for sentence {idx + 1}: {e}")
 
 
 def extract_root_info(word: WordData) -> tuple[str, str | None, str | None]:
@@ -505,26 +488,21 @@ def insert_article_sentences(
                 article_data = (
                     get_supabase_client()
                     .table("articles")
-                    .select("title, summary")
+                    .select("title")
                     .eq("id", article_id)
                     .execute()
                 )
-                if article_data.data:
-                    article_title = article_data.data[0].get("title")
-                    article_summary = article_data.data[0].get("summary")
-                else:
-                    article_title = None
-                    article_summary = None
+                article_title = (
+                    article_data.data[0].get("title") if article_data.data else None
+                )
             except Exception as e:
                 logger.warning(f"Could not fetch article metadata: {e}")
                 article_title = None
-                article_summary = None
 
             # Create article audio files in one pass
             audio_urls = _create_article_audio(
                 sentences=sentences,
                 article_title=article_title,
-                article_summary=article_summary,
                 output_dir=temp_dir,
             )
 
@@ -549,7 +527,7 @@ def insert_article_sentences(
         cleanup_temp_files([], temp_dir)
 
     except Exception as e:
-        logger.error(f"Error processing sentences: {str(e)}")
+        logger.error(f"Error processing sentences: {e!s}")
         cleanup_temp_files([], temp_dir)
         raise
 

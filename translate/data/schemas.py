@@ -6,9 +6,6 @@ Pydantic models are defined in data/models.py.
 from .config import VALID_CATEGORIES
 from .enums import DifficultyLevel, PartOfSpeech
 
-# Define valid parts of speech
-VALID_POS = [pos.value for pos in PartOfSpeech]
-
 # Define difficulty levels with descriptions
 DIFFICULTY_LEVELS = {
     DifficultyLevel.BASIC: "Basic - Simple vocabulary and grammar",
@@ -49,10 +46,12 @@ Priorities:
 Apply these principles to all translation tasks (splitting, diacritics, word analysis, verification).
 
 Core Rules (apply in every phase):
-- English-only output for all English fields (title, summary, translations, notes); never include Arabic script or transliterations in English fields.
-- All English content will be read aloud via text-to-speech, so use natural, flowing language suitable for audio reading.
-- Expand Arabic morphology into explicit multi-word English (e.g., "therein" -> "in it"); do not omit functional words encoded in Arabic.
-- Do not add parenthetical Arabic terms in any English output.
+- English-only output for all English fields (title, summary, translations, notes); no Arabic script or transliterations.
+- All content will be read aloud via text-to-speech; use natural, flowing language.
+- No parenthetical Arabic terms in English output.
+
+Word-by-word translations: expand Arabic morphology into explicit multi-word English (e.g., فيه → "in it", not "therein").
+Full sentence translations: prioritize natural, fluent English suitable for audio.
 """
 
 CONTENT_ANALYSIS_PROMPT = (
@@ -76,7 +75,7 @@ CONTENT_ANALYSIS_PROMPT = (
 3. Category:
    - Choose the most appropriate category from the valid categories below
    - Only use one of these exact categories: """
-    + ", ".join(f"'{category}'" for category in VALID_CATEGORIES.keys())
+    + ", ".join(f"'{category}'" for category in VALID_CATEGORIES)
     + """
    - Base your choice on the actual content, not assumptions
 
@@ -121,19 +120,13 @@ Focus on preserving Islamic terminology and classical Arabic meanings. Handle Ar
 
 For each sentence, provide:
 1. translation:
-   - Simple vocabulary; English-only output (used for audiobook and reading)
-   - Write in natural, flowing language suitable for text-to-speech reading
-   - Follow Core Rules: no Arabic script/transliteration in English fields; expand morphology into explicit multi-word English; no parenthetical Arabic terms
+   - Simple vocabulary; English-only output (for audiobook reading)
+   - Natural, flowing language suitable for text-to-speech
+   - Prioritize fluent English over literal word-for-word rendering
 2. notes:
    - Brief context or grammar observations
 3. uncertainties:
-   - Always expand Arabic morphology into explicit English multi-word phrases. Avoid condensed/archaic compounds like "therein/thereof/whereby". Prefer "in it", "of it", "by which", "for him", etc.
-   - Do not omit functional words (prepositions, pronouns) encoded in Arabic; make them explicit in English.
-   - Use natural, flowing language that sounds natural when read aloud via text-to-speech.
-
-Example (concise):
-- فيه -> "in it" (good)
-- فيه -> "therein" (bad)
+   - Document any ambiguities in meaning or grammar
 
 IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic text. Preserve ALL formatting.
 
@@ -189,10 +182,10 @@ Input for word-by-word translation:
 FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided components.
 
 Checklist:
-- Single best choice per word (no arrays, no synonyms); enforce English-only across all outputs (Core Rules)
-- Preserve correct diacritics on essential forms; do not "clean up" valid diacritics
-- Ensure explicit English phrasing mirrors Arabic morphology (e.g., "therein" -> "in it")
-- Keep functional words present when encoded in Arabic (prepositions/pronouns)
+- Single best choice per word (no arrays, no synonyms); English-only across all outputs
+- Preserve correct diacritics on essential forms
+- word_by_word: explicit multi-word English mirroring Arabic morphology (e.g., فيه → "in it")
+- full_translation: natural, fluent English suitable for audio
 - Fix only real grammatical errors; maintain consistency across tashkeel, translations, and word entries
 - Notes concise (<= 20 words); at most 2 uncertainties per sentence if needed
 

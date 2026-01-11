@@ -5,7 +5,8 @@ import os
 from itertools import batched  # Python 3.12+
 from typing import Any
 
-from data.config import TRANSLATE_DIR
+from data.config import MAX_TRANSLATION_BATCH_SIZE, TRANSLATE_DIR
+from data.deepseek_correction_models import ArticleContext
 from data.models import (
     SentenceTranslation,
     SplitResult,
@@ -36,9 +37,6 @@ from utils.file_utils import (
 from utils.responses_api import ResponsesAPIManager
 
 logger = logging.getLogger(__name__)
-
-# Maximum batch size for processing
-MAX_BATCH_SIZE = 12
 
 
 def create_batches(
@@ -120,6 +118,7 @@ def process_batch(
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
     conversation_manager: ResponsesAPIManager | None = None,
+    article_context: ArticleContext | None = None,
 ) -> list[SentenceTranslation]:
     """Process a single batch of sentences."""
     if not batch_sentences:
@@ -169,7 +168,7 @@ def process_batch(
         )
 
         # Step 5: Correct with DeepSeek (auto-fix morpheme alignment issues)
-        results = run_deepseek_correction(results)
+        results = run_deepseek_correction(results, article_context)
 
         return results
     except Exception as e:
@@ -179,7 +178,7 @@ def process_batch(
         # CRITICAL: Fail completely instead of creating placeholder data
         raise Exception(
             f"Batch processing failed after all retries for batch starting at {start_index}. "
-            f"Placeholder data creation is not allowed. Error: {str(e)}"
+            f"Placeholder data creation is not allowed. Error: {e!s}"
         ) from e
 
 
@@ -238,6 +237,7 @@ def process_batches(
     all_units: list[str] | list[dict[str, Any]],
     batch_size: int,
     conversation_manager: ResponsesAPIManager | None = None,
+    article_context: ArticleContext | None = None,
 ) -> tuple[list[SentenceTranslation], list[str]]:
     """Process all batches in parallel and return results and errors."""
     results: list[SentenceTranslation] = []
@@ -270,6 +270,7 @@ def process_batches(
                 batch["indices"],
                 context_cache,
                 conversation_manager,
+                article_context,
             )
             results.extend(batch_results)
             logger.info(
@@ -277,13 +278,13 @@ def process_batches(
                 f"({len(batch['sentences'])} sentences)"
             )
         except TranslationValidationError as e:
-            error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed validation: {str(e)}"
+            error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed validation: {e!s}"
             errors.append(error_msg)
         except (ValueError, TypeError, RuntimeError) as e:
-            error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed: {str(e)}"
+            error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed: {e!s}"
             errors.append(error_msg)
         except Exception as e:
-            error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed with unexpected error: {str(e)}"
+            error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed with unexpected error: {e!s}"
             errors.append(error_msg)
 
     # Clear batch context and print summary
@@ -335,7 +336,7 @@ def save_translation_output(
 def translate_file(
     input_file: str,
     output_file: str,
-    batch_size: int = MAX_BATCH_SIZE,
+    batch_size: int = MAX_TRANSLATION_BATCH_SIZE,
     use_conversation_continuity: bool = True,
 ) -> bool | None:
     """Translate a file containing split sentences."""
@@ -378,6 +379,12 @@ def translate_file(
                 )
                 raise RuntimeError("Conversation manager initialization failed")
 
+        # Build article context for DeepSeek correction
+        article_context = ArticleContext(
+            title=metadata.title or "",
+            summary=metadata.summary or "",
+        )
+
         # Handle empty files
         if len(all_units) == 0:
             results: list[SentenceTranslation] = []
@@ -386,7 +393,7 @@ def translate_file(
             missing_count = 0
         else:
             results, errors = process_batches(
-                all_units, batch_size, conversation_manager
+                all_units, batch_size, conversation_manager, article_context
             )
             actual_count, missing_count = validate_results(results, all_units)
 
@@ -416,7 +423,7 @@ def translate_file(
 
 def translate_files(
     split_files: list[tuple[str, str, str]],
-    batch_size: int = MAX_BATCH_SIZE,
+    batch_size: int = MAX_TRANSLATION_BATCH_SIZE,
 ) -> None:
     """
     Translate all split files.
@@ -451,8 +458,8 @@ def main() -> None:
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=MAX_BATCH_SIZE,
-        help=f"Batch size for processing (default: {MAX_BATCH_SIZE})",
+        default=MAX_TRANSLATION_BATCH_SIZE,
+        help=f"Batch size for processing (default: {MAX_TRANSLATION_BATCH_SIZE})",
     )
     parser.add_argument(
         "--no-conversation-continuity",

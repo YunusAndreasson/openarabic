@@ -26,6 +26,7 @@ dependencies = [
     "pydub>=0.25.1",
     "rich>=14.0.0",
     "pyfiglet>=1.0.2",
+    "beautifulsoup4>=4.14.3",
 ]
 
 [dependency-groups]
@@ -76,33 +77,55 @@ exclude = [
 [tool.ruff.lint]
 # Enable comprehensive linting rules
 select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-    "I",   # isort
-    "W",   # pycodestyle warnings
-    "B",   # flake8-bugbear
-    "C4",  # flake8-comprehensions
-    "UP",  # pyupgrade
-    "N",   # pep8-naming
-    "S",   # bandit security
-    "A",   # flake8-builtins
-    "COM", # flake8-commas
-    "DTZ", # flake8-datetimez
-    "T20", # flake8-print
-    "TC",  # flake8-type-checking
-    "ARG", # flake8-unused-arguments
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "W",    # pycodestyle warnings
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "N",    # pep8-naming
+    "S",    # bandit security
+    "A",    # flake8-builtins
+    "COM",  # flake8-commas
+    "DTZ",  # flake8-datetimez
+    "T20",  # flake8-print
+    "TC",   # flake8-type-checking
+    "ARG",  # flake8-unused-arguments
+    "RUF",  # Ruff-specific rules
+    "PIE",  # Python antipatterns
+    "PERF", # Performance antipatterns
+    "SIM",  # Code simplification
+    "LOG",  # Logging best practices
+    "RET",  # Return statement consistency
+    "PT",   # Pytest style
 ]
 ignore = [
-    "E501",  # line too long, handled by black
-    "B008",  # do not perform function calls in argument defaults
-    "C901",  # too complex
-    "S101",  # Use of assert detected (allow in tests)
-    "S603",  # subprocess call with untrusted input (legitimate uses for Python modules)
-    "TC001", # Import typing only in TYPE_CHECKING
-    "TC002", # Import typing only in TYPE_CHECKING
-    "TC003", # Import typing only in TYPE_CHECKING
-    "COM812", # Use of `dict.get()` with default value is redundant
+    "E501",   # line too long, handled by formatter
+    "B008",   # do not perform function calls in argument defaults
+    "C901",   # too complex
+    "S101",   # Use of assert detected (allow in tests)
+    "S603",   # subprocess call with untrusted input (legitimate uses)
+    "TC001",  # Import typing only in TYPE_CHECKING
+    "TC002",  # Import typing only in TYPE_CHECKING
+    "TC003",  # Import typing only in TYPE_CHECKING
+    "COM812", # Trailing comma (conflicts with formatter)
     "ARG001", # Unused function argument (allow for API compatibility)
+    # RUF - Arabic unicode false positives
+    "RUF001", # Ambiguous unicode in strings
+    "RUF002", # Ambiguous unicode in docstrings
+    "RUF003", # Ambiguous unicode in comments
+    # SIM - stylistic preferences
+    "SIM117", # Multiple with statements (clearer when nested)
+    "SIM108", # Ternary expressions (if/else often clearer)
+    # RET - debugging aid
+    "RET504", # Unnecessary assign before return (aids debugging)
+    # PERF - stylistic preferences
+    "PERF401", # List comprehensions (explicit loops often clearer)
+    # SIM - nested conditionals can be clearer with comments
+    "SIM102", # Nested if statements
+    # N804 - Pydantic validators don't always use cls parameter
+    "N804", # First argument of class method should be cls
 ]
 
 [tool.ruff.lint.isort]
@@ -110,7 +133,10 @@ known-first-party = ["translate"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**/*" = ["B011", "B017", "S101", "ARG001", "ARG002", "ARG005"]
+"tests/**/*" = ["B011", "B017", "S101", "ARG001", "ARG002", "ARG005", "PT011"]
+# CLI tools that use print for user interaction
+"pipeline/extract.py" = ["T201"]
+"utils/web_scraper.py" = ["T201"]
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.
@@ -206,9 +232,6 @@ ignore_missing_imports = true
 [tool.vulture]
 min_confidence = 80
 exclude = [
-    "*/tests/*",
-    "*/test_*.py",
-    "*_test.py",
     "*/__pycache__/*",
     "*/venv/*",
     "*/.venv/*",

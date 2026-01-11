@@ -2,6 +2,17 @@
 
 import os
 import tempfile
+from typing import TypedDict
+
+
+class VoiceSettingsDict(TypedDict, total=False):
+    """Type definition for ElevenLabs VoiceSettings parameters."""
+
+    stability: float
+    similarity_boost: float
+    use_speaker_boost: bool
+    speed: float
+
 
 # OpenAI model configuration - Valid model names per project standards
 
@@ -23,7 +34,6 @@ AUDIO_TEMP_DIR = os.path.join(tempfile.gettempdir(), "openarabic-audio")
 INBOX_DIR = os.path.join(ROOT_DIR, "0_inbox")
 SPLIT_DIR = os.path.join(ROOT_DIR, "1_split")
 TRANSLATE_DIR = os.path.join(ROOT_DIR, "2_translate")
-INSERT_DIR = os.path.join(ROOT_DIR, "3_insert")
 
 # Default file paths (legacy support)
 DEFAULT_INPUT_FILE = os.path.join(ARTICLE_DIR, "input.txt")
@@ -34,26 +44,25 @@ DEFAULT_SPLIT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "input_split.json")
 ARABIC_VOICE_ID = "R6nda3uM038xEEKi7GFl"  # Keep for sentence audio only
 
 # Arabic voice settings for ElevenLabs API compatibility
-ARABIC_VOICE_SETTINGS = {
+ARABIC_VOICE_SETTINGS: VoiceSettingsDict = {
     "use_speaker_boost": True,  # Enhanced speaker clarity
     "speed": 0.8,  # Optimal speed for Arabic pronunciation
 }
 
-# English voice IDs - Primary and fallback options
+# English voice IDs
 ENGLISH_VOICE_ID = "NFG5qt843uXKj4pFvR7C"  # Adam - Clear, natural English voice
-ENGLISH_VOICE_ID_FALLBACK = "21m00Tcm4TlvDq8ikWAM"  # Rachel - Backup option
 
 # ElevenLabs TTS - Premium Configuration
 ELEVENLABS_TTS_MODEL_ID = "eleven_v3"  # Latest multilingual model for best quality
 
 # Voice settings for ElevenLabs API compatibility
-DEFAULT_VOICE_SETTINGS = {
+DEFAULT_VOICE_SETTINGS: VoiceSettingsDict = {
     "use_speaker_boost": True,  # Enhanced speaker clarity
     "speed": 0.8,  # Optimal speed for Arabic pronunciation
 }
 
 # English voice settings for bilingual audio - Optimized for quality and stability
-ENGLISH_VOICE_SETTINGS = {
+ENGLISH_VOICE_SETTINGS: VoiceSettingsDict = {
     "stability": 0.5,  # Natural stability (must be 0.0, 0.5, or 1.0 per ElevenLabs API)
     "similarity_boost": 1.0,  # Maximum similarity to original voice
     "use_speaker_boost": True,  # Enhanced speaker clarity
@@ -65,7 +74,13 @@ BILINGUAL_AUDIO_PAUSE_MS = 500  # 500ms pause between English and Arabic
 
 # External services
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+_supabase_url = os.getenv("SUPABASE_URL", "")
+# Supabase storage requires trailing slash
+SUPABASE_URL = (
+    _supabase_url
+    if not _supabase_url or _supabase_url.endswith("/")
+    else _supabase_url + "/"
+)
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_ORG_ID = os.getenv("OPENAI_ORG_ID", "")
@@ -75,9 +90,7 @@ GOOGLE_CLOUD_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT_ID", "")
 GOOGLE_CLOUD_CREDENTIALS_PATH = os.getenv("GOOGLE_CLOUD_CREDENTIALS_PATH", "")
 
 # Translation settings for individual root words
-TRANSLATION_BATCH_SIZE = 20  # Number of root words to process in a batch
 TRANSLATION_RETRY_ATTEMPTS = 3
-TRANSLATION_TIMEOUT = 30
 
 # Author mapping for inbox folders and file prefixes
 AUTHOR_FOLDER_MAPPING = {
@@ -115,11 +128,11 @@ VALID_CATEGORIES = {
     "tafsir": "Quranic exegesis",
 }
 
-# Default category for fallback
-DEFAULT_CATEGORY = "aqeedah"
-
 # OpenRouter configuration for validation
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEEPSEEK_MODEL = "deepseek/deepseek-v3.2"  # Latest DeepSeek v3.2 model
 VALIDATION_MAX_RETRIES = 3
+
+# Batch processing configuration
+MAX_TRANSLATION_BATCH_SIZE = 12  # Maximum sentences per translation batch
+DEEPSEEK_CORRECTION_BATCH_SIZE = 5  # Sentences per DeepSeek correction batch

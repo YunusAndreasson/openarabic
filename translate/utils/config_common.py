@@ -1,5 +1,7 @@
 """Common configuration utilities to eliminate code duplication."""
 
+import contextlib
+import io
 import os
 from typing import Any
 
@@ -83,6 +85,18 @@ def get_supabase_client() -> Any:
                 "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set."
             )
         # At this point, we know both are not None due to the check above
-        assert supabase_url is not None and supabase_key is not None
-        _supabase_client = create_client(supabase_url, supabase_key)
+        assert supabase_url is not None
+        assert supabase_key is not None
+
+        # Supabase storage requires trailing slash
+        if not supabase_url.endswith("/"):
+            supabase_url = supabase_url + "/"
+
+        # Suppress storage3 library warning about trailing slash
+        # The library uses print() to warn, then auto-fixes the URL
+        # Storage client is lazily created - access .storage to trigger initialization
+        with contextlib.redirect_stdout(io.StringIO()):
+            _supabase_client = create_client(supabase_url, supabase_key)
+            # Trigger lazy initialization of storage client to capture its warning
+            _ = _supabase_client.storage
     return _supabase_client

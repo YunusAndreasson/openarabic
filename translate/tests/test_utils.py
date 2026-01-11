@@ -504,7 +504,6 @@ def test_article_audio_summary_exclusion():
         }
     ]
     article_title = "Test Article"
-    article_summary = "This is a test summary that should NOT be included in audio"
 
     # Track what text is being processed
     generated_texts = []
@@ -532,18 +531,11 @@ def test_article_audio_summary_exclusion():
                     _result = create_article_audio(
                         sentences=sentences,
                         article_title=article_title,
-                        article_summary=article_summary,
                         output_dir=temp_dir,
                     )
 
         # Verify that generate_speech was called
         assert len(generated_texts) > 0, "generate_speech should have been called"
-
-        # Verify that the summary text was NOT included in any call
-        summary_found = any(article_summary in text for text in generated_texts)
-        assert not summary_found, (
-            f"Summary text should not be in generated audio calls. Found in: {generated_texts}"
-        )
 
         # Verify that the title text WAS included
         title_found = any(article_title in text for text in generated_texts)

@@ -64,8 +64,7 @@ def get_optimized_context(
                 context_parts.append(f"Following beginning: {starting_words}")
 
         return " ".join(context_parts) if context_parts else None
-    else:
-        return get_sentence_context(sentences, index)
+    return get_sentence_context(sentences, index)
 
 
 @functools.lru_cache(maxsize=1024)

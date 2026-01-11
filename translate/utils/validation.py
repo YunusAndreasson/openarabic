@@ -3,10 +3,8 @@ Validation utilities for translation pipeline results.
 """
 
 import logging
-from collections.abc import Callable
 
 from data import TRANSLATION_ERROR_MARKERS
-from data.config import VALIDATION_MAX_RETRIES
 from data.models import SentenceTranslation, TranslationValidationError
 from data.pipeline_types import (
     TashkeelResults,
@@ -74,9 +72,10 @@ def validate_tashkeel_added(
                         1 for c in tashkeel_text if c in diacritical_marks
                     )
 
-                    if tashkeel_diacritic_count > original_diacritic_count:
-                        tashkeel_added = True
-                    elif tashkeel_text != original:  # Different diacritics
+                    if (
+                        tashkeel_diacritic_count > original_diacritic_count
+                        or tashkeel_text != original
+                    ):
                         tashkeel_added = True
                     else:
                         # If original has diacritics and tashkeel is identical,
@@ -116,11 +115,10 @@ def validate_tashkeel_added(
                     for i, orig, tash in failed_sentences
                 )
             )
-        else:
-            # Log warning for partial failures but don't break the pipeline
-            logger.warning(
-                f"Tashkeel validation partially failed: {len(failed_sentences)} out of {len(original_sentences)} sentences did not have tashkeel added"
-            )
+        # Log warning for partial failures but don't break the pipeline
+        logger.warning(
+            f"Tashkeel validation partially failed: {len(failed_sentences)} out of {len(original_sentences)} sentences did not have tashkeel added"
+        )
 
 
 def validate_translation_results(
@@ -360,7 +358,7 @@ def validate_batch_before_processing(translations: list[SentenceTranslation]) ->
             validate_translation_before_processing(translation)
         except TranslationValidationError as e:
             raise TranslationValidationError(
-                f"Translation {i} (index {translation.index}) failed validation: {str(e)}"
+                f"Translation {i} (index {translation.index}) failed validation: {e!s}"
             ) from e
 
 
@@ -435,51 +433,5 @@ def validate_batch_no_placeholder_data(translations: list[SentenceTranslation]) 
             validate_no_placeholder_data(translation)
         except TranslationValidationError as e:
             raise TranslationValidationError(
-                f"Translation {i} (index {translation.index}) contains placeholder data: {str(e)}"
+                f"Translation {i} (index {translation.index}) contains placeholder data: {e!s}"
             ) from e
-
-
-def validate_with_retry(
-    validation_func: Callable[[list[dict], int], dict],
-    data: list[dict],
-    verbose: bool = False,
-) -> dict | None:
-    """
-    Execute a validation function with retry logic for parse errors.
-
-    Args:
-        validation_func: Function that takes (data, retry_count) and returns a dict
-        data: List of data dictionaries to validate
-        verbose: Enable verbose logging
-
-    Returns:
-        dict: Parsed validation response or None if all retries fail
-    """
-    for retry_count in range(VALIDATION_MAX_RETRIES):
-        try:
-            # Call validation function with current retry count (affects prompt strictness)
-            response = validation_func(data, retry_count)
-            return response
-
-        except ValueError as e:
-            # Parse error - retry with stricter prompt
-            if retry_count < VALIDATION_MAX_RETRIES - 1:
-                if verbose:
-                    logger.warning(
-                        f"Parse error on attempt {retry_count + 1}, retrying: {e}"
-                    )
-                continue
-            else:
-                if verbose:
-                    logger.error(
-                        f"Parse error after {VALIDATION_MAX_RETRIES} attempts: {e}"
-                    )
-                return None
-
-        except Exception as e:
-            # Other errors (API errors, etc.) - log and fail
-            if verbose:
-                logger.error(f"Validation API call failed: {e}")
-            return None
-
-    return None

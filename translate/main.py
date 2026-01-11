@@ -16,7 +16,19 @@ from pathlib import Path
 from data.config import INBOX_DIR, SPLIT_DIR
 from pipeline.split_file import split_files
 from pipeline.translate import translate_files
-from utils.cli_style import print_logo, print_rule
+from utils.cli_style import (
+    print_api_summary,
+    print_error,
+    print_logo,
+    print_phase,
+    print_phase_complete,
+    print_pipeline_complete,
+    print_pipeline_start,
+    print_rule,
+    print_status,
+    print_warning,
+    setup_rich_logging,
+)
 from utils.file_discovery import find_input_files_in_inbox, find_split_files
 from utils.progress_tracker import suppress_verbose_logging
 from utils.responses_api import load_api_keys, token_tracker
@@ -29,23 +41,21 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def timed_phase(phase_name: str) -> Iterator[None]:
+def timed_phase(
+    emoji: str, phase_num: int, name: str, description: str
+) -> Iterator[None]:
     """Context manager for timing and logging pipeline phases."""
     print_rule()
-    logger.info(phase_name)
+    print_phase(emoji, phase_num, name, description)
     start = time.perf_counter()
     yield
     elapsed = time.perf_counter() - start
-    logger.info(f"✅ Completed in {elapsed:.1f}s")
+    print_phase_complete(elapsed)
 
 
 def _setup_logging() -> None:
-    """Configure logging for the pipeline."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    """Configure logging for the pipeline with Rich styling."""
+    setup_rich_logging()
     suppress_verbose_logging()
 
 
@@ -54,11 +64,89 @@ def _load_api_keys() -> None:
     try:
         import utils.set_keys  # noqa: F401
 
-        logger.info("API keys loaded from set_keys.py")
+        print_status("API keys loaded from set_keys.py")
     except ImportError:
-        logger.warning("set_keys.py not found, using environment variables")
+        print_warning("set_keys.py not found, using environment variables")
 
     load_api_keys()
+
+
+def _process_one_file() -> None:
+    """Process a single file from inbox through the complete pipeline."""
+
+    from pipeline.split_file import split_files
+    from pipeline.translate import translate_files
+    from utils.file_discovery import find_input_files_in_inbox
+
+    print_pipeline_start(["Split", "Translate", "Insert", "Word Audio"])
+    total_start = time.perf_counter()
+
+    # Find first file in inbox
+    input_files = find_input_files_in_inbox()
+    if not input_files:
+        print_warning("No files found in inbox. Use --extract to add some.")
+        return
+
+    # Take only the first file (tuple: file_path, author_folder, author_name)
+    single_file_tuple = input_files[0]
+    single_file = single_file_tuple[0]  # Extract just the path
+    print_status(f"Processing: {Path(single_file).name}")
+    remaining = len(input_files) - 1
+    if remaining > 0:
+        print_status(f"({remaining} more file(s) waiting in inbox)")
+
+    # Phase 1: Split
+    with timed_phase("📄", 1, "SPLIT", f"Splitting {Path(single_file).name}"):
+        split_files([single_file_tuple])
+
+    # Find the split file we just created
+    from utils.file_discovery import find_split_files
+
+    split_file_list = find_split_files()
+    if not split_file_list:
+        print_error("Split file not found")
+        return
+
+    # Take only the most recent split file (the one we just created)
+    # Each item is a tuple: (file_path, author_number, author_name)
+    split_file_list.sort(key=lambda x: Path(x[0]).stat().st_mtime, reverse=True)
+    single_split_tuple = split_file_list[0]
+    single_split_path = single_split_tuple[0]
+
+    # Phase 2: Translate
+    with timed_phase(
+        "🌍", 2, "TRANSLATE", f"Translating {Path(single_split_path).name}"
+    ):
+        translate_files([single_split_tuple])
+
+    # Phase 3: Insert (runs as subprocess, processes all translated files)
+    with timed_phase("💾", 3, "INSERT", "Inserting into database"):
+        run_pipeline_step(
+            script_path="pipeline/insert.py",
+            description="database insertion",
+            cwd=str(MODULE_DIR),
+        )
+
+    # Phase 4: Word Audio (for the single article we just inserted)
+    try:
+        from audio import process_word_audio_for_latest_articles
+
+        with timed_phase("🎵", 4, "WORD AUDIO", "Processing word audio"):
+            process_word_audio_for_latest_articles(limit=1)
+    except ImportError as e:
+        print_warning(f"Word audio skipped: {e}")
+    except Exception as e:
+        print_warning(f"Word audio failed: {e}")
+
+    # Summary
+    print_rule()
+    total_elapsed = time.perf_counter() - total_start
+    print_pipeline_complete(total_elapsed)
+
+    if remaining > 0:
+        print_status(
+            f"\n{remaining} file(s) remaining in inbox. Run --full again to process next."
+        )
 
 
 def _run_word_audio(article_id: int | None = None) -> None:
@@ -71,23 +159,24 @@ def _run_word_audio(article_id: int | None = None) -> None:
     )
 
     if article_id is None:
-        phase_name = (
-            "🎵 PHASE 4: WORD AUDIO - Cutting and uploading individual word audio clips"
-        )
-        with timed_phase(phase_name):
+        with timed_phase(
+            "🎵", 4, "WORD AUDIO", "Cutting and uploading individual word audio clips"
+        ):
             if not process_word_audio_for_latest_articles():
-                logger.warning("⚠️ Word audio processing completed with issues")
+                print_warning("Word audio processing completed with issues")
     else:
-        phase_name = (
-            f"🎵 WORD AUDIO - Processing word-level audio for article {article_id}"
-        )
-        with timed_phase(phase_name):
+        with timed_phase(
+            "🎵",
+            0,
+            "WORD AUDIO",
+            f"Processing word-level audio for article {article_id}",
+        ):
             with tempfile.TemporaryDirectory() as temp_dir:
                 if not process_word_audio_for_article(
                     article_id=article_id, output_dir=temp_dir
                 ):
-                    logger.error(
-                        f"❌ Failed to process word audio for article {article_id}"
+                    print_error(
+                        f"Failed to process word audio for article {article_id}"
                     )
 
 
@@ -98,21 +187,41 @@ def _create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Pipeline Phases:
+  0. Extract: Extract passages from URL (pre-inbox phase)
   1. Split: Split input files from 0_inbox into sentences
   2. Translate: Translate split sentences to English
   3. Insert: Process through ElevenLabs and insert into database
   4. Word Audio: Cut and upload individual word audio clips
 
 Examples:
-  python main.py --split                    # Split all files from inbox
-  python main.py --translate                # Translate split files
-  python main.py --insert                   # Insert into database
-  python main.py --split --translate        # Split then translate
-  python main.py --full                     # Complete pipeline (recommended)
-  python main.py --process-word-audio 123   # Process word audio for article 123
+  python main.py --extract --url URL --author 15   # Extract passages from URL
+  python main.py --full                            # Process ONE file end-to-end (recommended)
+  python main.py --split                           # Split all files from inbox
+  python main.py --translate                       # Translate split files
+  python main.py --insert                          # Insert into database
+  python main.py --process-word-audio 123          # Process word audio for article 123
         """,
     )
 
+    parser.add_argument(
+        "-e",
+        "--extract",
+        action="store_true",
+        help="Extract passages from a URL (pre-inbox phase)",
+    )
+    parser.add_argument(
+        "--url",
+        type=str,
+        metavar="URL",
+        help="URL to extract passages from (requires --extract)",
+    )
+    parser.add_argument(
+        "-a",
+        "--author",
+        type=str,
+        metavar="NUM",
+        help="Author number (e.g., 15 for al-Dhahabi) (requires --extract)",
+    )
     parser.add_argument(
         "-s",
         "--split",
@@ -141,7 +250,7 @@ Examples:
         "-f",
         "--full",
         action="store_true",
-        help="Run the complete pipeline: split -> translate -> insert -> word-audio",
+        help="Process ONE file from inbox through complete pipeline (split -> translate -> insert -> word-audio)",
     )
 
     return parser
@@ -155,11 +264,35 @@ def main() -> None:
     parser = _create_parser()
     args = parser.parse_args()
 
-    # Determine which phases to run
-    run_split = args.split or args.full
-    run_translate = args.translate or args.full
-    run_insert = args.insert or args.full
-    run_word_audio_latest = args.full
+    # Handle extract phase separately (it's interactive and doesn't chain)
+    if args.extract:
+        if not args.url or not args.author:
+            print_error("--extract requires both --url and --author")
+            print_status(
+                "Example: python main.py --extract --url 'https://...' --author 15"
+            )
+            sys.exit(1)
+
+        from pipeline.extract import extract_from_url
+
+        _load_api_keys()
+        try:
+            extract_from_url(args.url, args.author)
+        except Exception as e:
+            print_error(f"Extraction failed: {e}")
+            sys.exit(1)
+        return
+
+    # Handle --full: process single file through complete pipeline
+    if args.full:
+        _load_api_keys()
+        _process_one_file()
+        return
+
+    # Determine which phases to run (individual phases, not --full)
+    run_split = args.split
+    run_translate = args.translate
+    run_insert = args.insert
     run_word_audio_specific = args.process_word_audio
 
     if not any((run_split, run_translate, run_insert, run_word_audio_specific)):
@@ -169,28 +302,25 @@ def main() -> None:
     # Load API keys only when actually running pipeline phases
     _load_api_keys()
 
-    if args.full:
-        logger.info(
-            "🚀 Starting FULL PIPELINE (split → translate → insert → word-audio)"
-        )
-    else:
-        phases = []
-        if run_split:
-            phases.append("Split")
-        if run_translate:
-            phases.append("Translate")
-        if run_insert:
-            phases.append("Insert")
-        if run_word_audio_specific:
-            phases.append("Word Audio")
-        if phases:
-            logger.info(f"🚀 Running: {' → '.join(phases)}")
+    # Build list of phases to run
+    phases = []
+    if run_split:
+        phases.append("Split")
+    if run_translate:
+        phases.append("Translate")
+    if run_insert:
+        phases.append("Insert")
+    if args.full or run_word_audio_specific:
+        phases.append("Word Audio")
+
+    if phases:
+        print_pipeline_start(phases)
 
     total_start = time.perf_counter()
 
     # Phase 1: Split
     if run_split:
-        with timed_phase("📄 PHASE 1: SPLIT - Splitting input files into sentences"):
+        with timed_phase("📄", 1, "SPLIT", "Splitting input files into sentences"):
             input_files = find_input_files_in_inbox()
             if not input_files:
                 raise FileNotFoundError(f"No input files found in inbox: {INBOX_DIR}")
@@ -198,7 +328,7 @@ def main() -> None:
 
     # Phase 2: Translate
     if run_translate:
-        with timed_phase("🌍 PHASE 2: TRANSLATE - Translating sentences to English"):
+        with timed_phase("🌍", 2, "TRANSLATE", "Translating sentences to English"):
             split_file_list = find_split_files()
             if not split_file_list:
                 raise FileNotFoundError(f"No split files found in: {SPLIT_DIR}")
@@ -207,7 +337,10 @@ def main() -> None:
     # Phase 3: Insert
     if run_insert:
         with timed_phase(
-            "💾 PHASE 3: INSERT - Processing through ElevenLabs and inserting into database"
+            "💾",
+            3,
+            "INSERT",
+            "Processing through ElevenLabs and inserting into database",
         ):
             run_pipeline_step(
                 script_path="pipeline/insert.py",
@@ -215,42 +348,30 @@ def main() -> None:
                 cwd=str(MODULE_DIR),
             )
 
-        # Phase 4: Word Audio (for full pipeline)
-        if run_word_audio_latest:
-            try:
-                _run_word_audio()
-            except ImportError as e:
-                logger.warning(f"⚠️ Word audio processing not available: {e}")
-            except Exception as e:
-                logger.error(f"❌ Error during word audio processing: {e}")
-
     # Standalone word audio processing
     if run_word_audio_specific:
         try:
             _run_word_audio(run_word_audio_specific)
         except ImportError as e:
-            logger.error(f"❌ Word audio processing not available: {e}")
+            print_error(f"Word audio processing not available: {e}")
         except Exception as e:
-            logger.error(f"❌ Error processing word audio: {e}")
+            print_error(f"Error processing word audio: {e}")
 
     # Final summary
     print_rule()
     total_elapsed = time.perf_counter() - total_start
-    if args.full:
-        logger.info("🎉 FULL PIPELINE COMPLETED!")
-    logger.info(f"⏱️  Total time: {total_elapsed:.1f}s")
+    print_pipeline_complete(total_elapsed)
 
     if token_tracker.api_calls > 0:
-        logger.info("📊 API Usage Summary:")
-        logger.info(token_tracker.get_phase_summary())
+        print_api_summary("API Usage", token_tracker.get_phase_summary())
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        logger.info("\n⚠️  Operation cancelled by user")
+        print_warning("Operation cancelled by user")
         sys.exit(130)
     except Exception as e:
-        logger.error(f"Pipeline failed: {e}")
+        print_error(f"Pipeline failed: {e}")
         sys.exit(1)

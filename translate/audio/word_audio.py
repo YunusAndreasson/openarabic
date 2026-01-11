@@ -77,7 +77,6 @@ def _generate_word_audio(
                     f,
                     file_options={"content-type": "audio/mpeg", "upsert": "true"},
                 )
-            logger.info(f"Force uploaded new {language} audio file: {filename}")
         elif not check_file_exists("audio", filename):
             # Normal upload: check if file exists first
             with open(temp_audio_path, "rb") as f:
@@ -86,11 +85,6 @@ def _generate_word_audio(
                     f,
                     file_options={"content-type": "audio/mpeg"},
                 )
-        else:
-            logger.info(
-                f"{language.capitalize()} audio file {filename} already exists, skipping upload"
-            )
-
         # Clean up temporary file
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
@@ -99,7 +93,7 @@ def _generate_word_audio(
         return {"url": url, "cached": False}
 
     except Exception as e:
-        logger.error(f"Error generating {language} word audio: {str(e)}")
+        logger.error(f"Error generating {language} word audio: {e!s}")
         return None
 
 

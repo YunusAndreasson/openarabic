@@ -24,15 +24,9 @@ def batch_translate_root_words_with_google_cloud(
     service = GoogleTranslateService(credentials_path=credentials_path)
     results: WordTranslationResults = []
 
-    # Extract individual Arabic words from sentences, then extract root words
-    arabic_words = filter_arabic_words(
-        " ".join(sentences)
-    )  # CRITICAL: Use existing function
-    # TODO: Add root word extraction logic here
-    # For now, use individual words as root words
-    root_words = (
-        arabic_words  # This should be enhanced with proper root word extraction
-    )
+    # Extract Arabic words from sentences (root extraction not implemented)
+    arabic_words = filter_arabic_words(" ".join(sentences))
+    root_words = arabic_words
 
     if not root_words:
         return results
@@ -45,57 +39,23 @@ def batch_translate_root_words_with_google_cloud(
 
         # Convert batch results to WordTranslation format
         for translation_result in batch_translations:
-            # Validate that we have proper root word extraction
             original_text = translation_result["original_text"]
             translated_text = translation_result["translated_text"]
-
-            # For now, use the original text as essential, but validate it's not just a fallback
-            # TODO: Implement proper root word extraction logic
-            essential_text = original_text
 
             word_option = WordTranslation(
                 arabic=original_text,
                 english=[translated_text],
                 pos=translation_result.get("pos", "noun"),
-                essential=essential_text,
+                essential=original_text,  # Uses word as-is (root extraction not implemented)
                 essential_translation=[translated_text],
                 notes=translation_result.get("notes", ""),
                 uncertainties=translation_result.get("uncertainties", []),
             )
 
-            # Validate essential field for Google Cloud results
             if not word_option.essential:
                 raise ValueError(
-                    f"Google Cloud translation missing 'essential' field for word '{original_text}'. "
-                    f"Root word extraction logic needs to be implemented."
+                    f"Google Cloud translation missing 'essential' for '{original_text}'"
                 )
-
-            if word_option.essential == word_option.arabic:
-                # Check if this is a word type where identical fields are allowed
-                pos = word_option.pos.lower()
-                if pos in [
-                    "preposition",
-                    "particle",
-                    "conjunction",
-                    "pronoun",
-                    "demonstrative_pronoun",
-                    "relative_pronoun",
-                    "interjection",
-                    "numeral",
-                    "proper_noun",
-                ]:
-                    # For these word types, identical fields are correct
-                    pass
-                elif pos in ["noun", "adjective"]:
-                    # For nouns/adjectives, check if they're already in root form
-                    pass
-                elif pos == "verb":
-                    # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
-                    # No warning needed - this is acceptable
-                    pass
-                else:
-                    # For other parts of speech, allow identical fields without warning
-                    pass
 
             results.append(WordTranslationResult(word_translations=[word_option]))
 

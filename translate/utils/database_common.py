@@ -19,7 +19,7 @@ def safe_database_operation(
         return operation()
     except Exception as e:
         if log_error:
-            logger.error(f"Database operation failed for {error_context}: {str(e)}")
+            logger.error(f"Database operation failed for {error_context}: {e!s}")
         raise
 
 

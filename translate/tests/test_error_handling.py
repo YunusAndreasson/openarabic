@@ -185,11 +185,11 @@ class TestHandleImportError:
 
     def test_handle_import_error_default_message_raises(self):
         """Import error handler should raise and can log a warning first."""
-        with patch("utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger"):
             with pytest.raises(ImportError):
                 handle_import_error("test_module")
             # optional warning may be logged prior to raise
-            assert mock_logger.warning.called or True
+            assert True
 
     def test_handle_import_error_custom_message_raises(self):
         """Import error handler should raise with custom warning."""
@@ -200,14 +200,14 @@ class TestHandleImportError:
 
     def test_handle_import_error_no_fallback(self):
         """No fallback path; always raise."""
-        with patch("utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger"):
             with pytest.raises(ImportError):
                 handle_import_error("test_module")
-            assert mock_logger.warning.called or True
+            assert True
 
     def test_handle_import_error_no_warning_raises(self):
         """Even without warning message, must raise."""
-        with patch("utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger"):
             with pytest.raises(ImportError):
                 handle_import_error("test_module", warning_message=None)
-            assert mock_logger.warning.called or True
+            assert True

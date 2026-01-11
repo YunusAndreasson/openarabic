@@ -1,6 +1,9 @@
 """Helpers for translation processing pipeline orchestration."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from data.deepseek_correction_models import ArticleContext
 
 from data.enums import VerificationStatus
 from data.models import (
@@ -313,6 +316,7 @@ def refine_translations(
 
 def run_deepseek_correction(
     translations: list[SentenceTranslation],
+    article_context: "ArticleContext | None" = None,
 ) -> list[SentenceTranslation]:
     """Run DeepSeek correction on refined translations.
 
@@ -321,13 +325,14 @@ def run_deepseek_correction(
 
     Args:
         translations: List of refined SentenceTranslation objects
+        article_context: Optional ArticleContext with title/summary for context
 
     Returns:
         list[SentenceTranslation]: Translations with corrections applied
     """
     from pipeline.engine.deepseek_correction import correct_translations_with_deepseek
 
-    return correct_translations_with_deepseek(translations)
+    return correct_translations_with_deepseek(translations, article_context)
 
 
 __all__ = [

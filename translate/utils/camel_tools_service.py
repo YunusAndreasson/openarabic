@@ -48,7 +48,7 @@ class CamelToolsService:
             if results and len(results) > 0:
                 # Get the first result with diacritics
                 for result in results:
-                    if "diac" in result and result["diac"]:
+                    if result.get("diac"):
                         # Tashkeel generated successfully
                         return str(result["diac"])
 
@@ -169,6 +169,6 @@ def generate_tashkeel_suggestions_with_context(
 
 __all__ = [
     "CamelToolsService",
-    "get_camel_tools_service",
     "generate_tashkeel_suggestions_with_context",
+    "get_camel_tools_service",
 ]

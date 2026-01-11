@@ -49,7 +49,7 @@ def _extract_tashkeel_data(response: dict[str, Any]) -> dict[str, Any] | None:
                 "uncertainties": response["data"].get("uncertainties", []),
             }
         # Direct format: response["tashkeel"]
-        elif "tashkeel" in response:
+        if "tashkeel" in response:
             return {
                 "tashkeel": response["tashkeel"],
                 "uncertainties": response.get("uncertainties", []),
@@ -140,86 +140,47 @@ def _get_translation_data(obj: Any) -> tuple[str, list[Any]]:
     """Extract translation and uncertainties from TranslationResult object or dict."""
     if hasattr(obj, "translation"):
         return obj.translation, obj.uncertainties
-    else:
-        return obj.get("translation", ""), obj.get("uncertainties", [])
+    return obj.get("translation", ""), obj.get("uncertainties", [])
 
 
 def _get_tashkeel_data(obj: Any) -> tuple[str, list[Any]]:
     """Extract tashkeel and uncertainties from TashkeelResult object or dict."""
     if hasattr(obj, "tashkeel"):
         return obj.tashkeel, obj.uncertainties
-    else:
-        return obj.get("tashkeel", ""), obj.get("uncertainties", [])
+    return obj.get("tashkeel", ""), obj.get("uncertainties", [])
+
+
+def _uncertainty_from_dict(item: dict[str, Any]) -> Uncertainty:
+    """Create Uncertainty from dict with defaults for missing fields."""
+    return Uncertainty(
+        text=item.get("text", "unknown"),
+        reason=item["reason"],
+        word=item.get("word", "unknown"),
+        type=item.get("type", "unknown"),
+        step=item.get("step", "unknown"),
+        resolution=item.get("resolution", "unknown"),
+        explanation=item.get("explanation", "unknown"),
+        related_translation_uncertainty=item.get(
+            "related_translation_uncertainty", "unknown"
+        ),
+        original_uncertainty=item.get("original_uncertainty", "unknown"),
+        reason_unresolved=item.get("reason_unresolved", "unknown"),
+    )
 
 
 def _validate_uncertainties(uncertainties: list[Any]) -> list[Uncertainty]:
-    """Validate and convert uncertainties to proper format."""
+    """Validate and convert uncertainties to proper format.
+
+    Handles: dicts with 'reason' key, strings, or existing Uncertainty objects.
+    Items without 'reason' or invalid types are skipped.
+    """
     validated = []
     for item in uncertainties:
-        if isinstance(item, dict):
-            # Handle various dictionary formats
-            if "text" in item and "reason" in item:
-                # Standard format
-                validated.append(
-                    Uncertainty(
-                        text=item["text"],
-                        reason=item["reason"],
-                        word=item.get("word", "unknown"),
-                        type=item.get("type", "unknown"),
-                        step=item.get("step", "unknown"),
-                        resolution=item.get("resolution", "unknown"),
-                        explanation=item.get("explanation", "unknown"),
-                        related_translation_uncertainty=item.get(
-                            "related_translation_uncertainty", "unknown"
-                        ),
-                        original_uncertainty=item.get(
-                            "original_uncertainty", "unknown"
-                        ),
-                        reason_unresolved=item.get("reason_unresolved", "unknown"),
-                    )
-                )
-            elif "word" in item and "reason" in item:
-                # Tashkeel uncertainty format
-                validated.append(
-                    Uncertainty(
-                        text="unknown",
-                        reason=item["reason"],
-                        word=item["word"],
-                        type=item.get("type", "unknown"),
-                        step=item.get("step", "unknown"),
-                        resolution=item.get("resolution", "unknown"),
-                        explanation=item.get("explanation", "unknown"),
-                        related_translation_uncertainty=item.get(
-                            "related_translation_uncertainty", "unknown"
-                        ),
-                        original_uncertainty=item.get(
-                            "original_uncertainty", "unknown"
-                        ),
-                        reason_unresolved=item.get("reason_unresolved", "unknown"),
-                    )
-                )
-            elif "reason" in item:
-                # Minimal format with just reason
-                validated.append(
-                    Uncertainty(
-                        text=item.get("text", "unknown"),
-                        reason=item["reason"],
-                        word=item.get("word", "unknown"),
-                        type=item.get("type", "unknown"),
-                        step=item.get("step", "unknown"),
-                        resolution=item.get("resolution", "unknown"),
-                        explanation=item.get("explanation", "unknown"),
-                        related_translation_uncertainty=item.get(
-                            "related_translation_uncertainty", "unknown"
-                        ),
-                        original_uncertainty=item.get(
-                            "original_uncertainty", "unknown"
-                        ),
-                        reason_unresolved=item.get("reason_unresolved", "unknown"),
-                    )
-                )
+        if isinstance(item, Uncertainty):
+            validated.append(item)
+        elif isinstance(item, dict) and "reason" in item:
+            validated.append(_uncertainty_from_dict(item))
         elif isinstance(item, str):
-            # Convert string to proper format
             validated.append(
                 Uncertainty(
                     text="unknown",
@@ -234,11 +195,6 @@ def _validate_uncertainties(uncertainties: list[Any]) -> list[Uncertainty]:
                     reason_unresolved="unknown",
                 )
             )
-        elif isinstance(item, Uncertainty):
-            validated.append(item)
-        else:
-            # Skip invalid uncertainty items silently
-            continue
     return validated
 
 
@@ -346,13 +302,13 @@ def _sanitize_word_translation_data(wt_data: dict[str, Any]) -> WordTranslation:
 
 
 __all__ = [
-    "_handle_arabic_processing_error",
     "_extract_response_data",
     "_extract_tashkeel_data",
-    "_validate_word_data",
-    "_get_translation_data",
     "_get_tashkeel_data",
-    "_validate_uncertainties",
+    "_get_translation_data",
+    "_handle_arabic_processing_error",
     "_sanitize_refinement_data",
     "_sanitize_word_translation_data",
+    "_validate_uncertainties",
+    "_validate_word_data",
 ]

@@ -15,9 +15,25 @@ from data.config import (
     DEFAULT_VOICE_SETTINGS,
     ENGLISH_VOICE_ID,
     ENGLISH_VOICE_SETTINGS,
+    VoiceSettingsDict,
 )
 from utils.config_common import get_storage_url
+from utils.error_handling import handle_speech_generation_error
 from utils.storage import get_supabase_client
+
+
+def _create_voice_settings(settings: VoiceSettingsDict) -> VoiceSettings:
+    """Create VoiceSettings from typed dict configuration.
+
+    Uses explicit keyword args to satisfy type checker.
+    """
+    return VoiceSettings(
+        stability=settings.get("stability"),
+        similarity_boost=settings.get("similarity_boost"),
+        use_speaker_boost=settings.get("use_speaker_boost"),
+        speed=settings.get("speed"),
+    )
+
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +41,6 @@ logger = logging.getLogger(__name__)
 def create_article_audio(
     sentences: list[dict],
     article_title: str | None = None,
-    article_summary: str | None = None,
     output_dir: str = AUDIO_TEMP_DIR,
 ) -> dict[str, str] | None:
     """
@@ -36,7 +51,6 @@ def create_article_audio(
     Args:
         sentences: List of sentence dictionaries with 'arabic_text', 'english_text', 'tashkeel'
         article_title: Article title for bilingual audio intro
-        article_summary: Article summary (NOT used in audio generation - kept for API compatibility)
         output_dir: Directory to save temporary files
 
     Returns:
@@ -58,7 +72,7 @@ def create_article_audio(
             title_response = generate_speech(
                 text=article_title.strip(),
                 voice_id=ENGLISH_VOICE_ID,
-                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),  # type: ignore[arg-type]
+                voice_settings=_create_voice_settings(ENGLISH_VOICE_SETTINGS),
             )
             if title_response and title_response.get("audio"):
                 bilingual_segments.append(title_response["audio"])
@@ -75,22 +89,17 @@ def create_article_audio(
             arabic_text = sentence.get("arabic_text", "")
             english_text = sentence.get("english_text", "")
             tashkeel_text = sentence.get("tashkeel", arabic_text)
-            sentence_id = sentence.get("id")  # Get sentence ID for tracking
 
             if not arabic_text or not english_text:
                 logger.warning(f"Skipping sentence {i + 1} - missing text")
                 continue
-
-            logger.info(
-                f"Processing sentence {i + 1}/{len(sentences)} (ID: {sentence_id})"
-            )
 
             # Generate Arabic audio for this sentence
             try:
                 arabic_response = generate_speech(
                     text=tashkeel_text,
                     voice_id=ARABIC_VOICE_ID,
-                    voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),  # type: ignore[arg-type]
+                    voice_settings=_create_voice_settings(DEFAULT_VOICE_SETTINGS),
                 )
 
                 if not arabic_response or not arabic_response.get("audio"):
@@ -103,18 +112,7 @@ def create_article_audio(
                 arabic_segments.append(arabic_audio)
 
             except Exception as e:
-                error_msg = str(e).lower()
-                if (
-                    "content_against_policy" in error_msg
-                    or "terms of service" in error_msg
-                ):
-                    logger.warning(
-                        f"Skipping sentence {i + 1} due to content policy violation"
-                    )
-                else:
-                    logger.warning(
-                        f"Error generating Arabic audio for sentence {i + 1}: {e}"
-                    )
+                handle_speech_generation_error(e, "Arabic", i)
                 continue
 
             # Generate English audio for bilingual version (without timestamps for now)
@@ -122,7 +120,7 @@ def create_article_audio(
                 english_response = generate_speech(
                     text=english_text,
                     voice_id=ENGLISH_VOICE_ID,
-                    voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),  # type: ignore[arg-type]
+                    voice_settings=_create_voice_settings(ENGLISH_VOICE_SETTINGS),
                 )
                 if not english_response or not english_response.get("audio"):
                     logger.warning(
@@ -137,22 +135,9 @@ def create_article_audio(
                 bilingual_segments.append(arabic_audio)
 
             except Exception as e:
-                error_msg = str(e).lower()
-                if (
-                    "content_against_policy" in error_msg
-                    or "terms of service" in error_msg
-                ):
-                    logger.warning(
-                        f"Skipping English audio for sentence {i + 1} due to content policy violation"
-                    )
-                else:
-                    logger.warning(
-                        f"Error generating English audio for sentence {i + 1}: {e}"
-                    )
+                handle_speech_generation_error(e, "English", i)
                 # Still add Arabic audio to bilingual if we have it
                 bilingual_segments.append(arabic_audio)
-
-            logger.info(f"Sentence {i + 1} audio generated successfully")
 
         if not arabic_segments:
             logger.warning(
@@ -247,7 +232,7 @@ def create_article_audio(
         return result
 
     except Exception as e:
-        logger.error(f"Error creating article audio: {str(e)}")
+        logger.error(f"Error creating article audio: {e!s}")
         return None
 
 

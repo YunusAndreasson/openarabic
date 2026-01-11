@@ -16,7 +16,7 @@ def safe_execute(
         return operation()
     except Exception as e:
         if log_error:
-            logger.error(f"Operation failed for {error_context}: {str(e)}")
+            logger.error(f"Operation failed for {error_context}: {e!s}")
         # Always fail fast; callers should handle exceptions explicitly
         raise
 
@@ -53,3 +53,26 @@ def handle_import_error(module_name: str, warning_message: str | None = None) ->
     if warning_message:
         logger.warning(warning_message)
     raise ImportError(f"Required module '{module_name}' is not available")
+
+
+def is_content_policy_error(e: Exception) -> bool:
+    """Check if an exception is due to content policy violation."""
+    error_msg = str(e).lower()
+    return "content_against_policy" in error_msg or "terms of service" in error_msg
+
+
+def handle_speech_generation_error(e: Exception, language: str, idx: int) -> None:
+    """
+    Handle speech generation errors with appropriate logging.
+
+    Args:
+        e: The exception that occurred
+        language: The language being processed (e.g., "Arabic", "English")
+        idx: The sentence index (0-based)
+    """
+    if is_content_policy_error(e):
+        logger.warning(
+            f"Skipping {language} audio for sentence {idx + 1} due to content policy violation"
+        )
+    else:
+        logger.warning(f"Error generating {language} audio for sentence {idx + 1}: {e}")

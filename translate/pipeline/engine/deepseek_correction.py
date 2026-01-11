@@ -10,23 +10,30 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from data.config import DEEPSEEK_CORRECTION_BATCH_SIZE
 from data.deepseek_correction_models import (
+    ArticleContext,
     DeepSeekCorrectionBatchResponse,
+    SentenceContext,
+    SentenceCorrectionInput,
     SentenceCorrectionResponse,
     WordCorrection,
+    WordInput,
 )
 from data.enums import VerificationStatus
 from data.models import SentenceTranslation, WordTranslation
 from utils.arabic_text import strip_arabic_diacritics
 from utils.batch_context import get_batch_prefix, pipeline_stats
+from utils.cli_style import (
+    print_correction_summary,
+    print_sentence_correction,
+    print_word_correction,
+)
 
 if TYPE_CHECKING:
     from utils.openrouter_client import OpenRouterClient
 
 logger = logging.getLogger(__name__)
-
-# Configuration
-CORRECTION_BATCH_SIZE = 5  # Sentences per API call
 
 # Condensed forms that should be expanded to multi-word phrases
 # Used for logging when DeepSeek detects and corrects these
@@ -65,6 +72,7 @@ def _mark_batch_needs_review(batch: list[SentenceTranslation], message: str) -> 
 
 def correct_translations_with_deepseek(
     translations: list[SentenceTranslation],
+    article_context: ArticleContext | None = None,
 ) -> list[SentenceTranslation]:
     """Correct translations using DeepSeek as a second opinion.
 
@@ -74,6 +82,7 @@ def correct_translations_with_deepseek(
 
     Args:
         translations: List of SentenceTranslation objects from refinement step
+        article_context: Optional ArticleContext with title/summary for context
 
     Returns:
         Updated translations with corrections applied and verification_status updated
@@ -90,9 +99,13 @@ def correct_translations_with_deepseek(
         logger.info(f"  → {get_batch_prefix()}DeepSeek correction...")
         client = OpenRouterClient()
 
-        # Process in batches using slicing
-        for i in range(0, len(translations), CORRECTION_BATCH_SIZE):
-            _correct_batch(translations[i : i + CORRECTION_BATCH_SIZE], client)
+        # Build index map once for O(1) context lookup
+        translations_by_index = {t.index: t for t in translations}
+
+        # Process in batches
+        for i in range(0, len(translations), DEEPSEEK_CORRECTION_BATCH_SIZE):
+            batch = translations[i : i + DEEPSEEK_CORRECTION_BATCH_SIZE]
+            _correct_batch(batch, client, translations_by_index, article_context)
 
         return translations
 
@@ -110,16 +123,24 @@ def correct_translations_with_deepseek(
         return translations
 
 
-def _correct_batch(batch: list[SentenceTranslation], client: OpenRouterClient) -> None:
+def _correct_batch(
+    batch: list[SentenceTranslation],
+    client: OpenRouterClient,
+    translations_by_index: dict[int, SentenceTranslation],
+    article_context: ArticleContext | None = None,
+) -> None:
     """Correct a batch of translations and apply changes."""
     from data.config import VALIDATION_MAX_RETRIES
 
-    sentences_data = [_prepare_sentence_data(t) for t in batch]
+    # Prepare sentence data with surrounding context using O(1) lookup
+    sentences_data = [_prepare_sentence_input(t, translations_by_index) for t in batch]
 
     # Call DeepSeek with retry logic
     for retry_count in range(VALIDATION_MAX_RETRIES):
         try:
-            response = client.correct_translations_batch(sentences_data, retry_count)
+            response = client.correct_translations_batch(
+                sentences_data, retry_count, article_context
+            )
             if response:
                 break
         except ValueError as e:
@@ -147,24 +168,53 @@ def _correct_batch(batch: list[SentenceTranslation], client: OpenRouterClient) -
         _mark_batch_needs_review(batch, f"Correction response parsing failed: {e}")
 
 
-def _prepare_sentence_data(translation: SentenceTranslation) -> dict:
-    """Prepare sentence data for correction API."""
-    return {
-        "sentence_index": translation.index,
-        "original_arabic": translation.original,
-        "tashkeel": translation.tashkeel,
-        "full_translation": translation.full_translation,
-        "word_translations": [
-            {
-                "arabic": w.arabic,
-                "english": _get_str_value(w.english),
-                "pos": w.pos.value if hasattr(w.pos, "value") else str(w.pos),
-                "essential": w.essential,
-                "essential_translation": _get_str_value(w.essential_translation),
-            }
-            for w in translation.word_by_word
-        ],
-    }
+def _prepare_sentence_input(
+    translation: SentenceTranslation,
+    translations_by_index: dict[int, SentenceTranslation],
+) -> SentenceCorrectionInput:
+    """Prepare sentence data for correction API with surrounding context.
+
+    Uses O(1) dict lookup instead of O(n) list iteration for efficiency.
+    Returns a validated Pydantic model for type safety.
+    """
+    idx = translation.index
+
+    # O(1) lookup for surrounding sentences
+    prev_t = translations_by_index.get(idx - 1)
+    next_t = translations_by_index.get(idx + 1)
+
+    prev_context = (
+        SentenceContext(arabic=prev_t.original, english=prev_t.full_translation)
+        if prev_t
+        else None
+    )
+    next_context = (
+        SentenceContext(arabic=next_t.original, english=next_t.full_translation)
+        if next_t
+        else None
+    )
+
+    # Build word inputs with proper typing
+    word_inputs = [
+        WordInput(
+            arabic=w.arabic,
+            english=_get_str_value(w.english),
+            pos=w.pos.value if hasattr(w.pos, "value") else str(w.pos),
+            essential=w.essential,
+            essential_translation=_get_str_value(w.essential_translation),
+        )
+        for w in translation.word_by_word
+    ]
+
+    return SentenceCorrectionInput(
+        sentence_index=idx,
+        original_arabic=translation.original,
+        tashkeel=translation.tashkeel,
+        full_translation=translation.full_translation,
+        previous_sentence=prev_context,
+        next_sentence=next_context,
+        word_translations=word_inputs,
+    )
 
 
 def _detect_condensed_forms(text: str) -> list[str]:
@@ -188,13 +238,9 @@ def _apply_corrections(
         # Check for condensed form expansion
         old_condensed = _detect_condensed_forms(old)
         new_condensed = _detect_condensed_forms(new)
+        expanded = old_condensed if (old_condensed and not new_condensed) else None
 
-        logger.info(f"    [Sentence {idx}] Translation corrected:")
-        logger.info(f"      ✗ {old}")
-        logger.info(f"      ✓ {new}")
-        if old_condensed and not new_condensed:
-            logger.info(f"      → Expanded: {old_condensed}")
-
+        print_sentence_correction(idx, "Translation", old, new, expanded)
         translation.full_translation = new
         corrections_applied += 1
 
@@ -205,9 +251,7 @@ def _apply_corrections(
     ):
         old = translation.tashkeel
         new = correction.corrected_tashkeel
-        logger.info(f"    [Sentence {idx}] Tashkeel corrected:")
-        logger.info(f"      ✗ {old}")
-        logger.info(f"      ✓ {new}")
+        print_sentence_correction(idx, "Tashkeel", old, new)
         translation.tashkeel = new
         corrections_applied += 1
 
@@ -222,10 +266,10 @@ def _apply_corrections(
     # Track corrections in pipeline stats
     pipeline_stats.record_correction(corrections_applied)
 
-    # Log summary
-    log_fn = logger.info if corrections_applied else logger.debug
-    log_fn(
-        f"    [Sentence {idx}] {corrections_applied} fixes, q={correction.overall_quality:.2f}"
+    # Print summary with Rich styling
+    level = "info" if corrections_applied else "debug"
+    print_correction_summary(
+        idx, corrections_applied, correction.overall_quality, level
     )
 
 
@@ -283,14 +327,11 @@ def _apply_word_corrections(
             # Check for condensed form expansion in word translation
             old_condensed = _detect_condensed_forms(old_english)
             new_condensed = _detect_condensed_forms(wc.corrected_english)
+            expanded = old_condensed if (old_condensed and not new_condensed) else None
 
-            # Log word correction with clear formatting
-            logger.info(f"      [Sentence {sentence_idx}] Word '{wc.arabic}':")
-            logger.info(f"        ✗ {old_english}")
-            logger.info(f"        ✓ {wc.corrected_english}")
-            if old_condensed and not new_condensed:
-                logger.info(f"        → Expanded: {old_condensed}")
-
+            print_word_correction(
+                sentence_idx, wc.arabic, old_english, wc.corrected_english, expanded
+            )
             word.english = wc.corrected_english
             corrections_applied += 1
 

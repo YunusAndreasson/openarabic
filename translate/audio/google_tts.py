@@ -6,9 +6,9 @@ from typing import Any
 
 from google.cloud import texttospeech
 
-from audio.retry import retry_operation
 from data.config import GOOGLE_CLOUD_CREDENTIALS_PATH
 from utils.exceptions import AudioGenerationError
+from utils.retry import retry_operation
 
 logger = logging.getLogger(__name__)
 
@@ -87,8 +87,9 @@ class GoogleTTSService:
             )
 
             if not response.audio_content:
-                logger.error(f"No audio content returned for Arabic word: {word}")
-                return None
+                raise AudioGenerationError(
+                    f"No audio content returned for Arabic word: {word}"
+                )
 
             return {
                 "audio": response.audio_content,
@@ -98,6 +99,8 @@ class GoogleTTSService:
                 "text": word,
             }
 
+        except AudioGenerationError:
+            raise
         except Exception as e:
             logger.error(f"Failed to generate Arabic word audio for '{word}': {e}")
             raise AudioGenerationError(f"Arabic TTS generation failed: {e}") from e
@@ -138,8 +141,9 @@ class GoogleTTSService:
             )
 
             if not response.audio_content:
-                logger.error(f"No audio content returned for English word: {word}")
-                return None
+                raise AudioGenerationError(
+                    f"No audio content returned for English word: {word}"
+                )
 
             return {
                 "audio": response.audio_content,
@@ -149,6 +153,8 @@ class GoogleTTSService:
                 "text": word,
             }
 
+        except AudioGenerationError:
+            raise
         except Exception as e:
             logger.error(f"Failed to generate English word audio for '{word}': {e}")
             raise AudioGenerationError(f"English TTS generation failed: {e}") from e

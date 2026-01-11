@@ -5,14 +5,17 @@ import logging
 import random
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import ParamSpec, TypeVar
+
+P = ParamSpec("P")
+T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
 
 def retry_operation(
     max_attempts: int = 3, delay: float = 1, backoff: float = 2, jitter: bool = True
-) -> Callable:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Retry decorator for network operations with exponential backoff and jitter.
 
     Args:
@@ -22,9 +25,9 @@ def retry_operation(
         jitter: Add random jitter to delay to avoid thundering herd
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             attempts = 0
             current_delay = delay
 
@@ -80,11 +83,8 @@ def retry_operation(
                     # Cap the delay at 60 seconds maximum
                     current_delay = min(current_delay, 60)
 
-            # This should not be reached (raise on max_attempts), but log if it is
-            logger.error(
-                f"AUDIO GENERATION FAILED: {func.__name__} exhausted all {max_attempts} retries"
-            )
-            return None
+            # Unreachable: loop exits via return (success) or raise (max_attempts)
+            raise AssertionError("Retry loop exited unexpectedly")
 
         return wrapper
 

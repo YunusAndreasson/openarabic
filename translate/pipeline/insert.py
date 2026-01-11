@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -18,13 +19,11 @@ except ImportError:
         "set_keys.py not found, using environment variables"
     )
 
-from audio import (
-    create_article_audio,
-)
 from data.config import (
     AUTHOR_NUMBER_MAPPING,
     TRANSLATE_DIR,
 )
+from data.enums import DifficultyLevel
 from data.models import ArticleData, SentenceTranslation
 from utils import load_api_keys
 
@@ -58,6 +57,9 @@ except Exception as e:
     AUDIO_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
+# Pre-compiled regex for translated file matching
+_TRANSLATED_FILE_RE = re.compile(r"^\d+_.*_translated\.json$")
 
 load_api_keys()
 
@@ -192,7 +194,6 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
             audio_urls = create_article_audio(
                 sentences=sentences,
                 article_title=data["metadata"]["title"],
-                article_summary=data["metadata"]["summary"],
                 output_dir=temp_dir,
             )
 
@@ -219,7 +220,7 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
     article_data = ArticleData(
         title=data["metadata"]["title"],
         summary=data["metadata"]["summary"],
-        difficulty_level=data["metadata"]["difficulty_level"],
+        difficulty_level=DifficultyLevel(data["metadata"]["difficulty_level"]),
         category_id=category_id,
         author_id=author_id,
         content_hash=content_hash,
@@ -259,22 +260,16 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
 
 def find_translation_files() -> list[str]:
     """Find all translation files in the translate directory."""
-    translation_files: list[str] = []
-    import re
-
-    filename_re = re.compile(r"^\d+_.*_translated\.json$")
-
     if not os.path.exists(TRANSLATE_DIR):
         logger.warning(f"Translate directory not found: {TRANSLATE_DIR}")
-        return translation_files
+        return []
 
     # Look for translated JSON files that match our author-number convention
-    for file_name in os.listdir(TRANSLATE_DIR):
-        if filename_re.match(file_name):
-            translation_file = os.path.join(TRANSLATE_DIR, file_name)
-            translation_files.append(translation_file)
-
-    return translation_files
+    return [
+        os.path.join(TRANSLATE_DIR, file_name)
+        for file_name in os.listdir(TRANSLATE_DIR)
+        if _TRANSLATED_FILE_RE.match(file_name)
+    ]
 
 
 def main() -> int:

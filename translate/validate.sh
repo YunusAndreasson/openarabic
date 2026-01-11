@@ -31,7 +31,8 @@ else
 fi
 
 echo -e "\n🔍 Dead code detection (vulture)..."
-uv run vulture .
+# Scan source + tests (so test imports count as usage)
+uv run vulture . tests/
 if [ $? -eq 0 ]; then
     echo "✅ Dead code detection (vulture) passed"
 else

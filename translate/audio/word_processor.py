@@ -90,35 +90,24 @@ def generate_word_audio_with_google_tts(
     return word_audio_results
 
 
-def process_word_audio_for_latest_articles() -> bool:
+def process_word_audio_for_latest_articles(limit: int = 3) -> bool:
     """
     Process word audio for the most recently inserted articles.
     This is used in the full pipeline to automatically process word audio after insertion.
+
+    Args:
+        limit: Maximum number of recent articles to process (default 3)
     """
-    # Find latest articles for word audio processing
-
     try:
-        # Query for the latest articles (most recently inserted)
-        import os
+        # Use singleton client (handles URL trailing slash and warning suppression)
+        supabase = get_supabase_client()
 
-        from dotenv import load_dotenv
-        from supabase import create_client
-
-        load_dotenv()
-
-        url = os.getenv("SUPABASE_URL")
-        key = os.getenv("SUPABASE_KEY")
-        if not url or not key:
-            logger.error("Missing SUPABASE_URL or SUPABASE_KEY environment variables")
-            return False
-        supabase = create_client(url, key)
-
-        # Get the 3 most recent articles that don't have word audio processed yet
+        # Get the most recent articles that don't have word audio processed yet
         result = (
             supabase.table("articles")
             .select("id, title")
             .order("created_at", desc=True)
-            .limit(3)
+            .limit(limit)
             .execute()
         )
 

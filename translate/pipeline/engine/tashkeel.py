@@ -89,7 +89,7 @@ def batch_add_tashkeel(
             )
 
             # Handle both TranslationResult objects and dictionaries
-            translation, uncertainties = _get_translation_data(translation_result)
+            _translation, _uncertainties = _get_translation_data(translation_result)
 
             # Create a tashkeel-enhanced version of the sentence using camel_tools suggestions
             # Use token-aware replacement to avoid modifying substrings in other words

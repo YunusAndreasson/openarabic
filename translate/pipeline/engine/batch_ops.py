@@ -92,9 +92,8 @@ def batch_translate_full_sentences(
             else:
                 raise RuntimeError(f"Failed to translate sentence {i}")
         return results
-    else:
-        # Use standard implementation when no conversation manager
-        response = try_translation(sentences, contexts)
+    # Use standard implementation when no conversation manager
+    response = try_translation(sentences, contexts)
 
     # Handle Response API response structure (only for standard implementation)
     data = _extract_response_data(response)

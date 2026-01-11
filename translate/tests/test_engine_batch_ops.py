@@ -164,9 +164,7 @@ class TestBatchTranslateFullSentences:
             )
 
     @patch("utils.responses_api.token_tracker")
-    def test_with_conversation_manager(
-        self, mock_tracker, mock_conversation_manager, sample_translation_result
-    ):
+    def test_with_conversation_manager(self, mock_tracker, mock_conversation_manager):
         """Test translation using conversation manager path."""
         from pipeline.engine.batch_ops import batch_translate_full_sentences
 

@@ -195,8 +195,9 @@ class TestConfigCommon:
 
         client = get_supabase_client()
         assert client == mock_client
+        # URL should have trailing slash added for Supabase storage compatibility
         mock_create_client.assert_called_once_with(
-            "https://test.supabase.co", "test_key"
+            "https://test.supabase.co/", "test_key"
         )
 
     @patch.dict(os.environ, {}, clear=True)
