@@ -25,8 +25,7 @@ yarn-error.log*
 # local env files
 .env*.local
 
-# cloudflare / vercel build output
-.vercel
+# cloudflare build output
 .open-next
 
 # typescript
