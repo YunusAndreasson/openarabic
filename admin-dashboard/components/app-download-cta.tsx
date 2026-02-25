@@ -163,12 +163,12 @@ export function AppDownloadCTA({
 
             <h2
               id="hero-cta-title"
-              className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight"
+              className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight"
             >
               {finalTitle}
             </h2>
 
-            <p className="mt-2 text-gray-600 dark:text-gray-400 max-w-lg mx-auto sm:mx-0">
+            <p className="mt-2 text-muted-foreground max-w-lg mx-auto sm:mx-0">
               {finalDescription}
             </p>
 
@@ -177,7 +177,7 @@ export function AppDownloadCTA({
               {FEATURES.map((feature) => (
                 <span
                   key={feature}
-                  className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full"
+                  className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-muted-foreground bg-muted rounded-full"
                 >
                   {feature}
                 </span>
@@ -191,7 +191,7 @@ export function AppDownloadCTA({
 
             {/* Authors */}
             {authors.length > 0 && (
-              <p className="mt-4 text-xs text-gray-500 dark:text-gray-500">
+              <p className="mt-4 text-xs text-muted-foreground">
                 Featuring works by {formatAuthors()}
               </p>
             )}
@@ -208,7 +208,7 @@ export function AppDownloadCTA({
 
   return (
     <div
-      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 md:p-8"
+      className="bg-card border border-border rounded-xl p-6 md:p-8"
       style={{ contain: 'layout style paint' }}
     >
       <div className="flex flex-col md:flex-row items-center gap-6">
@@ -221,10 +221,10 @@ export function AppDownloadCTA({
           loading="lazy"
         />
         <div className="flex-1 text-center md:text-left">
-          <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-3">
+          <h3 className="text-xl md:text-2xl font-bold text-foreground mb-3">
             {finalTitle}
           </h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-muted-foreground mb-6">
             {finalDescription}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3">

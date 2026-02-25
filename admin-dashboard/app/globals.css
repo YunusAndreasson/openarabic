@@ -80,10 +80,6 @@ body {
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-family-sans);
-  /* Optimize for readability */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
   overscroll-behavior: none;
 }
 
@@ -122,12 +118,6 @@ h1, h2, h3, h4, h5, h6 {
 *:focus-visible {
   outline: 2px solid var(--color-ring);
   outline-offset: 2px;
-}
-
-/* Performance optimizations - GPU acceleration for interactive elements */
-button, a, [role="button"] {
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 
 /* Optimize animations - only use transform and opacity */

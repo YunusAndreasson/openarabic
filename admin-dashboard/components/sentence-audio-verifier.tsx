@@ -868,7 +868,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
       {/* Instant Hover Tooltip */}
       {hoveredWord && !selectedWord && (
         <div
-          className="fixed z-40 bg-gray-900 text-white px-2 py-1 rounded text-sm pointer-events-none"
+          className="fixed z-40 bg-popover text-popover-foreground px-2 py-1 rounded text-sm pointer-events-none shadow-md"
           style={{
             left: `${hoveredWord.position.x}px`,
             top: `${hoveredWord.position.y - 10}px`,

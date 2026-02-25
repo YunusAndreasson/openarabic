@@ -62,7 +62,7 @@ export function SmartAppBanner({ platformInfo }: SmartAppBannerProps) {
         role="banner"
         aria-label="Download OpenArabic mobile app"
       >
-        <div className="bg-white/95 dark:bg-gray-900/95 border-b border-gray-200 dark:border-gray-800 shadow-lg backdrop-blur-sm">
+        <div className="bg-card/95 border-b border-border shadow-lg backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
             <Image
               src="/oaLogo.png"
@@ -75,10 +75,10 @@ export function SmartAppBanner({ platformInfo }: SmartAppBannerProps) {
             />
 
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+              <div className="font-semibold text-sm text-foreground">
                 OpenArabic
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="text-xs text-muted-foreground">
                 Master Arabic through reading
               </div>
             </div>
@@ -93,7 +93,7 @@ export function SmartAppBanner({ platformInfo }: SmartAppBannerProps) {
 
             <button
               onClick={handleDismiss}
-              className="flex-shrink-0 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 touch-manipulation"
+              className="flex-shrink-0 p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors duration-200 touch-manipulation"
               aria-label="Dismiss banner"
             >
               <X size={18} />

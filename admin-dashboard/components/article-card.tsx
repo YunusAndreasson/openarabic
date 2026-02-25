@@ -80,7 +80,7 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
     <Link
       href={`/read/${generateSlug(article.title, article.id)}`}
       prefetch={true}
-      className="group block h-full will-change-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
+      className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
       aria-label={`Read article: ${article.title}`}
     >
       <article
@@ -127,7 +127,7 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
 
           {/* Title Overlay - Only in dark mode */}
           {isDark && (
-            <div className="absolute bottom-0 left-0 right-0 pl-4 pr-4 pb-0 pt-6 md:pr-5 md:pb-0 md:pt-8">
+            <div className="absolute bottom-0 left-0 right-0 px-4 pt-8">
               <h2 className="text-lg md:text-xl font-bold leading-[1.3] text-white line-clamp-2">
                 {article.title}
               </h2>
@@ -136,24 +136,26 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
         </div>
 
         {/* Content - Title (light mode only), Summary and Metadata */}
-        <div className="flex flex-col flex-1 px-6 pb-4 md:px-[26px] md:pb-4 pt-4 md:pt-5">
+        <div className="flex flex-col flex-1 px-4 pt-4 pb-4">
           {/* Title - Light mode only (below image) */}
           {!isDark && (
-            <h2 className="text-lg md:text-xl font-bold leading-[1.3] text-foreground line-clamp-2 mb-3 -mx-2 md:-mx-[10px]">
+            <h2 className="text-lg md:text-xl font-bold leading-[1.3] text-foreground line-clamp-2 mb-1.5">
               {article.title}
             </h2>
           )}
 
           {/* Summary */}
-          <p className="text-foreground/90 text-base line-clamp-4 leading-[1.618] font-serif -mx-2 md:-mx-[10px]">
+          <p className="text-muted-foreground text-sm line-clamp-3 leading-relaxed">
             {article.summary}
           </p>
 
           {/* Metadata - Author, Date, Read Time */}
-          <div className={`flex items-center gap-2 text-xs text-muted-foreground/80 flex-wrap mt-auto -mx-2 md:-mx-[10px] ${isDark ? 'pt-5' : 'pt-4'}`}>
-            <span className="font-medium text-foreground/90">{article.authors?.name || 'OpenArabic'}</span>
-            <span className="opacity-65">{formatDate(article.created_at)}</span>
-            <span className="opacity-65">{estimateReadTime(article.summary, article.difficulty_level)}</span>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-auto pt-4">
+            <span className="font-medium">{article.authors?.name || 'OpenArabic'}</span>
+            <span aria-hidden="true">&middot;</span>
+            <span>{formatDate(article.created_at)}</span>
+            <span aria-hidden="true">&middot;</span>
+            <span>{estimateReadTime(article.summary, article.difficulty_level)}</span>
           </div>
         </div>
       </article>

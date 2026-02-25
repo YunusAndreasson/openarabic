@@ -65,7 +65,7 @@ export function PublicHeader({
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md will-change-transform supports-[backdrop-filter]:bg-background/80 view-transition-stable transition-transform duration-300 ease-out ${!isVisible ? '-translate-y-full' : 'translate-y-0'}`}
+      className={`sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md view-transition-stable transition-transform duration-300 ease-out ${!isVisible ? '-translate-y-full' : 'translate-y-0'}`}
       style={{ viewTransitionName: 'header' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
