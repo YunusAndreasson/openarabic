@@ -101,7 +101,8 @@
         "expo-audio",
         {
           "recordAudioAndroid": false,
-          "_comment": "Audio recording disabled - app only uses playback. This prevents RECORD_AUDIO permission from being added."
+          "enableBackgroundPlayback": true,
+          "_comment": "Audio recording disabled - app only uses playback. Background playback enabled for lock screen controls."
         }
       ],
       "./plugins/withRemoveExpoAudioBootReceiver.js",

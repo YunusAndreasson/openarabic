@@ -80,6 +80,8 @@ describe('audioPlayer service', () => {
     remove: jest.Mock;
     seekTo: jest.Mock;
     addListener: jest.Mock;
+    setActiveForLockScreen: jest.Mock;
+    clearLockScreenControls: jest.Mock;
   };
 
   // Test tracks
@@ -120,6 +122,8 @@ describe('audioPlayer service', () => {
       pause: jest.fn(),
       remove: jest.fn(),
       seekTo: jest.fn().mockResolvedValue(undefined),
+      setActiveForLockScreen: jest.fn(),
+      clearLockScreenControls: jest.fn(),
       addListener: jest.fn((event, callback) => {
         if (event === 'playbackStatusUpdate') {
           statusCallback = callback;

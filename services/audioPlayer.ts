@@ -21,9 +21,9 @@ const AUDIO_MODE_CONFIG = {
   // iOS
   playsInSilentMode: true,
   allowsRecording: false,
-  interruptionMode: 'duckOthers' as const,
+  interruptionMode: 'doNotMix' as const,
   // Android
-  interruptionModeAndroid: 'duckOthers' as const,
+  interruptionModeAndroid: 'doNotMix' as const,
   shouldRouteThroughEarpiece: false,
 };
 
@@ -414,6 +414,9 @@ class SimpleAudioService {
         throw new Error(`Failed to start playback: ${playError}`);
       }
 
+      // Activate lock screen controls with track metadata
+      this.activateLockScreen(track);
+
       // Update status to playing (actual state will come from event subscription)
       // Note: Native states (isLoaded, isBuffering) will be updated by event subscription
       this.updateStatus({
@@ -768,6 +771,21 @@ class SimpleAudioService {
   }
 
   /**
+   * Activate lock screen controls with track metadata (best-effort)
+   */
+  private activateLockScreen(track: EnhancedAudioTrack): void {
+    if (!this.currentPlayer) return;
+    try {
+      this.currentPlayer.setActiveForLockScreen(true, {
+        title: track.title,
+        artworkUrl: track.imageUrl,
+      });
+    } catch {
+      // Non-critical — lock screen controls are best-effort
+    }
+  }
+
+  /**
    * Internal stop method
    */
   private async stopInternal(): Promise<void> {
@@ -779,7 +797,7 @@ class SimpleAudioService {
       this.currentTrack = null;
 
       try {
-        // Properly dispose of player to free memory
+        player.clearLockScreenControls();
         player.pause();
         player.remove();
       } catch {
