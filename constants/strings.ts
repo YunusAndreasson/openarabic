@@ -112,15 +112,9 @@ export const STRINGS = {
   CATEGORY: 'Category',
   // Section headers for Explore tab
   SECTION_CATEGORIES: 'Topics',
-  SECTION_AUTHORS: 'Writers',
-  SECTION_DIFFICULTY: 'Level',
-  SECTION_LENGTH: 'Length',
-  SECTION_MORE_FILTERS: 'Refine',
   SECTION_GETTING_STARTED: 'Getting started',
   SECTION_FEATURED: 'For you',
-  SECTION_AUTHOR_IN_FOCUS: 'Spotlight',
-  SECTION_QUICK_READS: 'Quick reads',
-  SECTION_DISCOVER_WORDS: 'Discover words to practice',
+  SECTION_LONG_READS: 'Long reads',
   // Difficulty levels
   DIFFICULTY_BEGINNER: 'Beginner',
   DIFFICULTY_INTERMEDIATE: 'Intermediate',

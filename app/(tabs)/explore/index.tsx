@@ -8,19 +8,21 @@ import type { ScrollView } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
 import { SectionLabel } from '@/components/common';
-import { ArticleList , AuthorInFocusSection , BrandFooter , ContinueReadingSection , DiscoverWordsSection , FilterSection , IntelligentArticleSection , MoreFiltersSection , QuickReadsSection } from '@/components/explore';
+import {
+  ArticleList,
+  BrandFooter,
+  ContinueReadingSection,
+  FilterSection,
+  IntelligentArticleSection,
+  LongReadsSection,
+} from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
-import {
-  getAuthorFilterRoute,
-  getCategoryFilterRoute,
-  getDifficultyFilterRoute,
-  getLengthFilterRoute,
-} from '@/constants/routes';
+import { getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useToast } from '@/components/providers/ToastProvider';
-import type { AuthorId, CategoryId } from '@/types/branded.types';
+import type { CategoryId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
@@ -69,8 +71,6 @@ export default function ExploreScreen(): JSX.Element {
 
   const { data: categoriesData = [] } = useQuery(articleQueries.categories());
 
-  const { data: authorsData = [] } = useQuery(articleQueries.authors());
-
   const { data: articlesData = [] } = useQuery({
     ...articleQueries.all(),
     refetchOnMount: false, // Don't refetch on mount if we have data
@@ -105,36 +105,13 @@ export default function ExploreScreen(): JSX.Element {
     }
   }, [articlesData]);
 
-  // Note: Categories are prioritized over authors since IDs overlap and categories are primary navigation
-
-  // OPTIMIZED: Single-pass count calculation for categories, authors, difficulty, and length
-  const { categoryCounts, authorCounts, difficultyCounts, lengthCounts } = useMemo(() => {
-    return articlesData.reduce<{
-      categoryCounts: Record<number, number>;
-      authorCounts: Record<number, number>;
-      difficultyCounts: Record<number, number>;
-      lengthCounts: Record<number, number>;
-    }>(
-      (acc, article) => {
-        // Every article has a category and author (guaranteed)
-        acc.categoryCounts[article.category.id] =
-          (acc.categoryCounts[article.category.id] || 0) + 1;
-        acc.authorCounts[article.author.id] = (acc.authorCounts[article.author.id] || 0) + 1;
-
-        // Difficulty counts (map 1-5 to 3 buckets)
-        const diffLevel = article.difficulty_level ?? 3;
-        const diffBucket = diffLevel <= 2 ? 1 : diffLevel <= 4 ? 2 : 3;
-        acc.difficultyCounts[diffBucket] = (acc.difficultyCounts[diffBucket] || 0) + 1;
-
-        // Length counts based on reading time (sentences / 4 = minutes)
-        const minutes = Math.ceil((article.article_sentences?.length ?? 0) / 4);
-        const lengthBucket = minutes <= 2 ? 1 : minutes <= 5 ? 2 : 3;
-        acc.lengthCounts[lengthBucket] = (acc.lengthCounts[lengthBucket] || 0) + 1;
-
-        return acc;
-      },
-      { categoryCounts: {}, authorCounts: {}, difficultyCounts: {}, lengthCounts: {} },
-    );
+  // Build category counts from articles
+  const categoryCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (const article of articlesData) {
+      counts[article.category.id] = (counts[article.category.id] || 0) + 1;
+    }
+    return counts;
   }, [articlesData]);
 
   // Build categories list with counts (only show categories with articles, sorted by popularity)
@@ -144,37 +121,6 @@ export default function ExploreScreen(): JSX.Element {
         .filter(c => c.count > 0)
         .sort((a, b) => b.count - a.count),
     [categoriesData, categoryCounts],
-  );
-
-  // Build authors list with counts (only show authors with articles, sorted by popularity)
-  const authorsWithArticles = useMemo(
-    () =>
-      buildEntitiesWithCounts(authorsData, authorCounts)
-        .filter(a => a.count > 0)
-        .sort((a, b) => b.count - a.count),
-    [authorsData, authorCounts],
-  );
-
-  // Build difficulty items with counts (only show items with articles)
-  const difficultyItems = useMemo(
-    () =>
-      [
-        { id: 1, name: STRINGS.DIFFICULTY_BEGINNER, count: difficultyCounts[1] || 0 },
-        { id: 2, name: STRINGS.DIFFICULTY_INTERMEDIATE, count: difficultyCounts[2] || 0 },
-        { id: 3, name: STRINGS.DIFFICULTY_ADVANCED, count: difficultyCounts[3] || 0 },
-      ].filter(item => item.count > 0),
-    [difficultyCounts],
-  );
-
-  // Build length items with counts (only show items with articles)
-  const lengthItems = useMemo(
-    () =>
-      [
-        { id: 1, name: STRINGS.LENGTH_SHORT, count: lengthCounts[1] || 0 },
-        { id: 2, name: STRINGS.LENGTH_MEDIUM, count: lengthCounts[2] || 0 },
-        { id: 3, name: STRINGS.LENGTH_LONG, count: lengthCounts[3] || 0 },
-      ].filter(item => item.count > 0),
-    [lengthCounts],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -205,24 +151,15 @@ export default function ExploreScreen(): JSX.Element {
   }, [isRefreshing, queryClient, user?.id]);
 
   const handleSelectFilter = useCallback(
-    (id: number, name?: string, filterType?: string) => {
+    (id: number, _name?: string, filterType?: string) => {
       if (filterType === 'category') {
         const category = categoriesData.find(c => c.id === id);
         if (category) {
           router.push(getCategoryFilterRoute(id as CategoryId, category.name));
         }
-      } else if (filterType === 'author') {
-        const author = authorsData.find(a => a.id === id);
-        if (author) {
-          router.push(getAuthorFilterRoute(id as AuthorId, author.name));
-        }
-      } else if (filterType === 'difficulty') {
-        router.push(getDifficultyFilterRoute(id, name));
-      } else if (filterType === 'length') {
-        router.push(getLengthFilterRoute(id, name));
       }
     },
-    [categoriesData, authorsData],
+    [categoriesData],
   );
 
   // Optimized header component - memoize individual sections
@@ -230,9 +167,7 @@ export default function ExploreScreen(): JSX.Element {
     const sections = [];
 
     // Continue Reading / Getting Started section (adaptive based on user progress)
-    sections.push(
-      <ContinueReadingSection key="continue-reading" articlesData={articlesData} />,
-    );
+    sections.push(<ContinueReadingSection key="continue-reading" articlesData={articlesData} />);
 
     // Featured articles (intelligent selection of unread articles)
     sections.push(
@@ -255,50 +190,11 @@ export default function ExploreScreen(): JSX.Element {
       </View>,
     );
 
-    // Author in Focus section (highlights one author with most unread content)
-    // Placed before Authors list to create "try this one → browse all" flow
-    sections.push(
-      <AuthorInFocusSection key="author-in-focus" articlesData={articlesData} />,
-    );
-
-    // Authors section
-    sections.push(
-      <View key="authors-wrapper">
-        <SectionLabel title={STRINGS.SECTION_AUTHORS} />
-        <FilterSection
-          items={authorsWithArticles}
-          onSelect={handleSelectFilter}
-          filterType="author"
-        />
-      </View>,
-    );
-
-    // Collapsible More Filters section (Difficulty + Length)
-    sections.push(
-      <MoreFiltersSection
-        key="more-filters"
-        difficultyItems={difficultyItems}
-        lengthItems={lengthItems}
-        onSelect={handleSelectFilter}
-      />,
-    );
-
-    // Quick Reads section (short articles ≤2 min)
-    sections.push(<QuickReadsSection key="quick-reads" articlesData={articlesData} />);
-
-    // Discover Words section (tap words to add to Practice)
-    sections.push(<DiscoverWordsSection key="discover-words" />);
+    // Long reads section (longer unread articles)
+    sections.push(<LongReadsSection key="long-reads" articlesData={articlesData} />);
 
     return sections;
-  }, [
-    articlesData,
-    refreshKey,
-    categoriesWithArticles,
-    authorsWithArticles,
-    difficultyItems,
-    lengthItems,
-    handleSelectFilter,
-  ]);
+  }, [articlesData, refreshKey, categoriesWithArticles, handleSelectFilter]);
 
   const ListHeaderComponent = useMemo(() => <>{headerSections}</>, [headerSections]);
 

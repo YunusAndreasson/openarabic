@@ -1,16 +1,13 @@
 export { ArticleCard } from './ArticleCard';
 export { ArticleList } from './ArticleList';
-export { AuthorInFocusSection } from './AuthorInFocusSection';
 export { BrandFooter } from './BrandFooter';
 export { ContinueReadingSection } from './ContinueReadingSection';
-export { DiscoverWordsSection } from './DiscoverWordsSection';
 export { FeaturedSection } from './FeaturedSection';
 export { FilteredArticleView } from './FilteredArticleView';
 export { FilterSection } from './FilterSection';
 export { HorizontalArticleSlider } from './HorizontalArticleSlider';
 export { HorizontalFeaturedSection } from './HorizontalFeaturedSection';
 export { IntelligentArticleSection } from './IntelligentArticleSection';
-export { MoreFiltersSection } from './MoreFiltersSection';
-export { QuickReadsSection } from './QuickReadsSection';
+export { LongReadsSection } from './LongReadsSection';
 export { StreakChart } from './StreakChart';
 export { StreakMetrics } from './StreakMetrics';
