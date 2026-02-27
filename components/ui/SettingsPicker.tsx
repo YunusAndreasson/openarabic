@@ -104,10 +104,7 @@ function SettingsPickerComponent<T>({
 
         {/* Options */}
         <View
-          style={[
-            styles.optionsContainer,
-            { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE },
-          ]}
+          style={[styles.optionsContainer, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
         >
           {options.map(option => {
             const isSelected = currentValue === option.id;

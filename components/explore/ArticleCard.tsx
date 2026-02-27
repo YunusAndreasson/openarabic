@@ -123,19 +123,11 @@ export function ArticleCard({
         </Canvas>
 
         <View style={styles.overlayTextContainer}>
-          <ThemedText
-            colorName="cardOverlayHeading"
-            numberOfLines={2}
-            style={TITLE_STYLE}
-          >
+          <ThemedText colorName="cardOverlayHeading" numberOfLines={2} style={TITLE_STYLE}>
             {title}
           </ThemedText>
 
-          <ThemedText
-            colorName="cardOverlayAuthor"
-            numberOfLines={1}
-            type="label"
-          >
+          <ThemedText colorName="cardOverlayAuthor" numberOfLines={1} type="label">
             {metadataText}
           </ThemedText>
         </View>

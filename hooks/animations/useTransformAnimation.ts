@@ -77,7 +77,6 @@ export interface TransformAnimationOptions {
    */
   damping?: number;
   stiffness?: number;
-
 }
 
 interface TransformAnimationResult {

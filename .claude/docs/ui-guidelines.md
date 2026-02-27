@@ -123,16 +123,16 @@ Use unified `PRESS_SCALE` from `animation.ts`:
 import { PRESS_SCALE } from '@/constants/animation';
 
 // Default press (buttons, cards)
-withTiming(PRESS_SCALE.DEFAULT)  // 0.96
+withTiming(PRESS_SCALE.DEFAULT); // 0.96
 
 // Moderate press (toggles, interactive words)
-withTiming(PRESS_SCALE.MODERATE)  // 0.95
+withTiming(PRESS_SCALE.MODERATE); // 0.95
 
 // Strong press (icon buttons)
-withTiming(PRESS_SCALE.STRONG)  // 0.9
+withTiming(PRESS_SCALE.STRONG); // 0.9
 
 // Drag feedback (scale up)
-withTiming(PRESS_SCALE.DRAG_UP)  // 1.05
+withTiming(PRESS_SCALE.DRAG_UP); // 1.05
 ```
 
 ## Header Button Components

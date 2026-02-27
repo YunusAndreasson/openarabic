@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BaseCard , SectionTitle } from '@/components/common';
+import { BaseCard, SectionTitle } from '@/components/common';
 import { OPACITY_HEX } from '@/constants/colors';
 import { FONT_WEIGHTS, LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';

@@ -105,12 +105,7 @@ export class ComponentErrorBoundary extends Component<
         return fallback;
       }
 
-      return (
-        <DefaultErrorFallback
-          error={error}
-          componentName={componentName}
-        />
-      );
+      return <DefaultErrorFallback error={error} componentName={componentName} />;
     }
 
     return children;

@@ -140,3 +140,6 @@ VALIDATION_MAX_RETRIES = 3
 # Batch processing configuration
 MAX_TRANSLATION_BATCH_SIZE = 12  # Maximum sentences per translation batch
 DEEPSEEK_CORRECTION_BATCH_SIZE = 5  # Sentences per DeepSeek correction batch
+
+# Parallelism: max concurrent API calls within a pipeline step
+MAX_PARALLEL_API_CALLS = 4

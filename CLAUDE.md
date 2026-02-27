@@ -7,6 +7,7 @@ React Native Arabic language learning app with spaced repetition, audio features
 This CLAUDE.md applies to the **React Native mobile app only**.
 
 **Ignore these directories** (separate projects with their own tooling):
+
 - `admin-dashboard/` - Next.js admin panel
 - `translate/` - Python translation pipeline
 - `publish/` - Python social media scripts
@@ -33,11 +34,13 @@ This CLAUDE.md applies to the **React Native mobile app only**.
 **CRITICAL: NEVER run validation during development** - Make all changes first, then validate once at the very end.
 
 **Correct pattern:**
+
 ```
 ✅ Make edit 1 → Make edit 2 → Make edit 3 → (user confirms done) → yarn validate once
 ```
 
 **Commands** (run directly without asking):
+
 - `yarn validate` - Fast validation (changed files only, ~5-6s)
 - `yarn validate:full` - Full validation (all files)
 - `yarn prettier:fix` - Auto-format (always use this, never manually fix formatting)

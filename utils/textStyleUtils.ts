@@ -1,11 +1,6 @@
 import type { TextStyle, ViewStyle } from 'react-native';
 
-import {
-  FONT_WEIGHTS,
-  getArabicTextStyle,
-  LAYOUT,
-  LETTER_SPACING,
-} from '@/constants/layout';
+import { FONT_WEIGHTS, getArabicTextStyle, LAYOUT, LETTER_SPACING } from '@/constants/layout';
 
 // ===== TEXT STYLE CONSTANTS =====
 export const TEXT_STYLE_CONSTANTS = {

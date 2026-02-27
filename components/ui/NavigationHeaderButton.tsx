@@ -47,7 +47,11 @@ export const NavigationHeaderButton: FC<NavigationHeaderButtonProps> = ({ action
   }, [onPress]);
 
   return (
-    <TransparentHeaderButton iconName={NAVIGATION_ICONS[action]} onPress={handlePress} size="medium" />
+    <TransparentHeaderButton
+      iconName={NAVIGATION_ICONS[action]}
+      onPress={handlePress}
+      size="medium"
+    />
   );
 };
 

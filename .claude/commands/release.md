@@ -11,21 +11,25 @@ Trigger a release build via GitHub Actions.
 ## Commands
 
 **iOS only:**
+
 ```bash
 gh workflow run release.yml -f platform=ios
 ```
 
 **Android only:**
+
 ```bash
 gh workflow run release.yml -f platform=android
 ```
 
 **Both platforms (default):**
+
 ```bash
 gh workflow run release.yml -f platform=all
 ```
 
 **Check status:**
+
 ```bash
 gh workflow view release.yml
 ```

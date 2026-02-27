@@ -35,10 +35,7 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
   const router = useRouter();
 
   // Get all article IDs for bulk progress fetch
-  const articleIds = useMemo(
-    () => articlesData.map(a => a.id as ArticleId),
-    [articlesData],
-  );
+  const articleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
 
   // Fetch reading progress for all articles
   const { data: progressMap } = useSafeBulkReadingProgress(articleIds);

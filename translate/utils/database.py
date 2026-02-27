@@ -673,6 +673,33 @@ def validate_article_data(data: dict) -> None:
                         f"Missing essential translation in word_by_word at translation {idx}, word {word_idx}",
                     )
 
+    # Validate essential field lengths and tashkeel content
+    for idx, translation in enumerate(data["translations"]):
+        # Check tashkeel is not from a different sentence
+        if translation.get("tashkeel") and translation.get("original"):
+            orig_words = set(translation["original"].split()[:3])
+            tashkeel_stripped = clean_arabic_text(translation["tashkeel"])
+            tashkeel_words = set(tashkeel_stripped.split()[:3])
+            # If first few words don't overlap at all, tashkeel is likely from wrong sentence
+            if orig_words and tashkeel_words and not any(
+                tw.startswith(ow[:3]) or ow.startswith(tw[:3])
+                for ow in orig_words
+                for tw in tashkeel_words
+            ):
+                raise ValueError(
+                    f"Tashkeel at position {idx} does not match original text "
+                    f"(possible sentence mix-up)"
+                )
+
+        for word_idx, word in enumerate(translation.get("word_by_word", [])):
+            essential = word.get("essential", "")
+            if len(essential) > 30:
+                raise ValueError(
+                    f"Essential field too long at translation {idx}, word {word_idx}: "
+                    f"'{essential[:40]}...' ({len(essential)} chars, max 30). "
+                    f"This usually means multiple words were concatenated."
+                )
+
     difficulty = data["metadata"]["difficulty_level"]
     if (
         not isinstance(difficulty, int)

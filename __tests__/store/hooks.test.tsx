@@ -19,11 +19,7 @@ import React, { type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
 import { Theme } from '@/constants/colors';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useAppSelectorShallow,
-} from '../../store/hooks';
+import { useAppDispatch, useAppSelector, useAppSelectorShallow } from '../../store/hooks';
 import { setupTestStore } from '../helpers/testStore';
 
 describe('Redux hooks', () => {
@@ -56,10 +52,9 @@ describe('Redux hooks', () => {
   describe('useAppSelector', () => {
     test('returns a value from selector', () => {
       const { Wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useAppSelector(state => state.theme.theme),
-        { wrapper: Wrapper },
-      );
+      const { result } = renderHook(() => useAppSelector(state => state.theme.theme), {
+        wrapper: Wrapper,
+      });
 
       // Verify it returns a valid theme value
       expect(result.current).toBeDefined();
@@ -68,10 +63,9 @@ describe('Redux hooks', () => {
 
     test('can select settings values', () => {
       const { Wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useAppSelector(state => state.settings.arabicFont),
-        { wrapper: Wrapper },
-      );
+      const { result } = renderHook(() => useAppSelector(state => state.settings.arabicFont), {
+        wrapper: Wrapper,
+      });
 
       expect(result.current).toBeDefined();
       expect(typeof result.current).toBe('string');
@@ -91,10 +85,9 @@ describe('Redux hooks', () => {
   describe('useAppSelectorShallow', () => {
     test('returns a value from selector', () => {
       const { Wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useAppSelectorShallow(state => state.theme.theme),
-        { wrapper: Wrapper },
-      );
+      const { result } = renderHook(() => useAppSelectorShallow(state => state.theme.theme), {
+        wrapper: Wrapper,
+      });
 
       expect(result.current).toBeDefined();
     });

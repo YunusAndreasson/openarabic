@@ -4,11 +4,11 @@ This document tracks all skipped tests in the codebase, their root causes, and a
 
 ## Summary
 
-| File                              | Skipped Count | Root Cause                                |
-| --------------------------------- | ------------- | ----------------------------------------- |
-| `hooks/useReview.test.tsx`        | 1             | Async timing with playAudio in useEffect  |
-| `hooks/useReview.swipe.test.tsx`  | 1             | Nested timer callbacks with async audio   |
-| `hooks/useReview.session.test.tsx`| 2             | Async timing with playAudio/preloader     |
+| File                               | Skipped Count | Root Cause                               |
+| ---------------------------------- | ------------- | ---------------------------------------- |
+| `hooks/useReview.test.tsx`         | 1             | Async timing with playAudio in useEffect |
+| `hooks/useReview.swipe.test.tsx`   | 1             | Nested timer callbacks with async audio  |
+| `hooks/useReview.session.test.tsx` | 2             | Async timing with playAudio/preloader    |
 
 **Total: 4 skipped tests**
 

@@ -141,18 +141,14 @@ describe('FSRS Property-Based Tests', () => {
 
     test('should maintain hard word invariants (lapses >= 2)', () => {
       fc.assert(
-        propertyTestUtils.testInvariant(
-          isHardWord,
-          studyWordArbitrary,
-          (word, isStruggling) => {
-            if (isStruggling) {
-              // If classified as hard/struggling, should have 2+ lapses
-              return (word.fsrs_lapses ?? 0) >= 2;
-            }
-            // If not hard/struggling, should have < 2 lapses
-            return (word.fsrs_lapses ?? 0) < 2;
-          },
-        ),
+        propertyTestUtils.testInvariant(isHardWord, studyWordArbitrary, (word, isStruggling) => {
+          if (isStruggling) {
+            // If classified as hard/struggling, should have 2+ lapses
+            return (word.fsrs_lapses ?? 0) >= 2;
+          }
+          // If not hard/struggling, should have < 2 lapses
+          return (word.fsrs_lapses ?? 0) < 2;
+        }),
       );
     });
 

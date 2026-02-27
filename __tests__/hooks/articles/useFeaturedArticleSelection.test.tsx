@@ -101,11 +101,7 @@ import { getBeginnerArticles } from '@/utils/articleUtils';
 /**
  * Creates a mock article with sentence words containing specific root IDs
  */
-function createArticleWithRoots(
-  id: number,
-  rootIds: number[],
-  difficulty: number = 1,
-): Article {
+function createArticleWithRoots(id: number, rootIds: number[], difficulty: number = 1): Article {
   const sentenceWords: Partial<SentenceWord>[] = rootIds.map((rootId, index) => ({
     id: index + 1,
     root_id: rootId as RootId,
@@ -179,9 +175,7 @@ describe('useFeaturedArticleSelection', () => {
 
   describe('Initialization', () => {
     test('returns loading state when no articles', () => {
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection([], 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection([], 0, 'global'));
 
       expect(result.current.article).toBeNull();
       expect(result.current.reason).toBe('Loading articles...');
@@ -191,9 +185,7 @@ describe('useFeaturedArticleSelection', () => {
     test('returns result with all expected properties', () => {
       const articles = [createArticleWithRoots(1, [100, 101])];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current).toHaveProperty('article');
       expect(result.current).toHaveProperty('reason');
@@ -217,9 +209,7 @@ describe('useFeaturedArticleSelection', () => {
         createArticleWithRoots(2, [200, 201]), // No due words
       ];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.article?.id).toBe(1);
       expect(result.current.type).toBe('due-words');
@@ -235,9 +225,7 @@ describe('useFeaturedArticleSelection', () => {
         createArticleWithRoots(2, [200, 201]),
       ];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       // Should fall back to random
       expect(result.current.type).toBe('random');
@@ -277,9 +265,7 @@ describe('useFeaturedArticleSelection', () => {
         createArticleWithRoots(2, [200, 201]), // No difficult words
       ];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.article?.id).toBe(1);
       expect(result.current.type).toBe('difficult-words');
@@ -308,9 +294,7 @@ describe('useFeaturedArticleSelection', () => {
 
       const articles = [createArticleWithRoots(1, [100, 101])];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       // Should not use difficult words strategy with < 3 difficult words
       expect(result.current.type).not.toBe('difficult-words');
@@ -344,9 +328,7 @@ describe('useFeaturedArticleSelection', () => {
       const { getBeginnerArticles } = require('@/utils/articleUtils');
       jest.mocked(getBeginnerArticles).mockReturnValue([beginnerArticle]);
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.article?.id).toBe(1);
       expect(result.current.type).toBe('beginner');
@@ -371,9 +353,7 @@ describe('useFeaturedArticleSelection', () => {
 
       const articles = [beginnerArticle];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.type).toBe('beginner');
     });
@@ -401,9 +381,7 @@ describe('useFeaturedArticleSelection', () => {
 
       const articles = [createArticleWithRoots(1, [100])];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.type).toBe('random');
       expect(result.current.reason).toBe('Randomly selected for discovery');
@@ -418,9 +396,7 @@ describe('useFeaturedArticleSelection', () => {
         createArticleWithRoots(3, [300]),
       ];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.article?.id).toBe(1);
     });
@@ -434,10 +410,7 @@ describe('useFeaturedArticleSelection', () => {
     test('caches initial selection (refreshKey = 0)', () => {
       jest.spyOn(Math, 'random').mockReturnValue(0);
 
-      const articles = [
-        createArticleWithRoots(1, [100]),
-        createArticleWithRoots(2, [200]),
-      ];
+      const articles = [createArticleWithRoots(1, [100]), createArticleWithRoots(2, [200])];
 
       const { result, rerender } = renderHook(
         ({ refreshKey }) => useFeaturedArticleSelection(articles, refreshKey, 'global'),
@@ -501,9 +474,7 @@ describe('useFeaturedArticleSelection', () => {
 
   describe('Edge Cases', () => {
     test('handles empty articles array', () => {
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection([], 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection([], 0, 'global'));
 
       expect(result.current.article).toBeNull();
       expect(result.current.reason).toBe('Loading articles...');
@@ -512,9 +483,7 @@ describe('useFeaturedArticleSelection', () => {
     test('handles single article', () => {
       const articles = [createArticleWithRoots(1, [100])];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.article?.id).toBe(1);
     });
@@ -536,9 +505,7 @@ describe('useFeaturedArticleSelection', () => {
 
       const articles = [createArticleWithRoots(1, [100])];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.dueWordRootIds).toEqual(mockDueWordRootIds);
     });
@@ -555,9 +522,7 @@ describe('useFeaturedArticleSelection', () => {
 
       const articles = [createArticleWithRoots(1, [100])];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.type).toBe('due-words');
     });
@@ -583,9 +548,7 @@ describe('useFeaturedArticleSelection', () => {
 
       const articles = [createArticleWithRoots(1, [100, 101])];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.type).toBe('difficult-words');
     });
@@ -625,9 +588,7 @@ describe('useFeaturedArticleSelection', () => {
 
       const articles = [createArticleWithRoots(1, [100])];
 
-      const { result } = renderHook(() =>
-        useFeaturedArticleSelection(articles, 0, 'global'),
-      );
+      const { result } = renderHook(() => useFeaturedArticleSelection(articles, 0, 'global'));
 
       expect(result.current.type).toBe('random');
     });

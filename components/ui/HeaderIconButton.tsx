@@ -52,7 +52,6 @@ const SIZE_CONFIG = {
   },
 } as const;
 
-
 /**
  * Reusable circular icon button for headers
  *

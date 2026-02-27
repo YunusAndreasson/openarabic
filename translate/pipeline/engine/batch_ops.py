@@ -1,9 +1,10 @@
 """Batch sentence translation operations."""
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
-from data.config import MODEL_TRANSLATION
+from data.config import MAX_PARALLEL_API_CALLS, MODEL_TRANSLATION
 from data.models import TranslationResult
 from data.pipeline_types import TranslationResults
 from data.schemas import GENERAL_SYSTEM_PROMPT, SENTENCE_TRANSLATION_USER_PROMPT
@@ -13,6 +14,28 @@ from utils.responses_api import ResponsesAPIManager, call_response_api
 from .helpers import _extract_response_data
 
 logger = logging.getLogger(__name__)
+
+
+def _translate_single_sentence(
+    i: int,
+    sentence: str,
+    context: str | None,
+    conversation_manager: ResponsesAPIManager,
+    base_response_id: str,
+) -> tuple[int, TranslationResult]:
+    """Translate a single sentence using the conversation manager (thread-safe)."""
+    context_str = f"\nContext: {context}" if context else ""
+    message = (
+        f"Please translate sentence {i + 1} from the uploaded document.\n\n"
+        f"Sentence: {sentence}{context_str}"
+    )
+    response = conversation_manager.continue_conversation_parallel(
+        base_response_id, message, response_model=TranslationResult
+    )
+    data = _extract_response_data(response)
+    if data is not None:
+        return i, TranslationResult(**data)
+    raise RuntimeError(f"Failed to translate sentence {i}")
 
 
 def batch_translate_full_sentences(
@@ -26,7 +49,6 @@ def batch_translate_full_sentences(
 
     token_tracker.set_phase("Sentence Translation")
     logger.info(f"  → {get_batch_prefix()}Sentence translation...")
-    results: TranslationResults = []
 
     def try_translation(
         sentences: list[str],
@@ -71,29 +93,40 @@ def batch_translate_full_sentences(
             model=MODEL_TRANSLATION,
         )
 
-    # Use conversation continuity if available
+    # Use conversation continuity if available — run sentences in parallel
     if conversation_manager and conversation_manager.current_response_id:
-        # Process each sentence individually with conversation manager
-        for i, sentence in enumerate(sentences):
-            context_str = (
-                f"\nContext: {contexts[i]}" if contexts and contexts[i] else ""
+        base_response_id = conversation_manager.current_response_id
+        indexed_results: dict[int, TranslationResult] = {}
+
+        with ThreadPoolExecutor(max_workers=MAX_PARALLEL_API_CALLS) as executor:
+            futures = {
+                executor.submit(
+                    _translate_single_sentence,
+                    i,
+                    sentence,
+                    contexts[i] if contexts else None,
+                    conversation_manager,
+                    base_response_id,
+                ): i
+                for i, sentence in enumerate(sentences)
+            }
+            for future in as_completed(futures):
+                idx, result = future.result()  # propagates exceptions
+                indexed_results[idx] = result
+
+        # Reassemble in order
+        results = [indexed_results[i] for i in range(len(sentences))]
+
+        # Basic validation - ensure we have results for all sentences
+        if len(results) != len(sentences):
+            raise RuntimeError(
+                f"Result count mismatch - got {len(results)} results for {len(sentences)} sentences"
             )
-            individual_message = (
-                f"Please translate sentence {i + 1} from the uploaded document.\n\n"
-                f"Sentence: {sentence}{context_str}"
-            )
-            individual_response = conversation_manager.continue_with_stage(
-                individual_message, response_model=TranslationResult
-            )
-            individual_data = _extract_response_data(individual_response)
-            if individual_data is not None:
-                # Enforce model fields; let Pydantic raise on invalid data
-                results.append(TranslationResult(**individual_data))
-            else:
-                raise RuntimeError(f"Failed to translate sentence {i}")
         return results
+
     # Use standard implementation when no conversation manager
     response = try_translation(sentences, contexts)
+    results: TranslationResults = []
 
     # Handle Response API response structure (only for standard implementation)
     data = _extract_response_data(response)

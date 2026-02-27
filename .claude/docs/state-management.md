@@ -20,12 +20,14 @@ Does the data come from an API/database?
 ## Redux Toolkit (Global App State)
 
 **Use Redux when:**
+
 - State needs to be accessed across multiple unrelated screens
 - State requires persistence across app sessions
 - State has complex update logic with multiple actions
 - You need time-travel debugging capabilities
 
 **Current Redux slices:**
+
 - `themeSlice` - Theme preference (light/dark mode)
 - `settingsSlice` - User preferences (audio language, fonts, shuffle)
 - `editModeSlice` - Dictionary edit mode state
@@ -55,12 +57,14 @@ dispatch(setAudioLanguagePreference('bilingual'));
 ## React Context (Feature-Scoped State)
 
 **Use Context when:**
+
 - State is scoped to a specific feature or subtree
 - State doesn't need persistence
 - State changes infrequently
 - You want to avoid prop drilling
 
 **Current providers** (in `components/providers/`):
+
 - `StreaksProvider` - Streak modal visibility
 - `AuthProvider` - Authentication state
 - `ToastProvider` - Toast notifications
@@ -89,12 +93,14 @@ export function useFeature() {
 ## TanStack Query (Server State)
 
 **Use React Query when:**
+
 - Data comes from an API or database
 - Data needs caching and background updates
 - You need loading/error states automatically
 - Data should be refetched on certain triggers
 
 **Current query patterns:**
+
 - `QUERY_KEYS.articles` - Article data (infinite staleTime, never changes)
 - `QUERY_KEYS.fsrs` - FSRS vocabulary (medium staleTime, user-specific)
 - `QUERY_KEYS.readingProgress` - Reading progress/streaks (short staleTime)
@@ -123,6 +129,7 @@ const mutation = useMutation({
 ## Best Practices
 
 **DO:**
+
 - ✅ Use `useAppSelectorShallow` for Redux to prevent unnecessary re-renders
 - ✅ Memoize Context values with `useMemo`
 - ✅ Use `queryOptions` helper for type-safe React Query configurations
@@ -130,6 +137,7 @@ const mutation = useMutation({
 - ✅ Combine patterns when appropriate (Redux for preferences + React Query for data)
 
 **DON'T:**
+
 - ❌ Store server data in Redux (use React Query instead)
 - ❌ Use Context for frequently changing values (causes re-renders of entire subtree)
 - ❌ Mix state management patterns for the same piece of state

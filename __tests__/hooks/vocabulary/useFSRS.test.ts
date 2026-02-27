@@ -23,7 +23,7 @@ jest.mock('@tanstack/react-query', () => ({
   useQueryClient: jest.fn(() => mockQueryClient),
   QueryClient: jest.fn(),
   QueryClientProvider: ({ children }: { children: ReactNode }) => children,
-  queryOptions: jest.fn((options) => options),
+  queryOptions: jest.fn(options => options),
 }));
 
 jest.mock('@/constants/queries', () => ({

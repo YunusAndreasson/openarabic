@@ -8,8 +8,12 @@ Use branded types to prevent mixing different ID types:
 // ✅ GOOD - Type-safe IDs
 import type { ArticleId, RootId } from '@/types/branded.types';
 
-function getArticle(id: ArticleId): Article { /* ... */ }
-function getRoot(id: RootId): Root { /* ... */ }
+function getArticle(id: ArticleId): Article {
+  /* ... */
+}
+function getRoot(id: RootId): Root {
+  /* ... */
+}
 
 // ❌ CAUGHT AT COMPILE TIME
 getArticle(rootId); // Error: RootId not assignable to ArticleId
@@ -55,13 +59,13 @@ Be consistent with optionality patterns:
 ```typescript
 // ✅ GOOD - Use ? for truly optional UI props
 interface ComponentProps {
-  title?: string;       // May or may not be provided
+  title?: string; // May or may not be provided
   onClick?: () => void; // May or may not exist
 }
 
 // ✅ GOOD - Use | null for database fields that can be NULL
 interface Article {
-  fsrs_due: string | null;       // Database can store NULL
+  fsrs_due: string | null; // Database can store NULL
   fsrs_stability: number | null; // Database can store NULL
 }
 
@@ -78,7 +82,9 @@ Never use `any` in production code - always define proper types:
 ```typescript
 // ❌ BAD - Defeats type safety
 article.sentences?.forEach((sentence: any) => {
-  (sentence as any).words.forEach((word: any) => { /* ... */ });
+  (sentence as any).words.forEach((word: any) => {
+    /* ... */
+  });
 });
 
 // ✅ GOOD - Proper types

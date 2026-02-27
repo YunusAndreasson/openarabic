@@ -7,6 +7,7 @@ Response API, which maintains state across multiple interactions.
 
 import logging
 import os
+import threading
 from typing import Any
 
 from openai import OpenAI
@@ -58,6 +59,7 @@ class TokenUsageTracker:
     """Track token usage and calculate costs for Response API"""
 
     def __init__(self) -> None:
+        self._lock = threading.Lock()
         self.prompt_tokens: int = 0
         self.completion_tokens: int = 0
         self.total_tokens: int = 0
@@ -112,9 +114,21 @@ class TokenUsageTracker:
     ) -> float:
         """Update token counts from API response and return computed cost.
 
+        Thread-safe: uses a lock to protect concurrent updates from parallel API calls.
+
         usage_data is expected to contain keys like: prompt_tokens, completion_tokens,
         total_tokens, and nested prompt_tokens_details.cached_tokens where available.
         """
+        with self._lock:
+            return self._update_unlocked(usage_data, model, phase, response_id)
+
+    def _update_unlocked(
+        self,
+        usage_data: dict[str, Any],
+        model: str | None = None,
+        phase: str | None = None,
+        response_id: str | None = None,
+    ) -> float:
         prompt_tokens = int(usage_data.get("prompt_tokens", 0) or 0)
         completion_tokens = int(usage_data.get("completion_tokens", 0) or 0)
         total_tokens = int(
@@ -442,6 +456,74 @@ class ResponsesAPIManager:
         except Exception as e:
             self.logger.error(f"Error in continue_conversation: {e!s}")
             token_tracker.failed_calls += 1
+            return {"response_id": response_id, "error": str(e), "success": False}
+
+    def continue_conversation_parallel(
+        self,
+        response_id: str,
+        message: str,
+        response_model: Any = None,
+    ) -> dict[str, Any]:
+        """Thread-safe continuation that does NOT mutate current_response_id.
+
+        Use this for parallel API calls where multiple sentences branch from
+        the same parent response_id simultaneously.
+        """
+        try:
+            if response_model:
+                response = self._call_parse(
+                    input=message,
+                    previous_response_id=response_id,
+                    model=self.model,
+                    text_format=response_model,
+                )
+
+                usage_dict = self._extract_usage(response)
+                if usage_dict:
+                    token_tracker.update(
+                        usage_data=usage_dict,
+                        model=self.model,
+                        phase=token_tracker.current_phase,
+                        response_id=response.id,
+                    )
+                    with token_tracker._lock:
+                        token_tracker.successful_calls += 1
+
+                return {
+                    "response_id": response.id,
+                    "data": response.output_parsed.model_dump()
+                    if response.output_parsed
+                    else {},
+                    "success": True,
+                }
+
+            text_response = self._call_create(
+                input=message,
+                previous_response_id=response_id,
+                model=self.model,
+            )
+
+            usage_dict = self._extract_usage(text_response)
+            if usage_dict:
+                token_tracker.update(
+                    usage_data=usage_dict,
+                    model=self.model,
+                    phase=token_tracker.current_phase,
+                    response_id=text_response.id,
+                )
+                with token_tracker._lock:
+                    token_tracker.successful_calls += 1
+
+            return {
+                "response_id": text_response.id,
+                "text": text_response.output_text,
+                "success": True,
+            }
+
+        except Exception as e:
+            self.logger.error(f"Error in continue_conversation_parallel: {e!s}")
+            with token_tracker._lock:
+                token_tracker.failed_calls += 1
             return {"response_id": response_id, "error": str(e), "success": False}
 
     def start_document_conversation(

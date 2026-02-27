@@ -89,7 +89,11 @@ export function withOpacity(hex: string, opacity: number): string {
 // =============================================================================
 
 /** Type for a single OKLCH color definition */
-interface OKLCHColor { readonly l: number; readonly c: number; readonly h: number }
+interface OKLCHColor {
+  readonly l: number;
+  readonly c: number;
+  readonly h: number;
+}
 
 /** Type for a palette with theme variants (light/dark/sepia) */
 interface ThemedOKLCHColor {

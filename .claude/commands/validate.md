@@ -11,11 +11,13 @@ Run the validation suite to check for TypeScript errors, linting issues, and for
 ## Commands
 
 **Fast validation** (changed files only, ~5-6s):
+
 ```bash
 yarn validate
 ```
 
 **Full validation** (all files, before commits/PRs):
+
 ```bash
 yarn validate:full
 ```

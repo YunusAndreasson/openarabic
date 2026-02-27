@@ -111,4 +111,3 @@ export function mapToStudyWord(row: StudyWordQueryRow, fallbackUserId: string): 
     root: row.root ?? undefined,
   };
 }
-

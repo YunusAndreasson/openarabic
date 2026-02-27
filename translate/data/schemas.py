@@ -166,7 +166,8 @@ Guidelines:
 - Never omit functional words; if the Arabic token encodes a preposition+pronoun (e.g., فيه, له, منهم), the english must include both parts (e.g., "in it", "for him", "from them").
 - When a word begins with coordinating particles (wa=and, fa=so/then), treat them as distinct morphemes in your translation. Example: "وَقَالَ" translates to "and" + "said", not combined.
 
-- `essential` is a single Arabic token (no whitespace). Strip only affixes; preserve core diacritics.
+- `essential` is a single Arabic token (no whitespace, max 30 characters). Strip only affixes; preserve core diacritics.
+  CRITICAL: Each entry must be exactly ONE Arabic word. Never group multiple words into one entry. If the phrase is "فَأَتَيْتُ إِلَى قَوْلِهِ", create separate entries for each word.
   Example: "الْكِتَابُ" -> "كِتَابٌ" (OK); "مِنْ" -> "من" (NOT OK, do not strip diacritics from simple prepositions).
 
 **Grammar notes (concise):**

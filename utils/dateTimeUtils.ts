@@ -117,4 +117,3 @@ export function toUTCDateString(date: Date): string {
       .split('T')[0] || ''
   );
 }
-

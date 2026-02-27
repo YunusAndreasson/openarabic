@@ -95,4 +95,3 @@ export const errorFeedback = (): void => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   }
 };
-

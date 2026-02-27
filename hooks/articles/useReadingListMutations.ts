@@ -17,9 +17,13 @@ interface ReadingListMutationsResult {
     articleId: ArticleId | undefined,
     isInReadingList: boolean,
   ) => Promise<void>;
-   
-  addToReadingListMutation: UseMutationResult<void, Error, { userId: string; articleId: ArticleId }>;
-   
+
+  addToReadingListMutation: UseMutationResult<
+    void,
+    Error,
+    { userId: string; articleId: ArticleId }
+  >;
+
   removeFromReadingListMutation: UseMutationResult<
     void,
     Error,
@@ -118,13 +122,17 @@ export const useReadingListMutations = (
 
   // Initialize mutations with memoized options
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- void is correct for mutations with no return value
-  const addToReadingListMutation = useMutation<void, Error, { userId: string; articleId: ArticleId }>(
-    addToReadingListOptions,
-  );
+  const addToReadingListMutation = useMutation<
+    void,
+    Error,
+    { userId: string; articleId: ArticleId }
+  >(addToReadingListOptions);
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- void is correct for mutations with no return value
-  const removeFromReadingListMutation = useMutation<void, Error, { userId: string; articleId: ArticleId }>(
-    removeFromReadingListOptions,
-  );
+  const removeFromReadingListMutation = useMutation<
+    void,
+    Error,
+    { userId: string; articleId: ArticleId }
+  >(removeFromReadingListOptions);
 
   // Handle toggling reading list with session refresh
   const handleToggleReadingList = useCallback(

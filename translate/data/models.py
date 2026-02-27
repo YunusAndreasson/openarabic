@@ -134,9 +134,10 @@ class WordTranslation(BaseModel):
         description=(
             "Essential letters with diacritics (kesra, fetha, damma, etc),"
             " removing only complex affixes/case endings. Must be one token"
-            " (no whitespace)."
+            " (no whitespace). Max 30 characters."
         ),
         pattern=r"^\S+$",
+        max_length=30,
     )
     essential_translation: str | list[str] = Field(
         description=(

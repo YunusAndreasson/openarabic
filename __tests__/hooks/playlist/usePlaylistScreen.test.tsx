@@ -133,7 +133,11 @@ jest.mock('@/constants/queries', () => ({
       queryFn: jest.fn().mockResolvedValue([]),
     }),
     keys: {
-      tracks: (userId: string, preference: AudioLanguage) => ['enhancedAudioTracks', userId, preference],
+      tracks: (userId: string, preference: AudioLanguage) => [
+        'enhancedAudioTracks',
+        userId,
+        preference,
+      ],
     },
   },
 }));
@@ -355,9 +359,7 @@ describe('usePlaylistScreen', () => {
     // TODO: Fix mock setup - Redux store not providing customOrder correctly
     test.skip('tracks analytics event when starting playback', async () => {
       const { analytics } = require('@/services/analytics');
-      const tracks = [
-        createEnhancedAudioTrackMock({ articleId: 1 as ArticleId }),
-      ];
+      const tracks = [createEnhancedAudioTrackMock({ articleId: 1 as ArticleId })];
 
       queryClient.setQueryData(
         ['enhancedAudioTracks', mockUser.id, AudioLanguage.ARABIC_ONLY],
@@ -522,9 +524,7 @@ describe('usePlaylistScreen', () => {
 
     // TODO: Fix mock setup - Redux store not providing customOrder correctly
     test.skip('generates single track for article not in playlist', async () => {
-      const tracks = [
-        createEnhancedAudioTrackMock({ articleId: 1 as ArticleId }),
-      ];
+      const tracks = [createEnhancedAudioTrackMock({ articleId: 1 as ArticleId })];
 
       queryClient.setQueryData(
         ['enhancedAudioTracks', mockUser.id, AudioLanguage.ARABIC_ONLY],
@@ -566,10 +566,7 @@ describe('usePlaylistScreen', () => {
         await result.current.handleDelete(1 as ArticleId);
       });
 
-      expect(mockBookmarkService.removeFromReadingList).toHaveBeenCalledWith(
-        mockUser.id,
-        1,
-      );
+      expect(mockBookmarkService.removeFromReadingList).toHaveBeenCalledWith(mockUser.id, 1);
     });
 
     // TODO: Fix mock setup - simpleAudioService mock not being restored properly
@@ -605,9 +602,7 @@ describe('usePlaylistScreen', () => {
     // TODO: Fix mock setup - simpleAudioService mock not being restored properly
     test.skip('handles error gracefully', async () => {
       const { handleError } = require('@/utils/errorHandling');
-      mockBookmarkService.removeFromReadingList.mockRejectedValueOnce(
-        new Error('Delete failed'),
-      );
+      mockBookmarkService.removeFromReadingList.mockRejectedValueOnce(new Error('Delete failed'));
 
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),
@@ -638,9 +633,7 @@ describe('usePlaylistScreen', () => {
 
     // TODO: Fix mock setup - simpleAudioService mock not being restored properly
     test.skip('hides initial loading when data is cached', async () => {
-      const readingList = [
-        createReadingListMock({ article_id: 1 }),
-      ];
+      const readingList = [createReadingListMock({ article_id: 1 })];
 
       queryClient.setQueryData(['readingList', mockUser.id], readingList);
 

@@ -6,9 +6,11 @@ Status: **Phase 2 Complete** - Additional cleanup and DRY refactoring done
 ## Cleanup Summary
 
 ### Phase 1 (Initial)
+
 - 24 dead code items removed
 
 ### Phase 2 (Additional Cleanup)
+
 - Deleted 3 entire files: `navigationUtils.ts`, `buttonStyleUtils.ts`, `useAndroidBackGesture.ts`
 - Removed 4 more unused functions: `generateFutureDateRange`, `generatePastDateRange`, `createTranslationTextStyle`, `determineTextColor`
 - DRY refactored `useThemeDetection.ts`: `useIsDarkMode` now uses `useCurrentTheme` internally (removed ~20 lines of duplicated logic)
@@ -32,12 +34,12 @@ Each finding was validated by searching for usages across the codebase.
 
 ## Legend
 
-| Action | Meaning |
-|--------|---------|
-| `DELETE` | Safe to remove, no value |
+| Action         | Meaning                                            |
+| -------------- | -------------------------------------------------- |
+| `DELETE`       | Safe to remove, no value                           |
 | `CONSIDER USE` | Well-implemented, could be used instead of deleted |
-| `KEEP` | Intentionally public API or test utility |
-| `REVIEW` | Needs manual review before decision |
+| `KEEP`         | Intentionally public API or test utility           |
+| `REVIEW`       | Needs manual review before decision                |
 
 ---
 
@@ -48,23 +50,25 @@ Each finding was validated by searching for usages across the codebase.
 ### Analysis
 
 This file provides type-safe navigation wrappers with validation. The functions wrap expo-router's `router.push/replace/back` with:
+
 - Parameter validation (null/undefined checks)
 - Error handling (try/catch)
 - Return boolean indicating success/failure
 
 ### Exports
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
-| `navigateToArticle` | `CONSIDER USE` | Well-designed wrapper with ArticleId validation. Could replace direct `router.push` calls for article navigation. |
-| `navigateToStudyReview` | `CONSIDER USE` | Validates RootId and mode params before navigation. Could improve robustness. |
-| `navigateBack` | `DELETE` | Trivial wrapper, `router.back()` is sufficient. |
-| `navigateReplace` | `DELETE` | Trivial wrapper, adds little value. |
-| `validateAndNavigate` | `DELETE` | Generic abstraction with no clear use case. |
+| Export                  | Action         | Rationale                                                                                                         |
+| ----------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `navigateToArticle`     | `CONSIDER USE` | Well-designed wrapper with ArticleId validation. Could replace direct `router.push` calls for article navigation. |
+| `navigateToStudyReview` | `CONSIDER USE` | Validates RootId and mode params before navigation. Could improve robustness.                                     |
+| `navigateBack`          | `DELETE`       | Trivial wrapper, `router.back()` is sufficient.                                                                   |
+| `navigateReplace`       | `DELETE`       | Trivial wrapper, adds little value.                                                                               |
+| `validateAndNavigate`   | `DELETE`       | Generic abstraction with no clear use case.                                                                       |
 
 ### Recommendation
 
 Either:
+
 1. **Use it**: Adopt `navigateToArticle` and `navigateToStudyReview` in components that navigate to these routes
 2. **Delete entire file**: If the codebase prefers direct router calls
 
@@ -80,11 +84,11 @@ Provides utilities for creating consistent text styles, particularly for Arabic 
 
 ### Exports
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
-| `createTranslationTextStyle` | `REVIEW` | Creates consistent translation text styling. Check if components inline similar styles. |
-| `calculateFontSize` | `DELETE` | Calculates font size based on warning/vague/struggling flags. Very specific logic, likely outdated. |
-| `createMeaningOverlayTextStyle` | `DELETE` | Trivial - just merges color and fontSize into base style. |
+| Export                          | Action   | Rationale                                                                                           |
+| ------------------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| `createTranslationTextStyle`    | `REVIEW` | Creates consistent translation text styling. Check if components inline similar styles.             |
+| `calculateFontSize`             | `DELETE` | Calculates font size based on warning/vague/struggling flags. Very specific logic, likely outdated. |
+| `createMeaningOverlayTextStyle` | `DELETE` | Trivial - just merges color and fontSize into base style.                                           |
 
 ### Recommendation
 
@@ -102,10 +106,10 @@ Defines shared styles for header buttons.
 
 ### Exports
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
-| `HEADER_BUTTON_STYLE` | `CONSIDER USE` | ViewStyle constant for header buttons. Check if DoneButton/EditModeButton could use it. |
-| `HEADER_BUTTON_TEXT_STYLE` | `CONSIDER USE` | TextStyle for header button text. Same consideration. |
+| Export                     | Action         | Rationale                                                                               |
+| -------------------------- | -------------- | --------------------------------------------------------------------------------------- |
+| `HEADER_BUTTON_STYLE`      | `CONSIDER USE` | ViewStyle constant for header buttons. Check if DoneButton/EditModeButton could use it. |
+| `HEADER_BUTTON_TEXT_STYLE` | `CONSIDER USE` | TextStyle for header button text. Same consideration.                                   |
 
 ### Recommendation
 
@@ -123,10 +127,10 @@ Provides date range generation for charts.
 
 ### Exports
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export                    | Action   | Rationale                                                                                             |
+| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
 | `generateFutureDateRange` | `REVIEW` | Docstring says "Used by FSRS charts for due word predictions". Check if charts generate dates inline. |
-| `generatePastDateRange` | `REVIEW` | Docstring says "Used by study streak charts". Same consideration. |
+| `generatePastDateRange`   | `REVIEW` | Docstring says "Used by study streak charts". Same consideration.                                     |
 
 ### Recommendation
 
@@ -144,10 +148,10 @@ Re-exported in `components/common/charts/index.ts` but imports never use these s
 
 ### Exports
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
-| `getUTCDateString` | `DELETE` | Simple date-to-string, can use inline `toISOString().split('T')[0]` |
-| `isSameDay` | `DELETE` | Simple comparison, can be inlined |
+| Export                     | Action   | Rationale                                                                  |
+| -------------------------- | -------- | -------------------------------------------------------------------------- |
+| `getUTCDateString`         | `DELETE` | Simple date-to-string, can use inline `toISOString().split('T')[0]`        |
+| `isSameDay`                | `DELETE` | Simple comparison, can be inlined                                          |
 | `calculateSevenDayAverage` | `REVIEW` | More complex logic. Check if any chart could benefit from 7-day averaging. |
 
 ---
@@ -158,8 +162,8 @@ Re-exported in `components/common/charts/index.ts` but imports never use these s
 
 ### Exports
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export            | Action   | Rationale                                                                     |
+| ----------------- | -------- | ----------------------------------------------------------------------------- |
 | `mapToStudyWords` | `DELETE` | Maps DB rows to StudyWord type. If unused, likely obsolete after refactoring. |
 
 ---
@@ -168,15 +172,15 @@ Re-exported in `components/common/charts/index.ts` but imports never use these s
 
 **File: `utils/arabicAnalysis/validationConstants.ts`**
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
-| `COMPONENT_COUNT` | `KEEP` | Referenced in `__tests__/BASELINE.md` for test documentation |
-| `meetsMinimumLength` | `DELETE` | Validation function never used |
+| Export               | Action   | Rationale                                                    |
+| -------------------- | -------- | ------------------------------------------------------------ |
+| `COMPONENT_COUNT`    | `KEEP`   | Referenced in `__tests__/BASELINE.md` for test documentation |
+| `meetsMinimumLength` | `DELETE` | Validation function never used                               |
 
 **File: `utils/arabicAnalysis/constants.ts`**
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export                | Action | Rationale                                              |
+| --------------------- | ------ | ------------------------------------------------------ |
 | `STANDALONE_PRONOUNS` | `KEEP` | Used in `__tests__/utils/test-fahuwa-coloring.test.ts` |
 
 ---
@@ -191,10 +195,10 @@ Android-specific haptic feedback variants.
 
 ### Exports
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export                  | Action   | Rationale                                                                         |
+| ----------------------- | -------- | --------------------------------------------------------------------------------- |
 | `androidRippleFeedback` | `DELETE` | Same as `lightFeedback()`. Android ripple is visual, not haptic. Misleading name. |
-| `androidPressFeedback` | `DELETE` | Same as `mediumFeedback()`. No differentiation needed. |
+| `androidPressFeedback`  | `DELETE` | Same as `mediumFeedback()`. No differentiation needed.                            |
 
 ### Recommendation
 
@@ -206,14 +210,14 @@ Delete both. Use `lightFeedback`/`mediumFeedback` directly.
 
 **File: `hooks/theme/useSystemUITheme.ts`**
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export                       | Action   | Rationale                               |
+| ---------------------------- | -------- | --------------------------------------- |
 | `getSystemUIBackgroundColor` | `DELETE` | Internal helper, should not be exported |
 
 **File: `hooks/theme/useThemeDetection.ts`**
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export            | Action         | Rationale                                                                                          |
+| ----------------- | -------------- | -------------------------------------------------------------------------------------------------- |
 | `useCurrentTheme` | `CONSIDER USE` | Returns Theme enum vs boolean. Could be useful if components need theme name, not just dark/light. |
 
 ### Recommendation
@@ -230,8 +234,8 @@ Check if any component needs the Theme enum. If not, delete. If so, consider usi
 
 Custom Android back button handler hook.
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export                  | Action         | Rationale                                                                        |
+| ----------------------- | -------------- | -------------------------------------------------------------------------------- |
 | `useAndroidBackGesture` | `CONSIDER USE` | Well-implemented hook for Android back button. Could be useful in modals/sheets. |
 
 ### Recommendation
@@ -244,8 +248,8 @@ Check if any screens need custom back button behavior. If modal sheets need this
 
 **File: `hooks/animations/usePressAnimation.ts`**
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export                 | Action   | Rationale                                               |
+| ---------------------- | -------- | ------------------------------------------------------- |
 | `PRESS_ANIMATION_WORD` | `DELETE` | Animation config constant. If not imported, not needed. |
 
 ---
@@ -256,25 +260,26 @@ These hooks are re-exported through index files but never imported elsewhere.
 
 **File: `hooks/app/useArticlesAndDueWordsLoaded.ts`**
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export                 | Action   | Rationale                                                                      |
+| ---------------------- | -------- | ------------------------------------------------------------------------------ |
 | `useReadTabDataLoaded` | `REVIEW` | Checks if articles and due words are loaded. May be useful for loading states. |
 
 **File: `hooks/playlist/useAddBeginnerArticles.ts`**
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export                   | Action         | Rationale                                                                                                 |
+| ------------------------ | -------------- | --------------------------------------------------------------------------------------------------------- |
 | `useAddBeginnerArticles` | `CONSIDER USE` | Fully implemented hook to add 10 beginner articles. Could power an onboarding feature or empty state CTA. |
 
 **File: `hooks/practice/useAddCommonWords.ts`**
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export              | Action         | Rationale                                                                                                   |
+| ------------------- | -------------- | ----------------------------------------------------------------------------------------------------------- |
 | `useAddCommonWords` | `CONSIDER USE` | Fully implemented hook to add 10 common Arabic words. Could power an onboarding feature or empty state CTA. |
 
 ### Recommendation
 
 These hooks are production-ready. Consider:
+
 1. Adding "Get Started" buttons that use these hooks for new users
 2. Or delete if onboarding is handled differently
 
@@ -282,25 +287,25 @@ These hooks are production-ready. Consider:
 
 ## 13. Unused Types
 
-| File | Type | Action | Rationale |
-|------|------|--------|-----------|
-| `hooks/account/useAccountScreen.ts` | `UseAccountScreenReturn` | `DELETE` | Internal return type, no need to export |
-| `hooks/articles/useReadingProgress.ts` | `ReadingProgressData` | `DELETE` | Internal interface, no need to export |
-| `services/vocabularyStats.ts` | `VocabularyStatsService` | `DELETE` | Internal service type, no need to export |
-| `services/studyStreak.ts` | `DailyStudyActivity` | `DELETE` | Internal type, no need to export |
-| `types/ui/theme.types.ts` | `ThemeColorName` | `DELETE` | Never used |
-| `types/ui/review.types.ts` | `ErrorMessageProps` | `DELETE` | Never used |
-| `types/navigation.types.ts` | `Route` | `REVIEW` | Discriminated union for type-safe navigation. Could be useful but needs adoption. |
-| `types/vocabulary.types.ts` | `StatCategory` | `DELETE` | Unused - VocabularyStatCategory enum is used instead |
-| `utils/priorityQueue.ts` | `PriorityItem` | `DELETE` | Internal interface |
-| `constants/fonts.ts` | `FontFamily` | `KEEP` | Used in tests |
+| File                                   | Type                     | Action   | Rationale                                                                         |
+| -------------------------------------- | ------------------------ | -------- | --------------------------------------------------------------------------------- |
+| `hooks/account/useAccountScreen.ts`    | `UseAccountScreenReturn` | `DELETE` | Internal return type, no need to export                                           |
+| `hooks/articles/useReadingProgress.ts` | `ReadingProgressData`    | `DELETE` | Internal interface, no need to export                                             |
+| `services/vocabularyStats.ts`          | `VocabularyStatsService` | `DELETE` | Internal service type, no need to export                                          |
+| `services/studyStreak.ts`              | `DailyStudyActivity`     | `DELETE` | Internal type, no need to export                                                  |
+| `types/ui/theme.types.ts`              | `ThemeColorName`         | `DELETE` | Never used                                                                        |
+| `types/ui/review.types.ts`             | `ErrorMessageProps`      | `DELETE` | Never used                                                                        |
+| `types/navigation.types.ts`            | `Route`                  | `REVIEW` | Discriminated union for type-safe navigation. Could be useful but needs adoption. |
+| `types/vocabulary.types.ts`            | `StatCategory`           | `DELETE` | Unused - VocabularyStatCategory enum is used instead                              |
+| `utils/priorityQueue.ts`               | `PriorityItem`           | `DELETE` | Internal interface                                                                |
+| `constants/fonts.ts`                   | `FontFamily`             | `KEEP`   | Used in tests                                                                     |
 
 ---
 
 ## 14. Unused Enum Members
 
-| File | Enum.Member | Action | Rationale |
-|------|-------------|--------|-----------|
+| File             | Enum.Member                        | Action   | Rationale                             |
+| ---------------- | ---------------------------------- | -------- | ------------------------------------- |
 | `types/enums.ts` | `DailyWordLimitStatus.APPROACHING` | `DELETE` | Only REACHED and NOT_REACHED are used |
 
 ---
@@ -309,35 +314,35 @@ These hooks are production-ready. Consider:
 
 **File: `constants/layout.ts`**
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export          | Action   | Rationale  |
+| --------------- | -------- | ---------- |
 | `OPACITY_BOOST` | `DELETE` | Never used |
 
 **File: `constants/chartConstants.ts`**
 
-| Export | Action | Rationale |
-|--------|--------|-----------|
+| Export         | Action   | Rationale                                                                     |
+| -------------- | -------- | ----------------------------------------------------------------------------- |
 | `CHART_LAYOUT` | `REVIEW` | Re-exported but never imported. Check if charts inline similar layout values. |
 
 ---
 
 ## 16. Duplicate Exports (Code Smell)
 
-| File | Issue | Action |
-|------|-------|--------|
-| `services/readingProgress.ts` | Exports both `ReadingProgressService` class and `readingProgressService` instance | Keep instance only, remove class export |
-| `services/studyStreak.ts` | Exports both `StudySessionStreakService` class and `studySessionStreakService` instance | Keep instance only, remove class export |
+| File                          | Issue                                                                                   | Action                                  |
+| ----------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------- |
+| `services/readingProgress.ts` | Exports both `ReadingProgressService` class and `readingProgressService` instance       | Keep instance only, remove class export |
+| `services/studyStreak.ts`     | Exports both `StudySessionStreakService` class and `studySessionStreakService` instance | Keep instance only, remove class export |
 
 ---
 
 ## Summary
 
-| Category | Delete | Consider Use | Keep | Review |
-|----------|--------|--------------|------|--------|
-| Functions/Constants | 15 | 7 | 2 | 5 |
-| Types/Interfaces | 8 | 0 | 1 | 1 |
-| Enum Members | 1 | 0 | 0 | 0 |
-| **Total** | **24** | **7** | **3** | **6** |
+| Category            | Delete | Consider Use | Keep  | Review |
+| ------------------- | ------ | ------------ | ----- | ------ |
+| Functions/Constants | 15     | 7            | 2     | 5      |
+| Types/Interfaces    | 8      | 0            | 1     | 1      |
+| Enum Members        | 1      | 0            | 0     | 0      |
+| **Total**           | **24** | **7**        | **3** | **6**  |
 
 ---
 
@@ -346,6 +351,7 @@ These hooks are production-ready. Consider:
 Use this section to track progress on cleanup:
 
 ### Phase 1: Quick Wins (DELETE items) - COMPLETED 2026-01-10
+
 - [x] Remove `navigateBack`, `navigateReplace`, `validateAndNavigate` from navigationUtils.ts
 - [x] Remove `calculateFontSize`, `createMeaningOverlayTextStyle`, `MEANING_OVERLAY_CONSTANTS` from textStyleUtils.ts
 - [x] Remove `getUTCDateString`, `isSameDay` from chartDataUtils.ts (also removed from charts/index.ts re-exports)
@@ -368,6 +374,7 @@ Use this section to track progress on cleanup:
 - [x] Duplicate service exports - SKIPPED (both `ReadingProgressService` and `readingProgressService` are used in different files)
 
 ### Phase 2: Review Items
+
 - [ ] Check if `generateFutureDateRange`/`generatePastDateRange` could replace inline date logic
 - [ ] Check if `calculateSevenDayAverage` could be useful for charts
 - [ ] Check if `CHART_LAYOUT` values are duplicated in chart components
@@ -375,6 +382,7 @@ Use this section to track progress on cleanup:
 - [ ] Evaluate `Route` type for adoption in navigation
 
 ### Phase 3: Consider Use Items
+
 - [ ] Evaluate `navigateToArticle`/`navigateToStudyReview` for safer navigation
 - [ ] Evaluate `HEADER_BUTTON_STYLE`/`HEADER_BUTTON_TEXT_STYLE` for header buttons
 - [ ] Evaluate `createTranslationTextStyle` for translation components

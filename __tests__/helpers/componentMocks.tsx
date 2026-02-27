@@ -189,7 +189,8 @@ export const createReanimatedMock = () => {
         value: initialValue,
         get: () => currentValue,
         set: (newValue: T | ((prev: T) => T)) => {
-          currentValue = typeof newValue === 'function' ? (newValue as (prev: T) => T)(currentValue) : newValue;
+          currentValue =
+            typeof newValue === 'function' ? (newValue as (prev: T) => T)(currentValue) : newValue;
         },
         modify: jest.fn(),
       };

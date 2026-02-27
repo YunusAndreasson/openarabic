@@ -18,7 +18,9 @@ jest.mock('@/services/audioCache', () => ({
 }));
 
 jest.mock('@/utils/storageUtils', () => ({
-  generateStorageUrl: jest.fn((bucket: string, path: string) => `https://storage.example.com/${bucket}/${path}`),
+  generateStorageUrl: jest.fn(
+    (bucket: string, path: string) => `https://storage.example.com/${bucket}/${path}`,
+  ),
 }));
 
 import { useAudioPreloader } from '@/hooks/review/useAudioPreloader';

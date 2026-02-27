@@ -87,7 +87,12 @@ export function usePlaylistHeaderActions() {
 
   const handlePlayAllArabicOnly = useCallback(async () => {
     mediumFeedback();
-    showToast(STRINGS.PLAYING_ARABIC_ONLY_THIS_SESSION, DEFAULT_TOAST_DURATION, ToastType.INFO, 'bottom');
+    showToast(
+      STRINGS.PLAYING_ARABIC_ONLY_THIS_SESSION,
+      DEFAULT_TOAST_DURATION,
+      ToastType.INFO,
+      'bottom',
+    );
     await handlePlayAll(true);
   }, [handlePlayAll, showToast]);
 

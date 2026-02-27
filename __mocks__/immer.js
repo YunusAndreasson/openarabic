@@ -12,12 +12,12 @@ const immer = {
   enableMapSet: () => {},
   setAutoFreeze: () => {},
   setUseProxies: () => {},
-  original: (value) => value,
+  original: value => value,
   isDraft: () => false,
-  isDraftable: (value) => typeof value === 'object' && value !== null,
-  current: (value) => value,
-  createDraft: (base) => JSON.parse(JSON.stringify(base)), // Deep clone
-  finishDraft: (draft) => draft,
+  isDraftable: value => typeof value === 'object' && value !== null,
+  current: value => value,
+  createDraft: base => JSON.parse(JSON.stringify(base)), // Deep clone
+  finishDraft: draft => draft,
   nothing: Symbol('nothing'),
   DRAFT_STATE: Symbol('draft-state'),
 };

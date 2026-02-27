@@ -12,20 +12,20 @@
 
 The grammar color family uses **12 perceptually distinct colors** in OKLCH color space:
 
-| Hue | Role | Usage |
-|-----|------|-------|
-| 65° | Definite Article | `grammar.definiteArticle` |
-| 90° | Prepositions | `grammar.preposition` (highest frequency) |
-| 110° | Particles | `grammar.particle` |
-| 125° | Negation | `grammar.negation` |
-| 140° | Plural markers | `grammar.plural` |
-| 155° | Possessive pronouns | `grammar.possessive` (high frequency) |
-| 170° | Verb Conjugation | `grammar.verbConjugation` |
-| 185° | Interrogative | `grammar.interrogative` |
-| 200° | Demonstrative | `grammar.demonstrative` |
-| 225° | Subject Prefix | `grammar.subjectPrefix` |
-| 250° | Conjunctions | `grammar.conjunction` |
-| 270° | Future Tense | `grammar.futureTense` |
+| Hue  | Role                | Usage                                     |
+| ---- | ------------------- | ----------------------------------------- |
+| 65°  | Definite Article    | `grammar.definiteArticle`                 |
+| 90°  | Prepositions        | `grammar.preposition` (highest frequency) |
+| 110° | Particles           | `grammar.particle`                        |
+| 125° | Negation            | `grammar.negation`                        |
+| 140° | Plural markers      | `grammar.plural`                          |
+| 155° | Possessive pronouns | `grammar.possessive` (high frequency)     |
+| 170° | Verb Conjugation    | `grammar.verbConjugation`                 |
+| 185° | Interrogative       | `grammar.interrogative`                   |
+| 200° | Demonstrative       | `grammar.demonstrative`                   |
+| 225° | Subject Prefix      | `grammar.subjectPrefix`                   |
+| 250° | Conjunctions        | `grammar.conjunction`                     |
+| 270° | Future Tense        | `grammar.futureTense`                     |
 
 ## Component Type Configuration
 
@@ -38,7 +38,7 @@ COMPONENT_TYPE_CONFIG = {
   INFIX: { colorName: 'violet', icon: '↔' },
   SUFFIX: { colorName: 'warning', icon: '←' },
   DIACRITIC: { colorName: 'accent', icon: '◌' },
-}
+};
 
 // Layer 2: Grammatical Role (semantic)
 GRAMMATICAL_ROLE_COLORS = {
@@ -46,7 +46,7 @@ GRAMMATICAL_ROLE_COLORS = {
   PREPOSITION: 'grammar.preposition',
   POSSESSIVE: 'grammar.possessive',
   // ... 12 total grammatical roles
-}
+};
 ```
 
 **Priority:** If a component has a role, the role-based color is used. Otherwise, type-based color is fallback.
@@ -56,12 +56,14 @@ GRAMMATICAL_ROLE_COLORS = {
 **Color name format:** `'grammar.{roleName}'` or flat colors like `'tint'`, `'warning'`, `'accent'`
 
 **Theme Adaptation:**
+
 - Same hue for all three themes (light, dark, sepia)
 - Lightness adjusted per theme for visibility
 
 ## Diacritic Color Inheritance
 
 Diacritics (vowel markings) inherit colors from their parent components:
+
 - Diacritics after suffixes inherit suffix color
 - Diacritics after prefixes inherit last prefix color
 

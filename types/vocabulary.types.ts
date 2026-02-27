@@ -39,4 +39,3 @@ export interface StudyWord extends Omit<Tables<'study_words'>, 'root_id' | 'user
   /** Optional root relation loaded from database */
   root?: Tables<'roots'> | null;
 }
-

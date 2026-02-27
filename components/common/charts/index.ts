@@ -46,6 +46,10 @@ export type { BuildPathOptions, BuildPathResult } from '@/utils/chartPathBuilder
 
 export { CHART_OPACITY, getChartColors, useChartColors } from '@/constants/chartColors';
 
-export { CHART_LABELS, EMPTY_STATE_MESSAGES, generateChartSubtitle } from '@/constants/chartMessages';
+export {
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+  generateChartSubtitle,
+} from '@/constants/chartMessages';
 
 // Other shared components (keep existing exports)

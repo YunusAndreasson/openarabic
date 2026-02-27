@@ -51,12 +51,12 @@ const mockUpdatedWords: Map<number, Partial<StudyWord>> = new Map();
 
 const mockStudyWordsFSRSService = {
   getFSRSWords: jest.fn().mockImplementation(() => Promise.resolve([...mockWords])),
-  updateWordAndReview: jest.fn().mockImplementation(
-    (userId: string, rootId: number, updates: Partial<StudyWord>) => {
+  updateWordAndReview: jest
+    .fn()
+    .mockImplementation((userId: string, rootId: number, updates: Partial<StudyWord>) => {
       mockUpdatedWords.set(rootId, updates);
       return Promise.resolve(undefined);
-    },
-  ),
+    }),
 };
 
 jest.mock('@/services/studyWordsFSRS', () => ({
@@ -132,10 +132,9 @@ describe('Review Session Flow Integration', () => {
       setupReviewSession(3);
       const onComplete = jest.fn();
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user', onComplete }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user', onComplete }), {
+        wrapper,
+      });
 
       // Wait for session to initialize
       await waitFor(() => {
@@ -178,10 +177,7 @@ describe('Review Session Flow Integration', () => {
     test.skip('handles mixed confidence levels throughout session', async () => {
       setupReviewSession(4);
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user' }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
         expect(result.current.currentWord).not.toBeNull();
@@ -247,10 +243,7 @@ describe('Review Session Flow Integration', () => {
         }),
       );
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user' }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
         expect(result.current.currentWord).not.toBeNull();
@@ -280,10 +273,7 @@ describe('Review Session Flow Integration', () => {
         }),
       );
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user' }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
         expect(result.current.currentWord).not.toBeNull();
@@ -310,10 +300,7 @@ describe('Review Session Flow Integration', () => {
         }),
       );
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user' }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
         expect(result.current.currentWord).not.toBeNull();
@@ -340,10 +327,7 @@ describe('Review Session Flow Integration', () => {
     test.skip('enforces minimum spacing between repeated words', async () => {
       setupReviewSession(3);
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user' }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
         expect(result.current.currentWord?.root_id).toBe(1);
@@ -383,10 +367,9 @@ describe('Review Session Flow Integration', () => {
       setupReviewSession(2);
 
       const onComplete = jest.fn();
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user', onComplete }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user', onComplete }), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.currentWord).not.toBeNull();
@@ -415,10 +398,7 @@ describe('Review Session Flow Integration', () => {
       });
 
       await act(async () => {
-        await result.current.updateWord(
-          result.current.currentWord!.root_id,
-          'known',
-        );
+        await result.current.updateWord(result.current.currentWord!.root_id, 'known');
       });
 
       await waitFor(() => {
@@ -426,10 +406,7 @@ describe('Review Session Flow Integration', () => {
       });
 
       await act(async () => {
-        await result.current.updateWord(
-          result.current.currentWord!.root_id,
-          'known',
-        );
+        await result.current.updateWord(result.current.currentWord!.root_id, 'known');
       });
 
       // Now should be complete
@@ -449,10 +426,7 @@ describe('Review Session Flow Integration', () => {
     test.skip('calculates progress based on known words only', async () => {
       setupReviewSession(4);
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user' }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
         expect(result.current.currentWord).not.toBeNull();
@@ -495,10 +469,7 @@ describe('Review Session Flow Integration', () => {
     test.skip('reaches 100% only when all words are known', async () => {
       setupReviewSession(2);
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user' }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
         expect(result.current.currentWord).not.toBeNull();
@@ -527,10 +498,7 @@ describe('Review Session Flow Integration', () => {
         });
 
         await act(async () => {
-          await result.current.updateWord(
-            result.current.currentWord!.root_id,
-            'known',
-          );
+          await result.current.updateWord(result.current.currentWord!.root_id, 'known');
         });
       }
 
@@ -561,10 +529,7 @@ describe('Review Session Flow Integration', () => {
         return Promise.resolve(undefined);
       });
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user' }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
         expect(result.current.currentWord).not.toBeNull();
@@ -598,10 +563,9 @@ describe('Review Session Flow Integration', () => {
       // No words to review
       const onComplete = jest.fn();
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user', onComplete }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user', onComplete }), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.isComplete).toBeTruthy();
@@ -632,10 +596,7 @@ describe('Review Session Flow Integration', () => {
         Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
       );
 
-      renderHook(
-        () => useFSRS({ userId, sessionCooldownHours: cooldownHours }),
-        { wrapper },
-      );
+      renderHook(() => useFSRS({ userId, sessionCooldownHours: cooldownHours }), { wrapper });
 
       await waitFor(() => {
         expect(mockStudyWordsFSRSService.getFSRSWords).toHaveBeenCalledWith(

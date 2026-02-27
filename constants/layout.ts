@@ -333,7 +333,6 @@ export const LAYOUT = {
     },
   },
 
-
   REVIEW: {
     BOTTOM_ACTIONS_HEIGHT: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // Same as CARD.HEIGHT.LIST_ITEM
     INDICATOR_MAX_WIDTH: BASE_UNIT * 22.5, // 90 - responsive to base unit

@@ -8,7 +8,15 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState } from '@/components/common';
-import { DueWordsBottomSheet , MemoryRetentionBottomSheet , PracticeEmptyState , RecommendationCard , StudyStreakBottomSheet , PracticeStatCards , WordsMasteredBottomSheet } from '@/components/practice';
+import {
+  DueWordsBottomSheet,
+  MemoryRetentionBottomSheet,
+  PracticeEmptyState,
+  RecommendationCard,
+  StudyStreakBottomSheet,
+  PracticeStatCards,
+  WordsMasteredBottomSheet,
+} from '@/components/practice';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { fsrsQueries } from '@/constants/queries';

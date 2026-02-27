@@ -112,10 +112,7 @@ describe('useFSRS Hook - Edge Cases', () => {
         });
       });
 
-      const { result, rerender } = renderHook(
-        () => useFSRS({ userId: 'test-user' }),
-        { wrapper },
-      );
+      const { result, rerender } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       expect(result.current.isLoading).toBeTruthy();
 
@@ -451,10 +448,9 @@ describe('useFSRS Hook - Edge Cases', () => {
       studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
 
       const onComplete = jest.fn();
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user', onComplete }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user', onComplete }), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.currentWord?.root_id).toBe(1);
@@ -531,10 +527,9 @@ describe('useFSRS Hook - Edge Cases', () => {
         throw new Error('Callback error');
       });
 
-      const { result } = renderHook(
-        () => useFSRS({ userId: 'test-user', onComplete }),
-        { wrapper },
-      );
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user', onComplete }), {
+        wrapper,
+      });
 
       await waitFor(() => {
         expect(result.current.currentWord).not.toBeNull();
@@ -594,10 +589,7 @@ describe('useFSRS Hook - Edge Cases', () => {
         // Clear query cache before each mount to ensure fresh fetches
         queryClient.clear();
 
-        const { result, unmount } = renderHook(
-          () => useFSRS({ userId: 'test-user' }),
-          { wrapper },
-        );
+        const { result, unmount } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
         await waitFor(() => {
           expect(result.current.currentWord).not.toBeNull();

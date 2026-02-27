@@ -48,13 +48,10 @@ describe('themeSlice reducers', () => {
       expect(state.theme).toBe(Theme.Dark);
     });
 
-    test.each([Theme.Light, Theme.Dark, Theme.Sepia])(
-      'accepts valid theme value: %p',
-      theme => {
-        const state = reducer(initialState, setTheme(theme));
-        expect(state.theme).toBe(theme);
-      },
-    );
+    test.each([Theme.Light, Theme.Dark, Theme.Sepia])('accepts valid theme value: %p', theme => {
+      const state = reducer(initialState, setTheme(theme));
+      expect(state.theme).toBe(theme);
+    });
   });
 
   describe('theme transitions', () => {

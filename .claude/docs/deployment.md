@@ -19,11 +19,13 @@ gh workflow view release.yml
 ```
 
 **When to use:**
+
 - After fixing critical bugs that need immediate TestFlight deployment
 - When testing environment variable changes in EAS builds
 - To trigger manual releases outside of the automatic version bump workflow
 
 **Notes:**
+
 - The workflow automatically handles version bumping, building, and TestFlight/Play Store submission
 - Builds use `--clear-cache` flag to ensure fresh Metro bundles
 - All `EXPO_PUBLIC_*` variables are injected from GitHub Secrets
@@ -66,5 +68,6 @@ eas config
 ## Version Management
 
 Uses Islamic Calendar versioning:
+
 - Format: `YEAR.MONTH.RELEASE` (e.g., `1447.2.2`)
 - Build numbers maintained per platform in package.json (e.g., `1447.2.2+41`)

@@ -10,7 +10,7 @@ import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
-import { SavedEmptyState , PlaylistItemCard } from '@/components/playlist';
+import { SavedEmptyState, PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
@@ -242,7 +242,6 @@ export default function PlaylistScreen(): JSX.Element {
           />
         )}
       </ThemedView>
-
     </ThemedView>
   );
 }

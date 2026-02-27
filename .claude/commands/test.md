@@ -11,26 +11,31 @@ Run the test suite.
 ## Commands
 
 **Changed files only** (~2.2s):
+
 ```bash
 yarn test
 ```
 
 **All tests** (~7.7s):
+
 ```bash
 yarn test:all
 ```
 
 **Specific pattern:**
+
 ```bash
 yarn test --testPathPattern=<pattern>
 ```
 
 **Watch mode:**
+
 ```bash
 yarn test:watch
 ```
 
 **Coverage report:**
+
 ```bash
 yarn test:coverage
 ```

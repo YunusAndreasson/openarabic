@@ -13,4 +13,3 @@ export interface WordDisplayProps {
   /** Callback when user taps the word (to replay audio) */
   onWordPress?: () => void;
 }
-

@@ -18,7 +18,6 @@ export const getEnvVar = (
   fallback?: string,
   warnIfMissing = false,
 ): string | undefined => {
-   
   const value = process.env[key] || fallback;
 
   if (warnIfMissing && !value && __DEV__) {
