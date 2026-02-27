@@ -18,8 +18,12 @@ class VoiceSettingsDict(TypedDict, total=False):
 
 MODEL_ANALYSIS = "gpt-5-mini"
 MODEL_TRANSLATION = "gpt-5-mini"
-MODEL_OTHER = "gpt-4o"
+MODEL_OTHER = "gpt-5-mini"
 MODEL_VERIFICATION = "gpt-5-mini"
+
+# Claude CLI configuration - use Claude CLI (via Max subscription) instead of OpenAI API
+USE_CLAUDE_CLI = False
+CLAUDE_CLI_MODEL = "sonnet"  # "sonnet", "opus", or "haiku"
 
 # Directory structure
 ROOT_DIR = os.path.abspath(
@@ -46,7 +50,7 @@ ARABIC_VOICE_ID = "R6nda3uM038xEEKi7GFl"  # Keep for sentence audio only
 # Arabic voice settings for ElevenLabs API compatibility
 ARABIC_VOICE_SETTINGS: VoiceSettingsDict = {
     "use_speaker_boost": True,  # Enhanced speaker clarity
-    "speed": 0.8,  # Optimal speed for Arabic pronunciation
+    "speed": 1.0,  # Natural speed (pacing controlled by [slowly] audio tag)
 }
 
 # English voice IDs
@@ -58,7 +62,7 @@ ELEVENLABS_TTS_MODEL_ID = "eleven_v3"  # Latest multilingual model for best qual
 # Voice settings for ElevenLabs API compatibility
 DEFAULT_VOICE_SETTINGS: VoiceSettingsDict = {
     "use_speaker_boost": True,  # Enhanced speaker clarity
-    "speed": 0.8,  # Optimal speed for Arabic pronunciation
+    "speed": 1.0,  # Natural speed (pacing controlled by [slowly] audio tag)
 }
 
 # English voice settings for bilingual audio - Optimized for quality and stability

@@ -76,7 +76,7 @@ export function PublicHeader({
             onClick={() => {
               onSelectCategory(null);
             }}
-            className="flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80 active:opacity-60 transition-opacity duration-150 group"
+            className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 active:opacity-60 transition-opacity duration-150 group"
             title="Home"
           >
             <Image

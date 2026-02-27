@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Share2, Check } from 'lucide-react';
 import type { Database } from '@/lib/database.types';
+import { normalizeImageUrl, formatDate, estimateReadTime } from '@/lib/article-utils';
 import { useTheme } from '@/components/providers/theme-provider';
 import { shareArticle, canShare } from '@/utils/share';
 import { ARTICLE_HEADER_BLUR } from '@/lib/blur-placeholder';
@@ -17,59 +18,6 @@ type Article = Database['public']['Tables']['articles']['Row'] & {
 interface ArticleHeaderProps {
   article: Article;
   showSummary?: boolean;
-}
-
-function normalizeImageUrl(imageUrl: string): string {
-  if (!imageUrl) return '';
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-  return `https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/${imageUrl}`;
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-  // Relative dates for recent articles (within 30 days)
-  if (diffInDays === 0) return 'Today';
-  if (diffInDays === 1) return 'Yesterday';
-  if (diffInDays < 7) return `${diffInDays} days ago`;
-  if (diffInDays < 30) {
-    const weeks = Math.floor(diffInDays / 7);
-    return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
-  }
-
-  // Absolute dates for older articles
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-  });
-}
-
-function estimateReadTime(summary: string, difficultyLevel: number): string {
-  // Count words in summary as a proxy for article length
-  const wordCount = summary.trim().split(/\s+/).length;
-
-  // Estimate total article length (summary is typically ~10-15% of article)
-  const estimatedTotalWords = wordCount * 8;
-
-  // Average reading speed: 200-250 words/min, use 225
-  // Adjust for difficulty (harder = slower reading)
-  const readingSpeed = difficultyLevel <= 2 ? 250 : difficultyLevel <= 4 ? 225 : 200;
-  const minutes = Math.ceil(estimatedTotalWords / readingSpeed);
-
-  // Bilingual multiplier: reading both Arabic and English takes ~2x longer
-  // Users switch between languages, compare translations, process dual content
-  const bilingualReadTime = Math.ceil(minutes * 2);
-
-  // Minimum 1 min
-  const readTime = Math.max(1, bilingualReadTime);
-
-  return `${readTime} min read`;
 }
 
 export function ArticleHeader({ article, showSummary = true }: ArticleHeaderProps) {
@@ -119,10 +67,7 @@ export function ArticleHeader({ article, showSummary = true }: ArticleHeaderProp
         <div className="mb-6 md:mb-8">
           <Link
             href="/"
-            className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm md:text-base font-semibold bg-white/25 text-white backdrop-blur-md ring-1 ring-white/30 shadow-lg shadow-black/25 capitalize cursor-pointer hover:bg-white/30 transition-colors duration-150"
-            style={{
-              textShadow: '0 1px 3px rgba(0,0,0,0.5), 0 0 8px rgba(0,0,0,0.3)',
-            }}
+            className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm md:text-base font-semibold bg-white/25 text-white backdrop-blur-md ring-1 ring-white/30 shadow-lg shadow-black/25 capitalize hover:bg-white/30 transition-colors duration-150 text-shadow-overlay"
             aria-label={`View all ${article.categories?.name || 'Uncategorized'} articles`}
           >
             {article.categories?.name || 'Uncategorized'}
@@ -155,7 +100,7 @@ export function ArticleHeader({ article, showSummary = true }: ArticleHeaderProp
           {/* Share Button */}
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 backdrop-blur-md ring-1 ring-white/20 transition-colors duration-150 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 backdrop-blur-md ring-1 ring-white/20 transition-colors duration-150"
             aria-label={shareSuccess ? 'Link copied' : 'Share article'}
             title={canShare() ? 'Share' : 'Copy link'}
           >

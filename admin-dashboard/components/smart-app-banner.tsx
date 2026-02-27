@@ -85,7 +85,7 @@ export function SmartAppBanner({ platformInfo }: SmartAppBannerProps) {
 
             <button
               onClick={handleDownload}
-              className="flex-shrink-0 px-4 py-2 bg-primary hover:bg-primary/85 active:bg-primary/70 text-primary-foreground text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm touch-manipulation"
+              className="flex-shrink-0 px-4 py-2 bg-primary hover:bg-primary/85 active:bg-primary/70 text-primary-foreground text-sm font-medium rounded-lg transition-colors duration-150 shadow-sm touch-manipulation"
               aria-label={`Download from ${platformInfo.storeName}`}
             >
               Download
@@ -93,7 +93,7 @@ export function SmartAppBanner({ platformInfo }: SmartAppBannerProps) {
 
             <button
               onClick={handleDismiss}
-              className="flex-shrink-0 p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors duration-200 touch-manipulation"
+              className="flex-shrink-0 p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors duration-150 touch-manipulation"
               aria-label="Dismiss banner"
             >
               <X size={18} />

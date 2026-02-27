@@ -18,6 +18,11 @@ def clean_arabic_text(text: str) -> str:
     return text.strip()
 
 
+def _has_arabic(text: str) -> bool:
+    """Check if text contains Arabic characters."""
+    return bool(re.search(r"[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]", text))
+
+
 def clean_text_for_tts(text: str) -> str:
     """
     Clean text for TTS by removing invisible/control characters while preserving content.
@@ -31,6 +36,9 @@ def clean_text_for_tts(text: str) -> str:
     Preserves:
     - All visible content (Arabic, English, numbers, punctuation)
     - Proper spacing and formatting
+
+    For Arabic text, prepends [slowly] audio tag for clearer pronunciation
+    (ElevenLabs v3 feature).
     """
     if not text:
         return text
@@ -60,7 +68,13 @@ def clean_text_for_tts(text: str) -> str:
     # Normalize whitespace (multiple spaces -> single space)
     text = re.sub(r"\s+", " ", text)
 
-    return text.strip()
+    text = text.strip()
+
+    # Add [slowly] audio tag for Arabic text (ElevenLabs v3 pacing control)
+    if _has_arabic(text):
+        text = f"[slowly] {text}"
+
+    return text
 
 
 def preprocess_text_for_tts(text: str) -> str:

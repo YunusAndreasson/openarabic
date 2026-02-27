@@ -42,8 +42,10 @@ def load_api_keys() -> None:
     else:
         logger.warning(f"API keys file not found: {set_keys_path}")
 
-    # Verify that required API keys are set
-    if not os.getenv("OPENAI_API_KEY"):
+    # Verify that required API keys are set (not needed when using Claude CLI)
+    from data.config import USE_CLAUDE_CLI
+
+    if not USE_CLAUDE_CLI and not os.getenv("OPENAI_API_KEY"):
         raise ValueError(
             "OPENAI_API_KEY environment variable is not set. "
             "Please set it in set_keys.py or as an environment variable."
@@ -551,7 +553,22 @@ def call_response_api(
     model: str = MODEL_OTHER,
     response_model: Any = None,
 ) -> dict[str, Any]:
-    """Call the Response API with the given messages and response model"""
+    """Call the Response API with the given messages and response model.
+
+    When USE_CLAUDE_CLI is enabled in config, delegates to Claude CLI
+    instead of OpenAI. Stage 5 (DeepSeek correction) is unaffected as
+    it uses OpenRouterClient separately.
+    """
+    from data.config import USE_CLAUDE_CLI
+
+    if USE_CLAUDE_CLI:
+        from utils.claude_cli import call_claude_cli
+
+        return call_claude_cli(
+            messages=messages,
+            response_model=response_model,
+        )
+
     manager = ResponsesAPIManager(model=model)
 
     try:

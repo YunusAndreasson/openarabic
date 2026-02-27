@@ -26,26 +26,12 @@ import { Loader2, ImageIcon, ArrowUpDown, ArrowUp, ArrowDown, Repeat, ChevronLef
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAuthorsCategories } from '@/hooks/useAuthorsCategories';
+import { normalizeImageUrl } from '@/lib/article-utils';
 import dynamic from 'next/dynamic';
 
 const ImagePicker = dynamic(() => import('@/components/image-picker').then(mod => ({ default: mod.ImagePicker })), {
   ssr: false,
 });
-
-const SUPABASE_STORAGE_URL =
-  'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
-
-function normalizeImageUrl(imageUrl: string): string {
-  if (!imageUrl) return '';
-
-  // If it's already a full URL, return it
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-
-  // If it's just a filename, prepend the storage URL
-  return SUPABASE_STORAGE_URL + imageUrl;
-}
 
 function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;

@@ -21,6 +21,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { SummaryPreviewDialog } from '@/components/summary-preview-dialog';
 import { useAuthorsCategories } from '@/hooks/useAuthorsCategories';
+import { normalizeImageUrl } from '@/lib/article-utils';
 
 const ImagePicker = dynamic(() => import('@/components/image-picker').then(mod => ({ default: mod.ImagePicker })), {
   loading: () => <div className="h-10 bg-muted animate-pulse rounded" />,
@@ -29,21 +30,6 @@ const ImagePicker = dynamic(() => import('@/components/image-picker').then(mod =
 const SentenceAudioVerifier = dynamic(() => import('@/components/sentence-audio-verifier').then(mod => ({ default: mod.SentenceAudioVerifier })), {
   loading: () => <div className="h-32 bg-muted animate-pulse rounded" />,
 });
-
-const SUPABASE_STORAGE_URL =
-  'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/';
-
-function normalizeImageUrl(imageUrl: string): string {
-  if (!imageUrl) return '';
-
-  // If it's already a full URL, return it
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-
-  // If it's just a filename, prepend the storage URL
-  return SUPABASE_STORAGE_URL + imageUrl;
-}
 
 type Article = Database['public']['Tables']['articles']['Row'];
 type Author = Database['public']['Tables']['authors']['Row'];

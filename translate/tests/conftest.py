@@ -28,6 +28,13 @@ def mock_api_keys():
         yield
 
 
+@pytest.fixture(autouse=True)
+def disable_claude_cli():
+    """Disable Claude CLI in tests so OpenAI mocks work correctly."""
+    with patch("data.config.USE_CLAUDE_CLI", False):
+        yield
+
+
 @pytest.fixture
 def temp_dir():
     """Create a temporary directory for tests."""

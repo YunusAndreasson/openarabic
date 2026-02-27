@@ -126,7 +126,7 @@ class WordTranslation(BaseModel):
         description=(
             "English translation(s). May be multi-word phrases (e.g., 'for him', 'in it'). "
             "Prefer explicit multi-word expansions that reflect Arabic morphology; avoid condensed forms like 'therein'. "
-            "For options, include 1–3 concise choices ordered by likelihood."
+            "For options, include 1–2 concise choices ordered by likelihood."
         )
     )
     pos: PartOfSpeech = Field(description="Part of speech from the allowed set.")
@@ -142,7 +142,7 @@ class WordTranslation(BaseModel):
         description=(
             "Essential root meaning(s). May be multi-word phrases when appropriate (e.g., 'for him', 'of it'). "
             "Prefer explicit multi-word expansions that mirror Arabic morphology; avoid condensed/archaic forms like 'therein/thereof'. "
-            "For options, include 1–3 concise choices ordered by likelihood."
+            "For options, include 1–2 concise choices ordered by likelihood."
         )
     )
     notes: str | None = Field(
@@ -245,15 +245,12 @@ class WordTranslation(BaseModel):
         if isinstance(v, list):
             if not v:
                 raise ValueError("english options list cannot be empty")
-            if len(v) > 2:
-                raise ValueError(
-                    "english options must have at most 2 items (single alternative)"
-                )
             # trim each option and ensure non-empty
             cleaned = [s.strip() for s in v if isinstance(s, str)]
             if len(cleaned) != len(v) or any(not s for s in cleaned):
                 raise ValueError("english options must be non-empty strings")
-            return cleaned
+            # Truncate to 2 items (ordered by likelihood, keep top 2)
+            return cleaned[:2]
         v = v.strip()
         if not v:
             raise ValueError("english must be a non-empty string")
@@ -265,16 +262,13 @@ class WordTranslation(BaseModel):
         if isinstance(v, list):
             if not v:
                 raise ValueError("essential_translation options list cannot be empty")
-            if len(v) > 2:
-                raise ValueError(
-                    "essential_translation options must have at most 2 items (single alternative)"
-                )
             cleaned = [s.strip() for s in v if isinstance(s, str)]
             if len(cleaned) != len(v) or any(not s for s in cleaned):
                 raise ValueError(
                     "essential_translation options must be non-empty strings"
                 )
-            return cleaned
+            # Truncate to 2 items (ordered by likelihood, keep top 2)
+            return cleaned[:2]
         v = v.strip()
         if not v:
             raise ValueError("essential_translation must be a non-empty string")

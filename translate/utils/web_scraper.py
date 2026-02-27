@@ -118,20 +118,27 @@ def try_extract_json_data(html: str) -> dict[str, Any] | None:
     return None
 
 
-def fetch_all_usul_pages(base_url: str, max_pages: int = 100) -> str:
+def fetch_all_usul_pages(
+    base_url: str, max_pages: int = 100, skip_pages: int = 0
+) -> str:
     """Fetch all pages from a paginated Usul.ai text.
 
     Args:
         base_url: Base URL without page number (e.g., https://usul.ai/t/zaghl-cilm)
         max_pages: Maximum pages to fetch
+        skip_pages: Number of pages to skip from the start (e.g., 10 to skip intro)
 
     Returns:
         Combined Arabic text from all pages
     """
     all_arabic = []
     arabic_pattern = re.compile(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]+")
+    start_page = skip_pages + 1
 
-    for page in range(1, max_pages + 1):
+    if skip_pages:
+        logger.info(f"Skipping first {skip_pages} pages, starting at page {start_page}")
+
+    for page in range(start_page, max_pages + 1):
         url = f"{base_url}/{page}"
         try:
             html = fetch_url(url)
@@ -152,12 +159,15 @@ def fetch_all_usul_pages(base_url: str, max_pages: int = 100) -> str:
     return " ".join(all_arabic)
 
 
-def extract_from_usul_ai(html: str, url: str = "") -> tuple[str, str, str]:
+def extract_from_usul_ai(
+    html: str, url: str = "", skip_pages: int = 0
+) -> tuple[str, str, str]:
     """Special extraction for Usul.ai platform.
 
     Args:
         html: Raw HTML from usul.ai
         url: Original URL (used for pagination)
+        skip_pages: Number of pages to skip from the start
 
     Returns:
         Tuple of (title, author, arabic_text)
@@ -183,7 +193,7 @@ def extract_from_usul_ai(html: str, url: str = "") -> tuple[str, str, str]:
         )
         if page_links:
             logger.info("Detected paginated content, fetching all pages...")
-            arabic_text = fetch_all_usul_pages(base_url)
+            arabic_text = fetch_all_usul_pages(base_url, skip_pages=skip_pages)
             return title, author, arabic_text
 
     # Fall back to single page extraction
@@ -216,11 +226,12 @@ def count_arabic_words(text: str) -> int:
     return len(words)
 
 
-def scrape_url(url: str) -> ScrapedContent:
+def scrape_url(url: str, skip_pages: int = 0) -> ScrapedContent:
     """Scrape Arabic content from a URL.
 
     Args:
         url: URL to scrape
+        skip_pages: Number of pages to skip from the start (for paginated sources)
 
     Returns:
         ScrapedContent with extracted data
@@ -236,7 +247,7 @@ def scrape_url(url: str) -> ScrapedContent:
     # Detect platform and use appropriate extractor
     if "usul.ai" in url:
         platform = "usul.ai"
-        title, author, arabic_text = extract_from_usul_ai(html, url)
+        title, author, arabic_text = extract_from_usul_ai(html, url, skip_pages)
     else:
         platform = "generic"
         title = ""

@@ -439,18 +439,16 @@ class TestWordTranslationValidators:
         )
         assert wt.arabic == "كتاب"
 
-    def test_english_list_max_two_items(self):
-        """Test english list max 2 items."""
-        from pydantic import ValidationError
-
-        with pytest.raises(ValidationError, match="at most 2 items"):
-            WordTranslation(
-                arabic="كتاب",
-                english=["book", "tome", "volume"],  # 3 items - too many
-                pos="noun",
-                essential="كتب",
-                essential_translation="book",
-            )
+    def test_english_list_truncated_to_two(self):
+        """Test english list with 3+ items is truncated to first 2."""
+        wt = WordTranslation(
+            arabic="كتاب",
+            english=["book", "tome", "volume"],  # 3 items - truncated to 2
+            pos="noun",
+            essential="كتب",
+            essential_translation="book",
+        )
+        assert wt.english == ["book", "tome"]
 
     def test_english_list_empty_raises(self):
         """Test empty english list raises."""
@@ -489,18 +487,16 @@ class TestWordTranslationValidators:
                 essential_translation="book",
             )
 
-    def test_essential_translation_list_max_two(self):
-        """Test essential_translation list max 2 items."""
-        from pydantic import ValidationError
-
-        with pytest.raises(ValidationError, match="at most 2 items"):
-            WordTranslation(
-                arabic="كتاب",
-                english="book",
-                pos="noun",
-                essential="كتب",
-                essential_translation=["book", "tome", "volume"],
-            )
+    def test_essential_translation_list_truncated_to_two(self):
+        """Test essential_translation list with 3+ items is truncated to first 2."""
+        wt = WordTranslation(
+            arabic="كتاب",
+            english="book",
+            pos="noun",
+            essential="كتب",
+            essential_translation=["book", "tome", "volume"],
+        )
+        assert wt.essential_translation == ["book", "tome"]
 
     def test_notes_empty_string_becomes_none(self):
         """Test empty notes string becomes None."""

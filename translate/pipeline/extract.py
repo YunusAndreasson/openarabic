@@ -79,7 +79,7 @@ STEP 1 - ANALYZE FIRST (do this mentally before extracting):
 
 STEP 2 - EXTRACT PASSAGES meeting these criteria:
 
-LENGTH: 200-300 Arabic words (strict)
+LENGTH: 400-600 Arabic words (strict)
 
 WHAT MAKES A PASSAGE "INTERESTING" (be specific):
 ✓ Stories or anecdotes (someone did something, something happened)
@@ -153,14 +153,14 @@ def build_user_prompt(arabic_text: str) -> str:
 
 {arabic_text}
 
-Remember: 200-300 words per passage, pure prose, self-contained, engaging content."""
+Remember: 400-600 words per passage, pure prose, self-contained, engaging content."""
 
 
 def extract_passages_with_deepseek(
     arabic_text: str,
     max_passages: int = 25,
 ) -> list[ExtractedPassage]:
-    """Use DeepSeek to extract suitable passages from Arabic text.
+    """Use DeepSeek (or Claude CLI) to extract suitable passages from Arabic text.
 
     Args:
         arabic_text: Full Arabic text to extract from
@@ -169,8 +169,6 @@ def extract_passages_with_deepseek(
     Returns:
         List of extracted passages with translations, sorted by quality score
     """
-    client = OpenRouterClient()
-
     system_prompt = build_extraction_prompt(arabic_text, max_passages)
     user_prompt = build_user_prompt(arabic_text)
 
@@ -179,15 +177,15 @@ def extract_passages_with_deepseek(
         {"role": "user", "content": user_prompt},
     ]
 
+    # Always use DeepSeek for extraction (large context, fast)
+    client = OpenRouterClient()
     print_status("Sending text to DeepSeek for passage extraction...")
-
-    response = client.call_api(
+    api_response = client.call_api(
         messages,
-        max_tokens=32000,  # More tokens for ~25 passages with translations
-        temperature=0.3,  # Some creativity but mostly consistent
+        max_tokens=32000,
+        temperature=0.3,
     )
-
-    result = client.parse_json_response(response)
+    result = client.parse_json_response(api_response)
 
     passages = []
     for p in result.get("passages", []):
@@ -340,8 +338,9 @@ def save_passages_to_inbox(
 def extract_from_url(
     url: str,
     author_key: str,
-    max_passages: int = 10,
+    max_passages: int = 25,
     skip_review: bool = False,
+    skip_pages: int = 10,
 ) -> ExtractionResult:
     """Main entry point: extract passages from URL and save to inbox.
 
@@ -350,6 +349,7 @@ def extract_from_url(
         author_key: Author number or folder name
         max_passages: Maximum passages to extract
         skip_review: If True, save all passages without review
+        skip_pages: Number of pages to skip from the start (default 10 to skip intros)
 
     Returns:
         ExtractionResult with details
@@ -367,7 +367,9 @@ def extract_from_url(
 
     # Scrape URL
     print_status(f"Fetching: {url}")
-    scraped = scrape_url(url)
+    if skip_pages:
+        print_status(f"Skipping first {skip_pages} pages (author intro)")
+    scraped = scrape_url(url, skip_pages=skip_pages)
     print_success(f"Downloaded {scraped.word_count} Arabic words")
 
     # Extract passages
@@ -418,24 +420,39 @@ def extract_from_url(
 
 # CLI test
 if __name__ == "__main__":
+    import argparse
     import sys
 
     logging.basicConfig(level=logging.INFO)
 
-    if len(sys.argv) < 3:
-        print("Usage: python -m pipeline.extract <url> <author_number>")
-        print("Example: python -m pipeline.extract 'https://usul.ai/t/zaghl-cilm' 15")
-        sys.exit(1)
-
-    url = sys.argv[1]
-    author = sys.argv[2]
+    parser = argparse.ArgumentParser(description="Extract passages from Arabic texts")
+    parser.add_argument("url", help="URL to scrape")
+    parser.add_argument("author", help="Author number or folder name")
+    parser.add_argument(
+        "--skip-pages",
+        type=int,
+        default=10,
+        help="Pages to skip from the start (default: 10, use 0 to skip nothing)",
+    )
+    parser.add_argument(
+        "--max-passages",
+        type=int,
+        default=25,
+        help="Maximum passages to extract (default: 25)",
+    )
+    args = parser.parse_args()
 
     try:
         # Load API keys
         with contextlib.suppress(ImportError):
             import utils.set_keys  # noqa: F401
 
-        result = extract_from_url(url, author)
+        result = extract_from_url(
+            args.url,
+            args.author,
+            max_passages=args.max_passages,
+            skip_pages=args.skip_pages,
+        )
         print(f"\nDone! Extracted from: {result.source_title}")
     except KeyboardInterrupt:
         print("\nCancelled.")

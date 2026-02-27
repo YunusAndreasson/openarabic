@@ -355,8 +355,11 @@ def translate_file(
         all_units = split_data.units
 
         # Initialize conversation manager for document-level continuity
+        # Skip conversation continuity when using Claude CLI (stateless calls)
         conversation_manager = None
-        if use_conversation_continuity:
+        from data.config import USE_CLAUDE_CLI
+
+        if use_conversation_continuity and not USE_CLAUDE_CLI:
             from utils.responses_api import ResponsesAPIManager
 
             conversation_manager = ResponsesAPIManager()

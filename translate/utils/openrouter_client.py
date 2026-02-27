@@ -84,7 +84,7 @@ class OpenRouterClient:
                 f"{self.base_url}/chat/completions",
                 headers=headers,
                 json=payload,
-                timeout=60,
+                timeout=300,
             )
             response.raise_for_status()
 
@@ -199,7 +199,8 @@ class OpenRouterClient:
         response = self.call_api(messages, max_tokens=max_tokens, temperature=0.1)
         return self.parse_json_response(response)
 
-    def _build_correction_system_prompt(self, retry_count: int) -> str:
+    @staticmethod
+    def _build_correction_system_prompt(retry_count: int) -> str:
         """Build system prompt for translation correction task.
 
         Args:
@@ -355,8 +356,8 @@ Start with {{ and end with }}. Nothing else."""
 
         return base_prompt
 
+    @staticmethod
     def _build_correction_user_prompt(
-        self,
         sentences_data: list["SentenceCorrectionInput"],
         article_context: "ArticleContext | None" = None,
     ) -> str:

@@ -15,23 +15,22 @@ export function SkeletonCard() {
       </div>
 
       {/* Content skeleton - matches ArticleCard content padding */}
-      <div className="flex flex-col flex-1 px-6 pb-4 md:px-[26px] md:pb-4 pt-4 md:pt-5">
-        {/* Title skeleton - light mode (2 lines) */}
-        <div className="space-y-2 mb-2 -mx-2 md:-mx-[10px]">
+      <div className="flex flex-col flex-1 px-4 pt-4 pb-4">
+        {/* Title skeleton (2 lines) */}
+        <div className="space-y-2 mb-1.5">
           <div className="h-5 md:h-6 bg-muted rounded animate-pulse w-full" />
           <div className="h-5 md:h-6 bg-muted rounded animate-pulse w-3/4" />
         </div>
 
-        {/* Summary skeleton (4 lines) */}
-        <div className="space-y-2 -mx-2 md:-mx-[10px]">
-          <div className="h-4 bg-muted rounded animate-pulse w-full" />
+        {/* Summary skeleton (3 lines) */}
+        <div className="space-y-2">
           <div className="h-4 bg-muted rounded animate-pulse w-full" />
           <div className="h-4 bg-muted rounded animate-pulse w-full" />
           <div className="h-4 bg-muted rounded animate-pulse w-5/6" />
         </div>
 
         {/* Metadata skeleton - at bottom */}
-        <div className="flex items-center gap-2 mt-auto pt-4 -mx-2 md:-mx-[10px]">
+        <div className="flex items-center gap-1.5 mt-auto pt-4">
           <div className="h-3 bg-muted rounded animate-pulse w-20" />
           <div className="h-3 bg-muted rounded animate-pulse w-1" />
           <div className="h-3 bg-muted rounded animate-pulse w-16" />

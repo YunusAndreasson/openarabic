@@ -164,7 +164,7 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
             <button
               onClick={handlePlayAudio}
               disabled={isLoading}
-              className="relative flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground/60 hover:text-primary hover:bg-primary/6 transition-[color,background-color] duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="relative flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-[color,background-color] duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={isPlaying ? 'Pause Arabic audio' : 'Play Arabic audio'}
               title={isPlaying ? 'Pause' : 'Play Arabic audio'}
             >

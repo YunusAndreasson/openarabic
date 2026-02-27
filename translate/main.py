@@ -72,7 +72,7 @@ def _load_api_keys() -> None:
 
 
 def _process_one_file() -> None:
-    """Process a single file from inbox through the complete pipeline."""
+    """Process all files from inbox through the complete pipeline, one at a time."""
 
     from pipeline.split_file import split_files
     from pipeline.translate import translate_files
@@ -81,72 +81,75 @@ def _process_one_file() -> None:
     print_pipeline_start(["Split", "Translate", "Insert", "Word Audio"])
     total_start = time.perf_counter()
 
-    # Find first file in inbox
+    # Find all files in inbox
     input_files = find_input_files_in_inbox()
     if not input_files:
         print_warning("No files found in inbox. Use --extract to add some.")
         return
 
-    # Take only the first file (tuple: file_path, author_folder, author_name)
-    single_file_tuple = input_files[0]
-    single_file = single_file_tuple[0]  # Extract just the path
-    print_status(f"Processing: {Path(single_file).name}")
-    remaining = len(input_files) - 1
-    if remaining > 0:
-        print_status(f"({remaining} more file(s) waiting in inbox)")
+    total_files = len(input_files)
+    print_status(f"Found {total_files} file(s) in inbox")
 
-    # Phase 1: Split
-    with timed_phase("📄", 1, "SPLIT", f"Splitting {Path(single_file).name}"):
-        split_files([single_file_tuple])
+    for file_idx, single_file_tuple in enumerate(input_files, start=1):
+        single_file = single_file_tuple[0]  # Extract just the path
+        print_rule()
+        print_status(f"[{file_idx}/{total_files}] Processing: {Path(single_file).name}")
 
-    # Find the split file we just created
-    from utils.file_discovery import find_split_files
+        # Phase 1: Split
+        with timed_phase("📄", 1, "SPLIT", f"Splitting {Path(single_file).name}"):
+            split_files([single_file_tuple])
 
-    split_file_list = find_split_files()
-    if not split_file_list:
-        print_error("Split file not found")
-        return
+        # Find the split file we just created
+        from utils.file_discovery import find_split_files
 
-    # Take only the most recent split file (the one we just created)
-    # Each item is a tuple: (file_path, author_number, author_name)
-    split_file_list.sort(key=lambda x: Path(x[0]).stat().st_mtime, reverse=True)
-    single_split_tuple = split_file_list[0]
-    single_split_path = single_split_tuple[0]
+        split_file_list = find_split_files()
+        if not split_file_list:
+            print_error(f"Split file not found for {Path(single_file).name}, skipping")
+            continue
 
-    # Phase 2: Translate
-    with timed_phase(
-        "🌍", 2, "TRANSLATE", f"Translating {Path(single_split_path).name}"
-    ):
-        translate_files([single_split_tuple])
-
-    # Phase 3: Insert (runs as subprocess, processes all translated files)
-    with timed_phase("💾", 3, "INSERT", "Inserting into database"):
-        run_pipeline_step(
-            script_path="pipeline/insert.py",
-            description="database insertion",
-            cwd=str(MODULE_DIR),
+        # Take only the most recent split file (the one we just created)
+        # Each item is a tuple: (file_path, author_number, author_name)
+        split_file_list.sort(
+            key=lambda x: Path(x[0]).stat().st_mtime, reverse=True
         )
+        single_split_tuple = split_file_list[0]
+        single_split_path = single_split_tuple[0]
 
-    # Phase 4: Word Audio (for the single article we just inserted)
-    try:
-        from audio import process_word_audio_for_latest_articles
+        # Phase 2: Translate
+        with timed_phase(
+            "🌍", 2, "TRANSLATE", f"Translating {Path(single_split_path).name}"
+        ):
+            translate_files([single_split_tuple])
 
-        with timed_phase("🎵", 4, "WORD AUDIO", "Processing word audio"):
-            process_word_audio_for_latest_articles(limit=1)
-    except ImportError as e:
-        print_warning(f"Word audio skipped: {e}")
-    except Exception as e:
-        print_warning(f"Word audio failed: {e}")
+        # Phase 3: Insert (runs as subprocess, processes all translated files)
+        with timed_phase("💾", 3, "INSERT", "Inserting into database"):
+            run_pipeline_step(
+                script_path="pipeline/insert.py",
+                description="database insertion",
+                cwd=str(MODULE_DIR),
+            )
+
+        # Phase 4: Word Audio (for the single article we just inserted)
+        try:
+            from audio import process_word_audio_for_latest_articles
+
+            with timed_phase("🎵", 4, "WORD AUDIO", "Processing word audio"):
+                process_word_audio_for_latest_articles(limit=1)
+        except ImportError as e:
+            print_warning(f"Word audio skipped: {e}")
+        except Exception as e:
+            print_warning(f"Word audio failed: {e}")
+
+        if file_idx < total_files:
+            print_status(
+                f"Finished {file_idx}/{total_files}. Continuing to next file..."
+            )
 
     # Summary
     print_rule()
     total_elapsed = time.perf_counter() - total_start
     print_pipeline_complete(total_elapsed)
-
-    if remaining > 0:
-        print_status(
-            f"\n{remaining} file(s) remaining in inbox. Run --full again to process next."
-        )
+    print_status(f"Processed {total_files} file(s) total")
 
 
 def _run_word_audio(article_id: int | None = None) -> None:
@@ -195,7 +198,7 @@ Pipeline Phases:
 
 Examples:
   python main.py --extract --url URL --author 15   # Extract passages from URL
-  python main.py --full                            # Process ONE file end-to-end (recommended)
+  python main.py --full                            # Process ALL inbox files end-to-end (recommended)
   python main.py --split                           # Split all files from inbox
   python main.py --translate                       # Translate split files
   python main.py --insert                          # Insert into database
@@ -221,6 +224,13 @@ Examples:
         type=str,
         metavar="NUM",
         help="Author number (e.g., 15 for al-Dhahabi) (requires --extract)",
+    )
+    parser.add_argument(
+        "--skip-pages",
+        type=int,
+        default=10,
+        metavar="N",
+        help="Pages to skip from book start (default: 10, skips author intro)",
     )
     parser.add_argument(
         "-s",
@@ -250,7 +260,7 @@ Examples:
         "-f",
         "--full",
         action="store_true",
-        help="Process ONE file from inbox through complete pipeline (split -> translate -> insert -> word-audio)",
+        help="Process ALL inbox files through complete pipeline (split -> translate -> insert -> word-audio)",
     )
 
     return parser
@@ -277,7 +287,7 @@ def main() -> None:
 
         _load_api_keys()
         try:
-            extract_from_url(args.url, args.author)
+            extract_from_url(args.url, args.author, skip_pages=args.skip_pages)
         except Exception as e:
             print_error(f"Extraction failed: {e}")
             sys.exit(1)

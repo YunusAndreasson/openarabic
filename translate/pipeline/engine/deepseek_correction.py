@@ -8,7 +8,7 @@ that OpenAI sometimes misses.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from data.config import DEEPSEEK_CORRECTION_BATCH_SIZE
 from data.deepseek_correction_models import (
@@ -91,13 +91,18 @@ def correct_translations_with_deepseek(
         return translations
 
     try:
-        # Import here to avoid circular imports and check if API key is available
-        from utils.openrouter_client import OpenRouterClient
+        from data.config import USE_CLAUDE_CLI
         from utils.responses_api import token_tracker
 
         token_tracker.set_phase("DeepSeek Correction")
-        logger.info(f"  → {get_batch_prefix()}DeepSeek correction...")
-        client = OpenRouterClient()
+        label = "Claude CLI" if USE_CLAUDE_CLI else "DeepSeek"
+        logger.info(f"  → {get_batch_prefix()}{label} correction...")
+
+        client = None
+        if not USE_CLAUDE_CLI:
+            from utils.openrouter_client import OpenRouterClient
+
+            client = OpenRouterClient()
 
         # Build index map once for O(1) context lookup
         translations_by_index = {t.index: t for t in translations}
@@ -123,35 +128,81 @@ def correct_translations_with_deepseek(
         return translations
 
 
+def _correct_batch_claude_cli(
+    batch: list[SentenceTranslation],
+    translations_by_index: dict[int, SentenceTranslation],
+    article_context: ArticleContext | None = None,
+) -> dict[str, Any] | None:
+    """Correct a batch using Claude CLI. Returns parsed response or None."""
+    from data.config import VALIDATION_MAX_RETRIES
+    from utils.claude_cli import call_claude_cli
+    from utils.openrouter_client import OpenRouterClient
+
+    sentences_data = [_prepare_sentence_input(t, translations_by_index) for t in batch]
+
+    for retry_count in range(VALIDATION_MAX_RETRIES):
+        system_prompt = OpenRouterClient._build_correction_system_prompt(retry_count)
+        user_prompt = OpenRouterClient._build_correction_user_prompt(
+            sentences_data, article_context
+        )
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+        response = call_claude_cli(messages)
+        if response.get("success") and response.get("data"):
+            return response["data"]
+        if retry_count == VALIDATION_MAX_RETRIES - 1:
+            error = response.get("error", "Unknown error")
+            logger.warning(f"Claude CLI correction failed after retries: {error}")
+            _mark_batch_needs_review(batch, "Claude CLI correction parsing failed")
+            return None
+        logger.warning(f"Retry {retry_count + 1}: {response.get('error')}")
+    return None
+
+
 def _correct_batch(
     batch: list[SentenceTranslation],
-    client: OpenRouterClient,
+    client: "OpenRouterClient | None",
     translations_by_index: dict[int, SentenceTranslation],
     article_context: ArticleContext | None = None,
 ) -> None:
     """Correct a batch of translations and apply changes."""
-    from data.config import VALIDATION_MAX_RETRIES
+    from data.config import USE_CLAUDE_CLI, VALIDATION_MAX_RETRIES
 
-    # Prepare sentence data with surrounding context using O(1) lookup
-    sentences_data = [_prepare_sentence_input(t, translations_by_index) for t in batch]
-
-    # Call DeepSeek with retry logic
-    for retry_count in range(VALIDATION_MAX_RETRIES):
-        try:
-            response = client.correct_translations_batch(
-                sentences_data, retry_count, article_context
-            )
-            if response:
-                break
-        except ValueError as e:
-            if retry_count == VALIDATION_MAX_RETRIES - 1:
-                logger.warning(f"DeepSeek correction failed after retries: {e}")
-                _mark_batch_needs_review(batch, "DeepSeek correction parsing failed")
-                return
-            logger.warning(f"Retry {retry_count + 1}: {e}")
+    if USE_CLAUDE_CLI:
+        response = _correct_batch_claude_cli(
+            batch, translations_by_index, article_context
+        )
+        if response is None:
+            return
     else:
-        _mark_batch_needs_review(batch, "DeepSeek correction returned no response")
-        return
+        assert client is not None
+        # Prepare sentence data with surrounding context using O(1) lookup
+        sentences_data = [_prepare_sentence_input(t, translations_by_index) for t in batch]
+
+        # Call DeepSeek with retry logic
+        response = None
+        for retry_count in range(VALIDATION_MAX_RETRIES):
+            try:
+                response = client.correct_translations_batch(
+                    sentences_data, retry_count, article_context
+                )
+                if response:
+                    break
+            except ValueError as e:
+                if retry_count == VALIDATION_MAX_RETRIES - 1:
+                    logger.warning(f"DeepSeek correction failed after retries: {e}")
+                    _mark_batch_needs_review(batch, "DeepSeek correction parsing failed")
+                    return
+                logger.warning(f"Retry {retry_count + 1}: {e}")
+        else:
+            _mark_batch_needs_review(batch, "DeepSeek correction returned no response")
+            return
+
+        if not response:
+            _mark_batch_needs_review(batch, "DeepSeek correction returned no response")
+            return
 
     # Parse response and apply corrections
     try:
