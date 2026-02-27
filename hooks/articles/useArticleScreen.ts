@@ -343,10 +343,10 @@ export function useArticleScreen({
           } else {
             // For middle positions, use scrollToOffset with smooth animation
             try {
-              // Estimate offset: use FlashList's estimated item size
-              const estimatedItemSize = 100;
+              // Estimate offset for scroll position
+              const approximateItemHeight = 100;
               const headerHeight = 400;
-              const offset = headerHeight + targetIndex * estimatedItemSize;
+              const offset = headerHeight + targetIndex * approximateItemHeight;
               scrollViewRef.current?.scrollToOffset({
                 offset,
                 animated: true,

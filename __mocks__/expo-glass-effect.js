@@ -19,4 +19,5 @@ GlassContainer.displayName = 'GlassContainer';
 module.exports = {
   GlassView,
   GlassContainer,
+  isLiquidGlassAvailable: () => false,
 };

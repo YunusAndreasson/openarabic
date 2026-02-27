@@ -1,7 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { GlassView } from 'expo-glass-effect';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { memo, startTransition, useOptimistic, useMemo } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+const GLASS_AVAILABLE = isLiquidGlassAvailable();
+const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -79,13 +82,16 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
       <>
         {/* Close button - top left */}
         <Pressable onPress={onClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={closeButtonStyle}>
-          <GlassView style={[styles.glassButton, fallbackButtonStyle]} isInteractive>
+          <GlassContainer
+            style={[styles.glassButton, fallbackButtonStyle]}
+            {...(GLASS_AVAILABLE && { isInteractive: true })}
+          >
             <Ionicons
               name="close"
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               color={colors.secondaryText}
             />
-          </GlassView>
+          </GlassContainer>
         </Pressable>
 
         {/* Action buttons - top right */}
@@ -94,19 +100,19 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
           hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           style={actionButtonsStyle}
         >
-          <GlassView
+          <GlassContainer
             style={[
               styles.glassButton,
               optimisticIsInReadingList ? activeFallbackStyle : fallbackButtonStyle,
             ]}
-            isInteractive
+            {...(GLASS_AVAILABLE && { isInteractive: true })}
           >
             <Ionicons
               name={optimisticIsInReadingList ? 'headset' : 'headset-outline'}
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               color={optimisticIsInReadingList ? colors.tint : colors.secondaryText}
             />
-          </GlassView>
+          </GlassContainer>
         </Pressable>
       </>
     );

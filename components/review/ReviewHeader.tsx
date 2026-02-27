@@ -1,8 +1,11 @@
 import { ProgressBar } from '@/components/common';
 import { Ionicons } from '@expo/vector-icons';
-import { GlassView } from 'expo-glass-effect';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+
+const GLASS_AVAILABLE = isLiquidGlassAvailable();
+const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -72,13 +75,16 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({ progress, maxProgress, onC
       </View>
       {onClose && (
         <Pressable onPress={handleClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM}>
-          <GlassView style={[STATIC_STYLES.closeButton, fallbackButtonStyle]} isInteractive>
+          <GlassContainer
+            style={[STATIC_STYLES.closeButton, fallbackButtonStyle]}
+            {...(GLASS_AVAILABLE && { isInteractive: true })}
+          >
             <Ionicons
               name="close"
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               color={colors.secondaryText}
             />
-          </GlassView>
+          </GlassContainer>
         </Pressable>
       )}
     </View>
