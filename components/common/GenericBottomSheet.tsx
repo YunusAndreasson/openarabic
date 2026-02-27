@@ -2,7 +2,6 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import type { FC, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
 
@@ -81,7 +80,6 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
 }) => {
   const effectiveSheetName = sheetName || title || 'Generic';
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   // Show/hide modal based on isVisible prop
@@ -136,9 +134,7 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
       backdropComponent={renderBackdrop}
       {...bottomSheetProps}
     >
-      <BottomSheetView
-        style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
-      >
+      <BottomSheetView style={styles.container}>
         <BottomSheetErrorBoundary sheetName={effectiveSheetName}>
           {/* Render custom header OR standard title/subtitle header */}
           {customHeader ? (
@@ -166,5 +162,6 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
 });

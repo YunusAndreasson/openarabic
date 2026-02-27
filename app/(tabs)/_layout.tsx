@@ -3,8 +3,8 @@ import { Fragment, useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Tabs , router } from 'expo-router';
-import { Badge, Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Tabs, router } from 'expo-router';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
@@ -31,7 +31,6 @@ export default function TabLayout(): JSX.Element {
   }
 
   // Use NativeTabs on iOS for native tab bar with liquid glass effect
-  // Note: NativeTabs is iOS-only (uses UITabBarController) - Android uses JavaScript tabs
   if (Platform.OS === 'ios') {
     return (
       <NativeTabs
@@ -43,10 +42,10 @@ export default function TabLayout(): JSX.Element {
       >
         {TAB_SCREENS.map(screen => (
           <NativeTabs.Trigger key={screen.name} name={screen.name}>
-            <Icon sf={screen.icon.sf} />
-            <Label>{screen.title}</Label>
+            <NativeTabs.Trigger.Icon sf={screen.icon.sf} />
+            <NativeTabs.Trigger.Label>{screen.title}</NativeTabs.Trigger.Label>
             {screen.name === 'practice' && dueWordsCount > 0 && (
-              <Badge>{String(dueWordsCount)}</Badge>
+              <NativeTabs.Trigger.Badge>{String(dueWordsCount)}</NativeTabs.Trigger.Badge>
             )}
           </NativeTabs.Trigger>
         ))}

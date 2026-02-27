@@ -89,7 +89,7 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
             style={styles.scrollView}
             contentContainerStyle={[
               styles.scrollContent,
-              { paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE },
+              { paddingBottom: insets.bottom + LAYOUT.SPACING.SMALL },
             ]}
             showsVerticalScrollIndicator={false}
           >

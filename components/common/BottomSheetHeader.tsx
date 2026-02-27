@@ -26,7 +26,7 @@ export const BottomSheetHeader = ({ title, subtitle }: BottomSheetHeaderProps) =
 const styles = StyleSheet.create({
   header: {
     ...LAYOUT.BOTTOM_SHEET.HEADER,
-    marginBottom: LAYOUT.SPACING.XLARGE, // 24px - major section separation
+    marginBottom: LAYOUT.SPACING.SMALL, // 8px - tight proximity to content
   },
   title: LAYOUT.BOTTOM_SHEET.STYLES.title,
   subtitle: LAYOUT.BOTTOM_SHEET.STYLES.subtitle,

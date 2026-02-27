@@ -77,6 +77,6 @@ StudyStreakBottomSheet.displayName = 'StudyStreakBottomSheet';
 
 const styles = StyleSheet.create({
   streakMetricsContainer: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 });

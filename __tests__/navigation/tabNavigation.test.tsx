@@ -11,14 +11,13 @@ jest.mock('expo-router/unstable-native-tabs', () => {
   const React = require('react');
   const NativeTabs = ({ children }: { children: React.ReactNode }) =>
     React.createElement('View', null, children);
-  NativeTabs.Trigger = ({ children }: { children: React.ReactNode }) =>
+  const Trigger = ({ children }: { children: React.ReactNode }) =>
     React.createElement('View', null, children);
-  return {
-    NativeTabs,
-    Icon: () => null,
-    Label: () => null,
-    Badge: () => null,
-  };
+  Trigger.Icon = () => null;
+  Trigger.Label = () => null;
+  Trigger.Badge = () => null;
+  NativeTabs.Trigger = Trigger;
+  return { NativeTabs };
 });
 
 jest.mock('@react-navigation/native', () => {
