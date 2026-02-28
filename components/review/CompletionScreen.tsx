@@ -23,6 +23,30 @@ import { UiAction } from '@/types/enums';
 import type { SessionMetrics } from '@/types/review.types';
 import { createMargin, createPadding, COMMON_STYLES } from '@/utils/layoutUtils';
 
+// Layout animation builders hoisted to module level per Reanimated best practices
+const ENTERING_ICON = ZoomIn.duration(TIMING_CONFIG.FAST.duration).springify();
+const ENTERING_TITLE = FadeInUp.delay(TIMING_CONSTANTS.STAGGER.BASE).duration(
+  TIMING_CONFIG.FAST.duration,
+);
+const ENTERING_SUBTITLE = FadeInUp.delay(TIMING_CONSTANTS.STAGGER.FAST).duration(
+  TIMING_CONFIG.FAST.duration,
+);
+const ENTERING_EDUCATIONAL = FadeInUp.delay(TIMING_CONSTANTS.STAGGER.MEDIUM).duration(
+  TIMING_CONFIG.FAST.duration,
+);
+const ENTERING_BUTTON_WITH_METRICS = FadeIn.delay(
+  TIMING_CONSTANTS.STAGGER.BUTTON_WITH_METRICS,
+).duration(TIMING_CONFIG.FAST.duration);
+const ENTERING_BUTTON_WITHOUT_METRICS = FadeIn.delay(
+  TIMING_CONSTANTS.STAGGER.BUTTON_WITHOUT_METRICS,
+).duration(TIMING_CONFIG.FAST.duration);
+// Pre-build metric entering animations for indices 0-4 (typical max metrics count)
+const ENTERING_METRICS = Array.from({ length: 5 }, (_, index) =>
+  FadeInUp.delay(
+    TIMING_CONSTANTS.STAGGER.SLOW + index * TIMING_CONSTANTS.STAGGER.INCREMENT,
+  ).duration(TIMING_CONFIG.FAST.duration),
+);
+
 interface CompletionScreenProps {
   title?: string;
   subtitle?: string;
@@ -61,31 +85,20 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   const Content = (
     <View style={[styles.contentContainer, contentStyle || {}]}>
       {/* Success Icon - Primary visual element */}
-      <Animated.View
-        entering={ZoomIn.duration(TIMING_CONFIG.FAST.duration).springify()}
-        style={styles.iconContainer}
-      >
+      <Animated.View entering={ENTERING_ICON} style={styles.iconContainer}>
         <Ionicons color={colors.completionSuccess} name={iconName} size={iconSize} />
       </Animated.View>
 
       {/* Title Group - Closely grouped for Gestalt proximity */}
       <View style={styles.titleGroup}>
-        <Animated.View
-          entering={FadeInUp.delay(TIMING_CONSTANTS.STAGGER.BASE).duration(
-            TIMING_CONFIG.FAST.duration,
-          )}
-        >
+        <Animated.View entering={ENTERING_TITLE}>
           <ThemedText colorName="headingText" style={styles.titleText} type="heading1">
             {title}
           </ThemedText>
         </Animated.View>
 
         {subtitle && (
-          <Animated.View
-            entering={FadeInUp.delay(TIMING_CONSTANTS.STAGGER.FAST).duration(
-              TIMING_CONFIG.FAST.duration,
-            )}
-          >
+          <Animated.View entering={ENTERING_SUBTITLE}>
             <ThemedText colorName="subtitleText" style={styles.subtitleText} type="heading3">
               {subtitle}
             </ThemedText>
@@ -93,11 +106,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
         )}
 
         {/* Educational text - grouped with title for clarity */}
-        <Animated.View
-          entering={FadeInUp.delay(TIMING_CONSTANTS.STAGGER.MEDIUM).duration(
-            TIMING_CONFIG.FAST.duration,
-          )}
-        >
+        <Animated.View entering={ENTERING_EDUCATIONAL}>
           <ThemedText colorName="secondary" style={styles.educationalText} type="body">
             {STRINGS.SESSION_COMPLETE_EDUCATIONAL}
           </ThemedText>
@@ -110,9 +119,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
           {encouragingMetrics.map((metric, index) => (
             <Fragment key={metric.type + metric.text}>
               <Animated.View
-                entering={FadeInUp.delay(
-                  TIMING_CONSTANTS.STAGGER.SLOW + index * TIMING_CONSTANTS.STAGGER.INCREMENT,
-                ).duration(TIMING_CONFIG.FAST.duration)}
+                entering={ENTERING_METRICS[index]}
                 style={[
                   styles.metricItem,
                   {
@@ -149,11 +156,9 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
 
       {/* Action Button - Anchored to bottom */}
       <Animated.View
-        entering={FadeIn.delay(
-          encouragingMetrics
-            ? TIMING_CONSTANTS.STAGGER.BUTTON_WITH_METRICS
-            : TIMING_CONSTANTS.STAGGER.BUTTON_WITHOUT_METRICS,
-        ).duration(TIMING_CONFIG.FAST.duration)}
+        entering={
+          encouragingMetrics ? ENTERING_BUTTON_WITH_METRICS : ENTERING_BUTTON_WITHOUT_METRICS
+        }
         style={styles.buttonContainer}
       >
         {fromRemember ? (

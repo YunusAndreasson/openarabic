@@ -4,6 +4,8 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-reanimated';
 import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
+import { useMemo } from 'react';
+
 import { SPRING_CONFIG } from '@/constants/animation';
 
 import { WordDisplay as WordDisplayComponent } from './WordDisplay';
@@ -74,17 +76,20 @@ export function ReviewCard({
     springConfig: SPRING_CONFIG.CARD,
   });
 
-  // ===== BACKGROUND FLASH COLORS =====
-  const flashColors = {
-    error: [
-      withOpacity(colors.error, 0),
-      withOpacity(colors.error, GESTURE_CONSTANTS.FLASH_OPACITY),
-    ] as [string, string],
-    success: [
-      withOpacity(colors.success, 0),
-      withOpacity(colors.success, GESTURE_CONSTANTS.FLASH_OPACITY),
-    ] as [string, string],
-  };
+  // ===== BACKGROUND FLASH COLORS (memoized to avoid worklet re-serialization) =====
+  const flashColors = useMemo(
+    () => ({
+      error: [
+        withOpacity(colors.error, 0),
+        withOpacity(colors.error, GESTURE_CONSTANTS.FLASH_OPACITY),
+      ] as [string, string],
+      success: [
+        withOpacity(colors.success, 0),
+        withOpacity(colors.success, GESTURE_CONSTANTS.FLASH_OPACITY),
+      ] as [string, string],
+    }),
+    [colors.error, colors.success],
+  );
 
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';

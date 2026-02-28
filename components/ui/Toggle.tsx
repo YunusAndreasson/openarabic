@@ -30,10 +30,10 @@ export function Toggle({ value, onValueChange, testID }: ToggleProps) {
   const { containerAnimatedStyle, handleAnimatedStyle, forceAnimateToInitialState } =
     useToggleAnimation(value, TRAVEL_DISTANCE);
 
+  // Force initial position on mount only — subsequent changes are animated by useToggleAnimation
   useEffect(() => {
-    isMounted.current = true;
-
-    if (forceAnimateToInitialState) {
+    if (!isMounted.current) {
+      isMounted.current = true;
       forceAnimateToInitialState(value);
     }
   }, [value, forceAnimateToInitialState]);

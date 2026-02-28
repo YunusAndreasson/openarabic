@@ -71,7 +71,7 @@ export const useToggleAnimation = (
   useEffect(() => {
     // Run animation on UI thread
     scheduleOnUI(animateToggle, isActive, travelDistance);
-  }, [isActive, travelDistance]);
+  }, [isActive, travelDistance, animateToggle]);
 
   const containerAnimatedStyle = useAnimatedStyle(() => {
     return {

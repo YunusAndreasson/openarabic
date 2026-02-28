@@ -20,7 +20,6 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { SCREEN_WIDTH } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
-import { handleError } from '@/utils/errorHandling';
 
 export type TransformType = 'rotate' | 'scale' | 'slide' | 'translateX' | 'translateY';
 export type SlideDirection = 'left' | 'right';
@@ -207,32 +206,23 @@ export const useTransformAnimation = (
   const startAnimation = useCallback(
     (onComplete?: () => void) => {
       'worklet';
-      try {
-        // First cancel any running animations
-        cancelAnimation(value);
+      cancelAnimation(value);
 
-        // Different animation based on type
-        if (useSpring) {
-          value.set(
-            withSpring(targetValue, springConfig, finished =>
+      if (useSpring) {
+        value.set(
+          withSpring(targetValue, springConfig, finished =>
+            handleAnimationComplete(finished, onComplete),
+          ),
+        );
+      } else {
+        value.set(
+          withDelay(
+            delay,
+            withTiming(targetValue, timingConfig, finished =>
               handleAnimationComplete(finished, onComplete),
             ),
-          );
-        } else {
-          value.set(
-            withDelay(
-              delay,
-              withTiming(targetValue, timingConfig, finished =>
-                handleAnimationComplete(finished, onComplete),
-              ),
-            ),
-          );
-        }
-      } catch (error) {
-        handleError(error instanceof Error ? error : String(error));
-        if (onComplete) {
-          scheduleOnRN(onComplete);
-        }
+          ),
+        );
       }
     },
     [value, targetValue, delay, useSpring, springConfig, timingConfig, handleAnimationComplete],
@@ -242,30 +232,22 @@ export const useTransformAnimation = (
   const reverseAnimation = useCallback(
     (onComplete?: () => void) => {
       'worklet';
-      try {
-        // First cancel any running animations
-        cancelAnimation(value);
+      cancelAnimation(value);
 
-        const reverseTarget = type === 'slide' ? startPosition : initialValue;
+      const reverseTarget = type === 'slide' ? startPosition : initialValue;
 
-        if (useSpring) {
-          value.set(
-            withSpring(reverseTarget, springConfig, finished =>
-              handleAnimationComplete(finished, onComplete),
-            ),
-          );
-        } else {
-          value.set(
-            withTiming(reverseTarget, timingConfig, finished =>
-              handleAnimationComplete(finished, onComplete),
-            ),
-          );
-        }
-      } catch (error) {
-        handleError(error instanceof Error ? error : String(error));
-        if (onComplete) {
-          scheduleOnRN(onComplete);
-        }
+      if (useSpring) {
+        value.set(
+          withSpring(reverseTarget, springConfig, finished =>
+            handleAnimationComplete(finished, onComplete),
+          ),
+        );
+      } else {
+        value.set(
+          withTiming(reverseTarget, timingConfig, finished =>
+            handleAnimationComplete(finished, onComplete),
+          ),
+        );
       }
     },
     [
@@ -284,26 +266,20 @@ export const useTransformAnimation = (
   const setValue = useCallback(
     (newValue: number, onComplete?: () => void) => {
       'worklet';
-      try {
-        cancelAnimation(value);
-        if (useSpring) {
-          value.set(
-            withSpring(newValue, springConfig, finished =>
-              handleAnimationComplete(finished, onComplete),
-            ),
-          );
-        } else {
-          value.set(
-            withTiming(newValue, timingConfig, finished =>
-              handleAnimationComplete(finished, onComplete),
-            ),
-          );
-        }
-      } catch (error) {
-        handleError(error instanceof Error ? error : String(error));
-        if (onComplete) {
-          scheduleOnRN(onComplete);
-        }
+      cancelAnimation(value);
+
+      if (useSpring) {
+        value.set(
+          withSpring(newValue, springConfig, finished =>
+            handleAnimationComplete(finished, onComplete),
+          ),
+        );
+      } else {
+        value.set(
+          withTiming(newValue, timingConfig, finished =>
+            handleAnimationComplete(finished, onComplete),
+          ),
+        );
       }
     },
     [value, useSpring, springConfig, timingConfig, handleAnimationComplete],
