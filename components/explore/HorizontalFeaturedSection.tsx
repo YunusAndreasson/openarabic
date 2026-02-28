@@ -35,6 +35,8 @@ export function HorizontalFeaturedSection({
 
   const selectedArticles = featuredArticles.articles;
 
+  if (selectedArticles.length === 0) return null;
+
   return (
     <View>
       <SectionLabel title={STRINGS.SECTION_FEATURED} />

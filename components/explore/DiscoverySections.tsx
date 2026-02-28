@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SectionLabel } from '@/components/common';
 import { PlaylistItemCard } from '@/components/playlist/PlaylistItemCard';
 import { COMPLETION_THRESHOLD, LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { APP_SESSION_ID } from '@/constants/queries';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
@@ -32,12 +33,27 @@ interface SectionConfig {
   articles: Article[];
 }
 
-/** Fisher-Yates shuffle, return first `count` items */
-function shuffleAndSlice<T>(items: T[], count: number): T[] {
+/**
+ * Seeded Fisher-Yates shuffle, return first `count` items.
+ * Uses a simple mulberry32 PRNG seeded by APP_SESSION_ID + sectionKey
+ * so the order is stable within a session but fresh across app launches.
+ */
+function seededRandom(seed: number): () => number {
+  let t = seed;
+  return () => {
+    t = (t + 0x6d2b79f5) | 0;
+    let x = Math.imul(t ^ (t >>> 15), 1 | t);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleAndSlice<T>(items: T[], count: number, sectionSeed: number): T[] {
   if (items.length === 0) return [];
+  const rand = seededRandom(sectionSeed);
   const arr = [...items];
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     const temp = arr[i];
     arr[i] = arr[j] as T;
     arr[j] = temp as T;
@@ -73,6 +89,9 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
 
     const result: SectionConfig[] = [];
 
+    // Seed per section: APP_SESSION_ID XOR'd with a unique offset per section
+    const baseSeed = APP_SESSION_ID;
+
     // Short Reads (< 10 sentences, ~2 min)
     const shortArticles = shuffleAndSlice(
       unreadArticles.filter(
@@ -81,6 +100,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
           (a.article_sentences?.length ?? 0) < SHORT_ARTICLE_MAX_SENTENCES,
       ),
       MAX_ARTICLES_PER_SECTION,
+      baseSeed ^ 1,
     );
     if (shortArticles.length > 0) {
       result.push({
@@ -94,6 +114,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     const longArticles = shuffleAndSlice(
       unreadArticles.filter(a => (a.article_sentences?.length ?? 0) >= LONG_ARTICLE_MIN_SENTENCES),
       MAX_ARTICLES_PER_SECTION,
+      baseSeed ^ 2,
     );
     if (longArticles.length > 0) {
       result.push({
@@ -107,6 +128,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     const beginnerArticles = shuffleAndSlice(
       unreadArticles.filter(a => a.difficulty_level <= BEGINNER_MAX_DIFFICULTY),
       MAX_ARTICLES_PER_SECTION,
+      baseSeed ^ 3,
     );
     if (beginnerArticles.length > 0) {
       result.push({
@@ -120,6 +142,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     const advancedArticles = shuffleAndSlice(
       unreadArticles.filter(a => a.difficulty_level >= ADVANCED_MIN_DIFFICULTY),
       MAX_ARTICLES_PER_SECTION,
+      baseSeed ^ 4,
     );
     if (advancedArticles.length > 0) {
       result.push({

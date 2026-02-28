@@ -200,12 +200,7 @@ export default function ExploreScreen(): JSX.Element {
 
   const ListFooterComponent = useMemo(() => <BrandFooter />, []);
 
-  const contentContainerStyle = useMemo(
-    () => ({
-      ...styles.listContentContainer,
-    }),
-    [],
-  );
+  const contentContainerStyle = styles.listContentContainer;
 
   return (
     <ThemedView useSafeArea={false} style={styles.container}>

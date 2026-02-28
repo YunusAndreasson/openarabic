@@ -7,6 +7,8 @@ import { StyleSheet, View } from 'react-native';
 interface SectionLabelProps {
   /** The label text (will be uppercased automatically) */
   title: string;
+  /** Optional subtitle displayed below the title in secondary color */
+  subtitle?: string;
   /** Optional container style override */
   style?: StyleProp<ViewStyle>;
 }
@@ -17,9 +19,14 @@ interface SectionLabelProps {
  *
  * Example: CATEGORIES, AUTHORS, DIFFICULTY, CONTINUE READING, UNREAD
  */
-export const SectionLabel: FC<SectionLabelProps> = ({ title, style }) => (
+export const SectionLabel: FC<SectionLabelProps> = ({ title, subtitle, style }) => (
   <View style={[styles.container, style]}>
     <ThemedText type="overline">{title}</ThemedText>
+    {subtitle ? (
+      <ThemedText type="caption" variant="secondary" style={styles.subtitle}>
+        {subtitle}
+      </ThemedText>
+    ) : null}
   </View>
 );
 
@@ -30,5 +37,8 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.XLARGE, // 24px - clear section separation
     paddingBottom: LAYOUT.SPACING.SMALL, // 8px
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING, // 12px
+  },
+  subtitle: {
+    marginTop: LAYOUT.SPACING.TINY, // 4px
   },
 });
