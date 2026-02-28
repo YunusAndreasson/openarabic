@@ -21,6 +21,11 @@ import {
   isSubjectMarker,
 } from './validation';
 
+/** Normalize alef variants (إ/آ/ٱ → ا) for hamza-insensitive pattern comparison.
+ * NOT أ — single-char prefix أ must stay distinct from prosthetic alef ا. */
+const ALEF_VARIANTS_REGEX = /[إآٱ]/g;
+const normalizeAlef = (s: string): string => s.replace(ALEF_VARIANTS_REGEX, 'ا');
+
 /**
  * Unified function to find components (prefix, infix, suffix, or diacritic)
  */
@@ -38,7 +43,9 @@ export function findComponent(
     // Check if pattern matches based on type
     let matches = false;
     if (type === ComponentType.PREFIX) {
-      matches = arabic.startsWith(pattern);
+      // Hamza-insensitive: normalize pattern alef variants to match normalizeArabic() output
+      // Input arabic is already normalized (أ/إ/آ/ٱ → ا), so normalize pattern to match
+      matches = arabic.startsWith(normalizeAlef(pattern));
     } else if (type === ComponentType.SUFFIX) {
       matches = arabic.endsWith(pattern);
     } else if (type === ComponentType.INFIX) {
@@ -248,13 +255,12 @@ export function shouldInjectBracket(normalizedArabic: string, englishTranslation
     return false;
   }
 
-  const lowerTranslation = englishTranslation.toLowerCase();
+  const lowerEnglish = englishTranslation.toLowerCase();
   const theWordRegex = /\bthe\b/;
-  if (theWordRegex.test(lowerTranslation)) {
+  if (theWordRegex.test(lowerEnglish)) {
     return false;
   }
 
-  const lowerEnglish = englishTranslation.toLowerCase();
   const skipInjection =
     normalizedArabic.includes('الله') ||
     lowerEnglish.includes('god') ||

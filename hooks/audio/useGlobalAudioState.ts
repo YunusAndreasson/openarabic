@@ -95,10 +95,7 @@ export function useGlobalAudioState(): GlobalAudioState {
   }, [audioPlayer.isPlaying, audioPlayer.isLoading, sleepTimer.state.isActive, sleepTimer.actions]);
 
   // Get current article ID from audio player
-  const currentArticleId = useMemo(() => {
-    const articleIdString = audioPlayer.currentTrack?.articleId?.toString();
-    return articleIdString ? parseInt(articleIdString, 10) : null;
-  }, [audioPlayer.currentTrack?.articleId]);
+  const currentArticleId = audioPlayer.currentTrack?.articleId ?? null;
 
   // Avoid refetching current article here; rely on cache and track metadata for mini-player
 
@@ -162,11 +159,11 @@ export function useGlobalAudioState(): GlobalAudioState {
     const title = cachedArticle?.title || audioPlayer.currentTrack?.title || '';
     const author = cachedArticle?.author?.name || readingListArticle?.author?.name || '';
     const category = cachedArticle?.category?.name || readingListArticle?.category?.name || '';
-    const imageUrl = String(
+    const imageUrl =
       cachedArticle?.image_url ||
-        readingListArticle?.image_url ||
-        audioPlayer.currentTrack?.imageUrl,
-    );
+      readingListArticle?.image_url ||
+      audioPlayer.currentTrack?.imageUrl ||
+      '';
 
     if (title || imageUrl) {
       const article = {

@@ -214,10 +214,8 @@ export const generateColorCodedSegments = ({
         const nextIdx = idx + candidate.length;
         const nextChar = nextIdx < searchText.length ? (searchText[nextIdx] ?? ' ') : ' ';
         const isValidMatch =
-          idx === 0 ||
-          isNonLetter(prevChar) ||
-          nextIdx === searchText.length ||
-          isNonLetter(nextChar);
+          (idx === 0 || isNonLetter(prevChar)) &&
+          (nextIdx === searchText.length || isNonLetter(nextChar));
 
         if (isValidMatch) {
           const key = `${idx}:${idx + candidate.length}`;
