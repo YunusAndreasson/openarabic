@@ -12,9 +12,9 @@ import {
   ArticleList,
   BrandFooter,
   ContinueReadingSection,
+  DiscoverySections,
   FilterSection,
   IntelligentArticleSection,
-  LongReadsSection,
 } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
@@ -190,8 +190,8 @@ export default function ExploreScreen(): JSX.Element {
       </View>,
     );
 
-    // Long reads section (longer unread articles)
-    sections.push(<LongReadsSection key="long-reads" articlesData={articlesData} />);
+    // Discovery sections (compact horizontal cards: beginner, short reads, long reads, advanced)
+    sections.push(<DiscoverySections key="discovery" articlesData={articlesData} />);
 
     return sections;
   }, [articlesData, refreshKey, categoriesWithArticles, handleSelectFilter]);

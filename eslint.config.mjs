@@ -1,3 +1,4 @@
+import { fixupPluginRules } from '@eslint/compat';
 import { defineConfig } from 'eslint/config';
 import expoConfig from 'eslint-config-expo/flat.js';
 import { configs as tseslintConfigs } from 'typescript-eslint';
@@ -5,9 +6,23 @@ import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals';
 
+// Patch eslint-plugin-react for ESLint 10 compatibility (getFilename → filename)
+const patchedExpoConfig = expoConfig.map(item => {
+  if (item.plugins?.react) {
+    return {
+      ...item,
+      plugins: {
+        ...item.plugins,
+        react: fixupPluginRules(item.plugins.react),
+      },
+    };
+  }
+  return item;
+});
+
 export default defineConfig([
   // Base Expo config (includes React, React Hooks, TypeScript)
-  expoConfig,
+  patchedExpoConfig,
 
   // TypeScript strict + stylistic rules
   tseslintConfigs.strict,

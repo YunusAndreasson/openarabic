@@ -121,15 +121,13 @@ export const useReadingListMutations = (
   );
 
   // Initialize mutations with memoized options
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- void is correct for mutations with no return value
   const addToReadingListMutation = useMutation<
-    void,
+    void, // eslint-disable-line @typescript-eslint/no-invalid-void-type
     Error,
     { userId: string; articleId: ArticleId }
   >(addToReadingListOptions);
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- void is correct for mutations with no return value
   const removeFromReadingListMutation = useMutation<
-    void,
+    void, // eslint-disable-line @typescript-eslint/no-invalid-void-type
     Error,
     { userId: string; articleId: ArticleId }
   >(removeFromReadingListOptions);

@@ -115,6 +115,9 @@ export const STRINGS = {
   SECTION_GETTING_STARTED: 'Getting started',
   SECTION_FEATURED: 'For you',
   SECTION_LONG_READS: 'Long reads',
+  SECTION_BEGINNER_FRIENDLY: 'Beginner friendly',
+  SECTION_SHORT_READS: 'Short reads',
+  SECTION_ADVANCED: 'Advanced',
   // Difficulty levels
   DIFFICULTY_BEGINNER: 'Beginner',
   DIFFICULTY_INTERMEDIATE: 'Intermediate',
