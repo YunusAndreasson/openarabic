@@ -79,12 +79,12 @@ export const AppearanceSection = memo<AppearanceSectionProps>(
           onPress={onLanguagePress}
         />
         <SettingsCard
-          icon="eye-off-outline"
+          icon="eye-outline"
           label={STRINGS.WORD_DETAILS}
           subtitle={STRINGS.WORD_DETAILS_DESCRIPTION}
           rightType="toggle"
-          toggleValue={!wordDetailsEnabled}
-          onToggleChange={enabled => handleWordDetailsToggle(!enabled)}
+          toggleValue={wordDetailsEnabled}
+          onToggleChange={handleWordDetailsToggle}
         />
         <SettingsCard
           icon="pulse"

@@ -15,7 +15,9 @@ import reducer, {
   setAudioShuffleEnabled,
   setDailyWordLimit,
   setDisplayLanguagePreference,
+  setHapticsEnabled,
   setReminderTime,
+  setWordDetailsEnabled,
   type SettingsState,
 } from '../../store/settingsSlice';
 import { AudioLanguage, DisplayLanguage } from '@/types/enums';
@@ -37,6 +39,8 @@ describe('settingsSlice reducers', () => {
       audioShuffleEnabled: false,
       displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH,
       dailyWordLimit: 10,
+      hapticsEnabled: true,
+      wordDetailsEnabled: true,
     };
   });
 
@@ -142,6 +146,32 @@ describe('settingsSlice reducers', () => {
     test.each(limits)('sets daily word limit to %p', limit => {
       const state = reducer(initialState, setDailyWordLimit(limit));
       expect(state.dailyWordLimit).toBe(limit);
+    });
+  });
+
+  describe('setHapticsEnabled', () => {
+    test('enables haptics', () => {
+      const modifiedState = { ...initialState, hapticsEnabled: false };
+      const state = reducer(modifiedState, setHapticsEnabled(true));
+      expect(state.hapticsEnabled).toBe(true);
+    });
+
+    test('disables haptics', () => {
+      const state = reducer(initialState, setHapticsEnabled(false));
+      expect(state.hapticsEnabled).toBe(false);
+    });
+  });
+
+  describe('setWordDetailsEnabled', () => {
+    test('enables word details', () => {
+      const modifiedState = { ...initialState, wordDetailsEnabled: false };
+      const state = reducer(modifiedState, setWordDetailsEnabled(true));
+      expect(state.wordDetailsEnabled).toBe(true);
+    });
+
+    test('disables word details', () => {
+      const state = reducer(initialState, setWordDetailsEnabled(false));
+      expect(state.wordDetailsEnabled).toBe(false);
     });
   });
 

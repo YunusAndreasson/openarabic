@@ -99,7 +99,7 @@ Use shared utilities from `utils/bottomSheetUtils.tsx`:
 
 - `COMMON_BOTTOM_SHEET_PROPS` - For regular BottomSheet with snapPoints
 - `COMMON_BOTTOM_SHEET_MODAL_PROPS` - For BottomSheetModal with dynamic sizing
-- `useBottomSheetBackdrop(onClose)` - Consistent backdrop behavior
+- `BottomSheetBackdrop` - Blur backdrop component (pass directly as `backdropComponent`)
 
 ## Snap Points Reference
 

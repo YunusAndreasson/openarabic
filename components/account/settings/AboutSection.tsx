@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import { router } from 'expo-router';
 
 import { SettingsCard, SettingsSection } from '@/components/account';
@@ -11,37 +11,25 @@ import { STRINGS } from '@/constants/strings';
  * Includes: Terms of Service, Privacy Policy, Legal Attributions.
  */
 export const AboutSection = memo(() => {
-  const handleTermsPress = useCallback(() => {
-    router.push(ROUTE_PATHS.TERMS);
-  }, []);
-
-  const handlePrivacyPress = useCallback(() => {
-    router.push(ROUTE_PATHS.PRIVACY);
-  }, []);
-
-  const handleLegalPress = useCallback(() => {
-    router.push(ROUTE_PATHS.LEGAL);
-  }, []);
-
   return (
     <SettingsSection title={STRINGS.ABOUT_SECTION}>
       <SettingsCard
         icon="document-text"
         label={STRINGS.TERMS_OF_SERVICE}
         rightType="chevron"
-        onPress={handleTermsPress}
+        onPress={() => router.push(ROUTE_PATHS.TERMS)}
       />
       <SettingsCard
         icon="shield-checkmark"
         label={STRINGS.PRIVACY_POLICY}
         rightType="chevron"
-        onPress={handlePrivacyPress}
+        onPress={() => router.push(ROUTE_PATHS.PRIVACY)}
       />
       <SettingsCard
         icon="documents"
         label={STRINGS.LEGAL_ATTRIBUTIONS}
         rightType="chevron"
-        onPress={handleLegalPress}
+        onPress={() => router.push(ROUTE_PATHS.LEGAL)}
       />
     </SettingsSection>
   );

@@ -1,9 +1,23 @@
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import { Linking } from 'react-native';
 
 import { SettingsCard, SettingsSection } from '@/components/account';
 import { STRINGS } from '@/constants/strings';
 import { handleError } from '@/utils/errorHandling';
+
+const openSocialLink = async (url: string) => {
+  try {
+    await Linking.openURL(url);
+  } catch (error) {
+    handleError(error as Error, {
+      analyticsEventName: 'Social_Media_Link_Failed',
+      sentryTags: { location: 'account_screen', action: 'social_media' },
+      sentryExtra: { url },
+      showToast: false,
+      sentrySeverity: 'info',
+    });
+  }
+};
 
 /**
  * Social media links settings section.
@@ -12,39 +26,25 @@ import { handleError } from '@/utils/errorHandling';
  * Opens external URLs in the device browser.
  */
 export const SocialMediaSection = memo(() => {
-  const handleSocialMediaPress = useCallback(async (url: string) => {
-    try {
-      await Linking.openURL(url);
-    } catch (error) {
-      handleError(error as Error, {
-        analyticsEventName: 'Social_Media_Link_Failed',
-        sentryTags: { location: 'account_screen', action: 'social_media' },
-        sentryExtra: { url },
-        showToast: false, // Silent failure for social media links
-        sentrySeverity: 'info', // Not critical, just informational
-      });
-    }
-  }, []);
-
   return (
     <SettingsSection title={STRINGS.FOLLOW_US}>
       <SettingsCard
         icon="logo-twitter"
         label={STRINGS.TWITTER}
         rightType="chevron"
-        onPress={() => handleSocialMediaPress(STRINGS.TWITTER_URL)}
+        onPress={() => openSocialLink(STRINGS.TWITTER_URL)}
       />
       <SettingsCard
         icon="logo-instagram"
         label={STRINGS.INSTAGRAM}
         rightType="chevron"
-        onPress={() => handleSocialMediaPress(STRINGS.INSTAGRAM_URL)}
+        onPress={() => openSocialLink(STRINGS.INSTAGRAM_URL)}
       />
       <SettingsCard
         icon="logo-facebook"
         label={STRINGS.FACEBOOK}
         rightType="chevron"
-        onPress={() => handleSocialMediaPress(STRINGS.FACEBOOK_URL)}
+        onPress={() => openSocialLink(STRINGS.FACEBOOK_URL)}
       />
     </SettingsSection>
   );

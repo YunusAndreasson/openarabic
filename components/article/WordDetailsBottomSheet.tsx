@@ -14,7 +14,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { ToastType } from '@/types/enums';
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -124,19 +124,6 @@ export function WordDetailsBottomSheet({
     }
   };
 
-  // Handle sheet dismissal via gesture or backdrop tap
-  // onChange is called when sheet position changes (index becomes -1 when closed)
-  const handleSheetChange = useCallback(
-    (index: number) => {
-      if (index === -1) {
-        onClose();
-      }
-    },
-    [onClose],
-  );
-
-  // Use common backdrop component
-  const renderBackdrop = useBottomSheetBackdrop(onClose);
 
   return (
     <BottomSheet
@@ -144,8 +131,8 @@ export function WordDetailsBottomSheet({
       index={-1}
       {...COMMON_BOTTOM_SHEET_PROPS}
       enableDynamicSizing={true}
-      onChange={handleSheetChange}
-      backdropComponent={renderBackdrop}
+      onClose={onClose}
+      backdropComponent={BottomSheetBackdrop}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
       handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
     >

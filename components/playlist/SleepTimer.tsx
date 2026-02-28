@@ -1,5 +1,5 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,7 +9,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { SleepTimerAction } from '@/types/enums';
-import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
 import { formatSecondsToClock } from '@/utils/dateTimeUtils';
 
@@ -49,16 +49,6 @@ export function SleepTimer({
     }
   }, [isVisible]);
 
-  // Handle sheet position changes - sync parent state when dismissed via gesture
-  const handleChange = useCallback(
-    (index: number) => {
-      if (index === -1) {
-        onClose();
-      }
-    },
-    [onClose],
-  );
-
   const handleSetTimer = () => {
     successFeedback();
     onTimerSet(selectedMinutes);
@@ -73,17 +63,13 @@ export function SleepTimer({
 
   const handleOptionSelect = (minutes: number) => () => setSelectedMinutes(minutes);
 
-  // Use common backdrop component
-  const renderBackdrop = useBottomSheetBackdrop(onClose);
-
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
       {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
       enableDynamicSizing={true}
-      onChange={handleChange}
       onDismiss={onClose}
-      backdropComponent={renderBackdrop}
+      backdropComponent={BottomSheetBackdrop}
       containerStyle={styles.modalContainer}
       backgroundStyle={[
         styles.background,

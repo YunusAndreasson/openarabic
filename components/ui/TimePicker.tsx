@@ -11,7 +11,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
-import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface TimePickerProps {
   isVisible: boolean;
@@ -51,17 +51,11 @@ export function TimePicker({
   }, [isVisible]);
 
   // Track bottom sheet visibility to delay native picker render on Android
-  const handleChange = useCallback(
-    (index: number) => {
-      // 0 means sheet is expanded (visible)
-      setIsSheetVisible(index === 0);
-
-      if (index === -1) {
-        onClose();
-      }
-    },
-    [onClose],
-  );
+  // Parent state sync is handled by onClose prop after close animation completes
+  const handleChange = useCallback((index: number) => {
+    // 0 means sheet is expanded (visible)
+    setIsSheetVisible(index === 0);
+  }, []);
 
   const extractTimeAndSet = (date: Date) => {
     const hour = date.getHours();
@@ -87,9 +81,6 @@ export function TimePicker({
       hour12: false,
     });
 
-  // Use common backdrop component
-  const renderBackdrop = useBottomSheetBackdrop(onClose);
-
   // Use shared dynamic styles hook for theme-aware styling
   const dynamicStyles = useBottomSheetDynamicStyles();
 
@@ -104,7 +95,7 @@ export function TimePicker({
       onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
-      backdropComponent={renderBackdrop}
+      backdropComponent={BottomSheetBackdrop}
     >
       <BottomSheetView
         style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}

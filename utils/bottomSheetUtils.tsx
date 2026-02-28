@@ -1,7 +1,7 @@
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useBottomSheet } from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import type { ViewProps } from 'react-native';
 import { Dimensions, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -22,38 +22,28 @@ const BACKDROP_OPACITY = 0.5;
 const APPEARS_ON_INDEX = 0;
 const DISAPPEARS_ON_INDEX = -1;
 
-interface BlurBackdropInternalProps extends BottomSheetBackdropProps {
-  onPress: () => void;
-}
-
 /**
  * Custom backdrop with BlurView as the background layer.
- * BlurView must be the top-level element (not a child of a view with its own
- * backgroundColor) so it can blur the app content behind it.
+ *
+ * Only calls close() on tap — parent state sync is handled by the BottomSheet's
+ * onClose/onDismiss prop after the close animation completes. This prevents
+ * content flash during close animation and avoids redundant re-renders.
  */
-const BlurBackdropComponent = ({ animatedIndex, style, onPress }: BlurBackdropInternalProps) => {
+const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProps) => {
   const { close } = useBottomSheet();
   const { intensity, tint } = useBlurProps('backdrop');
-  const isMounted = useRef(false);
   const [pointerEvents, setPointerEvents] = useState<ViewProps['pointerEvents']>('auto');
 
-  const handleOnPress = useCallback(() => {
-    onPress();
-    close();
-  }, [onPress, close]);
-
   const handleContainerTouchability = useCallback((shouldDisable: boolean) => {
-    if (isMounted.current) {
-      setPointerEvents(shouldDisable ? 'none' : 'auto');
-    }
+    setPointerEvents(shouldDisable ? 'none' : 'auto');
   }, []);
 
   const tapHandler = useMemo(
     () =>
       Gesture.Tap().onEnd(() => {
-        runOnJS(handleOnPress)();
+        runOnJS(close)();
       }),
-    [handleOnPress],
+    [close],
   );
 
   const animatedOpacity = useAnimatedStyle(
@@ -78,13 +68,6 @@ const BlurBackdropComponent = ({ animatedIndex, style, onPress }: BlurBackdropIn
     [],
   );
 
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
   const containerStyle = useMemo(
     () => [styles.backdrop, style, animatedOpacity],
     [style, animatedOpacity],
@@ -104,18 +87,11 @@ const BlurBackdropComponent = ({ animatedIndex, style, onPress }: BlurBackdropIn
   );
 };
 
-const BlurBackdrop = memo(BlurBackdropComponent);
-
 /**
- * Common backdrop component for bottom sheet modals with blur effect.
- * Returns a render function that produces a BlurView-backed backdrop.
+ * Backdrop component for bottom sheet modals with blur effect.
+ * Use directly as the backdropComponent prop on BottomSheet/BottomSheetModal.
  */
-export const useBottomSheetBackdrop = (onClose: () => void) => {
-  return useCallback(
-    (props: BottomSheetBackdropProps) => <BlurBackdrop {...props} onPress={onClose} />,
-    [onClose],
-  );
-};
+export const BottomSheetBackdrop = memo(BlurBackdropComponent);
 
 const styles = StyleSheet.create({
   backdrop: {

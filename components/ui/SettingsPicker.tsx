@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,7 +10,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
-import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface SettingsPickerOption<T> {
   id: T;
@@ -56,26 +56,6 @@ function SettingsPickerComponent<T>({
     }
   }, [isVisible]);
 
-  // Handle sheet position changes - sync parent state when dismissed via gesture
-  const handleChange = useCallback(
-    (index: number) => {
-      if (index === -1) {
-        onClose();
-      }
-    },
-    [onClose],
-  );
-
-  const handleValueSelect = useCallback(
-    (value: T) => {
-      onSelect(value);
-    },
-    [onSelect],
-  );
-
-  // Use common backdrop component
-  const renderBackdrop = useBottomSheetBackdrop(onClose);
-
   // Use shared dynamic styles hook for theme-aware styling
   const dynamicStyles = useBottomSheetDynamicStyles();
 
@@ -85,11 +65,10 @@ function SettingsPickerComponent<T>({
       index={-1}
       {...COMMON_BOTTOM_SHEET_PROPS}
       enableDynamicSizing={true}
-      onChange={handleChange}
       onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
-      backdropComponent={renderBackdrop}
+      backdropComponent={BottomSheetBackdrop}
     >
       <BottomSheetView>
         {/* Header */}
@@ -118,7 +97,7 @@ function SettingsPickerComponent<T>({
                     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
                   },
                 ]}
-                onPress={() => handleValueSelect(option.id)}
+                onPress={() => onSelect(option.id)}
               >
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>

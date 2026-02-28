@@ -1,6 +1,6 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import type { FC, ReactNode } from 'react';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -8,7 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { BottomSheetErrorBoundary } from './BottomSheetErrorBoundary';
 import { BottomSheetHeader } from './BottomSheetHeader';
 import { useColors } from '@/hooks/theme/useColors';
-import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface GenericBottomSheetProps {
   /** Controls bottom sheet visibility */
@@ -91,19 +91,6 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
     }
   }, [isVisible]);
 
-  // Handle sheet position changes - sync parent state when dismissed via gesture
-  const handleChange = useCallback(
-    (index: number) => {
-      if (index === -1) {
-        onClose();
-      }
-    },
-    [onClose],
-  );
-
-  // Use common backdrop component
-  const renderBackdrop = useBottomSheetBackdrop(onClose);
-
   // Memoize dynamic styles
   const dynamicStyles = useMemo(
     () => ({
@@ -126,12 +113,11 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
-      onChange={handleChange}
       onDismiss={onClose}
       containerStyle={styles.modalContainer}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
-      backdropComponent={renderBackdrop}
+      backdropComponent={BottomSheetBackdrop}
       {...bottomSheetProps}
     >
       <BottomSheetView style={styles.container}>

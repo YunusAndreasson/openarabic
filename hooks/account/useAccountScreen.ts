@@ -1,8 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
-import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { readingProgressQueries } from '@/constants/queries';
@@ -14,6 +13,7 @@ import { useReminders } from '@/hooks/notifications/useReminders';
 import pkg from '@/package.json';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
+import { ensurePermissions } from '@/services/notificationService';
 import { ReadingProgressService } from '@/services/readingProgress';
 import { supabase } from '@/services/supabase';
 import { UiAction } from '@/types/enums';
@@ -53,29 +53,21 @@ export const useAccountScreen = () => {
   const { clearCache, getCacheSize } = useAudioCache();
   const queryClient = useQueryClient();
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [, setNotificationPermissions] = useState(false);
   const [cacheSize, setCacheSize] = useState<number>(0);
   const user = useUserWithCreationDate();
-  const isMounted = useRef(true);
 
   // Load cache size on component mount
   useEffect(() => {
     const loadCacheSize = async () => {
       try {
         const audioSize = await getCacheSize();
-        if (isMounted.current) {
-          setCacheSize(audioSize);
-        }
+        setCacheSize(audioSize);
       } catch (error) {
         handleError(error as Error, { showToast: false });
       }
     };
 
     loadCacheSize();
-
-    return () => {
-      isMounted.current = false;
-    };
   }, [getCacheSize]);
 
   // Clear all caches: audio files, query data, and persisted storage
@@ -216,10 +208,7 @@ export const useAccountScreen = () => {
     async (enabled: boolean) => {
       if (enabled) {
         try {
-          // Ensure we have notification permissions when enabling notifications
-          const { ensurePermissions } = await import('@/services/notificationService');
           const granted = await ensurePermissions();
-          setNotificationPermissions(granted);
 
           if (!granted) {
             Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
@@ -244,28 +233,6 @@ export const useAccountScreen = () => {
     },
     [reminderTime, updateReminderTime],
   );
-
-  useEffect(() => {
-    const checkNotificationPermissions = async () => {
-      try {
-        const { status } = await Notifications.getPermissionsAsync();
-        const permissionsGranted = status === 'granted';
-        if (isMounted.current) {
-          setNotificationPermissions(permissionsGranted);
-        }
-      } catch (error) {
-        handleError(error as Error, { showToast: false });
-        if (isMounted.current) {
-          setNotificationPermissions(false);
-        }
-      }
-    };
-
-    checkNotificationPermissions();
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
 
   const handleTimePickerOpen = useCallback(() => {
     setShowTimePicker(true);
