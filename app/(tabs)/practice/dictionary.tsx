@@ -1,18 +1,19 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import {
+  DictionaryEmptyState,
   DictionaryWordCard,
   MemoryStrengthLegend,
   WordSentencesBottomSheet,
 } from '@/components/practice';
-import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
+import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
@@ -63,6 +64,14 @@ export default function DictionaryScreen(): JSX.Element {
 
   const hasWords = sortedWords.length > 0;
 
+  const contentContainerStyle = useMemo(
+    () => ({
+      paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE,
+      ...(!hasWords ? { flexGrow: 1 } : {}),
+    }),
+    [hasWords, insets.bottom],
+  );
+
   // Handle opening the sentence examples bottom sheet
   const handleWordPress = useCallback((word: StudyWord) => {
     setSelectedWord(word);
@@ -94,27 +103,40 @@ export default function DictionaryScreen(): JSX.Element {
 
   const renderItem = useCallback(
     (props: { item: StudyWord }) => (
-      <DictionaryWordCard
-        word={props.item}
-        editMode={editMode}
-        onDelete={() => handleDeleteWord(props.item.root_id)}
-        onPress={handleWordPress}
-      />
+      <Animated.View
+        entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
+        exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
+      >
+        <DictionaryWordCard
+          word={props.item}
+          editMode={editMode}
+          onDelete={() => handleDeleteWord(props.item.root_id)}
+          onPress={handleWordPress}
+        />
+      </Animated.View>
     ),
     [editMode, handleDeleteWord, handleWordPress],
   );
 
+  const ListEmptyComponent = useMemo(
+    () => (hasWords ? null : <DictionaryEmptyState />),
+    [hasWords],
+  );
+
   return (
     <ThemedView style={styles.container}>
-      {isLoading ? null : hasWords ? (
+      {isLoading ? null : (
         <View style={styles.contentContainer}>
           <FlashList
             data={sortedWords}
             renderItem={renderItem}
             ListHeaderComponent={
-              <MemoryStrengthLegend sortDirection={sortDirection} onToggleSort={setSorting} />
+              hasWords ? (
+                <MemoryStrengthLegend sortDirection={sortDirection} onToggleSort={setSorting} />
+              ) : null
             }
-            contentContainerStyle={{ paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE }}
+            ListEmptyComponent={ListEmptyComponent}
+            contentContainerStyle={contentContainerStyle}
             showsVerticalScrollIndicator={false}
             removeClippedSubviews={true}
             drawDistance={LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM * LIST_DRAW_DISTANCE_MULTIPLIER}
@@ -124,12 +146,6 @@ export default function DictionaryScreen(): JSX.Element {
             // v2 automatically handles layout - no estimates needed
             // Note: No extraData needed - DictionaryWordCard is properly memoized and receives editMode as prop
           />
-        </View>
-      ) : (
-        <View style={styles.emptyContainer}>
-          <ThemedText type="body" variant="secondary" align="center">
-            {STRINGS.STUDY_LIST_EMPTY_HINT}
-          </ThemedText>
         </View>
       )}
 
@@ -145,12 +161,6 @@ export default function DictionaryScreen(): JSX.Element {
 
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
-  },
   contentContainer: {
     ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
     flex: 1,

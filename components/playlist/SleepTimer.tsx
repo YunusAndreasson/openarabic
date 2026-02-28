@@ -9,7 +9,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { SleepTimerAction } from '@/types/enums';
-import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { COMMON_BOTTOM_SHEET_MODAL_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
 import { formatSecondsToClock } from '@/utils/dateTimeUtils';
 
@@ -79,9 +79,8 @@ export function SleepTimer({
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
+      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
       enableDynamicSizing={true}
-      enablePanDownToClose={true}
-      enableOverDrag={false}
       onChange={handleChange}
       onDismiss={onClose}
       backdropComponent={renderBackdrop}

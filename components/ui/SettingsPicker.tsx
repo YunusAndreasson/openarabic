@@ -10,7 +10,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
-import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 export interface SettingsPickerOption<T> {
   id: T;
@@ -83,11 +83,8 @@ function SettingsPickerComponent<T>({
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
-      enablePanDownToClose
-      enableOverDrag={false}
+      {...COMMON_BOTTOM_SHEET_PROPS}
       enableDynamicSizing={true}
-      animateOnMount={true}
-      activeOffsetY={[-10, 10]}
       onChange={handleChange}
       onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}

@@ -4,6 +4,7 @@ import React, { type FC, useDeferredValue, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -273,18 +274,23 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
           : getArticleMetadata(article);
 
     return (
-      <PlaylistItemCard
-        title={article.title}
-        secondaryText={secondaryText}
-        imageUrl={generateStorageUrl('images', article.image_url)}
-        articleId={article.id}
-        editMode={editMode}
-        onPress={!editMode ? () => onArticlePress(article) : undefined}
-        onDelete={createDeleteHandler(article.id)}
-        dragHandleProps={drag ? createDragHandleProps(drag) : undefined}
-        isBeingDragged={isDragging}
-        progressPercentage={progressPercentage}
-      />
+      <Animated.View
+        entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
+        exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
+      >
+        <PlaylistItemCard
+          title={article.title}
+          secondaryText={secondaryText}
+          imageUrl={generateStorageUrl('images', article.image_url)}
+          articleId={article.id}
+          editMode={editMode}
+          onPress={!editMode ? () => onArticlePress(article) : undefined}
+          onDelete={createDeleteHandler(article.id)}
+          dragHandleProps={drag ? createDragHandleProps(drag) : undefined}
+          isBeingDragged={isDragging}
+          progressPercentage={progressPercentage}
+        />
+      </Animated.View>
     );
   };
 

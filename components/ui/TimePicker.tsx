@@ -11,7 +11,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
-import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 export interface TimePickerProps {
   isVisible: boolean;
@@ -98,11 +98,8 @@ export function TimePicker({
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
-      enablePanDownToClose
-      enableOverDrag={false}
+      {...COMMON_BOTTOM_SHEET_PROPS}
       enableDynamicSizing={true}
-      animateOnMount={true}
-      activeOffsetY={[-10, 10]}
       onChange={handleChange}
       onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}

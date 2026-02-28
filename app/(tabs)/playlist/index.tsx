@@ -7,6 +7,7 @@ import { memo, useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -83,19 +84,24 @@ const PlaylistListItem = memo(
     const authorCategoryText = getArticleMetadata(item.articles);
 
     return (
-      <PlaylistItemCard
-        title={item.articles.title}
-        secondaryText={authorCategoryText}
-        editMode={editMode}
-        isBeingDragged={_isBeingDragged}
-        onDelete={handleDelete}
-        // Entire card triggers article navigation when not in edit mode
-        onPress={!editMode ? handlePress : undefined}
-        // Add article image for bookmarks-style appearance
-        imageUrl={generateStorageUrl('images', item.articles.image_url)}
-        articleId={item.article_id}
-        dragHandleProps={dragHandleProps}
-      />
+      <Animated.View
+        entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
+        exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
+      >
+        <PlaylistItemCard
+          title={item.articles.title}
+          secondaryText={authorCategoryText}
+          editMode={editMode}
+          isBeingDragged={_isBeingDragged}
+          onDelete={handleDelete}
+          // Entire card triggers article navigation when not in edit mode
+          onPress={!editMode ? handlePress : undefined}
+          // Add article image for bookmarks-style appearance
+          imageUrl={generateStorageUrl('images', item.articles.image_url)}
+          articleId={item.article_id}
+          dragHandleProps={dragHandleProps}
+        />
+      </Animated.View>
     );
   },
   (prevProps, nextProps) => {

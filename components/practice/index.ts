@@ -1,4 +1,5 @@
 export { ChartBottomSheet } from './ChartBottomSheet';
+export { DictionaryEmptyState } from './DictionaryEmptyState';
 export { DictionaryWordCard } from './DictionaryWordCard';
 export { DueWordsBottomSheet } from './DueWordsBottomSheet';
 export { MemoryRetentionBottomSheet } from './MemoryRetentionBottomSheet';

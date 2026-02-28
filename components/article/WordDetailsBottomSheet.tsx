@@ -14,7 +14,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { ToastType } from '@/types/enums';
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
+import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -153,8 +153,7 @@ export function WordDetailsBottomSheet({
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
-      enablePanDownToClose={true}
-      enableOverDrag={false}
+      {...COMMON_BOTTOM_SHEET_PROPS}
       enableDynamicSizing={true}
       onChange={handleSheetChange}
       backdropComponent={renderBackdrop}
