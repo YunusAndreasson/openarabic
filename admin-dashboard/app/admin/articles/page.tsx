@@ -435,12 +435,9 @@ function ArticlesPageContent() {
                   return (
                     <TableRow
                       key={article.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => {
-                        router.push(`/articles/${article.id}`);
-                      }}
+                      className="hover:bg-muted/50"
                     >
-                      <TableCell onClick={e => e.stopPropagation()}>
+                      <TableCell>
                         {article.image_url ? (
                           <Tooltip delayDuration={200}>
                             <TooltipTrigger asChild>
@@ -489,9 +486,18 @@ function ArticlesPageContent() {
                         )}
                       </TableCell>
                       <TableCell className="font-medium">
-                        <div className="max-w-md truncate">{article.title}</div>
+                        <a
+                          href={`/articles/${article.id}`}
+                          onClick={e => {
+                            e.preventDefault();
+                            router.push(`/articles/${article.id}`);
+                          }}
+                          className="block max-w-md truncate hover:underline cursor-pointer"
+                        >
+                          {article.title}
+                        </a>
                       </TableCell>
-                      <TableCell onClick={e => e.stopPropagation()}>
+                      <TableCell>
                         <Select
                           value={article.author_id.toString()}
                           onValueChange={value =>
@@ -511,7 +517,7 @@ function ArticlesPageContent() {
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell onClick={e => e.stopPropagation()}>
+                      <TableCell>
                         <Select
                           value={article.category_id.toString()}
                           onValueChange={value =>
@@ -531,7 +537,7 @@ function ArticlesPageContent() {
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell onClick={e => e.stopPropagation()}>
+                      <TableCell>
                         <Select
                           value={article.published ? 'true' : 'false'}
                           onValueChange={value =>
@@ -548,7 +554,7 @@ function ArticlesPageContent() {
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell onClick={e => e.stopPropagation()}>
+                      <TableCell>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div className="flex items-center gap-2 cursor-help">
@@ -569,7 +575,7 @@ function ArticlesPageContent() {
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>
-                      <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                      <TableCell className="text-center">
                         {hasRepeatFlags(article) && (
                           <Tooltip>
                             <TooltipTrigger asChild>

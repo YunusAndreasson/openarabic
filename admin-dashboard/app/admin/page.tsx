@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useGlobalTranslationCache } from '@/hooks/useGlobalTranslationCache';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, Trash2, Database, Clock, HardDrive, TrendingUp, FileText, BookOpen } from 'lucide-react';
+import { Loader2, RefreshCw, Trash2, Database, Clock, TrendingUp, FileText, BookOpen } from 'lucide-react';
 
 export default function AdminPage() {
   const { isLoading, stats, refresh, clear, error } = useGlobalTranslationCache();
@@ -135,14 +135,6 @@ export default function AdminPage() {
 
           <div className="p-4 border rounded-lg bg-background">
             <div className="flex items-center gap-2 mb-2">
-              <HardDrive className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Cache Size</span>
-            </div>
-            <p className="text-2xl font-bold">{stats.cacheSizeKB} KB</p>
-          </div>
-
-          <div className="p-4 border rounded-lg bg-background">
-            <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Avg Translations/Word</span>
             </div>
@@ -204,11 +196,11 @@ export default function AdminPage() {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            <span>Cache persists in your browser&apos;s localStorage, so it survives page reloads</span>
+            <span>Data is fetched fresh each session and held in memory</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
-            <span>Refresh the cache after updating word translations to see the changes</span>
+            <span>Use Refresh to pull the latest data after updating word translations</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary mt-0.5">•</span>
