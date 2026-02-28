@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from 'react-native-reanimated';
@@ -21,23 +22,30 @@ interface ToastProps {
 
 const DEFAULT_DURATION = DEFAULT_TOAST_DURATION;
 const MAX_TOAST_WIDTH_RATIO = 0.9;
+const TOAST_ANIMATION_DURATION = TIMING_CONFIG.SLOW.duration; // 300ms — deliberate enough to notice
+const ICON_SIZE = LAYOUT.BUTTON.ICON_SIZE.MEDIUM; // 20
 
-// Static color lookup - avoids switch statement per render
-const TOAST_COLOR_MAP = {
-  success: 'success',
-  error: 'error',
-  important: 'warning',
-  info: null, // Uses elevation2 for info
+// Toast type configuration — icon + color key in one place
+const TOAST_CONFIG = {
+  success: { icon: 'checkmark-circle' as const, colorKey: 'success' as const },
+  error: { icon: 'alert-circle' as const, colorKey: 'error' as const },
+  important: { icon: 'warning' as const, colorKey: 'warning' as const },
+  info: { icon: 'information-circle' as const, colorKey: null },
 } as const;
 
 const styles = StyleSheet.create({
+  icon: {
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
   toast: {
+    alignItems: 'center',
     alignSelf: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // More rounded for modern look
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
+    flexDirection: 'row',
     minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 3 - LAYOUT.SPACING.SMALL, // ~140px
     overflow: 'hidden',
-    paddingHorizontal: LAYOUT.SPACING.LARGE, // More generous padding
-    paddingVertical: LAYOUT.SPACING.MEDIUM, // Taller for more presence
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY, // 12px — compact pill
     ...LAYOUT.ELEVATION.LARGE,
   },
   toastContainer: {
@@ -45,13 +53,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     position: 'absolute',
     width: '100%',
-    zIndex: LAYOUT.Z_INDEX.POPUP, // Use design system z-index for proper layering
+    zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   toastText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Larger text
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-    textAlign: 'center',
+    flexShrink: 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px — lightweight toast text
+    fontWeight: FONT_WEIGHTS.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
 });
 
@@ -95,36 +103,32 @@ export function Toast({
     };
   }, [visible, duration]);
 
-  // Determine toast colors based on type
-  const colorKey = TOAST_COLOR_MAP[type];
-  const backgroundColor = colorKey
-    ? (colors[colorKey] as string) || colors.tint
-    : colors.elevation2;
-  const textColor = colorKey ? colors.white : colors.text;
+  const config = TOAST_CONFIG[type];
+  const backgroundColor = config.colorKey
+    ? (colors[config.colorKey] as string) || colors.tint
+    : colors.card;
+  const textColor = config.colorKey ? colors.white : colors.text;
 
-  // For mobile-only apps, use constant screen width
-  const screenWidth = SCREEN_WIDTH;
-  const maxToastWidth = screenWidth * MAX_TOAST_WIDTH_RATIO;
+  const maxToastWidth = SCREEN_WIDTH * MAX_TOAST_WIDTH_RATIO;
 
-  // Position based on position prop
+  // Position: sit close to the nav bar / bottom edge
   const containerStyle = {
     ...styles.toastContainer,
     ...(position === 'bottom'
-      ? { bottom: insets.bottom + LAYOUT.SPACING.LARGE } // Position at bottom
-      : { top: insets.top + LAYOUT.SPACING.XLARGE * 2 }), // Position at top for prominence
+      ? { bottom: insets.bottom + LAYOUT.SPACING.LARGE }
+      : { top: insets.top + LAYOUT.SPACING.SMALL }),
   };
 
   if (!visible) return null;
 
-  // Use different animations based on position
   const enterAnimation =
     position === 'bottom'
-      ? FadeInUp.duration(TIMING_CONFIG.FAST.duration)
-      : FadeInDown.duration(TIMING_CONFIG.FAST.duration);
+      ? FadeInUp.duration(TOAST_ANIMATION_DURATION)
+      : FadeInDown.duration(TOAST_ANIMATION_DURATION);
   const exitAnimation =
     position === 'bottom'
-      ? FadeOutDown.duration(TIMING_CONFIG.FAST.duration)
-      : FadeOutUp.duration(TIMING_CONFIG.FAST.duration);
+      ? FadeOutDown.duration(TOAST_ANIMATION_DURATION)
+      : FadeOutUp.duration(TOAST_ANIMATION_DURATION);
 
   return (
     <Animated.View
@@ -140,16 +144,21 @@ export function Toast({
             maxWidth: maxToastWidth,
             backgroundColor,
             shadowColor: colors.shadow,
-            // Add subtle border for definition
             borderWidth: isDarkMode ? 1 : 0,
             borderColor: isDarkMode ? colors.border : colors.transparent,
           },
         ]}
       >
+        <Ionicons
+          name={config.icon}
+          size={ICON_SIZE}
+          color={textColor}
+          style={styles.icon}
+        />
         <ThemedText
           skipDefaultColor
           ellipsizeMode="tail"
-          numberOfLines={3} // Allow more lines for longer messages
+          numberOfLines={2}
           style={[styles.toastText, { color: textColor }]}
         >
           {message}

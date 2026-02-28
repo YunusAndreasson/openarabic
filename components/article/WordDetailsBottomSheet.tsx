@@ -39,8 +39,6 @@ export function WordDetailsBottomSheet({
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const hasShownFirstAddToast = useRef(false);
-
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
 
@@ -106,9 +104,8 @@ export function WordDetailsBottomSheet({
     setOptimisticIsInStudyList(prev => !prev);
     selectionFeedback();
 
-    // Show toast immediately on first add (optimistic)
-    if (!wasInStudyList && !hasShownFirstAddToast.current) {
-      hasShownFirstAddToast.current = true;
+    // Show toast on add (optimistic feedback)
+    if (!wasInStudyList) {
       showToast(STRINGS.WORD_ADDED_TO_PRACTICE, undefined, ToastType.SUCCESS);
     }
 
@@ -118,19 +115,11 @@ export function WordDetailsBottomSheet({
       // If operation failed (e.g., daily limit reached), revert optimistic update
       if (!success) {
         setOptimisticIsInStudyList(prev => !prev);
-        // Revert toast flag if operation failed
-        if (!wasInStudyList) {
-          hasShownFirstAddToast.current = false;
-        }
       }
       // Success - optimistic state should now match actual state
     } catch (error) {
       // Revert optimistic update on error - use functional update
       setOptimisticIsInStudyList(prev => !prev);
-      // Revert toast flag on error
-      if (!wasInStudyList) {
-        hasShownFirstAddToast.current = false;
-      }
       handleError(error as Error, { toastMessage: 'Failed to update study list' });
     }
   };

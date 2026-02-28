@@ -261,7 +261,7 @@ export const LAYOUT = {
       TINY: BASE_UNIT * 2.75, // 11 - responsive to base unit
       SMALL: BASE_UNIT * 3.25, // 13 - responsive to base unit
       MEDIUM: BASE_UNIT * 4, // 16 - Material Design minimum (improved from 15px)
-      LARGE: BASE_UNIT * 4.25, // 17 - Apple HIG minimum for body text
+      LARGE: BASE_UNIT * 4.5, // 18 - clear heading3/body distinction (1.125x ratio)
       XLARGE: BASE_UNIT * 5.5, // 22 - bolder heading (2025 trend)
       XXLARGE: BASE_UNIT * 6, // 24 - bolder heading (2025 trend)
       HUGE: BASE_UNIT * 8, // 32 - bolder heading (2025 trend)

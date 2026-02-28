@@ -41,12 +41,14 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
     duration: number | undefined;
     type: ToastType;
     position: 'top' | 'bottom';
+    key: number;
   }>({
     visible: false,
     message: '',
     duration: undefined,
     type: ToastType.INFO,
     position: 'top',
+    key: 0,
   });
 
   const showToast = useCallback(
@@ -56,26 +58,28 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
       type: ToastType = ToastType.INFO,
       position: 'top' | 'bottom' = 'top',
     ) => {
-      setToastState({
+      setToastState(prev => ({
         visible: true,
         message,
         duration,
         type,
         position,
-      });
+        key: prev.key + 1,
+      }));
     },
     [],
   );
 
   const showImportantToast = useCallback(
     (message: string, duration: number = DEFAULT_TOAST_DURATION) => {
-      setToastState({
+      setToastState(prev => ({
         visible: true,
         message,
         duration,
         type: ToastType.IMPORTANT,
         position: 'top',
-      });
+        key: prev.key + 1,
+      }));
     },
     [],
   );
@@ -103,6 +107,7 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
     <ToastContext value={contextValue}>
       {children}
       <Toast
+        key={toastState.key}
         duration={toastState.duration}
         message={toastState.message}
         type={toastState.type}

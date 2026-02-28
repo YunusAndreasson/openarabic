@@ -58,21 +58,21 @@ describe('ThemedText', () => {
       const { getByText } = render(<ThemedText type="heading1">Heading 1</ThemedText>);
 
       const element = getByText('Heading 1');
-      expect(element).toHaveStyle({ fontSize: 28, fontWeight: '700' });
+      expect(element).toHaveStyle({ fontSize: 32, fontWeight: '700' });
     });
 
     test('renders heading2 type with appropriate font size', () => {
       const { getByText } = render(<ThemedText type="heading2">Heading 2</ThemedText>);
 
       const element = getByText('Heading 2');
-      expect(element).toHaveStyle({ fontSize: 22, fontWeight: '700' });
+      expect(element).toHaveStyle({ fontSize: 24, fontWeight: '700' });
     });
 
     test('renders heading3 type with semibold weight', () => {
       const { getByText } = render(<ThemedText type="heading3">Heading 3</ThemedText>);
 
       const element = getByText('Heading 3');
-      expect(element).toHaveStyle({ fontSize: 17, fontWeight: '600' });
+      expect(element).toHaveStyle({ fontSize: 18, fontWeight: '600' });
     });
 
     test('renders bodyBold type with semibold weight', () => {

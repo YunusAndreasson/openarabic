@@ -171,7 +171,7 @@ describe('Toast', () => {
 
     const textElement = getByText(longMessage);
     expect(textElement).toBeDefined();
-    expect(textElement.props.numberOfLines).toBe(3);
+    expect(textElement.props.numberOfLines).toBe(2);
     expect(textElement.props.ellipsizeMode).toBe('tail');
   });
 

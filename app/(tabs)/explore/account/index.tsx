@@ -329,7 +329,7 @@ const AccountScreen: FC = () => {
           styles.scrollContent,
           {
             paddingTop: LAYOUT.SPACING.XLARGE,
-            paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.LARGE,
+            paddingBottom: insets.bottom,
           },
         ]}
         scrollViewProps={{

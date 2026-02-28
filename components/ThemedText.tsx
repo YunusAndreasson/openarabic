@@ -197,9 +197,14 @@ export function ThemedText({
 
     const baseStyle = BASE_STYLE_MAP[type as TextTypeName] || BASE_STYLE_MAP.body;
 
+    // When an explicit color is provided (colorName or variant), the semantic color
+    // already encodes the hierarchy — skip the type's built-in opacity to avoid double-dimming.
+    // Opacity-based hierarchy only applies to default-colored text.
+    const baseOpacity = colorName || variant ? TEXT_OPACITY.PRIMARY : (baseStyle.opacity as number);
+
     return [
       baseStyle,
-      { opacity: getEnhancedOpacity(baseStyle.opacity as number, isDarkMode) },
+      { opacity: getEnhancedOpacity(baseOpacity, isDarkMode) },
       textColor && { color: textColor },
       weight && { fontWeight: weight },
       align && { textAlign: align },
