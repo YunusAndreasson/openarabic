@@ -23,11 +23,24 @@ const createMockParagraphBuilder = () => ({
   build: jest.fn(() => createMockParagraph()),
 });
 
+// Mock Skia Path API
+const createMockPath = () => ({
+  moveTo: jest.fn(),
+  lineTo: jest.fn(),
+  cubicTo: jest.fn(),
+  close: jest.fn(),
+  addArc: jest.fn(),
+  toSVGString: jest.fn(() => 'M0,0'),
+});
+
 // Mock Skia API
 export const Skia = {
   Color: jest.fn(color => color),
   ParagraphBuilder: {
     Make: jest.fn(() => createMockParagraphBuilder()),
+  },
+  Path: {
+    Make: jest.fn(() => createMockPath()),
   },
 };
 
@@ -47,6 +60,18 @@ export const Rect = jest.fn(() => null);
 
 // Mock LinearGradient component
 export const LinearGradient = jest.fn(() => null);
+
+// Mock chart/shape components
+export const Group = jest.fn(({ children }) =>
+  React.createElement('View', { testID: 'skia-group' }, children),
+);
+export const Path = jest.fn(() => null);
+export const Circle = jest.fn(() => null);
+export const RoundedRect = jest.fn(() => null);
+export const Line = jest.fn(() => null);
+export const Mask = jest.fn(({ children }) =>
+  React.createElement('View', { testID: 'skia-mask' }, children),
+);
 
 // Mock vec helper function (for gradient coordinates)
 export const vec = jest.fn((x, y) => ({ x, y }));
@@ -87,6 +112,12 @@ export default {
   Text,
   Rect,
   LinearGradient,
+  Group,
+  Path,
+  Circle,
+  RoundedRect,
+  Line,
+  Mask,
   vec,
   Skia,
   matchFont,
