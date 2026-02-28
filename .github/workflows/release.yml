@@ -68,7 +68,7 @@ jobs:
       - name: Publish update to Expo Go
         run: |
           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          eas update --branch $CURRENT_BRANCH --auto
+          eas update --branch $CURRENT_BRANCH --environment production --auto
 
       # === Version Bumping (before builds so they use new version) ===
       - name: Bump version
