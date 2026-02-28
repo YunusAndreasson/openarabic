@@ -1,4 +1,5 @@
 import { type FC, useMemo } from 'react';
+import type { PressableAndroidRippleConfig } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -35,13 +36,12 @@ export const BaseCard: FC<BaseCardProps> = ({
   // Press animation - using shared preset for zero allocations
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation(PRESS_ANIMATION_CARD);
 
-  // Memoize computed styles to prevent recreation on every render
-  const { baseCardStyle } = useMemo(() => {
-    // Theme-aware elevation (no shadows in dark mode)
+  // Memoize card style - flat return avoids extra object allocation
+  const cardStyle = useMemo(() => {
     const shadowStyles =
       shadowSize !== 'none' ? getThemeAwareElevation(SHADOW_LEVEL_MAP[shadowSize], isDarkMode) : {};
 
-    const cardStyle = [
+    return [
       styles.card,
       { backgroundColor: colors.card },
       shadowStyles,
@@ -49,44 +49,43 @@ export const BaseCard: FC<BaseCardProps> = ({
       style,
       disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
     ];
-
-    return { baseCardStyle: cardStyle };
   }, [colors.card, colors.shadow, isDarkMode, shadowSize, style, disabled]);
+
+  // Memoize ripple config to avoid per-render object allocation
+  const rippleConfig = useMemo<PressableAndroidRippleConfig>(
+    () => ({ color: colors.navigationRipple, borderless: false, foreground: true }),
+    [colors.navigationRipple],
+  );
+
+  // Content wrapper — View acts as layout boundary between flex:1 Pressable and card content
+  const content = <View style={contentStyle}>{children}</View>;
 
   // Non-pressable paths use plain View (no animation overhead)
   if (loading) {
-    return (
-      <View style={baseCardStyle} testID={testID}>
-        <View style={contentStyle} />
-      </View>
-    );
+    return <View style={cardStyle} testID={testID} />;
   }
 
   if (!onPress && !onLongPress) {
     return (
-      <View style={baseCardStyle} testID={testID}>
-        <View style={contentStyle}>{children}</View>
+      <View style={cardStyle} testID={testID}>
+        {content}
       </View>
     );
   }
 
   return (
-    <Animated.View style={[baseCardStyle, animatedStyle]}>
+    <Animated.View style={[cardStyle, animatedStyle]}>
       <Pressable
         testID={testID}
         disabled={disabled}
-        android_ripple={{
-          color: colors.navigationRipple,
-          borderless: false,
-          foreground: true,
-        }}
+        android_ripple={rippleConfig}
         style={PRESSABLE_STYLE}
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onLongPress={onLongPress}
       >
-        <View style={contentStyle}>{children}</View>
+        {content}
       </Pressable>
     </Animated.View>
   );

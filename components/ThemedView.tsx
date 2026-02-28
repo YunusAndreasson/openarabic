@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { Edge } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,13 +7,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemedViewProps } from '@/types/ui/layout.types';
 
-/**
- * ThemedView is a flexible container component that automatically applies theme colors
- * and provides options for scrollable content, safe area insets, and more.
- *
- * It serves as the foundation for most screens in the app, ensuring consistent
- * theming and behavior across the application.
- */
+// Static constants — zero per-render allocations
+const EDGES_WITHOUT_BOTTOM: Edge[] = ['top', 'left', 'right'];
+
+const SCROLL_VIEW_DEFAULTS = {
+  automaticallyAdjustContentInsets: false,
+  contentInsetAdjustmentBehavior: 'automatic' as const,
+  showsVerticalScrollIndicator: false,
+  overScrollMode: 'always' as const,
+};
 
 export function ThemedView({
   children,
@@ -28,33 +30,19 @@ export function ThemedView({
 }: ThemedViewProps): JSX.Element {
   const colors = useColors();
 
-  // Apply theme-based styling
-  const themedStyle = [
-    styles.container,
-    {
-      backgroundColor: colors.background,
-    },
-    style,
-  ] as StyleProp<ViewStyle>;
+  const themedStyle = useMemo(
+    () => [styles.container, { backgroundColor: colors.background }, style],
+    [colors.background, style],
+  );
 
   // Determine which edges to apply safe area insets to
-  const edges: Edge[] | undefined = safeAreaEdges
-    ? safeAreaEdges
-    : includeBottomInset
-      ? undefined
-      : ['top', 'left', 'right'];
+  const edges = safeAreaEdges ?? (includeBottomInset ? undefined : EDGES_WITHOUT_BOTTOM);
 
   // Only create ScrollView when needed
   const content = scrollable ? (
     <ScrollView
-      alwaysBounceVertical={true}
-      automaticallyAdjustContentInsets={false}
-      bounces={true}
+      {...SCROLL_VIEW_DEFAULTS}
       contentContainerStyle={contentContainerStyle}
-      contentInsetAdjustmentBehavior="automatic"
-      removeClippedSubviews={true}
-      showsVerticalScrollIndicator={false}
-      overScrollMode="always"
       {...scrollViewProps}
     >
       {children}
