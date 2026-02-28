@@ -40,6 +40,8 @@ interface PlaylistItemCardProps {
   articleId?: number;
   // Reading progress - always shown (0% = not started)
   progressPercentage?: number;
+  // Compact mode — smaller title for constrained widths (e.g. horizontal scroll cards)
+  compact?: boolean;
 }
 
 export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
@@ -53,6 +55,7 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
   imageUrl,
   articleId,
   progressPercentage,
+  compact = false,
 }) => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
@@ -104,7 +107,8 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
                 <ThemedText
                   colorName="headingText"
                   style={titleTextStyle}
-                  type="heading3"
+                  type={compact ? 'body' : 'heading3'}
+                  weight={compact ? 'semibold' : undefined}
                   numberOfLines={2}
                   ellipsizeMode="tail"
                 >

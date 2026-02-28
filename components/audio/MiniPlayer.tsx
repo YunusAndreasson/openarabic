@@ -225,7 +225,7 @@ const MiniPlayerComponent = ({
                 onPress={onTimerPress}
                 backgroundColor={timerButtonColor}
                 iconColor={timerIconColor}
-                iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
                 hapticType="light"
               />
 
@@ -235,7 +235,7 @@ const MiniPlayerComponent = ({
                 onPress={onPlayPause}
                 backgroundColor={stopButtonColor}
                 iconColor={colors.tint}
-                iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
                 hapticType="light"
               />
             </View>

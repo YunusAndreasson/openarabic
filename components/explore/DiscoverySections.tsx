@@ -162,6 +162,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
                   imageUrl={generateStorageUrl('images', article.image_url)}
                   articleId={article.id}
                   onPress={() => handleArticlePress(article)}
+                  compact
                 />
               </View>
             ))}
