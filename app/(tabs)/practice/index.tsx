@@ -1,6 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { InteractionManager, StyleSheet } from 'react-native';
@@ -20,6 +21,7 @@ import {
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { fsrsQueries } from '@/constants/queries';
+import { getPracticeReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -27,13 +29,16 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { useBottomSheetManager } from '@/hooks/ui';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { FloatingActionButton } from '@/components/ui';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+import { mediumFeedback } from '@/utils/haptics';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
 type BottomSheetKey = 'memory' | 'due' | 'streak' | 'mastered';
 
 export default function PracticeScreen(): JSX.Element {
   const { user } = useAuth();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { prefetchVocabularyData } = useAppPreloader();
 
@@ -108,6 +113,12 @@ export default function PracticeScreen(): JSX.Element {
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
   const dueWordsCount = dueWords?.length ?? 0;
+
+  const handleStartReview = useCallback(() => {
+    if (!user) return;
+    mediumFeedback();
+    router.push(getPracticeReviewRoute());
+  }, [user, router]);
 
   // Show main UI if there are any words available in either query source
   // - allWords may lag if mutations only invalidate 'due' keys
@@ -218,6 +229,10 @@ export default function PracticeScreen(): JSX.Element {
           )}
         </Animated.View>
       </ThemedView>
+
+      {dueWordsCount > 0 && hasAnyStudyWords && (
+        <FloatingActionButton icon="flash" onPress={handleStartReview} />
+      )}
 
       {/* Coordinated Bottom Sheets - only one can be visible at a time */}
       <MemoryRetentionBottomSheet isVisible={isVisible('memory')} onClose={hideSheet} />

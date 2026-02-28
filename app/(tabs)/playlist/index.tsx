@@ -13,9 +13,12 @@ import { ThemedView } from '@/components/ThemedView';
 import { SavedEmptyState, PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
+import { FloatingActionButton } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { usePlaylistScreen, usePlaylistUI } from '@/hooks/playlist';
+import { usePlaylistHeaderActions } from '@/hooks/playlist/usePlaylistHeaderActions';
+import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
@@ -139,6 +142,11 @@ export default function PlaylistScreen(): JSX.Element {
   // Check if there are articles for UI state
   const hasArticles = sortedReadingList.length > 0;
 
+  // Play All action (reuses existing hook logic)
+  const { handlePlayAll, isLoading: isPlayAllLoading } = usePlaylistHeaderActions();
+  const { currentArticle } = useGlobalAudioState();
+  const isMiniPlayerVisible = Boolean(currentArticle);
+
   useEffect(() => {
     if (enhancedTracksError) {
       showToast(STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS, 4000, ToastType.ERROR);
@@ -242,6 +250,9 @@ export default function PlaylistScreen(): JSX.Element {
           />
         )}
       </ThemedView>
+      {hasArticles && !shouldShowEmpty && !isMiniPlayerVisible && (
+        <FloatingActionButton icon="play" onPress={handlePlayAll} loading={isPlayAllLoading} />
+      )}
     </ThemedView>
   );
 }

@@ -9,9 +9,10 @@ export { DictionaryButton } from './DictionaryButton';
 export { DoneButton } from './DoneButton';
 export { EditModeButton } from './EditModeButton';
 export { EnhancedImage } from './EnhancedImage';
+export { FloatingActionButton } from './FloatingActionButton';
 export { HeaderIconButton } from './HeaderIconButton';
-export { PlayAllButton, PlaylistHeaderButtons } from './PlayAllButton';
-export { StartReviewButton, PracticeHeaderButtons } from './StartReviewButton';
+export { PlaylistHeaderButtons } from './PlayAllButton';
+export { PracticeHeaderButtons } from './StartReviewButton';
 export { IconButton } from './IconButton';
 export { PulsatingLoader } from './PulsatingLoader';
 export {
