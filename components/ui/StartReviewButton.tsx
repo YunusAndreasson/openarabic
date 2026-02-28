@@ -1,63 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
-import { memo, useCallback } from 'react';
-
-import { HeaderButtonGroup } from '@/components/ui/HeaderButtonGroup';
-import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
-import { fsrsQueries } from '@/constants/queries';
-import { getPracticeReviewRoute } from '@/constants/routes';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { mediumFeedback } from '@/utils/haptics';
+import { memo } from 'react';
 
 /**
- * Start Review header button for Practice tab
- * Navigates to vocabulary review when tapped
- * Only visible when there are due words
- */
-export const StartReviewButton = memo(function StartReviewButton() {
-  const router = useRouter();
-  const { user } = useAuth();
-
-  // Subscribe to cache updates - doesn't fetch, just watches for changes
-  const { data: dueWords = [] } = useQuery({
-    ...fsrsQueries.due(user?.id ?? ''),
-    enabled: !!user?.id,
-    staleTime: Infinity, // Never refetch - just subscribe to cache
-  });
-
-  const dueWordsCount = dueWords.length;
-
-  const handleStartReview = useCallback(() => {
-    if (!user) return;
-    mediumFeedback();
-    router.push(getPracticeReviewRoute());
-  }, [user, router]);
-
-  // Don't render if no due words
-  if (dueWordsCount === 0) return null;
-
-  return (
-    <TransparentHeaderButton
-      iconName="flash"
-      onPress={handleStartReview}
-      testID="start-review-button"
-    />
-  );
-});
-
-/**
- * Combined header buttons for Practice tab (Dictionary + Review)
- * Renders in shared iOS glass container with proper spacing
+ * Header buttons for Practice tab — Dictionary only.
+ * Primary "Start Review" action moved to content area.
  */
 export const PracticeHeaderButtons = memo(function PracticeHeaderButtons({
   DictionaryComponent,
 }: {
   DictionaryComponent: React.ReactNode;
 }) {
-  return (
-    <HeaderButtonGroup>
-      {DictionaryComponent}
-      <StartReviewButton />
-    </HeaderButtonGroup>
-  );
+  return <>{DictionaryComponent}</>;
 });

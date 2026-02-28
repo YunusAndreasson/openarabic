@@ -36,6 +36,7 @@ import {
   TutorialProvider,
 } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { TIMING_CONSTANTS } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { QUERY_DEFAULTS } from '@/constants/queries';
@@ -407,7 +408,7 @@ function AppContent() {
         backgroundedTime.current = null;
 
         // When resuming from background, refresh app data
-        setTimeout(preloadAppData, 300);
+        setTimeout(preloadAppData, TIMING_CONSTANTS.MEDIUM_DELAY);
       }
     });
 
@@ -470,22 +471,19 @@ function AppContent() {
               headerTitle: '',
               headerShadowVisible: false,
               freezeOnBlur: true,
+              contentStyle: { backgroundColor: colors.background },
             }}
           >
             <Stack.Screen
               name="(tabs)"
               options={{
-                headerShown: false,
-                headerTitle: '',
-                headerShadowVisible: false,
-                animation: 'none', // FIXED: Disable animation to prevent black screen
+                animation: 'none', // Disable animation to prevent black screen
                 freezeOnBlur: false, // Keep tabs active
               }}
             />
             <Stack.Screen
               name="auth"
               options={{
-                headerShown: false,
                 animation: 'fade',
                 freezeOnBlur: false, // Keep auth screen active
               }}
@@ -579,7 +577,7 @@ const AudioOverlays = memo(function AudioOverlays() {
       // Hide with delay to prevent flicker during rapid state changes
       hideTimeoutRef.current = setTimeout(() => {
         setShouldShowMiniPlayer(false);
-      }, 300); // 300ms delay before hiding
+      }, TIMING_CONSTANTS.MEDIUM_DELAY);
     }
 
     return () => {

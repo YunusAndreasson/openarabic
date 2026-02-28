@@ -394,6 +394,18 @@ export const LAYOUT = {
     radius: 2,
   },
 
+  /** Blur effect configuration for translucent surfaces */
+  BLUR: {
+    TAB_BAR: {
+      intensity: 80,
+      tint: { light: 'light', dark: 'dark', sepia: 'light' },
+    },
+    BACKDROP: {
+      intensity: 30,
+      tint: { light: 'light', dark: 'dark', sepia: 'light' },
+    },
+  },
+
   /** Android Material Design 3 touch targets */
   ANDROID: {
     TOUCH_TARGET: {

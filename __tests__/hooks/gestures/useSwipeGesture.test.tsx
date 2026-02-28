@@ -129,8 +129,7 @@ describe('useSwipeGesture Hook', () => {
         stiffness: 100,
         mass: 1,
         overshootClamping: false,
-        restDisplacementThreshold: 0.01,
-        restSpeedThreshold: 0.01,
+        energyThreshold: 0.01,
       };
 
       const options: SwipeGestureOptions = {

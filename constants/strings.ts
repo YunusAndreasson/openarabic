@@ -138,6 +138,8 @@ export const STRINGS = {
   BOOKMARKS_EMPTY_TITLE: 'Your playlist is empty',
   BOOKMARKS_EMPTY_HINT: 'Tap the headset on any article to add it here',
   // Practice tab empty state - minimal one-tap start
+  START_REVIEW: 'Start Review',
+  PLAY_ALL: 'Play All',
   STUDY_LIST_EMPTY_TITLE: 'Your practice list is empty',
   STUDY_LIST_EMPTY_HINT: 'Tap any word while reading to save it for practice',
   // Welcome toasts when navigating from empty states

@@ -39,11 +39,9 @@ export default function StudyLayout(): JSX.Element {
       />
       <Stack.Screen
         name="review"
-        options={{
+        options={createNavigationOptions(colors, {
           headerShown: false,
-          presentation: 'modal',
-          gestureEnabled: true,
-        }}
+        })}
       />
     </Stack>
   );

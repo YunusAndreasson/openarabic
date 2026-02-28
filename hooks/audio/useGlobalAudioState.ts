@@ -10,6 +10,7 @@ import { simpleAudioService } from '@/services/audioPlayer';
 import type { Article } from '@/types/articles.types';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import { successFeedback } from '@/utils/haptics';
+import { useTimerCleanup } from '@/hooks/utils/useTimerCleanup';
 
 // MiniPlayer-compatible article interface
 interface MiniPlayerArticle {
@@ -64,8 +65,7 @@ export function useGlobalAudioState(): GlobalAudioState {
   // Get reading list for queue tracking
   const { sortedEnhancedTracks } = usePlaylistScreen();
 
-  // FIXED: Store timeout ID in ref for cleanup to prevent memory leak
-  const forceStopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { setTimer } = useTimerCleanup();
 
   // Sleep timer integration
   const sleepTimer = useSleepTimer(() => {
@@ -76,32 +76,16 @@ export function useGlobalAudioState(): GlobalAudioState {
     // This allows the current track to finish naturally while preventing playlist progression
     simpleAudioService.markSleepTimerExpired();
 
-    // Clear any existing force-stop timeout before setting a new one
-    if (forceStopTimeoutRef.current) {
-      clearTimeout(forceStopTimeoutRef.current);
-    }
-
-    // Set a timeout to force stop after a reasonable delay (30 seconds)
+    // Force stop after a reasonable delay (30 seconds)
     // This ensures we don't get stuck if audio never stops naturally
-    forceStopTimeoutRef.current = setTimeout(() => {
+    setTimer('forceStop', () => {
       // Only stop if we're still in playlist mode (track didn't finish yet)
       const playlistInfo = simpleAudioService.getPlaylistInfo();
       if (playlistInfo.isPlaylistMode) {
         audioPlayer.stop();
       }
-      forceStopTimeoutRef.current = null; // Clear ref after execution
     }, 30000);
   });
-
-  // FIXED: Cleanup force-stop timeout on unmount to prevent memory leak
-  useEffect(() => {
-    return () => {
-      if (forceStopTimeoutRef.current) {
-        clearTimeout(forceStopTimeoutRef.current);
-        forceStopTimeoutRef.current = null;
-      }
-    };
-  }, []);
 
   // Auto-cancel sleep timer when audio stops - use existing audio subscription
   useEffect(() => {

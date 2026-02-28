@@ -57,6 +57,7 @@ export function createNavigationOptions(
       : {}),
     headerTintColor: colors.headingText,
     headerBackVisible: false, // Prevent default back button on Android when using custom headerLeft
+    headerBackButtonDisplayMode: 'minimal', // iOS: show only back chevron, no title text
     headerShadowVisible: false,
     ...restOverrides,
   };
@@ -71,6 +72,7 @@ export function createNavigationOptions(
     animation: 'slide_from_bottom', // Android: Slide up from bottom like iOS
     gestureEnabled: true,
     fullScreenGestureEnabled: true, // iOS: Allow full-screen swipe to dismiss
+    animationMatchesGesture: true, // iOS: Sync swipe gesture with slide animation
     contentStyle: {
       backgroundColor: colors.background,
     },

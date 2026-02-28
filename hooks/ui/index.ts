@@ -1,3 +1,4 @@
+export { useBlurProps } from './useBlurProps';
 export { useBottomSheetManager } from './useBottomSheetManager';
 export { useButtonPress } from './useButtonPress';
 export { useEditMode } from './useEditMode';

@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { DEFAULT_TOAST_DURATION, TIMING_CONSTANTS } from '@/constants/animation';
@@ -14,7 +14,7 @@ import { analytics } from '@/services/analytics';
 import { enhancedAudioService } from '@/services/audioPlaylist';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { bookmarkService } from '@/services/bookmark';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelector, useAppSelectorShallow } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
 import type { ArticleId } from '@/types/branded.types';
 import { AudioLanguage, ToastType } from '@/types/enums';
@@ -26,6 +26,7 @@ import {
 } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
+import { useTimerCleanup } from '@/hooks/utils/useTimerCleanup';
 import { shuffleArray } from '@/utils/list';
 import { sortByCustomOrder, sortByDateDesc } from '@/utils/sortingUtils';
 
@@ -56,12 +57,14 @@ export const usePlaylistScreen = () => {
   const { showToast } = useToast();
 
   const customOrder = useAppSelector(state => state.playlist.customOrder);
-  const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
-  const audioShuffleEnabled = useAppSelector(state => state.settings.audioShuffleEnabled);
+  const { audioPreference, audioShuffleEnabled } = useAppSelectorShallow(state => ({
+    audioPreference: state.settings.audioLanguagePreference,
+    audioShuffleEnabled: state.settings.audioShuffleEnabled,
+  }));
 
   // STABILIZATION: Add debouncing for playback mode changes
   const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
-  const playbackModeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { setTimer, clearTimer } = useTimerCleanup();
 
   // Sleep timer functionality is handled by useGlobalAudioState
 
@@ -137,9 +140,7 @@ export const usePlaylistScreen = () => {
   const handlePlayAll = useCallback(
     async (forceArabicOnly = false) => {
       // Clear playback mode timeout
-      if (playbackModeTimeoutRef.current) {
-        clearTimeout(playbackModeTimeoutRef.current);
-      }
+      clearTimer('playbackMode');
 
       // Get current values directly from audio service instead of relying on local state
       const currentStatus = simpleAudioService.getStatus();
@@ -157,13 +158,9 @@ export const usePlaylistScreen = () => {
           selectionFeedback();
           await simpleAudioService.stop();
           // STABILIZATION: Debounce playback mode change
-          playbackModeTimeoutRef.current = setTimeout(() => {
-            setPlaybackMode('none');
-          }, TIMING_CONSTANTS.QUICK_DELAY);
+          setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
         } catch {
-          playbackModeTimeoutRef.current = setTimeout(() => {
-            setPlaybackMode('none');
-          }, TIMING_CONSTANTS.QUICK_DELAY);
+          setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
         }
       } else if (currentTracks.length) {
         try {
@@ -202,21 +199,15 @@ export const usePlaylistScreen = () => {
               prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
             } else {
               // Playlist is complete, reset playback mode
-              playbackModeTimeoutRef.current = setTimeout(() => {
-                setPlaybackMode('none');
-              }, TIMING_CONSTANTS.QUICK_DELAY);
+              setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
             }
           });
 
           if (!success) {
-            playbackModeTimeoutRef.current = setTimeout(() => {
-              setPlaybackMode('none');
-            }, TIMING_CONSTANTS.QUICK_DELAY);
+            setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
           }
         } catch (error) {
-          playbackModeTimeoutRef.current = setTimeout(() => {
-            setPlaybackMode('none');
-          }, TIMING_CONSTANTS.QUICK_DELAY);
+          setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
           handleError(error as Error);
         }
       }
@@ -286,9 +277,7 @@ export const usePlaylistScreen = () => {
         selectionFeedback();
         await simpleAudioService.stop();
         // STABILIZATION: Debounce playback mode change
-        playbackModeTimeoutRef.current = setTimeout(() => {
-          setPlaybackMode('none');
-        }, TIMING_CONSTANTS.QUICK_DELAY);
+        setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
         return;
       }
 
@@ -330,35 +319,20 @@ export const usePlaylistScreen = () => {
             prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
           } else {
             // Playlist complete
-            playbackModeTimeoutRef.current = setTimeout(() => {
-              setPlaybackMode('none');
-            }, TIMING_CONSTANTS.QUICK_DELAY);
+            setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
           }
         });
 
         if (!success) {
-          playbackModeTimeoutRef.current = setTimeout(() => {
-            setPlaybackMode('none');
-          }, TIMING_CONSTANTS.QUICK_DELAY);
+          setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
         }
       } catch (error) {
-        playbackModeTimeoutRef.current = setTimeout(() => {
-          setPlaybackMode('none');
-        }, TIMING_CONSTANTS.QUICK_DELAY);
+        setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
         handleError(error as Error);
       }
     },
     [isCurrentlyPlaying, sortedEnhancedTracks, audioPreference, queryClient, prefetchArticle],
   );
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (playbackModeTimeoutRef.current) {
-        clearTimeout(playbackModeTimeoutRef.current);
-      }
-    };
-  }, []);
 
   // Stop audio when screen loses focus
   useFocusEffect(

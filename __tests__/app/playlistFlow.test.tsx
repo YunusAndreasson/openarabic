@@ -15,7 +15,6 @@ jest.mock('@shopify/flash-list', () => {
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
   Reanimated.default.call = () => {};
-  Reanimated.default.addWhitelistedNativeProps = () => {};
   return Reanimated;
 });
 

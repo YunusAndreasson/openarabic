@@ -8,66 +8,22 @@ import { useColors } from '@/hooks/theme/useColors';
 export default function AccountLayout() {
   const colors = useColors();
 
+  const screenOptions = (title: string) =>
+    createNavigationOptions(colors, {
+      title,
+      headerLeft: () => <CloseButton onPress={() => router.back()} />,
+    });
+
   return (
     <Stack>
-      <Stack.Screen
-        name="index"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.ACCOUNT,
-          headerLeft: () => <CloseButton onPress={() => router.back()} />,
-        })}
-      />
-      <Stack.Screen
-        name="FontSelector"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.ARABIC_FONT,
-          headerLeft: () => <CloseButton onPress={() => router.back()} />,
-        })}
-      />
-
-      <Stack.Screen
-        name="DeleteAccount"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.DELETE_ACCOUNT,
-          headerLeft: () => <CloseButton onPress={() => router.back()} />,
-        })}
-      />
-
-      <Stack.Screen
-        name="help"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.HELP_CENTER,
-          headerLeft: () => <CloseButton onPress={() => router.back()} />,
-        })}
-      />
-      <Stack.Screen
-        name="feedback"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.CONTACT_SUPPORT,
-          headerLeft: () => <CloseButton onPress={() => router.back()} />,
-        })}
-      />
-      <Stack.Screen
-        name="terms"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.TERMS_OF_SERVICE,
-          headerLeft: () => <CloseButton onPress={() => router.back()} />,
-        })}
-      />
-      <Stack.Screen
-        name="privacy"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.PRIVACY_POLICY,
-          headerLeft: () => <CloseButton onPress={() => router.back()} />,
-        })}
-      />
-      <Stack.Screen
-        name="legal"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.LEGAL_ATTRIBUTIONS,
-          headerLeft: () => <CloseButton onPress={() => router.back()} />,
-        })}
-      />
+      <Stack.Screen name="index" options={screenOptions(STRINGS.ACCOUNT)} />
+      <Stack.Screen name="FontSelector" options={screenOptions(STRINGS.ARABIC_FONT)} />
+      <Stack.Screen name="DeleteAccount" options={screenOptions(STRINGS.DELETE_ACCOUNT)} />
+      <Stack.Screen name="help" options={screenOptions(STRINGS.HELP_CENTER)} />
+      <Stack.Screen name="feedback" options={screenOptions(STRINGS.CONTACT_SUPPORT)} />
+      <Stack.Screen name="terms" options={screenOptions(STRINGS.TERMS_OF_SERVICE)} />
+      <Stack.Screen name="privacy" options={screenOptions(STRINGS.PRIVACY_POLICY)} />
+      <Stack.Screen name="legal" options={screenOptions(STRINGS.LEGAL_ATTRIBUTIONS)} />
     </Stack>
   );
 }

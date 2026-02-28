@@ -6,7 +6,7 @@ import { HeaderProfile } from '@/components/HeaderProfile';
 import { STRINGS } from '@/constants/strings';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
-import { UiAction } from '@/types/enums';
+import { AppTab, UiAction } from '@/types/enums';
 import type { FilterParams } from '@/types/navigation.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -47,7 +47,7 @@ export default function LibraryLayout(): JSX.Element {
       <Stack.Screen
         name="index"
         options={createTabHeaderOptions({
-          title: 'Explore',
+          title: AppTab.EXPLORE,
           rightComponent: () => <HeaderProfile size={32} />,
           colors,
         })}

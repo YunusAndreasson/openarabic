@@ -13,7 +13,7 @@ import {
   MemoryStrengthLegend,
   WordSentencesBottomSheet,
 } from '@/components/practice';
-import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG } from '@/constants/animation';
+import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
@@ -82,7 +82,7 @@ export default function DictionaryScreen(): JSX.Element {
   const handleCloseBottomSheet = useCallback(() => {
     setIsBottomSheetVisible(false);
     // Delay clearing selected word to allow close animation
-    setTimeout(() => setSelectedWord(null), 300);
+    setTimeout(() => setSelectedWord(null), TIMING_CONSTANTS.MEDIUM_DELAY);
   }, []);
 
   const handleDeleteWord = useCallback(

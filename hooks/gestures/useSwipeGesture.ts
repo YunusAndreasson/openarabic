@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { PanGesture } from 'react-native-gesture-handler';
 import { Gesture } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
@@ -7,6 +7,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { SPRING_CONFIG } from '@/constants/animation';
 import { SCREEN_WIDTH } from '@/constants/layout';
+import { useTimerCleanup } from '@/hooks/utils/useTimerCleanup';
 import { GESTURE_CONFIG, GESTURE_CONSTANTS } from '@/utils/gestureUtils';
 
 export interface SwipeGestureOptions {
@@ -53,7 +54,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
 
   const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);
-  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { setTimer } = useTimerCleanup();
 
   // Optimized reset function (worklet-ready)
   const resetPosition = useCallback(() => {
@@ -82,12 +83,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
       }
 
       // Reset position after a brief delay
-      if (resetTimerRef.current) {
-        clearTimeout(resetTimerRef.current);
-      }
-      resetTimerRef.current = setTimeout(() => {
-        resetPosition();
-      }, GESTURE_CONSTANTS.RESET_DELAY);
+      setTimer('swipeReset', resetPosition, GESTURE_CONSTANTS.RESET_DELAY);
     },
     [onSwipeLeft, onSwipeRight, onSwipeComplete, resetPosition],
   );
@@ -173,16 +169,6 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
       onGestureEnd,
     ],
   );
-
-  // Cleanup timer on unmount to prevent stale callbacks after app resume
-  useEffect(() => {
-    return () => {
-      if (resetTimerRef.current) {
-        clearTimeout(resetTimerRef.current);
-        resetTimerRef.current = null;
-      }
-    };
-  }, []);
 
   return {
     gesture,

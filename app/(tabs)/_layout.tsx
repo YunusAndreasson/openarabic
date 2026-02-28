@@ -1,8 +1,9 @@
 import type { JSX } from 'react';
 import { Fragment, useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
@@ -10,11 +11,13 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
 import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
+import { useBlurProps } from '@/hooks/ui/useBlurProps';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
+  const blurProps = useBlurProps('tabBar');
 
   // Get due words count using the same hook as the practice screen
   const { dueWords } = useFSRSQueries({ userId: session?.user?.id });
@@ -53,7 +56,7 @@ export default function TabLayout(): JSX.Element {
     );
   }
 
-  // Android: Use regular JavaScript tabs with labels
+  // Android: Use regular JavaScript tabs with blur background
   return (
     <Tabs
       screenOptions={{
@@ -61,9 +64,18 @@ export default function TabLayout(): JSX.Element {
         tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarShowLabel: true,
         tabBarStyle: {
-          backgroundColor: colors.background,
+          position: 'absolute',
+          backgroundColor: 'transparent',
           borderTopColor: colors.border,
         },
+        tabBarBackground: () => (
+          <BlurView
+            intensity={blurProps.intensity}
+            tint={blurProps.tint}
+            experimentalBlurMethod="dimezisBlurView"
+            style={styles.tabBarBlur}
+          />
+        ),
         headerShown: false, // Headers are handled by nested Stack navigators
       }}
     >
@@ -92,3 +104,10 @@ export default function TabLayout(): JSX.Element {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBarBlur: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+  },
+});

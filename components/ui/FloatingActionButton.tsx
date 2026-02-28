@@ -8,6 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { mediumFeedback } from '@/utils/haptics';
 
 const FAB_SIZE = 56;
 const BOTTOM_INSET = initialWindowMetrics?.insets.bottom ?? 0;
@@ -34,7 +35,10 @@ export function FloatingActionButton({
 
   return (
     <AnimatedPressable
-      onPress={onPress}
+      onPress={() => {
+        mediumFeedback();
+        onPress();
+      }}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={loading}

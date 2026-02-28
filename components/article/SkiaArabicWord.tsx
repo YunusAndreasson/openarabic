@@ -51,8 +51,8 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   const highlightStyle = isHighlighted
     ? {
         animationName: {
-          '0%': { opacity: 0.3 },
-          '100%': { opacity: 1 },
+          '0%': { opacity: LAYOUT.OPACITY.SUBTLE },
+          '100%': { opacity: LAYOUT.OPACITY.FULL },
         },
         animationDuration: '800ms',
         animationIterationCount: 'infinite' as const,
@@ -65,7 +65,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   // (RNGestureHandlerButton) doesn't support CSS transitions
   const activeStyle = useAnimatedStyle(
     () => ({
-      opacity: isActive ? 0.7 : 1,
+      opacity: isActive ? LAYOUT.OPACITY.HIGH : LAYOUT.OPACITY.FULL,
     }),
     [isActive],
   );
