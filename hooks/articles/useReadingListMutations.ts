@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { audioQueries, readingProgressQueries } from '@/constants/queries';
@@ -44,93 +44,77 @@ export const useReadingListMutations = (
   const queryClient = useQueryClient();
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
 
-  // Memoize mutation options for adding to reading list
-  const addToReadingListOptions = useMemo(
-    () => ({
-      mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
-        bookmarkService.addToReadingList(userId, articleId),
-      // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- void is correct for mutations with no return value
-      onSuccess: (_data: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
-        // Track bookmark added
-        analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
-          article_id: articleId,
-          action: 'add',
-        });
+  const addToReadingListMutation = useMutation({
+    mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
+      bookmarkService.addToReadingList(userId, articleId),
+    onSuccess: (_data, { userId, articleId }) => {
+      // Track bookmark added
+      analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
+        article_id: articleId,
+        action: 'add',
+      });
 
-        // Immediately update cache to reflect the bookmark was added
-        queryClient.setQueryData(['readingList', userId, articleId] as const, true);
+      // Immediately update cache to reflect the bookmark was added
+      queryClient.setQueryData(
+        readingProgressQueries.isInReadingList(userId, articleId).queryKey,
+        true,
+      );
 
-        // Then refetch to ensure consistency
-        refetchReadingListStatus();
-        queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.readingList(userId).queryKey,
+      // Then refetch to ensure consistency
+      refetchReadingListStatus();
+      queryClient.invalidateQueries({
+        queryKey: readingProgressQueries.readingList(userId).queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: audioQueries.tracks(userId, audioPreference).queryKey,
+      });
+    },
+    onError: (error: Error) => {
+      // Silently handle errors - no toast notifications for bookmarks actions
+      const errorMessage = error.message;
+      if (
+        !errorMessage.includes('reading_list_position_unique') &&
+        !errorMessage.includes('duplicate key value')
+      ) {
+        // Only log non-duplicate errors to console for debugging
+        handleError(new Error(`Failed to add to reading list: ${errorMessage}`), {
+          showToast: false,
+          captureSentry: false,
         });
-        queryClient.invalidateQueries({
-          queryKey: audioQueries.tracks(userId, audioPreference).queryKey,
-        });
-      },
-      onError: (error: Error) => {
-        // Silently handle errors - no toast notifications for bookmarks actions
-        const errorMessage = error.message;
-        if (
-          !errorMessage.includes('reading_list_position_unique') &&
-          !errorMessage.includes('duplicate key value')
-        ) {
-          // Only log non-duplicate errors to console for debugging
-          handleError(new Error(`Failed to add to reading list: ${errorMessage}`), {
-            showToast: false,
-            captureSentry: false,
-          });
-        }
-      },
-    }),
-    [queryClient, refetchReadingListStatus, audioPreference],
-  );
+      }
+    },
+  });
 
-  // Memoize mutation options for removing from reading list
-  const removeFromReadingListOptions = useMemo(
-    () => ({
-      mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
-        bookmarkService.removeFromReadingList(userId, articleId),
-      // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- void is correct for mutations with no return value
-      onSuccess: (_data: void, { userId, articleId }: { userId: string; articleId: ArticleId }) => {
-        // Track bookmark removed
-        analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
-          article_id: articleId,
-          action: 'remove',
-        });
+  const removeFromReadingListMutation = useMutation({
+    mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
+      bookmarkService.removeFromReadingList(userId, articleId),
+    onSuccess: (_data, { userId, articleId }) => {
+      // Track bookmark removed
+      analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
+        article_id: articleId,
+        action: 'remove',
+      });
 
-        // Immediately update cache to reflect the bookmark was removed
-        queryClient.setQueryData(['readingList', userId, articleId] as const, false);
+      // Immediately update cache to reflect the bookmark was removed
+      queryClient.setQueryData(
+        readingProgressQueries.isInReadingList(userId, articleId).queryKey,
+        false,
+      );
 
-        // Then refetch to ensure consistency
-        refetchReadingListStatus();
-        queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.readingList(userId).queryKey,
-        });
-        queryClient.invalidateQueries({
-          queryKey: audioQueries.tracks(userId, audioPreference).queryKey,
-        });
-      },
-      onError: (error: Error) => {
-        // Silently handle errors - no toast notifications for bookmarks actions
-        handleError(error, { showToast: false, captureSentry: false });
-      },
-    }),
-    [queryClient, refetchReadingListStatus, audioPreference],
-  );
-
-  // Initialize mutations with memoized options
-  const addToReadingListMutation = useMutation<
-    void, // eslint-disable-line @typescript-eslint/no-invalid-void-type
-    Error,
-    { userId: string; articleId: ArticleId }
-  >(addToReadingListOptions);
-  const removeFromReadingListMutation = useMutation<
-    void, // eslint-disable-line @typescript-eslint/no-invalid-void-type
-    Error,
-    { userId: string; articleId: ArticleId }
-  >(removeFromReadingListOptions);
+      // Then refetch to ensure consistency
+      refetchReadingListStatus();
+      queryClient.invalidateQueries({
+        queryKey: readingProgressQueries.readingList(userId).queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: audioQueries.tracks(userId, audioPreference).queryKey,
+      });
+    },
+    onError: (error: Error) => {
+      // Silently handle errors - no toast notifications for bookmarks actions
+      handleError(error, { showToast: false, captureSentry: false });
+    },
+  });
 
   // Handle toggling reading list with session refresh
   const handleToggleReadingList = useCallback(

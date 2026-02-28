@@ -152,32 +152,17 @@ export const fsrsQueries = {
     }),
 
   /**
+   * Query key for session completion timestamp (client-only, not fetched from server)
+   * Used to temporarily apply cooldown after completing a review session
+   */
+  lastCompletedAtKey: (userId: string) => ['fsrs-words', userId, 'lastCompletedAt'] as const,
+
+  /**
    * Invalidate all FSRS queries for a user
    * Use after: completing practice session, adding/removing words
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
     return queryClient.invalidateQueries({ queryKey: ['fsrs-words', userId] });
-  },
-
-  /**
-   * Invalidate specific common FSRS queries (more precise)
-   * Use for: targeted updates without full cache clear
-   */
-  invalidateCommon: (queryClient: QueryClient, userId: string, cooldownHours: number = 2) => {
-    return Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: fsrsQueries.all(userId).queryKey,
-      }),
-      queryClient.invalidateQueries({
-        queryKey: fsrsQueries.allWithCooldown(userId, cooldownHours).queryKey,
-      }),
-      queryClient.invalidateQueries({
-        queryKey: fsrsQueries.due(userId).queryKey,
-      }),
-      queryClient.invalidateQueries({
-        queryKey: fsrsQueries.stats(userId).queryKey,
-      }),
-    ]);
   },
 } as const;
 

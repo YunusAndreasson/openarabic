@@ -110,7 +110,7 @@ export function useArticleWordInteractions({
         return next;
       });
 
-      // Note: handleRootPress mutation already invalidates all FSRS queries via invalidateCommon
+      // Note: handleRootPress mutation already invalidates all FSRS queries via invalidateAll
       // We only need to refetch to update local component state
       await refetchStudyWords?.();
 

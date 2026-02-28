@@ -5,7 +5,6 @@ import { createEmptyCard, fsrs, generatorParameters, Rating, State } from 'ts-fs
 
 import {
   DEFAULT_SESSION_COOLDOWN_HOURS,
-  FSRS_BASE_KEY,
   MIN_WORD_SPACING,
   OPTIMIZED_FSRS_CONFIG,
 } from '@/constants/fsrs';
@@ -93,11 +92,9 @@ export function useFSRS({
       if (!userId) return [];
 
       // If the last session was recently completed, temporarily apply cooldown
-      const lastCompletedAt = queryClient.getQueryData<number>([
-        FSRS_BASE_KEY,
-        userId,
-        'lastCompletedAt',
-      ]);
+      const lastCompletedAt = queryClient.getQueryData<number>(
+        fsrsQueries.lastCompletedAtKey(userId),
+      );
       const recentlyCompleted =
         typeof lastCompletedAt === 'number' &&
         Date.now() - lastCompletedAt < _sessionCooldownHours * 60 * 60 * 1000;

@@ -308,23 +308,12 @@ describe('Study List Button State - Bug Reproduction', () => {
         expect(invalidateSpy).toHaveBeenCalled();
       });
 
-      // Verify all expected keys were invalidated
+      // Verify prefix-based invalidation covers all FSRS queries for this user
       const invalidatedKeys = invalidateSpy.mock.calls.map(call => call[0].queryKey);
 
-      // Check that the core query keys are invalidated (don't check exact cooldown value as it may vary)
-      expect(invalidatedKeys).toEqual(
-        expect.arrayContaining([
-          fsrsQueries.all(mockUserId).queryKey,
-          fsrsQueries.due(mockUserId).queryKey,
-          fsrsQueries.stats(mockUserId).queryKey,
-        ]),
-      );
-
-      // Verify at least one cooldown query was invalidated (cooldown value may vary)
-      const hasCooldownQuery = invalidatedKeys.some(
-        key => Array.isArray(key) && key.includes('cooldown'),
-      );
-      expect(hasCooldownQuery).toBeTruthy();
+      // invalidateAll uses prefix-based invalidation: ['fsrs-words', userId]
+      // This single call covers all, due, stats, and cooldown queries
+      expect(invalidatedKeys).toEqual(expect.arrayContaining([['fsrs-words', mockUserId]]));
     });
   });
 

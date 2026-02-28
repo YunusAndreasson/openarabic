@@ -79,15 +79,10 @@ export function useArticlesByDueWords(
   ]);
 
   // Flag to determine if we have enough articles with words (≥1)
-  const hasEnoughArticles = useMemo(() => {
-    if (limit <= 0) return false;
-    return sortedArticles.length >= 1;
-  }, [sortedArticles.length, limit]);
+  const hasEnoughArticles = limit > 0 && sortedArticles.length >= 1;
 
   // Count of due words for stats (only actual due words, not fallback)
-  const dueWordsCount = useMemo(() => {
-    return dueWords.length;
-  }, [dueWords.length]);
+  const dueWordsCount = dueWords.length;
 
   const isLoading =
     isLoadingDueWords ||

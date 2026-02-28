@@ -4,7 +4,6 @@ import { InteractionManager } from 'react-native';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY } from '@/constants/fsrs';
 import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
@@ -34,7 +33,7 @@ export const useReviewCompletion = (
     if (!user?.id) return;
 
     // Mark session completion time to enable temporary cooldown
-    queryClient.setQueryData([FSRS_BASE_KEY, user.id, 'lastCompletedAt'], Date.now());
+    queryClient.setQueryData(fsrsQueries.lastCompletedAtKey(user.id), Date.now());
 
     // Invalidate study streak queries to update UI immediately (silent - don't block on failure)
     try {
@@ -43,25 +42,8 @@ export const useReviewCompletion = (
       // Silently fail - don't block review completion on streak recording failure
     }
 
-    // Invalidate all FSRS word queries
-    queryClient.invalidateQueries({
-      predicate: query => {
-        const key = query.queryKey?.[0];
-        return key === 'fsrs-words';
-      },
-    });
-
-    // Specifically invalidate the queries used by the study tab
-    const queriesToInvalidate = [
-      fsrsQueries.all(user.id).queryKey,
-      fsrsQueries.due(user.id).queryKey,
-      fsrsQueries.stats(user.id).queryKey,
-      fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
-    ] as const;
-
-    queriesToInvalidate.forEach(queryKey => {
-      queryClient.invalidateQueries({ queryKey });
-    });
+    // Invalidate all FSRS word queries (prefix-based — covers all, due, stats, allWithCooldown)
+    fsrsQueries.invalidateAll(queryClient, user.id);
   }, [user?.id, queryClient]);
 
   /**

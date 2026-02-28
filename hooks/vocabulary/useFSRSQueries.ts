@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_BASE_KEY } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -26,13 +26,10 @@ interface FSRSQueriesResult {
 export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQueriesResult {
   const queryClient = useQueryClient();
 
+  // allWordsQuery: no initialData needed — useQuery automatically reads its own cache
   const allWordsQuery = useQuery({
     ...fsrsQueries.all(userId || ''),
     enabled: !!userId,
-    initialData: () => {
-      if (!userId) return undefined;
-      return queryClient.getQueryData(fsrsQueries.all(userId).queryKey);
-    },
   });
 
   // Query for due words - uses shorter stale time since it's more time-sensitive
@@ -42,11 +39,9 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     // Override queryFn to check for recent session completion
     queryFn: () => {
       if (!userId) throw new Error('User ID is required');
-      const lastCompletedAt = queryClient.getQueryData<number>([
-        FSRS_BASE_KEY,
-        userId,
-        'lastCompletedAt',
-      ]);
+      const lastCompletedAt = queryClient.getQueryData<number>(
+        fsrsQueries.lastCompletedAtKey(userId),
+      );
       const recentlyCompleted =
         typeof lastCompletedAt === 'number' &&
         Date.now() - lastCompletedAt < DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
@@ -57,18 +52,17 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
         ...(recentlyCompleted ? { sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS } : {}),
       });
     },
-    // Use data from allWordsQuery if available and filter client-side
-    initialData: () => {
+    // Use allWords as placeholder while due words fetch — shows filtered data immediately
+    // placeholderData (not initialData) so it doesn't create a stale cache entry
+    placeholderData: () => {
       if (!userId) return undefined;
       const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey);
       if (allWords) {
         const nowMs = Date.now();
         // Apply cooldown only if session was recently completed
-        const lastCompletedAt = queryClient.getQueryData<number>([
-          FSRS_BASE_KEY,
-          userId,
-          'lastCompletedAt',
-        ]);
+        const lastCompletedAt = queryClient.getQueryData<number>(
+          fsrsQueries.lastCompletedAtKey(userId),
+        );
         const applyCooldown =
           typeof lastCompletedAt === 'number' &&
           Date.now() - lastCompletedAt < DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;

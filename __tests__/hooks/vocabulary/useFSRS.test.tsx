@@ -23,6 +23,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { State } from 'ts-fsrs';
 
 import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
+import { fsrsQueries } from '@/constants/queries';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId } from '@/types/branded.types';
@@ -132,11 +133,7 @@ describe('useFSRS Hook', () => {
       const cooldownHours = 2;
 
       // Mock last completed timestamp (1 hour ago)
-      // Note: Use FSRS_BASE_KEY 'fsrs-words' not 'fsrs'
-      queryClient.setQueryData(
-        ['fsrs-words', userId, 'lastCompletedAt'],
-        Date.now() - 60 * 60 * 1000,
-      );
+      queryClient.setQueryData(fsrsQueries.lastCompletedAtKey(userId), Date.now() - 60 * 60 * 1000);
 
       renderHook(() => useFSRS({ userId, sessionCooldownHours: cooldownHours }), { wrapper });
 

@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -75,7 +74,7 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
       });
 
       // Invalidate queries in background (UI updates when ready)
-      fsrsQueries.invalidateCommon(queryClient, user.id, DEFAULT_SESSION_COOLDOWN_HOURS);
+      fsrsQueries.invalidateAll(queryClient, user.id);
 
       // Call onSuccess callback
       options?.onSuccess?.();

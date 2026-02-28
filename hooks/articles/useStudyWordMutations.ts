@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
@@ -115,101 +115,94 @@ export const useStudyWordMutations = (
     [queryClient],
   );
 
-  // Shared mutation options factory for toggling study words/roots
-  // DRY: Consolidates duplicate logic between toggleWord and toggleRoot
-  const createToggleStudyOptions = useCallback(
-    () => ({
-      mutationFn: async ({
-        userId,
-        wordId,
-        rootId,
-      }: {
-        userId: string;
-        wordId?: RootId;
-        rootId?: RootId;
-      }) => {
-        const id = (wordId ?? rootId) as RootId;
-        return studyWordsFSRSService.toggleFSRSStudyRoot(userId, id);
-      },
-      onMutate: async ({
-        userId,
-        wordId,
-        rootId,
-      }: {
-        userId: string;
-        wordId?: RootId;
-        rootId?: RootId;
-      }): Promise<StudyWordContext> => {
-        // CRITICAL: Use fsrsQueries.all() to match what UI components read
-        // This ensures optimistic updates are immediately visible in both underlines and buttons
-        await queryClient.cancelQueries({
-          queryKey: fsrsQueries.all(userId).queryKey,
-        });
-        const previousStudyWords =
-          (queryClient.getQueryData(fsrsQueries.all(userId).queryKey) as StudyWord[]) || [];
+  // Shared mutation options for toggling study words/roots
+  // DRY: Used by both toggleWord and toggleRoot mutations
+  const toggleStudyOptions = {
+    mutationFn: async ({
+      userId,
+      wordId,
+      rootId,
+    }: {
+      userId: string;
+      wordId?: RootId;
+      rootId?: RootId;
+    }) => {
+      const id = (wordId ?? rootId) as RootId;
+      return studyWordsFSRSService.toggleFSRSStudyRoot(userId, id);
+    },
+    onMutate: async ({
+      userId,
+      wordId,
+      rootId,
+    }: {
+      userId: string;
+      wordId?: RootId;
+      rootId?: RootId;
+    }): Promise<StudyWordContext> => {
+      // CRITICAL: Use fsrsQueries.all() to match what UI components read
+      // This ensures optimistic updates are immediately visible in both underlines and buttons
+      await queryClient.cancelQueries({
+        queryKey: fsrsQueries.all(userId).queryKey,
+      });
+      const previousStudyWords =
+        (queryClient.getQueryData(fsrsQueries.all(userId).queryKey) as StudyWord[]) || [];
 
-        const id = (wordId ?? rootId) as number;
-        queryClient.setQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey, (old = []) => {
-          const exists = old.some(sw => sw.root_id === id);
-          if (exists) {
-            return old.filter(sw => sw.root_id !== id);
-          }
-          // For optimistic add, create a minimal StudyWord-like object
-          // The actual full object will be fetched on success
-          return [...old, { root_id: id } as StudyWord];
-        });
-
-        return { previousStudyWords };
-      },
-      onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
-        // Revert optimistic update on error
-        if (context?.previousStudyWords) {
-          queryClient.setQueryData(fsrsQueries.all(userId).queryKey, context.previousStudyWords);
+      const id = (wordId ?? rootId) as number;
+      queryClient.setQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey, (old = []) => {
+        const exists = old.some(sw => sw.root_id === id);
+        if (exists) {
+          return old.filter(sw => sw.root_id !== id);
         }
-        handleError(error);
-        showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, ToastType.ERROR);
-        // Invalidate to ensure we have fresh data
-        queryClient.invalidateQueries({
-          queryKey: fsrsQueries.all(userId).queryKey,
+        // For optimistic add, create a minimal StudyWord-like object
+        // The actual full object will be fetched on success
+        return [...old, { root_id: id } as StudyWord];
+      });
+
+      return { previousStudyWords };
+    },
+    onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
+      // Revert optimistic update on error
+      if (context?.previousStudyWords) {
+        queryClient.setQueryData(fsrsQueries.all(userId).queryKey, context.previousStudyWords);
+      }
+      handleError(error);
+      showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, ToastType.ERROR);
+      // Invalidate to ensure we have fresh data
+      queryClient.invalidateQueries({
+        queryKey: fsrsQueries.all(userId).queryKey,
+      });
+    },
+    onSuccess: (
+      _: boolean,
+      { userId, wordId, rootId }: { userId: string; wordId?: RootId; rootId?: RootId },
+      context?: StudyWordContext,
+    ) => {
+      // Track word added/removed (fire and forget - don't block UI)
+      const id = (wordId ?? rootId) as number;
+      const wasInStudyList = context?.previousStudyWords?.some(sw => sw.root_id === id) ?? false;
+
+      if (wasInStudyList) {
+        analytics.track(ANALYTICS_EVENTS.WORD_REMOVED_FROM_STUDY, {
+          root_id: id,
         });
-      },
-      onSuccess: (
-        _: boolean,
-        { userId, wordId, rootId }: { userId: string; wordId?: RootId; rootId?: RootId },
-        context?: StudyWordContext,
-      ) => {
-        // Track word added/removed (fire and forget - don't block UI)
-        const id = (wordId ?? rootId) as number;
-        const wasInStudyList = context?.previousStudyWords?.some(sw => sw.root_id === id) ?? false;
+      } else {
+        analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
+          root_id: id,
+          source: 'article',
+        });
+      }
 
-        if (wasInStudyList) {
-          analytics.track(ANALYTICS_EVENTS.WORD_REMOVED_FROM_STUDY, {
-            root_id: id,
-          });
-        } else {
-          analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
-            root_id: id,
-            source: 'article',
-          });
-        }
+      // Invalidate queries in background (don't await - optimistic update already applied)
+      fsrsQueries.invalidateAll(queryClient, userId);
+      if (audioPreference) {
+        audioQueries.invalidateAll(queryClient, userId);
+      }
 
-        // Invalidate queries in background (don't await - optimistic update already applied)
-        fsrsQueries.invalidateCommon(queryClient, userId, DEFAULT_SESSION_COOLDOWN_HOURS);
-        if (audioPreference) {
-          audioQueries.invalidateAll(queryClient, userId);
-        }
+      // Call refetch callback if provided (also don't await)
+      refetchStudyWords?.();
+    },
+  };
 
-        // Call refetch callback if provided (also don't await)
-        refetchStudyWords?.();
-      },
-    }),
-    [queryClient, refetchStudyWords, showToast, audioPreference],
-  );
-
-  // Memoize shared toggle options (used by both word and root mutations)
-  const toggleStudyOptions = useMemo(() => createToggleStudyOptions(), [createToggleStudyOptions]);
-
-  // Initialize mutations with memoized options
   const toggleWordMutation = useMutation<
     boolean,
     Error,

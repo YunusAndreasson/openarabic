@@ -23,6 +23,7 @@ import React from 'react';
 import { State } from 'ts-fsrs';
 
 import { createTestQueryClient, createTestWord } from '@/__tests__/helpers';
+import { fsrsQueries } from '@/constants/queries';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId, UserId } from '@/types/branded.types';
 
@@ -592,7 +593,7 @@ describe('Review Session Flow Integration', () => {
 
       // Set last completed timestamp
       queryClient.setQueryData(
-        ['fsrs-words', userId, 'lastCompletedAt'],
+        fsrsQueries.lastCompletedAtKey(userId),
         Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
       );
 
