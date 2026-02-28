@@ -211,7 +211,7 @@ function AppContent() {
 
     // Configure Android navigation bar button style (background is transparent in edge-to-edge mode)
     if (Platform.OS === 'android') {
-      NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
+      NavigationBar.setStyle(isDark ? 'light' : 'dark');
     }
 
     // Pre-configure audio session for background playback

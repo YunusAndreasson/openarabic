@@ -95,7 +95,6 @@
     "ts-fsrs": "^5.2.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
     "@eslint/compat": "^2.0.2",
     "@eslint/js": "^10.0.1",
     "@jest/globals": "^30.2.0",
@@ -104,7 +103,6 @@
     "@types/jest": "29.5.14",
     "@types/moment-hijri": "^2.1.4",
     "@types/react": "~19.2.14",
-    "babel-preset-expo": "^55.0.10",
     "eslint": "10.0.2",
     "eslint-config-expo": "^55.0.0",
     "eslint-config-prettier": "^10.1.8",

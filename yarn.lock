@@ -16,7 +16,7 @@
   resolved "https://registry.yarnpkg.com/@babel/compat-data/-/compat-data-7.29.0.tgz#00d03e8c0ac24dd9be942c5370990cbe1f17d88d"
   integrity sha512-T1NCJqT/j9+cn8fvkt7jtwbLBfLC/1y1c7NtCeXFRgzGTsafi68MRv8yzkYSapBnFA6L3U2VSc02ciDzoAJhJg==
 
-"@babel/core@^7.11.6", "@babel/core@^7.12.3", "@babel/core@^7.20.0", "@babel/core@^7.23.9", "@babel/core@^7.24.4", "@babel/core@^7.25.2", "@babel/core@^7.27.4", "@babel/core@^7.29.0":
+"@babel/core@^7.11.6", "@babel/core@^7.12.3", "@babel/core@^7.20.0", "@babel/core@^7.23.9", "@babel/core@^7.24.4", "@babel/core@^7.25.2", "@babel/core@^7.27.4":
   version "7.29.0"
   resolved "https://registry.yarnpkg.com/@babel/core/-/core-7.29.0.tgz#5286ad785df7f79d656e88ce86e650d16ca5f322"
   integrity sha512-CGOfOJqWjg2qW/Mb6zNsDm+u5vFQ8DxXfbM09z69p5Z6+mE1ikP2jUXw+j42Pf1XTYED2Rni5f95npYeuwMDQA==
@@ -3389,7 +3389,7 @@ babel-preset-current-node-syntax@^1.0.0, babel-preset-current-node-syntax@^1.2.0
     "@babel/plugin-syntax-private-property-in-object" "^7.14.5"
     "@babel/plugin-syntax-top-level-await" "^7.14.5"
 
-babel-preset-expo@^55.0.10, babel-preset-expo@~55.0.10:
+babel-preset-expo@~55.0.10:
   version "55.0.10"
   resolved "https://registry.yarnpkg.com/babel-preset-expo/-/babel-preset-expo-55.0.10.tgz#366f3b90b9a67911a5403545de7390f2f95f0d68"
   integrity sha512-aRtW7qJKohGU2V0LUJ6IeP7py3+kVUo9zcc8+v1Kix8jGGuIvqvpo9S6W1Fmn9VFP2DBwkFDLiyzkCZS85urVA==
