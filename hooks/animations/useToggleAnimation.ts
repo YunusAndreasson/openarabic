@@ -5,9 +5,9 @@ import {
   withSpring,
   withTiming,
   withSequence,
-  runOnUI,
   type SharedValue,
 } from 'react-native-reanimated';
+import { scheduleOnUI } from 'react-native-worklets';
 
 import { PRESS_SCALE, SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 
@@ -70,7 +70,7 @@ export const useToggleAnimation = (
   // Update animation when value changes
   useEffect(() => {
     // Run animation on UI thread
-    runOnUI(animateToggle)(isActive, travelDistance);
+    scheduleOnUI(animateToggle, isActive, travelDistance);
   }, [isActive, travelDistance]);
 
   const containerAnimatedStyle = useAnimatedStyle(() => {

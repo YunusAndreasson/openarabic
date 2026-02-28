@@ -220,7 +220,6 @@ export const createReanimatedMock = () => {
     withRepeat: <T,>(value: T) => value,
     // Utilities
     runOnJS: (fn: Function) => fn,
-    runOnUI: (fn: Function) => fn,
     interpolate: (value: number) => value,
     Extrapolate: {
       CLAMP: 'clamp',

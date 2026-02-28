@@ -163,12 +163,11 @@ jest.mock('react-native-worklets', () => ({
     }
     return callback;
   }),
-  runOnUI: jest.fn(callback => {
-    // Execute callback immediately in test environment
+  scheduleOnUI: jest.fn((callback, ...args) => {
+    // Execute callback immediately in test environment (no threading)
     if (typeof callback === 'function') {
-      return (...args) => callback(...args);
+      callback(...args);
     }
-    return callback;
   }),
   createWorklet: jest.fn(callback => callback),
   isWorklet: jest.fn(() => false),
@@ -232,7 +231,6 @@ jest.mock('react-native-reanimated', () => {
     interpolateColor: (value, inputRange, outputRange) => outputRange[0],
 
     // Gesture handling
-    runOnUI: callback => callback,
     runOnJS:
       callback =>
       (...args) =>
