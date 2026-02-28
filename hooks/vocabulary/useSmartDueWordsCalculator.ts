@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef } from 'react';
 import type { AppStateStatus } from 'react-native';
 import { AppState } from 'react-native';
 
@@ -90,34 +90,35 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
   }, [user?.id, isAuthenticated, queryClient]);
 
   /**
-   * Handle app state changes
+   * Handle app state changes — useEffectEvent keeps the handler stable so the
+   * AppState listener is registered once and always sees the latest values.
    */
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      const wasInactive = appStateRef.current !== 'active';
-      const isActivating = wasInactive && nextAppState === 'active';
+  const handleAppStateChange = useEffectEvent((nextAppState: AppStateStatus) => {
+    const wasInactive = appStateRef.current !== 'active';
+    const isActivating = wasInactive && nextAppState === 'active';
 
-      appStateRef.current = nextAppState;
+    appStateRef.current = nextAppState;
 
-      // When app becomes active after being inactive, refresh due words
-      if (isActivating && user?.id && isAuthenticated) {
-        if (refreshDelay > 0) {
-          // Delay refresh to avoid excessive API calls during rapid state changes
-          refreshTimeoutRef.current = setTimeout(() => {
-            refreshDueWordsData();
-          }, refreshDelay);
-        } else {
+    // When app becomes active after being inactive, refresh due words
+    if (isActivating && user?.id && isAuthenticated) {
+      if (refreshDelay > 0) {
+        // Delay refresh to avoid excessive API calls during rapid state changes
+        refreshTimeoutRef.current = setTimeout(() => {
           refreshDueWordsData();
-        }
+        }, refreshDelay);
+      } else {
+        refreshDueWordsData();
       }
+    }
 
-      // When app becomes inactive, clear any pending refresh
-      if (nextAppState !== 'active' && refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
-        refreshTimeoutRef.current = null;
-      }
-    };
+    // When app becomes inactive, clear any pending refresh
+    if (nextAppState !== 'active' && refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = null;
+    }
+  });
 
+  useEffect(() => {
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
@@ -126,7 +127,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
         clearTimeout(refreshTimeoutRef.current);
       }
     };
-  }, [refreshDueWordsData, refreshDelay, user?.id, isAuthenticated]);
+  }, [handleAppStateChange]);
 
   /**
    * Manual refresh function for immediate updates

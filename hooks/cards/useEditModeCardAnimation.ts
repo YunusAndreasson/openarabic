@@ -1,38 +1,33 @@
-import { useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
+import type { CSSStyle } from 'react-native-reanimated';
 
-import { PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
-import { useTransformAnimation } from '@/hooks/animations';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import { PRESS_SCALE, TIMING_CONFIG } from '@/constants/animation';
 
 interface EditModeCardAnimationOptions {
   /** Whether the card is in edit mode (shows delete button, scales down) */
   editMode: boolean;
   /** Whether the card is currently being dragged (for draggable lists) */
   isBeingDragged?: boolean;
-  /** Whether to animate on mount (for staggered list animations) */
-  shouldAnimateOnMount?: boolean;
 }
 
 interface EditModeCardAnimationResult {
-  /** Animated style to apply to the card container */
-  animatedStyle: AnimatedStyleProp<ViewStyle>;
+  /** CSS transition style to apply to the card container */
+  animatedStyle: CSSStyle<ViewStyle>;
 }
 
 /**
  * Hook for managing card edit mode animations.
  *
- * Consolidates the common pattern of scaling cards during:
+ * Uses CSS transitions to declaratively scale cards based on:
  * - Edit mode (scales to PRESS_SCALE.MODERATE)
  * - Drag operations (scales to PRESS_SCALE.DRAG_UP)
- * - Mount animations (animates from initial to target scale)
+ * - Default (scale 1)
  *
  * @example
  * ```tsx
  * const { animatedStyle } = useEditModeCardAnimation({
  *   editMode,
  *   isBeingDragged,
- *   shouldAnimateOnMount: true,
  * });
  *
  * return (
@@ -45,29 +40,15 @@ interface EditModeCardAnimationResult {
 export function useEditModeCardAnimation({
   editMode,
   isBeingDragged = false,
-  shouldAnimateOnMount = false,
 }: EditModeCardAnimationOptions): EditModeCardAnimationResult {
-  const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
-    type: 'scale',
-    initialValue: 1,
-    targetValue: 1,
-    useSpring: true,
-    damping: SPRING_CONFIG.RESPONSIVE.damping,
-    stiffness: SPRING_CONFIG.RESPONSIVE.stiffness,
-  });
+  const scale = isBeingDragged ? PRESS_SCALE.DRAG_UP : editMode ? PRESS_SCALE.MODERATE : 1;
 
-  useEffect(() => {
-    if (isBeingDragged) {
-      setValue(PRESS_SCALE.DRAG_UP);
-    } else if (editMode) {
-      setValue(PRESS_SCALE.MODERATE);
-    } else if (shouldAnimateOnMount) {
-      startAnimation();
-    } else {
-      // Ensure we are at the target value without triggering an animation
-      setValue(1);
-    }
-  }, [editMode, isBeingDragged, shouldAnimateOnMount, startAnimation, setValue]);
+  const animatedStyle: CSSStyle<ViewStyle> = {
+    transform: [{ scale }],
+    transitionProperty: 'transform',
+    transitionDuration: `${TIMING_CONFIG.MEDIUM.duration}ms`,
+    transitionTimingFunction: 'ease-out',
+  };
 
   return { animatedStyle };
 }

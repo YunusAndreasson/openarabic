@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -6,7 +5,6 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -70,17 +68,12 @@ export function WordDisplay({ word, style, translation, onWordPress }: WordDispl
   // Use larger font for Arabic, smaller for English
   const arabicTextStyle = createTextStyle(WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE, batchedColors);
 
-  // Animation handling
-  // Always start at 0 opacity, let useEffect be single source of truth for animation state
-  const { animatedStyle: translationAnimatedStyle, setOpacity } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: ANIMATION_CONFIG.TRANSLATION_DURATION,
-  });
-
-  useEffect(() => {
-    // Single animation trigger - no double-trigger on mount
-    setOpacity(translation ? 1 : 0);
-  }, [translation, setOpacity]);
+  // CSS transition replaces useOpacityAnimation + useEffect
+  const translationAnimatedStyle = {
+    opacity: translation ? 1 : 0,
+    transitionProperty: 'opacity' as const,
+    transitionDuration: `${ANIMATION_CONFIG.TRANSLATION_DURATION}ms`,
+  };
 
   const containerStyle = [STATIC_STYLES.container, style];
 

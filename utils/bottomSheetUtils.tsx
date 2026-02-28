@@ -29,13 +29,13 @@ export const useBottomSheetBackdrop = (onClose: () => void) => {
  * Common bottom sheet modal props for consistent behavior
  * Reduces prop duplication across all bottom sheet modal components
  *
- * NOTE: enableDynamicSizing is true to automatically fit content and prevent cutoff.
  * maxDynamicContentSize prevents sheets from exceeding 85% of screen height.
  */
 export const COMMON_BOTTOM_SHEET_MODAL_PROPS = {
   enablePanDownToClose: true,
   enableOverDrag: false,
-  enableDynamicSizing: true,
+  enableBlurKeyboardOnGesture: true, // Auto-dismiss keyboard on gesture drag
   maxDynamicContentSize: SCREEN_HEIGHT * 0.85, // Prevent sheets taller than screen
   activeOffsetY: [-10, 10] as [number, number],
+  stackBehavior: 'replace' as const, // Dismiss previous modal when opening a new one
 } as const;

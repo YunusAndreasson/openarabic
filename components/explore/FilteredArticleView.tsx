@@ -284,7 +284,6 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
         dragHandleProps={drag ? createDragHandleProps(drag) : undefined}
         isBeingDragged={isDragging}
         progressPercentage={progressPercentage}
-        shouldAnimateOnMount={false}
       />
     );
   };

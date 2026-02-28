@@ -1,6 +1,7 @@
 import type { ArticleId, AuthorId, CategoryId, RootId } from '@/types/branded.types';
 
-import { ROUTE_PATHS } from '@/constants/routes';
+// Inlined to avoid require cycle: routes.ts -> routeBuilders.ts -> routes.ts
+const PRACTICE_REVIEW_PATH = '/practice/review';
 
 export const getArticleRoute = (
   id: ArticleId,
@@ -69,5 +70,5 @@ export const getPracticeReviewRoute = (
   if (params?.fromRemember)
     queryParts.push(`fromRemember=${encodeURIComponent(params.fromRemember)}`);
   const query = queryParts.join('&');
-  return query ? `${ROUTE_PATHS.PRACTICE_REVIEW}?${query}` : ROUTE_PATHS.PRACTICE_REVIEW;
+  return query ? `${PRACTICE_REVIEW_PATH}?${query}` : PRACTICE_REVIEW_PATH;
 };

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -8,7 +8,6 @@ import Animated, {
   useSharedValue,
   withSequence,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -58,32 +57,25 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
 
   // Animation values
   const scaleValue = useSharedValue(1);
-  const opacityValue = useSharedValue(0);
+  const [photoLoaded, setPhotoLoaded] = useState(false);
 
   // Profile photo picker with local storage persistence
   const { profilePhotoUri, selectPhoto } = useProfilePhotoPicker({
     userId,
-    onPhotoLoaded: useCallback(() => {
-      // Animate in after loading (cancel any existing animation first)
-      cancelAnimation(opacityValue);
-      opacityValue.set(withTiming(1, TIMING_CONFIG.ENTRANCE));
-    }, [opacityValue]),
+    onPhotoLoaded: useCallback(() => setPhotoLoaded(true), []),
   });
 
-  // Cleanup animations on unmount
+  // Cleanup scale animation on unmount
   React.useEffect(() => {
     return () => {
       try {
         cancelAnimation(scaleValue);
-        cancelAnimation(opacityValue);
-        // Reset to default values (use .value in cleanup for reliability)
         scaleValue.value = 1;
-        opacityValue.value = 0;
       } catch {
         // Animation cleanup failed - continue
       }
     };
-  }, [scaleValue, opacityValue]);
+  }, [scaleValue]);
 
   // Derived values
   const firstName = getFirstNameFromEmail(userEmail);
@@ -102,11 +94,14 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
     selectPhoto();
   }, [scaleValue, selectPhoto]);
 
-  // Animated styles
-  const containerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: opacityValue.get(),
-  }));
+  // Container opacity — CSS transition replaces useSharedValue + withTiming
+  const containerAnimatedStyle = {
+    opacity: photoLoaded ? 1 : 0,
+    transitionProperty: 'opacity' as const,
+    transitionDuration: `${TIMING_CONFIG.ENTRANCE.duration}ms`,
+  };
 
+  // Photo press scale — still imperative (withSequence on press)
   const photoAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleValue.get() }],
   }));

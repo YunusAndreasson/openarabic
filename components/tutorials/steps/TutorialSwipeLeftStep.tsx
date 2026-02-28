@@ -3,16 +3,9 @@
  */
 
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONSTANTS } from '@/constants/animation';
@@ -21,27 +14,39 @@ import { STRINGS } from '@/constants/strings';
 import { TUTORIAL_ANIMATION, TUTORIAL_VISUALS } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
 
+// Total cycle: delay + swipe left + swipe back + pause
+const SWIPE_LEFT_CYCLE =
+  TIMING_CONSTANTS.TUTORIAL_DELAY_SHORT +
+  TUTORIAL_ANIMATION.BOUNCE_DURATION +
+  TIMING_CONSTANTS.TUTORIAL_DELAY_LONG;
+
+// Keyframe percentages based on timing proportions
+const swipeLeftPause1End = (TIMING_CONSTANTS.TUTORIAL_DELAY_SHORT / SWIPE_LEFT_CYCLE) * 100;
+const swipeLeftPeakEnd =
+  ((TIMING_CONSTANTS.TUTORIAL_DELAY_SHORT + TUTORIAL_ANIMATION.BOUNCE_DURATION / 2) /
+    SWIPE_LEFT_CYCLE) *
+  100;
+const swipeLeftReturnEnd =
+  ((TIMING_CONSTANTS.TUTORIAL_DELAY_SHORT + TUTORIAL_ANIMATION.BOUNCE_DURATION) /
+    SWIPE_LEFT_CYCLE) *
+  100;
+
+// CSS @keyframes replaces useEffect + withRepeat + withSequence + withDelay + withTiming
+const handStyle = {
+  animationName: {
+    '0%': { transform: [{ translateX: 0 }] },
+    [`${swipeLeftPause1End}%`]: { transform: [{ translateX: 0 }] },
+    [`${swipeLeftPeakEnd}%`]: { transform: [{ translateX: -70 }] },
+    [`${swipeLeftReturnEnd}%`]: { transform: [{ translateX: 0 }] },
+    '100%': { transform: [{ translateX: 0 }] },
+  },
+  animationDuration: `${SWIPE_LEFT_CYCLE}ms`,
+  animationIterationCount: 'infinite' as const,
+  animationTimingFunction: 'ease-in-out',
+};
+
 export function TutorialSwipeLeftStep() {
   const colors = useColors();
-  const handTranslateX = useSharedValue(0);
-
-  useEffect(() => {
-    // Animate hand swiping left only
-    handTranslateX.value = withRepeat(
-      withSequence(
-        withDelay(TIMING_CONSTANTS.TUTORIAL_DELAY_SHORT, withTiming(0)),
-        withTiming(-70, { duration: TUTORIAL_ANIMATION.BOUNCE_DURATION / 2 }),
-        withTiming(0, { duration: TUTORIAL_ANIMATION.BOUNCE_DURATION / 2 }),
-        withDelay(TIMING_CONSTANTS.TUTORIAL_DELAY_LONG, withTiming(0)),
-      ),
-      -1,
-      false,
-    );
-  }, [handTranslateX]);
-
-  const handStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: handTranslateX.value }],
-  }));
 
   return (
     <View style={styles.container}>

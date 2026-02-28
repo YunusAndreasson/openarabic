@@ -1,18 +1,20 @@
-import { useEffect } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { cubicBezier } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
 
+// CSS easing equivalent of Easing.out(Easing.cubic)
+const PROGRESS_EASING = cubicBezier(0.33, 1, 0.68, 1);
+
 /**
  * An animated, crash-resistant progress bar component that displays progress.
  *
  * Features:
- * - Smooth animated transitions using Reanimated
+ * - Smooth CSS transitions via Reanimated v4
  * - Theme integration with light/dark mode
  * - Customizable colors and dimensions
  * - Crash prevention for invalid values
@@ -28,25 +30,12 @@ function ProgressBarComponent({
 }: ProgressBarProps) {
   const colors = useColors();
 
-  // Animated progress value for smooth transitions
-  const progressValue = useSharedValue(0);
-
   // Handle invalid inputs that could crash (React Compiler auto-memoizes)
   let safeProgress = 0;
   if (typeof rawProgress === 'number' && !isNaN(rawProgress) && isFinite(rawProgress)) {
     // Clamp to 0-100 range and ensure it's a safe number
     safeProgress = Math.max(0, Math.min(100, rawProgress));
   }
-
-  // Animate progress changes smoothly
-  useEffect(() => {
-    progressValue.set(
-      withTiming(safeProgress, {
-        duration: animationDuration,
-        easing: TIMING_CONFIG.PROGRESS.easing,
-      }),
-    );
-  }, [safeProgress, progressValue, animationDuration]);
 
   // Determine background color based on theme if not provided (React Compiler auto-memoizes)
   const bgColor = backgroundColor || colors.progressBackground;
@@ -65,27 +54,23 @@ function ProgressBarComponent({
     style,
   ] as StyleProp<ViewStyle>;
 
-  // Base fill styles (React Compiler auto-memoizes)
-  const baseFillStyle = [
+  // Fill styles with CSS transition for smooth width animation
+  const transitionFillStyle = [
     defaultStyles.fill,
     {
       backgroundColor: progressFillColor,
       borderRadius: height / 2,
+      width: `${safeProgress}%`,
+      transitionProperty: 'width',
+      transitionDuration: `${animationDuration}ms`,
+      transitionTimingFunction: PROGRESS_EASING,
     },
     fillStyle,
   ] as StyleProp<ViewStyle>;
 
-  // Animated fill width based on progress value
-  const animatedFillStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      width: `${progressValue.get()}%`,
-    };
-  }, [progressValue]);
-
   return (
     <View style={containerStyle}>
-      <Animated.View style={[baseFillStyle, animatedFillStyle]} />
+      <Animated.View style={transitionFillStyle} />
     </View>
   );
 }

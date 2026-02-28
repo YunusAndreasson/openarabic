@@ -40,8 +40,6 @@ interface PlaylistItemCardProps {
   articleId?: number;
   // Reading progress - always shown (0% = not started)
   progressPercentage?: number;
-  // Avoid running mount animations when rendering many list items at once
-  shouldAnimateOnMount?: boolean;
 }
 
 export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
@@ -55,7 +53,6 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
   imageUrl,
   articleId,
   progressPercentage,
-  shouldAnimateOnMount = true,
 }) => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
@@ -64,7 +61,6 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
   const { animatedStyle } = useEditModeCardAnimation({
     editMode,
     isBeingDragged,
-    shouldAnimateOnMount,
   });
 
   // Enhanced title and secondary text styles with semantic colors

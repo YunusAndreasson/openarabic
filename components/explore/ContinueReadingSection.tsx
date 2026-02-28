@@ -137,7 +137,6 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
               articleId={article.id}
               progressPercentage={progress}
               onPress={() => handleArticlePress(article)}
-              shouldAnimateOnMount={false}
             />
           </View>
         ))}

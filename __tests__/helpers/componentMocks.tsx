@@ -218,6 +218,8 @@ export const createReanimatedMock = () => {
     withDelay: <T,>(_delay: number, value: T) => value,
     withSequence: <T,>(...values: T[]) => values[values.length - 1],
     withRepeat: <T,>(value: T) => value,
+    // CSS transition easing helpers
+    cubicBezier: () => 'cubic-bezier(mock)',
     // Utilities
     runOnJS: (fn: Function) => fn,
     interpolate: (value: number) => value,

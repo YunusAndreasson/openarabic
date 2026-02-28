@@ -3,7 +3,7 @@ import type { NativeStackNavigationOptions } from '@react-navigation/native-stac
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { InteractionManager, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -23,7 +23,6 @@ import { LAYOUT } from '@/constants/layout';
 import { fsrsQueries } from '@/constants/queries';
 import { getPracticeReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
@@ -52,12 +51,15 @@ export default function PracticeScreen(): JSX.Element {
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
 
-  // Smooth content fade-in animation
-  const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
-    useOpacityAnimation({
-      initialOpacity: 0,
-      duration: TIMING_CONFIG.SLOW.duration,
-    });
+  // Mount fade-in — CSS @keyframes replaces useOpacityAnimation + startAnimation
+  const contentAnimatedStyle = {
+    animationName: {
+      from: { opacity: 0 },
+      to: { opacity: 1 },
+    },
+    animationDuration: `${TIMING_CONFIG.SLOW.duration}ms`,
+    animationFillMode: 'forwards' as const,
+  };
 
   // Prefetch vocabulary data on first focus (deduped via ref)
   // Note: useReview.handleClose already invalidates queries when returning from review,
@@ -141,17 +143,6 @@ export default function PracticeScreen(): JSX.Element {
 
   // Bottom padding for content
   const contentPaddingBottom = LAYOUT.SPACING.MEDIUM;
-
-  // Track animation state to prevent restarts
-  const hasStartedContentAnimation = useRef(false);
-
-  // Trigger content animation on mount
-  useEffect(() => {
-    if (!hasStartedContentAnimation.current) {
-      hasStartedContentAnimation.current = true;
-      startContentAnimation();
-    }
-  }, [startContentAnimation]);
 
   // Show error message if there was an error loading data
   if (shouldShowError) {

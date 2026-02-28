@@ -1,13 +1,7 @@
 import { memo, useEffect, useMemo, useRef, type ComponentRef, type RefObject } from 'react';
 import type { LayoutRectangle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 import { Pressable } from 'react-native-gesture-handler';
 import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
@@ -53,26 +47,22 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   // Prevent memory leaks from async callbacks on unmounted components
   const isMountedRef = useRef(true);
 
-  // Pulsing highlight animation for tutorial
-  const highlightOpacity = useSharedValue(0);
+  // Pulsing highlight — CSS @keyframes replaces useEffect + withRepeat + withSequence
+  const highlightStyle = isHighlighted
+    ? {
+        animationName: {
+          '0%': { opacity: 0.3 },
+          '100%': { opacity: 1 },
+        },
+        animationDuration: '800ms',
+        animationIterationCount: 'infinite' as const,
+        animationDirection: 'alternate' as const,
+        animationTimingFunction: 'ease-in-out',
+      }
+    : { opacity: 0 };
 
-  useEffect(() => {
-    if (isHighlighted) {
-      highlightOpacity.value = withRepeat(
-        withSequence(withTiming(1, { duration: 800 }), withTiming(0.3, { duration: 800 })),
-        -1,
-        false,
-      );
-    } else {
-      highlightOpacity.value = 0;
-    }
-  }, [isHighlighted, highlightOpacity]);
-
-  const highlightStyle = useAnimatedStyle(() => ({
-    opacity: highlightOpacity.value,
-  }));
-
-  // Active word opacity - runs on UI thread, synced with React prop via dependency array
+  // Active word opacity — useAnimatedStyle required because AnimatedPressable
+  // (RNGestureHandlerButton) doesn't support CSS transitions
   const activeStyle = useAnimatedStyle(
     () => ({
       opacity: isActive ? 0.7 : 1,

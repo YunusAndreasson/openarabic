@@ -19,7 +19,6 @@ import {
   MIN_TOUCH_TARGET,
   TEXT_STYLES,
 } from '@/constants/layout';
-import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleScrollHandler } from '@/hooks/articles/useArticleScrollHandler';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
@@ -147,13 +146,15 @@ const ArticleContentInternal = function ArticleContent({
   // High-performance scroll handler - runs on UI thread (no cross-thread calls)
   const { scrollY, onScrollAnimated } = useArticleScrollHandler();
 
-  // Optimized fade-in animation for snappy article appearance
-  // autoStart handles animation automatically on mount - no manual triggers needed
-  const { animatedStyle } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: TIMING_CONFIG.FAST.duration, // 150ms for snappier feel
-    autoStart: true, // Automatically fade in when component mounts
-  });
+  // Mount fade-in — CSS @keyframes replaces useOpacityAnimation + autoStart
+  const animatedStyle = {
+    animationName: {
+      from: { opacity: 0 },
+      to: { opacity: 1 },
+    },
+    animationDuration: `${TIMING_CONFIG.FAST.duration}ms`,
+    animationFillMode: 'forwards' as const,
+  };
 
   // Tooltip closure handler - only triggers when scroll begins, not during continuous scrolling
   // This prevents blocking scroll performance while still closing tooltip on user interaction
