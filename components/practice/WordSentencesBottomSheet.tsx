@@ -1,11 +1,11 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ArticleSentence } from '@/components/article/ArticleSentence';
 import { BaseCard } from '@/components/common';
-import { ColorDot, DoneButton, HeaderIconButton } from '@/components/ui';
+import { ColorDot, HeaderIconButton } from '@/components/ui';
 import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
@@ -14,6 +14,8 @@ import { useSentencesByWord } from '@/hooks/vocabulary/useSentencesByWord';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { getStabilityProgressColor } from '@/utils/urgencyScore';
+
+const SENTENCE_SETTINGS = { showEnglish: true } as const;
 
 interface WordSentencesBottomSheetProps {
   /** Controls modal visibility */
@@ -56,17 +58,8 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
 
     // Get text and colors
     const arabicText = word?.root?.letters || '';
-    const englishText = useMemo(
-      () => capitalizeFirstLetter(word?.root?.meaning || ''),
-      [word?.root?.meaning],
-    );
-    const dotColorKey = useMemo(
-      () => getStabilityProgressColor(word?.fsrs_stability),
-      [word?.fsrs_stability],
-    );
-
-    // Settings for ArticleSentence
-    const sentenceSettings = useMemo(() => ({ showEnglish: true }), []);
+    const englishText = capitalizeFirstLetter(word?.root?.meaning || '');
+    const dotColorKey = getStabilityProgressColor(word?.fsrs_stability);
 
     return (
       <Modal
@@ -78,10 +71,10 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
         <View style={[styles.container, { backgroundColor: colors.background }]}>
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <DoneButton onPress={onClose} />
+            <HeaderIconButton iconName="close" onPress={onClose} size="medium" />
             <View style={styles.headerSpacer} />
             {word?.root?.audio_url && (
-              <HeaderIconButton iconName="volume-high" onPress={handlePlayAudio} size="medium" />
+              <HeaderIconButton iconName="play-circle" onPress={handlePlayAudio} size="medium" />
             )}
           </View>
 
@@ -141,9 +134,9 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
                       audio_url: sentence.audio_url,
                     }}
                     words={sentence.sentence_words}
-                    settings={sentenceSettings}
+                    settings={SENTENCE_SETTINGS}
                     colors={colors}
-                    highlightRootId={word?.root_id as number}
+                    highlightRootId={word?.root_id}
                     containerStyle={styles.sentenceContainer}
                   />
                 </BaseCard>

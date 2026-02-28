@@ -10,6 +10,7 @@ import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import type { RootId } from '@/types/branded.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
@@ -32,7 +33,7 @@ interface ArticleSentenceProps {
   /** ID of the word currently shown in the tooltip */
   activeWordId?: string | number | null;
   /** Root ID to highlight as target word (used in dictionary sentence examples) */
-  highlightRootId?: number | null;
+  highlightRootId?: RootId | null;
 }
 
 const ArticleSentenceInternal = function ArticleSentence({
