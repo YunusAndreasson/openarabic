@@ -1,7 +1,7 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +11,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
+import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
 import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface TimePickerProps {
@@ -30,7 +31,7 @@ export function TimePicker({
 }: TimePickerProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useBottomSheetVisibility(isVisible);
 
   // Create initial date from hour and minute
   const initialDate = new Date();
@@ -40,15 +41,6 @@ export function TimePicker({
 
   // Track if bottom sheet is visible to prevent native picker from showing before sheet
   const [isSheetVisible, setIsSheetVisible] = useState(false);
-
-  // Show/hide modal based on isVisible prop - unified for both platforms
-  useEffect(() => {
-    if (isVisible) {
-      bottomSheetRef.current?.expand();
-    } else {
-      bottomSheetRef.current?.close();
-    }
-  }, [isVisible]);
 
   // Track bottom sheet visibility to delay native picker render on Android
   // Parent state sync is handled by onClose prop after close animation completes

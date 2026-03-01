@@ -1,5 +1,5 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,6 +9,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { SleepTimerAction } from '@/types/enums';
+import { useBottomSheetModalVisibility } from '@/hooks/ui/useBottomSheetVisibility';
 import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
 import { formatSecondsToClock } from '@/utils/dateTimeUtils';
@@ -33,21 +34,12 @@ export function SleepTimer({
   isTimerActive = false,
   remainingTime = 0,
 }: SleepTimerProps) {
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRef = useBottomSheetModalVisibility(isVisible);
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
   // Pre-select 15 minutes as default
   const [selectedMinutes, setSelectedMinutes] = useState<number>(DEFAULT_SELECTED_MINUTES);
-
-  // Handle visibility changes
-  useEffect(() => {
-    if (isVisible) {
-      bottomSheetRef.current?.present();
-    } else {
-      bottomSheetRef.current?.dismiss();
-    }
-  }, [isVisible]);
 
   const handleSetTimer = () => {
     successFeedback();

@@ -2,10 +2,11 @@ import { memo, useMemo } from 'react';
 
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
 import { CHART_LABELS, generateChartSubtitle } from '@/constants/chartMessages';
-import { calculateDataPointPositions, useGraphWidth } from '@/constants/chartConstants';
-import { formatMonthDayUTC, formatWeekdayUTC } from '@/utils/chartDataUtils';
+import { useGraphWidth } from '@/constants/chartConstants';
+import { formatMonthDayUTC } from '@/utils/chartDataUtils';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
+import { useChartAxisLabels } from '@/hooks/vocabulary/useChartAxisLabels';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -27,6 +28,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
   ({ studyWords = [], onInfoPress, hideTitle = true }: RetrievabilityChartProps) => {
     const graphWidth = useGraphWidth();
     const { retrievabilityData, chartData } = useRetrievabilityChart(studyWords);
+    const { xLabels, xLabelPositions } = useChartAxisLabels(retrievabilityData);
 
     // Generate subtitle using standardized messaging system
     const subtitle = useMemo(() => {
@@ -56,17 +58,6 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         },
       }));
     }, [chartData.dataPoints]);
-
-    // Stabilize x labels and positions to maximize memoization effectiveness
-    const xLabels = useMemo(
-      () => retrievabilityData.map(d => formatWeekdayUTC(d.date)),
-      [retrievabilityData],
-    );
-
-    const xLabelPositions = useMemo(() => {
-      const allDayPositions = calculateDataPointPositions(retrievabilityData.length);
-      return retrievabilityData.map((_, index) => allDayPositions[index] || 0);
-    }, [retrievabilityData.length]);
 
     // 🚀 Unified chart with perfect grid system, danger zones, and 75% target line:
     return (

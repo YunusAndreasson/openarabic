@@ -1,5 +1,5 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,6 +14,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { ToastType } from '@/types/enums';
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
 import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
@@ -38,20 +39,9 @@ export function WordDetailsBottomSheet({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useBottomSheetVisibility(isVisible && !!word);
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
-
-  // Control sheet visibility using imperative methods with proper lifecycle
-  useEffect(() => {
-    if (isVisible && word) {
-      // Snap to first snap point to show
-      bottomSheetRef.current?.snapToIndex(0);
-    } else {
-      // Close the sheet
-      bottomSheetRef.current?.close();
-    }
-  }, [isVisible, word]);
 
   // Optimistic state for instant UI feedback
   const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useState(isInStudyList);

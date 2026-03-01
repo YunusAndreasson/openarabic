@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +9,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
+import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
 import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface SettingsPickerOption<T> {
@@ -45,16 +45,7 @@ function SettingsPickerComponent<T>({
   const currentValue =
     selectedValue !== undefined && selectedValue !== null ? selectedValue : options[0]?.id;
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
-
-  // Show/hide modal based on isVisible prop
-  useEffect(() => {
-    if (isVisible) {
-      bottomSheetRef.current?.expand();
-    } else {
-      bottomSheetRef.current?.close();
-    }
-  }, [isVisible]);
+  const bottomSheetRef = useBottomSheetVisibility(isVisible);
 
   // Use shared dynamic styles hook for theme-aware styling
   const dynamicStyles = useBottomSheetDynamicStyles();

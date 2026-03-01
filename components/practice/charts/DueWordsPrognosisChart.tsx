@@ -2,8 +2,9 @@ import { memo, useMemo } from 'react';
 
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
 import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/constants/chartMessages';
-import { calculateDataPointPositions, useGraphWidth } from '@/constants/chartConstants';
-import { formatMonthDayUTC, formatWeekdayUTC } from '@/utils/chartDataUtils';
+import { useGraphWidth } from '@/constants/chartConstants';
+import { formatMonthDayUTC } from '@/utils/chartDataUtils';
+import { useChartAxisLabels } from '@/hooks/vocabulary/useChartAxisLabels';
 import { useDueWordsChart } from '@/hooks/vocabulary/useDueWordsChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -24,6 +25,7 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
   ({ studyWords = [], onInfoPress, hideTitle = true }: DueWordsPrognosisChartProps) => {
     const graphWidth = useGraphWidth();
     const { dueWordsData, chartData } = useDueWordsChart(studyWords);
+    const { xLabels, xLabelPositions } = useChartAxisLabels(dueWordsData);
 
     // Generate subtitle showing current and peak due words
     const subtitle = useMemo(() => {
@@ -59,14 +61,6 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         },
       }));
     }, [chartData.dataPoints, studyWords.length]);
-
-    // Stabilize x labels and positions to maximize memoization effectiveness
-    const xLabels = useMemo(() => dueWordsData.map(d => formatWeekdayUTC(d.date)), [dueWordsData]);
-
-    const xLabelPositions = useMemo(() => {
-      const allDayPositions = calculateDataPointPositions(dueWordsData.length);
-      return dueWordsData.map((_, index) => allDayPositions[index] || 0);
-    }, [dueWordsData.length]);
 
     // Calculate the maximum Y value for better scaling
     const yMax = useMemo(() => {
