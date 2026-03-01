@@ -183,7 +183,7 @@ export function useMultipleFeaturedArticles(
         // Strategy 1: If user has due words and enough articles with those words
         if (user?.id && hasDueWordArticles && stableDueWordSet.size > 0) {
           const dueWordArticles = unreadArticles.filter(article =>
-            article.article_sentences?.some(sentence =>
+            article.article_sentences.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
                 stableDueWordSet.has(word.root_id),
               ),
@@ -214,7 +214,7 @@ export function useMultipleFeaturedArticles(
           hasAnyStudyWords
         ) {
           const difficultWordArticles = unreadArticles.filter(article =>
-            article.article_sentences?.some(sentence =>
+            article.article_sentences.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
                 stableDifficultWordSet.has(word.root_id),
               ),

@@ -143,7 +143,7 @@ export function useFeaturedArticleSelection(
         // Strategy 1: If user has due words and enough articles with those words
         if (user?.id && hasDueWordArticles && dueWordRootIds.size > 0) {
           const dueWordArticles = articlesData.filter(article =>
-            article.article_sentences?.some(sentence =>
+            article.article_sentences.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
                 dueWordRootIds.has(word.root_id),
               ),
@@ -170,7 +170,7 @@ export function useFeaturedArticleSelection(
           hasAnyStudyWords
         ) {
           const difficultWordArticles = articlesData.filter(article =>
-            article.article_sentences?.some(sentence =>
+            article.article_sentences.some(sentence =>
               sentence.sentence_words?.some((word: SentenceWord) =>
                 difficultWordRootIds.has(word.root_id),
               ),
@@ -273,7 +273,7 @@ export function useFeaturedArticleSelection(
       if (
         user?.id &&
         hasDueWordArticles &&
-        article.article_sentences?.some(sentence =>
+        article.article_sentences.some(sentence =>
           sentence.sentence_words?.some((word: SentenceWord) => dueWordRootIds.has(word.root_id)),
         )
       ) {
@@ -284,7 +284,7 @@ export function useFeaturedArticleSelection(
         user?.id &&
         hasDifficultWordArticles &&
         hasAnyStudyWords &&
-        article.article_sentences?.some(sentence =>
+        article.article_sentences.some(sentence =>
           sentence.sentence_words?.some((word: SentenceWord) =>
             difficultWordRootIds.has(word.root_id),
           ),
@@ -310,7 +310,7 @@ export function useFeaturedArticleSelection(
       if (
         user?.id &&
         hasDueWordArticles &&
-        article.article_sentences?.some(sentence =>
+        article.article_sentences.some(sentence =>
           sentence.sentence_words?.some((word: SentenceWord) => dueWordRootIds.has(word.root_id)),
         )
       ) {
@@ -321,7 +321,7 @@ export function useFeaturedArticleSelection(
         user?.id &&
         hasDifficultWordArticles &&
         hasAnyStudyWords &&
-        article.article_sentences?.some(sentence =>
+        article.article_sentences.some(sentence =>
           sentence.sentence_words?.some((word: SentenceWord) =>
             difficultWordRootIds.has(word.root_id),
           ),

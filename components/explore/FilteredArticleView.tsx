@@ -265,7 +265,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     // When filtering by author, show "Category · Xm" (author is redundant)
     // When filtering by category, show "Author · Xm" (category is redundant)
     // Otherwise show full "Author · Category · Xm"
-    const readingTime = calculateReadingTime(article.article_sentences?.length ?? 0);
+    const readingTime = calculateReadingTime(article.article_sentences.length);
     const secondaryText =
       filterType === 'author'
         ? `${capitalizeFirstLetter(article.category.name)} · ${readingTime}`
@@ -349,6 +349,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
           ListHeaderComponent={ListHeaderComponent}
           ListFooterComponent={FooterComponent}
           renderItem={renderItem}
+          getItemType={(item: ListItem) => item.type}
         />
       )}
     </ThemedView>

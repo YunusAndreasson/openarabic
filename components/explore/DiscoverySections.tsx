@@ -96,8 +96,8 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     const shortArticles = shuffleAndSlice(
       unreadArticles.filter(
         a =>
-          (a.article_sentences?.length ?? 0) > 0 &&
-          (a.article_sentences?.length ?? 0) < SHORT_ARTICLE_MAX_SENTENCES,
+          a.article_sentences.length > 0 &&
+          a.article_sentences.length < SHORT_ARTICLE_MAX_SENTENCES,
       ),
       MAX_ARTICLES_PER_SECTION,
       baseSeed ^ 1,
@@ -112,7 +112,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
 
     // Long Reads (>= 15 sentences, ~4+ min)
     const longArticles = shuffleAndSlice(
-      unreadArticles.filter(a => (a.article_sentences?.length ?? 0) >= LONG_ARTICLE_MIN_SENTENCES),
+      unreadArticles.filter(a => a.article_sentences.length >= LONG_ARTICLE_MIN_SENTENCES),
       MAX_ARTICLES_PER_SECTION,
       baseSeed ^ 2,
     );

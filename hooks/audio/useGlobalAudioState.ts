@@ -157,8 +157,8 @@ export function useGlobalAudioState(): GlobalAudioState {
       readingList?.find(i => i.article_id === currentArticleId)?.articles ?? null;
 
     const title = cachedArticle?.title || audioPlayer.currentTrack?.title || '';
-    const author = cachedArticle?.author?.name || readingListArticle?.author?.name || '';
-    const category = cachedArticle?.category?.name || readingListArticle?.category?.name || '';
+    const author = cachedArticle?.author.name || readingListArticle?.author.name || '';
+    const category = cachedArticle?.category.name || readingListArticle?.category.name || '';
     const imageUrl =
       cachedArticle?.image_url ||
       readingListArticle?.image_url ||

@@ -80,7 +80,7 @@ export function getBeginnerArticles(articles: Article[], limit = 20): Article[] 
 
   // Sort by length (longer articles first, using sentence count)
   const sortedByLength = [...beginnerArticles].sort(
-    (a, b) => (b.article_sentences?.length ?? 0) - (a.article_sentences?.length ?? 0),
+    (a, b) => b.article_sentences.length - a.article_sentences.length,
   );
 
   // Select articles with author diversity
@@ -118,9 +118,9 @@ function buildArticleRootIdIndex(articles: Article[]): Map<number, Set<RootId>> 
   const index = new Map<number, Set<RootId>>();
   for (const article of articles) {
     const rootIds = new Set<RootId>();
-    article.article_sentences?.forEach(sentence => {
+    article.article_sentences.forEach(sentence => {
       sentence.sentence_words?.forEach(word => {
-        if (word?.root_id) {
+        if (word.root_id) {
           rootIds.add(word.root_id);
         }
       });

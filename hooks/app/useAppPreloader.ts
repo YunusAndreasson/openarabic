@@ -314,7 +314,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       const performIntelligentSelection = () => {
         if (dueWordRootIds.size > 0) {
           const dueWordArticles = allArticles.filter(article =>
-            article.article_sentences?.some(sentence =>
+            article.article_sentences.some(sentence =>
               sentence.sentence_words?.some(word => dueWordRootIds.has(word.root_id)),
             ),
           );
