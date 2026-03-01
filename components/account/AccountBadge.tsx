@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -27,8 +27,8 @@ interface AccountBadgeProps {
 }
 
 // Helper function to format member since date
-const formatMemberSince = (createdAt: string): string => {
-  const date = new Date(createdAt);
+const formatMemberSince = (createdAt?: string): string => {
+  const date = new Date(createdAt || '2024-01-01T00:00:00.000Z');
   const formatter = new Intl.DateTimeFormat('en-US', {
     month: 'long',
     year: 'numeric',
@@ -46,11 +46,6 @@ const getInitials = (name: string): string => {
     .slice(0, 2);
 };
 
-// Simple fallback for member since date - we'll use a reasonable default
-const getMemberSinceDate = (createdAt?: string) => {
-  // Use actual user creation date if available, otherwise use a reasonable default
-  return createdAt || '2024-01-01T00:00:00.000Z';
-};
 
 export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps) {
   const colors = useColors();
@@ -66,7 +61,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   });
 
   // Cleanup scale animation on unmount
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       try {
         cancelAnimation(scaleValue);
@@ -79,7 +74,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
 
   // Derived values
   const firstName = getFirstNameFromEmail(userEmail);
-  const memberSince = formatMemberSince(getMemberSinceDate(createdAt));
+  const memberSince = formatMemberSince(createdAt);
   const initials = getInitials(firstName);
 
   // Handle photo press animation

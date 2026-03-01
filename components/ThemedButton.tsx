@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { type JSX } from 'react';
+import React, { useState, type JSX } from 'react';
 import type { GestureResponderEvent } from 'react-native';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -48,7 +48,7 @@ export function ThemedButton({
     usePressAnimation(PRESS_ANIMATION_BUTTON);
 
   // Optimistic loading state - only when explicitly enabled
-  const [optimisticLoading, setOptimisticLoading] = React.useState(false);
+  const [optimisticLoading, setOptimisticLoading] = useState(false);
   const isActuallyLoading = loading || (enableOptimisticLoading && optimisticLoading);
 
   // Create the press handler with optional optimistic loading

@@ -5,7 +5,7 @@
  * Contextual help: Single step explaining specific action (reuses same step components)
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -79,7 +79,7 @@ export function SwipeGestureTutorial({
     }
   }, [isLastStep, onDismiss]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible && !contextualHelp) {
       setCurrentStep(SwipeTutorialStep.INTRO);
     }

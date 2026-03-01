@@ -268,7 +268,7 @@ const ArticleContentInternal = function ArticleContent({
   return (
     <>
       <Animated.View style={[styles.flexOne, animatedStyle]}>
-        {sortedSentences && sortedSentences.length > 0 ? (
+        {sortedSentences.length > 0 ? (
           <View style={listContainerStyle}>
             {/* Sticky Parallax Header behind content - using Skia gradients for Android stability */}
             <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
@@ -323,7 +323,7 @@ const ArticleContentInternal = function ArticleContent({
       </Animated.View>
 
       {/* Floating action buttons - completely outside Animated.View to avoid gesture conflicts */}
-      {sortedSentences && sortedSentences.length > 0 && (
+      {sortedSentences.length > 0 && (
         <FloatingActionButtons
           isInReadingList={isInReadingList}
           onToggleReadingList={onToggleReadingList}
