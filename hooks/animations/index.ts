@@ -13,8 +13,6 @@ export {
   PRESS_ANIMATION_DEFAULT,
   usePressAnimation,
 } from './usePressAnimation';
-export { useTransformAnimation } from './useTransformAnimation';
-
 export { useToggleAnimation } from './useToggleAnimation';
 
 // Export animation configs

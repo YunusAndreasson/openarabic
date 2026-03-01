@@ -24,9 +24,6 @@ export const ROUTE_PATHS = {
 // Re-export route builders for backward compatibility
 export {
   getArticleRoute,
-  getAuthorFilterRoute,
   getCategoryFilterRoute,
-  getDifficultyFilterRoute,
-  getLengthFilterRoute,
   getPracticeReviewRoute,
 } from '@/utils/routeBuilders';

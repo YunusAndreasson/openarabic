@@ -1,4 +1,4 @@
-import type { ArticleId, AuthorId, CategoryId, RootId } from '@/types/branded.types';
+import type { ArticleId, CategoryId, RootId } from '@/types/branded.types';
 
 // Inlined to avoid require cycle: routes.ts -> routeBuilders.ts -> routes.ts
 const PRACTICE_REVIEW_PATH = '/practice/review';
@@ -26,30 +26,6 @@ export const getArticleRoute = (
 export const getCategoryFilterRoute = (categoryId: CategoryId, name?: string): string => {
   const base = `/(tabs)/explore/filter`;
   const params = [`type=category`, `id=${categoryId}`];
-  if (name) params.push(`name=${encodeURIComponent(name)}`);
-  const query = params.join('&');
-  return `${base}?${query}`;
-};
-
-export const getAuthorFilterRoute = (authorId: AuthorId, name?: string): string => {
-  const base = `/(tabs)/explore/filter`;
-  const params = [`type=author`, `id=${authorId}`];
-  if (name) params.push(`name=${encodeURIComponent(name)}`);
-  const query = params.join('&');
-  return `${base}?${query}`;
-};
-
-export const getDifficultyFilterRoute = (difficultyId: number, name?: string): string => {
-  const base = `/(tabs)/explore/filter`;
-  const params = [`type=difficulty`, `id=${difficultyId}`];
-  if (name) params.push(`name=${encodeURIComponent(name)}`);
-  const query = params.join('&');
-  return `${base}?${query}`;
-};
-
-export const getLengthFilterRoute = (lengthId: number, name?: string): string => {
-  const base = `/(tabs)/explore/filter`;
-  const params = [`type=length`, `id=${lengthId}`];
   if (name) params.push(`name=${encodeURIComponent(name)}`);
   const query = params.join('&');
   return `${base}?${query}`;

@@ -263,10 +263,6 @@ export const createAnimationHooksMock = () => ({
     handlePressIn: jest.fn(),
     handlePressOut: jest.fn(),
   }),
-  useTransformAnimation: () => ({
-    animatedStyle: {},
-    setValue: jest.fn(),
-  }),
   useOpacityAnimation: () => ({
     opacity: { value: 1 },
     animatedStyle: {},

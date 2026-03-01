@@ -6,7 +6,6 @@
 export { CloseButton } from './CloseButton';
 export { ColorDot } from './ColorDot';
 export { DictionaryButton } from './DictionaryButton';
-export { DoneButton } from './DoneButton';
 export { EditModeButton } from './EditModeButton';
 export { EnhancedImage } from './EnhancedImage';
 export { FloatingActionButton } from './FloatingActionButton';
