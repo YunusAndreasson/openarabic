@@ -1,14 +1,4 @@
 /**
- * Type for review parameters
- */
-export interface ReviewParams {
-  rootId?: number;
-  mode?: 'new' | 'random' | 'spaced';
-  count?: number;
-  fromRemember?: string;
-}
-
-/**
  * Type for filter parameters with discriminated union
  */
 export type FilterParams =
@@ -24,31 +14,3 @@ export type FilterParams =
       name?: string;
       headerTitle?: string;
     };
-
-/**
- * Type for filters modal parameters
- */
-export interface FiltersParams {
-  categoryId: string;
-}
-
-/**
- * Type for article parameters
- */
-export interface ArticleParams {
-  id: string;
-  headerTitle?: string;
-}
-
-/**
- * Discriminated union for type-safe route navigation
- * Ensures params match the route pathname
- */
-export type Route =
-  | { pathname: '/article/[id]'; params: ArticleParams }
-  | { pathname: '/(tabs)/explore/filterModal'; params: FiltersParams }
-  | { pathname: '/practice/review'; params?: ReviewParams }
-  | { pathname: '/'; params?: Record<string, never> }
-  | { pathname: '/(tabs)'; params?: Record<string, never> }
-  | { pathname: '/(tabs)/practice'; params?: Record<string, never> }
-  | { pathname: '/(tabs)/playlist'; params?: Record<string, never> };

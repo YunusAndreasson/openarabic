@@ -71,13 +71,4 @@ export const PERFORMANCE_THRESHOLDS = {
   POOR: 0, // Red zone - poor performance (<40%)
 } as const;
 
-// Standardized chart layout constants for consistent alignment
-export const CHART_LAYOUT = {
-  // Card content padding - consistent across all charts
-  CONTENT_PADDING: LAYOUT.SPACING.MEDIUM, // 12px
-
-  // Chart spacing within cards
-  ELEMENT_SPACING: LAYOUT.SPACING.LARGE, // 16px between major elements
-} as const;
-
 export const useGraphWidth = (): number => GRAPH_WIDTH;

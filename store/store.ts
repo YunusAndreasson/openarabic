@@ -3,7 +3,6 @@ import { persistReducer, persistStore } from 'redux-persist';
 import type { PersistConfig } from 'redux-persist/es/types';
 
 import editModeReducer from '@/store/editModeSlice';
-import filtersReducer from '@/store/filtersSlice';
 import playlistReducer from '@/store/playlistSlice';
 import settingsReducer from '@/store/settingsSlice';
 import themeReducer from '@/store/themeSlice';
@@ -13,7 +12,6 @@ import { getSafeStorage } from '@/utils/safeAsyncStorage';
 const rootReducer = combineReducers({
   theme: themeReducer,
   settings: settingsReducer,
-  filters: filtersReducer,
   playlist: playlistReducer,
   editMode: editModeReducer,
 });
@@ -24,7 +22,7 @@ type RootStateShape = ReturnType<typeof rootReducer>;
 const persistConfig: PersistConfig<RootStateShape> = {
   key: 'root',
   storage: getSafeStorage(),
-  whitelist: ['theme', 'settings', 'filters', 'playlist', 'editMode'],
+  whitelist: ['theme', 'settings', 'playlist', 'editMode'],
 };
 
 const persistedReducer = persistReducer<RootStateShape>(persistConfig, rootReducer);

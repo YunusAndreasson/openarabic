@@ -1,17 +1,21 @@
 import { useMemo } from 'react';
 
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
-import { useAppSelector } from '@/store/hooks';
 import type { Article } from '@/types/articles.types';
 import { calculateFilterDate, filterArticles, sortArticlesByProgress } from '@/utils/articleUtils';
 
+// Default filter values (filtersSlice had no actions so state was always these defaults)
+const filters = {
+  authorIds: [] as number[],
+  difficultyRange: [1, 5] as [number, number],
+  dateRange: 'all' as const,
+};
+
 /**
- * Custom hook to filter and sort articles based on Redux filter state
+ * Custom hook to filter and sort articles
  * Returns both filtered articles AND their reading progress data (single source of truth)
  */
 export const useFilteredArticles = (articles: Article[] | null | undefined) => {
-  const filtersState = useAppSelector(state => state.filters);
-
   // Handle null/undefined articles gracefully
   const safeArticles = articles || [];
 
@@ -21,13 +25,6 @@ export const useFilteredArticles = (articles: Article[] | null | undefined) => {
     useBulkReadingProgress(articleIds);
   // Ensure progressMap is always a Map to prevent runtime errors
   const progressMap = progressMapRaw instanceof Map ? progressMapRaw : new Map();
-
-  // Provide default values if the state hasn't been rehydrated yet
-  const filters = filtersState?.filters || {
-    authorIds: [],
-    difficultyRange: [1, 5] as [number, number],
-    dateRange: 'all' as const,
-  };
 
   // Pre-calculate date filter if needed
   const filterDate = useMemo(() => {

@@ -4,15 +4,12 @@ import { Provider } from 'react-redux';
 
 import playlistReducer from '../../store/playlistSlice';
 import editModeReducer from '../../store/editModeSlice';
-import filtersReducer from '../../store/filtersSlice';
 import settingsReducer from '../../store/settingsSlice';
-
 import themeReducer from '../../store/themeSlice';
 
 const rootReducer = combineReducers({
   theme: themeReducer,
   settings: settingsReducer,
-  filters: filtersReducer,
   playlist: playlistReducer,
   editMode: editModeReducer,
 });

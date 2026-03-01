@@ -4,7 +4,6 @@
 export * from './store';
 export * from './hooks';
 export * from './editModeSlice';
-export * from './filtersSlice';
 export * from './playlistSlice';
 export * from './settingsSlice';
 export * from './themeSlice';

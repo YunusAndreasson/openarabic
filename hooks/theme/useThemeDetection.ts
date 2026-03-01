@@ -10,7 +10,7 @@ import { useAppSelectorShallow } from '@/store/hooks';
  * Gracefully falls back to system colors when Redux isn't ready
  * @returns the current theme (light/dark/sepia)
  */
-export function useCurrentTheme(): Theme {
+function useCurrentTheme(): Theme {
   // Check if Redux context is available
   const reduxContext = useContext(ReactReduxContext);
   const systemColorScheme = useColorScheme();

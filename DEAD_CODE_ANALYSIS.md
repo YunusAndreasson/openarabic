@@ -1,7 +1,7 @@
 # Dead Code Analysis
 
 Generated: 2026-01-10
-Status: **Phase 2 Complete** - Additional cleanup and DRY refactoring done
+Status: **Phase 3 Complete** - All REVIEW and CONSIDER USE items resolved; filtersSlice removed
 
 ## Cleanup Summary
 
@@ -14,6 +14,16 @@ Status: **Phase 2 Complete** - Additional cleanup and DRY refactoring done
 - Deleted 3 entire files: `navigationUtils.ts`, `buttonStyleUtils.ts`, `useAndroidBackGesture.ts`
 - Removed 4 more unused functions: `generateFutureDateRange`, `generatePastDateRange`, `createTranslationTextStyle`, `determineTextColor`
 - DRY refactored `useThemeDetection.ts`: `useIsDarkMode` now uses `useCurrentTheme` internally (removed ~20 lines of duplicated logic)
+
+### Phase 3 (REVIEW/CONSIDER USE Resolution + filtersSlice)
+
+- Deleted `store/filtersSlice.ts` (empty reducers, state was always initial values). Updated `useFilteredArticles.ts` to use hardcoded constants instead of Redux. Removed from `store/store.ts`, `store/index.ts`, `__tests__/helpers/testStore.tsx`. Deleted `__tests__/store/filtersSlice.test.ts`.
+- Removed `calculateSevenDayAverage` from `utils/chartDataUtils.ts` and its re-export in `components/common/charts/index.ts`
+- Removed `CHART_LAYOUT` from `constants/chartConstants.ts` and its re-export in `components/common/charts/index.ts`
+- Deleted `hooks/app/useArticlesAndDueWordsLoaded.ts` (`useReadTabDataLoaded` had no consumers). Removed from `hooks/app/index.ts`.
+- Removed `Route` discriminated union type from `types/navigation.types.ts` (no consumers; codebase uses `ROUTE_PATHS` + Expo Router directly)
+- Removed `export` from `useCurrentTheme` in `hooks/theme/useThemeDetection.ts` (only used internally by `useIsDarkMode`)
+- Deleted `hooks/playlist/useAddBeginnerArticles.ts` and `hooks/practice/useAddCommonWords.ts` (no active consumers; onboarding not planned). Removed from barrel exports.
 
 ## Method
 
@@ -373,22 +383,47 @@ Use this section to track progress on cleanup:
 - [x] Remove `OPACITY_BOOST` from layout.ts
 - [x] Duplicate service exports - SKIPPED (both `ReadingProgressService` and `readingProgressService` are used in different files)
 
-### Phase 2: Review Items
+### Phase 2: Review Items - COMPLETED 2026-03-01
 
-- [ ] Check if `generateFutureDateRange`/`generatePastDateRange` could replace inline date logic
-- [ ] Check if `calculateSevenDayAverage` could be useful for charts
-- [ ] Check if `CHART_LAYOUT` values are duplicated in chart components
-- [ ] Check if `useReadTabDataLoaded` could improve loading states
-- [ ] Evaluate `Route` type for adoption in navigation
+- [x] `generateFutureDateRange`/`generatePastDateRange` - removed (Phase 2)
+- [x] `calculateSevenDayAverage` - removed (Phase 3): no chart consumers
+- [x] `CHART_LAYOUT` - removed (Phase 3): no consumers outside re-export barrel
+- [x] `useReadTabDataLoaded` - removed (Phase 3): no consumers; file deleted
+- [x] `Route` type - removed (Phase 3): no consumers; codebase uses ROUTE_PATHS constants
 
-### Phase 3: Consider Use Items
+### Phase 3: Consider Use Items - COMPLETED 2026-03-01
 
-- [ ] Evaluate `navigateToArticle`/`navigateToStudyReview` for safer navigation
-- [ ] Evaluate `HEADER_BUTTON_STYLE`/`HEADER_BUTTON_TEXT_STYLE` for header buttons
-- [ ] Evaluate `createTranslationTextStyle` for translation components
-- [ ] Evaluate `useCurrentTheme` for components needing Theme enum
-- [ ] Evaluate `useAndroidBackGesture` for modals/sheets
-- [ ] Evaluate `useAddBeginnerArticles`/`useAddCommonWords` for onboarding features
+- [x] `navigateToArticle`/`navigateToStudyReview` - deleted entire navigationUtils.ts (Phase 2)
+- [x] `HEADER_BUTTON_STYLE`/`HEADER_BUTTON_TEXT_STYLE` - deleted buttonStyleUtils.ts (Phase 2)
+- [x] `createTranslationTextStyle` - removed (Phase 2)
+- [x] `useCurrentTheme` - unexported (Phase 3): used internally by `useIsDarkMode` only
+- [x] `useAndroidBackGesture` - deleted entire file (Phase 2)
+- [x] `useAddBeginnerArticles` - deleted (Phase 3): no onboarding feature planned
+- [x] `useAddCommonWords` - deleted (Phase 3): no onboarding feature planned
+
+### Phase 3 Bonus: filtersSlice - COMPLETED 2026-03-01
+
+- [x] `filtersSlice` - deleted (Phase 3): empty reducers, state never changed from initial values. Replaced Redux read in `useFilteredArticles.ts` with hardcoded constants.
+
+### Phase 3 Knip Experiment Findings
+
+New items surfaced by running `npx knip -c /tmp/knip-aggressive.json --exports --no-config-hints` with `ignoreExportsUsedInFile: true, includeEntryExports: true`:
+
+| Item | File | Action | Notes |
+|------|------|--------|-------|
+| `DoneButton` | `components/ui/DoneButton.tsx:16` | `REVIEW` | Comment in NavigationHeaderButton says it "consolidates CloseButton and DoneButton" - may be superseded |
+| `useTransformAnimation` | `hooks/animations/useTransformAnimation.ts:134` | `REVIEW` | Found in test mocks and barrel export only |
+| `getAuthorFilterRoute` | `utils/routeBuilders.ts:34` | `REVIEW` | Only re-exported from constants/routes.ts, no real consumer |
+| `getDifficultyFilterRoute` | `utils/routeBuilders.ts:42` | `REVIEW` | Same as above |
+| `getLengthFilterRoute` | `utils/routeBuilders.ts:50` | `REVIEW` | Same as above |
+| `getArticleMetadataWithoutAuthor` | `utils/stringUtils.ts:177` | `DELETE` | No consumers |
+| `getArticleMetadataWithoutTime` | `utils/stringUtils.ts:196` | `DELETE` | No consumers |
+| `ReviewParams` | `types/navigation.types.ts:4` | `DELETED` | Removed in Phase 3 (was only used by Route type) |
+| `FiltersParams` | `types/navigation.types.ts:31` | `DELETED` | Removed in Phase 3 (was only used by Route type) |
+| `ArticleParams` | `types/navigation.types.ts:38` | `DELETED` | Removed in Phase 3 (was only used by Route type) |
+| `FontFamily` | `constants/fonts.ts:15` | `KEEP` | Used in tests |
+| `STANDALONE_PRONOUNS` | `utils/arabicAnalysis/constants.ts:107` | `KEEP` | Used in tests |
+| `COMPONENT_COUNT` | `utils/arabicAnalysis/validationConstants.ts:116` | `KEEP` | Used in tests |
 
 ---
 

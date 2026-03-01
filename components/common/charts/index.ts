@@ -23,7 +23,6 @@ export {
   GRAPH_WIDTH,
   GRAPH_HEIGHT_LARGE,
   CHART_VISUAL,
-  CHART_LAYOUT,
   PERFORMANCE_THRESHOLDS,
   DAYS_7,
   calculateDataPointPositions,
@@ -38,7 +37,6 @@ export {
   createAreaFillPath,
   formatWeekdayUTC,
   formatMonthDayUTC,
-  calculateSevenDayAverage,
 } from '@/utils/chartDataUtils';
 
 export { buildSmoothChartPath } from '@/utils/chartPathBuilder';
