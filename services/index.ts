@@ -21,4 +21,3 @@ export * from './readingProgress';
 export * from './studyStreak';
 export * from './studyWordsFSRS';
 export * from './supabase';
-export * from './vocabularyStats';
