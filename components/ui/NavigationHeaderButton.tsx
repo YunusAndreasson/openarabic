@@ -1,7 +1,7 @@
 import type { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import type { FC } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
 import { TIMING_CONSTANTS } from '@/constants/animation';
@@ -34,13 +34,19 @@ interface NavigationHeaderButtonProps {
  * <NavigationHeaderButton action="done" onPress={handleSave} />
  */
 export const NavigationHeaderButton: FC<NavigationHeaderButtonProps> = ({ action, onPress }) => {
-  // Create press handler with navigation delay for better UX
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
   const handlePress = useCallback(() => {
     if (onPress) {
       onPress();
     } else {
-      // Default behavior: navigate back with slight delay to let press animation complete
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         router.back();
       }, TIMING_CONSTANTS.NAVIGATION_DELAY);
     }

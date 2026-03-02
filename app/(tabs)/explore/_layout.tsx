@@ -48,7 +48,7 @@ export default function LibraryLayout(): JSX.Element {
         name="index"
         options={createTabHeaderOptions({
           title: AppTab.EXPLORE,
-          rightComponent: () => <HeaderProfile size={32} />,
+          rightComponent: () => <HeaderProfile />,
           colors,
         })}
       />

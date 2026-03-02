@@ -9,7 +9,6 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
-import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { analytics } from '@/services/analytics';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -18,7 +17,7 @@ import { useAuth } from '@/hooks/auth';
 import { useAudioPreloader } from './useAudioPreloader';
 import { useSessionMetrics } from './useSessionMetrics';
 import { useTimerCleanup } from '@/hooks/utils';
-import { useFSRS, useWordSizing } from '@/hooks/vocabulary';
+import { useFSRS } from '@/hooks/vocabulary';
 import { audioCache } from '@/services/audioCache';
 import type { ReviewStateRefs, ReviewTimeRefs, SessionMetrics } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -41,7 +40,6 @@ interface UseReviewReturn {
   wordQueue: StudyWord[];
   progress: number;
   maxProgress: number;
-  wordFontSize: number;
   currentWordKey: string;
   handleSwipeLeft: () => void;
   handleSwipeRight: () => void;
@@ -54,19 +52,6 @@ interface UseReviewReturn {
   isAudioPreloadingComplete: boolean;
 }
 
-interface WordSizingConfig {
-  minFontSize: number;
-  maxFontSize: number;
-  minScreenWidth: number;
-  maxScreenWidth: number;
-}
-
-const fontConfig: WordSizingConfig = {
-  minFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.6,
-  maxFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 3.3,
-  minScreenWidth: 320,
-  maxScreenWidth: 500,
-};
 
 // Timing constants for transitions (milliseconds)
 const TRANSITION_DELAYS = {
@@ -164,8 +149,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     progress: audioPreloadProgress,
     isComplete: isAudioPreloadingComplete,
   } = useAudioPreloader(wordQueue, isComplete);
-
-  const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
 
   // Derive currentSentence directly from currentWord (React 19 auto-memoizes)
   const currentSentence = { wordForm: currentWord?.root?.letters ?? '' };
@@ -680,7 +663,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     wordQueue,
     progress,
     maxProgress: stateRefs.current.maxProgress,
-    wordFontSize,
     currentWordKey,
     handleSwipeLeft,
     handleSwipeRight,

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card } from 'ts-fsrs';
 import { createEmptyCard, fsrs, generatorParameters, Rating, State } from 'ts-fsrs';
 
@@ -40,6 +40,10 @@ interface EnhancedFSRSStateTracking extends FSRSStateTracking {
   queueInitialized: boolean;
 }
 
+// Module-level constants — pure functions of stable config, no need to recompute per render
+const FSRS_PARAMS = generatorParameters(OPTIMIZED_FSRS_CONFIG);
+const FSRS_INSTANCE = fsrs(FSRS_PARAMS);
+
 export function useFSRS({
   userId,
   onComplete,
@@ -79,11 +83,7 @@ export function useFSRS({
 
   const queryClient = useQueryClient();
 
-  // Configure FSRS with proper learning steps
-  const fsrsParams = useMemo(() => generatorParameters(OPTIMIZED_FSRS_CONFIG), []);
-
-  // Create FSRS instance with configured parameters
-  const fsrsInstance = useMemo(() => fsrs(fsrsParams), [fsrsParams]);
+  const fsrsInstance = FSRS_INSTANCE;
 
   const { data: dueWords, isLoading } = useQuery({
     ...fsrsQueries.due(userId || ''),

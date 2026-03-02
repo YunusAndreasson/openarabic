@@ -6,7 +6,6 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
-import { Toast } from '@/components/ui/Toast';
 import {
   CompletionScreen,
   ReviewBottomActions,
@@ -20,8 +19,7 @@ import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { ContextualHelpType } from '@/constants/tutorials';
 import { TutorialId } from '@/constants/tutorials';
-import { ToastType } from '@/types/enums';
-import { useReview, ReviewToastContext } from '@/hooks/review';
+import { useReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 
@@ -99,19 +97,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const insets = useSafeAreaInsets();
   const colors = useColors();
 
-  // Local toast state for the review screen (modal)
-  const [toastState, setToastState] = useState<{
-    visible: boolean;
-    message: string;
-    duration: number;
-    type: ToastType;
-  }>({
-    visible: false,
-    message: '',
-    duration: 3000,
-    type: ToastType.INFO,
-  });
-
   // Contextual help state - shows specific help when tapping bottom buttons
   const [contextualHelpType, setContextualHelpType] = useState<ContextualHelpType | null>(null);
 
@@ -122,19 +107,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const handleDismissContextualHelp = useCallback(() => {
     setContextualHelpType(null);
   }, []);
-
-  const showLocalToast = useCallback(
-    (message: string, duration: number = 3000, type: ToastType = ToastType.INFO) => {
-      setToastState({ visible: true, message, duration, type });
-    },
-    [],
-  );
-
-  const handleToastClose = useCallback(() => {
-    setToastState(prev => ({ ...prev, visible: false }));
-  }, []);
-
-  const toastContextValue = useMemo(() => ({ showToast: showLocalToast }), [showLocalToast]);
 
   const {
     currentSentence,
@@ -192,8 +164,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   }
 
   return (
-    <ReviewToastContext value={toastContextValue}>
-      <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
+    <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
         {/* Full-screen swipe background + word content */}
         <ReviewCard
           key={currentWordKey}
@@ -237,30 +208,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
             <ReviewBottomActions onShowContextualHelp={handleShowContextualHelp} />
           </View>
         </View>
-      </View>
-
-      {/* Local toast for modal - appears on top with maximum z-index */}
-      {toastState.visible && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: LAYOUT.Z_INDEX.TOP_OVERLAY,
-            pointerEvents: 'box-none',
-          }}
-        >
-          <Toast
-            visible={toastState.visible}
-            message={toastState.message}
-            duration={toastState.duration}
-            type={toastState.type}
-            onClose={handleToastClose}
-          />
-        </View>
-      )}
 
       {/* Contextual help overlay - shown when tapping bottom buttons */}
       <SwipeGestureTutorial
@@ -268,7 +215,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         onDismiss={handleDismissContextualHelp}
         contextualHelp={contextualHelpType ?? undefined}
       />
-    </ReviewToastContext>
+    </View>
   );
 }
 
