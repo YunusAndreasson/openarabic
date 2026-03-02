@@ -19,11 +19,10 @@ const CARD_WIDTH = SCREEN_WIDTH - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
 const IMAGE_HEIGHT = Math.round(CARD_WIDTH / 1.618); // Golden ratio
 const GRADIENT_HEIGHT = Math.round(IMAGE_HEIGHT * 0.6);
 
-// Enhanced interface for ArticleCard
-type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'onPress'> & {
-  imageUrl: string;
-  summary: string;
-  title: string;
+type ArticleCardProps = Omit<
+  BaseArticleCardProps,
+  'variant' | 'onPress' | 'onLongPress' | 'loading' | 'disabled' | 'shadowSize' | 'contentStyle'
+> & {
   article: Article;
   isFeaturedArticle?: boolean;
 };

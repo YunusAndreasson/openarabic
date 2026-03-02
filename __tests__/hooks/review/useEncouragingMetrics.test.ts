@@ -103,12 +103,12 @@ describe('useEncouragingMetrics', () => {
   });
 
   describe('Daily streak metric (YELLOW)', () => {
-    test('should show "Start your streak" when dailyStreak is 0', () => {
+    test('should show "Practice tomorrow for a streak" when dailyStreak is 0', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.[1].text).toBe('Start your streak');
+      expect(result.current?.[1].text).toBe('Practice tomorrow for a streak');
     });
 
     test('should show "Streak started!" when dailyStreak is 1', () => {
@@ -119,12 +119,12 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.[1].text).toBe('Streak started!');
     });
 
-    test('should show "X day streak" when dailyStreak is greater than 1', () => {
+    test('should show "X-day streak" when dailyStreak is greater than 1', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 7),
       );
 
-      expect(result.current?.[1].text).toBe('7 day streak');
+      expect(result.current?.[1].text).toBe('7-day streak');
     });
 
     test('should have flame icon for streak metric', () => {

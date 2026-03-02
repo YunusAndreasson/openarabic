@@ -217,11 +217,11 @@ describe('arabicWordAnalysis', () => {
         expect(analysis.prefixes[0]?.arabicMatch).toBe(expectedPrefix);
       });
 
-      // Test case where remaining word is too short (validation should reject)
+      // 2-char roots with 2 consonants are now valid (MIN_REMAINING_LENGTH lowered to 2)
       const analysis = analyzeArabicWord('يُحب', 'he loves');
-      // Remaining "حب" is only 2 chars - fails MIN_REMAINING_LENGTH validation
-      expect(analysis.prefixes[0]).toBeUndefined();
-      expect(analysis.hasComponents).toBeFalsy();
+      // Remaining "حب" is 2 chars with 2 consonants - passes validation
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('ي');
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should not match ي prefix when English has no correspondence', () => {

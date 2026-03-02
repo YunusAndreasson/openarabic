@@ -88,7 +88,7 @@ jest.mock('@/hooks/review', () => ({
     },
     {
       type: 'streak',
-      text: '5 day streak',
+      text: '5-day streak',
       value: 5,
       icon: 'flame-outline' as const,
       color: '#f59e0b',
@@ -174,7 +174,7 @@ describe('CompletionScreen Component', () => {
         },
         {
           type: 'streak',
-          text: '7 day streak',
+          text: '7-day streak',
           value: 7,
           icon: 'flame-outline',
           color: '#f59e0b',
@@ -184,7 +184,7 @@ describe('CompletionScreen Component', () => {
       const { getByText } = render(<CompletionScreen sessionMetrics={metrics} />);
 
       expect(getByText('15 words reviewed')).toBeTruthy();
-      expect(getByText('7 day streak')).toBeTruthy();
+      expect(getByText('7-day streak')).toBeTruthy();
     });
 
     test('displays multiple encouraging metrics', () => {
@@ -200,7 +200,7 @@ describe('CompletionScreen Component', () => {
         },
         {
           type: 'streak',
-          text: '5 day streak',
+          text: '5-day streak',
           value: 5,
           icon: 'flame-outline',
           color: '#f59e0b',
@@ -217,7 +217,7 @@ describe('CompletionScreen Component', () => {
       const { getByText } = render(<CompletionScreen sessionMetrics={metrics} />);
 
       expect(getByText('10 words reviewed')).toBeTruthy();
-      expect(getByText('5 day streak')).toBeTruthy();
+      expect(getByText('5-day streak')).toBeTruthy();
       expect(getByText('3 words mastered')).toBeTruthy();
     });
 
@@ -309,7 +309,7 @@ describe('CompletionScreen Component', () => {
         },
         {
           type: 'streak',
-          text: '10 day streak',
+          text: '10-day streak',
           value: 10,
           icon: 'flame-outline',
           color: '#f59e0b',
@@ -322,7 +322,7 @@ describe('CompletionScreen Component', () => {
 
       expect(getByText('Excellent Work!')).toBeTruthy();
       expect(getByText('20 words reviewed')).toBeTruthy();
-      expect(getByText('10 day streak')).toBeTruthy();
+      expect(getByText('10-day streak')).toBeTruthy();
     });
 
     test('renders for small session (few words)', () => {
@@ -460,7 +460,7 @@ describe('CompletionScreen Component', () => {
       useEncouragingMetrics.mockReturnValue([
         {
           type: 'streak',
-          text: '7 day streak',
+          text: '7-day streak',
           value: 7,
           icon: 'flame-outline',
           color: '#f59e0b',

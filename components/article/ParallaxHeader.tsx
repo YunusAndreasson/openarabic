@@ -141,7 +141,6 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
       source: imageSource,
       style: STATIC_STYLES.image,
       priority: 'high' as const,
-      cachePolicy: 'memory-disk' as const,
     }),
     [imageSource],
   );

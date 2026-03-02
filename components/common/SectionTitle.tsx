@@ -12,26 +12,15 @@ interface SectionTitleProps {
   textStyle?: StyleProp<TextStyle>;
 }
 
+const subtitleStyle = { marginTop: LAYOUT.SPACING.TINY };
+
 export const SectionTitle: FC<SectionTitleProps> = ({
   title,
   subtitle,
   containerStyle,
   textStyle,
 }) => {
-  const titleStyle = useMemo(
-    () => ({
-      marginBottom: 0,
-      ...(textStyle as TextStyle),
-    }),
-    [textStyle],
-  );
-
-  const subtitleStyle = useMemo(
-    () => ({
-      marginTop: LAYOUT.SPACING.TINY,
-    }),
-    [],
-  );
+  const titleStyle = useMemo(() => [{ marginBottom: 0 }, textStyle], [textStyle]);
 
   return (
     <View style={[styles.container, containerStyle]}>

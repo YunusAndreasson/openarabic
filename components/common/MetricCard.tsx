@@ -34,7 +34,7 @@ export const MetricCard = memo<MetricCardProps>(({ icon, value, label, color, on
         >
           <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
         </View>
-        <ThemedText type="heading2" weight="bold" style={[styles.value, { color }]}>
+        <ThemedText type="heading2" style={[styles.value, { color }]}>
           {displayValue}
         </ThemedText>
         <ThemedText

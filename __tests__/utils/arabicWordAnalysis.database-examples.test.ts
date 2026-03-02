@@ -118,8 +118,8 @@ describe('Database Example Grammar Rules', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ف');
       expect(analysis.prefixes[0]?.englishMatches).toContain('so');
 
-      // Remaining includes إنما (undetected particles)
-      expect(analysis.remainingArabic).toBe('إنما');
+      // Remaining includes إنما (إ normalized to ا by normalizeArabic)
+      expect(analysis.remainingArabic).toBe('انما');
     });
 
     test('should handle standalone إنما as two prefixes', () => {

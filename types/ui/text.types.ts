@@ -36,8 +36,6 @@ export interface ThemedTextProps extends TextProps {
   numberOfLines?: number;
   /** How text should be truncated if it overflows */
   ellipsizeMode?: 'clip' | 'head' | 'middle' | 'tail';
-  /** Font size for Arabic text */
-  arabicFontSize?: number;
   /** Custom style to apply to the text */
   style?: StyleProp<TextStyle>;
   /** Text content to display */

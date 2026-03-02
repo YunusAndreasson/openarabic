@@ -90,7 +90,6 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
             <View style={styles.wordSection}>
               <ThemedText
                 type="arabic"
-                arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE}
                 weight="semibold"
                 style={styles.arabicText}
               >

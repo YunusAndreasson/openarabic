@@ -106,24 +106,15 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
     };
   }, [clearTimerInterval]);
 
-  const state: SleepTimerState = {
-    isActive,
-    remainingTime,
-  };
-
-  const actions: SleepTimerActions = {
-    startTimer,
-    cancelTimer,
-    autoCancel,
-  };
-
-  const result = useMemo(
-    () => ({
-      state,
-      actions,
-    }),
-    [state.isActive, state.remainingTime],
+  const state: SleepTimerState = useMemo(
+    () => ({ isActive, remainingTime }),
+    [isActive, remainingTime],
   );
 
-  return result;
+  const actions: SleepTimerActions = useMemo(
+    () => ({ startTimer, cancelTimer, autoCancel }),
+    [startTimer, cancelTimer, autoCancel],
+  );
+
+  return { state, actions };
 }

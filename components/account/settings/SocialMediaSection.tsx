@@ -22,14 +22,14 @@ const openSocialLink = async (url: string) => {
 /**
  * Social media links settings section.
  *
- * Includes: Twitter, Instagram, Facebook links.
+ * Includes: X, Instagram, Facebook links.
  * Opens external URLs in the device browser.
  */
 export const SocialMediaSection = memo(() => {
   return (
     <SettingsSection title={STRINGS.FOLLOW_US}>
       <SettingsCard
-        icon="logo-twitter"
+        icon="logo-x"
         label={STRINGS.TWITTER}
         rightType="chevron"
         onPress={() => openSocialLink(STRINGS.TWITTER_URL)}

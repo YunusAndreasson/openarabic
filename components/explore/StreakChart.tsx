@@ -10,7 +10,6 @@ import type { DailyReadingActivity, StreakPeriod } from '@/services/studyStreak'
 interface StreakChartProps {
   dailyActivity: DailyReadingActivity[];
   streakPeriods: StreakPeriod[];
-  height?: number;
 }
 
 const CHART_HEIGHT = LAYOUT.CHART.HEIGHT; // 60 via constants
@@ -40,7 +39,7 @@ const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPerio
 };
 
 export const StreakChart = memo<StreakChartProps>(
-  ({ dailyActivity, streakPeriods, height = CHART_HEIGHT }) => {
+  ({ dailyActivity, streakPeriods }) => {
     const colors = useColors();
 
     // Memoize expensive calculations
@@ -119,7 +118,7 @@ export const StreakChart = memo<StreakChartProps>(
     ]);
 
     return (
-      <View style={[styles.container, { height }]}>
+      <View style={[styles.container, { height: CHART_HEIGHT }]}>
         <View style={styles.chartArea}>
           <Canvas
             style={{

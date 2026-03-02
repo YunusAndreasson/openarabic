@@ -17,8 +17,6 @@ export interface WordTooltipProps {
   } | null;
   /** Function to close the tooltip */
   onClose: () => void;
-  /** Optional zIndex value to control tooltip stacking order */
-  zIndex?: number;
   /** Function to open word details bottom sheet */
   onOpenWordDetails?: () => void;
   /** Whether to show word details chevron (controlled by settings) */

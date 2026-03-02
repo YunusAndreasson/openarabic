@@ -443,7 +443,7 @@ const AccountScreen: FC = () => {
         {/* Storage & Account - Data management and session */}
         <SettingsSection title={STRINGS.STORAGE_ACCOUNT_SECTION}>
           <SettingsCard
-            icon="archive-outline"
+            icon="trash-outline"
             label={STRINGS.CLEAR_CACHE}
             subtitle={formattedCacheSize}
             rightType="custom"

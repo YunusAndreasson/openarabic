@@ -194,9 +194,6 @@ function AppContent() {
     refreshDelay: 1000, // 1 second delay to avoid excessive API calls
   });
 
-  // Global audio state moved into AudioOverlays to avoid re-rendering the root
-  const globalAudioState = useGlobalAudioState();
-
   const { preloadAppData, isLoaded } = useAppPreloader();
   const hasTriggeredPreload = useRef(false);
 
@@ -215,8 +212,8 @@ function AppContent() {
       NavigationBar.setStyle(isDark ? 'light' : 'dark');
     }
 
-    // Pre-configure audio session for background playback
-    globalAudioState.preconfigureAudioSession?.();
+    // Pre-configure audio session for background playback (call service directly to avoid subscribing to audio state)
+    simpleAudioService.preconfigureAudioSession();
 
     const identifyUser = async () => {
       if (session?.user) {
@@ -232,7 +229,7 @@ function AppContent() {
     };
 
     identifyUser();
-  }, [session, appReady, isAuthLoading, globalAudioState]);
+  }, [session, appReady, isAuthLoading]);
 
   const colors = useColors();
 
@@ -550,7 +547,7 @@ const AudioOverlays = memo(function AudioOverlays() {
       });
       globalAudioState.onSleepTimerSet(durationMinutes);
     },
-    [globalAudioState],
+    [globalAudioState.onSleepTimerSet],
   );
 
   // Calculate raw visibility condition

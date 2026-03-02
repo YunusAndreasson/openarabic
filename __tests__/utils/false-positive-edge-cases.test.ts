@@ -266,14 +266,14 @@ describe('False Positive Edge Cases', () => {
   });
 
   describe('Validation Logic Verification', () => {
-    test('should enforce minimum remaining length for prefixes', () => {
-      // Test that MIN_REMAINING_LENGTH (3 chars) is enforced
-      const shortWord = 'يُحب'; // "he loves" - only 2 chars after ي
+    test('should allow 2-char roots with 2 consonants for prefixes', () => {
+      // MIN_REMAINING_LENGTH is 2 (lowered from 3 to support assimilated verbs)
+      const shortWord = 'يُحب'; // "he loves" - 2 chars after ي, both consonants
 
       const analysis = analyzeArabicWord(shortWord, 'he loves');
 
-      // Should NOT detect ي prefix because remaining would be < 3 chars
-      expect(analysis.prefixes.find(p => p.arabicMatch === 'ي')).toBeUndefined();
+      // SHOULD detect ي prefix because remaining "حب" has 2 consonants
+      expect(analysis.prefixes.find(p => p.arabicMatch === 'ي')).toBeDefined();
     });
 
     test('should accept valid prefix when remaining length is sufficient', () => {

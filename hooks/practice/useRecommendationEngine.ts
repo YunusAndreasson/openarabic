@@ -96,10 +96,10 @@ function getMilestoneMessage(masteredWords: number, currentStreak?: number): str
     return "🎉 25 words mastered! Building your first 25 takes real dedication—you've proven you can learn Arabic consistently.";
   }
   if (masteredWords === 50) {
-    return '🎉 50 words mastered! This covers basic Arabic comprehension. Reviewing at increasing intervals moves words into long-term memory.';
+    return '🎉 50 words mastered! A strong start. Reviewing at increasing intervals moves these words into long-term memory.';
   }
   if (masteredWords === 100) {
-    return '🎉 100 words mastered! The 100 most common words appear in almost half of everyday Arabic text.';
+    return '🎉 100 words mastered! A vocabulary this size makes reading Arabic noticeably easier.';
   }
   if (masteredWords === 200) {
     return '🎉 200 words mastered! You now recognize many of the most frequent Arabic words. Reading becomes genuinely enjoyable.';
@@ -108,7 +108,7 @@ function getMilestoneMessage(masteredWords: number, currentStreak?: number): str
     return "🎉 300 words mastered! You've reached intermediate vocabulary. Context clues now help you guess unfamiliar words.";
   }
   if (masteredWords === 500) {
-    return '🎉 500 words mastered! This is advanced vocabulary territory. You can understand most Arabic content with minimal dictionary help.';
+    return '🎉 500 words mastered! A rich vocabulary that makes Arabic texts far more accessible.';
   }
 
   // Check streak milestones
@@ -198,7 +198,7 @@ export function useRecommendationEngine({
 
       if (hasManyDue) {
         return {
-          message: `${dueWordsCount} words due at ${memoryStrength}% Memory Strength — review now before the forgetting curve sets in.${upcomingContext}`,
+          message: `${dueWordsCount} words due at ${memoryStrength}% Memory Strength — review now to stay ahead of the forgetting curve.${upcomingContext}`,
           type: 'review',
         };
       }

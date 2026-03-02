@@ -72,7 +72,7 @@ export default function TabLayout(): JSX.Element {
           <BlurView
             intensity={blurProps.intensity}
             tint={blurProps.tint}
-            experimentalBlurMethod="dimezisBlurView"
+            blurMethod="dimezisBlurView"
             style={styles.tabBarBlur}
           />
         ),

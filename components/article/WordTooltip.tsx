@@ -96,7 +96,6 @@ export function WordTooltip({
   text = '',
   arabicWord,
   layout,
-  zIndex,
   onOpenWordDetails,
   showWordDetails = true,
 }: WordTooltipProps) {
@@ -147,7 +146,7 @@ export function WordTooltip({
     return {
       container: {
         ...STATIC_STYLES.overlay,
-        zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
+        zIndex: TOOLTIP_CONSTANTS.Z_INDEX,
       },
       tooltip: {
         ...STATIC_STYLES.tooltip,
@@ -173,7 +172,7 @@ export function WordTooltip({
         borderRightColor: colors.transparent,
       },
     };
-  }, [dimensions, zIndex, colors]);
+  }, [dimensions, colors]);
 
   if (!visible || !layout) return null;
 

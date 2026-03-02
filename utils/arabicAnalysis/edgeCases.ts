@@ -2,6 +2,7 @@
  * Edge case handlers for Arabic word analysis
  */
 
+import { normalizeArabic } from './normalization';
 import type { AnalyzedComponent } from './types';
 
 /**
@@ -80,7 +81,7 @@ export function isSingleStandaloneComponent(
   // If we have exactly 1 prefix, it must consume the entire word (no remaining root)
   if (analysis.prefixes.length === 1) {
     const prefix = analysis.prefixes[0];
-    if (prefix?.arabicMatch === normalizedArabic) {
+    if (normalizeArabic(prefix?.arabicMatch ?? '') === normalizedArabic) {
       // Single prefix consuming entire word → no composition to show → skip coloring
       return true;
     }

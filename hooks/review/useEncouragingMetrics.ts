@@ -48,7 +48,7 @@ export const useEncouragingMetrics = (
     // 🟡 YELLOW - Daily study streak
     if (dailyStreak > 1) {
       trafficLightMetrics.push({
-        text: `${dailyStreak} day streak`,
+        text: `${dailyStreak}-day streak`,
         icon: 'flame',
         color: colors.warning,
         type: 'daily_streak',
@@ -61,9 +61,9 @@ export const useEncouragingMetrics = (
         type: 'daily_streak',
       });
     } else {
-      // No streak yet - encourage starting one
+      // No streak yet - encourage returning tomorrow
       trafficLightMetrics.push({
-        text: 'Start your streak',
+        text: 'Practice tomorrow for a streak',
         icon: 'flame',
         color: colors.warning,
         type: 'daily_streak',

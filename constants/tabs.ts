@@ -29,8 +29,8 @@ export const TAB_ICONS = {
     sf: { default: 'safari', selected: 'safari.fill' },
   },
   PLAYLIST: {
-    filled: 'headphones',
-    outline: 'headphones-outline',
+    filled: 'headset',
+    outline: 'headset-outline',
     sf: { default: 'headphones', selected: 'headphones' },
   },
   PRACTICE: {

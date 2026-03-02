@@ -87,7 +87,7 @@ export const AppearanceSection = memo<AppearanceSectionProps>(
           onToggleChange={handleWordDetailsToggle}
         />
         <SettingsCard
-          icon="pulse"
+          icon="cellular"
           label={STRINGS.HAPTICS}
           rightType="toggle"
           toggleValue={hapticsEnabled}

@@ -140,7 +140,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
                     />
                   </View>
                   <View style={styles.metricTextContainer}>
-                    <ThemedText style={styles.metricText} type="body" variant="primary">
+                    <ThemedText style={styles.metricText} type="body">
                       {metric.text}
                     </ThemedText>
                   </View>

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, type JSX } from 'react';
+import React, { useEffect, useRef, useState, type JSX } from 'react';
 import type { GestureResponderEvent } from 'react-native';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -49,16 +49,22 @@ export function ThemedButton({
 
   // Optimistic loading state - only when explicitly enabled
   const [optimisticLoading, setOptimisticLoading] = useState(false);
+  const optimisticTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isActuallyLoading = loading || (enableOptimisticLoading && optimisticLoading);
+
+  useEffect(() => {
+    return () => {
+      if (optimisticTimeoutRef.current) clearTimeout(optimisticTimeoutRef.current);
+    };
+  }, []);
 
   // Create the press handler with optional optimistic loading
   const pressHandler = (event: GestureResponderEvent) => {
     if (onPress && !disabled && !isActuallyLoading) {
       if (enableOptimisticLoading) {
-        setOptimisticLoading(true); // Immediately show loading
+        setOptimisticLoading(true);
         onPress(event);
-        // Auto-clear optimistic loading after 500ms as fallback (much shorter)
-        setTimeout(() => {
+        optimisticTimeoutRef.current = setTimeout(() => {
           setOptimisticLoading(false);
         }, 500);
       } else {
@@ -67,13 +73,9 @@ export function ThemedButton({
     }
   };
 
-  const textColor = disabled
-    ? colors.disabled
-    : variant === 'filled'
-      ? isDarkMode
-        ? colors.black // Dark text on sage tint background in dark mode
-        : colors.white // White text on sage tint background in light mode
-      : colors.tint;
+  // Single source of truth for text/icon color
+  const textColorName = disabled ? 'disabled' : variant === 'filled' ? (isDarkMode ? 'black' : 'white') : 'tint';
+  const textColor = colors[textColorName];
   const iconSize = ICON_SIZE_MAP[size];
 
   // Android Material Design 3 ripple config (must be a prop, not style)
@@ -151,15 +153,7 @@ export function ThemedButton({
           ) : (
             <ThemedText
               skipDefaultColor
-              colorName={
-                disabled
-                  ? 'disabled'
-                  : variant === 'filled'
-                    ? isDarkMode
-                      ? 'black'
-                      : 'white'
-                    : 'tint'
-              }
+              colorName={textColorName}
               style={[buttonTextStyle, isActuallyLoading && !icon && styles.hiddenText]}
               type={TEXT_TYPE_MAP[size]}
             >

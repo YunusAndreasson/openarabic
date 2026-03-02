@@ -10,6 +10,11 @@ import { BottomSheetHeader } from './BottomSheetHeader';
 import { useColors } from '@/hooks/theme/useColors';
 import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 
+const BOTTOM_SHEET_PROPS = {
+  ...COMMON_BOTTOM_SHEET_MODAL_PROPS,
+  enableDynamicSizing: true,
+} as const;
+
 export interface GenericBottomSheetProps {
   /** Controls bottom sheet visibility */
   isVisible: boolean;
@@ -19,14 +24,8 @@ export interface GenericBottomSheetProps {
   title?: string;
   /** Optional subtitle - requires title to be provided */
   subtitle?: string;
-  /** Optional custom header - replaces title/subtitle if provided */
-  customHeader?: ReactNode;
   /** Bottom sheet content */
   children: ReactNode;
-  /** Optional snap points - uses dynamic sizing if not provided */
-  snapPoints?: number[];
-  /** Name for error boundary tracking - defaults to title or 'Generic' */
-  sheetName?: string;
 }
 
 /**
@@ -58,31 +57,17 @@ export interface GenericBottomSheetProps {
  *   <TimerOptions />
  * </GenericBottomSheet>
  *
- * @example
- * // With custom header
- * <GenericBottomSheet
- *   isVisible={isVisible}
- *   onClose={onClose}
- *   customHeader={<MyCustomHeader />}
- * >
- *   <Content />
- * </GenericBottomSheet>
  */
 export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
   isVisible,
   onClose,
   title,
   subtitle,
-  customHeader,
   children,
-  snapPoints,
-  sheetName,
 }) => {
-  const effectiveSheetName = sheetName || title || 'Generic';
   const colors = useColors();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  // Show/hide modal based on isVisible prop
   useEffect(() => {
     if (isVisible) {
       bottomSheetRef.current?.present();
@@ -91,23 +76,12 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
     }
   }, [isVisible]);
 
-  // Memoize dynamic styles
   const dynamicStyles = useMemo(
     () => ({
       bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
       indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
     }),
     [colors.elevation1, colors.modalIndicator],
-  );
-
-  // When snapPoints are provided, disable dynamic sizing
-  // Otherwise use dynamic sizing from COMMON_BOTTOM_SHEET_MODAL_PROPS
-  const bottomSheetProps = useMemo(
-    () => ({
-      ...COMMON_BOTTOM_SHEET_MODAL_PROPS,
-      ...(snapPoints ? { snapPoints, enableDynamicSizing: false } : { enableDynamicSizing: true }),
-    }),
-    [snapPoints],
   );
 
   return (
@@ -118,18 +92,11 @@ export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={BottomSheetBackdrop}
-      {...bottomSheetProps}
+      {...BOTTOM_SHEET_PROPS}
     >
       <BottomSheetView style={styles.container}>
-        <BottomSheetErrorBoundary sheetName={effectiveSheetName}>
-          {/* Render custom header OR standard title/subtitle header */}
-          {customHeader ? (
-            customHeader
-          ) : title ? (
-            <BottomSheetHeader title={title} subtitle={subtitle || ''} />
-          ) : null}
-
-          {/* Content */}
+        <BottomSheetErrorBoundary sheetName={title ?? 'Generic'}>
+          {title ? <BottomSheetHeader title={title} subtitle={subtitle || ''} /> : null}
           {children}
         </BottomSheetErrorBoundary>
       </BottomSheetView>

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps, Ref } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GestureResponderEvent, TextInputProps } from 'react-native';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -74,14 +74,14 @@ export function ThemedInput({
 }: ThemedInputProps) {
   const colors = useColors();
   const [isFocused, setIsFocused] = useState(false);
-  const [prevError, setPrevError] = useState(error);
+  const prevErrorRef = useRef(error);
 
   useEffect(() => {
-    if (error && !prevError) {
+    if (error && !prevErrorRef.current) {
       errorFeedback();
     }
-    setPrevError(error);
-  }, [error, prevError]);
+    prevErrorRef.current = error;
+  }, [error]);
 
   const containerStyles = useMemo(
     () => [

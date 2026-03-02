@@ -69,7 +69,7 @@ export const VALIDATION_CONFIG = {
 
   /** Minimum validation thresholds for prefix detection */
   PREFIX_VALIDATION: {
-    MIN_REMAINING_LENGTH: 3,
+    MIN_REMAINING_LENGTH: 2, // Allow 2-char roots (جد، صل، قع) from assimilated verbs (يجد، يصل، يقع)
     MIN_CONSONANTS: 2,
   } as const,
 

@@ -230,5 +230,9 @@ export const TRANSLATION_NORMALIZATION_RULES: TranslationNormalizationRule[] = [
  * }
  */
 export const NORMALIZATION_MAP = new Map<string, string>(
-  TRANSLATION_NORMALIZATION_RULES.map(rule => [rule.arabic, rule.normalizedEnglish]),
+  TRANSLATION_NORMALIZATION_RULES.map(rule => [
+    // Normalize alef variants to match normalizeArabic() output (إ/آ/ٱ only, NOT أ)
+    rule.arabic.replace(/[إآٱ]/g, 'ا'),
+    rule.normalizedEnglish,
+  ]),
 );

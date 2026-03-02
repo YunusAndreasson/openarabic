@@ -81,7 +81,6 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
               <View style={styles.rightSection}>
                 <ThemedText
                   type="arabic"
-                  arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE}
                   weight="semibold"
                   numberOfLines={1}
                   style={styles.arabicText}

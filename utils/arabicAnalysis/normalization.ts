@@ -15,14 +15,19 @@ import { DIACRITIC_REGEX_GLOBAL, NON_WORD_REGEX, UNICODE_FORMAT_REGEX } from './
  * Normalizes Arabic text for comparison (with caching)
  *
  * Operations:
- * 1. Normalize alef wasla (ٱ) to regular alef (ا)
+ * 1. Normalize alef variants (إ/آ/ٱ) to plain alef (ا) — NOT أ (preserves hamza above)
  * 2. Remove Unicode formatting characters (RTL marks, zero-width chars)
  * 3. Remove diacritics (harakat: fatha, kasra, damma, sukun, shadda, etc.)
  * 4. Trim whitespace
  *
+ * Note: أ (alef with hamza above) is intentionally NOT normalized to avoid false
+ * positives. The أ prefix (first-person marker) must remain distinct from ا
+ * (prosthetic alef in Form VII-X verbs like استطاع, انكسر).
+ *
  * @param text - Original Arabic text with diacritics
  * @returns Normalized Arabic text without diacritics or formatting characters
  * @example normalizeArabic("ٱلْكِتَابُ") → "الكتاب"
+ * @example normalizeArabic("إِلَيْهِ") → "اليه"
  */
 export function normalizeArabic(text: string): string {
   const cached = ARABIC_NORMALIZATION_CACHE.get(text);
@@ -30,10 +35,11 @@ export function normalizeArabic(text: string): string {
     return cached;
   }
 
-  // Normalize alef wasla (ٱ U+0671) to regular alef (ا U+0627)
-  // Alef wasla is an orthographic variant used for the definite article
-  // and should be treated as regular alef for analysis purposes
-  let normalized = text.replace(/ٱ/g, 'ا');
+  // Normalize select alef variants to plain alef (ا U+0627)
+  // إ (U+0625, alef with hamza below), آ (U+0622, alef with madda), ٱ (U+0671, alef wasla)
+  // NOT أ (U+0623, alef with hamza above) — preserved to distinguish the first-person
+  // prefix أ from prosthetic alef ا in Form VII-X verbs (استطاع, انكسر, اجتمع)
+  let normalized = text.replace(/[إآٱ]/g, 'ا');
 
   // Remove Unicode formatting characters (RTL marks, zero-width characters, etc.)
   // then remove diacritics, then trim

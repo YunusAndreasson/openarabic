@@ -1,6 +1,6 @@
 import { BaseCard } from '@/components/common/BaseCard';
 import { ProgressBar } from '@/components/common/ProgressBar';
-import type { FC } from 'react';
+import { memo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -44,7 +44,7 @@ interface PlaylistItemCardProps {
   compact?: boolean;
 }
 
-export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
+export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(({
   title,
   secondaryText,
   onPress,
@@ -151,7 +151,7 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = ({
       )}
     </Animated.View>
   );
-};
+});
 
 PlaylistItemCard.displayName = 'PlaylistItemCard';
 

@@ -108,15 +108,6 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TEXT_OPACITY.SECONDARY,
   },
-  link: {
-    fontFamily: FONTS.ENGLISH,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: FONT_WEIGHTS.MEDIUM,
-    letterSpacing: LETTER_SPACING.NORMAL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: TEXT_OPACITY.ACCENT,
-    textDecorationLine: 'underline',
-  },
   overline: {
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
@@ -137,11 +128,16 @@ const BASE_STYLE_MAP = {
   heading2: styles.heading2,
   heading3: styles.heading3,
   label: styles.label,
-  link: styles.link,
   overline: styles.overline,
 } as const;
 
-type TextTypeName = keyof typeof BASE_STYLE_MAP;
+/** Maps semantic weight names to valid React Native fontWeight values */
+const WEIGHT_MAP = {
+  bold: '700',
+  medium: '500',
+  normal: '400',
+  semibold: '600',
+} as const satisfies Record<NonNullable<ThemedTextProps['weight']>, string>;
 
 /**
  * ThemedText component provides consistent typography across the app
@@ -171,7 +167,6 @@ export function ThemedText({
   skipDefaultColor = false,
   numberOfLines,
   ellipsizeMode,
-  arabicFontSize,
   ...rest
 }: ThemedTextProps) {
   const colors = useColors();
@@ -185,17 +180,17 @@ export function ThemedText({
     const textColor = getTextColor(colors, variant, colorName, skipDefaultColor);
 
     if (type === 'arabic') {
-      const fontSize = debouncedArabicFontSize || arabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
+      const fontSize = debouncedArabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
       return [
         getArabicTextStyle(fontSize, {}, selectedArabicFont),
         textColor && { color: textColor },
-        weight && { fontWeight: weight },
+        weight && { fontWeight: WEIGHT_MAP[weight] },
         align && { textAlign: align },
         style,
       ].filter(Boolean) as StyleProp<TextStyle>;
     }
 
-    const baseStyle = BASE_STYLE_MAP[type as TextTypeName] || BASE_STYLE_MAP.body;
+    const baseStyle = BASE_STYLE_MAP[type as keyof typeof BASE_STYLE_MAP] || BASE_STYLE_MAP.body;
 
     // When an explicit color is provided (colorName or variant), the semantic color
     // already encodes the hierarchy — skip the type's built-in opacity to avoid double-dimming.
@@ -206,7 +201,7 @@ export function ThemedText({
       baseStyle,
       { opacity: getEnhancedOpacity(baseOpacity, isDarkMode) },
       textColor && { color: textColor },
-      weight && { fontWeight: weight },
+      weight && { fontWeight: WEIGHT_MAP[weight] },
       align && { textAlign: align },
       style,
     ].filter(Boolean) as StyleProp<TextStyle>;
@@ -217,7 +212,6 @@ export function ThemedText({
     skipDefaultColor,
     type,
     debouncedArabicFontSize,
-    arabicFontSize,
     selectedArabicFont,
     weight,
     align,

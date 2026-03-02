@@ -23,7 +23,7 @@ jest.mock('@/hooks/theme/useThemeDetection', () =>
 );
 
 jest.mock('@/hooks/theme/useDebouncedArabicFontSize', () => ({
-  useDebouncedArabicFontSize: () => null,
+  useDebouncedArabicFontSize: () => 20,
 }));
 
 jest.mock('@/store/hooks', () => ({
@@ -96,13 +96,6 @@ describe('ThemedText', () => {
       expect(element).toHaveStyle({ fontSize: 13, fontWeight: '600' });
     });
 
-    test('renders link type with underline decoration', () => {
-      const { getByText } = render(<ThemedText type="link">Link text</ThemedText>);
-
-      const element = getByText('Link text');
-      expect(element).toHaveStyle({ textDecorationLine: 'underline' });
-    });
-
     test('renders overline type with uppercase transform', () => {
       const { getByText } = render(<ThemedText type="overline">Overline</ThemedText>);
 
@@ -158,7 +151,7 @@ describe('ThemedText', () => {
 
   describe('Text Properties', () => {
     test('applies custom weight override', () => {
-      const { getByText } = render(<ThemedText weight="700">Bold weight</ThemedText>);
+      const { getByText } = render(<ThemedText weight="bold">Bold weight</ThemedText>);
 
       const element = getByText('Bold weight');
       expect(element).toHaveStyle({ fontWeight: '700' });
@@ -189,25 +182,16 @@ describe('ThemedText', () => {
   });
 
   describe('Arabic Text', () => {
-    test('renders Arabic type text with specified font size', () => {
-      const { getByText } = render(
-        <ThemedText type="arabic" arabicFontSize={24}>
-          مرحبا
-        </ThemedText>,
-      );
+    test('renders Arabic type text with debounced font size', () => {
+      const { getByText } = render(<ThemedText type="arabic">مرحبا</ThemedText>);
 
       const element = getByText('مرحبا');
-      expect(element).toBeDefined();
-      // Arabic text should apply the specified font size
-      expect(element).toHaveStyle({ fontSize: 24 });
+      // Arabic text should use the debounced font size from the hook (mocked to 20)
+      expect(element).toHaveStyle({ fontSize: 20 });
     });
 
     test('renders Arabic type text with RTL text alignment', () => {
-      const { getByText } = render(
-        <ThemedText type="arabic" arabicFontSize={20}>
-          العربية
-        </ThemedText>,
-      );
+      const { getByText } = render(<ThemedText type="arabic">العربية</ThemedText>);
 
       const element = getByText('العربية');
       expect(element).toHaveStyle({ textAlign: 'right' });
