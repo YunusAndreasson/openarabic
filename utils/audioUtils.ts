@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 
-import { articlesService } from '@/services/articles';
+import { articleQueries } from '@/constants/queries';
 import { audioCache } from '@/services/audioCache';
 import { simpleAudioService } from '@/services/audioPlayer';
 import type { Article } from '@/types/articles.types';
@@ -60,17 +60,14 @@ export async function prefetchArticleWithImage(
   prefetchArticle?: (id: ArticleId) => Promise<boolean | undefined>,
 ): Promise<void> {
   // Prefetch article data
-  queryClient
-    .prefetchQuery({
-      queryKey: ['article', articleId],
-      queryFn: () => articlesService.getArticleById(articleId),
-    })
-    .catch(() => {
-      // Silent failure
-    });
+  queryClient.prefetchQuery(articleQueries.detail(articleId)).catch(() => {
+    // Silent failure
+  });
 
   // Get cached article for image URL
-  const cachedArticle = queryClient.getQueryData<Article>(['article', articleId]);
+  const cachedArticle = queryClient.getQueryData<Article>(
+    articleQueries.detail(articleId).queryKey,
+  );
   const imageUrl = generateStorageUrl('images', cachedArticle?.image_url);
 
   if (imageUrl) {

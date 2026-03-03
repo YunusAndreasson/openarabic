@@ -564,12 +564,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         // and will be fetched fresh when needed by components that use it
         queryClient.invalidateQueries({ queryKey: fsrsQueries.all(user.id).queryKey });
         queryClient.invalidateQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
-        queryClient.invalidateQueries({ queryKey: fsrsQueries.stats(user.id).queryKey });
 
         // Eagerly refetch to update counts immediately
         queryClient.refetchQueries({ queryKey: fsrsQueries.all(user.id).queryKey });
         queryClient.refetchQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
-        queryClient.refetchQueries({ queryKey: fsrsQueries.stats(user.id).queryKey });
       }
     });
 

@@ -135,23 +135,6 @@ export const fsrsQueries = {
     }),
 
   /**
-   * FSRS statistics for a user
-   * Used for charts and progress displays
-   */
-  stats: (userId: string) =>
-    queryOptions({
-      queryKey: ['fsrs-words', userId, 'stats'] as const,
-      queryFn: () =>
-        studyWordsFSRSService.getFSRSWords(userId, {
-          forStats: true,
-          limit: 1000,
-        }),
-      enabled: !!userId,
-      ...CACHE_TIMES.MEDIUM,
-      retry: 3,
-    }),
-
-  /**
    * Query key for session completion timestamp (client-only, not fetched from server)
    * Used to temporarily apply cooldown after completing a review session
    */
