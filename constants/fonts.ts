@@ -11,5 +11,3 @@ export const FONTS = {
   /** Default Arabic font with diacritics support */
   ARABIC: 'NotoSansArabic-Regular',
 } as const;
-
-export type FontFamily = (typeof FONTS)[keyof typeof FONTS];

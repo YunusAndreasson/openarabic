@@ -75,7 +75,6 @@ const NotificationsMock = Notifications as typeof Notifications & {
     cancelAllScheduledNotificationsAsync: jest.Mock;
     setBadgeCountAsync: jest.Mock;
     getBadgeCountAsync: jest.Mock;
-    clearLastNotificationResponseAsync: jest.Mock;
   };
 };
 
@@ -95,8 +94,6 @@ const mockCancelAllScheduledNotificationsAsync =
   NotificationsMock.__mocks.cancelAllScheduledNotificationsAsync;
 const mockSetBadgeCountAsync = NotificationsMock.__mocks.setBadgeCountAsync;
 const mockGetBadgeCountAsync = NotificationsMock.__mocks.getBadgeCountAsync;
-const mockClearLastNotificationResponseAsync =
-  NotificationsMock.__mocks.clearLastNotificationResponseAsync;
 
 // Import service after mocks - service runs setNotificationHandler on load
 import * as notificationService from '@/services/notificationService';
@@ -115,7 +112,6 @@ describe('notificationService', () => {
     mockCancelAllScheduledNotificationsAsync.mockClear();
     mockSetBadgeCountAsync.mockClear();
     mockGetBadgeCountAsync.mockClear();
-    mockClearLastNotificationResponseAsync.mockClear();
     mockSetNotificationCategoryAsync.mockClear();
     mockSetNotificationChannelAsync.mockClear();
     jest.mocked(handleError).mockClear();
@@ -152,32 +148,6 @@ describe('notificationService', () => {
   });
 
   describe('Permission Handling', () => {
-    test('should check if permissions are granted', async () => {
-      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'granted' });
-
-      const hasPerms = await notificationService.hasPermissions();
-
-      expect(hasPerms).toBeTruthy();
-      expect(mockGetPermissionsAsync).toHaveBeenCalled();
-    });
-
-    test('should return false if permissions not granted', async () => {
-      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'denied' });
-
-      const hasPerms = await notificationService.hasPermissions();
-
-      expect(hasPerms).toBeFalsy();
-    });
-
-    test('should handle permission check errors', async () => {
-      mockGetPermissionsAsync.mockRejectedValueOnce(new Error('Permission check failed'));
-
-      const hasPerms = await notificationService.hasPermissions();
-
-      expect(hasPerms).toBeFalsy();
-      expect(handleError).toHaveBeenCalled();
-    });
-
     test('should return true if permissions already granted', async () => {
       mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'granted' });
 
@@ -430,32 +400,6 @@ describe('notificationService', () => {
       expect(success).toBeFalsy();
       expect(handleError).toHaveBeenCalled();
     });
-
-    test('should get app badge count', async () => {
-      mockGetBadgeCountAsync.mockResolvedValueOnce(7);
-
-      const count = await notificationService.getAppBadgeCount();
-
-      expect(count).toBe(7);
-      expect(mockGetBadgeCountAsync).toHaveBeenCalled();
-    });
-
-    test('should ensure non-negative badge count', async () => {
-      mockGetBadgeCountAsync.mockResolvedValueOnce(-5);
-
-      const count = await notificationService.getAppBadgeCount();
-
-      expect(count).toBe(0);
-    });
-
-    test('should handle badge get errors', async () => {
-      mockGetBadgeCountAsync.mockRejectedValueOnce(new Error('Get failed'));
-
-      const count = await notificationService.getAppBadgeCount();
-
-      expect(count).toBe(0);
-      expect(handleError).toHaveBeenCalled();
-    });
   });
 
   describe('Notification Listeners and Navigation', () => {
@@ -473,24 +417,6 @@ describe('notificationService', () => {
 
     test('should handle cleanup when no listeners exist', () => {
       expect(() => notificationService.cleanupNotifications()).not.toThrow();
-    });
-  });
-
-  describe('Utility Functions', () => {
-    test('should clear last notification response', async () => {
-      const success = await notificationService.clearLastNotificationResponse();
-
-      expect(success).toBeTruthy();
-      expect(mockClearLastNotificationResponseAsync).toHaveBeenCalled();
-    });
-
-    test('should handle clear last notification response errors', async () => {
-      mockClearLastNotificationResponseAsync.mockRejectedValueOnce(new Error('Clear failed'));
-
-      const success = await notificationService.clearLastNotificationResponse();
-
-      expect(success).toBeFalsy();
-      expect(handleError).toHaveBeenCalled();
     });
   });
 

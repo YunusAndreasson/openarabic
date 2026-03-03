@@ -62,7 +62,6 @@ import * as BackgroundTask from 'expo-background-task';
 import {
   registerBackgroundTasks,
   unregisterBackgroundTasks,
-  isBackgroundTaskAvailable,
 } from '@/services/backgroundTasks';
 import { handleError } from '@/utils/errorHandling';
 
@@ -75,42 +74,6 @@ const mockHandleError = jest.mocked(handleError);
 describe('backgroundTasks service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('isBackgroundTaskAvailable', () => {
-    test('should return true when background task is available', async () => {
-      mockGetStatusAsync.mockResolvedValue(1); // Available status
-
-      const result = await isBackgroundTaskAvailable();
-
-      expect(result).toBeTruthy();
-      expect(mockGetStatusAsync).toHaveBeenCalled();
-    });
-
-    test('should return false when background task is unavailable', async () => {
-      mockGetStatusAsync.mockResolvedValue(2); // Unavailable status
-
-      const result = await isBackgroundTaskAvailable();
-
-      expect(result).toBeFalsy();
-    });
-
-    test('should return false when getStatusAsync throws error', async () => {
-      mockGetStatusAsync.mockRejectedValue(new Error('Not configured'));
-
-      const result = await isBackgroundTaskAvailable();
-
-      expect(result).toBeFalsy();
-    });
-
-    test('should handle error gracefully without logging', async () => {
-      mockGetStatusAsync.mockRejectedValue(new Error('Test error'));
-
-      await isBackgroundTaskAvailable();
-
-      // Should not call handleError (catches silently)
-      expect(mockHandleError).not.toHaveBeenCalled();
-    });
   });
 
   describe('registerBackgroundTasks', () => {
@@ -201,10 +164,6 @@ describe('backgroundTasks service', () => {
       mockGetStatusAsync.mockResolvedValue(2); // Unavailable
       await registerBackgroundTasks();
       expect(mockRegisterTaskAsync).not.toHaveBeenCalled();
-
-      mockGetStatusAsync.mockRejectedValue(new Error('Not supported'));
-      const available = await isBackgroundTaskAvailable();
-      expect(available).toBeFalsy();
     });
 
     test('should never throw errors to caller', async () => {
@@ -215,7 +174,6 @@ describe('backgroundTasks service', () => {
       // All should resolve without throwing
       await expect(registerBackgroundTasks()).resolves.not.toThrow();
       await expect(unregisterBackgroundTasks()).resolves.not.toThrow();
-      await expect(isBackgroundTaskAvailable()).resolves.not.toThrow();
     });
   });
 });

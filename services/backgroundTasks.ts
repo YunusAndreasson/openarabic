@@ -173,15 +173,3 @@ export async function unregisterBackgroundTasks(): Promise<void> {
     });
   }
 }
-
-/**
- * Check if background task is available
- */
-export async function isBackgroundTaskAvailable(): Promise<boolean> {
-  try {
-    const status = await BackgroundTask.getStatusAsync();
-    return status === BackgroundTask.BackgroundTaskStatus.Available;
-  } catch {
-    return false;
-  }
-}

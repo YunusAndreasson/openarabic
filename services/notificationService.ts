@@ -354,29 +354,6 @@ export async function clearAppBadge(): Promise<boolean> {
   }
 }
 
-export async function getAppBadgeCount(): Promise<number> {
-  try {
-    const count = await Notifications.getBadgeCountAsync();
-    return Math.max(0, count); // Ensure non-negative
-  } catch (error) {
-    handleError(error as Error, {
-      showToast: false,
-      analyticsEventName: 'Badge_Get_Error',
-    });
-    return 0;
-  }
-}
-
-export async function hasPermissions(): Promise<boolean> {
-  try {
-    const { status } = await Notifications.getPermissionsAsync();
-    return status === 'granted';
-  } catch (error) {
-    handleError(error as Error, { showToast: false });
-    return false;
-  }
-}
-
 export async function ensurePermissions(): Promise<boolean> {
   try {
     // First check current permissions (more efficient than always requesting)
@@ -478,20 +455,6 @@ export async function canUseBadge(): Promise<boolean> {
     handleError(error as Error, {
       showToast: false,
       analyticsEventName: 'Badge_Permission_Check_Error',
-    });
-    return false;
-  }
-}
-
-// New feature: Clear last notification response (SDK 54+)
-export async function clearLastNotificationResponse(): Promise<boolean> {
-  try {
-    await Notifications.clearLastNotificationResponseAsync();
-    return true;
-  } catch (error) {
-    handleError(error as Error, {
-      showToast: false,
-      analyticsEventName: 'Clear_Last_Notification_Response_Error',
     });
     return false;
   }

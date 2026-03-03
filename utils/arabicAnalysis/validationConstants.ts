@@ -111,20 +111,6 @@ export const WORD_COUNT = {
 } as const;
 
 /**
- * Component count thresholds for edge case handling
- */
-export const COMPONENT_COUNT = {
-  /**
-   * Single standalone component threshold
-   *
-   * Rationale: If a word consists of exactly 1 component that consumes the entire
-   * word, it provides no compositional insight (e.g., "بل" → "but rather" is just
-   * a conjunction, no composition to learn from).
-   */
-  STANDALONE: 1,
-} as const;
-
-/**
  * Helper function to check if text is exactly a critical length
  */
 export function isCriticalLength(text: string, criticalLength: number): boolean {
