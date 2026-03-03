@@ -14,7 +14,7 @@ import {
   ContinueReadingSection,
   DiscoverySections,
   FilterSection,
-  IntelligentArticleSection,
+  HorizontalFeaturedSection,
 } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
@@ -171,10 +171,11 @@ export default function ExploreScreen(): JSX.Element {
 
     // Featured articles (intelligent selection of unread articles)
     sections.push(
-      <IntelligentArticleSection
+      <HorizontalFeaturedSection
         key="featured"
         articlesData={articlesData}
         refreshKey={refreshKey}
+        scope="global"
       />,
     );
 

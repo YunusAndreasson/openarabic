@@ -1,19 +1,22 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { router } from 'expo-router';
 
 import { SettingsCard, SettingsSection } from '@/components/account';
+import { THEME_OPTIONS } from '@/components/ui/ThemePicker';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setHapticsEnabled, setWordDetailsEnabled } from '@/store/settingsSlice';
 
+const FONT_DISPLAY_NAMES: Record<string, string> = {
+  'NotoSansArabic-Regular': 'Noto Sans',
+  DigitalKhattNewMadinaRegular: 'Madina',
+  'Amiri-Regular': 'Amiri',
+  'ScheherazadeNew-Regular': 'Scheherazade',
+  'NotoNastaliqUrdu-Regular': 'Nastaliq',
+};
+
 interface AppearanceSectionProps {
-  /** Current theme display text */
-  currentThemeText: string;
-  /** Current display language text */
-  currentLanguageText: string;
-  /** Current Arabic font display text */
-  currentArabicFontText: string;
   /** Open the theme picker */
   onThemePress: () => void;
   /** Open the display language picker */
@@ -25,17 +28,23 @@ interface AppearanceSectionProps {
  *
  * Includes: Theme, Arabic font, display language, word details toggle, haptics toggle.
  */
-export const AppearanceSection = memo<AppearanceSectionProps>(
-  ({
-    currentThemeText,
-    currentLanguageText,
-    currentArabicFontText,
-    onThemePress,
-    onLanguagePress,
-  }) => {
+export const AppearanceSection = memo<AppearanceSectionProps>(({ onThemePress, onLanguagePress }) => {
     const dispatch = useAppDispatch();
+    const currentTheme = useAppSelectorShallow(state => state.theme.theme);
+    const currentLanguage = useAppSelectorShallow(state => state.settings.displayLanguagePreference);
+    const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
     const hapticsEnabled = useAppSelectorShallow(state => state.settings.hapticsEnabled);
     const wordDetailsEnabled = useAppSelectorShallow(state => state.settings.wordDetailsEnabled);
+
+    const currentThemeText = useMemo(() => {
+      const themeOption = THEME_OPTIONS.find(option => option.id === currentTheme);
+      return themeOption?.title || STRINGS.THEME_BIRCHES;
+    }, [currentTheme]);
+
+    const currentLanguageText =
+      currentLanguage === 'arabic' ? STRINGS.DISPLAY_LANGUAGE_ARABIC : STRINGS.BILINGUAL_LABEL;
+
+    const currentArabicFontText = FONT_DISPLAY_NAMES[currentArabicFont] ?? 'Noto Sans';
 
     const handleHapticsToggle = useCallback(
       (enabled: boolean) => {

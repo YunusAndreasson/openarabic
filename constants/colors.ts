@@ -231,10 +231,6 @@ const autumnOKLCH = {
  * Hue range: 40-74° (warm sepia)
  */
 const autumnPaperOKLCH = {
-  darkest: { l: 0.2098, c: 0.0176, h: 50.5 }, // #1F1611
-  dark: { l: 0.2516, c: 0.0227, h: 51.6 }, // #2B1F18
-  mediumDark: { l: 0.2794, c: 0.0233, h: 40.5 }, // #332520
-  medium: { l: 0.3183, c: 0.0287, h: 46.4 }, // #3F2E26
   light: { l: 0.9319, c: 0.0301, h: 73.9 }, // #F5E6D3
   lighter: { l: 0.9406, c: 0.0273, h: 72.8 }, // #F7E9D8
   lightest: { l: 0.9602, c: 0.0171, h: 67.6 }, // #FAF0E6
@@ -356,15 +352,10 @@ const basePalette = {
 
 const opacity = {
   subtle: 0.04,
-  light: 0.06,
   medium: 0.08,
   strong: 0.1,
   active: 0.12,
   border: 0.15,
-  disabled: 0.2,
-  selection: 0.28,
-  tooltip: 0.32,
-  due: 0.42,
   overlay: 0.52,
   backdrop: 0.68,
   shadow: 0.75,

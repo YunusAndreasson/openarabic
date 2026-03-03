@@ -8,6 +8,5 @@ export { FilterSection } from './FilterSection';
 export { DiscoverySections } from './DiscoverySections';
 export { HorizontalArticleSlider } from './HorizontalArticleSlider';
 export { HorizontalFeaturedSection } from './HorizontalFeaturedSection';
-export { IntelligentArticleSection } from './IntelligentArticleSection';
 export { StreakChart } from './StreakChart';
 export { StreakMetrics } from './StreakMetrics';

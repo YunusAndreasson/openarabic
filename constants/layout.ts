@@ -106,10 +106,6 @@ export const TYPOGRAPHY_HIERARCHY = {
         letterSpacing: -0.35,
         lineHeightMultiplier: 1.1,
       },
-      METADATA: {
-        letterSpacing: 0.3,
-        lineHeightMultiplier: 1.3,
-      },
       AUTHOR_BYLINE: {
         letterSpacing: 0.15,
         lineHeightMultiplier: 1.25,
@@ -170,11 +166,6 @@ export const COMPLETION_THRESHOLD = 95;
 export const LAYOUT = {
   /** Left/right screen edge padding for all content (12px) */
   SCREEN_HORIZONTAL_PADDING: SPACING_SCALE.MEDIUM,
-
-  CONTENT_SPACING: {
-    TOP: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
-    BOTTOM: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
-  },
 
   SPACING: SPACING_SCALE,
 
@@ -355,11 +346,6 @@ export const LAYOUT = {
       THIN: Math.round(BASE_UNIT * 0.125), // 0.5 rounded to 1 - prevents sub-pixel rendering
       NORMAL: BASE_UNIT * 0.25, // 1 - responsive to base unit
       FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
-    },
-    STYLE: {
-      SOLID: 'solid',
-      DASHED: 'dashed',
-      DOTTED: 'dotted',
     },
   },
 

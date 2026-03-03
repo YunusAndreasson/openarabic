@@ -89,7 +89,6 @@ const AccountScreen: FC = () => {
     [rawAudioLanguagePreference],
   );
 
-  const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
   const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
   const dispatch = useAppDispatch();
 
@@ -285,31 +284,9 @@ const AccountScreen: FC = () => {
     [currentTheme, currentLanguage, currentAudioLanguage, currentDailyWordLimit],
   );
 
-  // Get current theme display text
-  const currentThemeText = useMemo(() => {
-    const themeOption = THEME_OPTIONS.find(option => option.id === currentTheme);
-    return themeOption?.title || STRINGS.THEME_BIRCHES;
-  }, [currentTheme]);
-
-  // Get current language display text
-  const currentLanguageText =
-    currentLanguage === 'arabic' ? STRINGS.DISPLAY_LANGUAGE_ARABIC : STRINGS.BILINGUAL_LABEL;
-
   // Get current audio language display text
   const currentAudioLanguageText =
     currentAudioLanguage === 'arabic' ? STRINGS.AUDIO_LANGUAGE_ARABIC : STRINGS.BILINGUAL_LABEL;
-
-  // Get current Arabic font display text
-  const currentArabicFontText = useMemo(() => {
-    const fontDisplayNames: Record<string, string> = {
-      'NotoSansArabic-Regular': 'Noto Sans',
-      DigitalKhattNewMadinaRegular: 'Madina',
-      'Amiri-Regular': 'Amiri',
-      'ScheherazadeNew-Regular': 'Scheherazade',
-      'NotoNastaliqUrdu-Regular': 'Nastaliq',
-    };
-    return fontDisplayNames[currentArabicFont] || 'Noto Sans';
-  }, [currentArabicFont]);
 
   // Format cache size for display
   const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : STRINGS.NO_CACHED_FILES;
@@ -348,9 +325,6 @@ const AccountScreen: FC = () => {
 
         {/* Appearance - All visual customization together */}
         <AppearanceSection
-          currentThemeText={currentThemeText}
-          currentLanguageText={currentLanguageText}
-          currentArabicFontText={currentArabicFontText}
           onThemePress={() => handlePickerOpen('theme')}
           onLanguagePress={() => handlePickerOpen('language')}
         />
