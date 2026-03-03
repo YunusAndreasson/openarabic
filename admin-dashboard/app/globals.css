@@ -223,9 +223,6 @@ h1, h2, h3, h4, h5, h6 {
 ::view-transition-new(root) {
   animation-duration: 0.3s;
   animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
-  /* Prevent flickering */
-  backface-visibility: hidden;
-  transform: translateZ(0);
 }
 
 ::view-transition-old(root) {
@@ -260,7 +257,6 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Layout Stability - Prevent shifts */
 .view-transition-stable {
-  contain: layout style paint;
   content-visibility: auto;
 }
 

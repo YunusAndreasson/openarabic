@@ -157,6 +157,13 @@ export function ArabicWordCloud() {
     let lastX = 0;
     let lastY = 0;
 
+    // Cache rect — only update on resize, not on every mousemove
+    let cachedRect = container.getBoundingClientRect();
+    const resizeObserver = new ResizeObserver(() => {
+      cachedRect = container.getBoundingClientRect();
+    });
+    resizeObserver.observe(container);
+
     const updatePositions = () => {
       const words = wordsRef.current;
       for (let i = 0; i < words.length; i++) {
@@ -169,9 +176,8 @@ export function ArabicWordCloud() {
     };
 
     const onMouseMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      lastX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-      lastY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+      lastX = ((e.clientX - cachedRect.left) / cachedRect.width - 0.5) * 2;
+      lastY = ((e.clientY - cachedRect.top) / cachedRect.height - 0.5) * 2;
 
       cancelAnimationFrame(rafId.current);
       rafId.current = requestAnimationFrame(updatePositions);
@@ -192,6 +198,7 @@ export function ArabicWordCloud() {
 
     return () => {
       cancelAnimationFrame(rafId.current);
+      resizeObserver.disconnect();
       container.removeEventListener('mousemove', onMouseMove);
       container.removeEventListener('mouseleave', onMouseLeave);
     };

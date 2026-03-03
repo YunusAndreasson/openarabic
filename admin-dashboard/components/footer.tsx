@@ -97,7 +97,7 @@ export function Footer() {
             >
               Delete Account
             </Link>
-            <span className="text-muted-foreground/70">© 2025 OpenArabic</span>
+            <span className="text-muted-foreground/70">© {new Date().getFullYear()} OpenArabic</span>
           </div>
         </div>
       </div>

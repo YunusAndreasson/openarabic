@@ -34,9 +34,9 @@ const GOOGLE_PLAY_URL =
 
 const DEFAULTS = {
   hero: {
-    title: 'Learn Arabic Through Classical Texts',
+    title: 'Read Classical Arabic — Even as a Beginner',
     description:
-      'Read bilingual Islamic literature with word-by-word translations, native audio, and smart vocabulary building.',
+      'Read real Islamic texts sentence by sentence with translations, tap unknown words to learn them, and build vocabulary through spaced repetition.',
   },
   inline: {
     title: 'Continue reading in the app',
@@ -136,20 +136,16 @@ export function AppDownloadCTA({
   if (variant === 'hero') {
     const formatAuthors = () => {
       if (authors.length === 0) return null;
-      if (authors.length <= 3) {
-        return authors.map((a) => a.name).join(', ');
+      if (authors.length <= 2) {
+        return authors.map((a) => a.name).join(' and ');
       }
-      const shown = authors
-        .slice(0, 3)
-        .map((a) => a.name)
-        .join(', ');
-      return `${shown} & ${authors.length - 3} more`;
+      const allButLast = authors.slice(0, -1).map((a) => a.name).join(', ');
+      return `${allButLast} and ${authors[authors.length - 1].name}`;
     };
 
     return (
       <section
         className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary to-primary/5 dark:from-primary/10 dark:via-secondary dark:to-primary/10 rounded-2xl border border-primary/10"
-        style={{ contain: 'layout style paint' }}
         aria-labelledby="hero-cta-title"
       >
         <div className="px-6 py-10 sm:px-10 sm:py-12 lg:grid lg:grid-cols-5 lg:gap-8 lg:items-center">
@@ -209,7 +205,6 @@ export function AppDownloadCTA({
   return (
     <div
       className="bg-card border border-border rounded-xl p-6 md:p-8"
-      style={{ contain: 'layout style paint' }}
     >
       <div className="flex flex-col md:flex-row items-center gap-6">
         <Image

@@ -21,8 +21,9 @@ export function RelatedArticles({ articles }: RelatedArticlesProps) {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !isVisible) {
+        if (entry.isIntersecting) {
           setIsVisible(true);
+          observer.disconnect();
         }
       },
       { threshold: 0.1, rootMargin: '0px 0px -100px 0px' }
@@ -33,12 +34,8 @@ export function RelatedArticles({ articles }: RelatedArticlesProps) {
       observer.observe(currentSection);
     }
 
-    return () => {
-      if (currentSection) {
-        observer.unobserve(currentSection);
-      }
-    };
-  }, [isVisible]);
+    return () => observer.disconnect();
+  }, []);
 
   if (articles.length === 0) return null;
 

@@ -161,14 +161,32 @@ export function ArticlesClient({
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         {/* App download CTA - Mobile: single store, Desktop: both stores */}
         {selectedCategoryId === null && (
-          <div className="mb-8">
-            <AppDownloadCTA
-              platformInfo={platformInfo}
-              variant="hero"
-              authors={initialAuthors}
-              showBothStores={!platformInfo.isMobile}
-            />
-          </div>
+          <>
+            <div className="mb-8">
+              <AppDownloadCTA
+                platformInfo={platformInfo}
+                variant="hero"
+                authors={initialAuthors}
+                showBothStores={!platformInfo.isMobile}
+              />
+            </div>
+
+            {/* Who is this for & How does it work */}
+            <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-xl border border-border/60 bg-card p-6">
+                <h3 className="text-base font-semibold text-foreground mb-2">Who is this for?</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Learners who can decode Arabic and want to read real texts — especially those studying with a course or who just finished one and need vocabulary to read independently.
+                </p>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-card p-6">
+                <h3 className="text-base font-semibold text-foreground mb-2">How does it work?</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  You read bilingual sentence pairs at 90–95% comprehension, with 5–10% new vocabulary per article. Tap unknown words to add them to spaced repetition. Regular reading builds pattern recognition without explicit grammar study.
+                </p>
+              </div>
+            </div>
+          </>
         )}
 
         <ArticleGrid articles={articles} loading={loading} showCategoryPill={selectedCategoryId === null} />
