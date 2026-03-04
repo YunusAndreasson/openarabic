@@ -59,6 +59,17 @@ const baseStyles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center',
   } as TextStyle,
+  uiChromeOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'box-none',
+  } as ViewStyle,
+  headerPadding: {
+    paddingTop: LAYOUT.SPACING.LARGE,
+  } as ViewStyle,
 });
 
 /** Reusable loading state component for review screen */
@@ -181,18 +192,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         />
 
         {/* UI chrome - header and bottom actions, positioned above background */}
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            pointerEvents: 'box-none',
-          }}
-        >
+        <View style={baseStyles.uiChromeOverlay}>
           {/* Progress header at top of screen */}
-          <View style={{ paddingTop: LAYOUT.SPACING.LARGE }}>
+          <View style={baseStyles.headerPadding}>
             <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
           </View>
 

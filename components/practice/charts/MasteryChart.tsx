@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 
 import { VocabularyChart } from '@/components/common/charts';
 import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/constants/chartMessages';
@@ -31,10 +31,7 @@ export const MasteryChart = memo<MasteryChartProps>(
       maxCount,
     } = useMasteryChart(studyWords);
 
-    // Prepare tooltip data points for interactivity
-    const tooltipDataPoints = useMemo(() => {
-      return dataPoints || [];
-    }, [dataPoints]);
+    const tooltipDataPoints = dataPoints ?? [];
 
     // 🚀 Unified chart with clean single-color design (no performance zones):
     return (

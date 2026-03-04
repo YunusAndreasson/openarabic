@@ -51,15 +51,6 @@ export default function PracticeScreen(): JSX.Element {
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
 
-  // Mount fade-in — CSS @keyframes replaces useOpacityAnimation + startAnimation
-  const contentAnimatedStyle = {
-    animationName: {
-      from: { opacity: 0 },
-      to: { opacity: 1 },
-    },
-    animationDuration: `${TIMING_CONFIG.SLOW.duration}ms`,
-    animationFillMode: 'forwards' as const,
-  };
 
   // Prefetch vocabulary data on first focus (deduped via ref)
   // Note: useReview.handleClose already invalidates queries when returning from review,
@@ -187,7 +178,7 @@ export default function PracticeScreen(): JSX.Element {
         <Animated.View
           style={[
             styles.vocabularySection,
-            contentAnimatedStyle,
+            CONTENT_FADE_IN_STYLE,
             // Required for empty state centering due to wrapper hierarchy
             !hasAnyStudyWords && { flex: 1 },
           ]}
@@ -236,6 +227,16 @@ export default function PracticeScreen(): JSX.Element {
 
 export const options: NativeStackNavigationOptions = {
   headerShown: false,
+};
+
+// Mount fade-in — CSS @keyframes, module-level so no per-render allocation
+const CONTENT_FADE_IN_STYLE = {
+  animationName: {
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  },
+  animationDuration: `${TIMING_CONFIG.SLOW.duration}ms`,
+  animationFillMode: 'forwards' as const,
 };
 
 const styles = StyleSheet.create({

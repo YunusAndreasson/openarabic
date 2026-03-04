@@ -37,6 +37,26 @@ const STATIC_STYLES = StyleSheet.create({
     minHeight: WORD_AREA_MIN_HEIGHT,
     width: '100%',
   } as ViewStyle,
+  absoluteFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  } as ViewStyle,
+  absoluteFillNoEvents: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none',
+  } as ViewStyle,
+  centeredFlex: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  } as ViewStyle,
 });
 
 interface ReviewCardProps {
@@ -128,33 +148,13 @@ export function ReviewCard({
     return (
       <>
         {/* Background layer - absolutely positioned full screen, no pointer events */}
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              pointerEvents: 'none',
-            },
-            swipeBackgroundStyle,
-          ]}
-        />
+        <Animated.View style={[STATIC_STYLES.absoluteFillNoEvents, swipeBackgroundStyle]} />
 
         {/* Gesture detector - full screen swipeable area */}
         <GestureDetector gesture={panGesture}>
-          <Animated.View
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-          >
+          <Animated.View style={STATIC_STYLES.absoluteFill}>
             {/* Word content - centered in screen */}
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={STATIC_STYLES.centeredFlex}>
               <Animated.View
                 style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
                 testID={testID}
@@ -173,7 +173,7 @@ export function ReviewCard({
     <View style={STATIC_STYLES.swipeContainer}>
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[STATIC_STYLES.swipeContainer, swipeBackgroundStyle]}>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <View style={STATIC_STYLES.centeredFlex}>
             <Animated.View
               style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
               testID={testID}
