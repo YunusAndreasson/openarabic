@@ -12,16 +12,13 @@ export type ArabicFontName =
   | 'NotoNastaliqUrdu-Regular'
   | 'NotoSansArabic-Regular';
 
-export type AudioLanguagePreference = AudioLanguage;
-export type DisplayLanguagePreference = DisplayLanguage;
-
 export interface SettingsState {
   reminderTime: ReminderTime;
   arabicFont: ArabicFontName;
   arabicFontSize: number;
-  audioLanguagePreference: AudioLanguagePreference;
+  audioLanguagePreference: AudioLanguage;
   audioShuffleEnabled: boolean;
-  displayLanguagePreference: DisplayLanguagePreference;
+  displayLanguagePreference: DisplayLanguage;
   dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
   hapticsEnabled: boolean; // Vibration for button presses and interactions
   wordDetailsEnabled: boolean; // Show word details tooltip when tapping words
@@ -56,13 +53,13 @@ const settingsSlice = createSlice({
     setArabicFontSize: (state, action: PayloadAction<number>) => {
       state.arabicFontSize = action.payload;
     },
-    setAudioLanguagePreference: (state, action: PayloadAction<AudioLanguagePreference>) => {
+    setAudioLanguagePreference: (state, action: PayloadAction<AudioLanguage>) => {
       state.audioLanguagePreference = action.payload;
     },
     setAudioShuffleEnabled: (state, action: PayloadAction<boolean>) => {
       state.audioShuffleEnabled = action.payload;
     },
-    setDisplayLanguagePreference: (state, action: PayloadAction<DisplayLanguagePreference>) => {
+    setDisplayLanguagePreference: (state, action: PayloadAction<DisplayLanguage>) => {
       state.displayLanguagePreference = action.payload;
     },
     setDailyWordLimit: (state, action: PayloadAction<number>) => {

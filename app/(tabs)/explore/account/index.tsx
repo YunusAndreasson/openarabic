@@ -30,8 +30,6 @@ import {
   setAudioShuffleEnabled,
   setDailyWordLimit,
   setDisplayLanguagePreference,
-  type AudioLanguagePreference,
-  type DisplayLanguagePreference,
 } from '@/store/settingsSlice';
 import { setTheme } from '@/store/themeSlice';
 import {
@@ -192,10 +190,10 @@ const AccountScreen: FC = () => {
           dispatch(setTheme(value as Theme));
           break;
         case 'language':
-          dispatch(setDisplayLanguagePreference(value as DisplayLanguagePreference));
+          dispatch(setDisplayLanguagePreference(value as DisplayLanguage));
           break;
         case 'audioLanguage':
-          dispatch(setAudioLanguagePreference(value as AudioLanguagePreference));
+          dispatch(setAudioLanguagePreference(value as AudioLanguage));
           break;
         case 'dailyWordLimit':
           dispatch(setDailyWordLimit(value as number));

@@ -21,9 +21,6 @@ const errorConfig = {
     toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
     analyticsEventName: 'Articles_Bulk_Load_Error',
   }),
-  loadCard: createServiceErrorConfig('article_card', 'load', {
-    toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
-  }),
 };
 
 // Define different column sets for different use cases
@@ -254,27 +251,4 @@ export const articlesService = {
     return mapToArticles(data ?? []);
   },
 
-  // Optimized method for getting article metadata only (for cards, lists)
-  async getArticleCard(id: number): Promise<Article> {
-    const data = await executeQuery(
-      () =>
-        supabase
-          .from('articles')
-          .select(CARD_VIEW_COLUMNS)
-          .eq('id', id)
-          .eq('published', true)
-          .maybeSingle()
-          .returns<ArticleRow>(),
-      {
-        ...errorConfig.loadCard,
-        analyticsProperties: { id },
-      },
-    );
-
-    if (!data) {
-      throw new Error(`Article not found: ${id}`);
-    }
-
-    return mapToArticle(data);
-  },
 };

@@ -243,36 +243,4 @@ describe('articlesService', () => {
     });
   });
 
-  describe('getArticleCard', () => {
-    test('fetches minimal article data', async () => {
-      const response = { data: { id: 2 }, error: null };
-      const builder = createFinalBuilder(response);
-      fromMock.mockReturnValue(builder);
-      (mapToArticle as jest.Mock).mockReturnValue('mapped');
-
-      const result = await articlesService.getArticleCard(2);
-
-      expect(fromMock).toHaveBeenCalledWith('articles');
-      const called = builder.select.mock.calls[0][0];
-      expect(called).toContain('article_sentences');
-      expect(builder.eq).toHaveBeenCalledWith('id', 2);
-      expect(mapToArticle).toHaveBeenCalledWith(response.data);
-      expect(result).toBe('mapped');
-    });
-
-    test('handles errors', async () => {
-      const err = new Error('nope');
-      const builder = createFinalBuilder({ data: null, error: err });
-      fromMock.mockReturnValue(builder);
-
-      await expect(articlesService.getArticleCard(4)).rejects.toThrow(err);
-      expect(handleError).toHaveBeenCalledWith(
-        err,
-        expect.objectContaining({
-          toastMessage: "Couldn't load article. Try again",
-          analyticsProperties: { id: 4 },
-        }),
-      );
-    });
-  });
 });

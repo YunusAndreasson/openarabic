@@ -341,21 +341,6 @@ describe('notificationService', () => {
     });
   });
 
-  describe('Reminder Cancellation', () => {
-    test('should cancel all scheduled notifications', async () => {
-      await notificationService.cancelReminder();
-
-      expect(mockCancelAllScheduledNotificationsAsync).toHaveBeenCalled();
-    });
-
-    test('should handle cancellation errors gracefully', async () => {
-      mockCancelAllScheduledNotificationsAsync.mockRejectedValueOnce(new Error('Cancel failed'));
-
-      await expect(notificationService.cancelReminder()).resolves.not.toThrow();
-      expect(handleError).toHaveBeenCalled();
-    });
-  });
-
   describe('Badge Management', () => {
     test('should set app badge count', async () => {
       const success = await notificationService.setAppBadgeCount(5);

@@ -315,7 +315,7 @@ export async function scheduleReminder(reminderTime: ReminderTime): Promise<stri
   }
 }
 
-export async function cancelReminder(): Promise<void> {
+async function cancelReminder(): Promise<void> {
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch (error) {
