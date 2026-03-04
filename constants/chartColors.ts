@@ -56,9 +56,6 @@ export const getChartColors = (colors: ThemeColors): ChartColors => {
       inner: withOpacity(colors.tint, 0.7), // Slightly darker for inner highlight
     },
 
-    // Opacity utilities
-    opacity: CHART_OPACITY,
-
     // Helper functions
     withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
 

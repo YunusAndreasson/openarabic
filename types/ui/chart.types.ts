@@ -40,16 +40,6 @@ export interface ChartColors {
     primary: string;
     inner: string;
   };
-  /** Opacity helper values */
-  opacity: {
-    SOLID: number;
-    HIGH: number;
-    MEDIUM: number;
-    LOW: number;
-    SUBTLE: number;
-    MINIMAL: number;
-    [key: string]: number;
-  };
   /** Helper to apply opacity to a color */
   withOpacity: (color: string, opacity: number) => string;
   /** Get unified gradient colors for area fills */

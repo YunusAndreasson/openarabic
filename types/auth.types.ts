@@ -10,19 +10,7 @@ export interface UserSession {
     email?: string;
     /** Timestamp when user account was created */
     created_at?: string;
-    /**
-     * App-level metadata managed by Supabase Auth
-     * Not currently used by the application
-     */
-    app_metadata: Record<string, unknown>;
-    /**
-     * User-level metadata that can be updated
-     * Not currently used by the application
-     */
-    user_metadata: Record<string, unknown>;
   } | null;
-  /** Unix timestamp when session expires */
-  expires_at?: number;
 }
 
 /**
