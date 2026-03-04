@@ -63,19 +63,7 @@ const ParallaxHeaderComparison = (
   prevProps: ParallaxHeaderProps,
   nextProps: ParallaxHeaderProps,
 ): boolean => {
-  // Quick path comparisons first (most likely to change)
-  if (prevProps.article !== nextProps.article) return false;
-  if (prevProps.colors !== nextProps.colors) return false;
-
-  // Article properties comparison
-  if (prevProps.article.image_url !== nextProps.article.image_url) return false;
-
-  // Colors comparison (most critical for gradient calculations)
-  if (prevProps.colors.black !== nextProps.colors.black) return false;
-  if (prevProps.colors.white !== nextProps.colors.white) return false;
-  if (prevProps.colors.background !== nextProps.colors.background) return false;
-
-  return true;
+  return prevProps.article === nextProps.article && prevProps.colors === nextProps.colors;
 };
 
 /**

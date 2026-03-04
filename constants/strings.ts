@@ -108,7 +108,6 @@ export const STRINGS = {
   // Landing screen
   CONTINUE_WITH_EMAIL_OPTION: 'Continue with email',
   HIDE_EMAIL_OPTIONS: 'Hide email options',
-  AUTHOR_ARTICLES: 'Author articles',
   CATEGORY: 'Category',
   // Section headers for Explore tab
   SECTION_CATEGORIES: 'Topics',

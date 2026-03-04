@@ -7,6 +7,22 @@ const GLASS_AVAILABLE = isLiquidGlassAvailable();
 const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+
+const CLOSE_BUTTON_STYLE = {
+  position: 'absolute' as const,
+  top: LAYOUT.SPACING.LARGE,
+  left: LAYOUT.SPACING.LARGE,
+  zIndex: LAYOUT.Z_INDEX.OVERLAY,
+};
+
+const ACTION_BUTTONS_STYLE = {
+  position: 'absolute' as const,
+  top: LAYOUT.SPACING.LARGE,
+  right: LAYOUT.SPACING.LARGE,
+  zIndex: LAYOUT.Z_INDEX.OVERLAY,
+  flexDirection: 'row' as const,
+  gap: LAYOUT.SPACING.TINY,
+};
 import { useColors } from '@/hooks/theme/useColors';
 
 export interface FloatingActionButtonsProps {
@@ -55,33 +71,10 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
       [colors.elevation2],
     );
 
-    // Memoize static button positions
-    const closeButtonStyle = useMemo(
-      () => ({
-        position: 'absolute' as const,
-        top: LAYOUT.SPACING.LARGE, // Comfortable edge spacing (16px on all sides)
-        left: LAYOUT.SPACING.LARGE,
-        zIndex: LAYOUT.Z_INDEX.OVERLAY,
-      }),
-      [],
-    );
-
-    const actionButtonsStyle = useMemo(
-      () => ({
-        position: 'absolute' as const,
-        top: LAYOUT.SPACING.LARGE, // Comfortable edge spacing (16px on all sides)
-        right: LAYOUT.SPACING.LARGE,
-        zIndex: LAYOUT.Z_INDEX.OVERLAY,
-        flexDirection: 'row' as const,
-        gap: LAYOUT.SPACING.TINY,
-      }),
-      [],
-    );
-
     return (
       <>
         {/* Close button - top left */}
-        <Pressable onPress={onClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={closeButtonStyle}>
+        <Pressable onPress={onClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={CLOSE_BUTTON_STYLE}>
           <GlassContainer
             style={[styles.glassButton, fallbackButtonStyle]}
             {...(GLASS_AVAILABLE && { isInteractive: true })}
@@ -98,7 +91,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         <Pressable
           onPress={handleOptimisticToggle}
           hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-          style={actionButtonsStyle}
+          style={ACTION_BUTTONS_STYLE}
         >
           <GlassContainer
             style={[

@@ -25,10 +25,9 @@ export const getArticleRoute = (
 
 export const getCategoryFilterRoute = (categoryId: CategoryId, name?: string): string => {
   const base = `/(tabs)/explore/filter`;
-  const params = [`type=category`, `id=${categoryId}`];
+  const params = [`id=${categoryId}`];
   if (name) params.push(`name=${encodeURIComponent(name)}`);
-  const query = params.join('&');
-  return `${base}?${query}`;
+  return `${base}?${params.join('&')}`;
 };
 
 export const getPracticeReviewRoute = (

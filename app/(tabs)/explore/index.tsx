@@ -26,6 +26,8 @@ import type { CategoryId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
+const FOOTER_COMPONENT = <BrandFooter />;
+
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
   listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
@@ -199,18 +201,14 @@ export default function ExploreScreen(): JSX.Element {
 
   const ListHeaderComponent = useMemo(() => <>{headerSections}</>, [headerSections]);
 
-  const ListFooterComponent = useMemo(() => <BrandFooter />, []);
-
-  const contentContainerStyle = styles.listContentContainer;
-
   return (
     <ThemedView useSafeArea={false} style={styles.container}>
       <ArticleList
         ref={scrollViewRef}
-        contentContainerStyle={contentContainerStyle}
+        contentContainerStyle={styles.listContentContainer}
         isRefreshing={isRefreshing}
         ListHeaderComponent={ListHeaderComponent}
-        ListFooterComponent={ListFooterComponent}
+        ListFooterComponent={FOOTER_COMPONENT}
         progressViewOffset={LAYOUT.SPACING.XLARGE}
         onRefresh={handleRefresh}
         onScroll={handleScroll}

@@ -83,6 +83,11 @@ const STATIC_STYLES = StyleSheet.create({
   },
 });
 
+const CONTAINER_STYLE = {
+  ...STATIC_STYLES.overlay,
+  zIndex: TOOLTIP_CONSTANTS.Z_INDEX,
+};
+
 const DEFAULT_DIMENSIONS = {
   tooltipLeft: 0,
   tooltipTop: 0,
@@ -144,10 +149,6 @@ export function WordTooltip({
   const dynamicStyles = useMemo(() => {
     const effectiveHeight = Math.max(dimensions.tooltipHeight, MIN_TOUCH_TARGET.MEDIUM);
     return {
-      container: {
-        ...STATIC_STYLES.overlay,
-        zIndex: TOOLTIP_CONSTANTS.Z_INDEX,
-      },
       tooltip: {
         ...STATIC_STYLES.tooltip,
         top: dimensions.tooltipTop,
@@ -177,7 +178,7 @@ export function WordTooltip({
   if (!visible || !layout) return null;
 
   return (
-    <View style={dynamicStyles.container} pointerEvents="box-none">
+    <View style={CONTAINER_STYLE} pointerEvents="box-none">
       <Pressable
         onPress={onOpenWordDetails}
         disabled={!onOpenWordDetails}

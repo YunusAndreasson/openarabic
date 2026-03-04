@@ -31,6 +31,16 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
   FlashList as React.ComponentType<FlashListProps<Tables<'article_sentences'>>>,
 );
 
+// Mount fade-in — CSS @keyframes, module-level so no per-render allocation
+const MOUNT_FADE_IN_STYLE = {
+  animationName: {
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  },
+  animationDuration: `${TIMING_CONFIG.FAST.duration}ms`,
+  animationFillMode: 'forwards' as const,
+};
+
 // Comfortable reading space constant
 const COMFORTABLE_READING_SPACE = MIN_TOUCH_TARGET.MEDIUM;
 
@@ -146,15 +156,6 @@ const ArticleContentInternal = function ArticleContent({
   // High-performance scroll handler - runs on UI thread (no cross-thread calls)
   const { scrollY, onScrollAnimated } = useArticleScrollHandler();
 
-  // Mount fade-in — CSS @keyframes replaces useOpacityAnimation + autoStart
-  const animatedStyle = {
-    animationName: {
-      from: { opacity: 0 },
-      to: { opacity: 1 },
-    },
-    animationDuration: `${TIMING_CONFIG.FAST.duration}ms`,
-    animationFillMode: 'forwards' as const,
-  };
 
   // Tooltip closure handler - only triggers when scroll begins, not during continuous scrolling
   // This prevents blocking scroll performance while still closing tooltip on user interaction
@@ -267,7 +268,7 @@ const ArticleContentInternal = function ArticleContent({
 
   return (
     <>
-      <Animated.View style={[styles.flexOne, animatedStyle]}>
+      <Animated.View style={[styles.flexOne, MOUNT_FADE_IN_STYLE]}>
         {sortedSentences.length > 0 ? (
           <View style={listContainerStyle}>
             {/* Sticky Parallax Header behind content - using Skia gradients for Android stability */}

@@ -19,11 +19,7 @@ import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
-import {
-  calculateReadingTime,
-  capitalizeFirstLetter,
-  getArticleMetadata,
-} from '@/utils/stringUtils';
+import { calculateReadingTime } from '@/utils/stringUtils';
 
 // List item types
 interface SectionHeaderItem {
@@ -40,9 +36,7 @@ interface ArticleItem {
 
 type ListItem = SectionHeaderItem | ArticleItem;
 
-// Use responsive height for filtered article items
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
-const DRAW_DISTANCE_MULTIPLIER = LIST_DRAW_DISTANCE_MULTIPLIER;
 
 const SeparatorComponent = () => <ListSeparator height={LAYOUT.SPACING.SMALL} />;
 
@@ -121,8 +115,6 @@ function groupArticlesWithHeaders(
 interface FilteredArticleViewProps {
   articles: Article[];
   onArticlePress?: (article: Article) => void;
-  loading?: boolean;
-  filterType?: string;
 }
 
 /**
@@ -131,8 +123,6 @@ interface FilteredArticleViewProps {
 export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   articles,
   onArticlePress,
-  loading = false,
-  filterType,
 }) => {
   const insets = useSafeAreaInsets();
 
@@ -165,9 +155,8 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     style: STATIC_STYLES.container,
   };
 
-  const isInitialProgressLoad =
+  const shouldShowLoading =
     isProgressLoading && visibleArticles.length > 0 && progressMap.size === 0;
-  const shouldShowLoading = (loading && visibleArticles.length === 0) || isInitialProgressLoad;
 
   if (shouldShowLoading) {
     return (
@@ -191,12 +180,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
       : 0;
 
     const readingTime = calculateReadingTime(article.article_sentences.length);
-    const secondaryText =
-      filterType === 'author'
-        ? `${capitalizeFirstLetter(article.category.name)} · ${readingTime}`
-        : filterType === 'category'
-          ? `${article.author.name} · ${readingTime}`
-          : getArticleMetadata(article);
+    const secondaryText = `${article.author.name} · ${readingTime}`;
 
     return (
       <Animated.View
@@ -219,7 +203,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     <ThemedView {...themedViewProps}>
       <FlashList<ListItem>
         data={listData}
-        drawDistance={ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER}
+        drawDistance={ITEM_HEIGHT * LIST_DRAW_DISTANCE_MULTIPLIER}
         keyExtractor={(item: ListItem) => item.id}
         removeClippedSubviews={true}
         scrollEventThrottle={SCROLL_EVENT_THROTTLE}

@@ -6,7 +6,7 @@ import { HeaderProfile } from '@/components/HeaderProfile';
 import { STRINGS } from '@/constants/strings';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
-import { AppTab, UiAction } from '@/types/enums';
+import { AppTab } from '@/types/enums';
 import type { FilterParams } from '@/types/navigation.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -14,29 +14,13 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
  * Get display title for filter screen based on route params
  */
 function getFilterTitle(params: FilterParams): string {
-  const { type, name } = params;
+  const { name } = params;
 
   if (name) {
-    const decodedName = decodeURIComponent(name);
-    const capitalizedName = capitalizeFirstLetter(decodedName);
-
-    // For author names that might be long, truncate if necessary
-    if (type === 'author' && capitalizedName.length > 20) {
-      return capitalizedName.substring(0, 17) + '...';
-    }
-
-    return capitalizedName;
+    return capitalizeFirstLetter(decodeURIComponent(name));
   }
 
-  if (type === 'category') {
-    return STRINGS.CATEGORY;
-  }
-
-  if (type === 'author') {
-    return STRINGS.AUTHOR_ARTICLES;
-  }
-
-  return UiAction.FILTER;
+  return STRINGS.CATEGORY;
 }
 
 export default function LibraryLayout(): JSX.Element {

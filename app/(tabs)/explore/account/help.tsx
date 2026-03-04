@@ -34,27 +34,17 @@ interface FAQItemComponentProps {
   item: FAQItem;
   isExpanded: boolean;
   onToggle: (id: string) => void;
-  onLayout?: (id: string, y: number) => void;
   uniqueKey: string; // Unique key for expand/collapse state (supports duplicate questions)
 }
 
 // Minimal, robust FAQ item component
 const FAQItemComponent: FC<FAQItemComponentProps> = memo(
-  ({ item, isExpanded, onToggle, onLayout, uniqueKey }) => {
+  ({ item, isExpanded, onToggle, uniqueKey }) => {
     const colors = useColors();
 
     const handlePress = useCallback(() => {
       onToggle(uniqueKey);
     }, [uniqueKey, onToggle]);
-
-    const handleLayout = useCallback(
-      (event: { nativeEvent: { layout: { y: number } } }) => {
-        if (onLayout) {
-          onLayout(item.id, event.nativeEvent.layout.y);
-        }
-      },
-      [item.id, onLayout],
-    );
 
     const buttonStyle = useMemo(
       () => [
@@ -79,7 +69,7 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
     );
 
     return (
-      <View style={styles.faqItemContainer} onLayout={handleLayout}>
+      <View>
         <BaseCard shadowSize="small" style={buttonStyle} onPress={handlePress}>
           <View style={styles.faqButtonContent}>
             <ThemedText
@@ -435,10 +425,6 @@ const styles = StyleSheet.create({
   emptyStateDescription: {
     textAlign: 'center',
     paddingHorizontal: LAYOUT.SPACING.XLARGE,
-  },
-  // FAQ Item styles moved from inline for better performance
-  faqItemContainer: {
-    // Spacing handled by parent container's gap property
   },
   faqButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,

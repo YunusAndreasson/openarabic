@@ -19,6 +19,18 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 // Shared timing for tooltip fade animation (exported for WordTooltip)
 export const WORD_TOOLTIP_ANIMATION_DURATION = 150;
 
+// Module-level constant — no per-render allocation
+const HIGHLIGHT_ANIMATION_STYLE = {
+  animationName: {
+    '0%': { opacity: LAYOUT.OPACITY.SUBTLE },
+    '100%': { opacity: LAYOUT.OPACITY.FULL },
+  },
+  animationDuration: '800ms',
+  animationIterationCount: 'infinite' as const,
+  animationDirection: 'alternate' as const,
+  animationTimingFunction: 'ease-in-out',
+};
+
 interface SkiaArabicWordProps {
   word: SentenceWord;
   onTooltipOpen?: (word: SentenceWord, layout: LayoutRectangle) => void;
@@ -46,20 +58,6 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
   // Prevent memory leaks from async callbacks on unmounted components
   const isMountedRef = useRef(true);
-
-  // Pulsing highlight — CSS @keyframes replaces useEffect + withRepeat + withSequence
-  const highlightStyle = isHighlighted
-    ? {
-        animationName: {
-          '0%': { opacity: LAYOUT.OPACITY.SUBTLE },
-          '100%': { opacity: LAYOUT.OPACITY.FULL },
-        },
-        animationDuration: '800ms',
-        animationIterationCount: 'infinite' as const,
-        animationDirection: 'alternate' as const,
-        animationTimingFunction: 'ease-in-out',
-      }
-    : { opacity: 0 };
 
   // Active word opacity — useAnimatedStyle required because AnimatedPressable
   // (RNGestureHandlerButton) doesn't support CSS transitions
@@ -181,7 +179,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
       {/* Pulsing highlight for tutorial */}
       {isHighlighted && (
         <Animated.View
-          style={[styles.highlightOverlay, { backgroundColor: colors.tint }, highlightStyle]}
+          style={[styles.highlightOverlay, { backgroundColor: colors.tint }, HIGHLIGHT_ANIMATION_STYLE]}
         />
       )}
       {/* Static subtle highlight for target word in sentence examples */}

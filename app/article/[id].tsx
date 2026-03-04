@@ -23,6 +23,8 @@ import type { SentenceWord } from '@/types/vocabulary.types';
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
 
+const ARTICLE_SETTINGS = { showEnglish: true } as const;
+
 // Static styles for loading container
 const LOADING_CONTAINER_STYLE = {
   flex: 1,
@@ -101,9 +103,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     [showWordTapTutorial, completeTutorial, handleWordPress],
   );
 
-  // Memoize settings object to prevent recreation on every sentence
-  // Always show English alongside Arabic
-  const settings = useMemo(() => ({ showEnglish: true }), []);
+  const settings = ARTICLE_SETTINGS;
 
   // Memoize renderSentenceItem to prevent unnecessary recreations
   const renderSentenceItem = useCallback(

@@ -2,18 +2,11 @@ import { useMemo } from 'react';
 
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
-import { calculateFilterDate, filterArticles, sortArticlesByProgress } from '@/utils/articleUtils';
-
-// Default filter values (filtersSlice had no actions so state was always these defaults)
-const filters = {
-  authorIds: [] as number[],
-  difficultyRange: [1, 5] as [number, number],
-  dateRange: 'all' as const,
-};
+import { sortArticlesByProgress } from '@/utils/articleUtils';
 
 /**
- * Custom hook to filter and sort articles
- * Returns both filtered articles AND their reading progress data (single source of truth)
+ * Custom hook to sort articles by reading progress
+ * Returns both articles AND their reading progress data (single source of truth)
  */
 export const useFilteredArticles = (articles: Article[] | null | undefined) => {
   // Handle null/undefined articles gracefully
@@ -26,21 +19,11 @@ export const useFilteredArticles = (articles: Article[] | null | undefined) => {
   // Ensure progressMap is always a Map to prevent runtime errors
   const progressMap = progressMapRaw instanceof Map ? progressMapRaw : new Map();
 
-  // Pre-calculate date filter if needed
-  const filterDate = useMemo(() => {
-    return calculateFilterDate(filters.dateRange);
-  }, [filters.dateRange]);
-
   const filteredAndSortedArticles = useMemo(() => {
-    // Return empty array if articles are not provided
     if (!safeArticles.length) return [];
-
-    // Apply filters using utility function
-    const filteredArticles = filterArticles(safeArticles, filters, filterDate);
-
-    // Apply progress-based sorting: articles with progress first, then no progress, then completed
-    return sortArticlesByProgress(filteredArticles, progressMap);
-  }, [safeArticles, filters, filterDate, progressMap]);
+    // Sort: articles with progress first, then no progress, then completed
+    return sortArticlesByProgress(safeArticles, progressMap);
+  }, [safeArticles, progressMap]);
 
   // Return both articles and their progress data (single source of truth)
   return {

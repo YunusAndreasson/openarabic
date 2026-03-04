@@ -2,7 +2,6 @@ export { ArticleCard } from './ArticleCard';
 export { ArticleList } from './ArticleList';
 export { BrandFooter } from './BrandFooter';
 export { ContinueReadingSection } from './ContinueReadingSection';
-export { FeaturedSection } from './FeaturedSection';
 export { FilteredArticleView } from './FilteredArticleView';
 export { FilterSection } from './FilterSection';
 export { DiscoverySections } from './DiscoverySections';
