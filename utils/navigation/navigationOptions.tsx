@@ -1,5 +1,5 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 
 import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
 
@@ -35,7 +35,7 @@ export function createNavigationOptions(
     headerStyle: {
       backgroundColor: colors.background,
     },
-    headerTitleAlign: 'left',
+    ...(Platform.OS === 'android' && { headerTitleAlign: 'left' }),
     // Custom headerTitle for left-aligned large title on both platforms
     ...(title
       ? {
