@@ -1,7 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
 import { InteractionManager, StyleSheet } from 'react-native';
@@ -158,7 +158,6 @@ export default function PracticeScreen(): JSX.Element {
   if (!hasAnyStudyWords) {
     return (
       <ThemedView useSafeArea={false} style={styles.container}>
-        <Stack.Screen options={{ headerRight: () => null }} />
         <PracticeEmptyState />
       </ThemedView>
     );

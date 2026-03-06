@@ -1,5 +1,4 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { Stack } from 'expo-router';
 import { ListSeparator } from '@/components/common';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
@@ -205,11 +204,9 @@ export default function PlaylistScreen(): JSX.Element {
   // Memoize the key extractor to prevent inline function creation
   const memoizedKeyExtractor = useCallback(keyExtractor, []);
 
-  // Empty state — render directly without list wrapper for consistent centering
   if (shouldShowEmpty) {
     return (
       <ThemedView useSafeArea={false} style={styles.container}>
-        <Stack.Screen options={{ headerRight: () => null }} />
         <SavedEmptyState />
       </ThemedView>
     );
