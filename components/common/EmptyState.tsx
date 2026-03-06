@@ -14,7 +14,7 @@ interface EmptyStateProps {
 
 /**
  * Generic empty state component used across the app.
- * Displays an icon, title, and hint message with consistent styling.
+ * Displays an icon, title, and hint message.
  */
 export function EmptyState({
   icon,
@@ -39,6 +39,7 @@ export function EmptyState({
           {hint}
         </ThemedText>
       </View>
+
     </View>
   );
 }
@@ -48,23 +49,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
+    paddingBottom: '15%', // Optical center — compensates for tab bar and status bar
     paddingHorizontal: LAYOUT.SPACING.XLARGE,
   },
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.XLARGE, // 24px - modern spacing between icon and title
+    marginBottom: LAYOUT.SPACING.MEDIUM, // 12px - tight proximity groups icon with title
   },
   title: {
     textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM, // 12px - balanced spacing between title and description
+    marginBottom: LAYOUT.SPACING.LARGE, // 16px - separates title group from hint
   },
   hintContainer: {
-    maxWidth: 320, // Optimal reading width for mobile (2025 best practice)
+    maxWidth: 320,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
     alignItems: 'center',
-    minHeight: 80, // Fixed height to prevent title movement (accommodates longest text)
   },
   hint: {
     textAlign: 'center',

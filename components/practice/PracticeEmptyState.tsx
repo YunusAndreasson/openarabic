@@ -7,7 +7,7 @@ import { STRINGS } from '@/constants/strings';
 export function PracticeEmptyState() {
   return (
     <EmptyState
-      icon="albums-outline"
+      icon="school-outline"
       title={STRINGS.STUDY_LIST_EMPTY_TITLE}
       hint={STRINGS.STUDY_LIST_EMPTY_HINT}
     />

@@ -88,12 +88,11 @@ const compactCardStyles = StyleSheet.create({
   },
 });
 
-export function FilterSection({ items, onSelect, filterType }: FilterSectionProps): JSX.Element {
+export function FilterSection({ items, onSelect, filterType }: FilterSectionProps): JSX.Element | null {
   const handleSelect = (id: number, name?: string) => () => onSelect(id, name, filterType);
 
-  // Guard against undefined or empty items
   if (!items?.length) {
-    return <View style={styles.filterSectionContainer} />;
+    return null;
   }
 
   return (

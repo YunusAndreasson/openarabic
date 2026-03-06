@@ -1,4 +1,5 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { Stack } from 'expo-router';
 import { ListSeparator } from '@/components/common';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
@@ -166,16 +167,8 @@ export default function PlaylistScreen(): JSX.Element {
       ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
       // Standard padding - no FAB clearance needed
       paddingBottom: LAYOUT.SPACING.LARGE + insets.bottom,
-      // Enable vertical centering when empty
-      ...(shouldShowEmpty ? { flexGrow: 1 } : {}),
     }),
-    [shouldShowEmpty, insets.bottom],
-  );
-
-  // Memoize shared components to prevent recreation
-  const EmptyStateComponent = useMemo(
-    () => (shouldShowEmpty ? <SavedEmptyState /> : null),
-    [shouldShowEmpty],
+    [insets.bottom],
   );
 
   // Create the article press handler - plays audio in miniplayer
@@ -212,6 +205,16 @@ export default function PlaylistScreen(): JSX.Element {
   // Memoize the key extractor to prevent inline function creation
   const memoizedKeyExtractor = useCallback(keyExtractor, []);
 
+  // Empty state — render directly without list wrapper for consistent centering
+  if (shouldShowEmpty) {
+    return (
+      <ThemedView useSafeArea={false} style={styles.container}>
+        <Stack.Screen options={{ headerRight: () => null }} />
+        <SavedEmptyState />
+      </ThemedView>
+    );
+  }
+
   return (
     <ThemedView useSafeArea={false} style={styles.container}>
       <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
@@ -229,7 +232,7 @@ export default function PlaylistScreen(): JSX.Element {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}
-            ListEmptyComponent={EmptyStateComponent}
+
             removeClippedSubviews
             initialNumToRender={6}
             windowSize={7}
@@ -249,7 +252,7 @@ export default function PlaylistScreen(): JSX.Element {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}
-            ListEmptyComponent={EmptyStateComponent}
+
             ListHeaderComponent={null}
             renderItem={renderItem}
             maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)

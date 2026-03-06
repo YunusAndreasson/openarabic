@@ -105,14 +105,11 @@ export const STRINGS = {
   // Sign Up screen
   CREATE_ACCOUNT_TITLE: 'Create account',
   CREATE_ACCOUNT_SUBTITLE: 'Start your Arabic journey',
-  // Landing screen
-  CONTINUE_WITH_EMAIL_OPTION: 'Continue with email',
-  HIDE_EMAIL_OPTIONS: 'Hide email options',
   CATEGORY: 'Category',
   // Section headers for Explore tab
   SECTION_CATEGORIES: 'Topics',
   SECTION_GETTING_STARTED: 'Getting started',
-  SECTION_FEATURED: 'For you',
+  SECTION_FEATURED: 'Fresh reads',
   SECTION_LONG_READS: 'Long reads',
   SECTION_BEGINNER_FRIENDLY: 'Beginner friendly',
   SECTION_SHORT_READS: 'Short reads',
@@ -134,13 +131,13 @@ export const STRINGS = {
   COMPLETED: 'Completed',
   SET_TIME: 'Set time',
   // Playlist tab empty state - minimal one-tap start
-  BOOKMARKS_EMPTY_TITLE: 'Your playlist is empty',
-  BOOKMARKS_EMPTY_HINT: 'Tap the headset on any article to add it here',
+  BOOKMARKS_EMPTY_TITLE: 'Nothing saved yet',
+  BOOKMARKS_EMPTY_HINT: 'Tap the headset on any text\nto add it here',
   // Practice tab empty state - minimal one-tap start
   START_REVIEW: 'Start Review',
   PLAY_ALL: 'Play All',
-  STUDY_LIST_EMPTY_TITLE: 'Your practice list is empty',
-  STUDY_LIST_EMPTY_HINT: 'Tap any word while reading to save it for practice',
+  STUDY_LIST_EMPTY_TITLE: 'No words yet',
+  STUDY_LIST_EMPTY_HINT: 'Tap any word while reading\nto save it for practice',
   // Welcome toasts when navigating from empty states
   EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headset on any article to add it to your playlist',
   // Success toasts for empty state actions
@@ -273,6 +270,8 @@ export const STRINGS = {
   // Social auth
   SIGN_IN_WITH_APPLE: 'Sign in with Apple',
   SIGN_IN_WITH_GOOGLE: 'Sign in with Google',
+  SIGN_IN_WITH_EMAIL: 'Sign in with email',
+  CREATE_ACCOUNT_WITH_EMAIL: 'Create account with email',
   CONTINUE_WITH: 'or',
   MEMORY_STRENGTH: 'Memory Strength',
   WORD_MASTERY: 'Mastered Words',

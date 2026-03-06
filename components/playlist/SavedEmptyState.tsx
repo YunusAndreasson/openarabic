@@ -7,7 +7,7 @@ import { STRINGS } from '@/constants/strings';
 export function SavedEmptyState() {
   return (
     <EmptyState
-      icon="albums-outline"
+      icon="headset-outline"
       title={STRINGS.BOOKMARKS_EMPTY_TITLE}
       hint={STRINGS.BOOKMARKS_EMPTY_HINT}
     />

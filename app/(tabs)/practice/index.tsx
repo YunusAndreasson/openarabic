@@ -1,11 +1,11 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
 import { InteractionManager, StyleSheet } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState } from '@/components/common';
@@ -154,6 +154,16 @@ export default function PracticeScreen(): JSX.Element {
     );
   }
 
+  // Empty state — no ScrollView needed, just center in full screen
+  if (!hasAnyStudyWords) {
+    return (
+      <ThemedView useSafeArea={false} style={styles.container}>
+        <Stack.Screen options={{ headerRight: () => null }} />
+        <PracticeEmptyState />
+      </ThemedView>
+    );
+  }
+
   // Main content
   return (
     <ThemedView useSafeArea={false} style={styles.container}>
@@ -163,52 +173,37 @@ export default function PracticeScreen(): JSX.Element {
         includeBottomInset={false}
         contentContainerStyle={[
           styles.contentContainer,
-          {
-            paddingBottom: contentPaddingBottom,
-            // Enable vertical centering when empty
-            ...(hasAnyStudyWords ? {} : { flexGrow: 1 }),
-          },
+          { paddingBottom: contentPaddingBottom },
         ]}
         scrollViewProps={{
           showsVerticalScrollIndicator: false,
           contentInsetAdjustmentBehavior: 'never' as const,
         }}
       >
-        {/* PRIMARY SECTION: Learning Overview */}
         <Animated.View
-          style={[
-            styles.vocabularySection,
-            CONTENT_FADE_IN_STYLE,
-            // Required for empty state centering due to wrapper hierarchy
-            !hasAnyStudyWords && { flex: 1 },
-          ]}
+          entering={FadeIn.duration(TIMING_CONFIG.SLOW.duration)}
+          style={styles.vocabularySection}
         >
-          {hasAnyStudyWords ? (
-            <>
-              <PracticeStatCards
-                dueWords={dueWordsCount}
-                currentStreak={currentStreak}
-                masteredWords={calculatedStats.masteredWords}
-                studyWords={filteredStudyWords}
-                onInfoPress={handleMemoryStrengthInfo}
-                onDuePress={handleDuePress}
-                onStreakPress={handleStreakPress}
-                onMasteredPress={handleMasteredPress}
-              />
+          <PracticeStatCards
+            dueWords={dueWordsCount}
+            currentStreak={currentStreak}
+            masteredWords={calculatedStats.masteredWords}
+            studyWords={filteredStudyWords}
+            onInfoPress={handleMemoryStrengthInfo}
+            onDuePress={handleDuePress}
+            onStreakPress={handleStreakPress}
+            onMasteredPress={handleMasteredPress}
+          />
 
-              {/* Recommendation Card - placed below stat cards */}
-              <RecommendationCard
-                studyWords={filteredStudyWords}
-                dueWordsCount={dueWordsCount}
-                currentRetention={chartData.insights.currentRetrievability}
-                learningWords={calculatedStats.learningPhaseWords}
-                masteredWords={calculatedStats.masteredWords}
-                currentStreak={currentStreak}
-              />
-            </>
-          ) : (
-            <PracticeEmptyState />
-          )}
+          {/* Recommendation Card - placed below stat cards */}
+          <RecommendationCard
+            studyWords={filteredStudyWords}
+            dueWordsCount={dueWordsCount}
+            currentRetention={chartData.insights.currentRetrievability}
+            learningWords={calculatedStats.learningPhaseWords}
+            masteredWords={calculatedStats.masteredWords}
+            currentStreak={currentStreak}
+          />
         </Animated.View>
       </ThemedView>
 
@@ -227,16 +222,6 @@ export default function PracticeScreen(): JSX.Element {
 
 export const options: NativeStackNavigationOptions = {
   headerShown: false,
-};
-
-// Mount fade-in — CSS @keyframes, module-level so no per-render allocation
-const CONTENT_FADE_IN_STYLE = {
-  animationName: {
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-  },
-  animationDuration: `${TIMING_CONFIG.SLOW.duration}ms`,
-  animationFillMode: 'forwards' as const,
 };
 
 const styles = StyleSheet.create({
