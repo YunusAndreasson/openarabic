@@ -178,7 +178,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
         {/* Full-screen swipe background + word content */}
         <ReviewCard
-          key={currentWordKey}
+          wordKey={currentWordKey}
           word={currentSentence.wordForm}
           onSwipeLeft={handleSwipeLeft}
           onSwipeRight={handleSwipeRight}

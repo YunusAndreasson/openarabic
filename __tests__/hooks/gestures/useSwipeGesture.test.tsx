@@ -292,8 +292,7 @@ describe('useSwipeGesture Hook', () => {
     });
 
     test('hook resets position after RESET_DELAY', () => {
-      // Based on hook implementation lines 85-90
-      // setTimeout with GESTURE_CONSTANTS.RESET_DELAY (50ms)
+      // Reset handled on UI thread via withDelay + withSpring (no JS bridge)
       expect(true).toBeTruthy(); // Documented behavior
     });
   });
