@@ -1,8 +1,11 @@
+import Constants from 'expo-constants';
 import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import { useEffect, useState } from 'react';
-
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
+
+/** Native Google Sign In is unavailable in Expo Go */
+const isExpoGo = Constants.appOwnership === 'expo';
 
 /** Type for dynamically imported Google Sign In module */
 interface GoogleSignInModule {
@@ -47,18 +50,10 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
   useEffect(() => {
     const configure = async (): Promise<void> => {
       try {
-        // Check if native module is available
-        let GoogleSignin;
-        try {
-          GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
-        } catch (moduleError) {
-          Sentry.captureMessage('Google Sign In module not available', {
-            level: 'warning',
-            tags: { location: 'google_auth_config' },
-            extra: { error: String(moduleError) },
-          });
-          return;
-        }
+        // Guard: skip if native module is unavailable (Expo Go)
+        if (isExpoGo) return;
+
+        const GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
 
         // Get Web Client ID from environment
         const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
@@ -110,8 +105,8 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     provider: 'google',
 
     loadModule: async () => {
-      if (!isConfigured) {
-        throw new Error('Google Sign In not configured');
+      if (isExpoGo || !isConfigured) {
+        throw new Error('Google Sign In not available');
       }
 
       const { GoogleSignin } = require('@react-native-google-signin/google-signin');
@@ -213,13 +208,10 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     },
 
     handleProviderError: (error: unknown) => {
+      if (isExpoGo) return undefined;
+
       // Handle Play Services not available (Android)
-      let statusCodes;
-      try {
-        statusCodes = require('@react-native-google-signin/google-signin').statusCodes;
-      } catch {
-        return undefined;
-      }
+      const { statusCodes } = require('@react-native-google-signin/google-signin');
 
       if (
         statusCodes &&

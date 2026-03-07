@@ -129,7 +129,6 @@ describe('useArticleScreen Hook', () => {
       activeTooltip: null,
       wordDetailsModal: { isOpen: false, rootId: null },
       isInStudyList: jest.fn(),
-      wordDetailsEnabled: true,
       handleWordPress: mockHandleWordPress,
       handleCloseTooltip: mockHandleCloseTooltip,
       handleOpenWordDetails: mockHandleOpenWordDetails,
@@ -543,90 +542,6 @@ describe('useArticleScreen Hook', () => {
     });
   });
 
-  describe('Completion Detection', () => {
-    test('handleEndReached marks article as complete', () => {
-      const mockSentences = createMockSentences(10);
-
-      jest.mocked(useArticleData).mockReturnValue({
-        article: createMockArticle(),
-        isLoadingArticle: false,
-        sortedSentences: mockSentences,
-        sentenceWordsMap: new Map(),
-        refetchStudyWords: mockRefetchStudyWords,
-        isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
-      } as any);
-
-      const { result } = renderHook(() =>
-        useArticleScreen({
-          id: '1',
-          showToast: mockShowToast,
-        }),
-      );
-
-      act(() => {
-        result.current.handleEndReached();
-      });
-
-      // Should update to last sentence (9)
-      expect(result.current.currentSentenceIndex).toBe(9);
-      expect(mockUpdateProgress).toHaveBeenCalledWith(9);
-    });
-
-    test('handleEndReached does nothing with no sentences', () => {
-      jest.mocked(useArticleData).mockReturnValue({
-        article: createMockArticle(),
-        isLoadingArticle: false,
-        sortedSentences: [],
-        sentenceWordsMap: new Map(),
-        refetchStudyWords: mockRefetchStudyWords,
-        isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
-      } as any);
-
-      const { result } = renderHook(() =>
-        useArticleScreen({
-          id: '1',
-          showToast: mockShowToast,
-        }),
-      );
-
-      act(() => {
-        result.current.handleEndReached();
-      });
-
-      expect(mockUpdateProgress).not.toHaveBeenCalled();
-    });
-
-    test('handleRelatedArticlesVisible marks article as complete', () => {
-      const mockSentences = createMockSentences(10);
-
-      jest.mocked(useArticleData).mockReturnValue({
-        article: createMockArticle(),
-        isLoadingArticle: false,
-        sortedSentences: mockSentences,
-        sentenceWordsMap: new Map(),
-        refetchStudyWords: mockRefetchStudyWords,
-        isInReadingList: false,
-        refetchReadingListStatus: mockRefetchReadingListStatus,
-      } as any);
-
-      const { result } = renderHook(() =>
-        useArticleScreen({
-          id: '1',
-          showToast: mockShowToast,
-        }),
-      );
-
-      act(() => {
-        result.current.handleRelatedArticlesVisible();
-      });
-
-      // Should update to last sentence (9)
-      expect(result.current.currentSentenceIndex).toBe(9);
-      expect(mockUpdateProgress).toHaveBeenCalledWith(9);
-    });
-  });
 
   describe('Word Interactions', () => {
     test('exposes word interaction handlers', () => {
@@ -648,7 +563,6 @@ describe('useArticleScreen Hook', () => {
         activeTooltip: { rootId: 123, position: { x: 0, y: 0 } },
         wordDetailsModal: { isOpen: true, rootId: 456 },
         isInStudyList: jest.fn(),
-        wordDetailsEnabled: false,
         handleWordPress: mockHandleWordPress,
         handleCloseTooltip: mockHandleCloseTooltip,
         handleOpenWordDetails: mockHandleOpenWordDetails,
@@ -665,7 +579,6 @@ describe('useArticleScreen Hook', () => {
 
       expect(result.current.activeTooltip).toEqual({ rootId: 123, position: { x: 0, y: 0 } });
       expect(result.current.wordDetailsModal).toEqual({ isOpen: true, rootId: 456 });
-      expect(result.current.wordDetailsEnabled).toBeFalsy();
     });
   });
 
@@ -799,11 +712,8 @@ describe('useArticleScreen Hook', () => {
 
       expect(result.current.sortedSentences).toEqual([]);
 
-      // Should not crash when calling completion handlers
-      act(() => {
-        result.current.handleEndReached();
-        result.current.handleRelatedArticlesVisible();
-      });
+      // Should not crash with empty sentences
+      expect(result.current.currentSentenceIndex).toBe(0);
     });
 
     test('handles disableAutoScroll option', () => {

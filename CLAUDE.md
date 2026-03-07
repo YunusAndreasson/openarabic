@@ -72,9 +72,9 @@ This CLAUDE.md applies to the **React Native mobile app only**.
 
 ## Technical Stack
 
-- **React Native**: 0.81.5 with React 19.1.0
-- **Expo SDK**: 54 with New Architecture enabled
-- **Navigation**: Expo Router v6
+- **React Native**: 0.83.2 with React 19.2.0
+- **Expo SDK**: 55 with New Architecture enabled
+- **Navigation**: Expo Router v55
 - **State**: Redux Toolkit + TanStack Query + React Context
 - **UI**: @shopify/flash-list, @gorhom/bottom-sheet, react-native-reanimated
 - **Backend**: Supabase JS client

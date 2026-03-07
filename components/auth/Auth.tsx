@@ -1,9 +1,7 @@
 import type { JSX } from 'react';
-import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { EnhancedImage } from '@/components/ui/EnhancedImage';
-import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -17,25 +15,15 @@ import { SocialAuthButtons } from './SocialAuthButtons';
 /**
  * Authentication Landing Component
  *
- * Modern progressive disclosure auth flow:
+ * Auth flow:
  * 1. Social buttons (Apple, Google) - Primary options
- * 2. "Continue with email" button - Collapsible
- * 3. When expanded: Sign In / Create Account navigation buttons
- *
- * This component prioritizes social auth while keeping email auth accessible.
- * Follows 2025 UX best practices for mobile authentication.
+ * 2. Divider
+ * 3. Email Sign In / Create Account navigation buttons
  */
 export function Auth(): JSX.Element {
-  const [showEmailOptions, setShowEmailOptions] = useState(false);
-
   // Auth hooks lifted here for unified loading state
   const appleAuth = useAppleAuth();
   const googleAuth = useGoogleAuth();
-  const isSocialAuthLoading = appleAuth.loading || googleAuth.loading;
-
-  const handleToggleEmailOptions = useCallback(() => {
-    setShowEmailOptions(prev => !prev);
-  }, []);
 
   return (
     <View style={styles.container}>
@@ -58,30 +46,11 @@ export function Auth(): JSX.Element {
 
       {/* Content Container */}
       <View style={styles.contentContainer}>
-        {/* Social Authentication Buttons - Primary action, top for visibility */}
+        {/* Social Authentication Buttons */}
         <SocialAuthButtons appleAuth={appleAuth} googleAuth={googleAuth} />
 
-        {/* Email Options Toggle Button - Secondary option */}
-        <ThemedButton
-          variant="outlined"
-          title={showEmailOptions ? STRINGS.HIDE_EMAIL_OPTIONS : STRINGS.CONTINUE_WITH_EMAIL_OPTION}
-          icon="mail-outline"
-          uppercase={false}
-          disabled={isSocialAuthLoading}
-          style={styles.emailToggleButton}
-          testID="toggle-email-options-button"
-          accessibilityLabel={
-            showEmailOptions ? 'Hide email sign in options' : 'Show email sign in options'
-          }
-          onPress={handleToggleEmailOptions}
-        />
-
-        {/* Email Auth Options (Sign In / Create Account buttons) */}
-        {showEmailOptions ? (
-          <View style={styles.emailOptionsContainer}>
-            <EmailAuthOptions />
-          </View>
-        ) : null}
+        {/* Email Auth Options (Sign In / Create Account) */}
+        <EmailAuthOptions />
       </View>
 
       {/* Legal Links */}
@@ -98,14 +67,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     maxWidth: SCREEN_WIDTH * 0.9,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    width: '100%',
-  },
-  emailOptionsContainer: {
-    marginTop: LAYOUT.SPACING.LARGE, // Grouped with email toggle (proximity)
-    width: '100%',
-  },
-  emailToggleButton: {
-    marginTop: LAYOUT.SPACING.XLARGE, // Clear separation after divider
     width: '100%',
   },
   headerContainer: {

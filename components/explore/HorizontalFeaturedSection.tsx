@@ -30,17 +30,14 @@ export function HorizontalFeaturedSection({
   refreshKey,
   scope = 'global',
 }: HorizontalFeaturedSectionProps): JSX.Element | null {
-  // Use the multiple featured articles selection hook
-  const featuredArticles = useMultipleFeaturedArticles(articlesData, refreshKey, scope);
+  const { articles } = useMultipleFeaturedArticles(articlesData, refreshKey, scope);
 
-  const selectedArticles = featuredArticles.articles;
-
-  if (selectedArticles.length === 0) return null;
+  if (articles.length === 0) return null;
 
   return (
     <View>
       <SectionLabel title={STRINGS.SECTION_FEATURED} />
-      <HorizontalArticleSlider articles={selectedArticles} />
+      <HorizontalArticleSlider articles={articles} />
     </View>
   );
 }

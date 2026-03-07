@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useRef } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { RelatedArticlesByFilter } from '@/components/article/RelatedArticlesByFilter';
@@ -21,11 +21,6 @@ interface RelatedArticlesSectionProps {
    */
   maxArticles?: number;
 
-  /**
-   * Callback fired when related articles section becomes visible
-   * Used as heuristic to mark article as 100% complete
-   */
-  onVisible?: () => void;
 }
 
 /**
@@ -39,19 +34,7 @@ interface RelatedArticlesSectionProps {
  * Uses existing article selection logic for consistency and efficiency.
  */
 export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
-  ({ article, articlesData, maxArticles = 5, onVisible }) => {
-    // Track if we've already fired the callback
-    const hasCalledOnVisibleRef = useRef(false);
-
-    // Fire callback when either section becomes visible
-    // This serves as a heuristic to mark article as 100% complete
-    const handleSectionVisible = useCallback(() => {
-      if (!hasCalledOnVisibleRef.current && onVisible) {
-        hasCalledOnVisibleRef.current = true;
-        onVisible();
-      }
-    }, [onVisible]);
-
+  ({ article, articlesData, maxArticles = 5 }) => {
     // Memoize article IDs for efficient comparison
     const currentArticleId = article.id;
     const authorId = article.author_id;
@@ -82,7 +65,6 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
           filterId={authorId}
           filterName={article.author.name}
           maxArticles={maxArticles}
-          onVisible={handleSectionVisible}
         />
         <RelatedArticlesByFilter
           currentArticleId={currentArticleId}
@@ -91,7 +73,6 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
           filterId={categoryId}
           filterName={article.category.name}
           maxArticles={maxArticles}
-          onVisible={handleSectionVisible}
         />
       </View>
     );

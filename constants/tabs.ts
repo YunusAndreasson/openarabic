@@ -22,7 +22,7 @@ interface TabIconDefinition {
  * Uses Ionicons icon names with filled/outline variants
  * SF Symbols are used for iOS native tabs (liquid glass effect)
  */
-export const TAB_ICONS = {
+const TAB_ICONS = {
   EXPLORE: {
     filled: 'compass',
     outline: 'compass-outline',
@@ -40,7 +40,7 @@ export const TAB_ICONS = {
   },
 } as const satisfies Record<string, TabIconDefinition>;
 
-export type TabIconConfig = (typeof TAB_ICONS)[keyof typeof TAB_ICONS];
+type TabIconConfig = (typeof TAB_ICONS)[keyof typeof TAB_ICONS];
 
 /**
  * Tab screen configuration for the main tab navigator

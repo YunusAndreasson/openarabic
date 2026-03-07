@@ -39,8 +39,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingBottom: LAYOUT.SPACING.XXLARGE,
-    paddingTop: LAYOUT.SPACING.XLARGE,
+    paddingTop: LAYOUT.SPACING.XXXLARGE * 2, // Stable top anchor — prevents layout shift when toggling email options
   },
 });

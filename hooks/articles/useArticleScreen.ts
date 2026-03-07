@@ -91,7 +91,6 @@ export function useArticleScreen({
     activeTooltip,
     wordDetailsModal,
     isInStudyList,
-    wordDetailsEnabled,
     handleWordPress,
     handleCloseTooltip,
     handleOpenWordDetails,
@@ -151,21 +150,19 @@ export function useArticleScreen({
   // Track current sentence for reading progress
   const scrollViewRef = useRef<FlashListRef<Tables<'article_sentences'>> | null>(null);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
+  // High water mark: the furthest sentence the user has reached (never decreases)
+  const highWaterMarkRef = useRef(0);
 
   // Track scroll state - one attempt per article
   const hasScrolledToPositionRef = useRef(false);
   const [isFlashListReady, setIsFlashListReady] = useState(false);
-  // Prevent progress updates immediately after programmatic scroll
-  const ignoreProgressUpdatesRef = useRef(true);
-  // Track if user has reached the end - locks completion at 100%
-  const hasReachedEndRef = useRef(false);
   // Track current position for UI, but debounce DB updates
   const pendingProgressUpdateRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset scroll state when article changes
   useEffect(() => {
     hasScrolledToPositionRef.current = false;
-    hasReachedEndRef.current = false;
+    highWaterMarkRef.current = 0;
     setIsFlashListReady(false);
   }, [articleId]);
 
@@ -181,44 +178,33 @@ export function useArticleScreen({
       const totalSentences = sortedSentences?.length ?? 0;
       if (totalSentences === 0) return;
 
-      // COMPLETION LOCK: Stop tracking if user has already completed the article
-      // This prevents viewability from overwriting 100% completion
-      if (hasReachedEndRef.current) {
-        return;
+      // Find the highest visible sentence index from viewable items.
+      // FlashList v2 includes the ListHeaderComponent at index 0,
+      // so data items start at index 1. We subtract 1 to get the sentence index.
+      let maxVisibleSentenceIndex = -1;
+      for (const item of viewableItems) {
+        if (
+          typeof item.index === 'number' &&
+          item.index > 0 && // Skip ListHeaderComponent (index 0 in FlashList v2)
+          item.isViewable === true
+        ) {
+          const sentenceIndex = item.index - 1;
+          if (sentenceIndex >= 0 && sentenceIndex < totalSentences) {
+            maxVisibleSentenceIndex = Math.max(maxVisibleSentenceIndex, sentenceIndex);
+          }
+        }
       }
 
-      // Skip progress updates if we just did a programmatic scroll
-      if (ignoreProgressUpdatesRef.current) {
-        return;
-      }
-
-      // Find all visible sentences (excluding header at index 0)
-      const visibleSentences = viewableItems
-        .filter(
-          item =>
-            typeof item.index === 'number' &&
-            item.index > 0 && // Skip header
-            item.isViewable === true,
-        )
-        .map(item => ({
-          index: (item.index as number) - 1, // Convert to sentence index
-          item: item,
-        }))
-        .filter(({ index }) => index >= 0 && index < totalSentences);
-
-      if (visibleSentences.length > 0) {
-        // Simple approach: always track first visible sentence for reading position
-        // onEndReached handler (with aggressive threshold=10) handles 100% completion
-        const firstVisibleSentence = visibleSentences[0];
-        const newSentenceIndex = firstVisibleSentence?.index;
-
-        // Update UI immediately for smooth progress tracking
-        if (newSentenceIndex !== undefined && newSentenceIndex !== currentSentenceIndex) {
-          setCurrentSentenceIndex(newSentenceIndex);
+      if (maxVisibleSentenceIndex >= 0) {
+        // High water mark: only advance, never go backward
+        const newHighWater = Math.max(highWaterMarkRef.current, maxVisibleSentenceIndex);
+        if (newHighWater !== highWaterMarkRef.current) {
+          highWaterMarkRef.current = newHighWater;
+          setCurrentSentenceIndex(newHighWater);
         }
       }
     },
-    [currentSentenceIndex, sortedSentences?.length],
+    [sortedSentences?.length],
   );
 
   // Debounced progress update - only save to DB when user stops scrolling
@@ -228,8 +214,8 @@ export function useArticleScreen({
       clearTimeout(pendingProgressUpdateRef.current);
     }
 
-    // Don't update if article is still loading or user just did programmatic scroll
-    if (!article || isLoadingArticle || ignoreProgressUpdatesRef.current) {
+    // Don't update if article is still loading
+    if (!article || isLoadingArticle) {
       return;
     }
 
@@ -252,44 +238,6 @@ export function useArticleScreen({
     // No-op: viewable items callback handles all position tracking
   }, []);
 
-  // Handle reaching the end of the article - immediately set to last sentence for 100% completion
-  // This ensures articles always reach 100% when user scrolls to the bottom
-  // NOTE: This fires VERY aggressively (threshold=10) to catch end scrolling early
-  const handleEndReached = useCallback(() => {
-    const totalSentences = sortedSentences?.length ?? 0;
-    if (totalSentences === 0) return;
-
-    const lastSentenceIndex = totalSentences - 1;
-    if (lastSentenceIndex >= 0) {
-      // LOCK COMPLETION: Prevent viewability from overwriting this
-      hasReachedEndRef.current = true;
-      // Disable ignore flag to ensure this update goes through
-      ignoreProgressUpdatesRef.current = false;
-      // Update state for UI
-      setCurrentSentenceIndex(lastSentenceIndex);
-      // IMMEDIATELY save to DB - don't wait for debounced update
-      updateProgress(lastSentenceIndex);
-    }
-  }, [sortedSentences?.length, updateProgress]);
-
-  // Handle related articles becoming visible - reliable heuristic for 100% completion
-  // When user scrolls far enough to see related articles footer, article is complete
-  const handleRelatedArticlesVisible = useCallback(() => {
-    const totalSentences = sortedSentences?.length ?? 0;
-    if (totalSentences === 0) return;
-
-    const lastSentenceIndex = totalSentences - 1;
-    if (lastSentenceIndex >= 0) {
-      // LOCK COMPLETION: Prevent viewability from overwriting this
-      hasReachedEndRef.current = true;
-      // Disable the ignore flag in case it was still set
-      ignoreProgressUpdatesRef.current = false;
-      // Update state for UI
-      setCurrentSentenceIndex(lastSentenceIndex);
-      // IMMEDIATELY save to DB - don't wait for debounced update
-      updateProgress(lastSentenceIndex);
-    }
-  }, [sortedSentences?.length, updateProgress]);
 
   // Sync sentence index (for any other features that might use it)
   useEffect(() => {
@@ -297,7 +245,6 @@ export function useArticleScreen({
   }, [currentSentenceIndex]);
 
   // Scroll to position effect - triggers when all conditions are met
-  // Uses DIRECT values from useReadingProgress (no capturing)
   useEffect(() => {
     const totalSentences = sortedSentences?.length ?? 0;
 
@@ -325,8 +272,9 @@ export function useArticleScreen({
 
       hasScrolledToPositionRef.current = true;
 
-      // Disable progress tracking during programmatic scroll
-      ignoreProgressUpdatesRef.current = true;
+      // Initialize high water mark to the saved position so viewability
+      // tracking only records progress BEYOND the resume point.
+      highWaterMarkRef.current = initialLastSentenceRead;
 
       // Double RAF ensures FlashList layout is complete (v2 best practice)
       requestAnimationFrame(() => {
@@ -341,9 +289,7 @@ export function useArticleScreen({
               // Silent error - scroll failed
             }
           } else {
-            // For middle positions, use scrollToOffset with smooth animation
             try {
-              // Estimate offset for scroll position
               const approximateItemHeight = 100;
               const headerHeight = 400;
               const offset = headerHeight + targetIndex * approximateItemHeight;
@@ -356,13 +302,7 @@ export function useArticleScreen({
             }
           }
 
-          // Re-enable progress tracking after scroll settles
-          setTimeout(() => {
-            ignoreProgressUpdatesRef.current = false;
-          }, 500);
-
           // Show toast
-          // Note: last_sentence_read is 0-based, so add 1 for accurate percentage
           const percentage = Math.round(((initialLastSentenceRead + 1) / totalSentences) * 100);
           const message = STRINGS.RESUMED_READING_TEMPLATE.replace(
             '{percent}',
@@ -372,9 +312,7 @@ export function useArticleScreen({
         });
       });
     } else if (!hasScrolledToPositionRef.current && isFlashListReady) {
-      // FlashList is ready but no scroll needed (new article or position 0)
       hasScrolledToPositionRef.current = true;
-      ignoreProgressUpdatesRef.current = false;
     }
   }, [
     isFlashListReady,
@@ -416,10 +354,7 @@ export function useArticleScreen({
     activeTooltip,
     wordDetailsModal,
     isInStudyList,
-    wordDetailsEnabled,
     handleScrollEnd,
-    handleEndReached,
-    handleRelatedArticlesVisible,
     // Handlers
     handleScroll,
     handleViewableItemsChanged,

@@ -1,25 +1,23 @@
 // External Libraries
 import { TimePicker } from '@/components/ui';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState, type FC } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { Alert, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 import { THEME_OPTIONS } from '@/components/ui/ThemePicker';
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SettingsCard, SettingsSection } from '@/components/account';
 import {
   AboutSection,
   AppearanceSection,
   DangerZoneSection,
-  SocialMediaSection,
 } from '@/components/account/settings';
 import { BrandFooter } from '@/components/explore';
 import { useTutorialContext } from '@/components/providers';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAccountScreen } from '@/hooks/account';
@@ -52,8 +50,6 @@ function validateEnumValue<T>(value: unknown, validValues: readonly T[], default
 type ActivePicker = 'theme' | 'language' | 'audioLanguage' | 'dailyWordLimit' | null;
 
 const AccountScreen: FC = () => {
-  const insets = useSafeAreaInsets();
-
   // Get theme with validation
   const rawTheme = useAppSelectorShallow(state => state.theme.theme);
   const currentTheme = useMemo(() => rawTheme ?? ('dark' as const), [rawTheme]);
@@ -67,30 +63,22 @@ const AccountScreen: FC = () => {
   );
 
   // Validate and provide defaults - ensure values are valid enum values
-  const currentLanguage = useMemo(
-    () =>
-      validateEnumValue(
-        rawLanguagePreference,
-        [DisplayLanguage.ARABIC_ONLY, DisplayLanguage.ARABIC_ENGLISH] as const,
-        DisplayLanguage.ARABIC_ENGLISH,
-      ),
-    [rawLanguagePreference],
+  const currentLanguage = validateEnumValue(
+    rawLanguagePreference,
+    [DisplayLanguage.ARABIC_ONLY, DisplayLanguage.ARABIC_ENGLISH] as const,
+    DisplayLanguage.ARABIC_ENGLISH,
   );
 
-  const currentAudioLanguage = useMemo(
-    () =>
-      validateEnumValue(
-        rawAudioLanguagePreference,
-        [AudioLanguage.ARABIC_ONLY, AudioLanguage.ENGLISH_ARABIC] as const,
-        AudioLanguage.ENGLISH_ARABIC,
-      ),
-    [rawAudioLanguagePreference],
+  const currentAudioLanguage = validateEnumValue(
+    rawAudioLanguagePreference,
+    [AudioLanguage.ARABIC_ONLY, AudioLanguage.ENGLISH_ARABIC] as const,
+    AudioLanguage.ENGLISH_ARABIC,
   );
 
   const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
   const dispatch = useAppDispatch();
 
-  const [activePicker, setActivePicker] = React.useState<ActivePicker>(null);
+  const [activePicker, setActivePicker] = useState<ActivePicker>(null);
 
   // Get daily word limit with validation
   const rawDailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
@@ -113,7 +101,6 @@ const AccountScreen: FC = () => {
     handleSignOut,
     handleResetReadingProgress,
     handleSupportContact,
-    handleRequestReview,
     user,
     handleClearCache,
     cacheSize,
@@ -136,9 +123,6 @@ const AccountScreen: FC = () => {
   }, [getRemainingWords]);
 
   const currentDailyWordLimitText = useMemo(() => {
-    if (currentDailyWordLimit === undefined || currentDailyWordLimit === null) {
-      return '10 words'; // Default fallback
-    }
     if (currentDailyWordLimit === 0) return 'Unlimited';
     return `${currentDailyWordLimit} words`;
   }, [currentDailyWordLimit]);
@@ -304,7 +288,6 @@ const AccountScreen: FC = () => {
           styles.scrollContent,
           {
             paddingTop: LAYOUT.SPACING.XLARGE,
-            paddingBottom: insets.bottom,
           },
         ]}
         scrollViewProps={{
@@ -327,26 +310,7 @@ const AccountScreen: FC = () => {
           onLanguagePress={() => handlePickerOpen('language')}
         />
 
-        {/* Audio & Playback - Audio settings */}
-        <SettingsSection title={AccountSection.AUDIO_PLAYBACK}>
-          <SettingsCard
-            icon="volume-high"
-            label={STRINGS.AUDIO_LANGUAGE}
-            rightType="text-chevron"
-            rightText={currentAudioLanguageText}
-            onPress={() => handlePickerOpen('audioLanguage')}
-          />
-          <SettingsCard
-            icon="shuffle"
-            label={STRINGS.AUDIO_SHUFFLE}
-            subtitle={STRINGS.AUDIO_SHUFFLE_DESCRIPTION}
-            rightType="toggle"
-            toggleValue={audioShuffleEnabled}
-            onToggleChange={handleAudioShuffleToggle}
-          />
-        </SettingsSection>
-
-        {/* Learning - Study settings */}
+        {/* Learning - Study settings (most frequently adjusted) */}
         <SettingsSection title={AccountSection.LEARNING}>
           <SettingsCard
             icon="book"
@@ -378,6 +342,24 @@ const AccountScreen: FC = () => {
           )}
         </SettingsSection>
 
+        {/* Audio - Audio settings */}
+        <SettingsSection title={AccountSection.AUDIO_PLAYBACK}>
+          <SettingsCard
+            icon="volume-high"
+            label={STRINGS.AUDIO_LANGUAGE}
+            rightType="text-chevron"
+            rightText={currentAudioLanguageText}
+            onPress={() => handlePickerOpen('audioLanguage')}
+          />
+          <SettingsCard
+            icon="shuffle"
+            label={STRINGS.AUDIO_SHUFFLE}
+            rightType="toggle"
+            toggleValue={audioShuffleEnabled}
+            onToggleChange={handleAudioShuffleToggle}
+          />
+        </SettingsSection>
+
         {/* Support - Help and assistance */}
         <SettingsSection title={AccountSection.SUPPORT}>
           <SettingsCard
@@ -387,30 +369,15 @@ const AccountScreen: FC = () => {
             onPress={() => router.push(ROUTE_PATHS.ACCOUNT_HELP)}
           />
           <SettingsCard
-            icon="school"
-            label={STRINGS.RESET_TUTORIALS}
-            rightType="chevron"
-            onPress={handleResetTutorials}
-          />
-          <SettingsCard
             icon="mail"
             label={STRINGS.CONTACT_SUPPORT}
             rightType="chevron"
             onPress={handleSupportContact}
           />
-          <SettingsCard
-            icon="star"
-            label={STRINGS.RATE_APP}
-            rightType="chevron"
-            onPress={handleRequestReview}
-          />
         </SettingsSection>
 
-        {/* About - Legal and informational */}
+        {/* About - Legal, social, and rating */}
         <AboutSection />
-
-        {/* Follow Us - Social media links */}
-        <SocialMediaSection />
 
         {/* Storage & Account - Data management and session */}
         <SettingsSection title={STRINGS.STORAGE_ACCOUNT_SECTION}>
@@ -418,25 +385,19 @@ const AccountScreen: FC = () => {
             icon="trash-outline"
             label={STRINGS.CLEAR_CACHE}
             subtitle={formattedCacheSize}
-            rightType="custom"
-            rightComponent={
-              <ThemedText
-                type="label"
-                weight="medium"
-                colorName="tint"
-                style={styles.clearButton}
-                onPress={cacheSize > 0 ? handleClearCache : undefined}
-                disabled={cacheSize === 0}
-              >
-                {STRINGS.CLEAR_CACHE_BUTTON}
-              </ThemedText>
-            }
+            rightType="none"
+            onPress={handleClearCache}
+          />
+          <SettingsCard
+            icon="school"
+            label={STRINGS.RESET_TUTORIALS}
+            rightType="none"
+            onPress={handleResetTutorials}
           />
           <SettingsCard
             icon="log-out"
             label={STRINGS.SIGN_OUT}
-            subtitle={user?.email || STRINGS.NO_EMAIL}
-            rightType="chevron"
+            rightType="none"
             onPress={handleSignOut}
           />
         </SettingsSection>
@@ -488,12 +449,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  clearButton: {
-    minWidth: MIN_TOUCH_TARGET.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    textAlign: 'center',
   },
 });
 

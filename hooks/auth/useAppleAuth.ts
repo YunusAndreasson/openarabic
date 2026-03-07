@@ -1,9 +1,13 @@
 import * as Sentry from '@sentry/react-native';
 import * as Application from 'expo-application';
 import { useEffect, useState } from 'react';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
+
+/** Native Apple Auth is unavailable in Expo Go or non-iOS */
+const isAppleAuthAvailable = Platform.OS === 'ios' && Constants.appOwnership !== 'expo';
 import { supabase } from '@/services/supabase';
 
 /** Type for dynamically imported Apple Auth module (iOS only) */
@@ -50,23 +54,10 @@ export function useAppleAuth(): UseAppleAuthReturn {
   // This ensures the native module is fully initialized before first use
   // Note: require() is synchronous, so no async wrapper needed
   useEffect(() => {
-    try {
-      // Pre-load the native module to ensure it's ready
-      require('@invertase/react-native-apple-authentication');
-      setIsReady(true);
+    if (!isAppleAuthAvailable) return;
 
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Apple Auth module pre-loaded successfully',
-        level: 'info',
-      });
-    } catch (error) {
-      Sentry.captureMessage('Apple Auth module not available', {
-        level: 'warning',
-        tags: { location: 'apple_auth_init' },
-        extra: { error: String(error) },
-      });
-    }
+    require('@invertase/react-native-apple-authentication');
+    setIsReady(true);
   }, []);
 
   // Use OAuth provider factory with Apple-specific configuration
@@ -74,8 +65,8 @@ export function useAppleAuth(): UseAppleAuthReturn {
     provider: 'apple',
 
     loadModule: async () => {
-      if (!isReady) {
-        throw new Error('Apple Sign In is initializing. Please try again.');
+      if (!isAppleAuthAvailable || !isReady) {
+        throw new Error('Apple Sign In not available');
       }
       const appleAuth = require('@invertase/react-native-apple-authentication');
       return appleAuth;

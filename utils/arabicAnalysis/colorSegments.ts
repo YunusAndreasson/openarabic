@@ -116,6 +116,29 @@ interface Segment {
 }
 
 /**
+ * Adds pre-infix root and infix segments, returns infixEnd position for the caller to handle post-infix.
+ */
+function addInfixToSegments(
+  remainingText: string,
+  infixArabic: string,
+  infixColorName: string,
+  segments: Segment[],
+): number {
+  const normalizedRemaining = normalizeArabic(remainingText);
+  const infixIndex = normalizedRemaining.indexOf(infixArabic);
+  const infixStart = infixIndex > 0 ? mapToOriginalPosition(remainingText, infixIndex) : 0;
+
+  if (infixStart > 0) {
+    segments.push({ text: remainingText.substring(0, infixStart), colorName: 'arabicText', type: 'root' });
+  }
+
+  const infixEnd = mapToOriginalPosition(remainingText, infixIndex + infixArabic.length);
+  segments.push({ text: remainingText.substring(infixStart, infixEnd), colorName: infixColorName, type: 'infix' });
+
+  return infixEnd;
+}
+
+/**
  * Helper to split text and optionally extract a trailing diacritic.
  * Returns array of segments: [main segment] or [main segment, diacritic segment].
  * Handles the common pattern of checking for diacritic at end of text and splitting.
@@ -184,63 +207,22 @@ export function reconstructWithColors(analysis: WordAnalysis) {
   }
 
   // Handle infix within the remaining text
+  const infixColorName = COMPONENT_TYPE_CONFIG[ComponentType.INFIX].colorName;
   if (analysis.infix && analysis.suffix) {
-    // Complex case: prefix + infix + suffix
-    const suffixOriginalStart = mapToOriginalPosition(
-      arabic,
-      analysis.suffix.arabicMatch.length,
-      true,
-    );
+    // Complex case: infix + suffix
+    const suffixOriginalStart = mapToOriginalPosition(arabic, analysis.suffix.arabicMatch.length, true);
     const remainingText = arabic.substring(processed, suffixOriginalStart);
 
-    // Find infix position within the remaining text segment
-    const normalizedRemaining = normalizeArabic(remainingText);
-    const infixIndex = normalizedRemaining.indexOf(analysis.infix.arabicMatch);
+    const infixEnd = addInfixToSegments(remainingText, analysis.infix.arabicMatch, infixColorName, segments);
 
-    if (infixIndex > 0) {
-      // Add pre-infix root segment
-      const preInfixEnd = mapToOriginalPosition(remainingText, infixIndex);
-      segments.push({
-        text: remainingText.substring(0, preInfixEnd),
-        colorName: 'arabicText',
-        type: 'root',
-      });
-      processed += preInfixEnd;
-    }
-
-    // Add infix segment
-    const infixEnd = mapToOriginalPosition(
-      remainingText,
-      infixIndex + analysis.infix.arabicMatch.length,
-    );
-    segments.push({
-      text: remainingText.substring(
-        infixIndex > 0 ? mapToOriginalPosition(remainingText, infixIndex) : 0,
-        infixEnd,
-      ),
-      colorName: COMPONENT_TYPE_CONFIG[ComponentType.INFIX].colorName,
-      type: 'infix',
-    });
-    processed =
-      processed +
-      infixEnd -
-      (infixIndex > 0 ? mapToOriginalPosition(remainingText, infixIndex) : 0);
-
-    // Add post-infix root segment if there's remaining text before suffix
     if (infixEnd < remainingText.length) {
-      segments.push({
-        text: remainingText.substring(infixEnd),
-        colorName: 'arabicText',
-        type: 'root',
-      });
-      processed = suffixOriginalStart;
+      segments.push({ text: remainingText.substring(infixEnd), colorName: 'arabicText', type: 'root' });
     }
 
     // Add suffix segment (with diacritic split if needed)
-    const suffixText = arabic.substring(suffixOriginalStart);
     segments.push(
       ...splitWithDiacritic(
-        suffixText,
+        arabic.substring(suffixOriginalStart),
         getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
         'suffix',
         analysis,
@@ -249,35 +231,10 @@ export function reconstructWithColors(analysis: WordAnalysis) {
   } else if (analysis.infix) {
     // Simpler case: infix without suffix
     const remainingText = arabic.substring(processed);
-    const normalizedRemaining = normalizeArabic(remainingText);
-    const infixIndex = normalizedRemaining.indexOf(analysis.infix.arabicMatch);
+    const infixEnd = addInfixToSegments(remainingText, analysis.infix.arabicMatch, infixColorName, segments);
 
-    if (infixIndex > 0) {
-      // Add pre-infix root segment
-      const preInfixEnd = mapToOriginalPosition(remainingText, infixIndex);
-      segments.push({
-        text: remainingText.substring(0, preInfixEnd),
-        colorName: 'arabicText',
-        type: 'root',
-      });
-    }
-
-    // Add infix segment
-    const infixStart = infixIndex > 0 ? mapToOriginalPosition(remainingText, infixIndex) : 0;
-    const infixEnd = mapToOriginalPosition(
-      remainingText,
-      infixIndex + analysis.infix.arabicMatch.length,
-    );
-    segments.push({
-      text: remainingText.substring(infixStart, infixEnd),
-      colorName: COMPONENT_TYPE_CONFIG[ComponentType.INFIX].colorName,
-      type: 'infix',
-    });
-
-    // Add post-infix root segment if there's remaining text (with diacritic split if needed)
     if (infixEnd < remainingText.length) {
-      const postInfixText = remainingText.substring(infixEnd);
-      segments.push(...splitWithDiacritic(postInfixText, 'arabicText', 'root', analysis));
+      segments.push(...splitWithDiacritic(remainingText.substring(infixEnd), 'arabicText', 'root', analysis));
     }
   } else if (analysis.suffix) {
     // Original suffix-only logic

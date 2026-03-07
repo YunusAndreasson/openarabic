@@ -58,7 +58,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     activeTooltip,
     wordDetailsModal,
     isInStudyList,
-    wordDetailsEnabled,
     handleScroll,
     handleViewableItemsChanged,
     handleScrollEnd,
@@ -150,9 +149,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       layout: activeTooltip?.layout ?? null,
       onClose: handleCloseTooltip,
       onOpenWordDetails: handleOpenWordDetails,
-      showWordDetails: wordDetailsEnabled,
     }),
-    [activeTooltip, handleCloseTooltip, handleOpenWordDetails, wordDetailsEnabled],
+    [activeTooltip, handleCloseTooltip, handleOpenWordDetails],
   );
 
   // Only create articleContentProps when article is defined to avoid TypeScript errors

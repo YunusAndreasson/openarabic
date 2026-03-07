@@ -6,7 +6,7 @@ import { THEME_OPTIONS } from '@/components/ui/ThemePicker';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import { setHapticsEnabled, setWordDetailsEnabled } from '@/store/settingsSlice';
+import { setHapticsEnabled } from '@/store/settingsSlice';
 
 const FONT_DISPLAY_NAMES: Record<string, string> = {
   'NotoSansArabic-Regular': 'Noto Sans',
@@ -26,7 +26,7 @@ interface AppearanceSectionProps {
 /**
  * Appearance settings section - visual customization options.
  *
- * Includes: Theme, Arabic font, display language, word details toggle, haptics toggle.
+ * Includes: Theme, Arabic font, display language, haptics toggle.
  */
 export const AppearanceSection = memo<AppearanceSectionProps>(({ onThemePress, onLanguagePress }) => {
     const dispatch = useAppDispatch();
@@ -34,8 +34,6 @@ export const AppearanceSection = memo<AppearanceSectionProps>(({ onThemePress, o
     const currentLanguage = useAppSelectorShallow(state => state.settings.displayLanguagePreference);
     const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
     const hapticsEnabled = useAppSelectorShallow(state => state.settings.hapticsEnabled);
-    const wordDetailsEnabled = useAppSelectorShallow(state => state.settings.wordDetailsEnabled);
-
     const currentThemeText = useMemo(() => {
       const themeOption = THEME_OPTIONS.find(option => option.id === currentTheme);
       return themeOption?.title || STRINGS.THEME_BIRCHES;
@@ -49,13 +47,6 @@ export const AppearanceSection = memo<AppearanceSectionProps>(({ onThemePress, o
     const handleHapticsToggle = useCallback(
       (enabled: boolean) => {
         dispatch(setHapticsEnabled(enabled));
-      },
-      [dispatch],
-    );
-
-    const handleWordDetailsToggle = useCallback(
-      (enabled: boolean) => {
-        dispatch(setWordDetailsEnabled(enabled));
       },
       [dispatch],
     );
@@ -86,14 +77,6 @@ export const AppearanceSection = memo<AppearanceSectionProps>(({ onThemePress, o
           rightType="text-chevron"
           rightText={currentLanguageText}
           onPress={onLanguagePress}
-        />
-        <SettingsCard
-          icon="eye-outline"
-          label={STRINGS.WORD_DETAILS}
-          subtitle={STRINGS.WORD_DETAILS_DESCRIPTION}
-          rightType="toggle"
-          toggleValue={wordDetailsEnabled}
-          onToggleChange={handleWordDetailsToggle}
         />
         <SettingsCard
           icon="cellular"

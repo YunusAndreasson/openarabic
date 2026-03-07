@@ -11,8 +11,9 @@ interface BrandFooterProps {
   showDetails?: boolean;
 }
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 export const BrandFooter = memo(({ showDetails = false }: BrandFooterProps) => {
-  const currentYear = new Date().getFullYear();
 
   // Use pkg.version directly to ensure build number is included (format: "1447.5.37+188")
   const versionString = pkg.version || '0.0.0';
@@ -27,7 +28,7 @@ export const BrandFooter = memo(({ showDetails = false }: BrandFooterProps) => {
         </ThemedText>
       )}
       <ThemedText type="caption" colorName="textTertiary" style={styles.copyright}>
-        © {currentYear} OpenArabic
+        © {CURRENT_YEAR} OpenArabic
       </ThemedText>
       <Image
         source={require('@/assets/images/oaLogo.png')}

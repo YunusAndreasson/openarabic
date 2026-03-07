@@ -17,7 +17,6 @@ import reducer, {
   setDisplayLanguagePreference,
   setHapticsEnabled,
   setReminderTime,
-  setWordDetailsEnabled,
   type SettingsState,
 } from '../../store/settingsSlice';
 import { AudioLanguage, DisplayLanguage } from '@/types/enums';
@@ -40,7 +39,6 @@ describe('settingsSlice reducers', () => {
       displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH,
       dailyWordLimit: 10,
       hapticsEnabled: true,
-      wordDetailsEnabled: true,
     };
   });
 
@@ -159,19 +157,6 @@ describe('settingsSlice reducers', () => {
     test('disables haptics', () => {
       const state = reducer(initialState, setHapticsEnabled(false));
       expect(state.hapticsEnabled).toBe(false);
-    });
-  });
-
-  describe('setWordDetailsEnabled', () => {
-    test('enables word details', () => {
-      const modifiedState = { ...initialState, wordDetailsEnabled: false };
-      const state = reducer(modifiedState, setWordDetailsEnabled(true));
-      expect(state.wordDetailsEnabled).toBe(true);
-    });
-
-    test('disables word details', () => {
-      const state = reducer(initialState, setWordDetailsEnabled(false));
-      expect(state.wordDetailsEnabled).toBe(false);
     });
   });
 

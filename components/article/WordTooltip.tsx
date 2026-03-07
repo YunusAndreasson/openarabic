@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -69,10 +68,6 @@ const STATIC_STYLES = StyleSheet.create({
     textAlignVertical: 'center',
     flexShrink: 0,
   },
-  chevronIcon: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM,
-  },
   textContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -101,7 +96,6 @@ export function WordTooltip({
   arabicWord,
   layout,
   onOpenWordDetails,
-  showWordDetails = true,
 }: WordTooltipProps) {
   const colors = useColors();
 
@@ -174,6 +168,7 @@ export function WordTooltip({
         onPress={onOpenWordDetails}
         disabled={!onOpenWordDetails}
         hitSlop={LAYOUT.HIT_SLOP.SMALL}
+        style={({ pressed }) => ({ opacity: pressed ? LAYOUT.OPACITY.HIGH : 1 })}
       >
         <Animated.View
           entering={FADE_IN_ANIMATION}
@@ -195,14 +190,6 @@ export function WordTooltip({
                 ))}
               </ThemedText>
             </View>
-            {showWordDetails && (
-              <Ionicons
-                name="chevron-forward"
-                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                color={colors.secondaryText}
-                style={STATIC_STYLES.chevronIcon}
-              />
-            )}
           </View>
         </Animated.View>
       </Pressable>

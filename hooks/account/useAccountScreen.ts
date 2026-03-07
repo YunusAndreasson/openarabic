@@ -1,7 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import * as StoreReview from 'expo-store-review';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { readingProgressQueries } from '@/constants/queries';
@@ -10,7 +9,6 @@ import { STRINGS } from '@/constants/strings';
 import { useAudioCache } from '@/hooks/audio/useAudioCache';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useReminders } from '@/hooks/notifications/useReminders';
-import pkg from '@/package.json';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { ensurePermissions } from '@/services/notificationService';
@@ -79,9 +77,7 @@ export const useAccountScreen = () => {
 
     Alert.alert(
       STRINGS.CLEAR_CACHE,
-      `This will clear ${formatBytes(cacheSize)} of cached data including audio files, articles, and all app data. ${
-        STRINGS.DATA_RELOAD_REQUIRED
-      }`,
+      STRINGS.CLEAR_CACHE_CONFIRMATION.replace('{size}', formatBytes(cacheSize)),
       [
         {
           text: UiAction.CANCEL,
@@ -103,10 +99,7 @@ export const useAccountScreen = () => {
               await clearPersistedQueryCache();
 
               lightFeedback();
-              Alert.alert(
-                STRINGS.SUCCESS,
-                'All caches cleared successfully. Audio, articles, and app data will reload when needed.',
-              );
+              Alert.alert(STRINGS.SUCCESS, STRINGS.CLEAR_CACHE_SUCCESS);
             } catch (error) {
               Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
               handleError(error as Error, { showToast: false });
@@ -255,77 +248,19 @@ export const useAccountScreen = () => {
     router.push(ROUTE_PATHS.ACCOUNT_FEEDBACK);
   }, []);
 
-  const handleRequestReview = useCallback(async () => {
-    try {
-      // isAvailableAsync checks platform capability and store URL config
-      const isAvailable = await StoreReview.isAvailableAsync();
-      if (!isAvailable) {
-        // Not available: TestFlight, missing store URL, or unsupported platform
-        handleError(new Error('StoreReview not available'), {
-          analyticsEventName: 'Store_Review_Not_Available',
-          sentryTags: { location: 'account', action: 'store_review' },
-          sentryExtra: { storeUrl: StoreReview.storeUrl() },
-          sentrySeverity: 'info',
-          showToast: false,
-        });
-        return;
-      }
-
-      // Small delay to ensure app is fully in foreground (iOS window scene issue)
-      await new Promise(resolve => setTimeout(resolve, 100));
-      await StoreReview.requestReview();
-      lightFeedback();
-    } catch (error) {
-      handleError(error as Error, {
-        analyticsEventName: 'Store_Review_Request_Failed',
-        sentryTags: { location: 'account', action: 'store_review' },
-        showToast: true,
-        sentrySeverity: 'warning',
-      });
-    }
-  }, []);
-
-  const appVersion = pkg.version;
-  const currentYear = new Date().getFullYear();
-
-  const result = useMemo(
-    () => ({
-      reminderTime,
-      formatReminderTime,
-      showTimePicker,
-      handleTimePickerOpen,
-      handleTimePickerClose,
-      handleTimeSet,
-      handleReminderToggle,
-      handleSignOut,
-      handleResetReadingProgress,
-      handleSupportContact,
-      handleRequestReview,
-      appVersion,
-      currentYear,
-      user,
-      handleClearCache,
-      cacheSize,
-    }),
-    [
-      reminderTime,
-      formatReminderTime,
-      showTimePicker,
-      handleTimePickerOpen,
-      handleTimePickerClose,
-      handleTimeSet,
-      handleReminderToggle,
-      handleSignOut,
-      handleResetReadingProgress,
-      handleSupportContact,
-      handleRequestReview,
-      appVersion,
-      currentYear,
-      user,
-      handleClearCache,
-      cacheSize,
-    ],
-  );
-
-  return result;
+  return {
+    reminderTime,
+    formatReminderTime,
+    showTimePicker,
+    handleTimePickerOpen,
+    handleTimePickerClose,
+    handleTimeSet,
+    handleReminderToggle,
+    handleSignOut,
+    handleResetReadingProgress,
+    handleSupportContact,
+    user,
+    handleClearCache,
+    cacheSize,
+  };
 };

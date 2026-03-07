@@ -112,6 +112,8 @@ export function useAuthForm(): UseAuthFormReturn {
 
       if (error) {
         if (!isMountedRef.current) return;
+        // Show inline error so it's visible even when auth screen overlays the toast
+        setPasswordError(error.message);
         handleError(error, {
           toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${error.message}`,
           analyticsEventName: 'Sign_In_Error',
@@ -127,6 +129,7 @@ export function useAuthForm(): UseAuthFormReturn {
       }
     } catch (err) {
       if (!isMountedRef.current) return;
+      setPasswordError(STRINGS.PLEASE_TRY_AGAIN);
       handleError(err instanceof Error ? err : new Error('Sign in error'), {
         toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
         analyticsEventName: 'Sign_In_Error',
@@ -156,6 +159,7 @@ export function useAuthForm(): UseAuthFormReturn {
       });
       if (error) {
         if (!isMountedRef.current) return;
+        setPasswordError(error.message);
         handleError(error, {
           toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${error.message}`,
           analyticsEventName: 'Sign_Up_Error',
@@ -198,6 +202,7 @@ export function useAuthForm(): UseAuthFormReturn {
       }
     } catch (err) {
       if (!isMountedRef.current) return;
+      setPasswordError(STRINGS.PLEASE_TRY_AGAIN);
       handleError(err instanceof Error ? err : new Error('Sign up error'), {
         toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
         analyticsEventName: 'Sign_Up_Error',

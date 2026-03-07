@@ -12,4 +12,3 @@ export { ListSeparator } from './ListSeparator';
 export { MetricCard } from './MetricCard';
 export { ProgressBar } from './ProgressBar';
 export { SectionLabel } from './SectionLabel';
-export { SectionTitle } from './SectionTitle';

@@ -1,15 +1,18 @@
 import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAccountDeletion } from '@/hooks/account/useAccountDeletion';
+import { useColors } from '@/hooks/theme/useColors';
 import { router } from 'expo-router';
 
 const DeleteAccountScreen: FC = () => {
+  const colors = useColors();
   const {
     userEmail,
     confirmationText,
@@ -75,7 +78,7 @@ const DeleteAccountScreen: FC = () => {
             {STRINGS.DELETE_ACCOUNT_SIGNED_IN_AS}
           </ThemedText>
           <ThemedText type="body" weight="medium" style={styles.emailText}>
-            {userEmail || 'Loading...'}
+            {userEmail || STRINGS.NO_EMAIL}
           </ThemedText>
         </View>
 
@@ -97,21 +100,15 @@ const DeleteAccountScreen: FC = () => {
           />
         </View>
 
-        {/* Continue Button */}
-        <View style={styles.buttonContainer}>
-          <ThemedText
-            type="body"
-            weight="semibold"
-            colorName="error"
-            style={[
-              styles.deleteButton,
-              (!confirmationText || loading) && styles.deleteButtonDisabled,
-            ]}
-            onPress={!confirmationText || loading ? undefined : handleDeletePress}
-          >
-            {loading ? STRINGS.ACCOUNT_DELETION_IN_PROGRESS : STRINGS.DELETE_ACCOUNT}
-          </ThemedText>
-        </View>
+        {/* Delete Button */}
+        <ThemedButton
+          title={loading ? STRINGS.ACCOUNT_DELETION_IN_PROGRESS : STRINGS.DELETE_ACCOUNT}
+          onPress={handleDeletePress}
+          disabled={!confirmationText || loading}
+          loading={loading}
+          style={[styles.deleteButton, { backgroundColor: colors.error }]}
+          uppercase={false}
+        />
       </ThemedView>
     </ThemedView>
   );
@@ -161,16 +158,8 @@ const styles = StyleSheet.create({
   inputLabel: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
-  buttonContainer: {
-    marginTop: LAYOUT.SPACING.SMALL,
-  },
   deleteButton: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  deleteButtonDisabled: {
-    opacity: LAYOUT.OPACITY.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL,
   },
 });
 

@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 
-import { EditModeButton, PlaylistHeaderButtons } from '@/components/ui';
+import { EditModeButton } from '@/components/ui';
 import { useColors } from '@/hooks/theme/useColors';
 import { AppTab } from '@/types/enums';
 import { createTabHeaderOptions } from '@/utils/navigation';
@@ -15,9 +15,7 @@ export default function BookmarksLayout(): JSX.Element {
         name="index"
         options={createTabHeaderOptions({
           title: AppTab.PLAYLIST,
-          rightComponent: () => (
-            <PlaylistHeaderButtons EditModeComponent={<EditModeButton type="playlist" />} />
-          ),
+          rightComponent: () => <EditModeButton type="playlist" />,
           colors,
         })}
       />

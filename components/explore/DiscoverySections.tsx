@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { memo, useMemo, type FC } from 'react';
+import { memo, useCallback, useMemo, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { SectionLabel } from '@/components/common';
@@ -155,11 +155,14 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     return result;
   }, [unreadArticles]);
 
-  if (sections.length === 0) return null;
+  const handleArticlePress = useCallback(
+    (article: Article) => {
+      router.push(getArticleRoute(article.id as ArticleId, article.title, true));
+    },
+    [router],
+  );
 
-  const handleArticlePress = (article: Article) => {
-    router.push(getArticleRoute(article.id as ArticleId, article.title, true));
-  };
+  if (sections.length === 0) return null;
 
   return (
     <View>

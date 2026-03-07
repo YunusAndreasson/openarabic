@@ -1,4 +1,4 @@
-import { Stack, router } from 'expo-router';
+import { Stack } from 'expo-router';
 
 import { CloseButton } from '@/components/ui';
 import { STRINGS } from '@/constants/strings';
@@ -11,7 +11,7 @@ export default function AccountLayout() {
   const screenOptions = (title: string) =>
     createNavigationOptions(colors, {
       title,
-      headerLeft: () => <CloseButton onPress={() => router.back()} />,
+      headerRight: () => <CloseButton />,
     });
 
   return (

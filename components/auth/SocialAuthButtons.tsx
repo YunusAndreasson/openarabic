@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   dividerContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginTop: LAYOUT.SPACING.XLARGE, // More space above divider (clear separation)
+    marginVertical: LAYOUT.SPACING.XLARGE, // Equal space above and below divider
     width: '100%',
   },
   dividerLine: {

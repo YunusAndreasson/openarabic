@@ -5,7 +5,6 @@ import type { LayoutRectangle } from 'react-native';
 import { fsrsQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useModalState } from '@/hooks/ui/useModalState';
-import { useAppSelectorShallow } from '@/store/hooks';
 import type { RootId } from '@/types/branded.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
@@ -28,7 +27,6 @@ export function useArticleWordInteractions({
   refetchStudyWords,
 }: UseArticleWordInteractionsOptions) {
   const { user } = useAuth();
-  const wordDetailsEnabled = useAppSelectorShallow(state => state.settings.wordDetailsEnabled);
   const queryClient = useQueryClient();
 
   // Tooltip state for word tap preview
@@ -151,8 +149,6 @@ export function useArticleWordInteractions({
     activeTooltip,
     wordDetailsModal,
     isInStudyList,
-    wordDetailsEnabled,
-
     // Handlers
     handleWordPress,
     handleCloseTooltip,

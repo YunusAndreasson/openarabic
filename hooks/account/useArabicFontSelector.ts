@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { LAYOUT } from '@/constants/layout';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -59,7 +59,6 @@ export interface UseArabicFontSelectorResult {
   fontOptions: ArabicFontOption[];
   selectFont: (fontName: ArabicFontName) => void;
   setFontSize: (size: number) => void;
-  getSelectedFontOption: () => ArabicFontOption;
   fontSizeRange: typeof FONT_SIZE_RANGE;
 }
 
@@ -77,7 +76,6 @@ export const useArabicFontSelector = (): UseArabicFontSelectorResult => {
 
   const setFontSize = useCallback(
     (size: number) => {
-      // Ensure size is within bounds
       const clampedSize = Math.max(
         FONT_SIZE_RANGE.MIN,
         Math.min(FONT_SIZE_RANGE.MAX, Math.round(size)),
@@ -87,29 +85,12 @@ export const useArabicFontSelector = (): UseArabicFontSelectorResult => {
     [dispatch],
   );
 
-  const getSelectedFontOption = useCallback((): ArabicFontOption => {
-    const foundOption = ARABIC_FONT_OPTIONS.find(option => option.name === selectedFont);
-    if (foundOption) {
-      return foundOption;
-    }
-    // Fallback to first option if selected font is not found
-    const defaultOption = ARABIC_FONT_OPTIONS[0];
-    if (!defaultOption) {
-      throw new Error('No Arabic font options available');
-    }
-    return defaultOption;
-  }, [selectedFont]);
-
-  return useMemo(
-    () => ({
-      selectedFont,
-      selectedFontSize,
-      fontOptions: ARABIC_FONT_OPTIONS,
-      selectFont,
-      setFontSize,
-      getSelectedFontOption,
-      fontSizeRange: FONT_SIZE_RANGE,
-    }),
-    [selectedFont, selectedFontSize, selectFont, setFontSize, getSelectedFontOption],
-  );
+  return {
+    selectedFont,
+    selectedFontSize,
+    fontOptions: ARABIC_FONT_OPTIONS,
+    selectFont,
+    setFontSize,
+    fontSizeRange: FONT_SIZE_RANGE,
+  };
 };

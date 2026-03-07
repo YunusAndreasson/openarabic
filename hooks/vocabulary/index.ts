@@ -10,4 +10,3 @@ export * from './useChartAxisLabels';
 export * from './useDueWordsChart';
 export * from './useMasteryChart';
 export * from './useRetrievabilityChart';
-export * from './useWordSizing';

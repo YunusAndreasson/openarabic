@@ -75,10 +75,6 @@ export function SignUpForm(): JSX.Element {
     router.push(ROUTE_PATHS.AUTH_SIGN_IN);
   }, []);
 
-  const handleCreateAccount = useCallback(() => {
-    signUpWithEmail();
-  }, [signUpWithEmail]);
-
   return (
     <View style={styles.container}>
       <AuthEmailInput
@@ -108,7 +104,7 @@ export function SignUpForm(): JSX.Element {
         title={STRINGS.CREATE_ACCOUNT}
         testID="create-account-button"
         accessibilityLabel="Create account"
-        onPress={handleCreateAccount}
+        onPress={signUpWithEmail}
       />
 
       {/* Link to Sign In */}

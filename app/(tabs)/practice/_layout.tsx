@@ -1,11 +1,10 @@
-import { Stack, router } from 'expo-router';
+import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 
 import {
   CloseButton,
   DictionaryButton,
   EditModeButton,
-  PracticeHeaderButtons,
 } from '@/components/ui';
 import { useColors } from '@/hooks/theme/useColors';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
@@ -22,9 +21,7 @@ export default function StudyLayout(): JSX.Element {
         name="index"
         options={createTabHeaderOptions({
           title: AppTab.PRACTICE,
-          rightComponent: () => (
-            <PracticeHeaderButtons DictionaryComponent={<DictionaryButton />} />
-          ),
+          rightComponent: () => <DictionaryButton />,
           colors,
         })}
       />
@@ -32,9 +29,12 @@ export default function StudyLayout(): JSX.Element {
         name="dictionary"
         options={createNavigationOptions(colors, {
           title: UiAction.ALL_WORDS,
-          // Only show CloseButton when NOT in edit mode to avoid duplicate buttons
-          headerLeft: editMode ? undefined : () => <CloseButton onPress={() => router.back()} />,
-          headerRight: () => <EditModeButton type="dictionary" hideWhenEmpty={false} />,
+          headerRight: () => (
+            <>
+              <EditModeButton type="dictionary" hideWhenEmpty={false} />
+              {!editMode && <CloseButton />}
+            </>
+          ),
         })}
       />
       <Stack.Screen

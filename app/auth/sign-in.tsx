@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LegalLinks, SignInForm } from '@/components/auth';
+import { SignInForm } from '@/components/auth';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 
@@ -31,23 +31,14 @@ const SignInScreen = memo(function SignInScreen(): JSX.Element {
       }}
     >
       <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.headerContainer}>
-          <ThemedText align="center" type="heading1" colorName="headingText">
-            {STRINGS.SIGN_IN_TITLE}
-          </ThemedText>
-          <ThemedText align="center" type="body" variant="secondary" style={styles.subtitle}>
-            {STRINGS.SIGN_IN_SUBTITLE}
-          </ThemedText>
-        </View>
+        <ThemedText align="center" type="body" variant="secondary" style={styles.subtitle}>
+          {STRINGS.SIGN_IN_SUBTITLE}
+        </ThemedText>
 
         {/* Sign In Form */}
         <View style={styles.formContainer}>
           <SignInForm />
         </View>
-
-        {/* Legal Links */}
-        <LegalLinks />
       </View>
     </ThemedView>
   );
@@ -68,19 +59,13 @@ const styles = StyleSheet.create({
     maxWidth: SCREEN_WIDTH * 0.9,
     width: '100%',
   },
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.XLARGE,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    width: '100%',
-  },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingBottom: LAYOUT.SPACING.XXLARGE,
-    paddingTop: LAYOUT.SPACING.XLARGE,
+    paddingTop: LAYOUT.SPACING.XXXLARGE,
   },
   subtitle: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.XLARGE,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
 });

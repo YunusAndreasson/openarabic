@@ -62,7 +62,6 @@ export default function TabLayout(): JSX.Element {
       screenOptions={{
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
-        tabBarShowLabel: true,
         tabBarStyle: {
           position: 'absolute',
           backgroundColor: 'transparent',
@@ -72,7 +71,7 @@ export default function TabLayout(): JSX.Element {
           <BlurView
             intensity={blurProps.intensity}
             tint={blurProps.tint}
-            blurMethod="dimezisBlurView"
+            blurMethod="dimezisBlurViewSdk31Plus"
             style={styles.tabBarBlur}
           />
         ),

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
-import { memo, startTransition, useOptimistic, useMemo } from 'react';
+import { memo, startTransition, useOptimistic } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 const GLASS_AVAILABLE = isLiquidGlassAvailable();
@@ -55,21 +55,15 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     };
 
     // Fallback background for non-iOS-26 platforms
-    const fallbackButtonStyle = useMemo(
-      () => ({
-        backgroundColor: colors.elevation1,
-        opacity: LAYOUT.OPACITY.PRESSED,
-      }),
-      [colors.elevation1],
-    );
+    const fallbackButtonStyle = {
+      backgroundColor: colors.elevation1,
+      opacity: LAYOUT.OPACITY.PRESSED,
+    };
 
-    const activeFallbackStyle = useMemo(
-      () => ({
-        backgroundColor: colors.elevation2,
-        opacity: LAYOUT.OPACITY.ACTIVE,
-      }),
-      [colors.elevation2],
-    );
+    const activeFallbackStyle = {
+      backgroundColor: colors.elevation2,
+      opacity: LAYOUT.OPACITY.ACTIVE,
+    };
 
     return (
       <>

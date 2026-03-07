@@ -1,6 +1,5 @@
 import { router } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback } from 'react';
 
 import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -21,9 +20,7 @@ export function DictionaryButton(props: DictionaryButtonProps): JSX.Element | nu
   const studyWordsCount = (allWords?.length ?? 0) + (dueWords?.length ?? 0);
   const effectiveCount = itemCount ?? studyWordsCount;
 
-  const handlePressAction = useCallback((): void => {
-    router.push(ROUTE_PATHS.PRACTICE_DICTIONARY);
-  }, []);
+  const handlePressAction = () => router.push(ROUTE_PATHS.PRACTICE_DICTIONARY);
 
   // Hide button when hideWhenEmpty is true and there are no study words
   if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {

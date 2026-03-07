@@ -194,58 +194,6 @@ export function getArticlesByDueWords(
 }
 
 /**
- * Calculate filter date based on date range
- */
-export function calculateFilterDate(dateRange: 'week' | 'month' | 'all'): Date | null {
-  if (dateRange === 'all') return null;
-  const date = new Date();
-  if (dateRange === 'week') {
-    date.setDate(date.getDate() - 7);
-  } else if (dateRange === 'month') {
-    date.setDate(date.getDate() - 30);
-  }
-  return date;
-}
-
-/**
- * Filter articles based on filter criteria
- */
-export function filterArticles(
-  articles: Article[],
-  filters: {
-    authorIds: number[];
-    difficultyRange: [number, number];
-    dateRange: 'week' | 'month' | 'all';
-  },
-  filterDate: Date | null,
-): Article[] {
-  if (articles.length === 0) return [];
-
-  return articles.filter(article => {
-    // Filter by authors
-    if (filters.authorIds.length > 0 && !filters.authorIds.includes(article.author.id)) {
-      return false;
-    }
-
-    // Filter by difficulty range
-    if (
-      (filters.difficultyRange[0] > 1 || filters.difficultyRange[1] < 5) &&
-      (article.difficulty_level < filters.difficultyRange[0] ||
-        article.difficulty_level > filters.difficultyRange[1])
-    ) {
-      return false;
-    }
-
-    // Filter by date range
-    if (filterDate && new Date(article.created_at) < filterDate) {
-      return false;
-    }
-
-    return true;
-  });
-}
-
-/**
  * Sort articles by progress: articles with progress (partially read) first,
  * then articles with no progress, then articles with full progress (completed)
  */

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { memo, useMemo, type FC } from 'react';
+import { memo, useCallback, useMemo, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { SectionLabel } from '@/components/common';
@@ -103,16 +103,19 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
     };
   }, [user?.id, articlesData, progressMap]);
 
+  const handleArticlePress = useCallback(
+    (article: Article) => {
+      // For continue reading: resume from progress (disableAutoScroll = false)
+      // For getting started: start fresh (disableAutoScroll = true)
+      router.push(getArticleRoute(article.id as ArticleId, article.title, !isContinueReading));
+    },
+    [router, isContinueReading],
+  );
+
   // Don't render if no user or no articles to show
   if (!user?.id || articles.length === 0) {
     return null;
   }
-
-  const handleArticlePress = (article: Article) => {
-    // For continue reading: resume from progress (disableAutoScroll = false)
-    // For getting started: start fresh (disableAutoScroll = true)
-    router.push(getArticleRoute(article.id as ArticleId, article.title, !isContinueReading));
-  };
 
   return (
     <View style={styles.container}>

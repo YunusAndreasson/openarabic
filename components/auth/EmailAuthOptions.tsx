@@ -9,15 +9,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
 /**
- * Email Authentication Options Component
- *
- * Displays navigation buttons to dedicated Sign In and Sign Up screens.
- * Shown when user expands "Continue with email" option.
- *
- * Features:
- * - Two clear CTAs for signing in vs creating account
- * - Navigates to separate dedicated screens
- * - Consistent button styling with design system
+ * Email authentication navigation buttons (Sign In / Create Account).
  */
 export function EmailAuthOptions(): JSX.Element {
   const handleSignIn = useCallback(() => {
@@ -32,7 +24,8 @@ export function EmailAuthOptions(): JSX.Element {
     <View style={styles.container}>
       <ThemedButton
         variant="outlined"
-        title={STRINGS.SIGN_IN}
+        title={STRINGS.SIGN_IN_WITH_EMAIL}
+        icon="mail-outline"
         uppercase={false}
         testID="navigate-to-sign-in-button"
         accessibilityLabel="Go to sign in screen"
@@ -41,7 +34,8 @@ export function EmailAuthOptions(): JSX.Element {
 
       <ThemedButton
         variant="outlined"
-        title={STRINGS.CREATE_ACCOUNT}
+        title={STRINGS.CREATE_ACCOUNT_WITH_EMAIL}
+        icon="mail-outline"
         uppercase={false}
         style={styles.createAccountButton}
         testID="navigate-to-sign-up-button"

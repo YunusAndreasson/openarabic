@@ -15,8 +15,6 @@ import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
-  calculateFilterDate,
-  filterArticles,
   getArticlesByDueWords,
   sortArticlesByProgress,
 } from '@/utils/articleUtils';
@@ -117,25 +115,6 @@ const mockStudyWords: StudyWord[] = [
 ];
 
 describe('articleUtils', () => {
-  describe('calculateFilterDate', () => {
-    test('should return null for "all" date range', () => {
-      const result = calculateFilterDate('all');
-      expect(result).toBeNull();
-    });
-
-    test('should calculate week date correctly', () => {
-      const result = calculateFilterDate('week');
-      expect(result).not.toBeNull();
-      expect(result!.getTime()).toBeLessThan(Date.now());
-    });
-
-    test('should calculate month date correctly', () => {
-      const result = calculateFilterDate('month');
-      expect(result).not.toBeNull();
-      expect(result!.getTime()).toBeLessThan(Date.now());
-    });
-  });
-
   describe('sortArticlesByProgress', () => {
     test('should prioritize articles with partial progress (1-94%)', () => {
       const progressMap = new Map([
@@ -243,52 +222,6 @@ describe('articleUtils', () => {
       expect(result[3].id).toBe(6); // 100%
       expect(result[4].id).toBe(5); // 99%
       expect(result[5].id).toBe(4); // 95% - at threshold
-    });
-  });
-
-  describe('filterArticles', () => {
-    test('should filter by author IDs', () => {
-      const filters = {
-        authorIds: [1],
-        difficultyRange: [1, 5] as [number, number],
-        dateRange: 'all' as const,
-      };
-      const result = filterArticles(mockArticles, filters, null);
-      expect(result).toHaveLength(1);
-      expect(result[0].author.id).toBe(1);
-    });
-
-    test('should filter by difficulty range', () => {
-      const filters = {
-        authorIds: [],
-        difficultyRange: [3, 5] as [number, number],
-        dateRange: 'all' as const,
-      };
-      const result = filterArticles(mockArticles, filters, null);
-      expect(result).toHaveLength(1);
-      expect(result[0].difficulty_level).toBe(4);
-    });
-
-    test('should filter by date range', () => {
-      const filters = {
-        authorIds: [],
-        difficultyRange: [1, 5] as [number, number],
-        dateRange: 'all' as const,
-      };
-      const filterDate = new Date('2024-01-10T00:00:00Z');
-      const result = filterArticles(mockArticles, filters, filterDate);
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(2); // Second article is newer
-    });
-
-    test('should return empty array for empty input', () => {
-      const filters = {
-        authorIds: [],
-        difficultyRange: [1, 5] as [number, number],
-        dateRange: 'all' as const,
-      };
-      const result = filterArticles([], filters, null);
-      expect(result).toHaveLength(0);
     });
   });
 

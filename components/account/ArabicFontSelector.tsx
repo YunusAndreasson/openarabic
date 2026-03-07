@@ -1,11 +1,13 @@
-import { BaseCard } from '@/components/common';
+import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import { useEffect, useState, type FC } from 'react';
+import { useState, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import {
   useArabicFontSelector,
   type ArabicFontOption,
@@ -41,9 +43,18 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
       onPress={handlePress}
     >
       <View style={styles.fontHeader}>
-        <ThemedText style={styles.fontName} type="body" weight="semibold">
-          {option.displayName}
-        </ThemedText>
+        <View style={styles.fontTitleRow}>
+          <ThemedText style={styles.fontName} type="body" weight="semibold">
+            {option.displayName}
+          </ThemedText>
+          {isSelected && (
+            <Ionicons
+              name="checkmark-circle"
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color={colors.tint}
+            />
+          )}
+        </View>
         <ThemedText colorName="textTertiary" style={styles.fontDescription} type="caption">
           {option.description}
         </ThemedText>
@@ -72,17 +83,6 @@ export const ArabicFontSelector: FC = () => {
   const [localFontSize, setLocalFontSize] = useState<number>(selectedFontSize);
   const [isSliding, setIsSliding] = useState<boolean>(false);
 
-  // Keep local state in sync when global value changes externally
-  useEffect(() => {
-    if (!isSliding && localFontSize !== selectedFontSize) {
-      setLocalFontSize(selectedFontSize);
-    }
-  }, [selectedFontSize, localFontSize, isSliding]);
-
-  const handleFontSizeChange = (value: number) => {
-    setLocalFontSize(value);
-  };
-
   const handleSlidingStart = () => {
     setIsSliding(true);
   };
@@ -92,27 +92,45 @@ export const ArabicFontSelector: FC = () => {
     setFontSize(value);
   };
 
+  const displayFontSize = isSliding ? localFontSize : selectedFontSize;
+
   const scrollContentStyle = {
     gap: LAYOUT.SPACING.SMALL,
-    paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE, // Extra space + safe area
+    paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE,
   };
 
   return (
     <View style={styles.container}>
       <BaseCard shadowSize="small" style={styles.sliderCard}>
-        <Slider
-          style={styles.slider}
-          minimumValue={fontSizeRange.MIN}
-          maximumValue={fontSizeRange.MAX}
-          step={fontSizeRange.STEP}
-          value={localFontSize}
-          onValueChange={handleFontSizeChange}
-          onSlidingStart={handleSlidingStart}
-          onSlidingComplete={handleSlidingComplete}
-          minimumTrackTintColor={colors.tint}
-          maximumTrackTintColor={colors.borderOverlay}
-          thumbTintColor={colors.tint}
-        />
+        <View style={styles.sliderHeader}>
+          <ThemedText type="body" weight="medium">
+            {STRINGS.FONT_SIZE}
+          </ThemedText>
+          <ThemedText colorName="textTertiary" type="caption">
+            {Math.round(displayFontSize)}px
+          </ThemedText>
+        </View>
+        <View style={styles.sliderRow}>
+          <ThemedText colorName="textTertiary" style={styles.sliderLabel}>
+            A
+          </ThemedText>
+          <Slider
+            style={styles.slider}
+            minimumValue={fontSizeRange.MIN}
+            maximumValue={fontSizeRange.MAX}
+            step={fontSizeRange.STEP}
+            value={localFontSize}
+            onValueChange={setLocalFontSize}
+            onSlidingStart={handleSlidingStart}
+            onSlidingComplete={handleSlidingComplete}
+            minimumTrackTintColor={colors.tint}
+            maximumTrackTintColor={colors.borderOverlay}
+            thumbTintColor={colors.tint}
+          />
+          <ThemedText colorName="textTertiary" style={styles.sliderLabelLarge}>
+            A
+          </ThemedText>
+        </View>
       </BaseCard>
 
       <ScrollView
@@ -124,7 +142,7 @@ export const ArabicFontSelector: FC = () => {
           <FontPreviewCard
             key={option.name}
             isSelected={selectedFont === option.name}
-            fontSize={isSliding ? localFontSize : selectedFontSize}
+            fontSize={displayFontSize}
             option={option}
             onSelect={selectFont}
           />
@@ -143,8 +161,25 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
+  sliderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  sliderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  sliderLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  },
+  sliderLabelLarge: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+  },
   slider: {
-    width: '100%',
+    flex: 1,
     height: LAYOUT.BUTTON.HEIGHT.LARGE - LAYOUT.SPACING.SMALL,
   },
   scrollView: {
@@ -158,6 +193,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,
     gap: LAYOUT.SPACING.TINY,
+  },
+  fontTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
   },
   fontName: {
     textAlign: 'center',

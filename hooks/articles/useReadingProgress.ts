@@ -137,7 +137,7 @@ export function useReadingProgress({
     },
   });
 
-  // Improved progress update logic
+  // Only save forward progress (never regress)
   const updateProgress = useCallback(
     (sentenceIndex: number) => {
       if (!isActive || !user?.id || articleId <= 0 || totalSentences <= 0) {
@@ -147,13 +147,13 @@ export function useReadingProgress({
       // Ensure sentenceIndex is valid (0-based indexing: 0 to totalSentences-1)
       const validSentenceIndex = Math.max(0, Math.min(sentenceIndex, totalSentences - 1));
 
-      // Update if we've moved to a different position (not just forward progress)
+      // Only save if we've advanced beyond the last recorded position
       const lastRecorded = Math.max(
         lastSavedSentenceRef.current,
         progress?.last_sentence_read ?? 0,
       );
 
-      if (validSentenceIndex !== lastRecorded) {
+      if (validSentenceIndex > lastRecorded) {
         updateProgressMutation.mutate(validSentenceIndex);
       }
     },

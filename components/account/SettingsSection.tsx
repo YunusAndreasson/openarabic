@@ -1,9 +1,9 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BaseCard, SectionTitle } from '@/components/common';
+import { BaseCard, SectionLabel } from '@/components/common';
 import { OPACITY_HEX } from '@/constants/colors';
-import { FONT_WEIGHTS, LAYOUT, LETTER_SPACING } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface SettingsSectionProps {
@@ -45,7 +45,7 @@ export const SettingsSection = memo(({ title, children, dangerZone }: SettingsSe
 
   return (
     <>
-      <SectionTitle title={title} textStyle={styles.sectionTitle} />
+      <SectionLabel title={title} style={styles.sectionLabelOverride} />
       <BaseCard shadowSize="small" style={sectionStyle}>
         <View style={styles.linksContainer}>{childrenWithDividers}</View>
       </BaseCard>
@@ -72,15 +72,11 @@ const styles = StyleSheet.create({
   divider: {
     height: LAYOUT.BORDER.WIDTH.THIN,
     opacity: LAYOUT.OPACITY.MEDIUM,
-    width: '100%',
+    // Inset to align with text (skip icon column): card padding + icon padding + icon + icon padding + text margin
+    marginLeft: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.SMALL + LAYOUT.BUTTON.ICON_SIZE.MEDIUM + LAYOUT.SPACING.SMALL + LAYOUT.SPACING.MEDIUM,
   },
-  sectionTitle: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.TINY,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
-    letterSpacing: LETTER_SPACING.WIDE,
-    opacity: LAYOUT.OPACITY.HIGH,
-    paddingLeft: LAYOUT.SCREEN_HORIZONTAL_PADDING,
+  sectionLabelOverride: {
+    paddingTop: LAYOUT.SPACING.XLARGE,
+    paddingBottom: LAYOUT.SPACING.SMALL,
   },
 });
