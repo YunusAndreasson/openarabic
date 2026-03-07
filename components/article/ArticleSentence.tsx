@@ -166,8 +166,8 @@ const styles = StyleSheet.create({
   },
   englishText: {
     fontFamily: FONTS.ENGLISH,
-    paddingTop: LAYOUT.SPACING.XLARGE, // More separation from previous Arabic sentence
-    paddingBottom: 0, // Minimal gap to keep English close to its Arabic
+    paddingTop: LAYOUT.SPACING.XXLARGE, // More separation from previous Arabic sentence
+    paddingBottom: LAYOUT.SPACING.TINY, // Small gap before its Arabic text
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   tutorialContainer: {
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row-reverse',
     flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.MICRO, // Minimal gap between words (1px)
+    gap: LAYOUT.SPACING.HALF_TINY, // Breathing room between words (2px)
     justifyContent: 'flex-start',
     minHeight: LAYOUT.SPACING.XLARGE * 1.5,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
