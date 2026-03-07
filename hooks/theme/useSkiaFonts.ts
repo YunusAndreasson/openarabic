@@ -1,7 +1,17 @@
 import { useMemo } from 'react';
 
-import { matchFont, type SkFont } from '@shopify/react-native-skia';
+import {
+  matchFont,
+  useFonts as useSkiaFontManager,
+  type SkFont,
+  type SkTypefaceFontProvider,
+} from '@shopify/react-native-skia';
 
+import amiriFont from '@/assets/fonts/Amiri.ttf';
+import madinaFont from '@/assets/fonts/Madina.otf';
+import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
+import notoSansFont from '@/assets/fonts/NotoSans.ttf';
+import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import { LAYOUT } from '@/constants/layout';
 import { useAppSelector } from '@/store/hooks';
 import type { ArabicFontName } from '@/store/settingsSlice';
@@ -40,6 +50,8 @@ export interface UseSkiaFontsResult {
   fontSize: number;
   /** Current font family name for Skia rendering */
   fontFamily: string;
+  /** Skia font manager for ParagraphBuilder */
+  fontManager: SkTypefaceFontProvider | null;
 }
 
 /**
@@ -62,6 +74,15 @@ export interface UseSkiaFontsResult {
 export const useSkiaFonts = (): UseSkiaFontsResult => {
   const selectedFontName = useAppSelector(state => state.settings.arabicFont);
   const fontSize = useAppSelector(state => state.settings.arabicFontSize);
+
+  // Load fonts into Skia's own font manager for ParagraphBuilder
+  const fontManager = useSkiaFontManager({
+    'Noto Sans Arabic': [notoSansFont],
+    Amiri: [amiriFont],
+    'Digital Khatt New Madina': [madinaFont],
+    'Scheherazade New': [scheherazadeFont],
+    'Noto Nastaliq Urdu': [nastaliqFont],
+  });
 
   // Get the Skia-compatible font family name
   const fontFamily = SKIA_FONT_FAMILY_MAP[selectedFontName] || 'Noto Sans Arabic';
@@ -114,5 +135,6 @@ export const useSkiaFonts = (): UseSkiaFontsResult => {
     isReady: arabicFont !== null,
     fontSize: fontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontFamily,
+    fontManager,
   };
 };

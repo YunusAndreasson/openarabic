@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { FONT_WEIGHTS, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { getCategoryDisplayName, getCategorySubtitle } from '@/utils/stringUtils';
 
 const styles = StyleSheet.create({
   filterSectionContainer: {
@@ -27,10 +27,12 @@ interface FilterSectionProps {
 
 function CompactNavCard({
   label,
+  subtitle,
   count,
   onPress,
 }: {
   label: string;
+  subtitle?: string;
   count?: number;
   onPress: () => void;
 }) {
@@ -38,13 +40,21 @@ function CompactNavCard({
 
   const countBadgeStyle = [compactCardStyles.countBadge, { backgroundColor: colors.elevation3 }];
   const countTextStyle = [compactCardStyles.countText, { color: colors.text }];
+  const subtitleStyle = [compactCardStyles.subtitle, { color: colors.secondaryText }];
 
   return (
     <BaseCard shadowSize="small" style={compactCardStyles.card} onPress={onPress}>
       <View style={compactCardStyles.row}>
-        <ThemedText numberOfLines={1} style={compactCardStyles.label} type="body" weight="bold">
-          {capitalizeFirstLetter(label)}
-        </ThemedText>
+        <View style={compactCardStyles.labelGroup}>
+          <ThemedText numberOfLines={1} style={compactCardStyles.label} type="body" weight="bold">
+            {label}
+          </ThemedText>
+          {subtitle && (
+            <ThemedText numberOfLines={1} skipDefaultColor style={subtitleStyle} type="caption">
+              {subtitle}
+            </ThemedText>
+          )}
+        </View>
         {count !== undefined && (
           <View style={countBadgeStyle}>
             <ThemedText skipDefaultColor style={countTextStyle} type="caption">
@@ -69,9 +79,15 @@ const compactCardStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  label: {
+  labelGroup: {
     flex: 1,
+    gap: 2,
+  },
+  label: {
     fontWeight: FONT_WEIGHTS.SEMIBOLD,
+  },
+  subtitle: {
+    opacity: 0.7,
   },
   countBadge: {
     alignItems: 'center',
@@ -101,7 +117,8 @@ export function FilterSection({ items, onSelect, filterType }: FilterSectionProp
         <CompactNavCard
           key={`filter-${item.id}`}
           count={item.count}
-          label={item.name}
+          label={getCategoryDisplayName(item.name)}
+          subtitle={getCategorySubtitle(item.name)}
           onPress={handleSelect(item.id, item.name)}
         />
       ))}

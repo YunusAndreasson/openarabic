@@ -54,7 +54,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   isTargetWord = false,
 }: SkiaArabicWordProps) {
   const colors = useColors();
-  const { arabicFont, getArabicFont, fontFamily } = useSkiaFonts();
+  const { getArabicFont, fontFamily, fontManager } = useSkiaFonts();
 
   // Prevent memory leaks from async callbacks on unmounted components
   const isMountedRef = useRef(true);
@@ -87,7 +87,6 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   }, []);
 
   // Build Skia paragraph based on whether word has colored components
-  // Note: arabicFont is guaranteed to be available since app waits for fonts before rendering
   const paragraph = useMemo(() => {
     // Get font with appropriate weight for selection state
     const font = getArabicFont(undefined, isSelected ? 'semibold' : 'normal');
@@ -101,6 +100,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
         segments: coloredSegments,
         font,
         fontFamily,
+        fontManager,
         textDirection: TextDirection.RTL,
         maxWidth: 2000, // Large width to prevent wrapping of single words
         letterSpacing: 0,
@@ -114,6 +114,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
         fontFamily,
         TextDirection.RTL,
         2000,
+        fontManager,
       );
     }
   }, [
@@ -124,24 +125,19 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     word.word_form,
     colors.arabicText,
     fontFamily,
+    fontManager,
   ]);
 
-  // Calculate canvas dimensions from paragraph
   const canvasDimensions = useMemo(() => {
-    const fontSize = arabicFont?.getSize() || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
-
     if (!paragraph) {
-      // Fallback dimensions if paragraph build failed (shouldn't happen)
-      return { width: 60, height: 40, yOffset: fontSize * 0.5 };
+      return { width: 60, height: 40 };
     }
 
-    // Simple, robust sizing with minimal buffers for Arabic text + diacritics
-    const width = Math.ceil(paragraph.getMaxIntrinsicWidth() * 1.05); // 5% extra for safety
-    const height = Math.ceil(fontSize * 1.9); // Tighter line height for closer pairing with English
-    const yOffset = fontSize * 0.1; // Reduced shift to preserve descenders like ayn (ع)
-
-    return { width, height, yOffset };
-  }, [paragraph, arabicFont]);
+    return {
+      width: Math.ceil(paragraph.getMaxIntrinsicWidth() * 1.05),
+      height: Math.ceil(paragraph.getHeight()),
+    };
+  }, [paragraph]);
 
   // Show tooltip on press - always measure fresh for 100% reliability
   const handlePress = () => {
@@ -197,7 +193,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
             <SkiaParagraph
               paragraph={paragraph}
               x={0}
-              y={canvasDimensions.yOffset}
+              y={0}
               width={canvasDimensions.width}
             />
           )}

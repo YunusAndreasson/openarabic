@@ -38,6 +38,7 @@ jest.mock('@/hooks/theme/useSkiaFonts', () => ({
     isReady: true,
     fontSize: 17,
     fontFamily: 'Noto Sans Arabic',
+    fontManager: null,
   }),
 }));
 

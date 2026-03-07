@@ -2,6 +2,8 @@
  * String utility functions for text formatting and manipulation
  */
 
+import { STRINGS } from '@/constants/strings';
+
 /**
  * Validates if a value is a non-empty string.
  * Handles null, undefined, and empty strings consistently.
@@ -73,12 +75,34 @@ export const METADATA_SEPARATOR = '·'; // Middle dot - clean and modern
 
 /**
  * Capitalizes the first letter of a string
- * @param str - The string to capitalize
- * @returns The string with the first letter capitalized
  */
 export function capitalizeFirstLetter(str: string): string {
   if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Returns the display name for a category with proper transliteration.
+ * Falls back to capitalizing the raw name for unknown categories.
+ */
+export function getCategoryDisplayName(rawName: string): string {
+  const entry = STRINGS.CATEGORIES[rawName.toLowerCase()];
+  return entry?.display ?? capitalizeFirstLetter(rawName);
+}
+
+/**
+ * Returns the English subtitle for a category, or undefined if unknown.
+ */
+export function getCategorySubtitle(rawName: string): string | undefined {
+  return STRINGS.CATEGORIES[rawName.toLowerCase()]?.subtitle;
+}
+
+/**
+ * Returns the display name for an author with proper transliteration.
+ * Falls back to the raw name for unknown authors.
+ */
+export function getAuthorDisplayName(rawName: string): string {
+  return STRINGS.AUTHORS[rawName] ?? rawName;
 }
 
 /**
@@ -93,8 +117,7 @@ export function capitalizeFirstLetter(str: string): string {
 export function formatAuthorCategory(author: string, category: string): string {
   if (!author || !category) return author || category || '';
 
-  const capitalizedCategory = capitalizeFirstLetter(category);
-  return `${author} ${METADATA_SEPARATOR} ${capitalizedCategory}`;
+  return `${getAuthorDisplayName(author)} ${METADATA_SEPARATOR} ${getCategoryDisplayName(category)}`;
 }
 
 /**
@@ -117,8 +140,7 @@ export function formatArticleMetadata(
 ): string {
   if (!author || !category) return author || category || '';
 
-  const capitalizedCategory = capitalizeFirstLetter(category);
-  const base = `${author} ${METADATA_SEPARATOR} ${capitalizedCategory}`;
+  const base = `${getAuthorDisplayName(author)} ${METADATA_SEPARATOR} ${getCategoryDisplayName(category)}`;
 
   if (readingTime) {
     return `${base} ${METADATA_SEPARATOR} ${readingTime}`;
@@ -163,7 +185,7 @@ export function getArticleMetadataWithoutCategory(article: {
   const sentenceCount = article.article_sentences?.length || 0;
   const readingTime = calculateReadingTime(sentenceCount);
 
-  return `${article.author.name} ${METADATA_SEPARATOR} ${readingTime}`;
+  return `${getAuthorDisplayName(article.author.name)} ${METADATA_SEPARATOR} ${readingTime}`;
 }
 
 

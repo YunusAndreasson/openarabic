@@ -47,6 +47,8 @@ jest.mock('@/hooks/theme/useSkiaFonts', () => ({
     })),
     isReady: true,
     fontSize: 17,
+    fontFamily: 'Noto Sans Arabic',
+    fontManager: null,
   })),
 }));
 
@@ -90,6 +92,8 @@ describe('SkiaArabicWord Component', () => {
       })),
       isReady: true,
       fontSize: 17,
+      fontFamily: 'Noto Sans Arabic',
+      fontManager: null,
     });
   });
 
@@ -203,6 +207,8 @@ describe('SkiaArabicWord Component', () => {
         getArabicFont: mockGetArabicFont,
         isReady: true,
         fontSize: 17,
+        fontFamily: 'Noto Sans Arabic',
+        fontManager: null,
       });
 
       const word = createMockWord();
@@ -231,6 +237,8 @@ describe('SkiaArabicWord Component', () => {
         getArabicFont: mockGetArabicFont,
         isReady: true,
         fontSize: 17,
+        fontFamily: 'Noto Sans Arabic',
+        fontManager: null,
       });
 
       const word = createMockWord();
@@ -346,6 +354,7 @@ describe('SkiaArabicWord Component', () => {
         getArabicFont: jest.fn(() => null),
         fontSize: 17,
         fontFamily: 'Noto Sans Arabic',
+        fontManager: null,
       });
 
       const word = createMockWord({ word_form: 'كتاب' });

@@ -107,6 +107,33 @@ export const STRINGS = {
   CREATE_ACCOUNT_TITLE: 'Create account',
   CREATE_ACCOUNT_SUBTITLE: 'Start your Arabic journey',
   CATEGORY: 'Category',
+  // Category display names with proper transliteration and English subtitles
+  CATEGORIES: {
+    aqeedah: { display: '\u02BFAq\u012Bdah', subtitle: 'Islamic Creed' },
+    fiqh: { display: 'Fiqh', subtitle: 'Islamic Law' },
+    hadith: { display: '\u1E24ad\u012Bth', subtitle: 'Prophetic Traditions' },
+    ihsan: { display: 'I\u1E25s\u0101n', subtitle: 'Spiritual Excellence' },
+    quran: { display: 'Qur\u02BE\u0101n', subtitle: 'Quranic Studies' },
+    seerah: { display: 'S\u012Brah', subtitle: 'History & Biography' },
+  } as Record<string, { display: string; subtitle: string }>,
+  // Author display names with proper transliteration (no honorific titles for mobile space)
+  AUTHORS: {
+    'an-Nawawi': 'an-Nawaw\u012B',
+    'Ibn al-Qayyim al-Jawziyyah': 'Ibn al-Qayyim al-Jawziyyah',
+    'Ibn Taymiyyah': 'Ibn Taymiyyah',
+    'Ibn al-Jawzi': 'Ibn al-Jawz\u012B',
+    'Ibn Kathir': 'Ibn Kath\u012Br',
+    'al-Imam al-Bukhari': 'al-Bukh\u0101r\u012B',
+    'al-Imam Muslim': 'Muslim',
+    'Ibn Hajar al-Asqalani': 'Ibn \u1E24ajar al-\u02BFAsqal\u0101n\u012B',
+    'al-Imam Malik': 'M\u0101lik',
+    'al-Imam ash-Shafii': 'ash-Sh\u0101fi\u02BF\u012B',
+    'al-Imam Ahmad ibn Hanbal': 'A\u1E25mad ibn \u1E24anbal',
+    'al-Imam at-Tirmidhi': 'at-Tirmidh\u012B',
+    'al-Imam as-Suyuti': 'as-Suy\u016B\u1E6D\u012B',
+    'at-Tabari': 'a\u1E6D-\u1E6Cabar\u012B',
+    'adh-Dhahabi': 'adh-Dhahab\u012B',
+  } as Record<string, string>,
   // Section headers for Explore tab
   SECTION_CATEGORIES: 'Topics',
   SECTION_GETTING_STARTED: 'Getting started',

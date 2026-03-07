@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useMemo, useRef } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -13,7 +13,7 @@ import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
-import { getArticleMetadata, capitalizeFirstLetter } from '@/utils/stringUtils';
+import { getArticleMetadata, getAuthorDisplayName, getCategoryDisplayName } from '@/utils/stringUtils';
 
 interface RelatedArticlesByFilterProps {
   /**
@@ -46,11 +46,6 @@ interface RelatedArticlesByFilterProps {
    */
   maxArticles?: number;
 
-  /**
-   * Callback fired when related articles section becomes visible
-   * Used as heuristic to mark article as 100% complete
-   */
-  onVisible?: () => void;
 }
 
 // Section header component matching FilteredArticleView style
@@ -80,7 +75,6 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     filterId,
     filterName,
     maxArticles = 5,
-    onVisible,
   }) => {
     const router = useRouter();
 
@@ -173,27 +167,15 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
       });
     }, [relatedArticles, progressMap, handleArticlePress]);
 
-    // Track if we've already fired the callback
-    const hasCalledOnVisibleRef = useRef(false);
-
     // Format section title based on filter type
     // Capitalize category name for consistency with rest of app
     // Must be called before early return to satisfy React Hooks rules
     const sectionTitle = useMemo(() => {
       if (filterType === 'author') {
-        return STRINGS.MORE_FROM_AUTHOR.replace('{author}', filterName);
+        return STRINGS.MORE_FROM_AUTHOR.replace('{author}', getAuthorDisplayName(filterName));
       }
-      return STRINGS.MORE_FROM_CATEGORY.replace('{category}', capitalizeFirstLetter(filterName));
+      return STRINGS.MORE_FROM_CATEGORY.replace('{category}', getCategoryDisplayName(filterName));
     }, [filterType, filterName]);
-
-    // Fire callback when related articles section becomes visible on screen
-    // This serves as a heuristic to mark article as 100% complete
-    const handleLayout = useCallback(() => {
-      if (!hasCalledOnVisibleRef.current && onVisible) {
-        hasCalledOnVisibleRef.current = true;
-        onVisible();
-      }
-    }, [onVisible]);
 
     // Early return if no articles to show
     if (relatedArticles.length === 0) {
@@ -201,7 +183,7 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     }
 
     return (
-      <View style={styles.container} onLayout={handleLayout}>
+      <View style={styles.container}>
         <SectionHeader title={sectionTitle} />
         {articleCards}
       </View>

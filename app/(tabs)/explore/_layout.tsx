@@ -1,4 +1,4 @@
-import { Stack, router } from 'expo-router';
+import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 
 import { CloseButton } from '@/components/ui';
@@ -8,7 +8,7 @@ import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigat
 import { useColors } from '@/hooks/theme/useColors';
 import { AppTab } from '@/types/enums';
 import type { FilterParams } from '@/types/navigation.types';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { getCategoryDisplayName } from '@/utils/stringUtils';
 
 /**
  * Get display title for filter screen based on route params
@@ -17,7 +17,7 @@ function getFilterTitle(params: FilterParams): string {
   const { name } = params;
 
   if (name) {
-    return capitalizeFirstLetter(decodeURIComponent(name));
+    return getCategoryDisplayName(decodeURIComponent(name));
   }
 
   return STRINGS.CATEGORY;
@@ -50,7 +50,7 @@ export default function LibraryLayout(): JSX.Element {
 
           return createNavigationOptions(colors, {
             title: getFilterTitle(params),
-            headerLeft: () => <CloseButton onPress={() => router.back()} />,
+            headerRight: () => <CloseButton />,
           });
         }}
       />

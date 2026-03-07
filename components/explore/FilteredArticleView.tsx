@@ -19,7 +19,7 @@ import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
-import { calculateReadingTime } from '@/utils/stringUtils';
+import { calculateReadingTime, getAuthorDisplayName } from '@/utils/stringUtils';
 
 // List item types
 interface SectionHeaderItem {
@@ -180,7 +180,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
       : 0;
 
     const readingTime = calculateReadingTime(article.article_sentences.length);
-    const secondaryText = `${article.author.name} · ${readingTime}`;
+    const secondaryText = `${getAuthorDisplayName(article.author.name)} · ${readingTime}`;
 
     return (
       <Animated.View
