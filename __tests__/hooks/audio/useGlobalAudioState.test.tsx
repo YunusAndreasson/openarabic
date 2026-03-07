@@ -44,7 +44,6 @@ describe('useGlobalAudioState Hook', () => {
   const mockPreconfigureAudioSession = jest.fn();
   const mockStartTimer = jest.fn();
   const mockCancelTimer = jest.fn();
-  const mockAutoCancel = jest.fn();
   const mockGetQueryData = jest.fn();
   const mockMarkSleepTimerExpired = jest.fn();
   const mockGetPlaylistInfo = jest.fn();
@@ -75,12 +74,11 @@ describe('useGlobalAudioState Hook', () => {
         ({
           state: {
             isActive: false,
-            remainingTime: 0,
+            endTime: 0,
           },
           actions: {
             startTimer: mockStartTimer,
             cancelTimer: mockCancelTimer,
-            autoCancel: mockAutoCancel,
           },
           onComplete, // Store for testing
         }) as any,
@@ -170,7 +168,7 @@ describe('useGlobalAudioState Hook', () => {
 
       expect(result.current.isTimerActive).toBeFalsy();
       expect(result.current.showSleepTimerModal).toBeFalsy();
-      expect(result.current.sleepTimerRemainingTime).toBe(0);
+      expect(result.current.sleepTimerEndTime).toBe(0);
     });
 
     test('initializes with default queue position', () => {
@@ -271,11 +269,10 @@ describe('useGlobalAudioState Hook', () => {
       jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
         timerCallback = onComplete;
         return {
-          state: { isActive: true, remainingTime: 60 },
+          state: { isActive: true, endTime: Date.now() + 60000 },
           actions: {
             startTimer: mockStartTimer,
             cancelTimer: mockCancelTimer,
-            autoCancel: mockAutoCancel,
           },
         } as any;
       });
@@ -296,11 +293,10 @@ describe('useGlobalAudioState Hook', () => {
       jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
         timerCallback = onComplete;
         return {
-          state: { isActive: true, remainingTime: 60 },
+          state: { isActive: true, endTime: Date.now() + 60000 },
           actions: {
             startTimer: mockStartTimer,
             cancelTimer: mockCancelTimer,
-            autoCancel: mockAutoCancel,
           },
         } as any;
       });
@@ -320,11 +316,10 @@ describe('useGlobalAudioState Hook', () => {
       jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
         timerCallback = onComplete;
         return {
-          state: { isActive: true, remainingTime: 60 },
+          state: { isActive: true, endTime: Date.now() + 60000 },
           actions: {
             startTimer: mockStartTimer,
             cancelTimer: mockCancelTimer,
-            autoCancel: mockAutoCancel,
           },
         } as any;
       });
@@ -359,11 +354,10 @@ describe('useGlobalAudioState Hook', () => {
       jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
         timerCallback = onComplete;
         return {
-          state: { isActive: true, remainingTime: 60 },
+          state: { isActive: true, endTime: Date.now() + 60000 },
           actions: {
             startTimer: mockStartTimer,
             cancelTimer: mockCancelTimer,
-            autoCancel: mockAutoCancel,
           },
         } as any;
       });
@@ -391,11 +385,10 @@ describe('useGlobalAudioState Hook', () => {
       jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
         timerCallback = onComplete;
         return {
-          state: { isActive: true, remainingTime: 60 },
+          state: { isActive: true, endTime: Date.now() + 60000 },
           actions: {
             startTimer: mockStartTimer,
             cancelTimer: mockCancelTimer,
-            autoCancel: mockAutoCancel,
           },
         } as any;
       });
@@ -430,11 +423,10 @@ describe('useGlobalAudioState Hook', () => {
   describe('Auto-Cancel Sleep Timer', () => {
     test('auto-cancels timer when audio stops', async () => {
       jest.mocked(useSleepTimer).mockReturnValue({
-        state: { isActive: true, remainingTime: 120 },
+        state: { isActive: true, endTime: Date.now() + 120000 },
         actions: {
           startTimer: mockStartTimer,
           cancelTimer: mockCancelTimer,
-          autoCancel: mockAutoCancel,
         },
       } as any);
 
@@ -464,17 +456,16 @@ describe('useGlobalAudioState Hook', () => {
       rerender();
 
       await waitFor(() => {
-        expect(mockAutoCancel).toHaveBeenCalled();
+        expect(mockCancelTimer).toHaveBeenCalled();
       });
     });
 
     test('does not auto-cancel when audio is loading', () => {
       jest.mocked(useSleepTimer).mockReturnValue({
-        state: { isActive: true, remainingTime: 120 },
+        state: { isActive: true, endTime: Date.now() + 120000 },
         actions: {
           startTimer: mockStartTimer,
           cancelTimer: mockCancelTimer,
-          autoCancel: mockAutoCancel,
         },
       } as any);
 
@@ -490,16 +481,15 @@ describe('useGlobalAudioState Hook', () => {
 
       renderHook(() => useGlobalAudioState());
 
-      expect(mockAutoCancel).not.toHaveBeenCalled();
+      expect(mockCancelTimer).not.toHaveBeenCalled();
     });
 
     test('does not auto-cancel when timer is not active', () => {
       jest.mocked(useSleepTimer).mockReturnValue({
-        state: { isActive: false, remainingTime: 0 },
+        state: { isActive: false, endTime: 0 },
         actions: {
           startTimer: mockStartTimer,
           cancelTimer: mockCancelTimer,
-          autoCancel: mockAutoCancel,
         },
       } as any);
 
@@ -515,7 +505,7 @@ describe('useGlobalAudioState Hook', () => {
 
       renderHook(() => useGlobalAudioState());
 
-      expect(mockAutoCancel).not.toHaveBeenCalled();
+      expect(mockCancelTimer).not.toHaveBeenCalled();
     });
   });
 
@@ -812,11 +802,10 @@ describe('useGlobalAudioState Hook', () => {
       jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
         timerCallback = onComplete;
         return {
-          state: { isActive: true, remainingTime: 60 },
+          state: { isActive: true, endTime: Date.now() + 60000 },
           actions: {
             startTimer: mockStartTimer,
             cancelTimer: mockCancelTimer,
-            autoCancel: mockAutoCancel,
           },
         } as any;
       });

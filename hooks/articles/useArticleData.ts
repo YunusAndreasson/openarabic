@@ -1,4 +1,4 @@
-import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
+import { skipToken, useQuery, type QueryObserverResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { articleQueries, fsrsQueries, readingProgressQueries } from '@/constants/queries';
@@ -45,9 +45,10 @@ export const useArticleData = (
 
   // Fetch study words with optimized caching
   // CRITICAL: Use same query as useArabicWord and useArticleWordInteractions for DRY consistency
+  const allWordsConfig = fsrsQueries.all(userId ?? '');
   const studyWordsQuery = useQuery({
-    ...fsrsQueries.all(userId || ''),
-    enabled: !!userId,
+    ...allWordsConfig,
+    queryFn: userId ? allWordsConfig.queryFn : skipToken,
     refetchOnMount: false, // Only refetch via cache invalidation or pull-to-refresh
     refetchOnReconnect: false, // Only refetch via pull-to-refresh
     placeholderData: old => old,

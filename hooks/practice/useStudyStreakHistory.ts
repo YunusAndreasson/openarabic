@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 
 import { studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -25,13 +25,14 @@ interface UseStudyStreakHistoryResult {
 export function useStudyStreakHistory(): UseStudyStreakHistoryResult {
   const { user } = useAuth();
 
+  const historyConfig = studyStreakQueries.history(user?.id ?? '', 40);
   const {
     data: streakHistory = null,
     isLoading,
     isError,
   } = useQuery({
-    ...studyStreakQueries.history(user?.id || '', 40),
-    enabled: !!user?.id,
+    ...historyConfig,
+    queryFn: user?.id ? historyConfig.queryFn : skipToken,
   });
 
   return { streakHistory, isLoading, isError };

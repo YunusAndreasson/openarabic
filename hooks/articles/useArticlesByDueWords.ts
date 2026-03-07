@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
@@ -29,15 +29,17 @@ export function useArticlesByDueWords(
   limit = 10,
 ): UseArticlesByDueWordsResult {
   // Fetch due words for the current user with optimized query
+  const dueConfig = fsrsQueries.due(userId ?? '');
   const { data: dueWords = [], isLoading: isLoadingDueWords } = useQuery({
-    ...fsrsQueries.due(userId || ''),
-    enabled: !!userId,
+    ...dueConfig,
+    queryFn: userId ? dueConfig.queryFn : skipToken,
   });
 
   // Fallback: fetch all study words if no due words (for better recommendations)
+  const cooldownConfig = fsrsQueries.allWithCooldown(userId ?? '', DEFAULT_SESSION_COOLDOWN_HOURS);
   const { data: allStudyWords = [], isLoading: isLoadingAllWords } = useQuery({
-    ...fsrsQueries.allWithCooldown(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
-    enabled: !!userId && dueWords.length === 0, // Only fetch if no due words
+    ...cooldownConfig,
+    queryFn: userId && dueWords.length === 0 ? cooldownConfig.queryFn : skipToken,
   });
 
   // Use due words if available, otherwise fallback to all study words
@@ -51,13 +53,10 @@ export function useArticlesByDueWords(
   }, [wordsToUse]);
 
   // Use optimized articles query with word stats (shared cache with other hooks)
+  const shouldFetchArticles = !!userId && wordsToUse.length > 0 && limit > 0;
   const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
     ...articleQueries.withStats(),
-    queryFn: () => {
-      if (!wordsToUse.length || limit <= 0) return Promise.resolve([]);
-      return articlesService.getArticlesWithWordStats();
-    },
-    enabled: !!userId && wordsToUse.length > 0 && limit > 0,
+    queryFn: shouldFetchArticles ? () => articlesService.getArticlesWithWordStats() : skipToken,
   });
 
   // Process and sort articles by words count

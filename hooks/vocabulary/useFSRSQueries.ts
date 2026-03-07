@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
@@ -27,18 +27,19 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
   const queryClient = useQueryClient();
 
   // allWordsQuery: no initialData needed — useQuery automatically reads its own cache
+  const allConfig = fsrsQueries.all(userId ?? '');
   const allWordsQuery = useQuery({
-    ...fsrsQueries.all(userId || ''),
-    enabled: !!userId,
+    ...allConfig,
+    queryFn: userId ? allConfig.queryFn : skipToken,
   });
 
   // Query for due words - uses shorter stale time since it's more time-sensitive
   const dueWordsQuery = useQuery({
-    ...fsrsQueries.due(userId || '', DEFAULT_SESSION_COOLDOWN_HOURS),
-    enabled: !!userId,
-    // Override queryFn to check for recent session completion
-    queryFn: () => {
-      if (!userId) throw new Error('User ID is required');
+    ...fsrsQueries.due(userId ?? '', DEFAULT_SESSION_COOLDOWN_HOURS),
+    // Override queryFn with skipToken when no userId, or custom logic when present
+    queryFn: !userId
+      ? skipToken
+      : () => {
       const lastCompletedAt = queryClient.getQueryData<number>(
         fsrsQueries.lastCompletedAtKey(userId),
       );

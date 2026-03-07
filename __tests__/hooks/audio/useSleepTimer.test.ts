@@ -2,7 +2,7 @@
  * Hook Tests
  *
  * Modern Jest 29 Patterns:
- * - ✅ @jest/globals explicit imports
+ * - @jest/globals explicit imports
  * - Note: No test.concurrent() - hook tests use renderHook
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
@@ -26,7 +26,7 @@ afterEach(() => {
 });
 
 describe('useSleepTimer', () => {
-  test('starts countdown and triggers completion', () => {
+  test('starts timer and triggers completion after duration', () => {
     const onComplete = jest.fn();
     const { result } = renderHook(() => useSleepTimer(onComplete));
 
@@ -35,20 +35,22 @@ describe('useSleepTimer', () => {
     });
 
     expect(result.current.state.isActive).toBeTruthy();
-    expect(result.current.state.remainingTime).toBe(60);
+    expect(result.current.state.endTime).toBeGreaterThan(0);
 
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    expect(result.current.state.remainingTime).toBe(59);
-
+    // Should not fire before duration
     act(() => {
       jest.advanceTimersByTime(59 * 1000);
     });
 
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Should fire at duration
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
     expect(result.current.state.isActive).toBeFalsy();
-    expect(result.current.state.remainingTime).toBe(0);
+    expect(result.current.state.endTime).toBe(0);
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
@@ -58,7 +60,6 @@ describe('useSleepTimer', () => {
 
     act(() => {
       result.current.actions.startTimer(1);
-      jest.advanceTimersByTime(1000);
     });
 
     act(() => {
@@ -66,7 +67,7 @@ describe('useSleepTimer', () => {
     });
 
     expect(result.current.state.isActive).toBeFalsy();
-    expect(result.current.state.remainingTime).toBe(0);
+    expect(result.current.state.endTime).toBe(0);
 
     act(() => {
       jest.advanceTimersByTime(60 * 1000);
@@ -75,34 +76,17 @@ describe('useSleepTimer', () => {
     expect(onComplete).not.toHaveBeenCalled();
   });
 
-  test('auto-cancels an active timer', () => {
-    const { result } = renderHook(() => useSleepTimer());
-
-    act(() => {
-      result.current.actions.startTimer(5);
-    });
-
-    expect(result.current.state.isActive).toBeTruthy();
-
-    act(() => {
-      result.current.actions.autoCancel();
-    });
-
-    expect(result.current.state.isActive).toBeFalsy();
-    expect(result.current.state.remainingTime).toBe(0);
-  });
-
-  test('auto-cancel does nothing when timer is not active', () => {
+  test('cancel is safe to call when timer is not active', () => {
     const { result } = renderHook(() => useSleepTimer());
 
     expect(result.current.state.isActive).toBeFalsy();
 
     act(() => {
-      result.current.actions.autoCancel();
+      result.current.actions.cancelTimer();
     });
 
     expect(result.current.state.isActive).toBeFalsy();
-    expect(result.current.state.remainingTime).toBe(0);
+    expect(result.current.state.endTime).toBe(0);
   });
 
   test('handles invalid duration', () => {
@@ -151,7 +135,6 @@ describe('useSleepTimer', () => {
     });
 
     expect(result.current.state.isActive).toBeFalsy();
-    expect(result.current.state.remainingTime).toBe(0);
     expect(onComplete).toHaveBeenCalledTimes(1);
 
     act(() => {
@@ -159,14 +142,13 @@ describe('useSleepTimer', () => {
     });
 
     expect(result.current.state.isActive).toBeTruthy();
-    expect(result.current.state.remainingTime).toBe(60);
+    expect(result.current.state.endTime).toBeGreaterThan(0);
 
     act(() => {
       jest.advanceTimersByTime(60 * 1000);
     });
 
     expect(result.current.state.isActive).toBeFalsy();
-    expect(result.current.state.remainingTime).toBe(0);
     expect(onComplete).toHaveBeenCalledTimes(2);
   });
 });

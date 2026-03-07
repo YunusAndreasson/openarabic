@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
-import { useAnimatedStyle } from 'react-native-reanimated';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG } from '@/constants/animation';
@@ -20,6 +19,7 @@ import { useTimerCleanup } from '@/hooks/utils';
 import { useFSRS } from '@/hooks/vocabulary';
 import { audioCache } from '@/services/audioCache';
 import type { ReviewStateRefs, ReviewTimeRefs, SessionMetrics } from '@/types/review.types';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -44,7 +44,7 @@ interface UseReviewReturn {
   handleSwipeLeft: () => void;
   handleSwipeRight: () => void;
   handleClose: () => void;
-  transparentStyle: ViewStyle;
+  transparentStyle: AnimatedStyleProp<ViewStyle>;
   sessionMetrics: SessionMetrics;
   handleReplayAudio: () => Promise<void>;
   isAudioPreloading: boolean;
@@ -72,18 +72,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   audioPlayerRef.current = audioPlayer;
 
   // Use optimized opacity animation from hooks/animations
-  const { opacity, fadeIn, fadeOut } = useOpacityAnimation({
+  // animatedStyle uses Reanimated 4 inline shared values (no useAnimatedStyle wrapper)
+  const { animatedStyle: opacityStyle, fadeIn, fadeOut } = useOpacityAnimation({
     initialOpacity: 1,
     duration: TRANSITION_DELAYS.fadeAnimation,
   });
-
-  // Create animated style from opacity SharedValue for smooth fade transitions
-  const opacityStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      opacity: opacity.get(),
-    };
-  }, [opacity]);
 
   // Timer cleanup hook for managing all setTimeout calls
   const { setTimer, clearTimer, clearAllTimers } = useTimerCleanup();

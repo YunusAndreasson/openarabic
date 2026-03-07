@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
-import { Fragment, type ComponentProps, type FC } from 'react';
+import type { ComponentProps, FC } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
@@ -21,6 +21,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { UiAction } from '@/types/enums';
 import type { SessionMetrics } from '@/types/review.types';
+import { withAlpha } from '@/utils/colorUtils';
 import { createMargin, createPadding, COMMON_STYLES } from '@/utils/layoutUtils';
 
 // Layout animation builders hoisted to module level per Reanimated best practices
@@ -80,10 +81,10 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   // Handle review completion logic (query invalidation, analytics, haptics)
   useReviewCompletion(sessionMetrics, true);
 
-  const encouragingMetrics = useEncouragingMetrics(sessionMetrics, colors, currentDailyStreak);
+  const encouragingResult = useEncouragingMetrics(sessionMetrics, colors, currentDailyStreak);
 
   const Content = (
-    <View style={[styles.contentContainer, contentStyle || {}]}>
+    <View style={[styles.contentContainer, contentStyle]}>
       {/* Success Icon - Primary visual element */}
       <Animated.View entering={ENTERING_ICON} style={styles.iconContainer}>
         <Ionicons color={colors.completionSuccess} name={iconName} size={iconSize} />
@@ -105,48 +106,50 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
           </Animated.View>
         )}
 
-        {/* Educational text - grouped with title for clarity */}
+        {/* Educational text - contextual based on session performance */}
         <Animated.View entering={ENTERING_EDUCATIONAL}>
           <ThemedText colorName="secondary" style={styles.educationalText} type="body">
-            {STRINGS.SESSION_COMPLETE_EDUCATIONAL}
+            {encouragingResult?.educationalText ?? STRINGS.SESSION_COMPLETE_EDUCATIONAL_DEFAULT}
           </ThemedText>
         </Animated.View>
       </View>
 
       {/* Metrics Section - Separated group for visual hierarchy */}
-      {encouragingMetrics && encouragingMetrics.length > 0 && (
+      {encouragingResult && encouragingResult.metrics.length > 0 && (
         <View style={styles.metricsContainer}>
-          {encouragingMetrics.map((metric, index) => (
-            <Fragment key={metric.type + metric.text}>
-              <Animated.View
-                entering={ENTERING_METRICS[index]}
-                style={[
-                  styles.metricItem,
-                  {
-                    backgroundColor: colors.card,
-                    shadowColor: colors.shadow,
-                  },
-                  getThemeAwareElevation('SUBTLE', isDarkMode),
-                ]}
-              >
-                <View style={styles.metricContent}>
-                  <View
-                    style={[styles.metricIconContainer, { backgroundColor: `${metric.color}20` }]}
-                  >
-                    <Ionicons
-                      color={metric.color}
-                      name={metric.icon}
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <View style={styles.metricTextContainer}>
-                    <ThemedText style={styles.metricText} type="body">
-                      {metric.text}
-                    </ThemedText>
-                  </View>
+          {encouragingResult.metrics.map((metric, index) => (
+            <Animated.View
+              key={metric.type + metric.text}
+              entering={ENTERING_METRICS[index]}
+              style={[
+                styles.metricItem,
+                {
+                  backgroundColor: colors.card,
+                  shadowColor: colors.shadow,
+                },
+                getThemeAwareElevation('SUBTLE', isDarkMode),
+              ]}
+            >
+              <View style={styles.metricContent}>
+                <View
+                  style={[
+                    styles.metricIconContainer,
+                    { backgroundColor: withAlpha(metric.color, 0.12) },
+                  ]}
+                >
+                  <Ionicons
+                    color={metric.color}
+                    name={metric.icon}
+                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                  />
                 </View>
-              </Animated.View>
-            </Fragment>
+                <View style={styles.metricTextContainer}>
+                  <ThemedText style={styles.metricText} type="body">
+                    {metric.text}
+                  </ThemedText>
+                </View>
+              </View>
+            </Animated.View>
           ))}
         </View>
       )}
@@ -157,7 +160,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
       {/* Action Button - Anchored to bottom */}
       <Animated.View
         entering={
-          encouragingMetrics ? ENTERING_BUTTON_WITH_METRICS : ENTERING_BUTTON_WITHOUT_METRICS
+          encouragingResult ? ENTERING_BUTTON_WITH_METRICS : ENTERING_BUTTON_WITHOUT_METRICS
         }
         style={styles.buttonContainer}
       >

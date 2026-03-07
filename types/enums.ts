@@ -183,17 +183,6 @@ export const AudioAction = {
 
 export type AudioAction = (typeof AudioAction)[keyof typeof AudioAction];
 
-/**
- * Sleep timer actions
- * Using const object for zero runtime overhead
- */
-export const SleepTimerAction = {
-  SET: 'Set timer',
-  CANCEL: 'Cancel',
-} as const;
-
-export type SleepTimerAction = (typeof SleepTimerAction)[keyof typeof SleepTimerAction];
-
 // ===== REVIEW ACTIONS =====
 
 /**

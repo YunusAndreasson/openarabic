@@ -58,10 +58,10 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 5),
       );
 
-      expect(result.current).toHaveLength(3);
-      expect(result.current?.[0].type).toBe('due');
-      expect(result.current?.[1].type).toBe('daily_streak');
-      expect(result.current?.[2].type).toBe('mastery');
+      expect(result.current?.metrics).toHaveLength(3);
+      expect(result.current?.metrics[0].type).toBe('due');
+      expect(result.current?.metrics[1].type).toBe('daily_streak');
+      expect(result.current?.metrics[2].type).toBe('mastery');
     });
 
     test('should use correct colors for each metric type', () => {
@@ -69,9 +69,9 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 5),
       );
 
-      expect(result.current?.[0].color).toBe(mockColors.error);
-      expect(result.current?.[1].color).toBe(mockColors.warning);
-      expect(result.current?.[2].color).toBe(mockColors.success);
+      expect(result.current?.metrics[0].color).toBe(mockColors.error);
+      expect(result.current?.metrics[1].color).toBe(mockColors.warning);
+      expect(result.current?.metrics[2].color).toBe(mockColors.success);
     });
   });
 
@@ -82,7 +82,7 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(singleWordMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.[0].text).toBe('1 word reviewed');
+      expect(result.current?.metrics[0].text).toBe('1 word reviewed');
     });
 
     test('should show plural "words" for multiple words reviewed', () => {
@@ -90,7 +90,7 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.[0].text).toBe('5 words reviewed');
+      expect(result.current?.metrics[0].text).toBe('5 words reviewed');
     });
 
     test('should have time icon for due metric', () => {
@@ -98,17 +98,17 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.[0].icon).toBe('time');
+      expect(result.current?.metrics[0].icon).toBe('time');
     });
   });
 
   describe('Daily streak metric (YELLOW)', () => {
-    test('should show "Practice tomorrow for a streak" when dailyStreak is 0', () => {
+    test('should show "First session today!" when dailyStreak is 0', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.[1].text).toBe('Practice tomorrow for a streak');
+      expect(result.current?.metrics[1].text).toBe('First session today!');
     });
 
     test('should show "Streak started!" when dailyStreak is 1', () => {
@@ -116,7 +116,7 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 1),
       );
 
-      expect(result.current?.[1].text).toBe('Streak started!');
+      expect(result.current?.metrics[1].text).toBe('Streak started!');
     });
 
     test('should show "X-day streak" when dailyStreak is greater than 1', () => {
@@ -124,7 +124,7 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 7),
       );
 
-      expect(result.current?.[1].text).toBe('7-day streak');
+      expect(result.current?.metrics[1].text).toBe('7-day streak');
     });
 
     test('should have flame icon for streak metric', () => {
@@ -132,18 +132,37 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 5),
       );
 
-      expect(result.current?.[1].icon).toBe('flame');
+      expect(result.current?.metrics[1].icon).toBe('flame');
     });
   });
 
   describe('Mastery metric (GREEN)', () => {
-    test('should show "Building toward mastery" when no words mastered', () => {
-      const noMasteryMetrics: SessionMetrics = { ...baseMetrics, masteredWords: 0 };
+    test('should show words strengthened when no words mastered but some known', () => {
+      const noMasteryMetrics: SessionMetrics = {
+        ...baseMetrics,
+        masteredWords: 0,
+        wordsKnown: 4,
+      };
       const { result } = renderHook(() =>
         useEncouragingMetrics(noMasteryMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.[2].text).toBe('Building toward mastery');
+      expect(result.current?.metrics[2].text).toBe('4 words strengthened');
+      expect(result.current?.metrics[2].icon).toBe('trending-up');
+    });
+
+    test('should show words strengthened with total count when none known', () => {
+      const noKnownMetrics: SessionMetrics = {
+        ...baseMetrics,
+        masteredWords: 0,
+        wordsKnown: 0,
+        wordsReviewed: 5,
+      };
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(noKnownMetrics, mockColors as ThemeColors, 0),
+      );
+
+      expect(result.current?.metrics[2].text).toBe('5 words strengthened');
     });
 
     test('should show singular "word mastered" for 1 word', () => {
@@ -151,7 +170,7 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.[2].text).toBe('1 word mastered');
+      expect(result.current?.metrics[2].text).toBe('1 word mastered');
     });
 
     test('should show plural "words mastered" for multiple words', () => {
@@ -160,7 +179,7 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(multiMasteryMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.[2].text).toBe('3 words mastered');
+      expect(result.current?.metrics[2].text).toBe('3 words mastered');
     });
 
     test('should have trophy icon for mastery metric', () => {
@@ -168,7 +187,51 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.[2].icon).toBe('trophy');
+      expect(result.current?.metrics[2].icon).toBe('trophy');
+    });
+  });
+
+  describe('Contextual educational text', () => {
+    test('should return strong recall text when known ratio >= 70%', () => {
+      const strongMetrics: SessionMetrics = {
+        ...baseMetrics,
+        wordsReviewed: 10,
+        wordsKnown: 8,
+        wordsUnknown: 2,
+      };
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
+      );
+
+      expect(result.current?.educationalText).toContain('strong recall');
+    });
+
+    test('should return keep at it text when known ratio < 40%', () => {
+      const weakMetrics: SessionMetrics = {
+        ...baseMetrics,
+        wordsReviewed: 10,
+        wordsKnown: 3,
+        wordsUnknown: 7,
+      };
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(weakMetrics, mockColors as ThemeColors, 0),
+      );
+
+      expect(result.current?.educationalText).toContain('keep at it');
+    });
+
+    test('should return default text for moderate performance', () => {
+      const moderateMetrics: SessionMetrics = {
+        ...baseMetrics,
+        wordsReviewed: 10,
+        wordsKnown: 5,
+        wordsUnknown: 5,
+      };
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(moderateMetrics, mockColors as ThemeColors, 0),
+      );
+
+      expect(result.current?.educationalText).toContain('optimal intervals');
     });
   });
 

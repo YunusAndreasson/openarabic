@@ -2,6 +2,7 @@ import type { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { useMemo } from 'react';
 
+import { STRINGS } from '@/constants/strings';
 import type { SessionMetrics } from '@/types/review.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
@@ -12,10 +13,17 @@ export interface EncouragingMetric {
   type: 'due' | 'daily_streak' | 'mastery';
 }
 
+export interface EncouragingMetricsResult {
+  metrics: EncouragingMetric[];
+  educationalText: string;
+}
+
 /**
  * Build an array of encouraging metric objects for the review completion screen.
  * Shows exactly 3 metrics matching the Practice tab's traffic light pattern:
  * Red (Due) → Yellow (Streak) → Green (Mastered)
+ *
+ * Also returns contextual educational text based on session performance.
  *
  * @param sessionMetrics - Metrics from the completed session
  * @param colors - Theme colors
@@ -25,13 +33,14 @@ export const useEncouragingMetrics = (
   sessionMetrics: SessionMetrics | undefined,
   colors: ThemeColors | undefined,
   dailyStreak: number = 0,
-): EncouragingMetric[] | null => {
+): EncouragingMetricsResult | null => {
   return useMemo(() => {
     if (!sessionMetrics || !colors || sessionMetrics.wordsReviewed === 0) {
       return null;
     }
 
     const metrics = sessionMetrics;
+    const knownRatio = metrics.wordsReviewed > 0 ? metrics.wordsKnown / metrics.wordsReviewed : 0;
 
     // Traffic light metrics (always show these 3 in order)
     const trafficLightMetrics: EncouragingMetric[] = [];
@@ -61,16 +70,15 @@ export const useEncouragingMetrics = (
         type: 'daily_streak',
       });
     } else {
-      // No streak yet - encourage returning tomorrow
       trafficLightMetrics.push({
-        text: 'Practice tomorrow for a streak',
+        text: STRINGS.METRIC_FIRST_SESSION_TODAY,
         icon: 'flame',
         color: colors.warning,
         type: 'daily_streak',
       });
     }
 
-    // 🟢 GREEN - Mastered words (only NEW words mastered in THIS session)
+    // 🟢 GREEN - Mastered words or progress indicator
     if (metrics.masteredWords > 0) {
       const masteredText = metrics.masteredWords === 1 ? 'word' : 'words';
       trafficLightMetrics.push({
@@ -79,16 +87,32 @@ export const useEncouragingMetrics = (
         color: colors.success,
         type: 'mastery',
       });
-    } else {
-      // Positive framing: focus on building toward mastery
+    } else if (metrics.wordsKnown > 0) {
       trafficLightMetrics.push({
-        text: 'Building toward mastery',
-        icon: 'trophy',
+        text: STRINGS.METRIC_WORDS_IMPROVING(metrics.wordsKnown),
+        icon: 'trending-up',
+        color: colors.success,
+        type: 'mastery',
+      });
+    } else {
+      trafficLightMetrics.push({
+        text: STRINGS.METRIC_WORDS_IMPROVING(metrics.wordsReviewed),
+        icon: 'trending-up',
         color: colors.success,
         type: 'mastery',
       });
     }
 
-    return trafficLightMetrics;
+    // Contextual educational text based on performance
+    let educationalText: string;
+    if (knownRatio >= 0.7) {
+      educationalText = STRINGS.SESSION_COMPLETE_EDUCATIONAL_STRONG;
+    } else if (knownRatio < 0.4) {
+      educationalText = STRINGS.SESSION_COMPLETE_EDUCATIONAL_KEEP_AT_IT;
+    } else {
+      educationalText = STRINGS.SESSION_COMPLETE_EDUCATIONAL_DEFAULT;
+    }
+
+    return { metrics: trafficLightMetrics, educationalText };
   }, [sessionMetrics, colors, dailyStreak]);
 };

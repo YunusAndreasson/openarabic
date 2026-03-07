@@ -83,12 +83,12 @@ describe('useGlobalAudioState', () => {
   const mockSleepTimer = {
     state: {
       isActive: false,
-      remainingTime: 0,
+      endTime: 0,
     },
     actions: {
       startTimer: jest.fn(),
       cancelTimer: jest.fn(),
-      autoCancel: jest.fn(),
+      cancelTimer: jest.fn(),
     },
   };
 
@@ -152,7 +152,7 @@ describe('useGlobalAudioState', () => {
 
       expect(result.current.showSleepTimerModal).toBeFalsy();
       expect(result.current.isTimerActive).toBeFalsy();
-      expect(result.current.sleepTimerRemainingTime).toBe(0);
+      expect(result.current.sleepTimerEndTime).toBe(0);
     });
   });
 
@@ -270,7 +270,7 @@ describe('useGlobalAudioState', () => {
       mockUseSleepTimer.mockReturnValue({
         state: {
           isActive: true,
-          remainingTime: 1800, // 30 minutes in seconds
+          endTime: Date.now() + 1800 * 1000, // 30 minutes from now
         },
         actions: mockSleepTimer.actions,
       });
@@ -278,7 +278,7 @@ describe('useGlobalAudioState', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
       expect(result.current.isTimerActive).toBeTruthy();
-      expect(result.current.sleepTimerRemainingTime).toBe(1800);
+      expect(result.current.sleepTimerEndTime).toBeGreaterThan(0);
     });
   });
 

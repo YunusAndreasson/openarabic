@@ -1,7 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import {
   useSharedValue,
-  useAnimatedStyle,
   withSpring,
   withTiming,
   withSequence,
@@ -12,8 +11,8 @@ import { scheduleOnUI } from 'react-native-worklets';
 import { PRESS_SCALE, SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 
 interface ToggleAnimationResult {
-  containerAnimatedStyle: { transform: { scale: number }[] };
-  handleAnimatedStyle: { transform: { translateX: number }[] };
+  containerAnimatedStyle: { transform: { scale: SharedValue<number> }[] };
+  handleAnimatedStyle: { transform: { translateX: SharedValue<number> }[] };
   translateX: SharedValue<number>;
   toggleScale: SharedValue<number>;
   forceAnimateToInitialState: (toActive: boolean) => void;
@@ -73,17 +72,9 @@ export const useToggleAnimation = (
     scheduleOnUI(animateToggle, isActive, travelDistance);
   }, [isActive, travelDistance, animateToggle]);
 
-  const containerAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: toggleScale.get() }],
-    };
-  });
-
-  const handleAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.get() }],
-    };
-  });
+  // Reanimated 4: pass shared values directly to style props (no useAnimatedStyle wrapper needed)
+  const containerAnimatedStyle = { transform: [{ scale: toggleScale }] };
+  const handleAnimatedStyle = { transform: [{ translateX: translateX }] };
 
   return {
     containerAnimatedStyle,

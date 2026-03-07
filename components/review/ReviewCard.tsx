@@ -128,13 +128,8 @@ export function ReviewCard({
     return { backgroundColor: colors.transparent };
   }, [flashColors.error, flashColors.success]);
 
-  // ===== COMBINED ANIMATED STYLE (SINGLE ANIMATED VIEW) =====
-  const combinedAnimatedStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  }, []);
+  // Reanimated 4: pass shared value directly (no useAnimatedStyle wrapper needed)
+  const combinedAnimatedStyle = { transform: [{ translateX }] };
 
   // Word display props
   const wordDisplayProps = {

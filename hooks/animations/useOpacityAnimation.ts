@@ -5,7 +5,6 @@ import {
   cancelAnimation,
   FadeIn,
   FadeOut,
-  useAnimatedStyle,
   useSharedValue,
   withDelay,
   withTiming,
@@ -251,13 +250,8 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     [opacity, validInitialOpacity, delay, timingConfig, safeRunCallback],
   );
 
-  // Create animated style based on the opacity shared value
-  const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
-    'worklet';
-    return {
-      opacity: opacity.get(),
-    };
-  }, [opacity]) as AnimatedStyleProp<ViewStyle>;
+  // Reanimated 4: pass shared value directly to style prop (no useAnimatedStyle wrapper needed)
+  const animatedStyle = { opacity } as AnimatedStyleProp<ViewStyle>;
 
   // Auto-start animation if enabled - using UI thread
   useEffect(() => {

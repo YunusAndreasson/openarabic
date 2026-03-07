@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 import { handleError } from '@/utils/errorHandling';
 
 export interface SleepTimerState {
   isActive: boolean;
-  remainingTime: number; // in seconds
+  /** Unix timestamp (ms) when the timer expires, or 0 if inactive */
+  endTime: number;
 }
 
 export interface SleepTimerActions {
   startTimer: (minutes: number) => void;
   cancelTimer: () => void;
-  autoCancel: () => void; // Automatically cancel when audio stops
 }
 
 export interface UseSleepTimerResult {
@@ -19,55 +19,45 @@ export interface UseSleepTimerResult {
   actions: SleepTimerActions;
 }
 
+/**
+ * Sleep timer hook — schedules a single setTimeout to fire the completion callback.
+ * Stores the end timestamp so UI can derive remaining time locally without
+ * causing re-renders every second in the global audio state tree.
+ */
 export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult {
   const [isActive, setIsActive] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(0);
+  const [endTime, setEndTime] = useState(0);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Clear interval helper
-  const clearTimerInterval = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+  const clearTimerTimeout = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
   }, []);
 
-  // Start timer function
   const startTimer = useCallback(
     (minutes: number) => {
       try {
-        // Validate input
         if (!minutes || minutes <= 0 || minutes > 180) {
           throw new Error(`Invalid timer duration: ${minutes} minutes`);
         }
 
-        const seconds = minutes * 60;
-        setRemainingTime(seconds);
+        const durationMs = minutes * 60 * 1000;
+        const end = Date.now() + durationMs;
+
+        clearTimerTimeout();
+
+        setEndTime(end);
         setIsActive(true);
 
-        // Clear any existing interval
-        clearTimerInterval();
-
-        // Start countdown
-        intervalRef.current = setInterval(() => {
-          setRemainingTime(prev => {
-            const newTime = prev - 1;
-
-            if (newTime <= 0) {
-              setIsActive(false);
-              clearTimerInterval();
-
-              // Call completion callback
-              if (onTimerComplete) {
-                onTimerComplete();
-              }
-              return 0;
-            }
-
-            return newTime;
-          });
-        }, 1000);
+        timeoutRef.current = setTimeout(() => {
+          setIsActive(false);
+          setEndTime(0);
+          timeoutRef.current = null;
+          onTimerComplete?.();
+        }, durationMs);
       } catch (error) {
         handleError(error as Error, {
           toastMessage: STRINGS.FAILED_TO_START_SLEEP_TIMER,
@@ -75,46 +65,24 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
         });
       }
     },
-    [clearTimerInterval, onTimerComplete],
+    [clearTimerTimeout, onTimerComplete],
   );
 
-  // Cancel timer function
   const cancelTimer = useCallback(() => {
-    try {
-      setIsActive(false);
-      setRemainingTime(0);
-      clearTimerInterval();
-    } catch (error) {
-      handleError(error as Error, {
-        toastMessage: STRINGS.FAILED_TO_CANCEL_SLEEP_TIMER,
-        analyticsEventName: 'Sleep_Timer_Cancel_Error',
-      });
-    }
-  }, [clearTimerInterval]);
-
-  // Auto-cancel timer when audio stops (no user feedback needed)
-  const autoCancel = useCallback(() => {
-    if (isActive) {
-      cancelTimer();
-    }
-  }, [isActive, cancelTimer]);
+    setIsActive(false);
+    setEndTime(0);
+    clearTimerTimeout();
+  }, [clearTimerTimeout]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      clearTimerInterval();
+      clearTimerTimeout();
     };
-  }, [clearTimerInterval]);
+  }, [clearTimerTimeout]);
 
-  const state: SleepTimerState = useMemo(
-    () => ({ isActive, remainingTime }),
-    [isActive, remainingTime],
-  );
-
-  const actions: SleepTimerActions = useMemo(
-    () => ({ startTimer, cancelTimer, autoCancel }),
-    [startTimer, cancelTimer, autoCancel],
-  );
-
-  return { state, actions };
+  return {
+    state: { isActive, endTime },
+    actions: { startTimer, cancelTimer },
+  };
 }

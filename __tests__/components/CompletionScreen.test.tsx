@@ -78,22 +78,25 @@ jest.mock('@/hooks/practice', () => ({
 
 jest.mock('@/hooks/review', () => ({
   useReviewCompletion: jest.fn(),
-  useEncouragingMetrics: jest.fn(() => [
-    {
-      type: 'wordsReviewed',
-      text: '10 words reviewed',
-      value: 10,
-      icon: 'book-outline' as const,
-      color: '#4a7c59',
-    },
-    {
-      type: 'streak',
-      text: '5-day streak',
-      value: 5,
-      icon: 'flame-outline' as const,
-      color: '#f59e0b',
-    },
-  ]),
+  useEncouragingMetrics: jest.fn(() => ({
+    metrics: [
+      {
+        type: 'wordsReviewed',
+        text: '10 words reviewed',
+        value: 10,
+        icon: 'book-outline' as const,
+        color: '#4a7c59',
+      },
+      {
+        type: 'streak',
+        text: '5-day streak',
+        value: 5,
+        icon: 'flame-outline' as const,
+        color: '#f59e0b',
+      },
+    ],
+    educationalText: 'Words return at optimal intervals for long-term memory',
+  })),
 }));
 
 const { useReviewCompletion, useEncouragingMetrics } = require('@/hooks/review');
@@ -164,22 +167,25 @@ describe('CompletionScreen Component', () => {
         currentStreak: 7,
       });
 
-      useEncouragingMetrics.mockReturnValue([
-        {
-          type: 'wordsReviewed',
-          text: '15 words reviewed',
-          value: 15,
-          icon: 'book-outline',
-          color: '#4a7c59',
-        },
-        {
-          type: 'streak',
-          text: '7-day streak',
-          value: 7,
-          icon: 'flame-outline',
-          color: '#f59e0b',
-        },
-      ]);
+      useEncouragingMetrics.mockReturnValue({
+        metrics: [
+          {
+            type: 'wordsReviewed',
+            text: '15 words reviewed',
+            value: 15,
+            icon: 'book-outline',
+            color: '#4a7c59',
+          },
+          {
+            type: 'streak',
+            text: '7-day streak',
+            value: 7,
+            icon: 'flame-outline',
+            color: '#f59e0b',
+          },
+        ],
+        educationalText: 'Words return at optimal intervals for long-term memory',
+      });
 
       const { getByText } = render(<CompletionScreen sessionMetrics={metrics} />);
 
@@ -190,29 +196,32 @@ describe('CompletionScreen Component', () => {
     test('displays multiple encouraging metrics', () => {
       const metrics = createMockMetrics();
 
-      useEncouragingMetrics.mockReturnValue([
-        {
-          type: 'wordsReviewed',
-          text: '10 words reviewed',
-          value: 10,
-          icon: 'book-outline',
-          color: '#4a7c59',
-        },
-        {
-          type: 'streak',
-          text: '5-day streak',
-          value: 5,
-          icon: 'flame-outline',
-          color: '#f59e0b',
-        },
-        {
-          type: 'mastered',
-          text: '3 words mastered',
-          value: 3,
-          icon: 'star-outline',
-          color: '#10b981',
-        },
-      ]);
+      useEncouragingMetrics.mockReturnValue({
+        metrics: [
+          {
+            type: 'wordsReviewed',
+            text: '10 words reviewed',
+            value: 10,
+            icon: 'book-outline',
+            color: '#4a7c59',
+          },
+          {
+            type: 'streak',
+            text: '5-day streak',
+            value: 5,
+            icon: 'flame-outline',
+            color: '#f59e0b',
+          },
+          {
+            type: 'mastered',
+            text: '3 words mastered',
+            value: 3,
+            icon: 'star-outline',
+            color: '#10b981',
+          },
+        ],
+        educationalText: 'Words return at optimal intervals for long-term memory',
+      });
 
       const { getByText } = render(<CompletionScreen sessionMetrics={metrics} />);
 
@@ -227,7 +236,7 @@ describe('CompletionScreen Component', () => {
         currentStreak: 0,
       });
 
-      useEncouragingMetrics.mockReturnValue([]);
+      useEncouragingMetrics.mockReturnValue({ metrics: [], educationalText: 'Words return at optimal intervals for long-term memory' });
 
       const { queryByText } = render(<CompletionScreen sessionMetrics={metrics} />);
 
@@ -299,22 +308,25 @@ describe('CompletionScreen Component', () => {
         currentStreak: 10,
       });
 
-      useEncouragingMetrics.mockReturnValue([
-        {
-          type: 'wordsReviewed',
-          text: '20 words reviewed',
-          value: 20,
-          icon: 'book-outline',
-          color: '#4a7c59',
-        },
-        {
-          type: 'streak',
-          text: '10-day streak',
-          value: 10,
-          icon: 'flame-outline',
-          color: '#f59e0b',
-        },
-      ]);
+      useEncouragingMetrics.mockReturnValue({
+        metrics: [
+          {
+            type: 'wordsReviewed',
+            text: '20 words reviewed',
+            value: 20,
+            icon: 'book-outline',
+            color: '#4a7c59',
+          },
+          {
+            type: 'streak',
+            text: '10-day streak',
+            value: 10,
+            icon: 'flame-outline',
+            color: '#f59e0b',
+          },
+        ],
+        educationalText: "You're building strong recall — words return at optimal intervals",
+      });
 
       const { getByText } = render(
         <CompletionScreen title="Excellent Work!" sessionMetrics={metrics} />,
@@ -331,15 +343,18 @@ describe('CompletionScreen Component', () => {
         wordsKnown: 3,
       });
 
-      useEncouragingMetrics.mockReturnValue([
-        {
-          type: 'wordsReviewed',
-          text: '3 words reviewed',
-          value: 3,
-          icon: 'book-outline',
-          color: '#4a7c59',
-        },
-      ]);
+      useEncouragingMetrics.mockReturnValue({
+        metrics: [
+          {
+            type: 'wordsReviewed',
+            text: '3 words reviewed',
+            value: 3,
+            icon: 'book-outline',
+            color: '#4a7c59',
+          },
+        ],
+        educationalText: 'Words return at optimal intervals for long-term memory',
+      });
 
       const { getByText } = render(<CompletionScreen sessionMetrics={metrics} />);
 
@@ -354,15 +369,18 @@ describe('CompletionScreen Component', () => {
         wordsUnknown: 0,
       });
 
-      useEncouragingMetrics.mockReturnValue([
-        {
-          type: 'perfect',
-          text: 'Perfect session!',
-          value: 100,
-          icon: 'trophy-outline',
-          color: '#f59e0b',
-        },
-      ]);
+      useEncouragingMetrics.mockReturnValue({
+        metrics: [
+          {
+            type: 'perfect',
+            text: 'Perfect session!',
+            value: 100,
+            icon: 'trophy-outline',
+            color: '#f59e0b',
+          },
+        ],
+        educationalText: "You're building strong recall — words return at optimal intervals",
+      });
 
       const { getByText } = render(
         <CompletionScreen title="Perfect Session!" sessionMetrics={metrics} />,
@@ -457,22 +475,25 @@ describe('CompletionScreen Component', () => {
     test('should display metrics in order of importance', () => {
       const metrics = createMockMetrics();
 
-      useEncouragingMetrics.mockReturnValue([
-        {
-          type: 'streak',
-          text: '7-day streak',
-          value: 7,
-          icon: 'flame-outline',
-          color: '#f59e0b',
-        },
-        {
-          type: 'wordsReviewed',
-          text: '10 words reviewed',
-          value: 10,
-          icon: 'book-outline',
-          color: '#4a7c59',
-        },
-      ]);
+      useEncouragingMetrics.mockReturnValue({
+        metrics: [
+          {
+            type: 'streak',
+            text: '7-day streak',
+            value: 7,
+            icon: 'flame-outline',
+            color: '#f59e0b',
+          },
+          {
+            type: 'wordsReviewed',
+            text: '10 words reviewed',
+            value: 10,
+            icon: 'book-outline',
+            color: '#4a7c59',
+          },
+        ],
+        educationalText: 'Words return at optimal intervals for long-term memory',
+      });
 
       const { getAllByText } = render(<CompletionScreen sessionMetrics={metrics} />);
 

@@ -23,13 +23,25 @@ jest.mock('@tanstack/react-query', () => ({
   QueryClient: jest.fn(),
   QueryClientProvider: ({ children }: { children: ReactNode }) => children,
   queryOptions: jest.fn(options => options),
+  skipToken: Symbol.for('skipToken'),
 }));
 
+const mockQueryFn = () => Promise.resolve([]);
 jest.mock('@/constants/queries', () => ({
   fsrsQueries: {
-    all: jest.fn(() => ({ queryKey: ['fsrs-words', 'all'], enabled: true })),
-    due: jest.fn(() => ({ queryKey: ['fsrs-words', 'due'], enabled: true })),
-    stats: jest.fn(() => ({ queryKey: ['fsrs-words', 'stats'], enabled: true })),
+    all: jest.fn(() => ({
+      queryKey: ['fsrs-words', 'all'],
+      queryFn: mockQueryFn,
+    })),
+    due: jest.fn(() => ({
+      queryKey: ['fsrs-words', 'due'],
+      queryFn: mockQueryFn,
+    })),
+    stats: jest.fn(() => ({
+      queryKey: ['fsrs-words', 'stats'],
+      queryFn: mockQueryFn,
+    })),
+    lastCompletedAtKey: jest.fn(() => ['fsrs-words', 'lastCompletedAt']),
   },
 }));
 
@@ -45,12 +57,14 @@ jest.mock('@/utils/dateTimeUtils', () => ({
 
 import { useQuery } from '@tanstack/react-query';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId, UserId } from '@/types/branded.types';
 
 const mockUseQuery = jest.mocked(useQuery);
 const mockStudyWordsFSRSService = jest.mocked(studyWordsFSRSService);
+const mockFsrsQueries = jest.mocked(fsrsQueries);
 
 describe('useFSRSQueries', () => {
   const mockStudyWord: StudyWord = {
@@ -74,6 +88,20 @@ describe('useFSRSQueries', () => {
     jest.clearAllMocks();
     mockQueryClient.getQueryData.mockReturnValue(undefined);
 
+    // Re-apply mock implementations after clearAllMocks
+    mockFsrsQueries.all.mockImplementation(() => ({
+      queryKey: ['fsrs-words', 'all'],
+      queryFn: mockQueryFn,
+    }) as never);
+    mockFsrsQueries.due.mockImplementation(() => ({
+      queryKey: ['fsrs-words', 'due'],
+      queryFn: mockQueryFn,
+    }) as never);
+    (mockFsrsQueries as any).lastCompletedAtKey.mockImplementation(() => [
+      'fsrs-words',
+      'lastCompletedAt',
+    ]);
+
     // Default query mock
     mockUseQuery.mockReturnValue({
       data: undefined,
@@ -84,26 +112,23 @@ describe('useFSRSQueries', () => {
   });
 
   describe('Query configuration', () => {
-    test('should not enable queries when userId is undefined', () => {
+    test('should disable queries with skipToken when userId is undefined', () => {
       renderHook(() => useFSRSQueries({ userId: undefined }));
 
-      // Check that useQuery was called with enabled: false
-      expect(mockUseQuery).toHaveBeenCalledWith(
-        expect.objectContaining({
-          enabled: false,
-        }),
-      );
+      // Both queries should use skipToken (Symbol) as queryFn when userId is undefined
+      const calls = mockUseQuery.mock.calls;
+      expect(calls.length).toBeGreaterThanOrEqual(2);
+      // skipToken is a Symbol, so queryFn should not be a regular function
+      expect(typeof (calls[0][0] as Record<string, unknown>).queryFn).not.toBe('function');
     });
 
     test('should enable queries when userId is provided', () => {
       renderHook(() => useFSRSQueries({ userId: 'user-123' }));
 
-      // Check that useQuery was called with enabled: true
-      expect(mockUseQuery).toHaveBeenCalledWith(
-        expect.objectContaining({
-          enabled: true,
-        }),
-      );
+      // Both queries should have a function as queryFn when userId is provided
+      const calls = mockUseQuery.mock.calls;
+      expect(calls.length).toBeGreaterThanOrEqual(2);
+      expect(typeof (calls[0][0] as Record<string, unknown>).queryFn).toBe('function');
     });
   });
 

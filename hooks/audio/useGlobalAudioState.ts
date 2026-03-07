@@ -39,7 +39,7 @@ export interface GlobalAudioState {
   // Sleep timer state
   showSleepTimerModal: boolean;
   isTimerActive: boolean;
-  sleepTimerRemainingTime: number;
+  sleepTimerEndTime: number;
 
   // Actions
   onPlayPause: () => void;
@@ -87,10 +87,10 @@ export function useGlobalAudioState(): GlobalAudioState {
     }, 30000);
   });
 
-  // Auto-cancel sleep timer when audio stops - use existing audio subscription
+  // Auto-cancel sleep timer when audio stops
   useEffect(() => {
     if (!audioPlayer.isPlaying && !audioPlayer.isLoading && sleepTimer.state.isActive) {
-      sleepTimer.actions.autoCancel();
+      sleepTimer.actions.cancelTimer();
     }
   }, [audioPlayer.isPlaying, audioPlayer.isLoading, sleepTimer.state.isActive, sleepTimer.actions]);
 
@@ -249,7 +249,7 @@ export function useGlobalAudioState(): GlobalAudioState {
     duration: audioPlayer.duration,
     isTimerActive: sleepTimer.state.isActive,
     showSleepTimerModal,
-    sleepTimerRemainingTime: sleepTimer.state.remainingTime,
+    sleepTimerEndTime: sleepTimer.state.endTime,
     onPlayPause: handlePlayPause,
     onTimerPress: handleTimerPress,
     onSleepTimerSet: handleSleepTimerSet,

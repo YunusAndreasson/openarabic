@@ -1,5 +1,5 @@
 import { ProgressBar } from '@/components/common';
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
@@ -38,9 +38,9 @@ export interface MiniPlayerProps {
   onTimerPress: () => void;
 }
 
-// Layout constants using proper LAYOUT system from layout.ts
-const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 112px (taller for 2-line title)
-const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px
+// Layout constants
+const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER;
+const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT;
 
 // Static container style - positioned to cover tab bar and floating buttons
 const CONTAINER_STYLE = [
@@ -49,40 +49,25 @@ const CONTAINER_STYLE = [
       position: 'absolute' as const,
       left: LAYOUT.SCREEN_HORIZONTAL_PADDING,
       right: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-      zIndex: LAYOUT.Z_INDEX.HEADER, // Below modals (3) but above cards (1)
+      zIndex: LAYOUT.Z_INDEX.HEADER,
     },
   }).container,
-  { bottom: LAYOUT.BOTTOM_BAR.HEIGHT - LAYOUT.SPACING.LARGE - LAYOUT.SPACING.TINY }, // Sits lower to cover tab bar icons
+  { bottom: LAYOUT.BOTTOM_BAR.HEIGHT - LAYOUT.SPACING.LARGE - LAYOUT.SPACING.TINY },
 ];
 
-// Custom comparison function for React.memo
-// Only re-render when visual display actually changes
-// This prevents excessive re-renders from high-frequency position updates (2x/second)
+// Custom memo comparison — keeps the one optimization React Compiler can't do:
+// skip re-renders for sub-second position changes (position updates 2x/sec but display shows seconds)
 const MiniPlayerComparison = (prev: MiniPlayerProps, next: MiniPlayerProps): boolean => {
-  // Re-render if different article
   if (prev.article.id !== next.article.id) return false;
-
-  // Re-render if timer state changes
   if (prev.isTimerActive !== next.isTimerActive) return false;
-
-  // Re-render if duration changes (new track)
   if (prev.duration !== next.duration) return false;
-
-  // Only re-render when display text changes (full seconds)
-  // Position updates 2x/second but display only shows seconds
-  const prevSeconds = Math.floor(prev.position);
-  const nextSeconds = Math.floor(next.position);
-  if (prevSeconds !== nextSeconds) return false;
-
-  // Re-render if queue position changes
+  if (Math.floor(prev.position) !== Math.floor(next.position)) return false;
   if (
     prev.queuePosition?.current !== next.queuePosition?.current ||
     prev.queuePosition?.total !== next.queuePosition?.total
   ) {
     return false;
   }
-
-  // Props are "equal enough" - skip re-render
   return true;
 };
 
@@ -97,58 +82,29 @@ const MiniPlayerComponent = ({
 }: MiniPlayerProps) => {
   const colors = useColors();
 
-  // Memoize image URL to prevent duplicate generation on every render
-  const imageUrl = useMemo(
-    () => generateStorageUrl('images', article.image_url),
-    [article.image_url],
-  );
+  // React Compiler auto-memoizes these derivations
+  const imageUrl = generateStorageUrl('images', article.image_url);
+  const progressPercentage = safePercent(position, duration);
+  const timeDisplay = `${formatSecondsToClock(position)} / ${formatSecondsToClock(duration)}`;
+  const queueDisplay =
+    queuePosition && queuePosition.total > 1
+      ? `${queuePosition.current}/${queuePosition.total}`
+      : null;
 
-  // Memoize dynamic styles for better performance - use elevation2 for prominence
-  const cardStyle = useMemo(
-    () => [
-      styles.card,
-      {
-        backgroundColor: colors.elevation2,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: withAlpha(colors.border, 0.5),
-        ...LAYOUT.ELEVATION.MEDIUM,
-        shadowColor: colors.shadow,
-      },
-    ],
-    [colors.elevation2, colors.border, colors.shadow],
-  );
+  const timerButtonColor = isTimerActive ? colors.warning : withAlpha(colors.tint, 0.12);
+  const timerIconColor = isTimerActive ? colors.white : colors.tint;
+  const stopButtonColor = withAlpha(colors.tint, 0.12);
 
-  // Memoize button colors - use subtle tinted background for visibility
-  const timerButtonColor = useMemo(
-    () => (isTimerActive ? colors.warning : withAlpha(colors.tint, 0.12)),
-    [isTimerActive, colors.warning, colors.tint],
-  );
-
-  const timerIconColor = useMemo(
-    () => (isTimerActive ? colors.white : colors.tint),
-    [isTimerActive, colors.white, colors.tint],
-  );
-
-  // Stop button uses subtle tinted background for visibility
-  const stopButtonColor = useMemo(() => withAlpha(colors.tint, 0.12), [colors.tint]);
-
-  // Calculate progress percentage
-  const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
-
-  // Format time display with current position and total duration
-  const timeDisplay = useMemo(() => {
-    const currentTime = formatSecondsToClock(position);
-    const totalTime = formatSecondsToClock(duration);
-    return `${currentTime} / ${totalTime}`;
-  }, [position, duration]);
-
-  // Format queue position display
-  const queueDisplay = useMemo(() => {
-    if (queuePosition && queuePosition.total > 1) {
-      return `${queuePosition.current}/${queuePosition.total}`;
-    }
-    return null;
-  }, [queuePosition]);
+  const cardStyle = [
+    styles.card,
+    {
+      backgroundColor: colors.elevation2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: withAlpha(colors.border, 0.5),
+      ...LAYOUT.ELEVATION.MEDIUM,
+      shadowColor: colors.shadow,
+    },
+  ];
 
   return (
     <Animated.View
@@ -159,105 +115,97 @@ const MiniPlayerComponent = ({
       style={CONTAINER_STYLE}
     >
       <View style={cardStyle}>
-        {/* Clean elevated card content */}
-        <View style={styles.contentWrapper}>
-          {/* Main Content Row */}
-          <View style={styles.contentRow}>
-            {/* Artwork Thumbnail */}
-            <View style={styles.artworkContainer}>
-              <EnhancedImage
-                source={imageUrl}
-                style={styles.artwork}
-                transition={TIMING_CONSTANTS.TRANSITION_DELAY}
-                recyclingKey={`miniplayer-${article.id}`}
-              />
-            </View>
-
-            {/* Text Content Column */}
-            <View style={styles.textColumn}>
-              <ThemedText
-                colorName="headingText"
-                style={styles.title}
-                type="heading3"
-                numberOfLines={2}
-                ellipsizeMode="tail"
-              >
-                {article.title}
-              </ThemedText>
-
-              <ThemedText
-                colorName="secondaryText"
-                style={styles.artist}
-                type="caption"
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {formatAuthorCategory(article.author, article.category)}
-              </ThemedText>
-
-              {/* Time and queue position */}
-              <View style={styles.timeAndQueueRow}>
-                <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
-                  {timeDisplay}
-                </ThemedText>
-                {queueDisplay && (
-                  <>
-                    <ThemedText colorName="textTertiary" type="caption">
-                      •
-                    </ThemedText>
-                    <ThemedText
-                      colorName="textTertiary"
-                      style={styles.queuePosition}
-                      type="caption"
-                    >
-                      {queueDisplay}
-                    </ThemedText>
-                  </>
-                )}
-              </View>
-            </View>
-
-            {/* Controls */}
-            <View style={styles.controlsContainer}>
-              {/* Timer button - always visible with state indication */}
-              <IconButton
-                icon="timer"
-                onPress={onTimerPress}
-                backgroundColor={timerButtonColor}
-                iconColor={timerIconColor}
-                iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
-                hapticType="light"
-              />
-
-              {/* Stop button - fully stops playback and clears player state */}
-              <IconButton
-                icon="stop"
-                onPress={onPlayPause}
-                backgroundColor={stopButtonColor}
-                iconColor={colors.tint}
-                iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
-                hapticType="light"
-              />
-            </View>
-          </View>
-
-          {/* Progress Bar - at bottom */}
-          <View style={styles.progressContainer} pointerEvents="none">
-            <ProgressBar
-              progress={progressPercentage}
-              height={PROGRESS_HEIGHT}
-              style={styles.progressBar}
-              fillColor={colors.tint}
-              backgroundColor={colors.border}
+        {/* Main Content Row */}
+        <View style={styles.contentRow}>
+          {/* Artwork Thumbnail */}
+          <View style={styles.artworkContainer}>
+            <EnhancedImage
+              source={imageUrl}
+              style={styles.artwork}
+              transition={TIMING_CONSTANTS.TRANSITION_DELAY}
+              recyclingKey={`miniplayer-${article.id}`}
             />
           </View>
+
+          {/* Text Content Column */}
+          <View style={styles.textColumn}>
+            <ThemedText
+              colorName="headingText"
+              style={styles.title}
+              type="heading3"
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
+              {article.title}
+            </ThemedText>
+
+            <ThemedText
+              colorName="secondaryText"
+              style={styles.artist}
+              type="caption"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {formatAuthorCategory(article.author, article.category)}
+            </ThemedText>
+
+            {/* Time and queue position */}
+            <View style={styles.timeAndQueueRow}>
+              <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
+                {timeDisplay}
+              </ThemedText>
+              {queueDisplay && (
+                <>
+                  <ThemedText colorName="textTertiary" type="caption">
+                    •
+                  </ThemedText>
+                  <ThemedText
+                    colorName="textTertiary"
+                    style={styles.queuePosition}
+                    type="caption"
+                  >
+                    {queueDisplay}
+                  </ThemedText>
+                </>
+              )}
+            </View>
+          </View>
+
+          {/* Controls */}
+          <View style={styles.controlsContainer}>
+            <IconButton
+              icon="timer"
+              onPress={onTimerPress}
+              backgroundColor={timerButtonColor}
+              iconColor={timerIconColor}
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+              hapticType="light"
+            />
+            <IconButton
+              icon="stop"
+              onPress={onPlayPause}
+              backgroundColor={stopButtonColor}
+              iconColor={colors.tint}
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+              hapticType="light"
+            />
+          </View>
+        </View>
+
+        {/* Progress Bar - at bottom */}
+        <View style={styles.progressContainer} pointerEvents="none">
+          <ProgressBar
+            progress={progressPercentage}
+            height={PROGRESS_HEIGHT}
+            fillColor={colors.tint}
+            backgroundColor={colors.border}
+          />
         </View>
       </View>
     </Animated.View>
   );
 };
 
-// Export with custom comparison for optimal performance
 export const MiniPlayer = memo<MiniPlayerProps>(MiniPlayerComponent, MiniPlayerComparison);
 
 MiniPlayer.displayName = 'MiniPlayer';
@@ -269,19 +217,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Content wrapper for clean elevated card
-  contentWrapper: {
-    position: 'relative',
-    width: '100%',
-    height: '100%',
-  },
-
   contentRow: {
-    flex: 1, // Fill available height for proper vertical centering
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.SMALL, // 8px - consistent with PlaylistItemCard
-    paddingBottom: PROGRESS_HEIGHT, // Account for progress bar overlay
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingBottom: PROGRESS_HEIGHT,
   },
 
   textColumn: {
@@ -291,7 +232,6 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    // Typography handled by type="heading3" (17px LARGE)
     letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
     marginBottom: LAYOUT.SPACING.TINY,
   },
@@ -313,7 +253,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     opacity: LAYOUT.OPACITY.HIGH,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + LAYOUT.SPACING.HALF_TINY,
-    // Use tabular numbers for consistent width (prevents jumping when time changes)
     fontVariant: ['tabular-nums'],
     textAlign: 'left',
   },
@@ -338,12 +277,8 @@ const styles = StyleSheet.create({
     height: PROGRESS_HEIGHT,
   },
 
-  progressBar: {
-    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
-  },
-
   artworkContainer: {
-    marginRight: LAYOUT.SPACING.MEDIUM, // 12px - breathing room for title text
+    marginRight: LAYOUT.SPACING.MEDIUM,
   },
 
   artwork: {

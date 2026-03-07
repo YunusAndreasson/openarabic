@@ -97,6 +97,7 @@ export const STRINGS = {
   PREPARING_PRACTICE_SESSION: 'Preparing session…',
   // Timer controls
   SLEEP_TIMER: 'Sleep timer',
+  SET_TIMER: 'Set timer',
   // Welcome & onboarding
   WELCOME_TITLE: 'OpenArabic',
   WELCOME_SUBTITLE: 'Read, listen, and memorize',
@@ -174,7 +175,14 @@ export const STRINGS = {
   ERROR_LOADING_DATA: "Couldn't load data. " + tryAgain,
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',
-  SESSION_COMPLETE_EDUCATIONAL: 'Words return at optimal intervals for long-term memory',
+  SESSION_COMPLETE_EDUCATIONAL_STRONG:
+    "You're building strong recall — words return at optimal intervals",
+  SESSION_COMPLETE_EDUCATIONAL_DEFAULT: 'Words return at optimal intervals for long-term memory',
+  SESSION_COMPLETE_EDUCATIONAL_KEEP_AT_IT:
+    'Each review strengthens your memory — keep at it',
+  METRIC_FIRST_SESSION_TODAY: 'First session today!',
+  METRIC_WORDS_IMPROVING: (count: number) =>
+    `${count} ${count === 1 ? 'word' : 'words'} strengthened`,
   ADDED_TO_BOOKMARKS: 'Added to playlist',
   REMOVED_FROM_BOOKMARKS: 'Removed from playlist',
   // Word action buttons
@@ -414,7 +422,6 @@ export const STRINGS = {
   FAILED_TO_LOAD_SENTENCES: "Couldn't load sentences. " + tryAgain,
   // Timer errors
   FAILED_TO_START_SLEEP_TIMER: "Couldn't start timer. " + tryAgain,
-  FAILED_TO_CANCEL_SLEEP_TIMER: "Couldn't cancel timer. " + tryAgain,
   // Cache errors
   FAILED_TO_CLEAR_AUDIO_CACHE: "Couldn't clear audio cache. " + tryAgain,
   FAILED_TO_CLEAR_OFFLINE_CACHE: "Couldn't clear cache. " + tryAgain,

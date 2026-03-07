@@ -602,7 +602,7 @@ const AudioOverlays = memo(function AudioOverlays() {
       <SleepTimer
         isVisible={globalAudioState.showSleepTimerModal}
         isTimerActive={globalAudioState.isTimerActive}
-        remainingTime={globalAudioState.sleepTimerRemainingTime}
+        endTime={globalAudioState.sleepTimerEndTime}
         onClose={globalAudioState.onSleepTimerClose}
         onTimerSet={handleSleepTimerSet}
         onTimerCancel={globalAudioState.onSleepTimerCancel}

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
-  useAnimatedStyle,
   useSharedValue,
   withSequence,
   withSpring,
@@ -83,9 +82,8 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
     }
   }, [photoLoaded, containerOpacity]);
 
-  const containerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: containerOpacity.get(),
-  }));
+  // Reanimated 4: pass shared value directly (no useAnimatedStyle wrapper needed)
+  const containerAnimatedStyle = { opacity: containerOpacity };
 
   // Derived values
   const firstName = getFirstNameFromEmail(userEmail);
@@ -104,10 +102,8 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
     selectPhoto();
   }, [scaleValue, selectPhoto]);
 
-  // Photo press scale — still imperative (withSequence on press)
-  const photoAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scaleValue.get() }],
-  }));
+  // Reanimated 4: pass shared value directly (no useAnimatedStyle wrapper needed)
+  const photoAnimatedStyle = { transform: [{ scale: scaleValue }] };
 
   // Dynamic styles (React Compiler auto-memoizes)
   const dynamicStyles = {
@@ -151,68 +147,65 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   };
 
   return (
-    <>
-      <Animated.View
-        style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}
-      >
-        <View style={styles.profileContent}>
-          {/* Profile Photo */}
-          <Pressable
-            onPress={handlePhotoPress}
-            style={styles.photoContainer}
-            hitSlop={LAYOUT.HIT_SLOP.SMALL}
-          >
-            <Animated.View style={[styles.photoWrapper, photoAnimatedStyle]}>
-              <View style={dynamicStyles.photoRing}>
-                {profilePhotoUri ? (
-                  <Image
-                    source={{ uri: profilePhotoUri }}
-                    style={styles.profilePhoto}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                    transition={200}
-                    priority="high"
-                  />
-                ) : (
-                  <View style={dynamicStyles.initialsContainer}>
-                    <ThemedText
-                      type="heading2"
-                      weight="bold"
-                      // Use dark text to be legible on elevation background in dark mode
-                      style={[styles.initialsText, dynamicStyles.initialsText]}
-                    >
-                      {initials}
-                    </ThemedText>
-                  </View>
-                )}
-
-                {/* Edit Icon Overlay */}
-                <View style={dynamicStyles.editIconContainer}>
-                  <Ionicons name="camera" size={14} color={colors.background} />
+    <Animated.View
+      style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}
+    >
+      <View style={styles.profileContent}>
+        {/* Profile Photo */}
+        <Pressable
+          onPress={handlePhotoPress}
+          style={styles.photoContainer}
+          hitSlop={LAYOUT.HIT_SLOP.SMALL}
+        >
+          <Animated.View style={photoAnimatedStyle}>
+            <View style={dynamicStyles.photoRing}>
+              {profilePhotoUri ? (
+                <Image
+                  source={{ uri: profilePhotoUri }}
+                  style={styles.profilePhoto}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  transition={200}
+                  priority="high"
+                />
+              ) : (
+                <View style={dynamicStyles.initialsContainer}>
+                  <ThemedText
+                    type="heading2"
+                    weight="bold"
+                    style={[styles.initialsText, dynamicStyles.initialsText]}
+                  >
+                    {initials}
+                  </ThemedText>
                 </View>
-              </View>
-            </Animated.View>
-          </Pressable>
+              )}
 
-          {/* User Info */}
-          <View style={styles.userInfo}>
-            <ThemedText type="heading2" weight="bold" style={styles.userName} numberOfLines={1}>
-              {firstName}
+              {/* Edit Icon Overlay */}
+              <View style={dynamicStyles.editIconContainer}>
+                <Ionicons name="camera" size={14} color={colors.background} />
+              </View>
+            </View>
+          </Animated.View>
+        </Pressable>
+
+        {/* User Info */}
+        <View style={styles.userInfo}>
+          <ThemedText type="heading2" weight="bold" style={styles.userName} numberOfLines={1}>
+            {firstName}
+          </ThemedText>
+          {memberSince && (
+            <ThemedText
+              type="body"
+              variant="secondary"
+              style={styles.memberSince}
+              numberOfLines={1}
+            >
+              {memberSince}
             </ThemedText>
-            {memberSince && (
-              <ThemedText
-                type="body"
-                variant="secondary"
-                style={styles.memberSince}
-                numberOfLines={1}
-              >
-                {memberSince}
-              </ThemedText>
-            )}
-          </View>
+          )}
         </View>
-      </Animated.View>
-    </>
+      </View>
+    </Animated.View>
   );
 }
 
@@ -233,9 +226,6 @@ const styles = StyleSheet.create({
   photoContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
-  photoWrapper: {
-    position: 'relative',
-  },
   profilePhoto: {
     width: PROFILE_PHOTO_SIZE,
     height: PROFILE_PHOTO_SIZE,
@@ -244,16 +234,6 @@ const styles = StyleSheet.create({
   initialsText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-  },
-  editIconContainer: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
-    height: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
-    borderRadius: LAYOUT.BUTTON.ICON_SIZE.MEDIUM / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   userInfo: {
     flex: 1,

@@ -1,5 +1,5 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,7 +8,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { SleepTimerAction } from '@/types/enums';
 import { useBottomSheetModalVisibility } from '@/hooks/ui/useBottomSheetVisibility';
 import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
@@ -20,11 +19,21 @@ export interface SleepTimerProps {
   onTimerSet: (minutes: number) => void;
   onTimerCancel: () => void;
   isTimerActive?: boolean;
-  remainingTime?: number;
+  /** Unix timestamp (ms) when timer expires */
+  endTime?: number;
 }
 
 const timerOptions = [5, 10, 15, 30, 45, 60]; // minutes
-const DEFAULT_SELECTED_MINUTES = 15; // Pre-select 15 minutes
+const DEFAULT_SELECTED_MINUTES = 15;
+const COUNTDOWN_INTERVAL = 1000;
+
+/**
+ * Derives remaining seconds from an end timestamp.
+ * Only called inside this component — no global re-renders.
+ */
+function getRemainingSeconds(endTime: number): number {
+  return Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+}
 
 export function SleepTimer({
   isVisible,
@@ -32,14 +41,31 @@ export function SleepTimer({
   onTimerSet,
   onTimerCancel,
   isTimerActive = false,
-  remainingTime = 0,
+  endTime = 0,
 }: SleepTimerProps) {
   const bottomSheetRef = useBottomSheetModalVisibility(isVisible);
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
-  // Pre-select 15 minutes as default
   const [selectedMinutes, setSelectedMinutes] = useState<number>(DEFAULT_SELECTED_MINUTES);
+
+  // Local countdown — only ticks when modal is visible and timer is active
+  const [displaySeconds, setDisplaySeconds] = useState(() => getRemainingSeconds(endTime));
+
+  useEffect(() => {
+    if (!isTimerActive || !endTime || !isVisible) {
+      setDisplaySeconds(getRemainingSeconds(endTime));
+      return;
+    }
+
+    // Sync immediately then tick every second
+    setDisplaySeconds(getRemainingSeconds(endTime));
+    const interval = setInterval(() => {
+      setDisplaySeconds(getRemainingSeconds(endTime));
+    }, COUNTDOWN_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [isTimerActive, endTime, isVisible]);
 
   const handleSetTimer = () => {
     successFeedback();
@@ -53,7 +79,10 @@ export function SleepTimer({
     onClose();
   };
 
-  const handleOptionSelect = (minutes: number) => () => setSelectedMinutes(minutes);
+  const handleOptionSelect = useCallback(
+    (minutes: number) => () => setSelectedMinutes(minutes),
+    [],
+  );
 
   return (
     <BottomSheetModal
@@ -72,7 +101,7 @@ export function SleepTimer({
       <BottomSheetView
         style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
       >
-        {/* Header - always show title */}
+        {/* Header */}
         <View style={styles.header}>
           <ThemedText type="heading3" weight="bold">
             {STRINGS.SLEEP_TIMER}
@@ -98,7 +127,7 @@ export function SleepTimer({
             <View style={styles.buttonContainer}>
               <ThemedButton
                 style={styles.fullWidthButton}
-                title={SleepTimerAction.SET}
+                title={STRINGS.SET_TIMER}
                 onPress={handleSetTimer}
               />
             </View>
@@ -107,11 +136,11 @@ export function SleepTimer({
           <View style={styles.activeTimerContainer}>
             <View style={styles.timeDisplay}>
               <ThemedText colorName="tint" style={styles.timeText} type="heading1">
-                {formatSecondsToClock(remainingTime)}
+                {formatSecondsToClock(displaySeconds)}
               </ThemedText>
             </View>
             <View style={styles.buttonContainer}>
-              <ThemedButton title={SleepTimerAction.CANCEL} onPress={handleCancelTimer} />
+              <ThemedButton title={STRINGS.CANCEL} onPress={handleCancelTimer} />
             </View>
           </View>
         )}
@@ -122,7 +151,7 @@ export function SleepTimer({
 
 const styles = StyleSheet.create({
   modalContainer: {
-    zIndex: LAYOUT.Z_INDEX.MODAL, // Ensure modal appears above MiniPlayer
+    zIndex: LAYOUT.Z_INDEX.MODAL,
   },
   background: {
     ...LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
@@ -149,7 +178,6 @@ const styles = StyleSheet.create({
   },
 
   optionButton: {
-    // +2px micro-adjustment for visual balance in timer option buttons
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + 2,
     paddingVertical: LAYOUT.SPACING.MEDIUM + 2,
     width: '100%',

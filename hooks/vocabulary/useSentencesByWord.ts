@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { sentenceQueries } from '@/constants/queries';
@@ -51,9 +51,10 @@ export function useSentencesByWord({
 }: UseSentencesByWordOptions): UseSentencesByWordResult {
   const colors = useColors();
 
+  const sentenceConfig = sentenceQueries.byRootId(rootId as RootId, limit);
   const query = useQuery({
-    ...sentenceQueries.byRootId(rootId as RootId, limit),
-    enabled: enabled && !!rootId,
+    ...sentenceConfig,
+    queryFn: enabled && rootId ? sentenceConfig.queryFn : skipToken,
   });
 
   // Pre-compute colored segments for all words in all sentences
