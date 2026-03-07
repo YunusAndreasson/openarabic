@@ -32,8 +32,8 @@ export const ChartTooltipData = memo<ChartTooltipProps>(({ tooltip, maxWidth }) 
         {
           left: Math.max(8, Math.min(tooltip.x - 40, maxWidth - 88)),
           top: Math.max(8, tooltip.y),
-          backgroundColor: colors.elevation3, // Use elevation3 for floating chart tooltips
-          borderColor: colors.border,
+          backgroundColor: colors.elevation3,
+          borderColor: colors.wordTooltipBorder, // Distinct from elevation3 bg (border === elevation3 in dark mode)
           shadowColor: colors.shadow,
         },
       ]}

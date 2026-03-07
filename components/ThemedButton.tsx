@@ -103,7 +103,12 @@ export function ThemedButton({
     size === 'large' && styles.buttonLarge,
     size === 'small' && styles.buttonSmall,
     variant === 'filled' && {
-      backgroundColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint,
+      backgroundColor:
+        isActuallyLoading || disabled
+          ? isDarkMode
+            ? colors.elevation1 // Darker bg in dark mode for ~3:1 contrast with disabled text
+            : colors.cardBorder
+          : colors.tint,
       borderWidth: LAYOUT.BORDER.WIDTH.THIN,
       borderColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint,
     },

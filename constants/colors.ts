@@ -273,8 +273,8 @@ const textHierarchyOKLCH = {
     subtitle: { l: 0.93, c: 0.014, h: 157.0 }, // Premium 2025: slightly more chroma for tint
     metadata: { l: 0.87, c: 0.014, h: 157.0 }, // Premium 2025: -6% L step
     caption: { l: 0.85, c: 0.014, h: 157.0 }, // Readable content (summaries, descriptions)
-    subtleLabel: { l: 0.72, c: 0.014, h: 157.0 }, // Subtle labels that should recede
-    secondaryMetadata: { l: 0.75, c: 0.014, h: 157.0 }, // Premium 2025: -6% L step, most subtle
+    subtleLabel: { l: 0.72, c: 0.014, h: 157.0 }, // Dimmest text level - labels that should recede
+    secondaryMetadata: { l: 0.75, c: 0.014, h: 157.0 }, // Secondary metadata (chevrons, chart labels)
   },
   sepia: {
     subtitle: { l: 0.3337, c: 0.0476, h: 51.1 }, // #4A2F1F
@@ -600,8 +600,8 @@ const darkColors: ThemeColors = {
   // UI semantics
   progressIndicator: basePalette.tint.primaryDark,
   progressBackground: withAlpha(basePalette.tint.primaryDark, opacity.border),
-  readingProgressIndicator: basePalette.sage.medium,
-  readingProgressBackground: withAlpha(basePalette.sage.medium, opacity.border),
+  readingProgressIndicator: basePalette.forest.light, // L: 0.576 - visible on elevation1 cards (0.39 delta vs 0.08 with sage.medium)
+  readingProgressBackground: withAlpha(basePalette.forest.light, opacity.border),
   interactiveSecondary: textHierarchy.dark.metadata,
   completionSuccess: basePalette.semantic.successDark,
 
