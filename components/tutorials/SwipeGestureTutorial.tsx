@@ -5,7 +5,7 @@
  * Contextual help: Single step explaining specific action (reuses same step components)
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -48,7 +48,7 @@ const FULL_TUTORIAL_TITLES: (string | null)[] = [
 ];
 
 // Contextual help (single step, no title)
-const CONTEXTUAL_COMPONENTS: Record<ContextualHelpType, React.ComponentType> = {
+const CONTEXTUAL_COMPONENTS: Record<ContextualHelpType, ComponentType> = {
   [ContextualHelpType.SWIPE_LEFT]: TutorialSwipeLeftStep,
   [ContextualHelpType.SWIPE_RIGHT]: TutorialSwipeRightStep,
 };

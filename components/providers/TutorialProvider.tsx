@@ -3,7 +3,7 @@
  * Provides tutorial state management to entire app via Context
  */
 
-import React, { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 
 import type { TutorialId } from '@/constants/tutorials';
 import { useTutorialManager } from '@/hooks/tutorials/useTutorialManager';

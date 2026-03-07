@@ -2,9 +2,8 @@ import type { NativeStackNavigationOptions } from '@react-navigation/native-stac
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { ScrollView } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
 import { SectionLabel } from '@/components/common';
@@ -66,12 +65,10 @@ export default function ExploreScreen(): JSX.Element {
     }
   }, [from, showToast]);
 
-  // Scroll position preservation refs
-  const scrollViewRef = useRef<ScrollView>(null);
-  const scrollPositionRef = useRef<number>(0);
-  const isRestoringScrollRef = useRef<boolean>(false);
-
   const { data: categoriesData = [] } = useQuery(articleQueries.categories());
+  // Ref for stable callback access to latest categoriesData
+  const categoriesDataRef = useRef(categoriesData);
+  categoriesDataRef.current = categoriesData;
 
   const { data: articlesData = [] } = useQuery({
     ...articleQueries.all(),
@@ -80,32 +77,6 @@ export default function ExploreScreen(): JSX.Element {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-
-  // Track scroll position to preserve it across data updates
-  const handleScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
-    // Don't track scroll position while restoring
-    if (!isRestoringScrollRef.current) {
-      scrollPositionRef.current = event.nativeEvent.contentOffset.y;
-    }
-  }, []);
-
-  // Restore scroll position when articles data changes (re-sorts after completion)
-  useEffect(() => {
-    if (articlesData.length > 0 && scrollPositionRef.current > 0) {
-      // Use setTimeout to ensure DOM has updated after re-render
-      setTimeout(() => {
-        isRestoringScrollRef.current = true;
-        scrollViewRef.current?.scrollTo({
-          y: scrollPositionRef.current,
-          animated: false,
-        });
-        // Reset flag after scroll completes
-        setTimeout(() => {
-          isRestoringScrollRef.current = false;
-        }, 100);
-      }, 50);
-    }
-  }, [articlesData]);
 
   // Build category counts from articles
   const categoryCounts = useMemo(() => {
@@ -116,12 +87,12 @@ export default function ExploreScreen(): JSX.Element {
     return counts;
   }, [articlesData]);
 
-  // Build categories list with counts (only show categories with articles, sorted by popularity)
+  // Build categories list with counts (only show categories with articles, sorted alphabetically)
   const categoriesWithArticles = useMemo(
     () =>
       buildEntitiesWithCounts(categoriesData, categoryCounts)
         .filter(c => c.count > 0)
-        .sort((a, b) => b.count - a.count),
+        .sort((a, b) => a.name.localeCompare(b.name)),
     [categoriesData, categoryCounts],
   );
 
@@ -155,13 +126,13 @@ export default function ExploreScreen(): JSX.Element {
   const handleSelectFilter = useCallback(
     (id: number, _name?: string, filterType?: string) => {
       if (filterType === 'category') {
-        const category = categoriesData.find(c => c.id === id);
+        const category = categoriesDataRef.current.find(c => c.id === id);
         if (category) {
           router.push(getCategoryFilterRoute(id as CategoryId, category.name));
         }
       }
     },
-    [categoriesData],
+    [],
   );
 
   // Optimized header component - memoize individual sections
@@ -199,19 +170,15 @@ export default function ExploreScreen(): JSX.Element {
     return sections;
   }, [articlesData, refreshKey, categoriesWithArticles, handleSelectFilter]);
 
-  const ListHeaderComponent = useMemo(() => <>{headerSections}</>, [headerSections]);
-
   return (
     <ThemedView useSafeArea={false} style={styles.container}>
       <ArticleList
-        ref={scrollViewRef}
         contentContainerStyle={styles.listContentContainer}
         isRefreshing={isRefreshing}
-        ListHeaderComponent={ListHeaderComponent}
+        ListHeaderComponent={<>{headerSections}</>}
         ListFooterComponent={FOOTER_COMPONENT}
         progressViewOffset={LAYOUT.SPACING.XLARGE}
         onRefresh={handleRefresh}
-        onScroll={handleScroll}
       />
     </ThemedView>
   );

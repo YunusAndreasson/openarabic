@@ -2,7 +2,7 @@ import { ErrorState } from '@/components/common';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { ThemedView } from '@/components/ThemedView';
 import { FilteredArticleView } from '@/components/explore';

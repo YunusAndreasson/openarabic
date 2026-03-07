@@ -2,7 +2,7 @@
  * Minimal tutorial card - visual-first, minimal text
  */
 
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 

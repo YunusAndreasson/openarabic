@@ -31,75 +31,99 @@ export type DisplayLanguage = (typeof DisplayLanguage)[keyof typeof DisplayLangu
 
 /**
  * Daily word limit tiers for vocabulary acquisition
+ * Using const object for zero runtime overhead
  */
-export enum DailyWordLimitTier {
-  GETTING_STARTED = 'Getting Started',
-  STEADY_PROGRESS = 'Steady Progress',
-  ACTIVE_LEARNING = 'Active Learning',
-  UNLIMITED = 'Unlimited',
-}
+export const DailyWordLimitTier = {
+  GETTING_STARTED: 'Getting Started',
+  STEADY_PROGRESS: 'Steady Progress',
+  ACTIVE_LEARNING: 'Active Learning',
+  UNLIMITED: 'Unlimited',
+} as const;
+
+export type DailyWordLimitTier = (typeof DailyWordLimitTier)[keyof typeof DailyWordLimitTier];
 
 /**
  * Descriptions for daily word limit tiers
+ * Using const object for zero runtime overhead
  */
-export enum DailyWordLimitDescription {
-  GETTING_STARTED = '10 words per day - Perfect for beginners',
-  STEADY_PROGRESS = '20 words per day - Balanced learning pace',
-  ACTIVE_LEARNING = '30 words per day - For dedicated learners',
-  UNLIMITED = 'No daily limit - Review load may increase significantly',
-}
+export const DailyWordLimitDescription = {
+  GETTING_STARTED: '10 new words per day',
+  STEADY_PROGRESS: '20 new words per day',
+  ACTIVE_LEARNING: '30 new words per day',
+  UNLIMITED: 'No daily limit — reviews may grow quickly',
+} as const;
+
+export type DailyWordLimitDescription =
+  (typeof DailyWordLimitDescription)[keyof typeof DailyWordLimitDescription];
 
 /**
  * Daily word limit status messages
+ * Using const object for zero runtime overhead
  */
-export enum DailyWordLimitStatus {
-  REACHED = 'Daily limit reached. You can increase it in Account settings.',
-}
+export const DailyWordLimitStatus = {
+  REACHED: 'Daily limit reached. You can increase it in Account settings.',
+} as const;
+
+export type DailyWordLimitStatus =
+  (typeof DailyWordLimitStatus)[keyof typeof DailyWordLimitStatus];
 
 // ===== ACCOUNT SECTIONS =====
 
 /**
  * Account section categories for organization
+ * Using const object for zero runtime overhead
  */
-export enum AccountSection {
-  AUDIO_PLAYBACK = 'Audio',
-  LEARNING = 'Learning',
-  SUPPORT = 'Support',
-}
+export const AccountSection = {
+  AUDIO_PLAYBACK: 'Audio',
+  LEARNING: 'Learning',
+  SUPPORT: 'Help',
+} as const;
+
+export type AccountSection = (typeof AccountSection)[keyof typeof AccountSection];
 
 // ===== PRACTICE SYSTEM =====
 
 /**
  * Vocabulary statistics categories
+ * Using const object for zero runtime overhead
  */
-export enum VocabularyStatCategory {
-  DUE = 'Words Due',
-  MASTERED = 'Mastered',
-}
+export const VocabularyStatCategory = {
+  DUE: 'Words Due',
+  MASTERED: 'Mastered',
+} as const;
+
+export type VocabularyStatCategory =
+  (typeof VocabularyStatCategory)[keyof typeof VocabularyStatCategory];
 
 // ===== FONT OPTIONS =====
 
 /**
  * Available Arabic fonts
+ * Using const object for zero runtime overhead
  */
-export enum ArabicFont {
-  MADINA = 'Madina',
-  AMIRI = 'Amiri',
-  SCHEHERAZADE = 'Scheherazade',
-  NASTALIQ = 'Nastaliq',
-  NOTO_SANS = 'Noto Sans',
-}
+export const ArabicFont = {
+  MADINA: 'Madina',
+  AMIRI: 'Amiri',
+  SCHEHERAZADE: 'Scheherazade',
+  NASTALIQ: 'Nastaliq',
+  NOTO_SANS: 'Noto Sans',
+} as const;
+
+export type ArabicFont = (typeof ArabicFont)[keyof typeof ArabicFont];
 
 /**
  * Font descriptions for UI display
+ * Using const object for zero runtime overhead
  */
-export enum FontDescription {
-  MADINA = 'Modern & clean',
-  AMIRI = 'Traditional',
-  SCHEHERAZADE = 'Flowing',
-  NASTALIQ = 'Calligraphic',
-  NOTO_SANS = 'Simple',
-}
+export const FontDescription = {
+  MADINA: 'Modern & clean',
+  AMIRI: 'Traditional',
+  SCHEHERAZADE: 'Flowing',
+  NASTALIQ: 'Calligraphic',
+  NOTO_SANS: 'Simple',
+} as const;
+
+export type FontDescription = (typeof FontDescription)[keyof typeof FontDescription];
 
 // ===== NAVIGATION & UI ACTIONS =====
 
@@ -161,11 +185,14 @@ export type AudioAction = (typeof AudioAction)[keyof typeof AudioAction];
 
 /**
  * Sleep timer actions
+ * Using const object for zero runtime overhead
  */
-export enum SleepTimerAction {
-  SET = 'Set timer',
-  CANCEL = 'Cancel',
-}
+export const SleepTimerAction = {
+  SET: 'Set timer',
+  CANCEL: 'Cancel',
+} as const;
+
+export type SleepTimerAction = (typeof SleepTimerAction)[keyof typeof SleepTimerAction];
 
 // ===== REVIEW ACTIONS =====
 
@@ -200,11 +227,14 @@ export type ToastType = (typeof ToastType)[keyof typeof ToastType];
 
 /**
  * FAQ categories for organizing help content
+ * Using const object for zero runtime overhead
  */
-export enum FAQCategory {
-  GETTING_STARTED = 'Getting Started',
-  FEATURES = 'Features',
-  OFFLINE_STORAGE = 'Offline & storage',
-  LEARNING_APPROACH = 'Learning approach',
-  PRIVACY_DATA = 'Privacy & data',
-}
+export const FAQCategory = {
+  GETTING_STARTED: 'Getting Started',
+  FEATURES: 'Features',
+  OFFLINE_STORAGE: 'Offline & storage',
+  LEARNING_APPROACH: 'Learning approach',
+  PRIVACY_DATA: 'Privacy & data',
+} as const;
+
+export type FAQCategory = (typeof FAQCategory)[keyof typeof FAQCategory];

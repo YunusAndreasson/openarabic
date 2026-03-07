@@ -1,6 +1,6 @@
 import { ListSeparator, SectionLabel } from '@/components/common';
 import { FlashList } from '@shopify/flash-list';
-import React, { type FC, useDeferredValue, useMemo } from 'react';
+import { type FC, type JSX, useDeferredValue, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -168,7 +168,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     );
   }
 
-  const renderItem = ({ item }: { item: ListItem }): React.JSX.Element => {
+  const renderItem = ({ item }: { item: ListItem }): JSX.Element => {
     if (item.type === 'header') {
       return <SectionLabel title={item.title} />;
     }

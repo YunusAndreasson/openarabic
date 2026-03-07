@@ -3,7 +3,7 @@
  * Pure text utilities are in stringUtils.ts
  */
 
-import React from 'react';
+import type { ReactElement } from 'react';
 
 import { EmailLink } from '@/components/common/EmailLink';
 
@@ -28,7 +28,7 @@ const EMAIL_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
 export const parseTextWithEmails = (
   text: string,
   type: 'body' | 'caption' = 'body',
-): string | (string | React.ReactElement)[] => {
+): string | (string | ReactElement)[] => {
   const parts: (string | { email: string; key: string })[] = [];
   let lastIndex = 0;
   let match;

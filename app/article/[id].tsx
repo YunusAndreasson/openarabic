@@ -1,7 +1,7 @@
 import type { FlashListRef } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
-import type { JSX } from 'react';
-import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
+import type { JSX, RefObject } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -62,8 +62,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleScroll,
     handleViewableItemsChanged,
     handleScrollEnd,
-    handleEndReached,
-    handleRelatedArticlesVisible,
     handleToggleReadingListWithFeedback,
     handleClose,
     handleWordPress,
@@ -168,10 +166,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       handleScroll,
       handleViewableItemsChanged,
       handleScrollEnd,
-      handleEndReached,
-      handleRelatedArticlesVisible,
       colors,
-      scrollViewRef: scrollViewRef as React.RefObject<FlashListRef<Tables<'article_sentences'>>>,
+      scrollViewRef: scrollViewRef as RefObject<FlashListRef<Tables<'article_sentences'>>>,
       isInReadingList,
       onToggleReadingList: handleToggleReadingListWithFeedback,
       showEnglish: true,
@@ -185,8 +181,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleScroll,
     handleViewableItemsChanged,
     handleScrollEnd,
-    handleEndReached,
-    handleRelatedArticlesVisible,
     colors,
     scrollViewRef,
     isInReadingList,

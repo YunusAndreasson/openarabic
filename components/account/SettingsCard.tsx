@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { ComponentProps } from 'react';
-import React, { memo } from 'react';
+import { memo, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BaseCard } from '@/components/common';
@@ -25,6 +24,10 @@ interface ChevronCardProps extends BaseSettingsCardProps {
   rightType: 'chevron';
 }
 
+interface ExternalLinkCardProps extends BaseSettingsCardProps {
+  rightType: 'external';
+}
+
 interface TextChevronCardProps extends BaseSettingsCardProps {
   rightType: 'text-chevron';
   rightText: string;
@@ -38,7 +41,7 @@ interface ToggleCardProps extends BaseSettingsCardProps {
 
 interface CustomCardProps extends BaseSettingsCardProps {
   rightType: 'custom';
-  rightComponent: React.ReactNode;
+  rightComponent: ReactNode;
 }
 
 interface NoneCardProps extends BaseSettingsCardProps {
@@ -47,6 +50,7 @@ interface NoneCardProps extends BaseSettingsCardProps {
 
 type SettingsCardProps =
   | ChevronCardProps
+  | ExternalLinkCardProps
   | TextChevronCardProps
   | ToggleCardProps
   | CustomCardProps
@@ -62,7 +66,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
     icon,
     label,
     subtitle,
-    iconColor = colors.interactiveSecondary,
+    iconColor = colors.tint,
     textColor = 'default',
     backgroundColor,
     onPress,
@@ -93,6 +97,16 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
       case 'custom':
         return props.rightComponent;
 
+      case 'external':
+        return (
+          <Ionicons
+            color={colors.secondaryMetadataText}
+            name="open-outline"
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            style={styles.chevron}
+          />
+        );
+
       case 'none':
         return null;
 
@@ -100,7 +114,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
       default:
         return (
           <Ionicons
-            color={textColor === 'error' ? colors.error : colors.secondaryMetadataText}
+            color={colors.secondaryMetadataText}
             name="chevron-forward"
             size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
             style={styles.chevron}

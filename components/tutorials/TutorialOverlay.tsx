@@ -3,7 +3,7 @@
  * Reusable semi-transparent backdrop for all tutorials (DRY!)
  */
 
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 

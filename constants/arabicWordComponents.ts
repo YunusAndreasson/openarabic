@@ -11,32 +11,37 @@
 /**
  * Component types enum for type safety
  */
-export enum ComponentType {
-  PREFIX = 'prefix',
-  INFIX = 'infix',
-  SUFFIX = 'suffix',
-  DIACRITIC = 'diacritic',
-}
+export const ComponentType = {
+  PREFIX: 'prefix',
+  INFIX: 'infix',
+  SUFFIX: 'suffix',
+  DIACRITIC: 'diacritic',
+} as const;
+
+export type ComponentType = (typeof ComponentType)[keyof typeof ComponentType];
 
 /**
  * Grammatical roles for components - used for color differentiation and educational value
+ * Using const object for zero runtime overhead
  */
-export enum GrammaticalRole {
-  CONJUNCTION = 'conjunction', // و, ف - connecting words/clauses
-  DEFINITE_ARTICLE = 'article', // ال - the
-  PREPOSITION = 'preposition', // ب, ل, ك, في, من, على, عن, إلى - with, to, like, in, from, on, about, to
-  SUBJECT_PREFIX = 'subject', // ت, ي, ن, أ - verb conjugation markers (you, he, we, I)
-  FUTURE_TENSE = 'future', // س, سوف - will/shall
-  NEGATION = 'negation', // لا, لم, لن, لئلا, إلا, بل - not, no, except
-  PARTICLE = 'particle', // قد, إن, فإن, إنما, أما, أن, إذا, ثم - various grammatical particles
-  INTERROGATIVE = 'interrogative', // ما, من, كم - what, who, how (question words)
-  POSSESSIVE = 'possessive', // ي, ك, ه, ها, نا, كم, هم, هن - my, your, his, her, our, their
-  PLURAL = 'plural', // ون, ين, ات - plural markers
-  VERB_CONJUGATION = 'verb', // ت, وا, تم, تن, كن - perfect tense verb endings (I, you, they)
-  DEMONSTRATIVE = 'demonstrative', // هذا, هذه, ذلك, تلك - this, that (pointing words)
-  CASE_ENDING = 'case', // ُ, َ, ِ - nominative, accusative, genitive diacritics
-  GENERIC = 'generic', // Fallback for unclassified components
-}
+export const GrammaticalRole = {
+  CONJUNCTION: 'conjunction', // و, ف - connecting words/clauses
+  DEFINITE_ARTICLE: 'article', // ال - the
+  PREPOSITION: 'preposition', // ب, ل, ك, في, من, على, عن, إلى - with, to, like, in, from, on, about, to
+  SUBJECT_PREFIX: 'subject', // ت, ي, ن, أ - verb conjugation markers (you, he, we, I)
+  FUTURE_TENSE: 'future', // س, سوف - will/shall
+  NEGATION: 'negation', // لا, لم, لن, لئلا, إلا, بل - not, no, except
+  PARTICLE: 'particle', // قد, إن, فإن, إنما, أما, أن, إذا, ثم - various grammatical particles
+  INTERROGATIVE: 'interrogative', // ما, من, كم - what, who, how (question words)
+  POSSESSIVE: 'possessive', // ي, ك, ه, ها, نا, كم, هم, هن - my, your, his, her, our, their
+  PLURAL: 'plural', // ون, ين, ات - plural markers
+  VERB_CONJUGATION: 'verb', // ت, وا, تم, تن, كن - perfect tense verb endings (I, you, they)
+  DEMONSTRATIVE: 'demonstrative', // هذا, هذه, ذلك, تلك - this, that (pointing words)
+  CASE_ENDING: 'case', // ُ, َ, ِ - nominative, accusative, genitive diacritics
+  GENERIC: 'generic', // Fallback for unclassified components
+} as const;
+
+export type GrammaticalRole = (typeof GrammaticalRole)[keyof typeof GrammaticalRole];
 
 export interface WordComponent {
   /** Arabic text pattern (regex) */

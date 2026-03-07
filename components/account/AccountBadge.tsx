@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -8,6 +8,7 @@ import Animated, {
   useSharedValue,
   withSequence,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -27,8 +28,9 @@ interface AccountBadgeProps {
 }
 
 // Helper function to format member since date
-const formatMemberSince = (createdAt?: string): string => {
-  const date = new Date(createdAt || '2024-01-01T00:00:00.000Z');
+const formatMemberSince = (createdAt?: string): string | null => {
+  if (!createdAt) return null;
+  const date = new Date(createdAt);
   const formatter = new Intl.DateTimeFormat('en-US', {
     month: 'long',
     year: 'numeric',
@@ -52,25 +54,38 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
 
   // Animation values
   const scaleValue = useSharedValue(1);
+  const containerOpacity = useSharedValue(0);
   const [photoLoaded, setPhotoLoaded] = useState(false);
 
   // Profile photo picker with local storage persistence
   const { profilePhotoUri, selectPhoto } = useProfilePhotoPicker({
     userId,
-    onPhotoLoaded: useCallback(() => setPhotoLoaded(true), []),
+    onPhotoLoaded: () => setPhotoLoaded(true),
   });
 
-  // Cleanup scale animation on unmount
+  // Cleanup animations on unmount
   useEffect(() => {
     return () => {
       try {
         cancelAnimation(scaleValue);
+        cancelAnimation(containerOpacity);
         scaleValue.value = 1;
       } catch {
         // Animation cleanup failed - continue
       }
     };
-  }, [scaleValue]);
+  }, [scaleValue, containerOpacity]);
+
+  // Container opacity — fade in when photo loaded
+  useEffect(() => {
+    if (photoLoaded) {
+      containerOpacity.value = withTiming(1, TIMING_CONFIG.ENTRANCE);
+    }
+  }, [photoLoaded, containerOpacity]);
+
+  const containerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: containerOpacity.get(),
+  }));
 
   // Derived values
   const firstName = getFirstNameFromEmail(userEmail);
@@ -88,13 +103,6 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
     );
     selectPhoto();
   }, [scaleValue, selectPhoto]);
-
-  // Container opacity — CSS transition replaces useSharedValue + withTiming
-  const containerAnimatedStyle = {
-    opacity: photoLoaded ? 1 : 0,
-    transitionProperty: 'opacity' as const,
-    transitionDuration: `${TIMING_CONFIG.ENTRANCE.duration}ms`,
-  };
 
   // Photo press scale — still imperative (withSequence on press)
   const photoAnimatedStyle = useAnimatedStyle(() => ({
@@ -191,14 +199,16 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
             <ThemedText type="heading2" weight="bold" style={styles.userName} numberOfLines={1}>
               {firstName}
             </ThemedText>
-            <ThemedText
-              type="body"
-              variant="secondary"
-              style={styles.memberSince}
-              numberOfLines={1}
-            >
-              {memberSince}
-            </ThemedText>
+            {memberSince && (
+              <ThemedText
+                type="body"
+                variant="secondary"
+                style={styles.memberSince}
+                numberOfLines={1}
+              >
+                {memberSince}
+              </ThemedText>
+            )}
           </View>
         </View>
       </Animated.View>
@@ -213,7 +223,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     overflow: 'hidden',
   },
   profileContent: {

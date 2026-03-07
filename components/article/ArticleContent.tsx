@@ -1,7 +1,7 @@
 import type { FlashListProps, FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { memo, useCallback, type ReactElement } from 'react';
+import { memo, useCallback, type ComponentType, type ReactElement, type RefObject } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -28,7 +28,7 @@ import { getArticleMetadata } from '@/utils/stringUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
 const AnimatedFlashList = Animated.createAnimatedComponent(
-  FlashList as React.ComponentType<FlashListProps<Tables<'article_sentences'>>>,
+  FlashList as ComponentType<FlashListProps<Tables<'article_sentences'>>>,
 );
 
 // Mount fade-in — CSS @keyframes, module-level so no per-render allocation
@@ -116,10 +116,8 @@ interface ArticleContentProps {
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   handleScrollEnd: () => void;
-  handleEndReached: () => void;
-  handleRelatedArticlesVisible: () => void;
   colors: ThemeColors;
-  scrollViewRef: React.RefObject<FlashListRef<Tables<'article_sentences'>>>;
+  scrollViewRef: RefObject<FlashListRef<Tables<'article_sentences'>>>;
   // Reading list (bookmarks/listening) functionality
   isInReadingList: boolean;
   onToggleReadingList: () => Promise<void>;
@@ -138,8 +136,6 @@ const ArticleContentInternal = function ArticleContent({
   handleScroll,
   handleViewableItemsChanged,
   handleScrollEnd,
-  handleEndReached,
-  handleRelatedArticlesVisible,
   colors,
   scrollViewRef,
   isInReadingList,
@@ -242,7 +238,6 @@ const ArticleContentInternal = function ArticleContent({
     <RelatedArticlesSection
       article={article}
       articlesData={articlesData}
-      onVisible={handleRelatedArticlesVisible}
     />
   );
 
@@ -304,8 +299,6 @@ const ArticleContentInternal = function ArticleContent({
               onScrollBeginDrag={handleScrollBegin}
               onViewableItemsChanged={handleViewableItemsChanged}
               onMomentumScrollEnd={handleScrollEnd}
-              onEndReached={handleEndReached}
-              onEndReachedThreshold={10}
               viewabilityConfig={viewabilityConfig}
               scrollEventThrottle={SCROLL_THROTTLE}
               showsVerticalScrollIndicator={true}

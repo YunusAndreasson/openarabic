@@ -1,6 +1,5 @@
 import { Canvas } from '@shopify/react-native-skia';
 import type { ReactNode } from 'react';
-import React from 'react';
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 
 import { FONT_WEIGHTS, LAYOUT, STATUS_INDICATOR } from '@/constants/layout';

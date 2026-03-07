@@ -753,10 +753,12 @@ export const OPACITY_HEX = {
 
 export const Colors = { light: lightColors, dark: darkColors, sepia: sepiaColors } as const;
 
-export enum Theme {
-  Light = 'light',
-  Dark = 'dark',
-  Sepia = 'sepia',
-}
+export const Theme = {
+  Light: 'light',
+  Dark: 'dark',
+  Sepia: 'sepia',
+} as const;
+
+export type Theme = (typeof Theme)[keyof typeof Theme];
 
 export type ColorName = keyof ThemeColors;

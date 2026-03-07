@@ -11,7 +11,7 @@ import { ChartMainLine } from './ChartMainLine';
 import { ChartPerformanceZones } from './ChartPerformanceZones';
 import { ChartReferenceLine } from './ChartReferenceLine';
 import { Group } from '@shopify/react-native-skia';
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useColors } from '@/hooks/theme/useColors';

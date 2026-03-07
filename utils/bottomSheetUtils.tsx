@@ -1,7 +1,7 @@
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useBottomSheet } from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import type { ViewProps } from 'react-native';
 import { Dimensions, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
