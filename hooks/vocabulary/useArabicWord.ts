@@ -1,5 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { skipToken, useQuery } from '@tanstack/react-query';
 
 import { fsrsQueries } from '@/constants/queries';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
@@ -29,19 +28,18 @@ export function useArabicWord({ word }: UseArabicWordProps): UseArabicWordReturn
 
   // CRITICAL: Use same query as useArticleWordInteractions for DRY consistency
   // Both underline state AND button state must use fsrsQueries.all() to stay in sync
+  const allConfig = fsrsQueries.all(user?.id ?? '');
   const { data: studyWords = [] } = useQuery({
-    ...fsrsQueries.all(user?.id || ''),
-    enabled: !!user?.id,
+    ...allConfig,
+    queryFn: user?.id ? allConfig.queryFn : skipToken,
   });
 
-  // Check if the word is directly selected (added to study words)
-  // DRY: Uses same comparison logic as useArticleWordInteractions.ts line 145
-  const directlySelected = useMemo(() => {
-    if (!studyWords?.length || !word.root_id) return false;
-    return studyWords.some((sw: StudyWord) => sw.root_id === word.root_id);
-  }, [studyWords, word.root_id]);
+  // React Compiler auto-memoizes these derivations
+  const directlySelected =
+    studyWords.length > 0 && word.root_id != null
+      ? studyWords.some((sw: StudyWord) => sw.root_id === word.root_id)
+      : false;
 
-  // Calculate final selection state, considering direct selection and due words
   const isSelected = directlySelected || isDueWord;
 
   return {

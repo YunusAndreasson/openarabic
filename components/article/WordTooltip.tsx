@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -117,21 +116,16 @@ export function WordTooltip({
     !!(cleanedArabicWord && cleanedText),
   );
 
-  // Generate color-coded segments using shared utility
-  const coloredSegments = useMemo(
-    () =>
-      generateColorCodedSegments({
-        text: cleanedText,
-        formattedAnalysis,
-        analysis,
-        colors,
-        defaultColor: colors.text,
-      }),
-    [cleanedText, formattedAnalysis, analysis, colors],
-  );
+  // React Compiler auto-memoizes these derivations
+  const coloredSegments = generateColorCodedSegments({
+    text: cleanedText,
+    formattedAnalysis,
+    analysis,
+    colors,
+    defaultColor: colors.text,
+  });
 
-  // Memoize dimensions calculation
-  const dimensions = useMemo(() => {
+  const dimensions = (() => {
     if (!layout) return DEFAULT_DIMENSIONS;
     if (layout.x < 0 || layout.y < 0 || layout.x > SCREEN_WIDTH) return DEFAULT_DIMENSIONS;
 
@@ -143,37 +137,34 @@ export function WordTooltip({
       undefined,
       SCREEN_WIDTH,
     );
-  }, [layout, coloredSegments]);
+  })();
 
-  // Memoize dynamic styles - single object to reduce allocations
-  const dynamicStyles = useMemo(() => {
-    const effectiveHeight = Math.max(dimensions.tooltipHeight, MIN_TOUCH_TARGET.MEDIUM);
-    return {
-      tooltip: {
-        ...STATIC_STYLES.tooltip,
-        top: dimensions.tooltipTop,
-        left: dimensions.tooltipLeft,
-        width: dimensions.tooltipWidth,
-        height: effectiveHeight,
-        backgroundColor: colors.elevation1,
-        borderColor: colors.border,
-        zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
-        ...LAYOUT.ELEVATION.LARGE,
-        shadowColor: colors.shadow,
-      },
-      arrow: {
-        ...STATIC_STYLES.arrow,
-        left: dimensions.arrowLeft,
-        top: effectiveHeight,
-        borderTopWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
-        borderLeftWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
-        borderRightWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
-        borderTopColor: colors.elevation1,
-        borderLeftColor: colors.transparent,
-        borderRightColor: colors.transparent,
-      },
-    };
-  }, [dimensions, colors]);
+  const effectiveHeight = Math.max(dimensions.tooltipHeight, MIN_TOUCH_TARGET.MEDIUM);
+  const dynamicStyles = {
+    tooltip: {
+      ...STATIC_STYLES.tooltip,
+      top: dimensions.tooltipTop,
+      left: dimensions.tooltipLeft,
+      width: dimensions.tooltipWidth,
+      height: effectiveHeight,
+      backgroundColor: colors.elevation1,
+      borderColor: colors.border,
+      zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
+      ...LAYOUT.ELEVATION.LARGE,
+      shadowColor: colors.shadow,
+    },
+    arrow: {
+      ...STATIC_STYLES.arrow,
+      left: dimensions.arrowLeft,
+      top: effectiveHeight,
+      borderTopWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
+      borderLeftWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
+      borderRightWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
+      borderTopColor: colors.elevation1,
+      borderLeftColor: colors.transparent,
+      borderRightColor: colors.transparent,
+    },
+  };
 
   if (!visible || !layout) return null;
 
