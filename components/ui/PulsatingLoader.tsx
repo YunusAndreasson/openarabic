@@ -1,3 +1,4 @@
+import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -20,6 +21,7 @@ const MIN_BORDER_WIDTH = 3; // Minimum border width in pixels
 const BORDER_WIDTH_SCALE = 0.06; // Border width as percentage of loader size
 
 // Reanimated v4 CSS keyframe animation — replaces useEffect + withRepeat + withTiming
+// Type assertion needed: Reanimated v4 CSS animations aren't in ViewStyle
 const pulsateStyle = {
   animationName: {
     '0%': { transform: [{ scale: 0.8 }] },
@@ -29,7 +31,7 @@ const pulsateStyle = {
   animationIterationCount: 'infinite' as const,
   animationDirection: 'alternate' as const,
   animationTimingFunction: 'ease-in-out',
-};
+} as unknown as ViewStyle;
 
 /**
  * A pulsating circle loader component for smooth loading states

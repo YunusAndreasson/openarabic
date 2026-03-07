@@ -2,7 +2,7 @@ import type { FlashListProps, FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { memo, useCallback, type ComponentType, type ReactElement, type RefObject } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle, ViewToken } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,6 +32,7 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 );
 
 // Mount fade-in — CSS @keyframes, module-level so no per-render allocation
+// Type assertion needed: Reanimated v4 CSS animations aren't in ViewStyle
 const MOUNT_FADE_IN_STYLE = {
   animationName: {
     from: { opacity: 0 },
@@ -39,7 +40,7 @@ const MOUNT_FADE_IN_STYLE = {
   },
   animationDuration: `${TIMING_CONFIG.FAST.duration}ms`,
   animationFillMode: 'forwards' as const,
-};
+} as unknown as ViewStyle;
 
 // Comfortable reading space constant
 const COMFORTABLE_READING_SPACE = MIN_TOUCH_TARGET.MEDIUM;

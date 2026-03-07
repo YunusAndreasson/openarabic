@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, type ComponentRef, type RefObject } from 'react';
-import type { LayoutRectangle } from 'react-native';
+import type { LayoutRectangle, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
@@ -20,6 +20,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export const WORD_TOOLTIP_ANIMATION_DURATION = 150;
 
 // Module-level constant — no per-render allocation
+// Type assertion needed: Reanimated v4 CSS animations aren't in ViewStyle
 const HIGHLIGHT_ANIMATION_STYLE = {
   animationName: {
     '0%': { opacity: LAYOUT.OPACITY.SUBTLE },
@@ -29,7 +30,7 @@ const HIGHLIGHT_ANIMATION_STYLE = {
   animationIterationCount: 'infinite' as const,
   animationDirection: 'alternate' as const,
   animationTimingFunction: 'ease-in-out',
-};
+} as unknown as ViewStyle;
 
 interface SkiaArabicWordProps {
   word: SentenceWord;
