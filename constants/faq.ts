@@ -20,42 +20,42 @@ export const FAQ_DATA: FAQCategoryData[] = [
       {
         id: 'what-is-app',
         question: 'What is OpenArabic?',
-        answer: `A free Arabic learning app based on classical Islamic texts. You read bilingual sentence pairs (an Arabic sentence followed by an English sentence), tap words you don't understand, and add them to a spaced repetition system (FSRS) to learn over time.\n\nDeveloped by Yunus Andréasson. Contact: yunus+openarabic@edenmind.com`,
+        answer: `OpenArabic is a free Arabic learning app built around classical Islamic texts. You read bilingual sentence pairs, tap words you don't know, and add them to spaced repetition to learn over time.\n\nDeveloped by Yunus Andréasson. Questions or feedback? yunus+openarabic@edenmind.com`,
         category: FAQCategoryEnum.GETTING_STARTED,
       },
       {
         id: 'is-this-a-course',
         question: 'Is OpenArabic a course?',
         answer:
-          'No. OpenArabic is not a start‑to‑finish course. It is a bilingual reading and listening tool that complements your studies—use it alongside a course or after completing one.',
+          'No—OpenArabic is a bilingual reading and listening tool, not a structured course. Use it alongside your studies or after finishing a course to keep building vocabulary.',
         category: FAQCategoryEnum.GETTING_STARTED,
       },
       {
         id: 'who-is-this-for',
         question: 'Who is this for?',
         answer:
-          'Learners who can decode Arabic and want to read real texts efficiently—especially those studying with a course or who just finished one and need vocabulary to read independently.',
+          "Anyone who can read Arabic script and wants to build vocabulary through real texts—especially if you're studying with a course or just finished one and want to read independently.",
         category: FAQCategoryEnum.GETTING_STARTED,
       },
       {
         id: 'using-with-course',
         question: 'How should I use this with a course?',
         answer:
-          'Pair your coursework with authentic texts. Read regularly to build stamina—even 10-15 minutes daily works. Continue reading between classes to maintain momentum and expand vocabulary.',
+          'Read alongside your coursework to build fluency with real texts. Even 10–15 minutes daily makes a difference. Reading between classes keeps your momentum going and expands your vocabulary naturally.',
         category: FAQCategoryEnum.GETTING_STARTED,
       },
       {
         id: 'after-course-gap',
         question: "I finished a course but can't read books—what now?",
         answer:
-          'OpenArabic bridges the post‑course vocabulary gap. Read texts with bilingual support, add unknown words as you encounter them, then move to harder material when you understand 90-95% of current content.',
+          "OpenArabic is designed for this gap. Read texts with bilingual support, add unknown words as you encounter them, and move to harder material once you understand 90–95% of what you're reading.",
         category: FAQCategoryEnum.GETTING_STARTED,
       },
       {
         id: 'learning-speed',
         question: 'How quickly will I learn?',
         answer:
-          'Your learning pace scales with reading and review frequency. FSRS schedules reviews just before you forget words—easy words appear less often, challenging words more often. Daily 15-30 minute sessions typically yield measurable vocabulary growth within weeks.',
+          'It depends on how often you read and review. The app schedules reviews just before you forget—easy words appear less often, harder words more often. Daily 15–30 minute sessions tend to show noticeable progress within a few weeks.',
         category: FAQCategoryEnum.GETTING_STARTED,
       },
     ],
@@ -64,66 +64,52 @@ export const FAQ_DATA: FAQCategoryData[] = [
     name: FAQCategoryEnum.FEATURES,
     items: [
       {
-        id: 'spaced-repetition',
-        question: 'How does spaced repetition work?',
-        answer:
-          "FSRS (Free Spaced Repetition Scheduler) predicts when you'll forget words and schedules reviews just before that happens. Each review adjusts the word's difficulty rating and next review interval based on your recall performance.",
-        category: FAQCategoryEnum.FEATURES,
-      },
-      {
         id: 'article-selection',
         question: 'How are recommended articles selected?',
         answer:
-          'Featured articles contain 90-95% known vocabulary with 5-10% new words (i+1 principle). This comprehension level maintains reading flow while adding new vocabulary at a sustainable pace and balancing your review workload.',
+          "Recommended articles contain 90–95% words you already know, with just 5–10% new vocabulary (the i+1 principle). This keeps reading enjoyable while introducing new words at a pace that won't overwhelm your review queue.",
         category: FAQCategoryEnum.FEATURES,
       },
       {
         id: 'word-difficulty',
         question: 'How is word difficulty determined?',
         answer:
-          "Word difficulty is calculated from your review history using FSRS. It considers how quickly you recall words, how consistent your responses are, and how much time has passed since your last review. There are no fixed difficulty levels - each word's rating adapts based on your personal learning patterns.",
-        category: FAQCategoryEnum.FEATURES,
-      },
-      {
-        id: 'learned-vs-mastered',
-        question: 'What is the difference between Learned and Mastered?',
-        answer:
-          'Learned words have moved to long-term memory (FSRS State 2) and need regular review to build retention strength. Mastered words have achieved high stability through consistent successful reviews—their intervals extend to months or years between reviews. FSRS tracks retention strength and schedules each review just before forgetting occurs.',
+          "There are no fixed difficulty levels. Each word's difficulty adapts to you based on how quickly you recall it, how consistent your responses are, and how much time has passed since your last review.",
         category: FAQCategoryEnum.FEATURES,
       },
       {
         id: 'why-review-before-adding',
         question: 'Why should I review before adding more words?',
         answer:
-          'Your brain consolidates limited information at once. Adding too many words without reviewing existing ones overwhelms memory and reduces retention.\n\nComplete Due reviews before adding vocabulary—this strengthens neural connections and prevents relearning forgotten words.\n\nTarget 75% Memory Strength before adding new words. This threshold ensures existing vocabulary is stable before expanding your learning load.',
+          'Your brain can only consolidate so much at once. Adding too many new words without reviewing existing ones leads to forgetting and wasted effort.\n\nFinish your Due reviews before adding new vocabulary—this strengthens what you already know and prevents having to relearn forgotten words. Aim for at least 75% Memory Strength before adding more.',
         category: FAQCategoryEnum.FEATURES,
       },
       {
         id: 'understanding-memory-strength',
         question: 'How does Memory Strength work?',
         answer:
-          "Memory Strength shows your overall recall probability—the percentage of words you're expected to remember right now, calculated across all vocabulary using FSRS.\n\nDue words are scheduled just before forgetting. Reviews catch words before they fade and recalibrate your next review interval.\n\nLearned words have graduated to long-term memory (FSRS State 2). They need regular review to build stability, with intervals growing longer after each successful recall.\n\nMastered words have achieved high stability through consistent successful reviews. Their review intervals extend to months or years while maintaining retention above 90%.",
+          "Memory Strength shows the percentage of words you're expected to remember right now across all your vocabulary.\n\nDue words are scheduled just before you'd forget them. Reviewing on time keeps your memory fresh and sets the right interval for next time.\n\nLearned words have entered long-term memory. They still need regular review, but intervals grow longer after each successful recall.\n\nMastered words have been reviewed consistently enough that intervals stretch to months or years—while keeping retention above 90%.",
         category: FAQCategoryEnum.FEATURES,
       },
       {
         id: 'how-spaced-repetition-works-detailed',
         question: 'How does the spacing algorithm work?',
         answer:
-          "Your memory follows a predictable forgetting curve—information fades rapidly at first, then more slowly over time. Spaced repetition shows words just before you forget them.\n\nEach successful review strengthens memory and extends the interval to the next review. Easy words appear less frequently, challenging words more often. You focus effort where needed most.\n\nFSRS adapts to your individual learning patterns—response speed, consistency, and review history determine when each word appears again. Complete Due reviews daily to maintain spacing intervals. Missing even a few days creates backlogs that disrupt the algorithm's effectiveness.",
+          "Your memory follows a predictable curve—new information fades quickly at first, then more slowly over time. Spaced repetition uses this to show words just before you'd forget them.\n\nEach successful review strengthens the memory and pushes the next review further out. Easy words appear less often, harder words more often.\n\nThe algorithm adapts to your personal learning patterns based on response speed, consistency, and history. Try to complete your Due reviews daily—missing even a few days creates backlogs that are harder to catch up on.",
         category: FAQCategoryEnum.FEATURES,
       },
       {
         id: 'arabic-text-coloring',
         question: 'Why is Arabic text colored in the app?',
         answer:
-          'Arabic text is color-coded to help you understand word structure and grammatical components. This makes it easier to see how words are built from smaller parts.\n\nPrefixes like و (and), ب (with), ل (to) appear in green. Suffixes like ي (my), ك (your), ه (his) appear in orange. Diacritics (case endings) appear in blue. Infixes (verb form markers) appear in purple.\n\nWhy only multi-word phrases? Single words like "house" aren\'t colored because there\'s no educational value in that context. But "and the house" shows how و (and) + ال (the) combine with the root word—this helps you understand Arabic grammar naturally through reading.\n\nSee colored examples below to understand how this works in practice.',
+          'Arabic text is color-coded so you can see how words are built from smaller parts at a glance.\n\nPrefixes like و (and), ب (with), ل (to) appear in green. Suffixes like ي (my), ك (your), ه (his) appear in orange. Diacritics (case endings) appear in blue. Infixes (verb form markers) appear in purple.\n\nWhy only multi-word phrases? A single word like "house" doesn\'t benefit from color-coding. But "and the house" shows how و (and) + ال (the) attach to the root word—helping you understand Arabic grammar naturally as you read.\n\nSee the colored examples below.',
         category: FAQCategoryEnum.FEATURES,
       },
       {
         id: 'play-all-long-press',
         question: 'How do I temporarily play Arabic-only audio?',
         answer:
-          'Long-press the "Play all" button in your Playlist to start Arabic-only playback for the current session. Your audio language preference will return to normal after playback ends.\n\nThis is useful when you want to practice listening comprehension without English translations, even if your default setting includes English.',
+          'Long-press the "Play all" button in your Playlist to switch to Arabic-only audio for the current session. Your regular language setting returns automatically when playback ends.\n\nUseful when you want to practice listening without English, even if your default includes both languages.',
         category: FAQCategoryEnum.FEATURES,
       },
     ],
@@ -135,7 +121,7 @@ export const FAQ_DATA: FAQCategoryData[] = [
         id: 'offline-mode',
         question: 'Does this work offline?',
         answer:
-          'Yes, with limitations. You can review vocabulary offline, and previously cached audio plays without a connection. New content and progress sync require an internet connection.',
+          'Yes. You can review vocabulary and play cached audio without a connection. New content and progress syncing require internet.',
         category: FAQCategoryEnum.OFFLINE_STORAGE,
       },
     ],
@@ -147,28 +133,28 @@ export const FAQ_DATA: FAQCategoryData[] = [
         id: 'how-learning-works',
         question: 'How does learning work here?',
         answer:
-          'You read bilingual sentence pairs at 90-95% comprehension (i+1 level), with 5-10% new vocabulary per article. Tap unknown words to add them to spaced repetition. Regular reading builds pattern recognition without explicit grammar study.',
+          'Read bilingual sentence pairs, tap unknown words to add them to spaced repetition, and review regularly. Over time you build pattern recognition naturally—without explicit grammar study.',
         category: FAQCategoryEnum.LEARNING_APPROACH,
       },
       {
         id: 'i-plus-one',
         question: 'What does i+1 mean?',
         answer:
-          'Your current level (i) plus one step beyond (+1). Content at 90-95% comprehension—readable enough to understand context while introducing new vocabulary that you can deduce from surrounding text. This comprehension range drives language acquisition without overwhelming you.',
+          'Your current level (i) plus one step beyond (+1). At 90–95% comprehension, you understand enough context to figure out new words from what surrounds them—challenging enough to learn, easy enough to follow.',
         category: FAQCategoryEnum.LEARNING_APPROACH,
       },
       {
         id: 'why-classical-texts',
         question: 'Why classical texts?',
         answer:
-          'Classical texts contain the complete Arabic grammatical system and core vocabulary in authentic contexts. You acquire Arabic as native speakers use it—not simplified textbook approximations. Modern Standard Arabic is simplified classical Arabic, making the transition natural once you have built a classical foundation.',
+          "Classical texts contain the full Arabic grammatical system and core vocabulary in authentic contexts. You learn Arabic as it's actually used—not simplified textbook versions. Since Modern Standard Arabic evolved from classical Arabic, building a classical foundation makes the transition seamless.",
         category: FAQCategoryEnum.LEARNING_APPROACH,
       },
       {
         id: 'scope',
-        question: 'What’s the scope of this app?',
+        question: "What’s the scope of this app?",
         answer:
-          'It’s a language tool for reading and vocabulary. For theological guidance, consult qualified scholars and reliable references.',
+          'OpenArabic is a language tool for reading and vocabulary—not a religious guide. For theological questions, consult qualified scholars and reliable references.',
         category: FAQCategoryEnum.LEARNING_APPROACH,
       },
     ],
@@ -180,7 +166,7 @@ export const FAQ_DATA: FAQCategoryData[] = [
         id: 'privacy-data',
         question: 'What data do you store?',
         answer:
-          'Your account email, study vocabulary and review history, reading list, and app preferences. No ads. No third-party analytics. Diagnostics track app crashes to fix bugs.',
+          'Your email, vocabulary and review history, reading list, and preferences. No ads, no third-party analytics. Crash diagnostics are collected to fix bugs—nothing else.',
         category: FAQCategoryEnum.PRIVACY_DATA,
       },
     ],

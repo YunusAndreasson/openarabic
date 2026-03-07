@@ -1,33 +1,22 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { memo, useCallback, useMemo, type FC } from 'react';
-import { Pressable, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
+import { memo, useCallback, useMemo, type FC } from 'react';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArabicColoringExamples } from '@/components/account/ArabicColoringExamples';
-import { BaseCard } from '@/components/common';
+import { BaseCard, SectionLabel } from '@/components/common';
 import { type FAQCategoryData, type FAQItem } from '@/constants/faq';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { getFAQItemKey, useFAQSearch } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
-import { FAQCategory } from '@/types/enums';
 import { parseTextWithEmails } from '@/utils/textUtils';
-
-// Category icon mapping for visual categorization
-const CATEGORY_ICONS: Record<FAQCategory, keyof typeof Ionicons.glyphMap> = {
-  [FAQCategory.GETTING_STARTED]: 'rocket',
-  [FAQCategory.FEATURES]: 'settings',
-  [FAQCategory.OFFLINE_STORAGE]: 'cloud-offline',
-  [FAQCategory.LEARNING_APPROACH]: 'school',
-  [FAQCategory.PRIVACY_DATA]: 'lock-closed',
-};
 
 // FAQ item component props
 interface FAQItemComponentProps {
@@ -81,8 +70,8 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
               {item.question}
             </ThemedText>
             <Ionicons
-              name={isExpanded ? 'remove-circle' : 'add-circle'}
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
               color={isExpanded ? colors.tint : colors.textTertiary}
             />
           </View>
@@ -117,39 +106,18 @@ FAQItemComponent.displayName = 'FAQItemComponent';
 // FAQ Category Section component props
 interface FAQCategorySectionProps {
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
   items: FAQItem[];
   expandedItems: Set<string>;
   onToggle: (id: string) => void;
-  itemCount?: number;
   keyPrefix?: string; // Prefix for unique keys (e.g., 'popular' for popular questions)
-  containerStyle?: ViewStyle;
 }
 
 // Reusable FAQ category section with header and items
-// Handles both "Popular Questions" and regular category sections
 const FAQCategorySection: FC<FAQCategorySectionProps> = memo(
-  ({ title, icon, items, expandedItems, onToggle, itemCount, keyPrefix, containerStyle }) => {
-    const colors = useColors();
-
+  ({ title, items, expandedItems, onToggle, keyPrefix }) => {
     return (
-      <View style={containerStyle}>
-        <View style={styles.categoryHeader}>
-          <Ionicons
-            name={icon}
-            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            color={colors.tint}
-            style={styles.categoryIcon}
-          />
-          <ThemedText type="heading3" weight="semibold" style={styles.categoryTitle}>
-            {title}
-          </ThemedText>
-          {itemCount !== undefined && (
-            <ThemedText type="caption" colorName="textTertiary" style={styles.categoryCount}>
-              ({itemCount})
-            </ThemedText>
-          )}
-        </View>
+      <View>
+        <SectionLabel title={title} />
         <View style={styles.categoryContainer}>
           {items.map(item => {
             const uniqueKey = getFAQItemKey(item.id, keyPrefix);
@@ -173,7 +141,6 @@ FAQCategorySection.displayName = 'FAQCategorySection';
 // Main Help screen
 const HelpScreen: FC = () => {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ expandItem?: string }>();
 
   // FAQ search and state management
@@ -193,6 +160,10 @@ const HelpScreen: FC = () => {
   const handleClearSearch = useCallback(() => {
     clearSearch();
   }, [clearSearch]);
+
+  const handleContactSupport = useCallback(() => {
+    router.push(ROUTE_PATHS.ACCOUNT_FEEDBACK);
+  }, []);
 
   return (
     <ThemedView
@@ -256,15 +227,8 @@ const HelpScreen: FC = () => {
         scrollable={true}
         style={styles.flexOne}
         useSafeArea={false}
-        contentContainerStyle={[
-          styles.scrollContentDynamic,
-          {
-            paddingTop: LAYOUT.SPACING.MEDIUM,
-            paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE,
-          },
-        ]}
+        contentContainerStyle={styles.scrollContent}
         scrollViewProps={{
-          style: styles.scrollView,
           showsVerticalScrollIndicator: true,
           removeClippedSubviews: false,
           keyboardShouldPersistTaps: 'handled',
@@ -292,34 +256,22 @@ const HelpScreen: FC = () => {
             {showPopularQuestions && popularQuestions.length > 0 && (
               <FAQCategorySection
                 title={STRINGS.HELP_POPULAR_QUESTIONS}
-                icon="flame"
                 items={popularQuestions}
                 expandedItems={expandedItems}
                 onToggle={handleToggleItem}
                 keyPrefix="popular"
-                containerStyle={styles.popularQuestionsSection}
               />
             )}
 
-            {filteredFAQData.map((category: FAQCategoryData) => {
-              const iconName = CATEGORY_ICONS[category.name as FAQCategory];
-              const itemCount = category.items.length;
-
-              // Skip categories without icons (defensive)
-              if (!iconName) return null;
-
-              return (
-                <FAQCategorySection
-                  key={category.name}
-                  title={category.name}
-                  icon={iconName}
-                  items={category.items}
-                  expandedItems={expandedItems}
-                  onToggle={handleToggleItem}
-                  itemCount={itemCount}
-                />
-              );
-            })}
+            {filteredFAQData.map((category: FAQCategoryData) => (
+              <FAQCategorySection
+                key={category.name}
+                title={category.name}
+                items={category.items}
+                expandedItems={expandedItems}
+                onToggle={handleToggleItem}
+              />
+            ))}
 
             {/* Still Need Help? Footer */}
             <BaseCard shadowSize="small" style={styles.helpFooter}>
@@ -332,11 +284,11 @@ const HelpScreen: FC = () => {
                   colorName="textTertiary"
                   style={styles.helpFooterDescription}
                 >
-                  {STRINGS.CONTACT_SUPPORT}
+                  {STRINGS.HELP_STILL_NEED_HELP_DESCRIPTION}
                 </ThemedText>
                 <ThemedButton
                   title={STRINGS.CONTACT_SUPPORT}
-                  onPress={() => router.push(ROUTE_PATHS.ACCOUNT_FEEDBACK)}
+                  onPress={handleContactSupport}
                   style={styles.helpFooterButton}
                 />
               </View>
@@ -355,36 +307,16 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
-  scrollContentDynamic: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-  scrollView: {
-    flex: 1,
+  scrollContent: {
+    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
   },
   categoryContainer: {
     gap: LAYOUT.SPACING.SMALL,
   },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  categoryIcon: {
-    marginRight: -LAYOUT.SPACING.TINY, // Tighten spacing slightly
-  },
-  categoryTitle: {
-    flex: 1,
-  },
-  categoryCount: {
-    marginLeft: LAYOUT.SPACING.TINY,
-  },
-  popularQuestionsSection: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
   // Search bar styles
   searchContainer: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.SMALL,
     gap: LAYOUT.SPACING.TINY,

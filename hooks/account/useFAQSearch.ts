@@ -6,7 +6,7 @@ import { FAQ_DATA, type FAQCategoryData, type FAQItem } from '@/constants/faq';
 const POPULAR_QUESTION_IDS = [
   'what-is-app',
   'arabic-text-coloring',
-  'spaced-repetition',
+  'how-spaced-repetition-works-detailed',
   'learning-speed',
 ] as const;
 
